@@ -4,10 +4,8 @@ import os
 import requests
 from simplejson.scanner import JSONDecodeError
 
+from . import constants, errors
 from ._client import Client
-
-from . import errors
-from . import constants
 
 
 class SSOClient(Client):

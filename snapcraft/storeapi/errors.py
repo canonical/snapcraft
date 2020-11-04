@@ -15,16 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-from http.client import responses
 import logging
-from requests.packages import urllib3
-from simplejson.scanner import JSONDecodeError
+from http.client import responses
 from typing import Dict, List, Optional
 
-from . import channels
-from . import status
-from snapcraft.internal.errors import SnapcraftError, SnapcraftException
+from requests.packages import urllib3
+from simplejson.scanner import JSONDecodeError
+
 from snapcraft import formatting_utils
+from snapcraft.internal.errors import SnapcraftError, SnapcraftException
+
+from . import channels, status
 
 logger = logging.getLogger(__name__)
 

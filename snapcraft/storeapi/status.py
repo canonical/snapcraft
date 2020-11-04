@@ -16,10 +16,7 @@
 
 from typing import Any, Dict, List, Optional, Set
 
-from . import channels
-from . import constants
-from . import errors
-
+from . import channels, constants, errors
 
 # FIXME Obtain link to docs
 """

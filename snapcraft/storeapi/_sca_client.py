@@ -6,13 +6,9 @@ from typing import List, Optional
 import requests
 from simplejson.scanner import JSONDecodeError
 
+from . import _macaroon_auth, _metadata, constants, errors, logger
 from ._client import Client
 from ._status_tracker import StatusTracker
-
-from . import _metadata
-from . import constants
-from . import errors
-from . import logger, _macaroon_auth
 
 
 class SCAClient(Client):
