@@ -9,7 +9,6 @@ import re
 import sys
 from subprocess import check_call, check_output
 
-
 try:
     from launchpadlib.launchpad import Launchpad
 except ImportError:
