@@ -984,7 +984,12 @@ def gated(snap_name):
         print("There are no validations for snap {!r}".format(snap_name))
 
 
-def validate(snap_name, validations, revoke=False, key=None):
+def validate(
+    snap_name: str,
+    validations: List[str],
+    revoke: bool = False,
+    key: Optional[str] = None,
+):
     """Generate, sign and upload validation assertions."""
     # Check validations format
     _check_validations(validations)
@@ -1002,26 +1007,32 @@ def validate(snap_name, validations, revoke=False, key=None):
 
     # Then, for each requested validation, generate assertion
     for validation in validations:
-        gated_name, rev = validation.split("=", 1)
-        echo.info("Getting details for {}".format(gated_name))
-        approved_data = store_client.cpi.get_info(gated_name)
-        assertion = {
+        gated_snap, rev = validation.split("=", 1)
+        echo.info(f"Getting details for {gated_snap}")
+        # The Info API is not authed, so it cannot see private snaps.
+        try:
+            approved_data = store_client.cpi.get_info(gated_snap)
+            snap_id = approved_data.snap_id
+        except storeapi.errors.SnapNotFoundError:
+            snap_id = gated_snap
+
+        assertion_payload = {
             "type": "validation",
             "authority-id": authority_id,
             "series": DEFAULT_SERIES,
             "snap-id": snap_id,
-            "approved-snap-id": approved_data.snap_id,
+            "approved-snap-id": snap_id,
             "approved-snap-revision": rev,
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "revoked": "false",
         }
         if revoke:
-            assertion["revoked"] = "true"
+            assertion_payload["revoked"] = "true"
 
-        assertion = _sign_assertion(validation, assertion, key, "validations")
+        assertion = _sign_assertion(validation, assertion_payload, key, "validations")
 
         # Save assertion to a properly named file
-        fname = "{}-{}-r{}.assertion".format(snap_name, gated_name, rev)
+        fname = f"{snap_name}-{gated_snap}-r{rev}.assertion"
         with open(fname, "wb") as f:
             f.write(assertion)
 

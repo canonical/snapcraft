@@ -112,3 +112,8 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
         self.assertThat(
             result.output, Contains("You are required to login before continuing.")
         )
+
+    def test_validate_fallback_to_snap_id(self):
+        self.client.login("dummy", "test correct password")
+
+        self.run_command(["validate", "core", "maybe-snap-id=3"],)
