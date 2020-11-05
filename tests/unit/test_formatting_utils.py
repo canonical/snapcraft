@@ -65,14 +65,14 @@ class FormatPathVariableTestCases(unit.TestCase):
     def test_one_path(self):
         paths = ["/bin"]
         output = formatting_utils.format_path_variable("PATH", paths, "/usr", ":")
-        self.assertThat(output, Equals('PATH="$PATH:/usr/bin"'))
+        self.assertThat(output, Equals('PATH="${PATH:+$PATH:}/usr/bin"'))
 
     def test_two_paths(self):
         paths = ["/bin", "/sbin"]
         output = formatting_utils.format_path_variable("PATH", paths, "/usr", ":")
-        self.assertThat(output, Equals('PATH="$PATH:/usr/bin:/usr/sbin"'))
+        self.assertThat(output, Equals('PATH="${PATH:+$PATH:}/usr/bin:/usr/sbin"'))
 
     def test_two_paths_other_paremeters(self):
         paths = ["/usr/bin", "/usr/sbin"]
         output = formatting_utils.format_path_variable("PATH", paths, "", ",")
-        self.assertThat(output, Equals('PATH="$PATH,/usr/bin,/usr/sbin"'))
+        self.assertThat(output, Equals('PATH="${PATH:+$PATH,}/usr/bin,/usr/sbin"'))

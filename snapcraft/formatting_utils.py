@@ -39,15 +39,17 @@ def format_path_variable(
     :param str prepend: String to prepend to each path in the definition.
     :param str separator: String to place between each path in the definition.
     """
-
     if not paths:
         raise ValueError("Failed to format '${}': no paths supplied".format(envvar))
 
-    return '{envvar}="${envvar}{separator}{paths}"'.format(
-        envvar=envvar,
-        separator=separator,
-        paths=combine_paths(paths, prepend, separator),
-    )
+    combined_paths = combine_paths(paths, prepend, separator)
+
+    if separator.isspace():
+        formatted = f'{envvar}="${envvar}{separator}{combined_paths}"'
+    else:
+        formatted = f'{envvar}="${{{envvar}:+${envvar}{separator}}}{combined_paths}"'
+
+    return formatted
 
 
 def humanize_list(
