@@ -1428,7 +1428,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
 
     def put_snap_validations(self, request):
         snap_id = request.matchdict["snap_id"]
-        if snap_id == "good" or snap_id == "maybe-snap-id":
+        if snap_id == "good":
             payload = request.body
             response_code = 200
         elif snap_id == "err":

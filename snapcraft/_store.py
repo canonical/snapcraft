@@ -1012,16 +1012,16 @@ def validate(
         # The Info API is not authed, so it cannot see private snaps.
         try:
             approved_data = store_client.cpi.get_info(gated_snap)
-            snap_id = approved_data.snap_id
+            approved_snap_id = approved_data.snap_id
         except storeapi.errors.SnapNotFoundError:
-            snap_id = gated_snap
+            approved_snap_id = gated_snap
 
         assertion_payload = {
             "type": "validation",
             "authority-id": authority_id,
             "series": DEFAULT_SERIES,
             "snap-id": snap_id,
-            "approved-snap-id": snap_id,
+            "approved-snap-id": approved_snap_id,
             "approved-snap-revision": rev,
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "revoked": "false",
