@@ -15,9 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import os
 import functools
 import operator
+import os
 import stat
 import sys
 from textwrap import dedent
@@ -27,13 +27,13 @@ import click
 from tabulate import tabulate
 
 import snapcraft
+from snapcraft import formatting_utils, storeapi
 from snapcraft._store import StoreClientCLI
-from snapcraft import storeapi, formatting_utils
 from snapcraft.storeapi.constants import DEFAULT_SERIES
-from . import echo
-from ._review import review_snap
-from ._channel_map import get_tabulated_channel_map
 
+from . import echo
+from ._channel_map import get_tabulated_channel_map
+from ._review import review_snap
 
 _MESSAGE_REGISTER_PRIVATE = dedent(
     """\
