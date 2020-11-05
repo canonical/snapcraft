@@ -87,7 +87,7 @@ class ExtensionImpl(Extension):
             },
             "environment": {
                 "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
-                "GTK_USE_PORTALS": "1",
+                "GTK_USE_PORTAL": "1",
             },
             "hooks": {
                 "configure": {
