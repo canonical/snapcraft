@@ -49,6 +49,33 @@ def test_apt_name():
     assert repo.name == "http_archive_ubuntu_com_ubuntu"
 
 
+@pytest.mark.parametrize(
+    "arch", ["amd64", "armhf", "arm64", "i386", "ppc64el", "s390x"]
+)
+def test_apt_valid_architectures(arch):
+    package_repo = PackageRepositoryApt(
+        key_id="test-key-id", url="http://test", architectures=[arch]
+    )
+
+    assert package_repo.architectures == [arch]
+
+
+@pytest.mark.parametrize("arch", ["", "armv8"])
+def test_apt_invalid_architectures(arch):
+    with pytest.raises(errors.PackageRepositoryValidationError) as exc_info:
+        PackageRepositoryApt(key_id="test-key-id", url="", architectures=[arch])
+
+    assert exc_info.value.brief == f"Invalid architecture '{arch}'."
+    assert (
+        exc_info.value.details
+        == "Valid architectures include: amd64, armhf, arm64, i386, ppc64el, and s390x."
+    )
+    assert (
+        exc_info.value.resolution
+        == "Verify repository configuration and ensure that 'architectures' is correctly specified."
+    )
+
+
 def test_apt_invalid_url():
     with pytest.raises(errors.PackageRepositoryValidationError) as exc_info:
         PackageRepositoryApt(
@@ -56,7 +83,11 @@ def test_apt_invalid_url():
         )
 
     assert exc_info.value.brief == "Invalid URL ''."
-    assert exc_info.value.resolution == "You can update 'url' to a non-empty string."
+    assert exc_info.value.details == "URLs must be non-empty strings."
+    assert (
+        exc_info.value.resolution
+        == "Verify the repository configuration and ensure that 'url' is correctly specified."
+    )
 
 
 def test_apt_invalid_path():
@@ -66,9 +97,10 @@ def test_apt_invalid_path():
         )
 
     assert exc_info.value.brief == "Invalid path ''."
+    assert exc_info.value.details == "Paths must be non-empty strings."
     assert (
         exc_info.value.resolution
-        == "You can update 'path' to a non-empty string, such as '/'."
+        == "Verify the repository configuration and ensure that 'path' is a non-empty string such as '/'."
     )
 
 
@@ -81,10 +113,14 @@ def test_apt_invalid_path_with_suites():
             url="http://archive.ubuntu.com/ubuntu",
         )
 
-    assert exc_info.value.brief == "Components and suites cannot be used with path."
+    assert (
+        exc_info.value.brief
+        == "Suites ['xenial', 'xenial-updates'] cannot be combined with path '/'."
+    )
+    assert exc_info.value.details == "Path and suites are incomptiable options."
     assert (
         exc_info.value.resolution
-        == "Paths and components/suites are mutually exclusive options.  You can remove the path, or components and suites."
+        == "Verify the repository configuration and remove 'path' or 'suites'."
     )
 
 
@@ -97,10 +133,13 @@ def test_apt_invalid_path_with_components():
             url="http://archive.ubuntu.com/ubuntu",
         )
 
-    assert exc_info.value.brief == "Components and suites cannot be used with path."
+    assert (
+        exc_info.value.brief == "Components ['main'] cannot be combined with path '/'."
+    )
+    assert exc_info.value.details == "Path and components are incomptiable options."
     assert (
         exc_info.value.resolution
-        == "Paths and components/suites are mutually exclusive options.  You can remove the path, or components and suites."
+        == "Verify the repository configuration and remove 'path' or 'components'."
     )
 
 
@@ -113,9 +152,10 @@ def test_apt_invalid_missing_components():
         )
 
     assert exc_info.value.brief == "No components specified."
+    assert exc_info.value.details == "Components are required when using suites."
     assert (
         exc_info.value.resolution
-        == "Components are required when using suites.  You can correct this by adding the correct components to the repository configuration."
+        == "Verify the repository configuration and ensure that 'components' is correctly specified."
     )
 
 
@@ -128,9 +168,10 @@ def test_apt_invalid_missing_suites():
         )
 
     assert exc_info.value.brief == "No suites specified."
+    assert exc_info.value.details == "Suites are required when using components."
     assert (
         exc_info.value.resolution
-        == "Suites are required when using components.  You can correct this by adding the correct suites to the repository configuration."
+        == "Verify the repository configuration and ensure that 'suites' is correctly specified."
     )
 
 
@@ -142,10 +183,11 @@ def test_apt_invalid_suites_as_path():
             url="http://archive.ubuntu.com/ubuntu",
         )
 
-    assert exc_info.value.brief == "Suites cannot end with a '/'."
+    assert exc_info.value.brief == "Invalid suite 'my-suite/'."
+    assert exc_info.value.details == "Suites must not end with a '/'."
     assert (
         exc_info.value.resolution
-        == "You can either remove the '/' or instead use the 'path' property to define an exact path."
+        == "Verify the repository configuration and remove the trailing '/ from suites or use the 'path' property to define a path."
     )
 
 
@@ -273,7 +315,15 @@ def test_apt_unmarshal_invalid_extra_keys():
     with pytest.raises(errors.PackageRepositoryValidationError) as exc_info:
         PackageRepositoryApt.unmarshal(test_dict)
 
-    assert exc_info.value.brief == "Invalid key(s) present ('foo', 'foo2')."
+    assert (
+        exc_info.value.brief
+        == "Found unsupported package repository properties 'foo', 'foo2'."
+    )
+    assert exc_info.value.details is None
+    assert (
+        exc_info.value.resolution
+        == "Verify repository configuration and ensure it is correct."
+    )
 
 
 def test_apt_unmarshal_invalid_type():
@@ -293,7 +343,11 @@ def test_apt_unmarshal_invalid_type():
         PackageRepositoryApt.unmarshal(test_dict)
 
     assert exc_info.value.brief == "Unsupported type 'aptx'."
-    assert exc_info.value.resolution == "You can use type 'apt'."
+    assert exc_info.value.details == "The only currently supported type is 'apt'."
+    assert (
+        exc_info.value.resolution
+        == "Verify repository configuration and ensure that 'type' is correctly specified."
+    )
 
 
 def test_ppa_marshal():
@@ -307,7 +361,11 @@ def test_ppa_invalid_ppa():
         PackageRepositoryAptPpa(ppa="")
 
     assert exc_info.value.brief == "Invalid PPA ''."
-    assert exc_info.value.resolution == "You can update 'ppa' to a non-empty string."
+    assert exc_info.value.details == "PPAs must be non-empty strings."
+    assert (
+        exc_info.value.resolution
+        == "Verify repository configuration and ensure that 'ppa' is correctly specified."
+    )
 
 
 def test_ppa_unmarshal_invalid_apt_ppa_type():
@@ -317,7 +375,11 @@ def test_ppa_unmarshal_invalid_apt_ppa_type():
         PackageRepositoryAptPpa.unmarshal(test_dict)
 
     assert exc_info.value.brief == "Unsupported type 'aptx'."
-    assert exc_info.value.resolution == "You can use type 'apt'."
+    assert exc_info.value.details == "The only currently supported type is 'apt'."
+    assert (
+        exc_info.value.resolution
+        == "Verify repository configuration and ensure that 'type' is correctly specified."
+    )
 
 
 def test_ppa_unmarshal_invalid_apt_ppa_extra_keys():
@@ -326,7 +388,15 @@ def test_ppa_unmarshal_invalid_apt_ppa_extra_keys():
     with pytest.raises(errors.PackageRepositoryValidationError) as exc_info:
         PackageRepositoryAptPpa.unmarshal(test_dict)
 
-    assert exc_info.value.brief == "Invalid keys present ('test')."
+    assert (
+        exc_info.value.brief
+        == "Found unsupported package repository properties 'test'."
+    )
+    assert exc_info.value.details is None
+    assert (
+        exc_info.value.resolution
+        == "Verify repository configuration and ensure that it is correct."
+    )
 
 
 def test_ppa_install(tmp_path, mock_repo):

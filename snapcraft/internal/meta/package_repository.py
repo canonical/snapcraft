@@ -82,14 +82,18 @@ class PackageRepositoryAptPpa(PackageRepository):
             raise errors.PackageRepositoryValidationError(
                 url=self.ppa,
                 brief=f"Invalid PPA {self.ppa!r}.",
-                resolution="Update 'ppa' to a non-empty string.",
+                details="PPAs must be non-empty strings.",
+                resolution="Verify repository configuration and ensure that 'ppa' is correctly specified.",
             )
 
     @classmethod
     def unmarshal(cls, data: Dict[str, str]) -> "PackageRepositoryAptPpa":
         if not isinstance(data, dict):
             raise errors.PackageRepositoryValidationError(
-                url=str(data), brief=f"Invalid PPA object {data!r}.",
+                url=str(data),
+                brief=f"Invalid PPA object {data!r}.",
+                details="PPA repository must be a valid object.",
+                resolution="Verify repository configuration and ensure that the correct syntax is used.",
             )
 
         if not isinstance(data, dict):
@@ -104,20 +108,24 @@ class PackageRepositoryAptPpa(PackageRepository):
             raise errors.PackageRepositoryValidationError(
                 url=ppa,
                 brief=f"Unsupported type {repo_type!r}.",
-                resolution="You can use type 'apt'.",
+                details="The only currently supported type is 'apt'.",
+                resolution="Verify repository configuration and ensure that 'type' is correctly specified.",
             )
 
         if not isinstance(ppa, str):
             raise errors.PackageRepositoryValidationError(
-                url=ppa, brief=f"Invalid PPA {ppa!r}.",
+                url=ppa,
+                brief=f"Invalid PPA {ppa!r}.",
+                details="PPA must be a valid string.",
+                resolution="Verify repository configuration and ensure that 'ppa' is correctly specified.",
             )
 
         if data_copy:
             keys = ", ".join([repr(k) for k in data_copy.keys()])
             raise errors.PackageRepositoryValidationError(
                 url=ppa,
-                brief=f"Invalid keys present ({keys}).",
-                resolution="You can remove the unsupported keys.",
+                brief=f"Found unsupported package repository properties {keys}.",
+                resolution="Verify repository configuration and ensure that it is correct.",
             )
 
         return cls(ppa=ppa)
@@ -232,71 +240,105 @@ class PackageRepositoryApt(PackageRepository):
 
         return data
 
-    def validate(self) -> None:
-        if self.formats is not None and any(
-            f not in ["deb", "deb-src"] for f in self.formats
-        ):
-            raise errors.PackageRepositoryValidationError(
-                url=self.url,
-                brief=f"Invalid formats {self.formats!r}.",
-                resolution="You can specify a list of formats including 'deb' and/or 'deb-src'.",
-            )
+    def validate(self) -> None:  # noqa: C901
+        if self.architectures is not None:
+            for arch in self.architectures:
+                if arch not in [
+                    "amd64",
+                    "arm64",
+                    "armhf",
+                    "i386",
+                    "ppc64el",
+                    "s390x",
+                ]:
+                    raise errors.PackageRepositoryValidationError(
+                        url=self.url,
+                        brief=f"Invalid architecture {arch!r}.",
+                        details="Valid architectures include: amd64, armhf, arm64, i386, ppc64el, and s390x.",
+                        resolution="Verify repository configuration and ensure that 'architectures' is correctly specified.",
+                    )
+
+        if self.formats is not None:
+            for repo_format in self.formats:
+                if repo_format not in ["deb", "deb-src"]:
+                    raise errors.PackageRepositoryValidationError(
+                        url=self.url,
+                        brief=f"Invalid format {repo_format!r}.",
+                        details="Valid formats include: deb and deb-src.",
+                        resolution="Verify the repository configuration and ensure that 'formats' is correctly specified.",
+                    )
 
         if not self.key_id:
             raise errors.PackageRepositoryValidationError(
                 url=self.url,
-                brief=f"Invalid Key Identifier {self.key_id!r}.",
-                resolution="You can verify that the key specifies a valid key identifier.",
+                brief=f"Invalid key identifier {self.key_id!r}.",
+                details="Key IDs must be 40 upper-case hex characters.",
+                resolution="Verify the repository configuration and ensure that 'key-id' is correctly specified.",
             )
 
         if not self.url:
             raise errors.PackageRepositoryValidationError(
                 url=self.url,
                 brief=f"Invalid URL {self.url!r}.",
-                resolution="You can update 'url' to a non-empty string.",
+                details="URLs must be non-empty strings.",
+                resolution="Verify the repository configuration and ensure that 'url' is correctly specified.",
             )
 
-        if self.suites and any((s.endswith("/") for s in self.suites)):
-            raise errors.PackageRepositoryValidationError(
-                url=self.url,
-                brief=f"Suites cannot end with a '/'.",
-                resolution="Remove the trailing '/' or use the 'path' property to define an exact path.",
-            )
+        if self.suites:
+            for suite in self.suites:
+                if suite.endswith("/"):
+                    raise errors.PackageRepositoryValidationError(
+                        url=self.url,
+                        brief=f"Invalid suite {suite!r}.",
+                        details="Suites must not end with a '/'.",
+                        resolution="Verify the repository configuration and remove the trailing '/ from suites or use the 'path' property to define a path.",
+                    )
 
-        if self.path is not None and not self.path:
+        if self.path is not None and self.path == "":
             raise errors.PackageRepositoryValidationError(
                 url=self.url,
                 brief=f"Invalid path {self.path!r}.",
-                resolution="Update 'path' to a non-empty string, such as '/'.",
+                details="Paths must be non-empty strings.",
+                resolution="Verify the repository configuration and ensure that 'path' is a non-empty string such as '/'.",
             )
 
-        if self.path and (self.components or self.suites):
+        if self.path and self.components:
             raise errors.PackageRepositoryValidationError(
                 url=self.url,
-                brief=f"Components and suites cannot be used with path.",
-                details="Incompatible options: 'path' cannot be combined with 'components' or 'suites'.",
-                resolution="Remove 'path' or both 'components' and 'suites'.",
+                brief=f"Components {self.components!r} cannot be combined with path {self.path!r}.",
+                details="Path and components are incomptiable options.",
+                resolution="Verify the repository configuration and remove 'path' or 'components'.",
+            )
+
+        if self.path and self.suites:
+            raise errors.PackageRepositoryValidationError(
+                url=self.url,
+                brief=f"Suites {self.suites!r} cannot be combined with path {self.path!r}.",
+                details="Path and suites are incomptiable options.",
+                resolution="Verify the repository configuration and remove 'path' or 'suites'.",
             )
 
         if self.suites and not self.components:
             raise errors.PackageRepositoryValidationError(
                 url=self.url,
                 brief=f"No components specified.",
-                resolution="Components are required when using suites.  You can correct this by adding the correct components to the repository configuration.",
+                details="Components are required when using suites.",
+                resolution="Verify the repository configuration and ensure that 'components' is correctly specified.",
             )
 
         if self.components and not self.suites:
             raise errors.PackageRepositoryValidationError(
                 url=self.url,
                 brief=f"No suites specified.",
-                resolution="Suites are required when using components.  You can correct this by adding the correct suites to the repository configuration.",
+                details="Suites are required when using components.",
+                resolution="Verify the repository configuration and ensure that 'suites' is correctly specified.",
             )
 
     @classmethod  # noqa: C901
     def unmarshal(cls, data: Dict[str, Any]) -> "PackageRepositoryApt":
         if not isinstance(data, dict):
             raise errors.PackageRepositoryValidationError(
-                url=str(data), brief=f"Invalid object {data!r}.",
+                url=str(data), brief=f"Invalid object {data!r} (not a dict).",
             )
 
         data_copy = deepcopy(data)
@@ -316,7 +358,8 @@ class PackageRepositoryApt(PackageRepository):
             raise errors.PackageRepositoryValidationError(
                 url=url,
                 brief=f"Unsupported type {repo_type!r}.",
-                resolution="You can use type 'apt'.",
+                details="The only currently supported type is 'apt'.",
+                resolution="Verify repository configuration and ensure that 'type' is correctly specified.",
             )
 
         if architectures is not None and (
@@ -324,7 +367,10 @@ class PackageRepositoryApt(PackageRepository):
             or not all(isinstance(x, str) for x in architectures)
         ):
             raise errors.PackageRepositoryValidationError(
-                url=url, brief=f"Invalid architectures {architectures!r}.",
+                url=url,
+                brief=f"Invalid architectures {architectures!r}.",
+                details="Architectures must be a list of valid architecture strings.",
+                resolution="Verify repository configuration and ensure that 'architectures' is correctly specified.",
             )
 
         if components is not None and (
@@ -333,7 +379,10 @@ class PackageRepositoryApt(PackageRepository):
             or not components
         ):
             raise errors.PackageRepositoryValidationError(
-                url=url, brief=f"Invalid components {components!r}.",
+                url=url,
+                brief=f"Invalid components {components!r}.",
+                details="Components must be a list of strings.",
+                resolution="Verify repository configuration and ensure that 'components' is correctly specified.",
             )
 
         if formats is not None and (
@@ -341,27 +390,42 @@ class PackageRepositoryApt(PackageRepository):
             or not all(isinstance(x, str) for x in formats)
         ):
             raise errors.PackageRepositoryValidationError(
-                url=url, brief=f"Invalid formats {formats!r}.",
+                url=url,
+                brief=f"Invalid formats {formats!r}.",
+                details="Formats must be a list of strings.",
+                resolution="Verify repository configuration and ensure that 'formats' is correctly specified.",
             )
 
         if not isinstance(key_id, str):
             raise errors.PackageRepositoryValidationError(
-                url=url, brief=f"Invalid key identifier {key_id!r}.",
+                url=url,
+                brief=f"Invalid key identifier {key_id!r}.",
+                details="Key identifiers must be a valid string.",
+                resolution="Verify repository configuration and ensure that 'key-id' is correctly specified.",
             )
 
         if key_server is not None and not isinstance(key_server, str):
             raise errors.PackageRepositoryValidationError(
-                url=url, brief=f"Invalid key server {key_server!r}.",
+                url=url,
+                brief=f"Invalid key server {key_server!r}.",
+                details="Key servers must be a valid string.",
+                resolution="Verify repository configuration and ensure that 'key-server' is correctly specified.",
             )
 
         if name is not None and not isinstance(name, str):
             raise errors.PackageRepositoryValidationError(
-                url=url, brief=f"Invalid name {name!r}.",
+                url=url,
+                brief=f"Invalid name {name!r}.",
+                details="Names must be a valid string.",
+                resolution="Verify repository configuration and ensure that 'name' is correctly specified.",
             )
 
         if path is not None and not isinstance(path, str):
             raise errors.PackageRepositoryValidationError(
-                url=url, brief=f"Invalid path {path!r}.",
+                url=url,
+                brief=f"Invalid path {path!r}.",
+                details="Paths must be a valid string.",
+                resolution="Verify repository configuration and ensure that 'path' is correctly specified.",
             )
 
         if suites is not None and (
@@ -370,20 +434,26 @@ class PackageRepositoryApt(PackageRepository):
             or not suites
         ):
             raise errors.PackageRepositoryValidationError(
-                url=url, brief=f"Suites must be a list of strings.",
+                url=url,
+                brief=f"Invalid suites {suites!r}.",
+                details="Suites must be a list of strings.",
+                resolution="Verify repository configuration and ensure that 'suites' is correctly specified.",
             )
 
         if not isinstance(url, str):
             raise errors.PackageRepositoryValidationError(
-                url=url, brief=f"Invalid URL {url!r}.",
+                url=url,
+                brief=f"Invalid URL {url!r}.",
+                details="URLs must be a valid string.",
+                resolution="Verify repository configuration and ensure that 'url' is correctly specified.",
             )
 
         if data_copy:
             keys = ", ".join([repr(k) for k in data_copy.keys()])
             raise errors.PackageRepositoryValidationError(
                 url=url,
-                brief=f"Invalid key(s) present ({keys}).",
-                resolution="Remove the unsupported keys or correct their name(s).",
+                brief=f"Found unsupported package repository properties {keys}.",
+                resolution="Verify repository configuration and ensure it is correct.",
             )
 
         return cls(
