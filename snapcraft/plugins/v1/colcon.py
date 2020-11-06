@@ -438,7 +438,7 @@ class ColconPlugin(PluginV1):
         """
         ).format(
             underlay_setup=os.path.join(underlaydir, "setup.sh"),
-            overlay_setup=os.path.join(overlaydir, "setup.sh"),
+            overlay_setup=os.path.join(overlaydir, "local_setup.sh"),
         )
 
         # We need to source ROS's setup.sh at this point. However, it accepts
