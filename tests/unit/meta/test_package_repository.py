@@ -326,6 +326,23 @@ def test_apt_unmarshal_invalid_extra_keys():
     )
 
 
+def test_apt_unmarshal_invalid_data():
+    test_dict = "not-a-dict"
+
+    with pytest.raises(errors.PackageRepositoryValidationError) as exc_info:
+        PackageRepositoryApt.unmarshal(test_dict)
+
+    assert exc_info.value.brief == "Invalid package repository object 'not-a-dict'."
+    assert (
+        exc_info.value.details
+        == "Package repository must be a valid dictionary object."
+    )
+    assert (
+        exc_info.value.resolution
+        == "Verify repository configuration and ensure that the correct syntax is used."
+    )
+
+
 def test_apt_unmarshal_invalid_type():
     test_dict = {
         "architectures": ["amd64", "i386"],
@@ -365,6 +382,23 @@ def test_ppa_invalid_ppa():
     assert (
         exc_info.value.resolution
         == "Verify repository configuration and ensure that 'ppa' is correctly specified."
+    )
+
+
+def test_ppa_unmarshal_invalid_data():
+    test_dict = "not-a-dict"
+
+    with pytest.raises(errors.PackageRepositoryValidationError) as exc_info:
+        PackageRepositoryAptPpa.unmarshal(test_dict)
+
+    assert exc_info.value.brief == "Invalid package repository object 'not-a-dict'."
+    assert (
+        exc_info.value.details
+        == "Package repository must be a valid dictionary object."
+    )
+    assert (
+        exc_info.value.resolution
+        == "Verify repository configuration and ensure that the correct syntax is used."
     )
 
 
@@ -475,3 +509,17 @@ def test_unmarshal_package_repositories_list_all():
     ]
 
     assert unmarshalled_list == test_list
+
+
+def test_unmarshal_package_repositories_invalid_data():
+    with pytest.raises(errors.PackageRepositoryValidationError) as exc_info:
+        PackageRepository.unmarshal_package_repositories("not-a-list")
+
+    assert (
+        exc_info.value.brief == "Invalid package-repositories list object 'not-a-list'."
+    )
+    assert exc_info.value.details == "Package repositories must be a list of objects."
+    assert (
+        exc_info.value.resolution
+        == "Verify 'package-repositories' configuration and ensure that the correct syntax is used."
+    )

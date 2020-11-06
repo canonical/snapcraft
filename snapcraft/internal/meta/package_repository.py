@@ -40,7 +40,12 @@ class PackageRepository(abc.ABC):
     @classmethod
     def unmarshal(cls, data: Dict[str, str]) -> "PackageRepository":
         if not isinstance(data, dict):
-            raise RuntimeError(f"invalid repository object: {data!r}")
+            raise errors.PackageRepositoryValidationError(
+                url=str(data),
+                brief=f"Invalid package repository object {data!r}.",
+                details="Package repository must be a valid dictionary object.",
+                resolution="Verify repository configuration and ensure that the correct syntax is used.",
+            )
 
         if "ppa" in data:
             return PackageRepositoryAptPpa.unmarshal(data)
@@ -53,7 +58,12 @@ class PackageRepository(abc.ABC):
 
         if data is not None:
             if not isinstance(data, list):
-                raise RuntimeError(f"invalid package-repositories: {data!r}")
+                raise errors.PackageRepositoryValidationError(
+                    url=str(data),
+                    brief=f"Invalid package-repositories list object {data!r}.",
+                    details="Package repositories must be a list of objects.",
+                    resolution="Verify 'package-repositories' configuration and ensure that the correct syntax is used.",
+                )
 
             for repository in data:
                 package_repo = cls.unmarshal(repository)
@@ -91,13 +101,10 @@ class PackageRepositoryAptPpa(PackageRepository):
         if not isinstance(data, dict):
             raise errors.PackageRepositoryValidationError(
                 url=str(data),
-                brief=f"Invalid PPA object {data!r}.",
-                details="PPA repository must be a valid object.",
+                brief=f"Invalid package repository object {data!r}.",
+                details="Package repository must be a valid dictionary object.",
                 resolution="Verify repository configuration and ensure that the correct syntax is used.",
             )
-
-        if not isinstance(data, dict):
-            raise RuntimeError(f"invalid ppa repository object: {data!r}")
 
         data_copy = deepcopy(data)
 
@@ -338,7 +345,10 @@ class PackageRepositoryApt(PackageRepository):
     def unmarshal(cls, data: Dict[str, Any]) -> "PackageRepositoryApt":
         if not isinstance(data, dict):
             raise errors.PackageRepositoryValidationError(
-                url=str(data), brief=f"Invalid object {data!r} (not a dict).",
+                url=str(data),
+                brief=f"Invalid package repository object {data!r}.",
+                details="Package repository must be a valid dictionary object.",
+                resolution="Verify repository configuration and ensure that the correct syntax is used.",
             )
 
         data_copy = deepcopy(data)
