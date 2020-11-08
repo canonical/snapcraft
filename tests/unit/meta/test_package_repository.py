@@ -17,22 +17,12 @@
 
 import pytest
 
-from snapcraft.internal import repo
 from snapcraft.internal.meta import errors
 from snapcraft.internal.meta.package_repository import (
     PackageRepository,
     PackageRepositoryApt,
     PackageRepositoryAptPpa,
 )
-from tests.unit import mock
-
-
-@pytest.fixture(autouse=True)
-def mock_repo():
-    with mock.patch(
-        "snapcraft.internal.meta.package_repository.repo.Ubuntu", spec=repo.Ubuntu
-    ) as m:
-        yield m
 
 
 def test_apt_name():
@@ -173,70 +163,6 @@ def test_apt_invalid_suites_as_path():
         exc_info.value.resolution
         == "Verify the repository configuration and remove the trailing '/ from suites or use the 'path' property to define a path."
     )
-
-
-def test_apt_install(mock_repo, tmp_path):
-    repo = PackageRepositoryApt(
-        architectures=["amd64", "i386"],
-        components=["main", "multiverse"],
-        formats=["deb", "deb-src"],
-        key_id="A" * 40,
-        key_server="xkeyserver.ubuntu.com",
-        name="some-name",
-        suites=["xenial", "xenial-updates"],
-        url="http://archive.ubuntu.com/ubuntu",
-    )
-
-    repo.install()
-
-    assert mock_repo.mock_calls == [
-        mock.call.install_sources(
-            architectures=["amd64", "i386"],
-            components=["main", "multiverse"],
-            formats=["deb", "deb-src"],
-            name="some-name",
-            suites=["xenial", "xenial-updates"],
-            url="http://archive.ubuntu.com/ubuntu",
-        ),
-    ]
-
-
-def test_apt_install_with_path(mock_repo, tmp_path):
-    repo = PackageRepositoryApt(
-        key_id="A" * 40, path="x", url="http://archive.ubuntu.com/ubuntu",
-    )
-
-    repo.install()
-
-    assert mock_repo.mock_calls == [
-        mock.call.install_sources(
-            architectures=None,
-            components=None,
-            formats=None,
-            name="http_archive_ubuntu_com_ubuntu",
-            suites=["x/"],
-            url="http://archive.ubuntu.com/ubuntu",
-        ),
-    ]
-
-
-def test_apt_install_implied_path(mock_repo, tmp_path):
-    repo = PackageRepositoryApt(
-        key_id="A" * 40, url="http://archive.ubuntu.com/ubuntu",
-    )
-
-    repo.install()
-
-    assert mock_repo.mock_calls == [
-        mock.call.install_sources(
-            architectures=None,
-            components=None,
-            formats=None,
-            name="http_archive_ubuntu_com_ubuntu",
-            suites=["/"],
-            url="http://archive.ubuntu.com/ubuntu",
-        ),
-    ]
 
 
 def test_apt_marshal():
@@ -398,14 +324,6 @@ def test_ppa_unmarshal_invalid_apt_ppa_extra_keys():
         exc_info.value.resolution
         == "Verify repository configuration and ensure that it is correct."
     )
-
-
-def test_ppa_install(mock_repo):
-    repo = PackageRepositoryAptPpa(ppa="test/ppa")
-
-    repo.install()
-
-    assert mock_repo.mock_calls == [mock.call.install_ppa(ppa="test/ppa")]
 
 
 def test_unmarshal_package_repositories_list_none():

@@ -30,7 +30,7 @@ from snapcraft.internal.meta.snap import Snap
 from snapcraft.internal.pluginhandler._part_environment import (
     get_snapcraft_global_environment,
 )
-from snapcraft.internal.repo import apt_key_manager
+from snapcraft.internal.repo import apt_key_manager, apt_sources_manager
 from snapcraft.project._schema import Validator
 
 from . import errors, grammar_processing, replace_attr
@@ -265,13 +265,16 @@ class Config:
 
         key_assets = self.project._get_keys_path()
         key_manager = apt_key_manager.AptKeyManager(key_assets=key_assets)
+        sources_manager = apt_sources_manager.AptSourcesManager()
 
         refresh_required = False
         for package_repo in self._get_required_package_repositories():
             refresh_required |= key_manager.install_package_repository_key(
                 package_repo=package_repo
             )
-            refresh_required |= package_repo.install()
+            refresh_required |= sources_manager.install_package_repository_sources(
+                package_repo=package_repo
+            )
 
         if refresh_required:
             repo.Repo.refresh_build_packages()
