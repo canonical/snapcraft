@@ -16,8 +16,8 @@
 
 from textwrap import dedent
 
-from testtools.matchers import Equals
 from testtools import TestCase
+from testtools.matchers import Equals
 
 from snapcraft.plugins.v2.rust import RustPlugin
 

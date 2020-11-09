@@ -20,8 +20,9 @@ from unittest import mock
 from testtools.matchers import Equals, HasLength
 
 import snapcraft
-from snapcraft.plugins.v1 import ruby
 from snapcraft.internal import errors
+from snapcraft.plugins.v1 import ruby
+
 from . import PluginsV1BaseTestCase
 
 

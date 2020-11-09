@@ -19,9 +19,9 @@ from textwrap import dedent
 from testtools.matchers import Equals
 
 from snapcraft.internal.build_providers import errors
-from snapcraft.internal.build_providers._multipass._instance_info import (
+from snapcraft.internal.build_providers._multipass._instance_info import (  # noqa: E501
     InstanceInfo,
-)  # noqa: E501
+)
 from tests import unit
 
 

@@ -19,8 +19,8 @@ from unittest import mock
 import pytest
 
 from snapcraft import file_utils
-from snapcraft.internal.pluginhandler import PartPatcher
 from snapcraft.internal import errors
+from snapcraft.internal.pluginhandler import PartPatcher
 from tests.unit import load_part
 
 

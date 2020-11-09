@@ -23,7 +23,7 @@ from unittest import mock
 
 import fixtures
 import pymacaroons
-from testtools.matchers import Contains, Equals, FileExists, Not, Is, IsInstance
+from testtools.matchers import Contains, Equals, FileExists, Is, IsInstance, Not
 
 import tests
 from snapcraft import config, storeapi

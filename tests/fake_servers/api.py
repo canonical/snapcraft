@@ -21,11 +21,10 @@ import re
 import urllib.parse
 import uuid
 
-from pyramid import response
 import pymacaroons
+from pyramid import response
 
 from tests.fake_servers import base
-
 
 logger = logging.getLogger(__name__)
 

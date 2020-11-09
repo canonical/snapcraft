@@ -17,13 +17,11 @@
 import copy
 import os
 import shutil
-
 from unittest import mock
+
 from testtools.matchers import DirExists, Equals, FileContains, FileExists, Not
 
-from snapcraft.internal import common
-from snapcraft.internal import errors
-from snapcraft.internal import sources
+from snapcraft.internal import common, errors, sources
 from tests import unit
 
 

@@ -22,10 +22,10 @@ from textwrap import dedent
 import fixtures
 from testtools.matchers import Equals, IsInstance
 
+from snapcraft.internal import errors
+from snapcraft.plugins._plugin_finder import _PLUGINS
 from snapcraft.plugins.v1 import PluginV1
 from snapcraft.plugins.v2 import PluginV2
-from snapcraft.plugins._plugin_finder import _PLUGINS
-from snapcraft.internal import errors
 from tests import unit
 
 

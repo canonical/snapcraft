@@ -17,13 +17,12 @@
 import os
 import pathlib
 import subprocess
-
 from unittest import mock
+
 from testtools.matchers import Equals
 
-from snapcraft.plugins.v1._ros import rosdep
-
 import snapcraft
+from snapcraft.plugins.v1._ros import rosdep
 from tests import unit
 
 

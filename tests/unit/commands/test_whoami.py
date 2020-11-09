@@ -16,11 +16,10 @@
 
 import os
 import re
-import xdg
-
 from unittest import mock
 
 import fixtures
+import xdg
 from testtools.matchers import MatchesRegex
 
 from snapcraft import storeapi

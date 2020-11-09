@@ -21,10 +21,10 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Contains, Equals, StartsWith
 
-from snapcraft.cli.help import _TOPICS
 from snapcraft.cli._runner import run
-
+from snapcraft.cli.help import _TOPICS
 from tests import fixture_setup
+
 from . import CommandBaseTestCase
 
 
@@ -161,9 +161,10 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
             helps.append(str(key))
 
         # Get a list of plugins
-        import snapcraft.plugins
         import os
         from pathlib import Path
+
+        import snapcraft.plugins
 
         for plugin in Path(snapcraft.plugins.__path__[0]).glob("*.py"):
             if os.path.isfile(str(plugin)) and not os.path.basename(

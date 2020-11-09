@@ -15,12 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import fixtures
 import tarfile
 import threading
 
+import fixtures
 from pyftpdlib import authorizers, handlers, servers
-
 from testtools.matchers import DirExists, FileContains, FileExists
 
 from tests import integration

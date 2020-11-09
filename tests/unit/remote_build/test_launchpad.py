@@ -15,16 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import snapcraft
 import textwrap
 from unittest import mock
 
 import fixtures
-from testtools.matchers import Equals, Contains
+from testtools.matchers import Contains, Equals
 
-from snapcraft.internal.sources.errors import SnapcraftPullError
+import snapcraft
 from snapcraft.internal.remote_build import LaunchpadClient, errors
+from snapcraft.internal.sources.errors import SnapcraftPullError
 from tests import unit
+
 from . import TestDir
 
 

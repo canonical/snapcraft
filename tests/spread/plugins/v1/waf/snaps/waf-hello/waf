@@ -30,7 +30,9 @@ IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 """
 
-import os, sys, inspect
+import inspect
+import os
+import sys
 
 VERSION="1.9.2"
 REVISION="11b7fee9827dab190fa039655e649dcd"
@@ -69,7 +71,8 @@ def unpack_wafdir(dir, src):
 	if not txt: err(c % 3)
 	txt = txt[1:-1].replace(b(C1), b('\n')).replace(b(C2), b('\r')).replace(b(C3), b('\x00'))
 
-	import shutil, tarfile
+	import shutil
+	import tarfile
 	try: shutil.rmtree(dir)
 	except OSError: pass
 	try:

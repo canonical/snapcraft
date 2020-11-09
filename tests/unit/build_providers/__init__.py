@@ -18,10 +18,10 @@ import pathlib
 from typing import Dict, Optional
 from unittest import mock
 
-from snapcraft.project import Project
-from snapcraft.internal.meta.snap import Snap
-from tests import fixture_setup, unit
 from snapcraft.internal.build_providers._base_provider import Provider
+from snapcraft.internal.meta.snap import Snap
+from snapcraft.project import Project
+from tests import fixture_setup, unit
 
 
 class ProviderImpl(Provider):
