@@ -142,7 +142,6 @@ class PartGrammarProcessor:
                 self._get_property("build-packages"),
                 self._project,
                 self._repo.build_package_is_valid,
-                transformer=package_transformer,
             )
             self.__build_packages = processor.process()
 
