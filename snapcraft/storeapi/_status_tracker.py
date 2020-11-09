@@ -1,14 +1,12 @@
 import itertools
-from time import sleep
-from threading import Thread
 from queue import Queue
-
-from progressbar import AnimatedMarker, ProgressBar, UnknownLength
+from threading import Thread
+from time import sleep
 
 import requests
+from progressbar import AnimatedMarker, ProgressBar, UnknownLength
 
-from . import constants
-from . import errors
+from . import constants, errors
 
 
 class StatusTracker:

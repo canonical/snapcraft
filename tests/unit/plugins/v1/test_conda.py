@@ -24,6 +24,7 @@ from testtools.matchers import DirExists, Equals, HasLength, Not
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import conda
 from tests import unit
+
 from . import PluginsV1BaseTestCase
 
 

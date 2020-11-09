@@ -16,9 +16,7 @@
 
 import logging
 
-import pytest
-
-from snapcraft.internal.meta import command, errors
+from snapcraft.internal.meta import command
 
 
 class TestCommandMangle:
@@ -297,10 +295,12 @@ class TestCommandMangle:
 
 
 def test_find_binary_not_found(tmp_path):
-    with pytest.raises(errors.PrimedCommandNotFoundError):
+    assert (
         command._SnapCommandResolver.resolve_snap_command_entry(
             command="not-found", prime_path=tmp_path
         )
+        is None
+    )
 
 
 def test_find_ambigious_command_multiple_targets(tmp_work_path, caplog):
@@ -324,14 +324,3 @@ def test_find_ambigious_command_multiple_targets(tmp_work_path, caplog):
         "The command 'xc' for 'xc' was resolved to 'bin/xc'.",
         "The command 'xc' has been changed to 'bin/xc'.",
     ]
-
-
-def test_binary_not_executable(tmp_work_path):
-    exec_path = tmp_work_path / "bin" / "not-executable"
-    exec_path.parent.mkdir()
-    exec_path.touch()
-
-    with pytest.raises(errors.PrimedCommandNotFoundError):
-        command._SnapCommandResolver.resolve_snap_command_entry(
-            command="not-executable", prime_path=tmp_work_path
-        )

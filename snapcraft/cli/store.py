@@ -15,25 +15,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import os
 import functools
 import operator
+import os
 import stat
 import sys
 from textwrap import dedent
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Set, Union
 
 import click
 from tabulate import tabulate
 
 import snapcraft
+from snapcraft import formatting_utils, storeapi
 from snapcraft._store import StoreClientCLI
-from snapcraft import storeapi, formatting_utils
 from snapcraft.storeapi.constants import DEFAULT_SERIES
-from . import echo
-from ._review import review_snap
-from ._channel_map import get_tabulated_channel_map
 
+from . import echo
+from ._channel_map import get_tabulated_channel_map
+from ._review import review_snap
 
 _MESSAGE_REGISTER_PRIVATE = dedent(
     """\
@@ -542,11 +542,75 @@ def list_revisions(snap_name, arch):
         snapcraft list-revisions my-snap --arch armhf
         snapcraft revisions my-snap
     """
-    snapcraft.revisions(snap_name, arch)
+    releases = StoreClientCLI().get_snap_releases(snap_name=snap_name)
+
+    def get_channels_for_revision(revision: int) -> List[str]:
+        # channels: the set of channels revision was released to, active or not.
+        channels: Set[str] = set()
+        # seen_channel: applies to channels regardless of revision.
+        # The first channel that shows up for each architecture is to
+        # be marked as the active channel, all others are historic.
+        seen_channel: Dict[str, Set[str]] = dict()
+
+        for release in releases.releases:
+            if release.architecture not in seen_channel:
+                seen_channel[release.architecture] = set()
+
+            # If the revision is in this release entry and was not seen
+            # before it means that this channel is active and needs to
+            # be represented with a *.
+            if (
+                release.revision == revision
+                and release.channel not in seen_channel[release.architecture]
+            ):
+                channels.add(f"{release.channel}*")
+            # All other releases found for a revision are inactive.
+            elif (
+                release.revision == revision
+                and release.channel not in channels
+                and f"{release.channel}*" not in channels
+            ):
+                channels.add(release.channel)
+
+            seen_channel[release.architecture].add(release.channel)
+
+        return sorted(list(channels))
+
+    parsed_revisions = list()
+    for rev in releases.revisions:
+        if arch and arch not in rev.architectures:
+            continue
+        channels_for_revision = get_channels_for_revision(rev.revision)
+        if channels_for_revision:
+            channels = ",".join(channels_for_revision)
+        else:
+            channels = "-"
+        parsed_revisions.append(
+            (
+                rev.revision,
+                rev.created_at,
+                ",".join(rev.architectures),
+                rev.version,
+                channels,
+            )
+        )
+
+    tabulated_revisions = tabulate(
+        parsed_revisions,
+        numalign="left",
+        headers=["Rev.", "Uploaded", "Arches", "Version", "Channels"],
+        tablefmt="plain",
+    )
+
+    # 23 revisions + header should not need paging.
+    if len(parsed_revisions) < 24:
+        click.echo(tabulated_revisions)
+    else:
+        click.echo_via_pager(tabulated_revisions)
 
 
 @storecli.command("list")
-def list():
+def list_registered():
     """List snap names registered or shared with you.
 
     \b
@@ -728,6 +792,38 @@ def whoami():
             "In order to view the correct email you will need to "
             "logout and login again."
         )
+
+
+@storecli.command()
+@click.argument("snap-name", metavar="<snap-name>")
+@click.argument("track_name", metavar="<track>")
+def set_default_track(snap_name: str, track_name: str):
+    """Set the default track for <snap-name> to <track>.
+
+    The track must be a valid active track for this operation to be successful.
+    """
+    store_client_cli = StoreClientCLI()
+
+    # Client-side check to verify that the selected track exists.
+    snap_channel_map = store_client_cli.get_snap_channel_map(snap_name=snap_name)
+    active_tracks = [
+        track.name
+        for track in snap_channel_map.snap.tracks
+        if track.status in ("default", "active")
+    ]
+    if track_name not in active_tracks:
+        echo.exit_error(
+            brief=f"The specified track {track_name!r} does not exist for {snap_name!r}.",
+            resolution=f"Ensure the {track_name!r} track exists for the {snap_name!r} snap and try again.",
+            details="Valid tracks for {!r}: {}.".format(
+                snap_name, ", ".join([f"{t!r}" for t in active_tracks])
+            ),
+        )
+
+    metadata = dict(default_track=track_name)
+    store_client_cli.upload_metadata(snap_name=snap_name, metadata=metadata, force=True)
+
+    echo.info(f"Default track for {snap_name!r} set to {track_name!r}.")
 
 
 @storecli.command()

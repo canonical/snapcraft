@@ -21,11 +21,10 @@ import re
 import urllib.parse
 import uuid
 
-from pyramid import response
 import pymacaroons
+from pyramid import response
 
 from tests.fake_servers import base
-
 
 logger = logging.getLogger(__name__)
 
@@ -139,13 +138,6 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         configurator.add_view(self.account, route_name="account")
 
         configurator.add_route(
-            "snap_history",
-            urllib.parse.urljoin(self._DEV_API_PATH, "snaps/{dummy}/history"),
-            request_method="GET",
-        )
-        configurator.add_view(self.snap_history, route_name="snap_history")
-
-        configurator.add_route(
             "snap_state",
             urllib.parse.urljoin(self._DEV_API_PATH, "snaps/{dummy}/state"),
             request_method="GET",
@@ -158,6 +150,13 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             request_method="GET",
         )
         configurator.add_view(self.snap_channel_map, route_name="snap_channel_map")
+
+        configurator.add_route(
+            "snap_releases",
+            urllib.parse.urljoin(self._V2_DEV_API_PATH, "{snap}/releases"),
+            request_method="GET",
+        )
+        configurator.add_view(self.snap_releases, route_name="snap_releases")
 
         configurator.add_route(
             "snap_validations",
@@ -1087,42 +1086,6 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             payload, response_code, [("Content-Type", content_type)]
         )
 
-    def snap_history(self, request):
-        if self.fake_store.needs_refresh:
-            return self._refresh_error()
-        logger.debug("Handling account request")
-        revisions = [
-            {
-                "series": ["16"],
-                "channels": [],
-                "version": "2.0.1",
-                "timestamp": "2016-09-27T19:23:40Z",
-                "current_channels": ["beta", "edge"],
-                "arch": "i386",
-                "revision": 2,
-            },
-            {
-                "series": ["16"],
-                "channels": ["stable", "edge"],
-                "version": "2.0.2",
-                "timestamp": "2016-09-27T18:38:43Z",
-                "current_channels": ["stable", "candidate", "beta"],
-                "arch": "amd64",
-                "revision": 1,
-            },
-        ]
-
-        parsed_qs = urllib.parse.parse_qs(urllib.parse.urlparse(request.url).query)
-        if "arch" in parsed_qs:
-            output = [rev for rev in revisions if rev["arch"] in parsed_qs["arch"]]
-        else:
-            output = revisions
-        response_code = 200
-        content_type = "application/json"
-        return response.Response(
-            json.dumps(output).encode(), response_code, [("Content-Type", content_type)]
-        )
-
     def snap_channel_map(self, request):
         if self.fake_store.needs_refresh:
             return self._refresh_error()
@@ -1135,7 +1098,11 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                     "channel": "2.1/beta",
                     "expiration-date": None,
                     "revision": 1,
-                    "progressive": {"paused": None, "percentage": None},
+                    "progressive": {
+                        "paused": None,
+                        "percentage": None,
+                        "current-percentage": None,
+                    },
                     "when": "2020-02-03T20:58:37Z",
                 }
             ],
@@ -1207,6 +1174,48 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         content_type = "application/json"
         return response.Response(
             json.dumps(snap_channel_map).encode(),
+            response_code,
+            [("Content-Type", content_type)],
+        )
+
+    def snap_releases(self, request):
+        if self.fake_store.needs_refresh:
+            return self._refresh_error()
+        logger.debug("Handling snap releases request")
+        snap_releases = {
+            "revisions": [
+                {
+                    "architectures": ["arm64"],
+                    "base": "core20",
+                    "build_url": None,
+                    "confinement": "strict",
+                    "created_at": "2020-02-11T17:51:40.891996Z",
+                    "grade": "stable",
+                    "revision": 1,
+                    "sha3-384": "a9060ef4872ccacbfa440617a76fcd84967896b28d0d1eb7571f00a1098d766e7e93353b084ba6ad841d7b14b95ede48",
+                    "size": 20,
+                    "status": "Published",
+                    "version": "1.0",
+                },
+            ],
+            "releases": [
+                {
+                    "architecture": "amd64",
+                    "branch": None,
+                    "channel": "latest/edge",
+                    "expiration-date": None,
+                    "revision": 1,
+                    "risk": "stable",
+                    "track": "latest",
+                    "when": "2020-01-12T17:51:40.891996Z",
+                },
+            ],
+        }
+
+        response_code = 200
+        content_type = "application/json"
+        return response.Response(
+            json.dumps(snap_releases).encode(),
             response_code,
             [("Content-Type", content_type)],
         )

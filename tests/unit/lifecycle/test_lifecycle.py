@@ -30,10 +30,11 @@ from testtools.matchers import (
 )
 
 import snapcraft
-from snapcraft.internal import errors, pluginhandler, lifecycle, project_loader, steps
+from snapcraft.internal import errors, lifecycle, pluginhandler, project_loader, steps
 from snapcraft.internal.lifecycle._runner import _replace_in_part
 from snapcraft.project import Project
 from tests import fixture_setup
+
 from . import LifecycleTestBase
 
 

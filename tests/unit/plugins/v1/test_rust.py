@@ -29,6 +29,7 @@ import snapcraft
 from snapcraft.internal import errors, meta
 from snapcraft.plugins.v1 import rust
 from tests import fixture_setup, unit
+
 from . import PluginsV1BaseTestCase
 
 

@@ -16,7 +16,6 @@
 
 import functools
 from typing import Any, Callable
-
 from unittest import skipUnless
 
 from tests import os_release

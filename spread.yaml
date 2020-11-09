@@ -48,7 +48,7 @@ backends:
           workers: 18
           image: ubuntu-1804-64
       - ubuntu-20.04-64:
-          workers: 4
+          workers: 6
           image: ubuntu-2004-64
 
   multipass:
@@ -523,6 +523,10 @@ suites:
    prepare: |
      sudo apt-get install git
      sudo apt-mark auto git
+
+# Electron builder tests
+ tests/spread/electron-builder/:
+   summary: electron-builder tests
 
 # Legacy tests
  tests/spread/legacy/:

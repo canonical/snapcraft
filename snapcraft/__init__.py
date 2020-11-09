@@ -344,7 +344,6 @@ from snapcraft.plugins.v1 import PluginV1 as BasePlugin  # noqa: F401
 from snapcraft._store import (  # noqa
     create_key,
     download,
-    revisions,
     gated,
     list_keys,
     list_registered,

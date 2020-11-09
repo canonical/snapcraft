@@ -21,6 +21,129 @@
 
 from typing import Any, Dict
 
+# Version 14, found at: https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-releases
+RELEASES_JSONSCHEMA: Dict[str, Any] = {
+    "properties": {
+        "releases": {
+            "items": {
+                "properties": {
+                    "architecture": {"introduced_at": 1, "type": "string"},
+                    "branch": {"introduced_at": 1, "type": ["string", "null"]},
+                    "channel": {
+                        "description": "The channel name for this release.",
+                        "introduced_at": 8,
+                        "type": "string",
+                    },
+                    "expiration-date": {
+                        "description": "The date when this release expires, in ISO 8601 format. If null, the release does not expire.",
+                        "format": "date-time",
+                        "introduced_at": 8,
+                        "type": ["string", "null"],
+                    },
+                    "progressive": {
+                        "introduced_at": 4,
+                        "properties": {
+                            "current-percentage": {
+                                "introduced_at": 14,
+                                "type": ["number", "null"],
+                            },
+                            "paused": {"type": ["boolean", "null"]},
+                            "percentage": {"type": ["number", "null"]},
+                        },
+                        "required": ["paused", "percentage", "current-percentage"],
+                        "type": "object",
+                    },
+                    "revision": {"introduced_at": 1, "type": ["integer", "null"]},
+                    "risk": {"introduced_at": 1, "type": "string"},
+                    "track": {"introduced_at": 1, "type": "string"},
+                    "when": {
+                        "format": "date-time",
+                        "introduced_at": 1,
+                        "type": "string",
+                    },
+                },
+                "required": [
+                    "architecture",
+                    "branch",
+                    "revision",
+                    "risk",
+                    "track",
+                    "when",
+                ],
+                "type": "object",
+            },
+            "minItems": 0,
+            "type": "array",
+        },
+        "revisions": {
+            "items": {
+                "properties": {
+                    "architectures": {
+                        "introduced_at": 1,
+                        "items": {"type": "string"},
+                        "minItems": 1,
+                        "type": "array",
+                    },
+                    "attributes": {"introduced_at": 2, "type": "object"},
+                    "base": {"introduced_at": 1, "type": "string"},
+                    "build_url": {"introduced_at": 1, "type": ["string", "null"]},
+                    "confinement": {
+                        "enum": ["strict", "classic", "devmode"],
+                        "introduced_at": 1,
+                        "type": "string",
+                    },
+                    "created_at": {
+                        "format": "date-time",
+                        "introduced_at": 1,
+                        "type": "string",
+                    },
+                    "epoch": {"introduced_at": 1, "type": "object"},
+                    "grade": {
+                        "enum": ["stable", "devel"],
+                        "introduced_at": 1,
+                        "type": "string",
+                    },
+                    "revision": {"introduced_at": 1, "type": "integer"},
+                    "sha3-384": {"introduced_at": 1, "type": "string"},
+                    "size": {"introduced_at": 1, "type": "integer"},
+                    "status": {
+                        "enum": [
+                            "Published",
+                            "Unpublished",
+                            "ManualReviewPending",
+                            "NeedsInformation",
+                            "AutomaticallyRejected",
+                            "Rejected",
+                        ],
+                        "introduced_at": 1,
+                        "type": "string",
+                    },
+                    "version": {"introduced_at": 1, "type": "string"},
+                },
+                "required": [
+                    "architectures",
+                    "base",
+                    "build_url",
+                    "confinement",
+                    "created_at",
+                    "grade",
+                    "revision",
+                    "sha3-384",
+                    "size",
+                    "status",
+                    "version",
+                ],
+                "type": "object",
+            },
+            "minItems": 0,
+            "type": "array",
+        },
+    },
+    "required": ["releases", "revisions"],
+    "type": "object",
+}
+
+
 CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
     "additionalProperties": False,
     "properties": {
@@ -41,8 +164,9 @@ CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
                         "properties": {
                             "paused": {"type": ["boolean", "null"]},
                             "percentage": {"type": ["number", "null"]},
+                            "current-percentage": {"type": ["number", "null"]},
                         },
-                        "required": ["paused", "percentage"],
+                        "required": ["paused", "percentage", "current-percentage"],
                         "type": "object",
                     },
                     "revision": {"type": "integer"},

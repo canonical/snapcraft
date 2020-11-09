@@ -16,11 +16,11 @@
 
 import os
 import re
-
 from unittest import mock
+
 from testtools.matchers import Equals, MatchesRegex
 
-from snapcraft.plugins.v1._python import errors, _python_finder
+from snapcraft.plugins.v1._python import _python_finder, errors
 
 from ._basesuite import PythonBaseTestCase
 

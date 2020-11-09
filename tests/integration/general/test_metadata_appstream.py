@@ -15,8 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import textwrap
 import shutil
+import textwrap
 
 import yaml as yaml_utils
 from testtools.matchers import Equals, FileExists

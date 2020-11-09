@@ -16,17 +16,18 @@
 
 import logging
 import os
-import jsonschema
 from unittest import mock
 
 import fixtures
+import jsonschema
 import pytest
 from testtools.matchers import Contains, DirExists, Equals, HasLength, Not
 
 from snapcraft.internal import errors, meta
-from snapcraft.project import Project
 from snapcraft.plugins.v1 import go
+from snapcraft.project import Project
 from tests import fixture_setup, unit
+
 from . import PluginsV1BaseTestCase
 
 

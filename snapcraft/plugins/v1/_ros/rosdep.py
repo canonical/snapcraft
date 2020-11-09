@@ -93,9 +93,17 @@ def _parse_rosdep_resolve_dependencies(
 
 class Rosdep:
     def __init__(
-        self, *, ros_distro, ros_package_path, rosdep_path, ubuntu_distro, base
+        self,
+        *,
+        ros_distro,
+        ros_version,
+        ros_package_path,
+        rosdep_path,
+        ubuntu_distro,
+        base
     ):
         self._ros_distro = ros_distro
+        self._ros_version = ros_version
         self._ros_package_path = ros_package_path
         self._rosdep_path = rosdep_path
         self._ubuntu_distro = ubuntu_distro
@@ -210,6 +218,11 @@ class Rosdep:
             self._rosdep_install_path, "usr", "lib", "python2.7", "dist-packages"
         )
 
+        if self._ros_version == "2":
+            env["ROS_PYTHON_VERSION"] = "3"
+        else:
+            env["ROS_PYTHON_VERSION"] = "2"
+
         # By default, rosdep uses /etc/ros/rosdep to hold its sources list. We
         # don't want that here since we don't want to touch the host machine
         # (not to mention it would require sudo), so we can redirect it via
@@ -219,6 +232,8 @@ class Rosdep:
         # By default, rosdep saves its cache in $HOME/.ros, which we shouldn't
         # access here, so we'll redirect it with this environment variable.
         env["ROS_HOME"] = self._rosdep_cache_path
+
+        env["ROS_VERSION"] = self._ros_version
 
         # This environment variable tells rosdep which directory to recursively
         # search for packages.

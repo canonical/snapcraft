@@ -22,6 +22,7 @@ from testtools.matchers import Equals, HasLength
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import plainbox_provider
 from tests import fixture_setup, unit
+
 from . import PluginsV1BaseTestCase
 
 

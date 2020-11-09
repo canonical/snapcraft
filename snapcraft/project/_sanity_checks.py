@@ -67,6 +67,11 @@ def conduct_project_sanity_check(project: Project, **kwargs) -> None:
             "--target-arch has been deprecated and is no longer supported on core20."
         )
 
+    # Icon should refer to project file, verify it exists.
+    icon = project.info.get_raw_snapcraft().get("icon")
+    if icon and not os.path.exists(icon):
+        raise SnapcraftEnvironmentError(f"Specified icon {icon!r} does not exist.")
+
 
 def _check_snap_dir(snap_dir_path: str) -> None:
     unexpected_paths = set()

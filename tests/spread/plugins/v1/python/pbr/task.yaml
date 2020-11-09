@@ -43,12 +43,12 @@ execute: |
   [ -f "stage/bin/python2_test" ]
   [ -f "stage/bin/python3_test" ]
 
-  if ! diff stage/bin/python2_test "$expected_python2_entry_point"; then
+  if ! diff --ignore-blank-lines stage/bin/python2_test "$expected_python2_entry_point"; then
       echo "The entry for the python2 part is incorrect"
       exit 1
   fi
 
-  if ! diff stage/bin/python3_test "$expected_python3_entry_point"; then
+  if ! diff --ignore-blank-lines stage/bin/python3_test "$expected_python3_entry_point"; then
       echo "The entry for the python3 part is incorrect"
       exit 1
   fi

@@ -20,8 +20,9 @@ from textwrap import dedent
 
 import pytest
 
-from snapcraft.project._sanity_checks import conduct_project_sanity_check
+import snapcraft.internal.errors
 from snapcraft.project import Project
+from snapcraft.project._sanity_checks import conduct_project_sanity_check
 
 
 @pytest.fixture
@@ -72,6 +73,45 @@ def caplog_warning(caplog):
 def test_no_snap_dir(caplog_warning, project):
     conduct_project_sanity_check(project)
     assert len(caplog_warning.records) == 0
+
+
+def test_icon(tmp_work_path):
+    snapcraft_yaml_path = tmp_work_path / "snap/snapcraft.yaml"
+    snapcraft_yaml_path.parent.mkdir(parents=True)
+    with snapcraft_yaml_path.open("w") as snapcraft_file:
+        print(
+            dedent(
+                """\
+            name: project-name
+            base: core18
+            version: "1.0"
+            summary: sanity checks
+            description: sanity checks
+            grade: stable
+            confinement: strict
+            icon: foo.png
+
+            parts:
+              nil:
+                plugin: nil
+            """
+            ),
+            file=snapcraft_file,
+        )
+
+    project = Project(
+        is_managed_host=False, snapcraft_yaml_file_path=snapcraft_yaml_path.as_posix(),
+    )
+
+    # Test without icon raises error
+    with pytest.raises(snapcraft.internal.errors.SnapcraftEnvironmentError) as exc_info:
+        conduct_project_sanity_check(project)
+
+    assert exc_info.value.get_brief() == "Specified icon 'foo.png' does not exist."
+
+    # Test with icon passes.
+    (tmp_work_path / "foo.png").touch()
+    conduct_project_sanity_check(project)
 
 
 def test_accepted_artifacts(caplog_warning, project):

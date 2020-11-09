@@ -18,15 +18,15 @@ import subprocess
 import tempfile
 from datetime import datetime
 from textwrap import dedent
-from typing import List, Dict
+from typing import Dict, List
 
 import click
 
 import snapcraft
-from . import echo
 from snapcraft import storeapi, yaml_utils
 from snapcraft.storeapi import assertions
 
+from . import echo
 
 _COLLABORATION_HEADER = dedent(
     """\

@@ -17,13 +17,18 @@
 import contextlib
 import os
 import pathlib
+import platform
+import tempfile
 from textwrap import dedent
 from unittest.mock import Mock, call, patch
 
 import fixtures
+import pytest
 from testtools.matchers import DirExists, EndsWith, Equals, Not
 
 from snapcraft.internal.build_providers import errors
+from snapcraft.internal.meta.snap import Snap
+from snapcraft.project import Project
 
 from . import (
     BaseProviderBaseTest,
@@ -203,6 +208,58 @@ class BaseProviderTest(BaseProviderBaseTest):
             ]
         )
 
+    def test_launch_instance_with_cert_file(self):
+        test_certs = pathlib.Path(self.path, "certs")
+        test_certs.mkdir()
+        test_cert1 = pathlib.Path(test_certs, "1.crt")
+        test_cert1.write_text("")
+
+        provider = ProviderImpl(
+            project=self.project,
+            echoer=self.echoer_mock,
+            build_provider_flags={"SNAPCRAFT_ADD_CA_CERTIFICATES": str(test_cert1)},
+        )
+        provider.launch_instance()
+
+        provider.push_file_mock.assert_has_calls(
+            [
+                call(
+                    destination="/usr/local/share/ca-certificates/1.crt",
+                    source=str(test_cert1),
+                )
+            ]
+        )
+        provider.run_mock.assert_has_calls([call(["update-ca-certificates"])])
+
+    def test_launch_instance_with_cert_dir_files(self):
+        test_certs = pathlib.Path(self.path, "certs")
+        test_certs.mkdir()
+        test_cert1 = pathlib.Path(test_certs, "1.crt")
+        test_cert1.write_text("")
+        test_cert2 = pathlib.Path(test_certs, "2.crt")
+        test_cert2.write_text("")
+
+        provider = ProviderImpl(
+            project=self.project,
+            echoer=self.echoer_mock,
+            build_provider_flags={"SNAPCRAFT_ADD_CA_CERTIFICATES": str(test_certs)},
+        )
+        provider.launch_instance()
+
+        provider.push_file_mock.assert_has_calls(
+            [
+                call(
+                    destination="/usr/local/share/ca-certificates/1.crt",
+                    source=str(test_cert1),
+                ),
+                call(
+                    destination="/usr/local/share/ca-certificates/2.crt",
+                    source=str(test_cert2),
+                ),
+            ]
+        )
+        provider.run_mock.assert_has_calls([call(["update-ca-certificates"])])
+
     def test_expose_prime(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider.expose_prime()
@@ -237,132 +294,6 @@ class BaseProviderTest(BaseProviderBaseTest):
                 call(self.project._project_dir, "/root/project"),
                 call("/home/user/.ssh", "/root/.ssh"),
             ]
-        )
-
-    def test_setup_environment_content_amd64(self):
-        self.useFixture(fixtures.MockPatch("platform.machine", return_value="x86_64"))
-        recorded_files = dict()
-
-        @contextlib.contextmanager
-        def fake_namedtempfile(*, suffix: str, **kwargs):
-            # Usage hides the file basename in the suffix.
-            tmp_path = os.path.join(self.path, "tmpfile")
-            with open(tmp_path, "wb") as f_write:
-                yield f_write
-            with open(tmp_path, "r") as f_read:
-                recorded_files[suffix] = f_read.read()
-
-        self.useFixture(
-            fixtures.MockPatch("tempfile.NamedTemporaryFile", new=fake_namedtempfile)
-        )
-
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider._setup_environment()
-
-        self.expectThat(
-            recorded_files,
-            Equals(
-                {
-                    ".bashrc": '#!/bin/bash\nexport PS1="\\h \\$(/bin/_snapcraft_prompt)# "\n',
-                    "00-snapcraft": 'Apt::Install-Recommends "false";\n',
-                    "_snapcraft_prompt": dedent(
-                        """\
-                        #!/bin/bash
-                        if [[ "$PWD" =~ ^$HOME.* ]]; then
-                            path="${PWD/#$HOME/\\ ..}"
-                            if [[ "$path" == " .." ]]; then
-                                ps1=""
-                            else
-                                ps1="$path"
-                            fi
-                        else
-                            ps1="$PWD"
-                        fi
-                        echo -n $ps1
-                        """
-                    ),
-                    "default.sources": dedent(
-                        """\
-                        Types: deb deb-src
-                        URIs: http://archive.ubuntu.com/ubuntu
-                        Suites: xenial xenial-updates
-                        Components: main multiverse restricted universe
-                    """
-                    ),
-                    "default-security.sources": dedent(
-                        """\
-                        Types: deb deb-src
-                        URIs: http://security.ubuntu.com/ubuntu
-                        Suites: xenial-security
-                        Components: main multiverse restricted universe
-                    """
-                    ),
-                    "sources.list": "",
-                }
-            ),
-        )
-
-    def test_setup_environment_content_arm64(self):
-        self.useFixture(fixtures.MockPatch("platform.machine", return_value="aarch64"))
-        recorded_files = dict()
-
-        @contextlib.contextmanager
-        def fake_namedtempfile(*, suffix: str, **kwargs):
-            # Usage hides the file basename in the suffix.
-            tmp_path = os.path.join(self.path, "tmpfile")
-            with open(tmp_path, "wb") as f_write:
-                yield f_write
-            with open(tmp_path, "r") as f_read:
-                recorded_files[suffix] = f_read.read()
-
-        self.useFixture(
-            fixtures.MockPatch("tempfile.NamedTemporaryFile", new=fake_namedtempfile)
-        )
-
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider._setup_environment()
-
-        self.expectThat(
-            recorded_files,
-            Equals(
-                {
-                    ".bashrc": '#!/bin/bash\nexport PS1="\\h \\$(/bin/_snapcraft_prompt)# "\n',
-                    "00-snapcraft": 'Apt::Install-Recommends "false";\n',
-                    "_snapcraft_prompt": dedent(
-                        """\
-                        #!/bin/bash
-                        if [[ "$PWD" =~ ^$HOME.* ]]; then
-                            path="${PWD/#$HOME/\\ ..}"
-                            if [[ "$path" == " .." ]]; then
-                                ps1=""
-                            else
-                                ps1="$path"
-                            fi
-                        else
-                            ps1="$PWD"
-                        fi
-                        echo -n $ps1
-                        """
-                    ),
-                    "default.sources": dedent(
-                        """\
-                        Types: deb deb-src
-                        URIs: http://ports.ubuntu.com/ubuntu-ports
-                        Suites: xenial xenial-updates
-                        Components: main multiverse restricted universe
-                    """
-                    ),
-                    "default-security.sources": dedent(
-                        """\
-                        Types: deb deb-src
-                        URIs: http://ports.ubuntu.com/ubuntu-ports
-                        Suites: xenial-security
-                        Components: main multiverse restricted universe
-                    """
-                    ),
-                    "sources.list": "",
-                }
-            ),
         )
 
     def test_start_instance(self):
@@ -475,7 +406,6 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
             registry_filepath=os.path.join(
                 provider.provider_project_dir, "snap-registry.yaml"
             ),
-            snap_arch=self.project.deb_arch,
             runner=provider._run,
             file_pusher=provider._push_file,
             inject_from_host=True,
@@ -501,7 +431,6 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
             registry_filepath=os.path.join(
                 provider.provider_project_dir, "snap-registry.yaml"
             ),
-            snap_arch=self.project.deb_arch,
             runner=provider._run,
             file_pusher=provider._push_file,
             inject_from_host=True,
@@ -563,7 +492,6 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
             registry_filepath=os.path.join(
                 provider.provider_project_dir, "snap-registry.yaml"
             ),
-            snap_arch=self.project.deb_arch,
             runner=provider._run,
             file_pusher=provider._push_file,
             inject_from_host=False,
@@ -589,7 +517,6 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
             registry_filepath=os.path.join(
                 provider.provider_project_dir, "snap-registry.yaml"
             ),
-            snap_arch=self.project.deb_arch,
             runner=provider._run,
             file_pusher=provider._push_file,
             inject_from_host=False,
@@ -687,3 +614,89 @@ class TestCompatibilityClean:
             provider.clean_project_mock.assert_called_once_with()
         else:
             provider.clean_project_mock.assert_not_called()
+
+
+_ARCHIVES = {
+    "x86": {
+        "main": "http://archive.ubuntu.com/ubuntu",
+        "security": "http://security.ubuntu.com/ubuntu",
+    },
+    "ports": {
+        "main": "http://ports.ubuntu.com/ubuntu-ports",
+        "security": "http://ports.ubuntu.com/ubuntu-ports",
+    },
+}
+
+
+@pytest.mark.parametrize(
+    "machine_platform",
+    [
+        ("x86_64", _ARCHIVES["x86"]),
+        ("AMD64", _ARCHIVES["x86"]),
+        ("aarch64", _ARCHIVES["ports"]),
+    ],
+)
+@pytest.mark.parametrize(
+    "distro", [("core", "xenial"), ("core18", "bionic"), ("core20", "focal")]
+)
+def test_setup_environment_content_x86(
+    tmp_work_path, monkeypatch, machine_platform, distro
+):
+    snapcraft_project = Project()
+    snapcraft_project._snap_meta = Snap(name="test-snap", base=distro[0])
+
+    monkeypatch.setattr(platform, "machine", lambda: machine_platform[0])
+
+    recorded_files = dict()
+
+    @contextlib.contextmanager
+    def fake_namedtempfile(*, suffix: str, **kwargs):
+        # Usage hides the file basename in the suffix.
+        tmp_path = os.path.join("tmpfile")
+        with open(tmp_path, "wb") as f_write:
+            yield f_write
+        with open(tmp_path, "r") as f_read:
+            recorded_files[suffix] = f_read.read()
+
+    monkeypatch.setattr(tempfile, "NamedTemporaryFile", fake_namedtempfile)
+
+    provider = ProviderImpl(project=snapcraft_project, echoer=Mock())
+    provider._setup_environment()
+
+    assert recorded_files == {
+        ".bashrc": '#!/bin/bash\nexport PS1="\\h \\$(/bin/_snapcraft_prompt)# "\n',
+        "00-snapcraft": 'Apt::Install-Recommends "false";\n',
+        "_snapcraft_prompt": dedent(
+            """\
+            #!/bin/bash
+            if [[ "$PWD" =~ ^$HOME.* ]]; then
+                path="${PWD/#$HOME/\\ ..}"
+                if [[ "$path" == " .." ]]; then
+                    ps1=""
+                else
+                    ps1="$path"
+                fi
+            else
+                ps1="$PWD"
+            fi
+            echo -n $ps1
+            """
+        ),
+        "default.sources": dedent(
+            f"""\
+                Types: deb
+                URIs: {machine_platform[1]["main"]}
+                Suites: {distro[1]} {distro[1]}-updates
+                Components: main multiverse restricted universe
+            """
+        ),
+        "default-security.sources": dedent(
+            f"""\
+                Types: deb
+                URIs: {machine_platform[1]["security"]}
+                Suites: {distro[1]}-security
+                Components: main multiverse restricted universe
+            """
+        ),
+        "sources.list": "",
+    }

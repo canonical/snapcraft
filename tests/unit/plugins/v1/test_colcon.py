@@ -17,17 +17,17 @@
 import logging
 import os
 import pathlib
+from unittest import mock
 
 import fixtures
 import pytest
-from unittest import mock
 from testscenarios import multiply_scenarios
 from testtools.matchers import Contains, Equals, FileExists, HasLength, LessThan, Not
 
 from snapcraft import repo
-from snapcraft.plugins.v1 import colcon
-from snapcraft.plugins.v1 import _ros
+from snapcraft.plugins.v1 import _ros, colcon
 from tests import unit
+
 from . import PluginsV1BaseTestCase
 
 
@@ -48,6 +48,7 @@ class ColconPluginTestBase(PluginsV1BaseTestCase):
             disable_parallel = False
 
         self.properties = props()
+        self.ros_version = "2"
         self.ubuntu_distro = "bionic"
 
         self.ubuntu_mock = self.useFixture(
@@ -70,12 +71,13 @@ class ColconPluginTestBase(PluginsV1BaseTestCase):
         self.pip_mock.return_value.list.return_value = {}
 
     def assert_rosdep_setup(
-        self, rosdistro, package_path, rosdep_path, ubuntu_distro, base
+        self, rosdistro, ros_version, package_path, rosdep_path, ubuntu_distro, base
     ):
         self.rosdep_mock.assert_has_calls(
             [
                 mock.call(
                     ros_distro=rosdistro,
+                    ros_version=ros_version,
                     ros_package_path=package_path,
                     rosdep_path=rosdep_path,
                     ubuntu_distro=ubuntu_distro,
@@ -457,7 +459,7 @@ class ColconPluginTest(ColconPluginTestBase):
             sh_mock.assert_called_with(plugin.installdir)
 
         underlay_setup = os.path.join(plugin.options.colcon_rosdistro, "setup.sh")
-        overlay_setup = os.path.join("snap", "setup.sh")
+        overlay_setup = os.path.join("snap", "local_setup.sh")
 
         # Verify that the python executables and root are set before any setup.sh is
         # sourced. Also verify that the underlay setup is sourced before the overlay.
@@ -493,7 +495,7 @@ class ColconPluginTest(ColconPluginTestBase):
         )
         underlay_setup = os.path.join(underlay, "setup.sh")
         overlay = os.path.join("test-root", "opt", "ros", "snap")
-        overlay_setup = os.path.join(overlay, "setup.sh")
+        overlay_setup = os.path.join(overlay, "local_setup.sh")
 
         # Make sure $@ is zeroed, then setup.sh sourced, then $@ is restored
         lines_of_interest = [
@@ -891,6 +893,7 @@ class PullTestCase(ColconPluginTestBase):
 
         self.assert_rosdep_setup(
             plugin.options.colcon_rosdistro,
+            self.ros_version,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
@@ -942,6 +945,7 @@ class PullTestCase(ColconPluginTestBase):
 
         self.assert_rosdep_setup(
             plugin.options.colcon_rosdistro,
+            self.ros_version,
             os.path.join(plugin.sourcedir, "subdir", "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
@@ -971,6 +975,7 @@ class PullTestCase(ColconPluginTestBase):
 
         self.assert_rosdep_setup(
             plugin.options.colcon_rosdistro,
+            self.ros_version,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,

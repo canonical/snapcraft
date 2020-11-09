@@ -1,7 +1,6 @@
 #+TITLE: Snapcraft Tasks
 #+STARTUP: content
-#+STARTUP: lognotestate
-#+TODO: TODO(t) STRT(s@/!) | DONE(d!) CANCELED(c@)
+#+TODO: TODO(t) STRT(s) | DONE(d) CANCELED(c)
 
 * Specifications
 
@@ -55,6 +54,16 @@ CLOSED: [2020-06-24]
 - [ ] Add multi-arch spread test(s).
 - [ ] Finalize schema and mark stable.
 
+*** TODO [[file:specifications/environment-management.org][Build Environment Management]] [/]
+
+- [ ] Implement general datastore.
+- [ ] Implement provider datastore.
+- [ ] Migrate BuildProviders to new provider datastores.
+- [ ] Implement =snapcraft clean --all-projects= command.
+- [ ] Implement =snapcraft clean --all-projects --dry-run= command.
+- [ ] Update providers to match documented lifecycle.
+- [ ] Update documentation on snapcraft.io.
+
 *** STRT [[file:specifications/flutter-extension.org][Flutter Extension]] [2/4]
 
 - [X] Add extension variant for master
@@ -62,9 +71,10 @@ CLOSED: [2020-06-24]
 - [ ] Add extension variant for beta
 - [ ] Add extension variant for stable
 
-*** TODO [[file:specifications/default-tracks.org][Default Tracks]] [1/3]
+*** TODO [[file:specifications/default-tracks.org][Default Tracks]] [2/4]
 
-- [ ] Implement =snapcraft set-default-tracks=
+- [X] Implement =snapcraft set-default-tracks=
+- [ ] Error handling for setting invalid track names ([[https://bugs.launchpad.net/snapcraft/+bug/1892553][LP: 1892553]])
 - [X] Implement =snapcraft list-tracks=
 - [ ] Add documentation for track management to the [[https://snapcraft.io/docs/release-management][Release management]] docs.
 
@@ -82,3 +92,19 @@ CLOSED: [2020-06-24]
   creation.
 - [ ] Optimize =_setup_apt_configuration()= to detect changes to configuration
   using =_pull_file()=, issuing an =apt update= if modified.
+
+*** DONE [[file:specifications/desktop-extensions-font-hook.org][Desktop Extensions Font Hook]] [3/3]
+CLOSED: [2020-10-01 jue 10:00]
+
+- [X] Support hook stubs when =command-chain= is defined
+- [X] Generate =configure= hook =command-chain= in desktop parts
+- [X] Extend yaml for neon, gnome-2-28 and gnome-3-34 to use desktop
+      part's =command-chain= for the =configure= hook
+
+*** DONE [[file:specifications/history-to-releases.org][Snap Store API migration from v1 history to v2 releases]] [3/3]
+CLOSED: [2020-10-22]
+
+- [X] Add bindings to Snap Store package
+- [X] Use releases bindings for CLI implementing new output
+- [X] Remove v1 history bindings
+

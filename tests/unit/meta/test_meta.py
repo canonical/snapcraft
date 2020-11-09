@@ -17,9 +17,9 @@
 import contextlib
 import logging
 import os
+import stat
 import textwrap
 from unittest.mock import patch
-import stat
 
 import fixtures
 import testtools
@@ -34,13 +34,12 @@ from testtools.matchers import (
     Not,
 )
 
-from snapcraft.internal.meta import errors as meta_errors, _snap_packaging
 from snapcraft import extractors, yaml_utils
+from snapcraft.internal import errors, project_loader, states
+from snapcraft.internal.meta import _snap_packaging
+from snapcraft.internal.meta import errors as meta_errors
 from snapcraft.project import Project
-from snapcraft.internal import errors
-from snapcraft.internal import project_loader
-from snapcraft.internal import states
-from tests import unit, fixture_setup
+from tests import fixture_setup, unit
 
 
 class CreateBaseTestCase(unit.TestCase):
@@ -1108,6 +1107,48 @@ class WriteSnapDirectoryTestCase(CreateBaseTestCase):
         self.assertThat(
             os.path.join(self.prime_dir, "meta", "hooks", "test-hook"),
             FileContains("from snap"),
+        )
+
+    def test_hooks_with_command_chain_write_stub(self):
+        self.config_data["hooks"] = {
+            "configure": {"command-chain": ["fake-hook-command-chain"]}
+        }
+
+        self.generate_meta_yaml()
+
+        self.assertThat(os.path.join(self.hooks_dir, "configure"), FileExists())
+
+        # The hook should be empty, because the one in snap/hooks is empty, and
+        # no wrapper is generated (i.e. that hook is copied to both locations).
+        self.assertThat(
+            os.path.join(self.hooks_dir, "configure"), FileContains("#!/bin/sh\n")
+        )
+
+    def test_snap_hooks_stubs_not_created_stubs_from_command_chain(self):
+        self.config_data["hooks"] = {
+            "install": {"command-chain": ["fake-hook-command-chain"]}
+        }
+
+        # Setup a prime/snap directory containing a hook.
+        part_hook = os.path.join(self.prime_dir, "snap", "hooks", "install")
+        _create_file(part_hook, content="from part", executable=True)
+
+        # Now write the snap directory, and verify that the snap hook overwrote
+        # the part hook in both prime/snap/hooks and prime/meta/hooks.
+        self.generate_meta_yaml()
+
+        self.assertThat(
+            os.path.join(self.hooks_dir, "install"),
+            FileContains(
+                textwrap.dedent(
+                    """\
+            #!/bin/sh
+            export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
+            export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
+            exec "$SNAP/snap/hooks/install" "$@"
+            """
+                )
+            ),
         )
 
     def test_snap_hooks_not_executable_chmods(self):

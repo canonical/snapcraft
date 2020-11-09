@@ -14,15 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from unittest import mock
+
 import requests
 from requests import exceptions
 from requests.packages import urllib3
 
-from unittest import mock
-
-from snapcraft.storeapi import _client
-from snapcraft.storeapi import errors
-
+from snapcraft.storeapi import _client, errors
 from tests import unit
 
 

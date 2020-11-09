@@ -86,6 +86,14 @@ export LIBGL_DRIVERS_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/dri"
 append_dir LD_LIBRARY_PATH "$LIBGL_DRIVERS_PATH"
 export LIBVA_DRIVERS_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/dri"
 
+# Set where the VDPAU drivers are located
+export VDPAU_DRIVER_PATH="/usr/lib/$ARCH/vdpau/"
+if [ -e "/var/lib/snapd/lib/gl/vdpau/libvdpau_nvidia.so" ]; then
+  export VDPAU_DRIVER_PATH="/var/lib/snapd/lib/gl/vdpau"
+  # Prevent picking VA-API (Intel/AMD) over NVIDIA VDPAU; on PRIME systems for example
+  unset LIBVA_DRIVERS_PATH
+fi
+
 # Workaround in snapd for proprietary nVidia drivers mounts the drivers in
 # /var/lib/snapd/lib/gl that needs to be in LD_LIBRARY_PATH
 # Without that OpenGL using apps do not work with the nVidia drivers.
@@ -282,19 +290,13 @@ function make_user_fontconfig {
   if [ -d "$REALHOME/.fonts" ]; then
     echo "  <dir>$REALHOME/.fonts</dir>"
   fi
-  for ((i = 0; i < ${#data_dirs_array[@]}; i++)); do
-    if [ -d "${data_dirs_array[$i]}/fonts" ]; then
-      echo "  <dir>${data_dirs_array[$i]}/fonts</dir>"
-    fi
-  done
   echo '  <include ignore_missing="yes">conf.d</include>'
+  echo "  <include ignore_missing=\"yes\">${FONTCONFIG_FILE}</include>"
   # We need to include this default cachedir first so that caching
   # works: without it, fontconfig will try to write to the real user home
   # cachedir and be blocked by AppArmor.
   echo '  <cachedir prefix="xdg">fontconfig</cachedir>'
-  if [ -d "$REALHOME/.cache/fontconfig" ]; then
-    echo "  <cachedir>$REALHOME/.cache/fontconfig</cachedir>"
-  fi
+  echo "  <cachedir>$SNAP_DATA/fontconfig</cachedir>"
   echo "</fontconfig>"
 }
 

@@ -19,8 +19,7 @@ import enum
 import logging
 import os
 import tempfile
-from typing import Callable, List, Optional
-from typing import Any, Dict  # noqa: F401
+from typing import Any, Callable, Dict, List, Optional  # noqa: F401
 
 from snapcraft import storeapi, yaml_utils
 from snapcraft.internal import repo
@@ -57,12 +56,10 @@ class _SnapManager:
         snap_name: str,
         remote_snap_dir: str,
         latest_revision: Optional[str],
-        snap_arch: str,
         inject_from_host: bool = True
     ) -> None:
         self.snap_name = snap_name
         self._remote_snap_dir = remote_snap_dir
-        self._snap_arch = snap_arch
         self._inject_from_host = inject_from_host
 
         self._latest_revision = latest_revision
@@ -198,7 +195,7 @@ class _SnapManager:
             snap_channel = _get_snap_channel(self.snap_name)
             store_snap_info = storeapi.StoreClient().cpi.get_info(self.snap_name)
             snap_channel_map = store_snap_info.get_channel_mapping(
-                risk=snap_channel.risk, track=snap_channel.track, arch=self._snap_arch
+                risk=snap_channel.risk, track=snap_channel.track
             )
             snap_revision = snap_channel_map.revision
             if snap_channel_map.confinement == "classic":
@@ -301,7 +298,6 @@ class SnapInjector:
         self,
         *,
         registry_filepath: str,
-        snap_arch: str,
         runner: Callable[..., Optional[bytes]],
         file_pusher: Callable[..., None],
         inject_from_host: bool = True
@@ -309,7 +305,6 @@ class SnapInjector:
         """
         Initialize a SnapInjector instance.
 
-        :param str snap_arch: the snap architecture of the snaps to inject.
         :param str registry_filepath: path to where recordings of previusly installed
                                       revisions of a snap can be queried and recorded.
         :param runner: a callable which can run commands in the build environment.
@@ -320,7 +315,6 @@ class SnapInjector:
 
         self._snaps = []  # type: List[_SnapManager]
         self._registry_filepath = registry_filepath
-        self._snap_arch = snap_arch
         self._inject_from_host = inject_from_host
         self._runner = runner
         self._file_pusher = file_pusher
@@ -369,7 +363,6 @@ class SnapInjector:
                 snap_name=snap_name,
                 remote_snap_dir=self._remote_snap_dir,
                 latest_revision=self._get_latest_revision(snap_name),
-                snap_arch=self._snap_arch,
                 inject_from_host=self._inject_from_host,
             )
         )

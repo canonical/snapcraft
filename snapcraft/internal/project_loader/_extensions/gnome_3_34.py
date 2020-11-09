@@ -89,6 +89,12 @@ class ExtensionImpl(Extension):
                 "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
                 "GTK_USE_PORTALS": "1",
             },
+            "hooks": {
+                "configure": {
+                    "plugs": ["desktop"],
+                    "command-chain": ["snap/command-chain/hooks-configure-desktop"],
+                }
+            },
             "layout": {
                 "/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
                     "bind": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
@@ -115,7 +121,7 @@ class ExtensionImpl(Extension):
             "build-environment": [
                 {"PATH": "/snap/gnome-3-34-1804-sdk/current/usr/bin:$PATH"},
                 {
-                    "XDG_DATA_DIRS": "/snap/gnome-3-34-1804-sdk/current/usr/share:/usr/share:$XDG_DATA_DIRS"
+                    "XDG_DATA_DIRS": "$SNAPCRAFT_STAGE/usr/share:/snap/gnome-3-34-1804-sdk/current/usr/share:/usr/share:$XDG_DATA_DIRS"
                 },
                 {
                     "LD_LIBRARY_PATH": "/snap/gnome-3-34-1804-sdk/current/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-34-1804-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-34-1804-sdk/current/usr/lib:/snap/gnome-3-34-1804-sdk/current/usr/lib/vala-current:$LD_LIBRARY_PATH"

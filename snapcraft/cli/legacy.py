@@ -16,10 +16,11 @@
 
 import click
 
-from ._options import get_project
-from ._command import SnapcraftProjectCommand, run_legacy_snapcraft
 from snapcraft.internal import errors
 from snapcraft.project._sanity_checks import conduct_project_sanity_check
+
+from ._command import SnapcraftProjectCommand, run_legacy_snapcraft
+from ._options import get_project
 
 
 @click.group()

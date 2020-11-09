@@ -45,7 +45,8 @@ from snapcraft.storeapi.constants import DEFAULT_SERIES
 
 if TYPE_CHECKING:
     from snapcraft.storeapi._status_tracker import StatusTracker
-    from snapcraft.storeapi.v2.snap_channel_map import SnapChannelMap
+    from snapcraft.storeapi.v2.channel_map import ChannelMap
+    from snapcraft.storeapi.v2.releases import Releases
 
 
 logger = logging.getLogger(__name__)
@@ -326,7 +327,11 @@ class StoreClientCLI(storeapi.StoreClient):
         return super().close_channels(snap_id=snap_id, channel_names=channel_names)
 
     @_login_wrapper
-    def get_snap_channel_map(self, *, snap_name: str) -> "SnapChannelMap":
+    def get_snap_releases(self, *, snap_name: str) -> "Releases":
+        return super().get_snap_releases(snap_name=snap_name)
+
+    @_login_wrapper
+    def get_snap_channel_map(self, *, snap_name: str) -> "ChannelMap":
         return super().get_snap_channel_map(snap_name=snap_name)
 
     @_login_wrapper
@@ -938,38 +943,6 @@ def status(snap_name, arch):
     # This does not look good in green so we print instead
     tabulated_status = _tabulated_channel_map_tree(channel_map_tree)
     print(tabulated_status)
-
-
-def _get_text_for_current_channels(channels, current_channels):
-    return (
-        ", ".join(
-            channel + ("*" if channel in current_channels else "")
-            for channel in channels
-        )
-        or "-"
-    )
-
-
-def revisions(snap_name, arch):
-    revisions = StoreClientCLI().get_snap_revisions(snap_name, arch)
-
-    parsed_revisions = [
-        (
-            rev["revision"],
-            rev["timestamp"],
-            rev["arch"],
-            rev["version"],
-            _get_text_for_current_channels(rev["channels"], rev["current_channels"]),
-        )
-        for rev in revisions
-    ]
-    tabulated_revisions = tabulate(
-        parsed_revisions,
-        numalign="left",
-        headers=["Rev.", "Uploaded", "Arch", "Version", "Channels"],
-        tablefmt="plain",
-    )
-    print(tabulated_revisions)
 
 
 def gated(snap_name):

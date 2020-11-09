@@ -18,7 +18,7 @@ import os
 import subprocess
 
 import testscenarios
-from testtools.matchers import Equals, Contains
+from testtools.matchers import Contains, Equals
 
 from tests import fixture_setup, integration
 from tests.integration import repo

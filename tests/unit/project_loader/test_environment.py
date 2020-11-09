@@ -26,8 +26,9 @@ from testtools.matchers import Contains, Equals, GreaterThan, Not
 
 import snapcraft
 from snapcraft.internal import common
-from . import ProjectLoaderBaseTest
 from tests.fixture_setup.os_release import FakeOsRelease
+
+from . import ProjectLoaderBaseTest
 
 
 class EnvironmentTest(ProjectLoaderBaseTest):
