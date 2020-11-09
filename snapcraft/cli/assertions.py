@@ -94,7 +94,13 @@ def sign_build(snap_file: str, key_name: str, local: bool) -> None:
 @click.argument("validations", metavar="<validation>...", nargs=-1, required=True)
 @click.option("--key-name", metavar="<key-name>")
 def validate(snap_name: str, validations: list, key_name: str) -> None:
-    """Validate a gated snap."""
+    """Validate a gated snap.
+
+    Each validation can be presented with ether syntax:
+
+    -  <snap-name>=<revision>
+    -  <snap-id>=<revision>
+    """
     snapcraft.validate(snap_name, validations, key=key_name)
 
 
