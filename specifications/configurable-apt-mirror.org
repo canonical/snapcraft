@@ -35,6 +35,3 @@ Enable users to configure mirror URL with fully supported arguments:
 
 - Replace =SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR= variable with introduced
   =SNAPCRAFT_APT_MIRROR=.
-
-- Update APT configuration on every run of build environment, enabling the
-  user to change mirrors without cleaning.
