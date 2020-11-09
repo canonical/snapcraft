@@ -459,7 +459,7 @@ class ColconPluginTest(ColconPluginTestBase):
             sh_mock.assert_called_with(plugin.installdir)
 
         underlay_setup = os.path.join(plugin.options.colcon_rosdistro, "setup.sh")
-        overlay_setup = os.path.join("snap", "setup.sh")
+        overlay_setup = os.path.join("snap", "local_setup.sh")
 
         # Verify that the python executables and root are set before any setup.sh is
         # sourced. Also verify that the underlay setup is sourced before the overlay.
@@ -495,7 +495,7 @@ class ColconPluginTest(ColconPluginTestBase):
         )
         underlay_setup = os.path.join(underlay, "setup.sh")
         overlay = os.path.join("test-root", "opt", "ros", "snap")
-        overlay_setup = os.path.join(overlay, "setup.sh")
+        overlay_setup = os.path.join(overlay, "local_setup.sh")
 
         # Make sure $@ is zeroed, then setup.sh sourced, then $@ is restored
         lines_of_interest = [
