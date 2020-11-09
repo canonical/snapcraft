@@ -98,4 +98,3 @@ CLOSED: [2020-10-22]
 - [X] Add bindings to Snap Store package
 - [X] Use releases bindings for CLI implementing new output
 - [X] Remove v1 history bindings
-
