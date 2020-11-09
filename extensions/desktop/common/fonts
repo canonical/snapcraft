@@ -2,7 +2,7 @@
 
 set -e
 
-[ ! -d "${SNAP_DATA}/fontconfig" ] && mkdir -p "${SNAP_DATA}/fontconfig"
+[ ! -d "${SNAP_COMMON}/fontconfig" ] && mkdir -p "${SNAP_COMMON}/fontconfig"
 
 function append_dir() {
   local -n var="$1"
@@ -38,7 +38,7 @@ cat > "${SNAP_COMMON}/fontconfig/fonts.conf" <<EOF
 </fontconfig>
 EOF
 
-export FONTCONFIG_FILE="${SNAP_DATA}/fontconfig/fonts.conf"
+export FONTCONFIG_FILE="${SNAP_COMMON}/fontconfig/fonts.conf"
 
 "${SNAP_DESKTOP_RUNTIME}/usr/bin/fc-cache" --force --system-only --verbose
 
