@@ -83,15 +83,6 @@ CLOSED: [2020-06-24]
   =SNAPCRAFT_APT_MIRROR= environment variable.
 - [ ] Replace usage of =SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR= with
   =SNAPCRAFT_APT_MIRROR=.
-- [ ] Remove configurable security mirror.
-- [ ] Move apt configuration in base provider into own
-  =_setup_apt_configuration()=.
-- [ ] Implement abstract _pull_file() in base provider, allowing
-  the base provider to get a file from the target.
-- [ ] Call =_setup_apt_configuration()= on every run, not just
-  creation.
-- [ ] Optimize =_setup_apt_configuration()= to detect changes to configuration
-  using =_pull_file()=, issuing an =apt update= if modified.
 
 *** DONE [[file:specifications/desktop-extensions-font-hook.org][Desktop Extensions Font Hook]] [3/3]
 CLOSED: [2020-10-01 jue 10:00]
