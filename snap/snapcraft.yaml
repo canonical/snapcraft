@@ -113,10 +113,10 @@ parts:
     after: [snapcraft-libs]
 
   legacy-snapcraft:
-    plugin: python
-    source: https://github.com/snapcore/snapcraft.git
+    source: .
+    source-type: git
     source-branch: legacy
-    source-depth: 1
+    plugin: python
     requirements:
         - requirements.txt
     override-build: |
