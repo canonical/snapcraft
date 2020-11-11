@@ -296,7 +296,7 @@ function make_user_fontconfig {
   # works: without it, fontconfig will try to write to the real user home
   # cachedir and be blocked by AppArmor.
   echo '  <cachedir prefix="xdg">fontconfig</cachedir>'
-  echo "  <cachedir>$SNAP_DATA/fontconfig</cachedir>"
+  echo "  <cachedir>$SNAP_COMMON/fontconfig</cachedir>"
   echo "</fontconfig>"
 }
 
