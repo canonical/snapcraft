@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import textwrap
 from unittest import mock
 
@@ -23,6 +22,7 @@ from testtools.matchers import Contains, Equals
 
 import snapcraft
 from snapcraft.internal.remote_build import LaunchpadClient, errors
+from snapcraft.internal.sources._git import Git
 from snapcraft.internal.sources.errors import SnapcraftPullError
 from tests import unit
 
@@ -202,8 +202,16 @@ class LaunchpadTestCase(unit.TestCase):
             "launchpadlib.launchpad.Launchpad.login_with", return_value=self.lp
         )
         self.useFixture(self.fake_login_with)
+
+        self.mock_git_class = mock.Mock(spec=Git)
+        self.mock_git_class.check_command_installed.return_value = True
+
         self.lpc = LaunchpadClient(
-            project=self._project, build_id="id", architectures=[]
+            project=self._project,
+            build_id="id",
+            architectures=[],
+            git_class=self.mock_git_class,
+            running_snapcraft_version="100.1234",
         )
 
     def test_login(self):
@@ -430,39 +438,41 @@ class LaunchpadTestCase(unit.TestCase):
         source_testdir = self.useFixture(TestDir())
         source_testdir.create_file("foo")
         repo_dir = source_testdir.path
-        self.assertFalse(os.path.exists(os.path.join(repo_dir, ".git")))
+
         self.lpc._gitify_repository(repo_dir)
-        self.assertTrue(os.path.exists(os.path.join(repo_dir, ".git")))
 
-    @mock.patch("snapcraft.internal.sources.Git.push", return_value=None)
-    def test_push_source_tree(self, mock_push):
+        assert self.mock_git_class.mock_calls == [
+            mock.call.check_command_installed(),
+            mock.call(repo_dir, repo_dir, silent=True),
+            mock.call().init(),
+            mock.call().add("foo"),
+            mock.call().commit("committed by snapcraft version: 100.1234"),
+        ]
+
+    def test_push_source_tree(self):
         source_testdir = self.useFixture(TestDir())
-        source_testdir.create_file("foo")
         repo_dir = source_testdir.path
-        self.lpc.push_source_tree(repo_dir)
-        mock_push.assert_called_with(
-            "https://user:access-token@git.launchpad.net/~user/+git/id/",
-            "HEAD:master",
-            force=True,
-        )
 
-    @mock.patch(
-        "snapcraft.internal.sources.Git.push",
-        side_effect=SnapcraftPullError(
-            command="git push HEAD:master https://user:access-token@url", exit_code=128
-        ),
-    )
-    def test_push_source_tree_error(self, mock_push):
+        self.lpc.push_source_tree(repo_dir)
+
+        self.mock_git_class.assert_has_calls == [
+            mock.call(
+                "https://user:access-token@git.launchpad.net/~user/+git/id/",
+                "HEAD:master",
+                force=True,
+            )
+        ]
+
+    def test_push_source_tree_error(self):
+        self.mock_git_class.return_value.push.side_effect = (
+            SnapcraftPullError(
+                command="git push HEAD:master https://user:access-token@url",
+                exit_code=128,
+            ),
+        )
         source_testdir = self.useFixture(TestDir())
-        source_testdir.create_file("foo")
         repo_dir = source_testdir.path
 
         self.assertRaises(
             errors.LaunchpadGitPushError, self.lpc.push_source_tree, repo_dir
-        )
-
-        mock_push.assert_called_with(
-            "https://user:access-token@git.launchpad.net/~user/+git/id/",
-            "HEAD:master",
-            force=True,
         )
