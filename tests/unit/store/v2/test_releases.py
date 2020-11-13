@@ -51,10 +51,10 @@ def test_release(branch, revision):
 
 @pytest.mark.parametrize("architectures", (["amd64"], ["amd64", "arm64"]))
 @pytest.mark.parametrize("build_url", (None, "https://launchpad.net/foo"))
-def test_revision(architectures, build_url):
+@pytest.mark.parametrize("base", (None, "core20"))
+def test_revision(architectures, build_url, base):
     payload = {
         "architectures": architectures,
-        "base": "core20",
         "build_url": build_url,
         "confinement": "strict",
         "created_at": "2020-02-11T17:51:40.891996Z",
@@ -65,12 +65,14 @@ def test_revision(architectures, build_url):
         "status": "Published",
         "version": "1.0",
     }
+    if base is not None:
+        payload["base"] = base
 
     r = releases.Revision.unmarshal(payload)
 
     assert repr(r) == "<Revision: 42>"
     assert r.architectures == payload["architectures"]
-    assert r.base == payload["base"]
+    assert r.base == base
     assert r.build_url == payload["build_url"]
     assert r.confinement == payload["confinement"]
     assert r.created_at == payload["created_at"]
@@ -87,7 +89,6 @@ def test_releases():
         "revisions": [
             {
                 "architectures": ["amd64"],
-                "base": "core20",
                 "build_url": None,
                 "confinement": "strict",
                 "created_at": "2020-02-11T17:51:40.891996Z",
