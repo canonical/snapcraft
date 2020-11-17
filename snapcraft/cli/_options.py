@@ -16,7 +16,6 @@
 
 import distutils.util
 import os
-import pathlib
 import sys
 from typing import Any, Dict, List, Optional
 
