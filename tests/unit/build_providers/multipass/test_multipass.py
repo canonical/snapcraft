@@ -92,6 +92,7 @@ def multipass_cmd():
         _DEFAULT_INSTANCE_INFO.encode(),
         _DEFAULT_INSTANCE_INFO.encode(),
     ]
+    multipass_cmd_mock().exists.return_value = False
 
     yield multipass_cmd_mock
 
