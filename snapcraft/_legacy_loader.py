@@ -18,9 +18,8 @@ import importlib
 import importlib.abc
 import importlib.machinery
 import importlib.util
-import warnings
 import sys
-
+import warnings
 
 _VALID_V1_PLUGINS = [
     "ant",

@@ -16,16 +16,15 @@
 
 import enum
 import os
-
 from copy import deepcopy
-from snapcraft import yaml_utils
 from typing import Any, Dict, List, Optional, Sequence  # noqa: F401
+
+from snapcraft import yaml_utils
 
 from . import errors
 from ._utils import _executable_is_valid
 from .command import Command
 from .desktop import DesktopFile
-
 
 _COMMAND_ENTRIES = ["command", "stop-command"]
 _MASSAGED_BASES = ["core", "core18"]

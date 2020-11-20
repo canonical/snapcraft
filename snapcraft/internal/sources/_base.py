@@ -14,10 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
-import requests
 import shutil
 import subprocess
 import sys
+
+import requests
 
 import snapcraft.internal.common
 from snapcraft.internal.cache import FileCache
@@ -25,8 +26,9 @@ from snapcraft.internal.indicators import (
     download_requests_stream,
     download_urllib_source,
 )
-from ._checksum import split_checksum, verify_checksum
+
 from . import errors
+from ._checksum import split_checksum, verify_checksum
 
 
 class Base:

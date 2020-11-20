@@ -19,8 +19,8 @@ import glob
 import os
 from textwrap import dedent
 
-from ._python_finder import get_python_command
 from . import errors
+from ._python_finder import get_python_command
 
 _SITECUSTOMIZE_TEMPLATE = dedent(
     """\
