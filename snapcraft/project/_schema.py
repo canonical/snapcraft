@@ -20,9 +20,8 @@ import os
 
 import jsonschema
 
+import snapcraft.yaml_utils.errors
 from snapcraft.internal import common
-
-from . import errors
 
 
 class Validator:
@@ -59,7 +58,7 @@ class Validator:
             with open(schema_file) as fp:
                 self._schema = json.load(fp)
         except FileNotFoundError:
-            raise errors.YamlValidationError(
+            raise snapcraft.yaml_utils.errors.YamlValidationError(
                 "snapcraft validation file is missing from installation path"
             )
 
@@ -70,4 +69,6 @@ class Validator:
                 self._snapcraft, self._schema, format_checker=format_check
             )
         except jsonschema.ValidationError as e:
-            raise errors.YamlValidationError.from_validation_error(e, source=source)
+            raise snapcraft.yaml_utils.errors.YamlValidationError.from_validation_error(
+                e, source=source
+            )

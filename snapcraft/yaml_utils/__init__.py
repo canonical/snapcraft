@@ -20,7 +20,7 @@ from typing import Any, Dict, Optional, TextIO, Union
 
 import yaml
 
-from snapcraft.project.errors import YamlValidationError
+from snapcraft.yaml_utils.errors import YamlValidationError
 
 try:
     # The C-based loaders/dumpers aren't available everywhere, but they're much faster.

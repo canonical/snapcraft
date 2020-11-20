@@ -13,7 +13,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 from snapcraft.project import errors
 
 
@@ -30,14 +29,6 @@ class TestErrorFormatting:
                     "in the right directory?\n"
                     "To start a new project, use `snapcraft init`"
                 ),
-            },
-        ),
-        (
-            "YamlValidationError",
-            {
-                "exception_class": errors.YamlValidationError,
-                "kwargs": {"source": ".snapcraft.yaml", "message": "error"},
-                "expected_message": "Issues while validating .snapcraft.yaml: error",
             },
         ),
         (

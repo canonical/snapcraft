@@ -20,7 +20,7 @@ import os
 from testtools.matchers import Equals
 
 from snapcraft import yaml_utils
-from snapcraft.project.errors import YamlValidationError
+from snapcraft.yaml_utils import YamlValidationError
 from tests import unit
 
 
