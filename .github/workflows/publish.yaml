@@ -1,0 +1,39 @@
+name: CI
+
+on: [pull_request, push]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Snapcraft
+        uses: actions/checkout@v2
+        with:
+          # Fetch all of history so Snapcraft can determine its own version from git.
+          fetch-depth: 0
+
+      - name: Build Snapcraft Snap
+        id: build-snapcraft
+        uses: snapcore/action-build@v1
+
+      - name: Verify Snapcraft Snap
+        run: |
+          # Make sure it is installable.
+          sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
+
+      - name: Publish Snapcraft Snap (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: snapcore/action-publish@v1
+        with:
+          store_login: ${{ secrets.STORE_LOGIN }}
+          snap: ${{ steps.build-snapcraft.outputs.snap }}
+          release: edge/pr-${{ github.event.number }}
+
+      - name: Publish Snapcraft Snap (PUSH)
+        if: ${{ github.event_name == 'push' }}
+        uses: snapcore/action-publish@v1
+        with:
+          store_login: ${{ secrets.STORE_LOGIN }}
+          snap: ${{ steps.build-snapcraft.outputs.snap }}
+          release: edge
