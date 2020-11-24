@@ -20,7 +20,7 @@ import os
 import shutil
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Type
 from urllib.parse import unquote, urlsplit
 
 import requests
@@ -90,8 +90,11 @@ class LaunchpadClient:
         core18_channel: str = "stable",
         snapcraft_channel: str = "stable",
         deadline: int = 0,
+        git_class: Type[Git] = Git,
+        running_snapcraft_version: str = snapcraft.__version__,
     ) -> None:
-        if not Git.check_command_installed():
+        self._git_class = git_class
+        if not self._git_class.check_command_installed():
             raise errors.GitNotFoundProviderError(provider="Launchpad")
 
         self._snap_name = project.info.name
@@ -104,6 +107,7 @@ class LaunchpadClient:
 
         self._core18_channel = core18_channel
         self._snapcraft_channel = snapcraft_channel
+        self._running_snapcraft_version = running_snapcraft_version
 
         self._cache_dir = self._create_cache_directory()
         self._data_dir = self._create_data_directory()
@@ -438,7 +442,7 @@ class LaunchpadClient:
 
         :return: Git handler instance to git repository.
         """
-        git_handler = Git(repo_dir, repo_dir, silent=True)
+        git_handler = self._git_class(repo_dir, repo_dir, silent=True)
 
         # Init repo.
         git_handler.init()
@@ -449,7 +453,9 @@ class LaunchpadClient:
                 git_handler.add(f)
 
         # Commit files.
-        git_handler.commit(f"committed by snapcraft version: {snapcraft.__version__}")
+        git_handler.commit(
+            f"committed by snapcraft version: {self._running_snapcraft_version}"
+        )
 
         return git_handler
 
