@@ -13,9 +13,6 @@ environment:
   # nothing.
   SNAPCRAFT_CHANNEL: "$(HOST: echo ${SNAPCRAFT_CHANNEL})"
 
-  # Are these unit tests.
-  SNAPCRAFT_UNIT_TESTS: "$(HOST: echo ${SNAPCRAFT_UNIT_TESTS})"
-
   # Show error tracebacks
   SNAPCRAFT_MANAGED_HOST: "yes"
 
@@ -195,11 +192,6 @@ prepare: |
       exit 1
   fi
 
-  # Exit now if we are preparing for unit tests.
-  if [ "$SNAPCRAFT_UNIT_TESTS" = "Y" ]; then
-      exit 0
-  fi
-
   apt-get install -y snapd
   snap install snapd
   snap wait system seed.loaded
@@ -242,56 +234,6 @@ restore-each: |
   "$TOOLS_DIR"/restore.sh
 
 suites:
- # Unit tests
- tests/spread/unit/:
-   summary: unit tests for snapcraft
-   manual: true
-   systems:
-   - ubuntu-18*
-   prepare: |
-     apt-get update
-     apt-get install --yes \
-       git \
-       libapt-pkg-dev \
-       libffi-dev \
-       libnacl-dev \
-       libsodium-dev \
-       libssl-dev \
-       libxml2-dev \
-       libxslt-dev \
-       libyaml-dev \
-       python3-venv \
-       python3-yaml \
-       python3.6-dev \
-       rpm2cpio \
-       squashfs-tools \
-       xdelta3
-     apt-mark auto \
-       git \
-       libapt-pkg-dev \
-       libffi-dev \
-       libnacl-dev \
-       libsodium-dev \
-       libssl-dev \
-       libxml2-dev \
-       libxslt-dev \
-       libyaml-dev \
-       python3-venv \
-       python3-yaml \
-       python3.6-dev \
-       rpm2cpio \
-       squashfs-tools \
-       xdelta3
-     pyvenv "$HOME/venv/snapcraft"
-     # shellcheck source=/dev/null
-     source "$HOME/venv/snapcraft/bin/activate"
-     pip install --upgrade wheel setuptools
-     cd /snapcraft
-     pip install -r requirements.txt -r requirements-devel.txt codecov
-     pip install -e .
-   recover: |
-     rm -rf ~/venv
-
  # General, core suite
  tests/spread/general/:
    summary: tests of snapcraft core functionality
