@@ -16,6 +16,7 @@ jobs:
         apt:
           packages:
             - libyaml-dev
+            - make
             - python3-yaml
             - python3.6-dev
         snaps:
@@ -29,7 +30,7 @@ jobs:
         - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
         - pip3 install --user -r requirements-devel.txt
       script:
-        - ./runtests.sh static
+        - make tests-static
     - stage: unit and snap
       name: unit tests
       script:
