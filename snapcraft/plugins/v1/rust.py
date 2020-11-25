@@ -45,14 +45,13 @@ will be used.
 import collections
 import logging
 import os
-from pathlib import Path
 from contextlib import suppress
+from pathlib import Path
 from typing import List, Optional
 
 import toml
 
-from snapcraft import sources
-from snapcraft import file_utils, shell_utils
+from snapcraft import file_utils, shell_utils, sources
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import PluginV1
 

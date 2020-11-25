@@ -22,7 +22,6 @@ from mypy_extensions import TypedDict
 from snapcraft import yaml_utils
 from snapcraft.internal.states._state import State
 
-
 StateDict = TypedDict(
     "StateDict",
     {

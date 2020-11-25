@@ -19,8 +19,8 @@ import pathlib
 import subprocess
 
 from snapcraft import file_utils
-from . import errors
 
+from . import errors
 
 _REVIEW_TOOLS_PATH = pathlib.Path("/snap/bin/review-tools.snap-review")
 _REVIEW_TOOLS_SNAP_USER_COMMON = pathlib.Path("~/snap/review-tools/common").expanduser()

@@ -38,8 +38,8 @@ import re
 
 from snapcraft import file_utils
 from snapcraft.internal import errors
-from snapcraft.sources import Tar
 from snapcraft.plugins.v1 import PluginV1
+from snapcraft.sources import Tar
 
 logger = logging.getLogger(__name__)
 
