@@ -635,12 +635,14 @@ class _SnapPackaging:
         if hooks_with_command_chain or hooks_in_snap_dir:
             os.makedirs(hooks_dir, exist_ok=True)
 
+        # Create stub hooks as necessary.
         for hook in hooks_with_command_chain:
             hook_path = pathlib.Path(hooks_dir) / hook.hook_name
-            with hook_path.open("w") as hook_file:
-                print("#!/bin/sh", file=hook_file)
-            hook_path.chmod(0o755)
+            if not hook_path.exists():
+                hook_path.write_text("#!/bin/sh\n")
+                hook_path.chmod(0o755)
 
+        # Write wrapper hooks as necessary.
         for hook_name in hooks_in_snap_dir:
             file_path = os.path.join(snap_hooks_dir, hook_name)
             # Make sure the hook is executable
