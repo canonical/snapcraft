@@ -69,8 +69,9 @@ class SnapPackagingRunnerTests(unit.TestCase):
         expected_runner = textwrap.dedent(
             """
             #!/bin/sh
-            export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
-            export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
+            export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin${PATH:+:$PATH}"
+            export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+            echo $LD_LIBRARY_PATH | grep -qE "::|^:|:$" && echo "WARNING: an empty LD_LIBRARY_PATH has been set. CWD will be added to the library path. This can cause the incorrect library to be loaded."
             exec "$@"
             """
         ).lstrip()
@@ -145,8 +146,9 @@ class SnapPackagingRunnerTests(unit.TestCase):
 
         expected_env = textwrap.dedent(
             """
-            export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
-            export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
+            export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin${PATH:+:$PATH}"
+            export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+            echo $LD_LIBRARY_PATH | grep -qE "::|^:|:$" && echo "WARNING: an empty LD_LIBRARY_PATH has been set. CWD will be added to the library path. This can cause the incorrect library to be loaded."
             """
         ).strip()
 
@@ -165,7 +167,8 @@ class SnapPackagingRunnerTests(unit.TestCase):
         # Verify that, since all parts are using patchelf, no LD_LIBRARY_PATH is set
         expected_env = textwrap.dedent(
             """
-            export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
+            export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin${PATH:+:$PATH}"
+            echo $LD_LIBRARY_PATH | grep -qE "::|^:|:$" && echo "WARNING: an empty LD_LIBRARY_PATH has been set. CWD will be added to the library path. This can cause the incorrect library to be loaded."
             """
         ).strip()
 
