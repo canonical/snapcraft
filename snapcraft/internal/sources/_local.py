@@ -21,6 +21,7 @@ import os
 
 from snapcraft import file_utils
 from snapcraft.internal import common
+
 from ._base import Base
 
 

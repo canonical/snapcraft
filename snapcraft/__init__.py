@@ -319,6 +319,7 @@ of the choice of plugin.
 """
 
 from collections import OrderedDict  # noqa
+
 import pkg_resources  # noqa
 
 
@@ -336,9 +337,18 @@ def _get_version():
 # Set this early so that the circular imports aren't too painful
 __version__ = _get_version()
 
+# Workaround for potential import loops.
+from snapcraft.internal import repo  # noqa isort:skip
+
 # For backwards compatibility with external plugins.
-import snapcraft._legacy_loader  # noqa: F401
-from snapcraft.plugins.v1 import PluginV1 as BasePlugin  # noqa: F401
+import snapcraft._legacy_loader  # noqa: F401 isort:skip
+from snapcraft.plugins.v1 import PluginV1 as BasePlugin  # noqa: F401 isort:skip
+from snapcraft import common  # noqa
+from snapcraft import extractors  # noqa
+from snapcraft import file_utils  # noqa
+from snapcraft import plugins  # noqa
+from snapcraft import shell_utils  # noqa
+from snapcraft import sources  # noqa
 
 # FIXME LP: #1662658
 from snapcraft._store import (  # noqa
@@ -348,19 +358,13 @@ from snapcraft._store import (  # noqa
     list_keys,
     list_registered,
     login,
-    upload,
-    upload_metadata,
     register,
     register_key,
     sign_build,
     status,
+    upload,
+    upload_metadata,
     validate,
 )
-from snapcraft import common  # noqa
-from snapcraft import extractors  # noqa
-from snapcraft import plugins  # noqa
-from snapcraft import sources  # noqa
-from snapcraft import file_utils  # noqa
-from snapcraft import shell_utils  # noqa
-from snapcraft.internal import repo  # noqa
-from snapcraft.project._project_options import ProjectOptions  # noqa
+
+from snapcraft.project._project_options import ProjectOptions  # noqa isort:skip

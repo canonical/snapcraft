@@ -21,8 +21,9 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from ._cache import SnapcraftProjectCache
 from snapcraft import file_utils, yaml_utils
+
+from ._cache import SnapcraftProjectCache
 
 logger = logging.getLogger(__name__)
 

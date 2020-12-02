@@ -19,12 +19,12 @@ import os
 import sys
 from typing import Dict, Optional, Sequence
 
+from snapcraft.internal.errors import SnapcraftEnvironmentError
+
 from .. import errors
 from .._base_provider import Provider
 from ._instance_info import InstanceInfo
 from ._multipass_command import MultipassCommand
-from snapcraft.internal.errors import SnapcraftEnvironmentError
-
 
 logger = logging.getLogger(__name__)
 

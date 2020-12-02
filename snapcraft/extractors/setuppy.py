@@ -14,16 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-from importlib.abc import Loader
 import importlib.util
 import logging
+import os
+from importlib.abc import Loader
 from typing import Dict  # noqa: F401
 from unittest.mock import patch
 
-from ._metadata import ExtractedMetadata
 from snapcraft.extractors import _errors
 
+from ._metadata import ExtractedMetadata
 
 logger = logging.getLogger(__name__)
 
