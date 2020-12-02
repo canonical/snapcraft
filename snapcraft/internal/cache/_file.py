@@ -19,6 +19,7 @@ import shutil
 from typing import Optional
 
 from snapcraft.file_utils import calculate_hash
+
 from ._cache import SnapcraftCache
 
 logger = logging.getLogger(__name__)

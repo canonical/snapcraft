@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
@@ -7,22 +7,30 @@ from __future__ import print_function
 import os
 import re
 import sys
+import argparse
 from subprocess import check_call, check_output
+
 
 try:
     from launchpadlib.launchpad import Launchpad
 except ImportError:
-    sys.exit("Install launchpadlib: sudo apt install python-launchpadlib")
+    sys.exit(
+        "Install launchpadlib: sudo apt install python-launchpadlib python3-launchpadlib"
+    )
 
 shortlog_email_rx = re.compile(r"^\s*\d+\s+.*<(\S+)>$", re.M)
 
 
+is_travis = os.getenv("TRAVIS", "") == "true"
+is_github_actions = os.getenv("GITHUB_ACTIONS", "") == "true"
+
+
 def get_emails_for_range(r):
-    output = check_output(["git", "shortlog", "-se", r])
+    output = check_output(["git", "shortlog", "-se", r]).decode("utf-8")
     return set(m.group(1) for m in shortlog_email_rx.finditer(output))
 
 
-if sys.stdout.isatty():
+if sys.stdout.isatty() or is_travis or is_github_actions:
     green = "\033[32;1m"
     red = "\033[31;1m"
     yellow = "\033[33;1m"
@@ -34,6 +42,18 @@ else:
     yellow = ""
     reset = ""
     clear = ""
+
+if is_travis:
+    fold_start = "travis_fold:start:{{tag}}\r{}{}{{message}}{}".format(
+        clear, yellow, reset
+    )
+    fold_end = "travis_fold:end:{{tag}}\r{}".format(clear)
+elif is_github_actions:
+    fold_start = "::group::{message}"
+    fold_end = "::endgroup::"
+else:
+    fold_start = "{}{{message}}{}".format(yellow, reset)
+    fold_end = ""
 
 
 def static_email_check(email, master_emails, width):
@@ -56,7 +76,7 @@ def static_email_check(email, master_emails, width):
                 yellow, reset, email, width
             )
         )
-        return True
+        return False
     return False
 
 
@@ -84,9 +104,7 @@ def lp_email_check(email, lp, cla_folks, width):
 
 def print_checkout_info(travis_commit_range):
     # This is just to have information in case things go wrong
-    if clear:
-        print("travis_fold:start:checkout_info\r" + clear, end="")
-    print("{}Debug information{}".format(yellow, reset))
+    print(fold_start.format(tag="checkout_info", message="Debug information"))
     print("Commit range:", travis_commit_range)
     print("Remotes:")
     sys.stdout.flush()
@@ -95,22 +113,22 @@ def print_checkout_info(travis_commit_range):
     sys.stdout.flush()
     check_call(["git", "branch", "-v"])
     sys.stdout.flush()
-    if clear:
-        print("travis_fold:end:checkout_info\r" + clear)
+    print(fold_end.format(tag="checkout_info"))
 
 
 def main():
-    travis_commit_range = os.getenv("TRAVIS_COMMIT_RANGE", "")
-    print_checkout_info(travis_commit_range)
-
-    if travis_commit_range == "":
-        sys.exit("No TRAVIS_COMMIT_RANGE set.")
-
-    emails = get_emails_for_range(travis_commit_range)
+    parser = argparse.ArgumentParser(description="")
+    parser.add_argument(
+        "commit_range", help="Commit range in format <upstream-head>..<fork-head>"
+    )
+    opts = parser.parse_args()
+    master, _ = opts.commit_range.split("..")
+    print_checkout_info(opts.commit_range)
+    emails = get_emails_for_range(opts.commit_range)
     if len(emails) == 0:
         sys.exit("No emails found in in the given commit range.")
 
-    master_emails = get_emails_for_range("master")
+    master_emails = get_emails_for_range(master)
 
     width = max(map(len, emails))
     lp = None

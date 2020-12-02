@@ -18,7 +18,7 @@ import contextlib
 import logging
 import os
 import sys
-from subprocess import check_call, check_output, CalledProcessError
+from subprocess import CalledProcessError, check_call, check_output
 from typing import List, Sequence, Set, Union
 from urllib import parse
 
@@ -26,7 +26,6 @@ import requests_unixsocket
 from requests import exceptions
 
 from . import errors
-
 
 _STORE_ASSERTION = [
     "account-key",
