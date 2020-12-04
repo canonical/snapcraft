@@ -1166,10 +1166,6 @@ class GenerateHookWrappersTestCase(CreateBaseTestCase):
             "#!/bin/sh\n"
             "export PATH=$SNAP/foo\n"
             'export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\n'
-            'echo $LD_LIBRARY_PATH | grep -qE "::|^:|:$" && '
-            'echo "WARNING: an empty LD_LIBRARY_PATH has been set. '
-            "CWD will be added to the library path. "
-            'This can cause the incorrect library to be loaded."\n'
             'exec "$SNAP/snap/hooks/snap-hook" "$@"\n'
         )
 
@@ -1377,10 +1373,6 @@ class WrapExeTest(BaseWrapTest):
             "#!/bin/sh\n"
             "PATH=$SNAP/usr/bin:$SNAP/bin\n"
             'export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\n'
-            'echo $LD_LIBRARY_PATH | grep -qE "::|^:|:$" && '
-            'echo "WARNING: an empty LD_LIBRARY_PATH has been set. '
-            "CWD will be added to the library path. "
-            'This can cause the incorrect library to be loaded."\n'
             'exec "$SNAP/test_relexepath" "$@"\n'
         )
 
@@ -1429,10 +1421,6 @@ class WrapExeTest(BaseWrapTest):
             "#!/bin/sh\n"
             "PATH=$SNAP/usr/bin:$SNAP/bin\n"
             'export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\n'
-            'echo $LD_LIBRARY_PATH | grep -qE "::|^:|:$" && '
-            'echo "WARNING: an empty LD_LIBRARY_PATH has been set. '
-            "CWD will be added to the library path. "
-            'This can cause the incorrect library to be loaded."\n'
             'exec "$SNAP/test_relexepath" "$@"\n'
         )
         self.assertThat(wrapper_path, FileContains(expected))
@@ -1614,6 +1602,11 @@ class TestRootEnvironmentLibraryPathWarnings(CreateBaseTestCase):
 
         self.assert_warnings()
 
+    def test_root_ld_library_path_braces(self):
+        self.config_data["environment"] = {"LD_LIBRARY_PATH": "/foo:${LD_LIBRARY_PATH}"}
+
+        self.assert_warnings()
+
     def test_root_ld_library_path_with_colon_at_start(self):
         self.config_data["environment"] = {"LD_LIBRARY_PATH": ":/foo:/bar"}
 
@@ -1695,6 +1688,13 @@ class TestAppsEnvironmentLibraryPathWarnings(CreateBaseTestCase):
     def test_app_ld_library_path_app1(self):
         self.config_data["apps"]["app1"]["environment"] = {
             "LD_LIBRARY_PATH": "/foo:$LD_LIBRARY_PATH"
+        }
+
+        self.assert_warnings_app1()
+
+    def test_app_ld_library_path_app1_braces(self):
+        self.config_data["apps"]["app1"]["environment"] = {
+            "LD_LIBRARY_PATH": "/foo:${LD_LIBRARY_PATH}"
         }
 
         self.assert_warnings_app1()
