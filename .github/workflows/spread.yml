@@ -1,6 +1,6 @@
 name: Spread Tests
 
-on: [pull_request, push]
+on: [pull_request]
 
 jobs:
   build:
