@@ -471,7 +471,7 @@ class _SnapPackaging:
             ld_library_path_empty = {
                 name
                 for name, ld_env in app_environment.items()
-                if "$LD_LIBRARY_PATH" in ld_env
+                if "$LD_LIBRARY_PATH" in ld_env or "${LD_LIBRARY_PATH}" in ld_env
             }
         elif (
             root_ld_library_path is not None
@@ -570,13 +570,6 @@ class _SnapPackaging:
             env.append(
                 'export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"'
             )
-
-        env.append(
-            'echo $LD_LIBRARY_PATH | grep -qE "::|^:|:$" && '
-            'echo "WARNING: an empty LD_LIBRARY_PATH has been set. '
-            "CWD will be added to the library path. This can cause "
-            'the incorrect library to be loaded."'
-        )
 
         return "\n".join(env)
 

@@ -1145,7 +1145,6 @@ class WriteSnapDirectoryTestCase(CreateBaseTestCase):
             #!/bin/sh
             export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin${PATH:+:$PATH}"
             export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-            echo $LD_LIBRARY_PATH | grep -qE "::|^:|:$" && echo "WARNING: an empty LD_LIBRARY_PATH has been set. CWD will be added to the library path. This can cause the incorrect library to be loaded."
             exec "$SNAP/snap/hooks/install" "$@"
             """
                 )
@@ -1263,7 +1262,6 @@ class GenerateHookWrappersTestCase(CreateBaseTestCase):
             #!/bin/sh
             export PATH=$SNAP/foo
             export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-            echo $LD_LIBRARY_PATH | grep -qE "::|^:|:$" && echo "WARNING: an empty LD_LIBRARY_PATH has been set. CWD will be added to the library path. This can cause the incorrect library to be loaded."
             exec "$SNAP/snap/hooks/snap-hook" "$@"
         """
         )
@@ -1352,6 +1350,11 @@ class TestRootEnvironmentLibraryPathWarnings(CreateBaseTestCase):
 
         self.assert_warnings()
 
+    def test_root_ld_library_path_braces(self):
+        self.config_data["environment"] = {"LD_LIBRARY_PATH": "/foo:${LD_LIBRARY_PATH}"}
+
+        self.assert_warnings()
+
     def test_root_ld_library_path_with_colon_at_start(self):
         self.config_data["environment"] = {"LD_LIBRARY_PATH": ":/foo:/bar"}
 
@@ -1433,6 +1436,13 @@ class TestAppsEnvironmentLibraryPathWarnings(CreateBaseTestCase):
     def test_app_ld_library_path_app1(self):
         self.config_data["apps"]["app1"]["environment"] = {
             "LD_LIBRARY_PATH": "/foo:$LD_LIBRARY_PATH"
+        }
+
+        self.assert_warnings_app1()
+
+    def test_app_ld_library_path_app1_braces(self):
+        self.config_data["apps"]["app1"]["environment"] = {
+            "LD_LIBRARY_PATH": "/foo:${LD_LIBRARY_PATH}"
         }
 
         self.assert_warnings_app1()
