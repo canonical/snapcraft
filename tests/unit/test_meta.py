@@ -1165,7 +1165,7 @@ class GenerateHookWrappersTestCase(CreateBaseTestCase):
         expected = (
             "#!/bin/sh\n"
             "export PATH=$SNAP/foo\n"
-            "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n"
+            'export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\n'
             'exec "$SNAP/snap/hooks/snap-hook" "$@"\n'
         )
 
@@ -1372,8 +1372,7 @@ class WrapExeTest(BaseWrapTest):
         expected = (
             "#!/bin/sh\n"
             "PATH=$SNAP/usr/bin:$SNAP/bin\n"
-            "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:"
-            "$LD_LIBRARY_PATH\n"
+            'export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\n'
             'exec "$SNAP/test_relexepath" "$@"\n'
         )
 
@@ -1421,8 +1420,7 @@ class WrapExeTest(BaseWrapTest):
         expected = (
             "#!/bin/sh\n"
             "PATH=$SNAP/usr/bin:$SNAP/bin\n"
-            "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:"
-            "$LD_LIBRARY_PATH\n"
+            'export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\n'
             'exec "$SNAP/test_relexepath" "$@"\n'
         )
         self.assertThat(wrapper_path, FileContains(expected))
@@ -1562,6 +1560,176 @@ class WrapExeTest(BaseWrapTest):
         self.assertThat(
             snap_yaml["apps"], Equals({"app": {"command": "command-app.wrapper"}})
         )
+
+
+class TestRootEnvironmentLibraryPathWarnings(CreateBaseTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.config_data["grade"] = "stable"
+
+        self.fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(self.fake_logger)
+
+    def assert_warnings(self):
+        self.generate_meta_yaml()
+
+        self.assertThat(
+            self.fake_logger.output,
+            Contains(
+                "CVE-2020-27348: A potentially empty LD_LIBRARY_PATH has been set for environment "
+                "in '.'. The current working directory will be added to the library path if empty. "
+                "This can cause unexpected libraries to be loaded."
+            ),
+        )
+
+    def assert_no_warnings(self):
+        self.generate_meta_yaml()
+
+        self.assertThat(
+            self.fake_logger.output,
+            Not(
+                Contains(
+                    "CVE-2020-27348: A potentially empty LD_LIBRARY_PATH has been set for environment "
+                    "in '.'. The current working directory will be added to the library path if empty. "
+                    "This can cause unexpected libraries to be loaded."
+                )
+            ),
+        )
+
+    def test_root_ld_library_path(self):
+        self.config_data["environment"] = {"LD_LIBRARY_PATH": "/foo:$LD_LIBRARY_PATH"}
+
+        self.assert_warnings()
+
+    def test_root_ld_library_path_braces(self):
+        self.config_data["environment"] = {"LD_LIBRARY_PATH": "/foo:${LD_LIBRARY_PATH}"}
+
+        self.assert_warnings()
+
+    def test_root_ld_library_path_with_colon_at_start(self):
+        self.config_data["environment"] = {"LD_LIBRARY_PATH": ":/foo:/bar"}
+
+        self.assert_warnings()
+
+    def test_root_ld_library_path_with_colon_at_end(self):
+        self.config_data["environment"] = {"LD_LIBRARY_PATH": "/foo:/bar:"}
+
+        self.assert_warnings()
+
+    def test_root_ld_library_path_with_colon_at_middle(self):
+        self.config_data["environment"] = {"LD_LIBRARY_PATH": "/foo::/bar"}
+
+        self.assert_warnings()
+
+    def test_root_ld_library_path_good(self):
+        self.config_data["environment"] = {"LD_LIBRARY_PATH": "/foo:/bar"}
+
+        self.assert_no_warnings()
+
+
+class TestAppsEnvironmentLibraryPathWarnings(CreateBaseTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.config_data["grade"] = "stable"
+        self.config_data["apps"] = {
+            "app1": {"command": "foo"},
+            "app2": {"command": "bar"},
+        }
+
+        _create_file(os.path.join(self.prime_dir, "foo"), executable=True)
+        _create_file(os.path.join(self.prime_dir, "bar"), executable=True)
+
+        self.fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(self.fake_logger)
+
+    def assert_warnings_both(self):
+        self.generate_meta_yaml()
+
+        self.assertThat(
+            self.fake_logger.output,
+            Contains(
+                "CVE-2020-27348: A potentially empty LD_LIBRARY_PATH has been set for environment "
+                "in 'app1' and 'app2'. The current working directory will be added to the library "
+                "path if empty. "
+                "This can cause unexpected libraries to be loaded."
+            ),
+        )
+
+    def assert_warnings_app1(self):
+        self.generate_meta_yaml()
+
+        self.assertThat(
+            self.fake_logger.output,
+            Contains(
+                "CVE-2020-27348: A potentially empty LD_LIBRARY_PATH has been set for environment "
+                "in 'app1'. The current working directory will be added to the library "
+                "path if empty. "
+                "This can cause unexpected libraries to be loaded."
+            ),
+        )
+
+    def assert_no_warnings(self):
+        self.generate_meta_yaml()
+
+        self.assertThat(
+            self.fake_logger.output,
+            Not(
+                Contains(
+                    "CVE-2020-27348: A potentially empty LD_LIBRARY_PATH has been set for environment "
+                    "in 'app1' and 'app2'. The current working directory will be added to the library "
+                    "path if empty. "
+                    "This can cause unexpected libraries to be loaded."
+                )
+            ),
+        )
+
+    def test_app_ld_library_path_app1(self):
+        self.config_data["apps"]["app1"]["environment"] = {
+            "LD_LIBRARY_PATH": "/foo:$LD_LIBRARY_PATH"
+        }
+
+        self.assert_warnings_app1()
+
+    def test_app_ld_library_path_app1_braces(self):
+        self.config_data["apps"]["app1"]["environment"] = {
+            "LD_LIBRARY_PATH": "/foo:${LD_LIBRARY_PATH}"
+        }
+
+        self.assert_warnings_app1()
+
+    def test_app_ld_library_path_app1_app2(self):
+        self.config_data["apps"]["app1"]["environment"] = {
+            "LD_LIBRARY_PATH": "/foo:$LD_LIBRARY_PATH"
+        }
+        self.config_data["apps"]["app2"]["environment"] = {
+            "LD_LIBRARY_PATH": "/foo:$LD_LIBRARY_PATH"
+        }
+
+        self.assert_warnings_both()
+
+    def test_root_ld_library_path_set(self):
+        self.config_data["environment"] = {"LD_LIBRARY_PATH": "/foo:/bar"}
+
+        self.config_data["apps"]["app1"]["environment"] = {
+            "LD_LIBRARY_PATH": "/foo:$LD_LIBRARY_PATH"
+        }
+        self.config_data["apps"]["app2"]["environment"] = {
+            "LD_LIBRARY_PATH": "/foo:$LD_LIBRARY_PATH"
+        }
+
+        self.assert_no_warnings()
+
+    def test_app_ld_library_path_colon_middle_app1_app2(self):
+        self.config_data["apps"]["app1"]["environment"] = {
+            "LD_LIBRARY_PATH": "/foo::/bar"
+        }
+        self.config_data["apps"]["app2"]["environment"] = {
+            "LD_LIBRARY_PATH": "/foo::/bar"
+        }
+
+        self.assert_warnings_both()
 
 
 def _create_file(path, *, content="", executable=False):

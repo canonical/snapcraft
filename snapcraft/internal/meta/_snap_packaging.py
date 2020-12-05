@@ -111,6 +111,7 @@ def create_snap_packaging(project_config: _config.Config) -> str:
     packaging.setup_assets()
     packaging.generate_hook_wrappers()
     packaging.write_snap_directory()
+    packaging.warn_ld_library_paths()
 
     return packaging.meta_dir
 
@@ -412,6 +413,54 @@ class _SnapPackaging:
 
         self._record_manifest_and_source_snapcraft_yaml()
 
+    def warn_ld_library_paths(self) -> None:
+        root_environment = self._config_data.get("environment", dict())
+        root_ld_library_path = root_environment.get("LD_LIBRARY_PATH")
+        # Dictionary of app names with LD_LIBRARY_PATH in their environment.
+        app_environment: Dict[str, str] = dict()
+
+        for app_name, app_props in self._config_data.get("apps", dict()).items():
+            with contextlib.suppress(KeyError):
+                app_environment[app_name] = app_props["environment"]["LD_LIBRARY_PATH"]
+
+        if root_ld_library_path is None and not app_environment:
+            return
+
+        ld_library_path_empty: Set[str] = set()
+        if root_ld_library_path is None and app_environment:
+            ld_library_path_empty = {
+                name
+                for name, ld_env in app_environment.items()
+                if "$LD_LIBRARY_PATH" in ld_env or "${LD_LIBRARY_PATH}" in ld_env
+            }
+        elif (
+            root_ld_library_path is not None
+            and "LD_LIBRARY_PATH" in root_ld_library_path
+        ):
+            ld_library_path_empty = {"."}
+
+        _EMPTY_LD_LIBRARY_PATH_ITEM_PATTERN = re.compile("^:|::|:$")
+
+        for name, ld_env in app_environment.items():
+            if _EMPTY_LD_LIBRARY_PATH_ITEM_PATTERN.findall(ld_env):
+                ld_library_path_empty.add(name)
+
+        if (
+            root_ld_library_path is not None
+            and _EMPTY_LD_LIBRARY_PATH_ITEM_PATTERN.findall(root_ld_library_path)
+        ):
+            ld_library_path_empty.add(".")
+
+        if ld_library_path_empty:
+            logger.warning(
+                "CVE-2020-27348: A potentially empty LD_LIBRARY_PATH has been set for environment "
+                "in {}. "
+                "The current working directory will be added to the library path if empty. "
+                "This can cause unexpected libraries to be loaded.".format(
+                    formatting_utils.humanize_list(sorted(ld_library_path_empty), "and")
+                )
+            )
+
     def generate_hook_wrappers(self) -> None:
         snap_hooks_dir = os.path.join(self._prime_dir, "snap", "hooks")
         hooks_dir = os.path.join(self._prime_dir, "meta", "hooks")
@@ -527,7 +576,8 @@ class _SnapPackaging:
             if assembled_env:
                 print("{}".format(assembled_env), file=f)
                 print(
-                    "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH", file=f
+                    'export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"',
+                    file=f,
                 )
             if cwd:
                 print("{}".format(cwd), file=f)
