@@ -351,7 +351,9 @@ class Config:
         if dependency_paths:
             # Add more specific LD_LIBRARY_PATH from the dependencies.
             env.append(
-                'LD_LIBRARY_PATH="' + ":".join(dependency_paths) + ':$LD_LIBRARY_PATH"'
+                'LD_LIBRARY_PATH="'
+                + ":".join(dependency_paths)
+                + '${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"'
             )
 
         return env
