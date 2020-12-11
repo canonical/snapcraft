@@ -69,6 +69,7 @@ if sys.platform == "linux" or TYPE_CHECKING:
             "nil": v2.NilPlugin,
             "npm": v2.NpmPlugin,
             "python": v2.PythonPlugin,
+            "qmake": v2.QMakePlugin,
             "rust": v2.RustPlugin,
         },
     }
