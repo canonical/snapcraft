@@ -282,6 +282,7 @@ class LXD(Provider):
         """Create the LXD instance and setup the build environment."""
         self.echoer.info("Launching a container.")
         self.launch_instance()
+        self._mount_project()
 
     def destroy(self) -> None:
         """Destroy the instance, trying to stop it first."""
