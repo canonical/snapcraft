@@ -24,24 +24,24 @@ import re
 import subprocess
 import tempfile
 from datetime import datetime
-from subprocess import Popen
-from typing import Any, Dict, Iterable, List, Optional, TextIO, Tuple, TYPE_CHECKING
 from pathlib import Path
+from subprocess import Popen
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, TextIO, Tuple
+
+from tabulate import tabulate
+
+from snapcraft import storeapi, yaml_utils
 
 # Ideally we would move stuff into more logical components
 from snapcraft.cli import echo
-from tabulate import tabulate
-
 from snapcraft.file_utils import calculate_sha3_384, get_snap_tool_path
-from snapcraft import storeapi, yaml_utils
 from snapcraft.internal import cache, deltas, repo
-from snapcraft.internal.errors import SnapDataExtractionError, ToolMissingError
 from snapcraft.internal.deltas.errors import (
     DeltaGenerationError,
     DeltaGenerationTooBigError,
 )
+from snapcraft.internal.errors import SnapDataExtractionError, ToolMissingError
 from snapcraft.storeapi.constants import DEFAULT_SERIES
-
 
 if TYPE_CHECKING:
     from snapcraft.storeapi._status_tracker import StatusTracker
@@ -984,7 +984,12 @@ def gated(snap_name):
         print("There are no validations for snap {!r}".format(snap_name))
 
 
-def validate(snap_name, validations, revoke=False, key=None):
+def validate(
+    snap_name: str,
+    validations: List[str],
+    revoke: bool = False,
+    key: Optional[str] = None,
+):
     """Generate, sign and upload validation assertions."""
     # Check validations format
     _check_validations(validations)
@@ -1002,26 +1007,32 @@ def validate(snap_name, validations, revoke=False, key=None):
 
     # Then, for each requested validation, generate assertion
     for validation in validations:
-        gated_name, rev = validation.split("=", 1)
-        echo.info("Getting details for {}".format(gated_name))
-        approved_data = store_client.cpi.get_info(gated_name)
-        assertion = {
+        gated_snap, rev = validation.split("=", 1)
+        echo.info(f"Getting details for {gated_snap}")
+        # The Info API is not authed, so it cannot see private snaps.
+        try:
+            approved_data = store_client.cpi.get_info(gated_snap)
+            approved_snap_id = approved_data.snap_id
+        except storeapi.errors.SnapNotFoundError:
+            approved_snap_id = gated_snap
+
+        assertion_payload = {
             "type": "validation",
             "authority-id": authority_id,
             "series": DEFAULT_SERIES,
             "snap-id": snap_id,
-            "approved-snap-id": approved_data.snap_id,
+            "approved-snap-id": approved_snap_id,
             "approved-snap-revision": rev,
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "revoked": "false",
         }
         if revoke:
-            assertion["revoked"] = "true"
+            assertion_payload["revoked"] = "true"
 
-        assertion = _sign_assertion(validation, assertion, key, "validations")
+        assertion = _sign_assertion(validation, assertion_payload, key, "validations")
 
         # Save assertion to a properly named file
-        fname = "{}-{}-r{}.assertion".format(snap_name, gated_name, rev)
+        fname = f"{snap_name}-{gated_snap}-r{rev}.assertion"
         with open(fname, "wb") as f:
             f.write(assertion)
 

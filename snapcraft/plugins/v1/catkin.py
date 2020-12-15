@@ -307,9 +307,6 @@ class CatkinPlugin(PluginV1):
         super().__init__(name, options, project)
 
         base = self.project._get_build_base()
-        if base not in ("core", "core16", "core18"):
-            raise errors.PluginBaseError(part_name=self.name, base=base)
-
         self._rosdistro = _BASE_TO_ROS_RELEASE_MAP[base]
 
         self.build_packages.extend(["gcc", "g++", "libc6-dev", "make", "python-pip"])

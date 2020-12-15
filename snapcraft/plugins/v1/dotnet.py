@@ -29,19 +29,17 @@ The plugin will take into account the following build-attributes:
 
 """
 
+import fnmatch
+import json
 import os
 import shutil
-import fnmatch
 import urllib.parse
 import urllib.request
-import json
 from typing import List
 
-from snapcraft import sources
-from snapcraft import formatting_utils
+from snapcraft import formatting_utils, sources
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import PluginV1
-
 
 _DOTNET_RELEASE_METADATA_URL = "http://dotnetcli.blob.core.windows.net/dotnet/release-metadata/{version}/releases.json"  # noqa
 _RUNTIME_DEFAULT = "2.0.9"

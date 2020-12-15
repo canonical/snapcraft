@@ -18,9 +18,10 @@ from unittest import mock
 
 from testtools.matchers import Equals
 
-from snapcraft import yaml_utils
 import snapcraft.internal
+from snapcraft import yaml_utils
 from tests import unit
+
 from .conftest import Project
 
 

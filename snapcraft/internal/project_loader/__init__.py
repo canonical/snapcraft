@@ -14,17 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import cast, Dict, List, Union
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Union, cast
 
 from ._env import environment_to_replacements, runtime_env  # noqa: F401
-
-from ._parts_config import PartsConfig  # noqa: F401
 from ._extensions import (  # noqa: F401
     apply_extensions,
     find_extension,
     supported_extension_names,
 )
+from ._parts_config import PartsConfig  # noqa: F401
 
 if TYPE_CHECKING:
     from snapcraft.project import Project  # noqa: F401

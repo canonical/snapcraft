@@ -15,10 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import os
 import json
+import os
 from collections import OrderedDict
-from typing import Any, Dict, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Set
 
 import snapcraft
 from snapcraft.internal import errors, os_release, steps

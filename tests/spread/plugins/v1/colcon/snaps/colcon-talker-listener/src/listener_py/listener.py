@@ -1,7 +1,7 @@
 import rclpy
+from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
-from rcl_interfaces.msg import ParameterDescriptor
 from std_msgs.msg import String
 
 

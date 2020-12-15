@@ -20,7 +20,7 @@ from textwrap import dedent
 import yaml as yaml_utils
 from testtools.matchers import Equals
 
-from tests import integration, fixture_setup
+from tests import fixture_setup, integration
 
 
 class SetupPyMetadataTestCase(integration.TestCase):

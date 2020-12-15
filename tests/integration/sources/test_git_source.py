@@ -15,8 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import subprocess
 import shutil
+import subprocess
 from textwrap import dedent
 
 from testtools.matchers import Equals, FileExists

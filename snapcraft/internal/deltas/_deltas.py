@@ -28,7 +28,6 @@ from snapcraft.internal.deltas.errors import (
     DeltaGenerationTooBigError,
 )
 
-
 logger = logging.getLogger(__name__)
 
 

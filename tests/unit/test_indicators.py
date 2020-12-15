@@ -17,7 +17,6 @@
 import os
 from unittest.mock import patch
 
-
 import fixtures
 import progressbar
 import requests

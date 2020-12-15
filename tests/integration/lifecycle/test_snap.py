@@ -20,7 +20,7 @@ from textwrap import dedent
 
 import fixtures
 import testtools
-from testtools.matchers import Equals, EndsWith, FileContains, FileExists, Not
+from testtools.matchers import EndsWith, Equals, FileContains, FileExists, Not
 
 from tests import integration, skip
 

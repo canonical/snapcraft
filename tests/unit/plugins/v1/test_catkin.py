@@ -39,8 +39,9 @@ from testtools.matchers import (
 import snapcraft
 from snapcraft import repo
 from snapcraft.internal import errors
-from snapcraft.plugins.v1 import catkin, _ros
+from snapcraft.plugins.v1 import _ros, catkin
 from tests import unit
+
 from . import PluginsV1BaseTestCase
 
 

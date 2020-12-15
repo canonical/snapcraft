@@ -20,7 +20,6 @@ from typing import Any, Dict, Tuple
 
 from ._extension import Extension
 
-
 _PLATFORM_SNAP = dict(core18="kde-frameworks-5-core18")
 
 

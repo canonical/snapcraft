@@ -24,7 +24,6 @@ from typing import Set
 from snapcraft import file_utils
 from snapcraft.internal import common, errors, os_release
 
-
 logger = logging.getLogger(__name__)
 
 

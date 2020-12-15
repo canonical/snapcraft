@@ -17,17 +17,18 @@
 import logging
 import os
 import pathlib
+from unittest import mock
 
 import fixtures
 import pytest
-from unittest import mock
 from testscenarios import multiply_scenarios
 from testtools.matchers import Contains, Equals, FileExists, HasLength, LessThan, Not
 
 from snapcraft import repo
-from snapcraft.plugins.v1 import colcon
-from snapcraft.plugins.v1 import _ros
+from snapcraft.internal import errors
+from snapcraft.plugins.v1 import _ros, colcon
 from tests import unit
+
 from . import PluginsV1BaseTestCase
 
 
@@ -123,7 +124,7 @@ class ColconPluginTest(ColconPluginTestBase):
         self.project._snap_meta.base = "unsupported-base"
 
         raised = self.assertRaises(
-            colcon.ColconPluginBaseError,
+            errors.PluginBaseError,
             colcon.ColconPlugin,
             "test-part",
             self.properties,
@@ -132,6 +133,20 @@ class ColconPluginTest(ColconPluginTestBase):
 
         self.assertThat(raised.part_name, Equals("test-part"))
         self.assertThat(raised.base, Equals("unsupported-base"))
+
+    def test_unsupported_base_and_rosdistro(self):
+        self.project._snap_meta.base = "core"
+
+        raised = self.assertRaises(
+            colcon.ColconPluginBaseError,
+            colcon.ColconPlugin,
+            "test-part",
+            self.properties,
+            self.project,
+        )
+
+        self.assertThat(raised.part_name, Equals("test-part"))
+        self.assertThat(raised.base, Equals("core"))
         self.assertThat(raised.rosdistro, Equals("crystal"))
 
     def test_schema_colcon_rosdistro(self):
@@ -459,7 +474,7 @@ class ColconPluginTest(ColconPluginTestBase):
             sh_mock.assert_called_with(plugin.installdir)
 
         underlay_setup = os.path.join(plugin.options.colcon_rosdistro, "setup.sh")
-        overlay_setup = os.path.join("snap", "setup.sh")
+        overlay_setup = os.path.join("snap", "local_setup.sh")
 
         # Verify that the python executables and root are set before any setup.sh is
         # sourced. Also verify that the underlay setup is sourced before the overlay.
@@ -495,7 +510,7 @@ class ColconPluginTest(ColconPluginTestBase):
         )
         underlay_setup = os.path.join(underlay, "setup.sh")
         overlay = os.path.join("test-root", "opt", "ros", "snap")
-        overlay_setup = os.path.join(overlay, "setup.sh")
+        overlay_setup = os.path.join(overlay, "local_setup.sh")
 
         # Make sure $@ is zeroed, then setup.sh sourced, then $@ is restored
         lines_of_interest = [

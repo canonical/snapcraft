@@ -16,11 +16,12 @@
 
 import os
 import sys
-from testtools.matchers import Equals
 from unittest import mock
 
-from snapcraft.internal.errors import XAttributeTooLongError
+from testtools.matchers import Equals
+
 from snapcraft.internal import xattrs
+from snapcraft.internal.errors import XAttributeTooLongError
 from tests import unit
 
 

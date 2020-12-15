@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-from plainbox.provider_manager import setup, N_
-
+from plainbox.provider_manager import N_, setup
 
 setup(
     name="plainbox-provider-parent",

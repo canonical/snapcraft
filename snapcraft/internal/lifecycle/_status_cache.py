@@ -18,8 +18,8 @@ import collections
 import contextlib
 from typing import Any, Dict, List, Optional, Set
 
-from snapcraft.internal import errors, pluginhandler, steps
 import snapcraft.internal.project_loader._config as _config
+from snapcraft.internal import errors, pluginhandler, steps
 
 _DirtyReport = Dict[str, Dict[steps.Step, Optional[pluginhandler.DirtyReport]]]
 _OutdatedReport = Dict[str, Dict[steps.Step, Optional[pluginhandler.OutdatedReport]]]

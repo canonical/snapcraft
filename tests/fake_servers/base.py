@@ -15,10 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from pyramid import config
-
 # LP: #1733579
 from wsgiref import simple_server  # type: ignore
+
+from pyramid import config
 
 
 class BaseFakeServer:

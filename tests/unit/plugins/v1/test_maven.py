@@ -31,6 +31,7 @@ from snapcraft.internal.meta.snap import Snap
 from snapcraft.plugins.v1 import maven
 from snapcraft.project import Project
 from tests import unit
+
 from . import PluginsV1BaseTestCase
 
 

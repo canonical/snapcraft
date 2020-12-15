@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from testtools.matchers import Equals
 from testtools import TestCase
+from testtools.matchers import Equals
 
 from snapcraft.plugins.v2.meson import MesonPlugin
 

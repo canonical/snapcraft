@@ -18,6 +18,7 @@ from textwrap import dedent
 from unittest import mock
 
 import fixtures
+
 from snapcraft.cli import echo
 from tests import unit
 

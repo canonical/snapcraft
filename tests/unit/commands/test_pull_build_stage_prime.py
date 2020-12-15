@@ -19,13 +19,13 @@ from unittest import mock
 from testtools.matchers import Equals
 
 from snapcraft.internal import steps
+
 from . import LifecycleCommandsBaseTestCase
 
 
 class TestPullBuildStagePrimeCommand(LifecycleCommandsBaseTestCase):
     def assert_build_provider_calls(self, step: steps.Step):
         self.fake_lifecycle_execute.mock.assert_not_called()
-        self.provider_mock.mount_project.assert_called_once_with()
         if step is None:
             self.provider_mock.execute_step.assert_not_called()
         else:
