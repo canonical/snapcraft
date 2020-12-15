@@ -16,13 +16,11 @@
 
 import logging
 import os
-from typing import FrozenSet, List
 from typing import Dict  # noqa: F401
+from typing import FrozenSet, List
 
-from snapcraft.internal import elf
-from snapcraft.internal import errors
+from snapcraft.internal import elf, errors
 from snapcraft.project import Project
-
 
 logger = logging.getLogger(__name__)
 

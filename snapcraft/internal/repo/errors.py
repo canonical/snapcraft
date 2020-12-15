@@ -14,14 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Sequence
+from typing import List, Optional, Sequence
 
+from snapcraft.internal import errors
 from snapcraft.internal.errors import SnapcraftException
 from snapcraft.internal.os_release import OsRelease
-from ._platform import _is_deb_based
-from snapcraft.internal import errors
 
-from typing import List, Optional
+from ._platform import _is_deb_based
 
 
 class RepoError(errors.SnapcraftError):

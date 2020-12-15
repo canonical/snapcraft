@@ -45,14 +45,13 @@ will be used.
 import collections
 import logging
 import os
-from pathlib import Path
 from contextlib import suppress
+from pathlib import Path
 from typing import List, Optional
 
 import toml
 
-from snapcraft import sources
-from snapcraft import file_utils, shell_utils
+from snapcraft import file_utils, shell_utils, sources
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import PluginV1
 
@@ -90,12 +89,6 @@ class RustPlugin(PluginV1):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-
-        if project._get_build_base() not in ("core", "core16", "core18"):
-            raise errors.PluginBaseError(
-                part_name=self.name, base=project._get_build_base()
-            )
-
         self.build_packages.extend(["gcc", "git", "curl", "file"])
         self._rustup_dir = os.path.expanduser(os.path.join("~", ".rustup"))
         self._cargo_dir = os.path.expanduser(os.path.join("~", ".cargo"))

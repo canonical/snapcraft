@@ -31,7 +31,6 @@ For more information check the 'plugins' topic for the former and the
 
 import os
 
-from snapcraft.internal import errors
 from snapcraft.internal import mangling
 from snapcraft.plugins.v1 import PluginV1
 
@@ -45,17 +44,13 @@ class PlainboxProviderPlugin(PluginV1):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+        self._setup_base_tools()
 
-        self._setup_base_tools(project._get_build_base())
-
-    def _setup_base_tools(self, base):
-        if base in ("core", "core16", "core18"):
-            self.stage_packages.extend(
-                ["python3-pip", "python3-wheel", "python3-setuptools"]
-            )
-            self.build_packages.append("intltool")
-        else:
-            raise errors.PluginBaseError(part_name=self.name, base=base)
+    def _setup_base_tools(self):
+        self.stage_packages.extend(
+            ["python3-pip", "python3-wheel", "python3-setuptools"]
+        )
+        self.build_packages.append("intltool")
 
     def build(self):
         super().build()

@@ -471,7 +471,7 @@ class BuildProviderCleanCommandTestCase(LifecycleCommandsBaseTestCase):
             def clean_project(self):
                 clean_project_mock()
 
-            def clean(self, part_names):
+            def clean_parts(self, part_names):
                 clean_mock(part_names=part_names)
 
         patcher = mock.patch(

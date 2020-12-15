@@ -37,7 +37,7 @@ class CleanCommandTestCase(LifecycleCommandsBaseTestCase):
         self.fake_lifecycle_clean.mock.assert_called_once_with(
             mock.ANY, tuple(), steps.PRIME
         )
-        self.provider_mock.clean.assert_not_called()
+        self.provider_mock.clean_parts.assert_not_called()
         self.provider_class_mock().clean_project.assert_called_once_with()
 
     def test_with_parts_specified_using_defaults(self):
@@ -46,7 +46,7 @@ class CleanCommandTestCase(LifecycleCommandsBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.fake_get_provider_for.mock.assert_called_once_with("multipass")
         self.fake_lifecycle_clean.mock.assert_not_called()
-        self.provider_mock.clean.assert_called_once_with(
+        self.provider_mock.clean_parts.assert_called_once_with(
             part_names=tuple(["part0", "part1", "part2"])
         )
         self.provider_class_mock().clean_project.assert_not_called()
@@ -59,7 +59,7 @@ class CleanCommandTestCase(LifecycleCommandsBaseTestCase):
         self.fake_lifecycle_clean.mock.assert_called_once_with(
             mock.ANY, tuple(), steps.PRIME
         )
-        self.provider_mock.clean.assert_not_called()
+        self.provider_mock.clean_parts.assert_not_called()
         self.provider_class_mock().clean_project.assert_called_once_with()
 
     def test_with_parts_specified_using_lxd(self):
@@ -68,7 +68,7 @@ class CleanCommandTestCase(LifecycleCommandsBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.fake_get_provider_for.mock.assert_called_once_with("lxd")
         self.fake_lifecycle_clean.mock.assert_not_called()
-        self.provider_mock.clean.assert_called_once_with(
+        self.provider_mock.clean_parts.assert_called_once_with(
             part_names=tuple(["part0", "part1", "part2"])
         )
         self.provider_class_mock().clean_project.assert_not_called()

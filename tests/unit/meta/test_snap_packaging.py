@@ -69,8 +69,8 @@ class SnapPackagingRunnerTests(unit.TestCase):
         expected_runner = textwrap.dedent(
             """
             #!/bin/sh
-            export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
-            export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
+            export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin${PATH:+:$PATH}"
+            export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
             exec "$@"
             """
         ).lstrip()
@@ -145,8 +145,8 @@ class SnapPackagingRunnerTests(unit.TestCase):
 
         expected_env = textwrap.dedent(
             """
-            export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
-            export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
+            export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin${PATH:+:$PATH}"
+            export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
             """
         ).strip()
 
@@ -165,8 +165,52 @@ class SnapPackagingRunnerTests(unit.TestCase):
         # Verify that, since all parts are using patchelf, no LD_LIBRARY_PATH is set
         expected_env = textwrap.dedent(
             """
-            export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
+            export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin${PATH:+:$PATH}"
             """
         ).strip()
 
         self.assertThat(assembled_env, Equals(expected_env))
+
+    def test_stub_hook(self):
+        apps = dict(testapp=dict(command="echo"))
+        parts = {"part1": {"plugin": "nil", "build-attributes": ["enable-patchelf"]}}
+        hooks = dict(configure={"command-chain": ["foo"], "plugs": ["network"]})
+
+        sp = self._get_snap_packaging(
+            apps=apps,
+            parts=parts,
+            confinement="strict",
+            type="app",
+            base="core",
+            hooks=hooks,
+        )
+
+        sp.generate_hook_wrappers()
+
+        hook = Path(sp._prime_dir, "meta", "hooks", "configure")
+        assert hook.exists()
+        assert hook.read_text() == "#!/bin/sh\n"
+        assert hook.stat().st_mode & 0xFFF == 0o755
+
+    def test_no_stub_for_preconfigured_hook(self):
+        apps = dict(testapp=dict(command="echo"))
+        parts = {"part1": {"plugin": "nil", "build-attributes": ["enable-patchelf"]}}
+        hooks = dict(configure={"command-chain": ["foo"], "plugs": ["network"]})
+
+        sp = self._get_snap_packaging(
+            apps=apps,
+            parts=parts,
+            confinement="strict",
+            type="app",
+            base="core",
+            hooks=hooks,
+        )
+
+        hook = Path(sp._prime_dir, "meta", "hooks", "configure")
+        hook.parent.mkdir(parents=True)
+        hook.write_text("foo")
+
+        sp.generate_hook_wrappers()
+
+        assert hook.exists()
+        assert hook.read_text() == "foo"
