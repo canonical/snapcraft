@@ -94,3 +94,7 @@ class CMakePlugin(PluginV2):
             'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
             'DESTDIR="${SNAPCRAFT_PART_INSTALL}" cmake --build . --target install',
         ]
+
+    @property
+    def out_of_source_build(self) -> bool:
+        return True

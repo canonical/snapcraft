@@ -117,3 +117,13 @@ def test_get_build_commands_with_cmake_parameters():
         'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
         'DESTDIR="${SNAPCRAFT_PART_INSTALL}" cmake --build . --target install',
     ]
+
+
+def test_out_of_source_build():
+    class Options:
+        cmake_parameters = list()
+        cmake_generator = "Unix Makefiles"
+
+    plugin = CMakePlugin(part_name="my-part", options=Options())
+
+    assert plugin.out_of_source_build is True
