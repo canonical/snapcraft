@@ -26,7 +26,7 @@ import shutil
 import subprocess
 import sys
 from glob import iglob
-from typing import cast, Dict, List, Optional, Set, Sequence, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Set, cast
 
 import snapcraft.extractors
 from snapcraft import file_utils, plugins, yaml_utils
@@ -35,14 +35,13 @@ from snapcraft.internal.mangling import clear_execstack
 
 from ._build_attributes import BuildAttributes
 from ._dependencies import MissingDependencyResolver
+from ._dirty_report import Dependency, DirtyReport  # noqa
 from ._metadata_extraction import extract_metadata
+from ._outdated_report import OutdatedReport
 from ._part_environment import get_snapcraft_part_environment
+from ._patchelf import PartPatcher
 from ._plugin_loader import load_plugin  # noqa: F401
 from ._runner import Runner
-from ._patchelf import PartPatcher
-from ._dirty_report import Dependency, DirtyReport  # noqa
-from ._outdated_report import OutdatedReport
-
 
 if TYPE_CHECKING:
     from snapcraft.project import Project

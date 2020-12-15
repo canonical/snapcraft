@@ -62,8 +62,8 @@ be used.
 
 import logging
 import os
-import subprocess
 import re
+import subprocess
 
 from snapcraft import file_utils
 from snapcraft.internal import errors

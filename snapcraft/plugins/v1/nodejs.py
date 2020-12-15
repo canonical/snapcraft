@@ -50,8 +50,8 @@ import subprocess
 import sys
 
 from snapcraft import sources
-from snapcraft.internal import errors
 from snapcraft.file_utils import link_or_copy, link_or_copy_tree
+from snapcraft.internal import errors
 from snapcraft.plugins.v1 import PluginV1
 
 _NODEJS_BASE = "node-v{version}-linux-{arch}"

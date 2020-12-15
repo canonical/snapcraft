@@ -44,12 +44,6 @@ jobs:
         - /snap/bin/http https://api.snapcraft.io/v2/snaps/info/core architecture==amd64 Snap-Device-Series:16
 
     - stage: integration
-      name: spread
-      workspaces:
-        use: snaps
-      if: repo = "snapcore/snapcraft" or env(SPREAD_GOOGLE_KEY) IS present
-      script: ./runtests.sh spread "google:"
-    - stage: integration
       name: store
       workspaces:
         use: snaps
@@ -82,16 +76,3 @@ jobs:
         - cd docker
         - docker build --no-cache -f ${RISK}.Dockerfile --tag snapcore/snapcraft:${RISK} .
         - docker run snapcore/snapcraft:${RISK} snapcraft --version
-    # CLA check, only in pull requests, not coming from the bot.
-    - stage: cla
-      name:  CLA check
-      addons:
-        apt:
-          packages:
-            - git
-            - python-launchpadlib
-      if: type = pull_request AND sender != snappy-m-o
-      git:
-        depth: false
-      script:
-        - ./tools/cla_check.py

@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import apt
 import logging
 import os
 import re
@@ -22,6 +21,8 @@ import shutil
 from contextlib import ContextDecorator
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
+
+import apt
 
 from snapcraft.internal import common
 from snapcraft.internal.indicators import is_dumb_terminal
