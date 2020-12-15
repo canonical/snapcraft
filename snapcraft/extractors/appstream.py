@@ -21,11 +21,11 @@ from io import StringIO
 from typing import List, Optional
 
 import lxml.etree
-
 from xdg.DesktopEntry import DesktopEntry
-from ._metadata import ExtractedMetadata
+
 from snapcraft.extractors import _errors
 
+from ._metadata import ExtractedMetadata
 
 _xslt = None
 _XSLT = """\
@@ -197,11 +197,7 @@ def _extract_icon(dom, workdir: str, desktop_file_paths: List[str]) -> Optional[
     icon = icon_node.text.strip() if icon_node is not None else None
 
     if icon_node_type == "remote":
-        # TODO Currently we only support local and stock icons.
-        # See bug https://bugs.launchpad.net/snapcraft/+bug/1742348
-        # for supporting remote icons.
-        # --elopio -20180109
-        return None
+        return icon
     elif icon_node_type == "stock":
         return _get_icon_from_theme(workdir, "hicolor", icon)
 

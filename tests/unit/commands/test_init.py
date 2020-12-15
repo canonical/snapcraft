@@ -16,8 +16,9 @@
 import os
 from textwrap import dedent
 
-import snapcraft.internal.errors
 from testtools.matchers import Contains, Equals, FileContains
+
+import snapcraft.internal.errors
 
 from . import CommandBaseTestCase
 

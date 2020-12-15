@@ -20,6 +20,7 @@ from testtools.matchers import Contains, Equals
 
 import snapcraft.storeapi.errors
 from snapcraft import storeapi
+
 from . import FakeStoreCommandsBaseTestCase
 
 

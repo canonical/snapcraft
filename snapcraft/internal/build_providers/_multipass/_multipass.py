@@ -19,12 +19,12 @@ import os
 import sys
 from typing import Dict, Optional, Sequence
 
+from snapcraft.internal.errors import SnapcraftEnvironmentError
+
 from .. import errors
 from .._base_provider import Provider
 from ._instance_info import InstanceInfo
 from ._multipass_command import MultipassCommand
-from snapcraft.internal.errors import SnapcraftEnvironmentError
-
 
 logger = logging.getLogger(__name__)
 
@@ -211,8 +211,9 @@ class Multipass(Provider):
 
     def clean_project(self) -> bool:
         was_cleaned = super().clean_project()
-        if was_cleaned:
+        if self._multipass_cmd.exists(instance_name=self.instance_name):
             self._multipass_cmd.delete(instance_name=self.instance_name, purge=True)
+            return True
         return was_cleaned
 
     def pull_file(self, name: str, destination: str, delete: bool = False) -> None:

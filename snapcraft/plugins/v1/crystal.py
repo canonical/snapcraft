@@ -73,11 +73,6 @@ class CrystalPlugin(PluginV1):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        if project._get_build_base() not in ("core", "core16", "core18"):
-            raise errors.PluginBaseError(
-                part_name=self.name, base=project._get_build_base()
-            )
-
         self.build_snaps.append("crystal/{}".format(self.options.crystal_channel))
         self.build_packages.extend(
             [

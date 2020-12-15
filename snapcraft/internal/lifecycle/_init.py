@@ -19,7 +19,6 @@ from textwrap import dedent
 
 from snapcraft.internal import errors
 
-
 _TEMPLATE_YAML = dedent(
     """\
     name: my-snap-name # you probably want to 'snapcraft register <name>'

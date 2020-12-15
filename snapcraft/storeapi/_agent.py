@@ -18,8 +18,8 @@ import os
 import sys
 
 import snapcraft
-from snapcraft.internal.errors import OsReleaseNameError, OsReleaseVersionIdError
 from snapcraft.internal import os_release
+from snapcraft.internal.errors import OsReleaseNameError, OsReleaseVersionIdError
 
 
 def _is_ci_env():

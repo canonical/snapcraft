@@ -16,7 +16,6 @@
 
 from typing import Optional, Type
 
-
 _VALID_RISKS = ["stable", "candidate", "beta", "edge"]
 
 

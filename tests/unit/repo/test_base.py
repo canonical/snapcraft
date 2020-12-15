@@ -22,6 +22,7 @@ from testtools.matchers import Equals, FileContains, FileExists, Not
 
 from snapcraft.internal.repo._base import BaseRepo, get_pkg_name_parts
 from tests import unit
+
 from . import RepoBaseTestCase
 
 

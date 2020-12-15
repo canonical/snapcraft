@@ -17,7 +17,6 @@
 import contextlib
 from typing import Dict, Optional  # noqa: F401
 
-
 _ID_TO_UBUNTU_CODENAME = {
     "17.10": "artful",
     "17.04": "zesty",

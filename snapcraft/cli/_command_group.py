@@ -16,8 +16,8 @@
 import click
 
 from snapcraft.internal import deprecations
-from . import echo
 
+from . import echo
 
 _CMD_DEPRECATED_REPLACEMENTS = {
     "strip": "prime",
@@ -34,6 +34,7 @@ _CMD_ALIASES = {
     "plugins": "list-plugins",
     "collaborators": "edit-collaborators",
     "extensions": "list-extensions",
+    "tracks": "list-tracks",
 }
 
 _CMD_DEPRECATION_NOTICES = {

@@ -19,6 +19,9 @@ class BuildAttributes:
     def __init__(self, build_attributes):
         self._attributes = build_attributes
 
+    def enable_patchelf(self):
+        return "enable-patchelf" in self._attributes
+
     def no_patchelf(self):
         return "no-patchelf" in self._attributes
 

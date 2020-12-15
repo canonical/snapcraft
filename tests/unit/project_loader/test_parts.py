@@ -19,10 +19,11 @@ from textwrap import dedent
 
 from testtools.matchers import Equals
 
-from . import LoadPartBaseTest, ProjectLoaderBaseTest
-from snapcraft.project import Project
 from snapcraft.internal import project_loader
+from snapcraft.project import Project
 from tests import fixture_setup
+
+from . import LoadPartBaseTest, ProjectLoaderBaseTest
 
 
 def get_project_config(snapcraft_yaml_content):

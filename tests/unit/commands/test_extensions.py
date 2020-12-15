@@ -16,14 +16,14 @@
 
 import textwrap
 from typing import Tuple
-
 from unittest import mock
+
 from testtools.matchers import Equals
 
 from snapcraft.internal.project_loader import errors, supported_extension_names
 from snapcraft.internal.project_loader._extensions._extension import Extension
-
 from tests import fixture_setup
+
 from . import CommandBaseTestCase
 
 

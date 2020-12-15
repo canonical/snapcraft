@@ -19,6 +19,8 @@ bld.add_manual_dependency('main.c', bld.path.find_resource('wscript_build'))
 # ----------------------------------------
 
 from waflib import TaskGen
+
+
 @TaskGen.feature('aaa')
 @TaskGen.before('apply_link')
 def add_one_task(self):
@@ -27,6 +29,8 @@ def add_one_task(self):
 	tsk.outputs = [self.bld.path.find_or_declare('abc.h')]
 
 import waflib.Task
+
+
 class foo(waflib.Task.Task):
 	"""this is a task class"""
 	before = ['c']

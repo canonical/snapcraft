@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import Optional, List, Sequence, Set
+from typing import List, Optional, Sequence, Set
 
 from snapcraft import config, plugins, storeapi
 from snapcraft.internal import (
@@ -27,12 +27,12 @@ from snapcraft.internal import (
     states,
     steps,
 )
+from snapcraft.internal.meta._snap_packaging import create_snap_packaging
 from snapcraft.internal.pluginhandler._part_environment import (
     get_snapcraft_part_directory_environment,
 )
-from snapcraft.internal.meta._snap_packaging import create_snap_packaging
-from ._status_cache import StatusCache
 
+from ._status_cache import StatusCache
 
 logger = logging.getLogger(__name__)
 

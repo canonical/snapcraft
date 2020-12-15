@@ -19,11 +19,11 @@ from typing import Tuple
 
 from testtools.matchers import Contains, Equals, Not
 
-from snapcraft.project import errors as project_errors
 from snapcraft.internal.project_loader import errors
 from snapcraft.internal.project_loader._extensions._extension import Extension
-
+from snapcraft.project import errors as project_errors
 from tests import fixture_setup
+
 from .. import ProjectLoaderBaseTest
 
 

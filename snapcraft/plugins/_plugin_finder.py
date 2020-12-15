@@ -15,9 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from typing import Dict, Type, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Type, Union
 
 from snapcraft.internal import errors
+
 from . import v1, v2
 
 PluginTypes = Union[Type[v1.PluginV1], Type[v2.PluginV2]]
@@ -25,7 +26,7 @@ PluginTypes = Union[Type[v1.PluginV1], Type[v2.PluginV2]]
 # TODO: segregate into base specific plugins.
 if sys.platform == "linux" or TYPE_CHECKING:
     _PLUGINS: Dict[str, Dict[str, PluginTypes]] = {
-        "legacy": {
+        "v1": {
             "ant": v1.AntPlugin,
             "autotools": v1.AutotoolsPlugin,
             "catkin": v1.CatkinPlugin,
@@ -55,13 +56,16 @@ if sys.platform == "linux" or TYPE_CHECKING:
             "scons": v1.SconsPlugin,
             "waf": v1.WafPlugin,
         },
-        "core20": {
+        "v2": {
             "autotools": v2.AutotoolsPlugin,
-            "dump": v2.DumpPlugin,
+            "catkin": v2.CatkinPlugin,
+            "catkin-tools": v2.CatkinToolsPlugin,
             "cmake": v2.CMakePlugin,
+            "colcon": v2.ColconPlugin,
+            "dump": v2.DumpPlugin,
+            "go": v2.GoPlugin,
             "make": v2.MakePlugin,
             "meson": v2.MesonPlugin,
-            "go": v2.GoPlugin,
             "nil": v2.NilPlugin,
             "npm": v2.NpmPlugin,
             "python": v2.PythonPlugin,
@@ -70,7 +74,7 @@ if sys.platform == "linux" or TYPE_CHECKING:
     }
 else:
     # We cannot import the plugins on anything but linux.
-    _PLUGINS = {"legacy": {}}
+    _PLUGINS = {"v1": {}, "v2": {}}
 
 
 def get_plugin_for_base(plugin_name: str, *, build_base: str) -> PluginTypes:
@@ -82,10 +86,19 @@ def get_plugin_for_base(plugin_name: str, *, build_base: str) -> PluginTypes:
     """
     # TODO: segregate this more and remove the checks UnsupportedBase checks
     # from the plugins
+
+    # Default for unknown, and core20
+    plugin_version = "v2"
+    # Others use v1
     if build_base in ("core", "core16", "core18"):
-        build_base = "legacy"
+        plugin_version = "v1"
+    elif build_base == "":
+        # This should never happen when using build_base from Project.
+        raise RuntimeError("'build_base' cannot be unset.")
+        plugin_version = "v1"
+
     try:
-        plugin_classes = _PLUGINS[build_base]
+        plugin_classes = _PLUGINS[plugin_version]
         return plugin_classes[plugin_name]
     except KeyError:
         raise errors.PluginError(f"unknown plugin: {plugin_name!r}")

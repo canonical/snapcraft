@@ -24,6 +24,7 @@ from testtools.matchers import Contains, Equals, Not
 import tests
 from snapcraft import storeapi
 from snapcraft.storeapi.errors import StoreUploadError
+
 from . import CommandBaseTestCase
 
 

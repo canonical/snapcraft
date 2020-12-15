@@ -15,10 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pathlib
 import stat
+from typing import Union
 
 
-def _executable_is_valid(path: str) -> bool:
+def _executable_is_valid(path: Union[str, pathlib.Path]) -> bool:
     if not os.path.isfile(path):
         return False
 

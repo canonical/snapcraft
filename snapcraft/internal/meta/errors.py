@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List
+from typing import List, Optional
 
 from snapcraft import formatting_utils
 from snapcraft.internal import errors
@@ -158,27 +158,6 @@ class InvalidDesktopFileError(errors.SnapcraftError):
         super().__init__(filename=filename, message=message)
 
 
-class PrimedCommandNotFoundError(errors.SnapcraftError):
-    fmt = (
-        "Failed to generate snap metadata: "
-        "Specified command {command!r} was not found.\n"
-        "Verify the command is correct and for a more "
-        "deterministic outcome, specify the relative path "
-        "to the command from the prime directory."
-    )
-
-    def __init__(self, command: str) -> None:
-        super().__init__(command=command)
-
-
-class ShebangNotFoundError(Exception):
-    """Internal exception for when a shebang is not found."""
-
-
-class ShebangInRoot(Exception):
-    """Internal exception for when a shebang is part of the root."""
-
-
 class SlotValidationError(errors.SnapcraftError):
     fmt = "failed to validate slot={slot_name}: {message}"
 
@@ -198,6 +177,27 @@ class HookValidationError(errors.SnapcraftError):
 
     def __init__(self, *, hook_name: str, message: str) -> None:
         super().__init__(hook_name=hook_name, message=message)
+
+
+class PackageRepositoryValidationError(errors.SnapcraftException):
+    def __init__(
+        self, *, url: str, brief: str, resolution: Optional[str] = None
+    ) -> None:
+        self.url = url
+        self.brief = brief
+        self.resolution = resolution
+
+    def get_brief(self) -> str:
+        return f"Invalid package-repository for {self.url!r}: {self.brief}"
+
+    def get_resolution(self) -> str:
+        if self.resolution:
+            return self.resolution
+
+        return "You can verify package repository configuration according to the referenced documentation."
+
+    def get_docs_url(self) -> str:
+        return "https://snapcraft.io/docs/package-repositories"
 
 
 class SystemUsernamesValidationError(errors.SnapcraftException):

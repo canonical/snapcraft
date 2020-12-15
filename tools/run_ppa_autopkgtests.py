@@ -21,7 +21,6 @@ import tempfile
 
 from launchpadlib.launchpad import Launchpad
 
-
 ACTIVE_DISTROS = ("xenial", "artful", "bionic")
 ACTIVE_ARCHITECTURES = ("amd64", "i386", "armhf", "arm64")
 

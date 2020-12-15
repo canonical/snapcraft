@@ -21,8 +21,8 @@ import os
 import subprocess
 
 from snapcraft.cli._runner import run
-from snapcraft.cli.snapcraftctl._runner import run as run_snapcraftctl  # noqa
 from snapcraft.cli.echo import warning
+from snapcraft.cli.snapcraftctl._runner import run as run_snapcraftctl  # noqa
 
 # If the locale ends up being ascii, Click will barf. Let's try to prevent that
 # here by using C.UTF-8 as a last-resort fallback. This mostly happens in CI,

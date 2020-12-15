@@ -15,9 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import requests
 from unittest import mock
 
+import requests
 from testtools.matchers import Contains, Equals
 
 from snapcraft.internal.sources import _base, errors

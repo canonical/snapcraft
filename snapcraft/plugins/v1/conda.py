@@ -33,7 +33,6 @@ from typing import Optional, Tuple
 from snapcraft.internal import errors, sources
 from snapcraft.plugins.v1 import PluginV1
 
-
 _MINICONDA_CHECKSUMS = {"4.6.14": "md5/718259965f234088d785cad1fbd7de03"}
 
 
@@ -89,11 +88,6 @@ class CondaPlugin(PluginV1):
 
     def __init__(self, name, options, project) -> None:
         super().__init__(name, options, project)
-        if project._get_build_base() not in ("core", "core16", "core18"):
-            raise errors.PluginBaseError(
-                part_name=self.name, base=project._get_build_base()
-            )
-
         self._conda_home = os.path.join(self.partdir, "miniconda")
         self._miniconda_script = os.path.join(self.partdir, "miniconda.sh")
 

@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pytest
 from testtools.matchers import Equals, HasLength, Is, IsInstance
 
 from snapcraft.storeapi.v2 import channel_map
@@ -22,23 +23,25 @@ from tests import unit
 
 class ProgressiveTest(unit.TestCase):
     def test_progressive(self):
-        payload = {"paused": False, "percentage": 83.3}
+        payload = {"paused": False, "percentage": 83.3, "current-percentage": 32.1}
 
         p = channel_map.Progressive.unmarshal(payload)
 
-        self.expectThat(repr(p), Equals(f"<Progressive: 83.3>"))
+        self.expectThat(repr(p), Equals(f"<Progressive: 32.1=>83.3>"))
         self.expectThat(p.paused, Equals(payload["paused"]))
         self.expectThat(p.percentage, Equals(payload["percentage"]))
+        self.expectThat(p.current_percentage, Equals(payload["current-percentage"]))
         self.expectThat(p.marshal(), Equals(payload))
 
     def test_none(self):
-        payload = {"paused": None, "percentage": None}
+        payload = {"paused": None, "percentage": None, "current-percentage": None}
 
         p = channel_map.Progressive.unmarshal(payload)
 
-        self.expectThat(repr(p), Equals(f"<Progressive: None>"))
+        self.expectThat(repr(p), Equals(f"<Progressive: None=>None>"))
         self.expectThat(p.paused, Equals(payload["paused"]))
         self.expectThat(p.percentage, Equals(payload["percentage"]))
+        self.expectThat(p.current_percentage, Equals(payload["current-percentage"]))
         self.expectThat(p.marshal(), Equals(payload))
 
 
@@ -50,7 +53,11 @@ class MappedChannelTest(unit.TestCase):
             "architecture": "amd64",
             "channel": "latest/stable",
             "expiration-date": None,
-            "progressive": {"paused": None, "percentage": None},
+            "progressive": {
+                "paused": None,
+                "percentage": None,
+                "current-percentage": None,
+            },
             "revision": 2,
         }
 
@@ -140,6 +147,34 @@ class SnapChannelTest(unit.TestCase):
         self.expectThat(sc.marshal(), Equals(self.payload))
 
 
+_TRACK_PAYLOADS = [
+    {
+        "name": "latest",
+        "status": "active",
+        "creation-date": None,
+        "version-pattern": None,
+    },
+    {
+        "name": "1.0",
+        "status": "default",
+        "creation-date": "2019-10-17T14:11:59Z",
+        "version-pattern": "1.*",
+    },
+]
+
+
+@pytest.mark.parametrize("payload", _TRACK_PAYLOADS)
+def test_snap_track(payload):
+    st = channel_map.SnapTrack.unmarshal(payload)
+
+    assert repr(st) == f"<SnapTrack: {st.name!r}>"
+    assert st.name == payload["name"]
+    assert st.status == payload["status"]
+    assert st.creation_date == payload["creation-date"]
+    assert st.version_pattern == payload["version-pattern"]
+    assert st.marshal() == payload
+
+
 class RevisionTest(unit.TestCase):
     def test_revision(self):
         payload = {"revision": 2, "version": "2.0", "architectures": ["amd64", "arm64"]}
@@ -178,6 +213,20 @@ class SnapTest(unit.TestCase):
                     "fallback": "latest/stable",
                 },
             ],
+            "tracks": [
+                {
+                    "name": "track1",
+                    "creation-date": "2019-10-17T14:11:59Z",
+                    "status": "default",
+                    "version-pattern": None,
+                },
+                {
+                    "name": "track2",
+                    "creation-date": None,
+                    "status": "active",
+                    "version-pattern": None,
+                },
+            ],
         }
 
         s = channel_map.Snap.unmarshal(payload)
@@ -201,28 +250,44 @@ class ChannelMapTest(unit.TestCase):
                     "architecture": "amd64",
                     "channel": "latest/stable",
                     "expiration-date": None,
-                    "progressive": {"paused": None, "percentage": None},
+                    "progressive": {
+                        "paused": None,
+                        "percentage": None,
+                        "current-percentage": None,
+                    },
                     "revision": 2,
                 },
                 {
                     "architecture": "amd64",
                     "channel": "latest/stable",
                     "expiration-date": None,
-                    "progressive": {"paused": None, "percentage": 33.3},
+                    "progressive": {
+                        "paused": None,
+                        "percentage": 33.3,
+                        "current-percentage": 12.3,
+                    },
                     "revision": 3,
                 },
                 {
                     "architecture": "arm64",
                     "channel": "latest/stable",
                     "expiration-date": None,
-                    "progressive": {"paused": None, "percentage": None},
+                    "progressive": {
+                        "paused": None,
+                        "percentage": None,
+                        "current-percentage": None,
+                    },
                     "revision": 2,
                 },
                 {
                     "architecture": "i386",
                     "channel": "latest/stable",
                     "expiration-date": None,
-                    "progressive": {"paused": None, "percentage": None},
+                    "progressive": {
+                        "paused": None,
+                        "percentage": None,
+                        "current-percentage": None,
+                    },
                     "revision": 4,
                 },
             ],
@@ -247,6 +312,20 @@ class ChannelMapTest(unit.TestCase):
                         "risk": "candidate",
                         "branch": None,
                         "fallback": "latest/stable",
+                    },
+                ],
+                "tracks": [
+                    {
+                        "name": "track1",
+                        "creation-date": "2019-10-17T14:11:59Z",
+                        "status": "default",
+                        "version-pattern": None,
+                    },
+                    {
+                        "name": "track2",
+                        "creation-date": None,
+                        "status": "active",
+                        "version-pattern": None,
                     },
                 ],
             },
