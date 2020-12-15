@@ -66,9 +66,8 @@ from typing import Sequence
 from urllib.parse import urlsplit
 
 from snapcraft import formatting_utils
-from snapcraft.plugins.v1 import PluginV1
 from snapcraft.internal import errors, sources
-
+from snapcraft.plugins.v1 import PluginV1
 
 logger = logging.getLogger(__name__)
 

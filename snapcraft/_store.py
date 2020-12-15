@@ -24,24 +24,24 @@ import re
 import subprocess
 import tempfile
 from datetime import datetime
-from subprocess import Popen
-from typing import Any, Dict, Iterable, List, Optional, TextIO, Tuple, TYPE_CHECKING
 from pathlib import Path
+from subprocess import Popen
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, TextIO, Tuple
+
+from tabulate import tabulate
+
+from snapcraft import storeapi, yaml_utils
 
 # Ideally we would move stuff into more logical components
 from snapcraft.cli import echo
-from tabulate import tabulate
-
 from snapcraft.file_utils import calculate_sha3_384, get_snap_tool_path
-from snapcraft import storeapi, yaml_utils
 from snapcraft.internal import cache, deltas, repo
-from snapcraft.internal.errors import SnapDataExtractionError, ToolMissingError
 from snapcraft.internal.deltas.errors import (
     DeltaGenerationError,
     DeltaGenerationTooBigError,
 )
+from snapcraft.internal.errors import SnapDataExtractionError, ToolMissingError
 from snapcraft.storeapi.constants import DEFAULT_SERIES
-
 
 if TYPE_CHECKING:
     from snapcraft.storeapi._status_tracker import StatusTracker

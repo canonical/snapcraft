@@ -57,7 +57,7 @@ import os
 import shutil
 import textwrap
 from glob import glob
-from typing import Sequence, Optional
+from typing import Optional, Sequence
 from urllib.parse import urlparse
 from xml.etree import ElementTree
 

@@ -14,11 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import ChainMap
 import logging
+from collections import ChainMap
 from os import path
-from typing import List
 from typing import Set  # noqa: F401
+from typing import List
 
 import snapcraft
 from snapcraft.internal import elf, pluginhandler, repo
@@ -26,8 +26,9 @@ from snapcraft.internal.pluginhandler._part_environment import (
     get_snapcraft_global_environment,
     get_snapcraft_part_directory_environment,
 )
-from ._env import build_env, build_env_for_stage, runtime_env
+
 from . import errors, grammar_processing
+from ._env import build_env, build_env_for_stage, runtime_env
 
 logger = logging.getLogger(__name__)
 
