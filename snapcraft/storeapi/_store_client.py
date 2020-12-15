@@ -17,29 +17,22 @@
 import os
 import urllib.parse
 from time import sleep
-from typing import Any, Dict, Iterable, List, Optional, TextIO, Union, TYPE_CHECKING
+from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
 
 import pymacaroons
 import requests
 
-import snapcraft
 from snapcraft import config
 from snapcraft.internal.indicators import download_requests_stream
 
-from . import logger
-from . import _upload
-from . import errors
-from .constants import DEFAULT_SERIES
-
-from ._sso_client import SSOClient
-from ._snap_index_client import SnapIndexClient
+from . import _upload, errors, logger
 from ._sca_client import SCAClient
+from ._snap_index_client import SnapIndexClient
 from ._snap_v2_client import SnapV2Client
+from ._sso_client import SSOClient
 from ._up_down_client import UpDownClient
-
-
-if TYPE_CHECKING:
-    from .v2 import snap_channel_map
+from .constants import DEFAULT_SERIES
+from .v2 import channel_map, releases
 
 
 class StoreClient:
@@ -224,25 +217,6 @@ class StoreClient:
             progressive_percentage=progressive_percentage,
         )
 
-    def get_snap_revisions(self, snap_name, arch=None):
-        account_info = self.get_account_information()
-        try:
-            snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
-        except KeyError:
-            raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
-
-        if snap_id is None:
-            raise errors.NoSnapIdError(snap_name)
-
-        response = self._refresh_if_necessary(
-            self.sca.snap_revisions, snap_id, DEFAULT_SERIES, arch
-        )
-
-        if not response:
-            raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
-
-        return response
-
     def get_snap_status(self, snap_name, arch=None):
         account_info = self.get_account_information()
         try:
@@ -262,11 +236,14 @@ class StoreClient:
 
         return response
 
-    def get_snap_channel_map(
-        self, *, snap_name: str
-    ) -> "snap_channel_map.SnapChannelMap":
+    def get_snap_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
         return self._refresh_if_necessary(
             self.v2_snap.get_snap_channel_map, snap_name=snap_name
+        )
+
+    def get_snap_releases(self, *, snap_name: str) -> releases.Releases:
+        return self._refresh_if_necessary(
+            self.v2_snap.get_snap_releases, snap_name=snap_name
         )
 
     def close_channels(self, snap_id, channel_names):
@@ -280,13 +257,10 @@ class StoreClient:
         *,
         risk: str,
         download_path: str,
-        track: str = None,
-        arch: str = None,
-        except_hash=""
+        track: Optional[str] = None,
+        arch: Optional[str] = None,
+        except_hash: str = ""
     ):
-        if arch is None:
-            arch = snapcraft.ProjectOptions().deb_arch
-
         snap_info = self.cpi.get_info(snap_name)
         channel_mapping = snap_info.get_channel_mapping(
             risk=risk, track=track, arch=arch

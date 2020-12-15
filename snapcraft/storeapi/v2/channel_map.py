@@ -40,17 +40,32 @@ class Progressive:
                 "progressive"
             ],
         )
-        return cls(paused=payload["paused"], percentage=payload["percentage"])
+        return cls(
+            paused=payload["paused"],
+            percentage=payload["percentage"],
+            current_percentage=payload["current-percentage"],
+        )
 
     def marshal(self) -> Dict[str, Any]:
-        return {"paused": self.paused, "percentage": self.percentage}
+        return {
+            "paused": self.paused,
+            "percentage": self.percentage,
+            "current-percentage": self.current_percentage,
+        }
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}: {self.percentage!r}>"
+        return f"<{self.__class__.__name__}: {self.current_percentage!r}=>{self.percentage!r}>"
 
-    def __init__(self, *, paused: Optional[bool], percentage: Optional[float]) -> None:
+    def __init__(
+        self,
+        *,
+        paused: Optional[bool],
+        percentage: Optional[float],
+        current_percentage: Optional[float],
+    ) -> None:
         self.paused = paused
         self.percentage = percentage
+        self.current_percentage = current_percentage
 
 
 class MappedChannel:

@@ -23,12 +23,12 @@ from unittest import mock
 
 import fixtures
 import pymacaroons
-from testtools.matchers import Contains, Equals, FileExists, Not, Is, IsInstance
+from testtools.matchers import Contains, Equals, FileExists, Is, IsInstance, Not
 
 import tests
 from snapcraft import config, storeapi
 from snapcraft.storeapi import errors
-from snapcraft.storeapi.v2 import channel_map
+from snapcraft.storeapi.v2 import channel_map, releases
 from tests import fixture_setup, unit
 
 
@@ -1277,92 +1277,6 @@ class MacaroonsTestCase(unit.TestCase):
         self.assertRaises(errors.InvalidCredentialsError, storeapi._macaroon_auth, conf)
 
 
-class GetSnapRevisionsTestCase(StoreTestCase):
-    def setUp(self):
-        super().setUp()
-        self.expected = [
-            {
-                "series": ["16"],
-                "channels": [],
-                "version": "2.0.1",
-                "timestamp": "2016-09-27T19:23:40Z",
-                "current_channels": ["beta", "edge"],
-                "arch": "i386",
-                "revision": 2,
-            },
-            {
-                "series": ["16"],
-                "channels": ["stable", "edge"],
-                "version": "2.0.2",
-                "timestamp": "2016-09-27T18:38:43Z",
-                "current_channels": ["stable", "candidate", "beta"],
-                "arch": "amd64",
-                "revision": 1,
-            },
-        ]
-
-    def test_get_snap_revisions_without_login_raises_exception(self):
-        self.assertRaises(
-            errors.InvalidCredentialsError, self.client.get_snap_revisions, "basic"
-        )
-
-    def test_get_snap_revisions_successfully(self):
-        self.client.login("dummy", "test correct password")
-        self.assertThat(self.client.get_snap_revisions("basic"), Equals(self.expected))
-
-    def test_get_snap_revisions_filter_by_arch(self):
-        self.client.login("dummy", "test correct password")
-        self.assertThat(
-            self.client.get_snap_revisions("basic", arch="amd64"),
-            Equals([rev for rev in self.expected if rev["arch"] == "amd64"]),
-        )
-
-    def test_get_snap_revisions_filter_by_unknown_arch(self):
-        self.client.login("dummy", "test correct password")
-
-        raised = self.assertRaises(
-            storeapi.errors.SnapNotFoundError,
-            self.client.get_snap_revisions,
-            "basic",
-            arch="some-arch",
-        )
-
-        self.expectThat(raised._snap_name, Equals("basic"))
-        self.expectThat(raised._channel, Is(None))
-        self.expectThat(raised._arch, Equals("some-arch"))
-
-    def test_get_snap_revisions_refreshes_macaroon(self):
-        self.client.login("dummy", "test correct password")
-        self.fake_store.needs_refresh = True
-        self.assertThat(self.client.get_snap_revisions("basic"), Equals(self.expected))
-        self.assertFalse(self.fake_store.needs_refresh)
-
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get")
-    def test_get_snap_revisions_server_error(self, mock_sca_get, mock_account_info):
-        mock_account_info.return_value = {
-            "snaps": {"16": {"basic": {"snap-id": "my_snap_id"}}}
-        }
-
-        mock_sca_get.return_value = mock.Mock(
-            ok=False, status_code=500, reason="Server error", json=lambda: {}
-        )
-
-        self.client.login("dummy", "test correct password")
-        e = self.assertRaises(
-            storeapi.errors.StoreSnapRevisionsError,
-            self.client.get_snap_revisions,
-            "basic",
-        )
-        self.assertThat(
-            str(e),
-            Equals(
-                "Error fetching revisions of snap id 'my_snap_id' for "
-                "'any arch' in '16' series: 500 Server error."
-            ),
-        )
-
-
 class GetSnapStatusTestCase(StoreTestCase):
     def setUp(self):
         super().setUp()
@@ -1525,6 +1439,22 @@ class SnapChannelMapTest(StoreTestCase):
         self.assertThat(
             self.client.get_snap_channel_map(snap_name="basic"),
             IsInstance(channel_map.ChannelMap),
+        )
+
+
+class SnapReleasesTest(StoreTestCase):
+    def test_get_releases_without_login_raises_exception(self):
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.get_snap_releases,
+            snap_name="basic",
+        )
+
+    def test_get_snap_releases(self):
+        self.client.login("dummy", "test correct password")
+        self.assertThat(
+            self.client.get_snap_releases(snap_name="basic"),
+            IsInstance(releases.Releases),
         )
 
 

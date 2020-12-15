@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from . import typing
 from ._statement import Statement

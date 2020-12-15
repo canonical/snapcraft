@@ -147,10 +147,7 @@ class PythonPlugin(PluginV1):
         elif self.options.python_version == "python3":
             python_base = "python3"
 
-        if self.project._get_build_base() in ("core", "core16", "core18"):
-            stage_packages = [python_base]
-        else:
-            stage_packages = []
+        stage_packages = [python_base]
 
         if self.project._get_build_base() == "core18" and python_base == "python3":
             stage_packages.append("{}-distutils".format(python_base))
@@ -185,7 +182,7 @@ class PythonPlugin(PluginV1):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        self._setup_base_tools(project._get_build_base())
+        self._setup_base_tools()
 
         self._manifest = collections.OrderedDict()
 
@@ -200,29 +197,26 @@ class PythonPlugin(PluginV1):
         self._python_major_version = match.group("major_version")
         self.__pip = None
 
-    def _setup_base_tools(self, base):
+    def _setup_base_tools(self):
         # NOTE: stage-packages are lazily loaded.
-        if base in ("core", "core16", "core18"):
-            if self.options.python_version == "python3":
-                self.build_packages.extend(
-                    [
-                        "python3-dev",
-                        "python3-pip",
-                        "python3-pkg-resources",
-                        "python3-setuptools",
-                    ]
-                )
-            elif self.options.python_version == "python2":
-                self.build_packages.extend(
-                    [
-                        "python-dev",
-                        "python-pip",
-                        "python-pkg-resources",
-                        "python-setuptools",
-                    ]
-                )
-        else:
-            raise errors.PluginBaseError(part_name=self.name, base=base)
+        if self.options.python_version == "python3":
+            self.build_packages.extend(
+                [
+                    "python3-dev",
+                    "python3-pip",
+                    "python3-pkg-resources",
+                    "python3-setuptools",
+                ]
+            )
+        elif self.options.python_version == "python2":
+            self.build_packages.extend(
+                [
+                    "python-dev",
+                    "python-pip",
+                    "python-pkg-resources",
+                    "python-setuptools",
+                ]
+            )
 
     def pull(self):
         super().pull()

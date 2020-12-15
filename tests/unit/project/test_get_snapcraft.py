@@ -18,7 +18,7 @@ import pathlib
 
 import pytest
 
-from snapcraft.project import get_snapcraft_yaml, errors
+from snapcraft.project import errors, get_snapcraft_yaml
 
 
 @pytest.fixture(

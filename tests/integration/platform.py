@@ -17,7 +17,6 @@
 import platform
 import sys
 
-
 _32BIT_USERSPACE_ARCHITECTURE = {
     "aarch64": "armv7l",
     "armv8l": "armv7l",

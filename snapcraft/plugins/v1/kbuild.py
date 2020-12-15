@@ -62,11 +62,10 @@ be used.
 
 import logging
 import os
-import subprocess
 import re
+import subprocess
 
 from snapcraft import file_utils
-from snapcraft.internal import errors
 from snapcraft.plugins.v1 import PluginV1
 
 logger = logging.getLogger(__name__)
@@ -102,12 +101,6 @@ class KBuildPlugin(PluginV1):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-
-        if project._get_build_base() not in ("core", "core16", "core18"):
-            raise errors.PluginBaseError(
-                part_name=self.name, base=project._get_build_base()
-            )
-
         self.build_packages.extend(["bc", "gcc", "make"])
 
         self.make_targets = []

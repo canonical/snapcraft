@@ -21,6 +21,8 @@ import pytest
 from testtools import TestCase
 from testtools.matchers import Contains, Equals
 
+# required for schema format checkers
+import snapcraft.internal.project_loader._config  # noqa: F401
 from snapcraft.project import errors
 from snapcraft.project._schema import Validator
 
@@ -689,31 +691,7 @@ class IconTest(ProjectBaseTest):
         )
 
         self.assertThat(
-            raised.message, Equals("'icon' must be either a .png or a .svg")
-        )
-
-    def test_invalid_yaml_missing_icon(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: test
-            icon: icon.png
-            confinement: strict
-            grade: stable
-
-            parts:
-              part1:
-                plugin: nil
-            """
-            )
-        )
-
-        self.assertThat(
-            raised.message, Equals("Specified icon 'icon.png' does not exist")
+            raised.message, Equals("icon 'icon.foo' must be either a .png or a .svg")
         )
 
 
@@ -1026,6 +1004,26 @@ def test_invalid_confinement(data, confinement):
     assert expected_message in str(error.value)
 
 
+@pytest.mark.parametrize("desc", ["test", "multi\nline\n"])
+def test_valid_description(data, desc):
+    data["description"] = desc
+    Validator(data).validate()
+
+
+@pytest.mark.parametrize("desc", [""])
+def test_invalid_description(data, desc):
+    data["description"] = desc
+
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
+
+    expected_message = (
+        "The 'description' property does not match the required "
+        f"schema: {desc!r} is not a valid description string"
+    )
+    assert expected_message in str(error.value)
+
+
 @pytest.mark.parametrize("grade", ["stable", "devel"])
 def test_valid_grade(data, grade):
     data["grade"] = grade
@@ -1295,7 +1293,7 @@ class PackageManagement(ProjectBaseTest):
                     components: []
                     key-id: test-key-id
                     url: http://archive.ubuntu.com/ubuntu
-                    suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-updates]
+                    suites: [bionic, bionic-updates]
                 """
             )
         )

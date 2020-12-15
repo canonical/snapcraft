@@ -131,6 +131,16 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
+        param_decls="--add-ca-certificates",
+        metavar="<certificate-path>",
+        help="File or directory containing CA certificates to install into build environments.",
+        envvar="SNAPCRAFT_ADD_CA_CERTIFICATES",
+        supported_providers=["lxd", "multipass"],
+        type=click.Path(
+            exists=True, file_okay=True, dir_okay=True, readable=True, resolve_path=True
+        ),
+    ),
+    dict(
         param_decls="--bind-ssh",
         is_flag=True,
         help="Bind ~/.ssh directory to locally-run build environments.",

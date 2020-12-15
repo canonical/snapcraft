@@ -17,12 +17,10 @@
 import os
 import textwrap
 
-from snapcraft.extractors import appstream, ExtractedMetadata
-
 import testscenarios
 from testtools.matchers import Equals
 
-from snapcraft.extractors import _errors
+from snapcraft.extractors import ExtractedMetadata, _errors, appstream
 from tests import unit
 
 

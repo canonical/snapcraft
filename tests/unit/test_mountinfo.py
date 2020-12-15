@@ -21,7 +21,6 @@ import fixtures
 from testtools.matchers import Equals, HasLength
 
 from snapcraft.internal import errors, mountinfo
-
 from tests import unit
 
 

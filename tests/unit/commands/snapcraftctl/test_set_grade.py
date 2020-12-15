@@ -20,22 +20,28 @@ from testtools.matchers import Contains, Equals, FileExists
 
 from snapcraft.internal import errors
 
-from . import CommandBaseTestCase, CommandBaseNoFifoTestCase
+from . import CommandBaseNoFifoTestCase, CommandBaseTestCase
 
 
 class SetGradeCommandTestCase(CommandBaseTestCase):
     def test_set_grade(self):
-        self.run_command(["set-grade", "test-grade"])
-        self.assertThat(self.call_fifo, FileExists())
+        for grade in ["stable", "devel"]:
+            self.run_command(["set-grade", grade])
+            self.assertThat(self.call_fifo, FileExists())
 
-        with open(self.call_fifo, "r") as f:
-            data = json.loads(f.read())
+            with open(self.call_fifo, "r") as f:
+                data = json.loads(f.read())
 
-        self.assertThat(data, Contains("function"))
-        self.assertThat(data, Contains("args"))
+            self.assertThat(data, Contains("function"))
+            self.assertThat(data, Contains("args"))
 
-        self.assertThat(data["function"], Equals("set-grade"))
-        self.assertThat(data["args"], Equals({"grade": "test-grade"}))
+            self.assertThat(data["function"], Equals("set-grade"))
+            self.assertThat(data["args"], Equals({"grade": grade}))
+
+    def test_invalid_grades(self):
+        for grade in ["", "invalid-grade"]:
+            result = self.run_command(["set-grade", ""])
+            assert result != 0
 
     def test_set_grade_error(self):
         # If there is a string in the feedback, it should be considered an
@@ -43,19 +49,13 @@ class SetGradeCommandTestCase(CommandBaseTestCase):
         with open(self.feedback_fifo, "w") as f:
             f.write("this is an error\n")
 
-        raised = self.assertRaises(
-            errors.SnapcraftctlError, self.run_command, ["set-grade", "test-grade"]
-        )
-
-        self.assertThat(str(raised), Equals("this is an error"))
+        assert self.run_command(["set-grade", "stable"]).exit_code == -1
 
 
 class SetGradeCommandWithoutFifoTestCase(CommandBaseNoFifoTestCase):
     def test_set_grade_without_fifo(self):
         raised = self.assertRaises(
-            errors.SnapcraftEnvironmentError,
-            self.run_command,
-            ["set-grade", "test-grade"],
+            errors.SnapcraftEnvironmentError, self.run_command, ["set-grade", "stable"],
         )
 
         self.assertThat(

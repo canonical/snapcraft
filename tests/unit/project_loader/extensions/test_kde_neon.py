@@ -50,6 +50,14 @@ class ExtensionTest(ProjectLoaderBaseTest):
                         },
                     },
                     "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
+                    "hooks": {
+                        "configure": {
+                            "plugs": ["desktop"],
+                            "command-chain": [
+                                "snap/command-chain/hooks-configure-desktop"
+                            ],
+                        }
+                    },
                 }
             ),
         )

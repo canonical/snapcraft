@@ -212,8 +212,9 @@ class Multipass(Provider):
 
     def clean_project(self) -> bool:
         was_cleaned = super().clean_project()
-        if was_cleaned:
+        if self._multipass_cmd.exists(instance_name=self.instance_name):
             self._multipass_cmd.delete(instance_name=self.instance_name, purge=True)
+            return True
         return was_cleaned
 
     def pull_file(self, name: str, destination: str, delete: bool = False) -> None:

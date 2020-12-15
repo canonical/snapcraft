@@ -1,7 +1,6 @@
 #+TITLE: Snapcraft Tasks
 #+STARTUP: content
-#+STARTUP: lognotestate
-#+TODO: TODO(t) STRT(s@/!) | DONE(d!) CANCELED(c@)
+#+TODO: TODO(t) STRT(s) | DONE(d) CANCELED(c)
 
 * Specifications
 
@@ -78,3 +77,18 @@ CLOSED: [2020-06-24]
 - [ ] Error handling for setting invalid track names ([[https://bugs.launchpad.net/snapcraft/+bug/1892553][LP: 1892553]])
 - [X] Implement =snapcraft list-tracks=
 - [ ] Add documentation for track management to the [[https://snapcraft.io/docs/release-management][Release management]] docs.
+
+*** DONE [[file:specifications/desktop-extensions-font-hook.org][Desktop Extensions Font Hook]] [3/3]
+CLOSED: [2020-10-01 jue 10:00]
+
+- [X] Support hook stubs when =command-chain= is defined
+- [X] Generate =configure= hook =command-chain= in desktop parts
+- [X] Extend yaml for neon, gnome-2-28 and gnome-3-34 to use desktop
+      part's =command-chain= for the =configure= hook
+
+*** DONE [[file:specifications/history-to-releases.org][Snap Store API migration from v1 history to v2 releases]] [3/3]
+CLOSED: [2020-10-22]
+
+- [X] Add bindings to Snap Store package
+- [X] Use releases bindings for CLI implementing new output
+- [X] Remove v1 history bindings

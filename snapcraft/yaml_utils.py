@@ -16,8 +16,9 @@
 
 import codecs
 import collections
-import yaml
 from typing import Any, Dict, Optional, TextIO, Union
+
+import yaml
 
 from snapcraft.project.errors import YamlValidationError
 
@@ -25,7 +26,7 @@ try:
     # The C-based loaders/dumpers aren't available everywhere, but they're much faster.
     # Use them if possible. If not, we could fallback to the normal loader/dumper, but
     # they actually behave differently, so raise an error instead.
-    from yaml import CSafeLoader, CSafeDumper  # type: ignore
+    from yaml import CSafeDumper, CSafeLoader  # type: ignore
 except ImportError:
     raise RuntimeError("Snapcraft requires PyYAML to be built with libyaml bindings")
 

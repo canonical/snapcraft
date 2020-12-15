@@ -18,18 +18,18 @@ import contextlib
 import logging
 import os
 import subprocess
+from textwrap import dedent
+from unittest import mock
 
 import fixtures
 import pytest
 from testtools.matchers import Contains, Equals, FileContains, HasLength
-from unittest import mock
-
-from textwrap import dedent
 
 import snapcraft
 from snapcraft import storeapi
 from snapcraft.internal import errors, meta
 from snapcraft.plugins.v1 import kernel
+
 from . import PluginsV1BaseTestCase
 
 

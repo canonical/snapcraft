@@ -19,7 +19,6 @@ import subprocess
 import sys
 from typing import Any, Dict
 from unittest import mock
-from unittest.mock import call
 
 from testtools.matchers import Equals, FileContains, FileExists
 
@@ -32,10 +31,22 @@ from tests.unit.build_providers import BaseProviderBaseTest
 if sys.platform == "linux":
     import pylxd
 
+LXD_RUN_ENV_COMMAND = [
+    "env",
+    "SNAPCRAFT_HAS_TTY=False",
+]
+
+LXD_RUN_COMMAND_PREFIX = [
+    "/snap/bin/lxc",
+    "exec",
+    "snapcraft-project-name",
+    "--",
+] + LXD_RUN_ENV_COMMAND
+
 
 class GetEnv(_base_provider.Provider):
     def _get_env_command(self):
-        return ["env", "SNAPCRAFT_HAS_TTY=False"]
+        return LXD_RUN_ENV_COMMAND.copy()
 
 
 class EnvSetup(_base_provider.Provider):
@@ -227,353 +238,52 @@ class LXDInitTest(LXDBaseTest):
         for args, kwargs in (
             self.check_output_mock.call_args_list + self.check_call_mock.call_args_list
         ):
-            assert args[0][0:4] == [
-                "/snap/bin/lxc",
-                "exec",
-                "snapcraft-project-name",
-                "--",
-            ]
+            assert args[0][0 : len(LXD_RUN_COMMAND_PREFIX)] == LXD_RUN_COMMAND_PREFIX
 
-        self.check_output_mock.assert_has_calls(
-            [
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "systemctl",
-                        "is-system-running",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "ln",
-                        "-sf",
-                        "/run/systemd/resolve/resolv.conf",
-                        "/etc/resolv.conf",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "systemctl",
-                        "enable",
-                        "systemd-resolved",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "systemctl",
-                        "enable",
-                        "systemd-networkd",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "systemctl",
-                        "restart",
-                        "systemd-resolved",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "systemctl",
-                        "restart",
-                        "systemd-networkd",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "getent",
-                        "hosts",
-                        "snapcraft.io",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "systemctl",
-                        "enable",
-                        "systemd-udevd",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "systemctl",
-                        "start",
-                        "systemd-udevd",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "systemctl",
-                        "start",
-                        "snapd",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "getent",
-                        "hosts",
-                        "snapcraft.io",
-                    ]
-                ),
-            ]
-        )
+        check_output_calls = [
+            args[0][len(LXD_RUN_COMMAND_PREFIX) :]
+            for args, kwargs in self.check_output_mock.call_args_list
+        ]
 
-        self.check_call_mock.assert_has_calls(
+        assert check_output_calls == [
+            ["systemctl", "is-system-running"],
+            ["ln", "-sf", "/run/systemd/resolve/resolv.conf", "/etc/resolv.conf"],
+            ["systemctl", "enable", "systemd-resolved"],
+            ["systemctl", "enable", "systemd-networkd"],
+            ["systemctl", "restart", "systemd-resolved"],
+            ["systemctl", "restart", "systemd-networkd"],
+            ["getent", "hosts", "snapcraft.io"],
+            ["systemctl", "enable", "systemd-udevd"],
+            ["systemctl", "start", "systemd-udevd"],
+            ["systemctl", "start", "snapd"],
+            ["getent", "hosts", "snapcraft.io"],
+        ]
+
+        check_call_calls = [
+            args[0][len(LXD_RUN_COMMAND_PREFIX) :]
+            for args, kwargs in self.check_call_mock.call_args_list
+        ]
+
+        assert check_call_calls == [
             [
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "mv",
-                        "/var/tmp/L2V0Yy9zeXN0ZW1kL25ldHdvcmsvMTAtZXRoMC5uZXR3b3Jr",
-                        "/etc/systemd/network/10-eth0.network",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "chown",
-                        "root:root",
-                        "/etc/systemd/network/10-eth0.network",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "chmod",
-                        "0644",
-                        "/etc/systemd/network/10-eth0.network",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "mv",
-                        "/var/tmp/L2V0Yy9ob3N0bmFtZQ==",
-                        "/etc/hostname",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "chown",
-                        "root:root",
-                        "/etc/hostname",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "chmod",
-                        "0644",
-                        "/etc/hostname",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "apt-get",
-                        "update",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "apt-get",
-                        "install",
-                        "dirmngr",
-                        "udev",
-                        "fuse",
-                        "--yes",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "apt-get",
-                        "install",
-                        "snapd",
-                        "sudo",
-                        "--yes",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "apt-get",
-                        "update",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "apt-get",
-                        "dist-upgrade",
-                        "--yes",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "apt-get",
-                        "install",
-                        "--yes",
-                        "apt-transport-https",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "snap",
-                        "unset",
-                        "system",
-                        "proxy.http",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "snap",
-                        "unset",
-                        "system",
-                        "proxy.https",
-                    ]
-                ),
-            ]
-        )
+                "mv",
+                "/var/tmp/L2V0Yy9zeXN0ZW1kL25ldHdvcmsvMTAtZXRoMC5uZXR3b3Jr",
+                "/etc/systemd/network/10-eth0.network",
+            ],
+            ["chown", "root:root", "/etc/systemd/network/10-eth0.network"],
+            ["chmod", "0644", "/etc/systemd/network/10-eth0.network"],
+            ["mv", "/var/tmp/L2V0Yy9ob3N0bmFtZQ==", "/etc/hostname"],
+            ["chown", "root:root", "/etc/hostname"],
+            ["chmod", "0644", "/etc/hostname"],
+            ["apt-get", "update"],
+            ["apt-get", "install", "dirmngr", "udev", "fuse", "--yes"],
+            ["apt-get", "install", "snapd", "sudo", "--yes"],
+            ["apt-get", "update"],
+            ["apt-get", "dist-upgrade", "--yes"],
+            ["apt-get", "install", "--yes", "apt-transport-https"],
+            ["snap", "unset", "system", "proxy.http"],
+            ["snap", "unset", "system", "proxy.https"],
+        ]
 
     def test_clean_project(self):
         instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
@@ -730,15 +440,7 @@ class LXDLaunchedTest(LXDBaseTest):
         self.instance.shell()
 
         self.check_call_mock.assert_called_once_with(
-            [
-                "/snap/bin/lxc",
-                "exec",
-                "snapcraft-project-name",
-                "--",
-                "env",
-                "SNAPCRAFT_HAS_TTY=False",
-                "/bin/bash",
-            ]
+            [*LXD_RUN_COMMAND_PREFIX, "/bin/bash"]
         )
 
     def test_mount_project(self):
@@ -769,16 +471,7 @@ class LXDLaunchedTest(LXDBaseTest):
         self.instance._run(["ls", "/root/project"])
 
         self.check_call_mock.assert_called_once_with(
-            [
-                "/snap/bin/lxc",
-                "exec",
-                "snapcraft-project-name",
-                "--",
-                "env",
-                "SNAPCRAFT_HAS_TTY=False",
-                "ls",
-                "/root/project",
-            ]
+            [*LXD_RUN_COMMAND_PREFIX, "ls", "/root/project"]
         )
 
 

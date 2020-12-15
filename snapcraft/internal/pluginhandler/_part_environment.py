@@ -14,13 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Optional
 
 from snapcraft import formatting_utils
 from snapcraft.internal import common, steps
 
 if TYPE_CHECKING:
     from snapcraft.project import Project
+
     from . import PluginHandler
 
 

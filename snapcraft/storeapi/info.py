@@ -17,9 +17,9 @@
 import os
 from typing import Any, Dict, List, Optional
 
-from . import errors
 from snapcraft.file_utils import calculate_hash
 
+from . import errors
 
 """
 This module holds representations for results from the v2 info API provided by
@@ -227,7 +227,7 @@ class SnapInfo:
         return self._payload["snap-id"]
 
     def get_channel_mapping(
-        self, *, risk: str, arch: str, track: Optional[str] = None
+        self, *, risk: str, arch: Optional[str] = None, track: Optional[str] = None
     ) -> SnapChannelMapping:
         if track is None:
             track_filter = "latest"
@@ -235,7 +235,9 @@ class SnapInfo:
             track_filter = track
 
         arch_match = (
-            c for c in self.channel_map if c.channel_details.architecture == arch
+            c
+            for c in self.channel_map
+            if arch is None or c.channel_details.architecture == arch
         )
         track_match = (c for c in arch_match if c.channel_details.track == track_filter)
         risk_match = [c for c in track_match if c.channel_details.risk == risk]

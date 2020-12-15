@@ -26,6 +26,7 @@ from testtools.matchers import Equals, HasLength
 import snapcraft
 from snapcraft.internal import errors, meta
 from snapcraft.plugins.v1 import autotools, make
+
 from . import PluginsV1BaseTestCase
 
 

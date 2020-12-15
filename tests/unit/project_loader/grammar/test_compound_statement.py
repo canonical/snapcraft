@@ -20,9 +20,9 @@ import re
 import pytest
 
 import snapcraft
+import snapcraft.internal.project_loader.grammar._compound as compound
 import snapcraft.internal.project_loader.grammar._on as on
 import snapcraft.internal.project_loader.grammar._to as to
-import snapcraft.internal.project_loader.grammar._compound as compound
 from snapcraft.internal.project_loader import grammar
 
 
