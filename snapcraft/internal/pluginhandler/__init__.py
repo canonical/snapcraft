@@ -257,6 +257,7 @@ class PluginHandler:
         dirs = [
             self.part_source_dir,
             self.part_build_dir,
+            self.part_build_work_dir,
             self.part_install_dir,
             self.part_state_dir,
             self._project.stage_dir,
