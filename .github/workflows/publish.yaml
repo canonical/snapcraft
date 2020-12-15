@@ -23,7 +23,7 @@ jobs:
           sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
 
       - name: Publish Snapcraft Snap (PR)
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request' && secrets.STORE_LOGIN != null  }}
         uses: snapcore/action-publish@v1
         with:
           store_login: ${{ secrets.STORE_LOGIN }}
@@ -31,7 +31,7 @@ jobs:
           release: edge/pr-${{ github.event.number }}
 
       - name: Publish Snapcraft Snap (PUSH)
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' && secrets.STORE_LOGIN != null  }}
         uses: snapcore/action-publish@v1
         with:
           store_login: ${{ secrets.STORE_LOGIN }}
