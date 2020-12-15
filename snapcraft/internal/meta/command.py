@@ -151,7 +151,7 @@ class _SnapCommandResolver:
 
         return " ".join(interpreter_parts)
 
-    def resolve_command(self) -> str:
+    def resolve_command(self) -> Optional[str]:
         """Resolve the given command, searching prime directory or host if needed.
 
         :return: Resolved and normalized command string.
@@ -167,9 +167,8 @@ class _SnapCommandResolver:
 
         # If not where it claims to be, search for backwards compatibility.
         command_path = self._find_executable(command=command_parts[0])
-
         if command_path is None:
-            raise errors.PrimedCommandNotFoundError(self.original_command)
+            return None
 
         # Command was found in the prime directory, but it required the
         # legacy search or was found on the host.  Log a warning.
@@ -198,13 +197,13 @@ class _SnapCommandResolver:
 
         return _get_shebang_from_file(command_path)
 
-    def resolve(self) -> str:
+    def resolve(self) -> Optional[str]:
         """Resolve command to take into account interpreter and pathing,
         resolving ambiguous commands either relative to prime, or absolute
         to host/base.
 
         :return: Resolved and normalized command, accounting for the interpreter,
-          if required.
+          if required.  None if command not found.
         """
         # Strip leading unneed $SNAP from command, if present.
         self.command = re.sub(r"^\$SNAP/", "", self.command)
@@ -213,7 +212,11 @@ class _SnapCommandResolver:
         self.interpreter = self.resolve_interpreter()
 
         # Resolve command.
-        self.command = self.resolve_command()
+        resolved_command = self.resolve_command()
+        if resolved_command is None:
+            return None
+
+        self.command = resolved_command
 
         # Format interpreter and command for snap.yaml.
         if self.interpreter is not None:
@@ -244,7 +247,7 @@ class _SnapCommandResolver:
     @classmethod
     def resolve_snap_command_entry(
         cls, *, command: str, prime_path: pathlib.Path
-    ) -> str:
+    ) -> Optional[str]:
         """Resolve and normalize a given snap command entry, taking
         the interpreter into account, if appropriate.
 
@@ -303,9 +306,14 @@ class Command:
         Check if command is in prime_dir and raise exception if not valid."""
 
         if massage_command:
-            self.command = _SnapCommandResolver.resolve_snap_command_entry(
+            resolved_command = _SnapCommandResolver.resolve_snap_command_entry(
                 command=self.command, prime_path=pathlib.Path(prime_dir)
             )
+            if resolved_command is None:
+                raise errors.InvalidAppCommandNotFound(
+                    command=self.command, app_name=self._app_name
+                )
+            self.command = resolved_command
 
         if self.requires_wrapper:
             if not can_use_wrapper:
@@ -317,6 +325,12 @@ class Command:
         else:
             command_parts = shlex.split(self.command)
             command_path = os.path.join(prime_dir, command_parts[0])
+
+            if not os.path.exists(command_path):
+                raise errors.InvalidAppCommandNotFound(
+                    command=self.command, app_name=self._app_name
+                )
+
             if not _executable_is_valid(command_path):
                 raise errors.InvalidAppCommandNotExecutable(
                     command=self.command, app_name=self._app_name

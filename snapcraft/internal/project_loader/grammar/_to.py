@@ -15,11 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from typing import Optional, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Set
 
-from .errors import ToStatementSyntaxError
 from . import typing
 from ._statement import Statement
+from .errors import ToStatementSyntaxError
 
 # Don't use circular imports unless type checking
 if TYPE_CHECKING:

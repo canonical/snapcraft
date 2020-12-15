@@ -16,7 +16,7 @@
 
 import os
 
-from testtools.matchers import Equals, DirExists, FileExists
+from testtools.matchers import DirExists, Equals, FileExists
 
 from tests import integration
 

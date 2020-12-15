@@ -19,6 +19,7 @@ import sys
 import click
 
 from snapcraft.internal import review_tools
+
 from . import echo
 
 

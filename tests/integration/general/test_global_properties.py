@@ -16,7 +16,7 @@
 
 import testscenarios
 
-from tests import integration, fixture_setup
+from tests import fixture_setup, integration
 
 
 class UnicodePropertyTestCase(testscenarios.WithScenarios, integration.TestCase):

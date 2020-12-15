@@ -18,8 +18,8 @@ from textwrap import dedent
 
 import pytest
 
-from snapcraft.internal.meta.desktop import DesktopFile
 from snapcraft.internal.meta import errors
+from snapcraft.internal.meta.desktop import DesktopFile
 
 
 class TestDesktopExec:

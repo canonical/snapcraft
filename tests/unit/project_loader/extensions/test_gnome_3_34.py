@@ -17,10 +17,9 @@
 from testtools.matchers import Equals
 
 from snapcraft.internal.project_loader._extensions.gnome_3_34 import ExtensionImpl
+from tests.unit.commands import CommandBaseTestCase
 
 from .. import ProjectLoaderBaseTest
-
-from tests.unit.commands import CommandBaseTestCase
 
 
 class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):
@@ -101,7 +100,7 @@ class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):
                     "build-environment": [
                         {"PATH": "/snap/gnome-3-34-1804-sdk/current/usr/bin:$PATH"},
                         {
-                            "XDG_DATA_DIRS": "/snap/gnome-3-34-1804-sdk/current/usr/share:/usr/share:$XDG_DATA_DIRS"
+                            "XDG_DATA_DIRS": "$SNAPCRAFT_STAGE/usr/share:/snap/gnome-3-34-1804-sdk/current/usr/share:/usr/share:$XDG_DATA_DIRS"
                         },
                         {
                             "LD_LIBRARY_PATH": "/snap/gnome-3-34-1804-sdk/current/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-34-1804-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-34-1804-sdk/current/usr/lib:/snap/gnome-3-34-1804-sdk/current/usr/lib/vala-current:$LD_LIBRARY_PATH"

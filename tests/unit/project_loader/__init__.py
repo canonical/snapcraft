@@ -16,8 +16,8 @@
 
 from unittest import mock
 
-from snapcraft.project import Project as _Project
 from snapcraft.internal import project_loader
+from snapcraft.project import Project as _Project
 from tests import unit
 
 

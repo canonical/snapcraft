@@ -27,7 +27,7 @@ from testtools.matchers import (
     Not,
 )
 
-from tests import integration, fixture_setup, skip
+from tests import fixture_setup, integration, skip
 
 
 class RpathTestCase(integration.TestCase):

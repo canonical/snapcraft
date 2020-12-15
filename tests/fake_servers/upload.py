@@ -22,7 +22,6 @@ from pyramid import response
 
 from tests.fake_servers import base
 
-
 logger = logging.getLogger(__name__)
 
 

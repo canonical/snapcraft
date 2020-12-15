@@ -17,13 +17,12 @@
 import os
 import pathlib
 import subprocess
-
 from unittest import mock
+
 from testtools.matchers import Equals
 
-from snapcraft.plugins.v1._ros import rosdep
-
 import snapcraft
+from snapcraft.plugins.v1._ros import rosdep
 from tests import unit
 
 
@@ -34,6 +33,7 @@ class RosdepTestCase(unit.TestCase):
 
         self.rosdep = rosdep.Rosdep(
             ros_distro="kinetic",
+            ros_version="1",
             ros_package_path="package_path",
             rosdep_path="rosdep_path",
             ubuntu_distro="xenial",
@@ -252,6 +252,7 @@ class RosdepTestCase(unit.TestCase):
                     and env["ROSDEP_SOURCE_PATH"] == rosdep_sources_path
                     and env["ROS_HOME"] == rosdep._rosdep_cache_path
                     and env["ROS_PACKAGE_PATH"] == rosdep._ros_package_path
+                    and env["ROS_VERSION"] == rosdep._ros_version
                 )
 
         self.check_output_mock.assert_called_with(mock.ANY, env=check_env())

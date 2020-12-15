@@ -14,14 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from tests import unit
 from textwrap import dedent
 
 import pytest
 from testtools.matchers import Equals, Is, MatchesRegex
 
-from snapcraft.project._project_info import ProjectInfo
 from snapcraft.project import errors
+from snapcraft.project._project_info import ProjectInfo
+from tests import unit
 
 
 class ProjectInfoTest(unit.TestCase):

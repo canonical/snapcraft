@@ -4,7 +4,6 @@ import setuptools
 # setup.py will fail.
 import six  # noqa: F401
 
-
 setuptools.setup(
     name="hello-world",
     version="0.0.1",

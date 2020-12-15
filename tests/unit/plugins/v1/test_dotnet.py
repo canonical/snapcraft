@@ -26,6 +26,7 @@ from snapcraft import file_utils
 from snapcraft.internal import sources
 from snapcraft.plugins.v1 import dotnet
 from tests import unit
+
 from . import PluginsV1BaseTestCase
 
 

@@ -38,8 +38,8 @@ import re
 
 from snapcraft import file_utils
 from snapcraft.internal import errors
-from snapcraft.sources import Tar
 from snapcraft.plugins.v1 import PluginV1
+from snapcraft.sources import Tar
 
 logger = logging.getLogger(__name__)
 
@@ -73,11 +73,6 @@ class RubyPlugin(PluginV1):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-
-        if project._get_build_base() not in ("core", "core16", "core18"):
-            raise errors.PluginBaseError(
-                part_name=self.name, base=project._get_build_base()
-            )
 
         # Beta Warning
         # Remove this comment and warning once ruby plugin is stable.

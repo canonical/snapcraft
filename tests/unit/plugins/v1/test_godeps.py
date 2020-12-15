@@ -411,10 +411,13 @@ class GodepsPluginUnsupportedBaseTest(PluginsV1BaseTestCase):
         self.options = Options()
 
     def test_unsupported_base_using_snap(self):
-        plugin = godeps.GodepsPlugin("test-part", self.options, self.project)
-
-        self.assertThat(plugin.build_packages, Not(Contains("golang-go")))
-        self.assertThat(plugin.build_snaps, Contains("go/latest/stable"))
+        self.assertRaises(
+            errors.PluginBaseError,
+            godeps.GodepsPlugin,
+            "test-part",
+            self.options,
+            self.project,
+        )
 
     def test_unsupported_base_using_without_snap_raises(self):
         self.options.go_channel = ""

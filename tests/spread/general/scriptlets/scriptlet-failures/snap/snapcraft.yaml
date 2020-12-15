@@ -1,0 +1,17 @@
+name: snapcraftctl-build-failure
+base: core20
+version: '0.1'
+summary: Fail on snapcraftctl build
+description: |
+  Failing with purpose.
+
+grade: devel
+confinement: strict
+
+parts:
+  my-part:
+    plugin: go
+    source: .
+    override-build: |
+      snapcraftctl set-version && echo "should have failed set-version"
+      snapcraftctl build && echo "should have failed build"

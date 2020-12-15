@@ -17,14 +17,14 @@
 import sys as _sys
 
 if _sys.platform == "linux":
-    from snapcraft.internal.sources import Script  # noqa
     from snapcraft.internal.sources import Bazaar  # noqa
+    from snapcraft.internal.sources import Deb  # noqa
     from snapcraft.internal.sources import Git  # noqa
+    from snapcraft.internal.sources import Local  # noqa
     from snapcraft.internal.sources import Mercurial  # noqa
+    from snapcraft.internal.sources import Rpm  # noqa
+    from snapcraft.internal.sources import Script  # noqa
     from snapcraft.internal.sources import Subversion  # noqa
     from snapcraft.internal.sources import Tar  # noqa
-    from snapcraft.internal.sources import Local  # noqa
     from snapcraft.internal.sources import Zip  # noqa
     from snapcraft.internal.sources import get  # noqa
-    from snapcraft.internal.sources import Deb  # noqa
-    from snapcraft.internal.sources import Rpm  # noqa

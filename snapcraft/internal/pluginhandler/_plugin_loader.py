@@ -22,10 +22,10 @@ from pathlib import Path
 
 import jsonschema
 
-from snapcraft.project import errors as project_errors, Project
-from snapcraft.internal import errors
 from snapcraft import plugins
-
+from snapcraft.internal import errors
+from snapcraft.project import Project
+from snapcraft.project import errors as project_errors
 
 logger = logging.getLogger(__name__)
 

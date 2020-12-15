@@ -1,0 +1,70 @@
+name: Spread Tests
+
+on: [pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout snapcraft
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Build snapcraft snap
+        id: build-snapcraft
+        uses: snapcore/action-build@v1
+
+      - name: Upload snapcraft snap
+        uses: actions/upload-artifact@v2
+        with:
+          name: snap
+          path: ${{ steps.build-snapcraft.outputs.snap }}
+
+      - name: Verify snapcraft snap
+        run: |
+          sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
+
+  integration-spread-tests:
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      # FIXME: enable fail-fast mode once spread can cancel an executing job.
+      # Disable fail-fast mode as it doesn't function with spread. It seems
+      # that cancelling tasks requires short, interruptible actions and
+      # interrupting spread, notably, does not work today. As such disable
+      # fail-fast while we tackle that problem upstream.
+      fail-fast: false
+      matrix:
+        spread-jobs:
+          - google:ubuntu-16.04-64
+          - google:ubuntu-18.04-64
+          - google:ubuntu-20.04-64
+
+    steps:
+      - name: Checkout snapcraft
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Download snapcraft snap
+        uses: actions/download-artifact@v2
+        with:
+          name: snap
+
+      - name: Install spread
+        run: curl -s https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz | sudo tar xzv -C /usr/bin
+
+      - name: Run spread
+        env:
+          SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
+        run: spread ${{ matrix.spread-jobs }}
+
+      - name: Discard spread workers
+        if: always()
+        run: |
+          shopt -s nullglob
+          for r in .spread-reuse.*.yaml; do
+            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          done
