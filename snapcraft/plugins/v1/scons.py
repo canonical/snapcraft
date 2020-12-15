@@ -31,7 +31,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
 import os
 
-from snapcraft.internal import errors
 from snapcraft.plugins.v1 import PluginV1
 
 
@@ -57,13 +56,10 @@ class SconsPlugin(PluginV1):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self._setup_base_tools(project._get_build_base())
+        self._setup_base_tools()
 
-    def _setup_base_tools(self, base):
-        if base in ("core", "core16", "core18"):
-            self.build_packages.append("scons")
-        else:
-            raise errors.PluginBaseError(part_name=self.name, base=base)
+    def _setup_base_tools(self):
+        self.build_packages.append("scons")
 
     def build(self):
         super().build()

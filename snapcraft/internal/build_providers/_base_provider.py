@@ -152,7 +152,7 @@ class Provider(abc.ABC):
     def _mount(self, host_source: str, target: str) -> None:
         """Mount host source directory to target mount point."""
 
-    def mount_project(self) -> None:
+    def _mount_project(self) -> None:
         """Provider steps needed to make the project available to the instance.
         """
         target = (self._get_home_directory() / "project").as_posix()
@@ -189,7 +189,7 @@ class Provider(abc.ABC):
     def execute_step(self, step: steps.Step) -> None:
         self._run(command=["snapcraft", step.name])
 
-    def clean(self, part_names: Sequence[str]) -> None:
+    def clean_parts(self, part_names: Sequence[str]) -> None:
         self._run(command=["snapcraft", "clean"] + list(part_names))
 
     def pack_project(self, *, output: Optional[str] = None) -> None:

@@ -232,7 +232,7 @@ class LXDInitTest(LXDBaseTest):
 
         container = self.fake_pylxd_client.containers.get(self.instance_name)
         container.start_mock.assert_called_once_with(wait=True)
-        self.assertThat(container.save_mock.call_count, Equals(2))
+        self.assertThat(container.save_mock.call_count, Equals(3))
         self.assertThat(self.check_output_mock.call_count, Equals(11))
 
         for args, kwargs in (
@@ -444,8 +444,7 @@ class LXDLaunchedTest(LXDBaseTest):
         )
 
     def test_mount_project(self):
-        self.instance.mount_project()
-
+        # project is mounted as dependency of create(), called in setUp().
         self.assertThat(
             self.fake_container.devices,
             Equals(
@@ -456,25 +455,14 @@ class LXDLaunchedTest(LXDBaseTest):
                 }
             ),
         )
-        self.assertThat(self.fake_container.sync_mock.call_count, Equals(1))
-        self.fake_container.save_mock.assert_called_once_with(wait=True)
 
     def test_mount_prime_directory(self):
         self.check_output_mock.return_value = b"/root"
 
         self.instance._mount_prime_directory()
 
-        self.assertThat(
-            self.fake_container.devices,
-            Equals(
-                {
-                    "snapcraft-project-prime": dict(
-                        path="/root/prime",
-                        source=os.path.join(self.path, "prime"),
-                        type="disk",
-                    )
-                }
-            ),
+        assert self.fake_container.devices.get("snapcraft-project-prime") == dict(
+            path="/root/prime", source=os.path.join(self.path, "prime"), type="disk",
         )
         self.assertThat(self.fake_container.sync_mock.call_count, Equals(1))
         self.fake_container.save_mock.assert_called_once_with(wait=True)

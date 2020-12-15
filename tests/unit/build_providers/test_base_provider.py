@@ -274,21 +274,21 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         # False.
         provider.build_provider_flags = dict(SNAPCRAFT_BIND_SSH=False)
-        provider.mount_project()
+        provider._mount_project()
         provider.mount_mock.assert_has_calls(
             [call(self.project._project_dir, "/root/project")]
         )
 
         # Not present.
         provider.build_provider_flags = dict()
-        provider.mount_project()
+        provider._mount_project()
         provider.mount_mock.assert_has_calls(
             [call(self.project._project_dir, "/root/project")]
         )
 
         # True.
         provider.build_provider_flags = dict(SNAPCRAFT_BIND_SSH=True)
-        provider.mount_project()
+        provider._mount_project()
         provider.mount_mock.assert_has_calls(
             [
                 call(self.project._project_dir, "/root/project"),
@@ -317,14 +317,14 @@ class BaseProviderTest(BaseProviderBaseTest):
     def test_clean_part(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
 
-        provider.clean(part_names=("part1",))
+        provider.clean_parts(part_names=("part1",))
 
         provider.run_mock.assert_called_once_with(["snapcraft", "clean", "part1"])
 
     def test_clean_multiple_parts(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
 
-        provider.clean(part_names=("part1", "part2"))
+        provider.clean_parts(part_names=("part1", "part2"))
 
         provider.run_mock.assert_called_once_with(
             ["snapcraft", "clean", "part1", "part2"]
