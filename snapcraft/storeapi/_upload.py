@@ -14,15 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 import functools
+import logging
 import os
 
 from progressbar import Bar, Percentage, ProgressBar
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
 from snapcraft.storeapi.errors import StoreUpDownError
-
 
 logger = logging.getLogger(__name__)
 

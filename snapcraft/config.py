@@ -22,7 +22,7 @@ import logging
 import os
 import sys
 import urllib.parse
-from typing import TextIO, Optional
+from typing import Optional, TextIO
 
 from xdg import BaseDirectory
 

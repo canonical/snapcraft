@@ -18,7 +18,7 @@ import logging
 import os
 from collections import OrderedDict
 from copy import deepcopy
-from typing import Any, Dict, List, Set, Sequence, Optional
+from typing import Any, Dict, List, Optional, Sequence, Set
 
 from snapcraft import yaml_utils
 from snapcraft.internal import common

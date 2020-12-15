@@ -17,11 +17,11 @@
 import logging
 import os
 import re
-
 from collections import OrderedDict
 from copy import deepcopy
+from typing import Any, Dict, List, Optional, Set, Tuple, Type
+
 from snapcraft.internal.meta.errors import SlotValidationError
-from typing import Any, Dict, List, Set, Optional, Tuple, Type
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +166,7 @@ class ContentSlot(Slot):
 
     @classmethod
     def from_dict(cls, *, slot_dict: Dict[str, Any], slot_name: str) -> "ContentSlot":
-        slot = ContentSlot(slot_name=slot_name)
+        slot = ContentSlot(slot_name=slot_name, content=slot_dict.get("content"))
 
         # Content directories may be nested under "source",
         # but they cannot be in both places according to snapd:
@@ -183,9 +183,6 @@ class ContentSlot(Slot):
 
         if "write" in source_data:
             slot.write = source_data["write"]
-
-        if "content" in source_data:
-            slot.content = source_data["content"]
 
         return slot
 

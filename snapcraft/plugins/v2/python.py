@@ -63,6 +63,7 @@ Use of python3-<python-package> in stage-packages will force the
 inclusion of the python interpreter.
 """
 
+import shlex
 from textwrap import dedent
 from typing import Any, Dict, List, Set
 
@@ -125,7 +126,9 @@ class PythonPlugin(PluginV2):
             constraints = ""
 
         if self.options.python_packages:
-            python_packages = " ".join(self.options.python_packages)
+            python_packages = " ".join(
+                [shlex.quote(pkg) for pkg in self.options.python_packages]
+            )
             python_packages_cmd = f"pip install {constraints} -U {python_packages}"
             build_commands.append(python_packages_cmd)
 

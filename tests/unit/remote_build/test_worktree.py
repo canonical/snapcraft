@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import OrderedDict
 import os
-from pathlib import Path
 import tarfile
+from collections import OrderedDict
+from pathlib import Path
 
 from testtools.matchers import Equals
 
@@ -25,6 +25,7 @@ from snapcraft import yaml_utils
 from snapcraft.internal.remote_build import WorkTree
 from snapcraft.project import Project
 from tests import fixture_setup, unit
+
 from . import TestDir
 
 

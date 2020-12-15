@@ -17,11 +17,10 @@ import contextlib
 import logging
 import os
 import shutil
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from snapcraft import formatting_utils
-from snapcraft.internal import errors, project_loader, mountinfo, steps
-
+from snapcraft.internal import errors, mountinfo, project_loader, steps
 
 logger = logging.getLogger(__name__)
 

@@ -30,9 +30,7 @@ https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map
 
 
 class Progressive:
-    """
-    Represents Progressive information for a MappedChannel.
-    """
+    """Represent Progressive information for a MappedChannel."""
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "Progressive":
@@ -42,23 +40,36 @@ class Progressive:
                 "progressive"
             ],
         )
-        return cls(paused=payload["paused"], percentage=payload["percentage"])
+        return cls(
+            paused=payload["paused"],
+            percentage=payload["percentage"],
+            current_percentage=payload["current-percentage"],
+        )
 
     def marshal(self) -> Dict[str, Any]:
-        return {"paused": self.paused, "percentage": self.percentage}
+        return {
+            "paused": self.paused,
+            "percentage": self.percentage,
+            "current-percentage": self.current_percentage,
+        }
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}: {self.percentage!r}>"
+        return f"<{self.__class__.__name__}: {self.current_percentage!r}=>{self.percentage!r}>"
 
-    def __init__(self, *, paused: Optional[bool], percentage: Optional[float]) -> None:
+    def __init__(
+        self,
+        *,
+        paused: Optional[bool],
+        percentage: Optional[float],
+        current_percentage: Optional[float],
+    ) -> None:
         self.paused = paused
         self.percentage = percentage
+        self.current_percentage = current_percentage
 
 
 class MappedChannel:
-    """
-    Represents a Channel from a channel List for channel-map.
-    """
+    """Represent a mapped channel item for "channel-map" in ChannelMap."""
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "MappedChannel":
@@ -102,9 +113,7 @@ class MappedChannel:
 
 
 class Revision:
-    """
-    Represents a Revision in the revisions List.
-    """
+    """Represent a revision item for "revisions" in ChannelMap."""
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "Revision":
@@ -136,9 +145,7 @@ class Revision:
 
 
 class SnapChannel:
-    """
-    Represents a Channel from a channel List for snap.
-    """
+    """Represent a channel item in "channels" in Snap."""
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "SnapChannel":
@@ -184,8 +191,51 @@ class SnapChannel:
         self.fallback = fallback
 
 
+class SnapTrack:
+    """Represent a track item in "tracks" in Snap."""
+
+    @classmethod
+    def unmarshal(cls, payload: Dict[str, Any]) -> "SnapTrack":
+        jsonschema.validate(
+            payload,
+            CHANNEL_MAP_JSONSCHEMA["properties"]["snap"]["properties"]["tracks"][
+                "items"
+            ],
+        )
+        return cls(
+            name=payload["name"],
+            status=payload["status"],
+            creation_date=payload["creation-date"],
+            version_pattern=payload["version-pattern"],
+        )
+
+    def marshal(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "status": self.status,
+            "creation-date": self.creation_date,
+            "version-pattern": self.version_pattern,
+        }
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}: {self.name!r}>"
+
+    def __init__(
+        self,
+        *,
+        name: str,
+        status: str,
+        creation_date: Optional[str],
+        version_pattern: Optional[str],
+    ) -> None:
+        self.name = name
+        self.status = status
+        self.creation_date = creation_date
+        self.version_pattern = version_pattern
+
+
 class Snap:
-    """Represents a Snap structure from the Snap Store."""
+    """Represent "snap" in ChannelMap."""
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "Snap":
@@ -193,23 +243,29 @@ class Snap:
         return cls(
             name=payload["name"],
             channels=[SnapChannel.unmarshal(sc) for sc in payload["channels"]],
+            tracks=[SnapTrack.unmarshal(st) for st in payload["tracks"]],
         )
 
     def marshal(self) -> Dict[str, Any]:
-        return {"name": self.name, "channels": [sc.marshal() for sc in self.channels]}
+        return {
+            "name": self.name,
+            "channels": [sc.marshal() for sc in self.channels],
+            "tracks": [st.marshal() for st in self.tracks],
+        }
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}: {self.name!r}>"
 
-    def __init__(self, *, name: str, channels: List[SnapChannel]) -> None:
+    def __init__(
+        self, *, name: str, channels: List[SnapChannel], tracks: List[SnapTrack]
+    ) -> None:
         self.name = name
         self.channels = channels
+        self.tracks = tracks
 
 
 class ChannelMap:
-    """
-    Represents the data returned from the channel-map call from the Snap Store.
-    """
+    """Represent the data returned from the channel-map Snap Store endpoint."""
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "ChannelMap":

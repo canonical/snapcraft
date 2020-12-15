@@ -12,6 +12,8 @@ base: core18
 parts:
   checkbox-ng-local:
     plugin: python
+    build-environment:
+      - SETUPTOOLS_USE_DISTUTILS: stdlib
     python-packages:
       - idna==2.7
       - checkbox-ng==1.0.0
@@ -27,11 +29,15 @@ parts:
   simple-plainbox-provider-with-stage-pkg:
     plugin: plainbox-provider
     source: ./com.example_simple
+    build-environment:
+      - SETUPTOOLS_USE_DISTUTILS: stdlib
     after: [checkbox-ng-local]
     stage-packages:
       - python3-yaml
   part-with-python-pkg:
     plugin: python
+    build-environment:
+      - SETUPTOOLS_USE_DISTUTILS: stdlib
     python-packages:
       - bitstring
     after:

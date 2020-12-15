@@ -17,16 +17,18 @@
 import collections
 import contextlib
 import copy
-import jsonschema
 import importlib
 import logging
 import os
 import pkgutil
 from typing import Any, Dict, List, Optional, Set, Type
 
+import jsonschema
+
+from snapcraft.project import errors as project_errors
+
 from .. import errors
 from ._extension import Extension
-from snapcraft.project import errors as project_errors
 
 logger = logging.getLogger(__name__)
 
@@ -122,6 +124,14 @@ def _load_extension(
     base: Optional[str], extension_name: str, yaml_data: Dict[str, Any]
 ) -> Extension:
     extension_class = find_extension(extension_name)
+
+    if extension_class.is_experimental(base=base):
+        if os.getenv("SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS"):
+            logger.warning(f"*EXPERIMENTAL* extension {extension_name!r} enabled.")
+        else:
+            raise project_errors.SnapcraftExperimentalExtensionsRequiredError(
+                extension_name=extension_name
+            )
 
     # Hand the extension a copy of the yaml data so the only way they can modify it is
     # by going through the extension API.

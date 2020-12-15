@@ -16,17 +16,20 @@
 
 import logging
 import os
+import shutil
 
 import fixtures
-from testtools.matchers import Equals, Is, FileContains, FileExists
+from testtools.matchers import Equals, FileContains, FileExists, Is
 
 from snapcraft.internal.meta import command, errors
 from tests import unit
 
 
-def _create_file(file_path: str, *, mode=0o755) -> None:
+def _create_file(file_path: str, *, mode=0o755, contents="") -> None:
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    open(file_path, "w").close()
+    with open(file_path, "w") as f:
+        if contents:
+            f.write(contents)
     os.chmod(file_path, mode)
 
 
@@ -47,7 +50,7 @@ class CommandWithoutWrapperAllowedTest(unit.TestCase):
         cmd = command.Command(app_name="foo", command_name="command", command="foo")
 
         cmd.prime_command(
-            can_use_wrapper=False, massage_command=True, prime_dir=self.path
+            can_use_wrapper=False, massage_command=True, prime_dir=self.path,
         )
 
         self.assertThat(cmd.command, Equals("foo"))
@@ -58,10 +61,52 @@ class CommandWithoutWrapperAllowedTest(unit.TestCase):
             app_name="foo", command_name="command", command="foo bar -baz"
         )
         cmd.prime_command(
-            can_use_wrapper=False, massage_command=True, prime_dir=self.path
+            can_use_wrapper=False, massage_command=True, prime_dir=self.path,
         )
 
         self.assertThat(cmd.command, Equals("foo bar -baz"))
+
+
+def test_interpretered_command_from_host(monkeypatch, tmp_path):
+    monkeypatch.setattr(shutil, "which", lambda x: "/bin/python3")
+
+    _create_file(os.path.join(tmp_path, "foo"), contents="#!/usr/bin/env python3\n")
+    cmd = command.Command(
+        app_name="foo", command_name="command", command="foo bar -baz"
+    )
+    cmd.prime_command(
+        can_use_wrapper=True, massage_command=True, prime_dir=tmp_path.as_posix(),
+    )
+
+    assert cmd.command == "command-foo.wrapper"
+    assert cmd.wrapped_command == "/bin/python3 $SNAP/foo bar -baz"
+
+
+def test_interpretered_command_from_prime(tmp_path):
+    _create_file(os.path.join(tmp_path, "bin", "python3"))
+    _create_file(os.path.join(tmp_path, "foo"), contents="#!/usr/bin/env python3\n")
+
+    cmd = command.Command(
+        app_name="foo", command_name="command", command="foo bar -baz"
+    )
+    cmd.prime_command(
+        can_use_wrapper=True, massage_command=True, prime_dir=tmp_path.as_posix(),
+    )
+
+    assert cmd.command == "bin/python3 $SNAP/foo bar -baz"
+
+
+def test_interpretered_command_from_root(tmp_path):
+    _create_file(os.path.join(tmp_path, "foo"), contents="#!/bin/sh\n")
+
+    cmd = command.Command(
+        app_name="foo", command_name="command", command="foo bar -baz"
+    )
+    cmd.prime_command(
+        can_use_wrapper=True, massage_command=True, prime_dir=tmp_path.as_posix(),
+    )
+
+    assert cmd.command == "foo bar -baz"
 
 
 class CommandWithoutWrapperAllowedTestErrors(unit.TestCase):
@@ -96,8 +141,8 @@ class CommandWithoutWrapperAllowedTestErrors(unit.TestCase):
         self.assertThat(
             self.fake_logger.output.strip(),
             Equals(
-                "The command 'sh' was not found in the prime directory, it has "
-                "been changed to '/bin/sh'."
+                "The command 'sh' for 'sh' was resolved to '/bin/sh'.\n"
+                "The command 'sh' has been changed to '/bin/sh'."
             ),
         )
 
@@ -129,6 +174,18 @@ class CommandWithoutWrapperAllowedTestErrors(unit.TestCase):
         )
         self.assertThat(self.fake_logger.output, Equals(""))
 
+    def test_command_not_found(self):
+        cmd = command.Command(app_name="foo", command_name="command", command="foo")
+
+        self.assertRaises(
+            errors.InvalidAppCommandNotFound,
+            cmd.prime_command,
+            can_use_wrapper=False,
+            massage_command=False,
+            prime_dir=self.path,
+        )
+        self.assertThat(self.fake_logger.output.strip(), Equals(""))
+
 
 class CommandWithWrapperTest(unit.TestCase):
     def setUp(self):
@@ -141,7 +198,7 @@ class CommandWithWrapperTest(unit.TestCase):
         _create_file(os.path.join(self.path, "foo"))
         cmd = command.Command(app_name="foo", command_name="command", command="foo")
         cmd.prime_command(
-            can_use_wrapper=True, massage_command=True, prime_dir=self.path
+            can_use_wrapper=True, massage_command=True, prime_dir=self.path,
         )
 
         self.assertThat(cmd.command, Equals("foo"))
@@ -153,15 +210,15 @@ class CommandWithWrapperTest(unit.TestCase):
             app_name="foo", command_name="command", command="$SNAP/foo !option"
         )
         cmd.prime_command(
-            can_use_wrapper=True, massage_command=True, prime_dir=self.path
+            can_use_wrapper=True, massage_command=True, prime_dir=self.path,
         )
 
         self.assertThat(cmd.command, Equals("command-foo.wrapper"))
         self.assertThat(
             self.fake_logger.output.strip(),
             Equals(
-                "Stripped '$SNAP/' from command '$SNAP/foo !option'."
-                "\n"
+                "Found unneeded '$SNAP/' in command '$SNAP/foo !option'.\n"
+                "The command '$SNAP/foo !option' has been changed to 'foo !option'.\n"
                 "A shell wrapper will be generated for command 'foo !option' "
                 "as it does not conform with the command pattern expected "
                 "by the runtime. Commands must be relative to the prime "
@@ -177,7 +234,7 @@ class CommandWithWrapperTest(unit.TestCase):
         )
 
         cmd.prime_command(
-            can_use_wrapper=True, massage_command=True, prime_dir=self.path
+            can_use_wrapper=True, massage_command=True, prime_dir=self.path,
         )
         wrapper_path = cmd.write_wrapper(prime_dir=self.path)
 
@@ -192,7 +249,7 @@ class CommandWithWrapperTest(unit.TestCase):
         )
 
         cmd.prime_command(
-            can_use_wrapper=True, massage_command=True, prime_dir=self.path
+            can_use_wrapper=True, massage_command=True, prime_dir=self.path,
         )
         wrapper_path = cmd.write_wrapper(prime_dir=self.path)
 
@@ -216,7 +273,7 @@ class CommandWithWrapperTest(unit.TestCase):
         cmd = command.Command(app_name="foo", command_name="command", command="/foo")
 
         cmd.prime_command(
-            can_use_wrapper=True, massage_command=True, prime_dir=self.path
+            can_use_wrapper=True, massage_command=True, prime_dir=self.path,
         )
         wrapper_path = cmd.write_wrapper(prime_dir=self.path)
 
@@ -238,7 +295,7 @@ class CommandWithWrapperTest(unit.TestCase):
         cmd = command.Command(app_name="foo", command_name="command", command="sh")
 
         cmd.prime_command(
-            can_use_wrapper=True, massage_command=True, prime_dir=self.path
+            can_use_wrapper=True, massage_command=True, prime_dir=self.path,
         )
         wrapper_path = cmd.write_wrapper(prime_dir=self.path)
 
@@ -248,9 +305,8 @@ class CommandWithWrapperTest(unit.TestCase):
         self.assertThat(
             self.fake_logger.output.strip(),
             Equals(
-                "The command 'sh' was not found in the prime directory, it has "
-                "been changed to '/bin/sh'."
-                "\n"
+                "The command 'sh' for 'sh' was resolved to '/bin/sh'.\n"
+                "The command 'sh' has been changed to '/bin/sh'.\n"
                 "A shell wrapper will be generated for command '/bin/sh' "
                 "as it does not conform with the command pattern expected "
                 "by the runtime. Commands must be relative to the prime "
@@ -265,6 +321,18 @@ class CommandWithWrapperTest(unit.TestCase):
 
         self.assertRaises(
             errors.InvalidAppCommandNotExecutable,
+            cmd.prime_command,
+            can_use_wrapper=True,
+            massage_command=True,
+            prime_dir=self.path,
+        )
+        self.assertThat(self.fake_logger.output.strip(), Equals(""))
+
+    def test_command_not_found(self):
+        cmd = command.Command(app_name="foo", command_name="command", command="foo")
+
+        self.assertRaises(
+            errors.InvalidAppCommandNotFound,
             cmd.prime_command,
             can_use_wrapper=True,
             massage_command=True,

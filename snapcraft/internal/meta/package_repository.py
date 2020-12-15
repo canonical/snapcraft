@@ -23,6 +23,8 @@ from typing import Any, Dict, List, Optional
 
 from snapcraft.internal import repo
 
+from . import errors
+
 logger = logging.getLogger(__name__)
 
 
@@ -76,20 +78,39 @@ class PackageRepositoryAptPpa(PackageRepository):
     @classmethod
     def unmarshal(cls, data: Dict[str, str]) -> "PackageRepositoryAptPpa":
         if not isinstance(data, dict):
+            raise errors.PackageRepositoryValidationError(
+                url=str(data), brief=f"Invalid PPA object {data!r}.",
+            )
+
+        if not isinstance(data, dict):
             raise RuntimeError(f"invalid ppa repository object: {data!r}")
 
         data_copy = deepcopy(data)
 
-        ppa = data_copy.pop("ppa", None)
+        ppa = data_copy.pop("ppa", "")
         repo_type = data_copy.pop("type", None)
-        if repo_type != "apt":
-            raise RuntimeError(f"invalid ppa repository object {data!r} (type invalid)")
 
-        if ppa is None:
-            raise RuntimeError(f"invalid ppa repository object {data!r} (ppa missing)")
+        if repo_type != "apt":
+            raise errors.PackageRepositoryValidationError(
+                url=ppa,
+                brief=f"Unsupported type {repo_type!r}.",
+                resolution="You can use type 'apt'.",
+            )
+
+        if not ppa:
+            raise errors.PackageRepositoryValidationError(
+                url=ppa,
+                brief=f"Invalid PPA {ppa!r}.",
+                resolution="You can update 'ppa' to a non-empty string.",
+            )
 
         if data_copy:
-            raise RuntimeError(f"invalid ppa repository object {data!r} (extra keys)")
+            keys = ", ".join([repr(k) for k in data_copy.keys()])
+            raise errors.PackageRepositoryValidationError(
+                url=ppa,
+                brief=f"Invalid keys present ({keys}).",
+                resolution="You can remove the unsupported keys.",
+            )
 
         return cls(ppa=ppa)
 
@@ -100,7 +121,7 @@ class PackageRepositoryApt(PackageRepository):
         *,
         architectures: Optional[List[str]] = None,
         components: List[str],
-        deb_types: Optional[List[str]] = None,
+        formats: Optional[List[str]] = None,
         key_id: str,
         key_server: Optional[str] = None,
         name: Optional[str] = None,
@@ -110,7 +131,7 @@ class PackageRepositoryApt(PackageRepository):
         self.type = "apt"
         self.architectures = architectures
         self.components = components
-        self.deb_types = deb_types
+        self.formats = formats
         self.key_id = key_id
         self.key_server = key_server
 
@@ -123,6 +144,8 @@ class PackageRepositoryApt(PackageRepository):
         self.suites = suites
         self.url = url
 
+        self.validate()
+
     def install(self, keys_path: Path) -> bool:
         # First install associated GPG key.
         new_key: bool = repo.Ubuntu.install_gpg_key_id(
@@ -133,7 +156,7 @@ class PackageRepositoryApt(PackageRepository):
         new_sources: bool = repo.Ubuntu.install_sources(
             architectures=self.architectures,
             components=self.components,
-            deb_types=self.deb_types,
+            formats=self.formats,
             name=self.name,
             suites=self.suites,
             url=self.url,
@@ -149,8 +172,8 @@ class PackageRepositoryApt(PackageRepository):
 
         data["components"] = self.components
 
-        if self.deb_types:
-            data["deb-types"] = self.deb_types
+        if self.formats:
+            data["formats"] = self.formats
 
         data["key-id"] = self.key_id
 
@@ -163,80 +186,120 @@ class PackageRepositoryApt(PackageRepository):
 
         return data
 
+    def validate(self) -> None:
+        if self.formats is not None and any(
+            f not in ["deb", "deb-src"] for f in self.formats
+        ):
+            raise errors.PackageRepositoryValidationError(
+                url=self.url,
+                brief=f"Invalid formats {self.formats!r}.",
+                resolution="You can specify a list of formats including 'deb' and/or 'deb-src'.",
+            )
+
+        if not self.key_id:
+            raise errors.PackageRepositoryValidationError(
+                url=self.url,
+                brief=f"Invalid Key Identifier {self.key_id!r}.",
+                resolution="You can verify that the key specifies a valid key identifier.",
+            )
+
+        if not self.url:
+            raise errors.PackageRepositoryValidationError(
+                url=self.url,
+                brief=f"Invalid URL {self.url!r}.",
+                resolution="You can update 'url' to a non-empty string.",
+            )
+
     @classmethod  # noqa: C901
     def unmarshal(cls, data: Dict[str, Any]) -> "PackageRepositoryApt":
         if not isinstance(data, dict):
-            raise RuntimeError(f"invalid deb repository object: {data!r}")
+            raise errors.PackageRepositoryValidationError(
+                url=str(data), brief=f"Invalid object {data!r}.",
+            )
 
         data_copy = deepcopy(data)
 
         architectures = data_copy.pop("architectures", None)
         components = data_copy.pop("components", None)
-        deb_types = data_copy.pop("deb-types", None)
+        formats = data_copy.pop("formats", None)
         key_id = data_copy.pop("key-id", None)
         key_server = data_copy.pop("key-server", None)
         name = data_copy.pop("name", None)
         suites = data_copy.pop("suites", None)
-        url = data_copy.pop("url", None)
+        url = data_copy.pop("url", "")
         repo_type = data_copy.pop("type", None)
 
         if repo_type != "apt":
-            raise RuntimeError(
-                f"invalid deb repository object: {data!r} (invalid type)"
+            raise errors.PackageRepositoryValidationError(
+                url=url,
+                brief=f"Unsupported type {repo_type!r}.",
+                resolution="You can use type 'apt'.",
             )
 
         if architectures is not None and (
             not isinstance(architectures, list)
             or not all(isinstance(x, str) for x in architectures)
         ):
-            raise RuntimeError(
-                f"invalid deb repository object: {data!r} (invalid architectures)"
+            raise errors.PackageRepositoryValidationError(
+                url=url, brief=f"Invalid architectures {architectures!r}.",
             )
 
-        if not isinstance(components, list) or not all(
-            isinstance(x, str) for x in components
+        if (
+            not isinstance(components, list)
+            or not all(isinstance(x, str) for x in components)
+            or not components
         ):
-            raise RuntimeError(
-                f"invalid deb repository object: {data!r} (invalid components)"
+            raise errors.PackageRepositoryValidationError(
+                url=url, brief=f"Invalid components {components!r}.",
             )
 
-        if deb_types is not None and any(
-            deb_type not in ["deb", "deb-src"] for deb_type in deb_types
+        if formats is not None and (
+            not isinstance(formats, list)
+            or not all(isinstance(x, str) for x in formats)
         ):
-            raise RuntimeError(
-                f"invalid deb repository object: {data!r} (invalid deb-types)"
+            raise errors.PackageRepositoryValidationError(
+                url=url, brief=f"Invalid formats {formats!r}.",
             )
 
         if not isinstance(key_id, str):
-            raise RuntimeError(
-                f"invalid deb repository object: {data!r} (invalid key-id)"
+            raise errors.PackageRepositoryValidationError(
+                url=url, brief=f"Invalid key identifier {key_id!r}.",
             )
 
         if key_server is not None and not isinstance(key_server, str):
-            raise RuntimeError(
-                f"invalid deb repository object: {data!r} (invalid key-server)"
+            raise errors.PackageRepositoryValidationError(
+                url=url, brief=f"Invalid key server {key_server!r}.",
             )
 
         if name is not None and not isinstance(name, str):
-            raise RuntimeError(
-                f"invalid deb repository object: {data!r} (invalid name)"
+            raise errors.PackageRepositoryValidationError(
+                url=url, brief=f"Invalid name {name!r}.",
             )
 
-        if not isinstance(suites, list) or not all(isinstance(x, str) for x in suites):
-            raise RuntimeError(
-                f"invalid deb repository object: {data!r} (invalid suites)"
+        if (
+            not isinstance(suites, list)
+            or not all(isinstance(x, str) for x in suites)
+            or not suites
+        ):
+            raise errors.PackageRepositoryValidationError(
+                url=url, brief=f"Suites must be a list of strings.",
             )
 
         if not isinstance(url, str):
-            raise RuntimeError(f"invalid deb repository object: {data!r} (invalid url)")
+            raise errors.PackageRepositoryValidationError(
+                url=url, brief=f"Invalid URL {url!r}.",
+            )
 
         if data_copy:
-            raise RuntimeError(f"invalid deb repository object: {data!r} (extra keys)")
+            keys = ", ".join([repr(k) for k in data_copy.keys()])
+            raise errors.PackageRepositoryValidationError(
+                url=url, brief=f"Invalid keys present ({keys}).",
+            )
 
         return cls(
             architectures=architectures,
             components=components,
-            deb_types=deb_types,
+            formats=formats,
             key_id=key_id,
             key_server=key_server,
             name=name,

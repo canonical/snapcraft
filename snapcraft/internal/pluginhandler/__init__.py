@@ -26,7 +26,7 @@ import shutil
 import subprocess
 import sys
 from glob import iglob
-from typing import cast, Dict, List, Optional, Set, Sequence, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Set, cast
 
 import snapcraft.extractors
 from snapcraft import file_utils, plugins, yaml_utils
@@ -35,14 +35,13 @@ from snapcraft.internal.mangling import clear_execstack
 
 from ._build_attributes import BuildAttributes
 from ._dependencies import MissingDependencyResolver
+from ._dirty_report import Dependency, DirtyReport  # noqa
 from ._metadata_extraction import extract_metadata
+from ._outdated_report import OutdatedReport
 from ._part_environment import get_snapcraft_part_environment
+from ._patchelf import PartPatcher
 from ._plugin_loader import load_plugin  # noqa: F401
 from ._runner import Runner
-from ._patchelf import PartPatcher
-from ._dirty_report import Dependency, DirtyReport  # noqa
-from ._outdated_report import OutdatedReport
-
 
 if TYPE_CHECKING:
     from snapcraft.project import Project
@@ -965,13 +964,44 @@ class PluginHandler:
         if not self._build_attributes.keep_execstack():
             clear_execstack(elf_files=elf_files)
 
-        if self._build_attributes.no_patchelf():
+        # ELF files in this part need to have their rpath and interpreter patched
+        # to use the in-snap version in the following scenarios:
+        #
+        #   - The base is defined
+        #   AND
+        #     - The base is not one of the static bases
+        #   AND
+        #     - The snap uses classic confinement
+        #     OR
+        #       - libc has been staged (as opposed to being in the base snap)
+        patching_required = (
+            self._project._snap_meta.base
+            and not self._project.is_static_base(self._project._snap_meta.base)
+            and (
+                self._project._snap_meta.confinement == "classic"
+                or "libc6" in self._part_properties.get("stage-packages", [])
+            )
+        )
+
+        # In addition to considering whether patching is NEEDED, we need to account
+        # for the user requesting different behavior:
+        #
+        #  - Opting out of patching even though it's needed (i.e. `no-patchelf` is a
+        #    build attribute)
+        #  - Requesting patching even though it's not needed (i.e. `enable-patchelf` is
+        #    a build attribute)
+        if (
+            self._build_attributes.no_patchelf()
+            and self._build_attributes.enable_patchelf()
+        ):
+            raise errors.BuildAttributePatchelfConflictError(part_name=self.name)
+        elif patching_required and self._build_attributes.no_patchelf():
             logger.warning(
                 "The primed files for part {!r} will not be verified for "
                 "correctness or patched: build-attributes: [no-patchelf] "
                 "is set.".format(self.name)
             )
-        else:
+        elif patching_required or self._build_attributes.enable_patchelf():
             part_patcher = PartPatcher(
                 elf_files=elf_files,
                 project=self._project,

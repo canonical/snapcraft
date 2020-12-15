@@ -18,11 +18,11 @@ import textwrap
 
 import pytest
 
-from snapcraft.internal.project_loader._extensions.flutter_master import (
-    ExtensionImpl as FlutterMasterExtension,
-)
 from snapcraft.internal.project_loader._extensions.flutter_dev import (
     ExtensionImpl as FlutterDevExtension,
+)
+from snapcraft.internal.project_loader._extensions.flutter_master import (
+    ExtensionImpl as FlutterMasterExtension,
 )
 
 

@@ -15,12 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import shlex
-
 from abc import ABC, abstractmethod
+from subprocess import CalledProcessError
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
+
 from snapcraft import formatting_utils
 from snapcraft.internal import steps
-from subprocess import CalledProcessError
-from typing import Dict, List, Union, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from snapcraft.internal.pluginhandler._dirty_report import DirtyReport
@@ -753,3 +753,30 @@ class SnapcraftPluginBuildError(SnapcraftException):
 
     def get_resolution(self) -> str:
         return "Check the build logs and ensure the part's configuration and sources are correct."
+
+
+class SnapcraftHostToolNotFoundError(SnapcraftException):
+    """An exception to raise when a host tool is required, but not found."""
+
+    def __init__(self, *, command_name: str, package_name: str) -> None:
+        self._command_name = command_name
+        self._package_name = package_name
+
+    def get_brief(self) -> str:
+        return f"A tool snapcraft depends on could not be found: {self._command_name!r}"
+
+    def get_resolution(self) -> str:
+        return f"Ensure that {self._package_name!r} is installed."
+
+
+class BuildAttributePatchelfConflictError(SnapcraftException):
+    """An exception to raise a part specified incompatible patchelf-related build-attributes."""
+
+    def __init__(self, *, part_name: str) -> None:
+        self._part_name = part_name
+
+    def get_brief(self) -> str:
+        return f"part {self._part_name} has both 'no-patchelf' and 'enable-patchelf' build-attributes, which are mutually exclusive and cannot be used together."
+
+    def get_resolution(self) -> str:
+        return f"Use either 'no-patchelf' or 'enable-patchelf', not both."

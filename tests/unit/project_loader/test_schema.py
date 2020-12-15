@@ -23,11 +23,12 @@ import pytest
 from testscenarios.scenarios import multiply_scenarios
 from testtools.matchers import Contains, Equals
 
-from . import ProjectLoaderBaseTest
+from snapcraft import project
 from snapcraft.internal.errors import PluginError
 from snapcraft.internal.project_loader import errors, load_config
-from snapcraft import project
 from tests import fixture_setup
+
+from . import ProjectLoaderBaseTest
 
 
 def get_project_config(snapcraft_yaml_content, target_deb_arch=None):

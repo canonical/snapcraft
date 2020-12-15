@@ -120,7 +120,7 @@ def test_get_build_commands_with_all_properties():
     class Options:
         constraints = ["constraints.txt"]
         requirements = ["requirements.txt"]
-        python_packages = ["pip"]
+        python_packages = ["pip", "some-pkg; sys_platform != 'win32'"]
 
     plugin = PythonPlugin(part_name="my-part", options=Options())
 
@@ -129,7 +129,7 @@ def test_get_build_commands_with_all_properties():
         == [
             '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} '
             '"${SNAPCRAFT_PART_INSTALL}"',
-            "pip install -c 'constraints.txt' -U pip",
+            "pip install -c 'constraints.txt' -U pip 'some-pkg; sys_platform != '\"'\"'win32'\"'\"''",
             "pip install -c 'constraints.txt' -U -r 'requirements.txt'",
             "[ -f setup.py ] && pip install -c 'constraints.txt' -U .",
         ]

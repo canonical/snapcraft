@@ -16,9 +16,7 @@
 
 import fileinput
 import functools
-import gnupg
 import io
-import lazr.restfulclient.errors
 import logging
 import os
 import pathlib
@@ -27,20 +25,19 @@ import subprocess
 import sys
 import tempfile
 from typing import Dict, List, Optional, Set, Tuple  # noqa: F401
-from typing_extensions import Final
 
-from launchpadlib.launchpad import Launchpad
+import gnupg
+from typing_extensions import Final
 from xdg import BaseDirectory
 
 from snapcraft import file_utils
-from snapcraft.project._project_options import ProjectOptions
 from snapcraft.internal import os_release
 from snapcraft.internal.indicators import is_dumb_terminal
+from snapcraft.project._project_options import ProjectOptions
 
-from . import errors
-from .apt_cache import AptCache
+from . import apt_ppa, errors
 from ._base import BaseRepo, get_pkg_name_parts
-
+from .apt_cache import AptCache
 
 logger = logging.getLogger(__name__)
 
@@ -352,26 +349,26 @@ class Ubuntu(BaseRepo):
         :raises snapcraft.repo.errors.BuildPackagesNotInstalledError:
             if installing the packages on the host failed.
         """
-        logger.debug(f"Requested build-packages: {sorted(package_names)!r}")
+        install_required = False
+        package_names = sorted(package_names)
 
-        if cls._check_if_all_packages_installed(package_names):
-            # To get the version list required to return, we mark the installed
-            # packages, but no refresh is required.
-            marked_packages = cls._get_marked_packages(package_names)
-        else:
-            # Ensure we have an up-to-date cache first.
+        logger.debug(f"Requested build-packages: {package_names!r}")
+
+        # Ensure we have an up-to-date cache first if we will have to
+        # install anything.
+        if not cls._check_if_all_packages_installed(package_names):
+            install_required = True
             cls.refresh_build_packages()
 
-            marked_packages = cls._get_marked_packages(package_names)
+        marked_packages = cls._get_marked_packages(package_names)
+        packages = [f"{name}={version}" for name, version in sorted(marked_packages)]
 
-            # TODO: this matches prior behavior, but the version is not
-            # being passed along to apt-get install, even if prescribed
-            # by the user.  We should specify it upon user request.
-            install_packages = sorted([name for name, _ in marked_packages])
+        if install_required:
+            cls._install_packages(packages)
+        else:
+            logger.debug(f"Requested build-packages already installed: {packages!r}")
 
-            cls._install_packages(install_packages)
-
-        return sorted([f"{name}={version}" for name, version in marked_packages])
+        return packages
 
     @classmethod
     def _install_packages(cls, package_names: List[str]) -> None:
@@ -391,6 +388,7 @@ class Ubuntu(BaseRepo):
             "apt-get",
             "--no-install-recommends",
             "-y",
+            "--allow-downgrades",
         ]
         if not is_dumb_terminal():
             apt_command.extend(["-o", "Dpkg::Progress-Fancy=1"])
@@ -401,8 +399,11 @@ class Ubuntu(BaseRepo):
         except subprocess.CalledProcessError:
             raise errors.BuildPackagesNotInstalledError(packages=package_names)
 
+        versionless_names = [get_pkg_name_parts(p)[0] for p in package_names]
         try:
-            subprocess.check_call(["sudo", "apt-mark", "auto"] + package_names, env=env)
+            subprocess.check_call(
+                ["sudo", "apt-mark", "auto"] + versionless_names, env=env
+            )
         except subprocess.CalledProcessError as e:
             logger.warning(
                 "Impossible to mark packages as auto-installed: {}".format(e)
@@ -630,42 +631,19 @@ class Ubuntu(BaseRepo):
         return True
 
     @classmethod
-    def _get_ppa_parts(cls, ppa: str) -> Tuple[str, str]:
-        ppa_split = ppa.split("/")
-        if len(ppa_split) != 2:
-            raise errors.AptPPAInstallError(ppa=ppa, reason="invalid PPA format")
-        return ppa_split[0], ppa_split[1]
-
-    @classmethod
-    def _get_launchpad_ppa_key_id(cls, ppa: str) -> str:
-        owner, name = cls._get_ppa_parts(ppa)
-        launchpad = Launchpad.login_anonymously("snapcraft", "production")
-        launchpad_url = f"~{owner}/+archive/{name}"
-
-        logger.debug(f"Loading launchpad url: {launchpad_url}")
-        try:
-            key_id = launchpad.load(launchpad_url).signing_key_fingerprint
-        except lazr.restfulclient.errors.NotFound as error:
-            raise errors.AptPPAInstallError(
-                ppa=ppa, reason="not found on launchpad"
-            ) from error
-
-        logger.debug(f"Retrieved launchpad PPA key ID: {key_id}")
-        return key_id
-
-    @classmethod
     def install_ppa(cls, *, keys_path: pathlib.Path, ppa: str) -> bool:
-        owner, name = cls._get_ppa_parts(ppa)
-        key_id = cls._get_launchpad_ppa_key_id(ppa)
+        owner, name = apt_ppa.split_ppa_parts(ppa=ppa)
+        key_id = apt_ppa.get_launchpad_ppa_key_id(ppa=ppa)
+        codename = os_release.OsRelease().version_codename()
 
         return any(
             [
                 cls.install_gpg_key_id(keys_path=keys_path, key_id=key_id),
                 cls.install_sources(
                     components=["main"],
-                    deb_types=["deb"],
+                    formats=["deb"],
                     name=f"ppa-{owner}_{name}",
-                    suites=["$SNAPCRAFT_APT_RELEASE"],
+                    suites=[codename],
                     url=f"http://ppa.launchpad.net/{owner}/{name}/ubuntu",
                 ),
             ]
@@ -677,19 +655,21 @@ class Ubuntu(BaseRepo):
         *,
         architectures: Optional[List[str]] = None,
         components: List[str],
-        deb_types: Optional[List[str]] = None,
+        formats: Optional[List[str]] = None,
         suites: List[str],
         url: str,
     ) -> str:
         with io.StringIO() as deb822:
-            if deb_types:
-                deb_text = " ".join(deb_types)
-                print(f"Types: {deb_text}", file=deb822)
+            if formats:
+                type_text = " ".join(formats)
+            else:
+                type_text = "deb"
 
-            url_text = _format_sources_list(url)
-            print(f"URIs: {url_text}", file=deb822)
+            print(f"Types: {type_text}", file=deb822)
 
-            suites_text = _format_sources_list(" ".join(suites))
+            print(f"URIs: {url}", file=deb822)
+
+            suites_text = " ".join(suites)
             print(f"Suites: {suites_text}", file=deb822)
 
             components_text = " ".join(components)
@@ -697,9 +677,10 @@ class Ubuntu(BaseRepo):
 
             if architectures:
                 arch_text = " ".join(architectures)
-                host_arch = _get_host_arch()
-                arch_text = arch_text.replace("$SNAPCRAFT_APT_HOST_ARCH", host_arch)
-                print(f"Architectures: {arch_text}", file=deb822)
+            else:
+                arch_text = _get_host_arch()
+
+            print(f"Architectures: {arch_text}", file=deb822)
 
             return deb822.getvalue()
 
@@ -709,7 +690,7 @@ class Ubuntu(BaseRepo):
         *,
         architectures: Optional[List[str]] = None,
         components: List[str],
-        deb_types: Optional[List[str]] = None,
+        formats: Optional[List[str]] = None,
         name: str,
         suites: List[str],
         url: str,
@@ -717,7 +698,7 @@ class Ubuntu(BaseRepo):
         config = cls._construct_deb822_source(
             architectures=architectures,
             components=components,
-            deb_types=deb_types,
+            formats=formats,
             suites=suites,
             url=url,
         )
@@ -753,9 +734,3 @@ class Ubuntu(BaseRepo):
             subprocess.check_call(["dpkg-deb", "--extract", deb_path, extract_dir])
         except subprocess.CalledProcessError:
             raise errors.UnpackError(deb_path)
-
-
-def _format_sources_list(sources_list: str):
-    release = os_release.OsRelease().version_codename()
-
-    return sources_list.replace("$SNAPCRAFT_APT_RELEASE", release)

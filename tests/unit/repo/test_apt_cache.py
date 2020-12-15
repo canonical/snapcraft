@@ -16,9 +16,9 @@
 
 import os
 import unittest
+from pathlib import Path
 from unittest import mock
 from unittest.mock import call
-from pathlib import Path
 
 import fixtures
 from testtools.matchers import Equals

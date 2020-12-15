@@ -16,13 +16,14 @@
 
 import os
 import subprocess
-
 from unittest import mock
+
 from testtools.matchers import Equals, HasLength
 
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import meson
 from tests import unit
+
 from . import PluginsV1BaseTestCase
 
 

@@ -14,13 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import OrderedDict
-from datetime import datetime
+import http.server
 import json
 import logging
-import http.server
 import os
 import urllib.parse
+from collections import OrderedDict
+from datetime import datetime
+
 import pymacaroons
 
 # we do not want snapcraft imports for the integration tests

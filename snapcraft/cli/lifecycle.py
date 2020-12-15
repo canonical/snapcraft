@@ -16,25 +16,17 @@
 
 import itertools
 import logging
-import typing
 import os
+import pathlib
 import subprocess
 import sys
 import time
-from typing import List, Optional
+import typing
+from typing import List, Optional, Union
 
 import click
 import progressbar
 
-from . import echo
-from ._command import SnapcraftProjectCommand
-from ._options import (
-    add_provider_options,
-    apply_host_provider_flags,
-    get_build_provider,
-    get_build_provider_flags,
-    get_project,
-)
 from snapcraft import file_utils
 from snapcraft.internal import (
     build_providers,
@@ -46,8 +38,17 @@ from snapcraft.internal import (
     steps,
 )
 from snapcraft.project._sanity_checks import conduct_project_sanity_check
-from ._errors import TRACEBACK_MANAGED, TRACEBACK_HOST
 
+from . import echo
+from ._command import SnapcraftProjectCommand
+from ._errors import TRACEBACK_HOST, TRACEBACK_MANAGED
+from ._options import (
+    add_provider_options,
+    apply_host_provider_flags,
+    get_build_provider,
+    get_build_provider_flags,
+    get_project,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +104,7 @@ def _execute(  # noqa: C901
             if provider_error.prompt_installable:
                 if echo.is_tty_connected() and echo.confirm(
                     "Support for {!r} needs to be set up. "
-                    "Would you like to do that it now?".format(provider_error.provider)
+                    "Would you like to do it now?".format(provider_error.provider)
                 ):
                     build_provider_class.setup_provider(echoer=echo)
                 else:
@@ -152,7 +153,7 @@ def _execute(  # noqa: C901
     return project
 
 
-def _run_pack(snap_command: List[str]) -> str:
+def _run_pack(snap_command: List[Union[str, pathlib.Path]]) -> str:
     ret = None
     stdout = ""
     stderr = ""
@@ -201,9 +202,32 @@ def _run_pack(snap_command: List[str]) -> str:
 def _pack(
     directory: str, *, compression: Optional[str] = None, output: Optional[str]
 ) -> None:
-    snap_path = file_utils.get_tool_path("snap")
+    """Pack a snap.
 
-    command = [snap_path, "pack"]
+    :param directory: directory to snap
+    :param compression: compression type to use, None for defaults
+    :param output: Output may either be:
+        (1) a directory path to output snaps to
+        (2) an explicit file path to output snap to
+        (3) unpsecified/None to output to current (project) directory
+    """
+    output_file = None
+    output_dir = None
+
+    if output:
+        output_path = pathlib.Path(output)
+        output_parent = output_path.parent
+        if output_path.is_dir():
+            output_dir = str(output_path)
+        elif output_parent and output_parent != pathlib.Path("."):
+            output_dir = str(output_parent)
+            output_file = output_path.name
+        else:
+            output_file = output
+
+    snap_path = file_utils.get_host_tool_path(command_name="snap", package_name="snapd")
+
+    command: List[Union[str, pathlib.Path]] = [snap_path, "pack"]
     # When None, just use snap pack's default settings.
     if compression is not None:
         if compression != "xz":
@@ -211,10 +235,16 @@ def _pack(
                 f"EXPERIMENTAL: Setting the squash FS compression to {compression!r}."
             )
         command.extend(["--compression", compression])
-    if output is not None:
-        command.extend(["--filename", output])
+
+    if output_file is not None:
+        command.extend(["--filename", output_file])
+
     command.append(directory)
 
+    if output_dir is not None:
+        command.append(output_dir)
+
+    logger.debug(f"Running pack command: {command}")
     snap_filename = _run_pack(command)
     echo.info(f"Snapped {snap_filename}")
 

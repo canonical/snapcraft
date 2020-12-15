@@ -15,8 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import shlex
-from typing import Any, Dict, Optional
 from typing import Sequence  # noqa: F401
+from typing import Any, Dict, Optional
 
 from snapcraft.internal.errors import SnapcraftError as _SnapcraftError
 from snapcraft.internal.errors import SnapcraftException as _SnapcraftException

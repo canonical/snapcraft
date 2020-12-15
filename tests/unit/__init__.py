@@ -14,16 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import apt
+import http.server
 import logging
 import os
 import stat
+import threading
 from unittest import mock
 
+import apt
 import fixtures
-import http.server
 import progressbar
-import threading
 import testscenarios
 import testtools
 
@@ -159,7 +159,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
 
         # We do not want the paths to affect every test we have.
         patcher = mock.patch(
-            "snapcraft.file_utils.get_tool_path", side_effect=lambda x: x
+            "snapcraft.file_utils.get_snap_tool_path", side_effect=lambda x: x
         )
         patcher.start()
         self.addCleanup(patcher.stop)

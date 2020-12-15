@@ -17,8 +17,8 @@
 import contextlib
 import os
 import textwrap
-
 from unittest import mock
+
 from testtools.matchers import Contains, Equals, HasLength
 
 import snapcraft
@@ -26,7 +26,6 @@ from snapcraft.internal import lifecycle, pluginhandler, states, steps
 from snapcraft.internal.lifecycle._status_cache import StatusCache
 
 from . import LifecycleTestBase
-
 
 # TODO refactor this entire module, the current test time is around 15 minutes.
 

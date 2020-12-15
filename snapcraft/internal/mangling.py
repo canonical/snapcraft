@@ -21,7 +21,6 @@ from typing import FrozenSet
 from snapcraft import file_utils
 from snapcraft.internal import elf
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -64,7 +63,7 @@ def clear_execstack(*, elf_files: FrozenSet[elf.ElfFile]) -> None:
     param elf.ElfFile elf_files: the full list of elf files to analyze
                                  and clear the execstack if present.
     """
-    execstack_path = file_utils.get_tool_path("execstack")
+    execstack_path = file_utils.get_snap_tool_path("execstack")
     elf_files_with_execstack = [e for e in elf_files if e.execstack_set]
 
     if elf_files_with_execstack:

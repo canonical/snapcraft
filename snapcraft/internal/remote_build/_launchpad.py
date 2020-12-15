@@ -14,27 +14,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime
 import gzip
 import logging
 import os
 import shutil
 import time
-import urllib.request
-import urllib.error
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Sequence, Type
+from urllib.parse import unquote, urlsplit
 
+import requests
+from launchpadlib.launchpad import Launchpad
 from lazr import restfulclient
 from lazr.restfulclient.resource import Entry
-from launchpadlib.launchpad import Launchpad
-from typing import Any, Dict, List, Sequence, Optional
-from urllib.parse import unquote, urlsplit
 from xdg import BaseDirectory
-from . import errors
 
 import snapcraft
-from snapcraft.internal.sources.errors import SnapcraftPullError
 from snapcraft.internal.sources._git import Git
+from snapcraft.internal.sources.errors import SnapcraftPullError
 from snapcraft.project import Project
+
+from . import errors
 
 _LP_POLL_INTERVAL = 30
 _LP_SUCCESS_STATUS = "Successfully built"
@@ -90,8 +90,11 @@ class LaunchpadClient:
         core18_channel: str = "stable",
         snapcraft_channel: str = "stable",
         deadline: int = 0,
+        git_class: Type[Git] = Git,
+        running_snapcraft_version: str = snapcraft.__version__,
     ) -> None:
-        if not Git.check_command_installed():
+        self._git_class = git_class
+        if not self._git_class.check_command_installed():
             raise errors.GitNotFoundProviderError(provider="Launchpad")
 
         self._snap_name = project.info.name
@@ -104,6 +107,7 @@ class LaunchpadClient:
 
         self._core18_channel = core18_channel
         self._snapcraft_channel = snapcraft_channel
+        self._running_snapcraft_version = running_snapcraft_version
 
         self._cache_dir = self._create_cache_directory()
         self._data_dir = self._create_data_directory()
@@ -403,14 +407,16 @@ class LaunchpadClient:
         # TODO: consolidate with, and use indicators.download_requests_stream
         logger.debug(f"Downloading: {url}")
         try:
-            with urllib.request.urlopen(url) as response:
+            with requests.get(url, stream=True) as response:
                 # Wrap response with gzipfile if gunzip is requested.
+                stream = response.raw
                 if gunzip:
-                    response = gzip.GzipFile(fileobj=response)  # type: ignore
+                    stream = gzip.GzipFile(fileobj=stream)
                 with open(dst, "wb") as f_dst:
-                    shutil.copyfileobj(response, f_dst)  # type: ignore
-        except urllib.error.HTTPError as e:
-            logger.error(f"Error downloading {url}: {e.reason}")
+                    shutil.copyfileobj(stream, f_dst)
+                response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error downloading {url}: {str(e)}")
 
     def _download_build_artifacts(self, build: Dict[str, Any]) -> None:
         arch = build["arch_tag"]
@@ -436,7 +442,7 @@ class LaunchpadClient:
 
         :return: Git handler instance to git repository.
         """
-        git_handler = Git(repo_dir, repo_dir, silent=True)
+        git_handler = self._git_class(repo_dir, repo_dir, silent=True)
 
         # Init repo.
         git_handler.init()
@@ -447,7 +453,9 @@ class LaunchpadClient:
                 git_handler.add(f)
 
         # Commit files.
-        git_handler.commit(f"committed by snapcraft version: {snapcraft.__version__}")
+        git_handler.commit(
+            f"committed by snapcraft version: {self._running_snapcraft_version}"
+        )
 
         return git_handler
 

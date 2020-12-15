@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, unicode_literals
 
-
 # FIXME: snapcraft targets the '16' series, hardcode it until more choices
 # become available server side -- vila 2016-04-22
 DEFAULT_SERIES = "16"

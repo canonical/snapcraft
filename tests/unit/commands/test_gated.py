@@ -19,8 +19,8 @@ import textwrap
 from testtools.matchers import Contains, Equals
 
 import snapcraft.storeapi.errors
-from . import StoreCommandsBaseTestCase
 
+from . import StoreCommandsBaseTestCase
 
 account_info_data = {"snaps": {"16": {"core": {"snap-id": "good"}}}}
 

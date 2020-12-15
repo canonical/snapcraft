@@ -20,7 +20,7 @@ from testtools.matchers import Contains, Equals, FileExists
 
 from snapcraft.internal import errors
 
-from . import CommandBaseTestCase, CommandBaseNoFifoTestCase
+from . import CommandBaseNoFifoTestCase, CommandBaseTestCase
 
 
 class BuildCommandTestCase(CommandBaseTestCase):
@@ -43,11 +43,7 @@ class BuildCommandTestCase(CommandBaseTestCase):
         with open(self.feedback_fifo, "w") as f:
             f.write("this is an error\n")
 
-        raised = self.assertRaises(
-            errors.SnapcraftctlError, self.run_command, ["build"]
-        )
-
-        self.assertThat(str(raised), Equals("this is an error"))
+        assert self.run_command(["build"]).exit_code == -1
 
 
 class BuildCommandWithoutFifoTestCase(CommandBaseNoFifoTestCase):

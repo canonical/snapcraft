@@ -15,10 +15,10 @@ systems:
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
-  set_base "../snaps/$SNAP/snap/snapcraft.yaml"
+  set_base "$SNAP/snap/snapcraft.yaml"
 
 restore: |
-  cd "../snaps/$SNAP"
+  cd "$SNAP"
   if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
       snapcraft clean --use-lxd
   else
@@ -32,7 +32,7 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
-  cd "../snaps/$SNAP"
+  cd "$SNAP"
 
   # Build what we have.
   # We cannot use --use-lxd for autopkgtest so we resort to --destructive-mode there.

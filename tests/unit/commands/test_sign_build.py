@@ -21,8 +21,9 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Contains, Equals, FileExists, Not
 
-from snapcraft import storeapi, internal
 import tests
+from snapcraft import internal, storeapi
+
 from . import CommandBaseTestCase
 
 

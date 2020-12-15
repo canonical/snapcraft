@@ -20,7 +20,6 @@ from typing import Any, Dict, Tuple
 
 from ._extension import Extension
 
-
 _PLATFORM_SNAP = dict(core18="kde-frameworks-5-core18")
 
 
@@ -80,6 +79,12 @@ class ExtensionImpl(Extension):
                 },
             },
             "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
+            "hooks": {
+                "configure": {
+                    "plugs": ["desktop"],
+                    "command-chain": ["snap/command-chain/hooks-configure-desktop"],
+                }
+            },
         }
 
         self.app_snippet = {
