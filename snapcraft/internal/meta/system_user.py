@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import OrderedDict
 import enum
 import logging
+from collections import OrderedDict
 from typing import Any, Dict
 
 from snapcraft.internal.meta import errors

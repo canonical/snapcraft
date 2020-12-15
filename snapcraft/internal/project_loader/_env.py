@@ -26,10 +26,8 @@ def runtime_env(root: str, arch_triplet: str) -> List[str]:
 
     env.append(
         'PATH="'
-        + ":".join(
-            ["{0}/usr/sbin", "{0}/usr/bin", "{0}/sbin", "{0}/bin", "$PATH"]
-        ).format(root)
-        + '"'
+        + ":".join(["{0}/usr/sbin", "{0}/usr/bin", "{0}/sbin", "{0}/bin"]).format(root)
+        + '${PATH:+:$PATH}"'
     )
 
     # Add the default LD_LIBRARY_PATH

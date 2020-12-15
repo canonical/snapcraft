@@ -19,7 +19,6 @@ import os
 import pathlib
 import shutil
 import subprocess
-
 from collections import OrderedDict
 from copy import deepcopy
 
@@ -27,9 +26,9 @@ import snapcraft
 import snapcraft.internal.sources
 from snapcraft import yaml_utils
 from snapcraft.file_utils import rmtree
-from snapcraft.project import Project
 from snapcraft.internal.meta import _version
 from snapcraft.internal.remote_build import errors
+from snapcraft.project import Project
 
 logger = logging.getLogger(__name__)
 

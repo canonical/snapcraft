@@ -17,11 +17,11 @@
 import logging
 import os
 import re
-
 from collections import OrderedDict
 from copy import deepcopy
+from typing import Any, Dict, List, Optional, Set, Tuple, Type
+
 from snapcraft.internal.meta.errors import SlotValidationError
-from typing import Any, Dict, List, Set, Optional, Tuple, Type
 
 logger = logging.getLogger(__name__)
 

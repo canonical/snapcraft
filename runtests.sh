@@ -20,7 +20,6 @@ set -e
 usage() {
     echo "Usage: "
     echo "    ./runtests.sh static"
-    echo "    ./runtests.sh tests/unit [<use-run>]"
     echo "    ./runtests.sh tests/integration[/<test-suite>]"
     echo "    ./runtests.sh spread"
     echo ""
@@ -54,12 +53,7 @@ run_static_tests() {
 run_snapcraft_tests(){
     test_suite="$1"
 
-    if [[ "$test_suite" == "tests/unit"* ]]; then
-        # Run with coverage results, if available.
-        pytest --cov-report=xml --cov=snapcraft "$test_suite"
-    else
-        python3 -m unittest discover -b -v -s "$test_suite" -t .
-    fi
+    python3 -m unittest discover -b -v -s "$test_suite" -t .
 }
 
 run_spread(){

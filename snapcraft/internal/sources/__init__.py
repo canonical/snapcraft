@@ -82,18 +82,18 @@ import sys
 from . import errors
 
 if sys.platform == "linux":
+    from ._7z import SevenZip  # noqa
     from ._bazaar import Bazaar  # noqa
+    from ._deb import Deb  # noqa
     from ._git import Git  # noqa
     from ._local import Local  # noqa
     from ._mercurial import Mercurial  # noqa
+    from ._rpm import Rpm  # noqa
     from ._script import Script  # noqa
+    from ._snap import Snap  # noqa: F401
     from ._subversion import Subversion  # noqa
     from ._tar import Tar  # noqa
     from ._zip import Zip  # noqa
-    from ._7z import SevenZip  # noqa
-    from ._deb import Deb  # noqa
-    from ._rpm import Rpm  # noqa
-    from ._snap import Snap  # noqa: F401
 
     _source_handler = {
         "bzr": Bazaar,
