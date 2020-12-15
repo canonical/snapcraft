@@ -31,8 +31,7 @@ For more information check the 'plugins' topic for the former and the
 
 import os
 
-from snapcraft.internal import errors
-from snapcraft.internal import mangling
+from snapcraft.internal import errors, mangling
 from snapcraft.plugins.v1 import PluginV1
 
 

@@ -57,10 +57,6 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         lib_paths = [
             os.path.join(self.prime_dir, "lib"),
             os.path.join(self.prime_dir, "usr", "lib"),
-            os.path.join(self.prime_dir, "lib", project_config.project.arch_triplet),
-            os.path.join(
-                self.prime_dir, "usr", "lib", project_config.project.arch_triplet
-            ),
         ]
         for lib_path in lib_paths:
             os.makedirs(lib_path)
@@ -69,43 +65,25 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         self.assertThat(
             environment,
             Contains(
-                'PATH="{0}/usr/sbin:{0}/usr/bin:{0}/sbin:{0}/bin:$PATH"'.format(
+                'PATH="{0}/usr/sbin:{0}/usr/bin:{0}/sbin:{0}/bin${{PATH:+:$PATH}}"'.format(
                     self.prime_dir
                 )
             ),
         )
-
-        # Ensure that LD_LIBRARY_PATH is present and it contains only the
-        # basics.
-        paths = []
-        for variable in environment:
-            if "LD_LIBRARY_PATH" in variable:
-                these_paths = variable.split("=")[1].strip()
-                paths.extend(these_paths.replace('"', "").split(":"))
-
-        self.assertTrue(len(paths) > 0, "Expected LD_LIBRARY_PATH to be in environment")
-
-        expected = (
-            os.path.join(self.prime_dir, i)
-            for i in [
-                "lib",
-                os.path.join("usr", "lib"),
-                os.path.join("lib", project_config.project.arch_triplet),
-                os.path.join("usr", "lib", project_config.project.arch_triplet),
-            ]
+        self.assertThat(
+            environment,
+            Contains(
+                'LD_LIBRARY_PATH="${{LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}}'
+                '{0}/lib:{0}/usr/lib"'.format(self.prime_dir)
+            ),
         )
-        for item in expected:
-            self.assertTrue(
-                item in paths,
-                "Expected LD_LIBRARY_PATH in {!r} to include {!r}".format(paths, item),
-            )
 
     def test_config_snap_environment_with_no_library_paths(self):
         project_config = self.make_snapcraft_project(self.snapcraft_yaml)
 
         environment = project_config.snap_env()
         self.assertTrue(
-            'PATH="{0}/usr/sbin:{0}/usr/bin:{0}/sbin:{0}/bin:$PATH"'.format(
+            'PATH="{0}/usr/sbin:{0}/usr/bin:{0}/sbin:{0}/bin${{PATH:+:$PATH}}"'.format(
                 self.prime_dir
             )
             in environment,
@@ -132,20 +110,14 @@ class EnvironmentTest(ProjectLoaderBaseTest):
 
         # Ensure that LD_LIBRARY_PATH is present and it contains the
         # extra dependency paths.
-        paths = []
-        for variable in project_config.snap_env():
-            if "LD_LIBRARY_PATH" in variable:
-                these_paths = variable.split("=")[1].strip()
-                paths.extend(these_paths.replace('"', "").split(":"))
-
-        self.assertTrue(len(paths) > 0, "Expected LD_LIBRARY_PATH to be in environment")
-
-        expected = (os.path.join(self.prime_dir, i) for i in ["lib1", "lib2"])
-        for item in expected:
-            self.assertTrue(
-                item in paths,
-                "Expected LD_LIBRARY_PATH ({!r}) to include {!r}".format(paths, item),
-            )
+        self.assertThat(
+            project_config.snap_env(),
+            Contains(
+                'LD_LIBRARY_PATH="{0}/lib1:{0}/lib2${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"'.format(
+                    self.prime_dir
+                )
+            ),
+        )
 
     @mock.patch.object(
         snapcraft.internal.pluginhandler.PluginHandler, "get_primed_dependency_paths"
@@ -241,13 +213,13 @@ class EnvironmentTest(ProjectLoaderBaseTest):
                         'PATH="{0}/parts/main/install/usr/sbin:'
                         "{0}/parts/main/install/usr/bin:"
                         "{0}/parts/main/install/sbin:"
-                        '{0}/parts/main/install/bin:$PATH"'
+                        '{0}/parts/main/install/bin${{PATH:+:$PATH}}"'
                     ).format(self.path),
                     (
                         'PATH="{0}/stage/usr/sbin:'
                         "{0}/stage/usr/bin:"
                         "{0}/stage/sbin:"
-                        '{0}/stage/bin:$PATH"'
+                        '{0}/stage/bin${{PATH:+:$PATH}}"'
                     ).format(self.path),
                     'PERL5LIB="{0}/stage/usr/share/perl5/"'.format(self.path),
                     'SNAPCRAFT_ARCH_TRIPLET="{}"'.format(
@@ -326,42 +298,39 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         project_config = self.make_snapcraft_project(self.snapcraft_yaml)
         environment = project_config.stage_env()
 
-        self.assertTrue(
-            'PATH="{0}/usr/sbin:{0}/usr/bin:{0}/sbin:{0}/bin:$PATH"'.format(
+        self.assertIn(
+            'PATH="{0}/usr/sbin:{0}/usr/bin:{0}/sbin:{0}/bin${{PATH:+:$PATH}}"'.format(
                 self.stage_dir
-            )
-            in environment
+            ),
+            environment,
         )
-        self.assertTrue(
-            'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{stage_dir}/lib:'
+        self.assertIn(
+            'LD_LIBRARY_PATH="${{LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}}{stage_dir}/lib:'
             "{stage_dir}/usr/lib:{stage_dir}/lib/{arch_triplet}:"
             '{stage_dir}/usr/lib/{arch_triplet}"'.format(
                 stage_dir=self.stage_dir,
                 arch_triplet=project_config.project.arch_triplet,
-            )
-            in environment,
-            "Current environment is {!r}".format(environment),
+            ),
+            environment,
         )
-        self.assertTrue(
+        self.assertIn(
             'CFLAGS="$CFLAGS -isystem{stage_dir}/include -isystem{stage_dir}/usr/include '
             "-isystem{stage_dir}/include/{arch_triplet} "
             '-isystem{stage_dir}/usr/include/{arch_triplet}"'.format(
                 stage_dir=self.stage_dir,
                 arch_triplet=project_config.project.arch_triplet,
-            )
-            in environment,
-            "Current environment is {!r}".format(environment),
+            ),
+            environment,
         )
-        self.assertTrue(
+        self.assertIn(
             'CPPFLAGS="$CPPFLAGS -isystem{stage_dir}/include '
             "-isystem{stage_dir}/usr/include "
             "-isystem{stage_dir}/include/{arch_triplet} "
             '-isystem{stage_dir}/usr/include/{arch_triplet}"'.format(
                 stage_dir=self.stage_dir,
                 arch_triplet=project_config.project.arch_triplet,
-            )
-            in environment,
-            "Current environment is {!r}".format(environment),
+            ),
+            environment,
         )
         self.assertTrue(
             'CXXFLAGS="$CXXFLAGS -isystem{stage_dir}/include '

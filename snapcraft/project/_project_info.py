@@ -17,8 +17,8 @@
 from copy import deepcopy
 
 from snapcraft import yaml_utils
-from . import _schema
-from . import errors
+
+from . import _schema, errors
 
 
 class ProjectInfo:

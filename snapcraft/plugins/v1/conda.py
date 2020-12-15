@@ -33,7 +33,6 @@ from typing import Optional, Tuple
 from snapcraft.internal import errors, sources
 from snapcraft.plugins.v1 import PluginV1
 
-
 _MINICONDA_CHECKSUMS = {"4.6.14": "md5/718259965f234088d785cad1fbd7de03"}
 
 

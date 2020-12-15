@@ -22,8 +22,8 @@ same keywords and configurations as the catkin plugin, the difference
 is the installation of and using catkin_tools to build.
 """
 
-import os
 import logging
+import os
 
 from snapcraft.plugins.v1 import catkin
 

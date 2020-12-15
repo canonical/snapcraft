@@ -58,58 +58,33 @@ These tests are in the `snaps_tests` directory, with the sources for the test sn
 
 In order to run these tests suites, first you will need to set up your development environment. Follow the steps in the [Hacking guide](HACKING.md) to install for development.
 
-Then, you'll need a few more dependencies:
-
-    sudo apt install squashfs-tools xdelta3 bzr git mercurial subversion shellcheck
-
 ### Running the tests
 
 To run the static tests, execute:
 
-    ./runtests.sh static
+    make tests-static
 
 To run the unit tests, execute:
 
-    ./runtests.sh tests/unit
+    make test-units
 
-To run the integration tests, execute:
+...or use pytest directly:
 
-    ./runtests.sh tests/integration
+    pytest tests/unit
 
-You can also run a subsuite of the unit or integration suites specifying the path to the directory.
+You can also run a subsuite of the unit suites specifying the path to the directory.
 For example:
 
   * To run only the unit tests for the plugins:
 
     ```
-    ./runtests.sh tests/unit/plugins
+    pytest tests/unit/plugins
     ```
 
   * To run only the integration tests for the store:
 
     ```
-    ./runtests.sh tests/integration/store
-    ```
-
-And you can also run a single test module, test case or test function using the usual python way.
-For example:
-
-  * To run only the unit tests in the test_nodejs module:
-
-    ```
-    python3 -m unittest tests.unit.plugins.test_nodejs
-    ```
-
-  * To run only the unit tests in the NodePluginTest:
-
-    ```
-    python3 -m unittest tests.unit.plugins.test_nodejs.NodePluginTest
-    ```
-
-  * To run only the unit test named test_pull
-
-    ```
-    python3 -m unittest tests.unit.plugins.test_nodejs.NodePluginTest.test_pull
+    pytest tests/integration/store
     ```
 
 The snaps tests script has more complex arguments. For an explanation of them, run:
@@ -189,20 +164,6 @@ Then, you can run them using a local LXD as the backend with:
 Or, you can run them in google if you have a `SPREAD_GOOGLE_KEY`, with:
 
     SPREAD_GOOGLE_KEY={key} ./spread -v google:
-
-## External snaps tests
-
-The idea of the external snaps tests is to clone a repository external to snapcraft that contains a `snapcraft.yaml`, and check that snapcraft can build successfully that snap. There is a script in the snapcraft repo to help with this. You can see how to use it running:
-
-    python3 -m external_snaps_tests --help
-
-We have a suite of external snaps tests that runs each night using the latest snapcraft master to build a big variety of snaps. It is located in https://github.com/elopio/snapcraft-de-noche and you can add new snaps to the suite just by adding them to the `.travis.yml` file.
-
-## Reproducible builds tests
-
-This is an experimental suite, with still some details to define. The idea is to build a snap recording a manifest of all the details of the build. Then build the snap again, but this time using the manifest instead of the source `snapcraft.yaml`, and compare that both snaps are equal.
-
-Currently, the suite is using the snaps of the integration suite to check the reproducibility. It is located in https://github.com/elopio/snapcraft-reproducible/
 
 ## Testing arm
 

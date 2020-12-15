@@ -15,8 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-
 from typing import Any
+
 from snapcraft import yaml_utils
 
 
