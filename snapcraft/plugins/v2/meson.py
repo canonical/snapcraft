@@ -81,11 +81,15 @@ class MesonPlugin(PluginV2):
         meson_cmd = ["meson"]
         if self.options.meson_parameters:
             meson_cmd.append(" ".join(self.options.meson_parameters))
-        meson_cmd.append(".snapbuild")
+        meson_cmd.append('"${SNAPCRAFT_PART_SRC_WORK}"')
 
         return [
             f"/usr/bin/python3 -m pip install -U {meson_package}",
-            "[ ! -d .snapbuild ] && {}".format(" ".join(meson_cmd)),
-            "(cd .snapbuild && ninja)",
-            '(cd .snapbuild && DESTDIR="${SNAPCRAFT_PART_INSTALL}" ninja install)',
+            "[ ! -f build.ninja ] && {}".format(" ".join(meson_cmd)),
+            "ninja",
+            'DESTDIR="${SNAPCRAFT_PART_INSTALL}" ninja install',
         ]
+
+    @property
+    def out_of_source_build(self) -> bool:
+        return True
