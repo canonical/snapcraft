@@ -47,6 +47,6 @@ class GlobalGrammarProcessor:
                 self._project,
                 repo.Repo.build_package_is_valid,
             )
-            self.__build_packages = processor.process()
+            self.__build_packages = set(processor.process())
 
         return self.__build_packages

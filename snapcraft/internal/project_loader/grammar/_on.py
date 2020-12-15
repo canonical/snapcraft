@@ -105,7 +105,6 @@ def _extract_on_clause_selectors(on: str) -> Set[str]:
     :param str on: The 'on <selector>' part of the 'on' clause.
 
     :return: Selectors found within the 'on' clause.
-    :rtype: set
 
     For example:
     >>> _extract_on_clause_selectors('on amd64,i386') == {'amd64', 'i386'}

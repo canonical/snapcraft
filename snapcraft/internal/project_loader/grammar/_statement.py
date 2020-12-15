@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from typing import TYPE_CHECKING, Iterable, List, Optional, Set
+from typing import TYPE_CHECKING, Iterable, List, Optional
 
 from . import typing
 from .errors import UnsatisfiedStatementError
@@ -59,8 +59,8 @@ class Statement:
         self._check_primitives = check_primitives
         self._else_bodies: List[Optional[typing.Grammar]] = []
 
-        self.__processed_body: Optional[Set[str]] = None
-        self.__processed_else: Optional[Set[str]] = None
+        self.__processed_body: Optional[List[str]] = None
+        self.__processed_else: Optional[List[str]] = None
 
     def add_else(self, else_body: Optional[typing.Grammar]) -> None:
         """Add an 'else' clause to the statement.
@@ -71,23 +71,21 @@ class Statement:
         """
         self._else_bodies.append(else_body)
 
-    def process(self) -> Set[str]:
+    def process(self) -> List[str]:
         """Process this statement.
 
         :return: Primitives as determined by evaluating the statement or its
                  else clauses.
-        :rtype: set
         """
         if self._check():
             return self._process_body()
         else:
             return self._process_else()
 
-    def _process_body(self) -> Set[str]:
+    def _process_body(self) -> List[str]:
         """Process the main body of this statement.
 
         :return: Primitives as determined by processing the main body.
-        :rtype: set
         """
         if self.__processed_body is None:
             self.__processed_body = self._processor.process(
@@ -96,16 +94,15 @@ class Statement:
 
         return self.__processed_body
 
-    def _process_else(self) -> Set[str]:
+    def _process_else(self) -> List[str]:
         """Process the else clauses of this statement in order.
 
         :return: Primitives as determined by processing the else clauses.
-        :rtype: set
         """
         if self.__processed_else is not None:
             return self.__processed_else
 
-        self.__processed_else = set()
+        self.__processed_else = list()
         for else_body in self._else_bodies:
             if not else_body:
                 # Handle the 'else fail' case.
