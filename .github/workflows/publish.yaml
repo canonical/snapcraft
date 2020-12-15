@@ -16,15 +16,18 @@ jobs:
           # https://github.com/actions/runner/issues/520
           if [[ -n "${{ secrets.STORE_LOGIN }}" ]]; then
             echo "::set-output name=PUBLISH::true"
+            if [[ ${{ github.event_name }} == 'pull_request' ]]; then
+              echo "::set-output name=PUBLISH_BRANCH::edge/pr-${{ github.event.number }}"
+            elif [[ "${GITHUB_REF##*/}" == "master" ]]; then
+              echo "::set-output name=PUBLISH_BRANCH::edge"
+            else
+              echo "::set-output name=PUBLISH_BRANCH::"
+            fi
           else
-            echo "::set-output name=PUBLISH::false"
+            echo "::set-output name=PUBLISH::"
+            echo "::set-output name=PUBLISH_BRANCH::"
           fi
 
-          if [[ ${{ github.event_name }} == 'pull_request' ]]; then
-            echo "::set-output name=PUBLISH_BRANCH::edge/pr-${{ github.event.number }}"
-          elif [[ "${GITHUB_REF##*/}" == "master" ]]; then
-            echo "::set-output name=PUBLISH_BRANCH::edge"
-          fi
 
       - if: steps.decisions.outputs.PUBLISH == 'true'
         name: Checkout Snapcraft        
