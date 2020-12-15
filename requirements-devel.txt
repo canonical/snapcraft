@@ -8,6 +8,7 @@ mccabe==0.6.1
 mypy==0.770
 testscenarios==0.5.0
 pexpect==4.7.0
+pip==20.1.1
 pycodestyle==2.5.0
 pyftpdlib==1.5.5
 pyramid==1.10.4
