@@ -17,14 +17,15 @@ sudo apt install --yes \
     libyaml-dev \
     make \
     patchelf \
+    python3-apt \
     python3-dev \
     python3-pip \
     python3-venv \
     rpm2cpio \
     squashfs-tools
 
-# Create a virtual environment
-python3 -m venv "${SNAPCRAFT_VIRTUAL_ENV_DIR}"
+# Create a virtual environment enabling system packages (for python3-apt).
+python3 -m venv "${SNAPCRAFT_VIRTUAL_ENV_DIR}" --system-site-packages
 
 # Activate virtual environment
 # shellcheck source=/dev/null

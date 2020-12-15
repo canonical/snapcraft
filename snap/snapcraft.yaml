@@ -18,7 +18,7 @@ apps:
       PATH: "/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
       # https://github.com/lxc/pylxd/pull/361
       PYLXD_WARNINGS: "none"
-    command: bin/snapcraft
+    command: usr/bin/python3 $SNAP/bin/snapcraft
     completer: snapcraft-completion
 
 build-packages:
@@ -79,6 +79,12 @@ parts:
       # Remove so the link can be recreated on re-builds
       rm -f "$TRIPLET_PATH/libsodium.so"
       ln -s "$LIBSODIUM" "$TRIPLET_PATH/libsodium.so"
+
+      # We don't use stage-packages to prevent other dependencies from getting
+      # automatically pulled (such as an incomplete python3, which Snapcraft
+      # will attempt to use and break the build).
+      apt download python3-apt
+      dpkg -x python3-apt_*.deb $SNAPCRAFT_PART_INSTALL/
 
   snapcraft:
     source: .
