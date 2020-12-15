@@ -21,7 +21,6 @@ from typing import FrozenSet
 from snapcraft import file_utils
 from snapcraft.internal import elf
 
-
 logger = logging.getLogger(__name__)
 
 

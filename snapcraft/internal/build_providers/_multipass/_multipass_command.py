@@ -18,25 +18,23 @@ import io
 import logging
 import shutil
 import subprocess
-
 from time import sleep
 from typing import (  # noqa: F401
+    IO,
     Any,
     Callable,
     Dict,
-    IO,
     List,
     Optional,
     Sequence,
     Union,
 )
 
-from ._windows import windows_reload_multipass_path_env, windows_install_multipass
-
 from snapcraft.internal import repo
-from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.internal.build_providers import errors
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 
+from ._windows import windows_install_multipass, windows_reload_multipass_path_env
 
 logger = logging.getLogger(__name__)
 

@@ -15,11 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-
 from collections import OrderedDict
 from copy import deepcopy
-from snapcraft.internal.meta.errors import PlugValidationError
 from typing import Any, Dict, Optional, Type
+
+from snapcraft.internal.meta.errors import PlugValidationError
 
 logger = logging.getLogger(__name__)
 

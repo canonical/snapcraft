@@ -19,7 +19,6 @@ from typing import Sequence, Set
 
 from snapcraft.internal import repo
 
-
 _MSG_EXTEND_STAGE_PACKAGES = (
     "The {part_name!r} part is missing libraries that are not "
     "included in the snap or base. They can be satisfied by adding the following "

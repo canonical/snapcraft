@@ -48,6 +48,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 """
 
 import os
+
 import snapcraft.common
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import PluginV1
