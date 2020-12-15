@@ -89,12 +89,6 @@ class RustPlugin(PluginV1):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-
-        if project._get_build_base() not in ("core", "core16", "core18"):
-            raise errors.PluginBaseError(
-                part_name=self.name, base=project._get_build_base()
-            )
-
         self.build_packages.extend(["gcc", "git", "curl", "file"])
         self._rustup_dir = os.path.expanduser(os.path.join("~", ".rustup"))
         self._cargo_dir = os.path.expanduser(os.path.join("~", ".cargo"))

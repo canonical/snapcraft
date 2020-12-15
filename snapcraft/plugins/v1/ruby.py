@@ -74,11 +74,6 @@ class RubyPlugin(PluginV1):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        if project._get_build_base() not in ("core", "core16", "core18"):
-            raise errors.PluginBaseError(
-                part_name=self.name, base=project._get_build_base()
-            )
-
         # Beta Warning
         # Remove this comment and warning once ruby plugin is stable.
         logger.warning(

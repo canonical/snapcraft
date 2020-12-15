@@ -21,6 +21,7 @@ import shlex
 from subprocess import CalledProcessError
 from typing import List
 
+from snapcraft.project import Project
 from snapcraft.internal import common, errors
 from snapcraft.internal.meta.package_repository import PackageRepository
 
@@ -86,6 +87,15 @@ class PluginV1:
         self.options = options
 
         if project:
+            if isinstance(project, Project) and project._get_build_base() not in (
+                "core",
+                "core16",
+                "core18",
+            ):
+                raise errors.PluginBaseError(
+                    part_name=self.name, base=project._get_build_base()
+                )
+
             self.partdir = os.path.join(project.parts_dir, name)
         else:
             self.partdir = os.path.join(os.getcwd(), "parts", name)
