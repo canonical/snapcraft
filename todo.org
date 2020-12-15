@@ -78,6 +78,12 @@ CLOSED: [2020-06-24]
 - [X] Implement =snapcraft list-tracks=
 - [ ] Add documentation for track management to the [[https://snapcraft.io/docs/release-management][Release management]] docs.
 
+*** TODO [[file:specifications/configurable-apt-mirror.org][Configurable APT Mirror]] [0/7]
+- [ ] Add =--snapcraft-apt-mirror= command-line argument with matching
+  =SNAPCRAFT_APT_MIRROR= environment variable.
+- [ ] Replace usage of =SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR= with
+  =SNAPCRAFT_APT_MIRROR=.
+
 *** DONE [[file:specifications/desktop-extensions-font-hook.org][Desktop Extensions Font Hook]] [3/3]
 CLOSED: [2020-10-01 jue 10:00]
 
