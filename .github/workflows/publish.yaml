@@ -1,39 +1,52 @@
 name: CI
 
-on: [pull_request, push]
+on: 
+  pull_request:
+  push:
+    branches: [master]
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Snapcraft
+      - name: Decision to Publish
+        id: decisions
+        run: |
+          # Secrets cannot be used in conditionals, so this is our dance:
+          # https://github.com/actions/runner/issues/520
+          if [[ -n "${{ secrets.STORE_LOGIN }}" ]]; then
+            echo "::set-output name=PUBLISH::true"
+          else
+            echo "::set-output name=PUBLISH::false"
+          fi
+
+          if [[ ${{ github.event_name }} == 'pull_request' ]]; then
+            echo "::set-output name=PUBLISH_BRANCH::edge/pr-${{ github.event.number }}"
+          elif [[ "${GITHUB_REF##*/}" == "master" ]]; then
+            echo "::set-output name=PUBLISH_BRANCH::edge"
+          fi
+
+      - if: steps.decisions.outputs.PUBLISH == 'true'
+        name: Checkout Snapcraft        
         uses: actions/checkout@v2
         with:
           # Fetch all of history so Snapcraft can determine its own version from git.
           fetch-depth: 0
 
-      - name: Build Snapcraft Snap
+      - if: steps.decisions.outputs.PUBLISH == 'true'
+        name: Build Snapcraft Snap
         id: build-snapcraft
         uses: snapcore/action-build@v1
 
-      - name: Verify Snapcraft Snap
+      - if: steps.decisions.outputs.PUBLISH == 'true'
+        name: Verify Snapcraft Snap
         run: |
           # Make sure it is installable.
           sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
 
-      - name: Publish Snapcraft Snap (PR)
-        if: github.event_name == 'pull_request' && secrets.STORE_LOGIN != null
+      - if: steps.decisions.outputs.PUBLISH == 'true' && steps.decisions.outputs.PUBLISH_BRANCH != null
         uses: snapcore/action-publish@v1
         with:
           store_login: ${{ secrets.STORE_LOGIN }}
           snap: ${{ steps.build-snapcraft.outputs.snap }}
-          release: edge/pr-${{ github.event.number }}
-
-      - name: Publish Snapcraft Snap (PUSH)
-        if: github.event_name == 'push' && secrets.STORE_LOGIN != null
-        uses: snapcore/action-publish@v1
-        with:
-          store_login: ${{ secrets.STORE_LOGIN }}
-          snap: ${{ steps.build-snapcraft.outputs.snap }}
-          release: edge
+          release: ${{ steps.decisions.outputs.PUBLISH_BRANCH }}
