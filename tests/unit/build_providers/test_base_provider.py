@@ -317,14 +317,14 @@ class BaseProviderTest(BaseProviderBaseTest):
     def test_clean_part(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
 
-        provider.clean(part_names=("part1",))
+        provider.clean_parts(part_names=("part1",))
 
         provider.run_mock.assert_called_once_with(["snapcraft", "clean", "part1"])
 
     def test_clean_multiple_parts(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
 
-        provider.clean(part_names=("part1", "part2"))
+        provider.clean_parts(part_names=("part1", "part2"))
 
         provider.run_mock.assert_called_once_with(
             ["snapcraft", "clean", "part1", "part2"]

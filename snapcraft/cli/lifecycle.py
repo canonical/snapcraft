@@ -447,7 +447,7 @@ def clean(ctx, parts, unprime, step, **kwargs):
             with build_provider_class(
                 project=project, echoer=echo, build_provider_flags=build_provider_flags
             ) as instance:
-                instance.clean(part_names=parts)
+                instance.clean_parts(part_names=parts)
         else:
             build_provider_class(project=project, echoer=echo).clean_project()
             # Clear the prime directory on the host, unless on Windows.
