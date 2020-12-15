@@ -30,7 +30,6 @@ class TestSnap(LifecycleCommandsBaseTestCase):
         self, shell: bool = False, output: Optional[str] = None
     ):
         self.fake_lifecycle_execute.mock.assert_not_called()
-        self.provider_mock.mount_project.assert_called_once_with()
 
         if shell:
             self.provider_mock.shell.assert_called_once_with()

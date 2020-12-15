@@ -160,6 +160,7 @@ class Multipass(Provider):
         self.echoer.info("Launching a VM.")
         self.launch_instance()
         self._instance_info = self._get_instance_info()
+        self._mount_project()
 
     def destroy(self) -> None:
         """Destroy the instance, trying to stop it first."""
