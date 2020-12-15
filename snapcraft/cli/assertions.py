@@ -18,15 +18,15 @@ import subprocess
 import tempfile
 from datetime import datetime
 from textwrap import dedent
-from typing import List, Dict
+from typing import Dict, List
 
 import click
 
 import snapcraft
-from . import echo
 from snapcraft import storeapi, yaml_utils
 from snapcraft.storeapi import assertions
 
+from . import echo
 
 _COLLABORATION_HEADER = dedent(
     """\
@@ -94,7 +94,13 @@ def sign_build(snap_file: str, key_name: str, local: bool) -> None:
 @click.argument("validations", metavar="<validation>...", nargs=-1, required=True)
 @click.option("--key-name", metavar="<key-name>")
 def validate(snap_name: str, validations: list, key_name: str) -> None:
-    """Validate a gated snap."""
+    """Validate a gated snap.
+
+    Each validation can be presented with ether syntax:
+
+    -  <snap-name>=<revision>
+    -  <snap-id>=<revision>
+    """
     snapcraft.validate(snap_name, validations, key=key_name)
 
 

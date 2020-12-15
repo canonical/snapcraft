@@ -16,11 +16,10 @@
 
 import os
 
-from snapcraft import project
-from snapcraft.internal.project_loader import inspection
-
 from testtools.matchers import Equals
 
+from snapcraft import project
+from snapcraft.internal.project_loader import inspection
 from tests import unit
 
 

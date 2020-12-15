@@ -21,13 +21,14 @@ import pathlib
 import tarfile
 from unittest import mock
 
-import pytest
 import fixtures
-from testtools.matchers import Equals, HasLength, FileExists
+import pytest
+from testtools.matchers import Equals, FileExists, HasLength
 
-from snapcraft.plugins.v1 import nodejs
 from snapcraft.internal import errors
+from snapcraft.plugins.v1 import nodejs
 from tests import fixture_setup, unit
+
 from . import PluginsV1BaseTestCase
 
 

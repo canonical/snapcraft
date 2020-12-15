@@ -20,7 +20,7 @@ import textwrap
 from testtools.matchers import FileContains, FileExists, Not
 
 from snapcraft.internal import mangling
-from tests import unit, fixture_setup
+from tests import fixture_setup, unit
 
 
 def _create_file(filename, contents):

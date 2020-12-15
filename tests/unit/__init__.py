@@ -14,16 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import apt
+import http.server
 import logging
 import os
 import stat
+import threading
 from unittest import mock
 
+import apt
 import fixtures
-import http.server
 import progressbar
-import threading
 import testscenarios
 import testtools
 

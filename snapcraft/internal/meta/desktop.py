@@ -22,7 +22,6 @@ from typing import Optional
 
 from . import errors
 
-
 logger = logging.getLogger(__name__)
 
 

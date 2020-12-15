@@ -15,13 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-
 from unittest import mock
+
 from testtools.matchers import Equals, HasLength
 
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import scons
 from tests import unit
+
 from . import PluginsV1BaseTestCase
 
 

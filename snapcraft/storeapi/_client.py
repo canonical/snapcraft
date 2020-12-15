@@ -15,15 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import os
+import urllib.parse
+
 import requests
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, RetryError
 from requests.packages.urllib3.util.retry import Retry
-import urllib.parse
-import os
 
-from . import _agent
-from . import errors
+from . import _agent, errors
 
 # Set urllib3's logger to only emit errors, not warnings. Otherwise even
 # retries are printed, and they're nasty.

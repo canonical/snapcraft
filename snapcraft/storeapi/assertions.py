@@ -18,9 +18,7 @@ import subprocess
 from copy import deepcopy
 from datetime import datetime
 
-from . import StoreClient
-from . import errors
-from . import constants
+from . import StoreClient, constants, errors
 
 
 class _BaseAssertion:

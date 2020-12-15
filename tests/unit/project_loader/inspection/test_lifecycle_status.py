@@ -17,10 +17,10 @@
 import os
 import textwrap
 
+from testtools.matchers import Equals
+
 from snapcraft.internal import steps
 from snapcraft.internal.project_loader import inspection
-
-from testtools.matchers import Equals
 
 from .. import ProjectLoaderBaseTest
 

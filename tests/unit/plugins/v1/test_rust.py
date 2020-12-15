@@ -29,6 +29,7 @@ import snapcraft
 from snapcraft.internal import errors, meta
 from snapcraft.plugins.v1 import rust
 from tests import fixture_setup, unit
+
 from . import PluginsV1BaseTestCase
 
 
@@ -166,7 +167,9 @@ class TestRustPluginCrossCompile:
         project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
         plugin = rust.RustPlugin("test-part", options, project)
-        plugin.pull()
+
+        with mock.patch("os.path.exists", return_value=False):
+            plugin.pull()
 
         assert mock_run.call_count == 4
         mock_run.assert_has_calls(

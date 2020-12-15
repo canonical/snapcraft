@@ -27,7 +27,6 @@ import pytest
 from testtools.matchers import Contains, Equals, FileExists, Not
 
 import snapcraft
-from . import mocks
 from snapcraft.internal import (
     common,
     errors,
@@ -41,6 +40,8 @@ from snapcraft.internal import (
 from snapcraft.internal.sources.errors import SnapcraftSourceUnhandledError
 from snapcraft.project import Project
 from tests import fixture_setup, unit
+
+from . import mocks
 
 
 class PluginTestCase(unit.TestCase):

@@ -12,6 +12,7 @@ APPNAME='cc_test'
 top = '.'
 
 from waflib import Configure, Logs, Utils
+
 #Configure.autoconfig = True # True/False/'clobber'
 
 def options(opt):
@@ -86,10 +87,14 @@ def build(bld):
 # command examples
 
 from waflib.Build import BuildContext
+
+
 class foo_class(BuildContext):
 	cmd = 'foo'
 
 from waflib.Context import Context
+
+
 class package_class(Context):
 	"""just a test, try calling 'waf package' """
 	cmd = 'package'
@@ -101,6 +106,8 @@ def package(ctx):
 # and a task generator method example
 
 from waflib import TaskGen
+
+
 @TaskGen.feature('strictlib')
 def check_lib_in_libpath(self):
 	#For use in a configuration check: raise an exception

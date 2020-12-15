@@ -20,7 +20,7 @@ from testtools.matchers import Contains, Equals, FileExists
 
 from snapcraft.internal import errors
 
-from . import CommandBaseTestCase, CommandBaseNoFifoTestCase
+from . import CommandBaseNoFifoTestCase, CommandBaseTestCase
 
 
 class SetVersionCommandTestCase(CommandBaseTestCase):
@@ -37,17 +37,17 @@ class SetVersionCommandTestCase(CommandBaseTestCase):
         self.assertThat(data["function"], Equals("set-version"))
         self.assertThat(data["args"], Equals({"version": "test-version"}))
 
+    def test_set_empty_version(self):
+        result = self.run_command(["set-version", ""])
+        assert result != 0
+
     def test_set_version_error(self):
         # If there is a string in the feedback, it should be considered an
         # error
         with open(self.feedback_fifo, "w") as f:
             f.write("this is an error\n")
 
-        raised = self.assertRaises(
-            errors.SnapcraftctlError, self.run_command, ["set-version", "test-version"]
-        )
-
-        self.assertThat(str(raised), Equals("this is an error"))
+        assert self.run_command(["set-version", "test-version"]).exit_code == -1
 
 
 class SetVersionCommandWithoutFifoTestCase(CommandBaseNoFifoTestCase):

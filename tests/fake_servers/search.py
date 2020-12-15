@@ -24,7 +24,6 @@ from pyramid import response
 import tests
 from tests.fake_servers import base
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -115,18 +114,20 @@ class FakeStoreSearchServer(base.BaseFakeServer):
                     }
                 )
 
+        snap_id = f"{snap}-snap-id"
+
         return json.dumps(
             {
                 "channel-map": channel_map,
                 "snap": {
                     "name": snap,
-                    "snap-id": "good",
+                    "snap-id": snap_id,
                     "publisher": {
                         "id": snap + "-developer-id",
                         "validation": "unproven",
                     },
                 },
-                "snap-id": "good",
+                "snap-id": snap_id,
                 "name": snap,
             }
         ).encode()

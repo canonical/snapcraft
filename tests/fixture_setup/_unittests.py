@@ -21,11 +21,10 @@ import subprocess
 import sys
 import textwrap
 from types import ModuleType
-from unittest import mock
 from typing import Callable
+from unittest import mock
 
 import fixtures
-
 
 import snapcraft
 from snapcraft.internal import elf

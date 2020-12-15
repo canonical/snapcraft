@@ -767,3 +767,16 @@ class SnapcraftHostToolNotFoundError(SnapcraftException):
 
     def get_resolution(self) -> str:
         return f"Ensure that {self._package_name!r} is installed."
+
+
+class BuildAttributePatchelfConflictError(SnapcraftException):
+    """An exception to raise a part specified incompatible patchelf-related build-attributes."""
+
+    def __init__(self, *, part_name: str) -> None:
+        self._part_name = part_name
+
+    def get_brief(self) -> str:
+        return f"part {self._part_name} has both 'no-patchelf' and 'enable-patchelf' build-attributes, which are mutually exclusive and cannot be used together."
+
+    def get_resolution(self) -> str:
+        return f"Use either 'no-patchelf' or 'enable-patchelf', not both."

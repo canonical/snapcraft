@@ -15,16 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from typing import Any, Callable, Dict, List, Set, Optional
+from typing import Any, Callable, Dict, List, Optional, Set
 
 from snapcraft import project
-from .errors import GrammarSyntaxError
+
 from . import typing
-from ._statement import Statement
+from ._compound import CompoundStatement
 from ._on import OnStatement
+from ._statement import Statement
 from ._to import ToStatement
 from ._try import TryStatement
-from ._compound import CompoundStatement
+from .errors import GrammarSyntaxError
 
 _ON_TO_CLAUSE_PATTERN = re.compile(r"(\Aon\s+\S+)\s+(to\s+\S+\Z)")
 _ON_CLAUSE_PATTERN = re.compile(r"\Aon\s+")

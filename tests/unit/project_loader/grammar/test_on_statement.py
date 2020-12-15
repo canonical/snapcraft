@@ -21,8 +21,8 @@ import re
 import pytest
 
 import snapcraft
-from snapcraft.internal.project_loader import grammar
 import snapcraft.internal.project_loader.grammar._on as on
+from snapcraft.internal.project_loader import grammar
 
 
 def load_tests(loader, tests, ignore):

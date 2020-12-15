@@ -17,8 +17,9 @@
 import contextlib
 from typing import List, Tuple
 
-from snapcraft.internal import pluginhandler, steps
 import snapcraft.internal.errors
+from snapcraft.internal import pluginhandler, steps
+
 from . import errors
 
 

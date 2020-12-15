@@ -54,6 +54,14 @@ class ExtensionTest(ProjectLoaderBaseTest):
                         },
                     },
                     "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform"},
+                    "hooks": {
+                        "configure": {
+                            "plugs": ["desktop"],
+                            "command-chain": [
+                                "snap/command-chain/hooks-configure-desktop"
+                            ],
+                        }
+                    },
                     "layout": {
                         "/usr/bin/gjs": {"symlink": "$SNAP/gnome-platform/usr/bin/gjs"},
                         "/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {

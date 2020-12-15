@@ -57,7 +57,7 @@ import os
 import shutil
 import textwrap
 from glob import glob
-from typing import Sequence, Optional
+from typing import Optional, Sequence
 from urllib.parse import urlparse
 from xml.etree import ElementTree
 
@@ -179,11 +179,6 @@ class MavenPlugin(PluginV1):
         self._setup_base_tools(project._get_build_base())
 
     def _setup_base_tools(self, base):
-        if base not in ("core", "core16", "core18"):
-            raise errors.PluginBaseError(
-                part_name=self.name, base=self.project._get_build_base()
-            )
-
         if base in ("core", "core16"):
             valid_versions = ["8", "9"]
         elif base == "core18":

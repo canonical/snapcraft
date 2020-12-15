@@ -262,6 +262,33 @@ class Provider(abc.ABC):
         # settings.
         self._setup_snapd_proxy()
 
+        # Install any CA certificates requested by the user.
+        certs_path = self.build_provider_flags.get("SNAPCRAFT_ADD_CA_CERTIFICATES")
+        if certs_path:
+            self._add_ca_certificates(pathlib.Path(certs_path))
+
+    def _add_ca_certificates(self, certs_path: pathlib.Path) -> None:
+        # Should have been validated by click already.
+        if not certs_path.exists():
+            raise RuntimeError(f"Unable to read CA certificates: {certs_path!r}")
+
+        if certs_path.is_file():
+            certificate_files = [certs_path]
+        elif certs_path.is_dir():
+            certificate_files = [x for x in certs_path.iterdir() if x.is_file()]
+        else:
+            raise RuntimeError(
+                f"Unable to read CA certificates: {certs_path!r} (unhandled file type)"
+            )
+
+        for certificate_file in sorted(certificate_files):
+            logger.info(f"Installing CA certificate: {certificate_file}")
+            dst_path = "/usr/local/share/ca-certificates/" + certificate_file.name
+            self._push_file(source=str(certificate_file), destination=dst_path)
+
+        if certificate_files:
+            self._run(["update-ca-certificates"])
+
     def _check_environment_needs_cleaning(self) -> bool:
         info = self._load_info()
         provider_base = info.get("base")
@@ -297,20 +324,28 @@ class Provider(abc.ABC):
     def _install_file(self, *, path: str, content: str, permissions: str) -> None:
         basename = os.path.basename(path)
 
-        with tempfile.NamedTemporaryFile(suffix=basename) as temp_file:
+        # Push to a location that can be written to by all backends
+        # with unique files depending on path.
+        # The path should be a valid path for the target.
+        remote_file = "/var/tmp/{}".format(base64.b64encode(path.encode()).decode())
+
+        # Windows cannot open the same file twice, so write to a temporary file that
+        # would later be deleted manually.
+        with tempfile.NamedTemporaryFile(delete=False, suffix=basename) as temp_file:
             temp_file.write(content.encode())
             temp_file.flush()
-            # Push to a location that can be written to by all backends
-            # with unique files depending on path.
-            remote_file = os.path.join(
-                "/var/tmp", base64.b64encode(path.encode()).decode()
-            )
+            temp_file_path = temp_file.name
+
+        try:
             self._push_file(source=temp_file.name, destination=remote_file)
             self._run(["mv", remote_file, path])
+
             # This chown is not necessarily needed. but does keep things
             # consistent.
             self._run(["chown", "root:root", path])
             self._run(["chmod", permissions, path])
+        finally:
+            os.unlink(temp_file_path)
 
     def _get_code_name_from_build_base(self):
         build_base = self.project._get_build_base()
@@ -326,7 +361,7 @@ class Provider(abc.ABC):
         primary_mirror = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR", None)
 
         if primary_mirror is None:
-            if platform.machine() in ["i686", "x86_64"]:
+            if platform.machine() in ["AMD64", "i686", "x86_64"]:
                 primary_mirror = "http://archive.ubuntu.com/ubuntu"
             else:
                 primary_mirror = "http://ports.ubuntu.com/ubuntu-ports"
@@ -337,7 +372,7 @@ class Provider(abc.ABC):
         security_mirror = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR", None)
 
         if security_mirror is None:
-            if platform.machine() in ["i686", "x86_64"]:
+            if platform.machine() in ["AMD64", "i686", "x86_64"]:
                 security_mirror = "http://security.ubuntu.com/ubuntu"
             else:
                 security_mirror = "http://ports.ubuntu.com/ubuntu-ports"
@@ -383,7 +418,7 @@ class Provider(abc.ABC):
             path="/etc/apt/sources.list.d/default.sources",
             content=dedent(
                 """\
-                    Types: deb deb-src
+                    Types: deb
                     URIs: {primary_mirror}
                     Suites: {release} {release}-updates
                     Components: main multiverse restricted universe
@@ -399,7 +434,7 @@ class Provider(abc.ABC):
             path="/etc/apt/sources.list.d/default-security.sources",
             content=dedent(
                 """\
-                        Types: deb deb-src
+                        Types: deb
                         URIs: {security_mirror}
                         Suites: {release}-security
                         Components: main multiverse restricted universe
@@ -444,7 +479,6 @@ class Provider(abc.ABC):
 
         snap_injector = SnapInjector(
             registry_filepath=registry_filepath,
-            snap_arch=self.project.deb_arch,
             runner=self._run,
             file_pusher=self._push_file,
             inject_from_host=inject_from_host,
@@ -500,6 +534,10 @@ class Provider(abc.ABC):
 
         # Pass through configurable environment variables.
         for key, value in self.build_provider_flags.items():
+            # Ignore keys that aren't relevant to managed instances.
+            if key in ["SNAPCRAFT_BIND_SSH", "SNAPCRAFT_ADD_CA_CERTIFICATES"]:
+                continue
+
             if not value:
                 continue
 

@@ -18,8 +18,8 @@ import functools
 import os
 import subprocess
 from textwrap import dedent
-
 from unittest import mock
+
 from testtools.matchers import Contains, FileContains, FileExists
 
 from snapcraft.internal import errors
@@ -315,4 +315,4 @@ class RunnerFailureTestCase(unit.TestCase):
         )
 
         with mock.patch("subprocess.Popen", wraps=silent_popen):
-            self.assertRaises(errors.ScriptletRunError, runner.prime)
+            self.assertRaises(_TestException, runner.prime)

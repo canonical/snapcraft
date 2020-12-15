@@ -17,8 +17,7 @@ dependencies, they work on all major Linux systems without modification.
 We’re here to help. Ask your questions at the [Snapcraft Forum](https://forum.snapcraft.io). Report bugs on [Launchpad](https://bugs.launchpad.net/snapcraft/+filebug).
 
 Learn about the latest features by following Snapcraft on
-[Twitter](https://twitter.com/snapcraftio),
-[Google+](https://plus.google.com/+SnapcraftIo) or
+[Twitter](https://twitter.com/snapcraftio) or
 [Facebook](https://www.facebook.com/snapcraftio).
 
 ## Contribute to Snapcraft

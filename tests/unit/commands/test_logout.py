@@ -16,9 +16,10 @@
 import re
 from unittest import mock
 
-from testtools.matchers import MatchesRegex, Equals
+from testtools.matchers import Equals, MatchesRegex
 
 from snapcraft import config
+
 from . import CommandBaseTestCase
 
 

@@ -20,11 +20,11 @@ from textwrap import dedent
 import click
 
 import snapcraft
+from snapcraft.internal import errors, sources
 from snapcraft.project import errors as project_errors
+
 from . import echo
 from ._options import get_project
-from snapcraft.internal import errors, sources
-
 
 _TOPICS = {"sources": sources, "plugins": snapcraft}
 

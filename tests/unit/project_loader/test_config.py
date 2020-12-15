@@ -18,11 +18,11 @@ from textwrap import dedent
 
 from testtools.matchers import Contains, Equals
 
-from . import LoadPartBaseTest, ProjectLoaderBaseTest
-
-from snapcraft.internal.project_loader import errors
 import snapcraft.internal.project_loader._config as _config
+from snapcraft.internal.project_loader import errors
 from tests import unit
+
+from . import LoadPartBaseTest, ProjectLoaderBaseTest
 
 
 class VariableExpansionTest(LoadPartBaseTest):

@@ -18,23 +18,22 @@ import os
 import re
 import sys
 import tempfile
-import xdg
-
 from textwrap import dedent
 from unittest import mock
 
 import fixtures
-from testtools.matchers import FileContains, Equals
+import xdg
+from testtools.matchers import Equals, FileContains
 
 import snapcraft.cli.echo
 import snapcraft.internal.errors
-from snapcraft.internal.build_providers.errors import ProviderExecError
 from snapcraft.cli._errors import (
-    exception_handler,
     _get_exception_exit_code,
     _is_reportable_error,
     _print_exception_message,
+    exception_handler,
 )
+from snapcraft.internal.build_providers.errors import ProviderExecError
 from tests import fixture_setup, unit
 
 

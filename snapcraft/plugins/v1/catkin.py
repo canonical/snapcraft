@@ -72,24 +72,24 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
 import contextlib
 import glob
+import logging
 import os
 import pathlib
-import tempfile
-import logging
 import re
 import shlex
 import shutil
 import subprocess
+import tempfile
 import textwrap
-from typing import List, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Set
 
-from snapcraft.plugins.v1 import PluginV1, _python, _ros
 from snapcraft import file_utils, formatting_utils
-from snapcraft.internal import common, errors, mangling, repo
+from snapcraft.internal import common, errors, mangling, os_release, repo
 from snapcraft.internal.meta.package_repository import (
     PackageRepository,
     PackageRepositoryApt,
 )
+from snapcraft.plugins.v1 import PluginV1, _python, _ros
 
 if TYPE_CHECKING:
     from snapcraft.project import Project
@@ -279,13 +279,15 @@ class CatkinPlugin(PluginV1):
 
     @classmethod
     def get_required_package_repositories(self) -> List[PackageRepository]:
+        codename = os_release.OsRelease().version_codename()
+
         return [
             PackageRepositoryApt(
-                deb_types=["deb"],
+                formats=["deb"],
                 components=["main"],
                 key_id="C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654",
                 url="http://packages.ros.org/ros/ubuntu/",
-                suites=["$SNAPCRAFT_APT_RELEASE"],
+                suites=[codename],
             )
         ]
 
@@ -305,9 +307,6 @@ class CatkinPlugin(PluginV1):
         super().__init__(name, options, project)
 
         base = self.project._get_build_base()
-        if base not in ("core", "core16", "core18"):
-            raise errors.PluginBaseError(part_name=self.name, base=base)
-
         self._rosdistro = _BASE_TO_ROS_RELEASE_MAP[base]
 
         self.build_packages.extend(["gcc", "g++", "libc6-dev", "make", "python-pip"])
@@ -502,6 +501,7 @@ class CatkinPlugin(PluginV1):
         # Use rosdep for dependency detection and resolution
         rosdep = _ros.rosdep.Rosdep(
             ros_distro=self._rosdistro,
+            ros_version="1",
             ros_package_path=self._ros_package_path,
             rosdep_path=self._rosdep_path,
             ubuntu_distro=_BASE_TO_UBUNTU_RELEASE_MAP[self.project._get_build_base()],

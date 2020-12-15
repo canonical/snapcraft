@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=appstream-desktop
+Exec=appstream-desktop
+Type=Application
+Icon=${SNAP}/meta/gui/icon.png
+

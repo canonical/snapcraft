@@ -18,12 +18,13 @@ import hashlib
 import os
 from datetime import datetime
 from pathlib import Path
+from typing import Set
 
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.meta.snap import Snap
-from typing import Set
-from ._project_options import ProjectOptions
+
 from ._project_info import ProjectInfo  # noqa: F401
+from ._project_options import ProjectOptions
 
 
 class Project(ProjectOptions):

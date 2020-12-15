@@ -174,6 +174,18 @@ class CommandWithoutWrapperAllowedTestErrors(unit.TestCase):
         )
         self.assertThat(self.fake_logger.output, Equals(""))
 
+    def test_command_not_found(self):
+        cmd = command.Command(app_name="foo", command_name="command", command="foo")
+
+        self.assertRaises(
+            errors.InvalidAppCommandNotFound,
+            cmd.prime_command,
+            can_use_wrapper=False,
+            massage_command=False,
+            prime_dir=self.path,
+        )
+        self.assertThat(self.fake_logger.output.strip(), Equals(""))
+
 
 class CommandWithWrapperTest(unit.TestCase):
     def setUp(self):
@@ -309,6 +321,18 @@ class CommandWithWrapperTest(unit.TestCase):
 
         self.assertRaises(
             errors.InvalidAppCommandNotExecutable,
+            cmd.prime_command,
+            can_use_wrapper=True,
+            massage_command=True,
+            prime_dir=self.path,
+        )
+        self.assertThat(self.fake_logger.output.strip(), Equals(""))
+
+    def test_command_not_found(self):
+        cmd = command.Command(app_name="foo", command_name="command", command="foo")
+
+        self.assertRaises(
+            errors.InvalidAppCommandNotFound,
             cmd.prime_command,
             can_use_wrapper=True,
             massage_command=True,
