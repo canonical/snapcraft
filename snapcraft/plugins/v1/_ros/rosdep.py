@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import pathlib
-import logging
 import re
 import shutil
 import subprocess
@@ -217,6 +217,11 @@ class Rosdep:
         env["PYTHONPATH"] = os.path.join(
             self._rosdep_install_path, "usr", "lib", "python2.7", "dist-packages"
         )
+
+        if self._ros_version == "2":
+            env["ROS_PYTHON_VERSION"] = "3"
+        else:
+            env["ROS_PYTHON_VERSION"] = "2"
 
         # By default, rosdep uses /etc/ros/rosdep to hold its sources list. We
         # don't want that here since we don't want to touch the host machine

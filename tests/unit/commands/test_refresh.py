@@ -20,6 +20,7 @@ from unittest import mock
 from testtools.matchers import Equals
 
 from tests.unit import TestWithFakeRemoteParts
+
 from . import CommandBaseTestCase
 
 

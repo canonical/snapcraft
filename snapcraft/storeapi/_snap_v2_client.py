@@ -18,11 +18,8 @@ import os
 
 import requests
 
+from . import _macaroon_auth, constants, errors
 from ._client import Client
-
-from . import constants
-from . import errors
-from . import _macaroon_auth
 from .v2 import channel_map, releases
 
 

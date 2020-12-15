@@ -20,7 +20,6 @@ import os
 import subprocess
 import tempfile
 
-
 ACTIVE_DISTROS = ("xenial", "artful", "bionic")
 
 

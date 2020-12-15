@@ -1,4 +1,4 @@
-name: test-apt-key-fingerprint
+name: test-apt-keyserver
 version: '1.0'
 summary: test
 description: test
@@ -20,6 +20,6 @@ package-repositories:
   - type: apt
     formats: [deb, deb-src]
     components: [main]
-    suites: [$SNAPCRAFT_APT_RELEASE]
-    key-id: 78E1918602959B9C59103100F1831DDAFC42E99D
+    suites: [bionic]
+    key-id: f1831ddafc42e99d
     url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu

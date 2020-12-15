@@ -24,6 +24,7 @@ from snapcraft.internal import errors, meta
 from snapcraft.plugins.v1 import waf
 from snapcraft.project import Project
 from tests import unit
+
 from . import PluginsV1BaseTestCase
 
 

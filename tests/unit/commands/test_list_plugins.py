@@ -15,10 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import fixtures
-from testtools.matchers import Equals, Contains
+from testtools.matchers import Contains, Equals
 
 import snapcraft
 from tests import fixture_setup
+
 from . import CommandBaseTestCase
 
 
@@ -113,6 +114,14 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
             result.output, Contains("Displaying plugins available for 'core20")
         )
 
+        self.fake_iter_modules.mock.assert_called_once_with(
+            snapcraft.plugins.v2.__path__
+        )
+
+    def test_core2y_list(self):
+        # Note that core2y is some future base, _not_ allowed to be used from cmdline
+        # This tests that addition of the next base will use the latest version of plugins
+        snapcraft.cli.discovery.list_plugins.callback("core2y")
         self.fake_iter_modules.mock.assert_called_once_with(
             snapcraft.plugins.v2.__path__
         )

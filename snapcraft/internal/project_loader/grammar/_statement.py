@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from typing import Iterable, List, Optional, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable, List, Optional, Set
 
 from . import typing
 from .errors import UnsatisfiedStatementError

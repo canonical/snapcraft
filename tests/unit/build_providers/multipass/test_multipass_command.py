@@ -650,6 +650,36 @@ class MultipassCommandTransferTest(MultipassCommandPassthroughBaseTest):
         self.check_output_mock.assert_not_called()
 
 
+class MultipassCommandExistsTest(MultipassCommandPassthroughBaseTest):
+    def test_exists(self):
+        exists = self.multipass_command.exists(instance_name=self.instance_name)
+
+        self.check_call_mock.assert_has_calls(
+            [
+                mock.call(
+                    ["multipass", "info", self.instance_name], stdin=subprocess.DEVNULL,
+                )
+            ]
+        )
+
+        assert exists is True
+
+    def test_exists_false(self):
+        self.check_call_mock.side_effect = subprocess.CalledProcessError(1, "info")
+
+        exists = self.multipass_command.exists(instance_name=self.instance_name)
+
+        self.check_call_mock.assert_has_calls(
+            [
+                mock.call(
+                    ["multipass", "info", self.instance_name], stdin=subprocess.DEVNULL,
+                )
+            ]
+        )
+
+        assert exists is False
+
+
 class MultipassCommandInfoTest(MultipassCommandPassthroughBaseTest):
     def test_info(self):
         self.multipass_command.info(instance_name=self.instance_name)

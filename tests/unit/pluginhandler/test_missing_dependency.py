@@ -16,8 +16,8 @@
 
 from unittest import mock
 
-from testtools.matchers import Equals
 import fixtures
+from testtools.matchers import Equals
 
 from snapcraft.internal import repo
 from snapcraft.internal.pluginhandler._dependencies import MissingDependencyResolver

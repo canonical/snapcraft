@@ -579,7 +579,7 @@ class WithoutSnapInstalled(fixtures.Fixture):
 
 
 class SnapcraftYaml(fixtures.Fixture):
-    def __init__(
+    def __init__(  # noqa: C901
         self,
         path,
         name="test-snap",
@@ -591,6 +591,7 @@ class SnapcraftYaml(fixtures.Fixture):
         confinement="strict",
         architectures=None,
         apps=None,
+        hooks=None,
         parts=None,
         type="app",
     ):
@@ -623,6 +624,8 @@ class SnapcraftYaml(fixtures.Fixture):
             self.data["base"] = base
         if build_base is not None:
             self.data["build-base"] = build_base
+        if hooks is not None:
+            self.data["hooks"] = hooks
 
     def update_part(self, name, data):
         part = {name: data}

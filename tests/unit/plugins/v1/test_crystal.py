@@ -17,12 +17,13 @@
 import os
 from unittest import mock
 
-from testtools.matchers import Equals, FileExists, HasLength
 import fixtures
+from testtools.matchers import Equals, FileExists, HasLength
 
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import crystal
 from tests import unit
+
 from . import PluginsV1BaseTestCase
 
 

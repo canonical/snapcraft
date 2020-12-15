@@ -20,8 +20,8 @@ import re
 import pytest
 
 import snapcraft
-from snapcraft.internal.project_loader import grammar
 import snapcraft.internal.project_loader.grammar._to as _to
+from snapcraft.internal.project_loader import grammar
 
 
 @pytest.mark.parametrize(

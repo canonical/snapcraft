@@ -15,11 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import shlex
+from typing import List
 
 from snapcraft import formatting_utils
 from snapcraft.internal import errors
-
-from typing import List
 
 
 class SnapcraftSourceError(errors.SnapcraftError):

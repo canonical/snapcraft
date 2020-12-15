@@ -14,12 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import fixtures
 import logging
+import os
 import random
 from unittest import mock
 
+import fixtures
 from progressbar import AnimatedMarker, ProgressBar
 from testtools import matchers as m
 

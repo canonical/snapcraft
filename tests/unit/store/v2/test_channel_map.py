@@ -14,9 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from testtools.matchers import Equals, HasLength, Is, IsInstance
-
 import pytest
+from testtools.matchers import Equals, HasLength, Is, IsInstance
 
 from snapcraft.storeapi.v2 import channel_map
 from tests import unit

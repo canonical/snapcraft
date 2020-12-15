@@ -21,6 +21,8 @@ import pytest
 from testtools import TestCase
 from testtools.matchers import Contains, Equals
 
+# required for schema format checkers
+import snapcraft.internal.project_loader._config  # noqa: F401
 from snapcraft.project import errors
 from snapcraft.project._schema import Validator
 
@@ -1291,7 +1293,7 @@ class PackageManagement(ProjectBaseTest):
                     components: []
                     key-id: test-key-id
                     url: http://archive.ubuntu.com/ubuntu
-                    suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-updates]
+                    suites: [bionic, bionic-updates]
                 """
             )
         )

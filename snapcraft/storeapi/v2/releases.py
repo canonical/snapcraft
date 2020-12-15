@@ -97,7 +97,7 @@ class Revision:
         )
         return cls(
             architectures=payload["architectures"],
-            base=payload["base"],
+            base=payload.get("base"),
             build_url=payload["build_url"],
             confinement=payload["confinement"],
             created_at=payload["created_at"],
@@ -110,9 +110,8 @@ class Revision:
         )
 
     def marshal(self) -> Dict[str, Any]:
-        return {
+        payload = {
             "architectures": self.architectures,
-            "base": self.base,
             "build_url": self.build_url,
             "confinement": self.confinement,
             "created_at": self.created_at,
@@ -124,6 +123,11 @@ class Revision:
             "version": self.version,
         }
 
+        if self.base is not None:
+            payload["base"] = self.base
+
+        return payload
+
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}: {self.revision!r}>"
 
@@ -131,7 +135,7 @@ class Revision:
         self,
         *,
         architectures: List[str],
-        base: str,
+        base: Optional[str],
         build_url: Optional[str],
         confinement: str,
         created_at: str,

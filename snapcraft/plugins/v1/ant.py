@@ -66,9 +66,8 @@ from typing import Sequence
 from urllib.parse import urlsplit
 
 from snapcraft import formatting_utils
-from snapcraft.plugins.v1 import PluginV1
 from snapcraft.internal import errors, sources
-
+from snapcraft.plugins.v1 import PluginV1
 
 logger = logging.getLogger(__name__)
 
@@ -158,11 +157,6 @@ class AntPlugin(PluginV1):
         self._setup_base_tools(project._get_build_base())
 
     def _setup_base_tools(self, base):
-        if base not in ("core", "core16", "core18"):
-            raise errors.PluginBaseError(
-                part_name=self.name, base=self.project._get_build_base()
-            )
-
         if base in ("core", "core16"):
             valid_versions = ["8", "9"]
         elif base == "core18":

@@ -18,12 +18,9 @@ import contextlib
 import os
 from typing import Dict
 
+from . import _macaroon_auth, constants, errors, logger
 from ._client import Client
 from .info import SnapInfo
-
-from . import errors
-from . import logger, _macaroon_auth
-from . import constants
 
 
 class SnapIndexClient(Client):

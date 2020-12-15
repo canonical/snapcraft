@@ -84,8 +84,6 @@ the schema is to be considered stable.
 
 - *Description:* Architectures to enable, or restrict to, for this repository.
 
-- *Notes:*
-
 - *Default:* If unspecified, architectures is assumed to match the host's
   architecture.
 
@@ -101,7 +99,7 @@ the schema is to be considered stable.
 
 - *Description:* List of deb types to enable.
 
-- *Default:* If unspecified, types is assumed to be =deb= and =deb-src=, i.e. =[deb, deb-src]=.
+- *Default:* If unspecified, format is assumed to be =deb=, i.e. =[deb]=.
 
 - *Examples:*
 
@@ -109,33 +107,35 @@ the schema is to be considered stable.
 
   - =formats: [deb, deb-src]=
 
-** Property: components (required)
+** Property: components (required if specifying suites)
 
 - *Type:* list[string]
 
 - *Description:* Apt repository components to enable: e.g. =main=, =multiverse=, =unstable=.
 
-  May be empty, e.g.: =components: []=
-
 - *Examples:*
-
-  - =components: []=
 
   - =components: [main]=
 
   - =components: [main, multiverse, universe, restricted]=
 
-** Property: key-id (required)
+** Property: key-id (required if not using =ppa=)
 
   - *Type:* string
 
-  - *Description:* GPG key identifier.  May be used to identify a key by:
+  - *Description:* GPG key identifier.
 
-    - GPG Key ID
+    - Sometimes referred to as a "thumbprint" or "fingerprint".
 
-    - GPG Key Thumbprint/Fingerprint
+    - Must be 40 characters (the long-form thumbprint).
 
-    - Snapcraft project asset name found at: =<project>/snap/keys/<key-id>.asc=
+  - *Notes:*
+
+    - If not using a key-server, Snapcraft will look for the corresponding key at:
+      =<project>/snap/keys/<key-id[0:8]>.asc=.
+
+    - To determine a key-id from a given key file using =gpg=:
+      =gpg --import-options show-only --import <file>=
 
   - *Format:* alphanumeric, dash =-=, and underscores =_= permitted.
 
@@ -143,9 +143,9 @@ the schema is to be considered stable.
 
     - =key-id: 590CA3D8E4826565BE3200526A634116E00F4C82=
 
-    - =key-id: 6A634116E00F4C82=
+      Snapcraft will install a corresponding key at
+      =<project>/snap/keys/590CA3D8.key=.
 
-    - =key-id: my-org-repo=
 
 ** Property: key-server (optional)
 
@@ -153,9 +153,10 @@ the schema is to be considered stable.
 
   - *Description:* Key server to fetch key =<key-id>= from.
 
-  - *Default:* If unspecified, snapcraft will attempt to fetch a specified key from keyserver.ubuntu.com.
+  - *Default:* If unspecified, Snapcraft will attempt to fetch a specified key
+    from keyserver.ubuntu.com.
 
-  - *Format:* Keyserver URL supported by =gpg --keyserver=.
+  - *Format:* Key server URL supported by =gpg --keyserver=.
 
   - *Examples:*
 
@@ -163,7 +164,23 @@ the schema is to be considered stable.
 
     - =key-server: hkp://keyserver.ubuntu.com:80=
 
-** Property: suites (required)
+** Property: path (required if not using suites & components)
+
+  - *Type:* string
+
+  - *Description:* Absolute path to repository (from =url=).
+
+    Apt sources using absolute paths are incompatible with suites and components.
+
+  - *Format:* Path starting with =/=.
+
+  - *Examples:*
+
+    - =path: /=
+
+    - =path: /my-repo=
+
+** Property: suites (required if not using path)
 
   - *Type:* string
 
@@ -171,19 +188,14 @@ the schema is to be considered stable.
 
   - *Notes:*
 
-    - Supports =$SNAPCRAFT_APT_RELEASE= variable for snapcraft to populate base's release name (e.g. =xenial=).
-
-    - If your deb URL does not look like it has a suite defined, it is likely that the suite is =/=.
+    - If your deb URL does not look like it has a suite defined, it is likely
+      that the repository uses an absolute URL.  Consider using =path=.
 
   - *Examples:*
-
-    - =suites: [/]=
 
     - =suites: [xenial]=
 
     - =suites: [xenial, xenial-updates]=
-
-    - =suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-security]=
 
 ** Property: url (required)
 
@@ -200,99 +212,70 @@ the schema is to be considered stable.
 * Example configurations
 
 #+BEGIN_SRC yaml
-name: apt-example
-base: core18
-
-<snip>
-
 package-repositories:
+  # PPA repository.
   - type: apt
     ppa: snappy-dev/snapcraft-daily
 
+  # Apt repository with components and suites.
   - type: apt
-    formats: [deb, deb-src]
     components: [main]
-    suites: [$SNAPCRAFT_APT_RELEASE]
+    suites: [xenial]
     key-id: 78E1918602959B9C59103100F1831DDAFC42E99D
     url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu
 
+  # Apt repository enabling deb sources.
+  - type: apt
+    formats: [deb, deb-src]
+    components: [main]
+    suites: [xenial]
+    key-id: 78E1918602959B9C59103100F1831DDAFC42E99D
+    url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu
+
+  # Absolute path repository with implied "/".
+  - type: apt
+    key-id: AE09FE4BBD223A84B2CCFCE3F60F4B3D7FA2AF80
+    url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64`
+
+  # Absolute path repository with explicit path and formats.
   - type: apt
     formats: [deb]
-    components: []
-    suites: [/]
-    key-id: 7fa2af80
+    path: /
+    key-id: AE09FE4BBD223A84B2CCFCE3F60F4B3D7FA2AF80
     url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64`
 #+END_SRC
 
-* Exploratory: overriding default snapcraft image sources configuration
-
-The default repositories that ship with snapcraft could be overridden by
-adding a =name= field.  Default names currently shipped are =default=
-and =default-security=.  This would only override sources if using a snapcraft
-managed build environment (i.e. Multipass or LXD). Snapcraft does not modify
-the host's apt repository configuration when using destructive mode.
-
-E.g.:
-
-#+BEGIN_SRC yaml
-package-repositories:
-  - type: apt
-    name: default
-    formats: [deb, deb-src]
-    components: [main, multiverse, restricted, universe]
-    suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-updates]
-    key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
-    url: http://archive.ubuntu.com/ubuntu
-
-  - type: apt
-    name: default-security
-    formats: [deb, deb-src]
-    components: [main, multiverse, restricted, universe]
-    suites: [$SNAPCRAFT_APT_RELEASE-security]
-    key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
-    url: http://security.ubuntu.com/ubuntu
-#+END_SRC
-
-When used in the snapcraft yaml, snapcraft will warn:
-
-#+BEGIN_SRC
-*EXPERIMENTAL* package-repositories in use.
-#+END_SRC
-
-As it will be enabled without an experimental CLI flag to promote testing,
-it will warn every time the snapcraft.yaml is processed.  This will result
-in the warning being logged several times.
-
 * Key search methodology
 
-1. =<key-id>= will be matched against thumbprints for all keys in =<project>/snap/keys/*.asc=.
+1. =<key-id>= will be checked at =<project>/snap/keys/<key-id[0:8]>.asc=.
 
-  - If match found, matching key file will be imported.
+   - If =<key-id[0:8]>.asc= file exists and =key-id= matches, the key file will
+     be imported.
 
-  - If no match, continue to step 2.
+   - If =<key-id[0:8]>.asc= file exists and =key-id= does not match, Snapcraft
+     must error.
 
-2. =<key-id>= will be matched for file pattern: =<project>/snap/keys/<key-id>.asc=.
+   - If =<key-id[0:8]>.asc= file does not exist, continue to step 2.
 
-  - If file is found, matching key file will be imported.
+2. =<key-id>= will be queried from the =<key-server>=, defaulting to =keyserver.ubuntu.com=.
 
-  - If no match, continue to step 3.
+   - If key is found, the key will be imported.
 
-3. =<key-id>= will be queried from =<key-server>=, defaulting to =keyserver.ubuntu.com=.
+   - If key not found, an error will be presented to the user:
 
-  - If key is found, the key will be imported.
-
-  - If key not found, an error will be presented to the user:
-
-#+BEGIN_EXAMPLE
-Failed to install GPG key: GPG key =<key-id>= not found on key server =<key-server>=
+#+BEGIN_SRC python
+Failed to install GPG key: GPG key {key_id} not found on key server {key_server!r}.
 
 Recommended resolution:
-Verify any configured GPG keys.
+Verify GPG key ID and key server are correct, or install key to
+<project>/snap/keys/{key_id[0:8]}.asc.
 
 Detailed information:
 GPG key ID: <key-id>
 GPG key server: <key-server>
-#+END_EXAMPLE
+#+END_SRC
+
+If there are any unused keys present in =<project>/snap/keys=, Snapcraft must error.
 
 * GPG Keyring handling
 

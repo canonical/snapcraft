@@ -17,10 +17,10 @@
 import logging
 import subprocess
 
-from . import errors
 from snapcraft import shell_utils
 from snapcraft.internal import sources
 
+from . import errors
 
 logger = logging.getLogger(__name__)
 
