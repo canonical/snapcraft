@@ -18,7 +18,7 @@ apps:
       PATH: "/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
       # https://github.com/lxc/pylxd/pull/361
       PYLXD_WARNINGS: "none"
-    command: bin/snapcraft
+    command: usr/bin/python3 $SNAP/bin/snapcraft
     completer: snapcraft-completion
 
 build-packages:
