@@ -57,7 +57,14 @@ class RosPlugin(PluginV2):
         specific functionality.
         """
 
-        return [". /opt/ros/$ROS_DISTRO/setup.sh"]
+        # There are a number of unbound vars, disable flag
+        # after saving current state to restore after.
+        return [
+            'state="$(set +o)"',
+            "set +u",
+            ". /opt/ros/$ROS_DISTRO/setup.sh",
+            'eval "$(state)"',
+        ]
 
     @abc.abstractmethod
     def _get_build_commands(self) -> List[str]:

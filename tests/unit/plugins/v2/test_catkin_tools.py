@@ -74,7 +74,10 @@ def test_get_build_commands(monkeypatch):
     monkeypatch.setattr(os, "environ", dict())
 
     assert plugin.get_build_commands() == [
+        'state="$(set +o)"',
+        "set +u",
         "_CATKIN_SETUP_DIR=/opt/ros/$ROS_DISTRO . /opt/ros/$ROS_DISTRO/setup.sh",
+        'eval "$(state)"',
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
         "rosdep update --include-eol-distros --rosdistro $ROS_DISTRO",
@@ -116,7 +119,10 @@ def test_get_build_commands_with_all_properties(monkeypatch):
     )
 
     assert plugin.get_build_commands() == [
+        'state="$(set +o)"',
+        "set +u",
         "_CATKIN_SETUP_DIR=/opt/ros/$ROS_DISTRO . /opt/ros/$ROS_DISTRO/setup.sh",
+        'eval "$(state)"',
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
         "rosdep update --include-eol-distros --rosdistro $ROS_DISTRO",
