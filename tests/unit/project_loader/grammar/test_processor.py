@@ -55,6 +55,7 @@ class TestBasicGrammar:
             {
                 "grammar_entry": ["foo", "bar"],
                 "host_arch": "x86_64",
+                "target_arch": "amd64",
                 "expected_packages": {"foo", "bar"},
             },
         ),
@@ -63,6 +64,7 @@ class TestBasicGrammar:
             {
                 "grammar_entry": ["foo", {"on i386": ["bar"]}],
                 "host_arch": "i686",
+                "target_arch": "i386",
                 "expected_packages": {"foo", "bar"},
             },
         ),
@@ -71,6 +73,7 @@ class TestBasicGrammar:
             {
                 "grammar_entry": ["foo", {"on i386": ["bar"]}],
                 "host_arch": "x86_64",
+                "target_arch": "amd64",
                 "expected_packages": {"foo"},
             },
         ),
@@ -79,6 +82,7 @@ class TestBasicGrammar:
             {
                 "grammar_entry": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}],
                 "host_arch": "x86_64",
+                "target_arch": "amd64",
                 "expected_packages": {"foo"},
             },
         ),
@@ -87,6 +91,7 @@ class TestBasicGrammar:
             {
                 "grammar_entry": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}],
                 "host_arch": "i686",
+                "target_arch": "i386",
                 "expected_packages": {"bar"},
             },
         ),
@@ -95,6 +100,7 @@ class TestBasicGrammar:
             {
                 "grammar_entry": [{"on amd64": ["foo"]}, {"else": ["bar"]}],
                 "host_arch": "x86_64",
+                "target_arch": "amd64",
                 "expected_packages": {"foo"},
             },
         ),
@@ -103,6 +109,7 @@ class TestBasicGrammar:
             {
                 "grammar_entry": [{"on amd64": ["foo"]}, {"else": ["bar"]}],
                 "host_arch": "i686",
+                "target_arch": "i386",
                 "expected_packages": {"bar"},
             },
         ),
@@ -113,6 +120,7 @@ class TestBasicGrammar:
                     {"on amd64": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}]}
                 ],
                 "host_arch": "x86_64",
+                "target_arch": "amd64",
                 "expected_packages": {"foo"},
             },
         ),
@@ -123,6 +131,7 @@ class TestBasicGrammar:
                     {"on i386": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}]}
                 ],
                 "host_arch": "i686",
+                "target_arch": "i386",
                 "expected_packages": {"bar"},
             },
         ),
@@ -133,6 +142,7 @@ class TestBasicGrammar:
                     {"on amd64": [{"on amd64": ["foo"]}, {"else": ["bar"]}]}
                 ],
                 "host_arch": "x86_64",
+                "target_arch": "amd64",
                 "expected_packages": {"foo"},
             },
         ),
@@ -143,6 +153,7 @@ class TestBasicGrammar:
                     {"on i386": [{"on amd64": ["foo"]}, {"else": ["bar"]}]}
                 ],
                 "host_arch": "i686",
+                "target_arch": "amd64",
                 "expected_packages": {"bar"},
             },
         ),
@@ -151,6 +162,7 @@ class TestBasicGrammar:
             {
                 "grammar_entry": [{"try": ["valid"]}],
                 "host_arch": "x86_64",
+                "target_arch": "amd64",
                 "expected_packages": {"valid"},
             },
         ),
@@ -159,6 +171,7 @@ class TestBasicGrammar:
             {
                 "grammar_entry": [{"try": ["invalid"]}, {"else": ["valid"]}],
                 "host_arch": "x86_64",
+                "target_arch": "amd64",
                 "expected_packages": {"valid"},
             },
         ),
@@ -167,6 +180,7 @@ class TestBasicGrammar:
             {
                 "grammar_entry": [{"on amd64": [{"try": ["foo"]}, {"else": ["bar"]}]}],
                 "host_arch": "x86_64",
+                "target_arch": "amd64",
                 "expected_packages": {"foo"},
             },
         ),
@@ -177,6 +191,7 @@ class TestBasicGrammar:
                     {"on i386": [{"try": ["invalid"]}, {"else": ["bar"]}]}
                 ],
                 "host_arch": "i686",
+                "target_arch": "i686",
                 "expected_packages": {"bar"},
             },
         ),
@@ -185,19 +200,35 @@ class TestBasicGrammar:
             {
                 "grammar_entry": ["foo", {"try": ["invalid"]}],
                 "host_arch": "i686",
+                "target_arch": "i386",
                 "expected_packages": {"foo"},
+            },
+        ),
+        (
+            "multi",
+            {
+                "grammar_entry": [
+                    "foo",
+                    {"on amd64": ["foo2"]},
+                    {"on amd64 to arm64": ["foo3"]},
+                ],
+                "host_arch": "x86_64",
+                "target_arch": "i386",
+                "expected_packages": {"foo", "foo2"},
             },
         ),
     ]
 
     def test_basic_grammar(
-        self, monkeypatch, grammar_entry, host_arch, expected_packages
+        self, monkeypatch, grammar_entry, host_arch, target_arch, expected_packages
     ):
         monkeypatch.setattr(platform, "machine", lambda: host_arch)
         monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
 
+        project = snapcraft.ProjectOptions(target_deb_arch=target_arch)
+
         processor = grammar.GrammarProcessor(
-            grammar_entry, snapcraft.ProjectOptions(), lambda x: "invalid" not in x
+            grammar_entry, project, lambda x: "invalid" not in x
         )
         assert processor.process() == expected_packages
 

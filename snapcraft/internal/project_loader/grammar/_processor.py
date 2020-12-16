@@ -134,6 +134,9 @@ class GrammarProcessor:
             if on_to_clause_match:
                 # We've come across the beginning of a compound statement
                 # with both 'on' and 'to'.
+                # The first time through this may be None, but the
+                # collection will ignore it.
+                statements.add(statement)
 
                 # First, extract each statement's part of the string
                 on, to = on_to_clause_match.groups()
