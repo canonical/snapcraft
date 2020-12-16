@@ -1,0 +1,37 @@
+#+TITLE: Configurable APT Mirrors
+
+* Goal
+
+Enable users to override default mirrors used by Snapcraft-created build
+environments, allowing them to choose more performant / localized mirrors.
+
+* Scope
+
+Configuration and behavior of APT mirror configuration.
+
+* Background
+
+** Default primary/main mirrors configured by snapcraft:
+
+- For i386 & amd64, Snapcraft uses: http://archive.ubuntu.com/ubuntu
+- For non-x86, Snapcraft uses: http://ports.ubuntu.com/ubuntu-ports
+
+** Default security mirrors configured by snapcraft:
+
+- For i386 & amd64, Snapcraft uses: http://archive.ubuntu.com/ubuntu
+- For non-x86, Snapcraft uses: http://ports.ubuntu.com/ubuntu-ports
+
+** Currently Snapcraft supports configuring this on creation with
+=SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR=<url>=
+
+- This environment variable is undocumented and has no known usage.
+
+* Implementation
+
+Enable users to configure mirror URL with fully supported arguments:
+
+- Modify Snapcraft to support the command-line option =--apt-mirror
+  <url>= with corresponding environment variable =SNAPCRAFT_APT_MIRROR=<url>=.
+
+- Replace =SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR= variable with introduced
+  =SNAPCRAFT_APT_MIRROR=.

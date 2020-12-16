@@ -249,6 +249,14 @@ class MultipassCommand:
 
         return output
 
+    def exists(self, *, instance_name: str) -> bool:
+        """Determine if instance exists."""
+        try:
+            _run([self.provider_cmd, "info", instance_name])
+        except subprocess.CalledProcessError:
+            return False
+        return True
+
     def shell(self, *, instance_name: str) -> None:
         """Passthrough for running multipass shell.
 
