@@ -225,10 +225,22 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
                             "percentage": None,
                             "current-percentage": None,
                         },
-                    }
+                    },
+                    {
+                        "architecture": "amd64",
+                        "channel": "2.0/beta",
+                        "expiration-date": None,
+                        "revision": 18,
+                        "progressive": {
+                            "paused": None,
+                            "percentage": None,
+                            "current-percentage": None,
+                        },
+                    },
                 ],
                 "revisions": [
-                    {"architectures": ["amd64"], "revision": 19, "version": "10"}
+                    {"architectures": ["amd64"], "revision": 19, "version": "10"},
+                    {"architectures": ["amd64"], "revision": 18, "version": "10"},
                 ],
                 "snap": {
                     "name": "snap-test",
@@ -260,6 +272,34 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
                             "name": "2.1/edge",
                             "risk": "edge",
                             "track": "2.1",
+                        },
+                        {
+                            "branch": None,
+                            "fallback": None,
+                            "name": "2.0/stable",
+                            "risk": "stable",
+                            "track": "2.0",
+                        },
+                        {
+                            "branch": None,
+                            "fallback": "2.0/stable",
+                            "name": "2.0/candidate",
+                            "risk": "candidate",
+                            "track": "2.0",
+                        },
+                        {
+                            "branch": None,
+                            "fallback": "2.0/candidate",
+                            "name": "2.0/beta",
+                            "risk": "beta",
+                            "track": "2.0",
+                        },
+                        {
+                            "branch": None,
+                            "fallback": "2.0/beta",
+                            "name": "2.0/edge",
+                            "risk": "edge",
+                            "track": "2.0",
                         },
                     ],
                     "default-track": "2.1",

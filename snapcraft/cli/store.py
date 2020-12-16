@@ -497,13 +497,16 @@ def close(snap_name, channels):
 @click.option(
     "--arch", metavar="<arch>", help="The snap architecture to get the status for"
 )
+@click.option("--track", metavar="<track>", help="The snap track to get the status for")
 @click.argument("snap-name", metavar="<snap-name>")
-def status(snap_name, arch, experimental_progressive_releases):
+def status(snap_name, arch, track, experimental_progressive_releases):
     """Get the status on the store for <snap-name>.
 
     \b
     Examples:
         snapcraft status my-snap
+        snapcraft status --track 20 my-snap
+        snapcraft status --arch amd64 my-snap
     """
     if experimental_progressive_releases:
         os.environ["SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES"] = "Y"
@@ -521,8 +524,13 @@ def status(snap_name, arch, experimental_progressive_releases):
             architectures = (arch,)
         else:
             architectures = existing_architectures
+        tracks = None
+        if track:
+            tracks = (track,)
         click.echo(
-            get_tabulated_channel_map(snap_channel_map, architectures=architectures)
+            get_tabulated_channel_map(
+                snap_channel_map, architectures=architectures, tracks=tracks
+            )
         )
 
 
