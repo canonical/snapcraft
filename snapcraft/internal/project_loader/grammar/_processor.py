@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 from snapcraft import project
 
@@ -44,7 +44,7 @@ class GrammarProcessor:
         project: project.Project,
         checker: Callable[[str], bool],
         *,
-        transformer: Callable[[List[Statement], str, project.Project], str] = None
+        transformer: Callable[[List[Statement], str, project.Project], str] = None,
     ) -> None:
         """Create a new GrammarProcessor.
 
@@ -100,7 +100,11 @@ class GrammarProcessor:
                 else:
                     primitives.add(self._transformer(call_stack, section, self.project))
             elif isinstance(section, dict):
-                statement = self._parse_dict(section, statement, statements, call_stack)
+                statement, finalized_statement = self._parse_section_dictionary(
+                    section=section, statement=statement, call_stack=call_stack,
+                )
+                if finalized_statement is not None:
+                    statements.add(finalized_statement)
             else:
                 # jsonschema should never let us get here.
                 raise GrammarSyntaxError(
@@ -114,13 +118,14 @@ class GrammarProcessor:
 
         return primitives
 
-    def _parse_dict(
+    def _parse_section_dictionary(
         self,
+        *,
         section: Dict[str, Any],
         statement: Optional[Statement],
-        statements: "_StatementCollection",
         call_stack: typing.CallStack,
-    ):
+    ) -> Tuple[Optional[Statement], Optional[Statement]]:
+        finalized_statement: Optional[Statement] = None
         for key, value in section.items():
             # Grammar is always written as a list of selectors but the value
             # can be a list or a string. In the latter case we wrap it so no
@@ -134,6 +139,7 @@ class GrammarProcessor:
             if on_to_clause_match:
                 # We've come across the beginning of a compound statement
                 # with both 'on' and 'to'.
+                finalized_statement = statement
 
                 # First, extract each statement's part of the string
                 on, to = on_to_clause_match.groups()
@@ -159,9 +165,7 @@ class GrammarProcessor:
             elif on_clause_match:
                 # We've come across the beginning of an 'on' statement.
                 # That means any previous statement we found is complete.
-                # The first time through this may be None, but the
-                # collection will ignore it.
-                statements.add(statement)
+                finalized_statement = statement
 
                 statement = OnStatement(
                     on=key, body=value, processor=self, call_stack=call_stack
@@ -170,9 +174,7 @@ class GrammarProcessor:
             elif _TO_CLAUSE_PATTERN.match(key):
                 # We've come across the beginning of a 'to' statement.
                 # That means any previous statement we found is complete.
-                # The first time through this may be None, but the
-                # collection will ignore it.
-                statements.add(statement)
+                finalized_statement = statement
 
                 statement = ToStatement(
                     to=key, body=value, processor=self, call_stack=call_stack
@@ -181,9 +183,7 @@ class GrammarProcessor:
             elif _TRY_CLAUSE_PATTERN.match(key):
                 # We've come across the beginning of a 'try' statement.
                 # That means any previous statement we found is complete.
-                # The first time through this may be None, but the
-                # collection will ignore it.
-                statements.add(statement)
+                finalized_statement = statement
 
                 statement = TryStatement(
                     body=value, processor=self, call_stack=call_stack
@@ -192,7 +192,7 @@ class GrammarProcessor:
             elif _ELSE_CLAUSE_PATTERN.match(key):
                 _handle_else(statement, value)
 
-        return statement
+        return statement, finalized_statement
 
 
 def _handle_else(statement: Optional[Statement], else_body: Optional[typing.Grammar]):
