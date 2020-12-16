@@ -1,0 +1,55 @@
+name: CI
+
+on: 
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decision to Publish
+        id: decisions
+        run: |
+          # Secrets cannot be used in conditionals, so this is our dance:
+          # https://github.com/actions/runner/issues/520
+          if [[ -n "${{ secrets.STORE_LOGIN }}" ]]; then
+            echo "::set-output name=PUBLISH::true"
+            if [[ ${{ github.event_name }} == 'pull_request' ]]; then
+              echo "::set-output name=PUBLISH_BRANCH::edge/pr-${{ github.event.number }}"
+            elif [[ "${GITHUB_REF##*/}" == "master" ]]; then
+              echo "::set-output name=PUBLISH_BRANCH::edge"
+            else
+              echo "::set-output name=PUBLISH_BRANCH::"
+            fi
+          else
+            echo "::set-output name=PUBLISH::"
+            echo "::set-output name=PUBLISH_BRANCH::"
+          fi
+
+
+      - if: steps.decisions.outputs.PUBLISH == 'true'
+        name: Checkout Snapcraft        
+        uses: actions/checkout@v2
+        with:
+          # Fetch all of history so Snapcraft can determine its own version from git.
+          fetch-depth: 0
+
+      - if: steps.decisions.outputs.PUBLISH == 'true'
+        name: Build Snapcraft Snap
+        id: build-snapcraft
+        uses: snapcore/action-build@v1
+
+      - if: steps.decisions.outputs.PUBLISH == 'true'
+        name: Verify Snapcraft Snap
+        run: |
+          # Make sure it is installable.
+          sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
+
+      - if: steps.decisions.outputs.PUBLISH == 'true' && steps.decisions.outputs.PUBLISH_BRANCH != null
+        uses: snapcore/action-publish@v1
+        with:
+          store_login: ${{ secrets.STORE_LOGIN }}
+          snap: ${{ steps.build-snapcraft.outputs.snap }}
+          release: ${{ steps.decisions.outputs.PUBLISH_BRANCH }}

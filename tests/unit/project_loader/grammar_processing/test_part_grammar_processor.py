@@ -398,7 +398,7 @@ class TestPartGrammarBuildAndStageSnaps:
         assert processor.get_stage_snaps() == expected_arch[f"expected_{target_arch}"]
 
 
-class TestPartGrammarBuildAndStagePackages:
+class TestPartGrammarStagePackages:
 
     source_scenarios = [
         (
@@ -487,10 +487,7 @@ class TestPartGrammarBuildAndStagePackages:
         plugin = Plugin()
         processor = PartGrammarProcessor(
             plugin=plugin,
-            properties={
-                "build-packages": {"plugin-preferred"},
-                "stage-packages": "plugin-preferred",
-            },
+            properties={"stage-packages": "plugin-preferred"},
             project=project.Project(target_deb_arch=target_arch),
             repo=repo,
         )
@@ -499,9 +496,6 @@ class TestPartGrammarBuildAndStagePackages:
             expected_amd64=expected_amd64,
             expected_i386=expected_i386,
             expected_armhf=expected_armhf,
-        )
-        assert (
-            processor.get_build_packages() == expected_arch[f"expected_{target_arch}"]
         )
         assert (
             processor.get_stage_packages() == expected_arch[f"expected_{target_arch}"]
@@ -528,7 +522,111 @@ class TestPartGrammarBuildAndStagePackages:
         plugin = Plugin()
         processor = PartGrammarProcessor(
             plugin=plugin,
-            properties={"build-packages": packages, "stage-packages": packages},
+            properties={"stage-packages": packages},
+            project=project.Project(target_deb_arch=target_arch),
+            repo=repo,
+        )
+
+        expected_arch = dict(
+            expected_amd64=expected_amd64,
+            expected_i386=expected_i386,
+            expected_armhf=expected_armhf,
+        )
+        assert (
+            processor.get_stage_packages() == expected_arch[f"expected_{target_arch}"]
+        )
+
+
+class TestPartGrammarBuildPackages:
+
+    source_scenarios = [
+        (
+            "empty",
+            {
+                "packages": "",
+                "expected_amd64": set(),
+                "expected_i386": set(),
+                "expected_armhf": set(),
+            },
+        ),
+        (
+            "single item",
+            {
+                "packages": ["foo"],
+                "expected_amd64": {"foo"},
+                "expected_i386": {"foo"},
+                "expected_armhf": {"foo"},
+            },
+        ),
+        (
+            "on amd64",
+            {
+                "packages": [{"on amd64": ["foo"]}],
+                "expected_amd64": {"foo"},
+                "expected_i386": set(),
+                "expected_armhf": {"foo"},  # 'on' cares about host, not target
+            },
+        ),
+        (
+            "try",
+            {
+                "packages": [{"try": ["foo"]}],
+                "expected_amd64": {"foo"},
+                "expected_i386": {"foo"},
+                "expected_armhf": {"foo"},
+            },
+        ),
+        (
+            "to armhf",
+            {
+                "packages": [{"to armhf": ["foo"]}],
+                "expected_amd64": set(),
+                "expected_i386": set(),
+                "expected_armhf": {"foo"},
+            },
+        ),
+        (
+            "on amd64 to armhf",
+            {
+                "packages": [{"on amd64 to armhf": "foo"}],
+                "expected_amd64": set(),
+                "expected_i386": set(),
+                "expected_armhf": {"foo"},
+            },
+        ),
+    ]
+
+    arch_scenarios = [
+        ("amd64", {"host_arch": "x86_64", "target_arch": "amd64"}),
+        ("i386", {"host_arch": "i686", "target_arch": "i386"}),
+        ("amd64 to armhf", {"host_arch": "x86_64", "target_arch": "armhf"}),
+    ]
+
+    scenarios = multiply_scenarios(source_scenarios, arch_scenarios)
+
+    def test_packages(
+        self,
+        monkeypatch,
+        host_arch,
+        target_arch,
+        packages,
+        expected_amd64,
+        expected_i386,
+        expected_armhf,
+    ):
+        monkeypatch.setattr(platform, "machine", lambda: host_arch)
+        monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
+
+        repo = mock.Mock()
+
+        class Plugin:
+            build_packages = packages
+            stage_packages = packages
+
+        plugin = Plugin()
+        processor = PartGrammarProcessor(
+            plugin=plugin,
+            properties={"build-packages": {"plugin-preferred"}},
             project=project.Project(target_deb_arch=target_arch),
             repo=repo,
         )
@@ -541,6 +639,38 @@ class TestPartGrammarBuildAndStagePackages:
         assert (
             processor.get_build_packages() == expected_arch[f"expected_{target_arch}"]
         )
+
+    def test_packages_plugin_no_attr(
+        self,
+        monkeypatch,
+        host_arch,
+        target_arch,
+        packages,
+        expected_amd64,
+        expected_i386,
+        expected_armhf,
+    ):
+        monkeypatch.setattr(platform, "machine", lambda: host_arch)
+        monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
+
+        repo = mock.Mock()
+
+        class Plugin:
+            pass
+
+        plugin = Plugin()
+        processor = PartGrammarProcessor(
+            plugin=plugin,
+            properties={"build-packages": packages},
+            project=project.Project(target_deb_arch=target_arch),
+            repo=repo,
+        )
+
+        expected_arch = dict(
+            expected_amd64=expected_amd64,
+            expected_i386=expected_i386,
+            expected_armhf=expected_armhf,
+        )
         assert (
-            processor.get_stage_packages() == expected_arch[f"expected_{target_arch}"]
+            processor.get_build_packages() == expected_arch[f"expected_{target_arch}"]
         )

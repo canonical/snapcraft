@@ -400,12 +400,17 @@ class _SnapPackaging:
             icon_data = requests.get(icon).content
             target_icon_path.write_bytes(icon_data)
         elif parsed_url.scheme == "":
-            source_path = pathlib.Path(self._prime_dir, parsed_path)
+            source_path = pathlib.Path(
+                self._prime_dir,
+                parsed_path.relative_to("/")
+                if parsed_path.is_absolute()
+                else parsed_path,
+            )
             if source_path.exists():
-                # Local - the path should be relative to prime, copy to target.
-                file_utils.link_or_copy(str(parsed_path), str(target_icon_path))
+                # Local with path relative to prime.
+                file_utils.link_or_copy(str(source_path), str(target_icon_path))
             elif parsed_path.exists():
-                # Fall back to checking relative to project.
+                # Local with path relative to project.
                 file_utils.link_or_copy(str(parsed_path), str(target_icon_path))
             else:
                 # No icon found, fall back to searching for existing icon.

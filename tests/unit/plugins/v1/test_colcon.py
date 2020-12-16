@@ -25,6 +25,7 @@ from testscenarios import multiply_scenarios
 from testtools.matchers import Contains, Equals, FileExists, HasLength, LessThan, Not
 
 from snapcraft import repo
+from snapcraft.internal import errors
 from snapcraft.plugins.v1 import _ros, colcon
 from tests import unit
 
@@ -123,7 +124,7 @@ class ColconPluginTest(ColconPluginTestBase):
         self.project._snap_meta.base = "unsupported-base"
 
         raised = self.assertRaises(
-            colcon.ColconPluginBaseError,
+            errors.PluginBaseError,
             colcon.ColconPlugin,
             "test-part",
             self.properties,
@@ -132,6 +133,20 @@ class ColconPluginTest(ColconPluginTestBase):
 
         self.assertThat(raised.part_name, Equals("test-part"))
         self.assertThat(raised.base, Equals("unsupported-base"))
+
+    def test_unsupported_base_and_rosdistro(self):
+        self.project._snap_meta.base = "core"
+
+        raised = self.assertRaises(
+            colcon.ColconPluginBaseError,
+            colcon.ColconPlugin,
+            "test-part",
+            self.properties,
+            self.project,
+        )
+
+        self.assertThat(raised.part_name, Equals("test-part"))
+        self.assertThat(raised.base, Equals("core"))
         self.assertThat(raised.rosdistro, Equals("crystal"))
 
     def test_schema_colcon_rosdistro(self):
