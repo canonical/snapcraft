@@ -87,6 +87,12 @@ def _execute(  # noqa: C901
     project = get_project(is_managed_host=is_managed_host, **kwargs)
     conduct_project_sanity_check(project, **kwargs)
 
+    project_path = pathlib.Path(project._project_dir)
+    if project_path.name in ["build-aux", "snap"]:
+        echo.warning(
+            f"Snapcraft is running in directory {project_path.name!r}.  If this is the snap assets directory, please run snapcraft from {project_path.parent}."
+        )
+
     if build_provider in ["host", "managed-host"]:
         project_config = project_loader.load_config(project)
         lifecycle.execute(step, project_config, parts)
