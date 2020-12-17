@@ -54,6 +54,14 @@ class PluginV2(abc.ABC):
         This method is called by the PluginHandler during the "build" step.
         """
 
+    out_of_source_build = False
+    """Set to True if the plugin performs out-of-source-tree builds.
+
+    In practice, this controls whether the PluginHandler code will
+    copy the source code to the build directory before invoking the
+    plugin's build commands.
+    """
+
     @abc.abstractmethod
     def get_build_commands(self) -> List[str]:
         """
@@ -66,13 +74,3 @@ class PluginV2(abc.ABC):
         snapcraftctl can be used in the script to call out to snapcraft
         specific functionality.
         """
-
-    @property
-    def out_of_source_build(self) -> bool:
-        """Returns True if the plugin performs out-of-source-tree builds.
-
-        In practice, this controls whether the PluginHandler code will
-        copy the source code to the build directory before invoking
-        the plugin's build commands.
-        """
-        return False

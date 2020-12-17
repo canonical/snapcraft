@@ -72,6 +72,8 @@ class MesonPlugin(PluginV2):
     def get_build_environment(self) -> Dict[str, str]:
         return dict()
 
+    out_of_source_build = True
+
     def get_build_commands(self) -> List[str]:
         if self.options.meson_version:
             meson_package = f"meson=={self.options.meson_version}"
@@ -89,7 +91,3 @@ class MesonPlugin(PluginV2):
             "ninja",
             'DESTDIR="${SNAPCRAFT_PART_INSTALL}" ninja install',
         ]
-
-    @property
-    def out_of_source_build(self) -> bool:
-        return True

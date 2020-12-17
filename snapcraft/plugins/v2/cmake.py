@@ -88,13 +88,11 @@ class CMakePlugin(PluginV2):
 
         return " ".join(cmd)
 
+    out_of_source_build = True
+
     def get_build_commands(self) -> List[str]:
         return [
             self._get_cmake_configure_command(),
             'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
             'DESTDIR="${SNAPCRAFT_PART_INSTALL}" cmake --build . --target install',
         ]
-
-    @property
-    def out_of_source_build(self) -> bool:
-        return True
