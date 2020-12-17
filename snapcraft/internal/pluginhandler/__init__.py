@@ -94,7 +94,10 @@ class PluginHandler:
         # part property.
         source_sub_dir = self._part_properties.get("source-subdir", "")
         self.part_source_work_dir = os.path.join(self.part_source_dir, source_sub_dir)
-        self.part_build_work_dir = os.path.join(self.part_build_dir, source_sub_dir)
+        if self.plugin.out_of_source_build:
+            self.part_build_work_dir = self.part_build_dir
+        else:
+            self.part_build_work_dir = os.path.join(self.part_build_dir, source_sub_dir)
 
         self._pull_state: Optional[states.PullState] = None
         self._build_state: Optional[states.BuildState] = None
@@ -257,7 +260,6 @@ class PluginHandler:
         dirs = [
             self.part_source_dir,
             self.part_build_dir,
-            self.part_build_work_dir,
             self.part_install_dir,
             self.part_state_dir,
             self._project.stage_dir,
