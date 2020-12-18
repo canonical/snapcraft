@@ -88,7 +88,9 @@ class CMakePlugin(PluginV2):
 
         return " ".join(cmd)
 
-    out_of_source_build = True
+    @property
+    def out_of_source_build(self):
+        return True
 
     def get_build_commands(self) -> List[str]:
         return [

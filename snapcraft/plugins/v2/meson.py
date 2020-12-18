@@ -72,7 +72,9 @@ class MesonPlugin(PluginV2):
     def get_build_environment(self) -> Dict[str, str]:
         return dict()
 
-    out_of_source_build = True
+    @property
+    def out_of_source_build(self):
+        return True
 
     def get_build_commands(self) -> List[str]:
         if self.options.meson_version:

@@ -54,13 +54,15 @@ class PluginV2(abc.ABC):
         This method is called by the PluginHandler during the "build" step.
         """
 
-    out_of_source_build = False
-    """Set to True if the plugin performs out-of-source-tree builds.
+    @property
+    def out_of_source_build(self):
+        """Set to True if the plugin performs out-of-source-tree builds.
 
-    In practice, this controls whether the PluginHandler code will
-    copy the source code to the build directory before invoking the
-    plugin's build commands.
-    """
+        In practice, this controls whether the PluginHandler code will
+        copy the source code to the build directory before invoking
+        the plugin's build commands.
+        """
+        return False
 
     @abc.abstractmethod
     def get_build_commands(self) -> List[str]:
