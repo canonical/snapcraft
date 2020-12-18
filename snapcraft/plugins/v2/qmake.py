@@ -32,7 +32,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (string)
       the qmake project file to use. This is usually only needed if
       qmake can not determine what project file to use on its own.
-
 """
 
 from typing import Any, Dict, List, Set
