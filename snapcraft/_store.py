@@ -34,8 +34,12 @@ from snapcraft import storeapi, yaml_utils
 
 # Ideally we would move stuff into more logical components
 from snapcraft.cli import echo
-from snapcraft.file_utils import calculate_sha3_384, get_snap_tool_path
-from snapcraft.internal import cache, deltas, repo
+from snapcraft.file_utils import (
+    calculate_sha3_384,
+    get_host_tool_path,
+    get_snap_tool_path,
+)
+from snapcraft.internal import cache, deltas
 from snapcraft.internal.deltas.errors import (
     DeltaGenerationError,
     DeltaGenerationTooBigError,
@@ -433,8 +437,9 @@ def list_registered():
 
 
 def _get_usable_keys(name=None):
+    snap_path = get_host_tool_path(command_name="snap", package_name="snapd")
     keys = json.loads(
-        subprocess.check_output(["snap", "keys", "--json"], universal_newlines=True)
+        subprocess.check_output([snap_path, "keys", "--json"], universal_newlines=True)
     )
     if keys is not None:
         for key in keys:
@@ -472,15 +477,13 @@ def _export_key(name, account_id):
 
 
 def list_keys():
-    if not repo.Repo.is_package_installed("snapd"):
-        raise storeapi.errors.MissingSnapdError("list-keys")
     keys = list(_get_usable_keys())
     account_info = StoreClientCLI().get_account_information()
     enabled_keys = {
         account_key["public-key-sha3-384"]
         for account_key in account_info["account_keys"]
     }
-    if enabled_keys:
+    if keys and enabled_keys:
         tabulated_keys = tabulate(
             [
                 (
@@ -495,6 +498,14 @@ def list_keys():
             tablefmt="plain",
         )
         print(tabulated_keys)
+    elif not keys and enabled_keys:
+        registered_keys = "\n".join([f"- {key}" for key in enabled_keys])
+        print(
+            "No keys have been created on this system. "
+            " See 'snapcraft create-key --help to create a key.\n"
+            "The following SHA3-384 key fingerprints have been registered "
+            f"but are not available on this system:\n{registered_keys}"
+        )
     else:
         print(
             "No keys have been registered."
@@ -503,8 +514,6 @@ def list_keys():
 
 
 def create_key(name):
-    if not repo.Repo.is_package_installed("snapd"):
-        raise storeapi.errors.MissingSnapdError("create-key")
     if not name:
         name = "default"
     keys = list(_get_usable_keys(name=name))
@@ -539,8 +548,6 @@ def _maybe_prompt_for_key(name):
 
 
 def register_key(name):
-    if not repo.Repo.is_package_installed("snapd"):
-        raise storeapi.errors.MissingSnapdError("register-key")
     key = _maybe_prompt_for_key(name)
     store_client = StoreClientCLI()
     try:
@@ -568,8 +575,9 @@ def register(snap_name: str, is_private: bool = False, store_id: str = None) -> 
 
 def _generate_snap_build(authority_id, snap_id, grade, key_name, snap_filename):
     """Return the signed snap-build declaration for a snap on disk."""
+    snap_path = get_host_tool_path(command_name="snap", package_name="snapd")
     cmd = [
-        "snap",
+        snap_path,
         "sign-build",
         "--developer-id=" + authority_id,
         "--snap-id=" + snap_id,
@@ -585,9 +593,6 @@ def _generate_snap_build(authority_id, snap_id, grade, key_name, snap_filename):
 
 
 def sign_build(snap_filename, key_name=None, local=False):
-    if not repo.Repo.is_package_installed("snapd"):
-        raise storeapi.errors.MissingSnapdError("sign-build")
-
     if not os.path.exists(snap_filename):
         raise FileNotFoundError("The file {!r} does not exist.".format(snap_filename))
 

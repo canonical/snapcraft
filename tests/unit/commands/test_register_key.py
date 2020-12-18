@@ -28,17 +28,6 @@ from . import FakeStoreCommandsBaseTestCase, get_sample_key
 
 
 class RegisterKeyTestCase(FakeStoreCommandsBaseTestCase):
-    def test_register_key_snapd_not_installed(self):
-        self.fake_package_installed.mock.return_value = False
-
-        raised = self.assertRaises(
-            storeapi.errors.MissingSnapdError, self.run_command, ["register-key"]
-        )
-
-        self.expectThat(str(raised), Contains("The snapd package is not installed."))
-        self.fake_package_installed.mock.assert_called_with("snapd")
-        self.fake_check_output.mock.assert_not_called()
-
     def test_register_key(self):
         result = self.run_command(
             ["register-key", "default"], input="user@example.com\nsecret\n"
