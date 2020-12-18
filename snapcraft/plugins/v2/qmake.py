@@ -27,6 +27,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - qmake-parameters:
       (list of strings)
       additional options to pass to the qmake invocation.
+
     - qmake-project-file:
       (string)
       the qmake project file to use. This is usually only needed if
