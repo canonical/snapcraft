@@ -88,6 +88,10 @@ class CMakePlugin(PluginV2):
 
         return " ".join(cmd)
 
+    @property
+    def out_of_source_build(self):
+        return True
+
     def get_build_commands(self) -> List[str]:
         return [
             self._get_cmake_configure_command(),

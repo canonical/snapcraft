@@ -72,6 +72,10 @@ class MesonPlugin(PluginV2):
     def get_build_environment(self) -> Dict[str, str]:
         return dict()
 
+    @property
+    def out_of_source_build(self):
+        return True
+
     def get_build_commands(self) -> List[str]:
         if self.options.meson_version:
             meson_package = f"meson=={self.options.meson_version}"
@@ -81,11 +85,11 @@ class MesonPlugin(PluginV2):
         meson_cmd = ["meson"]
         if self.options.meson_parameters:
             meson_cmd.append(" ".join(self.options.meson_parameters))
-        meson_cmd.append(".snapbuild")
+        meson_cmd.append('"${SNAPCRAFT_PART_SRC_WORK}"')
 
         return [
             f"/usr/bin/python3 -m pip install -U {meson_package}",
-            "[ ! -d .snapbuild ] && {}".format(" ".join(meson_cmd)),
-            "(cd .snapbuild && ninja)",
-            '(cd .snapbuild && DESTDIR="${SNAPCRAFT_PART_INSTALL}" ninja install)',
+            "[ ! -f build.ninja ] && {}".format(" ".join(meson_cmd)),
+            "ninja",
+            'DESTDIR="${SNAPCRAFT_PART_INSTALL}" ninja install',
         ]
