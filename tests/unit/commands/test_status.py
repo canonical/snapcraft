@@ -63,6 +63,10 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
                              candidate  -          -
                              beta       10         19
                              edge       ↑          ↑
+            2.0      amd64   stable     -          -
+                             candidate  -          -
+                             beta       10         18
+                             edge       ↑          ↑
             """
                 )
             ),
@@ -145,6 +149,10 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
                              beta       10         19          93→90%
                                         11         20          7→10%
                              edge       ↑          ↑           -
+            2.0      amd64   stable     -          -           -
+                             candidate  -          -           -
+                             beta       10         18          -
+                             edge       ↑          ↑           -
             """
                 )
             ),
@@ -178,6 +186,152 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
             2.1      s390x   stable     -          -
                              candidate  -          -
                              beta       10         99
+                             edge       ↑          ↑
+            """
+                )
+            ),
+        )
+
+    def test_status_by_multiple_arch(self):
+        self.channel_map.channel_map.append(
+            MappedChannel(
+                channel="2.1/beta",
+                architecture="s390x",
+                expiration_date=None,
+                revision=98,
+                progressive=Progressive(
+                    paused=None, percentage=None, current_percentage=None
+                ),
+            )
+        )
+        self.channel_map.channel_map.append(
+            MappedChannel(
+                channel="2.1/beta",
+                architecture="arm64",
+                expiration_date=None,
+                revision=99,
+                progressive=Progressive(
+                    paused=None, percentage=None, current_percentage=None
+                ),
+            )
+        )
+        self.channel_map.revisions.append(
+            Revision(architectures=["s390x"], revision=98, version="10")
+        )
+        self.channel_map.revisions.append(
+            Revision(architectures=["arm64"], revision=99, version="10")
+        )
+
+        result = self.run_command(
+            ["status", "snap-test", "--arch=s390x", "--arch=arm64"]
+        )
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Equals(
+                dedent(
+                    """\
+            Track    Arch    Channel    Version    Revision
+            2.1      arm64   stable     -          -
+                             candidate  -          -
+                             beta       10         99
+                             edge       ↑          ↑
+                     s390x   stable     -          -
+                             candidate  -          -
+                             beta       10         98
+                             edge       ↑          ↑
+            """
+                )
+            ),
+        )
+
+    def test_status_by_track(self):
+        result = self.run_command(["status", "snap-test", "--track=2.0"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Equals(
+                dedent(
+                    """\
+            Track    Arch    Channel    Version    Revision
+            2.0      amd64   stable     -          -
+                             candidate  -          -
+                             beta       10         18
+                             edge       ↑          ↑
+            """
+                )
+            ),
+        )
+
+    def test_status_by_multiple_track(self):
+        result = self.run_command(["status", "snap-test", "--track=2.0", "--track=2.1"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Equals(
+                dedent(
+                    """\
+            Track    Arch    Channel    Version    Revision
+            2.1      amd64   stable     -          -
+                             candidate  -          -
+                             beta       10         19
+                             edge       ↑          ↑
+            2.0      amd64   stable     -          -
+                             candidate  -          -
+                             beta       10         18
+                             edge       ↑          ↑
+            """
+                )
+            ),
+        )
+
+    def test_status_by_track_and_arch(self):
+        self.channel_map.channel_map.append(
+            MappedChannel(
+                channel="2.1/beta",
+                architecture="s390x",
+                expiration_date=None,
+                revision=99,
+                progressive=Progressive(
+                    paused=None, percentage=None, current_percentage=None
+                ),
+            )
+        )
+        self.channel_map.channel_map.append(
+            MappedChannel(
+                channel="2.0/beta",
+                architecture="s390x",
+                expiration_date=None,
+                revision=98,
+                progressive=Progressive(
+                    paused=None, percentage=None, current_percentage=None
+                ),
+            )
+        )
+        self.channel_map.revisions.append(
+            Revision(architectures=["s390x"], revision=99, version="10")
+        )
+        self.channel_map.revisions.append(
+            Revision(architectures=["s390x"], revision=98, version="10")
+        )
+
+        result = self.run_command(
+            ["status", "snap-test", "--arch=s390x", "--track=2.0"]
+        )
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Equals(
+                dedent(
+                    """\
+            Track    Arch    Channel    Version    Revision
+            2.0      s390x   stable     -          -
+                             candidate  -          -
+                             beta       10         98
                              edge       ↑          ↑
             """
                 )
@@ -222,6 +376,10 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
                              stable/hotfix1  10hotfix   20          2020-02-03T20:58:37Z
                              candidate       -          -
                              beta            10         19
+                             edge            ↑          ↑
+            2.0      amd64   stable          -          -
+                             candidate       -          -
+                             beta            10         18
                              edge            ↑          ↑
             """
                 )
@@ -270,6 +428,10 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
                              candidate       -          -           -
                              beta            10         19          -
                              edge            ↑          ↑           -
+            2.0      amd64   stable          -          -           -
+                             candidate       -          -           -
+                             beta            10         18          -
+                             edge            ↑          ↑           -
             """
                 )
             ),
@@ -295,6 +457,10 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
                              candidate  -          -           -
                              beta       -          -           -
                                         10         19          ?→10%
+                             edge       ↑          ↑           -
+            2.0      amd64   stable     -          -           -
+                             candidate  -          -           -
+                             beta       10         18          -
                              edge       ↑          ↑           -
             """
                 )

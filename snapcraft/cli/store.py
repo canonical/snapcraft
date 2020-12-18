@@ -495,15 +495,28 @@ def close(snap_name, channels):
     envvar="SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES",
 )
 @click.option(
-    "--arch", metavar="<arch>", help="The snap architecture to get the status for"
+    "architectures",
+    "--arch",
+    metavar="<arch>",
+    multiple=True,
+    help="Limit status to these architectures (can specify multiple times)",
+)
+@click.option(
+    "tracks",
+    "--track",
+    multiple=True,
+    metavar="<track>",
+    help="Limit status to these tracks (can specify multiple times)",
 )
 @click.argument("snap-name", metavar="<snap-name>")
-def status(snap_name, arch, experimental_progressive_releases):
+def status(snap_name, architectures, tracks, experimental_progressive_releases):
     """Get the status on the store for <snap-name>.
 
     \b
     Examples:
         snapcraft status my-snap
+        snapcraft status --track 20 my-snap
+        snapcraft status --arch amd64 my-snap
     """
     if experimental_progressive_releases:
         os.environ["SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES"] = "Y"
@@ -514,15 +527,41 @@ def status(snap_name, arch, experimental_progressive_releases):
 
     if not snap_channel_map.channel_map:
         echo.warning("This snap has no released revisions.")
-    elif arch and arch not in existing_architectures:
-        echo.warning(f"No revisions for architecture {arch!r}.")
     else:
-        if arch:
-            architectures = (arch,)
+        if architectures:
+            architectures = set(architectures)
+            for architecture in architectures.copy():
+                if architecture not in existing_architectures:
+                    echo.warning(f"No revisions for architecture {architecture!r}.")
+                    architectures.remove(architecture)
+
+            # If we have no revisions for any of the architectures requested, there's
+            # nothing to do here.
+            if not architectures:
+                return
         else:
             architectures = existing_architectures
+
+        if tracks:
+            tracks = set(tracks)
+            existing_tracks = {
+                s.track for s in snap_channel_map.snap.channels if s.track in tracks
+            }
+            for track in tracks - existing_tracks:
+                echo.warning(f"No revisions in track {track!r}.")
+            tracks = existing_tracks
+
+            # If we have no revisions in any of the tracks requested, there's
+            # nothing to do here.
+            if not tracks:
+                return
+        else:
+            tracks = None
+
         click.echo(
-            get_tabulated_channel_map(snap_channel_map, architectures=architectures)
+            get_tabulated_channel_map(
+                snap_channel_map, architectures=architectures, tracks=tracks
+            )
         )
 
 
