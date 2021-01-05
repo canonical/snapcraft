@@ -14,10 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The cmake plugin is useful for building cmake based parts.
+"""The qmake plugin is useful for building qmake-based parts.
 
-These are projects that have a CMakeLists.txt that drives the build.
-The plugin requires a CMakeLists.txt in the root of the source tree.
+These are projects that are built using .pro files.
 
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
@@ -25,14 +24,14 @@ For more information check the 'plugins' topic for the former and the
 
 Additionally, this plugin uses the following plugin-specific keywords:
 
-    - cmake-parameters
+    - qmake-parameters:
       (list of strings)
-      parameters to pass to the build using the common cmake semantics.
+      additional options to pass to the qmake invocation.
 
-    - cmake-generator
-      (string; default: "Unix Makefiles")
-      Determine what native build system is to be used.
-      Can be either `ninja` or `Unix Makefiles` (default).
+    - qmake-project-file:
+      (string)
+      the qmake project file to use. This is usually only needed if
+      qmake can not determine what project file to use on its own.
 """
 
 from typing import Any, Dict, List, Set
@@ -40,7 +39,7 @@ from typing import Any, Dict, List, Set
 from snapcraft.plugins.v2 import PluginV2
 
 
-class CMakePlugin(PluginV2):
+class QMakePlugin(PluginV2):
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:
         return {
@@ -48,17 +47,13 @@ class CMakePlugin(PluginV2):
             "type": "object",
             "additionalProperties": False,
             "properties": {
-                "cmake-parameters": {
+                "qmake-parameters": {
                     "type": "array",
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],
                 },
-                "cmake-generator": {
-                    "type": "string",
-                    "enum": ["Unix Makefiles", "Ninja"],
-                    "default": "Unix Makefiles",
-                },
+                "qmake-project-file": {"type": "string", "default": ""},
             },
         }
 
@@ -66,35 +61,39 @@ class CMakePlugin(PluginV2):
         return set()
 
     def get_build_packages(self) -> Set[str]:
-        build_packages = {"gcc", "cmake"}
-
-        if self.options.cmake_generator == "Ninja":
-            build_packages.add("ninja-build")
-
-        return build_packages
+        return {"g++", "make", "qt5-qmake"}
 
     def get_build_environment(self) -> Dict[str, str]:
-        return {
-            "CMAKE_PREFIX_PATH": "${SNAPCRAFT_STAGE}",
-        }
-
-    def _get_cmake_configure_command(self) -> str:
-        cmd = [
-            "cmake",
-            '"${SNAPCRAFT_PART_SRC_WORK}"',
-            "-G",
-            f'"{self.options.cmake_generator}"',
-        ] + self.options.cmake_parameters
-
-        return " ".join(cmd)
+        return {"QT_SELECT": "qt5"}
 
     @property
     def out_of_source_build(self):
         return True
 
+    def _get_qmake_configure_command(self) -> str:
+        cmd = [
+            "qmake",
+            'QMAKE_CFLAGS+="${CFLAGS:-}"',
+            'QMAKE_CXXFLAGS+="${CXXFLAGS:-}"',
+            'QMAKE_LFLAGS+="${LDFLAGS:-}"',
+        ] + self.options.qmake_parameters
+
+        if self.options.qmake_project_file:
+            cmd.append(
+                '"${{SNAPCRAFT_PART_SRC_WORK}}/{}"'.format(
+                    self.options.qmake_project_file
+                )
+            )
+        else:
+            cmd.append('"${SNAPCRAFT_PART_SRC_WORK}"')
+
+        return " ".join(cmd)
+
     def get_build_commands(self) -> List[str]:
         return [
-            self._get_cmake_configure_command(),
-            'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
-            'DESTDIR="${SNAPCRAFT_PART_INSTALL}" cmake --build . --target install',
+            self._get_qmake_configure_command(),
+            # Avoid overriding the CFLAGS and CXXFLAGS environment
+            # variables qmake sets in the generated Makefile
+            'env -u CFLAGS -u CXXFLAGS make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
+            'make install INSTALL_ROOT="${SNAPCRAFT_PART_INSTALL}"',
         ]

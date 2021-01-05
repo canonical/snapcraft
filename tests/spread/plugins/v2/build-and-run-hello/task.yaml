@@ -19,6 +19,9 @@ environment:
   SNAP/meson: meson-hello
   SNAP/meson_staged_python: meson-hello-staged-python
   SNAP/npm: npm-hello
+  SNAP/qmake: qmake-hello
+  SNAP/qmake_subdir: qmake-hello-subdir
+  SNAP/qmake_project_file: qmake-hello-project-file
   SNAP/rust: rust-hello
   SNAP/rust_features: rust-hello-features
   SNAP/rust_workspace: rust-hello-workspace
