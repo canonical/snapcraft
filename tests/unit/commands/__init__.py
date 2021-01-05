@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+from pathlib import PosixPath
 import subprocess
 from textwrap import dedent
 from unittest import mock
@@ -51,11 +52,13 @@ original_check_output = subprocess.check_output
 
 
 def mock_check_output(command, *args, **kwargs):
+    if isinstance(command[0], PosixPath):
+        command[0] = str(command[0])
     if command[0].endswith("unsquashfs") or command[0].endswith("xdelta3"):
         return original_check_output(command, *args, **kwargs)
-    elif command == ["snap", "keys", "--json"]:
+    elif command[0].endswith("snap") and command[1:] == ["keys", "--json"]:
         return json.dumps(_sample_keys)
-    elif command[:2] == ["snap", "export-key"]:
+    elif command[0].endswith("snap") and command[1] == "export-key":
         if not command[2].startswith("--account="):
             raise AssertionError("Unhandled command: {}".format(command))
         account_id = command[2][len("--account=") :]
@@ -72,7 +75,10 @@ def mock_check_output(command, *args, **kwargs):
         ).format(
             account_id=account_id, name=name, sha3_384=get_sample_key(name)["sha3-384"]
         )
-    elif command == ["snap", "create-key", "new-key"]:
+    elif command[0].endswith("snap") and command[1:] == [
+        "create-key",
+        "new-key",
+    ]:
         pass
     else:
         raise AssertionError("Unhandled command: {}".format(command))

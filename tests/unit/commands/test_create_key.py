@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import fixtures
-from testtools.matchers import Contains, Equals
+from testtools.matchers import Equals
 
 from snapcraft import storeapi
 
@@ -28,18 +28,6 @@ class CreateKeyTestCase(FakeStoreCommandsBaseTestCase):
 
         self.fake_check_call = fixtures.MockPatch("subprocess.check_call")
         self.useFixture(self.fake_check_call)
-
-    def test_create_key_snapd_not_installed(self):
-        self.fake_package_installed.mock.return_value = False
-
-        raised = self.assertRaises(
-            storeapi.errors.MissingSnapdError, self.run_command, ["create-key"]
-        )
-
-        self.assertThat(str(raised), Contains("The snapd package is not installed."))
-        self.fake_package_installed.mock.assert_called_with("snapd")
-        self.fake_check_output.mock.assert_not_called()
-        self.fake_check_call.mock.assert_not_called()
 
     def test_create_key_already_exists(self):
         raised = self.assertRaises(
