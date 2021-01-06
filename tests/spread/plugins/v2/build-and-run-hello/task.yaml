@@ -4,6 +4,7 @@ summary: >-
 
 environment:
   SNAP/autotools: autotools-hello
+  SNAP/autotools_autogen: autotools-hello-autogen
   SNAP/cmake: cmake-hello
   SNAP/cmake_ninja: cmake-hello-ninja
   SNAP/cmake_subdir: cmake-hello-subdir
