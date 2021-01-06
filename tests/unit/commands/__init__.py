@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+from pathlib import PosixPath
 import subprocess
 from textwrap import dedent
 from unittest import mock
@@ -51,11 +52,13 @@ original_check_output = subprocess.check_output
 
 
 def mock_check_output(command, *args, **kwargs):
+    if isinstance(command[0], PosixPath):
+        command[0] = str(command[0])
     if command[0].endswith("unsquashfs") or command[0].endswith("xdelta3"):
         return original_check_output(command, *args, **kwargs)
-    elif command == ["snap", "keys", "--json"]:
+    elif command[0].endswith("snap") and command[1:] == ["keys", "--json"]:
         return json.dumps(_sample_keys)
-    elif command[:2] == ["snap", "export-key"]:
+    elif command[0].endswith("snap") and command[1] == "export-key":
         if not command[2].startswith("--account="):
             raise AssertionError("Unhandled command: {}".format(command))
         account_id = command[2][len("--account=") :]
@@ -72,7 +75,10 @@ def mock_check_output(command, *args, **kwargs):
         ).format(
             account_id=account_id, name=name, sha3_384=get_sample_key(name)["sha3-384"]
         )
-    elif command == ["snap", "create-key", "new-key"]:
+    elif command[0].endswith("snap") and command[1:] == [
+        "create-key",
+        "new-key",
+    ]:
         pass
     else:
         raise AssertionError("Unhandled command: {}".format(command))
@@ -225,10 +231,22 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
                             "percentage": None,
                             "current-percentage": None,
                         },
-                    }
+                    },
+                    {
+                        "architecture": "amd64",
+                        "channel": "2.0/beta",
+                        "expiration-date": None,
+                        "revision": 18,
+                        "progressive": {
+                            "paused": None,
+                            "percentage": None,
+                            "current-percentage": None,
+                        },
+                    },
                 ],
                 "revisions": [
-                    {"architectures": ["amd64"], "revision": 19, "version": "10"}
+                    {"architectures": ["amd64"], "revision": 19, "version": "10"},
+                    {"architectures": ["amd64"], "revision": 18, "version": "10"},
                 ],
                 "snap": {
                     "name": "snap-test",
@@ -260,6 +278,34 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
                             "name": "2.1/edge",
                             "risk": "edge",
                             "track": "2.1",
+                        },
+                        {
+                            "branch": None,
+                            "fallback": None,
+                            "name": "2.0/stable",
+                            "risk": "stable",
+                            "track": "2.0",
+                        },
+                        {
+                            "branch": None,
+                            "fallback": "2.0/stable",
+                            "name": "2.0/candidate",
+                            "risk": "candidate",
+                            "track": "2.0",
+                        },
+                        {
+                            "branch": None,
+                            "fallback": "2.0/candidate",
+                            "name": "2.0/beta",
+                            "risk": "beta",
+                            "track": "2.0",
+                        },
+                        {
+                            "branch": None,
+                            "fallback": "2.0/beta",
+                            "name": "2.0/edge",
+                            "risk": "edge",
+                            "track": "2.0",
                         },
                     ],
                     "default-track": "2.1",

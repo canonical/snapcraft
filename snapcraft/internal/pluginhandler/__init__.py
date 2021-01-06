@@ -94,7 +94,10 @@ class PluginHandler:
         # part property.
         source_sub_dir = self._part_properties.get("source-subdir", "")
         self.part_source_work_dir = os.path.join(self.part_source_dir, source_sub_dir)
-        self.part_build_work_dir = os.path.join(self.part_build_dir, source_sub_dir)
+        if self.plugin.out_of_source_build:
+            self.part_build_work_dir = self.part_build_dir
+        else:
+            self.part_build_work_dir = os.path.join(self.part_build_dir, source_sub_dir)
 
         self._pull_state: Optional[states.PullState] = None
         self._build_state: Optional[states.BuildState] = None
@@ -125,9 +128,15 @@ class PluginHandler:
         ] = collections.defaultdict(snapcraft.extractors.ExtractedMetadata)
 
         if isinstance(plugin, plugins.v2.PluginV2):
+            self._shell = "/bin/bash"
+            self._shell_flags = "set -xeuo pipefail"
+
             env_generator = self._generate_part_env
             build_step_run_callable = self._do_v2_build
         else:
+            # sh supports -u, but for legacy purposes we do not enable it.
+            self._shell = "/bin/sh"
+            self._shell_flags = "set -xe"
 
             def generate_part_env(step: steps.Step) -> str:
                 return common.assemble_env()
@@ -153,6 +162,8 @@ class PluginHandler:
                 "set-version": self._set_version,
                 "set-grade": self._set_grade,
             },
+            shell=self._shell,
+            shell_flags=self._shell_flags,
         )
 
         self._current_step: Optional[steps.Step] = None
@@ -575,10 +586,7 @@ class PluginHandler:
     def build(self, force=False):
         self.makedirs()
 
-        if not (
-            isinstance(self.plugin, plugins.v1.PluginV1)
-            and self.plugin.out_of_source_build
-        ):
+        if not self.plugin.out_of_source_build:
             if os.path.exists(self.part_build_dir):
                 shutil.rmtree(self.part_build_dir)
 
@@ -589,10 +597,7 @@ class PluginHandler:
         self._do_build()
 
     def update_build(self):
-        if not (
-            isinstance(self.plugin, plugins.v1.PluginV1)
-            and self.plugin.out_of_source_build
-        ):
+        if not self.plugin.out_of_source_build:
             # Use the local source to update. It's important to use
             # file_utils.copy instead of link_or_copy, as the build process
             # may modify these files
@@ -630,7 +635,7 @@ class PluginHandler:
 
         # Create the script.
         with io.StringIO() as run_environment:
-            print("#!/bin/sh", file=run_environment)
+            print(f"#!{self._shell}", file=run_environment)
             print("set -e", file=run_environment)
 
             print("# Environment", file=run_environment)
@@ -662,7 +667,7 @@ class PluginHandler:
         # TODO expand this in Runner.
         with build_script_path.open("w") as run_file:
             print(self._generate_part_env(steps.BUILD), file=run_file)
-            print("set -x", file=run_file)
+            print(self._shell_flags, file=run_file)
 
             for build_command in plugin_build_commands:
                 print(build_command, file=run_file)

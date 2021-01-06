@@ -44,6 +44,8 @@ class Runner:
         primedir: str,
         builtin_functions: Dict[str, Callable[..., None]],
         env_generator: Callable[..., str],
+        shell: str = "/bin/sh",
+        shell_flags: str = "set -ex",
     ) -> None:
         """Create a new Runner.
         :param dict part_properties: YAML properties set for this part.
@@ -69,6 +71,9 @@ class Runner:
         self._override_build_scriptlet = part_properties.get("override-build")
         self._override_stage_scriptlet = part_properties.get("override-stage")
         self._override_prime_scriptlet = part_properties.get("override-prime")
+
+        self._shell = shell
+        self._shell_flags = shell_flags
 
     def pull(self) -> None:
         """Run override-pull scriptlet."""
@@ -139,8 +144,11 @@ class Runner:
 
                 {env}
 
+                {shell_flags}
+
                 {scriptlet}"""
             ).format(
+                shell_flags=self._shell_flags,
                 interpreter=sys.executable,
                 call_fifo=call_fifo.path,
                 feedback_fifo=feedback_fifo.path,
@@ -154,7 +162,9 @@ class Runner:
                 script_file.flush()
                 script_file.seek(0)
 
-                process = subprocess.Popen(["/bin/sh"], stdin=script_file, cwd=workdir)
+                process = subprocess.Popen(
+                    [self._shell], stdin=script_file, cwd=workdir
+                )
 
             status = None
             try:
