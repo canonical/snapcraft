@@ -23,7 +23,7 @@ typing-extensions==3.7.4.1
 toml==0.10.0
 python-debian==0.1.28
 chardet==3.0.4
-lxml==4.5.0
+lxml==4.6.2
 launchpadlib==1.10.6
 lazr.restfulclient==0.14.2
 mypy-extensions==0.4.3
