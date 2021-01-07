@@ -21,7 +21,7 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Equals
 
-from snapcraft import project
+import snapcraft.yaml_utils.errors
 from snapcraft.internal import steps
 from snapcraft.internal.build_providers.errors import ProviderExecError
 from tests import fixture_setup
@@ -267,7 +267,7 @@ class BuildProviderYamlValidationTest(LifecycleCommandsBaseTestCase):
         self.useFixture(snapcraft_yaml)
 
         self.assertRaises(
-            project.errors.YamlValidationError, self.run_command, ["pull"]
+            snapcraft.yaml_utils.errors.YamlValidationError, self.run_command, ["pull"]
         )
 
 

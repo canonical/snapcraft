@@ -19,7 +19,7 @@ from textwrap import dedent
 import pytest
 from testtools.matchers import Equals, Is, MatchesRegex
 
-from snapcraft.project import errors
+import snapcraft.yaml_utils.errors
 from snapcraft.project._project_info import ProjectInfo
 from tests import unit
 
@@ -49,7 +49,7 @@ class ProjectInfoTest(unit.TestCase):
         snapcraft_yaml_file_path = self.make_snapcraft_yaml("")
 
         raised = self.assertRaises(
-            errors.YamlValidationError,
+            snapcraft.yaml_utils.errors.YamlValidationError,
             ProjectInfo,
             snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         )
@@ -90,7 +90,7 @@ class ProjectInfoTest(unit.TestCase):
         )
 
         raised = self.assertRaises(
-            errors.YamlValidationError,
+            snapcraft.yaml_utils.errors.YamlValidationError,
             ProjectInfo,
             snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         )
@@ -167,7 +167,7 @@ class InvalidYamlTest(unit.TestCase):
         )
 
         raised = self.assertRaises(
-            errors.YamlValidationError,
+            snapcraft.yaml_utils.errors.YamlValidationError,
             ProjectInfo,
             snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         )
@@ -195,7 +195,7 @@ class InvalidYamlTest(unit.TestCase):
         )
 
         raised = self.assertRaises(
-            errors.YamlValidationError,
+            snapcraft.yaml_utils.errors.YamlValidationError,
             ProjectInfo,
             snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         )
@@ -226,7 +226,7 @@ class InvalidYamlTest(unit.TestCase):
         )
 
         raised = self.assertRaises(
-            errors.YamlValidationError,
+            snapcraft.yaml_utils.errors.YamlValidationError,
             ProjectInfo,
             snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         )
@@ -247,7 +247,7 @@ class InvalidYamlTest(unit.TestCase):
         )
 
         raised = self.assertRaises(
-            errors.YamlValidationError,
+            snapcraft.yaml_utils.errors.YamlValidationError,
             ProjectInfo,
             snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         )
