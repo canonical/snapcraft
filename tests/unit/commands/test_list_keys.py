@@ -101,7 +101,7 @@ class ListKeysCommandTestCase(FakeStoreCommandsBaseTestCase):
             Contains(
                 dedent(
                     """\
-                    No keys have been created on this system.  See 'snapcraft create-key --help to create a key.
+                    No keys have been created on this system.  See 'snapcraft create-key --help' to create a key.
                     The following SHA3-384 key fingerprints have been registered but are not available on this system:
                     - vdEeQvRxmZ26npJCFaGnl-VfGz0lU2jZZkWp_s7E-RxVCNtH2_mtjcxq2NkDKkIp
             """
