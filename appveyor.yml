@@ -4,6 +4,7 @@ environment:
   MAKEAPPX: C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64\makeappx.exe
   SIGNTOOL: C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64\signtool.exe
   SNAPCRAFT_INSTALLED_EXE: C:\Program Files (x86)\Snapcraft for Windows\snapcraft.exe
+  TIMESTAMP_SERVICE: http://timestamp.digicert.com
 
   matrix:
   - PYTHON: C:\Python37-x64
@@ -32,13 +33,13 @@ build_script:
 
     echo "Test signing snapcraft.exe..."
     powershell.exe windows\generate-self-signed-cert.ps1
-    "%SIGNTOOL%" sign /fd SHA256 /T "http://timestamp.verisign.com/scripts/timstamp.dll" /F test-signing.pfx /P Password1234 dist\snapcraft.exe
+    "%SIGNTOOL%" sign /fd SHA256 /td SHA256 /tr "%TIMESTAMP_SERVICE%" /f test-signing.pfx /p Password1234 dist\snapcraft.exe
 
     echo "Building snapcraft inno installer..."
     "%INNOCC%" windows\snapcraft.iss
 
     echo "Test signing snapcraft inno installer..."
-    "%SIGNTOOL%" sign /fd SHA256 /T "http://timestamp.verisign.com/scripts/timstamp.dll" /F test-signing.pfx /P Password1234 dist\snapcraft-installer.exe
+    "%SIGNTOOL%" sign /fd SHA256 /td SHA256 /tr "%TIMESTAMP_SERVICE%" /f test-signing.pfx /p Password1234 dist\snapcraft-installer.exe
 
     echo "Building snapcraft msix installer..."
     mkdir dist\msix
@@ -48,7 +49,7 @@ build_script:
     "%MAKEAPPX%" pack /h SHA256 /d dist\msix /p dist\snapcraft-installer.msix
 
     echo "Test signing snapcraft msix installer..."
-    "%SIGNTOOL%" sign /fd SHA256 /T "http://timestamp.verisign.com/scripts/timstamp.dll" /F test-signing.pfx /P Password1234 dist\snapcraft-installer.msix
+    "%SIGNTOOL%" sign /fd SHA256 /td SHA256 /tr "%TIMESTAMP_SERVICE%" /f test-signing.pfx /p Password1234 dist\snapcraft-installer.msix
 
 test_script:
 - cmd: |
