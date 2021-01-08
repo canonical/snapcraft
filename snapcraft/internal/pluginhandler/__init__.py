@@ -1397,7 +1397,9 @@ def _generate_include_set(directory, includes):
         else:
             include_files |= set([os.path.join(directory, include)])
 
-    include_dirs = [x for x in include_files if os.path.isdir(x)]
+    include_dirs = [
+        x for x in include_files if os.path.isdir(x) and not os.path.islink(x)
+    ]
     include_files = set([os.path.relpath(x, directory) for x in include_files])
 
     # Expand includeFiles, so that an exclude like '*/*.so' will still match
