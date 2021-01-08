@@ -226,6 +226,27 @@ class PluginTestCase(unit.TestCase):
             "Expected migrated 'sym-a' to be a symlink.",
         )
 
+    def test_migrate_files_no_follow_symlinks(self):
+        os.makedirs("install/usr/bin")
+        os.makedirs("stage")
+
+        with open(os.path.join("install", "usr", "bin", "foo"), "w") as f:
+            f.write("installed")
+
+        os.symlink("usr/bin", os.path.join("install", "bin"))
+
+        files, dirs = pluginhandler._migratable_filesets(["-usr"], "install")
+        pluginhandler._migrate_files(files, dirs, "install", "stage")
+
+        # Verify that the symlinks were preserved
+        assert files == {"bin"}
+        assert dirs == set()
+
+        self.assertTrue(
+            os.path.islink(os.path.join("stage", "bin")),
+            "Expected migrated 'bin' to be a symlink.",
+        )
+
     def test_migrate_files_preserves_symlink_nested_file(self):
         os.makedirs(os.path.join("install", "a"))
         os.makedirs("stage")
