@@ -502,7 +502,7 @@ def list_keys():
         registered_keys = "\n".join([f"- {key}" for key in enabled_keys])
         print(
             "No keys have been created on this system. "
-            " See 'snapcraft create-key --help to create a key.\n"
+            " See 'snapcraft create-key --help' to create a key.\n"
             "The following SHA3-384 key fingerprints have been registered "
             f"but are not available on this system:\n{registered_keys}"
         )
