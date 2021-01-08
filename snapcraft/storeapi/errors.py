@@ -756,17 +756,6 @@ class StoreAssertionError(StoreError):
     fmt = "Error signing {endpoint} assertion for {snap_name}: {error!s}"
 
 
-class MissingSnapdError(StoreError):
-
-    fmt = (
-        "The snapd package is not installed. In order to use {command!r}, "
-        "you must run 'apt install snapd'."
-    )
-
-    def __init__(self, command):
-        super().__init__(command=command)
-
-
 class KeyAlreadyRegisteredError(StoreError):
 
     fmt = "You have already registered a key named {key_name!r}"
