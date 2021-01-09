@@ -45,6 +45,10 @@ class RosPlugin(PluginV2):
             "ROS_PYTHON_VERSION": "3",
         }
 
+    @property
+    def out_of_source_build(self):
+        return True
+
     def _get_workspace_activation_commands(self) -> List[str]:
         """Return a list of commands source a ROS workspace.
 
@@ -106,6 +110,8 @@ class RosPlugin(PluginV2):
                     "-I",
                     os.path.abspath(__file__),
                     "stage-runtime-dependencies",
+                    "--part-src",
+                    "$SNAPCRAFT_PART_SRC",
                     "--part-install",
                     "$SNAPCRAFT_PART_INSTALL",
                     "--ros-distro",
@@ -120,7 +126,7 @@ class RosPlugin(PluginV2):
             + [
                 "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep init; fi",
                 "rosdep update --include-eol-distros --rosdistro $ROS_DISTRO",
-                "rosdep install --default-yes --ignore-packages-from-source --from-paths .",
+                "rosdep install --default-yes --ignore-packages-from-source --from-paths $SNAPCRAFT_PART_SRC",
             ]
             + self._get_build_commands()
             + self._get_stage_runtime_dependencies_commands()
@@ -133,14 +139,15 @@ def plugin_cli():
 
 
 @plugin_cli.command()
+@click.option("--part-src", envvar="SNAPCRAFT_PART_SRC", required=True)
 @click.option("--part-install", envvar="SNAPCRAFT_PART_INSTALL", required=True)
 @click.option("--ros-distro", envvar="ROS_DISTRO", required=True)
-def stage_runtime_dependencies(part_install: str, ros_distro: str):
+def stage_runtime_dependencies(part_src: str, part_install: str, ros_distro: str):
     click.echo("Staging runtime dependencies...")
     # TODO: support python packages (only apt currently supported)
     apt_packages: Set[str] = set()
 
-    for pkg in catkin_packages.find_packages(".").values():
+    for pkg in catkin_packages.find_packages(part_src).values():
         for dep in pkg.exec_depends:
             cmd = ["rosdep", "resolve", dep.name, "--rosdistro", ros_distro]
             try:

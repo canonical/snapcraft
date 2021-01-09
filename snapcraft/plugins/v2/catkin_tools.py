@@ -85,6 +85,10 @@ class CatkinToolsPlugin(_ros.RosPlugin):
             "--profile",
             "default",
             "--install",
+            "--source-space",
+            "$SNAPCRAFT_PART_SRC",
+            "--build-space",
+            "$SNAPCRAFT_PART_BUILD",
             "--install-space",
             "$SNAPCRAFT_PART_INSTALL/opt/ros/$ROS_DISTRO",
         ]

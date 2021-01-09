@@ -64,6 +64,12 @@ def test_get_build_environment():
     }
 
 
+def test_out_of_source_build_property():
+    plugin = catkin.CatkinPlugin(part_name="my-part", options=lambda: None)
+
+    assert plugin.out_of_source_build
+
+
 def test_get_build_commands(monkeypatch):
     class Options:
         catkin_cmake_args = list()
@@ -85,12 +91,14 @@ def test_get_build_commands(monkeypatch):
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
         "rosdep update --include-eol-distros --rosdistro $ROS_DISTRO",
-        "rosdep install --default-yes --ignore-packages-from-source --from-paths .",
-        "catkin_make_isolated --install --merge --install-space $SNAPCRAFT_PART_INSTALL/opt/ros/$ROS_DISTRO "
+        "rosdep install --default-yes --ignore-packages-from-source --from-paths $SNAPCRAFT_PART_SRC",
+        "catkin_make_isolated --install --merge "
+        "--source-space $SNAPCRAFT_PART_SRC --build-space $SNAPCRAFT_PART_BUILD "
+        "--install-space $SNAPCRAFT_PART_INSTALL/opt/ros/$ROS_DISTRO "
         "-j $SNAPCRAFT_PARALLEL_BUILD_COUNT",
         "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 /test/python3 -I "
         "/test/_ros.py "
-        "stage-runtime-dependencies --part-install $SNAPCRAFT_PART_INSTALL "
+        "stage-runtime-dependencies --part-src $SNAPCRAFT_PART_SRC --part-install $SNAPCRAFT_PART_INSTALL "
         "--ros-distro $ROS_DISTRO",
     ]
 
@@ -129,8 +137,10 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
         "rosdep update --include-eol-distros --rosdistro $ROS_DISTRO",
-        "rosdep install --default-yes --ignore-packages-from-source --from-paths .",
-        "catkin_make_isolated --install --merge --install-space $SNAPCRAFT_PART_INSTALL/opt/ros/$ROS_DISTRO "
+        "rosdep install --default-yes --ignore-packages-from-source --from-paths $SNAPCRAFT_PART_SRC",
+        "catkin_make_isolated --install --merge "
+        "--source-space $SNAPCRAFT_PART_SRC --build-space $SNAPCRAFT_PART_BUILD "
+        "--install-space $SNAPCRAFT_PART_INSTALL/opt/ros/$ROS_DISTRO "
         "-j $SNAPCRAFT_PARALLEL_BUILD_COUNT --pkg package1 package2... "
         "--ignore-pkg ipackage1 ipackage2... --cmake-args cmake args...",
         "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/bin:/test SNAP=TESTSNAP "
@@ -138,6 +148,6 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "http_proxy=http://foo https_proxy=https://bar "
         "/test/python3 -I "
         "/test/_ros.py "
-        "stage-runtime-dependencies --part-install $SNAPCRAFT_PART_INSTALL "
+        "stage-runtime-dependencies --part-src $SNAPCRAFT_PART_SRC --part-install $SNAPCRAFT_PART_INSTALL "
         "--ros-distro $ROS_DISTRO",
     ]
