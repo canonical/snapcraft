@@ -4,12 +4,12 @@ summary: Build and run a basic gnome snap using extensions
 # available on a subset of all the architectures this testbed
 # can run on.
 systems:
-  - ubuntu-18.04
-  - ubuntu-18.04-64
-  - ubuntu-18.04-amd64
-  - ubuntu-18.04-arm64
-  - ubuntu-18.04-i386
-  - ubuntu-18.04-armhf
+  - ubuntu-20.04
+  - ubuntu-20.04-64
+  - ubuntu-20.04-amd64
+  - ubuntu-20.04-arm64
+  - ubuntu-20.04-i386
+  - ubuntu-20.04-armhf
 
 environment:
   SNAP_DIR: ../snaps/gtk3-hello
