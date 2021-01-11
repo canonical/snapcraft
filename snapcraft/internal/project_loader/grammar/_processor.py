@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from snapcraft import project
 
@@ -42,7 +42,7 @@ class GrammarProcessor:
         self,
         grammar: typing.Grammar,
         project: project.Project,
-        checker: Callable[[str], bool],
+        checker: Callable[[Any], bool],
         *,
         transformer: Callable[[List[Statement], str, project.Project], str] = None,
     ) -> None:
@@ -70,7 +70,7 @@ class GrammarProcessor:
 
     def process(
         self, *, grammar: typing.Grammar = None, call_stack: typing.CallStack = None
-    ) -> Set[str]:
+    ) -> List[Any]:
         """Process grammar and extract desired primitives.
 
         :param list grammar: Unprocessed grammar (defaults to that set in
@@ -78,7 +78,6 @@ class GrammarProcessor:
         :param list call_stack: Call stack of statements leading to now.
 
         :return: Primitives selected
-        :rtype: set
         """
 
         if grammar is None:
@@ -87,7 +86,7 @@ class GrammarProcessor:
         if call_stack is None:
             call_stack = []
 
-        primitives: Set[str] = set()
+        primitives: List[Any] = list()
         statements = _StatementCollection()
         statement: Optional[Statement] = None
 
@@ -98,13 +97,27 @@ class GrammarProcessor:
                 if _ELSE_FAIL_PATTERN.match(section):
                     _handle_else(statement, None)
                 else:
-                    primitives.add(self._transformer(call_stack, section, self.project))
+                    # Processing a string primitive indicates the previous section
+                    # is finalized (if any), process it first before this primitive.
+                    self._process_statement(
+                        statement=statement,
+                        statements=statements,
+                        primitives=primitives,
+                    )
+                    statement = None
+
+                    primitive = self._transformer(call_stack, section, self.project)
+                    primitives.append(primitive)
             elif isinstance(section, dict):
                 statement, finalized_statement = self._parse_section_dictionary(
-                    section=section, statement=statement, call_stack=call_stack,
+                    call_stack=call_stack, section=section, statement=statement,
                 )
-                if finalized_statement is not None:
-                    statements.add(finalized_statement)
+
+                self._process_statement(
+                    statement=finalized_statement,
+                    statements=statements,
+                    primitives=primitives,
+                )
             else:
                 # jsonschema should never let us get here.
                 raise GrammarSyntaxError(
@@ -112,11 +125,26 @@ class GrammarProcessor:
                     "type 'dict', but got {!r}".format(type(section))
                 )
 
-        # We've parsed the entire grammar, time to process it.
-        statements.add(statement)
-        primitives |= statements.process_all()
+        # Process the final statement (if any).
+        self._process_statement(
+            statement=statement, statements=statements, primitives=primitives,
+        )
 
         return primitives
+
+    def _process_statement(
+        self,
+        *,
+        statement: Optional[Statement],
+        statements: "_StatementCollection",
+        primitives: List[Any],
+    ):
+        if statement is None:
+            return
+
+        statements.add(statement)
+        processed_primitives = statement.process()
+        primitives.extend(processed_primitives)
 
     def _parse_section_dictionary(
         self,
@@ -132,7 +160,7 @@ class GrammarProcessor:
             # special care needs to be taken when fetching the result from the
             # primitive.
             if not isinstance(value, list):
-                value = {value}
+                value = [value]
 
             on_to_clause_match = _ON_TO_CLAUSE_PATTERN.match(key)
             on_clause_match = _ON_CLAUSE_PATTERN.match(key)
@@ -238,15 +266,3 @@ class _StatementCollection:
             )
 
         self._statements.append(statement)
-
-    def process_all(self) -> Set[str]:
-        """Process all statements in collection.
-
-        :return: Selected primitives as judged by all statements in collection.
-        :rtype: set
-        """
-        primitives = set()  # type: Set[str]
-        for statement in self._statements:
-            primitives |= statement.process()
-
-        return primitives

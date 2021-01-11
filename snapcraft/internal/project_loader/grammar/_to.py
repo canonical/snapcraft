@@ -96,7 +96,6 @@ def _extract_to_clause_selectors(to: str) -> Set[str]:
     :param str to: The 'to <selector>' part of the 'to' clause.
 
     :return: Selectors found within the 'to' clause.
-    :rtype: set
 
     For example:
     >>> _extract_to_clause_selectors('to amd64,i386') == {'amd64', 'i386'}

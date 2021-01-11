@@ -40,7 +40,7 @@ class TestToStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [],
                 "target_arch": None,
-                "expected_packages": {"foo"},
+                "expected_packages": ["foo"],
             },
         ),
         (
@@ -50,7 +50,7 @@ class TestToStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [],
                 "target_arch": "armhf",
-                "expected_packages": {"foo"},
+                "expected_packages": ["foo"],
             },
         ),
         (
@@ -60,7 +60,7 @@ class TestToStatementGrammar:
                 "body": ["foo:amd64"],
                 "else_bodies": [],
                 "target_arch": "armhf",
-                "expected_packages": {"foo:amd64"},
+                "expected_packages": ["foo:amd64"],
             },
         ),
         (
@@ -70,7 +70,7 @@ class TestToStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [],
                 "target_arch": "i386",
-                "expected_packages": set(),
+                "expected_packages": list(),
             },
         ),
         (
@@ -80,7 +80,7 @@ class TestToStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [["bar"]],
                 "target_arch": "armhf",
-                "expected_packages": {"foo"},
+                "expected_packages": ["foo"],
             },
         ),
         (
@@ -90,7 +90,7 @@ class TestToStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [["bar"]],
                 "target_arch": "i386",
-                "expected_packages": {"bar"},
+                "expected_packages": ["bar"],
             },
         ),
         (
@@ -100,7 +100,7 @@ class TestToStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [["bar:amd64"]],
                 "target_arch": "i386",
-                "expected_packages": {"bar:amd64"},
+                "expected_packages": ["bar:amd64"],
             },
         ),
         (
@@ -110,7 +110,7 @@ class TestToStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [["bar"], ["baz"]],
                 "target_arch": "i386",
-                "expected_packages": {"bar"},
+                "expected_packages": ["bar"],
             },
         ),
         (
@@ -120,7 +120,7 @@ class TestToStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [[{"to armhf": ["bar"]}], ["baz"]],
                 "target_arch": "i386",
-                "expected_packages": {"baz"},
+                "expected_packages": ["baz"],
             },
         ),
         (
@@ -130,7 +130,7 @@ class TestToStatementGrammar:
                 "body": [{"to armhf": ["foo"]}, {"to i386": ["bar"]}],
                 "else_bodies": [],
                 "target_arch": "armhf",
-                "expected_packages": {"foo"},
+                "expected_packages": ["foo"],
             },
         ),
         (
@@ -140,7 +140,7 @@ class TestToStatementGrammar:
                 "body": [{"to armhf": ["foo"]}, {"to i386": ["bar"]}],
                 "else_bodies": [],
                 "target_arch": "i386",
-                "expected_packages": {"bar"},
+                "expected_packages": ["bar"],
             },
         ),
         (
@@ -150,7 +150,7 @@ class TestToStatementGrammar:
                 "body": [{"to armhf": ["foo"]}, {"else": ["bar"]}],
                 "else_bodies": [],
                 "target_arch": "armhf",
-                "expected_packages": {"foo"},
+                "expected_packages": ["foo"],
             },
         ),
         (
@@ -160,7 +160,7 @@ class TestToStatementGrammar:
                 "body": [{"to armhf": ["foo"]}, {"else": ["bar"]}],
                 "else_bodies": [],
                 "target_arch": "i386",
-                "expected_packages": {"bar"},
+                "expected_packages": ["bar"],
             },
         ),
         (
@@ -170,7 +170,7 @@ class TestToStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [[{"to armhf": ["bar"]}, {"else": ["baz"]}]],
                 "target_arch": "armhf",
-                "expected_packages": {"bar"},
+                "expected_packages": ["bar"],
             },
         ),
         (
@@ -180,7 +180,7 @@ class TestToStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [[{"to armhf": ["bar"]}, {"else": ["baz"]}]],
                 "target_arch": "i386",
-                "expected_packages": {"baz"},
+                "expected_packages": ["baz"],
             },
         ),
     ]

@@ -36,7 +36,7 @@ class TestTryStatementGrammar:
             {
                 "body": ["foo", "bar"],
                 "else_bodies": [],
-                "expected_packages": {"foo", "bar"},
+                "expected_packages": ["foo", "bar"],
             },
         ),
         (
@@ -44,19 +44,19 @@ class TestTryStatementGrammar:
             {
                 "body": ["invalid"],
                 "else_bodies": [["valid"]],
-                "expected_packages": {"valid"},
+                "expected_packages": ["valid"],
             },
         ),
         (
             "optional without else",
-            {"body": ["invalid"], "else_bodies": [], "expected_packages": set()},
+            {"body": ["invalid"], "else_bodies": [], "expected_packages": list()},
         ),
         (
             "followed chained else",
             {
                 "body": ["invalid1"],
                 "else_bodies": [["invalid2"], ["finally-valid"]],
-                "expected_packages": {"finally-valid"},
+                "expected_packages": ["finally-valid"],
             },
         ),
         (
@@ -64,7 +64,7 @@ class TestTryStatementGrammar:
             {
                 "body": [{"try": ["foo"]}, {"else": ["bar"]}],
                 "else_bodies": [],
-                "expected_packages": {"foo"},
+                "expected_packages": ["foo"],
             },
         ),
         (
@@ -72,7 +72,7 @@ class TestTryStatementGrammar:
             {
                 "body": [{"try": ["invalid"]}, {"else": ["bar"]}],
                 "else_bodies": [],
-                "expected_packages": {"bar"},
+                "expected_packages": ["bar"],
             },
         ),
         (
@@ -80,7 +80,7 @@ class TestTryStatementGrammar:
             {
                 "body": ["invalid"],
                 "else_bodies": [[{"try": ["foo"]}, {"else": ["bar"]}]],
-                "expected_packages": {"foo"},
+                "expected_packages": ["foo"],
             },
         ),
         (
@@ -88,7 +88,7 @@ class TestTryStatementGrammar:
             {
                 "body": ["invalid"],
                 "else_bodies": [[{"try": ["invalid"]}, {"else": ["bar"]}]],
-                "expected_packages": {"bar"},
+                "expected_packages": ["bar"],
             },
         ),
         (
@@ -96,7 +96,7 @@ class TestTryStatementGrammar:
             {
                 "body": ["invalid1"],
                 "else_bodies": [["invalid2"], ["valid"]],
-                "expected_packages": {"valid"},
+                "expected_packages": ["valid"],
             },
         ),
         (
@@ -104,7 +104,7 @@ class TestTryStatementGrammar:
             {
                 "body": ["invalid1"],
                 "else_bodies": [["invalid2"], ["invalid3"]],
-                "expected_packages": {"invalid3"},
+                "expected_packages": ["invalid3"],
             },
         ),
     ]

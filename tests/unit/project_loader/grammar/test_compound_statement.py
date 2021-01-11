@@ -37,7 +37,7 @@ class TestCompoundStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo"},
+                "expected_packages": ["foo"],
             },
         ),
         (
@@ -48,7 +48,7 @@ class TestCompoundStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [],
                 "host_arch": "i686",
-                "expected_packages": set(),
+                "expected_packages": list(),
             },
         ),
         (
@@ -59,7 +59,7 @@ class TestCompoundStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [["bar"]],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo"},
+                "expected_packages": ["foo"],
             },
         ),
         (
@@ -70,7 +70,7 @@ class TestCompoundStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [["bar"]],
                 "host_arch": "i686",
-                "expected_packages": {"bar"},
+                "expected_packages": ["bar"],
             },
         ),
         (
@@ -81,7 +81,7 @@ class TestCompoundStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [["bar"], ["baz"]],
                 "host_arch": "i686",
-                "expected_packages": {"bar"},
+                "expected_packages": ["bar"],
             },
         ),
         (
@@ -92,7 +92,7 @@ class TestCompoundStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [[{"on armhf": ["bar"]}], ["baz"]],
                 "host_arch": "i686",
-                "expected_packages": {"baz"},
+                "expected_packages": ["baz"],
             },
         ),
         (
@@ -103,7 +103,7 @@ class TestCompoundStatementGrammar:
                 "body": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}],
                 "else_bodies": [],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo"},
+                "expected_packages": ["foo"],
             },
         ),
         (
@@ -114,7 +114,7 @@ class TestCompoundStatementGrammar:
                 "body": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}],
                 "else_bodies": [],
                 "host_arch": "i686",
-                "expected_packages": {"bar"},
+                "expected_packages": ["bar"],
             },
         ),
         (
@@ -125,7 +125,7 @@ class TestCompoundStatementGrammar:
                 "body": [{"on amd64": ["foo"]}, {"else": ["bar"]}],
                 "else_bodies": [],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo"},
+                "expected_packages": ["foo"],
             },
         ),
         (
@@ -136,7 +136,7 @@ class TestCompoundStatementGrammar:
                 "body": [{"on amd64": ["foo"]}, {"else": ["bar"]}],
                 "else_bodies": [],
                 "host_arch": "i686",
-                "expected_packages": {"bar"},
+                "expected_packages": ["bar"],
             },
         ),
         (
@@ -147,7 +147,7 @@ class TestCompoundStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [[{"on amd64": ["bar"]}, {"else": ["baz"]}]],
                 "host_arch": "x86_64",
-                "expected_packages": {"bar"},
+                "expected_packages": ["bar"],
             },
         ),
         (
@@ -158,7 +158,7 @@ class TestCompoundStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [[{"on amd64": ["bar"]}, {"else": ["baz"]}]],
                 "host_arch": "i686",
-                "expected_packages": {"baz"},
+                "expected_packages": ["baz"],
             },
         ),
         (
@@ -169,7 +169,7 @@ class TestCompoundStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [],
                 "host_arch": "x86_64",
-                "expected_packages": set(),
+                "expected_packages": list(),
             },
         ),
         (
@@ -180,7 +180,7 @@ class TestCompoundStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [],
                 "host_arch": "x86_64",
-                "expected_packages": set(),
+                "expected_packages": list(),
             },
         ),
     ]
