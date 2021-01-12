@@ -32,6 +32,7 @@ execute: |
   cd "$SNAP_DIR"
   sed -i 's/gnome-3-28/gnome-3-38/' "snap/snapcraft.yaml"
   sed -i 's/core18/core20/' "snap/snapcraft.yaml"
+  sed -i 's/bin\/gtk3-hello/usr\/local\/bin\/gtk3-hello/' "snap/snapcraft.yaml"
   output="$(snapcraft)"
 
   sudo snap install gtk3-hello_*.snap --dangerous
