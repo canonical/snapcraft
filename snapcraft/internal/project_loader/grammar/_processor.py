@@ -113,11 +113,19 @@ class GrammarProcessor:
                     call_stack=call_stack, section=section, statement=statement,
                 )
 
-                self._process_statement(
-                    statement=finalized_statement,
-                    statements=statements,
-                    primitives=primitives,
-                )
+                # Process any finalized statement (if any).
+                if finalized_statement is not None:
+                    self._process_statement(
+                        statement=finalized_statement,
+                        statements=statements,
+                        primitives=primitives,
+                    )
+
+                # If this section does not belong to a statement, it is
+                # a primitive to be recorded.
+                if statement is None:
+                    primitives.append(section)
+
             else:
                 # jsonschema should never let us get here.
                 raise GrammarSyntaxError(
@@ -219,6 +227,13 @@ class GrammarProcessor:
 
             elif _ELSE_CLAUSE_PATTERN.match(key):
                 _handle_else(statement, value)
+            else:
+                # Since this section is a dictionary, if there are no
+                # markers to indicate the start or change of statement,
+                # the current statement is complete and this section
+                # is a primitive to be collected.
+                finalized_statement = statement
+                statement = None
 
         return statement, finalized_statement
 
