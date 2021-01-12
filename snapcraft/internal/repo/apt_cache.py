@@ -178,10 +178,11 @@ class AptCache(ContextDecorator):
                 installed[package.name] = str(package.installed.version)
         return installed
 
-    def get_marked_packages(self) -> List[Tuple[str, str]]:
+    def get_packages_marked_for_installation(self) -> List[Tuple[str, str]]:
         return [
             (package.name, package.candidate.version)
             for package in self.cache.get_changes()
+            if package.marked_install
         ]
 
     def mark_packages(self, package_names: Set[str]) -> None:
