@@ -16,7 +16,7 @@
 
 # Import types and tell flake8 to ignore the "unused" List.
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from ._extension import Extension
 
