@@ -325,14 +325,16 @@ class Ubuntu(BaseRepo):
         return True
 
     @classmethod
-    def _get_marked_packages(cls, package_names: List[str]) -> List[Tuple[str, str]]:
+    def _get_packages_marked_for_installation(
+        cls, package_names: List[str]
+    ) -> List[Tuple[str, str]]:
         with AptCache() as apt_cache:
             try:
                 apt_cache.mark_packages(set(package_names))
             except errors.PackageNotFoundError as error:
                 raise errors.BuildPackageNotFoundError(error.package_name)
 
-            return apt_cache.get_marked_packages()
+            return apt_cache.get_packages_marked_for_installation()
 
     @classmethod
     def install_build_packages(cls, package_names: List[str]) -> List[str]:
@@ -360,7 +362,7 @@ class Ubuntu(BaseRepo):
             install_required = True
             cls.refresh_build_packages()
 
-        marked_packages = cls._get_marked_packages(package_names)
+        marked_packages = cls._get_packages_marked_for_installation(package_names)
         packages = [f"{name}={version}" for name, version in sorted(marked_packages)]
 
         if install_required:
