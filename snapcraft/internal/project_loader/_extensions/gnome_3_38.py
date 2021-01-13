@@ -16,15 +16,15 @@
 
 # Import types and tell flake8 to ignore the "unused" List.
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from ._extension import Extension
 
-_PLATFORM_SNAP = dict(core18="gnome-3-34-1804")
+_PLATFORM_SNAP = dict(core20="gnome-3-38-2004")
 
 
 class ExtensionImpl(Extension):
-    """This extension eases creation of snaps that integrate with GNOME 3.34.
+    """This extension eases creation of snaps that integrate with GNOME 3.38.
 
     At build time it ensures the right build dependencies are setup and for
     the runtime it ensures the application is run in an environment catered
@@ -36,7 +36,7 @@ class ExtensionImpl(Extension):
     - GTK3 Themes.
     - Common Icon Themes.
     - Common Sound Themes.
-    - The GNOME runtime libraries and utilities corresponding to 3.34.
+    - The GNOME runtime libraries and utilities corresponding to 3.38.
 
     For easier desktop integration, it also configures each application
     entry with these additional plugs:
@@ -52,11 +52,15 @@ class ExtensionImpl(Extension):
 
     @staticmethod
     def get_supported_bases() -> Tuple[str, ...]:
-        return ("core18",)
+        return ("core20",)
 
     @staticmethod
     def get_supported_confinement() -> Tuple[str, ...]:
         return ("strict", "devmode")
+
+    @staticmethod
+    def is_experimental(base: Optional[str]) -> bool:
+        return True
 
     def __init__(self, *, extension_name: str, yaml_data: Dict[str, Any]) -> None:
         super().__init__(extension_name=extension_name, yaml_data=yaml_data)
@@ -120,31 +124,31 @@ class ExtensionImpl(Extension):
 
         self.part_snippet = {
             "build-environment": [
-                {"PATH": "/snap/gnome-3-34-1804-sdk/current/usr/bin:$PATH"},
+                {"PATH": "/snap/gnome-3-38-2004-sdk/current/usr/bin:$PATH"},
                 {
-                    "XDG_DATA_DIRS": "$SNAPCRAFT_STAGE/usr/share:/snap/gnome-3-34-1804-sdk/current/usr/share:/usr/share:$XDG_DATA_DIRS"
+                    "XDG_DATA_DIRS": "$SNAPCRAFT_STAGE/usr/share:/snap/gnome-3-38-2004-sdk/current/usr/share:/usr/share:$XDG_DATA_DIRS"
                 },
                 {
-                    "LD_LIBRARY_PATH": "/snap/gnome-3-34-1804-sdk/current/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-34-1804-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-34-1804-sdk/current/usr/lib:/snap/gnome-3-34-1804-sdk/current/usr/lib/vala-current:$LD_LIBRARY_PATH"
+                    "LD_LIBRARY_PATH": "/snap/gnome-3-38-2004-sdk/current/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-38-2004-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-38-2004-sdk/current/usr/lib:/snap/gnome-3-38-2004-sdk/current/usr/lib/vala-current:$LD_LIBRARY_PATH"
                 },
                 {
-                    "PKG_CONFIG_PATH": "/snap/gnome-3-34-1804-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pkgconfig:/snap/gnome-3-34-1804-sdk/current/usr/lib/pkgconfig:/snap/gnome-3-34-1804-sdk/current/usr/share/pkgconfig:$PKG_CONFIG_PATH"
+                    "PKG_CONFIG_PATH": "/snap/gnome-3-38-2004-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pkgconfig:/snap/gnome-3-38-2004-sdk/current/usr/lib/pkgconfig:/snap/gnome-3-38-2004-sdk/current/usr/share/pkgconfig:$PKG_CONFIG_PATH"
                 },
                 {
-                    "GETTEXTDATADIRS": "/snap/gnome-3-34-1804-sdk/current/usr/share/gettext-current:$GETTEXTDATADIRS"
+                    "GETTEXTDATADIRS": "/snap/gnome-3-38-2004-sdk/current/usr/share/gettext-current:$GETTEXTDATADIRS"
                 },
                 {
-                    "GDK_PIXBUF_MODULE_FILE": "/snap/gnome-3-34-1804-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gdk-pixbuf-current/loaders.cache"
+                    "GDK_PIXBUF_MODULE_FILE": "/snap/gnome-3-38-2004-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gdk-pixbuf-current/loaders.cache"
                 },
             ]
         }
 
         self.parts = {
-            "gnome-3-34-extension": {
+            "gnome-3-38-extension": {
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                 "source-subdir": "gnome",
                 "plugin": "make",
-                "build-snaps": ["gnome-3-34-1804-sdk/latest/stable"],
+                "build-snaps": ["gnome-3-38-2004-sdk/latest/stable"],
                 "build-packages": ["gcc"],
             }
         }
