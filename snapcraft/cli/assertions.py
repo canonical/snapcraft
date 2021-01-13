@@ -93,7 +93,9 @@ def sign_build(snap_file: str, key_name: str, local: bool) -> None:
 @click.argument("snap-name", metavar="<snap-name>")
 @click.argument("validations", metavar="<validation>...", nargs=-1, required=True)
 @click.option("--key-name", metavar="<key-name>")
-def validate(snap_name: str, validations: list, key_name: str) -> None:
+@click.option("--revoke/--no-revoke", default=False)
+def validate(
+        snap_name: str, validations: list, key_name: str, revoke: bool) -> None:
     """Validate a gated snap.
 
     Each validation can be presented with ether syntax:
@@ -101,7 +103,7 @@ def validate(snap_name: str, validations: list, key_name: str) -> None:
     -  <snap-name>=<revision>
     -  <snap-id>=<revision>
     """
-    snapcraft.validate(snap_name, validations, key=key_name)
+    snapcraft.validate(snap_name, validations, revoke=revoke, key=key_name)
 
 
 @assertionscli.command()
