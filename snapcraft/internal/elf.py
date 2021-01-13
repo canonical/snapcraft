@@ -532,6 +532,113 @@ class ElfFile:
         return dependencies
 
 
+class DependencyChecker:
+    """DependencyChecker checks for library dependency problems in a snap."""
+
+    def __init__(self) -> None:
+        self._base_libs: Dict[Tuple[ElfArchitectureTuple, str], ElfFile] = {}
+
+    def _get_elfs(
+        self, base_path: str
+    ) -> Tuple[Dict[Tuple[ElfArchitectureTuple, str], ElfFile], List[ElfFile]]:
+        """Return the the libraries and other elf files found under base_path.
+
+        The libraries are returned as a dictionary keyed by
+        (architecture, soname), while other elf files are returned as
+        a simple sequence.
+        """
+        file_list: List[str] = []
+        for root, dirs, files in os.walk(base_path):
+            for f in files:
+                path = os.path.join(root, f)
+                if os.access(path, os.R_OK) and os.path.isfile(path):
+                    file_list.append(os.path.relpath(path, base_path))
+        libraries: Dict[Tuple[ElfArchitectureTuple, str], ElfFile] = {}
+        other: List[ElfFile] = []
+        for elf in get_elf_files(base_path, file_list):
+            if elf.soname:
+                assert elf.arch is not None
+                libraries[elf.arch, elf.soname] = elf
+            else:
+                other.append(elf)
+        return libraries, other
+
+    def add_base_libs(self, base_path: str) -> None:
+        """Add libraries provided by the base snap or a "platform" content snap.
+
+        The libraries can be used to satisfy dependencies, but it is
+        assumed that their own dependencies are already satisfied.
+        """
+        libs, _ = self._get_elfs(base_path)
+        self._base_libs.update(libs)
+
+    def check(self, snap_path: str) -> Sequence[str]:  # noqa: C901
+        """Check for dependency problems with the ELF files in a snap.
+
+        Currently this includes checks for:
+
+         1. Unused libraries, using the non-libraries as a seed for a
+            recursive search.
+         2. ELF files whose dependencies are not met by libraries in
+            the snap or its base (including symbol version checks).
+         3. Libraries in the snap that appear to duplicate those
+            provided by the base.
+        """
+        warnings: Set[str] = set()
+        libs, to_check = self._get_elfs(snap_path)
+        seen: Set[ElfFile] = set()
+        required_versions: Dict[Tuple[ElfArchitectureTuple, str], Set[str]] = {}
+        # Scan through the set of elf files referenced by executables
+        # and plugin shared libraries.
+        while len(to_check) != 0:
+            elf = to_check.pop()
+            if elf in seen:
+                continue
+            seen.add(elf)
+            assert elf.arch is not None
+            for needed in elf.needed.values():
+                required_versions.setdefault((elf.arch, needed.name), set()).update(
+                    needed.versions
+                )
+                # Is this library provided by the snap?
+                library = libs.get((elf.arch, needed.name))
+                if library is not None:
+                    to_check.append(library)
+                    if not needed.versions.issubset(library.versions):
+                        warnings.add(
+                            f"library {os.path.relpath(library.path, snap_path)} provided by snap does not provide symbol versions {needed.versions.difference(library.versions)}"
+                        )
+                    continue
+                # Is this library provided by the base snap?
+                library = self._base_libs.get((elf.arch, needed.name))
+                if library is not None:
+                    if not needed.versions.issubset(library.versions):
+                        warnings.add(
+                            f"library {library.path} provided by base does not provide symbol versions {needed.versions.difference(library.versions)}"
+                        )
+                else:
+                    warnings.add(
+                        f"library {needed.name} required by {os.path.relpath(elf.path, snap_path)} is missing"
+                    )
+
+        # Now check for library usage:
+        for library in libs.values():
+            if library in seen:
+                assert library.arch is not None
+                versions = required_versions.get((library.arch, library.soname), set())
+                base_lib = self._base_libs.get((library.arch, library.soname))
+                if base_lib is not None and versions.issubset(base_lib.versions):
+                    warnings.add(
+                        f"library {os.path.relpath(library.path, snap_path)} in snap duplicates {base_lib.path} from base snap"
+                    )
+            else:
+                warnings.add(
+                    f"library {os.path.relpath(library.path, snap_path)} in snap is unused"
+                )
+
+        return sorted(warnings)
+
+
 class Patcher:
     """Patcher holds the necessary logic to patch elf files."""
 
@@ -737,8 +844,8 @@ def get_elf_files(root: str, file_list: Sequence[str]) -> FrozenSet[ElfFile]:
             logger.warning(exception.get_brief())
             continue
 
-        # If ELF has dynamic symbols, add it.
-        if elf_file.needed:
+        # If ELF is dynamic, add it.
+        if elf_file.is_dynamic:
             elf_files.add(elf_file)
 
     return frozenset(elf_files)
