@@ -38,13 +38,19 @@ _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+
 class AptCache(ContextDecorator):
     """Transient cache for use with stage-packages, or read-only host-mode for build-packages."""
 
-    def __init__(self, *, stage_cache: Optional[Path] = None) -> None:
+    def __init__(
+        self,
+        *,
+        stage_cache: Optional[Path] = None,
+        stage_cache_arch: Optional[str] = None,
+    ) -> None:
         self.stage_cache = stage_cache
+        self.stage_cache_arch = stage_cache_arch
 
     def __enter__(self) -> "AptCache":
         if self.stage_cache is not None:
             self._configure_apt()
-            self._populate_cache_dir()
+            self._populate_stage_cache_dir()
             self.cache = apt.Cache(rootdir=str(self.stage_cache), memonly=True)
         else:
             # There appears to be a slowdown when using `rootdir` = '/' with
@@ -91,15 +97,35 @@ class AptCache(ContextDecorator):
             self.progress.pulse = lambda owner: True
             self.progress._width = 0
 
-    def _populate_cache_dir(self) -> None:
+    def _populate_stage_cache_dir(self) -> None:
+        """Create/refresh cache configuration.
+
+        (1) Delete old-style symlink cache, if symlink.
+        (2) Delete current-style (copied) tree.
+        (3) Copy current host apt configuration.
+        (4) Configure primary arch to target arch.
+        (5) Install dpkg into cache directory to support multi-arch.
+        """
         if self.stage_cache is None:
             return
 
-        # Create /etc inside cache root, and symlink apt to host's.
+        # Copy apt configuration from host.
         cache_etc_apt_path = Path(self.stage_cache, "etc", "apt")
-        if not cache_etc_apt_path.exists():
-            cache_etc_apt_path.parent.mkdir(parents=True, exist_ok=True)
-            os.symlink(Path("/etc/apt"), cache_etc_apt_path)
+
+        # Delete potentially outdated cache configuration.
+        if cache_etc_apt_path.is_symlink():
+            cache_etc_apt_path.unlink()
+        elif cache_etc_apt_path.exists():
+            shutil.rmtree(cache_etc_apt_path)
+
+        # Copy current cache configuration.
+        cache_etc_apt_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree("/etc/apt", cache_etc_apt_path)
+
+        # Specify default arch (if specified).
+        if self.stage_cache_arch is not None:
+            arch_conf_path = cache_etc_apt_path / "apt.conf.d" / "00default-arch"
+            arch_conf_path.write_text(f'APT::Architecture "{self.stage_cache_arch}";\n')
 
         # dpkg also needs to be in the rootdir in order to support multiarch
         # (apt calls dpkg --print-foreign-architectures).

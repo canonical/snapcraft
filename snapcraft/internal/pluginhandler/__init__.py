@@ -459,6 +459,7 @@ class PluginHandler:
                     package_names=stage_packages,
                     base=self._project._get_build_base(),
                     stage_packages_path=self.stage_packages_path,
+                    target_arch=self._project._get_stage_packages_target_arch(),
                 )
             except repo.errors.PackageNotFoundError as e:
                 raise errors.StagePackageDownloadError(self.name, e.message)

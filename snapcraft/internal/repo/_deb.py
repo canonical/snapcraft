@@ -413,14 +413,21 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def fetch_stage_packages(
-        cls, *, package_names: List[str], base: str, stage_packages_path: pathlib.Path
+        cls,
+        *,
+        package_names: List[str],
+        base: str,
+        stage_packages_path: pathlib.Path,
+        target_arch: str,
     ) -> List[str]:
         logger.debug(f"Requested stage-packages: {sorted(package_names)!r}")
 
         installed: Set[str] = set()
 
         stage_packages_path.mkdir(exist_ok=True)
-        with AptCache(stage_cache=_STAGE_CACHE_DIR) as apt_cache:
+        with AptCache(
+            stage_cache=_STAGE_CACHE_DIR, stage_cache_arch=target_arch
+        ) as apt_cache:
             filter_packages = set(get_packages_in_base(base=base))
             apt_cache.update()
             apt_cache.mark_packages(set(package_names))

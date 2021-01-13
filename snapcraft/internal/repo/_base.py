@@ -167,7 +167,12 @@ class BaseRepo:
 
     @classmethod
     def fetch_stage_packages(
-        cls, *, package_names: List[str], base: str, stage_packages_path: pathlib.Path
+        cls,
+        *,
+        package_names: List[str],
+        base: str,
+        stage_packages_path: pathlib.Path,
+        target_arch: str,
     ) -> List[str]:
         """Fetch stage packages to stage_packages_path."""
         raise errors.NoNativeBackendError()

@@ -250,6 +250,10 @@ class ProjectOptions:
         """
         return set()
 
+    def _get_stage_packages_target_arch(self) -> str:
+        """Stub for 'Project' interface for tests using ProjectOptions()."""
+        return self.deb_arch
+
     def is_static_base(self, base: str) -> bool:
         """Return True if a base that is intended to be static is used.
 

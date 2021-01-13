@@ -364,6 +364,7 @@ class ColconPlugin(PluginV1):
             rosdep_path=self._rosdep_path,
             ubuntu_distro=_BASE_TO_UBUNTU_RELEASE_MAP[self.project._get_build_base()],
             base=self.project._get_build_base(),
+            target_arch=self.project._get_stage_packages_target_arch(),
         )
         rosdep.setup()
 
@@ -389,6 +390,7 @@ class ColconPlugin(PluginV1):
                 package_names=apt_dependencies,
                 stage_packages_path=self.stage_packages_path,
                 base=self.project._get_build_base(),
+                target_arch=self.project._get_stage_packages_target_arch(),
             )
         except repo.errors.PackageNotFoundError as e:
             raise ColconAptDependencyFetchError(e.message)

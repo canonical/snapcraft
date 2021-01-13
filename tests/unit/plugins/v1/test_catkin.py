@@ -109,6 +109,7 @@ class CatkinPluginBaseTest(PluginsV1BaseTestCase):
                     rosdep_path=rosdep_path,
                     ubuntu_distro=ubuntu_distro,
                     base="core",
+                    target_arch=self.project._get_stage_packages_target_arch(),
                 ),
                 mock.call().setup(),
             ]
@@ -956,6 +957,7 @@ class PullNoUnderlayTestCase(CatkinPluginBaseTest):
                         stage_packages_path=plugin.stage_packages_path,
                         package_names={"bar", "baz", "foo"},
                         base=plugin.project._get_build_base(),
+                        target_arch=plugin.project._get_stage_packages_target_arch(),
                     )
                 ]
             ),
@@ -1059,6 +1061,7 @@ class PullNoUnderlayTestCase(CatkinPluginBaseTest):
                         stage_packages_path=plugin.stage_packages_path,
                         package_names={"ros-core-dependency"},
                         base=plugin.project._get_build_base(),
+                        target_arch=plugin.project._get_stage_packages_target_arch(),
                     )
                 ]
             ),
@@ -1221,6 +1224,7 @@ class PullUnderlayTestCase(CatkinPluginBaseTest):
                         stage_packages_path=plugin.stage_packages_path,
                         package_names={"bar", "baz", "foo"},
                         base=plugin.project._get_build_base(),
+                        target_arch=plugin.project._get_stage_packages_target_arch(),
                     )
                 ]
             ),
@@ -1324,6 +1328,7 @@ class PullUnderlayTestCase(CatkinPluginBaseTest):
                         stage_packages_path=plugin.stage_packages_path,
                         package_names={"ros-core-dependency"},
                         base=self.project._get_build_base(),
+                        target_arch=self.project._get_stage_packages_target_arch(),
                     )
                 ]
             ),
@@ -2142,6 +2147,7 @@ class CatkinFindTestCase(unit.TestCase):
                         stage_packages_path=self.catkin._catkin_stage_packages_path,
                         package_names=["ros-kinetic-catkin"],
                         base=self.project._get_build_base(),
+                        target_arch=self.project._get_stage_packages_target_arch(),
                     )
                 ]
             ),
