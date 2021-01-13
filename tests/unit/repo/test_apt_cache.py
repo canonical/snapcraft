@@ -49,7 +49,7 @@ class TestAptStageCache(unit.TestCase):
                 required_names=package_names, filtered_names=filtered_names
             )
 
-            marked_packages = apt_cache.get_marked_packages()
+            marked_packages = apt_cache.get_packages_marked_for_installation()
             self.assertThat(
                 sorted([name for name, _ in marked_packages]),
                 Equals(["libpci3", "pciutils"]),

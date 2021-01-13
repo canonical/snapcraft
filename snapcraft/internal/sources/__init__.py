@@ -112,11 +112,28 @@ if sys.platform == "linux":
         "": Local,
     }
 else:
+    from ._7z import SevenZip  # noqa
+    from ._bazaar import Bazaar  # noqa
     from ._git import Git  # noqa
     from ._local import Local  # noqa
+    from ._mercurial import Mercurial  # noqa
+    from ._subversion import Subversion  # noqa
     from ._tar import Tar  # noqa
+    from ._zip import Zip  # noqa
 
-    _source_handler = {"git": Git, "local": Local, "tar": Tar, "": Local}
+    _source_handler = {
+        "7z": SevenZip,
+        "bzr": Bazaar,
+        "git": Git,
+        "local": Local,
+        "hg": Mercurial,
+        "mercurial": Mercurial,
+        "subversion": Subversion,
+        "svn": Subversion,
+        "tar": Tar,
+        "zip": Zip,
+        "": Local,
+    }
 
 logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 

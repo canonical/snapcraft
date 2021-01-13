@@ -180,7 +180,7 @@ class BuildPackagesTestCase(unit.TestCase):
         ).mock
 
     def test_install_build_package(self):
-        self.fake_apt_cache.return_value.__enter__.return_value.get_marked_packages.return_value = [
+        self.fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package", "1.0"),
             ("package-installed", "1.0"),
             ("versioned-package", "2.0"),
@@ -248,7 +248,7 @@ class BuildPackagesTestCase(unit.TestCase):
         )
 
     def test_already_installed_no_specified_version(self):
-        self.fake_apt_cache.return_value.__enter__.return_value.get_marked_packages.return_value = [
+        self.fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package-installed", "1.0")
         ]
 
@@ -258,7 +258,7 @@ class BuildPackagesTestCase(unit.TestCase):
         self.assertThat(self.fake_run.mock_calls, Equals([]))
 
     def test_already_installed_with_specified_version(self):
-        self.fake_apt_cache.return_value.__enter__.return_value.get_marked_packages.return_value = [
+        self.fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package-installed", "1.0")
         ]
 
@@ -268,7 +268,7 @@ class BuildPackagesTestCase(unit.TestCase):
         self.assertThat(self.fake_run.mock_calls, Equals([]))
 
     def test_already_installed_with_different_version(self):
-        self.fake_apt_cache.return_value.__enter__.return_value.get_marked_packages.return_value = [
+        self.fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package-installed", "3.0")
         ]
 
@@ -310,7 +310,7 @@ class BuildPackagesTestCase(unit.TestCase):
         )
 
     def test_install_virtual_build_package(self):
-        self.fake_apt_cache.return_value.__enter__.return_value.get_marked_packages.return_value = [
+        self.fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package", "1.0")
         ]
 
@@ -353,7 +353,7 @@ class BuildPackagesTestCase(unit.TestCase):
 
     def test_smart_terminal(self):
         self.fake_is_dumb_terminal.return_value = False
-        self.fake_apt_cache.return_value.__enter__.return_value.get_marked_packages.return_value = [
+        self.fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package", "1.0")
         ]
 
@@ -407,7 +407,7 @@ class BuildPackagesTestCase(unit.TestCase):
         )
 
     def test_broken_package_apt_install(self):
-        self.fake_apt_cache.return_value.__enter__.return_value.get_marked_packages.return_value = [
+        self.fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package", "1.0")
         ]
         self.useFixture(
