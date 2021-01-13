@@ -65,14 +65,15 @@ def get_snapcraft_global_environment(
 
     return {
         "SNAPCRAFT_ARCH_TRIPLET": project.arch_triplet,
+        "SNAPCRAFT_EXTENSIONS_DIR": common.get_extensionsdir(),
         "SNAPCRAFT_PARALLEL_BUILD_COUNT": str(project.parallel_build_count),
+        "SNAPCRAFT_PRIME": project.prime_dir,
         "SNAPCRAFT_PROJECT_NAME": name,
         "SNAPCRAFT_PROJECT_VERSION": version,
         "SNAPCRAFT_PROJECT_DIR": project._project_dir,
         "SNAPCRAFT_PROJECT_GRADE": grade,
         "SNAPCRAFT_STAGE": project.stage_dir,
-        "SNAPCRAFT_PRIME": project.prime_dir,
-        "SNAPCRAFT_EXTENSIONS_DIR": common.get_extensionsdir(),
+        "SNAPCRAFT_TARGET_ARCH": project.target_arch,
     }
 
 
