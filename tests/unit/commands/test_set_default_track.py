@@ -14,11 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
 import fixtures
 from testtools.matchers import Contains, Equals
 
+import snapcraft
 from snapcraft import storeapi
+
 from . import FakeStoreCommandsBaseTestCase
 
 

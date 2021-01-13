@@ -16,8 +16,8 @@
 
 import glob
 import os
-import xdg
 
+import xdg
 from testtools.matchers import Equals, HasLength
 
 from tests import integration

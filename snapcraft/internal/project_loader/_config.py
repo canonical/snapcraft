@@ -33,7 +33,7 @@ from snapcraft.internal.pluginhandler._part_environment import (
 from snapcraft.project._schema import Validator
 
 from . import errors, grammar_processing, replace_attr
-from ._env import build_env_for_stage, environment_to_replacements, runtime_env
+from ._env import environment_to_replacements, runtime_env
 from ._extensions import apply_extensions
 from ._parts_config import PartsConfig
 
@@ -319,19 +319,6 @@ class Config:
 
         return state
 
-    def stage_env(self):
-        stage_dir = self.project.stage_dir
-        env = []
-
-        env += runtime_env(stage_dir, self.project.arch_triplet)
-        env += build_env_for_stage(
-            stage_dir, self.data["name"], self.project.arch_triplet
-        )
-        for part in self.parts.all_parts:
-            env += part.env(stage_dir)
-
-        return env
-
     def snap_env(self):
         prime_dir = self.project.prime_dir
         env = []
@@ -351,7 +338,9 @@ class Config:
         if dependency_paths:
             # Add more specific LD_LIBRARY_PATH from the dependencies.
             env.append(
-                'LD_LIBRARY_PATH="' + ":".join(dependency_paths) + ':$LD_LIBRARY_PATH"'
+                'LD_LIBRARY_PATH="'
+                + ":".join(dependency_paths)
+                + '${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"'
             )
 
         return env

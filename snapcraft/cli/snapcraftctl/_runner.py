@@ -22,9 +22,8 @@ import sys
 
 import click
 
-from snapcraft.internal import errors
 from snapcraft.cli._errors import exception_handler
-from snapcraft.internal import log
+from snapcraft.internal import errors, log
 
 
 @click.group()
@@ -68,15 +67,27 @@ def prime():
     _call_function("prime")
 
 
+def validate_version(ctx, param, value):
+    if not value:
+        raise click.BadParameter(f"Version must be a non-empty string.")
+    return value
+
+
 @run.command("set-version")
-@click.argument("version")
+@click.argument("version", callback=validate_version)
 def set_version(version):
     """Set the version of the snap"""
     _call_function("set-version", {"version": version})
 
 
+def validate_grade(ctx, param, value):
+    if value not in ["stable", "devel"]:
+        raise click.BadParameter(f"Grade must be 'stable' or 'devel'.")
+    return value
+
+
 @run.command("set-grade")
-@click.argument("grade")
+@click.argument("grade", callback=validate_grade)
 def set_grade(grade):
     """Set the grade of the snap"""
     _call_function("set-grade", {"grade": grade})
@@ -108,6 +119,6 @@ def _call_function(function_name, args=None):
     with open(feedback_fifo, "r") as f:
         feedback = f.readline().strip()
 
-    # Any feedback is considered a fatal error to be printed
+    # Any feedback is considered a fatal error.
     if feedback:
-        raise errors.SnapcraftctlError(feedback)
+        sys.exit(-1)

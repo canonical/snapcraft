@@ -16,8 +16,8 @@
 
 from unittest import mock
 
-from testtools.matchers import Equals, Is, FileContains, FileExists
 import fixtures
+from testtools.matchers import Equals, FileContains, FileExists, Is
 
 from snapcraft.internal.repo import errors, snaps
 from tests import unit

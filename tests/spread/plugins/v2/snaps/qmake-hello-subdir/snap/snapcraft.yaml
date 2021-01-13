@@ -1,0 +1,24 @@
+name: qmake-hello-subdir
+version: "1.0"
+summary: test the qmake plugin
+description: |
+  This is a basic qmake snap. It just prints a hello world.
+  If you want to add other functionalities to this snap, please don't.
+  Make a new one.
+
+grade: devel
+base: core20
+confinement: strict
+
+apps:
+  qmake-hello-subdir:
+    command: bin/hello
+
+parts:
+  hello:
+    plugin: qmake
+    qmake-parameters:
+      - -Wall
+    qmake-project-file: hello.pro
+    source: .
+    source-subdir: subdir

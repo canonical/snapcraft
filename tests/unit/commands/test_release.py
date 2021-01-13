@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from textwrap import dedent
+
 from testtools.matchers import Contains, Equals
 
 from snapcraft import storeapi
@@ -24,6 +25,7 @@ from snapcraft.storeapi.v2.channel_map import (
     Revision,
     SnapChannel,
 )
+
 from . import FakeStoreCommandsBaseTestCase
 
 
@@ -91,7 +93,7 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
             2.1      amd64   stable     -          -           -
                              candidate  -          -           -
                              beta       -          -           -
-                                        10         19          5 → 10%
+                                        10         19          5→10%
                              edge       ↑          ↑           -
             The '2.1/beta' channel is now open.
             """
@@ -209,7 +211,7 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
             *EXPERIMENTAL* progressive releases in use.
             Track    Arch    Channel         Version    Revision    Progress    Expires at
             2.1      amd64   stable          -          -           -
-                             stable/hotfix1  10hotfix   20          ? → 80%     2020-02-03T20:58:37Z
+                             stable/hotfix1  10hotfix   20          ?→80%       2020-02-03T20:58:37Z
                              candidate       -          -           -
                              beta            10         19          -
                              edge            ↑          ↑           -
@@ -251,7 +253,7 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
             2.1      amd64   stable     -          -           -
                              candidate  -          -           -
                              beta       -          -           -
-                                        10         19          ? → 10%
+                                        10         19          ?→10%
                              edge       ↑          ↑           -
             The '2.1/beta' channel is now open.
             """

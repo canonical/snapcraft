@@ -20,8 +20,9 @@ import sys
 
 import click
 
-from ._options import get_build_provider, get_project
 from snapcraft.internal import common, errors
+
+from ._options import get_build_provider, get_project
 
 
 def run_legacy_snapcraft(argv=sys.argv[1:]) -> None:

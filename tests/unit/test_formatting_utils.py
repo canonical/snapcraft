@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pytest
 from testtools.matchers import Equals
 
 from snapcraft import formatting_utils
@@ -56,23 +57,27 @@ class HumanizeListTestCases(unit.TestCase):
         self.assertThat(output, Equals("'bar', 'baz', 'foo', or 'qux'"))
 
 
-class FormatPathVariableTestCases(unit.TestCase):
-    def test_no_paths(self):
-        self.assertRaises(
-            ValueError, formatting_utils.format_path_variable, "PATH", None, "/usr", ":"
-        )
+def test_no_paths():
+    with pytest.raises(ValueError):
+        formatting_utils.format_path_variable("PATH", list(), "/usr", ":")
 
-    def test_one_path(self):
-        paths = ["/bin"]
-        output = formatting_utils.format_path_variable("PATH", paths, "/usr", ":")
-        self.assertThat(output, Equals('PATH="$PATH:/usr/bin"'))
 
-    def test_two_paths(self):
-        paths = ["/bin", "/sbin"]
-        output = formatting_utils.format_path_variable("PATH", paths, "/usr", ":")
-        self.assertThat(output, Equals('PATH="$PATH:/usr/bin:/usr/sbin"'))
+def test_one_path():
+    paths = ["/bin"]
+    output = formatting_utils.format_path_variable("PATH", paths, "/usr", ":")
 
-    def test_two_paths_other_paremeters(self):
-        paths = ["/usr/bin", "/usr/sbin"]
-        output = formatting_utils.format_path_variable("PATH", paths, "", ",")
-        self.assertThat(output, Equals('PATH="$PATH,/usr/bin,/usr/sbin"'))
+    assert output == 'PATH="${PATH:+$PATH:}/usr/bin"'
+
+
+def test_two_paths():
+    paths = ["/bin", "/sbin"]
+    output = formatting_utils.format_path_variable("PATH", paths, "/usr", ":")
+
+    assert output == 'PATH="${PATH:+$PATH:}/usr/bin:/usr/sbin"'
+
+
+def test_two_paths_other_paremeters():
+    paths = ["/usr/bin", "/usr/sbin"]
+    output = formatting_utils.format_path_variable("PATH", paths, "", ",")
+
+    assert output == 'PATH="${PATH:+$PATH,}/usr/bin,/usr/sbin"'

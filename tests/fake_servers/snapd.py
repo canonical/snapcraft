@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import json
-from urllib import parse
 from typing import Any, Dict, List  # noqa
+from urllib import parse
 
 from tests import fake_servers
 

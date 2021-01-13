@@ -15,16 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from typing import Any, Callable, Dict, List, Set, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from snapcraft import project
-from .errors import GrammarSyntaxError
+
 from . import typing
-from ._statement import Statement
+from ._compound import CompoundStatement
 from ._on import OnStatement
+from ._statement import Statement
 from ._to import ToStatement
 from ._try import TryStatement
-from ._compound import CompoundStatement
+from .errors import GrammarSyntaxError
 
 _ON_TO_CLAUSE_PATTERN = re.compile(r"(\Aon\s+\S+)\s+(to\s+\S+\Z)")
 _ON_CLAUSE_PATTERN = re.compile(r"\Aon\s+")
@@ -41,9 +42,9 @@ class GrammarProcessor:
         self,
         grammar: typing.Grammar,
         project: project.Project,
-        checker: Callable[[str], bool],
+        checker: Callable[[Any], bool],
         *,
-        transformer: Callable[[List[Statement], str, project.Project], str] = None
+        transformer: Callable[[List[Statement], str, project.Project], str] = None,
     ) -> None:
         """Create a new GrammarProcessor.
 
@@ -69,7 +70,7 @@ class GrammarProcessor:
 
     def process(
         self, *, grammar: typing.Grammar = None, call_stack: typing.CallStack = None
-    ) -> Set[str]:
+    ) -> List[Any]:
         """Process grammar and extract desired primitives.
 
         :param list grammar: Unprocessed grammar (defaults to that set in
@@ -77,7 +78,6 @@ class GrammarProcessor:
         :param list call_stack: Call stack of statements leading to now.
 
         :return: Primitives selected
-        :rtype: set
         """
 
         if grammar is None:
@@ -86,7 +86,7 @@ class GrammarProcessor:
         if call_stack is None:
             call_stack = []
 
-        primitives: Set[str] = set()
+        primitives: List[Any] = list()
         statements = _StatementCollection()
         statement: Optional[Statement] = None
 
@@ -97,9 +97,35 @@ class GrammarProcessor:
                 if _ELSE_FAIL_PATTERN.match(section):
                     _handle_else(statement, None)
                 else:
-                    primitives.add(self._transformer(call_stack, section, self.project))
+                    # Processing a string primitive indicates the previous section
+                    # is finalized (if any), process it first before this primitive.
+                    self._process_statement(
+                        statement=statement,
+                        statements=statements,
+                        primitives=primitives,
+                    )
+                    statement = None
+
+                    primitive = self._transformer(call_stack, section, self.project)
+                    primitives.append(primitive)
             elif isinstance(section, dict):
-                statement = self._parse_dict(section, statement, statements, call_stack)
+                statement, finalized_statement = self._parse_section_dictionary(
+                    call_stack=call_stack, section=section, statement=statement,
+                )
+
+                # Process any finalized statement (if any).
+                if finalized_statement is not None:
+                    self._process_statement(
+                        statement=finalized_statement,
+                        statements=statements,
+                        primitives=primitives,
+                    )
+
+                # If this section does not belong to a statement, it is
+                # a primitive to be recorded.
+                if statement is None:
+                    primitives.append(section)
+
             else:
                 # jsonschema should never let us get here.
                 raise GrammarSyntaxError(
@@ -107,32 +133,49 @@ class GrammarProcessor:
                     "type 'dict', but got {!r}".format(type(section))
                 )
 
-        # We've parsed the entire grammar, time to process it.
-        statements.add(statement)
-        primitives |= statements.process_all()
+        # Process the final statement (if any).
+        self._process_statement(
+            statement=statement, statements=statements, primitives=primitives,
+        )
 
         return primitives
 
-    def _parse_dict(
+    def _process_statement(
         self,
-        section: Dict[str, Any],
+        *,
         statement: Optional[Statement],
         statements: "_StatementCollection",
-        call_stack: typing.CallStack,
+        primitives: List[Any],
     ):
+        if statement is None:
+            return
+
+        statements.add(statement)
+        processed_primitives = statement.process()
+        primitives.extend(processed_primitives)
+
+    def _parse_section_dictionary(
+        self,
+        *,
+        section: Dict[str, Any],
+        statement: Optional[Statement],
+        call_stack: typing.CallStack,
+    ) -> Tuple[Optional[Statement], Optional[Statement]]:
+        finalized_statement: Optional[Statement] = None
         for key, value in section.items():
             # Grammar is always written as a list of selectors but the value
             # can be a list or a string. In the latter case we wrap it so no
             # special care needs to be taken when fetching the result from the
             # primitive.
             if not isinstance(value, list):
-                value = {value}
+                value = [value]
 
             on_to_clause_match = _ON_TO_CLAUSE_PATTERN.match(key)
             on_clause_match = _ON_CLAUSE_PATTERN.match(key)
             if on_to_clause_match:
                 # We've come across the beginning of a compound statement
                 # with both 'on' and 'to'.
+                finalized_statement = statement
 
                 # First, extract each statement's part of the string
                 on, to = on_to_clause_match.groups()
@@ -158,9 +201,7 @@ class GrammarProcessor:
             elif on_clause_match:
                 # We've come across the beginning of an 'on' statement.
                 # That means any previous statement we found is complete.
-                # The first time through this may be None, but the
-                # collection will ignore it.
-                statements.add(statement)
+                finalized_statement = statement
 
                 statement = OnStatement(
                     on=key, body=value, processor=self, call_stack=call_stack
@@ -169,9 +210,7 @@ class GrammarProcessor:
             elif _TO_CLAUSE_PATTERN.match(key):
                 # We've come across the beginning of a 'to' statement.
                 # That means any previous statement we found is complete.
-                # The first time through this may be None, but the
-                # collection will ignore it.
-                statements.add(statement)
+                finalized_statement = statement
 
                 statement = ToStatement(
                     to=key, body=value, processor=self, call_stack=call_stack
@@ -180,9 +219,7 @@ class GrammarProcessor:
             elif _TRY_CLAUSE_PATTERN.match(key):
                 # We've come across the beginning of a 'try' statement.
                 # That means any previous statement we found is complete.
-                # The first time through this may be None, but the
-                # collection will ignore it.
-                statements.add(statement)
+                finalized_statement = statement
 
                 statement = TryStatement(
                     body=value, processor=self, call_stack=call_stack
@@ -190,8 +227,15 @@ class GrammarProcessor:
 
             elif _ELSE_CLAUSE_PATTERN.match(key):
                 _handle_else(statement, value)
+            else:
+                # Since this section is a dictionary, if there are no
+                # markers to indicate the start or change of statement,
+                # the current statement is complete and this section
+                # is a primitive to be collected.
+                finalized_statement = statement
+                statement = None
 
-        return statement
+        return statement, finalized_statement
 
 
 def _handle_else(statement: Optional[Statement], else_body: Optional[typing.Grammar]):
@@ -237,15 +281,3 @@ class _StatementCollection:
             )
 
         self._statements.append(statement)
-
-    def process_all(self) -> Set[str]:
-        """Process all statements in collection.
-
-        :return: Selected primitives as judged by all statements in collection.
-        :rtype: set
-        """
-        primitives = set()  # type: Set[str]
-        for statement in self._statements:
-            primitives |= statement.process()
-
-        return primitives

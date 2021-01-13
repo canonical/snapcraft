@@ -13,9 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import snapcraft.yaml_utils.errors
 from snapcraft.project import Project as _Project
-from snapcraft.project import errors
 from tests import unit
 
 
@@ -38,5 +37,6 @@ class ProjectBaseTest(unit.TestCase):
         project = self.make_snapcraft_project(snapcraft_yaml)
 
         return self.assertRaises(
-            errors.YamlValidationError, project.info.validate_raw_snapcraft
+            snapcraft.yaml_utils.errors.YamlValidationError,
+            project.info.validate_raw_snapcraft,
         )

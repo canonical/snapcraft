@@ -123,6 +123,10 @@ class ColconPlugin(_ros.RosPlugin):
         cmd = [
             "colcon",
             "build",
+            "--base-paths",
+            "$SNAPCRAFT_PART_SRC",
+            "--build-base",
+            "$SNAPCRAFT_PART_BUILD",
             "--merge-install",
             "--install-base",
             "$SNAPCRAFT_PART_INSTALL",

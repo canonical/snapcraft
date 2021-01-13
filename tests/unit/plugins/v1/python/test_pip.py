@@ -17,11 +17,10 @@
 import os
 import pathlib
 import subprocess
+from unittest import mock
 
 import fixtures
 import pytest
-from unittest import mock
-
 from testtools.matchers import Contains, Equals, HasLength
 
 from snapcraft.plugins.v1._python import _pip, errors

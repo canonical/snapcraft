@@ -1,0 +1,25 @@
+name: test-apt-key-name
+version: '1.0'
+summary: test
+description: test
+grade: stable
+confinement: strict
+base: core18
+
+parts:
+  test-ppa:
+    plugin: nil
+    stage-packages:
+      - test-ppa
+
+apps:
+    test-ppa:
+      command: usr/bin/test-ppa
+
+package-repositories:
+  - type: apt
+    formats: [deb, deb-src]
+    components: [main]
+    suites: [bionic]
+    key-id: snapcraft-daily
+    url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu

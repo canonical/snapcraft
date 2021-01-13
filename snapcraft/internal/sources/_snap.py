@@ -18,9 +18,10 @@ import os
 import shutil
 import tempfile
 
+from snapcraft import file_utils, yaml_utils
+
 from . import errors
 from ._base import FileBase
-from snapcraft import file_utils, yaml_utils
 
 
 class Snap(FileBase):

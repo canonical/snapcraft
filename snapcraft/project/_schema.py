@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
 import os
 
-import json
 import jsonschema
 
-from . import errors
+import snapcraft.yaml_utils.errors
 from snapcraft.internal import common
 
 
@@ -58,7 +58,7 @@ class Validator:
             with open(schema_file) as fp:
                 self._schema = json.load(fp)
         except FileNotFoundError:
-            raise errors.YamlValidationError(
+            raise snapcraft.yaml_utils.errors.YamlValidationError(
                 "snapcraft validation file is missing from installation path"
             )
 
@@ -69,4 +69,6 @@ class Validator:
                 self._snapcraft, self._schema, format_checker=format_check
             )
         except jsonschema.ValidationError as e:
-            raise errors.YamlValidationError.from_validation_error(e, source=source)
+            raise snapcraft.yaml_utils.errors.YamlValidationError.from_validation_error(
+                e, source=source
+            )

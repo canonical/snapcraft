@@ -21,11 +21,10 @@ import subprocess
 import sys
 import textwrap
 from types import ModuleType
-from unittest import mock
 from typing import Callable
+from unittest import mock
 
 import fixtures
-
 
 import snapcraft
 from snapcraft.internal import elf
@@ -142,6 +141,7 @@ def _fake_elffile_extract_attributes(self):
 
         self.interp = "/lib64/ld-linux-x86-64.so.2"
         self.soname = ""
+        self.versions = set()
         self.needed = {glibc.name: glibc}
         self.execstack_set = False
         self.is_dynamic = True
@@ -154,6 +154,7 @@ def _fake_elffile_extract_attributes(self):
 
         self.interp = "/lib64/ld-linux-x86-64.so.2"
         self.soname = ""
+        self.versions = set()
         self.needed = {glibc.name: glibc}
         self.execstack_set = False
         self.is_dynamic = True
@@ -166,6 +167,7 @@ def _fake_elffile_extract_attributes(self):
 
         self.interp = "/lib64/ld-linux-x86-64.so.2"
         self.soname = ""
+        self.versions = set()
         self.needed = {glibc.name: glibc}
         self.execstack_set = False
         self.is_dynamic = True
@@ -174,6 +176,7 @@ def _fake_elffile_extract_attributes(self):
     elif name == "fake_elf-static":
         self.interp = "/lib64/ld-linux-x86-64.so.2"
         self.soname = ""
+        self.versions = set()
         self.needed = dict()
         self.execstack_set = False
         self.is_dynamic = False
@@ -185,6 +188,7 @@ def _fake_elffile_extract_attributes(self):
 
         self.interp = ""
         self.soname = "libfake_elf.so.0"
+        self.versions = set()
         self.needed = {openssl.name: openssl}
         self.execstack_set = False
         self.is_dynamic = True
@@ -196,6 +200,7 @@ def _fake_elffile_extract_attributes(self):
 
         self.interp = "/lib64/ld-linux-x86-64.so.2"
         self.soname = ""
+        self.versions = set()
         self.needed = {glibc.name: glibc}
         self.execstack_set = True
         self.is_dynamic = True
@@ -207,6 +212,7 @@ def _fake_elffile_extract_attributes(self):
 
         self.interp = "/lib64/ld-linux-x86-64.so.2"
         self.soname = ""
+        self.versions = set()
         self.needed = {glibc.name: glibc}
         self.execstack_set = True
         self.is_dynamic = True
@@ -215,6 +221,7 @@ def _fake_elffile_extract_attributes(self):
     elif name == "libc.so.6":
         self.interp = ""
         self.soname = "libc.so.6"
+        self.versions = {"libc.so.6", "GLIBC_2.2.5", "GLIBC_2.23", "GLIBC_2.26"}
         self.needed = {}
         self.execstack_set = False
         self.is_dynamic = True
@@ -223,6 +230,7 @@ def _fake_elffile_extract_attributes(self):
     elif name == "libssl.so.1.0.0":
         self.interp = ""
         self.soname = "libssl.so.1.0.0"
+        self.versions = {"libssl.so.1.0.0", "OPENSSL_1.0.0"}
         self.needed = {}
         self.execstack_set = False
         self.is_dynamic = True
@@ -231,6 +239,7 @@ def _fake_elffile_extract_attributes(self):
     else:
         self.interp = ""
         self.soname = ""
+        self.versions = set()
         self.needed = {}
         self.execstack_set = False
         self.is_dynamic = True

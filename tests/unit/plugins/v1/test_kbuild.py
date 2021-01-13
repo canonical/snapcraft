@@ -16,15 +16,16 @@
 
 import logging
 import os
-
-import pytest
-import fixtures
-from testtools.matchers import Equals, HasLength
 from unittest import mock
+
+import fixtures
+import pytest
+from testtools.matchers import Equals, HasLength
 
 import snapcraft
 from snapcraft.internal import errors, meta
 from snapcraft.plugins.v1 import kbuild
+
 from . import PluginsV1BaseTestCase
 
 

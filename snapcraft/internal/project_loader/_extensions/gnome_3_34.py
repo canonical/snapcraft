@@ -87,7 +87,7 @@ class ExtensionImpl(Extension):
             },
             "environment": {
                 "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
-                "GTK_USE_PORTALS": "1",
+                "GTK_USE_PORTAL": "1",
             },
             "hooks": {
                 "configure": {
@@ -121,7 +121,7 @@ class ExtensionImpl(Extension):
             "build-environment": [
                 {"PATH": "/snap/gnome-3-34-1804-sdk/current/usr/bin:$PATH"},
                 {
-                    "XDG_DATA_DIRS": "/snap/gnome-3-34-1804-sdk/current/usr/share:/usr/share:$XDG_DATA_DIRS"
+                    "XDG_DATA_DIRS": "$SNAPCRAFT_STAGE/usr/share:/snap/gnome-3-34-1804-sdk/current/usr/share:/usr/share:$XDG_DATA_DIRS"
                 },
                 {
                     "LD_LIBRARY_PATH": "/snap/gnome-3-34-1804-sdk/current/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-34-1804-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-34-1804-sdk/current/usr/lib:/snap/gnome-3-34-1804-sdk/current/usr/lib/vala-current:$LD_LIBRARY_PATH"

@@ -14,17 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import hashlib
-import zipfile
+import os
 import sys
+import zipfile
 
 from testtools.matchers import Equals
 
 from snapcraft.internal.sources import errors
 from snapcraft.internal.sources._checksum import verify_checksum
 from tests import unit
-
 
 if sys.version_info < (3, 6):
     import sha3  # noqa

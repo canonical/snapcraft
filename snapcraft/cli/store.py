@@ -15,25 +15,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import os
 import functools
 import operator
+import os
 import stat
 import sys
 from textwrap import dedent
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Set, Union
 
 import click
 from tabulate import tabulate
 
 import snapcraft
+from snapcraft import formatting_utils, storeapi
 from snapcraft._store import StoreClientCLI
-from snapcraft import storeapi, formatting_utils
 from snapcraft.storeapi.constants import DEFAULT_SERIES
-from . import echo
-from ._review import review_snap
-from ._channel_map import get_tabulated_channel_map
 
+from . import echo
+from ._channel_map import get_tabulated_channel_map
+from ._review import review_snap
 
 _MESSAGE_REGISTER_PRIVATE = dedent(
     """\
@@ -495,15 +495,28 @@ def close(snap_name, channels):
     envvar="SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES",
 )
 @click.option(
-    "--arch", metavar="<arch>", help="The snap architecture to get the status for"
+    "architectures",
+    "--arch",
+    metavar="<arch>",
+    multiple=True,
+    help="Limit status to these architectures (can specify multiple times)",
+)
+@click.option(
+    "tracks",
+    "--track",
+    multiple=True,
+    metavar="<track>",
+    help="Limit status to these tracks (can specify multiple times)",
 )
 @click.argument("snap-name", metavar="<snap-name>")
-def status(snap_name, arch, experimental_progressive_releases):
+def status(snap_name, architectures, tracks, experimental_progressive_releases):
     """Get the status on the store for <snap-name>.
 
     \b
     Examples:
         snapcraft status my-snap
+        snapcraft status --track 20 my-snap
+        snapcraft status --arch amd64 my-snap
     """
     if experimental_progressive_releases:
         os.environ["SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES"] = "Y"
@@ -514,15 +527,41 @@ def status(snap_name, arch, experimental_progressive_releases):
 
     if not snap_channel_map.channel_map:
         echo.warning("This snap has no released revisions.")
-    elif arch and arch not in existing_architectures:
-        echo.warning(f"No revisions for architecture {arch!r}.")
     else:
-        if arch:
-            architectures = (arch,)
+        if architectures:
+            architectures = set(architectures)
+            for architecture in architectures.copy():
+                if architecture not in existing_architectures:
+                    echo.warning(f"No revisions for architecture {architecture!r}.")
+                    architectures.remove(architecture)
+
+            # If we have no revisions for any of the architectures requested, there's
+            # nothing to do here.
+            if not architectures:
+                return
         else:
             architectures = existing_architectures
+
+        if tracks:
+            tracks = set(tracks)
+            existing_tracks = {
+                s.track for s in snap_channel_map.snap.channels if s.track in tracks
+            }
+            for track in tracks - existing_tracks:
+                echo.warning(f"No revisions in track {track!r}.")
+            tracks = existing_tracks
+
+            # If we have no revisions in any of the tracks requested, there's
+            # nothing to do here.
+            if not tracks:
+                return
+        else:
+            tracks = None
+
         click.echo(
-            get_tabulated_channel_map(snap_channel_map, architectures=architectures)
+            get_tabulated_channel_map(
+                snap_channel_map, architectures=architectures, tracks=tracks
+            )
         )
 
 
@@ -542,11 +581,75 @@ def list_revisions(snap_name, arch):
         snapcraft list-revisions my-snap --arch armhf
         snapcraft revisions my-snap
     """
-    snapcraft.revisions(snap_name, arch)
+    releases = StoreClientCLI().get_snap_releases(snap_name=snap_name)
+
+    def get_channels_for_revision(revision: int) -> List[str]:
+        # channels: the set of channels revision was released to, active or not.
+        channels: Set[str] = set()
+        # seen_channel: applies to channels regardless of revision.
+        # The first channel that shows up for each architecture is to
+        # be marked as the active channel, all others are historic.
+        seen_channel: Dict[str, Set[str]] = dict()
+
+        for release in releases.releases:
+            if release.architecture not in seen_channel:
+                seen_channel[release.architecture] = set()
+
+            # If the revision is in this release entry and was not seen
+            # before it means that this channel is active and needs to
+            # be represented with a *.
+            if (
+                release.revision == revision
+                and release.channel not in seen_channel[release.architecture]
+            ):
+                channels.add(f"{release.channel}*")
+            # All other releases found for a revision are inactive.
+            elif (
+                release.revision == revision
+                and release.channel not in channels
+                and f"{release.channel}*" not in channels
+            ):
+                channels.add(release.channel)
+
+            seen_channel[release.architecture].add(release.channel)
+
+        return sorted(list(channels))
+
+    parsed_revisions = list()
+    for rev in releases.revisions:
+        if arch and arch not in rev.architectures:
+            continue
+        channels_for_revision = get_channels_for_revision(rev.revision)
+        if channels_for_revision:
+            channels = ",".join(channels_for_revision)
+        else:
+            channels = "-"
+        parsed_revisions.append(
+            (
+                rev.revision,
+                rev.created_at,
+                ",".join(rev.architectures),
+                rev.version,
+                channels,
+            )
+        )
+
+    tabulated_revisions = tabulate(
+        parsed_revisions,
+        numalign="left",
+        headers=["Rev.", "Uploaded", "Arches", "Version", "Channels"],
+        tablefmt="plain",
+    )
+
+    # 23 revisions + header should not need paging.
+    if len(parsed_revisions) < 24:
+        click.echo(tabulated_revisions)
+    else:
+        click.echo_via_pager(tabulated_revisions)
 
 
 @storecli.command("list")
-def list():
+def list_registered():
     """List snap names registered or shared with you.
 
     \b

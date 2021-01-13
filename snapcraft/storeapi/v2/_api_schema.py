@@ -21,7 +21,6 @@
 
 from typing import Any, Dict
 
-
 # Version 14, found at: https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-releases
 RELEASES_JSONSCHEMA: Dict[str, Any] = {
     "properties": {
@@ -86,7 +85,7 @@ RELEASES_JSONSCHEMA: Dict[str, Any] = {
                         "type": "array",
                     },
                     "attributes": {"introduced_at": 2, "type": "object"},
-                    "base": {"introduced_at": 1, "type": "string"},
+                    "base": {"introduced_at": 1, "type": ["string", "null"]},
                     "build_url": {"introduced_at": 1, "type": ["string", "null"]},
                     "confinement": {
                         "enum": ["strict", "classic", "devmode"],
@@ -123,7 +122,6 @@ RELEASES_JSONSCHEMA: Dict[str, Any] = {
                 },
                 "required": [
                     "architectures",
-                    "base",
                     "build_url",
                     "confinement",
                     "created_at",

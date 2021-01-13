@@ -21,6 +21,7 @@ from testtools.matchers import Contains, Equals
 from snapcraft import storeapi
 from snapcraft.cli import assertions
 from tests import unit
+
 from . import StoreCommandsBaseTestCase
 
 

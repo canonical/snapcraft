@@ -79,6 +79,10 @@ class CatkinPlugin(_ros.RosPlugin):
             "catkin_make_isolated",
             "--install",
             "--merge",
+            "--source-space",
+            "$SNAPCRAFT_PART_SRC",
+            "--build-space",
+            "$SNAPCRAFT_PART_BUILD",
             "--install-space",
             "$SNAPCRAFT_PART_INSTALL/opt/ros/$ROS_DISTRO",
             "-j",
@@ -98,5 +102,8 @@ class CatkinPlugin(_ros.RosPlugin):
 
     def _get_workspace_activation_commands(self) -> List[str]:
         return [
-            "_CATKIN_SETUP_DIR=/opt/ros/$ROS_DISTRO . /opt/ros/$ROS_DISTRO/setup.sh"
+            'state="$(set +o)"',
+            "set +u",
+            "_CATKIN_SETUP_DIR=/opt/ros/$ROS_DISTRO . /opt/ros/$ROS_DISTRO/setup.sh",
+            'eval "$(state)"',
         ]

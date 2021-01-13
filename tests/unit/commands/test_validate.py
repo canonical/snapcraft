@@ -15,10 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from unittest import mock
 
-import snapcraft.storeapi.errors
-
 import fixtures
-from testtools.matchers import Contains, Equals
+from testtools.matchers import Contains, Equals, FileExists
+
+import snapcraft.storeapi.errors
 
 from . import StoreCommandsBaseTestCase
 
@@ -111,4 +111,59 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
         )
         self.assertThat(
             result.output, Contains("You are required to login before continuing.")
+        )
+
+    def test_validate_with_snap_name(self):
+        self.fake_sign = fixtures.MockPatch(
+            "snapcraft._store._sign_assertion", return_value=b""
+        )
+        self.useFixture(self.fake_sign)
+
+        self.client.login("dummy", "test correct password")
+
+        self.run_command(["validate", "core", "test-snap=3"])
+
+        self.assertThat("core-test-snap-r3.assertion", FileExists())
+        self.fake_sign.mock.assert_called_once_with(
+            "test-snap=3",
+            {
+                "type": "validation",
+                "authority-id": "abcd",
+                "series": "16",
+                "snap-id": "good",
+                "approved-snap-id": "test-snap-snap-id",
+                "approved-snap-revision": "3",
+                "timestamp": mock.ANY,
+                "revoked": "false",
+            },
+            None,
+            "validations",
+        )
+
+    def test_validate_fallback_to_snap_id(self):
+        self.fake_sign = fixtures.MockPatch(
+            "snapcraft._store._sign_assertion", return_value=b""
+        )
+        self.useFixture(self.fake_sign)
+
+        self.client.login("dummy", "test correct password")
+
+        # XXXYYY is an imaginary snap-id.
+        self.run_command(["validate", "core", "XXXYYY=3"])
+
+        self.assertThat("core-XXXYYY-r3.assertion", FileExists())
+        self.fake_sign.mock.assert_called_once_with(
+            "XXXYYY=3",
+            {
+                "type": "validation",
+                "authority-id": "abcd",
+                "series": "16",
+                "snap-id": "good",
+                "approved-snap-id": "XXXYYY",
+                "approved-snap-revision": "3",
+                "timestamp": mock.ANY,
+                "revoked": "false",
+            },
+            None,
+            "validations",
         )

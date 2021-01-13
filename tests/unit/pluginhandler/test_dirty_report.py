@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.internal.pluginhandler._dirty_report import Dependency, DirtyReport
-from snapcraft.internal import steps
-
 from testscenarios import multiply_scenarios
+
+from snapcraft.internal import steps
+from snapcraft.internal.pluginhandler._dirty_report import Dependency, DirtyReport
 
 
 class TestDirtyReportGetReport:

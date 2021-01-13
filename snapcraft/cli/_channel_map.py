@@ -18,9 +18,9 @@ import itertools
 import os
 from collections import OrderedDict
 from typing import List, Optional, Tuple
-from typing_extensions import Final
 
 from tabulate import tabulate
+from typing_extensions import Final
 
 from snapcraft.storeapi.v2.channel_map import (
     ChannelMap,
@@ -144,11 +144,13 @@ def _get_channel_lines_for_channel(  # noqa: C901
             revision=progressive_revision,
             channel_info=channel_info,
             hint=current_tick,
-            progress_string=f"{current_percentage_fmt} {_HINTS.PROGRESSING_TO} {percentage:.0f}%",
+            progress_string=f"{current_percentage_fmt}{_HINTS.PROGRESSING_TO}{percentage:.0f}%",
         )
         # Setup progress for the actually released revision, this needs to be
         # calculated. But only show it if the channel is open.
-        progress_string = f"{remaining_percentage_fmt} {_HINTS.PROGRESSING_TO} {100 - percentage:.0f}%"
+        progress_string = (
+            f"{remaining_percentage_fmt}{_HINTS.PROGRESSING_TO}{100 - percentage:.0f}%"
+        )
     else:
         progress_string = _HINTS.NO_PROGRESS
 
