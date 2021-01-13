@@ -78,11 +78,16 @@ def _execute(  # noqa: C901
     is_managed_host = build_provider == "managed-host"
 
     # Temporary fix to ignore target_arch.
-    if kwargs.get("target_arch") is not None and build_provider in ["multipass", "lxd"]:
-        echo.warning(
-            "Ignoring '--target-arch' flag.  This flag requires --destructive-mode and is unsupported with Multipass and LXD build providers."
-        )
-        kwargs.pop("target_arch")
+
+    if build_provider in ["multipass", "lxd"]:
+        if kwargs.get("target_arch") is not None:
+            echo.warning(
+                "Ignoring '--target-arch' flag.  This flag requires --destructive-mode and is unsupported with Multipass and LXD build providers."
+            )
+            kwargs.pop("target_arch")
+
+        # Ensure it is scrubbed from build provider flags.
+        build_provider_flags.pop("SNAPCRAFT_TARGET_ARCH", None)
 
     project = get_project(is_managed_host=is_managed_host, **kwargs)
     conduct_project_sanity_check(project, **kwargs)

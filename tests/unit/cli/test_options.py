@@ -64,11 +64,25 @@ class TestProviderOptions:
             ),
         ),
         (
+            "host target arch",
+            dict(
+                provider="host",
+                kwargs=dict(target_arch="somearch"),
+                flags=dict(SNAPCRAFT_TARGET_ARCH="somearch"),
+            ),
+        ),
+        (
             "host all",
             dict(
                 provider="host",
-                kwargs=dict(http_proxy="1.1.1.1", https_proxy="1.1.1.1"),
-                flags=dict(http_proxy="1.1.1.1", https_proxy="1.1.1.1"),
+                kwargs=dict(
+                    http_proxy="1.1.1.1", https_proxy="1.1.1.1", target_arch="somearch"
+                ),
+                flags=dict(
+                    http_proxy="1.1.1.1",
+                    https_proxy="1.1.1.1",
+                    SNAPCRAFT_TARGET_ARCH="somearch",
+                ),
             ),
         ),
         ("lxd empty", dict(provider="lxd", kwargs=dict(), flags=dict())),
@@ -105,6 +119,14 @@ class TestProviderOptions:
             ),
         ),
         (
+            "lxd target arch",
+            dict(
+                provider="lxd",
+                kwargs=dict(target_arch="somearch"),
+                flags=dict(SNAPCRAFT_TARGET_ARCH="somearch"),
+            ),
+        ),
+        (
             "lxd all",
             dict(
                 provider="lxd",
@@ -113,12 +135,14 @@ class TestProviderOptions:
                     https_proxy="1.1.1.1",
                     enable_manifest=True,
                     manifest_image_information="{}",
+                    target_arch="somearch",
                 ),
                 flags=dict(
                     http_proxy="1.1.1.1",
                     https_proxy="1.1.1.1",
                     SNAPCRAFT_BUILD_INFO=True,
                     SNAPCRAFT_IMAGE_INFO="{}",
+                    SNAPCRAFT_TARGET_ARCH="somearch",
                 ),
             ),
         ),
@@ -159,6 +183,14 @@ class TestProviderOptions:
             ),
         ),
         (
+            "managed-host target arch",
+            dict(
+                provider="managed-host",
+                kwargs=dict(target_arch="somearch"),
+                flags=dict(SNAPCRAFT_TARGET_ARCH="somearch"),
+            ),
+        ),
+        (
             "managed-host all",
             dict(
                 provider="managed-host",
@@ -167,12 +199,14 @@ class TestProviderOptions:
                     https_proxy="1.1.1.1",
                     enable_manifest=True,
                     manifest_image_information="{}",
+                    target_arch="somearch",
                 ),
                 flags=dict(
                     http_proxy="1.1.1.1",
                     https_proxy="1.1.1.1",
                     SNAPCRAFT_BUILD_INFO=True,
                     SNAPCRAFT_IMAGE_INFO="{}",
+                    SNAPCRAFT_TARGET_ARCH="somearch",
                 ),
             ),
         ),
@@ -210,6 +244,14 @@ class TestProviderOptions:
             ),
         ),
         (
+            "multipass target arch",
+            dict(
+                provider="multipass",
+                kwargs=dict(target_arch="somearch"),
+                flags=dict(SNAPCRAFT_TARGET_ARCH="somearch"),
+            ),
+        ),
+        (
             "multipass all",
             dict(
                 provider="multipass",
@@ -218,12 +260,14 @@ class TestProviderOptions:
                     https_proxy="1.1.1.1",
                     enable_manifest=True,
                     manifest_image_information="{}",
+                    target_arch="somearch",
                 ),
                 flags=dict(
                     http_proxy="1.1.1.1",
                     https_proxy="1.1.1.1",
                     SNAPCRAFT_BUILD_INFO=True,
                     SNAPCRAFT_IMAGE_INFO="{}",
+                    SNAPCRAFT_TARGET_ARCH="somearch",
                 ),
             ),
         ),

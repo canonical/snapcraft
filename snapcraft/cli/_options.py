@@ -73,9 +73,10 @@ _ALL_PROVIDERS = _SUPPORTED_PROVIDERS + _HIDDEN_PROVIDERS
 _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
     dict(
         param_decls="--target-arch",
+        envvar="SNAPCRAFT_TARGET_ARCH",
         metavar="<arch>",
         help="Target architecture to cross compile to",
-        supported_providers=["host", "lxd", "multipass"],
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
         param_decls="--debug",
