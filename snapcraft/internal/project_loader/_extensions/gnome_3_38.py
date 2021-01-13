@@ -24,7 +24,7 @@ _PLATFORM_SNAP = dict(core20="gnome-3-38-2004")
 
 
 class ExtensionImpl(Extension):
-    """This extension eases creation of snaps that integrate with GNOME 3.34.
+    """This extension eases creation of snaps that integrate with GNOME 3.38.
 
     At build time it ensures the right build dependencies are setup and for
     the runtime it ensures the application is run in an environment catered
@@ -36,7 +36,7 @@ class ExtensionImpl(Extension):
     - GTK3 Themes.
     - Common Icon Themes.
     - Common Sound Themes.
-    - The GNOME runtime libraries and utilities corresponding to 3.34.
+    - The GNOME runtime libraries and utilities corresponding to 3.38.
 
     For easier desktop integration, it also configures each application
     entry with these additional plugs:
