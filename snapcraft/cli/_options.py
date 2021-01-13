@@ -73,6 +73,7 @@ _ALL_PROVIDERS = _SUPPORTED_PROVIDERS + _HIDDEN_PROVIDERS
 _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
     dict(
         param_decls="--target-arch",
+        envvar="SNAPCRAFT_TARGET_ARCH",
         metavar="<arch>",
         help="Target architecture to cross compile to",
         supported_providers=["host", "lxd", "multipass"],
@@ -332,6 +333,11 @@ def get_build_provider_flags(build_provider: str, **kwargs) -> Dict[str, str]:
         # Add build provider flag using envvar as key.
         if envvar is not None and key_formatted in kwargs:
             build_provider_flags[envvar] = kwargs[key_formatted]
+
+    # Ensure target arch is scrubbed from build provider flags to prevent
+    # a change of behavior.
+    if build_provider in ["multipass", "lxd"]:
+        build_provider_flags.pop("SNAPCRAFT_TARGET_ARCH", None)
 
     return build_provider_flags
 
