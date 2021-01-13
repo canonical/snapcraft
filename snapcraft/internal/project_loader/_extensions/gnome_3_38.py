@@ -45,6 +45,7 @@ class ExtensionImpl(Extension):
     - desktop (https://snapcraft.io/docs/desktop-interface)
     - desktop-legacy (https://snapcraft.io/docs/desktop-legacy-interface)
     - gsettings (https://snapcraft.io/docs/gsettings-interface)
+    - opengl (https://snapcraft.io/docs/opengl-interface)
     - wayland (https://snapcraft.io/docs/wayland-interface)
     - x11 (https://snapcraft.io/docs/x11-interface)
     """
