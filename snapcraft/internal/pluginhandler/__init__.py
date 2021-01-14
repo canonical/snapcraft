@@ -628,6 +628,9 @@ class PluginHandler:
         else:
             plugin_environment = dict()
 
+        # User's say.
+        user_build_environment = self.build_environment
+
         # Create the script.
         with io.StringIO() as run_environment:
             print(f"#!{self._shell}", file=run_environment)
@@ -641,7 +644,7 @@ class PluginHandler:
             for k, v in plugin_environment.items():
                 print(f'export {k}="{v}"', file=run_environment)
             print("## User Environment", file=run_environment)
-            for env in self.build_environment:
+            for env in user_build_environment:
                 for k, v in env.items():
                     print(f'export {k}="{v}"', file=run_environment)
 
