@@ -30,7 +30,7 @@ from tests.unit import mock
 @pytest.fixture(autouse=True)
 def mock_repo():
     with mock.patch(
-        "snapcraft.internal.meta.package_repository.Ubuntu", spec=repo.Ubuntu
+        "snapcraft.internal.meta.package_repository.repo.Ubuntu", spec=repo.Ubuntu
     ) as m:
         yield m
 
@@ -50,7 +50,7 @@ def test_apt_name():
 
 
 @pytest.mark.parametrize(
-    "arch", ["amd64", "armhf", "arm64", "i386", "ppc64el", "s390x"]
+    "arch", ["amd64", "armhf", "arm64", "i386", "ppc64el", "riscv", "s390x"]
 )
 def test_apt_valid_architectures(arch):
     package_repo = PackageRepositoryApt(
@@ -58,22 +58,6 @@ def test_apt_valid_architectures(arch):
     )
 
     assert package_repo.architectures == [arch]
-
-
-@pytest.mark.parametrize("arch", ["", "armv8"])
-def test_apt_invalid_architectures(arch):
-    with pytest.raises(errors.PackageRepositoryValidationError) as exc_info:
-        PackageRepositoryApt(key_id="test-key-id", url="", architectures=[arch])
-
-    assert exc_info.value.brief == f"Invalid architecture '{arch}'."
-    assert (
-        exc_info.value.details
-        == "Valid architectures include: amd64, armhf, arm64, i386, ppc64el, and s390x."
-    )
-    assert (
-        exc_info.value.resolution
-        == "Verify repository configuration and ensure that 'architectures' is correctly specified."
-    )
 
 
 def test_apt_invalid_url():

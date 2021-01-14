@@ -25,6 +25,7 @@ from snapcraft.storeapi.v2.channel_map import (
     Revision,
     SnapChannel,
 )
+
 from . import FakeStoreCommandsBaseTestCase
 
 
