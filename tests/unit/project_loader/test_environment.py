@@ -240,6 +240,9 @@ class EnvironmentTest(ProjectLoaderBaseTest):
                     'SNAPCRAFT_PROJECT_NAME="test"',
                     'SNAPCRAFT_PROJECT_VERSION="1"',
                     'SNAPCRAFT_STAGE="{}/stage"'.format(self.path),
+                    'SNAPCRAFT_TARGET_ARCH="{}"'.format(
+                        project_config.project.target_arch
+                    ),
                 ]
             ),
         )
