@@ -62,9 +62,11 @@ def conduct_project_sanity_check(project: Project, **kwargs) -> None:
     if (
         project._get_build_base() in ["core20"]
         and kwargs.get("target_arch") is not None
+        and not os.getenv("SNAPCRAFT_ENABLE_EXPERIMENTAL_TARGET_ARCH")
     ):
         raise SnapcraftEnvironmentError(
-            "--target-arch has been deprecated and is no longer supported on core20."
+            "*EXPERIMENTAL* '--target-arch' configured, but not enabled. "
+            "Enable with '--enable-experimental-target-arch' flag."
         )
 
     # Icon should refer to project file, verify it exists.
