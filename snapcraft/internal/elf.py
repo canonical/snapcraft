@@ -538,8 +538,30 @@ class DependencyChecker:
     def __init__(self) -> None:
         self._base_libs: Dict[Tuple[ElfArchitectureTuple, str], ElfFile] = {}
 
+    def _is_library_path(self, path: str) -> bool:
+        components = path.split(os.sep)[:-1]
+        if len(components) >= 1 and components[-1] == "lib":
+            return True
+        if (
+            len(components) >= 2
+            and components[-2] == "lib"
+            and components[-1]
+            in {
+                "aarch64-linux-gnu",
+                "arm-linux-gnueabihf",
+                "i386-linux-gnu",
+                "powerpc-linux-gnu",
+                "powerpc64le-linux-gnu",
+                "riscv64-linux-gnu",
+                "s390x-linux-gnu",
+                "x86_64-linux-gnu",
+            }
+        ):
+            return True
+        return False
+
     def _get_elfs(
-        self, base_path: str
+        self, base_path: str, only_libraries: bool = False
     ) -> Tuple[Dict[Tuple[ElfArchitectureTuple, str], ElfFile], List[ElfFile]]:
         """Return the the libraries and other elf files found under base_path.
 
@@ -551,15 +573,18 @@ class DependencyChecker:
         for root, dirs, files in os.walk(base_path):
             for f in files:
                 path = os.path.join(root, f)
-                if os.access(path, os.R_OK) and os.path.isfile(path):
-                    file_list.append(os.path.relpath(path, base_path))
+                if not (os.access(path, os.R_OK) and os.path.isfile(path)):
+                    continue
+                if only_libraries and not self._is_library_path(path):
+                    continue
+                file_list.append(os.path.relpath(path, base_path))
         libraries: Dict[Tuple[ElfArchitectureTuple, str], ElfFile] = {}
         other: List[ElfFile] = []
         for elf in get_elf_files(base_path, file_list):
-            if elf.soname:
+            if elf.soname or self._is_library_path(elf.path):
                 assert elf.arch is not None
-                libraries[elf.arch, elf.soname] = elf
-            else:
+                libraries[elf.arch, elf.soname or os.path.basename(elf.path)] = elf
+            if not self._is_library_path(elf.path):
                 other.append(elf)
         return libraries, other
 
@@ -569,7 +594,7 @@ class DependencyChecker:
         The libraries can be used to satisfy dependencies, but it is
         assumed that their own dependencies are already satisfied.
         """
-        libs, _ = self._get_elfs(base_path)
+        libs, _ = self._get_elfs(base_path, only_libraries=True)
         self._base_libs.update(libs)
 
     def check(self, snap_path: str) -> Sequence[str]:  # noqa: C901
