@@ -115,6 +115,53 @@
                 ]
             }
         },
+        "build-environment-grammar": {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": true,
+            "items": {
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "minProperties": 1,
+                        "maxProperties": 1,
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "usage": "on <selector>[,<selector>...]:",
+                        "additionalProperties": false,
+                        "patternProperties": {
+                            "^on\\s+.+$": {
+                                "$ref": "#/definitions/build-environment-grammar"
+                            }
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "usage": "to <selector>[,<selector>...]:",
+                        "additionalProperties": false,
+                        "patternProperties": {
+                            "^to\\s+.+$": {
+                                "$ref": "#/definitions/build-environment-grammar"
+                            }
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "usage": "else:",
+                        "additionalProperties": false,
+                        "patternProperties": {
+                            "^else$": {
+                                "$ref": "#/definitions/build-environment-grammar"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
         "apt-deb": {
             "type": "object",
             "description": "deb repositories",
@@ -929,17 +976,8 @@
                             "default": []
                         },
                         "build-environment": {
-                            "type": "array",
-                            "default": [],
-                            "minitems": 1,
-                            "items": {
-                                "type": "object",
-                                "minProperties": 1,
-                                "maxProperties": 1,
-                                "additionalProperties": {
-                                    "type": "string"
-                                }
-                            }
+                            "$ref": "#/definitions/build-environment-grammar",
+                            "default": []
                         },
                         "build-attributes": {
                             "type": "array",

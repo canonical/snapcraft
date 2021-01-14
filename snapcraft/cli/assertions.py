@@ -48,7 +48,6 @@ _COLLABORATION_HEADER = dedent(
 @click.group()
 def assertionscli():
     """Store assertion commands"""
-    pass
 
 
 @assertionscli.command("list-keys")
