@@ -18,7 +18,6 @@ import abc
 import logging
 import re
 from copy import deepcopy
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from snapcraft.internal import repo
@@ -30,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 class PackageRepository(abc.ABC):
     @abc.abstractmethod
-    def install(self, *, keys_path: Path) -> bool:
+    def install(self) -> bool:
         ...
 
     @abc.abstractmethod
@@ -79,8 +78,8 @@ class PackageRepositoryAptPpa(PackageRepository):
 
         self.validate()
 
-    def install(self, *, keys_path: Path) -> bool:
-        return repo.Ubuntu.install_ppa(keys_path=keys_path, ppa=self.ppa)
+    def install(self) -> bool:
+        return repo.Ubuntu.install_ppa(ppa=self.ppa)
 
     def marshal(self) -> Dict[str, Any]:
         data = dict(type="apt")
@@ -171,7 +170,7 @@ class PackageRepositoryApt(PackageRepository):
 
         self.validate()
 
-    def install(self, keys_path: Path) -> bool:
+    def install(self) -> bool:
         """Install repository configuration.
 
         1) First check to see if package repo is implied path,
@@ -201,13 +200,7 @@ class PackageRepositoryApt(PackageRepository):
         else:
             raise RuntimeError("no suites or path")
 
-        # First install associated GPG key.
-        new_key: bool = repo.Ubuntu.install_gpg_key_id(
-            keys_path=keys_path, key_id=self.key_id, key_server=self.key_server
-        )
-
-        # Now install sources file.
-        new_sources: bool = repo.Ubuntu.install_sources(
+        return repo.Ubuntu.install_sources(
             architectures=self.architectures,
             components=self.components,
             formats=self.formats,
@@ -215,8 +208,6 @@ class PackageRepositoryApt(PackageRepository):
             suites=suites,
             url=self.url,
         )
-
-        return new_key or new_sources
 
     def marshal(self) -> Dict[str, Any]:
         data: Dict[str, Any] = {"type": "apt"}
@@ -258,7 +249,7 @@ class PackageRepositoryApt(PackageRepository):
                         resolution="Verify the repository configuration and ensure that 'formats' is correctly specified.",
                     )
 
-        if not self.key_id:
+        if not self.key_id or not re.match(r"^[0-9A-F]{40}$", self.key_id):
             raise errors.PackageRepositoryValidationError(
                 url=self.url,
                 brief=f"Invalid key identifier {self.key_id!r}.",

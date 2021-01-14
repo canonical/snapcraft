@@ -207,7 +207,7 @@
                 "key-id": {
                     "type": "string",
                     "description": "GPG key identifier / fingerprint. May be used to identify key file in <project>/snap/keys/<key-id>.asc",
-                    "pattern": "^[a-zA-Z0-9-_]*$"
+                    "pattern": "^[A-Z0-9]{40}$"
                 },
                 "key-server": {
                     "type": "string",

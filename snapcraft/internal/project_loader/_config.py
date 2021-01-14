@@ -30,6 +30,7 @@ from snapcraft.internal.meta.snap import Snap
 from snapcraft.internal.pluginhandler._part_environment import (
     get_snapcraft_global_environment,
 )
+from snapcraft.internal.repo import apt_key_manager
 from snapcraft.project._schema import Validator
 
 from . import errors, grammar_processing, replace_attr
@@ -262,11 +263,17 @@ class Config:
         # Install pre-requisite packages for apt-key, if not installed.
         repo.Repo.install_build_packages(package_names=["gnupg", "dirmngr"])
 
-        keys_path = self.project._get_keys_path()
-        changes = [
-            package_repo.install(keys_path=keys_path) for package_repo in package_repos
-        ]
-        if any(changes):
+        key_assets = self.project._get_keys_path()
+        key_manager = apt_key_manager.AptKeyManager(key_assets=key_assets)
+
+        refresh_required = False
+        for package_repo in self._get_required_package_repositories():
+            refresh_required |= key_manager.install_package_repository_key(
+                package_repo=package_repo
+            )
+            refresh_required |= package_repo.install()
+
+        if refresh_required:
             repo.Repo.refresh_build_packages()
 
     def get_build_packages(self) -> Set[str]:
