@@ -24,28 +24,33 @@ import re
 import subprocess
 import tempfile
 from datetime import datetime
-from subprocess import Popen
-from typing import Any, Dict, Iterable, List, Optional, TextIO, Tuple, TYPE_CHECKING
 from pathlib import Path
+from subprocess import Popen
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, TextIO, Tuple
+
+from tabulate import tabulate
+
+from snapcraft import storeapi, yaml_utils
 
 # Ideally we would move stuff into more logical components
 from snapcraft.cli import echo
-from tabulate import tabulate
-
-from snapcraft.file_utils import calculate_sha3_384, get_snap_tool_path
-from snapcraft import storeapi, yaml_utils
-from snapcraft.internal import cache, deltas, repo
-from snapcraft.internal.errors import SnapDataExtractionError, ToolMissingError
+from snapcraft.file_utils import (
+    calculate_sha3_384,
+    get_host_tool_path,
+    get_snap_tool_path,
+)
+from snapcraft.internal import cache, deltas
 from snapcraft.internal.deltas.errors import (
     DeltaGenerationError,
     DeltaGenerationTooBigError,
 )
+from snapcraft.internal.errors import SnapDataExtractionError, ToolMissingError
 from snapcraft.storeapi.constants import DEFAULT_SERIES
-
 
 if TYPE_CHECKING:
     from snapcraft.storeapi._status_tracker import StatusTracker
-    from snapcraft.storeapi.v2.snap_channel_map import SnapChannelMap
+    from snapcraft.storeapi.v2.channel_map import ChannelMap
+    from snapcraft.storeapi.v2.releases import Releases
 
 
 logger = logging.getLogger(__name__)
@@ -326,7 +331,11 @@ class StoreClientCLI(storeapi.StoreClient):
         return super().close_channels(snap_id=snap_id, channel_names=channel_names)
 
     @_login_wrapper
-    def get_snap_channel_map(self, *, snap_name: str) -> "SnapChannelMap":
+    def get_snap_releases(self, *, snap_name: str) -> "Releases":
+        return super().get_snap_releases(snap_name=snap_name)
+
+    @_login_wrapper
+    def get_snap_channel_map(self, *, snap_name: str) -> "ChannelMap":
         return super().get_snap_channel_map(snap_name=snap_name)
 
     @_login_wrapper
@@ -428,8 +437,9 @@ def list_registered():
 
 
 def _get_usable_keys(name=None):
+    snap_path = get_host_tool_path(command_name="snap", package_name="snapd")
     keys = json.loads(
-        subprocess.check_output(["snap", "keys", "--json"], universal_newlines=True)
+        subprocess.check_output([snap_path, "keys", "--json"], universal_newlines=True)
     )
     if keys is not None:
         for key in keys:
@@ -467,15 +477,13 @@ def _export_key(name, account_id):
 
 
 def list_keys():
-    if not repo.Repo.is_package_installed("snapd"):
-        raise storeapi.errors.MissingSnapdError("list-keys")
     keys = list(_get_usable_keys())
     account_info = StoreClientCLI().get_account_information()
     enabled_keys = {
         account_key["public-key-sha3-384"]
         for account_key in account_info["account_keys"]
     }
-    if enabled_keys:
+    if keys and enabled_keys:
         tabulated_keys = tabulate(
             [
                 (
@@ -490,6 +498,14 @@ def list_keys():
             tablefmt="plain",
         )
         print(tabulated_keys)
+    elif not keys and enabled_keys:
+        registered_keys = "\n".join([f"- {key}" for key in enabled_keys])
+        print(
+            "No keys have been created on this system. "
+            " See 'snapcraft create-key --help' to create a key.\n"
+            "The following SHA3-384 key fingerprints have been registered "
+            f"but are not available on this system:\n{registered_keys}"
+        )
     else:
         print(
             "No keys have been registered."
@@ -498,8 +514,6 @@ def list_keys():
 
 
 def create_key(name):
-    if not repo.Repo.is_package_installed("snapd"):
-        raise storeapi.errors.MissingSnapdError("create-key")
     if not name:
         name = "default"
     keys = list(_get_usable_keys(name=name))
@@ -534,8 +548,6 @@ def _maybe_prompt_for_key(name):
 
 
 def register_key(name):
-    if not repo.Repo.is_package_installed("snapd"):
-        raise storeapi.errors.MissingSnapdError("register-key")
     key = _maybe_prompt_for_key(name)
     store_client = StoreClientCLI()
     try:
@@ -563,8 +575,9 @@ def register(snap_name: str, is_private: bool = False, store_id: str = None) -> 
 
 def _generate_snap_build(authority_id, snap_id, grade, key_name, snap_filename):
     """Return the signed snap-build declaration for a snap on disk."""
+    snap_path = get_host_tool_path(command_name="snap", package_name="snapd")
     cmd = [
-        "snap",
+        snap_path,
         "sign-build",
         "--developer-id=" + authority_id,
         "--snap-id=" + snap_id,
@@ -580,9 +593,6 @@ def _generate_snap_build(authority_id, snap_id, grade, key_name, snap_filename):
 
 
 def sign_build(snap_filename, key_name=None, local=False):
-    if not repo.Repo.is_package_installed("snapd"):
-        raise storeapi.errors.MissingSnapdError("sign-build")
-
     if not os.path.exists(snap_filename):
         raise FileNotFoundError("The file {!r} does not exist.".format(snap_filename))
 
@@ -940,38 +950,6 @@ def status(snap_name, arch):
     print(tabulated_status)
 
 
-def _get_text_for_current_channels(channels, current_channels):
-    return (
-        ", ".join(
-            channel + ("*" if channel in current_channels else "")
-            for channel in channels
-        )
-        or "-"
-    )
-
-
-def revisions(snap_name, arch):
-    revisions = StoreClientCLI().get_snap_revisions(snap_name, arch)
-
-    parsed_revisions = [
-        (
-            rev["revision"],
-            rev["timestamp"],
-            rev["arch"],
-            rev["version"],
-            _get_text_for_current_channels(rev["channels"], rev["current_channels"]),
-        )
-        for rev in revisions
-    ]
-    tabulated_revisions = tabulate(
-        parsed_revisions,
-        numalign="left",
-        headers=["Rev.", "Uploaded", "Arch", "Version", "Channels"],
-        tablefmt="plain",
-    )
-    print(tabulated_revisions)
-
-
 def gated(snap_name):
     """Print list of snaps gated by snap_name."""
     store_client = StoreClientCLI()
@@ -1011,7 +989,12 @@ def gated(snap_name):
         print("There are no validations for snap {!r}".format(snap_name))
 
 
-def validate(snap_name, validations, revoke=False, key=None):
+def validate(
+    snap_name: str,
+    validations: List[str],
+    revoke: bool = False,
+    key: Optional[str] = None,
+):
     """Generate, sign and upload validation assertions."""
     # Check validations format
     _check_validations(validations)
@@ -1029,26 +1012,32 @@ def validate(snap_name, validations, revoke=False, key=None):
 
     # Then, for each requested validation, generate assertion
     for validation in validations:
-        gated_name, rev = validation.split("=", 1)
-        echo.info("Getting details for {}".format(gated_name))
-        approved_data = store_client.cpi.get_info(gated_name)
-        assertion = {
+        gated_snap, rev = validation.split("=", 1)
+        echo.info(f"Getting details for {gated_snap}")
+        # The Info API is not authed, so it cannot see private snaps.
+        try:
+            approved_data = store_client.cpi.get_info(gated_snap)
+            approved_snap_id = approved_data.snap_id
+        except storeapi.errors.SnapNotFoundError:
+            approved_snap_id = gated_snap
+
+        assertion_payload = {
             "type": "validation",
             "authority-id": authority_id,
             "series": DEFAULT_SERIES,
             "snap-id": snap_id,
-            "approved-snap-id": approved_data.snap_id,
+            "approved-snap-id": approved_snap_id,
             "approved-snap-revision": rev,
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "revoked": "false",
         }
         if revoke:
-            assertion["revoked"] = "true"
+            assertion_payload["revoked"] = "true"
 
-        assertion = _sign_assertion(validation, assertion, key, "validations")
+        assertion = _sign_assertion(validation, assertion_payload, key, "validations")
 
         # Save assertion to a properly named file
-        fname = "{}-{}-r{}.assertion".format(snap_name, gated_name, rev)
+        fname = f"{snap_name}-{gated_snap}-r{rev}.assertion"
         with open(fname, "wb") as f:
             f.write(assertion)
 

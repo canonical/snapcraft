@@ -18,8 +18,9 @@ import os
 import subprocess
 from textwrap import dedent
 
-from tests import integration
 from testtools.matchers import Contains, FileExists, Not
+
+from tests import integration
 
 
 class StagePackageGrammarTestCase(integration.TestCase):

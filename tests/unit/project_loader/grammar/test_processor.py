@@ -20,8 +20,8 @@ import re
 import pytest
 
 import snapcraft
-from snapcraft.internal.project_loader import grammar
 import snapcraft.internal.project_loader.grammar._to as _to
+from snapcraft.internal.project_loader import grammar
 
 
 @pytest.mark.parametrize(
@@ -55,7 +55,26 @@ class TestBasicGrammar:
             {
                 "grammar_entry": ["foo", "bar"],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo", "bar"},
+                "target_arch": "amd64",
+                "expected_results": ["foo", "bar"],
+            },
+        ),
+        (
+            "unconditional dict",
+            {
+                "grammar_entry": [{"foo": "bar"}],
+                "host_arch": "x86_64",
+                "target_arch": "amd64",
+                "expected_results": [{"foo": "bar"}],
+            },
+        ),
+        (
+            "unconditional multi-dict",
+            {
+                "grammar_entry": [{"foo": "bar"}, {"foo2": "bar2"}],
+                "host_arch": "x86_64",
+                "target_arch": "amd64",
+                "expected_results": [{"foo": "bar"}, {"foo2": "bar2"}],
             },
         ),
         (
@@ -63,7 +82,8 @@ class TestBasicGrammar:
             {
                 "grammar_entry": ["foo", {"on i386": ["bar"]}],
                 "host_arch": "i686",
-                "expected_packages": {"foo", "bar"},
+                "target_arch": "i386",
+                "expected_results": ["foo", "bar"],
             },
         ),
         (
@@ -71,7 +91,8 @@ class TestBasicGrammar:
             {
                 "grammar_entry": ["foo", {"on i386": ["bar"]}],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo"},
+                "target_arch": "amd64",
+                "expected_results": ["foo"],
             },
         ),
         (
@@ -79,7 +100,8 @@ class TestBasicGrammar:
             {
                 "grammar_entry": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo"},
+                "target_arch": "amd64",
+                "expected_results": ["foo"],
             },
         ),
         (
@@ -87,7 +109,8 @@ class TestBasicGrammar:
             {
                 "grammar_entry": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}],
                 "host_arch": "i686",
-                "expected_packages": {"bar"},
+                "target_arch": "i386",
+                "expected_results": ["bar"],
             },
         ),
         (
@@ -95,7 +118,8 @@ class TestBasicGrammar:
             {
                 "grammar_entry": [{"on amd64": ["foo"]}, {"else": ["bar"]}],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo"},
+                "target_arch": "amd64",
+                "expected_results": ["foo"],
             },
         ),
         (
@@ -103,7 +127,8 @@ class TestBasicGrammar:
             {
                 "grammar_entry": [{"on amd64": ["foo"]}, {"else": ["bar"]}],
                 "host_arch": "i686",
-                "expected_packages": {"bar"},
+                "target_arch": "i386",
+                "expected_results": ["bar"],
             },
         ),
         (
@@ -113,7 +138,19 @@ class TestBasicGrammar:
                     {"on amd64": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}]}
                 ],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo"},
+                "target_arch": "amd64",
+                "expected_results": ["foo"],
+            },
+        ),
+        (
+            "nested amd64 dict",
+            {
+                "grammar_entry": [
+                    {"on amd64": [{"on amd64": [{"foo": "bar"}]}, {"on i386": ["bar"]}]}
+                ],
+                "host_arch": "x86_64",
+                "target_arch": "amd64",
+                "expected_results": [{"foo": "bar"}],
             },
         ),
         (
@@ -123,7 +160,8 @@ class TestBasicGrammar:
                     {"on i386": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}]}
                 ],
                 "host_arch": "i686",
-                "expected_packages": {"bar"},
+                "target_arch": "i386",
+                "expected_results": ["bar"],
             },
         ),
         (
@@ -133,7 +171,8 @@ class TestBasicGrammar:
                     {"on amd64": [{"on amd64": ["foo"]}, {"else": ["bar"]}]}
                 ],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo"},
+                "target_arch": "amd64",
+                "expected_results": ["foo"],
             },
         ),
         (
@@ -143,7 +182,8 @@ class TestBasicGrammar:
                     {"on i386": [{"on amd64": ["foo"]}, {"else": ["bar"]}]}
                 ],
                 "host_arch": "i686",
-                "expected_packages": {"bar"},
+                "target_arch": "amd64",
+                "expected_results": ["bar"],
             },
         ),
         (
@@ -151,7 +191,8 @@ class TestBasicGrammar:
             {
                 "grammar_entry": [{"try": ["valid"]}],
                 "host_arch": "x86_64",
-                "expected_packages": {"valid"},
+                "target_arch": "amd64",
+                "expected_results": ["valid"],
             },
         ),
         (
@@ -159,7 +200,8 @@ class TestBasicGrammar:
             {
                 "grammar_entry": [{"try": ["invalid"]}, {"else": ["valid"]}],
                 "host_arch": "x86_64",
-                "expected_packages": {"valid"},
+                "target_arch": "amd64",
+                "expected_results": ["valid"],
             },
         ),
         (
@@ -167,7 +209,8 @@ class TestBasicGrammar:
             {
                 "grammar_entry": [{"on amd64": [{"try": ["foo"]}, {"else": ["bar"]}]}],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo"},
+                "target_arch": "amd64",
+                "expected_results": ["foo"],
             },
         ),
         (
@@ -177,7 +220,8 @@ class TestBasicGrammar:
                     {"on i386": [{"try": ["invalid"]}, {"else": ["bar"]}]}
                 ],
                 "host_arch": "i686",
-                "expected_packages": {"bar"},
+                "target_arch": "i686",
+                "expected_results": ["bar"],
             },
         ),
         (
@@ -185,21 +229,97 @@ class TestBasicGrammar:
             {
                 "grammar_entry": ["foo", {"try": ["invalid"]}],
                 "host_arch": "i686",
-                "expected_packages": {"foo"},
+                "target_arch": "i386",
+                "expected_results": ["foo"],
+            },
+        ),
+        (
+            "multi",
+            {
+                "grammar_entry": [
+                    "foo",
+                    {"on amd64": ["foo2"]},
+                    {"on amd64 to arm64": ["foo3"]},
+                ],
+                "host_arch": "x86_64",
+                "target_arch": "i386",
+                "expected_results": ["foo", "foo2"],
+            },
+        ),
+        (
+            "multi-ordering",
+            {
+                "grammar_entry": [
+                    "foo",
+                    {"on amd64": ["on-foo"]},
+                    "after-on",
+                    {"on amd64 to i386": ["on-to-foo"]},
+                    {"on amd64 to arm64": ["no-show"]},
+                    "n-1",
+                    "n",
+                ],
+                "host_arch": "x86_64",
+                "target_arch": "i386",
+                "expected_results": [
+                    "foo",
+                    "on-foo",
+                    "after-on",
+                    "on-to-foo",
+                    "n-1",
+                    "n",
+                ],
+            },
+        ),
+        (
+            "complex nested dicts",
+            {
+                "grammar_entry": [
+                    {"yes1": "yes1"},
+                    {
+                        "on amd64": [
+                            {"yes2": "yes2"},
+                            {"on amd64": [{"yes3": "yes3"}]},
+                            {"yes4": "yes4"},
+                            {"on i386": [{"no1": "no1"}]},
+                            {"else": [{"yes5": "yes5"}]},
+                            {"yes6": "yes6"},
+                        ],
+                    },
+                    {"else": [{"no2": "no2"}]},
+                    {"yes7": "yes7"},
+                    {"on i386": [{"no3": "no3"}]},
+                    {"else": [{"yes8": "yes8"}]},
+                    {"yes9": "yes9"},
+                ],
+                "host_arch": "x86_64",
+                "target_arch": "amd64",
+                "expected_results": [
+                    {"yes1": "yes1"},
+                    {"yes2": "yes2"},
+                    {"yes3": "yes3"},
+                    {"yes4": "yes4"},
+                    {"yes5": "yes5"},
+                    {"yes6": "yes6"},
+                    {"yes7": "yes7"},
+                    {"yes8": "yes8"},
+                    {"yes9": "yes9"},
+                ],
             },
         ),
     ]
 
     def test_basic_grammar(
-        self, monkeypatch, grammar_entry, host_arch, expected_packages
+        self, monkeypatch, grammar_entry, host_arch, target_arch, expected_results
     ):
         monkeypatch.setattr(platform, "machine", lambda: host_arch)
         monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
 
+        project = snapcraft.ProjectOptions(target_deb_arch=target_arch)
+
         processor = grammar.GrammarProcessor(
-            grammar_entry, snapcraft.ProjectOptions(), lambda x: "invalid" not in x
+            grammar_entry, project, lambda x: "invalid" not in x
         )
-        assert processor.process() == expected_packages
+        assert processor.process() == expected_results
 
 
 class TestTransformerGrammar:
@@ -210,7 +330,7 @@ class TestTransformerGrammar:
             {
                 "grammar_entry": ["foo", "bar"],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo", "bar"},
+                "expected_results": ["foo", "bar"],
             },
         ),
         (
@@ -218,7 +338,7 @@ class TestTransformerGrammar:
             {
                 "grammar_entry": ["foo", {"on i386": ["bar"]}],
                 "host_arch": "i686",
-                "expected_packages": {"foo", "bar"},
+                "expected_results": ["foo", "bar"],
             },
         ),
         (
@@ -226,7 +346,7 @@ class TestTransformerGrammar:
             {
                 "grammar_entry": ["foo", {"on i386": ["bar"]}],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo"},
+                "expected_results": ["foo"],
             },
         ),
         (
@@ -234,7 +354,7 @@ class TestTransformerGrammar:
             {
                 "grammar_entry": [{"to i386": ["foo"]}],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo:i386"},
+                "expected_results": ["foo:i386"],
             },
         ),
         (
@@ -242,7 +362,7 @@ class TestTransformerGrammar:
             {
                 "grammar_entry": [{"to i386": [{"on amd64": ["foo"]}]}],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo:i386"},
+                "expected_results": ["foo:i386"],
             },
         ),
         (
@@ -250,13 +370,13 @@ class TestTransformerGrammar:
             {
                 "grammar_entry": [{"to amd64": ["foo"]}, {"else": ["bar"]}],
                 "host_arch": "x86_64",
-                "expected_packages": {"bar"},
+                "expected_results": ["bar"],
             },
         ),
     ]
 
     def test_grammar_with_transformer(
-        self, monkeypatch, grammar_entry, host_arch, expected_packages
+        self, monkeypatch, grammar_entry, host_arch, expected_results
     ):
         monkeypatch.setattr(platform, "machine", lambda: host_arch)
         monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
@@ -276,7 +396,7 @@ class TestTransformerGrammar:
             transformer=_transformer,
         )
 
-        assert processor.process() == expected_packages
+        assert processor.process() == expected_results
 
 
 class TestInvalidGrammar:

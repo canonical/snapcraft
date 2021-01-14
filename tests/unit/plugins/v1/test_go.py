@@ -16,17 +16,18 @@
 
 import logging
 import os
-import jsonschema
 from unittest import mock
 
 import fixtures
+import jsonschema
 import pytest
 from testtools.matchers import Contains, DirExists, Equals, HasLength, Not
 
 from snapcraft.internal import errors, meta
-from snapcraft.project import Project
 from snapcraft.plugins.v1 import go
+from snapcraft.project import Project
 from tests import fixture_setup, unit
+
 from . import PluginsV1BaseTestCase
 
 
@@ -877,10 +878,9 @@ class GoPluginUnsupportedBase(PluginsV1BaseTestCase):
         self.options = Options()
 
     def test_unsupported_base_using_snap(self):
-        plugin = go.GoPlugin("test-part", self.options, self.project)
-
-        self.assertThat(plugin.build_packages, Not(Contains("golang-go")))
-        self.assertThat(plugin.build_snaps, Contains("go/latest/stable"))
+        self.assertRaises(
+            errors.PluginBaseError, go.GoPlugin, "test-part", self.options, self.project
+        )
 
     def test_unsupported_base_using_without_snap_raises(self):
         self.options.go_channel = ""

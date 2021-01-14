@@ -19,6 +19,7 @@ from typing import Callable, Iterable, Optional, Set, Tuple, Union
 
 from snapcraft import project
 from snapcraft.internal import pluginhandler, states, steps
+
 from . import errors
 
 

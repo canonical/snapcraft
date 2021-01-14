@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from testtools.matchers import Equals
 from testtools import TestCase
+from testtools.matchers import Equals
 
 from snapcraft.plugins.v2.meson import MesonPlugin
 
@@ -78,9 +78,9 @@ class MesonPluginTest(TestCase):
             Equals(
                 [
                     "/usr/bin/python3 -m pip install -U meson",
-                    "[ ! -d .snapbuild ] && meson .snapbuild",
-                    "(cd .snapbuild && ninja)",
-                    '(cd .snapbuild && DESTDIR="${SNAPCRAFT_PART_INSTALL}" ninja install)',
+                    '[ ! -f build.ninja ] && meson "${SNAPCRAFT_PART_SRC_WORK}"',
+                    "ninja",
+                    'DESTDIR="${SNAPCRAFT_PART_INSTALL}" ninja install',
                 ]
             ),
         )
@@ -97,9 +97,14 @@ class MesonPluginTest(TestCase):
             Equals(
                 [
                     "/usr/bin/python3 -m pip install -U meson==2.2",
-                    "[ ! -d .snapbuild ] && meson --buildtype=release .snapbuild",
-                    "(cd .snapbuild && ninja)",
-                    '(cd .snapbuild && DESTDIR="${SNAPCRAFT_PART_INSTALL}" ninja install)',
+                    '[ ! -f build.ninja ] && meson --buildtype=release "${SNAPCRAFT_PART_SRC_WORK}"',
+                    "ninja",
+                    'DESTDIR="${SNAPCRAFT_PART_INSTALL}" ninja install',
                 ]
             ),
         )
+
+    def test_out_of_source_build(self):
+        plugin = MesonPlugin(part_name="my-part", options=lambda: None)
+
+        self.assertThat(plugin.out_of_source_build, Equals(True))

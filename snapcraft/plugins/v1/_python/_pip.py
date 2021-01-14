@@ -30,8 +30,9 @@ from typing import Dict, List, Optional, Sequence, Set
 import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal import mangling
-from ._python_finder import get_python_command, get_python_headers, get_python_home
+
 from . import errors
+from ._python_finder import get_python_command, get_python_headers, get_python_home
 
 logger = logging.getLogger(__name__)
 

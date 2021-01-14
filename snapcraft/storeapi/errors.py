@@ -15,16 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-from http.client import responses
 import logging
-from requests.packages import urllib3
-from simplejson.scanner import JSONDecodeError
+from http.client import responses
 from typing import Dict, List, Optional
 
-from . import channels
-from . import status
-from snapcraft.internal.errors import SnapcraftError, SnapcraftException
+from requests.packages import urllib3
+from simplejson.scanner import JSONDecodeError
+
 from snapcraft import formatting_utils
+from snapcraft.internal.errors import SnapcraftError, SnapcraftException
+
+from . import channels, status
 
 logger = logging.getLogger(__name__)
 
@@ -753,17 +754,6 @@ class StoreBuildAssertionPermissionError(StoreError):
 class StoreAssertionError(StoreError):
 
     fmt = "Error signing {endpoint} assertion for {snap_name}: {error!s}"
-
-
-class MissingSnapdError(StoreError):
-
-    fmt = (
-        "The snapd package is not installed. In order to use {command!r}, "
-        "you must run 'apt install snapd'."
-    )
-
-    def __init__(self, command):
-        super().__init__(command=command)
 
 
 class KeyAlreadyRegisteredError(StoreError):

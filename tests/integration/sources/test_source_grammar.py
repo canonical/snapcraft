@@ -18,7 +18,7 @@ import subprocess
 
 from testtools.matchers import Contains
 
-from tests import integration, fixture_setup
+from tests import fixture_setup, integration
 
 
 class PartsGrammarTestCase(integration.TestCase):

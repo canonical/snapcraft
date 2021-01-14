@@ -14,17 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import fixtures
 import json
+from pathlib import PosixPath
 import subprocess
 from textwrap import dedent
 from unittest import mock
 
+import fixtures
 from click.testing import CliRunner
 
 from snapcraft import storeapi
-from snapcraft.storeapi.v2.channel_map import ChannelMap
 from snapcraft.cli._runner import run
+from snapcraft.storeapi.v2.channel_map import ChannelMap
+from snapcraft.storeapi.v2.releases import Releases
 from tests import fixture_setup, unit
 
 _sample_keys = [
@@ -50,11 +52,13 @@ original_check_output = subprocess.check_output
 
 
 def mock_check_output(command, *args, **kwargs):
+    if isinstance(command[0], PosixPath):
+        command[0] = str(command[0])
     if command[0].endswith("unsquashfs") or command[0].endswith("xdelta3"):
         return original_check_output(command, *args, **kwargs)
-    elif command == ["snap", "keys", "--json"]:
+    elif command[0].endswith("snap") and command[1:] == ["keys", "--json"]:
         return json.dumps(_sample_keys)
-    elif command[:2] == ["snap", "export-key"]:
+    elif command[0].endswith("snap") and command[1] == "export-key":
         if not command[2].startswith("--account="):
             raise AssertionError("Unhandled command: {}".format(command))
         account_id = command[2][len("--account=") :]
@@ -71,7 +75,10 @@ def mock_check_output(command, *args, **kwargs):
         ).format(
             account_id=account_id, name=name, sha3_384=get_sample_key(name)["sha3-384"]
         )
-    elif command == ["snap", "create-key", "new-key"]:
+    elif command[0].endswith("snap") and command[1:] == [
+        "create-key",
+        "new-key",
+    ]:
         pass
     else:
         raise AssertionError("Unhandled command: {}".format(command))
@@ -200,11 +207,6 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
         )
         self.useFixture(self.fake_store_status)
 
-        self.fake_store_revisions = fixtures.MockPatchObject(
-            storeapi._sca_client.SCAClient, "snap_revisions", return_value=dict()
-        )
-        self.useFixture(self.fake_store_revisions)
-
         self.fake_store_release = fixtures.MockPatchObject(
             storeapi.StoreClient, "release"
         )
@@ -224,11 +226,27 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
                         "channel": "2.1/beta",
                         "expiration-date": None,
                         "revision": 19,
-                        "progressive": {"paused": None, "percentage": None},
-                    }
+                        "progressive": {
+                            "paused": None,
+                            "percentage": None,
+                            "current-percentage": None,
+                        },
+                    },
+                    {
+                        "architecture": "amd64",
+                        "channel": "2.0/beta",
+                        "expiration-date": None,
+                        "revision": 18,
+                        "progressive": {
+                            "paused": None,
+                            "percentage": None,
+                            "current-percentage": None,
+                        },
+                    },
                 ],
                 "revisions": [
-                    {"architectures": ["amd64"], "revision": 19, "version": "10"}
+                    {"architectures": ["amd64"], "revision": 19, "version": "10"},
+                    {"architectures": ["amd64"], "revision": 18, "version": "10"},
                 ],
                 "snap": {
                     "name": "snap-test",
@@ -261,6 +279,34 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
                             "risk": "edge",
                             "track": "2.1",
                         },
+                        {
+                            "branch": None,
+                            "fallback": None,
+                            "name": "2.0/stable",
+                            "risk": "stable",
+                            "track": "2.0",
+                        },
+                        {
+                            "branch": None,
+                            "fallback": "2.0/stable",
+                            "name": "2.0/candidate",
+                            "risk": "candidate",
+                            "track": "2.0",
+                        },
+                        {
+                            "branch": None,
+                            "fallback": "2.0/candidate",
+                            "name": "2.0/beta",
+                            "risk": "beta",
+                            "track": "2.0",
+                        },
+                        {
+                            "branch": None,
+                            "fallback": "2.0/beta",
+                            "name": "2.0/edge",
+                            "risk": "edge",
+                            "track": "2.0",
+                        },
                     ],
                     "default-track": "2.1",
                     "tracks": [
@@ -284,6 +330,75 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
             storeapi.StoreClient, "get_snap_channel_map", return_value=self.channel_map
         )
         self.useFixture(self.fake_store_get_snap_channel_map)
+
+        self.releases = Releases.unmarshal(
+            {
+                "revisions": [
+                    {
+                        "architectures": ["i386"],
+                        "base": "core20",
+                        "build_url": None,
+                        "confinement": "strict",
+                        "created_at": " 2016-09-27T19:23:40Z",
+                        "grade": "stable",
+                        "revision": 2,
+                        "sha3-384": "a9060ef4872ccacbfa440617a76fcd84967896b28d0d1eb7571f00a1098d766e7e93353b084ba6ad841d7b14b95ede48",
+                        "size": 20,
+                        "status": "Published",
+                        "version": "2.0.1",
+                    },
+                    {
+                        "architectures": ["amd64"],
+                        "base": "core20",
+                        "build_url": None,
+                        "confinement": "strict",
+                        "created_at": "2016-09-27T18:38:43Z",
+                        "grade": "stable",
+                        "revision": 1,
+                        "sha3-384": "a9060ef4872ccacbfa440617a76fcd84967896b28d0d1eb7571f00a1098d766e7e93353b084ba6ad841d7b14b95ede48",
+                        "size": 20,
+                        "status": "Published",
+                        "version": "2.0.2",
+                    },
+                ],
+                "releases": [
+                    {
+                        "architecture": "amd64",
+                        "branch": None,
+                        "channel": "latest/stable",
+                        "expiration-date": None,
+                        "revision": 1,
+                        "risk": "stable",
+                        "track": "latest",
+                        "when": "2020-02-12T17:51:40.891996Z",
+                    },
+                    {
+                        "architecture": "i386",
+                        "branch": None,
+                        "channel": "latest/stable",
+                        "expiration-date": None,
+                        "revision": None,
+                        "risk": "stable",
+                        "track": "latest",
+                        "when": "2020-02-11T17:51:40.891996Z",
+                    },
+                    {
+                        "architecture": "amd64",
+                        "branch": None,
+                        "channel": "latest/edge",
+                        "expiration-date": None,
+                        "revision": 1,
+                        "risk": "stable",
+                        "track": "latest",
+                        "when": "2020-01-12T17:51:40.891996Z",
+                    },
+                ],
+            }
+        )
+        self.fake_store_get_releases = fixtures.MockPatchObject(
+            storeapi.StoreClient, "get_snap_releases", return_value=self.releases
+        )
+        self.useFixture(self.fake_store_get_releases)
 
         # Uploading
         self.mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)

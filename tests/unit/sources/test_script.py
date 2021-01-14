@@ -15,8 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-
 from unittest import mock
+
 from testtools.matchers import FileExists
 
 from snapcraft.internal.sources import Script

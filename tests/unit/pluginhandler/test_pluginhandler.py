@@ -27,7 +27,6 @@ import pytest
 from testtools.matchers import Contains, Equals, FileExists, Not
 
 import snapcraft
-from . import mocks
 from snapcraft.internal import (
     common,
     errors,
@@ -41,6 +40,8 @@ from snapcraft.internal import (
 from snapcraft.internal.sources.errors import SnapcraftSourceUnhandledError
 from snapcraft.project import Project
 from tests import fixture_setup, unit
+
+from . import mocks
 
 
 class PluginTestCase(unit.TestCase):
@@ -223,6 +224,27 @@ class PluginTestCase(unit.TestCase):
         self.assertTrue(
             os.path.islink(os.path.join("stage", "bar")),
             "Expected migrated 'sym-a' to be a symlink.",
+        )
+
+    def test_migrate_files_no_follow_symlinks(self):
+        os.makedirs("install/usr/bin")
+        os.makedirs("stage")
+
+        with open(os.path.join("install", "usr", "bin", "foo"), "w") as f:
+            f.write("installed")
+
+        os.symlink("usr/bin", os.path.join("install", "bin"))
+
+        files, dirs = pluginhandler._migratable_filesets(["-usr"], "install")
+        pluginhandler._migrate_files(files, dirs, "install", "stage")
+
+        # Verify that the symlinks were preserved
+        assert files == {"bin"}
+        assert dirs == set()
+
+        self.assertTrue(
+            os.path.islink(os.path.join("stage", "bin")),
+            "Expected migrated 'bin' to be a symlink.",
         )
 
     def test_migrate_files_preserves_symlink_nested_file(self):

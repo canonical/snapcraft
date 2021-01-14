@@ -14,13 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from unittest import mock
+
+from testtools.matchers import Equals
+
 from snapcraft import project
 from snapcraft.internal import steps
 from snapcraft.internal.project_loader import inspection
-
-from testtools.matchers import Equals
-from unittest import mock
-
 from tests import unit
 
 

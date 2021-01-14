@@ -63,7 +63,8 @@ import os
 import re
 import shutil
 from glob import iglob
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+
 from pkg_resources import parse_version
 
 from snapcraft import common

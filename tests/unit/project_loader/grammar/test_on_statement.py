@@ -21,8 +21,8 @@ import re
 import pytest
 
 import snapcraft
-from snapcraft.internal.project_loader import grammar
 import snapcraft.internal.project_loader.grammar._on as on
+from snapcraft.internal.project_loader import grammar
 
 
 def load_tests(loader, tests, ignore):
@@ -40,7 +40,7 @@ class TestOnStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo"},
+                "expected_packages": ["foo"],
             },
         ),
         (
@@ -50,7 +50,7 @@ class TestOnStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [],
                 "host_arch": "i686",
-                "expected_packages": set(),
+                "expected_packages": list(),
             },
         ),
         (
@@ -60,7 +60,7 @@ class TestOnStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [["bar"]],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo"},
+                "expected_packages": ["foo"],
             },
         ),
         (
@@ -70,7 +70,7 @@ class TestOnStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [["bar"]],
                 "host_arch": "i686",
-                "expected_packages": {"bar"},
+                "expected_packages": ["bar"],
             },
         ),
         (
@@ -80,7 +80,7 @@ class TestOnStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [["bar"], ["baz"]],
                 "host_arch": "i686",
-                "expected_packages": {"bar"},
+                "expected_packages": ["bar"],
             },
         ),
         (
@@ -90,7 +90,7 @@ class TestOnStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [[{"on armhf": ["bar"]}], ["baz"]],
                 "host_arch": "i686",
-                "expected_packages": {"baz"},
+                "expected_packages": ["baz"],
             },
         ),
         (
@@ -100,7 +100,7 @@ class TestOnStatementGrammar:
                 "body": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}],
                 "else_bodies": [],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo"},
+                "expected_packages": ["foo"],
             },
         ),
         (
@@ -110,7 +110,7 @@ class TestOnStatementGrammar:
                 "body": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}],
                 "else_bodies": [],
                 "host_arch": "i686",
-                "expected_packages": {"bar"},
+                "expected_packages": ["bar"],
             },
         ),
         (
@@ -120,7 +120,7 @@ class TestOnStatementGrammar:
                 "body": [{"on amd64": ["foo"]}, {"else": ["bar"]}],
                 "else_bodies": [],
                 "host_arch": "x86_64",
-                "expected_packages": {"foo"},
+                "expected_packages": ["foo"],
             },
         ),
         (
@@ -130,7 +130,7 @@ class TestOnStatementGrammar:
                 "body": [{"on amd64": ["foo"]}, {"else": ["bar"]}],
                 "else_bodies": [],
                 "host_arch": "i686",
-                "expected_packages": {"bar"},
+                "expected_packages": ["bar"],
             },
         ),
         (
@@ -140,7 +140,7 @@ class TestOnStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [[{"on amd64": ["bar"]}, {"else": ["baz"]}]],
                 "host_arch": "x86_64",
-                "expected_packages": {"bar"},
+                "expected_packages": ["bar"],
             },
         ),
         (
@@ -150,7 +150,7 @@ class TestOnStatementGrammar:
                 "body": ["foo"],
                 "else_bodies": [[{"on amd64": ["bar"]}, {"else": ["baz"]}]],
                 "host_arch": "i686",
-                "expected_packages": {"baz"},
+                "expected_packages": ["baz"],
             },
         ),
     ]

@@ -74,13 +74,11 @@ class MesonPlugin(PluginV1):
         self.mesonbuilddir = os.path.join(self.builddir, self.snapbuildname)
 
     def _setup_base_tools(self, base):
-        if base in ("core", "core16", "core18"):
-            self.build_packages.append("python3-pip")
-            self.build_packages.append("python3-setuptools")
-            self.build_packages.append("python3-wheel")
-            self.build_packages.append("ninja-build")
-        else:
-            raise errors.PluginBaseError(part_name=self.name, base=base)
+        self.build_packages.append("python3-pip")
+        self.build_packages.append("python3-setuptools")
+        self.build_packages.append("python3-wheel")
+        self.build_packages.append("ninja-build")
+
         if base == "core18":
             self.build_packages.append("python3-distutils")
 

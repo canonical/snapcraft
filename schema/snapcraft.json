@@ -132,7 +132,7 @@
                     "uniqueItems": true,
                     "items": {
                         "type": "string",
-                        "description": "Architectures to enable, or restrict to, for this repository.  Supports '$SNAPCRAFT_APT_HOST_ARCH' variable.  Defaults to host architecture."
+                        "description": "Architectures to enable, or restrict to, for this repository.  Defaults to host architecture."
                     }
                 },
                 "formats": {
@@ -172,7 +172,7 @@
                     "uniqueItems": true,
                     "items": {
                         "type": "string",
-                        "description": "Deb repository suites to enable, e.g. 'xenial-updates, xenial-security'.  Supports '$SNAPCRAFT_APT_RELEASE' variable for snapcraft to populate base's release name (e.g. 'xenial')."
+                        "description": "Deb repository suites to enable, e.g. 'xenial-updates, xenial-security')."
                     }
                 },
                 "url": {
@@ -347,7 +347,9 @@
         },
         "description": {
             "type": "string",
-            "description": "long description of the package"
+            "description": "long description of the package",
+            "pattern": ".+",
+            "validation-failure": "{.instance!r} is not a valid description string."
         },
         "assumes": {
             "type": "array",
@@ -784,6 +786,7 @@
                                     "flutter-master",
                                     "gnome-3-28",
                                     "gnome-3-34",
+                                    "gnome-3-38",
                                     "kde-neon",
                                     "ros1-noetic",
                                     "ros2-foxy"

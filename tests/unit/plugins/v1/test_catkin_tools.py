@@ -20,6 +20,7 @@ from unittest import mock
 import pytest
 
 from snapcraft.plugins.v1 import catkin_tools
+
 from . import PluginsV1BaseTestCase
 
 

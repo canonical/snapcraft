@@ -14,12 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import fixtures
 import os
 import socketserver
 import tempfile
 import threading
 from unittest import mock
+
+import fixtures
 
 from tests.fake_servers import snapd
 

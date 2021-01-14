@@ -14,13 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Optional
 
 from snapcraft import formatting_utils
 from snapcraft.internal import common, steps
 
 if TYPE_CHECKING:
     from snapcraft.project import Project
+
     from . import PluginHandler
 
 
@@ -64,14 +65,15 @@ def get_snapcraft_global_environment(
 
     return {
         "SNAPCRAFT_ARCH_TRIPLET": project.arch_triplet,
+        "SNAPCRAFT_EXTENSIONS_DIR": common.get_extensionsdir(),
         "SNAPCRAFT_PARALLEL_BUILD_COUNT": str(project.parallel_build_count),
+        "SNAPCRAFT_PRIME": project.prime_dir,
         "SNAPCRAFT_PROJECT_NAME": name,
         "SNAPCRAFT_PROJECT_VERSION": version,
         "SNAPCRAFT_PROJECT_DIR": project._project_dir,
         "SNAPCRAFT_PROJECT_GRADE": grade,
         "SNAPCRAFT_STAGE": project.stage_dir,
-        "SNAPCRAFT_PRIME": project.prime_dir,
-        "SNAPCRAFT_EXTENSIONS_DIR": common.get_extensionsdir(),
+        "SNAPCRAFT_TARGET_ARCH": project.target_arch,
     }
 
 

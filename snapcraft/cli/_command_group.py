@@ -16,8 +16,8 @@
 import click
 
 from snapcraft.internal import deprecations
-from . import echo
 
+from . import echo
 
 _CMD_DEPRECATED_REPLACEMENTS = {
     "strip": "prime",

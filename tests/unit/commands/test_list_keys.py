@@ -17,26 +17,16 @@
 from textwrap import dedent
 
 from testtools.matchers import Contains, Equals
+import fixtures
 
 from snapcraft import storeapi
+
 from . import FakeStoreCommandsBaseTestCase, get_sample_key
 
 
 class ListKeysCommandTestCase(FakeStoreCommandsBaseTestCase):
 
     command_name = "list-keys"
-
-    def test_list_keys_snapd_not_installed(self):
-        self.fake_package_installed.mock.return_value = False
-
-        raised = self.assertRaises(
-            storeapi.errors.MissingSnapdError, self.run_command, [self.command_name]
-        )
-
-        self.assertThat(str(raised), Contains("The snapd package is not installed."))
-        self.assertThat(str(raised), Contains("The snapd package is not installed."))
-        self.fake_package_installed.mock.assert_called_with("snapd")
-        self.fake_check_output.mock.assert_not_called()
 
     def test_command_without_login_must_ask(self):
         # TODO: look into why this many calls are done inside snapcraft.storeapi
@@ -82,6 +72,39 @@ class ListKeysCommandTestCase(FakeStoreCommandsBaseTestCase):
                 ).format(
                     default_sha3_384=get_sample_key("default")["sha3-384"],
                     another_sha3_384=get_sample_key("another")["sha3-384"],
+                )
+            ),
+        )
+
+    def test_list_keys_no_keys_on_system(self):
+        self.fake_store_account_info.mock.return_value = {
+            "account_id": "abcd",
+            "account_keys": [
+                {
+                    "name": "default",
+                    "public-key-sha3-384": (get_sample_key("default")["sha3-384"]),
+                }
+            ],
+        }
+
+        self.useFixture(
+            fixtures.MockPatch("subprocess.check_output", return_value="[]".encode())
+        )
+
+        result = self.run_command(
+            [self.command_name], input="user@example.com\nsecret\n"
+        )
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Contains(
+                dedent(
+                    """\
+                    No keys have been created on this system.  See 'snapcraft create-key --help' to create a key.
+                    The following SHA3-384 key fingerprints have been registered but are not available on this system:
+                    - vdEeQvRxmZ26npJCFaGnl-VfGz0lU2jZZkWp_s7E-RxVCNtH2_mtjcxq2NkDKkIp
+            """
                 )
             ),
         )

@@ -17,13 +17,12 @@
 import os
 import pathlib
 import subprocess
-
 from unittest import mock
+
 from testtools.matchers import Contains, Equals
 
-from snapcraft.plugins.v1._ros import wstool
-
 import snapcraft
+from snapcraft.plugins.v1._ros import wstool
 from tests import unit
 
 

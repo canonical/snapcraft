@@ -16,9 +16,9 @@
 
 from typing import Any, Dict, Set
 
-from snapcraft import project, BasePlugin
-from snapcraft.internal.project_loader import grammar
+from snapcraft import BasePlugin, project
 from snapcraft.internal import repo
+from snapcraft.internal.project_loader import grammar
 
 from ._package_transformer import package_transformer
 
@@ -121,7 +121,7 @@ class PartGrammarProcessor:
                 self._project,
                 repo.snaps.SnapPackage.is_valid_snap,
             )
-            self.__build_snaps = processor.process()
+            self.__build_snaps = set(processor.process())
 
         return self.__build_snaps
 
@@ -132,7 +132,7 @@ class PartGrammarProcessor:
                 self._project,
                 repo.snaps.SnapPackage.is_valid_snap,
             )
-            self.__stage_snaps = processor.process()
+            self.__stage_snaps = set(processor.process())
 
         return self.__stage_snaps
 
@@ -142,9 +142,8 @@ class PartGrammarProcessor:
                 self._get_property("build-packages"),
                 self._project,
                 self._repo.build_package_is_valid,
-                transformer=package_transformer,
             )
-            self.__build_packages = processor.process()
+            self.__build_packages = set(processor.process())
 
         return self.__build_packages
 
@@ -156,6 +155,6 @@ class PartGrammarProcessor:
                 self._repo.build_package_is_valid,
                 transformer=package_transformer,
             )
-            self.__stage_packages = processor.process()
+            self.__stage_packages = set(processor.process())
 
         return self.__stage_packages

@@ -1,9 +1,8 @@
 import os
 import urllib.parse
 
-from ._client import Client
-
 from . import constants
+from ._client import Client
 
 
 class UpDownClient(Client):

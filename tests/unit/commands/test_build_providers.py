@@ -21,12 +21,13 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Equals
 
-from . import CommandBaseTestCase
-from snapcraft import project
+import snapcraft.yaml_utils.errors
 from snapcraft.internal import steps
 from snapcraft.internal.build_providers.errors import ProviderExecError
 from tests import fixture_setup
 from tests.unit.build_providers import ProviderImpl
+
+from . import CommandBaseTestCase
 
 
 class LifecycleCommandsBaseTestCase(CommandBaseTestCase):
@@ -266,7 +267,7 @@ class BuildProviderYamlValidationTest(LifecycleCommandsBaseTestCase):
         self.useFixture(snapcraft_yaml)
 
         self.assertRaises(
-            project.errors.YamlValidationError, self.run_command, ["pull"]
+            snapcraft.yaml_utils.errors.YamlValidationError, self.run_command, ["pull"]
         )
 
 
@@ -470,7 +471,7 @@ class BuildProviderCleanCommandTestCase(LifecycleCommandsBaseTestCase):
             def clean_project(self):
                 clean_project_mock()
 
-            def clean(self, part_names):
+            def clean_parts(self, part_names):
                 clean_mock(part_names=part_names)
 
         patcher = mock.patch(

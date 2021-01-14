@@ -61,6 +61,12 @@ def test_get_build_environment():
     }
 
 
+def test_out_of_source_build_property():
+    plugin = catkin_tools.CatkinToolsPlugin(part_name="my-part", options=lambda: None)
+
+    assert plugin.out_of_source_build
+
+
 def test_get_build_commands(monkeypatch):
     class Options:
         catkin_tools_cmake_args = list()
@@ -74,18 +80,23 @@ def test_get_build_commands(monkeypatch):
     monkeypatch.setattr(os, "environ", dict())
 
     assert plugin.get_build_commands() == [
+        'state="$(set +o)"',
+        "set +u",
         "_CATKIN_SETUP_DIR=/opt/ros/$ROS_DISTRO . /opt/ros/$ROS_DISTRO/setup.sh",
+        'eval "$(state)"',
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
         "rosdep update --include-eol-distros --rosdistro $ROS_DISTRO",
-        "rosdep install --default-yes --ignore-packages-from-source --from-paths .",
+        "rosdep install --default-yes --ignore-packages-from-source --from-paths $SNAPCRAFT_PART_SRC",
         "catkin init",
         "catkin profile add -f default",
-        "catkin config --profile default --install --install-space $SNAPCRAFT_PART_INSTALL/opt/ros/$ROS_DISTRO",
+        "catkin config --profile default --install "
+        "--source-space $SNAPCRAFT_PART_SRC --build-space $SNAPCRAFT_PART_BUILD "
+        "--install-space $SNAPCRAFT_PART_INSTALL/opt/ros/$ROS_DISTRO",
         "catkin build --no-notify --profile default -j $SNAPCRAFT_PARALLEL_BUILD_COUNT",
         "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 /test/python3 -I "
         "/test/_ros.py "
-        "stage-runtime-dependencies --part-install $SNAPCRAFT_PART_INSTALL "
+        "stage-runtime-dependencies --part-src $SNAPCRAFT_PART_SRC --part-install $SNAPCRAFT_PART_INSTALL "
         "--ros-distro $ROS_DISTRO",
     ]
 
@@ -116,20 +127,25 @@ def test_get_build_commands_with_all_properties(monkeypatch):
     )
 
     assert plugin.get_build_commands() == [
+        'state="$(set +o)"',
+        "set +u",
         "_CATKIN_SETUP_DIR=/opt/ros/$ROS_DISTRO . /opt/ros/$ROS_DISTRO/setup.sh",
+        'eval "$(state)"',
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
         "rosdep update --include-eol-distros --rosdistro $ROS_DISTRO",
-        "rosdep install --default-yes --ignore-packages-from-source --from-paths .",
+        "rosdep install --default-yes --ignore-packages-from-source --from-paths $SNAPCRAFT_PART_SRC",
         "catkin init",
         "catkin profile add -f default",
-        "catkin config --profile default --install --install-space $SNAPCRAFT_PART_INSTALL/opt/ros/$ROS_DISTRO --cmake-args cmake args...",
+        "catkin config --profile default --install "
+        "--source-space $SNAPCRAFT_PART_SRC --build-space $SNAPCRAFT_PART_BUILD "
+        "--install-space $SNAPCRAFT_PART_INSTALL/opt/ros/$ROS_DISTRO --cmake-args cmake args...",
         "catkin build --no-notify --profile default -j $SNAPCRAFT_PARALLEL_BUILD_COUNT package1 package2...",
         "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/bin:/test SNAP=TESTSNAP "
         "SNAP_ARCH=TESTARCH SNAP_NAME=TESTSNAPNAME SNAP_VERSION=TESTV1 "
         "http_proxy=http://foo https_proxy=https://bar "
         "/test/python3 -I "
         "/test/_ros.py "
-        "stage-runtime-dependencies --part-install $SNAPCRAFT_PART_INSTALL "
+        "stage-runtime-dependencies --part-src $SNAPCRAFT_PART_SRC --part-install $SNAPCRAFT_PART_INSTALL "
         "--ros-distro $ROS_DISTRO",
     ]

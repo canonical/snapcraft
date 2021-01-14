@@ -16,18 +16,18 @@
 
 import logging
 import os
-import tempfile
 import subprocess
 import sys
+import tempfile
+from unittest import mock
 
 import fixtures
 import pytest
 from testtools.matchers import Contains, EndsWith, Equals, NotEquals, StartsWith
-from unittest import mock
 
 from snapcraft import ProjectOptions
-from snapcraft.internal import errors, elf
-from tests import unit, fixture_setup
+from snapcraft.internal import elf, errors
+from tests import fixture_setup, unit
 
 
 class TestElfBase(unit.TestCase):
@@ -85,8 +85,9 @@ class TestElfFileSmoketest(unit.TestCase):
         self.assertTrue(isinstance(elf_file.interp, str))
         self.assertThat(elf_file.interp, NotEquals(""))
 
-        # Python is not a shared library, so has no soname
+        # Python is not a shared library, so has no soname or defined versions
         self.assertThat(elf_file.soname, Equals(""))
+        self.assertThat(elf_file.versions, Equals(set()))
 
         # We expect that Python will be linked to libc
         for lib in elf_file.needed.values():
@@ -404,6 +405,14 @@ class TestElfFileAttrs(TestElfBase):
         openssl = elf_file.needed["libssl.so.1.0.0"]
         self.assertThat(openssl.name, Equals("libssl.so.1.0.0"))
         self.assertThat(openssl.versions, Equals({"OPENSSL_1.0.0"}))
+
+    def test_libssl(self):
+        # libssl.so.1.0.0 defines some symbol versions it provides
+        elf_file = self.fake_elf["libssl.so.1.0.0"]
+
+        self.assertThat(elf_file.interp, Equals(""))
+        self.assertThat(elf_file.soname, Equals("libssl.so.1.0.0"))
+        self.assertThat(elf_file.versions, Equals({"libssl.so.1.0.0", "OPENSSL_1.0.0"}))
 
 
 class TestPatcher(TestElfBase):

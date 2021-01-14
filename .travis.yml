@@ -9,32 +9,7 @@ env:
 
 jobs:
   include:
-    # Tests, only when not triggered by the daily cron.
-    - stage: static
-      name: static tests
-      addons:
-        apt:
-          packages:
-            - libyaml-dev
-            - python3-yaml
-            - python3.6-dev
-        snaps:
-          - name: core
-          - name: core18
-          - name: shellcheck
-          - name: black
-            channel: beta
-            confinement: devmode
-      install:
-        - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
-        - pip3 install --user -r requirements-devel.txt
-      script:
-        - ./runtests.sh static
-    - stage: unit and snap
-      name: unit tests
-      script:
-        - SNAPCRAFT_UNIT_TESTS=Y ./runtests.sh spread "google:ubuntu-18.04-64:tests/spread/unit/coverage"
-    - stage: unit and snap
+    - stage: snap
       name: snap
       workspaces:
         create:
@@ -68,23 +43,6 @@ jobs:
         - sudo journalctl -u snapd
         - /snap/bin/http https://api.snapcraft.io/v2/snaps/info/core architecture==amd64 Snap-Device-Series:16
 
-    - stage: deploy
-      name: Snap Store
-      addons:
-        snaps:
-          - name: snapcraft
-            channel: candidate
-            classic: true
-      workspaces:
-        use: snaps
-      if: (type = pull_request) AND (head_repo = "snapcore/snapcraft")
-      script: ./tools/travis_deploy.sh
-    - stage: integration
-      name: spread
-      workspaces:
-        use: snaps
-      if: repo = "snapcore/snapcraft" or env(SPREAD_GOOGLE_KEY) IS present
-      script: ./runtests.sh spread "google:"
     - stage: integration
       name: store
       workspaces:
@@ -118,16 +76,3 @@ jobs:
         - cd docker
         - docker build --no-cache -f ${RISK}.Dockerfile --tag snapcore/snapcraft:${RISK} .
         - docker run snapcore/snapcraft:${RISK} snapcraft --version
-    # CLA check, only in pull requests, not coming from the bot.
-    - stage: cla
-      name:  CLA check
-      addons:
-        apt:
-          packages:
-            - git
-            - python-launchpadlib
-      if: type = pull_request AND sender != snappy-m-o
-      git:
-        depth: false
-      script:
-        - ./tools/cla_check.py

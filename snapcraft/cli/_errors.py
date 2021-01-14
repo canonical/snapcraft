@@ -13,10 +13,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import distutils.util
-import os
-import sys
-import shutil
 import logging
+import os
+import shutil
+import sys
 import tempfile
 import traceback
 from textwrap import dedent
@@ -26,11 +26,11 @@ import click
 from raven import Client as RavenClient
 from raven.transport import RequestsHTTPTransport
 
-from . import echo
 import snapcraft
 from snapcraft.config import CLIConfig as _CLIConfig
 from snapcraft.internal import errors
 
+from . import echo
 
 # TODO:
 # - annotate the part and lifecycle step in the message

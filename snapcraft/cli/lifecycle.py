@@ -87,6 +87,12 @@ def _execute(  # noqa: C901
     project = get_project(is_managed_host=is_managed_host, **kwargs)
     conduct_project_sanity_check(project, **kwargs)
 
+    project_path = pathlib.Path(project._project_dir)
+    if project_path.name in ["build-aux", "snap"]:
+        echo.warning(
+            f"Snapcraft is running in directory {project_path.name!r}.  If this is the snap assets directory, please run snapcraft from {project_path.parent}."
+        )
+
     if build_provider in ["host", "managed-host"]:
         project_config = project_loader.load_config(project)
         lifecycle.execute(step, project_config, parts)
@@ -115,7 +121,6 @@ def _execute(  # noqa: C901
         with build_provider_class(
             project=project, echoer=echo, build_provider_flags=build_provider_flags
         ) as instance:
-            instance.mount_project()
             try:
                 if shell:
                     # shell means we want to do everything right up to the previous
@@ -447,7 +452,7 @@ def clean(ctx, parts, unprime, step, **kwargs):
             with build_provider_class(
                 project=project, echoer=echo, build_provider_flags=build_provider_flags
             ) as instance:
-                instance.clean(part_names=parts)
+                instance.clean_parts(part_names=parts)
         else:
             build_provider_class(project=project, echoer=echo).clean_project()
             # Clear the prime directory on the host, unless on Windows.

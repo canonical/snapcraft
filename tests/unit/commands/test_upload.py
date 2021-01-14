@@ -22,14 +22,15 @@ import fixtures
 from testtools.matchers import Contains, Equals, FileExists, Not
 from xdg import BaseDirectory
 
-from snapcraft import file_utils, storeapi, internal
+import tests
+from snapcraft import file_utils, internal, storeapi
 from snapcraft.internal import review_tools
 from snapcraft.storeapi.errors import (
     StoreDeltaApplicationError,
-    StoreUploadError,
     StoreUpDownError,
+    StoreUploadError,
 )
-import tests
+
 from . import FakeStoreCommandsBaseTestCase
 
 

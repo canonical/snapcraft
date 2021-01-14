@@ -16,9 +16,10 @@
 
 from copy import deepcopy
 
+import snapcraft.yaml_utils.errors
 from snapcraft import yaml_utils
+
 from . import _schema
-from . import errors
 
 
 class ProjectInfo:
@@ -31,7 +32,7 @@ class ProjectInfo:
         try:
             self.name = self.__raw_snapcraft["name"]
         except KeyError as key_error:
-            raise errors.YamlValidationError(
+            raise snapcraft.yaml_utils.errors.YamlValidationError(
                 "'name' is a required property in {!r}".format(snapcraft_yaml_file_path)
             ) from key_error
         self.version = self.__raw_snapcraft.get("version")

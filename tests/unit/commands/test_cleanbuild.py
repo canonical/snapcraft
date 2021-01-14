@@ -13,11 +13,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import snapcraft.yaml_utils.errors
+from snapcraft.internal import errors
+from tests import fixture_setup
 
 from . import CommandBaseTestCase
-from snapcraft.internal import errors
-from snapcraft.project import errors as project_errors
-from tests import fixture_setup
 
 
 class CleanbuildCase(CommandBaseTestCase):
@@ -36,5 +36,7 @@ class CleanbuildCase(CommandBaseTestCase):
         self.useFixture(snapcraft_yaml)
 
         self.assertRaises(
-            project_errors.YamlValidationError, self.run_command, ["cleanbuild"]
+            snapcraft.yaml_utils.errors.YamlValidationError,
+            self.run_command,
+            ["cleanbuild"],
         )

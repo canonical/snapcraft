@@ -1,0 +1,38 @@
+name: Python Environment Tests
+on: [pull_request, push]
+
+jobs:
+  static-and-unit-tests:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install dependencies
+        run: |
+          ./tools/environment-setup-local.sh
+      - name: Run black
+        run: |
+          make test-black
+      - name: Run codespell
+        run: |
+          source ${HOME}/.venv/snapcraft/bin/activate
+          make test-codespell
+      - name: Run flake8
+        run: |
+          source ${HOME}/.venv/snapcraft/bin/activate
+          make test-flake8
+      - name: Run mypy
+        run: |
+          source ${HOME}/.venv/snapcraft/bin/activate
+          make test-mypy
+      - name: Run shellcheck
+        run: |
+          make test-shellcheck
+      - name: Run unit tests
+        run: |
+          source ${HOME}/.venv/snapcraft/bin/activate
+          make test-units
+      - name: Upload code coverage
+        uses: codecov/codecov-action@v1

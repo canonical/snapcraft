@@ -14,9 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from testtools.matchers import Equals, HasLength, Is, IsInstance
-
 import pytest
+from testtools.matchers import Equals, HasLength, Is, IsInstance
 
 from snapcraft.storeapi.v2 import channel_map
 from tests import unit
@@ -24,23 +23,25 @@ from tests import unit
 
 class ProgressiveTest(unit.TestCase):
     def test_progressive(self):
-        payload = {"paused": False, "percentage": 83.3}
+        payload = {"paused": False, "percentage": 83.3, "current-percentage": 32.1}
 
         p = channel_map.Progressive.unmarshal(payload)
 
-        self.expectThat(repr(p), Equals(f"<Progressive: 83.3>"))
+        self.expectThat(repr(p), Equals(f"<Progressive: 32.1=>83.3>"))
         self.expectThat(p.paused, Equals(payload["paused"]))
         self.expectThat(p.percentage, Equals(payload["percentage"]))
+        self.expectThat(p.current_percentage, Equals(payload["current-percentage"]))
         self.expectThat(p.marshal(), Equals(payload))
 
     def test_none(self):
-        payload = {"paused": None, "percentage": None}
+        payload = {"paused": None, "percentage": None, "current-percentage": None}
 
         p = channel_map.Progressive.unmarshal(payload)
 
-        self.expectThat(repr(p), Equals(f"<Progressive: None>"))
+        self.expectThat(repr(p), Equals(f"<Progressive: None=>None>"))
         self.expectThat(p.paused, Equals(payload["paused"]))
         self.expectThat(p.percentage, Equals(payload["percentage"]))
+        self.expectThat(p.current_percentage, Equals(payload["current-percentage"]))
         self.expectThat(p.marshal(), Equals(payload))
 
 
@@ -52,7 +53,11 @@ class MappedChannelTest(unit.TestCase):
             "architecture": "amd64",
             "channel": "latest/stable",
             "expiration-date": None,
-            "progressive": {"paused": None, "percentage": None},
+            "progressive": {
+                "paused": None,
+                "percentage": None,
+                "current-percentage": None,
+            },
             "revision": 2,
         }
 
@@ -245,28 +250,44 @@ class ChannelMapTest(unit.TestCase):
                     "architecture": "amd64",
                     "channel": "latest/stable",
                     "expiration-date": None,
-                    "progressive": {"paused": None, "percentage": None},
+                    "progressive": {
+                        "paused": None,
+                        "percentage": None,
+                        "current-percentage": None,
+                    },
                     "revision": 2,
                 },
                 {
                     "architecture": "amd64",
                     "channel": "latest/stable",
                     "expiration-date": None,
-                    "progressive": {"paused": None, "percentage": 33.3},
+                    "progressive": {
+                        "paused": None,
+                        "percentage": 33.3,
+                        "current-percentage": 12.3,
+                    },
                     "revision": 3,
                 },
                 {
                     "architecture": "arm64",
                     "channel": "latest/stable",
                     "expiration-date": None,
-                    "progressive": {"paused": None, "percentage": None},
+                    "progressive": {
+                        "paused": None,
+                        "percentage": None,
+                        "current-percentage": None,
+                    },
                     "revision": 2,
                 },
                 {
                     "architecture": "i386",
                     "channel": "latest/stable",
                     "expiration-date": None,
-                    "progressive": {"paused": None, "percentage": None},
+                    "progressive": {
+                        "paused": None,
+                        "percentage": None,
+                        "current-percentage": None,
+                    },
                     "revision": 4,
                 },
             ],

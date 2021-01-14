@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import apt
 import logging
 import os
 import re
@@ -22,6 +21,8 @@ import shutil
 from contextlib import ContextDecorator
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
+
+import apt
 
 from snapcraft.internal import common
 from snapcraft.internal.indicators import is_dumb_terminal
@@ -177,10 +178,11 @@ class AptCache(ContextDecorator):
                 installed[package.name] = str(package.installed.version)
         return installed
 
-    def get_marked_packages(self) -> List[Tuple[str, str]]:
+    def get_packages_marked_for_installation(self) -> List[Tuple[str, str]]:
         return [
             (package.name, package.candidate.version)
             for package in self.cache.get_changes()
+            if package.marked_install
         ]
 
     def mark_packages(self, package_names: Set[str]) -> None:

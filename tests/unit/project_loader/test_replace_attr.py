@@ -17,7 +17,6 @@
 from testtools.matchers import Equals
 
 from snapcraft.internal import project_loader
-
 from tests import unit
 
 

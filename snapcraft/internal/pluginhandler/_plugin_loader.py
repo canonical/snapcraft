@@ -22,10 +22,10 @@ from pathlib import Path
 
 import jsonschema
 
-from snapcraft.project import errors as project_errors, Project
-from snapcraft.internal import errors
+import snapcraft.yaml_utils.errors
 from snapcraft import plugins
-
+from snapcraft.internal import errors
+from snapcraft.project import Project
 
 logger = logging.getLogger(__name__)
 
@@ -190,7 +190,7 @@ def _make_options(
     try:
         jsonschema.validate(properties, plugin_schema)
     except jsonschema.ValidationError as e:
-        error = project_errors.YamlValidationError.from_validation_error(e)
+        error = snapcraft.yaml_utils.errors.YamlValidationError.from_validation_error(e)
         raise errors.PluginError(
             "properties failed to load for {}: {}".format(part_name, error.message)
         )

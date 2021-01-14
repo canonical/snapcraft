@@ -14,14 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from tests import unit
 from textwrap import dedent
 
 import pytest
 from testtools.matchers import Equals, Is, MatchesRegex
 
+import snapcraft.yaml_utils.errors
 from snapcraft.project._project_info import ProjectInfo
-from snapcraft.project import errors
+from tests import unit
 
 
 class ProjectInfoTest(unit.TestCase):
@@ -49,7 +49,7 @@ class ProjectInfoTest(unit.TestCase):
         snapcraft_yaml_file_path = self.make_snapcraft_yaml("")
 
         raised = self.assertRaises(
-            errors.YamlValidationError,
+            snapcraft.yaml_utils.errors.YamlValidationError,
             ProjectInfo,
             snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         )
@@ -90,7 +90,7 @@ class ProjectInfoTest(unit.TestCase):
         )
 
         raised = self.assertRaises(
-            errors.YamlValidationError,
+            snapcraft.yaml_utils.errors.YamlValidationError,
             ProjectInfo,
             snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         )
@@ -167,7 +167,7 @@ class InvalidYamlTest(unit.TestCase):
         )
 
         raised = self.assertRaises(
-            errors.YamlValidationError,
+            snapcraft.yaml_utils.errors.YamlValidationError,
             ProjectInfo,
             snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         )
@@ -195,7 +195,7 @@ class InvalidYamlTest(unit.TestCase):
         )
 
         raised = self.assertRaises(
-            errors.YamlValidationError,
+            snapcraft.yaml_utils.errors.YamlValidationError,
             ProjectInfo,
             snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         )
@@ -226,7 +226,7 @@ class InvalidYamlTest(unit.TestCase):
         )
 
         raised = self.assertRaises(
-            errors.YamlValidationError,
+            snapcraft.yaml_utils.errors.YamlValidationError,
             ProjectInfo,
             snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         )
@@ -247,7 +247,7 @@ class InvalidYamlTest(unit.TestCase):
         )
 
         raised = self.assertRaises(
-            errors.YamlValidationError,
+            snapcraft.yaml_utils.errors.YamlValidationError,
             ProjectInfo,
             snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         )

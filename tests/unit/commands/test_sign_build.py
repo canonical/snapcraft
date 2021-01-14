@@ -21,8 +21,9 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Contains, Equals, FileExists, Not
 
-from snapcraft import storeapi, internal
 import tests
+from snapcraft import internal, storeapi
+
 from . import CommandBaseTestCase
 
 
@@ -52,26 +53,7 @@ class SignBuildTestCase(CommandBaseTestCase):
         self.snap_test = SnapTest("test-snap.snap")
         self.useFixture(self.snap_test)
 
-    @mock.patch("subprocess.check_output")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
-    def test_sign_build_snapd_not_installed(self, mock_installed, mock_check_output):
-        mock_installed.return_value = False
-
-        raised = self.assertRaises(
-            storeapi.errors.MissingSnapdError,
-            self.run_command,
-            ["sign-build", self.snap_test.snap_path, "--local"],
-        )
-
-        self.assertThat(str(raised), Contains("The snapd package is not installed."))
-        mock_installed.assert_called_with("snapd")
-        self.assertThat(mock_check_output.call_count, Equals(0))
-
-    @mock.patch("subprocess.check_output")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
-    def test_sign_build_nonexisting_snap(self, mock_installed, mock_check_output):
-        mock_installed.return_value = True
-
+    def test_sign_build_nonexisting_snap(self):
         result = self.run_command(["sign-build", "nonexisting.snap"])
 
         self.assertThat(result.exit_code, Equals(2))
@@ -81,11 +63,8 @@ class SignBuildTestCase(CommandBaseTestCase):
                 "Error: Invalid value for '<snap-file>': File 'nonexisting.snap' does not exist.\n"
             ),
         )
-        self.assertThat(mock_check_output.call_count, Equals(0))
 
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
-    def test_sign_build_invalid_snap(self, mock_installed):
-        mock_installed.return_value = True
+    def test_sign_build_invalid_snap(self):
         snap_path = os.path.join(
             os.path.dirname(tests.__file__), "data", "invalid.snap"
         )
@@ -99,17 +78,10 @@ class SignBuildTestCase(CommandBaseTestCase):
         self.assertThat(str(raised), Contains("Cannot read data from snap"))
 
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    @mock.patch("subprocess.check_output")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
     def test_sign_build_missing_account_info(
-        self,
-        mock_installed,
-        mock_get_snap_data,
-        mock_check_output,
-        mock_get_account_info,
+        self, mock_get_snap_data, mock_get_account_info,
     ):
-        mock_installed.return_value = True
         mock_get_account_info.return_value = {"account_id": "abcd", "snaps": {}}
         mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}
 
@@ -127,26 +99,21 @@ class SignBuildTestCase(CommandBaseTestCase):
                 "'test-snap' for series '16'."
             ),
         )
-        self.assertThat(mock_check_output.call_count, Equals(0))
 
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    @mock.patch("subprocess.check_output")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
     def test_sign_build_no_usable_keys(
-        self,
-        mock_installed,
-        mock_get_snap_data,
-        mock_check_output,
-        mock_get_account_info,
+        self, mock_get_snap_data, mock_get_account_info,
     ):
-        mock_installed.return_value = True
         mock_get_account_info.return_value = {
             "account_id": "abcd",
             "snaps": {"16": {"test-snap": {"snap-id": "snap-id"}}},
         }
         mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}
-        mock_check_output.side_effect = ["[]"]
+
+        self.useFixture(
+            fixtures.MockPatch("subprocess.check_output", return_value="[]".encode())
+        )
 
         raised = self.assertRaises(
             storeapi.errors.NoKeysError,
@@ -166,23 +133,20 @@ class SignBuildTestCase(CommandBaseTestCase):
         self.assertThat(snap_build_path, Not(FileExists()))
 
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    @mock.patch("subprocess.check_output")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
     def test_sign_build_no_usable_named_key(
-        self,
-        mock_installed,
-        mock_get_snap_data,
-        mock_check_output,
-        mock_get_account_info,
+        self, mock_get_snap_data, mock_get_account_info,
     ):
-        mock_installed.return_value = True
         mock_get_account_info.return_value = {
             "account_id": "abcd",
             "snaps": {"16": {"test-snap": {"snap-id": "snap-id"}}},
         }
         mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}
-        mock_check_output.side_effect = ['[{"name": "default"}]']
+        self.useFixture(
+            fixtures.MockPatch(
+                "subprocess.check_output", return_value='[{"name": "default"}]'.encode()
+            )
+        )
 
         raised = self.assertRaises(
             storeapi.errors.NoSuchKeyError,
@@ -200,24 +164,22 @@ class SignBuildTestCase(CommandBaseTestCase):
         self.assertThat(snap_build_path, Not(FileExists()))
 
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    @mock.patch("subprocess.check_output")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
     def test_sign_build_unregistered_key(
-        self,
-        mock_installed,
-        mock_get_snap_data,
-        mock_check_output,
-        mock_get_account_info,
+        self, mock_get_snap_data, mock_get_account_info,
     ):
-        mock_installed.return_value = True
         mock_get_account_info.return_value = {
             "account_id": "abcd",
             "account_keys": [{"public-key-sha3-384": "another_hash"}],
             "snaps": {"16": {"test-snap": {"snap-id": "snap-id"}}},
         }
         mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}
-        mock_check_output.side_effect = ['[{"name": "default", "sha3-384": "a_hash"}]']
+        self.useFixture(
+            fixtures.MockPatch(
+                "subprocess.check_output",
+                return_value='[{"name": "default", "sha3-384": "a_hash"}]'.encode(),
+            )
+        )
 
         raised = self.assertRaises(
             storeapi.errors.KeyNotRegisteredError,
@@ -239,27 +201,25 @@ class SignBuildTestCase(CommandBaseTestCase):
         self.assertThat(snap_build_path, Not(FileExists()))
 
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    @mock.patch("subprocess.check_output")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
     def test_sign_build_snapd_failure(
-        self,
-        mock_installed,
-        mock_get_snap_data,
-        mock_check_output,
-        mock_get_account_info,
+        self, mock_get_snap_data, mock_get_account_info,
     ):
-        mock_installed.return_value = True
         mock_get_account_info.return_value = {
             "account_id": "abcd",
             "account_keys": [{"public-key-sha3-384": "a_hash"}],
             "snaps": {"16": {"test-snap": {"snap-id": "snap-id"}}},
         }
         mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}
-        mock_check_output.side_effect = [
-            '[{"name": "default", "sha3-384": "a_hash"}]',
-            subprocess.CalledProcessError(1, ["a", "b"]),
-        ]
+        self.useFixture(
+            fixtures.MockPatch(
+                "subprocess.check_output",
+                side_effect=[
+                    '[{"name": "default", "sha3-384": "a_hash"}]'.encode(),
+                    subprocess.CalledProcessError(1, ["a", "b"]),
+                ],
+            )
+        )
 
         raised = self.assertRaises(
             storeapi.errors.SignBuildAssertionError,
@@ -279,23 +239,20 @@ class SignBuildTestCase(CommandBaseTestCase):
         self.assertThat(snap_build_path, Not(FileExists()))
 
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    @mock.patch("subprocess.check_output")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
     def test_sign_build_locally_successfully(
-        self,
-        mock_installed,
-        mock_get_snap_data,
-        mock_check_output,
-        mock_get_account_info,
+        self, mock_get_snap_data, mock_get_account_info,
     ):
-        mock_installed.return_value = True
         mock_get_account_info.return_value = {
             "account_id": "abcd",
             "snaps": {"16": {"test-snap": {"snap-id": "snap-id"}}},
         }
         mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}
-        mock_check_output.side_effect = ['[{"name": "default"}]', b"Mocked assertion"]
+        fake_check_output = fixtures.MockPatch(
+            "subprocess.check_output",
+            side_effect=['[{"name": "default"}]'.encode(), b"Mocked assertion"],
+        )
+        self.useFixture(fake_check_output)
 
         result = self.run_command(["sign-build", self.snap_test.snap_path, "--local"])
 
@@ -306,9 +263,9 @@ class SignBuildTestCase(CommandBaseTestCase):
             Contains("Build assertion {} saved to disk.".format(snap_build_path)),
         )
         self.assertThat(snap_build_path, FileExists())
-        mock_check_output.assert_called_with(
+        fake_check_output.mock.assert_called_with(
             [
-                "snap",
+                mock.ANY,
                 "sign-build",
                 "--developer-id=abcd",
                 "--snap-id=snap-id",
@@ -320,27 +277,21 @@ class SignBuildTestCase(CommandBaseTestCase):
         )
 
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    @mock.patch("subprocess.check_output")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
     def test_sign_build_missing_grade(
-        self,
-        mock_installed,
-        mock_get_snap_data,
-        mock_check_output,
-        mock_get_account_info,
+        self, mock_get_snap_data, mock_get_account_info,
     ):
-        mock_installed.return_value = True
         mock_get_account_info.return_value = {
             "account_id": "abcd",
             "account_keys": [{"public-key-sha3-384": "a_hash"}],
             "snaps": {"16": {"test-snap": {"snap-id": "snap-id"}}},
         }
         mock_get_snap_data.return_value = {"name": "test-snap"}
-        mock_check_output.side_effect = [
-            '[{"name": "default", "sha3-384": "a_hash"}]',
-            b"Mocked assertion",
-        ]
+        fake_check_output = fixtures.MockPatch(
+            "subprocess.check_output",
+            side_effect=['[{"name": "default"}]'.encode(), b"Mocked assertion"],
+        )
+        self.useFixture(fake_check_output)
 
         result = self.run_command(["sign-build", self.snap_test.snap_path, "--local"])
 
@@ -351,9 +302,9 @@ class SignBuildTestCase(CommandBaseTestCase):
             Contains("Build assertion {} saved to disk.".format(snap_build_path)),
         )
         self.assertThat(snap_build_path, FileExists())
-        mock_check_output.assert_called_with(
+        fake_check_output.mock.assert_called_with(
             [
-                "snap",
+                mock.ANY,
                 "sign-build",
                 "--developer-id=abcd",
                 "--snap-id=snap-id",
@@ -366,28 +317,24 @@ class SignBuildTestCase(CommandBaseTestCase):
 
     @mock.patch.object(storeapi._sca_client.SCAClient, "push_snap_build")
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    @mock.patch("subprocess.check_output")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
     def test_sign_build_upload_successfully(
-        self,
-        mock_installed,
-        mock_get_snap_data,
-        mock_check_output,
-        mock_get_account_info,
-        mock_push_snap_build,
+        self, mock_get_snap_data, mock_get_account_info, mock_push_snap_build,
     ):
-        mock_installed.return_value = True
         mock_get_account_info.return_value = {
             "account_id": "abcd",
             "account_keys": [{"public-key-sha3-384": "a_hash"}],
             "snaps": {"16": {"test-snap": {"snap-id": "snap-id"}}},
         }
         mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}
-        mock_check_output.side_effect = [
-            '[{"name": "default", "sha3-384": "a_hash"}]',
-            b"Mocked assertion",
-        ]
+        fake_check_output = fixtures.MockPatch(
+            "subprocess.check_output",
+            side_effect=[
+                '[{"name": "default", "sha3-384": "a_hash"}]'.encode(),
+                b"Mocked assertion",
+            ],
+        )
+        self.useFixture(fake_check_output)
 
         result = self.run_command(["sign-build", self.snap_test.snap_path])
 
@@ -404,9 +351,9 @@ class SignBuildTestCase(CommandBaseTestCase):
             ),
         )
         self.assertThat(snap_build_path, FileExists())
-        mock_check_output.assert_called_with(
+        fake_check_output.mock.assert_called_with(
             [
-                "snap",
+                mock.ANY,
                 "sign-build",
                 "--developer-id=abcd",
                 "--snap-id=snap-id",
@@ -421,15 +368,9 @@ class SignBuildTestCase(CommandBaseTestCase):
     @mock.patch.object(storeapi._sca_client.SCAClient, "push_snap_build")
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
     def test_sign_build_upload_existing(
-        self,
-        mock_installed,
-        mock_get_snap_data,
-        mock_get_account_info,
-        mock_push_snap_build,
+        self, mock_get_snap_data, mock_get_account_info, mock_push_snap_build,
     ):
-        mock_installed.return_value = True
         mock_get_account_info.return_value = {
             "account_id": "abcd",
             "snaps": {"16": {"test-snap": {"snap-id": "snap-id"}}},

@@ -23,11 +23,13 @@ import pytest
 from testscenarios.scenarios import multiply_scenarios
 from testtools.matchers import Contains, Equals
 
-from . import ProjectLoaderBaseTest
+import snapcraft.yaml_utils.errors
+from snapcraft import project
 from snapcraft.internal.errors import PluginError
 from snapcraft.internal.project_loader import errors, load_config
-from snapcraft import project
 from tests import fixture_setup
+
+from . import ProjectLoaderBaseTest
 
 
 def get_project_config(snapcraft_yaml_content, target_deb_arch=None):
@@ -278,7 +280,9 @@ class AliasesTest(ProjectLoaderBaseTest):
     def test_invalid_alias(self):
         apps = [("test", dict(command="test", aliases=[".test"]))]
         raised = self.assertRaises(
-            project.errors.YamlValidationError, self.make_snapcraft_project, apps
+            snapcraft.yaml_utils.errors.YamlValidationError,
+            self.make_snapcraft_project,
+            apps,
         )
         expected = (
             "The {path!r} property does not match the required schema: "

@@ -121,10 +121,12 @@ SonameCacheDict = Dict[Tuple[ElfArchitectureTuple, str], str]
 if parse_version(elftools.__version__) >= parse_version("0.24"):
     _DEBUG_INFO: Union[str, bytes] = ".debug_info"
     _DYNAMIC: Union[str, bytes] = ".dynamic"
+    _GNU_VERSION_D: Union[str, bytes] = ".gnu.version_d"
     _GNU_VERSION_R: Union[str, bytes] = ".gnu.version_r"
     _INTERP: Union[str, bytes] = ".interp"
 else:
     _DEBUG_INFO = b".debug_info"
+    _GNU_VERSION_D = b".gnu.version_d"
     _GNU_VERSION_R = b".gnu.version_r"
 
 
@@ -287,6 +289,7 @@ class ElfFile:
         self.arch: Optional[ElfArchitectureTuple] = None
         self.interp: str = ""
         self.soname: str = ""
+        self.versions: Set[str] = set()
         self.needed: Dict[str, NeededLibrary] = dict()
         self.execstack_set: bool = False
         self.is_dynamic: bool = True
@@ -368,6 +371,12 @@ class ElfFile:
                     lib = self.needed[library_name]
                     for version in versions:
                         lib.add_version(_ensure_str(version.name))
+
+            verdef_section = elf.get_section_by_name(_GNU_VERSION_D)
+            if isinstance(verdef_section, elftools.elf.gnuversions.GNUVerDefSection):
+                for _, auxiliaries in verdef_section.iter_versions():
+                    for aux in auxiliaries:
+                        self.versions.add(_ensure_str(aux.name))
 
             debug_info_section = elf.get_section_by_name(_DEBUG_INFO)
             self.has_debug_info = (
