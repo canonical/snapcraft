@@ -37,7 +37,10 @@ from snapcraft.project._project_options import ProjectOptions
 
 from . import apt_ppa, errors
 from ._base import BaseRepo, get_pkg_name_parts
-from .apt_cache import AptCache
+
+if sys.platform == "linux":
+    # Ensure importing works on non-Linux.
+    from .apt_cache import AptCache
 
 logger = logging.getLogger(__name__)
 
@@ -656,7 +659,7 @@ class Ubuntu(BaseRepo):
         cls,
         *,
         architectures: Optional[List[str]] = None,
-        components: List[str],
+        components: Optional[List[str]] = None,
         formats: Optional[List[str]] = None,
         suites: List[str],
         url: str,
@@ -674,8 +677,9 @@ class Ubuntu(BaseRepo):
             suites_text = " ".join(suites)
             print(f"Suites: {suites_text}", file=deb822)
 
-            components_text = " ".join(components)
-            print(f"Components: {components_text}", file=deb822)
+            if components:
+                components_text = " ".join(components)
+                print(f"Components: {components_text}", file=deb822)
 
             if architectures:
                 arch_text = " ".join(architectures)
@@ -691,7 +695,7 @@ class Ubuntu(BaseRepo):
         cls,
         *,
         architectures: Optional[List[str]] = None,
-        components: List[str],
+        components: Optional[List[str]] = None,
         formats: Optional[List[str]] = None,
         name: str,
         suites: List[str],

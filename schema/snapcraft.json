@@ -213,6 +213,10 @@
                     "type": "string",
                     "description": "GPG keyserver to use to fetch GPG <key-id>, e.g. 'keyserver.ubuntu.com'. Defaults to keyserver.ubuntu.com if key is not found in project."
                 },
+                "path": {
+                    "type": "string",
+                    "description": "Exact path to repository (relative to URL). Cannot be used with suites or components."
+                },
                 "suites": {
                     "type": "array",
                     "minItems": 1,
@@ -229,9 +233,7 @@
             },
             "required": [
                 "type",
-                "components",
                 "key-id",
-                "suites",
                 "url"
             ],
             "validation-failure": "{!r} is not properly configured deb repository"
