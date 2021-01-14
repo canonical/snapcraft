@@ -83,11 +83,12 @@ class TestPackages(unit.TestCase):
             package_names=["fake-package"],
             stage_packages_path=self.stage_packages_path,
             base="core",
+            target_arch="amd64",
         )
 
         self.fake_apt_cache.assert_has_calls(
             [
-                call(stage_cache=self.stage_cache_path),
+                call(stage_cache=self.stage_cache_path, stage_cache_arch="amd64"),
                 call().__enter__(),
                 call().__enter__().update(),
                 call().__enter__().mark_packages({"fake-package"}),
@@ -114,6 +115,7 @@ class TestPackages(unit.TestCase):
             package_names=["virtual-fake-package"],
             stage_packages_path=self.stage_packages_path,
             base="core",
+            target_arch="amd64",
         )
 
         self.assertThat(fetched_packages, Equals(["fake-package=1.0"]))
@@ -132,6 +134,7 @@ class TestPackages(unit.TestCase):
             package_names=["fake-package"],
             stage_packages_path=self.stage_packages_path,
             base="core",
+            target_arch="amd64",
         )
 
         self.assertThat(
@@ -150,6 +153,7 @@ class TestPackages(unit.TestCase):
             package_names=["fake-package"],
             stage_packages_path=Path(self.path),
             base="core",
+            target_arch="amd64",
         )
         self.assertThat(str(raised), Equals("Package fetch error: foo"))
 

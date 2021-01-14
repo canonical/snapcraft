@@ -89,6 +89,7 @@ class Wstool:
             package_names=["python-wstool"],
             stage_packages_path=self._wstool_stage_packages_path,
             base=self._base,
+            target_arch=self._project._get_stage_packages_target_arch(),
         )
         repo.Ubuntu.unpack_stage_packages(
             stage_packages_path=self._wstool_stage_packages_path,

@@ -55,6 +55,7 @@ class WstoolTestCase(unit.TestCase):
                         stage_packages_path=self.wstool._wstool_stage_packages_path,
                         package_names=["python-wstool"],
                         base="core",
+                        target_arch=self.project.target_arch,
                     )
                 ]
             ),

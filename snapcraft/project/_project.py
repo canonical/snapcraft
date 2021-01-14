@@ -136,6 +136,19 @@ class Project(ProjectOptions):
 
         return state_file_path
 
+    def _get_stage_packages_target_arch(self) -> str:
+        """Get architecture for staging packages.
+
+        Prior to core20, staging packages has broken behavior in that it will
+        stage native architecture packages by default.
+
+        :return: The appropriate default architecture to stage.
+        """
+        if self._get_build_base() in ["core16", "core18"]:
+            return self.deb_arch
+        else:
+            return self.target_arch
+
     def _get_start_time(self) -> datetime:
         """Returns the timestamp for when a snapcraft project was loaded."""
         return self._start_time

@@ -116,6 +116,8 @@ class RosPlugin(PluginV2):
                     "$SNAPCRAFT_PART_INSTALL",
                     "--ros-distro",
                     "$ROS_DISTRO",
+                    "--target-arch",
+                    "$SNAPCRAFT_TARGET_ARCH",
                 ]
             )
         ]
@@ -142,7 +144,10 @@ def plugin_cli():
 @click.option("--part-src", envvar="SNAPCRAFT_PART_SRC", required=True)
 @click.option("--part-install", envvar="SNAPCRAFT_PART_INSTALL", required=True)
 @click.option("--ros-distro", envvar="ROS_DISTRO", required=True)
-def stage_runtime_dependencies(part_src: str, part_install: str, ros_distro: str):
+@click.option("--target-arch", envvar="SNAPCRAFT_TARGET_ARCH", required=True)
+def stage_runtime_dependencies(
+    part_src: str, part_install: str, ros_distro: str, target_arch: str
+):
     click.echo("Staging runtime dependencies...")
     # TODO: support python packages (only apt currently supported)
     apt_packages: Set[str] = set()
@@ -180,6 +185,7 @@ def stage_runtime_dependencies(part_src: str, part_install: str, ros_distro: str
             package_names=package_names,
             base="core20",
             stage_packages_path=stage_packages_path,
+            target_arch=target_arch,
         )
 
         click.echo(f"Unpacking stage packages: {package_names!r}")

@@ -72,7 +72,14 @@ class ColconPluginTestBase(PluginsV1BaseTestCase):
         self.pip_mock.return_value.list.return_value = {}
 
     def assert_rosdep_setup(
-        self, rosdistro, ros_version, package_path, rosdep_path, ubuntu_distro, base
+        self,
+        rosdistro,
+        ros_version,
+        package_path,
+        rosdep_path,
+        ubuntu_distro,
+        base,
+        target_arch,
     ):
         self.rosdep_mock.assert_has_calls(
             [
@@ -83,6 +90,7 @@ class ColconPluginTestBase(PluginsV1BaseTestCase):
                     rosdep_path=rosdep_path,
                     ubuntu_distro=ubuntu_distro,
                     base=base,
+                    target_arch=target_arch,
                 ),
                 mock.call().setup(),
             ]
@@ -913,6 +921,7 @@ class PullTestCase(ColconPluginTestBase):
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
             plugin.project._get_build_base(),
+            plugin.project._get_stage_packages_target_arch(),
         )
 
         # Verify that dependencies were found as expected. TODO: Would really
@@ -930,6 +939,7 @@ class PullTestCase(ColconPluginTestBase):
                         stage_packages_path=plugin.stage_packages_path,
                         package_names={"bar", "baz", "foo"},
                         base=plugin.project._get_build_base(),
+                        target_arch=plugin.project._get_stage_packages_target_arch(),
                     )
                 ]
             ),
@@ -965,6 +975,7 @@ class PullTestCase(ColconPluginTestBase):
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
             plugin.project._get_build_base(),
+            plugin.project._get_stage_packages_target_arch(),
         )
 
         # Verify that dependencies were found as expected. TODO: Would really
@@ -995,6 +1006,7 @@ class PullTestCase(ColconPluginTestBase):
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
             plugin.project._get_build_base(),
+            plugin.project._get_stage_packages_target_arch(),
         )
 
         self.assert_pip_setup(
