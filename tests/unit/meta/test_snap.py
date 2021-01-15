@@ -144,7 +144,7 @@ class SnapTests(unit.TestCase):
                     "architectures": ["amd64", "i386"],
                     "components": ["main"],
                     "formats": ["deb"],
-                    "key-id": "test-key-id",
+                    "key-id": "A" * 40,
                     "key-server": "test-key-server.com",
                     "suites": ["xenial"],
                     "url": "http://archive.ubuntu.com",
