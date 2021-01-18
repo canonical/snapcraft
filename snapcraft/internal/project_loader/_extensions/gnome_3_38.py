@@ -141,7 +141,7 @@ class ExtensionImpl(Extension):
                     "GDK_PIXBUF_MODULE_FILE": "/snap/gnome-3-38-2004-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gdk-pixbuf-current/loaders.cache"
                 },
                 {
-                    "ACLOCAL_PATH": "/snap/gnome-3-38-2004-sdk/current/usr/share/aclocal:$ACLOCAL_PATH"
+                    "ACLOCAL_PATH": "/snap/gnome-3-38-2004-sdk/current/usr/share/aclocal${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
                 },
             ]
         }
