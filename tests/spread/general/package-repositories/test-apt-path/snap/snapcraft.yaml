@@ -15,5 +15,5 @@ parts:
 package-repositories:
   - type: apt
     url: http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64
-    key-id: 7fa2af80
+    key-id: AE09FE4BBD223A84B2CCFCE3F60F4B3D7FA2AF80
     path: /

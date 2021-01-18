@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import subprocess
 import textwrap
 from pathlib import Path
 from subprocess import CalledProcessError
@@ -491,71 +490,6 @@ class PackageForFileTest(unit.TestCase):
 
 
 class TestUbuntuInstallRepo(unit.TestCase):
-    @mock.patch("subprocess.run")
-    def test_install_gpg(self, mock_run):
-        repo.Ubuntu.install_gpg_key(key_id="FAKE_KEYID", key="FAKEKEY")
-
-        mock_run.assert_has_calls(
-            [
-                call(
-                    [
-                        "sudo",
-                        "apt-key",
-                        "--keyring",
-                        repo.Ubuntu._SNAPCRAFT_INSTALLED_GPG_KEYRING,
-                        "add",
-                        "-",
-                    ],
-                    check=True,
-                    input=b"FAKEKEY",
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    env=dict(LANG="C.UTF-8"),
-                )
-            ]
-        )
-
-    @mock.patch("subprocess.run")
-    def test_install_gpg_key_id(self, mock_run):
-        repo.Ubuntu.install_gpg_key_id(key_id="FAKE_KEYID", keys_path=Path(self.path))
-
-        mock_run.assert_has_calls(
-            [
-                call(
-                    [
-                        "sudo",
-                        "apt-key",
-                        "--keyring",
-                        "/etc/apt/trusted.gpg.d/snapcraft.gpg",
-                        "adv",
-                        "--keyserver",
-                        "keyserver.ubuntu.com",
-                        "--recv-keys",
-                        "FAKE_KEYID",
-                    ],
-                    check=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    env=dict(LANG="C.UTF-8"),
-                )
-            ]
-        )
-
-    @mock.patch("subprocess.run")
-    def test_install_gpg_key_id_error(self, mock_run):
-        mock_run.side_effect = CalledProcessError(
-            cmd=["foo"], returncode=1, output=b"some error"
-        )
-
-        raised = self.assertRaises(
-            errors.AptGPGKeyInstallError,
-            repo.Ubuntu.install_gpg_key_id,
-            key_id="FAKE_KEYID",
-            keys_path=Path(self.path),
-        )
-
-        self.assertThat(raised._output, Equals("some error"))
-
     @mock.patch("snapcraft.internal.repo._deb._sudo_write_file")
     def test_install_sources(self, mock_write):
         new_sources = repo.Ubuntu.install_sources(
@@ -612,39 +546,13 @@ class TestUbuntuInstallRepo(unit.TestCase):
 
     @mock.patch("subprocess.run")
     @mock.patch(
-        "snapcraft.internal.repo.apt_ppa.get_launchpad_ppa_key_id",
-        return_value="FAKE-PPA-KEY-ID",
+        "snapcraft.internal.repo._deb.Ubuntu.install_sources", return_value=True
     )
-    @mock.patch("snapcraft.internal.repo._deb.Ubuntu.install_sources")
     @mock.patch(
         "snapcraft.internal.os_release.OsRelease.version_codename", return_value="testy"
     )
-    def test_install_ppa(
-        self, os_release, mock_install_sources, mock_launchpad, mock_run
-    ):
-        repo.Ubuntu.install_ppa(keys_path=Path(self.path), ppa="test/ppa")
-
-        mock_run.assert_has_calls(
-            [
-                call(
-                    [
-                        "sudo",
-                        "apt-key",
-                        "--keyring",
-                        "/etc/apt/trusted.gpg.d/snapcraft.gpg",
-                        "adv",
-                        "--keyserver",
-                        "keyserver.ubuntu.com",
-                        "--recv-keys",
-                        "FAKE-PPA-KEY-ID",
-                    ],
-                    check=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    env=dict(LANG="C.UTF-8"),
-                )
-            ]
-        )
+    def test_install_ppa(self, os_release, mock_install_sources, mock_run):
+        repo.Ubuntu.install_ppa(ppa="test/ppa")
 
         self.assertThat(
             mock_install_sources.mock_calls,
@@ -660,21 +568,6 @@ class TestUbuntuInstallRepo(unit.TestCase):
                 ]
             ),
         )
-
-    @mock.patch("subprocess.run")
-    def test_apt_key_failure(self, mock_run):
-        mock_run.side_effect = CalledProcessError(
-            cmd=["foo"], returncode=1, output=b"some error"
-        )
-
-        raised = self.assertRaises(
-            errors.AptGPGKeyInstallError,
-            repo.Ubuntu.install_gpg_key,
-            key_id="FAKE_KEYID",
-            key="FAKEKEY",
-        )
-
-        self.assertThat(raised._output, Equals("some error"))
 
 
 class TestGetPackagesInBase(testtools.TestCase):
