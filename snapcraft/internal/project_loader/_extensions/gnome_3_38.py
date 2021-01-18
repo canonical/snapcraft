@@ -131,13 +131,14 @@ class ExtensionImpl(Extension):
                 {
                     "LD_LIBRARY_PATH": ":".join(
                         [
-                        "/snap/gnome-3-38-2004-sdk/current/lib/$SNAPCRAFT_ARCH_TRIPLET",
-                        "/snap/gnome-3-38-2004-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET",
-                        "/snap/gnome-3-38-2004-sdk/current/usr/lib",
-                        "/snap/gnome-3-38-2004-sdk/current/usr/lib/vala-current",
-                        "/snap/gnome-3-38-2004-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pulseaudio",
+                            "/snap/gnome-3-38-2004-sdk/current/lib/$SNAPCRAFT_ARCH_TRIPLET",
+                            "/snap/gnome-3-38-2004-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET",
+                            "/snap/gnome-3-38-2004-sdk/current/usr/lib",
+                            "/snap/gnome-3-38-2004-sdk/current/usr/lib/vala-current",
+                            "/snap/gnome-3-38-2004-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pulseaudio",
                         ]
-                    ) + "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+                    )
+                    + "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
                 },
                 {
                     "PKG_CONFIG_PATH": "/snap/gnome-3-38-2004-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pkgconfig:/snap/gnome-3-38-2004-sdk/current/usr/lib/pkgconfig:/snap/gnome-3-38-2004-sdk/current/usr/share/pkgconfig:$PKG_CONFIG_PATH"
