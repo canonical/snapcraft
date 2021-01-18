@@ -103,7 +103,16 @@ class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):
                             "XDG_DATA_DIRS": "$SNAPCRAFT_STAGE/usr/share:/snap/gnome-3-38-2004-sdk/current/usr/share:/usr/share:$XDG_DATA_DIRS"
                         },
                         {
-                            "LD_LIBRARY_PATH": "/snap/gnome-3-38-2004-sdk/current/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-38-2004-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-38-2004-sdk/current/usr/lib:/snap/gnome-3-38-2004-sdk/current/usr/lib/vala-current:/snap/gnome-3-38-2004-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pulseaudio:$LD_LIBRARY_PATH"
+                            "LD_LIBRARY_PATH": ":".join(
+                                [
+                                    "/snap/gnome-3-38-2004-sdk/current/lib/$SNAPCRAFT_ARCH_TRIPLET",
+                                    "/snap/gnome-3-38-2004-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET",
+                                    "/snap/gnome-3-38-2004-sdk/current/usr/lib",
+                                    "/snap/gnome-3-38-2004-sdk/current/usr/lib/vala-current",
+                                    "/snap/gnome-3-38-2004-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pulseaudio",
+                                ]
+                            )
+                            + "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
                         },
                         {
                             "PKG_CONFIG_PATH": "/snap/gnome-3-38-2004-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pkgconfig:/snap/gnome-3-38-2004-sdk/current/usr/lib/pkgconfig:/snap/gnome-3-38-2004-sdk/current/usr/share/pkgconfig:$PKG_CONFIG_PATH"
