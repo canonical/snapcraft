@@ -1,3 +1,4 @@
+manual: true
 summary: Build and run a basic checkbox snap with no base
 
 systems: [ubuntu-16*]
