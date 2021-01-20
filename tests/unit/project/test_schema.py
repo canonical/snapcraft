@@ -166,6 +166,11 @@ class ValidationTest(ValidationBaseTest):
                 "daemon": "simple",
                 "install-mode": "disable",
             },
+            "service17": {
+                "command": "binary17",
+                "daemon": "simple",
+                "activates-on": ["slot1", "slot2"],
+            },
         }
 
         Validator(self.data).validate()
@@ -191,6 +196,25 @@ class ValidationTest(ValidationBaseTest):
                 "the required schema: 'on-tuesday' is not one of ['on-success', "
                 "'on-failure', 'on-abnormal', 'on-abort', 'on-watchdog', 'always', "
                 "'never']"
+            ),
+        )
+
+    def test_invalid_activates_on(self):
+        self.data["apps"] = {
+            "service1": {
+                "command": "binary1",
+                "daemon": "simple",
+                "activates-on": ["slot1", "slot1"],
+            },
+        }
+        raised = self.assertRaises(
+            snapcraft.yaml_utils.errors.YamlValidationError,
+            Validator(self.data).validate,
+        )
+        self.assertThat(
+            str(raised),
+            Contains(
+                "The 'apps/service1/activates-on' property does not match the required schema: ['slot1', 'slot1'] has non-unique elements"
             ),
         )
 
@@ -236,6 +260,7 @@ class ValidationTest(ValidationBaseTest):
         ("post-stop-command", "binary1 --post-stop"),
         ("before", ["service1"]),
         ("after", ["service2"]),
+        ("activates-on", ["slot1"]),
     ],
 )
 def test_daemon_dependency(data, option, value):
