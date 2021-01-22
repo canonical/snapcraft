@@ -148,6 +148,9 @@ class ExtensionImpl(Extension):
                 {
                     "ACLOCAL_PATH": "/snap/gnome-3-38-2004-sdk/current/usr/share/aclocal${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
                 },
+                {
+                    "PYTHONPATH": "/snap/gnome-3-38-2004-sdk/current/usr/lib/python3/dist-packages${PYTHONPATH:+:$PYTHONPATH}"
+                },
             ]
         }
 
