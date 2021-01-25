@@ -198,7 +198,7 @@ class Pip:
                 # used will result in a broken install with pip unable to
                 # install packages.
                 self.download(
-                    {'pip; python_version >= "3.6"' 'pip<21; python_version < "3.6"'}
+                    {'pip; python_version >= "3.6"', 'pip<21; python_version < "3.6"'}
                 )
                 self.install({"pip"}, ignore_installed=True)
             finally:
