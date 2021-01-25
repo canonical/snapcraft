@@ -184,7 +184,12 @@ class Pip:
                 self.__python_home = os.path.join(os.path.sep, "usr")
 
                 # Using the host's pip, install our own pip
-                self.download({"pip"})
+                # pip >=21 no longer support python3.5 or python 2 and if
+                # used will result in a broken install with pip unable to
+                # install packages.
+                self.download(
+                    {'pip; python_version >= "3.6"', 'pip<21; python_version < "3.6"'}
+                )
                 self.install({"pip"}, ignore_installed=True)
             finally:
                 # Now that we have our own pip, reset the python home
