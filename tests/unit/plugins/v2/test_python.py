@@ -76,7 +76,7 @@ _FIXUP_BUILD_COMMANDS = [
     dedent(
         """\
             determine_link_target() {
-                set +x
+                opts_state="$(set +x)"
                 interp_dir="$(dirname "${SNAPCRAFT_PYTHON_VENV_INTERP_PATH}")"
                 target="${SNAPCRAFT_PYTHON_PATH}"
                 for dir in "${SNAPCRAFT_PART_INSTALL}" "${SNAPCRAFT_STAGE}"; do
