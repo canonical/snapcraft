@@ -87,7 +87,7 @@ _FIXUP_BUILD_COMMANDS = [
                     fi
                 done
                 echo "${target}"
-                set -x
+               eval "$(opts_state)"
             }
 
             target="$(determine_link_target)"
