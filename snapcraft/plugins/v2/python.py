@@ -181,7 +181,7 @@ class PythonPlugin(PluginV2):
                     fi
                 done
                 echo "${target}"
-                set -x
+                eval "$(opts_state)"
             }
 
             target="$(determine_link_target)"
