@@ -114,6 +114,9 @@ class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):
                         {
                             "GDK_PIXBUF_MODULE_FILE": "/snap/gnome-3-34-1804-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gdk-pixbuf-current/loaders.cache"
                         },
+                        {
+                            "PYTHONPATH": "/snap/gnome-3-34-1804-sdk/current/usr/lib/python3/dist-packages${PYTHONPATH:+:$PYTHONPATH}"
+                        },
                     ]
                 }
             ),
