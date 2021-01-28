@@ -1,4 +1,5 @@
 summary: Build and run a basic Godeps snap
+systems: [ubuntu-18*]
 
 environment:
   SNAP_DIR: ../snaps/godeps-use-build-packages
