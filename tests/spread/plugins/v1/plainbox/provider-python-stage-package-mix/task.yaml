@@ -1,3 +1,4 @@
+manual: true
 summary: "Ensure stage-packages can be used with plainbox LP: #1768233"
 
 environment:
