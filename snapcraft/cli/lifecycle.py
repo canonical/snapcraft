@@ -235,10 +235,6 @@ def _pack(
     command: List[Union[str, pathlib.Path]] = [snap_path, "pack"]
     # When None, just use snap pack's default settings.
     if compression is not None:
-        if compression != "xz":
-            echo.warning(
-                f"EXPERIMENTAL: Setting the squash FS compression to {compression!r}."
-            )
         command.extend(["--compression", compression])
 
     if output_file is not None:

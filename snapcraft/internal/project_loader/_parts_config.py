@@ -242,7 +242,8 @@ class PartsConfig:
 
             # Finally, add the declared environment from the part.
             # This is done only for the "root" part.
-            env += part.build_environment
+            for be in part.build_environment:
+                env.extend([f'{k}="{v}"' for k, v in be.items()])
         else:
             env += part.env(stagedir)
             env += runtime_env(stagedir, self._project.arch_triplet)

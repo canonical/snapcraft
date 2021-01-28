@@ -168,17 +168,17 @@ the schema is to be considered stable.
 
   - *Type:* string
 
-  - *Description:* Absolute path to repository (from =url=).
+  - *Description:* Exact path to repository (relative to =url=).
 
-    Apt sources using absolute paths are incompatible with suites and components.
-
-  - *Format:* Path starting with =/=.
+    Apt sources using exact paths are incompatible with suites and components.
 
   - *Examples:*
 
     - =path: /=
 
-    - =path: /my-repo=
+    - =path: my-repo=
+
+    - =path: my-repo/=
 
 ** Property: suites (required if not using path)
 
@@ -189,7 +189,7 @@ the schema is to be considered stable.
   - *Notes:*
 
     - If your deb URL does not look like it has a suite defined, it is likely
-      that the repository uses an absolute URL.  Consider using =path=.
+      that the repository uses an exact path. Consider using =path=.
 
   - *Examples:*
 

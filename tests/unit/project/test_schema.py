@@ -1296,10 +1296,13 @@ class PackageManagement(ProjectBaseTest):
                     url: http://archive.ubuntu.com/ubuntu
                     suites: [test, test-updates, test-security]
                   - type: apt
-                    components: []
                     key-id: test-key-id
                     url: http://archive.ubuntu.com/ubuntu
                     suites: [bionic, bionic-updates]
+                  - type: apt
+                    key-id: test-key-id
+                    path: foo
+                    url: http://archive.ubuntu.com/ubuntu
                 """
             )
         )
@@ -1331,20 +1334,6 @@ class TestInvalidAptConfigurations:
             ),
         ),
         (
-            "deb missing field: components",
-            dict(
-                packages=[
-                    {
-                        "type": "apt",
-                        "key-id": "test-key-id",
-                        "url": "http://archive.ubuntu.com/ubuntu",
-                        "suites": ["test", "test-updates", "test-security"],
-                    }
-                ],
-                message_contains="The 'package-repositories[0]' property does not match the required schema:",
-            ),
-        ),
-        (
             "deb missing field: key-id",
             dict(
                 packages=[
@@ -1353,20 +1342,6 @@ class TestInvalidAptConfigurations:
                         "components": ["main"],
                         "url": "http://archive.ubuntu.com/ubuntu",
                         "suites": ["test", "test-updates", "test-security"],
-                    }
-                ],
-                message_contains="The 'package-repositories[0]' property does not match the required schema:",
-            ),
-        ),
-        (
-            "deb missing field: suites",
-            dict(
-                packages=[
-                    {
-                        "type": "apt",
-                        "key-id": "test-key-id",
-                        "components": ["main"],
-                        "url": "http://archive.ubuntu.com/ubuntu",
                     }
                 ],
                 message_contains="The 'package-repositories[0]' property does not match the required schema:",

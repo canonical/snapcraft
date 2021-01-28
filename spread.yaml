@@ -242,6 +242,13 @@ suites:
    - ubuntu-16.04*
    - ubuntu-18.04*
 
+ # General, core suite
+ tests/spread/cross-compile/:
+   summary: tests of supported cross-compile functionality
+   systems:
+   - ubuntu-18.04*
+   - ubuntu-20.04*
+
  # Use of multipass and lxd build providers
  tests/spread/build-providers/:
    summary: tests of snapcraft using build providers

@@ -1,0 +1,19 @@
+name: test-apt-ppa
+version: '1.0'
+summary: test
+description: test
+grade: stable
+confinement: strict
+base: core18
+
+parts:
+  test-ppa:
+    plugin: nil
+    stage-packages:
+     - datacenter-gpu-manager
+
+package-repositories:
+  - type: apt
+    url: http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64
+    key-id: AE09FE4BBD223A84B2CCFCE3F60F4B3D7FA2AF80
+    path: /

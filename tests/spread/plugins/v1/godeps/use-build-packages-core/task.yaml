@@ -1,8 +1,8 @@
-manual: true
-summary: Ensure a basic provider using stage-packages works
+summary: Build and run a basic Godeps snap for core
+systems: [ubuntu-16*]
 
 environment:
-  SNAP_DIR: ../snaps/provider-with-stage-packages
+  SNAP_DIR: ../snaps/godeps-use-build-packages-go-snap
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -14,11 +14,15 @@ restore: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean
+  rm -f ./*.snap
   restore_yaml snap/snapcraft.yaml
 
 execute: |
   cd "$SNAP_DIR"
-  snapcraft stage
 
-  [ -d stage ]
-  [ -f stage/providers/simple-plainbox-provider/plainbox-provider-simple.provider ]
+  snapcraft build
+
+  if ! snap list go; then
+    echo "The go snap from the Snap Store should have been installed."
+    exit 1
+  fi

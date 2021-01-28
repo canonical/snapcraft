@@ -115,6 +115,53 @@
                 ]
             }
         },
+        "build-environment-grammar": {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": true,
+            "items": {
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "minProperties": 1,
+                        "maxProperties": 1,
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "usage": "on <selector>[,<selector>...]:",
+                        "additionalProperties": false,
+                        "patternProperties": {
+                            "^on\\s+.+$": {
+                                "$ref": "#/definitions/build-environment-grammar"
+                            }
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "usage": "to <selector>[,<selector>...]:",
+                        "additionalProperties": false,
+                        "patternProperties": {
+                            "^to\\s+.+$": {
+                                "$ref": "#/definitions/build-environment-grammar"
+                            }
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "usage": "else:",
+                        "additionalProperties": false,
+                        "patternProperties": {
+                            "^else$": {
+                                "$ref": "#/definitions/build-environment-grammar"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
         "apt-deb": {
             "type": "object",
             "description": "deb repositories",
@@ -160,11 +207,15 @@
                 "key-id": {
                     "type": "string",
                     "description": "GPG key identifier / fingerprint. May be used to identify key file in <project>/snap/keys/<key-id>.asc",
-                    "pattern": "^[a-zA-Z0-9-_]*$"
+                    "pattern": "^[A-Z0-9]{40}$"
                 },
                 "key-server": {
                     "type": "string",
                     "description": "GPG keyserver to use to fetch GPG <key-id>, e.g. 'keyserver.ubuntu.com'. Defaults to keyserver.ubuntu.com if key is not found in project."
+                },
+                "path": {
+                    "type": "string",
+                    "description": "Exact path to repository (relative to URL). Cannot be used with suites or components."
                 },
                 "suites": {
                     "type": "array",
@@ -182,9 +233,7 @@
             },
             "required": [
                 "type",
-                "components",
                 "key-id",
-                "suites",
                 "url"
             ],
             "validation-failure": "{!r} is not properly configured deb repository"
@@ -929,17 +978,8 @@
                             "default": []
                         },
                         "build-environment": {
-                            "type": "array",
-                            "default": [],
-                            "minitems": 1,
-                            "items": {
-                                "type": "object",
-                                "minProperties": 1,
-                                "maxProperties": 1,
-                                "additionalProperties": {
-                                    "type": "string"
-                                }
-                            }
+                            "$ref": "#/definitions/build-environment-grammar",
+                            "default": []
                         },
                         "build-attributes": {
                             "type": "array",
