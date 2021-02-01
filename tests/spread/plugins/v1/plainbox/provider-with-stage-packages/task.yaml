@@ -1,3 +1,4 @@
+manual: true
 summary: Ensure a basic provider using stage-packages works
 
 environment:

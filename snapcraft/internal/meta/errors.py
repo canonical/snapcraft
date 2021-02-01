@@ -181,10 +181,16 @@ class HookValidationError(errors.SnapcraftError):
 
 class PackageRepositoryValidationError(errors.SnapcraftException):
     def __init__(
-        self, *, url: str, brief: str, resolution: Optional[str] = None
+        self,
+        *,
+        url: str,
+        brief: str,
+        details: Optional[str] = None,
+        resolution: Optional[str] = None,
     ) -> None:
         self.url = url
         self.brief = brief
+        self.details = details
         self.resolution = resolution
 
     def get_brief(self) -> str:
@@ -195,6 +201,9 @@ class PackageRepositoryValidationError(errors.SnapcraftException):
             return self.resolution
 
         return "You can verify package repository configuration according to the referenced documentation."
+
+    def get_details(self) -> Optional[str]:
+        return self.details
 
     def get_docs_url(self) -> str:
         return "https://snapcraft.io/docs/package-repositories"

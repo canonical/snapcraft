@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, Set
+from typing import Any, Dict, List, Set
 
 from snapcraft import BasePlugin, project
 from snapcraft.internal import repo
@@ -85,6 +85,7 @@ class PartGrammarProcessor:
         self._project = project
         self._repo = repo
 
+        self.__build_environment: List[Dict[str, str]] = list()
         self.__build_snaps = set()  # type: Set[str]
         self.__stage_snaps = set()  # type: Set[str]
         self.__build_packages = set()  # type: Set[str]
@@ -113,6 +114,15 @@ class PartGrammarProcessor:
     def _get_property(self, attr: str) -> grammar.typing.Grammar:
         prop = self._properties.get(attr, set())
         return getattr(self._plugin, attr.replace("-", "_"), prop)
+
+    def get_build_environment(self) -> List[Dict[str, str]]:
+        if not self.__build_environment:
+            processor = grammar.GrammarProcessor(
+                self._get_property("build-environment"), self._project, lambda x: True,
+            )
+            self.__build_environment = processor.process()
+
+        return self.__build_environment
 
     def get_build_snaps(self) -> Set[str]:
         if not self.__build_snaps:

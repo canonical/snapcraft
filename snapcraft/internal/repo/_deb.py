@@ -26,7 +26,6 @@ import sys
 import tempfile
 from typing import Dict, List, Optional, Set, Tuple  # noqa: F401
 
-import gnupg
 from typing_extensions import Final
 from xdg import BaseDirectory
 
@@ -37,7 +36,10 @@ from snapcraft.project._project_options import ProjectOptions
 
 from . import apt_ppa, errors
 from ._base import BaseRepo, get_pkg_name_parts
-from .apt_cache import AptCache
+
+if sys.platform == "linux":
+    # Ensure importing works on non-Linux.
+    from .apt_cache import AptCache
 
 logger = logging.getLogger(__name__)
 
@@ -252,9 +254,6 @@ def _sudo_write_file(*, dst_path: pathlib.Path, content: bytes) -> None:
 
 
 class Ubuntu(BaseRepo):
-    _SNAPCRAFT_INSTALLED_GPG_KEYRING: Final[
-        str
-    ] = "/etc/apt/trusted.gpg.d/snapcraft.gpg"
     _SNAPCRAFT_INSTALLED_SOURCES_LIST: Final[
         str
     ] = "/etc/apt/sources.list.d/snapcraft.list"
@@ -413,14 +412,21 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def fetch_stage_packages(
-        cls, *, package_names: List[str], base: str, stage_packages_path: pathlib.Path
+        cls,
+        *,
+        package_names: List[str],
+        base: str,
+        stage_packages_path: pathlib.Path,
+        target_arch: str,
     ) -> List[str]:
         logger.debug(f"Requested stage-packages: {sorted(package_names)!r}")
 
         installed: Set[str] = set()
 
         stage_packages_path.mkdir(exist_ok=True)
-        with AptCache(stage_cache=_STAGE_CACHE_DIR) as apt_cache:
+        with AptCache(
+            stage_cache=_STAGE_CACHE_DIR, stage_cache_arch=target_arch
+        ) as apt_cache:
             filter_packages = set(get_packages_in_base(base=base))
             apt_cache.update()
             apt_cache.mark_packages(set(package_names))
@@ -472,175 +478,12 @@ class Ubuntu(BaseRepo):
             ]
 
     @classmethod
-    def _get_key_fingerprints(cls, key: str) -> List[str]:
-        with tempfile.NamedTemporaryFile(suffix="keyring") as temp_file:
-            return (
-                gnupg.GPG(keyring=temp_file.name).import_keys(key_data=key).fingerprints
-            )
-
-    @classmethod
-    def _is_key_id_installed(cls, key_id: str) -> bool:
-        # Check if key is installed by attempting to export the key.
-        # Unfortunately, apt-key does not exit with error, and
-        # we have to do our best to parse the output.
-        try:
-            proc = subprocess.run(
-                ["sudo", "apt-key", "export", key_id],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                check=True,
-            )
-        except subprocess.CalledProcessError as error:
-            # Export shouldn't exit with failure based on testing,
-            # but assume the key is not installed and log a warning.
-            logger.warning(f"Unexpected apt-key failure: {error.output}")
-            return False
-
-        apt_key_output = proc.stdout.decode()
-
-        if "BEGIN PGP PUBLIC KEY BLOCK" in apt_key_output:
-            return True
-
-        if "nothing exported" in apt_key_output:
-            return False
-
-        # The two strings above have worked in testing, but if neither is
-        # present for whatever reason, assume the key is not installed
-        # and log a warning.
-        logger.warning(f"Unexpected apt-key output: {apt_key_output}")
-        return False
-
-    @classmethod
-    def _install_gpg_key(cls, *, key_id: str, key: str) -> None:
-        cmd = [
-            "sudo",
-            "apt-key",
-            "--keyring",
-            cls._SNAPCRAFT_INSTALLED_GPG_KEYRING,
-            "add",
-            "-",
-        ]
-        try:
-            logger.debug(f"Executing: {cmd!r}")
-            env = os.environ.copy()
-            env["LANG"] = "C.UTF-8"
-            subprocess.run(
-                cmd,
-                input=key.encode(),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                check=True,
-                env=env,
-            )
-        except subprocess.CalledProcessError as error:
-            raise errors.AptGPGKeyInstallError(output=error.output.decode(), key=key)
-
-        logger.debug(f"Installed apt repository key:\n{key}")
-
-    @classmethod
-    def install_gpg_key(cls, *, key_id: str, key: str) -> bool:
-        if cls._is_key_id_installed(key_id):
-            # Already installed, nothing to do.
-            return False
-
-        cls._install_gpg_key(key_id=key_id, key=key)
-        return True
-
-    @classmethod
-    def _install_gpg_key_id_from_keyserver(
-        cls, *, key_id: str, key_server: Optional[str] = None
-    ) -> None:
-        # Default to keyserver.ubuntu.com.
-        if key_server is None:
-            key_server = "keyserver.ubuntu.com"
-
-        env = os.environ.copy()
-        env["LANG"] = "C.UTF-8"
-
-        cmd = [
-            "sudo",
-            "apt-key",
-            "--keyring",
-            cls._SNAPCRAFT_INSTALLED_GPG_KEYRING,
-            "adv",
-            "--keyserver",
-            key_server,
-            "--recv-keys",
-            key_id,
-        ]
-
-        try:
-            logger.debug(f"Executing: {cmd!r}")
-            subprocess.run(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                check=True,
-                env=env,
-            )
-        except subprocess.CalledProcessError as error:
-            raise errors.AptGPGKeyInstallError(
-                output=error.output.decode(), key_id=key_id, key_server=key_server
-            )
-
-    @classmethod
-    def _find_asset_with_key_id(
-        cls, *, key_id: str, keys_path: pathlib.Path
-    ) -> Tuple[str, Optional[pathlib.Path]]:
-        # First look for any key asset that matches the key_id fingerprint.
-        for key_path in keys_path.glob(pattern="*.asc"):
-            key = key_path.read_text()
-            if key_id in cls._get_key_fingerprints(key=key):
-                return key_id, key_path
-
-        # Handle case where user uses 'key_id' as the name of the key asset.
-        # In this case we translate the key name to a proper key ID.
-        key_path = keys_path / f"{key_id}.asc"
-        if key_path.exists():
-            fingerprints = cls._get_key_fingerprints(key=key_path.read_text())
-            if len(fingerprints) == 0:
-                logger.warning(f"Error reading key file: {key_path}")
-                return key_id, None
-            elif len(fingerprints) > 1:
-                logger.warning(f"Found multiple key fingerprints in: {key_path}")
-            return fingerprints[0], key_path
-
-        return key_id, None
-
-    @classmethod
-    def install_gpg_key_id(
-        cls, *, key_id: str, keys_path: pathlib.Path, key_server: Optional[str] = None
-    ) -> bool:
-        # If key_id references a local asset, we search and replace the local
-        # key_id reference with the actual fingerprint suitable for checking
-        # if it is installed.
-        key_id, key_path = cls._find_asset_with_key_id(
-            key_id=key_id, keys_path=keys_path
-        )
-
-        # If key is already installed, nothing to do.
-        if cls._is_key_id_installed(key_id):
-            return False
-
-        # Install key if it is available as a local asset.
-        if key_path is not None:
-            cls._install_gpg_key(key_id=key_id, key=key_path.read_text())
-            return True
-
-        # Finally attempt to install from keyserver.
-        cls._install_gpg_key_id_from_keyserver(key_id=key_id, key_server=key_server)
-        logger.debug(f"Installed apt repository key ID: {key_id}")
-        return True
-
-    @classmethod
-    def install_ppa(cls, *, keys_path: pathlib.Path, ppa: str) -> bool:
+    def install_ppa(cls, ppa: str) -> bool:
         owner, name = apt_ppa.split_ppa_parts(ppa=ppa)
-        key_id = apt_ppa.get_launchpad_ppa_key_id(ppa=ppa)
         codename = os_release.OsRelease().version_codename()
 
         return any(
             [
-                cls.install_gpg_key_id(keys_path=keys_path, key_id=key_id),
                 cls.install_sources(
                     components=["main"],
                     formats=["deb"],
@@ -656,7 +499,7 @@ class Ubuntu(BaseRepo):
         cls,
         *,
         architectures: Optional[List[str]] = None,
-        components: List[str],
+        components: Optional[List[str]] = None,
         formats: Optional[List[str]] = None,
         suites: List[str],
         url: str,
@@ -674,8 +517,9 @@ class Ubuntu(BaseRepo):
             suites_text = " ".join(suites)
             print(f"Suites: {suites_text}", file=deb822)
 
-            components_text = " ".join(components)
-            print(f"Components: {components_text}", file=deb822)
+            if components:
+                components_text = " ".join(components)
+                print(f"Components: {components_text}", file=deb822)
 
             if architectures:
                 arch_text = " ".join(architectures)
@@ -691,7 +535,7 @@ class Ubuntu(BaseRepo):
         cls,
         *,
         architectures: Optional[List[str]] = None,
-        components: List[str],
+        components: Optional[List[str]] = None,
         formats: Optional[List[str]] = None,
         name: str,
         suites: List[str],

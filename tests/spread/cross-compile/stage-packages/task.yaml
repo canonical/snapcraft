@@ -1,0 +1,78 @@
+summary: Cross-compiliation stage-package test
+
+systems:
+  - ubuntu-20.04*
+
+environment:
+  SNAP_DIR: .
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+  # For gcc and dpkg-architecture.
+  apt-get install -y dpkg-dev gcc
+  apt-mark auto dpkg-dev gcc
+
+  # Add architecture to sources.
+  codename="$(lsb_release -cs)"
+  echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports $codename main restricted universe multiverse" > /etc/apt/sources.list.d/armhf.list
+
+  # Save original sources, but specify to host arch only.
+  host_arch="$(dpkg-architecture  | grep DEB_BUILD_ARCH= | cut -f 2 -d =)"
+  cp /etc/apt/sources.list /etc/apt/sources.list.save
+  sed -i "s|^deb |deb [arch=$host_arch] |g" /etc/apt/sources.list
+
+  # Add armhf arch and update apt cache.
+  dpkg --add-architecture armhf
+  apt-get update
+
+restore: |
+  cd "$SNAP_DIR"
+
+  snapcraft clean
+  rm -f ./*.snap
+
+  # Remove architecture from sources.
+  mv /etc/apt/sources.list.save /etc/apt/sources.list
+  rm -f /etc/apt/sources.list.d/armhf.list
+  rm -f /etc/apt/sources.list.d/main.list
+
+  # Remove arch and update apt cache.
+  dpkg --remove-architecture armhf
+  apt-get update
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "$SNAP_DIR"
+
+  host_arch="$(dpkg-architecture  | grep DEB_BUILD_ARCH= | cut -f 2 -d =)"
+  host_arch_triplet="$(gcc -dumpmachine)"
+
+  # First build for armhf.
+  snapcraft --target-arch armhf --enable-experimental-target-arch
+
+  [ -f cross-compile-stage-package-test_0.1_armhf.snap ]
+  [ -f prime/usr/lib/arm-linux-gnueabihf/libjq.so.1 ]
+  [ "$(ls prime/usr/lib/)" == "arm-linux-gnueabihf" ]
+  rm cross-compile-stage-package-test_0.1_armhf.snap
+
+  # Re-spin as native.
+  snapcraft
+
+  [ -f "cross-compile-stage-package-test_0.1_$host_arch.snap" ]
+  [ -f "prime/usr/lib/$host_arch_triplet/libjq.so.1" ]
+  [ "$(ls prime/usr/lib/)" == "$host_arch_triplet" ]
+  rm "cross-compile-stage-package-test_0.1_$host_arch.snap"
+
+  # Re-build for armhf.
+  snapcraft --target-arch armhf --enable-experimental-target-arch
+
+  [ -f cross-compile-stage-package-test_0.1_armhf.snap ]
+  [ -f prime/usr/lib/arm-linux-gnueabihf/libjq.so.1 ]
+  [ "$(ls prime/usr/lib/)" == "arm-linux-gnueabihf" ]
+  rm cross-compile-stage-package-test_0.1_armhf.snap

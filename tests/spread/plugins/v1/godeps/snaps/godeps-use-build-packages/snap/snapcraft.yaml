@@ -20,4 +20,4 @@ parts:
     - git
     plugin: godeps
     go-importpath: bcrypt
-    go-channel: ""
+    go-channel: ''

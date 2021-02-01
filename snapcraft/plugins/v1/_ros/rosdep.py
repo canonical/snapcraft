@@ -100,7 +100,8 @@ class Rosdep:
         ros_package_path,
         rosdep_path,
         ubuntu_distro,
-        base
+        base,
+        target_arch,
     ):
         self._ros_distro = ros_distro
         self._ros_version = ros_version
@@ -115,6 +116,7 @@ class Rosdep:
         self._rosdep_install_path = os.path.join(self._rosdep_path, "install")
         self._rosdep_sources_path = os.path.join(self._rosdep_path, "sources.list.d")
         self._rosdep_cache_path = os.path.join(self._rosdep_path, "cache")
+        self._target_arch = target_arch
 
     def setup(self):
         # Make sure we can run multiple times without error, while leaving the
@@ -134,6 +136,7 @@ class Rosdep:
             package_names=["python-rosdep"],
             stage_packages_path=self._rosdep_stage_packages_path,
             base=self._base,
+            target_arch=self._target_arch,
         )
         repo.Ubuntu.unpack_stage_packages(
             stage_packages_path=self._rosdep_stage_packages_path,

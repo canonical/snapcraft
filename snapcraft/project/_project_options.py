@@ -250,6 +250,10 @@ class ProjectOptions:
         """
         return set()
 
+    def _get_stage_packages_target_arch(self) -> str:
+        """Stub for 'Project' interface for tests using ProjectOptions()."""
+        return self.deb_arch
+
     def is_static_base(self, base: str) -> bool:
         """Return True if a base that is intended to be static is used.
 
@@ -348,13 +352,19 @@ class ProjectOptions:
 
     def _set_machine(self, target_deb_arch):
         self.__platform_arch = _get_platform_architecture()
-        self.__target_arch = target_deb_arch
         if not target_deb_arch:
             self.__target_machine = self.__platform_arch
         else:
             self.__target_machine = _find_machine(target_deb_arch)
             logger.info("Setting target machine to {!r}".format(target_deb_arch))
+
         self.__machine_info = _ARCH_TRANSLATIONS[self.__target_machine]
+
+        # Set target arch to match the host if unspecified.
+        if target_deb_arch is None:
+            self.__target_arch = self.__machine_info.get("deb")
+        else:
+            self.__target_arch = target_deb_arch
 
 
 def _get_deb_arch(machine):
