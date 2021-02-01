@@ -322,8 +322,8 @@ class StoreClient:
     def push_assertion(self, snap_id, assertion, endpoint, force=False):
         return self.sca.push_assertion(snap_id, assertion, endpoint, force)
 
-    def get_assertion(self, snap_id, endpoint):
-        return self.sca.get_assertion(snap_id, endpoint)
+    def get_assertion(self, snap_id, endpoint, params=None):
+        return self.sca.get_assertion(snap_id, endpoint, params=params)
 
     def sign_developer_agreement(self, latest_tos_accepted=False):
         return self.sca.sign_developer_agreement(latest_tos_accepted)
