@@ -147,6 +147,7 @@ class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):
                         "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                         "source-subdir": "gnome",
                         "plugin": "make",
+                        "make-parameters": ["WITH_PYTHON=3.8"],
                         "build-snaps": ["gnome-3-38-2004-sdk/latest/stable"],
                         "build-packages": ["gcc"],
                     }
