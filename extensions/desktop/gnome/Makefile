@@ -11,6 +11,7 @@ BINDTEXTDOMAIN       := bindtextdomain.so
 DEST_CONFIGURE_HOOK  := hooks-configure-desktop
 HW_PLATFORM          := $(shell uname --hardware-platform)
 ARCH                 := $(HW_PLATFORM)-linux-gnu
+WITH_PYTHON          := "3.6"
 
 build: $(DEST_LAUNCHER) $(DEST_CONFIGURE_HOOK)
 
@@ -24,7 +25,7 @@ $(DEST_LAUNCHER):
 	@cat $(SRC_DIR)/init >> $(DEST_LAUNCHER)
 # tail -n +2 to remove the shebang
 	@tail -n +2 $(SRC_DIR)/desktop-exports >> $(DEST_LAUNCHER)
-	@tail -n +2 $(SRC_DIR)/launcher-specific >> $(DEST_LAUNCHER)
+	@tail -n +2 $(SRC_DIR)/launcher-specific | sed -e "s/%WITH_PYTHON%/$(WITH_PYTHON)/" >> $(DEST_LAUNCHER)
 	@tail -n +2 $(SRC_DIR)/mark-and-exec >> $(DEST_LAUNCHER)
 	mkdir -p $(ARCH)
 	gcc -Wall -O2 -o $(ARCH)/$(BINDTEXTDOMAIN) -fPIC -shared $(SRC_DIR)/../src/bindtextdomain.c -ldl
