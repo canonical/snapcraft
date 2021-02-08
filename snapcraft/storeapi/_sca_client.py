@@ -245,7 +245,7 @@ class SCAClient(Client):
 
         return response_json
 
-    def get_assertion(self, snap_id, endpoint):
+    def get_assertion(self, snap_id, endpoint, params=None):
         auth = _macaroon_auth(self.conf)
         response = self.get(
             "snaps/{}/{}".format(snap_id, endpoint),
@@ -254,6 +254,7 @@ class SCAClient(Client):
                 "Content-Type": "application/json",
                 "Accept": "application/json",
             },
+            params=params,
         )
         if not response.ok:
             raise errors.StoreValidationError(snap_id, response)

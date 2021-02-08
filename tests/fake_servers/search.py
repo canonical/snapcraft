@@ -72,7 +72,7 @@ class FakeStoreSearchServer(base.BaseFakeServer):
         revision = "10000"
         confinement = "strict"
 
-        if snap in ("test-snap", "core"):
+        if snap in ("snap-1", "test-snap", "core"):
             sha3_384 = test_sha3_384
         elif snap == "snapcraft":
             sha3_384 = test_sha3_384
@@ -114,7 +114,10 @@ class FakeStoreSearchServer(base.BaseFakeServer):
                     }
                 )
 
-        snap_id = f"{snap}-snap-id"
+        if snap == "snap-1":
+            snap_id = "snap-id-1"
+        else:
+            snap_id = f"{snap}-snap-id"
 
         return json.dumps(
             {

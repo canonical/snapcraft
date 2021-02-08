@@ -127,7 +127,13 @@ class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):
                             "ACLOCAL_PATH": "/snap/gnome-3-38-2004-sdk/current/usr/share/aclocal${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
                         },
                         {
-                            "PYTHONPATH": "/snap/gnome-3-38-2004-sdk/current/usr/lib/python3/dist-packages${PYTHONPATH:+:$PYTHONPATH}"
+                            "PYTHONPATH": ":".join(
+                                [
+                                    "/snap/gnome-3-38-2004-sdk/current/usr/lib/python3.8",
+                                    "/snap/gnome-3-38-2004-sdk/current/usr/lib/python3/dist-packages",
+                                ]
+                            )
+                            + "${PYTHONPATH:+:$PYTHONPATH}"
                         },
                     ]
                 }
@@ -141,6 +147,7 @@ class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):
                         "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                         "source-subdir": "gnome",
                         "plugin": "make",
+                        "make-parameters": ["WITH_PYTHON=3.8"],
                         "build-snaps": ["gnome-3-38-2004-sdk/latest/stable"],
                         "build-packages": ["gcc"],
                     }
