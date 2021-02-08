@@ -13,6 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+"""Manage the host's apt source repository configuration."""
 
 import io
 import logging
@@ -32,13 +34,53 @@ from . import apt_ppa
 logger = logging.getLogger(__name__)
 
 
+def _construct_deb822_source(
+    *,
+    architectures: Optional[List[str]] = None,
+    components: Optional[List[str]] = None,
+    formats: Optional[List[str]] = None,
+    suites: List[str],
+    url: str,
+) -> str:
+    """Construct deb-822 formatted sources.list config string."""
+    with io.StringIO() as deb822:
+        if formats:
+            type_text = " ".join(formats)
+        else:
+            type_text = "deb"
+
+        print(f"Types: {type_text}", file=deb822)
+
+        print(f"URIs: {url}", file=deb822)
+
+        suites_text = " ".join(suites)
+        print(f"Suites: {suites_text}", file=deb822)
+
+        if components:
+            components_text = " ".join(components)
+            print(f"Components: {components_text}", file=deb822)
+
+        if architectures:
+            arch_text = " ".join(architectures)
+        else:
+            arch_text = _get_host_arch()
+
+        print(f"Architectures: {arch_text}", file=deb822)
+
+        return deb822.getvalue()
+
+
+def _get_host_arch() -> str:
+    return ProjectOptions().deb_arch
+
+
 def _sudo_write_file(*, dst_path: pathlib.Path, content: bytes) -> None:
     """Workaround for writing privileged files in destructive mode."""
     try:
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(content)
-            f.flush()
-            f_name = f.name
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file.write(content)
+            temp_file.flush()
+            f_name = temp_file.name
 
         try:
             command = [
@@ -51,57 +93,25 @@ def _sudo_write_file(*, dst_path: pathlib.Path, content: bytes) -> None:
                 str(dst_path),
             ]
             subprocess.run(command, check=True)
-        except subprocess.CalledProcessError:
-            raise RuntimeError(f"Failed to install repository config with: {command!r}")
+        except subprocess.CalledProcessError as error:
+            raise RuntimeError(
+                f"Failed to install repository config with: {command!r}"
+            ) from error
     finally:
         os.unlink(f_name)
 
 
-def _get_host_arch() -> str:
-    return ProjectOptions().deb_arch
-
-
 class AptSourcesManager:
+    """Manage apt source configuration in /etc/apt/sources.list.d.
+
+    :param sources_list_d: Path to sources.list.d directory.
+    """
+
+    # pylint: disable=too-few-public-methods
     def __init__(
         self, *, sources_list_d: pathlib.Path = pathlib.Path("/etc/apt/sources.list.d"),
     ) -> None:
         self._sources_list_d = sources_list_d
-
-    def _construct_deb822_source(
-        self,
-        *,
-        architectures: Optional[List[str]] = None,
-        components: Optional[List[str]] = None,
-        formats: Optional[List[str]] = None,
-        suites: List[str],
-        url: str,
-    ) -> str:
-        """Construct deb-822 formatted sources.list config string."""
-        with io.StringIO() as deb822:
-            if formats:
-                type_text = " ".join(formats)
-            else:
-                type_text = "deb"
-
-            print(f"Types: {type_text}", file=deb822)
-
-            print(f"URIs: {url}", file=deb822)
-
-            suites_text = " ".join(suites)
-            print(f"Suites: {suites_text}", file=deb822)
-
-            if components:
-                components_text = " ".join(components)
-                print(f"Components: {components_text}", file=deb822)
-
-            if architectures:
-                arch_text = " ".join(architectures)
-            else:
-                arch_text = _get_host_arch()
-
-            print(f"Architectures: {arch_text}", file=deb822)
-
-            return deb822.getvalue()
 
     def _install_sources(
         self,
@@ -120,7 +130,7 @@ class AptSourcesManager:
 
         :returns: True if configuration was changed.
         """
-        config = self._construct_deb822_source(
+        config = _construct_deb822_source(
             architectures=architectures,
             components=components,
             formats=formats,
@@ -134,11 +144,11 @@ class AptSourcesManager:
         config_path = self._sources_list_d / f"{name}.sources"
         if config_path.exists() and config_path.read_text() == config:
             # Already installed and matches, nothing to do.
-            logger.debug(f"Ignoring unchanged sources: {config_path}")
+            logger.debug("Ignoring unchanged sources: %s", str(config_path))
             return False
 
         _sudo_write_file(dst_path=config_path, content=config.encode())
-        logger.debug(f"Installed sources: {config_path}")
+        logger.debug("Installed sources: %s", str(config_path))
         return True
 
     def _install_sources_apt(
@@ -220,12 +230,15 @@ class AptSourcesManager:
     ) -> bool:
         """Install configured package repositories.
 
+        :param package_repo: Repository to install the source configuration for.
+
         :returns: True if source configuration was changed.
         """
-        logger.debug(f"Processing repo: {package_repo!r}")
+        logger.debug("Processing repo: %r", package_repo)
         if isinstance(package_repo, package_repository.PackageRepositoryAptPpa):
             return self._install_sources_ppa(package_repo=package_repo)
-        elif isinstance(package_repo, package_repository.PackageRepositoryApt):
+
+        if isinstance(package_repo, package_repository.PackageRepositoryApt):
             return self._install_sources_apt(package_repo=package_repo)
-        else:
-            raise RuntimeError(f"unhandled package repository: {package_repository!r}")
+
+        raise RuntimeError(f"unhandled package repository: {package_repository!r}")
