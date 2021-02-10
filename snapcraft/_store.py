@@ -1010,6 +1010,13 @@ def validate(
     except KeyError:
         raise storeapi.errors.SnapNotFoundError(snap_name=snap_name)
 
+    existing_validations = {
+        (i["approved-snap-id"], i["approved-snap-revision"]): i
+        for i in store_client.get_assertion(
+            snap_id, endpoint="validations", params={"include_revoked": "1"}
+        )
+    }
+
     # Then, for each requested validation, generate assertion
     for validation in validations:
         gated_snap, rev = validation.split("=", 1)
@@ -1029,10 +1036,14 @@ def validate(
             "approved-snap-id": approved_snap_id,
             "approved-snap-revision": rev,
             "timestamp": datetime.utcnow().isoformat() + "Z",
-            "revoked": "false",
+            "revoked": "true" if revoke else "false",
         }
-        if revoke:
-            assertion_payload["revoked"] = "true"
+
+        # check for existing validation assertions
+        existing = existing_validations.get((approved_snap_id, rev))
+        if existing:
+            previous_revision = int(existing.get("revision", "0"))
+            assertion_payload["revision"] = str(previous_revision + 1)
 
         assertion = _sign_assertion(validation, assertion_payload, key, "validations")
 
