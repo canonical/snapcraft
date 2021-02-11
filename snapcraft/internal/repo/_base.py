@@ -248,8 +248,8 @@ class BaseRepo:
             # non-directories will be in files.
             for entry in itertools.chain(files, dirs):
                 path = os.path.join(root, entry)
-                if os.path.islink(path) and os.path.isabs(os.readlink(path)):
-                    cls._fix_symlink(path, unpackdir, root)
+                if os.path.islink(path):
+                    cls._fix_symlink(path, unpackdir)
                 elif os.path.exists(path):
                     _fix_filemode(path)
 
@@ -275,19 +275,46 @@ class BaseRepo:
             )
 
     @classmethod
-    def _fix_symlink(cls, path: str, unpackdir: str, root: str) -> None:
-        host_target = os.readlink(path)
-        if host_target in cls.get_package_libraries("libc6"):
-            logger.debug(
-                "Not fixing symlink {!r}: it's pointing to libc".format(host_target)
-            )
+    def _fix_symlink(cls, symlink_path: str, unpack_dir: str) -> None:
+        """Verify, fix, and/or log symlinks that would break in snap."""
+        symlink_target = os.readlink(symlink_path)
+        resolved_path = os.path.realpath(symlink_path)
+
+        # If symlink doesn't point to absolute target, nothing to do.
+        if not os.path.isabs(symlink_target):
             return
 
-        target = os.path.join(unpackdir, os.readlink(path)[1:])
-        if not os.path.exists(target) and not _try_copy_local(path, target):
+        # Ignore anything linking to libc6.
+        if resolved_path in cls.get_package_libraries("libc6"):
+            logger.debug("Not fixing symlink %r: it's pointing to libc", symlink_target)
             return
-        os.remove(path)
-        os.symlink(os.path.relpath(target, root), path)
+
+        # Use relative symlink if target is found in unpack directory.
+        target_in_unpack_dir = os.path.join(unpack_dir, symlink_target[1:])
+        if os.path.exists(target_in_unpack_dir):
+            relative_target = os.path.relpath(
+                target_in_unpack_dir, os.path.dirname(symlink_path)
+            )
+
+            # Relink to relative path.
+            os.unlink(symlink_path)
+            os.symlink(relative_target, symlink_path)
+            return
+
+        # Copy the file from host, if it exists - but warn about it.
+        if os.path.isfile(resolved_path):
+            logger.warning(
+                "Copying needed symlink target %r from host to satisfy %r.",
+                resolved_path,
+                symlink_path,
+            )
+            os.makedirs(os.path.dirname(target_in_unpack_dir), exist_ok=True)
+            shutil.copyfile(resolved_path, target_in_unpack_dir)
+            return
+
+        # Cannot find target, issue a warning.
+        relative_link = os.path.relpath(symlink_path, unpack_dir)
+        logger.warning("%r will be a dangling symlink", relative_link)
 
     @classmethod
     def _fix_shebangs(cls, unpackdir: str) -> None:
@@ -299,20 +326,6 @@ class DummyRepo(BaseRepo):
     @classmethod
     def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
         return set()
-
-
-def _try_copy_local(path: str, target: str) -> bool:
-    real_path = os.path.realpath(path)
-    if os.path.exists(real_path):
-        logger.warning(
-            "Copying needed target link from the system {}".format(real_path)
-        )
-        os.makedirs(os.path.dirname(target), exist_ok=True)
-        shutil.copyfile(os.readlink(path), target)
-        return True
-    else:
-        logger.warning("{} will be a dangling symlink".format(path))
-        return False
 
 
 def fix_pkg_config(
