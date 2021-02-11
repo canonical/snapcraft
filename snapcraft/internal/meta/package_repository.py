@@ -20,18 +20,12 @@ import re
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
-from snapcraft.internal import repo
-
 from . import errors
 
 logger = logging.getLogger(__name__)
 
 
 class PackageRepository(abc.ABC):
-    @abc.abstractmethod
-    def install(self) -> bool:
-        ...
-
     @abc.abstractmethod
     def marshal(self) -> Dict[str, Any]:
         ...
@@ -77,9 +71,6 @@ class PackageRepositoryAptPpa(PackageRepository):
         self.ppa = ppa
 
         self.validate()
-
-    def install(self) -> bool:
-        return repo.Ubuntu.install_ppa(ppa=self.ppa)
 
     def marshal(self) -> Dict[str, Any]:
         data = dict(type="apt")
@@ -169,45 +160,6 @@ class PackageRepositoryApt(PackageRepository):
         self.url = url
 
         self.validate()
-
-    def install(self) -> bool:
-        """Install repository configuration.
-
-        1) First check to see if package repo is implied path,
-           or "bare repository" config.  This is indicated when no
-           path, components, or suites are indicated.
-        2) If path is specified, convert path to a suite entry,
-           ending with "/".
-
-        Relatedly, this assumes all of the error-checking has been
-        done already by validate(), but do some sanity checks here
-        anyways.
-
-        :returns: True if source configuration was changed.
-        """
-        if not self.path and not self.components and not self.suites:
-            suites = ["/"]
-        elif self.path:
-            # Suites denoting exact path must end with '/'.
-            path = self.path
-            if not path.endswith("/"):
-                path += "/"
-            suites = [path]
-        elif self.suites:
-            suites = self.suites
-            if not self.components:
-                raise RuntimeError("no components with suites")
-        else:
-            raise RuntimeError("no suites or path")
-
-        return repo.Ubuntu.install_sources(
-            architectures=self.architectures,
-            components=self.components,
-            formats=self.formats,
-            name=self.name,
-            suites=suites,
-            url=self.url,
-        )
 
     def marshal(self) -> Dict[str, Any]:
         data: Dict[str, Any] = {"type": "apt"}
