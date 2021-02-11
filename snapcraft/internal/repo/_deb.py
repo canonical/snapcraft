@@ -16,7 +16,6 @@
 
 import fileinput
 import functools
-import io
 import logging
 import os
 import pathlib
@@ -26,15 +25,12 @@ import sys
 import tempfile
 from typing import Dict, List, Optional, Set, Tuple  # noqa: F401
 
-from typing_extensions import Final
 from xdg import BaseDirectory
 
 from snapcraft import file_utils
-from snapcraft.internal import os_release
 from snapcraft.internal.indicators import is_dumb_terminal
-from snapcraft.project._project_options import ProjectOptions
 
-from . import apt_ppa, errors
+from . import errors
 from ._base import BaseRepo, get_pkg_name_parts
 
 if sys.platform == "linux":
@@ -202,10 +198,6 @@ def _run_dpkg_query_list_files(package_name: str) -> Set[str]:
     return {i for i in output if ("lib" in i and os.path.isfile(i))}
 
 
-def _get_host_arch() -> str:
-    return ProjectOptions().deb_arch
-
-
 def _get_dpkg_list_path(base: str) -> pathlib.Path:
     return pathlib.Path(f"/snap/{base}/current/usr/share/snappy/dpkg.list")
 
@@ -232,32 +224,7 @@ def get_packages_in_base(*, base: str) -> List[str]:
     return package_list
 
 
-def _sudo_write_file(*, dst_path: pathlib.Path, content: bytes) -> None:
-    """Workaround for writing to privileged files."""
-    with tempfile.NamedTemporaryFile() as src_f:
-        src_f.write(content)
-        src_f.flush()
-
-        try:
-            command = [
-                "sudo",
-                "install",
-                "--owner=root",
-                "--group=root",
-                "--mode=0644",
-                src_f.name,
-                str(dst_path),
-            ]
-            subprocess.check_call(command)
-        except subprocess.CalledProcessError:
-            raise RuntimeError(f"failed to run: {command!r}")
-
-
 class Ubuntu(BaseRepo):
-    _SNAPCRAFT_INSTALLED_SOURCES_LIST: Final[
-        str
-    ] = "/etc/apt/sources.list.d/snapcraft.list"
-
     @classmethod
     def get_package_libraries(cls, package_name: str) -> Set[str]:
         return _run_dpkg_query_list_files(package_name)
@@ -476,91 +443,6 @@ class Ubuntu(BaseRepo):
                 f"{pkg_name}={pkg_version}"
                 for pkg_name, pkg_version in apt_cache.get_installed_packages().items()
             ]
-
-    @classmethod
-    def install_ppa(cls, ppa: str) -> bool:
-        owner, name = apt_ppa.split_ppa_parts(ppa=ppa)
-        codename = os_release.OsRelease().version_codename()
-
-        return any(
-            [
-                cls.install_sources(
-                    components=["main"],
-                    formats=["deb"],
-                    name=f"ppa-{owner}_{name}",
-                    suites=[codename],
-                    url=f"http://ppa.launchpad.net/{owner}/{name}/ubuntu",
-                ),
-            ]
-        )
-
-    @classmethod
-    def _construct_deb822_source(
-        cls,
-        *,
-        architectures: Optional[List[str]] = None,
-        components: Optional[List[str]] = None,
-        formats: Optional[List[str]] = None,
-        suites: List[str],
-        url: str,
-    ) -> str:
-        with io.StringIO() as deb822:
-            if formats:
-                type_text = " ".join(formats)
-            else:
-                type_text = "deb"
-
-            print(f"Types: {type_text}", file=deb822)
-
-            print(f"URIs: {url}", file=deb822)
-
-            suites_text = " ".join(suites)
-            print(f"Suites: {suites_text}", file=deb822)
-
-            if components:
-                components_text = " ".join(components)
-                print(f"Components: {components_text}", file=deb822)
-
-            if architectures:
-                arch_text = " ".join(architectures)
-            else:
-                arch_text = _get_host_arch()
-
-            print(f"Architectures: {arch_text}", file=deb822)
-
-            return deb822.getvalue()
-
-    @classmethod
-    def install_sources(
-        cls,
-        *,
-        architectures: Optional[List[str]] = None,
-        components: Optional[List[str]] = None,
-        formats: Optional[List[str]] = None,
-        name: str,
-        suites: List[str],
-        url: str,
-    ) -> bool:
-        config = cls._construct_deb822_source(
-            architectures=architectures,
-            components=components,
-            formats=formats,
-            suites=suites,
-            url=url,
-        )
-
-        if name not in ["default", "default-security"]:
-            name = "snapcraft-" + name
-
-        config_path = pathlib.Path(f"/etc/apt/sources.list.d/{name}.sources")
-        if config_path.exists() and config_path.read_text() == config:
-            # Already installed and matches, nothing to do.
-            logger.debug(f"Ignoring unchanged sources: {config_path}")
-            return False
-
-        _sudo_write_file(dst_path=config_path, content=config.encode())
-        logger.debug(f"Installed sources: {config_path}")
-        return True
 
     @classmethod
     def _extract_deb_name_version(cls, deb_path: pathlib.Path) -> str:
