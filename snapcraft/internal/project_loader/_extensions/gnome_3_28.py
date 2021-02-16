@@ -63,7 +63,7 @@ class ExtensionImpl(Extension):
         base: str = yaml_data["base"]
         platform_snap = _PLATFORM_SNAP[base]
         self.root_snippet = {
-            "assumes": ["snapd2.43"], # for 'snapctl is-connected'
+            "assumes": ["snapd2.43"],  # for 'snapctl is-connected'
             "plugs": {
                 "gtk-3-themes": {
                     "interface": "content",
