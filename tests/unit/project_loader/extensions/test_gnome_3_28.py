@@ -31,6 +31,7 @@ class ExtensionTest(ProjectLoaderBaseTest):
             gnome_extension.root_snippet,
             Equals(
                 {
+                    "assumes": ["snapd2.43"],
                     "plugs": {
                         "gtk-3-themes": {
                             "interface": "content",
@@ -53,7 +54,10 @@ class ExtensionTest(ProjectLoaderBaseTest):
                             "default-provider": "gnome-3-28-1804",
                         },
                     },
-                    "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform"},
+                    "environment": {
+                        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+                        "PLATFORM_SNAP": "gnome-3-28-1804",
+                    },
                     "hooks": {
                         "configure": {
                             "plugs": ["desktop"],

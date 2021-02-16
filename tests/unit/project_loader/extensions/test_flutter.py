@@ -37,6 +37,7 @@ def test_extension(extension_class):
     )
 
     assert flutter_extension.root_snippet == {
+        "assumes": ["snapd2.43"],
         "plugs": {
             "gtk-3-themes": {
                 "interface": "content",
@@ -59,7 +60,10 @@ def test_extension(extension_class):
                 "default-provider": "gnome-3-28-1804",
             },
         },
-        "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform"},
+        "environment": {
+            "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+            "PLATFORM_SNAP": "gnome-3-28-1804",
+        },
         "layout": {
             "/usr/share/xml/iso-codes": {
                 "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"

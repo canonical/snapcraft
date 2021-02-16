@@ -60,6 +60,7 @@ class ExtensionImpl(Extension):
         base: str = yaml_data["base"]
         platform_snap = _PLATFORM_SNAP[base]
         self.root_snippet = {
+            "assumes": ["snapd2.43"], # for 'snapctl is-connected'
             "plugs": {
                 "icon-themes": {
                     "interface": "content",
@@ -78,7 +79,10 @@ class ExtensionImpl(Extension):
                     "target": "$SNAP/kf5",
                 },
             },
-            "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
+            "environment": {
+                "SNAP_DESKTOP_RUNTIME": "$SNAP/kf5",
+                "PLATFORM_SNAP": platform_snap,
+            },
             "hooks": {
                 "configure": {
                     "plugs": ["desktop"],

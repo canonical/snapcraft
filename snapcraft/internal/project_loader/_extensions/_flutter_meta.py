@@ -99,6 +99,9 @@ class FlutterMetaExtension(type):
                     }
                 }
             )
+            self.root_snippet["environment"].update(
+                {"PLATFORM_SNAP": platform_snap}
+            )
 
         x = super().__new__(
             cls,
@@ -117,6 +120,7 @@ class FlutterMetaExtension(type):
 
         x.__doc__ = _DOC_TEMPLATE.format(channel=channel)
         x.root_snippet = {
+            "assumes": ["snapd2.43"], # for 'snapctl is-connected'
             "plugs": {
                 "gtk-3-themes": {
                     "interface": "content",

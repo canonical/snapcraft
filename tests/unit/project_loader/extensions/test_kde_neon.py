@@ -31,6 +31,7 @@ class ExtensionTest(ProjectLoaderBaseTest):
             kde_neon_extension.root_snippet,
             Equals(
                 {
+                    "assumes": ["snapd2.43"],
                     "plugs": {
                         "icon-themes": {
                             "interface": "content",
@@ -49,7 +50,10 @@ class ExtensionTest(ProjectLoaderBaseTest):
                             "default-provider": "kde-frameworks-5-core18",
                         },
                     },
-                    "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
+                    "environment": {
+                        "SNAP_DESKTOP_RUNTIME": "$SNAP/kf5",
+                        "PLATFORM_SNAP": "kde-frameworks-5-core18",
+                    },
                     "hooks": {
                         "configure": {
                             "plugs": ["desktop"],

@@ -68,6 +68,7 @@ class ExtensionImpl(Extension):
         base = yaml_data["base"]
         platform_snap = _PLATFORM_SNAP[base]
         self.root_snippet = {
+            "assumes": ["snapd2.43"], # for 'snapctl is-connected'
             "plugs": {
                 "gtk-3-themes": {
                     "interface": "content",
@@ -92,6 +93,7 @@ class ExtensionImpl(Extension):
             },
             "environment": {
                 "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+                "PLATFORM_SNAP": platform_snap,
                 "GTK_USE_PORTAL": "1",
             },
             "hooks": {
