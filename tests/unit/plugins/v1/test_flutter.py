@@ -91,9 +91,7 @@ def test_build(mock_run, flutter_plugin):
     else:
         bundle_dir = "build/linux/x64/release/bundle/my_app"
 
-    app_path = (
-        pathlib.Path(flutter_plugin.builddir) / bundle_dir
-    )
+    app_path = pathlib.Path(flutter_plugin.builddir) / bundle_dir
     app_path.parent.mkdir(parents=True)
     app_path.touch()
 
