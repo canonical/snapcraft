@@ -34,7 +34,7 @@ This plugin works best with the flutter related extensions.
 """
 
 import logging
-import pathlib
+from pathlib import Path
 import subprocess
 from typing import Any, Dict, List
 
@@ -76,7 +76,7 @@ class FlutterPlugin(PluginV1):
     def pull(self) -> None:
         super().pull()
 
-        work_path = pathlib.Path(self.sourcedir)
+        work_path = Path(self.sourcedir)
         if self.options.source_subdir:
             work_path /= self.options.source_subdir
 
@@ -107,16 +107,20 @@ class FlutterPlugin(PluginV1):
         )
 
         # Flutter only supports arm64 and amd64
-        if self.project.deb_arch == "arm64":
+        if Path(self.builddir, "build/linux/x64/release/bundle").exists():
             bundle_dir_path = (
-                pathlib.Path(self.builddir) / "build/linux/arm64/release/bundle"
+                Path(self.builddir, "build/linux/x64/release/bundle")
+            )
+        elif Path(self.builddir, "build/linux/arm64/release/bundle").exists():
+            bundle_dir_path = (
+                Path(self.builddir, "build/linux/arm64/release/bundle")
             )
         else:
             bundle_dir_path = (
-                pathlib.Path(self.builddir) / "build/linux/x64/release/bundle"
+                Path(self.builddir, "build/linux/release/bundle")
             )
 
-        install_bin_dir_path = pathlib.Path(self.installdir) / "bin"
+        install_bin_dir_path = Path(self.installdir) / "bin"
         install_bin_dir_path.mkdir(exist_ok=True)
         # Now move everything over to the plugin's installdir
         file_utils.link_or_copy_tree(
