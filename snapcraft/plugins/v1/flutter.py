@@ -106,7 +106,12 @@ class FlutterPlugin(PluginV1):
             ]
         )
 
-        bundle_dir_path = pathlib.Path(self.builddir) / "build/linux/release/bundle"
+        # Flutter only supports arm64 and amd64
+        if self.project.deb_arch == "arm64":
+            bundle_dir_path = pathlib.Path(self.builddir) / "build/linux/arm64/release/bundle"
+        else:
+            bundle_dir_path = pathlib.Path(self.builddir) / "build/linux/x64/release/bundle"
+
         install_bin_dir_path = pathlib.Path(self.installdir) / "bin"
         install_bin_dir_path.mkdir(exist_ok=True)
         # Now move everything over to the plugin's installdir
