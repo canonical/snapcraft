@@ -129,6 +129,9 @@ class PythonPlugin(PluginV2):
             'SNAPCRAFT_PYTHON_PATH="$(readlink -e "${SNAPCRAFT_PYTHON_PATH}")"',
             '"${SNAPCRAFT_PYTHON_PATH}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} "${SNAPCRAFT_PART_INSTALL}"',
             'SNAPCRAFT_PYTHON_VENV_INTERP_PATH="${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"',
+            'SNAPCRAFT_PYTHON_BUILD_EXTRAS="$(readlink -f "../python-build-extras")"',
+            'export PYTHONPATH="${SNAPCRAFT_PYTHON_BUILD_EXTRAS}${PYTHONPATH:+:$PYTHONPATH}"',
+            'pip install wheel --target "${SNAPCRAFT_PYTHON_BUILD_EXTRAS}"',
         ]
 
         if self.options.constraints:
