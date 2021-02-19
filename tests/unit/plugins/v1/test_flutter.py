@@ -86,9 +86,12 @@ def test_pull_from_subdir(mock_subprocess_run, flutter_plugin):
 
 def test_build(mock_run, flutter_plugin):
     # "mock" create the bundle directory and app.
-    app_path = (
-        pathlib.Path(flutter_plugin.builddir) / "build/linux/release/bundle/my_app"
-    )
+    if flutter_plugin.project.deb_arch == "arm64":
+        bundle_dir = "build/linux/arm64/release/bundle/my_app"
+    else:
+        bundle_dir = "build/linux/x64/release/bundle/my_app"
+
+    app_path = pathlib.Path(flutter_plugin.builddir) / bundle_dir
     app_path.parent.mkdir(parents=True)
     app_path.touch()
 
