@@ -15,10 +15,7 @@ class SSOClient(Client):
 
     def __init__(self, conf):
         super().__init__(
-            conf,
-            os.environ.get(
-                "UBUNTU_SSO_API_ROOT_URL", constants.UBUNTU_SSO_API_ROOT_URL
-            ),
+            conf, os.environ.get("UBUNTU_ONE_SSO_URL", constants.UBUNTU_ONE_SSO_URL),
         )
 
     def get_unbound_discharge(self, email, password, one_time_password, caveat_id):
@@ -26,7 +23,7 @@ class SSOClient(Client):
         if one_time_password:
             data["otp"] = one_time_password
         response = self.post(
-            "tokens/discharge",
+            "/api/v2/tokens/discharge",
             data=json.dumps(data),
             headers={"Content-Type": "application/json", "Accept": "application/json"},
         )
@@ -50,7 +47,7 @@ class SSOClient(Client):
     def refresh_unbound_discharge(self, unbound_discharge):
         data = {"discharge_macaroon": unbound_discharge}
         response = self.post(
-            "tokens/refresh",
+            "/api/v2/tokens/refresh",
             data=json.dumps(data),
             headers={"Content-Type": "application/json", "Accept": "application/json"},
         )

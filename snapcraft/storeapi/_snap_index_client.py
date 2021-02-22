@@ -36,10 +36,7 @@ class SnapIndexClient(Client):
         :type config: snapcraft.config.Config
         """
         super().__init__(
-            conf,
-            os.environ.get(
-                "UBUNTU_STORE_SEARCH_ROOT_URL", constants.UBUNTU_STORE_SEARCH_ROOT_URL
-            ),
+            conf, os.environ.get("STORE_API_URL", constants.STORE_API_URL),
         )
 
     def get_default_headers(self, api="v2"):
@@ -89,7 +86,7 @@ class SnapIndexClient(Client):
         if arch is not None:
             params["architecture"] = arch
         logger.debug("Getting information for {}".format(snap_name))
-        url = "v2/snaps/info/{}".format(snap_name)
+        url = "/v2/snaps/info/{}".format(snap_name)
         resp = self.get(url, headers=headers, params=params)
         if resp.status_code == 404:
             raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
@@ -116,22 +113,3 @@ class SnapIndexClient(Client):
         if response.status_code != 200:
             raise errors.SnapNotFoundError(snap_id=snap_id)
         return response.json()
-
-    def get(self, url, headers=None, params=None, stream=False):
-        """Perform a GET request with the given arguments.
-
-        :param str url: URL to send the request.
-        :param dict headers: Headers to be sent along with the request.
-        :param dict params: Query parameters to be sent along with
-        the request.
-        :param bool stream: Determines if the request shouldn't be
-        automatically closed (true by default).
-
-        :return Response of the request.
-        """
-        if headers is None:
-            headers = self.get_default_headers()
-        response = self.request(
-            "GET", url, stream=stream, headers=headers, params=params
-        )
-        return response
