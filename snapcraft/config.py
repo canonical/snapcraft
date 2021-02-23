@@ -163,7 +163,7 @@ class Config(object):
     """Hold configuration options in sections.
 
     There can be two sections for the sso related credentials: production and
-    staging. This is governed by the UBUNTU_SSO_API_ROOT_URL environment
+    staging. This is governed by the UBUNTU_ONE_SSO_URL environment
     variable. Other sections are ignored but preserved.
 
     """
@@ -174,9 +174,7 @@ class Config(object):
 
     def _section_name(self) -> str:
         # The only section we care about is the host from the SSO url
-        url = os.environ.get(
-            "UBUNTU_SSO_API_ROOT_URL", constants.UBUNTU_SSO_API_ROOT_URL
-        )
+        url = os.environ.get("UBUNTU_ONE_SSO_URL", constants.UBUNTU_ONE_SSO_URL)
         return urllib.parse.urlparse(url).netloc
 
     def get(

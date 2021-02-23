@@ -16,10 +16,7 @@ class SCAClient(Client):
 
     def __init__(self, conf):
         super().__init__(
-            conf,
-            os.environ.get(
-                "UBUNTU_STORE_API_ROOT_URL", constants.UBUNTU_STORE_API_ROOT_URL
-            ),
+            conf, os.environ.get("STORE_DASHBOARD_URL", constants.STORE_DASHBOARD_URL),
         )
 
     def get_macaroon(self, acls, packages=None, channels=None, expires=None):
@@ -31,7 +28,7 @@ class SCAClient(Client):
         if expires is not None:
             data.update({"expires": expires})
         headers = {"Accept": "application/json"}
-        response = self.post("acl/", json=data, headers=headers)
+        response = self.post("/dev/api/acl/", json=data, headers=headers)
         if response.ok:
             return response.json()["macaroon"]
         else:
@@ -53,7 +50,7 @@ class SCAClient(Client):
     def verify_acl(self):
         auth = _macaroon_auth(self.conf)
         response = self.post(
-            "acl/verify/",
+            "/dev/api/acl/verify/",
             json={"auth_data": {"authorization": auth}},
             headers={"Accept": "application/json"},
         )
@@ -65,7 +62,8 @@ class SCAClient(Client):
     def get_account_information(self):
         auth = _macaroon_auth(self.conf)
         response = self.get(
-            "account", headers={"Authorization": auth, "Accept": "application/json"}
+            "/dev/api/account",
+            headers={"Authorization": auth, "Accept": "application/json"},
         )
         if response.ok:
             return response.json()
@@ -76,7 +74,7 @@ class SCAClient(Client):
         data = {"account_key_request": account_key_request}
         auth = _macaroon_auth(self.conf)
         response = self.post(
-            "account/account-key",
+            "/dev/api/account/account-key",
             data=json.dumps(data),
             headers={
                 "Authorization": auth,
@@ -95,7 +93,7 @@ class SCAClient(Client):
         if store_id is not None:
             data["store"] = store_id
         response = self.post(
-            "register-name/",
+            "/dev/api/register-name/",
             data=json.dumps(data),
             headers={"Authorization": auth, "Content-Type": "application/json"},
         )
@@ -106,7 +104,7 @@ class SCAClient(Client):
         data = {"name": snap_name, "dry_run": True}
         auth = _macaroon_auth(self.conf)
         response = self.post(
-            "snap-push/",
+            "/dev/api/snap-push/",
             data=json.dumps(data),
             headers={
                 "Authorization": auth,
@@ -146,7 +144,7 @@ class SCAClient(Client):
             data["channels"] = channels
         auth = _macaroon_auth(self.conf)
         response = self.post(
-            "snap-push/",
+            "/dev/api/snap-push/",
             data=json.dumps(data),
             headers={
                 "Authorization": auth,
@@ -191,7 +189,7 @@ class SCAClient(Client):
             }
         auth = _macaroon_auth(self.conf)
         response = self.post(
-            "snap-release/",
+            "/dev/api/snap-release/",
             data=json.dumps(data),
             headers={
                 "Authorization": auth,
@@ -213,7 +211,7 @@ class SCAClient(Client):
             data = {"snap_developer": assertion.decode("utf-8")}
         auth = _macaroon_auth(self.conf)
 
-        url = "snaps/{}/{}".format(snap_id, endpoint)
+        url = "/dev/api/snaps/{}/{}".format(snap_id, endpoint)
 
         # For `snap-developer`, revoking developers will require their uploads
         # to be invalidated.
@@ -248,7 +246,7 @@ class SCAClient(Client):
     def get_assertion(self, snap_id, endpoint, params=None):
         auth = _macaroon_auth(self.conf)
         response = self.get(
-            "snaps/{}/{}".format(snap_id, endpoint),
+            "/dev/api/snaps/{}/{}".format(snap_id, endpoint),
             headers={
                 "Authorization": auth,
                 "Content-Type": "application/json",
@@ -272,7 +270,7 @@ class SCAClient(Client):
         return response_json
 
     def push_snap_build(self, snap_id, snap_build):
-        url = "snaps/{}/builds".format(snap_id)
+        url = "/dev/api/snaps/{}/builds".format(snap_id)
         data = json.dumps({"assertion": snap_build})
         headers = {
             "Authorization": _macaroon_auth(self.conf),
@@ -288,7 +286,7 @@ class SCAClient(Client):
             qs["series"] = series
         if arch:
             qs["architecture"] = arch
-        url = "snaps/" + snap_id + "/state"
+        url = "/dev/api/snaps/" + snap_id + "/state"
         if qs:
             url += "?" + urllib.parse.urlencode(qs)
         auth = _macaroon_auth(self.conf)
@@ -308,7 +306,7 @@ class SCAClient(Client):
         return response_json
 
     def close_channels(self, snap_id, channel_names):
-        url = "snaps/{}/close".format(snap_id)
+        url = "/dev/api/snaps/{}/close".format(snap_id)
         data = {"channels": channel_names}
         headers = {"Authorization": _macaroon_auth(self.conf)}
         response = self.post(url, json=data, headers=headers)
@@ -331,7 +329,7 @@ class SCAClient(Client):
         auth = _macaroon_auth(self.conf)
         data = {"latest_tos_accepted": latest_tos_accepted}
         response = self.post(
-            "agreement/",
+            "/dev/api/agreement/",
             data=json.dumps(data),
             headers={
                 "Authorization": auth,

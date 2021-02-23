@@ -126,7 +126,7 @@ class TestConfig(unit.TestCase):
         create_config_from_string("""[example.com]\nfoo=bar""")
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "UBUNTU_SSO_API_ROOT_URL", "http://example.com/api/v2"
+                "UBUNTU_ONE_SSO_URL", "http://example.com/api/v2"
             )
         )
         conf = config.Config()
@@ -211,7 +211,7 @@ class TestLocalConfig(unit.TestCase):
     def setUp(self):
         super().setUp()
         override_sso = fixtures.EnvironmentVariable(
-            "UBUNTU_SSO_API_ROOT_URL", "http://example.com/api/v2"
+            "UBUNTU_ONE_SSO_URL", "http://example.com/api/v2"
         )
         self.useFixture(override_sso)
 

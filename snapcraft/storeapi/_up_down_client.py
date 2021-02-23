@@ -1,5 +1,4 @@
 import os
-import urllib.parse
 
 from . import constants
 from ._client import Client
@@ -10,15 +9,12 @@ class UpDownClient(Client):
 
     def __init__(self, conf):
         super().__init__(
-            conf,
-            os.environ.get(
-                "UBUNTU_STORE_UPLOAD_ROOT_URL", constants.UBUNTU_STORE_UPLOAD_ROOT_URL
-            ),
+            conf, os.environ.get("STORE_UPLOAD_URL", constants.STORE_UPLOAD_URL),
         )
 
     def upload(self, monitor):
         return self.post(
-            urllib.parse.urljoin(self.root_url, "unscanned-upload/"),
+            "/unscanned-upload/",
             data=monitor,
             headers={
                 "Content-Type": monitor.content_type,
