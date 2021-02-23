@@ -28,11 +28,7 @@ class SnapV2Client(Client):
 
     def __init__(self, conf):
         super().__init__(
-            conf,
-            os.environ.get(
-                "SNAP_STORE_DASHBOARD_ROOT_URL", constants.SNAP_STORE_DASHBOARD_ROOT_URL
-            )
-            + "/api/v2/snaps/",
+            conf, os.environ.get("STORE_DASHBOARD_URL", constants.STORE_DASHBOARD_URL)
         )
 
     @staticmethod
@@ -49,7 +45,7 @@ class SnapV2Client(Client):
         return response
 
     def get_snap_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
-        url = snap_name + "/channel-map"
+        url = f"/api/v2/snaps/{snap_name}/channel-map"
         auth = _macaroon_auth(self.conf)
         response = self.get(
             url,
@@ -66,7 +62,7 @@ class SnapV2Client(Client):
         return channel_map.ChannelMap.unmarshal(response.json())
 
     def get_snap_releases(self, *, snap_name: str) -> releases.Releases:
-        url = snap_name + "/releases"
+        url = f"/api/v2/snaps/{snap_name}/releases"
         auth = _macaroon_auth(self.conf)
         response = self.get(
             url,

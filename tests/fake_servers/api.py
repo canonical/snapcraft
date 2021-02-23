@@ -254,7 +254,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         permission = request.path.split("/")[-1]
         logger.debug("Handling ACL request for {}".format(permission))
         sso_host = urllib.parse.urlparse(
-            os.environ.get("UBUNTU_SSO_API_ROOT_URL", "http://localhost")
+            os.environ.get("UBUNTU_ONE_SSO_URL", "http://localhost")
         ).netloc
         macaroon = pymacaroons.Macaroon(
             caveats=[
