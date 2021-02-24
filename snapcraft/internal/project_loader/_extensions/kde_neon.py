@@ -81,7 +81,7 @@ class ExtensionImpl(Extension):
             },
             "environment": {
                 "SNAP_DESKTOP_RUNTIME": "$SNAP/kf5",
-                "PLATFORM_SNAP": platform_snap,
+                "PLATFORM_SNAP": "kde-frameworks-5-plug",
             },
             "hooks": {
                 "configure": {
