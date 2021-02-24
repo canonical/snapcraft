@@ -15,22 +15,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import logging
 import os
 from typing import Dict
 
-from . import _macaroon_auth, constants, errors, logger
+from . import _macaroon_auth, constants, errors
 from ._client import Client
 from .info import SnapInfo
 
 
-class SnapIndexClient(Client):
-    """The Click Package Index knows everything about existing snaps.
-    https://wiki.ubuntu.com/AppStore/Interfaces/ClickPackageIndex is the
-    canonical reference.
+logger = logging.getLogger(__name__)
+
+
+class SnapAPI(Client):
+    """The Snap API is used to query snaps.
+
+    This is an interface to query that API which is documented
+    at http://api.snapcraft.io/docs/.
     """
 
     def __init__(self, conf):
-        """Initialize the SnapIndexClient object.
+        """Initialize SnapAPI.
 
         :param config conf: Configuration details for the client.
         :type config: snapcraft.config.Config
@@ -39,8 +44,9 @@ class SnapIndexClient(Client):
             conf, os.environ.get("STORE_API_URL", constants.STORE_API_URL),
         )
 
-    def get_default_headers(self, api="v2"):
+    def _get_default_headers(self, api="v2"):
         """Return default headers for CPI requests.
+
         Tries to build an 'Authorization' header with local credentials
         if they are available.
         Also pin specific branded store if `SNAPCRAFT_UBUNTU_STORE`
@@ -51,12 +57,12 @@ class SnapIndexClient(Client):
         with contextlib.suppress(errors.InvalidCredentialsError):
             headers["Authorization"] = _macaroon_auth(self.conf)
 
-        branded_store = os.getenv("SNAPCRAFT_UBUNTU_STORE")
-        if branded_store:
+        brand_store = os.getenv("SNAPCRAFT_UBUNTU_STORE")
+        if brand_store:
             if api == "v2":
-                headers["Snap-Device-Store"] = branded_store
+                headers["Snap-Device-Store"] = brand_store
             elif api == "v1":
-                headers["X-Ubuntu-Store"] = branded_store
+                headers["X-Ubuntu-Store"] = brand_store
             else:
                 logger.warning("Incorrect API version passed: {!r}.".format(api))
 
@@ -68,10 +74,10 @@ class SnapIndexClient(Client):
         :param str snap_name: Name of the snap.
         :param str arch: Architecture of the snap (none by default).
 
-        :return information for the snap.
+        :returns: information for the snap.
         :rtype: SnapInfo
         """
-        headers = self.get_default_headers()
+        headers = self._get_default_headers()
         headers.update(
             {
                 "Accept": "application/json",
@@ -97,14 +103,14 @@ class SnapIndexClient(Client):
     def get_assertion(
         self, assertion_type: str, snap_id: str
     ) -> Dict[str, Dict[str, str]]:
-        """Get the assertion for the specified snap.
+        """Get the assertion of assertion_type for the specified snap_id.
 
-        :param str assertion_type: The type of the assertion.
+        :param str assertion_type: The type of assertion.
         :param str snap_id: The ID of the snap.
 
-        :return Assertion for the snap.
+        :returns: Assertion for the snap.
         """
-        headers = self.get_default_headers(api="v1")
+        headers = self._get_default_headers(api="v1")
         logger.debug("Getting snap-declaration for {}".format(snap_id))
         url = "/api/v1/snaps/assertions/{}/{}/{}".format(
             assertion_type, constants.DEFAULT_SERIES, snap_id

@@ -27,7 +27,7 @@ from snapcraft.internal.indicators import download_requests_stream
 
 from . import _upload, errors, logger
 from ._sca_client import SCAClient
-from ._snap_index_client import SnapIndexClient
+from ._snap_api import SnapAPI
 from ._snap_v2_client import SnapV2Client
 from ._sso_client import SSOClient
 from ._up_down_client import UpDownClient
@@ -36,13 +36,13 @@ from .v2 import channel_map, releases
 
 
 class StoreClient:
-    """High-level client for the V2.0 API SCA resources."""
+    """High-level client Snap resources."""
 
     def __init__(self) -> None:
         super().__init__()
         self.conf = config.Config()
         self.sso = SSOClient(self.conf)
-        self.cpi = SnapIndexClient(self.conf)
+        self.snap = SnapAPI(self.conf)
         self.updown = UpDownClient(self.conf)
         self.sca = SCAClient(self.conf)
         self.v2_snap = SnapV2Client(self.conf)
@@ -143,7 +143,7 @@ class StoreClient:
         return acl_data
 
     def get_snap_name_for_id(self, snap_id: str) -> str:
-        declaration_assertion = self.cpi.get_assertion("snap-declaration", snap_id)
+        declaration_assertion = self.snap.get_assertion("snap-declaration", snap_id)
         return declaration_assertion["headers"]["snap-name"]
 
     def verify_acl(self) -> Dict[str, Union[List[str], str]]:
@@ -261,7 +261,7 @@ class StoreClient:
         arch: Optional[str] = None,
         except_hash: str = ""
     ):
-        snap_info = self.cpi.get_info(snap_name)
+        snap_info = self.snap.get_info(snap_name)
         channel_mapping = snap_info.get_channel_mapping(
             risk=risk, track=track, arch=arch
         )
@@ -297,7 +297,7 @@ class StoreClient:
             if resume_possible and os.path.exists(download_path):
                 total_read = os.path.getsize(download_path)
                 headers["Range"] = "bytes={}-".format(total_read)
-            request = self.cpi.get(download_url, headers=headers, stream=True)
+            request = self.snap.get(download_url, headers=headers, stream=True)
             request.raise_for_status()
             redirections = [h.headers["Location"] for h in request.history]
             if redirections:
