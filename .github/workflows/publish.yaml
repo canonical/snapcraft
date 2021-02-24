@@ -2,8 +2,6 @@ name: CI
 
 on: 
   pull_request:
-  push:
-    branches: [master]
 
 jobs:
   publish:
@@ -18,8 +16,6 @@ jobs:
             echo "::set-output name=PUBLISH::true"
             if [[ ${{ github.event_name }} == 'pull_request' ]]; then
               echo "::set-output name=PUBLISH_BRANCH::edge/pr-${{ github.event.number }}"
-            elif [[ "${GITHUB_REF##*/}" == "master" ]]; then
-              echo "::set-output name=PUBLISH_BRANCH::edge"
             else
               echo "::set-output name=PUBLISH_BRANCH::"
             fi
