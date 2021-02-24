@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2019 Canonical Ltd
+# Copyright (C) 2017-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -27,7 +27,7 @@ from tests.unit import commands
 
 
 class WhoamiCommandBaseTestCase(commands.CommandBaseTestCase):
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
+    @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
     def test_unknown_email_must_suggest_logout_and_login(
         self, mock_get_account_information
     ):
@@ -52,7 +52,7 @@ class WhoamiCommandBaseTestCase(commands.CommandBaseTestCase):
             ),
         )
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
+    @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
     def test_whoami_must_print_email_and_developer_id(
         self, mock_get_account_information
     ):

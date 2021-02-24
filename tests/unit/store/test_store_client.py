@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2020 Canonical Ltd
+# Copyright 2016-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -1403,7 +1403,7 @@ class GetSnapStatusTestCase(StoreTestCase):
         self.assertFalse(self.fake_store.needs_refresh)
 
     @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get")
+    @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get")
     def test_get_snap_status_server_error(self, mock_sca_get, mock_account_info):
         mock_account_info.return_value = {
             "snaps": {"16": {"basic": {"snap-id": "my_snap_id"}}}

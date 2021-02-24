@@ -1,3 +1,19 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
+# Copyright 2016-2021 Canonical Ltd
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import json
 import os
 import urllib.parse
@@ -7,12 +23,17 @@ import requests
 from simplejson.scanner import JSONDecodeError
 
 from . import _macaroon_auth, _metadata, constants, errors, logger
+from .v2 import channel_map, releases
 from ._client import Client
 from ._status_tracker import StatusTracker
 
 
-class SCAClient(Client):
-    """The software center agent deals with managing snaps."""
+class DashboardAPI(Client):
+    """The Dashboard API is used to publish and manage snaps.
+
+    This is an interface to query that API which is documented
+    at https://dashboard.snapcraft.io/docs/.
+    """
 
     def __init__(self, conf):
         super().__init__(
@@ -341,3 +362,37 @@ class SCAClient(Client):
         if not response.ok:
             raise errors.DeveloperAgreementSignError(response)
         return response.json()
+
+    def get_snap_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
+        url = f"/api/v2/snaps/{snap_name}/channel-map"
+        auth = _macaroon_auth(self.conf)
+        response = self.get(
+            url,
+            headers={
+                "Authorization": auth,
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+
+        if not response.ok:
+            raise errors.StoreSnapChannelMapError(snap_name=snap_name)
+
+        return channel_map.ChannelMap.unmarshal(response.json())
+
+    def get_snap_releases(self, *, snap_name: str) -> releases.Releases:
+        url = f"/api/v2/snaps/{snap_name}/releases"
+        auth = _macaroon_auth(self.conf)
+        response = self.get(
+            url,
+            headers={
+                "Authorization": auth,
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+
+        if not response.ok:
+            raise errors.StoreSnapChannelMapError(snap_name=snap_name)
+
+        return releases.Releases.unmarshal(response.json())
