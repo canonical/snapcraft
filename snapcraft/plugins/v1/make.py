@@ -96,10 +96,10 @@ class MakePlugin(PluginV1):
         if self.options.makefile:
             command.extend(["-f", self.options.makefile])
 
-        if self.options.make_parameters:
-            command.extend(self.options.make_parameters)
-
-        self.run(command + ["-j{}".format(self.parallel_build_count)], env=env)
+        self.run(
+            command + [f"-j{self.parallel_build_count}"] + self.options.make_parameters,
+            env=env,
+        )
         if self.options.artifacts:
             for artifact in self.options.artifacts:
                 source_path = os.path.join(self.builddir, artifact)
@@ -111,13 +111,13 @@ class MakePlugin(PluginV1):
                 else:
                     snapcraft.file_utils.link_or_copy(source_path, destination_path)
         else:
-            command.append("install")
+            install_command = command + ["install"] + self.options.make_parameters
             if self.options.make_install_var:
-                command.append(
+                install_command.append(
                     "{}={}".format(self.options.make_install_var, self.installdir)
                 )
 
-            self.run(command, env=env)
+            self.run(install_command, env=env)
 
     def build(self):
         super().build()

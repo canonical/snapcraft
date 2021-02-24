@@ -121,7 +121,10 @@ class ExtensionImpl(Extension):
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                 "source-subdir": "gnome",
                 "plugin": "make",
-                "make-parameters": ["PLATFORM_PLUG={plug}".format(plug=platform_snap)],
+                "make-parameters": [
+                    "WITH_BINDTEXTDOMAIN=1",
+                    "PLATFORM_PLUG={plug}".format(plug=platform_snap),
+                ],
                 "build-packages": ["gcc", "libgtk-3-dev"],
             }
         }

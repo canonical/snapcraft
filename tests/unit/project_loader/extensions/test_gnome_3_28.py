@@ -100,7 +100,10 @@ class ExtensionTest(ProjectLoaderBaseTest):
                         "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                         "source-subdir": "gnome",
                         "plugin": "make",
-                        "make-parameters": ["PLATFORM_PLUG=gnome-3-28-1804"],
+                        "make-parameters": [
+                            "WITH_BINDTEXTDOMAIN=1",
+                            "PLATFORM_PLUG=gnome-3-28-1804",
+                        ],
                         "build-packages": ["gcc", "libgtk-3-dev"],
                     }
                 }

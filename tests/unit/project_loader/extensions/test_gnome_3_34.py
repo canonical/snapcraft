@@ -130,7 +130,10 @@ class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):
                         "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                         "source-subdir": "gnome",
                         "plugin": "make",
-                        "make-parameters": ["PLATFORM_PLUG=gnome-3-34-1804"],
+                        "make-parameters": [
+                            "WITH_BINDTEXTDOMAIN=1",
+                            "PLATFORM_PLUG=gnome-3-34-1804",
+                        ],
                         "build-snaps": ["gnome-3-34-1804-sdk/latest/stable"],
                         "build-packages": ["gcc"],
                     }

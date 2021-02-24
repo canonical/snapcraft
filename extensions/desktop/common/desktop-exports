@@ -227,7 +227,8 @@ else
   for ((i = 0; i < ${#XDG_SPECIAL_DIRS[@]}; i++)); do
     old="${XDG_SPECIAL_DIRS_INITIAL_PATHS[$i]}"
     new="${XDG_SPECIAL_DIRS_PATHS[$i]}"
-    if [ -L "$old" ] && [ -d "$new" ] && [ "$(readlink "$old")" != "$new" ]; then
+    if [ -L "$old" ] && [ -d "$new" ] && [ "$(readlink "$old" 2>/dev/null)" != "$new" ] &&
+         (is_subpath "$old" "$SNAP_USER_DATA" || is_subpath "$old" "$SNAP_USER_COMMON"); then
       mv -vn "$old"/* "$new"/ 2>/dev/null
     elif [ -d "$old" ] && [ -d "$new" ] && [ "$old" != "$new" ] &&
          (is_subpath "$old" "$SNAP_USER_DATA" || is_subpath "$old" "$SNAP_USER_COMMON"); then

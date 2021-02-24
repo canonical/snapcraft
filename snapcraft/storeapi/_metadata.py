@@ -38,7 +38,7 @@ class StoreMetadataHandler:
 
     def upload(self, metadata, force):
         """Upload the metadata to SCA."""
-        url = "snaps/" + self.snap_id + "/metadata"
+        url = f"/dev/api/snaps/{self.snap_id}/metadata"
         headers = {
             "Authorization": self.auth,
             "Content-Type": "application/json",
@@ -54,7 +54,7 @@ class StoreMetadataHandler:
 
     def _current_binary_metadata(self):
         """Get current icons and screenshots as set in the store."""
-        url = "snaps/" + self.snap_id + "/binary-metadata"
+        url = f"/dev/api/snaps/{self.snap_id}/binary-metadata"
         headers = {"Authorization": self.auth, "Accept": "application/json"}
         # get current binary metadata information
         response = self.client.request("GET", url, headers=headers)
@@ -116,7 +116,7 @@ class StoreMetadataHandler:
             # nothing to update
             return
 
-        url = "snaps/" + self.snap_id + "/binary-metadata"
+        url = f"/dev/api/snaps/{self.snap_id}/binary-metadata"
         headers = {"Authorization": self.auth, "Accept": "application/json"}
         method = "PUT" if force else "POST"
         response = self.client.request(

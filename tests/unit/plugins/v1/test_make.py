@@ -266,6 +266,26 @@ class MakePluginTest(PluginsV1BaseTestCase):
             ]
         )
 
+    @mock.patch.object(make.MakePlugin, "run")
+    def test_make_with_parameters(self, run_mock):
+        """Ensure the targets comes before the parameters."""
+        self.options.make_parameters = ["FOO=BAR"]
+        plugin = make.MakePlugin("test-part", self.options, self.project)
+        os.makedirs(plugin.sourcedir)
+
+        plugin.make()
+
+        self.assertThat(run_mock.call_count, Equals(2))
+        run_mock.assert_has_calls(
+            [
+                mock.call(["make", "-j2", "FOO=BAR"], env=None),
+                mock.call(
+                    ["make", "install", "FOO=BAR", f"DESTDIR={plugin.installdir}"],
+                    env=None,
+                ),
+            ]
+        )
+
     def test_unsupported_base(self):
         self.project._snap_meta.base = "unsupported-base"
 

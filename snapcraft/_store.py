@@ -27,6 +27,7 @@ from datetime import datetime
 from pathlib import Path
 from subprocess import Popen
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, TextIO, Tuple
+from urllib.parse import urljoin
 
 from tabulate import tabulate
 
@@ -137,7 +138,9 @@ def _check_dev_agreement_and_namespace_statuses(store) -> None:
     except storeapi.errors.StoreAccountInformationError as e:
         if storeapi.constants.MISSING_AGREEMENT == e.error:  # type: ignore
             # A precaution if store does not return new style error.
-            url = _get_url_from_error(e) or storeapi.constants.UBUNTU_STORE_TOS_URL
+            url = _get_url_from_error(e) or urljoin(
+                storeapi.constants.STORE_DASHBOARD_URL, "/dev/tos"
+            )
             choice = echo.prompt(storeapi.constants.AGREEMENT_INPUT_MSG.format(url))
             if choice in {"y", "Y"}:
                 try:
@@ -157,7 +160,9 @@ def _check_dev_agreement_and_namespace_statuses(store) -> None:
     except storeapi.errors.StoreAccountInformationError as e:
         if storeapi.constants.MISSING_NAMESPACE in e.error:  # type: ignore
             # A precaution if store does not return new style error.
-            url = _get_url_from_error(e) or storeapi.constants.UBUNTU_STORE_ACCOUNT_URL
+            url = _get_url_from_error(e) or urljoin(
+                storeapi.constants.STORE_DASHBOARD_URL, "/dev/account"
+            )
             raise storeapi.errors.NeedTermsSignedError(
                 storeapi.constants.NAMESPACE_ERROR.format(url)
             )
@@ -1023,7 +1028,7 @@ def validate(
         echo.info(f"Getting details for {gated_snap}")
         # The Info API is not authed, so it cannot see private snaps.
         try:
-            approved_data = store_client.cpi.get_info(gated_snap)
+            approved_data = store_client.snap.get_info(gated_snap)
             approved_snap_id = approved_data.snap_id
         except storeapi.errors.SnapNotFoundError:
             approved_snap_id = gated_snap

@@ -100,7 +100,7 @@ class TestGlobalState(TestCase):
             "snap-id": "CSO04Jhav2yK0uz97cr0ipQRyqg0qQL6",
         }
         self.fake_storeapi_get_info = fixtures.MockPatch(
-            "snapcraft.storeapi._snap_index_client.SnapIndexClient.get_info",
+            "snapcraft.storeapi._snap_api.SnapAPI.get_info",
             return_value=SnapInfo(info),
         )
         self.useFixture(self.fake_storeapi_get_info)

@@ -1,22 +1,20 @@
 #!/bin/sh
 
 deactivate() {
-    unset SNAP_STORE_DASHBOARD_ROOT_URL
-    unset UBUNTU_STORE_API_ROOT_URL
-    unset UBUNTU_STORE_SEARCH_ROOT_URL
-    unset UBUNTU_STORE_UPLOAD_ROOT_URL
-    unset UBUNTU_SSO_API_ROOT_URL
+    unset STORE_DASHBOARD_URL
+    unset STORE_API_URL
+    unset STORE_UPLOAD_URL
+    unset UBUNTU_ONE_SSO_URL
     unset TEST_STORE
     export PS1="$ORIGINAL_PS1"
     unset ORIGINAL_PS1
     unset deactivate
 }
 
-export SNAP_STORE_DASHBOARD_ROOT_URL="https://dashboard.staging.snapcraft.io/"
-export UBUNTU_STORE_API_ROOT_URL="https://dashboard.staging.snapcraft.io/dev/api/"
-export UBUNTU_STORE_SEARCH_ROOT_URL="https://api.staging.snapcraft.io/"
-export UBUNTU_STORE_UPLOAD_ROOT_URL="https://upload.apps.staging.ubuntu.com/"
-export UBUNTU_SSO_API_ROOT_URL="https://login.staging.ubuntu.com/api/v2/"
+export STORE_DASHBOARD_URL="https://dashboard.staging.snapcraft.io/"
+export STORE_API_URL="https://api.staging.snapcraft.io/"
+export STORE_UPLOAD_URL="https://upload.apps.staging.ubuntu.com/"
+export UBUNTU_ONE_SSO_URL="https://login.staging.ubuntu.com/api/v2/"
 export TEST_STORE="staging"
 
 export ORIGINAL_PS1="$PS1"
