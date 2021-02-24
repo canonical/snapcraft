@@ -57,7 +57,6 @@ class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):
                     },
                     "environment": {
                         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
-                        "PLATFORM_SNAP": "gnome-3-34-1804",
                         "GTK_USE_PORTAL": "1",
                     },
                     "hooks": {
@@ -131,6 +130,7 @@ class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):
                         "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                         "source-subdir": "gnome",
                         "plugin": "make",
+                        "make-parameters": ["PLATFORM_PLUG=gnome-3-34-1804"],
                         "build-snaps": ["gnome-3-34-1804-sdk/latest/stable"],
                         "build-packages": ["gcc"],
                     }

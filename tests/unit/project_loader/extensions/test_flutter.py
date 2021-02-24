@@ -60,10 +60,7 @@ def test_extension(extension_class):
                 "default-provider": "gnome-3-28-1804",
             },
         },
-        "environment": {
-            "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
-            "PLATFORM_SNAP": "gnome-3-28-1804",
-        },
+        "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform"},
         "layout": {
             "/usr/share/xml/iso-codes": {
                 "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
@@ -85,6 +82,7 @@ def test_extension(extension_class):
             "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
             "source-subdir": "gnome",
             "plugin": "make",
+            "make-parameters": ["PLATFORM_PLUG=gnome-3-28-1804"],
             "build-packages": ["gcc", "libgtk-3-dev"],
         },
         "flutter-extension": {

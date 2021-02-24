@@ -20,13 +20,13 @@ clean:
 $(DEST_LAUNCHER):
 	@cat $(SRC_DIR)/init > $(DEST_LAUNCHER)
   # tail -n +2 to remove the shebang
-	@tail -n +2 $(SRC_DIR)/desktop-exports >> $(DEST_LAUNCHER)
+	@tail -n +2 $(SRC_DIR)/desktop-exports | sed -e "s/%PLATFORM_PLUG%/$${PLATFORM_PLUG:?}/" >> $(DEST_LAUNCHER)
 	@tail -n +2 $(SRC_DIR)/launcher-specific >> $(DEST_LAUNCHER)
 	@tail -n +2 $(SRC_DIR)/mark-and-exec >> $(DEST_LAUNCHER)
 	gcc -Wall -O2 -o $(BINDTEXTDOMAIN) -fPIC -shared $(SRC_DIR)/../src/bindtextdomain.c -ldl
 
 $(DEST_CONFIGURE_HOOK):
-	@cat $(SRC_DIR)/fonts > $(DEST_CONFIGURE_HOOK)
+	@cat $(SRC_DIR)/fonts | sed -e "s/%PLATFORM_PLUG%/$${PLATFORM_PLUG:?}/" > $(DEST_CONFIGURE_HOOK)
 
 install: $(DEST_LAUNCHER) $(DEST_CONFIGURE_HOOK)
 	install -d $(DATA_DIR)

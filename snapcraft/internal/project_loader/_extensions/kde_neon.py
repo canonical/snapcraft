@@ -79,10 +79,7 @@ class ExtensionImpl(Extension):
                     "target": "$SNAP/kf5",
                 },
             },
-            "environment": {
-                "SNAP_DESKTOP_RUNTIME": "$SNAP/kf5",
-                "PLATFORM_SNAP": "kde-frameworks-5-plug",
-            },
+            "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
             "hooks": {
                 "configure": {
                     "plugs": ["desktop"],
@@ -101,6 +98,7 @@ class ExtensionImpl(Extension):
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                 "source-subdir": "kde-neon",
                 "plugin": "make",
+                "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-plug"],
                 "build-packages": ["g++"],
             }
         }

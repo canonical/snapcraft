@@ -54,10 +54,7 @@ class ExtensionTest(ProjectLoaderBaseTest):
                             "default-provider": "gnome-3-28-1804",
                         },
                     },
-                    "environment": {
-                        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
-                        "PLATFORM_SNAP": "gnome-3-28-1804",
-                    },
+                    "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform"},
                     "hooks": {
                         "configure": {
                             "plugs": ["desktop"],
@@ -103,6 +100,7 @@ class ExtensionTest(ProjectLoaderBaseTest):
                         "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                         "source-subdir": "gnome",
                         "plugin": "make",
+                        "make-parameters": ["PLATFORM_PLUG=gnome-3-28-1804"],
                         "build-packages": ["gcc", "libgtk-3-dev"],
                     }
                 }

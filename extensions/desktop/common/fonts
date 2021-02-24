@@ -25,8 +25,8 @@ else
   ARCH="$SNAP_ARCH-linux-gnu"
 fi
 
-if ! snapctl is-connected "$PLATFORM_SNAP"; then
-  echo "ERROR: not connected to the ${PLATFORM_SNAP} content interface."
+if ! snapctl is-connected "%PLATFORM_PLUG%"; then
+  echo "ERROR: not connected to the %PLATFORM_PLUG% content interface."
   exit 1
 fi
 

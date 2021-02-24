@@ -99,7 +99,6 @@ class FlutterMetaExtension(type):
                     }
                 }
             )
-            self.root_snippet["environment"].update({"PLATFORM_SNAP": platform_snap})
 
         x = super().__new__(
             cls,
@@ -163,6 +162,7 @@ class FlutterMetaExtension(type):
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                 "source-subdir": "gnome",
                 "plugin": "make",
+                "make-parameters": ["PLATFORM_PLUG=gnome-3-28-1804"],
                 "build-packages": ["gcc", "libgtk-3-dev"],
             },
             "flutter-extension": {

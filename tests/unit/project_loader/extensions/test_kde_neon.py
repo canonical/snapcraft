@@ -50,10 +50,7 @@ class ExtensionTest(ProjectLoaderBaseTest):
                             "default-provider": "kde-frameworks-5-core18",
                         },
                     },
-                    "environment": {
-                        "SNAP_DESKTOP_RUNTIME": "$SNAP/kf5",
-                        "PLATFORM_SNAP": "kde-frameworks-5-core18",
-                    },
+                    "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
                     "hooks": {
                         "configure": {
                             "plugs": ["desktop"],
@@ -83,6 +80,7 @@ class ExtensionTest(ProjectLoaderBaseTest):
                         "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                         "source-subdir": "kde-neon",
                         "plugin": "make",
+                        "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-plug"],
                         "build-packages": ["g++"],
                     }
                 }

@@ -89,7 +89,6 @@ class ExtensionImpl(Extension):
             },
             "environment": {
                 "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
-                "PLATFORM_SNAP": platform_snap,
                 "GTK_USE_PORTAL": "1",
             },
             "hooks": {
@@ -149,6 +148,7 @@ class ExtensionImpl(Extension):
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                 "source-subdir": "gnome",
                 "plugin": "make",
+                "make-parameters": ["PLATFORM_PLUG={plug}".format(plug=platform_snap)],
                 "build-snaps": ["gnome-3-34-1804-sdk/latest/stable"],
                 "build-packages": ["gcc"],
             }

@@ -86,10 +86,7 @@ class ExtensionImpl(Extension):
                     "default-provider": "{snap}".format(snap=platform_snap),
                 },
             },
-            "environment": {
-                "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
-                "PLATFORM_SNAP": platform_snap,
-            },
+            "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform"},
             "hooks": {
                 "configure": {
                     "plugs": ["desktop"],
@@ -124,6 +121,7 @@ class ExtensionImpl(Extension):
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                 "source-subdir": "gnome",
                 "plugin": "make",
+                "make-parameters": ["PLATFORM_PLUG={plug}".format(plug=platform_snap)],
                 "build-packages": ["gcc", "libgtk-3-dev"],
             }
         }
