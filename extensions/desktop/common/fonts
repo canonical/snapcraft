@@ -25,13 +25,6 @@ else
   ARCH="$SNAP_ARCH-linux-gnu"
 fi
 
-if ! snapctl is-connected "%PLATFORM_PLUG%"; then
-  echo "ERROR: not connected to the %PLATFORM_PLUG% content interface."
-  # Exit with success to ensure the configure hook
-  # doesn't prevent installation of the snap.
-  exit 0
-fi
-
 append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/lib/$ARCH"
 append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH"
 append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib"
