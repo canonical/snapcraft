@@ -15,30 +15,39 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+import logging
 import os
-import urllib.parse
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
+from urllib.parse import urljoin, urlencode
 
 import requests
 from simplejson.scanner import JSONDecodeError
 
-from . import _macaroon_auth, _metadata, constants, errors, logger
-from .v2 import channel_map, releases
-from ._client import Client
+from . import _metadata, constants, errors
+from ._requests import Requests
 from ._status_tracker import StatusTracker
+from .v2 import channel_map, releases
 
 
-class DashboardAPI(Client):
+logger = logging.getLogger(__name__)
+
+
+class DashboardAPI(Requests):
     """The Dashboard API is used to publish and manage snaps.
 
     This is an interface to query that API which is documented
     at https://dashboard.snapcraft.io/docs/.
     """
 
-    def __init__(self, conf):
-        super().__init__(
-            conf, os.environ.get("STORE_DASHBOARD_URL", constants.STORE_DASHBOARD_URL),
+    def __init__(self, auth_client) -> None:
+        self._auth_client = auth_client
+        self._root_url = os.environ.get(
+            "STORE_DASHBOARD_URL", constants.STORE_DASHBOARD_URL
         )
+
+    def _request(self, method: str, urlpath: str, **kwargs) -> requests.Response:
+        url = urljoin(self._root_url, urlpath)
+        return self._auth_client.request(method, url, **kwargs)
 
     def get_macaroon(self, acls, packages=None, channels=None, expires=None):
         data = {"permissions": acls}
@@ -55,37 +64,21 @@ class DashboardAPI(Client):
         else:
             raise errors.StoreAuthenticationError("Failed to get macaroon", response)
 
-    @staticmethod
-    def _is_needs_refresh_response(response):
-        return (
-            response.status_code == requests.codes.unauthorized
-            and response.headers.get("WWW-Authenticate") == "Macaroon needs_refresh=1"
-        )
-
-    def request(self, *args, **kwargs):
-        response = super().request(*args, **kwargs)
-        if self._is_needs_refresh_response(response):
-            raise errors.StoreMacaroonNeedsRefreshError()
-        return response
-
     def verify_acl(self):
-        auth = _macaroon_auth(self.conf)
-        response = self.post(
+        response = self._auth_client.request(
+            "POST",
             "/dev/api/acl/verify/",
-            json={"auth_data": {"authorization": auth}},
+            json={"auth_data": {"authorization": self._auth_client.auth}},
             headers={"Accept": "application/json"},
+            auth_header=False,
         )
         if response.ok:
             return response.json()
         else:
             raise errors.StoreAccountInformationError(response)
 
-    def get_account_information(self):
-        auth = _macaroon_auth(self.conf)
-        response = self.get(
-            "/dev/api/account",
-            headers={"Authorization": auth, "Accept": "application/json"},
-        )
+    def get_account_information(self) -> Dict[str, Any]:
+        response = self.get("/dev/api/account", headers={"Accept": "application/json"})
         if response.ok:
             return response.json()
         else:
@@ -93,45 +86,34 @@ class DashboardAPI(Client):
 
     def register_key(self, account_key_request):
         data = {"account_key_request": account_key_request}
-        auth = _macaroon_auth(self.conf)
         response = self.post(
             "/dev/api/account/account-key",
             data=json.dumps(data),
-            headers={
-                "Authorization": auth,
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
         )
         if not response.ok:
             raise errors.StoreKeyRegistrationError(response)
 
     def register(
-        self, snap_name: str, *, is_private: bool, series: str, store_id: str
+        self, snap_name: str, *, is_private: bool, series: str, store_id: Optional[str]
     ) -> None:
-        auth = _macaroon_auth(self.conf)
         data = dict(snap_name=snap_name, is_private=is_private, series=series)
         if store_id is not None:
             data["store"] = store_id
         response = self.post(
             "/dev/api/register-name/",
             data=json.dumps(data),
-            headers={"Authorization": auth, "Content-Type": "application/json"},
+            headers={"Content-Type": "application/json"},
         )
         if not response.ok:
             raise errors.StoreRegistrationError(snap_name, response)
 
     def snap_upload_precheck(self, snap_name):
         data = {"name": snap_name, "dry_run": True}
-        auth = _macaroon_auth(self.conf)
         response = self.post(
             "/dev/api/snap-push/",
             data=json.dumps(data),
-            headers={
-                "Authorization": auth,
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
         )
         if not response.ok:
             raise errors.StoreUploadError(snap_name, response)
@@ -154,6 +136,7 @@ class DashboardAPI(Client):
             "binary_filesize": updown_data["binary_filesize"],
             "source_uploaded": updown_data["source_uploaded"],
         }
+
         if delta_format:
             data["delta_format"] = delta_format
             data["delta_hash"] = delta_hash
@@ -163,15 +146,10 @@ class DashboardAPI(Client):
             data["built_at"] = built_at
         if channels is not None:
             data["channels"] = channels
-        auth = _macaroon_auth(self.conf)
         response = self.post(
             "/dev/api/snap-push/",
             data=json.dumps(data),
-            headers={
-                "Authorization": auth,
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
         )
         if not response.ok:
             raise errors.StoreUploadError(data["name"], response)
@@ -181,14 +159,14 @@ class DashboardAPI(Client):
     def upload_metadata(self, snap_id, snap_name, metadata, force):
         """Upload the metadata to SCA."""
         metadata_handler = _metadata.StoreMetadataHandler(
-            self, _macaroon_auth(self.conf), snap_id, snap_name
+            request_method=self._request, snap_id=snap_id, snap_name=snap_name,
         )
         metadata_handler.upload(metadata, force)
 
     def upload_binary_metadata(self, snap_id, snap_name, metadata, force):
         """Upload the binary metadata to SCA."""
         metadata_handler = _metadata.StoreMetadataHandler(
-            self, _macaroon_auth(self.conf), snap_id, snap_name
+            request_method=self._request, snap_id=snap_id, snap_name=snap_name,
         )
         metadata_handler.upload_binary(metadata, force)
 
@@ -208,15 +186,10 @@ class DashboardAPI(Client):
                 "percentage": progressive_percentage,
                 "paused": False,
             }
-        auth = _macaroon_auth(self.conf)
         response = self.post(
             "/dev/api/snap-release/",
             data=json.dumps(data),
-            headers={
-                "Authorization": auth,
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
         )
         if not response.ok:
             raise errors.StoreReleaseError(data["name"], response)
@@ -230,7 +203,8 @@ class DashboardAPI(Client):
             data = {"assertion": assertion.decode("utf-8")}
         elif endpoint == "developers":
             data = {"snap_developer": assertion.decode("utf-8")}
-        auth = _macaroon_auth(self.conf)
+        else:
+            raise RuntimeError("No valid endpoint")
 
         url = "/dev/api/snaps/{}/{}".format(snap_id, endpoint)
 
@@ -241,12 +215,8 @@ class DashboardAPI(Client):
 
         response = self.put(
             url,
-            data=json.dumps(data),
-            headers={
-                "Authorization": auth,
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
+            json=data,
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
         )
 
         if not response.ok:
@@ -265,14 +235,9 @@ class DashboardAPI(Client):
         return response_json
 
     def get_assertion(self, snap_id, endpoint, params=None):
-        auth = _macaroon_auth(self.conf)
         response = self.get(
-            "/dev/api/snaps/{}/{}".format(snap_id, endpoint),
-            headers={
-                "Authorization": auth,
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
+            f"/dev/api/snaps/{snap_id}/{endpoint}",
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
             params=params,
         )
         if not response.ok:
@@ -291,10 +256,9 @@ class DashboardAPI(Client):
         return response_json
 
     def push_snap_build(self, snap_id, snap_build):
-        url = "/dev/api/snaps/{}/builds".format(snap_id)
+        url = f"/dev/api/snaps/{snap_id}/builds"
         data = json.dumps({"assertion": snap_build})
         headers = {
-            "Authorization": _macaroon_auth(self.conf),
             "Content-Type": "application/json",
         }
         response = self.post(url, data=data, headers=headers)
@@ -309,15 +273,10 @@ class DashboardAPI(Client):
             qs["architecture"] = arch
         url = "/dev/api/snaps/" + snap_id + "/state"
         if qs:
-            url += "?" + urllib.parse.urlencode(qs)
-        auth = _macaroon_auth(self.conf)
+            url += "?" + urlencode(qs)
         response = self.get(
             url,
-            headers={
-                "Authorization": auth,
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
         )
         if not response.ok:
             raise errors.StoreSnapStatusError(response, snap_id, series, arch)
@@ -329,8 +288,8 @@ class DashboardAPI(Client):
     def close_channels(self, snap_id, channel_names):
         url = "/dev/api/snaps/{}/close".format(snap_id)
         data = {"channels": channel_names}
-        headers = {"Authorization": _macaroon_auth(self.conf)}
-        response = self.post(url, json=data, headers=headers)
+
+        response = self.post(url, data=json.dumps(data))
         if not response.ok:
             raise errors.StoreChannelClosingError(response)
 
@@ -347,16 +306,11 @@ class DashboardAPI(Client):
             raise errors.StoreChannelClosingError(response)
 
     def sign_developer_agreement(self, latest_tos_accepted=False):
-        auth = _macaroon_auth(self.conf)
         data = {"latest_tos_accepted": latest_tos_accepted}
         response = self.post(
             "/dev/api/agreement/",
-            data=json.dumps(data),
-            headers={
-                "Authorization": auth,
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
+            json=data,
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
         )
 
         if not response.ok:
@@ -364,15 +318,9 @@ class DashboardAPI(Client):
         return response.json()
 
     def get_snap_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
-        url = f"/api/v2/snaps/{snap_name}/channel-map"
-        auth = _macaroon_auth(self.conf)
         response = self.get(
-            url,
-            headers={
-                "Authorization": auth,
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
+            f"/api/v2/snaps/{snap_name}/channel-map",
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
         )
 
         if not response.ok:
@@ -381,15 +329,9 @@ class DashboardAPI(Client):
         return channel_map.ChannelMap.unmarshal(response.json())
 
     def get_snap_releases(self, *, snap_name: str) -> releases.Releases:
-        url = f"/api/v2/snaps/{snap_name}/releases"
-        auth = _macaroon_auth(self.conf)
         response = self.get(
-            url,
-            headers={
-                "Authorization": auth,
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
+            f"/api/v2/snaps/{snap_name}/releases",
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
         )
 
         if not response.ok:
