@@ -17,6 +17,7 @@ parts:
   hello:
     plugin: python
     source: .
+    python-packages: [pip, setuptools, wheel]
     stage-packages:
       - libpython3-stdlib
       - libpython3.8-stdlib
@@ -38,7 +39,7 @@ parts:
   isort:
     plugin: python
     source: empty
-    python-packages: [isort]
+    python-packages: [isort, pip, setuptools, wheel]
     stage-packages:
       - libpython3-stdlib
       - libpython3.8-stdlib

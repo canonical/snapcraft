@@ -16,6 +16,7 @@ apps:
 parts:
   hello:
     plugin: python
+    python-packages: [pip, setuptools, wheel]
     source: .
     stage:
       - -pyvenv.cfg
@@ -26,7 +27,7 @@ parts:
   isort:
     plugin: python
     source: empty
-    python-packages: [isort]
+    python-packages: [isort, pip, setuptools, wheel]
     stage:
       - -pyvenv.cfg
       - -bin/activate*
