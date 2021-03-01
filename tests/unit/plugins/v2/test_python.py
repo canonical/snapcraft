@@ -32,7 +32,7 @@ def test_schema():
                 "uniqueItems": True,
             },
             "python-packages": {
-                "default": [],
+                "default": ["pip", "setuptools", "wheel"],
                 "items": {"type": "string"},
                 "type": "array",
                 "uniqueItems": True,
