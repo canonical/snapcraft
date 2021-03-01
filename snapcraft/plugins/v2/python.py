@@ -94,7 +94,7 @@ class PythonPlugin(PluginV2):
                     "type": "array",
                     "uniqueItems": True,
                     "items": {"type": "string"},
-                    "default": [],
+                    "default": ["pip", "setuptools", "wheel"],
                 },
             },
         }
