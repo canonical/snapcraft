@@ -16,11 +16,28 @@
 
 # Import types and tell flake8 to ignore the "unused" List.
 
+from collections import namedtuple
 from typing import Any, Dict, Tuple
 
 from ._extension import Extension
 
-_PLATFORM_SNAP = dict(core18="kde-frameworks-5-core18")
+
+_ExtensionInfo = namedtuple("ExtensionInfo", "cmake_args content provider build_snaps")
+
+_Info = dict(
+    core18=_ExtensionInfo(
+        cmake_args=None,
+        content="kde-frameworks-5-core18-all",
+        provider="kde-frameworks-5-core18",
+        build_snaps=["kde-frameworks-5-core18-sdk/latest/stable"],
+    ),
+    core20=_ExtensionInfo(
+        cmake_args="-DCMAKE_FIND_ROOT_PATH=/snap/kde-frameworks-5-qt-5-15-core20-sdk/current",
+        content="kde-frameworks-5-qt-5-15-core20",
+        provider="kde-frameworks-5-qt-5-15-core20-all",
+        build_snaps=["kde-frameworks-5-qt-5-15-core20-sdk/latest/candidate"],
+    ),
+)
 
 
 class ExtensionImpl(Extension):
@@ -42,13 +59,14 @@ class ExtensionImpl(Extension):
     \b
     - desktop (https://snapcraft.io/docs/desktop-interface)
     - desktop-legacy (https://snapcraft.io/docs/desktop-legacy-interface)
+    - opengl (https://snapcraft.io/docs/opengl-interface)
     - wayland (https://snapcraft.io/docs/wayland-interface)
     - x11 (https://snapcraft.io/docs/x11-interface)
     """
 
     @staticmethod
     def get_supported_bases() -> Tuple[str, ...]:
-        return ("core18",)
+        return ("core18", "core20")
 
     @staticmethod
     def get_supported_confinement() -> Tuple[str, ...]:
@@ -57,8 +75,7 @@ class ExtensionImpl(Extension):
     def __init__(self, *, extension_name: str, yaml_data: Dict[str, Any]) -> None:
         super().__init__(extension_name=extension_name, yaml_data=yaml_data)
 
-        base: str = yaml_data["base"]
-        platform_snap = _PLATFORM_SNAP[base]
+        info = _Info[yaml_data["base"]]
         self.root_snippet = {
             "plugs": {
                 "icon-themes": {
@@ -72,9 +89,9 @@ class ExtensionImpl(Extension):
                     "default-provider": "gtk-common-themes",
                 },
                 "kde-frameworks-5-plug": {
-                    "content": "kde-frameworks-5-core18-all",
+                    "content": info.content,
                     "interface": "content",
-                    "default-provider": platform_snap,
+                    "default-provider": info.provider,
                     "target": "$SNAP/kf5",
                 },
             },
@@ -87,9 +104,14 @@ class ExtensionImpl(Extension):
             },
         }
 
+        if info.cmake_args is not None:
+            self.part_snippet = {
+                "build-environment": [{"SNAPCRAFT_CMAKE_ARGS": info.cmake_args,}]
+            }
+
         self.app_snippet = {
             "command-chain": ["snap/command-chain/desktop-launch"],
-            "plugs": ["desktop", "desktop-legacy", "wayland", "x11"],
+            "plugs": ["desktop", "desktop-legacy", "opengl", "wayland", "x11"],
         }
 
         self.parts = {
@@ -98,5 +120,6 @@ class ExtensionImpl(Extension):
                 "source-subdir": "kde-neon",
                 "plugin": "make",
                 "build-packages": ["g++"],
+                "build-snaps": info.build_snaps,
             }
         }

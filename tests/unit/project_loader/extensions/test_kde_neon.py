@@ -22,7 +22,7 @@ from .. import ProjectLoaderBaseTest
 
 
 class ExtensionTest(ProjectLoaderBaseTest):
-    def test_extension(self):
+    def test_extension_core18(self):
         kde_neon_extension = ExtensionImpl(
             extension_name="kde-neon", yaml_data=dict(base="core18")
         )
@@ -66,7 +66,7 @@ class ExtensionTest(ProjectLoaderBaseTest):
             Equals(
                 {
                     "command-chain": ["snap/command-chain/desktop-launch"],
-                    "plugs": ["desktop", "desktop-legacy", "wayland", "x11"],
+                    "plugs": ["desktop", "desktop-legacy", "opengl", "wayland", "x11"],
                 }
             ),
         )
@@ -80,13 +80,16 @@ class ExtensionTest(ProjectLoaderBaseTest):
                         "source-subdir": "kde-neon",
                         "plugin": "make",
                         "build-packages": ["g++"],
+                        "build-snaps": ["kde-frameworks-5-core18-sdk/latest/stable"],
                     }
                 }
             ),
         )
 
     def test_supported_bases(self):
-        self.assertThat(ExtensionImpl.get_supported_bases(), Equals(("core18",)))
+        self.assertThat(
+            ExtensionImpl.get_supported_bases(), Equals(("core18", "core20"))
+        )
 
     def test_supported_confinement(self):
         self.assertThat(
