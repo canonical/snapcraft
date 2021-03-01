@@ -26,7 +26,7 @@ $(DEST_LAUNCHER):
 	gcc -Wall -O2 -o $(BINDTEXTDOMAIN) -fPIC -shared $(SRC_DIR)/../src/bindtextdomain.c -ldl
 
 $(DEST_CONFIGURE_HOOK):
-	@cat $(SRC_DIR)/fonts | sed -e "s/%PLATFORM_PLUG%/$${PLATFORM_PLUG:?}/" > $(DEST_CONFIGURE_HOOK)
+	@cat $(SRC_DIR)/fonts > $(DEST_CONFIGURE_HOOK)
 
 install: $(DEST_LAUNCHER) $(DEST_CONFIGURE_HOOK)
 	install -d $(DATA_DIR)

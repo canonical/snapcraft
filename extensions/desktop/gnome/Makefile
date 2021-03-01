@@ -30,7 +30,7 @@ $(DEST_LAUNCHER):
 	@tail -n +2 $(SRC_DIR)/mark-and-exec >> $(DEST_LAUNCHER)
 
 $(DEST_CONFIGURE_HOOK):
-	@cat $(SRC_DIR)/fonts | sed -e "s/%PLATFORM_PLUG%/$${PLATFORM_PLUG:?}/" > $(DEST_CONFIGURE_HOOK)
+	@cat $(SRC_DIR)/fonts > $(DEST_CONFIGURE_HOOK)
 
 $(BINDTEXTDOMAIN):
 	gcc -Wall -O2 -o $(BINDTEXTDOMAIN) -fPIC -shared $(SRC_DIR)/../src/bindtextdomain.c -ldl
