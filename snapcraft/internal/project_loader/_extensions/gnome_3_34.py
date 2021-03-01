@@ -64,6 +64,7 @@ class ExtensionImpl(Extension):
         base = yaml_data["base"]
         platform_snap = _PLATFORM_SNAP[base]
         self.root_snippet = {
+            "assumes": ["snapd2.43"],  # for 'snapctl is-connected'
             "plugs": {
                 "gtk-3-themes": {
                     "interface": "content",
@@ -147,7 +148,10 @@ class ExtensionImpl(Extension):
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                 "source-subdir": "gnome",
                 "plugin": "make",
-                "make-parameters": ["WITH_BINDTEXTDOMAIN=1"],
+                "make-parameters": [
+                    "WITH_BINDTEXTDOMAIN=1",
+                    "PLATFORM_PLUG={plug}".format(plug=platform_snap),
+                ],
                 "build-snaps": ["gnome-3-34-1804-sdk/latest/stable"],
                 "build-packages": ["gcc"],
             }
