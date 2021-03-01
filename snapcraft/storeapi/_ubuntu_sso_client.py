@@ -46,7 +46,7 @@ class Client:
         """Send a request to url relative to the root url.
 
         :param str method: Method used for the request.
-        :param str url: Appended with the root url first.
+        :param str url: URL to request with method.
         :param list params: Query parameters to be sent along with the request.
         :param list headers: Headers to be sent along with the request.
 
