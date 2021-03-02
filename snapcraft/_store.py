@@ -1028,7 +1028,7 @@ def validate(
         echo.info(f"Getting details for {gated_snap}")
         # The Info API is not authed, so it cannot see private snaps.
         try:
-            approved_data = store_client.cpi.get_info(gated_snap)
+            approved_data = store_client.snap.get_info(gated_snap)
             approved_snap_id = approved_data.snap_id
         except storeapi.errors.SnapNotFoundError:
             approved_snap_id = gated_snap

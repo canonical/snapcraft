@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -77,7 +77,7 @@ class SignBuildTestCase(CommandBaseTestCase):
 
         self.assertThat(str(raised), Contains("Cannot read data from snap"))
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
+    @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
     def test_sign_build_missing_account_info(
         self, mock_get_snap_data, mock_get_account_info,
@@ -100,7 +100,7 @@ class SignBuildTestCase(CommandBaseTestCase):
             ),
         )
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
+    @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
     def test_sign_build_no_usable_keys(
         self, mock_get_snap_data, mock_get_account_info,
@@ -132,7 +132,7 @@ class SignBuildTestCase(CommandBaseTestCase):
         snap_build_path = self.snap_test.snap_path + "-build"
         self.assertThat(snap_build_path, Not(FileExists()))
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
+    @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
     def test_sign_build_no_usable_named_key(
         self, mock_get_snap_data, mock_get_account_info,
@@ -163,7 +163,7 @@ class SignBuildTestCase(CommandBaseTestCase):
         snap_build_path = self.snap_test.snap_path + "-build"
         self.assertThat(snap_build_path, Not(FileExists()))
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
+    @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
     def test_sign_build_unregistered_key(
         self, mock_get_snap_data, mock_get_account_info,
@@ -200,7 +200,7 @@ class SignBuildTestCase(CommandBaseTestCase):
         snap_build_path = self.snap_test.snap_path + "-build"
         self.assertThat(snap_build_path, Not(FileExists()))
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
+    @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
     def test_sign_build_snapd_failure(
         self, mock_get_snap_data, mock_get_account_info,
@@ -238,7 +238,7 @@ class SignBuildTestCase(CommandBaseTestCase):
         snap_build_path = self.snap_test.snap_path + "-build"
         self.assertThat(snap_build_path, Not(FileExists()))
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
+    @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
     def test_sign_build_locally_successfully(
         self, mock_get_snap_data, mock_get_account_info,
@@ -276,7 +276,7 @@ class SignBuildTestCase(CommandBaseTestCase):
             ]
         )
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
+    @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
     def test_sign_build_missing_grade(
         self, mock_get_snap_data, mock_get_account_info,
@@ -315,8 +315,8 @@ class SignBuildTestCase(CommandBaseTestCase):
             ]
         )
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "push_snap_build")
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
+    @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "push_snap_build")
+    @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
     def test_sign_build_upload_successfully(
         self, mock_get_snap_data, mock_get_account_info, mock_push_snap_build,
@@ -365,8 +365,8 @@ class SignBuildTestCase(CommandBaseTestCase):
         )
         mock_push_snap_build.assert_called_with("snap-id", "Mocked assertion")
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "push_snap_build")
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
+    @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "push_snap_build")
+    @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
     def test_sign_build_upload_existing(
         self, mock_get_snap_data, mock_get_account_info, mock_push_snap_build,

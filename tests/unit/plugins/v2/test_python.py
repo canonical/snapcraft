@@ -32,7 +32,7 @@ def test_schema():
                 "uniqueItems": True,
             },
             "python-packages": {
-                "default": [],
+                "default": ["pip", "setuptools", "wheel"],
                 "items": {"type": "string"},
                 "type": "array",
                 "uniqueItems": True,
@@ -67,11 +67,9 @@ def test_get_build_environment():
 _FIXUP_BUILD_COMMANDS = [
     dedent(
         """\
-            for e in $(find "${SNAPCRAFT_PART_INSTALL}" -type f -executable)
-            do
-                sed -i "1 s|^#\\!${SNAPCRAFT_PYTHON_VENV_INTERP_PATH}.*$|#\\!/usr/bin/env ${SNAPCRAFT_PYTHON_INTERPRETER}|" "${e}"
-            done
-        """
+            find "${SNAPCRAFT_PART_INSTALL}" -type f -executable -print0 | xargs -0 \
+                sed -i "1 s|^#\\!${SNAPCRAFT_PYTHON_VENV_INTERP_PATH}.*$|#\\!/usr/bin/env ${SNAPCRAFT_PYTHON_INTERPRETER}|"
+            """
     ),
     dedent(
         """\

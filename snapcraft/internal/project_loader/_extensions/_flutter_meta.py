@@ -117,6 +117,7 @@ class FlutterMetaExtension(type):
 
         x.__doc__ = _DOC_TEMPLATE.format(channel=channel)
         x.root_snippet = {
+            "assumes": ["snapd2.43"],  # for 'snapctl is-connected'
             "plugs": {
                 "gtk-3-themes": {
                     "interface": "content",
@@ -161,6 +162,7 @@ class FlutterMetaExtension(type):
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                 "source-subdir": "gnome",
                 "plugin": "make",
+                "make-parameters": ["PLATFORM_PLUG=gnome-3-28-1804"],
                 "build-packages": ["gcc", "libgtk-3-dev"],
             },
             "flutter-extension": {
