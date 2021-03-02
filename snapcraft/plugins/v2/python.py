@@ -148,11 +148,9 @@ class PythonPlugin(PluginV2):
         build_commands.append(
             dedent(
                 """\
-            for e in $(find "${SNAPCRAFT_PART_INSTALL}" -type f -executable)
-            do
-                sed -i "1 s|^#\\!${SNAPCRAFT_PYTHON_VENV_INTERP_PATH}.*$|#\\!/usr/bin/env ${SNAPCRAFT_PYTHON_INTERPRETER}|" "${e}"
-            done
-        """
+            find "${SNAPCRAFT_PART_INSTALL}" -type f -executable -print0 | xargs -0 \
+                sed -i "1 s|^#\\!${SNAPCRAFT_PYTHON_VENV_INTERP_PATH}.*$|#\\!/usr/bin/env ${SNAPCRAFT_PYTHON_INTERPRETER}|"
+            """
             )
         )
 

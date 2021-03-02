@@ -37,6 +37,7 @@ def test_extension(extension_class):
     )
 
     assert flutter_extension.root_snippet == {
+        "assumes": ["snapd2.43"],
         "plugs": {
             "gtk-3-themes": {
                 "interface": "content",
@@ -81,6 +82,7 @@ def test_extension(extension_class):
             "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
             "source-subdir": "gnome",
             "plugin": "make",
+            "make-parameters": ["PLATFORM_PLUG=gnome-3-28-1804"],
             "build-packages": ["gcc", "libgtk-3-dev"],
         },
         "flutter-extension": {
