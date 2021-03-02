@@ -128,7 +128,7 @@ class SnapcraftProjectUnusedKeyAssetError(snapcraft.internal.errors.SnapcraftExc
         self.key_path = key_path
 
     def get_brief(self) -> str:
-        return f"Found unused key asset {self.key_path!s}."
+        return f"Found unused key asset {str(self.key_path)!r}."
 
     def get_details(self) -> str:
         return "All configured key assets must be utilized."

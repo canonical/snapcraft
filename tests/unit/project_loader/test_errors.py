@@ -24,6 +24,6 @@ def test_SnapcraftProjectUnusedKeyAssetError():
 
     error = errors.SnapcraftProjectUnusedKeyAssetError(key_path=path)
 
-    assert error.get_brief() == "Found unused key asset foo."
+    assert error.get_brief() == "Found unused key asset 'foo'."
     assert error.get_details() == "All configured key assets must be utilized."
     assert error.get_resolution() == "Verify key usage and remove all unused keys."
