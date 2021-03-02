@@ -1,0 +1,35 @@
+name: python-hello-multiple-parts
+base: core20
+version: '1.0'
+summary: Test multiple python parts
+description: Test multiple python parts
+
+grade: stable
+confinement: strict
+
+apps:
+  python-hello-multiple-parts:
+    command: bin/hello
+  isort:
+    command: bin/isort
+
+parts:
+  hello:
+    plugin: python
+    python-packages: [pip, setuptools, wheel]
+    source: .
+    stage:
+      - -pyvenv.cfg
+      - -bin/activate*
+      - -**/RECORD
+      - -**/__pycache__
+
+  isort:
+    plugin: python
+    source: empty
+    python-packages: [isort, pip, setuptools, wheel]
+    stage:
+      - -pyvenv.cfg
+      - -bin/activate*
+      - -**/RECORD
+      - -**/__pycache__
