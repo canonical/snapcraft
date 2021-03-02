@@ -160,7 +160,7 @@ class PythonPlugin(PluginV2):
             dedent(
                 """\
             determine_link_target() {
-                opts_state="$(set +o +x)"
+                opts_state="$(set +o +x | grep xtrace)"
                 interp_dir="$(dirname "${SNAPCRAFT_PYTHON_VENV_INTERP_PATH}")"
                 # Determine python based on PATH, then resolve it, e.g:
                 # (1) /home/ubuntu/.venv/snapcraft/bin/python3 -> /usr/bin/python3.8
