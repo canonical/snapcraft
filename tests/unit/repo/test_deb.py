@@ -93,10 +93,38 @@ class TestPackages(unit.TestCase):
                 call().__enter__().mark_packages({"fake-package"}),
                 call()
                 .__enter__()
-                .unmark_packages(
-                    required_names={"fake-package"},
-                    filtered_names=set(repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES),
-                ),
+                .unmark_packages(set(repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES)),
+                call().__enter__().fetch_archives(self.debs_path),
+            ]
+        )
+
+        self.assertThat(fetched_packages, Equals(["fake-package=1.0"]))
+
+    def test_fetch_stage_package_filtered_arch_version(self):
+        fake_package = self.debs_path / "fake-package_1.0_all.deb"
+        fake_package.touch()
+        self.fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = [
+            ("fake-package", "1.0", fake_package)
+        ]
+
+        package_names = ["base-files=0.0", "dpkg:amd64", "libc6"]
+        fetched_packages = repo.Ubuntu.fetch_stage_packages(
+            package_names=package_names,
+            stage_packages_path=self.stage_packages_path,
+            base="core",
+            target_arch="amd64",
+        )
+
+        filter_names = set(repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES)
+        filter_names -= {"base-files", "dpkg", "libc6"}
+
+        self.fake_apt_cache.assert_has_calls(
+            [
+                call(stage_cache=self.stage_cache_path, stage_cache_arch="amd64"),
+                call().__enter__(),
+                call().__enter__().update(),
+                call().__enter__().mark_packages(set(package_names)),
+                call().__enter__().unmark_packages(filter_names),
                 call().__enter__().fetch_archives(self.debs_path),
             ]
         )

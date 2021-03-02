@@ -224,6 +224,16 @@ def get_packages_in_base(*, base: str) -> List[str]:
     return package_list
 
 
+def _get_filtered_stage_packages(*, base: str, package_names: List[str]) -> Set[str]:
+    """Get filtered packages by name only - no version or architectures."""
+    manifest_packages = [
+        get_pkg_name_parts(p)[0] for p in get_packages_in_base(base=base)
+    ]
+    stage_packages = [get_pkg_name_parts(p)[0].split(":")[0] for p in package_names]
+
+    return set(manifest_packages) - set(stage_packages)
+
+
 class Ubuntu(BaseRepo):
     @classmethod
     def get_package_libraries(cls, package_name: str) -> Set[str]:
@@ -389,17 +399,17 @@ class Ubuntu(BaseRepo):
         logger.debug(f"Requested stage-packages: {sorted(package_names)!r}")
 
         installed: Set[str] = set()
+        filtered_names = _get_filtered_stage_packages(
+            base=base, package_names=package_names
+        )
 
         stage_packages_path.mkdir(exist_ok=True)
         with AptCache(
             stage_cache=_STAGE_CACHE_DIR, stage_cache_arch=target_arch
         ) as apt_cache:
-            filter_packages = set(get_packages_in_base(base=base))
             apt_cache.update()
             apt_cache.mark_packages(set(package_names))
-            apt_cache.unmark_packages(
-                required_names=set(package_names), filtered_names=filter_packages
-            )
+            apt_cache.unmark_packages(filtered_names)
             for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
                 _DEB_CACHE_DIR
             ):
