@@ -32,9 +32,13 @@ class BakeryClient(Client):
         )
 
         # serialize macaroons the bakery-way
-        macaroons = "[%s]" % ",".join(map(utils.macaroon_to_json_string, discharges))
+        discharged_macaroons = (
+            "[" + ",".join(map(utils.macaroon_to_json_string, discharges)) + "]"
+        )
 
-        self.auth = base64.urlsafe_b64encode(utils.to_bytes(macaroons)).decode("ascii")
+        self.auth = base64.urlsafe_b64encode(
+            utils.to_bytes(discharged_macaroons)
+        ).decode("ascii")
         self.macaroon = macaroon
 
     def request(
