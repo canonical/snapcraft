@@ -58,15 +58,16 @@ class DashboardAPI(Requests):
         if expires is not None:
             data.update({"expires": expires})
         headers = {"Accept": "application/json"}
-        response = self.post("/dev/api/acl/", json=data, headers=headers)
+        response = self.post(
+            "/dev/api/acl/", json=data, headers=headers, auth_header=False
+        )
         if response.ok:
             return response.json()["macaroon"]
         else:
             raise errors.StoreAuthenticationError("Failed to get macaroon", response)
 
     def verify_acl(self):
-        response = self._auth_client.request(
-            "POST",
+        response = self.post(
             "/dev/api/acl/verify/",
             json={"auth_data": {"authorization": self._auth_client.auth}},
             headers={"Accept": "application/json"},
