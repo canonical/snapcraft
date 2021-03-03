@@ -807,14 +807,6 @@ class SignBuildAssertionError(StoreError):
         super().__init__(snap_name=snap_name)
 
 
-class InvalidLoginConfig(StoreError):
-
-    fmt = "Invalid login config: {error}"
-
-    def __init__(self, error):
-        super().__init__(error=error)
-
-
 def _error_list_to_message(response_json):
     """Handle error list.
 

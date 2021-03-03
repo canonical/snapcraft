@@ -3,6 +3,7 @@
 import logging
 import json
 import os
+import pathlib
 from typing import Optional, TextIO
 from urllib.parse import urljoin, urlparse
 
@@ -12,10 +13,10 @@ from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, RetryError
 from requests.packages.urllib3.util.retry import Retry
 from simplejson.scanner import JSONDecodeError
+from xdg import BaseDirectory
 
-from snapcraft import config
 from . import _agent, constants, errors
-
+from ._config.base_config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +112,25 @@ def _macaroon_auth(conf):
     return auth
 
 
+class UbuntuOneSSOConfig(Config):
+    """Hold configuration options in sections.
+
+    There can be two sections for the sso related credentials: production and
+    staging. This is governed by the UBUNTU_ONE_SSO_URL environment
+    variable. Other sections are ignored but preserved.
+
+    """
+
+    def _get_section_name(self) -> str:
+        url = os.getenv("UBUNTU_ONE_SSO_URL", constants.UBUNTU_ONE_SSO_URL)
+        return urlparse(url).netloc
+
+    def _get_config_path(self) -> pathlib.Path:
+        return (
+            pathlib.Path(BaseDirectory.save_config_path("snapcraft")) / "snapcraft.cfg"
+        )
+
+
 class UbuntuOneAuthClient(Client):
     """Store Client using Ubuntu One SSO provided macaroons."""
 
@@ -124,7 +144,7 @@ class UbuntuOneAuthClient(Client):
     def __init__(self, *, user_agent: str = _agent.get_user_agent()) -> None:
         super().__init__(user_agent=user_agent)
 
-        self._conf = config.Config()
+        self._conf = UbuntuOneSSOConfig()
         self.auth_url = os.environ.get(
             "UBUNTU_ONE_SSO_URL", constants.UBUNTU_ONE_SSO_URL
         )
