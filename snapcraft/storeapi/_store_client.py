@@ -27,6 +27,7 @@ from ._dashboard_api import DashboardAPI
 from ._snap_api import SnapAPI
 from ._up_down_client import UpDownClient
 from ._ubuntu_sso_client import Client, UbuntuOneAuthClient
+from ._bakery_client import BakeryClient
 from .constants import DEFAULT_SERIES
 from .v2 import channel_map, releases
 
@@ -41,7 +42,12 @@ class StoreClient:
         super().__init__()
 
         self.client = Client()
-        self.auth_client = UbuntuOneAuthClient()
+        if os.getenv("SNAPCRAFT_CANDID"):
+            self.auth_client = BakeryClient()
+            self.use_candid = True
+        else:
+            self.auth_client = UbuntuOneAuthClient()
+            self.use_candid = False
 
         self.snap = SnapAPI(self.client)
         self.dashboard = DashboardAPI(self.auth_client)
@@ -60,7 +66,7 @@ class StoreClient:
         if config_fd is not None:
             return self.auth_client.login(config_fd=config_fd)
 
-        if acls is None:
+        if acls is None and not self.use_candid:
             acls = [
                 "package_access",
                 "package_manage",
@@ -69,8 +75,25 @@ class StoreClient:
                 "package_release",
                 "package_update",
             ]
+        elif acls is None and self.use_candid:
+            acls = [
+                "edit_account",
+                "package_access",
+                "package_metrics",
+                "package_register",
+                "package_release",
+                "package_update",
+                "package_upload_request",
+                "store_admin",
+            ]
 
-        macaroon = self.dashboard.get_macaroon(acls, packages, channels, expires)
+        macaroon = self.dashboard.get_macaroon(
+            acls=acls,
+            packages=packages,
+            channels=channels,
+            expires=expires,
+            use_candid=self.use_candid,
+        )
         self.auth_client.login(macaroon=macaroon, **kwargs)
 
     def export_login(self, *, config_fd: TextIO, encode=False) -> None:
