@@ -66,7 +66,7 @@ class StoreClient:
         if config_fd is not None:
             return self.auth_client.login(config_fd=config_fd)
 
-        if acls is None and not self.use_candid:
+        if acls is None:
             acls = [
                 "package_access",
                 "package_manage",
@@ -74,17 +74,6 @@ class StoreClient:
                 "package_register",
                 "package_release",
                 "package_update",
-            ]
-        elif acls is None and self.use_candid:
-            acls = [
-                "edit_account",
-                "package_access",
-                "package_metrics",
-                "package_register",
-                "package_release",
-                "package_update",
-                "package_upload_request",
-                "store_admin",
             ]
 
         macaroon = self.dashboard.get_macaroon(
