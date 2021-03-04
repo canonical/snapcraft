@@ -31,6 +31,7 @@ class ExtensionTest(ProjectLoaderBaseTest):
             kde_neon_extension.root_snippet,
             Equals(
                 {
+                    "assumes": ["snapd2.43"],
                     "plugs": {
                         "icon-themes": {
                             "interface": "content",
@@ -79,6 +80,7 @@ class ExtensionTest(ProjectLoaderBaseTest):
                         "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                         "source-subdir": "kde-neon",
                         "plugin": "make",
+                        "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-plug"],
                         "build-packages": ["g++"],
                         "build-snaps": ["kde-frameworks-5-core18-sdk/latest/stable"],
                     }

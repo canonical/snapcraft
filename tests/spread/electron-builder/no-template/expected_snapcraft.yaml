@@ -150,6 +150,7 @@ plugs:
     default-provider: gtk-common-themes
 name: electron-builder-hello-world
 version: 1.0.0
+title: electron-builder-hello-world
 summary: electron-builder-hello-world
 description: A minimal Electron application
 architectures:
@@ -175,7 +176,7 @@ apps:
     environment:
       DISABLE_WAYLAND: '1'
       TMPDIR: $XDG_RUNTIME_DIR
-      PATH: '$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH'
+      PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
       SNAP_DESKTOP_RUNTIME: $SNAP/gnome-platform
-      LD_LIBRARY_PATH: '$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu'
+      LD_LIBRARY_PATH: $SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu
 icon: snap/gui/icon.png

@@ -18,6 +18,7 @@ import os
 import sys
 
 import snapcraft
+from snapcraft import project
 from snapcraft.internal import os_release
 from snapcraft.internal.errors import OsReleaseNameError, OsReleaseVersionIdError
 
@@ -46,7 +47,7 @@ def _get_linux_release(release: os_release.OsRelease) -> str:
 
 
 def get_user_agent(platform: str = sys.platform) -> str:
-    arch = snapcraft.ProjectOptions().deb_arch
+    arch = project.Project().deb_arch
     testing = "(testing) " if _is_ci_env() else ""
 
     if platform == "linux":

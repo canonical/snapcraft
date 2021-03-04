@@ -27,7 +27,7 @@ import click
 from tabulate import tabulate
 
 import snapcraft
-from snapcraft import formatting_utils, storeapi
+from snapcraft import config, formatting_utils, storeapi
 from snapcraft._store import StoreClientCLI
 from snapcraft.storeapi.constants import DEFAULT_SERIES
 
@@ -731,7 +731,7 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
     # Support a login_file of '-', which indicates a desire to print to stdout
     if login_file.strip() == "-":
         echo.info("\nExported login starts on next line:")
-        store_client.conf.save(config_fd=sys.stdout, encode=True)
+        store_client.export_login(config_fd=sys.stdout, encode=True)
         print()
 
         preamble = "Login successfully exported and printed above"
@@ -742,7 +742,7 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
 
         # mypy doesn't have the opener arg in its stub. Ignore its warning
         with open(login_file, "w", opener=private_open) as f:  # type: ignore
-            store_client.conf.save(config_fd=f)
+            store_client.export_login(config_fd=f)
 
         # Now that the file has been written, we can just make it
         # owner-readable
@@ -809,28 +809,22 @@ def logout():
 @storecli.command()
 def whoami():
     """Returns your login information relevant to the store."""
-    try:
-        account_data = storeapi.StoreClient().whoami()
-    except storeapi.errors.InvalidCredentialsError:
-        echo.error("You need to first login to use this command.")
-        sys.exit(1)
+    # TODO: workaround until bakery client is added.
+    conf = config.Config()
+    email = conf.get("email")
+    if email is None:
+        email = "unknown"
+
+    account_info = StoreClientCLI().get_account_information()
+    account_id = account_info["account_id"]
 
     click.echo(
         dedent(
-            """\
+            f"""\
         email:        {email}
-        developer-id: {account_id}""".format(
-                **account_data
-            )
+        developer-id: {account_id}"""
         )
     )
-
-    # This is needed because we originally did not store the login information.
-    if account_data["email"] == "unknown":
-        echo.warning(
-            "In order to view the correct email you will need to "
-            "logout and login again."
-        )
 
 
 @storecli.command()

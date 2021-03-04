@@ -32,7 +32,7 @@ def test_schema():
                 "uniqueItems": True,
             },
             "python-packages": {
-                "default": [],
+                "default": ["pip", "setuptools", "wheel"],
                 "items": {"type": "string"},
                 "type": "array",
                 "uniqueItems": True,
@@ -67,33 +67,35 @@ def test_get_build_environment():
 _FIXUP_BUILD_COMMANDS = [
     dedent(
         """\
-            for e in $(find "${SNAPCRAFT_PART_INSTALL}" -type f -executable)
-            do
-                sed -i "1 s|^#\\!${SNAPCRAFT_PYTHON_VENV_INTERP_PATH}.*$|#\\!/usr/bin/env ${SNAPCRAFT_PYTHON_INTERPRETER}|" "${e}"
-            done
-        """
+            find "${SNAPCRAFT_PART_INSTALL}" -type f -executable -print0 | xargs -0 \
+                sed -i "1 s|^#\\!${SNAPCRAFT_PYTHON_VENV_INTERP_PATH}.*$|#\\!/usr/bin/env ${SNAPCRAFT_PYTHON_INTERPRETER}|"
+            """
     ),
     dedent(
         """\
             determine_link_target() {
-                opts_state="$(set +o +x)"
+                opts_state="$(set +o +x | grep xtrace)"
                 interp_dir="$(dirname "${SNAPCRAFT_PYTHON_VENV_INTERP_PATH}")"
-                target="${SNAPCRAFT_PYTHON_PATH}"
+                # Determine python based on PATH, then resolve it, e.g:
+                # (1) /home/ubuntu/.venv/snapcraft/bin/python3 -> /usr/bin/python3.8
+                # (2) /usr/bin/python3 -> /usr/bin/python3.8
+                # (3) /root/stage/python3 -> /root/stage/python3.8
+                # (4) /root/parts/<part>/install/usr/bin/python3 -> /root/parts/<part>/install/usr/bin/python3.8
+                python_path="$(which "${SNAPCRAFT_PYTHON_INTERPRETER}")"
+                python_path="$(readlink -e "${python_path}")"
                 for dir in "${SNAPCRAFT_PART_INSTALL}" "${SNAPCRAFT_STAGE}"; do
-                    if  echo "${SNAPCRAFT_PYTHON_PATH}" | grep -q "${dir}"; then
-                        target="$(realpath --strip --relative-to="${interp_dir}" \\
-                                "${SNAPCRAFT_PYTHON_PATH}")"
+                    if  echo "${python_path}" | grep -q "${dir}"; then
+                        python_path="$(realpath --strip --relative-to="${interp_dir}" \\
+                                "${python_path}")"
                         break
                     fi
                 done
-                echo "${target}"
+                echo "${python_path}"
                 eval "${opts_state}"
             }
 
-            target="$(determine_link_target)"
-            ln -sf "${target}" "${SNAPCRAFT_PYTHON_VENV_INTERP_PATH}"
-
-
+            python_path="$(determine_link_target)"
+            ln -sf "${python_path}" "${SNAPCRAFT_PYTHON_VENV_INTERP_PATH}"
         """
     ),
 ]
@@ -110,9 +112,7 @@ def test_get_build_commands():
     assert (
         plugin.get_build_commands()
         == [
-            'SNAPCRAFT_PYTHON_PATH="${SNAPCRAFT_PYTHON_PATH:-$(which "${SNAPCRAFT_PYTHON_INTERPRETER}")}"',
-            'SNAPCRAFT_PYTHON_PATH="$(readlink -e "${SNAPCRAFT_PYTHON_PATH}")"',
-            '"${SNAPCRAFT_PYTHON_PATH}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} "${SNAPCRAFT_PART_INSTALL}"',
+            '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} "${SNAPCRAFT_PART_INSTALL}"',
             'SNAPCRAFT_PYTHON_VENV_INTERP_PATH="${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"',
             "[ -f setup.py ] && pip install  -U .",
         ]
@@ -131,9 +131,7 @@ def test_get_build_commands_with_all_properties():
     assert (
         plugin.get_build_commands()
         == [
-            'SNAPCRAFT_PYTHON_PATH="${SNAPCRAFT_PYTHON_PATH:-$(which "${SNAPCRAFT_PYTHON_INTERPRETER}")}"',
-            'SNAPCRAFT_PYTHON_PATH="$(readlink -e "${SNAPCRAFT_PYTHON_PATH}")"',
-            '"${SNAPCRAFT_PYTHON_PATH}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} "${SNAPCRAFT_PART_INSTALL}"',
+            '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} "${SNAPCRAFT_PART_INSTALL}"',
             'SNAPCRAFT_PYTHON_VENV_INTERP_PATH="${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"',
             "pip install -c 'constraints.txt' -U pip 'some-pkg; sys_platform != '\"'\"'win32'\"'\"''",
             "pip install -c 'constraints.txt' -U -r 'requirements.txt'",

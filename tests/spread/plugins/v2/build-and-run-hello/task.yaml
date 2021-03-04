@@ -12,6 +12,8 @@ environment:
   SNAP/local_plugin_from_base: local-plugin-from-base-hello
   SNAP/local_plugin_from_nil: local-plugin-from-nil-hello
   SNAP/python: python-hello
+  SNAP/python_multiple_parts: python-hello-multiple-parts
+  SNAP/python_multiple_parts_staged: python-hello-multiple-parts-staged
   SNAP/python_staged: python-hello-staged-python
   SNAP/python_with_python_package_dep: python-hello-with-python-package-dep
   SNAP/python_with_stage_package_dep: python-hello-with-stage-package-dep

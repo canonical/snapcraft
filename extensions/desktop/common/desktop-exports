@@ -60,6 +60,11 @@ function is_subpath() {
   [ "${dir##$parent/}" != "$dir" ] && return 0 || return 1
 }
 
+if ! snapctl is-connected "%PLATFORM_PLUG%"; then
+  echo "ERROR: not connected to the %PLATFORM_PLUG% content interface."
+  exit 1
+fi
+
 append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/lib/$ARCH"
 append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH"
 append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib"

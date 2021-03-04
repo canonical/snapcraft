@@ -77,6 +77,7 @@ class ExtensionImpl(Extension):
 
         info = _Info[yaml_data["base"]]
         self.root_snippet = {
+            "assumes": ["snapd2.43"],  # for 'snapctl is-connected'
             "plugs": {
                 "icon-themes": {
                     "interface": "content",
@@ -119,6 +120,7 @@ class ExtensionImpl(Extension):
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                 "source-subdir": "kde-neon",
                 "plugin": "make",
+                "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-plug"],
                 "build-packages": ["g++"],
                 "build-snaps": info.build_snaps,
             }

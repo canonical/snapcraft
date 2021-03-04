@@ -31,6 +31,7 @@ class ExtensionTest(ProjectLoaderBaseTest):
             gnome_extension.root_snippet,
             Equals(
                 {
+                    "assumes": ["snapd2.43"],
                     "plugs": {
                         "gtk-3-themes": {
                             "interface": "content",
@@ -99,7 +100,10 @@ class ExtensionTest(ProjectLoaderBaseTest):
                         "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                         "source-subdir": "gnome",
                         "plugin": "make",
-                        "make-parameters": ["WITH_BINDTEXTDOMAIN=1"],
+                        "make-parameters": [
+                            "WITH_BINDTEXTDOMAIN=1",
+                            "PLATFORM_PLUG=gnome-3-28-1804",
+                        ],
                         "build-packages": ["gcc", "libgtk-3-dev"],
                     }
                 }
