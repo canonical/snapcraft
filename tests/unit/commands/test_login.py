@@ -37,8 +37,8 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
         self.assertThat(result.output, Contains(storeapi.constants.TWO_FACTOR_WARNING))
         self.assertThat(result.output, Contains("Login successful."))
         self.fake_store_login.mock.assert_called_once_with(
-            "user@example.com",
-            mock.ANY,
+            email="user@example.com",
+            password=mock.ANY,
             acls=None,
             packages=None,
             channels=None,
@@ -66,8 +66,8 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
         self.fake_store_login.mock.assert_has_calls(
             [
                 mock.call(
-                    "user@example.com",
-                    "secret",
+                    email="user@example.com",
+                    password="secret",
                     acls=None,
                     packages=None,
                     channels=None,
@@ -76,9 +76,9 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
                     config_fd=None,
                 ),
                 mock.call(
-                    "user@example.com",
-                    "secret",
-                    one_time_password="123456",
+                    email="user@example.com",
+                    password="secret",
+                    otp="123456",
                     acls=None,
                     packages=None,
                     channels=None,
@@ -129,8 +129,8 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
 
         self.fake_store_login.mock.assert_called_once_with(
-            "",
-            "",
+            email="",
+            password="",
             acls=None,
             packages=None,
             channels=None,

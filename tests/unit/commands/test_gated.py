@@ -27,7 +27,7 @@ account_info_data = {"snaps": {"16": {"core": {"snap-id": "good"}}}}
 
 class GatedCommandTestCase(StoreCommandsBaseTestCase):
     def test_gated_unknown_snap(self):
-        self.client.login("dummy", "test correct password")
+        self.client.login(email="dummy", password="test correct password")
 
         raised = self.assertRaises(
             snapcraft.storeapi.errors.SnapNotFoundError,
@@ -38,7 +38,7 @@ class GatedCommandTestCase(StoreCommandsBaseTestCase):
         self.assertThat(str(raised), Equals("Snap 'notfound' was not found."))
 
     def test_gated_success(self):
-        self.client.login("dummy", "test correct password")
+        self.client.login(email="dummy", password="test correct password")
 
         result = self.run_command(["gated", "core"])
 
@@ -53,7 +53,7 @@ class GatedCommandTestCase(StoreCommandsBaseTestCase):
         self.assertThat(result.output, Contains(expected_output))
 
     def test_gated_no_validations(self):
-        self.client.login("dummy", "test correct password")
+        self.client.login(email="dummy", password="test correct password")
 
         result = self.run_command(["gated", "test-snap-with-no-validations"])
 
@@ -62,12 +62,3 @@ class GatedCommandTestCase(StoreCommandsBaseTestCase):
             "There are no validations for snap 'test-snap-with-no-validations'\n"
         )
         self.assertThat(result.output, Contains(expected_output))
-
-    def test_gated_without_login_must_ask(self):
-        result = self.run_command(
-            ["gated", "test-snap-with-no-validations"],
-            input="dummy\ntest correct password\n",
-        )
-        self.assertThat(
-            result.output, Contains("You are required to login before continuing.")
-        )
