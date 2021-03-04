@@ -18,7 +18,7 @@ apps:
       PATH: "/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
       # https://github.com/lxc/pylxd/pull/361
       PYLXD_WARNINGS: "none"
-    command: usr/bin/python3 $SNAP/bin/snapcraft
+    command: usr/bin/python3.8 $SNAP/bin/snapcraft
     completer: snapcraft-completion
 
 build-packages:
@@ -33,6 +33,7 @@ build-packages:
   - libxslt1-dev
   - libyaml-dev
   - patch
+  - python3.8-dev
   - sed
 
 parts:
@@ -71,69 +72,110 @@ parts:
         - squashfs-tools
         - xdelta3
     override-build: |
-      snapcraftctl build
+        snapcraftctl build
 
-      echo "Create libsodium symlink..."
-      TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
-      LIBSODIUM="$(readlink -n "$TRIPLET_PATH/libsodium.so.23")"
-      # Remove so the link can be recreated on re-builds
-      rm -f "$TRIPLET_PATH/libsodium.so"
-      ln -s "$LIBSODIUM" "$TRIPLET_PATH/libsodium.so"
+        echo "Create libsodium symlink..."
+        TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
+        LIBSODIUM="$(readlink -n "$TRIPLET_PATH/libsodium.so.23")"
+        ln -sf "$LIBSODIUM" "$TRIPLET_PATH/libsodium.so"
 
   snapcraft:
     source: .
-    plugin: python
-    python-packages:
-        # Lock down cryptography to 3.4 to override the rust dependency.
-        - cryptography==3.4
-    requirements:
-        - requirements.txt
+    plugin: nil
     organize:
         # Put snapcraftctl into its own directory that can be included in the PATH
         # without including other binaries.
         bin/snapcraftctl: bin/scriptlet-bin/snapcraftctl
     build-environment:
-        - "CRYPTOGRAPHY_DONT_BUILD_RUST": "1"
+        - CPPFLAGS: '-I/usr/include/python3.8'
+        - CRYPTOGRAPHY_DONT_BUILD_RUST: "1"
+        - SNAPCRAFT_PYTHON: "$SNAPCRAFT_PART_INSTALL/usr/bin/python3.8"
+        - SNAPCRAFT_PYTHON_LIBS: "$SNAPCRAFT_PART_INSTALL/usr/lib/python3.8"
+        - SNAPCRAFT_PYTHON_PKGS: "$SNAPCRAFT_PART_INSTALL/lib/python3.8/site-packages"
+        - SNAPCRAFT_PIP_INSTALL_CMD: "$SNAPCRAFT_PYTHON -m pip install --user -U"
+        - PYTHONUSERBASE: "$SNAPCRAFT_PART_INSTALL"
     override-build: |
-        # pip 20.2 breaks python3-apt, so we pin
-        # the version of pip installed before building
-        PYTHONHOME=/usr PYTHONUSERBASE=$SNAPCRAFT_PART_INSTALL $SNAPCRAFT_PART_INSTALL/usr/bin/python3 -m pip install pip==20.1 --user
+        set -eux
 
-        snapcraftctl build
+        # pip may create site-packages as 0700, create it with correct permissions.
+        install -d -m 0755 "$SNAPCRAFT_PYTHON_PKGS"
+        ln -sf python3.8 "$SNAPCRAFT_PART_INSTALL/usr/bin/python3"
 
-        version="$(python3 setup.py --version)"
+        # Site customization to load correct paths depending on running as snap or building.
+        cp "$SNAPCRAFT_PART_SRC/patches/sitecustomize.py" "$SNAPCRAFT_PYTHON_LIBS/sitecustomize.py"
+
+        $SNAPCRAFT_PIP_INSTALL_CMD pip==20.1 wheel setuptools
+        $SNAPCRAFT_PIP_INSTALL_CMD -r "$SNAPCRAFT_PART_SRC/requirements.txt" "$SNAPCRAFT_PART_SRC"
+
+        if [ ! -f "$SNAPCRAFT_PYTHON_PKGS/ws4py/async_websocket.py.orig" ]; then cat $SNAPCRAFT_PROJECT_DIR/patches/ws4py-py3.7-compat.patch | patch -p1 -b -d "$SNAPCRAFT_PYTHON_PKGS"; fi
+
+        version="$($SNAPCRAFT_PYTHON setup.py --version)"
         snapcraftctl set-version "$version"
 
         [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
         snapcraftctl set-grade "$grade"
 
-        $SNAPCRAFT_PROJECT_DIR/tools/snapcraft-override-build.sh
-    override-prime: |
-        snapcraftctl prime
+        # Patch ctypes loader to allow loading shared objects in snap.
+        ctypes_init="$SNAPCRAFT_PART_INSTALL/usr/lib/python3.8/ctypes/__init__.py"
+        if [ ! -f "${ctypes_init}.orig" ]; then patch -s -b "$ctypes_init" "$SNAPCRAFT_PART_SRC/patches/ctypes_init.diff"; fi
 
-        echo "Compiling pyc files..."
-        # This is the last step, let's now compile all our pyc files.
-        "$SNAPCRAFT_PART_INSTALL/usr/bin/python3" -m compileall -q .
-
+        # Prevent runtime python from loading user libraries (outside snap).
+        sed -i "$SNAPCRAFT_PYTHON_LIBS/site.py" -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
+    stage:
+        - -bin/pip*
+        - -usr/lib/python3.6
+        - -usr/bin/python3.6*
+        - -usr/share/python-wheels
+    stage-packages:
+        - python3-pip
+        - python3.8
     after: [snapcraft-libs]
 
   legacy-snapcraft:
-    plugin: python
-    python-packages:
-        # Lock down cryptography to 3.4 to override the rust dependency.
-        - cryptography==3.4
+    plugin: nil
     source: https://github.com/snapcore/snapcraft.git
     source-branch: legacy
     source-depth: 1
-    requirements:
-        - requirements.txt
     build-environment:
-        - "CRYPTOGRAPHY_DONT_BUILD_RUST": "1"
+        - CPPFLAGS: '-I/usr/include/python3.8'
+        - CRYPTOGRAPHY_DONT_BUILD_RUST: "1"
+        - SNAPCRAFT_PYTHON: "$SNAPCRAFT_PART_INSTALL/usr/bin/python3.8"
+        - SNAPCRAFT_PYTHON_LIBS: "$SNAPCRAFT_PART_INSTALL/usr/lib/python3.8"
+        - SNAPCRAFT_PYTHON_PKGS: "$SNAPCRAFT_PART_INSTALL/lib/python3.8/site-packages"
+        - SNAPCRAFT_PIP_INSTALL_CMD: "$SNAPCRAFT_PYTHON -m pip install --user -U"
+        - PYTHONUSERBASE: "$SNAPCRAFT_PART_INSTALL"
     override-build: |
-        snapcraftctl build
-        $SNAPCRAFT_PROJECT_DIR/tools/snapcraft-override-build.sh
+        set -eux
 
-        sed -ri 's|(lib/.*/site-packages)|legacy_snapcraft/\1|' $SNAPCRAFT_PART_INSTALL/usr/lib/python3.6/sitecustomize.py
+        # pip may create site-packages as 0700, create it with correct permissions.
+        install -d -m 0755 "$SNAPCRAFT_PYTHON_PKGS"
+        ln -sf python3.8 "$SNAPCRAFT_PART_INSTALL/usr/bin/python3"
+
+        # Site customization to load correct paths depending on running as snap or building.
+        cp "$SNAPCRAFT_PROJECT_DIR/patches/sitecustomize.py" "$SNAPCRAFT_PYTHON_LIBS/sitecustomize.py"
+
+        $SNAPCRAFT_PIP_INSTALL_CMD pip==20.1 wheel setuptools
+        $SNAPCRAFT_PIP_INSTALL_CMD -r "$SNAPCRAFT_PART_SRC/requirements.txt" "$SNAPCRAFT_PART_SRC"
+
+        # Update sitecustomize path for organizing to legacy_snapcraft.
+        sed -ri 's|(lib/.*/site-packages)|legacy_snapcraft/\1|' $SNAPCRAFT_PYTHON_LIBS/sitecustomize.py
+
+        # Patch ctypes loader to allow loading shared objects in snap.
+        ctypes_init="$SNAPCRAFT_PART_INSTALL/usr/lib/python3.8/ctypes/__init__.py"
+        if [ ! -f "${ctypes_init}.orig" ]; then patch -s -b "$ctypes_init" "$SNAPCRAFT_PART_SRC/patches/ctypes_init.diff"; fi
+
+        # Prevent runtime python from loading user libraries (outside snap).
+        sed -i "$SNAPCRAFT_PYTHON_LIBS/site.py" -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
     organize:
         '*': legacy_snapcraft/
-    after: [snapcraft-libs]
+    stage:
+        - -**RECORD
+        - -**__pycache__
+        - -legacy_snapcraft/bin/pip*
+        - -legacy_snapcraft/usr/lib/python3.6
+        - -legacy_snapcraft/usr/bin/python3.6*
+        - -legacy_snapcraft/usr/share/python-wheels
+    stage-packages:
+        - python3-pip
+        - python3.8
+    after: [snapcraft-libs, snapcraft]
