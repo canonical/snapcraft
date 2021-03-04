@@ -184,8 +184,8 @@ def _try_login(
 ) -> None:
     try:
         store.login(
-            email,
-            password,
+            email=email,
+            password=password,
             packages=packages,
             acls=acls,
             channels=channels,
@@ -199,9 +199,9 @@ def _try_login(
     except storeapi.errors.StoreTwoFactorAuthenticationRequired:
         one_time_password = echo.prompt("Second-factor auth")
         store.login(
-            email,
-            password,
-            one_time_password=one_time_password,
+            email=email,
+            password=password,
+            otp=one_time_password,
             acls=acls,
             packages=packages,
             channels=channels,
