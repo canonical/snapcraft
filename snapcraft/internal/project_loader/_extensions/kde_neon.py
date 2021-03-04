@@ -107,7 +107,7 @@ class ExtensionImpl(Extension):
 
         if info.cmake_args is not None:
             self.part_snippet = {
-                "build-environment": [{"SNAPCRAFT_CMAKE_ARGS": info.cmake_args,}]
+                "build-environment": [{"SNAPCRAFT_CMAKE_ARGS": info.cmake_args}]
             }
 
         self.app_snippet = {
