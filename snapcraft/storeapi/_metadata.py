@@ -29,23 +29,21 @@ def _media_hash(media_file):
 
 
 class StoreMetadataHandler:
-    def __init__(self, store_client, store_auth, snap_id, snap_name):
+    def __init__(self, *, request_method, snap_id: str, snap_name: str):
         super().__init__()
-        self.client = store_client
-        self.auth = store_auth
+        self._request = request_method
         self.snap_id = snap_id
         self.snap_name = snap_name
 
     def upload(self, metadata, force):
-        """Upload the metadata to SCA."""
+        """Upload the metadata to Dashboard."""
         url = f"/dev/api/snaps/{self.snap_id}/metadata"
         headers = {
-            "Authorization": self.auth,
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
         method = "PUT" if force else "POST"
-        response = self.client.request(
+        response = self._request(
             method, url, data=json.dumps(metadata), headers=headers
         )
 
@@ -55,9 +53,9 @@ class StoreMetadataHandler:
     def _current_binary_metadata(self):
         """Get current icons and screenshots as set in the store."""
         url = f"/dev/api/snaps/{self.snap_id}/binary-metadata"
-        headers = {"Authorization": self.auth, "Accept": "application/json"}
+        headers = {"Accept": "application/json"}
         # get current binary metadata information
-        response = self.client.request("GET", url, headers=headers)
+        response = self._request("GET", url, headers=headers)
         if not response.ok:
             raise StoreMetadataError(self.snap_name, response, {})
 
@@ -117,11 +115,11 @@ class StoreMetadataHandler:
             return
 
         url = f"/dev/api/snaps/{self.snap_id}/binary-metadata"
-        headers = {"Authorization": self.auth, "Accept": "application/json"}
+        headers = {
+            "Accept": "application/json",
+        }
         method = "PUT" if force else "POST"
-        response = self.client.request(
-            method, url, data=data, files=files, headers=headers
-        )
+        response = self._request(method, url, data=data, files=files, headers=headers)
         if not response.ok:
             icon = metadata.get("icon")
             icon_name = os.path.basename(icon.name) if icon else None

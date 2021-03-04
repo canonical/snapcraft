@@ -241,7 +241,7 @@ class Config(object):
             BaseDirectory.save_config_path("snapcraft"), "snapcraft.cfg"
         )
 
-    def save(self, *, config_fd: TextIO = None, encode: bool = False) -> None:
+    def save(self, *, config_fd: Optional[TextIO] = None, encode: bool = False) -> None:
         with io.StringIO() as config_buffer:
             self.parser.write(config_buffer)
             config = config_buffer.getvalue()
