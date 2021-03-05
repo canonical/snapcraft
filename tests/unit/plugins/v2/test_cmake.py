@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2020 Canonical Ltd
+# Copyright (C) 2020-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -76,7 +76,7 @@ def test_get_build_commands():
     plugin = CMakePlugin(part_name="my-part", options=Options())
 
     assert plugin.get_build_commands() == [
-        'cmake "${SNAPCRAFT_PART_SRC_WORK}" -G "Unix Makefiles"',
+        'cmake "${SNAPCRAFT_PART_SRC_WORK}" -G "Unix Makefiles" ${SNAPCRAFT_CMAKE_ARGS}',
         'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
         'DESTDIR="${SNAPCRAFT_PART_INSTALL}" cmake --build . --target install',
     ]
@@ -90,7 +90,7 @@ def test_get_build_commands_ninja():
     plugin = CMakePlugin(part_name="my-part", options=Options())
 
     assert plugin.get_build_commands() == [
-        'cmake "${SNAPCRAFT_PART_SRC_WORK}" -G "Ninja"',
+        'cmake "${SNAPCRAFT_PART_SRC_WORK}" -G "Ninja" ${SNAPCRAFT_CMAKE_ARGS}',
         'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
         'DESTDIR="${SNAPCRAFT_PART_INSTALL}" cmake --build . --target install',
     ]
@@ -110,6 +110,7 @@ def test_get_build_commands_with_cmake_parameters():
 
     assert plugin.get_build_commands() == [
         'cmake "${SNAPCRAFT_PART_SRC_WORK}" -G "Unix Makefiles" '
+        "${SNAPCRAFT_CMAKE_ARGS} "
         "-DVERBOSE=1 "
         "-DCMAKE_INSTALL_PREFIX=/foo "
         '-DCMAKE_SPACED_ARGS="foo bar" '
