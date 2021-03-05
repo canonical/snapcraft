@@ -89,7 +89,7 @@ class CMakePlugin(PluginV2):
             '"${SNAPCRAFT_PART_SRC_WORK}"',
             "-G",
             f'"{self.options.cmake_generator}"',
-            "${SNAPCRAFT_CMAKE_ARGS}",
+            "${SNAPCRAFT_CMAKE_ARGS+}",
         ] + self.options.cmake_parameters
 
         return " ".join(cmd)
