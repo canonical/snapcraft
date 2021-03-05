@@ -1,24 +1,26 @@
 import os
-import urllib.parse
+from urllib.parse import urljoin
 
+import requests
+
+from ._requests import Requests
 from . import constants
-from ._client import Client
 
 
-class UpDownClient(Client):
+class UpDownClient(Requests):
     """The Up/Down server provide upload/download snap capabilities."""
 
-    def __init__(self, conf):
-        super().__init__(
-            conf,
-            os.environ.get(
-                "UBUNTU_STORE_UPLOAD_ROOT_URL", constants.UBUNTU_STORE_UPLOAD_ROOT_URL
-            ),
-        )
+    def __init__(self, client) -> None:
+        self._client = client
+        self._root_url = os.getenv("STORE_UPLOAD_URL", constants.STORE_UPLOAD_URL)
+
+    def _request(self, method, urlpath, **kwargs) -> requests.Response:
+        url = urljoin(self._root_url, urlpath)
+        return self._client.request(method, url, **kwargs)
 
     def upload(self, monitor):
         return self.post(
-            urllib.parse.urljoin(self.root_url, "unscanned-upload/"),
+            "/unscanned-upload/",
             data=monitor,
             headers={
                 "Content-Type": monitor.content_type,

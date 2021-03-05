@@ -233,8 +233,7 @@ class FakeStore(fixtures.Fixture):
         self.useFixture(self.fake_sso_server_fixture)
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "UBUNTU_SSO_API_ROOT_URL",
-                urllib.parse.urljoin(self.fake_sso_server_fixture.url, "api/v2/"),
+                "UBUNTU_ONE_SSO_URL", self.fake_sso_server_fixture.url
             )
         )
 
@@ -245,8 +244,7 @@ class FakeStore(fixtures.Fixture):
         self.useFixture(self.fake_store_upload_server_fixture)
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "UBUNTU_STORE_UPLOAD_ROOT_URL",
-                self.fake_store_upload_server_fixture.url,
+                "STORE_UPLOAD_URL", self.fake_store_upload_server_fixture.url,
             )
         )
 
@@ -254,15 +252,7 @@ class FakeStore(fixtures.Fixture):
         self.useFixture(self.fake_store_api_server_fixture)
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "UBUNTU_STORE_API_ROOT_URL",
-                urllib.parse.urljoin(
-                    self.fake_store_api_server_fixture.url, "dev/api/"
-                ),
-            )
-        )
-        self.useFixture(
-            fixtures.EnvironmentVariable(
-                "SNAP_STORE_DASHBOARD_ROOT_URL", self.fake_store_api_server_fixture.url
+                "STORE_DASHBOARD_URL", self.fake_store_api_server_fixture.url
             )
         )
 
@@ -270,8 +260,7 @@ class FakeStore(fixtures.Fixture):
         self.useFixture(self.fake_store_search_server_fixture)
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "UBUNTU_STORE_SEARCH_ROOT_URL",
-                self.fake_store_search_server_fixture.url,
+                "STORE_API_URL", self.fake_store_search_server_fixture.url,
             )
         )
 
@@ -346,30 +335,22 @@ class StagingStore(fixtures.Fixture):
         super().setUp()
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "SNAP_STORE_DASHBOARD_ROOT_URL",
-                "https://dashboard.staging.snapcraft.io/",
+                "STORE_DASHBOARD_URL", "https://dashboard.staging.snapcraft.io/",
             )
         )
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "UBUNTU_STORE_API_ROOT_URL",
-                "https://dashboard.staging.snapcraft.io/dev/api/",
+                "STORE_UPLOAD_URL", "https://upload.apps.staging.ubuntu.com/",
             )
         )
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "UBUNTU_STORE_UPLOAD_ROOT_URL",
-                "https://upload.apps.staging.ubuntu.com/",
+                "UBUNTU_ONE_SSO_URL", "https://login.staging.ubuntu.com/"
             )
         )
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "UBUNTU_SSO_API_ROOT_URL", "https://login.staging.ubuntu.com/api/v2/"
-            )
-        )
-        self.useFixture(
-            fixtures.EnvironmentVariable(
-                "UBUNTU_STORE_SEARCH_ROOT_URL", "https://api.staging.snapcraft.io/"
+                "STORE_API_URL", "https://api.staging.snapcraft.io/"
             )
         )
 

@@ -41,7 +41,7 @@ class CollaborateBaseTestCase(StoreCommandsBaseTestCase):
             {"developer-id": "dummy-id", "since": "2015-07-19 19:30:00"}
         ]
         self.addCleanup(patcher.stop)
-        self.client.login("dummy", "test correct password")
+        self.client.login(email="dummy", password="test correct password")
 
 
 class CollaboratorsCommandTestCase(CollaborateBaseTestCase):

@@ -94,7 +94,7 @@ class PythonPlugin(PluginV2):
                     "type": "array",
                     "uniqueItems": True,
                     "items": {"type": "string"},
-                    "default": [],
+                    "default": ["pip", "setuptools", "wheel"],
                 },
             },
         }
@@ -116,8 +116,11 @@ class PythonPlugin(PluginV2):
         }
 
     def get_build_commands(self) -> List[str]:
+        # $SNAPCRAFT_PYTHON_INTERPRETER (as -m venv will create the link to the
+        # interpreter invoked).
         build_commands = [
-            '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} "${SNAPCRAFT_PART_INSTALL}"'
+            '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} "${SNAPCRAFT_PART_INSTALL}"',
+            'SNAPCRAFT_PYTHON_VENV_INTERP_PATH="${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"',
         ]
 
         if self.options.constraints:
@@ -145,15 +148,9 @@ class PythonPlugin(PluginV2):
         build_commands.append(
             dedent(
                 """\
-            for e in $(find "${SNAPCRAFT_PART_INSTALL}" -type f -executable)
-            do
-                if head -1 "${e}" | grep -q "python" ; then
-                    sed \\
-                        -r '1 s|#\\!.*python3?$|#\\!/usr/bin/env '${SNAPCRAFT_PYTHON_INTERPRETER}'|' \\
-                        -i "${e}"
-                fi
-            done
-        """
+            find "${SNAPCRAFT_PART_INSTALL}" -type f -executable -print0 | xargs -0 \
+                sed -i "1 s|^#\\!${SNAPCRAFT_PYTHON_VENV_INTERP_PATH}.*$|#\\!/usr/bin/env ${SNAPCRAFT_PYTHON_INTERPRETER}|"
+            """
             )
         )
 
@@ -162,20 +159,30 @@ class PythonPlugin(PluginV2):
         build_commands.append(
             dedent(
                 """\
-            interp_path="${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"
-            if [ -f "${interp_path}" ]; then
-                current_link=$(readlink "${interp_path}")
-                # Change link if in $SNAPCRAFT_PART_INSTALL
-                if echo "${current_link}" | grep -q "${SNAPCRAFT_PART_INSTALL}" ; then
-                    new_link=$(realpath \\
-                               --strip \\
-                               --relative-to="${SNAPCRAFT_PART_INSTALL}/bin/" \\
-                              "${current_link}")
-                    rm "${interp_path}"
-                    ln -s "${new_link}" "${interp_path}"
-                fi
-            fi
-        """
+            determine_link_target() {
+                opts_state="$(set +o +x | grep xtrace)"
+                interp_dir="$(dirname "${SNAPCRAFT_PYTHON_VENV_INTERP_PATH}")"
+                # Determine python based on PATH, then resolve it, e.g:
+                # (1) /home/ubuntu/.venv/snapcraft/bin/python3 -> /usr/bin/python3.8
+                # (2) /usr/bin/python3 -> /usr/bin/python3.8
+                # (3) /root/stage/python3 -> /root/stage/python3.8
+                # (4) /root/parts/<part>/install/usr/bin/python3 -> /root/parts/<part>/install/usr/bin/python3.8
+                python_path="$(which "${SNAPCRAFT_PYTHON_INTERPRETER}")"
+                python_path="$(readlink -e "${python_path}")"
+                for dir in "${SNAPCRAFT_PART_INSTALL}" "${SNAPCRAFT_STAGE}"; do
+                    if  echo "${python_path}" | grep -q "${dir}"; then
+                        python_path="$(realpath --strip --relative-to="${interp_dir}" \\
+                                "${python_path}")"
+                        break
+                    fi
+                done
+                echo "${python_path}"
+                eval "${opts_state}"
+            }
+
+            python_path="$(determine_link_target)"
+            ln -sf "${python_path}" "${SNAPCRAFT_PYTHON_VENV_INTERP_PATH}"
+            """
             )
         )
 

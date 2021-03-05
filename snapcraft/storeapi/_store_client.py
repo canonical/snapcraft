@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2020 Canonical Ltd
+# Copyright 2016-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,52 +14,52 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
-import urllib.parse
 from time import sleep
 from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
 
-import pymacaroons
 import requests
 
-from snapcraft import config
 from snapcraft.internal.indicators import download_requests_stream
-
-from . import _upload, errors, logger
-from ._sca_client import SCAClient
-from ._snap_index_client import SnapIndexClient
-from ._snap_v2_client import SnapV2Client
-from ._sso_client import SSOClient
+from . import _upload, errors
+from ._dashboard_api import DashboardAPI
+from ._snap_api import SnapAPI
 from ._up_down_client import UpDownClient
+from ._ubuntu_sso_client import Client, UbuntuOneAuthClient
 from .constants import DEFAULT_SERIES
 from .v2 import channel_map, releases
 
 
+logger = logging.getLogger(__name__)
+
+
 class StoreClient:
-    """High-level client for the V2.0 API SCA resources."""
+    """High-level client Snap resources."""
 
     def __init__(self) -> None:
         super().__init__()
-        self.conf = config.Config()
-        self.sso = SSOClient(self.conf)
-        self.cpi = SnapIndexClient(self.conf)
-        self.updown = UpDownClient(self.conf)
-        self.sca = SCAClient(self.conf)
-        self.v2_snap = SnapV2Client(self.conf)
+
+        self.client = Client()
+        self.auth_client = UbuntuOneAuthClient()
+
+        self.snap = SnapAPI(self.client)
+        self.dashboard = DashboardAPI(self.auth_client)
+        self._updown = UpDownClient(self.client)
 
     def login(
         self,
-        email: str,
-        password: str,
-        one_time_password: str = None,
+        *,
         acls: Iterable[str] = None,
         channels: Iterable[str] = None,
         packages: Iterable[Dict[str, str]] = None,
         expires: str = None,
         config_fd: TextIO = None,
-        save: bool = True,
+        **kwargs
     ) -> None:
-        """Log in via the Ubuntu One SSO API."""
+        if config_fd is not None:
+            return self.auth_client.login(config_fd=config_fd)
+
         if acls is None:
             acls = [
                 "package_access",
@@ -70,105 +70,53 @@ class StoreClient:
                 "package_update",
             ]
 
-        if config_fd:
-            self.conf.load(config_fd=config_fd)
-        else:
-            # Ask the store for the needed capabilities to be associated with
-            # the macaroon.
-            macaroon = self.sca.get_macaroon(acls, packages, channels, expires)
-            caveat_id = self._extract_caveat_id(macaroon)
-            unbound_discharge = self.sso.get_unbound_discharge(
-                email, password, one_time_password, caveat_id
-            )
-            # Clear any old data before setting.
-            self.conf.clear()
-            # The macaroon has been discharged, save it in the config
-            self.conf.set("macaroon", macaroon)
-            self.conf.set("unbound_discharge", unbound_discharge)
-            self.conf.set("email", email)
+        macaroon = self.dashboard.get_macaroon(acls, packages, channels, expires)
+        self.auth_client.login(macaroon=macaroon, **kwargs)
 
-        if save:
-            self.conf.save()
-
-    def _extract_caveat_id(self, root_macaroon):
-        macaroon = pymacaroons.Macaroon.deserialize(root_macaroon)
-        # macaroons are all bytes, never strings
-        sso_host = urllib.parse.urlparse(self.sso.root_url).netloc
-        for caveat in macaroon.caveats:
-            if caveat.location == sso_host:
-                return caveat.caveat_id
-        else:
-            raise errors.InvalidCredentialsError("Invalid root macaroon")
+    def export_login(self, *, config_fd: TextIO, encode=False) -> None:
+        self.auth_client.export_login(config_fd=config_fd, encode=encode)
 
     def logout(self):
-        self.conf.clear()
-        self.conf.save()
+        self.auth_client.logout()
 
-    def _refresh_if_necessary(self, func, *args, **kwargs):
-        """Make a request, refreshing macaroons if necessary."""
-        try:
-            return func(*args, **kwargs)
-        except errors.StoreMacaroonNeedsRefreshError:
-            unbound_discharge = self.sso.refresh_unbound_discharge(
-                self.conf.get("unbound_discharge")
-            )
-            self.conf.set("unbound_discharge", unbound_discharge)
-            self.conf.save()
-            return func(*args, **kwargs)
-
-    def whoami(self):
+    def whoami(self) -> Dict[str, str]:
         """Return user relevant login information."""
-        account_data = {}
-
-        for k in ("email", "account_id"):
-            value = self.conf.get(k)
-            if not value:
-                account_info = self.get_account_information()
-                value = account_info.get(k, "unknown")
-                self.conf.set(k, value)
-                self.conf.save()
-            account_data[k] = value
-
-        return account_data
+        return self.get_account_information()
 
     def acl(self) -> Dict[str, Any]:
         """Return permissions for the logged-in user."""
 
         acl_data = {}
 
-        acl_info = self.verify_acl()
+        acl_info = self.dashboard.verify_acl()
         for key in ("snap_ids", "channels", "permissions", "expires"):
             acl_data[key] = acl_info.get(key)
 
         return acl_data
 
     def get_snap_name_for_id(self, snap_id: str) -> str:
-        declaration_assertion = self.cpi.get_assertion("snap-declaration", snap_id)
+        declaration_assertion = self.snap.get_assertion("snap-declaration", snap_id)
         return declaration_assertion["headers"]["snap-name"]
 
     def verify_acl(self) -> Dict[str, Union[List[str], str]]:
-        return self._refresh_if_necessary(self.sca.verify_acl)
+        return self.dashboard.verify_acl()
 
     def get_account_information(self):
-        return self._refresh_if_necessary(self.sca.get_account_information)
+        return self.dashboard.get_account_information()
 
     def register_key(self, account_key_request):
-        return self._refresh_if_necessary(self.sca.register_key, account_key_request)
+        return self.dashboard.register_key(account_key_request)
 
     def register(self, snap_name: str, is_private: bool = False, store_id: str = None):
-        return self._refresh_if_necessary(
-            self.sca.register,
-            snap_name,
-            is_private=is_private,
-            store_id=store_id,
-            series=DEFAULT_SERIES,
+        return self.dashboard.register(
+            snap_name, is_private=is_private, store_id=store_id, series=DEFAULT_SERIES,
         )
 
     def upload_precheck(self, snap_name):
-        return self._refresh_if_necessary(self.sca.snap_upload_precheck, snap_name)
+        return self.dashboard.snap_upload_precheck(snap_name)
 
     def push_snap_build(self, snap_id, snap_build):
-        return self._refresh_if_necessary(self.sca.push_snap_build, snap_id, snap_build)
+        return self.dashboard.push_snap_build(snap_id, snap_build)
 
     def upload(
         self,
@@ -181,17 +129,9 @@ class StoreClient:
         built_at=None,
         channels: Optional[List[str]] = None,
     ):
-        # FIXME This should be raised by the function that uses the
-        # discharge. --elopio -2016-06-20
-        if self.conf.get("unbound_discharge") is None:
-            raise errors.InvalidCredentialsError(
-                "Unbound discharge not in the config file"
-            )
+        updown_data = _upload.upload_files(snap_filename, self._updown)
 
-        updown_data = _upload.upload_files(snap_filename, self.updown)
-
-        return self._refresh_if_necessary(
-            self.sca.snap_upload_metadata,
+        return self.dashboard.snap_upload_metadata(
             snap_name,
             updown_data,
             delta_format=delta_format,
@@ -209,8 +149,7 @@ class StoreClient:
         channels,
         progressive_percentage: Optional[int] = None,
     ):
-        return self._refresh_if_necessary(
-            self.sca.snap_release,
+        return self.dashboard.snap_release(
             snap_name,
             revision,
             channels,
@@ -227,9 +166,7 @@ class StoreClient:
         if snap_id is None:
             raise errors.NoSnapIdError(snap_name)
 
-        response = self._refresh_if_necessary(
-            self.sca.snap_status, snap_id, DEFAULT_SERIES, arch
-        )
+        response = self.dashboard.snap_status(snap_id, DEFAULT_SERIES, arch)
 
         if not response:
             raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
@@ -237,19 +174,13 @@ class StoreClient:
         return response
 
     def get_snap_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
-        return self._refresh_if_necessary(
-            self.v2_snap.get_snap_channel_map, snap_name=snap_name
-        )
+        return self.dashboard.get_snap_channel_map(snap_name=snap_name)
 
     def get_snap_releases(self, *, snap_name: str) -> releases.Releases:
-        return self._refresh_if_necessary(
-            self.v2_snap.get_snap_releases, snap_name=snap_name
-        )
+        return self.dashboard.get_snap_releases(snap_name=snap_name)
 
     def close_channels(self, snap_id, channel_names):
-        return self._refresh_if_necessary(
-            self.sca.close_channels, snap_id, channel_names
-        )
+        return self.dashboard.close_channels(snap_id, channel_names)
 
     def download(
         self,
@@ -261,7 +192,7 @@ class StoreClient:
         arch: Optional[str] = None,
         except_hash: str = ""
     ):
-        snap_info = self.cpi.get_info(snap_name)
+        snap_info = self.snap.get_info(snap_name)
         channel_mapping = snap_info.get_channel_mapping(
             risk=risk, track=track, arch=arch
         )
@@ -297,7 +228,9 @@ class StoreClient:
             if resume_possible and os.path.exists(download_path):
                 total_read = os.path.getsize(download_path)
                 headers["Range"] = "bytes={}-".format(total_read)
-            request = self.cpi.get(download_url, headers=headers, stream=True)
+            request = self.client.request(
+                "GET", download_url, headers=headers, stream=True
+            )
             request.raise_for_status()
             redirections = [h.headers["Location"] for h in request.history]
             if redirections:
@@ -320,13 +253,13 @@ class StoreClient:
                 sleep(1)
 
     def push_assertion(self, snap_id, assertion, endpoint, force=False):
-        return self.sca.push_assertion(snap_id, assertion, endpoint, force)
+        return self.dashboard.push_assertion(snap_id, assertion, endpoint, force)
 
-    def get_assertion(self, snap_id, endpoint):
-        return self.sca.get_assertion(snap_id, endpoint)
+    def get_assertion(self, snap_id, endpoint, params=None):
+        return self.dashboard.get_assertion(snap_id, endpoint, params=params)
 
     def sign_developer_agreement(self, latest_tos_accepted=False):
-        return self.sca.sign_developer_agreement(latest_tos_accepted)
+        return self.dashboard.sign_developer_agreement(latest_tos_accepted)
 
     def upload_metadata(self, snap_name, metadata, force):
         """Upload the metadata to the server."""
@@ -339,9 +272,7 @@ class StoreClient:
         if snap_id is None:
             raise errors.NoSnapIdError(snap_name)
 
-        return self._refresh_if_necessary(
-            self.sca.upload_metadata, snap_id, snap_name, metadata, force
-        )
+        return self.dashboard.upload_metadata(snap_id, snap_name, metadata, force)
 
     def upload_binary_metadata(self, snap_name, metadata, force):
         """Upload the binary metadata to the server."""
@@ -354,6 +285,6 @@ class StoreClient:
         if snap_id is None:
             raise errors.NoSnapIdError(snap_name)
 
-        return self._refresh_if_necessary(
-            self.sca.upload_binary_metadata, snap_id, snap_name, metadata, force
+        return self.dashboard.upload_binary_metadata(
+            snap_id, snap_name, metadata, force
         )

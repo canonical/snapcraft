@@ -313,6 +313,16 @@ class Provider(abc.ABC):
             )
             return True
 
+        instance_project_dir = info.get("host-project-directory")
+        if (
+            instance_project_dir is not None
+            and self.project._project_dir != instance_project_dir
+        ):
+            self.echoer.warning(
+                f"Build environment project directory changed from {instance_project_dir!r}, cleaning first."
+            )
+            return True
+
         return False
 
     def _ensure_compatible_build_environment(self) -> None:
@@ -461,6 +471,7 @@ class Provider(abc.ABC):
             data={
                 "base": self.project._get_build_base(),
                 "created-by-snapcraft-version": snapcraft._get_version(),
+                "host-project-directory": self.project._project_dir,
             }
         )
 

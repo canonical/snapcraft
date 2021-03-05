@@ -43,8 +43,8 @@ class RegisterKeyTestCase(FakeStoreCommandsBaseTestCase):
             ),
         )
         self.fake_store_login.mock.assert_called_once_with(
-            "user@example.com",
-            "secret",
+            email="user@example.com",
+            password="secret",
             acls=["modify_account_key"],
             packages=None,
             channels=None,

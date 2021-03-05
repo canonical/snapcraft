@@ -1,0 +1,59 @@
+name: python-hello-multiple-parts-staged
+base: core20
+version: '1.0'
+summary: Test multiple python parts (staged python)
+description: Test multiple python parts (staged python)
+
+grade: stable
+confinement: strict
+
+apps:
+  python-hello-multiple-parts-staged:
+    command: bin/hello
+  isort:
+    command: bin/isort
+
+parts:
+  hello:
+    plugin: python
+    source: .
+    python-packages: [pip, setuptools, wheel]
+    stage-packages:
+      - libpython3-stdlib
+      - libpython3.8-stdlib
+      - libpython3.8-minimal
+      - python3-pip
+      - python3-setuptools
+      - python3-wheel
+      - python3-venv
+      - python3-minimal
+      - python3-distutils
+      - python3-pkg-resources
+      - python3.8-minimal
+    stage:
+      - -pyvenv.cfg
+      - -bin/activate*
+      - -**/RECORD
+      - -**/__pycache__
+
+  isort:
+    plugin: python
+    source: empty
+    python-packages: [isort, pip, setuptools, wheel]
+    stage-packages:
+      - libpython3-stdlib
+      - libpython3.8-stdlib
+      - libpython3.8-minimal
+      - python3-pip
+      - python3-setuptools
+      - python3-wheel
+      - python3-venv
+      - python3-minimal
+      - python3-distutils
+      - python3-pkg-resources
+      - python3.8-minimal
+    stage:
+      - -pyvenv.cfg
+      - -bin/activate*
+      - -**/RECORD
+      - -**/__pycache__

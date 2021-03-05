@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2020 Canonical Ltd
+# Copyright 2016-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -30,7 +30,7 @@ class CloseCommandTestCase(FakeStoreCommandsBaseTestCase):
 
         self.useFixture(
             fixtures.MockPatchObject(
-                storeapi._sca_client.SCAClient,
+                storeapi._dashboard_api.DashboardAPI,
                 "close_channels",
                 return_value=(list(), dict()),
             )

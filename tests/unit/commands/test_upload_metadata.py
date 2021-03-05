@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2020 Canonical Ltd
+# Copyright 2017-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -141,7 +141,7 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
         self.useFixture(self.fake_store_login)
 
         self.fake_store_account_info = fixtures.MockPatchObject(
-            storeapi._sca_client.SCAClient,
+            storeapi._dashboard_api.DashboardAPI,
             "get_account_information",
             return_value={
                 "account_id": "abcd",

@@ -27,6 +27,7 @@ from datetime import datetime
 from pathlib import Path
 from subprocess import Popen
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, TextIO, Tuple
+from urllib.parse import urljoin
 
 from tabulate import tabulate
 
@@ -137,7 +138,9 @@ def _check_dev_agreement_and_namespace_statuses(store) -> None:
     except storeapi.errors.StoreAccountInformationError as e:
         if storeapi.constants.MISSING_AGREEMENT == e.error:  # type: ignore
             # A precaution if store does not return new style error.
-            url = _get_url_from_error(e) or storeapi.constants.UBUNTU_STORE_TOS_URL
+            url = _get_url_from_error(e) or urljoin(
+                storeapi.constants.STORE_DASHBOARD_URL, "/dev/tos"
+            )
             choice = echo.prompt(storeapi.constants.AGREEMENT_INPUT_MSG.format(url))
             if choice in {"y", "Y"}:
                 try:
@@ -157,7 +160,9 @@ def _check_dev_agreement_and_namespace_statuses(store) -> None:
     except storeapi.errors.StoreAccountInformationError as e:
         if storeapi.constants.MISSING_NAMESPACE in e.error:  # type: ignore
             # A precaution if store does not return new style error.
-            url = _get_url_from_error(e) or storeapi.constants.UBUNTU_STORE_ACCOUNT_URL
+            url = _get_url_from_error(e) or urljoin(
+                storeapi.constants.STORE_DASHBOARD_URL, "/dev/account"
+            )
             raise storeapi.errors.NeedTermsSignedError(
                 storeapi.constants.NAMESPACE_ERROR.format(url)
             )
@@ -179,8 +184,8 @@ def _try_login(
 ) -> None:
     try:
         store.login(
-            email,
-            password,
+            email=email,
+            password=password,
             packages=packages,
             acls=acls,
             channels=channels,
@@ -194,9 +199,9 @@ def _try_login(
     except storeapi.errors.StoreTwoFactorAuthenticationRequired:
         one_time_password = echo.prompt("Second-factor auth")
         store.login(
-            email,
-            password,
-            one_time_password=one_time_password,
+            email=email,
+            password=password,
+            otp=one_time_password,
             acls=acls,
             packages=packages,
             channels=channels,
@@ -1010,13 +1015,20 @@ def validate(
     except KeyError:
         raise storeapi.errors.SnapNotFoundError(snap_name=snap_name)
 
+    existing_validations = {
+        (i["approved-snap-id"], i["approved-snap-revision"]): i
+        for i in store_client.get_assertion(
+            snap_id, endpoint="validations", params={"include_revoked": "1"}
+        )
+    }
+
     # Then, for each requested validation, generate assertion
     for validation in validations:
         gated_snap, rev = validation.split("=", 1)
         echo.info(f"Getting details for {gated_snap}")
         # The Info API is not authed, so it cannot see private snaps.
         try:
-            approved_data = store_client.cpi.get_info(gated_snap)
+            approved_data = store_client.snap.get_info(gated_snap)
             approved_snap_id = approved_data.snap_id
         except storeapi.errors.SnapNotFoundError:
             approved_snap_id = gated_snap
@@ -1029,10 +1041,14 @@ def validate(
             "approved-snap-id": approved_snap_id,
             "approved-snap-revision": rev,
             "timestamp": datetime.utcnow().isoformat() + "Z",
-            "revoked": "false",
+            "revoked": "true" if revoke else "false",
         }
-        if revoke:
-            assertion_payload["revoked"] = "true"
+
+        # check for existing validation assertions
+        existing = existing_validations.get((approved_snap_id, rev))
+        if existing:
+            previous_revision = int(existing.get("revision", "0"))
+            assertion_payload["revision"] = str(previous_revision + 1)
 
         assertion = _sign_assertion(validation, assertion_payload, key, "validations")
 

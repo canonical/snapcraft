@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2019 Canonical Ltd
+# Copyright (C) 2015-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -170,12 +170,12 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
         self.useFixture(self.fake_store_login)
 
         self.fake_store_register = fixtures.MockPatchObject(
-            storeapi._sca_client.SCAClient, "register"
+            storeapi._dashboard_api.DashboardAPI, "register"
         )
         self.useFixture(self.fake_store_register)
 
         self.fake_store_account_info = fixtures.MockPatchObject(
-            storeapi._sca_client.SCAClient,
+            storeapi._dashboard_api.DashboardAPI,
             "get_account_information",
             return_value={
                 "account_id": "abcd",
@@ -203,7 +203,7 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
         self.useFixture(self.fake_store_account_info)
 
         self.fake_store_status = fixtures.MockPatchObject(
-            storeapi._sca_client.SCAClient, "snap_status", return_value=dict()
+            storeapi._dashboard_api.DashboardAPI, "snap_status", return_value=dict()
         )
         self.useFixture(self.fake_store_status)
 
@@ -213,7 +213,7 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
         self.useFixture(self.fake_store_release)
 
         self.fake_store_register_key = fixtures.MockPatchObject(
-            storeapi._sca_client.SCAClient, "register_key"
+            storeapi._dashboard_api.DashboardAPI, "register_key"
         )
         self.useFixture(self.fake_store_register_key)
 

@@ -35,9 +35,9 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
         self.popen_mock.return_value = rv_mock
         self.addCleanup(patcher.stop)
 
-    def test_validate_success(self):
-        self.client.login("dummy", "test correct password")
+        self.client.login(email="dummy", password="test correct password")
 
+    def test_validate_success(self):
         result = self.run_command(["validate", "core", "core=3", "test-snap=4"])
 
         self.assertThat(result.exit_code, Equals(0))
@@ -49,8 +49,6 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
         )
 
     def test_validate_with_key(self):
-        self.client.login("dummy", "test correct password")
-
         result = self.run_command(
             ["validate", "core", "core=3", "test-snap=4", "--key-name=keyname"]
         )
@@ -69,7 +67,6 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
     def test_validate_from_branded_store(self):
         # Validating snaps from a branded store requires setting
         # `SNAPCRAFT_UBUNTU_STORE` environment variable to the store 'slug'.
-        self.client.login("dummy", "test correct password")
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_UBUNTU_STORE", "Test-Branded")
         )
@@ -83,8 +80,6 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
         )
 
     def test_validate_unknown_snap(self):
-        self.client.login("dummy", "test correct password")
-
         raised = self.assertRaises(
             snapcraft.storeapi.errors.SnapNotFoundError,
             self.run_command,
@@ -94,8 +89,6 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
         self.assertThat(str(raised), Equals("Snap 'notfound' was not found."))
 
     def test_validate_bad_argument(self):
-        self.client.login("dummy", "test correct password")
-
         raised = self.assertRaises(
             snapcraft.storeapi.errors.InvalidValidationRequestsError,
             self.run_command,
@@ -104,22 +97,11 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
 
         self.assertThat(str(raised), Contains("format must be name=revision"))
 
-    def test_validate_without_login_must_ask(self):
-        result = self.run_command(
-            ["validate", "core", "core=3", "test-snap=4"],
-            input="dummy\ntest correct password\n",
-        )
-        self.assertThat(
-            result.output, Contains("You are required to login before continuing.")
-        )
-
     def test_validate_with_snap_name(self):
         self.fake_sign = fixtures.MockPatch(
             "snapcraft._store._sign_assertion", return_value=b""
         )
         self.useFixture(self.fake_sign)
-
-        self.client.login("dummy", "test correct password")
 
         self.run_command(["validate", "core", "test-snap=3"])
 
@@ -140,13 +122,61 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
             "validations",
         )
 
-    def test_validate_fallback_to_snap_id(self):
+    def test_revoke(self):
         self.fake_sign = fixtures.MockPatch(
             "snapcraft._store._sign_assertion", return_value=b""
         )
         self.useFixture(self.fake_sign)
 
-        self.client.login("dummy", "test correct password")
+        self.run_command(["validate", "core", "snap-1=3", "--revoke"])
+
+        self.fake_sign.mock.assert_called_once_with(
+            "snap-1=3",
+            {
+                "type": "validation",
+                "authority-id": "abcd",
+                "series": "16",
+                "snap-id": "good",
+                "approved-snap-id": "snap-id-1",
+                "approved-snap-revision": "3",
+                "timestamp": mock.ANY,
+                "revoked": "true",
+                "revision": "1",
+            },
+            None,
+            "validations",
+        )
+
+    def test_no_revoke(self):
+        self.fake_sign = fixtures.MockPatch(
+            "snapcraft._store._sign_assertion", return_value=b""
+        )
+        self.useFixture(self.fake_sign)
+
+        self.run_command(["validate", "core", "snap-1=3", "--no-revoke"])
+
+        self.fake_sign.mock.assert_called_once_with(
+            "snap-1=3",
+            {
+                "type": "validation",
+                "authority-id": "abcd",
+                "series": "16",
+                "snap-id": "good",
+                "approved-snap-id": "snap-id-1",
+                "approved-snap-revision": "3",
+                "timestamp": mock.ANY,
+                "revoked": "false",
+                "revision": "1",
+            },
+            None,
+            "validations",
+        )
+
+    def test_validate_fallback_to_snap_id(self):
+        self.fake_sign = fixtures.MockPatch(
+            "snapcraft._store._sign_assertion", return_value=b""
+        )
+        self.useFixture(self.fake_sign)
 
         # XXXYYY is an imaginary snap-id.
         self.run_command(["validate", "core", "XXXYYY=3"])
@@ -160,6 +190,56 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
                 "series": "16",
                 "snap-id": "good",
                 "approved-snap-id": "XXXYYY",
+                "approved-snap-revision": "3",
+                "timestamp": mock.ANY,
+                "revoked": "false",
+            },
+            None,
+            "validations",
+        )
+
+    def test_validate_with_revoke(self):
+        self.fake_sign = fixtures.MockPatch(
+            "snapcraft._store._sign_assertion", return_value=b""
+        )
+        self.useFixture(self.fake_sign)
+
+        self.run_command(["validate", "core", "test-snap=3", "--revoke"])
+
+        self.assertThat("core-test-snap-r3.assertion", FileExists())
+        self.fake_sign.mock.assert_called_once_with(
+            "test-snap=3",
+            {
+                "type": "validation",
+                "authority-id": "abcd",
+                "series": "16",
+                "snap-id": "good",
+                "approved-snap-id": "test-snap-snap-id",
+                "approved-snap-revision": "3",
+                "timestamp": mock.ANY,
+                "revoked": "true",
+            },
+            None,
+            "validations",
+        )
+
+    def test_validate_with_no_revoke(self):
+        self.fake_sign = fixtures.MockPatch(
+            "snapcraft._store._sign_assertion", return_value=b""
+        )
+        self.useFixture(self.fake_sign)
+
+        self.run_command(["validate", "core", "test-snap=3", "--no-revoke"])
+
+        self.assertThat("core-test-snap-r3.assertion", FileExists())
+        self.fake_sign.mock.assert_called_once_with(
+            "test-snap=3",
+            {
+                "type": "validation",
+                "authority-id": "abcd",
+                "series": "16",
+                "snap-id": "good",
+                "approved-snap-id": "test-snap-snap-id",
                 "approved-snap-revision": "3",
                 "timestamp": mock.ANY,
                 "revoked": "false",
