@@ -1,5 +1,5 @@
 name: conda-hello
-version: '0.2'
+version: '1.0'
 summary: Hello world using ipython from conda packages
 description: |
   Leverage conda-packages to install ipython and use it to say "hello world".
