@@ -35,7 +35,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
       the miniconda to initialize.
 """
 
-import os
 from textwrap import dedent
 from typing import Any, Dict, List, Set
 
@@ -93,16 +92,7 @@ class CondaPlugin(PluginV2):
         return " ".join(cmd)
 
     def _get_deploy_command(self) -> str:
-        import pprint as pp
-
-        pp.pprint(self.options)
-        conda_target_prefix = os.path.join(
-            # os.path.sep, "snap", self.project._snap_meta.name, "current"
-            os.path.sep,
-            "snap",
-            "tfengine",
-            "current",
-        )
+        conda_target_prefix = "/snap/${SNAPCRAFT_PROJECT_NAME}/current"
 
         deploy_cmd = [
             "CONDA_TARGET_PREFIX_OVERRIDE=" + conda_target_prefix,
