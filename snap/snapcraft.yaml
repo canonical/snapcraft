@@ -135,7 +135,6 @@ parts:
     plugin: nil
     source: https://github.com/snapcore/snapcraft.git
     source-branch: legacy
-    source-depth: 1
     build-environment:
         - CPPFLAGS: '-I/usr/include/python3.8'
         - CRYPTOGRAPHY_DONT_BUILD_RUST: "1"
@@ -144,6 +143,11 @@ parts:
         - SNAPCRAFT_PYTHON_PKGS: "$SNAPCRAFT_PART_INSTALL/lib/python3.8/site-packages"
         - SNAPCRAFT_PIP_INSTALL_CMD: "$SNAPCRAFT_PYTHON -m pip install --user -U"
         - PYTHONUSERBASE: "$SNAPCRAFT_PART_INSTALL"
+    override-pull: |
+        snapcraftctl pull
+        # backport: store: improve platform detection (#2931)
+        # to remove platform.dist() usage
+        git cherry-pick 0c425ae9b1330fc081a815e423851afd5c4bc8c1
     override-build: |
         set -eux
 
