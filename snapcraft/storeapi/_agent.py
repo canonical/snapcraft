@@ -42,7 +42,7 @@ def _get_linux_release(release: os_release.OsRelease) -> str:
     except OsReleaseVersionIdError:
         os_version_id = "Unknown Version"
 
-    return f"{os_name}/{os_version_id}"
+    return "{}/{}".format(os_name, os_version_id)
 
 
 def get_user_agent(platform: str = sys.platform) -> str:
@@ -54,4 +54,6 @@ def get_user_agent(platform: str = sys.platform) -> str:
     else:
         os_platform = platform.title()
 
-    return f"snapcraft/{snapcraft.__version__} {testing}{os_platform} ({arch})"
+    return "snapcraft/{} {}{} ({})".format(
+        snapcraft.__version__, testing, os_platform, arch
+    )
