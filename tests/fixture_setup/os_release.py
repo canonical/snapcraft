@@ -45,7 +45,7 @@ class FakeOsRelease(fixtures.Fixture):
 
             print(
                 dedent(
-                    f"""\
+                    """\
                 VERSION="16.04.3 LTS (Xenial Xerus)"
                 ID_LIKE=debian
                 PRETTY_NAME="Ubuntu 16.04.3 LTS"
