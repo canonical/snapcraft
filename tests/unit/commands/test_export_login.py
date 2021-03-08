@@ -18,6 +18,7 @@ import re
 from unittest import mock
 
 import fixtures
+import pytest
 from testtools.matchers import Contains, Equals, MatchesRegex, Not
 
 from snapcraft import storeapi
@@ -214,10 +215,13 @@ class ExportLoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             "error"
         )
 
-        result = self.run_command(
-            ["export-login", "exported"], input="bad-user@example.com\nbad-password\n"
-        )
+        with pytest.raises(storeapi.errors.InvalidCredentialsError) as exc_info:
+            self.run_command(
+                ["export-login", "exported"],
+                input="bad-user@example.com\nbad-password\n",
+            )
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(storeapi.constants.INVALID_CREDENTIALS))
-        self.assertThat(result.output, Contains("Login failed."))
+        assert (
+            str(exc_info.value)
+            == 'Invalid credentials: error. Have you run "snapcraft login"?'
+        )

@@ -18,6 +18,7 @@ import re
 from unittest import mock
 
 import fixtures
+import pytest
 from simplejson.scanner import JSONDecodeError
 from testtools.matchers import Contains, Equals, MatchesRegex, Not
 
@@ -144,11 +145,13 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             "error"
         )
 
-        result = self.run_command(["login"], input="user@example.com\nbad-secret\n")
+        with pytest.raises(storeapi.errors.InvalidCredentialsError) as exc_info:
+            self.run_command(["login"], input="user@example.com\nbadsecret\n")
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(storeapi.constants.INVALID_CREDENTIALS))
-        self.assertThat(result.output, Contains("Login failed."))
+        assert (
+            str(exc_info.value)
+            == 'Invalid credentials: error. Have you run "snapcraft login"?'
+        )
 
     def test_login_failed_with_store_authentication_error(self):
         self.fake_store_login.mock.side_effect = storeapi.errors.StoreAuthenticationError(
@@ -173,36 +176,13 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             response
         )
 
-        result = self.run_command(["login"], input="user@example.com\nsecret\n\n")
+        with pytest.raises(storeapi.errors.StoreAccountInformationError) as exc_info:
+            self.run_command(["login"], input="user@example.com\nsecret\n\n")
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(
-            result.output, Contains(storeapi.constants.ACCOUNT_INFORMATION_ERROR)
+        assert (
+            str(exc_info.value)
+            == "Error fetching account information from store: 500 Internal Server Error"
         )
-        self.assertThat(result.output, Contains("Login failed."))
-
-    def test_login_failed_with_dev_agreement_error(self):
-        response = mock.Mock()
-        response.status_code = 403
-        response.reason = storeapi.constants.MISSING_AGREEMENT
-        content = {
-            "error_list": [
-                {
-                    "message": storeapi.constants.MISSING_AGREEMENT,
-                    "extra": {"url": "http://fake-url.com", "api": "fake-api"},
-                }
-            ]
-        }
-        response.json.return_value = content
-        self.fake_store_account_info.mock.side_effect = storeapi.errors.StoreAccountInformationError(
-            response
-        )
-
-        result = self.run_command(["login"], input="user@example.com\nsecret\nn\n")
-
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(storeapi.constants.AGREEMENT_ERROR))
-        self.assertThat(result.output, Contains("Login failed."))
 
     def test_failed_login_with_dev_namespace_error(self):
         response = mock.Mock()
@@ -221,14 +201,13 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             response
         )
 
-        result = self.run_command(["login"], input="user@example.com\nsecret\n")
+        with pytest.raises(storeapi.errors.NeedTermsSignedError) as exc_info:
+            self.run_command(["login"], input="user@example.com\nsecret\n")
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(
-            result.output,
-            Contains(storeapi.constants.NAMESPACE_ERROR.format("http://fake-url.com")),
+        assert (
+            str(exc_info.value)
+            == "Developer Terms of Service agreement must be signed before continuing: You need to set a username. It will appear in the developer field alongside the other details for your snap. Please visit http://fake-url.com and login again."
         )
-        self.assertThat(result.output, Contains("Login failed."))
 
     def test_failed_login_with_unexpected_account_error(self):
         # Test to simulate get_account_info raising unexpected errors.
@@ -248,36 +227,13 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             response
         )
 
-        result = self.run_command(["login"], input="user@example.com\nsecret\n")
+        with pytest.raises(storeapi.errors.StoreAccountInformationError) as exc_info:
+            self.run_command(["login"], input="user@example.com\nsecret\n\n")
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(
-            result.output, Contains(storeapi.constants.ACCOUNT_INFORMATION_ERROR)
+        assert (
+            str(exc_info.value)
+            == "Error fetching account information from store: Just another error"
         )
-        self.assertThat(result.output, Contains("Login failed."))
-
-    def test_failed_login_with_dev_agreement_error_with_choice(self):
-        response = mock.Mock()
-        response.status_code = 403
-        response.reason = storeapi.constants.MISSING_AGREEMENT
-        content = {
-            "error_list": [
-                {
-                    "message": storeapi.constants.MISSING_AGREEMENT,
-                    "extra": {"url": "http://fake-url.com", "api": "fake-api"},
-                }
-            ]
-        }
-        response.json.return_value = content
-        self.fake_store_account_info.mock.side_effect = storeapi.errors.StoreAccountInformationError(
-            response
-        )
-
-        result = self.run_command(["login"], input="user@example.com\nsecret\nn\n")
-
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(storeapi.constants.AGREEMENT_ERROR))
-        self.assertThat(result.output, Contains("Login failed."))
 
     def test_failed_login_with_dev_agreement_error_with_choice_no(self):
         response = mock.Mock()
@@ -296,11 +252,13 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             response
         )
 
-        result = self.run_command(["login"], input="user@example.com\nsecret\nn\n")
+        with pytest.raises(storeapi.errors.NeedTermsSignedError) as exc_info:
+            self.run_command(["login"], input="user@example.com\nsecret\nn\n")
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(storeapi.constants.AGREEMENT_ERROR))
-        self.assertThat(result.output, Contains("Login failed."))
+        assert (
+            str(exc_info.value)
+            == "Developer Terms of Service agreement must be signed before continuing: You must agree to the developer terms and conditions to upload snaps."
+        )
 
     def test_failed_login_with_dev_agreement_error_with_choice_yes(self):
         response = mock.Mock()
@@ -319,40 +277,10 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             response
         )
 
-        result = self.run_command(["login"], input="user@example.com\nsecret\ny\n")
+        with pytest.raises(storeapi.errors.NeedTermsSignedError) as exc_info:
+            self.run_command(["login"], input="user@example.com\nsecret\ny\n")
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(
-            result.output,
-            Contains(
-                storeapi.constants.AGREEMENT_SIGN_ERROR.format("http://fake-url.com")
-            ),
-        )
-        self.assertThat(result.output, Contains("Login failed."))
-
-    def test_failed_login_with_dev_agreement_error_with_sign_success(self):
-        self.useFixture(
-            fixtures.MockPatchObject(storeapi.StoreClient, "sign_developer_agreement")
-        )
-        response = mock.Mock()
-        response.status_code = 403
-        response.reason = storeapi.constants.MISSING_AGREEMENT
-        content = {
-            "error_list": [
-                {
-                    "message": storeapi.constants.MISSING_AGREEMENT,
-                    "extra": {"url": "http://fake-url.com", "api": "fake-api"},
-                }
-            ]
-        }
-        response.json.return_value = content
-        self.fake_store_account_info.mock.side_effect = storeapi.errors.StoreAccountInformationError(
-            response
-        )
-
-        result = self.run_command(["login"], input="user@example.com\nsecret\ny\n")
-
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(
-            result.output, Contains(storeapi.constants.ACCOUNT_INFORMATION_ERROR)
+        assert (
+            str(exc_info.value)
+            == "Developer Terms of Service agreement must be signed before continuing: Unexpected error encountered during signing the developer terms and conditions. Please visit http://fake-url.com and agree to the terms and conditions before continuing."
         )

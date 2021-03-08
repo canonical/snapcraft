@@ -245,25 +245,17 @@ def login(
             hide_input = True
         password = echo.prompt("Password", hide_input=hide_input)
 
-    try:
-        _try_login(
-            email,
-            password,
-            store=store,
-            packages=packages,
-            acls=acls,
-            channels=channels,
-            expires=expires,
-            config_fd=config_fd,
-            save=save,
-        )
-    # Let StoreAuthenticationError pass through so we get decent error messages
-    except storeapi.errors.InvalidCredentialsError:
-        return _fail_login(storeapi.constants.INVALID_CREDENTIALS)
-    except storeapi.errors.StoreAccountInformationError:
-        return _fail_login(storeapi.constants.ACCOUNT_INFORMATION_ERROR)
-    except storeapi.errors.NeedTermsSignedError as e:
-        return _fail_login(e.message)  # type: ignore
+    _try_login(
+        email,
+        password,
+        store=store,
+        packages=packages,
+        acls=acls,
+        channels=channels,
+        expires=expires,
+        config_fd=config_fd,
+        save=save,
+    )
 
     return True
 
