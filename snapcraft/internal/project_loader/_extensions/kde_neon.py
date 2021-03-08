@@ -33,8 +33,8 @@ _Info = dict(
     ),
     core20=_ExtensionInfo(
         cmake_args="-DCMAKE_FIND_ROOT_PATH=/snap/kde-frameworks-5-qt-5-15-core20-sdk/current",
-        content="kde-frameworks-5-qt-5-15-core20",
-        provider="kde-frameworks-5-qt-5-15-core20-all",
+        content="kde-frameworks-5-qt-5-15-core20-all",
+        provider="kde-frameworks-5-qt-5-15-core20",
         build_snaps=["kde-frameworks-5-qt-5-15-core20-sdk/latest/candidate"],
     ),
 )
