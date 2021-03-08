@@ -147,6 +147,8 @@ parts:
         snapcraftctl pull
         # backport: store: improve platform detection (#2931)
         # to remove platform.dist() usage
+        git config --global user.email "snapcraft@canonical.com"
+        git config --global user.name "Snapcraft"
         git cherry-pick 0c425ae9b1330fc081a815e423851afd5c4bc8c1
     override-build: |
         set -eux
