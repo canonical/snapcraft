@@ -15,14 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import distutils.util
+import logging
 import os
+import pathlib
 import sys
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 import click
 
 from snapcraft.cli.echo import confirm, prompt, warning
-from snapcraft.internal import common, errors
+from snapcraft.internal import common, errors, log
 from snapcraft.internal.meta.snap import Snap
 from snapcraft.project import Project, get_snapcraft_yaml
 
@@ -71,6 +74,40 @@ _SUPPORTED_PROVIDERS = ["host", "lxd", "multipass"]
 _HIDDEN_PROVIDERS = ["managed-host"]
 _ALL_PROVIDERS = _SUPPORTED_PROVIDERS + _HIDDEN_PROVIDERS
 _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
+    dict(
+        param_decls="--lxd-image-name",
+        metavar="<image>",
+        help="Override LXD image.",
+        envvar="SNAPCRAFT_LXD_IMAGE_NAME",
+        supported_providers=["lxd"],
+        hidden=True,
+    ),
+    dict(
+        param_decls="--lxd-image-remote",
+        metavar="<remote>",
+        help="Override LXD image remote.",
+        envvar="SNAPCRAFT_LXD_IMAGE_REMOTE",
+        supported_providers=["lxd"],
+        hidden=True,
+    ),
+    dict(
+        param_decls="--lxd-project",
+        metavar="<project>",
+        help="LXD project to use.",
+        envvar="SNAPCRAFT_LXD_PROJECT",
+        default="snapcraft",
+        supported_providers=["lxd"],
+        hidden=True,
+    ),
+    dict(
+        param_decls="--lxd-remote",
+        metavar="<remote>",
+        help="LXD Remote to use.",
+        envvar="SNAPCRAFT_LXD_REMOTE",
+        default="local",
+        supported_providers=["lxd"],
+        hidden=True,
+    ),
     dict(
         param_decls="--target-arch",
         metavar="<arch>",
@@ -165,6 +202,15 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         hidden=True,
     ),
     dict(
+        param_decls="--enable-snapshots",
+        is_flag=True,
+        type=BoolParamType(),
+        help="Enable snapshots if supported by build provider.",
+        envvar="SNAPCRAFT_ENABLE_SNAPSHOTS",
+        supported_providers=["lxd"],
+        hidden=True,
+    ),
+    dict(
         param_decls="--manifest-image-information",
         metavar="<json string>",
         help="Set snap manifest image-info",
@@ -220,122 +266,288 @@ def add_provider_options(hidden=False):
     return _add_provider_options
 
 
-def _sanity_check_build_provider_flags(build_provider: str, **kwargs) -> None:
-    destructive_mode = kwargs.get("destructive_mode")
-    env_provider = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT")
+def determine_provider(use_lxd: bool, destructive_mode: bool) -> str:
+    """Determine provider based on user inputs & defaults."""
+    if use_lxd:
+        return "lxd"
 
-    # Specifying --provider=host requires the use of --destructive-mode.
-    # Exceptions include:
-    # (1) SNAPCRAFT_BUILD_ENVIRONMENT=host.
-    # (2) Running inside of a container.
-    if (
-        build_provider == "host"
-        and not env_provider == "host"
-        and not destructive_mode
-        and not common.is_process_container()
-    ):
-        raise click.BadArgumentUsage(
-            "--provider=host requires --destructive-mode to acknowledge side effects"
-        )
+    if destructive_mode:
+        return "host"
 
-    if env_provider and env_provider != build_provider:
-        raise click.BadArgumentUsage(
-            "mismatch between --provider={} and SNAPCRAFT_BUILD_ENVIRONMENT={}".format(
-                build_provider, env_provider
-            )
-        )
+    if common.is_process_container():
+        return "host"
 
-    # Error if any sys.argv params are for unsupported providers.
-    # Values from environment variables and configuration files only
-    # change defaults, so they are safe to ignore due to filtering
-    # in get_build_provider_flags().
-    for option in _PROVIDER_OPTIONS:
-        key: str = option["param_decls"]  # type: ignore
-        supported_providers: List[str] = option["supported_providers"]  # type: ignore
-        if key in sys.argv and build_provider not in supported_providers:
+    # Default to multipass.
+    return "multipass"
+
+
+@dataclass
+class ProviderOptions:
+    bind_ssh: bool = False
+    add_ca_certificates: Optional[pathlib.Path] = None
+    debug: bool = False
+    destructive_mode: bool = False
+    enable_developer_debug: bool = True
+    enable_experimental_extensions: bool = False
+    enable_experimental_package_repositories: bool = False
+    enable_experimental_target_arch: Optional[str] = None
+    enable_manifest: bool = False
+    enable_snapshots: bool = True
+    http_proxy: Optional[str] = None
+    https_proxy: Optional[str] = None
+    lxd_image_name: Optional[str] = None
+    lxd_image_remote: Optional[str] = None
+    lxd_project: str = "snapcraft"
+    lxd_remote: str = "local"
+    manifest_image_information: Optional[str] = None
+    provider: str = "multipass"
+    shell: bool = False
+    shell_after: bool = False
+    target_arch: Optional[str] = None
+    use_lxd: bool = False
+
+    def apply_host_environment(self) -> None:
+        """Set build environment flags in snapcraft process."""
+        if self.enable_experimental_extensions:
+            os.environ["SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS"] = "True"
+
+        if self.enable_experimental_package_repositories:
+            os.environ["SNAPCRAFT_ENABLE_EXPERIMENTAL_PACKAGE_REPOSITORIES"] = "True"
+
+        if self.target_arch:
+            os.environ["SNAPCRAFT_ENABLE_EXPERIMENTAL_TARGET_ARCH"] = "True"
+
+        if self.enable_manifest:
+            os.environ["SNAPCRAFT_BUILD_INFO"] = "True"
+
+        if self.manifest_image_information:
+            os.environ["SNAPCRAFT_IMAGE_INFO"] = self.manifest_image_information
+
+        if self.http_proxy:
+            os.environ["http_proxy"] = self.http_proxy
+
+        if self.https_proxy:
+            os.environ["https_proxy"] = self.https_proxy
+
+        if self.enable_developer_debug:
+            log.configure(log_level=logging.DEBUG)
+
+    def issue_build_provider_warnings(self) -> None:
+        """Log any experimental flags in use."""
+        if self.enable_experimental_extensions:
+            warning("*EXPERIMENTAL* extensions enabled.")
+
+        if self.enable_experimental_package_repositories:
+            warning("*EXPERIMENTAL* package-repositories enabled.")
+
+        if self.enable_experimental_target_arch:
+            warning("*EXPERIMENTAL* --target-arch for core20 enabled.")
+
+    def perform_sanity_checks(self) -> None:
+        env_provider = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT")
+
+        # Specifying --provider=host requires the use of --destructive-mode.
+        # Exceptions include:
+        # (1) SNAPCRAFT_BUILD_ENVIRONMENT=host.
+        # (2) Running inside of a container.
+        if (
+            self.provider == "host"
+            and not env_provider == "host"
+            and not self.destructive_mode
+            and not common.is_process_container()
+        ):
             raise click.BadArgumentUsage(
-                f"{key} cannot be used with build provider {build_provider!r}"
+                "--provider=host requires --destructive-mode to acknowledge side effects"
             )
 
-    # Check if running as sudo but only if the host is not managed-host where Snapcraft
-    # runs as root already. This effectively avoids the warning when using the default
-    # build provider (Multipass) that uses "sudo" to get "root".
-    if (
-        build_provider != "managed-host"
-        and os.getenv("SUDO_USER")
-        and os.geteuid() == 0
-    ):
-        warning(
-            "Running with 'sudo' may cause permission errors and is discouraged. Use 'sudo' when cleaning."
+        if env_provider and env_provider != self.provider:
+            raise click.BadArgumentUsage(
+                "mismatch between --provider={} and SNAPCRAFT_BUILD_ENVIRONMENT={}".format(
+                    self.provider, env_provider
+                )
+            )
+
+        # Error if any sys.argv params are for unsupported providers.
+        # Values from environment variables and configuration files only
+        # change defaults, so they are safe to ignore due to filtering
+        # in get_build_provider_flags().
+        for option in _PROVIDER_OPTIONS:
+            key: str = option["param_decls"]  # type: ignore
+            supported_providers: List[str] = option["supported_providers"]  # type: ignore
+            if key in sys.argv and self.provider not in supported_providers:
+                raise click.BadArgumentUsage(
+                    f"{key} cannot be used with build provider {self.provider!r}"
+                )
+
+        # Check if running as sudo but only if the host is not managed-host where Snapcraft
+        # runs as root already. This effectively avoids the warning when using the default
+        # build provider (Multipass) that uses "sudo" to get "root".
+        if (
+            self.provider != "managed-host"
+            and os.getenv("SUDO_USER")
+            and os.geteuid() == 0
+        ):
+            warning(
+                "Running with 'sudo' may cause permission errors and is discouraged. Use 'sudo' when cleaning."
+            )
+
+    @classmethod
+    def from_click_group_args(
+        cls,
+        add_ca_certificates: Optional[pathlib.Path],
+        bind_ssh: bool,
+        debug: bool,
+        destructive_mode: bool,
+        enable_developer_debug: bool,
+        enable_manifest: bool,
+        enable_experimental_extensions: bool,
+        enable_experimental_package_repositories: bool,
+        enable_experimental_target_arch: Optional[str],
+        enable_snapshots: bool,
+        http_proxy: Optional[str],
+        https_proxy: Optional[str],
+        lxd_image_name: Optional[str],
+        lxd_image_remote: Optional[str],
+        lxd_project: str,
+        lxd_remote: str,
+        manifest_image_information: Optional[str],
+        provider: Optional[str],
+        shell: bool,
+        shell_after: bool,
+        target_arch: Optional[str],
+        use_lxd: bool,
+        **kwargs,
+    ) -> "ProviderOptions":
+        """Initialize options from group (global) arguments."""
+        if add_ca_certificates is not None:
+            certs_path: Optional[pathlib.Path] = pathlib.Path(add_ca_certificates)
+        else:
+            certs_path = None
+
+        if provider is None:
+            provider = determine_provider(
+                destructive_mode=destructive_mode, use_lxd=use_lxd
+            )
+
+        provider_options = ProviderOptions(
+            bind_ssh=bind_ssh,
+            add_ca_certificates=certs_path,
+            debug=debug,
+            destructive_mode=destructive_mode,
+            enable_developer_debug=enable_developer_debug,
+            enable_experimental_extensions=enable_experimental_extensions,
+            enable_experimental_package_repositories=enable_experimental_package_repositories,
+            enable_experimental_target_arch=enable_experimental_target_arch,
+            enable_manifest=enable_manifest,
+            enable_snapshots=enable_snapshots,
+            http_proxy=http_proxy,
+            https_proxy=https_proxy,
+            lxd_image_name=lxd_image_name,
+            lxd_image_remote=lxd_image_remote,
+            lxd_project=lxd_project,
+            lxd_remote=lxd_remote,
+            manifest_image_information=manifest_image_information,
+            provider=provider,
+            use_lxd=use_lxd,
         )
 
+        provider_options.perform_sanity_checks()
+        return provider_options
 
-def get_build_provider(skip_sanity_checks: bool = False, **kwargs) -> str:
-    """Get build provider and determine if running as managed instance."""
+    def update_from_click_command_args(  # noqa: C901
+        self,
+        add_ca_certificates: Optional[pathlib.Path],
+        bind_ssh: bool,
+        debug: bool,
+        destructive_mode: bool,
+        enable_developer_debug: bool,
+        enable_manifest: bool,
+        enable_experimental_extensions: bool,
+        enable_experimental_package_repositories: bool,
+        enable_experimental_target_arch: Optional[str],
+        enable_snapshots: bool,
+        http_proxy: Optional[str],
+        https_proxy: Optional[str],
+        lxd_image_name: Optional[str],
+        lxd_image_remote: Optional[str],
+        lxd_project: str,
+        lxd_remote: str,
+        manifest_image_information: Optional[str],
+        provider: Optional[str],
+        shell: bool,
+        shell_after: bool,
+        target_arch: Optional[str],
+        use_lxd: bool,
+        **kwargs,
+    ) -> None:
+        """Update provider options from command-specific arguments."""
+        if bind_ssh:
+            self.bind_ssh = True
 
-    provider = kwargs.get("provider")
+        if add_ca_certificates:
+            self.add_ca_certificates = pathlib.Path(add_ca_certificates)
 
-    if not provider:
-        if kwargs.get("use_lxd"):
-            provider = "lxd"
-        elif kwargs.get("destructive_mode"):
-            provider = "host"
-        elif common.is_process_container():
-            provider = "host"
-        else:
-            # Default is multipass.
-            provider = "multipass"
+        if debug:
+            self.debug = True
 
-    # Sanity checks may be skipped for the purpose of checking legacy.
-    if not skip_sanity_checks:
-        _sanity_check_build_provider_flags(provider, **kwargs)
+        if destructive_mode:
+            self.destructive_mode = True
 
-    return provider
+        if enable_developer_debug:
+            self.enable_developer_debug = True
 
+        if enable_experimental_extensions:
+            self.enable_experimental_extensions = True
 
-def _param_decls_to_kwarg(key: str) -> str:
-    """Format a param_decls to keyword argument name."""
+        if enable_experimental_package_repositories:
+            self.enable_experimental_package_repositories = True
 
-    # Drop leading "--".
-    key = key.replace("--", "", 1)
+        if enable_experimental_target_arch:
+            self.enable_experimental_target_arch = enable_experimental_target_arch
 
-    # Convert dashes to underscores.
-    return key.replace("-", "_")
+        if enable_manifest:
+            self.enable_manifest = True
 
+        if enable_snapshots:
+            self.enable_snapshots = True
 
-def get_build_provider_flags(build_provider: str, **kwargs) -> Dict[str, str]:
-    """Get configured options applicable to build_provider."""
+        if http_proxy:
+            self.http_proxy = http_proxy
 
-    build_provider_flags: Dict[str, str] = dict()
+        if https_proxy:
+            self.https_proxy = https_proxy
 
-    # Should not happen - developer safety check.
-    if build_provider not in _ALL_PROVIDERS:
-        raise RuntimeError(f"Invalid build provider: {build_provider}")
+        if lxd_image_name:
+            self.lxd_image_name = lxd_image_name
 
-    for option in _PROVIDER_OPTIONS:
-        key: str = option["param_decls"]  # type: ignore
-        is_flag: bool = option.get("is_flag", False)  # type: ignore
-        envvar: Optional[str] = option.get("envvar")  # type: ignore
-        supported_providers: List[str] = option["supported_providers"]  # type: ignore
+        if lxd_image_remote:
+            self.lxd_image_remote = lxd_image_remote
 
-        # Skip --provider option.
-        if key == "--provider":
-            continue
+        if lxd_project:
+            self.lxd_project = lxd_project
 
-        # Skip options that do not apply to configured provider.
-        if build_provider not in supported_providers:
-            continue
+        if lxd_remote:
+            self.lxd_remote = lxd_remote
 
-        # Skip boolean flags that have not been set.
-        key_formatted = _param_decls_to_kwarg(key)
-        if is_flag and not kwargs.get(key_formatted):
-            continue
+        if manifest_image_information:
+            self.manifest_image_information = manifest_image_information
 
-        # Add build provider flag using envvar as key.
-        if envvar is not None and key_formatted in kwargs:
-            build_provider_flags[envvar] = kwargs[key_formatted]
+        if provider:
+            self.provider = provider
 
-    return build_provider_flags
+        if shell:
+            self.shell = True
+
+        if shell_after:
+            self.shell_after = True
+
+        if target_arch:
+            self.target_arch = target_arch
+
+        if use_lxd:
+            self.use_lxd = True
+
+        self.perform_sanity_checks()
 
 
 def get_project(*, is_managed_host: bool = False, **kwargs):
@@ -367,43 +579,3 @@ def get_project(*, is_managed_host: bool = False, **kwargs):
     project._snap_meta = Snap.from_dict(project.info.get_raw_snapcraft())
 
     return project
-
-
-def apply_host_provider_flags(build_provider_flags: Dict[str, str]) -> None:
-    """Set build environment flags in snapcraft process."""
-
-    # Snapcraft plugins currently check for environment variables,
-    # e.g. http_proxy and https_proxy.  Ensure they are set if configured.
-    for key, value in build_provider_flags.items():
-        if value is None:
-            if key in os.environ:
-                os.environ.pop(key)
-        else:
-            os.environ[key] = str(value)
-
-    # Clear false/unset boolean environment flags.
-    for option in _PROVIDER_OPTIONS:
-        if not option.get("is_flag", False):
-            continue
-
-        env_name = option.get("envvar")
-        if env_name is None:
-            continue
-
-        if not build_provider_flags.get(env_name):
-            os.environ.pop(env_name, None)
-            continue
-
-    issue_build_provider_warnings(build_provider_flags)
-
-
-def issue_build_provider_warnings(build_provider_flags: Dict[str, str]) -> None:
-    # Log any experimental flags in use.
-    if build_provider_flags.get("SNAPCRAFT_ENABLE_EXPERIMENTAL_PACKAGE_REPOSITORIES"):
-        warning("*EXPERIMENTAL* package-repositories enabled.")
-
-    if build_provider_flags.get("SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS"):
-        warning("*EXPERIMENTAL* extensions enabled.")
-
-    if build_provider_flags.get("SNAPCRAFT_ENABLE_EXPERIMENTAL_TARGET_ARCH"):
-        warning("*EXPERIMENTAL* --target-arch for core20 enabled.")

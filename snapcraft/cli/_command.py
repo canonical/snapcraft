@@ -22,7 +22,7 @@ import click
 
 from snapcraft.internal import common, errors
 
-from ._options import get_build_provider, get_project
+from ._options import get_project
 
 
 def run_legacy_snapcraft(argv=sys.argv[1:]) -> None:
@@ -54,8 +54,9 @@ class SnapcraftProjectCommand(click.Command):
 
     def _is_legacy(self) -> bool:
         try:
-            build_provider = get_build_provider(skip_sanity_checks=True)
-            is_managed_host = build_provider == "managed-host"
+            is_managed_host = (
+                os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT", None) == "managed-host"
+            )
             project = get_project(is_managed_host=is_managed_host)
         except Exception:
             # If we cannot load the project, we assume we are in non legacy

@@ -19,7 +19,6 @@ import logging
 import os
 import pathlib
 import subprocess
-import sys
 import time
 import typing
 from typing import List, Optional, Union
@@ -29,7 +28,6 @@ import progressbar
 
 from snapcraft import file_utils
 from snapcraft.internal import (
-    build_providers,
     deprecations,
     errors,
     indicators,
@@ -39,16 +37,10 @@ from snapcraft.internal import (
 )
 from snapcraft.project._sanity_checks import conduct_project_sanity_check
 
-from . import echo
+from . import echo, providers
 from ._command import SnapcraftProjectCommand
 from ._errors import TRACEBACK_HOST, TRACEBACK_MANAGED
-from ._options import (
-    add_provider_options,
-    apply_host_provider_flags,
-    get_build_provider,
-    get_build_provider_flags,
-    get_project,
-)
+from ._options import add_provider_options, get_project
 
 logger = logging.getLogger(__name__)
 
@@ -59,41 +51,42 @@ if typing.TYPE_CHECKING:
 
 # TODO: when snap is a real step we can simplify the arguments here.
 def _execute(  # noqa: C901
+    ctx,
     step: steps.Step,
     parts: str,
     pack_project: bool = False,
     output: Optional[str] = None,
-    shell: bool = False,
-    shell_after: bool = False,
     setup_prime_try: bool = False,
+    target_arch: Optional[str] = None,
     **kwargs,
 ) -> "Project":
+    provider_options = ctx.obj["provider_options"]
+    provider_options.update_from_click_command_args(target_arch=target_arch, **kwargs)
+    provider_options.apply_host_environment()
+
     # Cleanup any previous errors.
     _clean_provider_error()
 
-    build_provider = get_build_provider(**kwargs)
-    build_provider_flags = get_build_provider_flags(build_provider, **kwargs)
-    apply_host_provider_flags(build_provider_flags)
-
-    is_managed_host = build_provider == "managed-host"
-
     # Temporary fix to ignore target_arch.
-    if kwargs.get("target_arch") is not None and build_provider in ["multipass", "lxd"]:
+    if target_arch is not None and provider_options.provider in ["multipass", "lxd"]:
         echo.warning(
             "Ignoring '--target-arch' flag.  This flag requires --destructive-mode and is unsupported with Multipass and LXD build providers."
         )
-        kwargs.pop("target_arch")
+        target_arch = None
 
-    project = get_project(is_managed_host=is_managed_host, **kwargs)
-    conduct_project_sanity_check(project, **kwargs)
+    is_managed_host = provider_options.provider == "managed-host"
+    project = get_project(
+        is_managed_host=is_managed_host, target_arch=target_arch, **kwargs
+    )
+    conduct_project_sanity_check(project, target_arch=target_arch, **kwargs)
 
-    project_path = pathlib.Path(project._project_dir)
-    if project_path.name in ["build-aux", "snap"]:
+    project_dir = pathlib.Path(project._project_dir)
+    if project_dir.name in ["build-aux", "snap"]:
         echo.warning(
-            f"Snapcraft is running in directory {project_path.name!r}.  If this is the snap assets directory, please run snapcraft from {project_path.parent}."
+            f"Snapcraft is running in directory {project_dir.name!r}.  If this is the snap assets directory, please run snapcraft from {project_dir.parent}."
         )
 
-    if build_provider in ["host", "managed-host"]:
+    if provider_options.provider in ["host", "managed-host"]:
         project_config = project_loader.load_config(project)
         lifecycle.execute(step, project_config, parts)
         if pack_project:
@@ -103,58 +96,46 @@ def _execute(  # noqa: C901
                 output=output,
             )
     else:
-        build_provider_class = build_providers.get_provider_for(build_provider)
+        manager = providers.setup_instance_manager(
+            base=project._get_build_base(),
+            project_dir=project_dir,
+            project_name=project.info.name,
+            provider_options=provider_options,
+        )
         try:
-            build_provider_class.ensure_provider()
-        except build_providers.errors.ProviderNotFound as provider_error:
-            if provider_error.prompt_installable:
-                if echo.is_tty_connected() and echo.confirm(
-                    "Support for {!r} needs to be set up. "
-                    "Would you like to do it now?".format(provider_error.provider)
-                ):
-                    build_provider_class.setup_provider(echoer=echo)
-                else:
-                    raise provider_error
+            if provider_options.shell:
+                # shell means we want to do everything right up to the previous
+                # step and then go into a shell instead of the requested step.
+                # the "snap" target is a special snowflake that has not made its
+                # way to be a proper step.
+                previous_step = None
+                if pack_project:
+                    previous_step = steps.PRIME
+                elif step > steps.PULL:
+                    previous_step = step.previous_step()
+                # steps.PULL is the first step, so we would directly shell into it.
+                if previous_step:
+                    manager.execute_step(step=previous_step.name)
+            elif pack_project:
+                manager.pack_project(output=output)
+            elif setup_prime_try:
+                manager.mount_prime(prime_dir=project._prime_dir)
+                manager.execute_step(step=step.name)
             else:
-                raise provider_error
-
-        with build_provider_class(
-            project=project, echoer=echo, build_provider_flags=build_provider_flags
-        ) as instance:
-            try:
-                if shell:
-                    # shell means we want to do everything right up to the previous
-                    # step and then go into a shell instead of the requested step.
-                    # the "snap" target is a special snowflake that has not made its
-                    # way to be a proper step.
-                    previous_step = None
-                    if pack_project:
-                        previous_step = steps.PRIME
-                    elif step > steps.PULL:
-                        previous_step = step.previous_step()
-                    # steps.PULL is the first step, so we would directly shell into it.
-                    if previous_step:
-                        instance.execute_step(previous_step)
-                elif pack_project:
-                    instance.pack_project(output=output)
-                elif setup_prime_try:
-                    instance.expose_prime()
-                    instance.execute_step(step)
-                else:
-                    instance.execute_step(step)
-            except Exception:
-                _retrieve_provider_error(instance)
-                if project.debug:
-                    instance.shell()
-                else:
-                    echo.warning(
-                        "Run the same command again with --debug to shell into the environment "
-                        "if you wish to introspect this failure."
-                    )
-                    raise
+                manager.execute_step(step=step.name)
+        except Exception:
+            _retrieve_provider_error(manager.instance)
+            if project.debug:
+                manager.shell()
             else:
-                if shell or shell_after:
-                    instance.shell()
+                echo.warning(
+                    "Run the same command again with --debug to shell into the environment "
+                    "if you wish to introspect this failure."
+                )
+                raise
+        else:
+            if provider_options.shell or provider_options.shell_after:
+                manager.shell()
     return project
 
 
@@ -260,16 +241,16 @@ def _clean_provider_error() -> None:
 
 def _retrieve_provider_error(instance) -> None:
     try:
-        instance.pull_file(TRACEBACK_MANAGED, TRACEBACK_HOST, delete=True)
+        instance.pull_file(TRACEBACK_MANAGED, TRACEBACK_HOST)
     except Exception as e:
         logger.debug("can't retrieve error file: {}", str(e))
 
+    instance.execute_run(["rm", "-f", TRACEBACK_MANAGED])
+
 
 @click.group()
-@add_provider_options()
-@click.pass_context
-def lifecyclecli(ctx, **kwargs):
-    pass
+def lifecyclecli():
+    """Never gets invoked with current structure. :-("""
 
 
 @lifecyclecli.command()
@@ -296,13 +277,16 @@ def pull(ctx, parts, **kwargs):
         snapcraft pull my-part1 my-part2
 
     """
-    _execute(steps.PULL, parts, **kwargs)
+    _execute(
+        ctx, steps.PULL, parts, **kwargs,
+    )
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
+@click.pass_context
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
-def build(parts, **kwargs):
+def build(ctx, parts, **kwargs):
     """Build artifacts defined for a part.
 
     \b
@@ -311,13 +295,16 @@ def build(parts, **kwargs):
         snapcraft build my-part1 my-part2
 
     """
-    _execute(steps.BUILD, parts, **kwargs)
+    _execute(
+        ctx, steps.BUILD, parts, **kwargs,
+    )
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
+@click.pass_context
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
-def stage(parts, **kwargs):
+def stage(ctx, parts, **kwargs):
     """Stage the part's built artifacts into the common staging area.
 
     \b
@@ -326,13 +313,14 @@ def stage(parts, **kwargs):
         snapcraft stage my-part1 my-part2
 
     """
-    _execute(steps.STAGE, parts, **kwargs)
+    _execute(ctx, steps.STAGE, parts, **kwargs)
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
+@click.pass_context
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
-def prime(parts, **kwargs):
+def prime(ctx, parts, **kwargs):
     """Final copy and preparation for the snap.
 
     \b
@@ -341,12 +329,13 @@ def prime(parts, **kwargs):
         snapcraft prime my-part1 my-part2
 
     """
-    _execute(steps.PRIME, parts, **kwargs)
+    _execute(ctx, steps.PRIME, parts, **kwargs)
 
 
 @lifecyclecli.command("try")
+@click.pass_context
 @add_provider_options()
-def try_command(**kwargs):
+def try_command(ctx, **kwargs):
     """Try a snap on the host, priming if necessary.
 
     This feature only works on snap enabled systems.
@@ -356,16 +345,18 @@ def try_command(**kwargs):
         snapcraft try
 
     """
-    project = _execute(steps.PRIME, [], setup_prime_try=True, **kwargs)
+    project = _execute(ctx, steps.PRIME, [], setup_prime_try=True, **kwargs)
+
     # project.prime_dir here points to the on-host prime directory.
     echo.info("You can now run `snap try {}`.".format(project.prime_dir))
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
+@click.pass_context
 @add_provider_options()
 @click.argument("directory", required=False)
 @click.option("--output", "-o", help="path to the resulting snap.")
-def snap(directory, output, **kwargs):
+def snap(ctx, directory, output, **kwargs):
     """Create a snap.
 
     \b
@@ -380,7 +371,9 @@ def snap(directory, output, **kwargs):
         deprecations.handle_deprecation_notice("dn6")
         _pack(directory, output=output)
     else:
-        _execute(steps.PRIME, parts=tuple(), pack_project=True, output=output, **kwargs)
+        _execute(
+            ctx, steps.PRIME, parts=tuple(), pack_project=True, output=output, **kwargs,
+        )
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
@@ -407,7 +400,7 @@ def pack(directory, output, **kwargs):
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 @click.option("--unprime", is_flag=True, required=False, hidden=True)
 @click.option("--step", "-s", required=False, hidden=True)
-def clean(ctx, parts, unprime, step, **kwargs):
+def clean(ctx, parts, unprime, step, target_arch, **kwargs):
     """Remove a part's assets.
 
     \b
@@ -415,20 +408,24 @@ def clean(ctx, parts, unprime, step, **kwargs):
         snapcraft clean
         snapcraft clean my-part
     """
+    provider_options = ctx.obj["provider_options"]
+
+    # Temporary fix to ignore target_arch for clean.
+    if target_arch is not None and provider_options.provider in ["multipass", "lxd"]:
+        target_arch = None
+
+    provider_options.update_from_click_command_args(target_arch=target_arch, **kwargs)
+    provider_options.apply_host_environment()
+
+    is_managed_host = provider_options.provider == "managed-host"
+
     # This option is only valid in legacy.
     if step:
         option = "--step" if "--step" in ctx.obj["argv"] else "-s"
         raise click.BadOptionUsage(option, "no such option: {}".format(option))
 
-    build_provider = get_build_provider(**kwargs)
-    build_provider_flags = get_build_provider_flags(build_provider, **kwargs)
-    apply_host_provider_flags(build_provider_flags)
-
-    is_managed_host = build_provider == "managed-host"
-
-    # Temporary fix to ignore target_arch, silently for clean.
-    if "target_arch" in kwargs and build_provider in ["multipass", "lxd"]:
-        kwargs.pop("target_arch")
+    if unprime and not is_managed_host:
+        raise click.BadOptionUsage("--unprime", "no such option: --unprime")
 
     try:
         project = get_project(is_managed_host=is_managed_host)
@@ -436,24 +433,18 @@ def clean(ctx, parts, unprime, step, **kwargs):
         # Fresh environment, nothing to clean.
         return
 
-    if unprime and not is_managed_host:
-        raise click.BadOptionUsage("--unprime", "no such option: --unprime")
-
-    if build_provider in ["host", "managed-host"]:
+    if provider_options.provider in ["host", "managed-host"]:
         step = steps.PRIME if unprime else None
         lifecycle.clean(project, parts, step)
     else:
-        build_provider_class = build_providers.get_provider_for(build_provider)
+        manager = providers.setup_existing_instance_manager(
+            project_name=project.info.name, provider_options=provider_options
+        )
+
         if parts:
-            with build_provider_class(
-                project=project, echoer=echo, build_provider_flags=build_provider_flags
-            ) as instance:
-                instance.clean_parts(part_names=parts)
+            manager.clean_parts(parts=parts)
         else:
-            build_provider_class(project=project, echoer=echo).clean_project()
-            # Clear the prime directory on the host, unless on Windows.
-            if sys.platform != "win32":
-                lifecycle.clean(project, parts, steps.PRIME)
+            manager.clean()
 
 
 if __name__ == "__main__":

@@ -26,7 +26,7 @@ from snapcraft.internal import log
 
 from ._command_group import SnapcraftGroup
 from ._errors import exception_handler
-from ._options import add_provider_options
+from ._options import ProviderOptions, add_provider_options
 from .assertions import assertionscli
 from .containers import containerscli
 from .discovery import discoverycli
@@ -93,11 +93,9 @@ def configure_requests_ca() -> None:
 @click.pass_context
 @add_provider_options(hidden=True)
 @click.option("--debug", "-d", is_flag=True)
-def run(ctx, debug, catch_exceptions=False, **kwargs):
+def run(ctx, debug, enable_developer_debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""
-
-    is_snapcraft_developer_debug = kwargs["enable_developer_debug"]
-    if is_snapcraft_developer_debug:
+    if enable_developer_debug:
         log_level = logging.DEBUG
         click.echo(
             "Starting snapcraft {} from {}.".format(
@@ -108,9 +106,7 @@ def run(ctx, debug, catch_exceptions=False, **kwargs):
         log_level = logging.INFO
 
     # Setup global exception handler (to be called for unhandled exceptions)
-    sys.excepthook = functools.partial(
-        exception_handler, debug=is_snapcraft_developer_debug
-    )
+    sys.excepthook = functools.partial(exception_handler, debug=enable_developer_debug,)
 
     # In an ideal world, this logger setup would be replaced
     log.configure(log_level=log_level)
@@ -118,8 +114,13 @@ def run(ctx, debug, catch_exceptions=False, **kwargs):
     # Configure `requests` library to use system certificates.
     configure_requests_ca()
 
-    # Payload information about argv
-    ctx.obj = dict(argv=sys.argv)
+    # Process provider options.
+    provider_options = ProviderOptions.from_click_group_args(
+        debug=debug, enable_developer_debug=enable_developer_debug, **kwargs
+    )
+
+    # Payload information about argv.
+    ctx.obj = dict(argv=sys.argv, provider_options=provider_options)
 
     # The default command
     if not ctx.invoked_subcommand:

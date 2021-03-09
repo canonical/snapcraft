@@ -20,9 +20,10 @@ import sys
 import tempfile
 import traceback
 from textwrap import dedent
-from typing import Dict
+from typing import Dict, Optional
 
 import click
+from craft_providers.errors import ProviderError
 from raven import Client as RavenClient
 from raven.transport import RequestsHTTPTransport
 
@@ -82,6 +83,9 @@ def _is_reportable_error(exc_info) -> bool:
     # SnapcraftException has explicit `repotable` attribute.
     if isinstance(exc_info[1], errors.SnapcraftException):
         return exc_info[1].get_reportable()
+
+    if isinstance(exc_info[1], ProviderError):
+        return False
 
     # Report non-snapcraft errors.
     if not issubclass(exc_info[0], errors.SnapcraftError) and not isinstance(
@@ -143,18 +147,21 @@ def _handle_sentry_submission(exc_info) -> None:
             click.echo(_MSG_SEND_TO_SENTRY_THANKS)
 
 
-def _print_snapcraft_exception_message(exception: errors.SnapcraftException):
-    parts = [exception.get_brief()]
+def _print_snapcraft_exception_message(
+    brief: str,
+    *,
+    details: Optional[str] = None,
+    docs_url: Optional[str] = None,
+    resolution: Optional[str] = None
+) -> None:
+    parts = [brief]
 
-    resolution = exception.get_resolution()
     if resolution:
         parts.extend(["", "Recommended resolution:", resolution])
 
-    details = exception.get_details()
     if details:
         parts.extend(["", "Detailed information:", details])
 
-    docs_url = exception.get_docs_url()
     if docs_url:
         parts.extend(["", "For more information, check out:", docs_url])
 
@@ -163,7 +170,18 @@ def _print_snapcraft_exception_message(exception: errors.SnapcraftException):
 
 def _print_exception_message(exception: Exception) -> None:
     if isinstance(exception, errors.SnapcraftException):
-        _print_snapcraft_exception_message(exception)
+        _print_snapcraft_exception_message(
+            brief=exception.get_brief(),
+            details=exception.get_details(),
+            docs_url=exception.get_docs_url(),
+            resolution=exception.get_resolution(),
+        )
+    elif isinstance(exception, ProviderError):
+        _print_snapcraft_exception_message(
+            brief=exception.brief,
+            details=exception.details,
+            resolution=exception.resolution,
+        )
     else:
         echo.error(str(exception))
 
