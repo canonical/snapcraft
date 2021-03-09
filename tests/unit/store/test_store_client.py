@@ -47,6 +47,7 @@ class LoginTestCase(StoreTestCase):
         conf = config.Config()
         self.assertIsNotNone(conf.get("macaroon"))
         self.assertIsNotNone(conf.get("unbound_discharge"))
+        self.assertIsNotNone(self.client.auth_client.auth)
 
     def test_login_successful_with_one_time_password(self):
         self.client.login(
@@ -57,6 +58,7 @@ class LoginTestCase(StoreTestCase):
         conf = config.Config()
         self.assertIsNotNone(conf.get("macaroon"))
         self.assertIsNotNone(conf.get("unbound_discharge"))
+        self.assertIsNotNone(self.client.auth_client.auth)
 
     def test_login_successful_with_package_attenuation(self):
         self.client.login(
@@ -67,6 +69,7 @@ class LoginTestCase(StoreTestCase):
         conf = config.Config()
         self.assertIsNotNone(conf.get("macaroon"))
         self.assertIsNotNone(conf.get("unbound_discharge"))
+        self.assertIsNotNone(self.client.auth_client.auth)
 
     def test_login_successful_with_channel_attenuation(self):
         self.client.login(
@@ -75,6 +78,7 @@ class LoginTestCase(StoreTestCase):
         conf = config.Config()
         self.assertIsNotNone(conf.get("macaroon"))
         self.assertIsNotNone(conf.get("unbound_discharge"))
+        self.assertIsNotNone(self.client.auth_client.auth)
 
     def test_login_successful_fully_attenuated(self):
         self.client.login(
@@ -88,6 +92,7 @@ class LoginTestCase(StoreTestCase):
         self.assertIsNotNone(self.client.auth_client._conf.get("macaroon"))
         self.assertIsNotNone(self.client.auth_client._conf.get("unbound_discharge"))
         self.assertTrue(config.Config().is_empty())
+        self.assertIsNotNone(self.client.auth_client.auth)
 
     def test_login_successful_with_expiration(self):
         self.client.login(
@@ -99,23 +104,38 @@ class LoginTestCase(StoreTestCase):
         )
         self.assertIsNotNone(self.client.auth_client._conf.get("macaroon"))
         self.assertIsNotNone(self.client.auth_client._conf.get("unbound_discharge"))
+        self.assertIsNotNone(self.client.auth_client.auth)
 
     def test_login_with_exported_login(self):
         conf = config.Config()
-        conf.set("macaroon", "test-macaroon")
-        conf.set("unbound_discharge", "test-unbound-discharge")
+        conf.set(
+            "macaroon",
+            "MDAwZWxvY2F0aW9uIAowMDEwaWRlbnRpZmllciAKMDAxNGNpZCB0ZXN0IGNhdmVhdAowMDE5dmlkIHRlc3QgdmVyaWZpYWNpb24KMDAxN2NsIGxvY2FsaG9zdDozNTM1MQowMDBmc2lnbmF0dXJlIAo",
+        )
+        conf.set(
+            "unbound_discharge",
+            "MDAwZWxvY2F0aW9uIAowMDEwaWRlbnRpZmllciAKMDAwZnNpZ25hdHVyZSAK",
+        )
         with open("test-exported-login", "w+") as config_fd:
             conf.save(config_fd=config_fd)
             config_fd.seek(0)
             self.client.login(config_fd=config_fd)
 
-        # Client configuration is filled, but it's not saved on disk.
         self.assertThat(
-            self.client.auth_client._conf.get("macaroon"), Equals("test-macaroon")
+            self.client.auth_client._conf.get("macaroon"),
+            Equals(
+                "MDAwZWxvY2F0aW9uIAowMDEwaWRlbnRpZmllciAKMDAxNGNpZCB0ZXN0IGNhdmVhdAowMDE5dmlkIHRlc3QgdmVyaWZpYWNpb24KMDAxN2NsIGxvY2FsaG9zdDozNTM1MQowMDBmc2lnbmF0dXJlIAo"
+            ),
         )
         self.assertThat(
             self.client.auth_client._conf.get("unbound_discharge"),
-            Equals("test-unbound-discharge"),
+            Equals("MDAwZWxvY2F0aW9uIAowMDEwaWRlbnRpZmllciAKMDAwZnNpZ25hdHVyZSAK"),
+        )
+        self.assertThat(
+            self.client.auth_client.auth,
+            Equals(
+                "Macaroon root=MDAwZWxvY2F0aW9uIAowMDEwaWRlbnRpZmllciAKMDAxNGNpZCB0ZXN0IGNhdmVhdAowMDE5dmlkIHRlc3QgdmVyaWZpYWNpb24KMDAxN2NsIGxvY2FsaG9zdDozNTM1MQowMDBmc2lnbmF0dXJlIAo, discharge=MDAwZWxvY2F0aW9uIAowMDEwaWRlbnRpZmllciAKMDAyZnNpZ25hdHVyZSDmRizXTOkAmfmy5hGCm7F0H4LBea16YbJYVhDkAJZ-Ago"
+            ),
         )
 
     def test_failed_login_with_wrong_password(self):
