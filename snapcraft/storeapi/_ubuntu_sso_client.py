@@ -188,10 +188,11 @@ class UbuntuOneAuthClient(Client):
             self._conf.set("macaroon", macaroon)
             self._conf.set("unbound_discharge", unbound_discharge)
             self._conf.set("email", email)
-            # Set auth and headers.
-            self.auth = _macaroon_auth(self._conf)
         else:
             raise RuntimeError("Logic Error")
+
+        # Set auth and headers.
+        self.auth = _macaroon_auth(self._conf)
 
         if save:
             self._conf.save()
