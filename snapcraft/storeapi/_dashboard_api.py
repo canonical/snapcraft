@@ -73,7 +73,7 @@ class DashboardAPI(Requests):
         else:
             urlpath = "/dev/api/acl/"
 
-        response = self.post(urlpath, json=data, headers=headers)
+        response = self.post(urlpath, json=data, headers=headers, auth_header=False)
 
         if response.ok:
             return response.json()["macaroon"]
