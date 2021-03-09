@@ -64,7 +64,7 @@ class StoreClient:
         **kwargs
     ) -> None:
         if config_fd is not None:
-            return self.auth_client.login(config_fd=config_fd)
+            return self.auth_client.login(config_fd=config_fd, **kwargs)
 
         if acls is None:
             acls = [

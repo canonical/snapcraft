@@ -81,8 +81,7 @@ class DashboardAPI(Requests):
             raise errors.StoreAuthenticationError("Failed to get macaroon", response)
 
     def verify_acl(self):
-        response = self._auth_client.request(
-            "POST",
+        response = self.post(
             "/dev/api/acl/verify/",
             json={"auth_data": {"authorization": self._auth_client.auth}},
             headers={"Accept": "application/json"},
