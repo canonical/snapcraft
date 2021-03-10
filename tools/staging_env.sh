@@ -14,7 +14,7 @@ deactivate() {
 export STORE_DASHBOARD_URL="https://dashboard.staging.snapcraft.io/"
 export STORE_API_URL="https://api.staging.snapcraft.io/"
 export STORE_UPLOAD_URL="https://upload.apps.staging.ubuntu.com/"
-export UBUNTU_ONE_SSO_URL="https://login.staging.ubuntu.com/api/v2/"
+export UBUNTU_ONE_SSO_URL="https://login.staging.ubuntu.com/"
 export TEST_STORE="staging"
 
 export ORIGINAL_PS1="$PS1"
