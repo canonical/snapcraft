@@ -52,7 +52,9 @@ execute: |
   snap_name=$(grep "name: " snap/snapcraft.yaml | sed -e "s/name: \(.*$\)/\1/")
 
   # Login
+  set +x
   echo "${SNAP_STORE_MACAROON}" | snapcraft login --with -
+  set -x
 
   # Register
   snapcraft register --yes "${snap_name}"
