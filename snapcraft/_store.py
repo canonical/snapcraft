@@ -114,12 +114,6 @@ def _get_icon_from_snap_file(snap_path):
                 icon_file.close()
 
 
-def _fail_login(msg: str = "") -> bool:
-    echo.error(msg)
-    echo.error("Login failed.")
-    return False
-
-
 def _get_url_from_error(error: storeapi.errors.StoreAccountInformationError) -> str:
     if error.extra:  # type: ignore
         return error.extra[0].get("url")  # type: ignore
@@ -245,25 +239,17 @@ def login(
             hide_input = True
         password = echo.prompt("Password", hide_input=hide_input)
 
-    try:
-        _try_login(
-            email,
-            password,
-            store=store,
-            packages=packages,
-            acls=acls,
-            channels=channels,
-            expires=expires,
-            config_fd=config_fd,
-            save=save,
-        )
-    # Let StoreAuthenticationError pass through so we get decent error messages
-    except storeapi.errors.InvalidCredentialsError:
-        return _fail_login(storeapi.constants.INVALID_CREDENTIALS)
-    except storeapi.errors.StoreAccountInformationError:
-        return _fail_login(storeapi.constants.ACCOUNT_INFORMATION_ERROR)
-    except storeapi.errors.NeedTermsSignedError as e:
-        return _fail_login(e.message)  # type: ignore
+    _try_login(
+        email,
+        password,
+        store=store,
+        packages=packages,
+        acls=acls,
+        channels=channels,
+        expires=expires,
+        config_fd=config_fd,
+        save=save,
+    )
 
     return True
 
@@ -555,11 +541,8 @@ def _maybe_prompt_for_key(name):
 def register_key(name):
     key = _maybe_prompt_for_key(name)
     store_client = StoreClientCLI()
-    try:
-        if not login(store=store_client, acls=["modify_account_key"], save=False):
-            raise storeapi.errors.LoginRequiredError()
-    except storeapi.errors.StoreAuthenticationError as e:
-        raise storeapi.errors.LoginRequiredError(str(e)) from e
+    login(store=store_client, acls=["modify_account_key"], save=False)
+
     logger.info("Registering key ...")
     account_info = store_client.get_account_information()
     account_key_request = _export_key(key["name"], account_info["account_id"])

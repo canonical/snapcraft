@@ -84,17 +84,6 @@ class InvalidCredentialsError(StoreError):
         super().__init__(message=message)
 
 
-class LoginRequiredError(StoreError):
-
-    fmt = "{message}"
-
-    def __init__(self, extra_information=""):
-        message = "Cannot continue without logging in successfully"
-        if extra_information:
-            message += ": {}".format(extra_information)
-        super().__init__(message=message)
-
-
 class StoreNetworkError(StoreError):
 
     fmt = "There seems to be a network error: {message}"

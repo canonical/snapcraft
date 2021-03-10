@@ -84,19 +84,19 @@ class RegisterKeyTestCase(FakeStoreCommandsBaseTestCase):
         )
 
     def test_register_key_login_failed(self):
-        self.fake_store_login.mock.side_effect = storeapi.errors.StoreAuthenticationError(
-            "test"
+        self.fake_store_login.mock.side_effect = storeapi.errors.InvalidCredentialsError(
+            "error"
         )
 
         raised = self.assertRaises(
-            storeapi.errors.LoginRequiredError,
+            storeapi.errors.InvalidCredentialsError,
             self.run_command,
             ["register-key", "default"],
             input="user@example.com\nsecret\n",
         )
 
-        self.assertThat(
-            str(raised), Contains("Cannot continue without logging in successfully")
+        assert (
+            str(raised) == 'Invalid credentials: error. Have you run "snapcraft login"?'
         )
 
     def test_register_key_account_info_failed(self):
