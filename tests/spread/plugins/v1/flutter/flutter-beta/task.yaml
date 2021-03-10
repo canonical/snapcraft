@@ -9,8 +9,11 @@ restore: |
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
+  rm -f ./snap/snapcraft.yaml
 
 execute: |
+  cp snapcraft.yaml "$SNAP_DIR/snap/snapcraft.yaml"
+
   cd "$SNAP_DIR"
   snapcraft
   snap install flutter-hello_*.snap --dangerous
