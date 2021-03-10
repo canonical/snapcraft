@@ -18,14 +18,13 @@ import contextlib
 import logging
 import urllib3
 from simplejson.scanner import JSONDecodeError
-from typing import Final
 
 from snapcraft.internal.errors import SnapcraftError
 
 logger = logging.getLogger(__name__)
 
 
-_STORE_STATUS_URL: Final = "https://status.snapcraft.io/"
+_STORE_STATUS_URL = "https://status.snapcraft.io/"
 
 
 # TODO: migrate to storeapi private exception to ready craft-store.

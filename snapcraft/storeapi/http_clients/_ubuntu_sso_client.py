@@ -18,7 +18,7 @@ import logging
 import json
 import os
 import pathlib
-from typing import Final, Optional, TextIO
+from typing import Optional, TextIO
 from urllib.parse import urljoin, urlparse
 
 import pymacaroons
@@ -29,7 +29,7 @@ from xdg import BaseDirectory
 from . import agent, _config, errors, _http_client
 
 
-UBUNTU_ONE_SSO_URL: Final = "https://login.ubuntu.com/"
+UBUNTU_ONE_SSO_URL = "https://login.ubuntu.com/"
 
 
 logger = logging.getLogger(__name__)
