@@ -190,7 +190,7 @@ def _try_login(
         if not config_fd:
             print()
             echo.wrapped(storeapi.constants.TWO_FACTOR_WARNING)
-    except storeapi.errors.StoreTwoFactorAuthenticationRequired:
+    except storeapi.http_clients.errors.StoreTwoFactorAuthenticationRequired:
         one_time_password = echo.prompt("Second-factor auth")
         store.login(
             email=email,
@@ -258,7 +258,7 @@ def _login_wrapper(method):
     def login_decorator(self, *args, **kwargs):
         try:
             return method(self, *args, **kwargs)
-        except storeapi.errors.InvalidCredentialsError:
+        except storeapi.http_clients.errors.InvalidCredentialsError:
             print("You are required to login before continuing.")
             login(store=self)
             return method(self, *args, **kwargs)
@@ -518,7 +518,7 @@ def create_key(name):
         enabled_names = {
             account_key["name"] for account_key in account_info["account_keys"]
         }
-    except storeapi.errors.InvalidCredentialsError:
+    except storeapi.http_clients.errors.InvalidCredentialsError:
         # Don't require a login here; if they don't have valid credentials,
         # then they probably also don't have a key registered with the store
         # yet.
@@ -795,7 +795,7 @@ def _upload_delta(
             raise storeapi.errors.StoreDeltaApplicationError(str(e))
         else:
             raise
-    except storeapi.errors.StoreServerError as e:
+    except storeapi.http_clients.errors.StoreServerError as e:
         raise storeapi.errors.StoreUploadError(snap_name, e.response)
     finally:
         if os.path.isfile(delta_filename):

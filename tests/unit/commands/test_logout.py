@@ -18,14 +18,14 @@ from unittest import mock
 
 from testtools.matchers import Equals, MatchesRegex
 
-from snapcraft import config
+from snapcraft.storeapi import StoreClient
 
 from . import CommandBaseTestCase
 
 
 class LogoutCommandTestCase(CommandBaseTestCase):
-    @mock.patch.object(config.Config, "clear")
-    def test_logout_clears_config(self, mock_clear):
+    @mock.patch.object(StoreClient, "logout")
+    def test_logout_clears_config(self, mock_logout):
         result = self.run_command(["logout"])
 
         self.assertThat(result.exit_code, Equals(0))

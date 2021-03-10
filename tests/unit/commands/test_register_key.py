@@ -84,12 +84,12 @@ class RegisterKeyTestCase(FakeStoreCommandsBaseTestCase):
         )
 
     def test_register_key_login_failed(self):
-        self.fake_store_login.mock.side_effect = storeapi.errors.InvalidCredentialsError(
+        self.fake_store_login.mock.side_effect = storeapi.http_clients.errors.InvalidCredentialsError(
             "error"
         )
 
         raised = self.assertRaises(
-            storeapi.errors.InvalidCredentialsError,
+            storeapi.http_clients.errors.InvalidCredentialsError,
             self.run_command,
             ["register-key", "default"],
             input="user@example.com\nsecret\n",

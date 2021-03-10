@@ -16,22 +16,11 @@
 
 from subprocess import CalledProcessError
 from typing import List
-from unittest import mock
-
-import requests.exceptions
-from requests.packages import urllib3
 
 from snapcraft.internal import errors, pluginhandler, steps
 from snapcraft.internal.project_loader import errors as project_loader_errors
 from snapcraft.internal.project_loader.inspection import errors as inspection_errors
 from snapcraft.internal.repo import errors as repo_errors
-from snapcraft.storeapi import errors as store_errors
-
-
-def _fake_error_response(status_code):
-    response = mock.Mock()
-    response.status_code = status_code
-    return response
 
 
 class TestErrorFormatting:
@@ -405,35 +394,6 @@ class TestErrorFormatting:
             },
         ),
         (
-            "StoreNetworkError generic error",
-            {
-                "exception_class": store_errors.StoreNetworkError,
-                "kwargs": {
-                    "exception": requests.exceptions.ConnectionError("bad error")
-                },
-                "expected_message": "There seems to be a network error: bad error",
-            },
-        ),
-        (
-            "StoreNetworkError max retry error",
-            {
-                "exception_class": store_errors.StoreNetworkError,
-                "kwargs": {
-                    "exception": requests.exceptions.ConnectionError(
-                        urllib3.exceptions.MaxRetryError(
-                            pool="test-pool", url="test-url"
-                        )
-                    )
-                },
-                "expected_message": (
-                    "There seems to be a network error: maximum retries exceeded "
-                    "trying to reach the store.\n"
-                    "Check your network connection, and check the store status at "
-                    "https://status.snapcraft.io/"
-                ),
-            },
-        ),
-        (
             "SnapcraftCopyFileNotFoundError",
             {
                 "exception_class": errors.SnapcraftCopyFileNotFoundError,
@@ -441,32 +401,6 @@ class TestErrorFormatting:
                 "expected_message": (
                     "Failed to copy 'test-path': no such file or directory.\n"
                     "Check the path and try again."
-                ),
-            },
-        ),
-        (
-            "StoreServerError 500",
-            {
-                "exception_class": store_errors.StoreServerError,
-                "kwargs": {"response": _fake_error_response(500)},
-                "expected_message": (
-                    "The Snap Store encountered an error while processing your "
-                    "request: internal server error (code 500).\nThe operational "
-                    "status of the Snap Store can be checked at "
-                    "https://status.snapcraft.io/"
-                ),
-            },
-        ),
-        (
-            "StoreServerError 501",
-            {
-                "exception_class": store_errors.StoreServerError,
-                "kwargs": {"response": _fake_error_response(501)},
-                "expected_message": (
-                    "The Snap Store encountered an error while processing your "
-                    "request: not implemented (code 501).\nThe operational "
-                    "status of the Snap Store can be checked at "
-                    "https://status.snapcraft.io/"
                 ),
             },
         ),

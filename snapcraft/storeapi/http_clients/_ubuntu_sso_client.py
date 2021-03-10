@@ -1,83 +1,38 @@
-#!/usr/bin/env python3
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
+# Copyright 2021 Canonical Ltd
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
 import json
 import os
-from typing import Optional, TextIO
+import pathlib
+from typing import Final, Optional, TextIO
 from urllib.parse import urljoin, urlparse
 
 import pymacaroons
 import requests
-from requests.adapters import HTTPAdapter
-from requests.exceptions import ConnectionError, RetryError
-from requests.packages.urllib3.util.retry import Retry
 from simplejson.scanner import JSONDecodeError
+from xdg import BaseDirectory
 
-from snapcraft import config
-from . import _agent, constants, errors
+from . import agent, _config, errors, _http_client
+
+
+UBUNTU_ONE_SSO_URL: Final = "https://login.ubuntu.com/"
 
 
 logger = logging.getLogger(__name__)
-
-# Set urllib3's logger to only emit errors, not warnings. Otherwise even
-# retries are printed, and they're nasty.
-logging.getLogger(requests.packages.urllib3.__package__).setLevel(logging.ERROR)
-
-
-class Client:
-    """Generic Client to talk to the *Store."""
-
-    def __init__(self, *, user_agent: str = _agent.get_user_agent()) -> None:
-        self.session = requests.Session()
-        self._user_agent = user_agent
-
-        # Setup max retries for all store URLs and the CDN
-        retries = Retry(
-            total=int(os.environ.get("STORE_RETRIES", 5)),
-            backoff_factor=int(os.environ.get("STORE_BACKOFF", 2)),
-            status_forcelist=[104, 500, 502, 503, 504],
-        )
-        self.session.mount("http://", HTTPAdapter(max_retries=retries))
-        self.session.mount("https://", HTTPAdapter(max_retries=retries))
-
-    def request(
-        self, method, url, params=None, headers=None, **kwargs
-    ) -> requests.Response:
-        """Send a request to url relative to the root url.
-
-        :param str method: Method used for the request.
-        :param str url: URL to request with method.
-        :param list params: Query parameters to be sent along with the request.
-        :param list headers: Headers to be sent along with the request.
-
-        :return Response of the request.
-        """
-        if headers:
-            headers["User-Agent"] = self._user_agent
-        else:
-            headers = {"User-Agent": self._user_agent}
-
-        debug_headers = headers.copy()
-        if "Authorization" in debug_headers:
-            debug_headers["Authorization"] = "<macaroon>"
-        logger.debug(
-            "Calling {} with params {} and headers {}".format(
-                url, params, debug_headers
-            )
-        )
-        try:
-            response = self.session.request(
-                method, url, headers=headers, params=params, **kwargs
-            )
-        except (ConnectionError, RetryError) as e:
-            raise errors.StoreNetworkError(e) from e
-
-        # Handle 5XX responses generically right here, so the callers don't
-        # need to worry about it.
-        if response.status_code >= 500:
-            raise errors.StoreServerError(response)
-
-        return response
 
 
 def _deserialize_macaroon(value):
@@ -111,7 +66,26 @@ def _macaroon_auth(conf):
     return auth
 
 
-class UbuntuOneAuthClient(Client):
+class UbuntuOneSSOConfig(_config.Config):
+    """Hold configuration options in sections.
+
+    There can be two sections for the sso related credentials: production and
+    staging. This is governed by the UBUNTU_ONE_SSO_URL environment
+    variable. Other sections are ignored but preserved.
+
+    """
+
+    def _get_section_name(self) -> str:
+        url = os.getenv("UBUNTU_ONE_SSO_URL", UBUNTU_ONE_SSO_URL)
+        return urlparse(url).netloc
+
+    def _get_config_path(self) -> pathlib.Path:
+        return (
+            pathlib.Path(BaseDirectory.save_config_path("snapcraft")) / "snapcraft.cfg"
+        )
+
+
+class UbuntuOneAuthClient(_http_client.Client):
     """Store Client using Ubuntu One SSO provided macaroons."""
 
     @staticmethod
@@ -121,13 +95,11 @@ class UbuntuOneAuthClient(Client):
             and response.headers.get("WWW-Authenticate") == "Macaroon needs_refresh=1"
         )
 
-    def __init__(self, *, user_agent: str = _agent.get_user_agent()) -> None:
+    def __init__(self, *, user_agent: str = agent.get_user_agent()) -> None:
         super().__init__(user_agent=user_agent)
 
-        self._conf = config.Config()
-        self.auth_url = os.environ.get(
-            "UBUNTU_ONE_SSO_URL", constants.UBUNTU_ONE_SSO_URL
-        )
+        self._conf = UbuntuOneSSOConfig()
+        self.auth_url = os.environ.get("UBUNTU_ONE_SSO_URL", UBUNTU_ONE_SSO_URL)
 
         try:
             self.auth: Optional[str] = _macaroon_auth(self._conf)
