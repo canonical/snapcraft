@@ -706,15 +706,14 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
         acl_list = acls.split(",")
 
     store_client = storeapi.StoreClient()
-    if not snapcraft.login(
+    snapcraft.login(
         store=store_client,
         packages=snap_list,
         channels=channel_list,
         acls=acl_list,
         expires=expires,
         save=False,
-    ):
-        sys.exit(1)
+    )
 
     # Support a login_file of '-', which indicates a desire to print to stdout
     if login_file.strip() == "-":
@@ -774,8 +773,7 @@ def login(login_file):
     https://snapcraft.io/account
     """
     store_client = storeapi.StoreClient()
-    if not snapcraft.login(store=store_client, config_fd=login_file):
-        sys.exit(1)
+    snapcraft.login(store=store_client, config_fd=login_file)
 
     print()
 

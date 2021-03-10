@@ -547,11 +547,8 @@ def _maybe_prompt_for_key(name):
 def register_key(name):
     key = _maybe_prompt_for_key(name)
     store_client = StoreClientCLI()
-    try:
-        if not login(store=store_client, acls=["modify_account_key"], save=False):
-            raise storeapi.errors.LoginRequiredError()
-    except storeapi.errors.StoreAuthenticationError as e:
-        raise storeapi.errors.LoginRequiredError(str(e)) from e
+    login(store=store_client, acls=["modify_account_key"], save=False)
+
     logger.info("Registering key ...")
     account_info = store_client.get_account_information()
     account_key_request = _export_key(key["name"], account_info["account_id"])
