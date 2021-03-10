@@ -215,7 +215,9 @@ class ExportLoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             "error"
         )
 
-        with pytest.raises(storeapi.errors.InvalidCredentialsError) as exc_info:
+        with pytest.raises(
+            storeapi.http_clients.errors.InvalidCredentialsError
+        ) as exc_info:
             self.run_command(
                 ["export-login", "exported"],
                 input="bad-user@example.com\nbad-password\n",

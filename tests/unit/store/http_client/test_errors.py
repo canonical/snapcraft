@@ -21,9 +21,10 @@ from unittest import mock
 from snapcraft.storeapi.http_clients import errors
 
 
-def _fake_error_response(status_code):
+def _fake_error_response(status_code, reason):
     response = mock.Mock()
     response.status_code = status_code
+    response.reason = reason
     return response
 
 
@@ -81,7 +82,9 @@ class TestSnapcraftException:
             "StoreServerError 500",
             {
                 "exception_class": errors.StoreServerError,
-                "kwargs": {"response": _fake_error_response(500)},
+                "kwargs": {
+                    "response": _fake_error_response(500, "internal server error")
+                },
                 "expected_message": (
                     "The Snap Store encountered an error while processing your "
                     "request: internal server error (code 500).\nThe operational "
@@ -94,7 +97,7 @@ class TestSnapcraftException:
             "StoreServerError 501",
             {
                 "exception_class": errors.StoreServerError,
-                "kwargs": {"response": _fake_error_response(501)},
+                "kwargs": {"response": _fake_error_response(501, "not implemented")},
                 "expected_message": (
                     "The Snap Store encountered an error while processing your "
                     "request: not implemented (code 501).\nThe operational "

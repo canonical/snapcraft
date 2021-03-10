@@ -141,7 +141,9 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             "error"
         )
 
-        with pytest.raises(storeapi.errors.InvalidCredentialsError) as exc_info:
+        with pytest.raises(
+            storeapi.http_clients.errors.InvalidCredentialsError
+        ) as exc_info:
             self.run_command(["login"], input="user@example.com\nbadsecret\n")
 
         assert (
