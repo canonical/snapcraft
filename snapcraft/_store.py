@@ -114,12 +114,6 @@ def _get_icon_from_snap_file(snap_path):
                 icon_file.close()
 
 
-def _fail_login(msg: str = "") -> bool:
-    echo.error(msg)
-    echo.error("Login failed.")
-    return False
-
-
 def _get_url_from_error(error: storeapi.errors.StoreAccountInformationError) -> str:
     if error.extra:  # type: ignore
         return error.extra[0].get("url")  # type: ignore
