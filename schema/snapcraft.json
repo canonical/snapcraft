@@ -831,6 +831,9 @@
                             "uniqueItems": true,
                             "items": {
                                 "enum": [
+                                    "flutter",
+                                    "flutter-stable",
+                                    "flutter-beta",
                                     "flutter-dev",
                                     "flutter-master",
                                     "gnome-3-28",
