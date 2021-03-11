@@ -17,18 +17,17 @@
 import json
 import logging
 import os
+import pathlib
 import tempfile
 from textwrap import dedent
 from unittest import mock
 
 import fixtures
-import pymacaroons
 from testtools.matchers import Contains, Equals, FileExists, Is, IsInstance, Not
 
 import tests
-from snapcraft import config, storeapi
-from snapcraft.storeapi import errors
-from snapcraft.storeapi._ubuntu_sso_client import _macaroon_auth
+from snapcraft import storeapi
+from snapcraft.storeapi import errors, http_clients
 from snapcraft.storeapi.v2 import channel_map, releases
 from tests import fixture_setup, unit
 
@@ -44,9 +43,6 @@ class StoreTestCase(unit.TestCase):
 class LoginTestCase(StoreTestCase):
     def test_login_successful(self):
         self.client.login(email="dummy email", password="test correct password")
-        conf = config.Config()
-        self.assertIsNotNone(conf.get("macaroon"))
-        self.assertIsNotNone(conf.get("unbound_discharge"))
         self.assertIsNotNone(self.client.auth_client.auth)
 
     def test_login_successful_with_one_time_password(self):
@@ -55,9 +51,6 @@ class LoginTestCase(StoreTestCase):
             password="test correct password",
             otp="test correct one-time password",
         )
-        conf = config.Config()
-        self.assertIsNotNone(conf.get("macaroon"))
-        self.assertIsNotNone(conf.get("unbound_discharge"))
         self.assertIsNotNone(self.client.auth_client.auth)
 
     def test_login_successful_with_package_attenuation(self):
@@ -66,18 +59,12 @@ class LoginTestCase(StoreTestCase):
             password="test correct password",
             packages=[{"name": "foo", "series": "16"}],
         )
-        conf = config.Config()
-        self.assertIsNotNone(conf.get("macaroon"))
-        self.assertIsNotNone(conf.get("unbound_discharge"))
         self.assertIsNotNone(self.client.auth_client.auth)
 
     def test_login_successful_with_channel_attenuation(self):
         self.client.login(
             email="dummy email", password="test correct password", channels=["edge"]
         )
-        conf = config.Config()
-        self.assertIsNotNone(conf.get("macaroon"))
-        self.assertIsNotNone(conf.get("unbound_discharge"))
         self.assertIsNotNone(self.client.auth_client.auth)
 
     def test_login_successful_fully_attenuated(self):
@@ -89,9 +76,9 @@ class LoginTestCase(StoreTestCase):
             save=False,
         )
         # Client configuration is filled, but it's not saved on disk.
-        self.assertIsNotNone(self.client.auth_client._conf.get("macaroon"))
-        self.assertIsNotNone(self.client.auth_client._conf.get("unbound_discharge"))
-        self.assertTrue(config.Config().is_empty())
+        self.assertThat(
+            self.client.auth_client._conf._get_config_path(), Not(FileExists())
+        )
         self.assertIsNotNone(self.client.auth_client.auth)
 
     def test_login_successful_with_expiration(self):
@@ -102,23 +89,25 @@ class LoginTestCase(StoreTestCase):
             channels=["edge"],
             expires="2017-12-22",
         )
-        self.assertIsNotNone(self.client.auth_client._conf.get("macaroon"))
-        self.assertIsNotNone(self.client.auth_client._conf.get("unbound_discharge"))
         self.assertIsNotNone(self.client.auth_client.auth)
 
     def test_login_with_exported_login(self):
-        conf = config.Config()
-        conf.set(
-            "macaroon",
-            "MDAwZWxvY2F0aW9uIAowMDEwaWRlbnRpZmllciAKMDAxNGNpZCB0ZXN0IGNhdmVhdAowMDE5dmlkIHRlc3QgdmVyaWZpYWNpb24KMDAxN2NsIGxvY2FsaG9zdDozNTM1MQowMDBmc2lnbmF0dXJlIAo",
-        )
-        conf.set(
-            "unbound_discharge",
-            "MDAwZWxvY2F0aW9uIAowMDEwaWRlbnRpZmllciAKMDAwZnNpZ25hdHVyZSAK",
-        )
-        with open("test-exported-login", "w+") as config_fd:
-            conf.save(config_fd=config_fd)
-            config_fd.seek(0)
+        with pathlib.Path("test-exported-login").open("w") as config_fd:
+            print(
+                "[{}]".format(self.client.auth_client._conf._get_section_name()),
+                file=config_fd,
+            )
+            print(
+                "macaroon=MDAwZWxvY2F0aW9uIAowMDEwaWRlbnRpZmllciAKMDAxNGNpZCB0ZXN0IGNhdmVhdAowMDE5dmlkIHRlc3QgdmVyaWZpYWNpb24KMDAxN2NsIGxvY2FsaG9zdDozNTM1MQowMDBmc2lnbmF0dXJlIAo",
+                file=config_fd,
+            )
+            print(
+                "unbound_discharge=MDAwZWxvY2F0aW9uIAowMDEwaWRlbnRpZmllciAKMDAwZnNpZ25hdHVyZSAK",
+                file=config_fd,
+            )
+            config_fd.flush()
+
+        with pathlib.Path("test-exported-login").open() as config_fd:
             self.client.login(config_fd=config_fd)
 
         self.assertThat(
@@ -140,38 +129,32 @@ class LoginTestCase(StoreTestCase):
 
     def test_failed_login_with_wrong_password(self):
         self.assertRaises(
-            errors.StoreAuthenticationError,
+            http_clients.errors.StoreAuthenticationError,
             self.client.login,
             email="dummy email",
             password="wrong password",
         )
 
-        self.assertTrue(config.Config().is_empty())
-
     def test_failed_login_requires_one_time_password(self):
         self.assertRaises(
-            errors.StoreTwoFactorAuthenticationRequired,
+            http_clients.errors.StoreTwoFactorAuthenticationRequired,
             self.client.login,
             email="dummy email",
             password="test requires 2fa",
         )
 
-        self.assertTrue(config.Config().is_empty())
-
     def test_failed_login_with_wrong_one_time_password(self):
         self.assertRaises(
-            errors.StoreAuthenticationError,
+            http_clients.errors.StoreAuthenticationError,
             self.client.login,
             email="dummy email",
             password="test correct password",
             otp="wrong one-time password",
         )
 
-        self.assertTrue(config.Config().is_empty())
-
     def test_failed_login_with_unregistered_snap(self):
         raised = self.assertRaises(
-            errors.StoreAuthenticationError,
+            errors.GeneralStoreError,
             self.client.login,
             email="dummy email",
             password="test correct password",
@@ -179,8 +162,6 @@ class LoginTestCase(StoreTestCase):
         )
 
         self.assertThat(str(raised), Contains("not found"))
-
-        self.assertTrue(config.Config().is_empty())
 
 
 class DownloadTestCase(StoreTestCase):
@@ -310,7 +291,7 @@ class PushSnapBuildTestCase(StoreTestCase):
         # will get a descriptive error message.
         self.client.login(email="dummy", password="test correct password")
         raised = self.assertRaises(
-            errors.StoreServerError,
+            http_clients.errors.StoreServerError,
             self.client.push_snap_build,
             "snap-id",
             "test-not-implemented",
@@ -335,7 +316,7 @@ class PushSnapBuildTestCase(StoreTestCase):
         # might happen in the internet, so we are a little defensive.
         self.client.login(email="dummy", password="test correct password")
         raised = self.assertRaises(
-            errors.StoreServerError,
+            http_clients.errors.StoreServerError,
             self.client.push_snap_build,
             "snap-id",
             "test-unexpected-data",
@@ -541,7 +522,9 @@ class RegisterKeyTestCase(StoreTestCase):
         # will get a 501 Not Implemented response.
         self.client.login(email="dummy", password="test correct password")
         raised = self.assertRaises(
-            errors.StoreServerError, self.client.register_key, "test-not-implemented"
+            http_clients.errors.StoreServerError,
+            self.client.register_key,
+            "test-not-implemented",
         )
         self.assertThat(raised.error_code, Equals(501))
 
@@ -747,7 +730,10 @@ class ValidationsTestCase(StoreTestCase):
         self.client.login(email="dummy", password="test correct password")
 
         err = self.assertRaises(
-            errors.StoreNetworkError, self.client.get_assertion, "err", "validations"
+            http_clients.errors.StoreNetworkError,
+            self.client.get_assertion,
+            "err",
+            "validations",
         )
 
         expected = "maximum retries exceeded"
@@ -783,7 +769,7 @@ class ValidationsTestCase(StoreTestCase):
         assertion = json.dumps({"foo": "bar"}).encode("utf-8")
 
         err = self.assertRaises(
-            errors.StoreServerError,
+            http_clients.errors.StoreServerError,
             self.client.push_assertion,
             "err",
             assertion,
@@ -853,7 +839,10 @@ class UploadTestCase(StoreTestCase):
         self.client.login(email="dummy", password="test correct password")
 
         raised = self.assertRaises(
-            errors.StoreServerError, self.client.upload, "test-snap", self.snap_path
+            http_clients.errors.StoreServerError,
+            self.client.upload,
+            "test-snap",
+            self.snap_path,
         )
         self.assertThat(raised.error_code, Equals(500))
 
@@ -1017,7 +1006,7 @@ class ReleaseTest(StoreTestCase):
     def test_release_snap_to_bad_channel(self):
         self.client.login(email="dummy", password="test correct password")
         self.assertRaises(
-            errors.StoreServerError,
+            http_clients.errors.StoreServerError,
             self.client.release,
             "test-snap",
             "19",
@@ -1110,7 +1099,7 @@ class CloseChannelsTestCase(StoreTestCase):
         # might happen in the internet, so we are a little defensive.
         self.client.login(email="dummy", password="test correct password")
         raised = self.assertRaises(
-            errors.StoreServerError,
+            http_clients.errors.StoreServerError,
             self.client.close_channels,
             "snap-id",
             ["unexpected"],
@@ -1197,23 +1186,6 @@ class CloseChannelsTestCase(StoreTestCase):
                 }
             ),
         )
-
-
-class MacaroonsTestCase(unit.TestCase):
-    def test_invalid_macaroon_root_raises_exception(self):
-        conf = config.Config()
-        conf.set("macaroon", 'inval"id')
-        conf.save()
-        self.assertRaises(
-            errors.InvalidCredentialsError, _macaroon_auth, conf,
-        )
-
-    def test_invalid_discharge_raises_exception(self):
-        conf = config.Config()
-        conf.set("macaroon", pymacaroons.Macaroon().serialize())
-        conf.set("unbound_discharge", "inval*id")
-        conf.save()
-        self.assertRaises(errors.InvalidCredentialsError, _macaroon_auth, conf)
 
 
 class GetSnapStatusTestCase(StoreTestCase):
@@ -1411,7 +1383,7 @@ class SignDeveloperAgreementTestCase(StoreTestCase):
         self.useFixture(fixtures.EnvironmentVariable("STORE_DOWN", "1"))
         self.client.login(email="dummy", password="test correct password")
         raised = self.assertRaises(
-            errors.StoreServerError,
+            http_clients.errors.StoreServerError,
             self.client.sign_developer_agreement,
             latest_tos_accepted=True,
         )

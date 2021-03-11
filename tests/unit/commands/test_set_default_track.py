@@ -40,7 +40,7 @@ class SetDefaultTrackCommandTestCase(FakeStoreCommandsBaseTestCase):
 
     def test_set_default_track_without_login_must_ask(self):
         self.fake_metadata.mock.side_effect = [
-            storeapi.errors.InvalidCredentialsError("error"),
+            storeapi.http_clients.errors.InvalidCredentialsError("error"),
             None,
         ]
 

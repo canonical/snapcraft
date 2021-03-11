@@ -16,20 +16,12 @@
 
 import os
 
-import fixtures
 import xdg
-from testtools.matchers import Contains, Equals, FileContains
+from testtools.matchers import Equals
 
 from snapcraft import config
 from snapcraft.internal.errors import SnapcraftInvalidCLIConfigError
-from snapcraft.storeapi import errors
 from tests import unit
-
-
-def create_config_from_string(content):
-    path = config.Config.save_path()
-    with open(path, "w") as f:
-        f.write(content)
 
 
 class TestCLIConfig(unit.TestCase):
@@ -100,136 +92,3 @@ class TestCLIConfig(unit.TestCase):
         cli_config = config.CLIConfig()
 
         self.assertRaises(SnapcraftInvalidCLIConfigError, cli_config.load)
-
-
-class TestConfig(unit.TestCase):
-    def test_non_existing_file_succeeds(self):
-        conf = config.Config()
-        self.assertThat(conf.parser.sections(), Equals([]))
-        self.assertTrue(conf.is_empty())
-
-    def test_existing_file(self):
-        existing_conf = config.Config()
-        existing_conf.set("foo", "bar")
-        existing_conf.save()
-        # Check we find and use the existing conf
-        conf = config.Config()
-        self.assertThat(conf.get("foo"), Equals("bar"))
-        self.assertFalse(conf.is_empty())
-
-    def test_irrelevant_sections_are_ignored(self):
-        create_config_from_string("""[example.com]\nfoo=bar""")
-        conf = config.Config()
-        self.assertThat(conf.get("foo"), Equals(None))
-
-    def test_section_from_url(self):
-        create_config_from_string("""[example.com]\nfoo=bar""")
-        self.useFixture(
-            fixtures.EnvironmentVariable(
-                "UBUNTU_ONE_SSO_URL", "http://example.com/api/v2"
-            )
-        )
-        conf = config.Config()
-        self.assertThat(conf.get("foo"), Equals("bar"))
-
-    def test_save_one_option(self):
-        conf = config.Config()
-        conf.set("bar", "baz")
-        conf.save()
-        new_conf = config.Config()
-        self.assertThat(new_conf.get("bar"), Equals("baz"))
-
-    def test_clear_preserver_other_sections(self):
-        create_config_from_string("""[keep_me]\nfoo=bar\n""")
-        conf = config.Config()
-        conf.set("bar", "baz")
-        self.assertThat(conf.get("bar"), Equals("baz"))
-        conf.clear()
-        conf.save()
-        new_conf = config.Config()
-        self.assertThat(new_conf.get("bar"), Equals(None))
-        # Picking behind the curtains
-        self.assertThat(new_conf.parser.get("keep_me", "foo"), Equals("bar"))
-        self.assertTrue(conf.is_empty())
-
-    def test_save_encoded(self):
-        conf = config.Config()
-        conf.set("bar", "baz")
-        conf.save(encode=True)
-        new_conf = config.Config()
-        self.assertThat(new_conf.get("bar"), Equals("baz"))
-
-    def test_save_encoded_to_file(self):
-        conf = config.Config()
-        conf.set("bar", "baz")
-        with open("test-config", "w") as f:
-            conf.save(config_fd=f, encode=True)
-            f.flush()
-
-        self.assertThat(
-            "test-config", FileContains("W2xvZ2luLnVidW50dS5jb21dCmJhciA9IGJhegoK")
-        )
-
-        new_conf = config.Config()
-        with open("test-config", "r") as f:
-            new_conf.load(config_fd=f)
-        self.assertThat(new_conf.get("bar"), Equals("baz"))
-
-    def test_load_invalid_config(self):
-        with open("test-config", "w") as f:
-            f.write("invalid config")
-            f.flush()
-
-        conf = config.Config()
-        with open("test-config", "r") as f:
-            raised = self.assertRaises(
-                errors.InvalidLoginConfig, conf.load, config_fd=f
-            )
-
-        self.assertThat(str(raised), Contains("File contains no section headers"))
-
-
-class TestOptions(unit.TestCase):
-    def create_config(self, **kwargs):
-        conf = config.Config()
-        for k, v in kwargs.items():
-            conf.set(k, v)
-        return conf
-
-    def test_string(self):
-        conf = self.create_config(foo="bar")
-        self.assertThat(conf.get("foo"), Equals("bar"))
-
-
-def create_local_config_from_string(content):
-    os.makedirs(os.path.dirname(config.LOCAL_CONFIG_FILENAME), exist_ok=True)
-    with open(config.LOCAL_CONFIG_FILENAME, "w") as f:
-        f.write(content)
-
-
-class TestLocalConfig(unit.TestCase):
-    def setUp(self):
-        super().setUp()
-        override_sso = fixtures.EnvironmentVariable(
-            "UBUNTU_ONE_SSO_URL", "http://example.com/api/v2"
-        )
-        self.useFixture(override_sso)
-
-    def test_local_config_is_considered(self):
-        create_local_config_from_string("""[example.com]\nfoo=bar""")
-        conf = config.Config()
-        self.assertThat(conf.get("foo"), Equals("bar"))
-
-    def test_local_config_is_preferred(self):
-        create_config_from_string("""[example.com]\nfoo=baz""")
-        create_local_config_from_string("""[example.com]\nfoo=bar""")
-        conf = config.Config()
-        self.assertThat(conf.get("foo"), Equals("bar"))
-
-    def test_local_config_is_static(self):
-        create_local_config_from_string("""[example.com]\nfoo=bar""")
-        conf = config.Config()
-        conf.set("foo", "baz")
-        conf.save()
-        new_conf = config.Config()
-        self.assertThat(new_conf.get("foo"), Equals("bar"))

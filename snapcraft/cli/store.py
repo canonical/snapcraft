@@ -26,7 +26,8 @@ import click
 from tabulate import tabulate
 
 import snapcraft
-from snapcraft import config, formatting_utils, storeapi
+from snapcraft import formatting_utils, storeapi
+from snapcraft.storeapi.http_clients._ubuntu_sso_client import UbuntuOneSSOConfig
 from snapcraft._store import StoreClientCLI
 from snapcraft.storeapi.constants import DEFAULT_SERIES
 
@@ -796,7 +797,7 @@ def logout():
 def whoami():
     """Returns your login information relevant to the store."""
     # TODO: workaround until bakery client is added.
-    conf = config.Config()
+    conf = UbuntuOneSSOConfig()
     email = conf.get("email")
     if email is None:
         email = "unknown"

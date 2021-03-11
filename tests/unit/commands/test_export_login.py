@@ -157,7 +157,7 @@ class ExportLoginCommandTestCase(FakeStoreCommandsBaseTestCase):
 
     def test_successful_login_with_2fa(self):
         self.fake_store_login.mock.side_effect = [
-            storeapi.errors.StoreTwoFactorAuthenticationRequired(),
+            storeapi.http_clients.errors.StoreTwoFactorAuthenticationRequired(),
             None,
         ]
 
@@ -211,11 +211,13 @@ class ExportLoginCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
 
     def test_failed_login_with_invalid_credentials(self):
-        self.fake_store_login.mock.side_effect = storeapi.errors.InvalidCredentialsError(
+        self.fake_store_login.mock.side_effect = storeapi.http_clients.errors.InvalidCredentialsError(
             "error"
         )
 
-        with pytest.raises(storeapi.errors.InvalidCredentialsError) as exc_info:
+        with pytest.raises(
+            storeapi.http_clients.errors.InvalidCredentialsError
+        ) as exc_info:
             self.run_command(
                 ["export-login", "exported"],
                 input="bad-user@example.com\nbad-password\n",

@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pathlib
 import re
 from unittest import mock
 
@@ -22,7 +23,7 @@ import pytest
 from simplejson.scanner import JSONDecodeError
 from testtools.matchers import Contains, Equals, MatchesRegex, Not
 
-from snapcraft import config, storeapi
+from snapcraft import storeapi
 
 from . import FakeStoreCommandsBaseTestCase
 
@@ -50,7 +51,7 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
 
     def test_login_with_2fa(self):
         self.fake_store_login.mock.side_effect = [
-            storeapi.errors.StoreTwoFactorAuthenticationRequired(),
+            storeapi.http_clients.errors.StoreTwoFactorAuthenticationRequired(),
             None,
         ]
 
@@ -105,12 +106,7 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
         self.fake_store_login.mock.side_effect = None
 
-        conf = config.Config()
-        conf.set("macaroon", "test-macaroon")
-        conf.set("unbound_discharge", "test-unbound-discharge")
-        with open("exported-login", "w") as f:
-            conf.save(config_fd=f)
-            f.flush()
+        pathlib.Path("exported-login").touch()
 
         result = self.run_command(["login", "--with", "exported-login"])
 
@@ -141,11 +137,13 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
 
     def test_login_failed_with_invalid_credentials(self):
-        self.fake_store_login.mock.side_effect = storeapi.errors.InvalidCredentialsError(
+        self.fake_store_login.mock.side_effect = storeapi.http_clients.errors.InvalidCredentialsError(
             "error"
         )
 
-        with pytest.raises(storeapi.errors.InvalidCredentialsError) as exc_info:
+        with pytest.raises(
+            storeapi.http_clients.errors.InvalidCredentialsError
+        ) as exc_info:
             self.run_command(["login"], input="user@example.com\nbadsecret\n")
 
         assert (
@@ -154,12 +152,12 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
 
     def test_login_failed_with_store_authentication_error(self):
-        self.fake_store_login.mock.side_effect = storeapi.errors.StoreAuthenticationError(
+        self.fake_store_login.mock.side_effect = storeapi.http_clients.errors.StoreAuthenticationError(
             "error"
         )
 
         raised = self.assertRaises(
-            storeapi.errors.StoreAuthenticationError,
+            storeapi.http_clients.errors.StoreAuthenticationError,
             self.run_command,
             ["login"],
             input="user@example.com\nbad-secret\n",
