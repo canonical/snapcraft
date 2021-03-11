@@ -668,7 +668,20 @@ def list_registered():
     metavar="<expiration date>",
     help="Date/time (in ISO 8601) when this exported login expires",
 )
-def export_login(login_file: str, snaps: str, channels: str, acls: str, expires: str):
+@click.option(
+    "--experimental-login",
+    is_flag=True,
+    help="*EXPERIMENTAL* Enables login through candid.",
+    envvar="SNAPCRAFT_LOGIN",
+)
+def export_login(
+    login_file: str,
+    snaps: str,
+    channels: str,
+    acls: str,
+    expires: str,
+    experimental_login: bool,
+):
     """Save login configuration for a store account in FILE.
 
     This file can then be used to log in to the given account with the
@@ -706,15 +719,24 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
     if acls:
         acl_list = acls.split(",")
 
-    store_client = storeapi.StoreClient()
-    snapcraft.login(
-        store=store_client,
-        packages=snap_list,
-        channels=channel_list,
-        acls=acl_list,
-        expires=expires,
-        save=False,
-    )
+    store_client = storeapi.StoreClient(use_candid=experimental_login)
+    if experimental_login:
+        store_client.login(
+            packages=snap_list,
+            channels=channel_list,
+            acls=acl_list,
+            expires=expires,
+            save=False,
+        )
+    else:
+        snapcraft.login(
+            store=store_client,
+            packages=snap_list,
+            channels=channel_list,
+            acls=acl_list,
+            expires=expires,
+            save=False,
+        )
 
     # Support a login_file of '-', which indicates a desire to print to stdout
     if login_file.strip() == "-":
@@ -767,14 +789,23 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
     type=click.File("r"),
     help="Path to file created with 'snapcraft export-login'",
 )
-def login(login_file):
+@click.option(
+    "--experimental-login",
+    is_flag=True,
+    help="*EXPERIMENTAL* Enables login through candid.",
+    envvar="SNAPCRAFT_LOGIN",
+)
+def login(login_file, experimental_login: bool):
     """Login with your Ubuntu One e-mail address and password.
 
     If you do not have an Ubuntu One account, you can create one at
     https://snapcraft.io/account
     """
-    store_client = storeapi.StoreClient()
-    snapcraft.login(store=store_client, config_fd=login_file)
+    store_client = storeapi.StoreClient(use_candid=experimental_login)
+    if experimental_login:
+        store_client.login()
+    else:
+        snapcraft.login(store=store_client, config_fd=login_file)
 
     print()
 

@@ -17,7 +17,7 @@
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 from urllib.parse import urljoin, urlencode
 
 import requests
@@ -49,18 +49,32 @@ class DashboardAPI(Requests):
         url = urljoin(self._root_url, urlpath)
         return self._auth_client.request(method, url, **kwargs)
 
-    def get_macaroon(self, acls, packages=None, channels=None, expires=None):
-        data = {"permissions": acls}
+    def get_macaroon(
+        self,
+        *,
+        acls: Iterable[str],
+        packages: Optional[Iterable[Dict[str, str]]] = None,
+        channels: Optional[Iterable[str]] = None,
+        expires: Optional[Iterable[str]] = None,
+        use_candid: bool = False,
+    ):
+        data: Dict[str, Any] = {"permissions": acls}
         if packages is not None:
-            data.update({"packages": packages})
+            data["packages"] = packages
         if channels is not None:
-            data.update({"channels": channels})
+            data["channels"] = channels
         if expires is not None:
-            data.update({"expires": expires})
-        headers = {"Accept": "application/json"}
-        response = self.post(
-            "/dev/api/acl/", json=data, headers=headers, auth_header=False
-        )
+            data["expires"] = expires
+
+        headers = {"Content--Type": "application/json", "Accept": "application/json"}
+
+        if use_candid:
+            urlpath = "/api/v2/tokens"
+        else:
+            urlpath = "/dev/api/acl/"
+
+        response = self.post(urlpath, json=data, headers=headers, auth_header=False)
+
         if response.ok:
             return response.json()["macaroon"]
         else:
@@ -339,3 +353,11 @@ class DashboardAPI(Requests):
             raise errors.StoreSnapChannelMapError(snap_name=snap_name)
 
         return releases.Releases.unmarshal(response.json())
+
+    def whoami(self):
+        response = self.get(
+            f"/api/v2/tokens/whoami",
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+        )
+
+        return response.json()

@@ -36,11 +36,17 @@ logger = logging.getLogger(__name__)
 class StoreClient:
     """High-level client Snap resources."""
 
-    def __init__(self) -> None:
+    def __init__(self, use_candid: bool = False) -> None:
         super().__init__()
 
         self.client = http_clients.Client()
-        self.auth_client = http_clients.UbuntuOneAuthClient()
+
+        if use_candid or http_clients.CandidClient.has_credentials():
+            self.auth_client = http_clients.CandidClient()
+            logger.debug("Using candid.")
+        else:
+            logger.debug("Using Ubuntu One SSO.")
+            self.auth_client = http_clients.UbuntuOneAuthClient()
 
         self.snap = SnapAPI(self.client)
         self.dashboard = DashboardAPI(self.auth_client)
@@ -69,7 +75,13 @@ class StoreClient:
                 "package_update",
             ]
 
-        macaroon = self.dashboard.get_macaroon(acls, packages, channels, expires)
+        macaroon = self.dashboard.get_macaroon(
+            acls=acls,
+            packages=packages,
+            channels=channels,
+            expires=expires,
+            use_candid=isinstance(self.auth_client, http_clients.CandidClient),
+        )
         self.auth_client.login(macaroon=macaroon, **kwargs)
 
     def export_login(self, *, config_fd: TextIO, encode=False) -> None:
