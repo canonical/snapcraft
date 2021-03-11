@@ -67,6 +67,8 @@ class Client:
         debug_headers = headers.copy()
         if "Authorization" in debug_headers:
             debug_headers["Authorization"] = "<macaroon>"
+        if "Macaroons" in debug_headers:
+            debug_headers["Macaroons"] = "<macaroon>"
         logger.debug(
             "Calling {} with params {} and headers {}".format(
                 url, params, debug_headers

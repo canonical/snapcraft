@@ -803,15 +803,19 @@ def login(login_file, experimental_login: bool):
     """
     store_client = storeapi.StoreClient(use_candid=experimental_login)
     if experimental_login:
-        store_client.login()
+        store_client.login(config_fd=login_file)
     else:
         snapcraft.login(store=store_client, config_fd=login_file)
 
     print()
 
     if login_file:
-        echo.info("Login successful. You now have these capabilities:\n")
-        echo.info(_human_readable_acls(store_client))
+        try:
+            human_acls = _human_readable_acls(store_client)
+            echo.info("Login successful. You now have these capabilities:\n")
+            echo.info(human_acls)
+        except AttributeError:
+            echo.info("Login successful.")
     else:
         echo.info("Login successful.")
 

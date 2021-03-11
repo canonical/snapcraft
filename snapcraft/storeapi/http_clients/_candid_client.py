@@ -43,7 +43,8 @@ class CandidClient(_http_client.Client):
     @_macaroon.setter
     def _macaroon(self, macaroon: str) -> None:
         self._conf.set("macaroon", macaroon)
-        self._conf.save()
+        if self._conf_save:
+            self._conf.save()
 
     @property
     def _auth(self) -> Optional[str]:
@@ -52,13 +53,15 @@ class CandidClient(_http_client.Client):
     @_auth.setter
     def _auth(self, auth: str) -> None:
         self._conf.set("auth", auth)
-        self._conf.save()
+        if self._conf_save:
+            self._conf.save()
 
     def __init__(self, *, user_agent: str = agent.get_user_agent()) -> None:
         super().__init__(user_agent=user_agent)
 
         self.bakery_client = httpbakery.Client()
         self._conf = CandidConfig()
+        self._conf_save = True
 
     def _login(self, macaroon: str) -> None:
         bakery_macaroon = bakery.Macaroon.from_dict(json.loads(macaroon))
@@ -77,12 +80,18 @@ class CandidClient(_http_client.Client):
         self._macaroon = macaroon
 
     def login(
-        self, *, macaroon: Optional[str] = None, config_fd: Optional[TextIO] = None
+        self,
+        *,
+        macaroon: Optional[str] = None,
+        config_fd: Optional[TextIO] = None,
+        save: bool = True,
     ) -> None:
+        self._conf_save = save
         if macaroon is not None:
             self._login(macaroon)
         elif config_fd is not None:
             self._conf.load(config_fd=config_fd)
+            self._conf.save()
         else:
             raise RuntimeError("Logic Error")
 
