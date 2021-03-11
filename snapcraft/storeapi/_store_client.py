@@ -42,7 +42,7 @@ class StoreClient:
         self.client = http_clients.Client()
 
         if use_candid or http_clients.CandidClient.has_credentials():
-            self.auth_client = http_clients.CandidClient()
+            self.auth_client: http_clients.AuthClient = http_clients.CandidClient()
             logger.debug("Using candid.")
         else:
             logger.debug("Using Ubuntu One SSO.")
