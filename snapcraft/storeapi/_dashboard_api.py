@@ -66,7 +66,7 @@ class DashboardAPI(Requests):
         if expires is not None:
             data["expires"] = expires
 
-        headers = {"Content--Type": "application/json", "Accept": "application/json"}
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
         if use_candid:
             urlpath = "/api/v2/tokens"
