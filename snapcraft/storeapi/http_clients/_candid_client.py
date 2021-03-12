@@ -18,7 +18,7 @@ class CandidConfig(_config.Config):
     """Hold configuration options in sections.
 
     There can be two sections for the sso related credentials: production and
-    staging. This is governed by the UBUNTU_ONE_SSO_URL environment
+    staging. This is governed by the STORE_DASHBOARD_URL environment
     variable. Other sections are ignored but preserved.
 
     """
