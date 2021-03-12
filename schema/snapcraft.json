@@ -831,7 +831,6 @@
                             "uniqueItems": true,
                             "items": {
                                 "enum": [
-                                    "flutter",
                                     "flutter-stable",
                                     "flutter-beta",
                                     "flutter-dev",

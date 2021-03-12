@@ -11,7 +11,7 @@ An extension variant per each /flutter/ channel available shall be available
 that reproduces the setup required to target a given flutter channel, these
 channels are:
 
-- flutter or flutter-stable (ideally, the default).
+- flutter-stable (ideally, the default).
 - flutter-beta
 - flutter-dev
 - flutter-master
