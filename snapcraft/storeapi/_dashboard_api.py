@@ -23,7 +23,7 @@ from urllib.parse import urljoin, urlencode
 import requests
 from simplejson.scanner import JSONDecodeError
 
-from . import _metadata, constants, errors
+from . import _metadata, constants, errors, http_clients
 from ._requests import Requests
 from ._status_tracker import StatusTracker
 from .v2 import channel_map, releases
@@ -39,7 +39,7 @@ class DashboardAPI(Requests):
     at https://dashboard.snapcraft.io/docs/.
     """
 
-    def __init__(self, auth_client) -> None:
+    def __init__(self, auth_client: http_clients.AuthClient) -> None:
         self._auth_client = auth_client
         self._root_url = os.environ.get(
             "STORE_DASHBOARD_URL", constants.STORE_DASHBOARD_URL
@@ -56,7 +56,6 @@ class DashboardAPI(Requests):
         packages: Optional[Iterable[Dict[str, str]]] = None,
         channels: Optional[Iterable[str]] = None,
         expires: Optional[Iterable[str]] = None,
-        use_candid: bool = False,
     ):
         data: Dict[str, Any] = {"permissions": acls}
         if packages is not None:
@@ -68,7 +67,7 @@ class DashboardAPI(Requests):
 
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
-        if use_candid:
+        if isinstance(self._auth_client, http_clients.CandidClient):
             urlpath = "/api/v2/tokens"
         else:
             urlpath = "/dev/api/acl/"
@@ -81,6 +80,9 @@ class DashboardAPI(Requests):
             raise errors.GeneralStoreError("Failed to get macaroon", response)
 
     def verify_acl(self):
+        if not isinstance(self._auth_client, http_clients.UbuntuOneAuthClient):
+            raise NotImplementedError("Only supports UbuntuOneAuthClient.")
+
         response = self.post(
             "/dev/api/acl/verify/",
             json={"auth_data": {"authorization": self._auth_client.auth}},

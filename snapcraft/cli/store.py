@@ -780,7 +780,7 @@ def export_login(
             "to log in to this account with no password and have these "
             f"capabilities:\n{human_acls}"
         )
-    except AttributeError:
+    except NotImplementedError:
         pass
 
     echo.warning(
@@ -821,7 +821,7 @@ def login(login_file, experimental_login: bool):
             human_acls = _human_readable_acls(store_client)
             echo.info("Login successful. You now have these capabilities:\n")
             echo.info(human_acls)
-        except AttributeError:
+        except NotImplementedError:
             echo.info("Login successful.")
     else:
         echo.info("Login successful.")

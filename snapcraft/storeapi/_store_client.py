@@ -79,11 +79,7 @@ class StoreClient:
             ]
 
         macaroon = self.dashboard.get_macaroon(
-            acls=acls,
-            packages=packages,
-            channels=channels,
-            expires=expires,
-            use_candid=isinstance(self.auth_client, http_clients.CandidClient),
+            acls=acls, packages=packages, channels=channels, expires=expires,
         )
         self.auth_client.login(macaroon=macaroon, **kwargs)
 
