@@ -8,7 +8,8 @@ manual: true
 
 environment:
   SNAP: dump-hello
-  SNAP_STORE_MACAROON: "$(HOST: echo ${SNAP_STORE_MACAROON})"
+  SNAP_STORE_MACAROON/UBUNTU_ONE: "$(HOST: echo ${SNAP_STORE_MACAROON})"
+  SNAP_STORE_MACAROON/CANDID: "$(HOST: echo ${SNAP_STORE_CANDID_MACAROON})"
   STORE_DASHBOARD_URL: https://dashboard.staging.snapcraft.io/
   STORE_API_URL: https://api.staging.snapcraft.io/
   STORE_UPLOAD_URL: https://upload.apps.staging.ubuntu.com/
@@ -52,7 +53,11 @@ execute: |
 
   # Login
   set +x
-  echo "${SNAP_STORE_MACAROON}" | snapcraft login --with -
+  if [ "${SPREAD_VARIANT}" = "CANDID" ]; then
+    echo "${SNAP_STORE_MACAROON}" | snapcraft login --experimental-login --with -
+  else
+    echo "${SNAP_STORE_MACAROON}" | snapcraft login --with -
+  fi
   set -x
 
   # Register
