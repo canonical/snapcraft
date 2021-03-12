@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2020 Canonical Ltd
+# Copyright 2016-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -769,13 +769,20 @@ def export_login(
 
             {}
 
-        to log in to this account with no password and have these
-        capabilities:\n""".format(
+        """.format(
                 preamble, login_action
             )
         )
     )
-    echo.info(_human_readable_acls(store_client))
+    try:
+        human_acls = _human_readable_acls(store_client)
+        echo.info(
+            "to log in to this account with no password and have these "
+            f"capabilities:\n{human_acls}"
+        )
+    except AttributeError:
+        pass
+
     echo.warning(
         "This exported login is not encrypted. Do not commit it to version control!"
     )
