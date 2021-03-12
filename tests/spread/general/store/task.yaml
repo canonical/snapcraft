@@ -53,12 +53,13 @@ execute: |
 
   # Login
   set +x
-  if [ "${SPREAD_VARIANT}" = "CANDID" ]; then
-    echo "${SNAP_STORE_MACAROON}" | snapcraft login --experimental-login --with -
-  else
-    echo "${SNAP_STORE_MACAROON}" | snapcraft login --with -
-  fi
+  echo "${SNAP_STORE_MACAROON}" > login
   set -x
+  if [ "${SPREAD_VARIANT}" = "CANDID" ]; then
+    snapcraft login --experimental-login --with login
+  else
+    snapcraft login --with login
+  fi
 
   # Register
   snapcraft register --yes "${snap_name}"
@@ -80,3 +81,6 @@ execute: |
 
   # List tracks
   snapcraft list-tracks "${snap_name}"
+
+  # Logout
+  snapcraft logout
