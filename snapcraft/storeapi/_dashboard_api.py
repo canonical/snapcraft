@@ -353,11 +353,3 @@ class DashboardAPI(Requests):
             raise errors.StoreSnapChannelMapError(snap_name=snap_name)
 
         return releases.Releases.unmarshal(response.json())
-
-    def whoami(self):
-        response = self.get(
-            f"/api/v2/tokens/whoami",
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-        )
-
-        return response.json()
