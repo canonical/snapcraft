@@ -41,9 +41,12 @@ class StoreClient:
 
         self.client = http_clients.Client()
 
-        if use_candid or http_clients.CandidClient.has_credentials():
+        candid_has_credentials = http_clients.CandidClient.has_credentials()
+        if use_candid or candid_has_credentials:
+            logger.debug(
+                f"Using candid. Forced: {use_candid}. Crendendials: {candid_has_credentials}."
+            )
             self.auth_client: http_clients.AuthClient = http_clients.CandidClient()
-            logger.debug("Using candid.")
         else:
             logger.debug("Using Ubuntu One SSO.")
             self.auth_client = http_clients.UbuntuOneAuthClient()
@@ -60,7 +63,7 @@ class StoreClient:
         packages: Iterable[Dict[str, str]] = None,
         expires: str = None,
         config_fd: TextIO = None,
-        **kwargs
+        **kwargs,
     ) -> None:
         if config_fd is not None:
             return self.auth_client.login(config_fd=config_fd, **kwargs)
@@ -201,7 +204,7 @@ class StoreClient:
         download_path: str,
         track: Optional[str] = None,
         arch: Optional[str] = None,
-        except_hash: str = ""
+        except_hash: str = "",
     ):
         snap_info = self.snap.get_info(snap_name)
         channel_mapping = snap_info.get_channel_mapping(
