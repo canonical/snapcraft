@@ -56,10 +56,15 @@ class CandidClient(_http_client.Client):
         if self._conf_save:
             self._conf.save()
 
-    def __init__(self, *, user_agent: str = agent.get_user_agent()) -> None:
+    def __init__(
+        self,
+        *,
+        user_agent: str = agent.get_user_agent(),
+        bakery_client=httpbakery.Client(),
+    ) -> None:
         super().__init__(user_agent=user_agent)
 
-        self.bakery_client = httpbakery.Client()
+        self.bakery_client = bakery_client
         self._conf = CandidConfig()
         self._conf_save = True
 
@@ -91,7 +96,8 @@ class CandidClient(_http_client.Client):
             self._login(macaroon)
         elif config_fd is not None:
             self._conf.load(config_fd=config_fd)
-            self._conf.save()
+            if save:
+                self._conf.save()
         else:
             raise RuntimeError("Logic Error")
 
