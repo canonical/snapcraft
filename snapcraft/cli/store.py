@@ -810,7 +810,7 @@ def login(login_file, experimental_login: bool):
     """
     store_client = storeapi.StoreClient(use_candid=experimental_login)
     if experimental_login:
-        store_client.login(config_fd=login_file)
+        store_client.login(config_fd=login_file, save=True)
     else:
         snapcraft.login(store=store_client, config_fd=login_file)
 
