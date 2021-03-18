@@ -65,9 +65,9 @@ class Client:
             headers = {"User-Agent": self._user_agent}
 
         debug_headers = headers.copy()
-        if "Authorization" in debug_headers:
+        if debug_headers.get("Authorization"):
             debug_headers["Authorization"] = "<macaroon>"
-        if "Macaroons" in debug_headers:
+        if debug_headers.get("Macaroons"):
             debug_headers["Macaroons"] = "<macaroon>"
         logger.debug(
             "Calling {} with params {} and headers {}".format(
