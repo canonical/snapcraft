@@ -42,13 +42,12 @@ class StoreClient:
         self.client = http_clients.Client()
 
         candid_has_credentials = http_clients.CandidClient.has_credentials()
+        logger.debug(
+            f"Candid forced: {use_candid}. Candid crendendials: {candid_has_credentials}."
+        )
         if use_candid or candid_has_credentials:
-            logger.debug(
-                f"Using candid. Forced: {use_candid}. Crendendials: {candid_has_credentials}."
-            )
             self.auth_client: http_clients.AuthClient = http_clients.CandidClient()
         else:
-            logger.debug("Using Ubuntu One SSO.")
             self.auth_client = http_clients.UbuntuOneAuthClient()
 
         self.snap = SnapAPI(self.client)
