@@ -220,7 +220,7 @@ prepare: |
   # Otherwise, look for it in /snapcraft/.
   if [ -z "$SNAPCRAFT_CHANNEL" ]; then
     if stat /snapcraft/*.snap 2>/dev/null; then
-      snap install --classic --dangerous /snapcraft/*.snap
+      snap install --classic --dangerous /snapcraft/tests/*.snap
     else
       echo "Expected a snap to exist in /snapcraft/. If your intention"\
            "was to install from the store, set \$SNAPCRAFT_CHANNEL."
@@ -229,6 +229,11 @@ prepare: |
   else
     snap install --classic snapcraft --channel="$SNAPCRAFT_CHANNEL"
   fi
+
+  pushd /snapcraft
+  git add .
+  git commit -m "Testing Commit"
+  popd
 
 restore-each: |
   "$TOOLS_DIR"/restore.sh
@@ -503,3 +508,5 @@ suites:
      mv /snapcraft.bak /snapcraft/snapcraft
 
 path: /snapcraft/
+include:
+  - tests/
