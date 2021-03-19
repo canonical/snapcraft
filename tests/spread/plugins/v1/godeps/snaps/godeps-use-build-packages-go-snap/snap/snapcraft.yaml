@@ -20,4 +20,4 @@ parts:
     - git
     plugin: godeps
     go-importpath: bcrypt
-    go-channel: latest/stable
+    go-channel: 1.14/stable
