@@ -20,7 +20,7 @@ prepare: |
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
   if [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
-    sed -i 's|command: bin/hello|command: /usr/local/bin/hello|' "${SNAP_DIR}/snap/snapcraft.yaml"
+    sed -i 's|command: bin/hello|command: usr/local/bin/hello|' "${SNAP_DIR}/snap/snapcraft.yaml"
     sed '/build-snaps: .*/d' "${SNAP_DIR}/snap/snapcraft.yaml"
   fi
 
