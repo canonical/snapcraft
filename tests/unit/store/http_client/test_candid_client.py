@@ -190,8 +190,24 @@ def test_export_login_base64_encoded(authed_client):
 
         config_fd.seek(0)
 
-        assert config_fd.getvalue().startswith(
-            "W2Rhc2hib2FyZC5zbmFwY3JhZnQuaW9dCmF1dGggPSBX"
+        assert config_fd.getvalue().strip() == (
+            "W2Rhc2hib2FyZC5zbmFwY3JhZnQuaW9dCmF1dGggPSBXM3NpYVdSbGJuUnBabWxsY2lJNklDSWlMQ0FpY"
+            "zJsbmJtRjBkWEpsSWpvZ0ltUTVOVE16TkRZeFpEYzRNelZsTkRnMU1XTTNaVE5pTmpNNU1UUTBOREEyWT"
+            "JZM05qZzFPVGRrWldFMlpURXpNekl6TW1aaVpESXpPRFZoTldNd05UQWlMQ0FpYkc5allYUnBiMjRpT2l"
+            "BaVlYQnBMbk51WVhCamNtRm1kQzVwYnlKOVhRPT0KbWFjYXJvb24gPSB7InM2NCI6ICJhMFZpN0N3aEhX"
+            "alM0Ynh6S1BoQ1pRSUVKRHZsYmg5RnloT3RXeDB0TkZRIiwgImMiOiBbeyJpIjogInRpbWUtYmVmb3JlI"
+            "DIwMjItMDMtMThUMTk6NTQ6NTcuMTUxNzIxWiJ9LCB7InY2NCI6ICJwRHFhTDlLRHJQZkNRQ0xEVWRQYz"
+            "h5TzJiVFFoZVdHc00xdHB4UmFTXzRCVDNyNnpwZG5UNVRlbFh6OHZwamI0aVVoVG5jNjAteDVEUEtKT3B"
+            "SdXdBaTRxTWROYTY3Vm8iLCAibCI6ICJodHRwczovL2FwaS5qdWp1Y2hhcm1zLmNvbS9pZGVudGl0eS8i"
+            "LCAiaTY0IjogIkFvWmgyajdtYkRRZ2gzb0szcU1xb1hLS0ZBbkp2bU9Ld21EQ05ZSEl4SHFRbkZMSlpKV"
+            "UJwcW9pSnRxcmEtdHlYUFBNVVRtZnVYTWdPV1A3eEt3VEQyNkZCZ3RKQmRoMW1FMXd0M2tmMFVyX1RuT3"
+            "piQVdRQ0hLeHFLOWpBcDFqWXYtTGxMTEFsUUFtb3F2ejlmQmYyLS1kSXhIaUxJUlRUaG1BRVNBbmxMWkh"
+            "PSjdwcmFEbUlTY3NMUUM0NzVhODVhdkEifSwgeyJpIjogImV4dHJhIHtcInBhY2thZ2VfaWRcIjogbnVs"
+            "bCwgXCJjaGFubmVsXCI6IG51bGwsIFwiYWNsXCI6IFtcInBhY2thZ2VfYWNjZXNzXCIsIFwicGFja2FnZ"
+            "V9tYW5hZ2VcIiwgXCJwYWNrYWdlX3B1c2hcIiwgXCJwYWNrYWdlX3JlZ2lzdGVyXCIsIFwicGFja2FnZV"
+            "9yZWxlYXNlXCIsIFwicGFja2FnZV91cGRhdGVcIl0sIFwic3RvcmVfaWRzXCI6IG51bGx9In1dLCAibCI"
+            "6ICJhcGkuc25hcGNyYWZ0LmlvIiwgImk2NCI6ICJBd29RMkZ0NVlCam5vdnFkcjhWTlYzVFNsaElCTUJv"
+            "T0NnVnNiMmRwYmhJRmJHOW5hVzQifQoK"
         )
 
 
