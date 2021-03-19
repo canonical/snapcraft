@@ -256,7 +256,7 @@ class Config:
 
         return package_repos
 
-    def _verify_all_key_assets_utilized(
+    def _verify_all_key_assets_installed(
         self, *, key_assets: pathlib.Path, key_manager: apt_key_manager.AptKeyManager,
     ) -> None:
         """Verify all configured key assets are utilized, error if not."""
@@ -287,7 +287,7 @@ class Config:
                 package_repo=package_repo
             )
 
-        self._verify_all_key_assets_utilized(
+        self._verify_all_key_assets_installed(
             key_assets=key_assets, key_manager=key_manager
         )
 
