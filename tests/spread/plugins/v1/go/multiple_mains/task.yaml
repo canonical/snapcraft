@@ -39,6 +39,7 @@ execute: |
   snapcraft clean
 
   # Now run the same test, but using go.mod support.
+  sed -i 's|GO111MODULE: "off"|GO111MODULE: "on"|g' snap/snapcraft.yaml
   go mod init io.snapcraft.maintests
   snapcraft stage
   [ -f stage/bin/main1 ]
@@ -46,13 +47,14 @@ execute: |
   [ -f stage/bin/main3 ]
   snapcraft clean
   rm go.mod
+  sed -i 's|GO111MODULE: "on"|GO111MODULE: "off"|g' snap/snapcraft.yaml
 
   # Now run the same test again, but with multiple go-packages
   cat << EOF >> snap/snapcraft.yaml
-        go-packages:
-            - main/main1
-            - main/main2
-            - main/main3
+      go-packages:
+          - main/main1
+          - main/main2
+          - main/main3
   EOF
 
   snapcraft stage
