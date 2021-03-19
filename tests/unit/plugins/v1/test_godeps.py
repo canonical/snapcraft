@@ -36,7 +36,7 @@ class GodepsPluginBaseTest(PluginsV1BaseTestCase):
 
         class Options:
             source = "src"
-            go_channel = "latest/stable"
+            go_channel = "1.15/stable"
             go_importpath = "github.com/foo/bar"
             godeps_file = "dependencies.tsv"
             go_packages = []
@@ -74,9 +74,9 @@ class GoPluginPropertiesTest(unit.TestCase):
         go_channel_default = go_channel["default"]
         self.assertThat(
             go_channel_default,
-            Equals("latest/stable"),
+            Equals("1.15/stable"),
             'Expected "go-channel" "default" to be '
-            '"latest/stable", but it was "{}"'.format(go_channel_default),
+            '"1.15/stable", but it was "{}"'.format(go_channel_default),
         )
 
         # Check godeps-file
@@ -387,7 +387,7 @@ class GodepsPluginToolSetupTest(GodepsPluginBaseTest):
         plugin = godeps.GodepsPlugin("test-part", self.options, self.project)
 
         self.assertThat(plugin.build_packages, Not(Contains("golang-go")))
-        self.assertThat(plugin.build_snaps, Contains("go/latest/stable"))
+        self.assertThat(plugin.build_snaps, Contains("go/1.15/stable"))
 
     def test_build_packages(self):
         self.options.go_channel = ""
@@ -395,7 +395,7 @@ class GodepsPluginToolSetupTest(GodepsPluginBaseTest):
         plugin = godeps.GodepsPlugin("test-part", self.options, self.project)
 
         self.assertThat(plugin.build_packages, Contains("golang-go"))
-        self.assertThat(plugin.build_snaps, Not(Contains("go/latest/stable")))
+        self.assertThat(plugin.build_snaps, Not(Contains("go/1.15/stable")))
 
 
 class GodepsPluginUnsupportedBaseTest(PluginsV1BaseTestCase):
@@ -406,7 +406,7 @@ class GodepsPluginUnsupportedBaseTest(PluginsV1BaseTestCase):
 
         class Options:
             source = "dir"
-            go_channel = "latest/stable"
+            go_channel = "1.15/stable"
 
         self.options = Options()
 
