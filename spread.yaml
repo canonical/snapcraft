@@ -509,3 +509,4 @@ include:
   - tests/
   - requirements.txt
   - requirements-devel.txt
+  - runtests.sh
