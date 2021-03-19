@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
 import functools
 import operator
 import os
@@ -27,7 +26,8 @@ import click
 from tabulate import tabulate
 
 import snapcraft
-from snapcraft import config, formatting_utils, storeapi
+from snapcraft import formatting_utils, storeapi
+from snapcraft.storeapi.http_clients._ubuntu_sso_client import UbuntuOneSSOConfig
 from snapcraft._store import StoreClientCLI
 from snapcraft.storeapi.constants import DEFAULT_SERIES
 
@@ -67,19 +67,9 @@ _MESSAGE_REGISTER_NO = dedent(
 )
 
 
-@contextlib.contextmanager
-def _requires_login():
-    try:
-        yield
-    except storeapi.errors.InvalidCredentialsError:
-        echo.error("No valid credentials found." ' Have you run "snapcraft login"?')
-        raise
-
-
 @click.group()
 def storecli():
     """Store commands"""
-    pass
 
 
 def _human_readable_acls(store_client: storeapi.StoreClient) -> str:
@@ -396,8 +386,7 @@ def promote(snap_name, from_channel, to_channel, yes):
         )
 
     store = storeapi.StoreClient()
-    with _requires_login():
-        status_payload = store.get_snap_status(snap_name)
+    status_payload = store.get_snap_status(snap_name)
 
     snap_status = storeapi.status.SnapStatus(
         snap_name=snap_name, payload=status_payload
@@ -718,15 +707,14 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
         acl_list = acls.split(",")
 
     store_client = storeapi.StoreClient()
-    if not snapcraft.login(
+    snapcraft.login(
         store=store_client,
         packages=snap_list,
         channels=channel_list,
         acls=acl_list,
         expires=expires,
         save=False,
-    ):
-        sys.exit(1)
+    )
 
     # Support a login_file of '-', which indicates a desire to print to stdout
     if login_file.strip() == "-":
@@ -786,8 +774,7 @@ def login(login_file):
     https://snapcraft.io/account
     """
     store_client = storeapi.StoreClient()
-    if not snapcraft.login(store=store_client, config_fd=login_file):
-        sys.exit(1)
+    snapcraft.login(store=store_client, config_fd=login_file)
 
     print()
 
@@ -810,7 +797,7 @@ def logout():
 def whoami():
     """Returns your login information relevant to the store."""
     # TODO: workaround until bakery client is added.
-    conf = config.Config()
+    conf = UbuntuOneSSOConfig()
     email = conf.get("email")
     if email is None:
         email = "unknown"

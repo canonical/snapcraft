@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2017, 2020-2021 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,14 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
+# Import types and tell flake8 to ignore the "unused" List.
 
-from . import errors  # noqa: F401 isort:skip
-from . import channels  # noqa: F401 isort:skip
-from . import status  # noqa: F401 isort:skip
-from . import http_clients  # noqa: F401 isort: skip
-
-logger = logging.getLogger(__name__)
+from ._flutter_meta import FlutterMetaExtension
 
 
-from ._store_client import StoreClient  # noqa
+class ExtensionImpl(metaclass=FlutterMetaExtension):
+    channel = "beta"
+    supported_bases = ("core18",)
+    supported_confinement = ("strict", "devmode")

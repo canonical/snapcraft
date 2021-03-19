@@ -64,7 +64,7 @@ class DashboardAPI(Requests):
         if response.ok:
             return response.json()["macaroon"]
         else:
-            raise errors.StoreAuthenticationError("Failed to get macaroon", response)
+            raise errors.GeneralStoreError("Failed to get macaroon", response)
 
     def verify_acl(self):
         response = self.post(

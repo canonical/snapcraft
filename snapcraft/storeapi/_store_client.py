@@ -22,11 +22,10 @@ from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
 import requests
 
 from snapcraft.internal.indicators import download_requests_stream
-from . import _upload, errors
+from . import _upload, errors, http_clients
 from ._dashboard_api import DashboardAPI
 from ._snap_api import SnapAPI
 from ._up_down_client import UpDownClient
-from ._ubuntu_sso_client import Client, UbuntuOneAuthClient
 from .constants import DEFAULT_SERIES
 from .v2 import channel_map, releases
 
@@ -40,8 +39,8 @@ class StoreClient:
     def __init__(self) -> None:
         super().__init__()
 
-        self.client = Client()
-        self.auth_client = UbuntuOneAuthClient()
+        self.client = http_clients.Client()
+        self.auth_client = http_clients.UbuntuOneAuthClient()
 
         self.snap = SnapAPI(self.client)
         self.dashboard = DashboardAPI(self.auth_client)
@@ -58,7 +57,7 @@ class StoreClient:
         **kwargs
     ) -> None:
         if config_fd is not None:
-            return self.auth_client.login(config_fd=config_fd)
+            return self.auth_client.login(config_fd=config_fd, **kwargs)
 
         if acls is None:
             acls = [

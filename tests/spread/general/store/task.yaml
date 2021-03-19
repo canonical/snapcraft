@@ -9,11 +9,10 @@ manual: true
 environment:
   SNAP: dump-hello
   SNAP_STORE_MACAROON: "$(HOST: echo ${SNAP_STORE_MACAROON})"
-  SNAP_STORE_DASHBOARD_ROOT_URL: https://dashboard.staging.snapcraft.io/
-  UBUNTU_STORE_API_ROOT_URL: https://dashboard.staging.snapcraft.io/dev/api/
-  UBUNTU_STORE_SEARCH_ROOT_URL: https://api.staging.snapcraft.io/
-  UBUNTU_STORE_UPLOAD_ROOT_URL: https://upload.apps.staging.ubuntu.com/
-  UBUNTU_SSO_API_ROOT_URL: https://login.staging.ubuntu.com/api/v2/
+  STORE_DASHBOARD_URL: https://dashboard.staging.snapcraft.io/
+  STORE_API_URL: https://api.staging.snapcraft.io/
+  STORE_UPLOAD_URL: https://upload.apps.staging.ubuntu.com/
+  UBUNTU_ONE_SSO_URL: https://login.staging.ubuntu.com/
 
 prepare: |
   # Install the review tools to make sure we do not break anything
@@ -52,7 +51,9 @@ execute: |
   snap_name=$(grep "name: " snap/snapcraft.yaml | sed -e "s/name: \(.*$\)/\1/")
 
   # Login
+  set +x
   echo "${SNAP_STORE_MACAROON}" | snapcraft login --with -
+  set -x
 
   # Register
   snapcraft register --yes "${snap_name}"

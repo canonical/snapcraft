@@ -38,7 +38,7 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
 
     def test_status_without_login_must_ask(self):
         self.fake_store_get_snap_channel_map.mock.side_effect = [
-            storeapi.errors.InvalidCredentialsError("error"),
+            storeapi.http_clients.errors.InvalidCredentialsError("error"),
             self.channel_map,
         ]
 
