@@ -65,7 +65,10 @@ def test_get_build_environment():
 
     plugin = CMakePlugin(part_name="my-part", options=Options())
 
-    assert plugin.get_build_environment() == {"CMAKE_PREFIX_PATH": "${SNAPCRAFT_STAGE}"}
+    assert plugin.get_build_environment() == {
+        "CMAKE_PREFIX_PATH": "${SNAPCRAFT_STAGE}",
+        "SNAPCRAFT_CMAKE_ARGS": "",
+    }
 
 
 def test_get_build_commands():
