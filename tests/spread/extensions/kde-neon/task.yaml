@@ -19,6 +19,11 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
+  if [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
+    sed -i 's|command: bin/hello|command: /usr/local/bin/hello|' "${SNAP_DIR}/snap/snapcraft.yaml"
+    sed '/build-snaps: .*/d' "${SNAP_DIR}/snap/snapcraft.yaml"
+  fi
+
 restore: |
   cd "$SNAP_DIR"
   snapcraft clean
@@ -37,7 +42,7 @@ execute: |
     # This snap requires manual connection
     snap connect neon-hello:kde-frameworks-5-plug kde-frameworks-5-qt-5-15-core20:kde-frameworks-5-qt-5-15-core20-slot
   else
-    output="$(snapcraft --enable-experimental-extensions)"
+    output="$(snapcraft)"
     snap install neon-hello_*.snap --dangerous
   fi
 
