@@ -17,3 +17,6 @@ parts:
   go-hello:
     plugin: go
     source: go-hello
+    go-channel: 1.16/stable
+    build-environment:
+      - GO111MODULE: "off"
