@@ -88,6 +88,85 @@ class ExtensionTest(ProjectLoaderBaseTest):
             ),
         )
 
+    def test_extension_core20(self):
+        kde_neon_extension = ExtensionImpl(
+            extension_name="kde-neon", yaml_data=dict(base="core20")
+        )
+
+        self.expectThat(
+            kde_neon_extension.root_snippet,
+            Equals(
+                {
+                    "assumes": ["snapd2.43"],
+                    "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
+                    "hooks": {
+                        "configure": {
+                            "command-chain": [
+                                "snap/command-chain/hooks-configure-desktop"
+                            ],
+                            "plugs": ["desktop"],
+                        }
+                    },
+                    "plugs": {
+                        "icon-themes": {
+                            "default-provider": "gtk-common-themes",
+                            "interface": "content",
+                            "target": "$SNAP/data-dir/icons",
+                        },
+                        "kde-frameworks-5-plug": {
+                            "content": "kde-frameworks-5-qt-5-15-core20-all",
+                            "default-provider": "kde-frameworks-5-qt-5-15-core20",
+                            "interface": "content",
+                            "target": "$SNAP/kf5",
+                        },
+                        "sound-themes": {
+                            "default-provider": "gtk-common-themes",
+                            "interface": "content",
+                            "target": "$SNAP/data-dir/sounds",
+                        },
+                    },
+                }
+            ),
+        )
+        self.expectThat(
+            kde_neon_extension.app_snippet,
+            Equals(
+                {
+                    "command-chain": ["snap/command-chain/desktop-launch"],
+                    "plugs": ["desktop", "desktop-legacy", "opengl", "wayland", "x11"],
+                }
+            ),
+        )
+        self.expectThat(
+            kde_neon_extension.part_snippet,
+            Equals(
+                {
+                    "build-environment": [
+                        {
+                            "SNAPCRAFT_CMAKE_ARGS": "-DCMAKE_FIND_ROOT_PATH=/snap/kde-frameworks-5-qt-5-15-core20-sdk/current"
+                        }
+                    ]
+                }
+            ),
+        )
+        self.expectThat(
+            kde_neon_extension.parts,
+            Equals(
+                {
+                    "kde-neon-extension": {
+                        "build-packages": ["g++"],
+                        "build-snaps": [
+                            "kde-frameworks-5-qt-5-15-core20-sdk/latest/candidate"
+                        ],
+                        "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-plug"],
+                        "plugin": "make",
+                        "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
+                        "source-subdir": "kde-neon",
+                    }
+                }
+            ),
+        )
+
     def test_supported_bases(self):
         self.assertThat(
             ExtensionImpl.get_supported_bases(), Equals(("core18", "core20"))
