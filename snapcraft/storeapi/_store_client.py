@@ -36,6 +36,10 @@ logger = logging.getLogger(__name__)
 class StoreClient:
     """High-level client Snap resources."""
 
+    @property
+    def use_candid(self) -> bool:
+        return isinstance(self.auth_client, http_clients.CandidClient)
+
     def __init__(self, use_candid: bool = False) -> None:
         super().__init__()
 

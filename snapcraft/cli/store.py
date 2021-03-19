@@ -720,7 +720,7 @@ def export_login(
         acl_list = acls.split(",")
 
     store_client = storeapi.StoreClient(use_candid=experimental_login)
-    if experimental_login:
+    if store_client.use_candid:
         store_client.login(
             packages=snap_list,
             channels=channel_list,
@@ -809,7 +809,7 @@ def login(login_file, experimental_login: bool):
     https://snapcraft.io/account
     """
     store_client = storeapi.StoreClient(use_candid=experimental_login)
-    if experimental_login:
+    if store_client.use_candid:
         store_client.login(config_fd=login_file, save=True)
     else:
         snapcraft.login(store=store_client, config_fd=login_file)
