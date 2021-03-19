@@ -162,7 +162,7 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
         self.useFixture(self.fake_store_account_info)
 
         self.fake_metadata.mock.side_effect = [
-            storeapi.errors.InvalidCredentialsError("error"),
+            storeapi.http_clients.errors.InvalidCredentialsError("error"),
             None,
         ]
 

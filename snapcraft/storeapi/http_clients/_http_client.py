@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2019 Canonical Ltd
+# Copyright 2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,16 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 import os
-import urllib.parse
+import logging
 
 import requests
+
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, RetryError
 from requests.packages.urllib3.util.retry import Retry
 
-from . import _agent, errors
+from . import agent, errors
+
 
 # Set urllib3's logger to only emit errors, not warnings. Otherwise even
 # retries are printed, and they're nasty.
@@ -32,21 +33,12 @@ logger = logging.getLogger(__name__)
 
 
 class Client:
-    """A base class to define clients for the ols servers.
-    This is a simple wrapper around requests.Session so we inherit all good
-    bits while providing a simple point for tests to override when needed.
-    """
+    """Generic Client to talk to the *Store."""
 
-    def __init__(self, conf, root_url):
-        """Initialize Client object
-
-        :param config conf: Configuration details for the client
-        :param str root_url: Root url for all requests.
-        :type config: snapcraft.config.Config
-        """
-        self.conf = conf
-        self.root_url = root_url
+    def __init__(self, *, user_agent: str = agent.get_user_agent()) -> None:
         self.session = requests.Session()
+        self._user_agent = user_agent
+
         # Setup max retries for all store URLs and the CDN
         retries = Retry(
             total=int(os.environ.get("STORE_RETRIES", 5)),
@@ -56,38 +48,34 @@ class Client:
         self.session.mount("http://", HTTPAdapter(max_retries=retries))
         self.session.mount("https://", HTTPAdapter(max_retries=retries))
 
-        self._snapcraft_headers = {"User-Agent": _agent.get_user_agent()}
-
-    def request(self, method, url, params=None, headers=None, **kwargs):
+    def request(
+        self, method, url, params=None, headers=None, **kwargs
+    ) -> requests.Response:
         """Send a request to url relative to the root url.
 
         :param str method: Method used for the request.
-        :param str url: Appended with the root url first.
+        :param str url: URL to request with method.
         :param list params: Query parameters to be sent along with the request.
         :param list headers: Headers to be sent along with the request.
 
         :return Response of the request.
         """
-        # Note that url may be absolute in which case 'root_url' is ignored by
-        # urljoin.
-
         if headers:
-            headers.update(self._snapcraft_headers)
+            headers["User-Agent"] = self._user_agent
         else:
-            headers = self._snapcraft_headers
+            headers = {"User-Agent": self._user_agent}
 
-        final_url = urllib.parse.urljoin(self.root_url, url)
         debug_headers = headers.copy()
         if "Authorization" in debug_headers:
             debug_headers["Authorization"] = "<macaroon>"
         logger.debug(
             "Calling {} with params {} and headers {}".format(
-                final_url, params, debug_headers
+                url, params, debug_headers
             )
         )
         try:
             response = self.session.request(
-                method, final_url, headers=headers, params=params, **kwargs
+                method, url, headers=headers, params=params, **kwargs
             )
         except (ConnectionError, RetryError) as e:
             raise errors.StoreNetworkError(e) from e
@@ -98,36 +86,3 @@ class Client:
             raise errors.StoreServerError(response)
 
         return response
-
-    def get(self, url, **kwargs):
-        """Perform a GET request with the given arguments.
-
-        The arguments are the same as for the request function,
-        namely params and headers.
-
-        :param str url: url to send the request.
-        :return Response of the request.
-        """
-        return self.request("GET", url, **kwargs)
-
-    def post(self, url, **kwargs):
-        """Perform a POST request with the given arguments.
-
-        The arguments are the same as for the request function,
-        namely params and headers.
-
-        :param str url: url to send the request.
-        :return Response of the request.
-        """
-        return self.request("POST", url, **kwargs)
-
-    def put(self, url, **kwargs):
-        """Perform a PUT request with the given arguments.
-
-        The arguments are the same as for the request function,
-        namely params and headers.
-
-        :param str url: url to send the request.
-        :return Response of the request.
-        """
-        return self.request("PUT", url, **kwargs)

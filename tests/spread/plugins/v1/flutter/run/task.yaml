@@ -1,16 +1,23 @@
 summary: Build and run a basic snap using the flutter plugin and extension
 
-kill-timeout: 20m
+kill-timeout: 30m
 
 environment:
+  FLUTTER/dev: dev
+  FLUTTER/master: master
+  FLUTTER/beta: beta
+  FLUTTER/stable: stable
   SNAP_DIR: ../snaps/flutter-hello
 
 restore: |
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
+  rm -f ./snap/snapcraft.yaml
 
 execute: |
+  cp "snapcraft-$FLUTTER.yaml" "$SNAP_DIR/snap/snapcraft.yaml"
+
   cd "$SNAP_DIR"
   snapcraft
   snap install flutter-hello_*.snap --dangerous
