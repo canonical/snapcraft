@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2020 Canonical Ltd
+# Copyright 2016-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
 import functools
 import operator
 import os
@@ -27,7 +26,8 @@ import click
 from tabulate import tabulate
 
 import snapcraft
-from snapcraft import config, formatting_utils, storeapi
+from snapcraft import formatting_utils, storeapi
+from snapcraft.storeapi.http_clients._ubuntu_sso_client import UbuntuOneSSOConfig
 from snapcraft._store import StoreClientCLI
 from snapcraft.storeapi.constants import DEFAULT_SERIES
 
@@ -67,19 +67,9 @@ _MESSAGE_REGISTER_NO = dedent(
 )
 
 
-@contextlib.contextmanager
-def _requires_login():
-    try:
-        yield
-    except storeapi.errors.InvalidCredentialsError:
-        echo.error("No valid credentials found." ' Have you run "snapcraft login"?')
-        raise
-
-
 @click.group()
 def storecli():
     """Store commands"""
-    pass
 
 
 def _human_readable_acls(store_client: storeapi.StoreClient) -> str:
@@ -396,8 +386,7 @@ def promote(snap_name, from_channel, to_channel, yes):
         )
 
     store = storeapi.StoreClient()
-    with _requires_login():
-        status_payload = store.get_snap_status(snap_name)
+    status_payload = store.get_snap_status(snap_name)
 
     snap_status = storeapi.status.SnapStatus(
         snap_name=snap_name, payload=status_payload
@@ -679,7 +668,20 @@ def list_registered():
     metavar="<expiration date>",
     help="Date/time (in ISO 8601) when this exported login expires",
 )
-def export_login(login_file: str, snaps: str, channels: str, acls: str, expires: str):
+@click.option(
+    "--experimental-login",
+    is_flag=True,
+    help="*EXPERIMENTAL* Enables login through candid.",
+    envvar="SNAPCRAFT_LOGIN",
+)
+def export_login(
+    login_file: str,
+    snaps: str,
+    channels: str,
+    acls: str,
+    expires: str,
+    experimental_login: bool,
+):
     """Save login configuration for a store account in FILE.
 
     This file can then be used to log in to the given account with the
@@ -717,16 +719,24 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
     if acls:
         acl_list = acls.split(",")
 
-    store_client = storeapi.StoreClient()
-    if not snapcraft.login(
-        store=store_client,
-        packages=snap_list,
-        channels=channel_list,
-        acls=acl_list,
-        expires=expires,
-        save=False,
-    ):
-        sys.exit(1)
+    store_client = storeapi.StoreClient(use_candid=experimental_login)
+    if store_client.use_candid:
+        store_client.login(
+            packages=snap_list,
+            channels=channel_list,
+            acls=acl_list,
+            expires=expires,
+            save=False,
+        )
+    else:
+        snapcraft.login(
+            store=store_client,
+            packages=snap_list,
+            channels=channel_list,
+            acls=acl_list,
+            expires=expires,
+            save=False,
+        )
 
     # Support a login_file of '-', which indicates a desire to print to stdout
     if login_file.strip() == "-":
@@ -759,13 +769,20 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
 
             {}
 
-        to log in to this account with no password and have these
-        capabilities:\n""".format(
+        """.format(
                 preamble, login_action
             )
         )
     )
-    echo.info(_human_readable_acls(store_client))
+    try:
+        human_acls = _human_readable_acls(store_client)
+        echo.info(
+            "to log in to this account with no password and have these "
+            f"capabilities:\n{human_acls}"
+        )
+    except NotImplementedError:
+        pass
+
     echo.warning(
         "This exported login is not encrypted. Do not commit it to version control!"
     )
@@ -779,21 +796,33 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
     type=click.File("r"),
     help="Path to file created with 'snapcraft export-login'",
 )
-def login(login_file):
+@click.option(
+    "--experimental-login",
+    is_flag=True,
+    help="*EXPERIMENTAL* Enables login through candid.",
+    envvar="SNAPCRAFT_LOGIN",
+)
+def login(login_file, experimental_login: bool):
     """Login with your Ubuntu One e-mail address and password.
 
     If you do not have an Ubuntu One account, you can create one at
     https://snapcraft.io/account
     """
-    store_client = storeapi.StoreClient()
-    if not snapcraft.login(store=store_client, config_fd=login_file):
-        sys.exit(1)
+    store_client = storeapi.StoreClient(use_candid=experimental_login)
+    if store_client.use_candid:
+        store_client.login(config_fd=login_file, save=True)
+    else:
+        snapcraft.login(store=store_client, config_fd=login_file)
 
     print()
 
     if login_file:
-        echo.info("Login successful. You now have these capabilities:\n")
-        echo.info(_human_readable_acls(store_client))
+        try:
+            human_acls = _human_readable_acls(store_client)
+            echo.info("Login successful. You now have these capabilities:\n")
+            echo.info(human_acls)
+        except NotImplementedError:
+            echo.info("Login successful.")
     else:
         echo.info("Login successful.")
 
@@ -810,7 +839,7 @@ def logout():
 def whoami():
     """Returns your login information relevant to the store."""
     # TODO: workaround until bakery client is added.
-    conf = config.Config()
+    conf = UbuntuOneSSOConfig()
     email = conf.get("email")
     if email is None:
         email = "unknown"

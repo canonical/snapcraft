@@ -157,7 +157,7 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
 
     def test_upload_without_login_must_ask(self):
         self.fake_store_upload_precheck.mock.side_effect = [
-            storeapi.errors.InvalidCredentialsError("error"),
+            storeapi.http_clients.errors.InvalidCredentialsError("error"),
             None,
         ]
 
@@ -459,6 +459,7 @@ class UploadCommandDeltasTestCase(UploadCommandBaseTestCase):
 
         class _FakeResponse:
             status_code = 501
+            reason = "disabled"
 
             def json(self):
                 return {
@@ -471,7 +472,7 @@ class UploadCommandDeltasTestCase(UploadCommandBaseTestCase):
                 }
 
         self.fake_store_upload.mock.side_effect = [
-            storeapi.errors.StoreServerError(_FakeResponse()),
+            storeapi.http_clients.errors.StoreServerError(_FakeResponse()),
             self.mock_tracker,
         ]
 

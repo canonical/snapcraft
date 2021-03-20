@@ -37,7 +37,7 @@ class RevisionsCommandTestCase(FakeStoreCommandsBaseTestCase):
 
     def test_revisions_without_login_must_ask(self):
         self.fake_store_get_releases.mock.side_effect = [
-            storeapi.errors.InvalidCredentialsError("error"),
+            storeapi.http_clients.errors.InvalidCredentialsError("error"),
             self.releases,
         ]
 

@@ -21,7 +21,7 @@ from testtools.matchers import Equals
 
 from snapcraft import ProjectOptions
 from snapcraft import __version__ as snapcraft_version
-from snapcraft import storeapi
+from snapcraft.storeapi.http_clients import agent
 from tests import unit
 from tests.fixture_setup.os_release import FakeOsRelease
 
@@ -33,7 +33,7 @@ class UserAgentTestCase(unit.TestCase):
         arch = ProjectOptions().deb_arch
         expected = f"snapcraft/{snapcraft_version} Ubuntu/16.04 ({arch})"
 
-        self.expectThat(storeapi._agent.get_user_agent("linux"), Equals(expected))
+        self.expectThat(agent.get_user_agent("linux"), Equals(expected))
 
     def test_user_agent_linux_unknown(self):
         self.useFixture(FakeOsRelease(name=None, version_id=None))
@@ -41,33 +41,29 @@ class UserAgentTestCase(unit.TestCase):
         arch = ProjectOptions().deb_arch
         expected = f"snapcraft/{snapcraft_version} Unknown/Unknown Version ({arch})"
 
-        self.expectThat(storeapi._agent.get_user_agent("linux"), Equals(expected))
+        self.expectThat(agent.get_user_agent("linux"), Equals(expected))
 
     def test_user_agent_windows(self):
         arch = ProjectOptions().deb_arch
         expected = f"snapcraft/{snapcraft_version} Windows ({arch})"
 
-        self.expectThat(
-            storeapi._agent.get_user_agent(platform="windows"), Equals(expected)
-        )
+        self.expectThat(agent.get_user_agent(platform="windows"), Equals(expected))
 
     def test_user_agent_darwin(self):
         arch = ProjectOptions().deb_arch
         expected = f"snapcraft/{snapcraft_version} Darwin ({arch})"
 
-        self.expectThat(
-            storeapi._agent.get_user_agent(platform="darwin"), Equals(expected)
-        )
+        self.expectThat(agent.get_user_agent(platform="darwin"), Equals(expected))
 
     def test_in_travis_ci_env(self):
         self.useFixture(fixtures.EnvironmentVariable("TRAVIS_TESTING", "1"))
 
-        self.assertTrue(storeapi._agent._is_ci_env())
+        self.assertTrue(agent._is_ci_env())
 
     def test_in_autopkgtest_ci_env(self):
         self.useFixture(fixtures.EnvironmentVariable("AUTOPKGTEST_TMP", "1"))
 
-        self.assertTrue(storeapi._agent._is_ci_env())
+        self.assertTrue(agent._is_ci_env())
 
     def test_not_in_ci_env(self):
         # unset any known testing environment vars
@@ -81,4 +77,4 @@ class UserAgentTestCase(unit.TestCase):
         for var in vars_to_unset:
             self.useFixture(fixtures.EnvironmentVariable(var, None))
 
-        self.assertFalse(storeapi._agent._is_ci_env())
+        self.assertFalse(agent._is_ci_env())

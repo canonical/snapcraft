@@ -18,6 +18,7 @@ import re
 from unittest import mock
 
 import fixtures
+import pytest
 from testtools.matchers import Contains, Equals, MatchesRegex, Not
 
 from snapcraft import storeapi
@@ -156,7 +157,7 @@ class ExportLoginCommandTestCase(FakeStoreCommandsBaseTestCase):
 
     def test_successful_login_with_2fa(self):
         self.fake_store_login.mock.side_effect = [
-            storeapi.errors.StoreTwoFactorAuthenticationRequired(),
+            storeapi.http_clients.errors.StoreTwoFactorAuthenticationRequired(),
             None,
         ]
 
@@ -210,14 +211,19 @@ class ExportLoginCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
 
     def test_failed_login_with_invalid_credentials(self):
-        self.fake_store_login.mock.side_effect = storeapi.errors.InvalidCredentialsError(
+        self.fake_store_login.mock.side_effect = storeapi.http_clients.errors.InvalidCredentialsError(
             "error"
         )
 
-        result = self.run_command(
-            ["export-login", "exported"], input="bad-user@example.com\nbad-password\n"
-        )
+        with pytest.raises(
+            storeapi.http_clients.errors.InvalidCredentialsError
+        ) as exc_info:
+            self.run_command(
+                ["export-login", "exported"],
+                input="bad-user@example.com\nbad-password\n",
+            )
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(storeapi.constants.INVALID_CREDENTIALS))
-        self.assertThat(result.output, Contains("Login failed."))
+        assert (
+            str(exc_info.value)
+            == 'Invalid credentials: error. Have you run "snapcraft login"?'
+        )

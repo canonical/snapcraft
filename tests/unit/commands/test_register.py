@@ -33,7 +33,7 @@ class RegisterTestCase(FakeStoreCommandsBaseTestCase):
 
     def test_register_without_login_must_ask(self):
         self.fake_store_register.mock.side_effect = [
-            storeapi.errors.InvalidCredentialsError("error"),
+            storeapi.http_clients.errors.InvalidCredentialsError("error"),
             None,
         ]
 

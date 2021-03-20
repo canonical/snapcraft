@@ -7,6 +7,9 @@ systems:
   - ubuntu-18.04
   - ubuntu-18.04-64
   - ubuntu-18.04-amd64
+  - ubuntu-20.04
+  - ubuntu-20.04-64
+  - ubuntu-20.04-amd64
 
 environment:
   SNAP_DIR: ../snaps/neon-hello
@@ -15,6 +18,11 @@ prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+  if [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
+    sed -i 's|command: bin/hello|command: usr/local/bin/hello|' "${SNAP_DIR}/snap/snapcraft.yaml"
+    sed '/build-snaps: .*/d' "${SNAP_DIR}/snap/snapcraft.yaml"
+  fi
 
 restore: |
   cd "$SNAP_DIR"
@@ -27,12 +35,16 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
-  output="$(snapcraft)"
 
-  sudo snap install neon-hello_*.snap --dangerous
-
-  # This snap requires manual connection
-  snap connect neon-hello:kde-frameworks-5-plug kde-frameworks-5-core18:kde-frameworks-5-core18-slot
+  if [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
+    output="$(snapcraft --enable-experimental-extensions)"
+    snap install neon-hello_*.snap --dangerous
+    # This snap requires manual connection
+    snap connect neon-hello:kde-frameworks-5-plug kde-frameworks-5-qt-5-15-core20:kde-frameworks-5-qt-5-15-core20-slot
+  else
+    output="$(snapcraft)"
+    snap install neon-hello_*.snap --dangerous
+  fi
 
   [ "$(neon-hello)" = "hello world" ]
 
@@ -42,9 +54,6 @@ execute: |
   [ -d "$snap_user_data/.local" ]
   [ -f "$snap_user_data/.last_revision" ]
   [ "$(cat "$snap_user_data/.last_revision")" = "SNAP_DESKTOP_LAST_REVISION=x1" ]
-
-  # Verify content snap was installed for dependency checks.
-  sudo snap list kde-frameworks-5-core18
 
   # Verify all dependencies were found.
   if echo "$output" | grep -q "part is missing libraries"; then

@@ -10,6 +10,9 @@ base: core18
 
 parts:
   multiple-mains:
-      source: .
-      plugin: go
-      go-importpath: main
+    source: .
+    plugin: go
+    go-importpath: main
+    go-channel: 1.16/stable
+    build-environment:
+      - GO111MODULE: "off"

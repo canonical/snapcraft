@@ -52,6 +52,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: snap
+          path: tests
 
       - name: Install spread
         run: curl -s https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz | sudo tar xzv -C /usr/bin
@@ -60,6 +61,62 @@ jobs:
         env:
           SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
         run: spread ${{ matrix.spread-jobs }}
+
+      - name: Discard spread workers
+        if: always()
+        run: |
+          shopt -s nullglob
+          for r in .spread-reuse.*.yaml; do
+            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          done
+
+  integration-spread-tests-store:
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      # FIXME: enable fail-fast mode once spread can cancel an executing job.
+      # Disable fail-fast mode as it doesn't function with spread. It seems
+      # that cancelling tasks requires short, interruptible actions and
+      # interrupting spread, notably, does not work today. As such disable
+      # fail-fast while we tackle that problem upstream.
+      fail-fast: false
+
+    steps:
+      - name: Decision to Run
+        id: decisions
+        run: |
+          # Secrets cannot be used in conditionals, so this is our dance:
+          # https://github.com/actions/runner/issues/520
+          if [[ -n "${{ secrets.SNAP_STORE_MACAROON }}" ]]; then
+            echo "::set-output name=RUN::true"
+          else
+            echo "::set-output name=RUN::"
+          fi
+
+      - if: steps.decisions.outputs.RUN == 'true'
+        name: Checkout snapcraft
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - if: steps.decisions.outputs.RUN == 'true'
+        name: Download snapcraft snap
+        uses: actions/download-artifact@v2
+        with:
+          name: snap
+          path: tests
+
+      - if: steps.decisions.outputs.RUN == 'true'
+        name: Install spread
+        run: curl -s https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz | sudo tar xzv -C /usr/bin
+
+      - if: steps.decisions.outputs.RUN == 'true'
+        name: Run spread
+        env:
+          SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
+          SNAP_STORE_MACAROON: ${{ secrets.SNAP_STORE_MACAROON }}
+          SNAP_STORE_CANDID_MACAROON: ${{ secrets.SNAP_STORE_CANDID_MACAROON }}
+        run: spread google:ubuntu-18.04-64:tests/spread/general/store
 
       - name: Discard spread workers
         if: always()

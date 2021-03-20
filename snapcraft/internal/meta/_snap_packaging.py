@@ -536,6 +536,11 @@ class _SnapPackaging:
             file_utils.link_or_copy(
                 "gadget.yaml", os.path.join(self.meta_dir, "gadget.yaml")
             )
+        if self._config_data.get("type", "") == "kernel":
+            if os.path.exists("kernel.yaml"):
+                file_utils.link_or_copy(
+                    "kernel.yaml", os.path.join(self.meta_dir, "kernel.yaml")
+                )
 
     def _assemble_runtime_environment(self) -> str:
         # Classic confinement or building on a host that does not match the target base

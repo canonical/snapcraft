@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2017 Canonical Ltd
+# Copyright 2016-2017, 2020-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,7 +19,7 @@ import logging
 from . import errors  # noqa: F401 isort:skip
 from . import channels  # noqa: F401 isort:skip
 from . import status  # noqa: F401 isort:skip
-
+from . import http_clients  # noqa: F401 isort: skip
 
 logger = logging.getLogger(__name__)
 
