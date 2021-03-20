@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2020 Canonical Ltd
+# Copyright (C) 2020-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -33,6 +33,11 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (string; default: "Unix Makefiles")
       Determine what native build system is to be used.
       Can be either `ninja` or `Unix Makefiles` (default).
+
+This plugin also interprets these specific build-environment entries:
+
+    - SNAPCRAFT_CMAKE_ARGS
+      Additional arguments to pass to the cmake configuration.
 """
 
 from typing import Any, Dict, List, Set
@@ -76,6 +81,7 @@ class CMakePlugin(PluginV2):
     def get_build_environment(self) -> Dict[str, str]:
         return {
             "CMAKE_PREFIX_PATH": "${SNAPCRAFT_STAGE}",
+            "SNAPCRAFT_CMAKE_ARGS": "",
         }
 
     def _get_cmake_configure_command(self) -> str:
@@ -84,6 +90,7 @@ class CMakePlugin(PluginV2):
             '"${SNAPCRAFT_PART_SRC_WORK}"',
             "-G",
             f'"{self.options.cmake_generator}"',
+            "${SNAPCRAFT_CMAKE_ARGS}",
         ] + self.options.cmake_parameters
 
         return " ".join(cmd)
