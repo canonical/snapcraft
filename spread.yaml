@@ -503,11 +503,10 @@ suites:
      pip3 install --user --upgrade wheel setuptools
      pip3 install --user --upgrade pip==20.1
      ~/.local/bin/pip install --user -r /snapcraft/requirements.txt -r /snapcraft/requirements-devel.txt
-     # Move the snapcraft modules out of the way
-     mv /snapcraft/snapcraft /snapcraft.bak
-   restore: |
-     mv /snapcraft.bak /snapcraft/snapcraft
 
 path: /snapcraft/
 include:
   - tests/
+  - requirements.txt
+  - requirements-devel.txt
+  - runtests.sh
