@@ -77,6 +77,8 @@ def xdg_dirs(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_DATA_HOME", (tmp_path / ".local").as_posix())
     monkeypatch.setenv("XDG_CACHE_HOME", (tmp_path / ".cache").as_posix())
 
+    return tmp_path
+
 
 @pytest.fixture()
 def in_snap(monkeypatch):

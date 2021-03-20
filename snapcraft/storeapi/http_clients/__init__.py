@@ -14,6 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Union
+
 from . import errors  # noqa: F401
+from ._candid_client import CandidClient  # noqa: F401
 from ._ubuntu_sso_client import UbuntuOneAuthClient  # noqa: F401
 from ._http_client import Client  # noqa: F401
+
+
+AuthClient = Union[CandidClient, UbuntuOneAuthClient]

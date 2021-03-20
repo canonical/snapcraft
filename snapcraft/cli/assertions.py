@@ -68,9 +68,15 @@ def create_key(key_name: str) -> None:
 
 @assertionscli.command("register-key")
 @click.argument("key-name", metavar="<key-name>", required=False)
-def register_key(key_name: str) -> None:
+@click.option(
+    "--experimental-login",
+    is_flag=True,
+    help="*EXPERIMENTAL* Enables login through candid.",
+    envvar="SNAPCRAFT_LOGIN",
+)
+def register_key(key_name: str, experimental_login: bool) -> None:
     """Register a key with the store to sign assertions."""
-    snapcraft.register_key(key_name)
+    snapcraft.register_key(key_name, use_candid=experimental_login)
 
 
 @assertionscli.command("sign-build")

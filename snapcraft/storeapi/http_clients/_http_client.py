@@ -18,7 +18,6 @@ import os
 import logging
 
 import requests
-
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, RetryError
 from requests.packages.urllib3.util.retry import Retry
@@ -66,8 +65,10 @@ class Client:
             headers = {"User-Agent": self._user_agent}
 
         debug_headers = headers.copy()
-        if "Authorization" in debug_headers:
+        if debug_headers.get("Authorization"):
             debug_headers["Authorization"] = "<macaroon>"
+        if debug_headers.get("Macaroons"):
+            debug_headers["Macaroons"] = "<macaroon>"
         logger.debug(
             "Calling {} with params {} and headers {}".format(
                 url, params, debug_headers

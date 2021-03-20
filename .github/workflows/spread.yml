@@ -115,6 +115,7 @@ jobs:
         env:
           SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
           SNAP_STORE_MACAROON: ${{ secrets.SNAP_STORE_MACAROON }}
+          SNAP_STORE_CANDID_MACAROON: ${{ secrets.SNAP_STORE_CANDID_MACAROON }}
         run: spread google:ubuntu-18.04-64:tests/spread/general/store
 
       - name: Discard spread workers

@@ -17,6 +17,7 @@
 import abc
 import base64
 import io
+import os
 import pathlib
 from typing import Optional, TextIO
 
@@ -108,6 +109,8 @@ class Config(abc.ABC):
             else:
                 with self._get_config_path().open("w") as config_file:
                     print(config_content, file=config_file)
+                    config_file.flush()
+                    os.fsync(config_file.fileno())
 
     def clear(self, section_name: Optional[str] = None) -> None:
         if section_name is None:

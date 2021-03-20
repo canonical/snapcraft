@@ -538,10 +538,15 @@ def _maybe_prompt_for_key(name):
     return _select_key(keys)
 
 
-def register_key(name):
+def register_key(name, use_candid: bool = False) -> None:
     key = _maybe_prompt_for_key(name)
-    store_client = StoreClientCLI()
-    login(store=store_client, acls=["modify_account_key"], save=False)
+    store_client = StoreClientCLI(use_candid=use_candid)
+
+    # TODO: remove coupling.
+    if isinstance(store_client.auth_client, storeapi.http_clients.CandidClient):
+        store_client.login(acls=["modify_account_key"], save=False)
+    else:
+        login(store=store_client, acls=["modify_account_key"], save=False)
 
     logger.info("Registering key ...")
     account_info = store_client.get_account_information()

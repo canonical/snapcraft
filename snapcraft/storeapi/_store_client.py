@@ -36,11 +36,23 @@ logger = logging.getLogger(__name__)
 class StoreClient:
     """High-level client Snap resources."""
 
-    def __init__(self) -> None:
+    @property
+    def use_candid(self) -> bool:
+        return isinstance(self.auth_client, http_clients.CandidClient)
+
+    def __init__(self, use_candid: bool = False) -> None:
         super().__init__()
 
         self.client = http_clients.Client()
-        self.auth_client = http_clients.UbuntuOneAuthClient()
+
+        candid_has_credentials = http_clients.CandidClient.has_credentials()
+        logger.debug(
+            f"Candid forced: {use_candid}. Candid crendendials: {candid_has_credentials}."
+        )
+        if use_candid or candid_has_credentials:
+            self.auth_client: http_clients.AuthClient = http_clients.CandidClient()
+        else:
+            self.auth_client = http_clients.UbuntuOneAuthClient()
 
         self.snap = SnapAPI(self.client)
         self.dashboard = DashboardAPI(self.auth_client)
@@ -54,7 +66,7 @@ class StoreClient:
         packages: Iterable[Dict[str, str]] = None,
         expires: str = None,
         config_fd: TextIO = None,
-        **kwargs
+        **kwargs,
     ) -> None:
         if config_fd is not None:
             return self.auth_client.login(config_fd=config_fd, **kwargs)
@@ -69,7 +81,9 @@ class StoreClient:
                 "package_update",
             ]
 
-        macaroon = self.dashboard.get_macaroon(acls, packages, channels, expires)
+        macaroon = self.dashboard.get_macaroon(
+            acls=acls, packages=packages, channels=channels, expires=expires,
+        )
         self.auth_client.login(macaroon=macaroon, **kwargs)
 
     def export_login(self, *, config_fd: TextIO, encode=False) -> None:
@@ -189,7 +203,7 @@ class StoreClient:
         download_path: str,
         track: Optional[str] = None,
         arch: Optional[str] = None,
-        except_hash: str = ""
+        except_hash: str = "",
     ):
         snap_info = self.snap.get_info(snap_name)
         channel_mapping = snap_info.get_channel_mapping(
