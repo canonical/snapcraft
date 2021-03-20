@@ -24,15 +24,15 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
     - conda-packages
       (list of strings, default [])
-      conda packages to install
+      List of conda packages to install.
 
     - conda-python-version
       string
-      python version like 3.8, etc.
+      Python version major and minor version (e.g. 3.8).
 
     - conda-miniconda-version
       string, default latest
-      the miniconda to initialize.
+      The version of miniconda to initialize.
 """
 
 from textwrap import dedent
@@ -42,7 +42,7 @@ from snapcraft.plugins.v2 import PluginV2
 
 
 def _get_miniconda_source(version: str) -> str:
-    """Return tuuple of source_url and source_checksum (if known)."""
+    """Return tuple of source_url and source_checksum (if known)."""
     source = f"https://repo.anaconda.com/miniconda/Miniconda3-{version}-Linux-x86_64.sh"
     return source
 
