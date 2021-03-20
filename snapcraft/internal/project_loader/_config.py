@@ -18,6 +18,7 @@ import collections
 import logging
 import os
 import os.path
+import pathlib
 import re
 from typing import List, Set
 
@@ -255,6 +256,16 @@ class Config:
 
         return package_repos
 
+    def _verify_all_key_assets_installed(
+        self, *, key_assets: pathlib.Path, key_manager: apt_key_manager.AptKeyManager,
+    ) -> None:
+        """Verify all configured key assets are utilized, error if not."""
+        for key_asset in key_assets.glob("*"):
+            key = key_asset.read_text()
+            for key_id in key_manager.get_key_fingerprints(key=key):
+                if not key_manager.is_key_installed(key_id=key_id):
+                    raise errors.SnapcraftProjectUnusedKeyAssetError(key_path=key_asset)
+
     def install_package_repositories(self) -> None:
         package_repos = self._get_required_package_repositories()
         if not package_repos:
@@ -275,6 +286,10 @@ class Config:
             refresh_required |= sources_manager.install_package_repository_sources(
                 package_repo=package_repo
             )
+
+        self._verify_all_key_assets_installed(
+            key_assets=key_assets, key_manager=key_manager
+        )
 
         if refresh_required:
             repo.Repo.refresh_build_packages()
