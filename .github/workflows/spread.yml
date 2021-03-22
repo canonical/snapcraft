@@ -48,12 +48,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download snapcraft snap
-        uses: actions/download-artifact@v2
-        with:
-          name: snap
-          path: tests
-
       - name: Install spread
         run: curl -s https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz | sudo tar xzv -C /usr/bin
 
