@@ -44,14 +44,14 @@ class AptKeyManager:
     def find_asset_with_key_id(self, *, key_id: str) -> Optional[pathlib.Path]:
         """Find snap key asset matching key_id.
 
-        The key asset much be named with the first 8 characters
-        of the key identifier, in upper case.
+        The key asset much be named with the last 8 characters of the key
+        identifier, in upper case.
 
         :param key_id: Key ID to search for.
 
         :returns: Path of key asset if match found, otherwise None.
         """
-        key_file = key_id[0:8].upper() + ".asc"
+        key_file = key_id[-8:].upper() + ".asc"
         key_path = self._key_assets / key_file
 
         if key_path.exists():
