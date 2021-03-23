@@ -94,6 +94,7 @@ parts:
         bin/snapcraftctl: bin/scriptlet-bin/snapcraftctl
     build-environment:
         - "CRYPTOGRAPHY_DONT_BUILD_RUST": "1"
+        - "SODIUM_INSTALL": "system"
     override-build: |
         # pip 20.2 breaks python3-apt, so we pin
         # the version of pip installed before building
@@ -129,6 +130,7 @@ parts:
         - requirements.txt
     build-environment:
         - "CRYPTOGRAPHY_DONT_BUILD_RUST": "1"
+        - "SODIUM_INSTALL": "system"
     override-build: |
         snapcraftctl build
         $SNAPCRAFT_PROJECT_DIR/tools/snapcraft-override-build.sh
