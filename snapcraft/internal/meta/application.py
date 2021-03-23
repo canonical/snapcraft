@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019 Canonical Ltd
+# Copyright (C) 2019-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -47,6 +47,7 @@ class Application:
         app_properties: Dict[str, Any] = None,
         adapter: ApplicationAdapter,
         desktop: str = None,
+        install_mode: str = None,
         command_chain: List[str] = None,
         passthrough: Dict[str, Any] = None,
         commands: Dict[str, Command] = None
@@ -63,6 +64,7 @@ class Application:
 
         self.adapter = adapter
         self.desktop = desktop
+        self.install_mode = install_mode
 
         self.command_chain: List[str] = list()
         if command_chain:
@@ -159,6 +161,7 @@ class Application:
             app_properties=app_dict,
             adapter=adapter,
             desktop=app_dict.get("desktop", None),
+            install_mode=app_dict.get("install-mode", None),
             command_chain=app_dict.get("command-chain", None),
             passthrough=app_dict.get("passthrough", None),
         )
@@ -186,6 +189,9 @@ class Application:
 
         if self.command_chain:
             app_dict["command-chain"] = self.command_chain
+
+        if self.install_mode:
+            app_dict["install-mode"] = self.install_mode
 
         # Adjust socket values to formats snap.yaml accepts
         sockets = app_dict.get("sockets", dict())

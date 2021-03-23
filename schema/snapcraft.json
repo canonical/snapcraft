@@ -593,6 +593,9 @@
                         ],
                         "timer": [
                             "daemon"
+                        ],
+                        "install-mode": [
+                            "daemon"
                         ]
                     },
                     "additionalProperties": false,
@@ -726,6 +729,13 @@
                                 "on-watchdog",
                                 "always",
                                 "never"
+                            ]
+                        },
+                        "install-mode": {
+                            "type": "string",
+                            "enum": [
+                                "enable",
+                                "disable"
                             ]
                         },
                         "slots": {
