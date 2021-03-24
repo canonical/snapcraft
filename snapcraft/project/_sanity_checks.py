@@ -18,6 +18,7 @@ import logging
 import os
 import re
 
+from snapcraft.internal import deprecations
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.project import Project
 
@@ -45,6 +46,9 @@ def conduct_project_sanity_check(project: Project, **kwargs) -> None:
     # rest of the code base.
     if project.info is not None:
         project.info.validate_raw_snapcraft()
+
+    if project._get_build_base() == "core":
+        deprecations.handle_deprecation_notice("dn13")
 
     snap_dir_path = os.path.join(project._get_snapcraft_assets_dir())
     if os.path.isdir(snap_dir_path):

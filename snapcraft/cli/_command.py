@@ -20,12 +20,14 @@ import sys
 
 import click
 
-from snapcraft.internal import common, errors
+from snapcraft.internal import common, deprecations, errors
 
 from ._options import get_build_provider, get_project
 
 
 def run_legacy_snapcraft(argv=sys.argv[1:]) -> None:
+    deprecations.handle_deprecation_notice("dn13")
+
     if not common.is_snap():
         raise errors.SnapcraftEnvironmentError(
             "Legacy mode not supported in this installation. "
