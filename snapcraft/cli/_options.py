@@ -193,6 +193,13 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         envvar="SNAPCRAFT_ENABLE_EXPERIMENTAL_TARGET_ARCH",
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
+    dict(
+        param_decls="--ua-token",
+        metavar="<ua-token>",
+        help="Configure build environment with ESM using specified UA token.",
+        envvar="SNAPCRAFT_UA_TOKEN",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+    ),
 ]
 
 

@@ -1,0 +1,74 @@
+#+TITLE: UA/ESM Token Support
+#+AUTHOR: Chris Patterson <chris.patterson@canonical.com>
+#+DATE: [2021-03-25]
+
+* Scope
+
+Snapcraft's support for handling UA tokens, used to enable ESM support.
+
+* Build Environment Support
+
+UA Tokens will be supported on the following providers:
+
+- Host
+- Managed-Host
+- Multipass
+- LXD
+
+Launchpad (remote) is expected to enable ESM PPAs and will not require
+additional Snapcraft configuration.
+
+* Design / Behaviors
+
+** Enabling a UA token
+
+A user would inform Snapcraft to manage (attach/detach) UA configuration
+=--ua-token <ua-token>= CLI option.
+
+** Token Attach/Detach Lifecycle
+
+If the user specifies =--ua-token <token>=, it is assumed that Snapcraft will
+manage UA on the system.
+
+When a token is specified, Snapcraft will first check the status of UA on the
+system using =ua status=. If Snapcraft determines that the build environment has
+UA:
+
+1. attached, nothing will be done. Snapcraft will log an informational output
+   =UA already attached, ignoring --ua-token option= to alert the user that
+   Snapcraft refuses to manage the token.
+
+2. detached, Snapcraft will execute =sudo ua attach <ua-token>= in the build
+   environment.
+
+As of the time of this writing, there is no expiry for a UA token to
+automatically detach/expire. Snapcraft must ensure that the UA token is detached
+prior to exiting, even if an unexpected exception is raised during the build.
+
+Detaching the UA token will be done with:
+=sudo ua detach <ua-token>=
+
+** Operations Requiring Managed UA Environment
+
+To support all providers with a common implementation, Snapcraft will perform
+the check, attach, and detach when running in =host= or =managed-host= mode. The
+=multipass= and =lxd= providers are responsible for ensuring the token is passed
+through to the =managed-host=.
+
+To reduce unnecessary attach/detach, Snapcraft will limit UA operations to
+lifecycle commands, with the exception of =clean=. =clean= does not require
+access to the ESM PPAs.
+
+** Handling Attach Failures
+
+If Snapcraft fails to attach a UA token, Snapcraft will abort the build and
+provide an error to the user =Failed to attach UA token, aborting build= in
+addition to the details from the =ua attach= command.
+
+** Handling Detach Failures
+
+If Snapcraft fails to detach a UA token, Snapcraft will abort the build with an
+error =Failed to detach UA token= in addition to the details from the =ua
+detach= command. Practically speaking, the lifecycle operation will have
+completed, but Snapcraft must exit with an error so that the end user is aware
+of, and can address the underlying issue.
