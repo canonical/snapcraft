@@ -38,7 +38,7 @@ def details_from_command_error(
     stdout: Optional[Union[bytes, str]] = None,
     stderr: Optional[Union[bytes, str]] = None,
 ) -> str:
-    """Create a consistent ProviderError from command errors.
+    """Create a consistent details message from command errors.
 
     stdout and stderr, if provided, will be stringified using its object
     representation.  This method does not decode byte strings.
