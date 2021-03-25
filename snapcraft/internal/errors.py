@@ -31,6 +31,56 @@ if TYPE_CHECKING:
 CLEAN_RESOLUTION = "Run `snapcraft clean` and retry build."
 
 
+def details_from_command_error(
+    *,
+    cmd: List[str],
+    returncode: int,
+    stdout: Optional[Union[bytes, str]] = None,
+    stderr: Optional[Union[bytes, str]] = None,
+) -> str:
+    """Create a consistent ProviderError from command errors.
+
+    stdout and stderr, if provided, will be stringified using its object
+    representation.  This method does not decode byte strings.
+
+    :param cmd: Command executed.
+    :param returncode: Command exit code.
+    :param stdout: Optional stdout to include.
+    :param stderr: Optional stderr to include.
+
+    :returns: Details string.
+    """
+    cmd_string = " ".join([shlex.quote(c) for c in cmd])
+
+    details = [
+        f"* Command that failed: {cmd_string!r}",
+        f"* Command exit code: {returncode}",
+    ]
+
+    if stdout:
+        details.append(f"* Command output: {stdout!r}")
+
+    if stderr:
+        details.append(f"* Command standard error output: {stderr!r}")
+
+    return "\n".join(details)
+
+
+def details_from_called_process_error(error: CalledProcessError) -> str:
+    """Create a consistent ProviderError from command errors.
+
+    :param error: CalledProcessError.
+
+    :returns: Details string.
+    """
+    return details_from_command_error(
+        cmd=error.cmd,
+        stdout=error.stdout,
+        stderr=error.stderr,
+        returncode=error.returncode,
+    )
+
+
 class SnapcraftError(Exception):
     """DEPRECATED: Use SnapcraftException instead."""
 
