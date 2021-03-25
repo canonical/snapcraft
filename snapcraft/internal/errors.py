@@ -67,7 +67,7 @@ def details_from_command_error(
 
 
 def details_from_called_process_error(error: CalledProcessError) -> str:
-    """Create a consistent ProviderError from command errors.
+    """Create a consistent details message from CalledProcessError.
 
     :param error: CalledProcessError.
 
