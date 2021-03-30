@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import textwrap
 from subprocess import CalledProcessError
 from typing import List
 
@@ -21,6 +22,68 @@ from snapcraft.internal import errors, pluginhandler, steps
 from snapcraft.internal.project_loader import errors as project_loader_errors
 from snapcraft.internal.project_loader.inspection import errors as inspection_errors
 from snapcraft.internal.repo import errors as repo_errors
+
+
+def test_details_from_called_process_error():
+    error = CalledProcessError(
+        -1, ["test-command", "flags", "quote$me"], "test stdout", "test stderr"
+    )
+
+    details = errors.details_from_called_process_error(error)
+
+    assert details == textwrap.dedent(
+        """\
+            * Command that failed: "test-command flags 'quote$me'"
+            * Command exit code: -1
+            * Command output: 'test stdout'
+            * Command standard error output: 'test stderr'"""
+    )
+
+
+def test_details_from_command_error():
+    details = errors.details_from_command_error(
+        returncode=-1, cmd=["test-command", "flags", "quote$me"],
+    )
+
+    assert details == textwrap.dedent(
+        """\
+            * Command that failed: "test-command flags 'quote$me'"
+            * Command exit code: -1"""
+    )
+
+
+def test_details_from_command_error_with_output_strings():
+    details = errors.details_from_command_error(
+        returncode=-1,
+        cmd=["test-command", "flags", "quote$me"],
+        stdout="test stdout",
+        stderr="test stderr",
+    )
+
+    assert details == textwrap.dedent(
+        """\
+            * Command that failed: "test-command flags 'quote$me'"
+            * Command exit code: -1
+            * Command output: 'test stdout'
+            * Command standard error output: 'test stderr'"""
+    )
+
+
+def test_details_from_command_error_with_output_bytes():
+    details = errors.details_from_command_error(
+        returncode=-1,
+        cmd=["test-command", "flags", "quote$me"],
+        stdout=bytes.fromhex("00 FF"),
+        stderr=bytes.fromhex("01 FE"),
+    )
+
+    assert details == textwrap.dedent(
+        """\
+            * Command that failed: "test-command flags 'quote$me'"
+            * Command exit code: -1
+            * Command output: b'\\x00\\xff'
+            * Command standard error output: b'\\x01\\xfe'"""
+    )
 
 
 class TestErrorFormatting:
