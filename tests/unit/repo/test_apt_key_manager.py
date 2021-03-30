@@ -249,8 +249,8 @@ def test_install_package_repository_key_already_installed(
 def test_install_package_repository_key_from_asset(
     mock_install_key, mock_is_key_installed, apt_gpg, key_assets,
 ):
-    key_id = "8" * 40
-    expected_key_path = key_assets / ("8" * 8 + ".asc")
+    key_id = "123456789012345678901234567890123456AABB"
+    expected_key_path = key_assets / "3456AABB.asc"
     expected_key_path.write_text("key-data")
 
     package_repo = PackageRepositoryApt(

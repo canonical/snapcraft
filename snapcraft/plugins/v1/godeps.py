@@ -24,10 +24,13 @@ This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
 
+This plugin only works with go < 1.16.  As godeps is no longer maintained,
+it is not recommended to continue using this plugin.
+
 Additionally, this plugin uses the following plugin-specific keywords:
 
     - go-channel:
-      (string, default: latest/stable)
+      (string, default: 1.15/stable)
       The Snap Store channel to install go from. If set to an empty string,
       go will be installed using the system's traditional package manager.
 
@@ -65,9 +68,10 @@ class GodepsPlugin(PluginV1):
     @classmethod
     def schema(cls):
         schema = super().schema()
+
         schema["properties"]["go-channel"] = {
             "type": "string",
-            "default": "latest/stable",
+            "default": "1.15/stable",
         }
         schema["properties"]["godeps-file"] = {
             "type": "string",

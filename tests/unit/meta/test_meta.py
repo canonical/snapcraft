@@ -206,6 +206,21 @@ class CreateTestCase(CreateBaseTestCase):
 
         self.assertRaises(errors.MissingGadgetError, self.generate_meta_yaml)
 
+    def test_create_kernel_meta_with_kernel_yaml(self):
+        kernel_yaml = "stub entry: stub value"
+        _create_file("kernel.yaml", content=kernel_yaml)
+
+        self.config_data["type"] = "kernel"
+        self.config_data["build-base"] = "core20"
+        self.config_data.pop("base")
+
+        self.generate_meta_yaml()
+
+        expected_kernel = os.path.join(self.meta_dir, "kernel.yaml")
+        self.assertTrue(os.path.exists(expected_kernel))
+
+        self.assertThat(expected_kernel, FileContains(kernel_yaml))
+
     def test_create_meta_with_declared_icon(self):
         _create_file(os.path.join(os.curdir, "my-icon.png"))
         self.config_data["icon"] = "my-icon.png"

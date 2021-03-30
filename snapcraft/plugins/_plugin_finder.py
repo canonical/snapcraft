@@ -62,6 +62,7 @@ if sys.platform == "linux" or TYPE_CHECKING:
             "catkin-tools": v2.CatkinToolsPlugin,
             "cmake": v2.CMakePlugin,
             "colcon": v2.ColconPlugin,
+            "conda": v2.CondaPlugin,
             "dump": v2.DumpPlugin,
             "go": v2.GoPlugin,
             "make": v2.MakePlugin,

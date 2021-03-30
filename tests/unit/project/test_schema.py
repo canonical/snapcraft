@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2019 Canonical Ltd
+# Copyright (C) 2015-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -156,6 +156,16 @@ class ValidationTest(ValidationBaseTest):
                 "restart-condition": "on-watchdog",
                 "watchdog-timeout": "30s",
             },
+            "service15": {
+                "command": "binary15",
+                "daemon": "simple",
+                "install-mode": "enable",
+            },
+            "service16": {
+                "command": "binary16",
+                "daemon": "simple",
+                "install-mode": "disable",
+            },
         }
 
         Validator(self.data).validate()
@@ -195,6 +205,26 @@ class ValidationTest(ValidationBaseTest):
 
         expected_message = (
             "'adopt-info' is a required property or 'summary' is a required property"
+        )
+        self.assertThat(raised.message, Equals(expected_message), message=self.data)
+
+    def test_invalid_install_mode(self):
+        self.data["apps"] = {
+            "service": {
+                "command": "binary",
+                "daemon": "simple",
+                "install-mode": "invalid",
+            }
+        }
+
+        raised = self.assertRaises(
+            snapcraft.yaml_utils.errors.YamlValidationError,
+            Validator(self.data).validate,
+        )
+
+        expected_message = (
+            "The 'apps/service/install-mode' property does not match the required schema: "
+            "'invalid' is not one of ['enable', 'disable']"
         )
         self.assertThat(raised.message, Equals(expected_message), message=self.data)
 

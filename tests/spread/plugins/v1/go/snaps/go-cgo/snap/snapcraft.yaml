@@ -16,3 +16,6 @@ parts:
     source: go-cgo
     build-packages:
       - gcc
+    go-channel: 1.16/stable
+    build-environment:
+      - GO111MODULE: "off"

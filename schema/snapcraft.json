@@ -593,6 +593,9 @@
                         ],
                         "timer": [
                             "daemon"
+                        ],
+                        "install-mode": [
+                            "daemon"
                         ]
                     },
                     "additionalProperties": false,
@@ -728,6 +731,13 @@
                                 "never"
                             ]
                         },
+                        "install-mode": {
+                            "type": "string",
+                            "enum": [
+                                "enable",
+                                "disable"
+                            ]
+                        },
                         "slots": {
                             "type": "array",
                             "minitems": 1,
@@ -831,6 +841,8 @@
                             "uniqueItems": true,
                             "items": {
                                 "enum": [
+                                    "flutter-stable",
+                                    "flutter-beta",
                                     "flutter-dev",
                                     "flutter-master",
                                     "gnome-3-28",

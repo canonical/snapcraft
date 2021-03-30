@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017,2020 Canonical Ltd
+# Copyright (C) 2017,2020-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,6 +18,7 @@ import os
 import sys
 
 import snapcraft
+from snapcraft import project
 from snapcraft.internal import os_release
 from snapcraft.internal.errors import OsReleaseNameError, OsReleaseVersionIdError
 
@@ -46,7 +47,7 @@ def _get_linux_release(release: os_release.OsRelease) -> str:
 
 
 def get_user_agent(platform: str = sys.platform) -> str:
-    arch = snapcraft.ProjectOptions().deb_arch
+    arch = project.Project().deb_arch
     testing = "(testing) " if _is_ci_env() else ""
 
     if platform == "linux":

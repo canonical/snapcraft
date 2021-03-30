@@ -30,7 +30,7 @@ class ListTest(FakeStoreCommandsBaseTestCase):
     def test_command_without_login_must_ask(self):
         # TODO: look into why this many calls are done inside snapcraft.storeapi
         self.fake_store_account_info.mock.side_effect = [
-            storeapi.errors.InvalidCredentialsError("error"),
+            storeapi.http_clients.errors.InvalidCredentialsError("error"),
             {"account_id": "abcd", "snaps": dict()},
             {"account_id": "abcd", "snaps": dict()},
             {"account_id": "abcd", "snaps": dict()},

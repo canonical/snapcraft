@@ -269,7 +269,7 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
 
     def test_release_without_login_must_ask(self):
         self.fake_store_release.mock.side_effect = [
-            storeapi.errors.InvalidCredentialsError("error"),
+            storeapi.http_clients.errors.InvalidCredentialsError("error"),
             {"opened_channels": ["beta"]},
         ]
 

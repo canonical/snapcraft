@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019 Canonical Ltd
+# Copyright (C) 2019-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -43,6 +43,7 @@ class AppCommandTest(unit.TestCase):
                 "command": "test-command",
                 "stop-command": "test-stop-command",
                 "daemon": "simple",
+                "install-mode": "disable",
                 "command-chain": ["test-command-chain"],
             },
         )
@@ -56,6 +57,7 @@ class AppCommandTest(unit.TestCase):
                     "command": "test-command",
                     "stop-command": "test-stop-command",
                     "daemon": "simple",
+                    "install-mode": "disable",
                     "command-chain": ["test-command-chain"],
                 }
             ),
@@ -250,7 +252,7 @@ class DesktopFileTest(unit.TestCase):
 
 
 class AppPassthroughTests(unit.TestCase):
-    def test_no_passthroug(self):
+    def test_no_passthrough(self):
         app = application.Application(
             app_name="foo",
             adapter=application.ApplicationAdapter.NONE,

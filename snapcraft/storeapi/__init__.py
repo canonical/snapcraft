@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2017 Canonical Ltd
+# Copyright 2016-2017, 2020-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,44 +16,12 @@
 
 import logging
 
-import pymacaroons
-
-from . import errors  # isort:skip
+from . import errors  # noqa: F401 isort:skip
 from . import channels  # noqa: F401 isort:skip
 from . import status  # noqa: F401 isort:skip
-
+from . import http_clients  # noqa: F401 isort: skip
 
 logger = logging.getLogger(__name__)
-
-
-def _macaroon_auth(conf):
-    """Format a macaroon and its associated discharge.
-
-    :return: A string suitable to use in an Authorization header.
-
-    """
-    root_macaroon_raw = conf.get("macaroon")
-    if root_macaroon_raw is None:
-        raise errors.InvalidCredentialsError("Root macaroon not in the config file")
-    unbound_raw = conf.get("unbound_discharge")
-    if unbound_raw is None:
-        raise errors.InvalidCredentialsError("Unbound discharge not in the config file")
-
-    root_macaroon = _deserialize_macaroon(root_macaroon_raw)
-    unbound = _deserialize_macaroon(unbound_raw)
-    bound = root_macaroon.prepare_for_request(unbound)
-    discharge_macaroon_raw = bound.serialize()
-    auth = "Macaroon root={}, discharge={}".format(
-        root_macaroon_raw, discharge_macaroon_raw
-    )
-    return auth
-
-
-def _deserialize_macaroon(value):
-    try:
-        return pymacaroons.Macaroon.deserialize(value)
-    except:  # noqa LP: #1733004
-        raise errors.InvalidCredentialsError("Failed to deserialize macaroon")
 
 
 from ._store_client import StoreClient  # noqa

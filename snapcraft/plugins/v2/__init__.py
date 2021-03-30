@@ -25,6 +25,7 @@ if sys.platform == "linux":
     from .catkin_tools import CatkinToolsPlugin  # noqa: F401
     from .cmake import CMakePlugin  # noqa: F401
     from .colcon import ColconPlugin  # noqa: F401
+    from .conda import CondaPlugin  # noqa: F401
     from .dump import DumpPlugin  # noqa: F401
     from .go import GoPlugin  # noqa: F401
     from .make import MakePlugin  # noqa: F401

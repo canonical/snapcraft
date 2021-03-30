@@ -1,0 +1,25 @@
+name: conda-hello
+version: '1.0'
+summary: Hello world using ipython from conda packages
+description: |
+  Leverage conda-packages to install ipython and use it to say "hello world".
+
+grade: devel
+base: core20
+confinement: strict
+
+apps:
+  conda-hello:
+    command:
+       hello
+
+parts:
+  ipython:
+    plugin: conda
+    conda-miniconda-version: 4.6.14
+    conda-packages:
+    - ipython
+    conda-python-version: "3.7"
+  hello:
+    plugin: dump
+    source: .
