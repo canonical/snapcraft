@@ -216,8 +216,8 @@ fi
 # Create links for user-dirs.dirs
 if [ "$needs_xdg_links" = true ]; then
   for ((i = 0; i < ${#XDG_SPECIAL_DIRS_PATHS[@]}; i++)); do
-    b="$(realpath "${XDG_SPECIAL_DIRS_PATHS[$i]}" --relative-to="$HOME")"
-    if [[ "$b" != "." && -e "$REALHOME/$b" ]]; then
+    b="$(realpath "${XDG_SPECIAL_DIRS_PATHS[$i]}" --relative-to="$HOME" 2>/dev/null)"
+    if [[ -n "$b" && "$b" != "." && -e "$REALHOME/$b" ]]; then
       [ -d "$HOME/$b" ] && rmdir "$HOME/$b" 2> /dev/null
       [ ! -e "$HOME/$b" ] && ln -s "$REALHOME/$b" "$HOME/$b"
     fi
