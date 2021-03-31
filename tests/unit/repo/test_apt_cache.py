@@ -45,9 +45,7 @@ class TestAptStageCache(unit.TestCase):
             filtered_names = {"base-files", "libc6", "libkmod2", "libudev1", "zlib1g"}
 
             apt_cache.mark_packages(package_names)
-            apt_cache.unmark_packages(
-                required_names=package_names, filtered_names=filtered_names
-            )
+            apt_cache.unmark_packages(unmark_names=filtered_names)
 
             marked_packages = apt_cache.get_packages_marked_for_installation()
             self.assertThat(

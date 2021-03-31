@@ -13,3 +13,13 @@ parts:
     plugin: nil
     stage-packages:
     - jq
+    - to amd64:
+      - tar:amd64
+      - xxd
+    - to armhf:
+      - tar:armhf
+      - xxd
+    - on amd64:
+      - grep
+    - else:
+      - grep

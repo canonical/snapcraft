@@ -32,6 +32,7 @@ from snapcraft.internal.indicators import is_dumb_terminal
 
 from . import errors
 from ._base import BaseRepo, get_pkg_name_parts
+from .deb_package import DebPackage
 
 if sys.platform == "linux":
     # Ensure importing works on non-Linux.
@@ -202,10 +203,20 @@ def _get_dpkg_list_path(base: str) -> pathlib.Path:
     return pathlib.Path(f"/snap/{base}/current/usr/share/snappy/dpkg.list")
 
 
-def get_packages_in_base(*, base: str) -> List[str]:
+def _get_filtered_stage_package_names(
+    *, base: str, package_list: List[DebPackage]
+) -> Set[str]:
+    """Get filtered packages by name only - no version or architectures."""
+    manifest_packages = [p.name for p in get_packages_in_base(base=base)]
+    stage_packages = [p.name for p in package_list]
+
+    return set(manifest_packages) - set(stage_packages)
+
+
+def get_packages_in_base(*, base: str) -> List[DebPackage]:
     # We do not want to break what we already have.
     if base in ("core", "core16", "core18"):
-        return _DEFAULT_FILTERED_STAGE_PACKAGES
+        return [DebPackage.from_unparsed(p) for p in _DEFAULT_FILTERED_STAGE_PACKAGES]
 
     base_package_list_path = _get_dpkg_list_path(base)
     if not base_package_list_path.exists():
@@ -218,9 +229,9 @@ def get_packages_in_base(*, base: str) -> List[str]:
         for line in fp:
             if not line.startswith("ii "):
                 continue
-            package_list.append(line.split()[1])
+            package = DebPackage.from_unparsed(line.split()[1])
+            package_list.append(package)
 
-    # format of package_list is <package_name>[:<architecture>]
     return package_list
 
 
@@ -390,16 +401,18 @@ class Ubuntu(BaseRepo):
 
         installed: Set[str] = set()
 
+        package_list = [DebPackage.from_unparsed(name) for name in package_names]
+        filtered_names = _get_filtered_stage_package_names(
+            base=base, package_list=package_list
+        )
+
         stage_packages_path.mkdir(exist_ok=True)
         with AptCache(
             stage_cache=_STAGE_CACHE_DIR, stage_cache_arch=target_arch
         ) as apt_cache:
-            filter_packages = set(get_packages_in_base(base=base))
             apt_cache.update()
             apt_cache.mark_packages(set(package_names))
-            apt_cache.unmark_packages(
-                required_names=set(package_names), filtered_names=filter_packages
-            )
+            apt_cache.unmark_packages(filtered_names)
             for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
                 _DEB_CACHE_DIR
             ):
