@@ -1,4 +1,9 @@
-FROM ubuntu:xenial as builder
+ARG RISK=edge
+ARG UBUNTU=xenial
+
+FROM ubuntu:$UBUNTU as builder
+
+RUN echo "Building snapcraft:$RISK in ubuntu:$UBUNTU"
 
 # Grab dependencies
 RUN apt-get update
@@ -20,9 +25,9 @@ RUN curl -L $(curl -H 'X-Ubuntu-Series: 16' 'https://api.snapcraft.io/api/v1/sna
 RUN mkdir -p /snap/core18
 RUN unsquashfs -d /snap/core18/current core18.snap
 
-# Grab the snapcraft snap from the beta channel and unpack it in the proper
+# Grab the snapcraft snap from the $RISK channel and unpack it in the proper
 # place.
-RUN curl -L $(curl -H 'X-Ubuntu-Series: 16' 'https://api.snapcraft.io/api/v1/snaps/details/snapcraft?channel=beta' | jq '.download_url' -r) --output snapcraft.snap
+RUN curl -L $(curl -H 'X-Ubuntu-Series: 16' 'https://api.snapcraft.io/api/v1/snaps/details/snapcraft?channel='$RISK | jq '.download_url' -r) --output snapcraft.snap
 RUN mkdir -p /snap/snapcraft
 RUN unsquashfs -d /snap/snapcraft/current snapcraft.snap
 
@@ -36,7 +41,7 @@ RUN chmod +x /snap/bin/snapcraft
 
 # Multi-stage build, only need the snaps from the builder. Copy them one at a
 # time so they can be cached.
-FROM ubuntu:xenial
+FROM ubuntu:$UBUNTU
 COPY --from=builder /snap/core /snap/core
 COPY --from=builder /snap/core18 /snap/core18
 COPY --from=builder /snap/snapcraft /snap/snapcraft
