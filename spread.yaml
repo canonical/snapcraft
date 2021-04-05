@@ -501,7 +501,8 @@ suites:
    prepare: |
      apt-get update
      apt-get install --yes gcc g++ make python3-dev python3-pip python3-wheel libffi-dev libsodium-dev libapt-pkg-dev squashfs-tools xdelta3 bzr git mercurial subversion libxml2-dev libxslt-dev
-     pip3 install --user --upgrade cryptography==3.4 wheel setuptools pip==20.1
+     pip3 install --user --upgrade wheel setuptools pip==20.1
+     pip3 install --user --upgrade cryptography==3.4
      ~/.local/bin/pip install --user -r /snapcraft/requirements.txt -r /snapcraft/requirements-devel.txt
 
 path: /snapcraft/
