@@ -35,15 +35,56 @@ Additionally, this plugin uses the following plugin-specific keywords:
       The version of miniconda to initialize.
 """
 
+import os
+import platform
 from textwrap import dedent
 from typing import Any, Dict, List, Set
 
+from snapcraft.internal.errors import SnapcraftException
 from snapcraft.plugins.v2 import PluginV2
+
+
+_MINICONDA_ARCH_FROM_SNAP_ARCH = {
+    "i386": "x86",
+    "amd64": "x86_64",
+    "armhf": "armv7l",
+    "ppc64el": "ppc64le",
+}
+_MINICONDA_ARCH_FROM_PLATFORM = {"x86_64": {"32bit": "x86", "64bit": "x86_64"}}
+
+
+class ArchitectureMissing(SnapcraftException):
+    def __init__(self, snap_arch: str) -> None:
+        self.snap_arch = snap_arch
+
+    def get_brief(self) -> str:
+        return f"Architecture {self.snap_arch!r} is not supported."
+
+    def get_resolution(self) -> str:
+        return "Ensure running the build on a supported architecture for this plugin."
+
+
+def _get_architecture() -> str:
+    snap_arch = os.getenv("SNAP_ARCH")
+    # The first scenario is the general case as snapcraft will be running from the snap.
+    if snap_arch is not None:
+        try:
+            miniconda_arch = _MINICONDA_ARCH_FROM_SNAP_ARCH[snap_arch]
+        except KeyError:
+            raise ArchitectureMissing(snap_arch)
+    # But there may be times when running from a virtualenv while doing development.
+    else:
+        miniconda_arch = _MINICONDA_ARCH_FROM_PLATFORM[platform.machine()][
+            platform.architecture()[0]
+        ]
+
+    return miniconda_arch
 
 
 def _get_miniconda_source(version: str) -> str:
     """Return tuple of source_url and source_checksum (if known)."""
-    source = f"https://repo.anaconda.com/miniconda/Miniconda3-{version}-Linux-x86_64.sh"
+    arch = _get_architecture()
+    source = f"https://repo.anaconda.com/miniconda/Miniconda3-{version}-Linux-{arch}.sh"
     return source
 
 
