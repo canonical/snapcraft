@@ -672,7 +672,7 @@ def list_registered():
     "--experimental-login",
     is_flag=True,
     help="*EXPERIMENTAL* Enables login through candid.",
-    envvar="SNAPCRAFT_LOGIN",
+    envvar="SNAPCRAFT_EXPERIMENTAL_LOGIN",
 )
 def export_login(
     login_file: str,
@@ -800,7 +800,7 @@ def export_login(
     "--experimental-login",
     is_flag=True,
     help="*EXPERIMENTAL* Enables login through candid.",
-    envvar="SNAPCRAFT_LOGIN",
+    envvar="SNAPCRAFT_EXPERIMENTAL_LOGIN",
 )
 def login(login_file, experimental_login: bool):
     """Login with your Ubuntu One e-mail address and password.
