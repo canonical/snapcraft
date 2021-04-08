@@ -1,0 +1,14 @@
+name: fix-symlink-host-copy
+version: "1.0"
+summary: Verify dangling symlinks are corrected with file from host
+description: Fix symlink tests
+
+base: core20
+grade: devel
+confinement: strict
+
+parts:
+  part1:
+    plugin: nil
+    build-packages: [zlib1g]
+    stage-packages: [zlib1g-dev]
