@@ -305,8 +305,9 @@ class DashboardAPI(Requests):
     def close_channels(self, snap_id, channel_names):
         url = "/dev/api/snaps/{}/close".format(snap_id)
         data = {"channels": channel_names}
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
-        response = self.post(url, data=json.dumps(data))
+        response = self.post(url, data=json.dumps(data), headers=headers)
         if not response.ok:
             raise errors.StoreChannelClosingError(response)
 
