@@ -79,6 +79,9 @@ execute: |
   # Progressive Release
   snapcraft release --experimental-progressive-releases --progressive 50 "${snap_name}" 1 candidate
 
+  # Close channel
+  snapcraft close "${snap_name}" candidate
+
   # List tracks
   snapcraft list-tracks "${snap_name}"
 
