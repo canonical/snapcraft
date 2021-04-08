@@ -60,11 +60,7 @@ execute: |
 
   [ -f cross-compile-stage-package-test_0.1_armhf.snap ]
   [ -f prime/usr/lib/arm-linux-gnueabihf/libjq.so.1 ]
-  [ -f prime/bin/grep ]
-  [ -f prime/bin/tar ]
-  [ -f prime/usr/bin/jq ]
-  [ -f prime/usr/bin/xxd ]
-  [ "$(find prime/usr/lib -mindepth 1 -maxdepth 1 -name '*-linux-*')" == prime/usr/lib/arm-linux-gnueabihf ]
+  [ "$(ls prime/usr/lib/)" == "arm-linux-gnueabihf" ]
   rm cross-compile-stage-package-test_0.1_armhf.snap
 
   # Re-spin as native.
@@ -72,11 +68,7 @@ execute: |
 
   [ -f "cross-compile-stage-package-test_0.1_$host_arch.snap" ]
   [ -f "prime/usr/lib/$host_arch_triplet/libjq.so.1" ]
-  [ -f prime/bin/grep ]
-  [ -f prime/bin/tar ]
-  [ -f prime/usr/bin/jq ]
-  [ -f prime/usr/bin/xxd ]
-  [ "$(find prime/usr/lib -mindepth 1 -maxdepth 1 -name '*-linux-*')" == prime/usr/lib/"$host_arch_triplet" ]
+  [ "$(ls prime/usr/lib/)" == "$host_arch_triplet" ]
   rm "cross-compile-stage-package-test_0.1_$host_arch.snap"
 
   # Re-build for armhf.
@@ -84,9 +76,5 @@ execute: |
 
   [ -f cross-compile-stage-package-test_0.1_armhf.snap ]
   [ -f prime/usr/lib/arm-linux-gnueabihf/libjq.so.1 ]
-  [ -f prime/bin/grep ]
-  [ -f prime/bin/tar ]
-  [ -f prime/usr/bin/jq ]
-  [ -f prime/usr/bin/xxd ]
-  [ "$(find prime/usr/lib -mindepth 1 -maxdepth 1 -name '*-linux-*')" == prime/usr/lib/arm-linux-gnueabihf ]
+  [ "$(ls prime/usr/lib/)" == "arm-linux-gnueabihf" ]
   rm cross-compile-stage-package-test_0.1_armhf.snap

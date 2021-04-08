@@ -28,7 +28,6 @@ from testtools.matchers import Equals
 
 from snapcraft.internal import repo
 from snapcraft.internal.repo import errors
-from snapcraft.internal.repo.deb_package import DebPackage
 from tests import unit
 
 
@@ -72,10 +71,6 @@ class TestPackages(unit.TestCase):
 
         self.stage_packages_path = Path(self.path)
 
-    @mock.patch(
-        "snapcraft.internal.repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES",
-        {"filtered-pkg-1", "filtered-pkg-2"},
-    )
     def test_fetch_stage_packages(self):
         fake_package = self.debs_path / "fake-package_1.0_all.deb"
         fake_package.touch()
@@ -98,44 +93,10 @@ class TestPackages(unit.TestCase):
                 call().__enter__().mark_packages({"fake-package"}),
                 call()
                 .__enter__()
-                .unmark_packages({"filtered-pkg-1", "filtered-pkg-2"}),
-                call().__enter__().fetch_archives(self.debs_path),
-            ]
-        )
-
-        self.assertThat(fetched_packages, Equals(["fake-package=1.0"]))
-
-    @mock.patch(
-        "snapcraft.internal.repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES",
-        {"filtered-pkg-1", "filtered-pkg-2", "filtered-pkg-3:amd64", "filtered-pkg-4"},
-    )
-    def test_fetch_stage_package_filtered_arch_version(self):
-        fake_package = self.debs_path / "fake-package_1.0_all.deb"
-        fake_package.touch()
-        self.fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = [
-            ("fake-package", "1.0", fake_package)
-        ]
-
-        package_names = [
-            "filtered-pkg-1=0.0",
-            "filtered-pkg-2:amd64",
-            "filtered-pkg-3",
-            "non-filtered",
-        ]
-        fetched_packages = repo.Ubuntu.fetch_stage_packages(
-            package_names=package_names,
-            stage_packages_path=self.stage_packages_path,
-            base="core",
-            target_arch="amd64",
-        )
-
-        self.fake_apt_cache.assert_has_calls(
-            [
-                call(stage_cache=self.stage_cache_path, stage_cache_arch="amd64"),
-                call().__enter__(),
-                call().__enter__().update(),
-                call().__enter__().mark_packages(set(package_names)),
-                call().__enter__().unmark_packages({"filtered-pkg-4"}),
+                .unmark_packages(
+                    required_names={"fake-package"},
+                    filtered_names=set(repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES),
+                ),
                 call().__enter__().fetch_archives(self.debs_path),
             ]
         )
@@ -531,11 +492,10 @@ class PackageForFileTest(unit.TestCase):
 class TestGetPackagesInBase(testtools.TestCase):
     def test_hardcoded_bases(self):
         for base in ("core", "core16", "core18"):
-            packages = [
-                DebPackage.from_unparsed(p)
-                for p in repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES
-            ]
-            assert repo._deb.get_packages_in_base(base=base) == packages
+            self.expectThat(
+                repo._deb.get_packages_in_base(base=base),
+                Equals(repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES),
+            )
 
     @mock.patch.object(repo._deb, "_get_dpkg_list_path")
     def test_package_list_from_dpkg_list(self, mock_dpkg_list_path):
@@ -566,12 +526,12 @@ class TestGetPackagesInBase(testtools.TestCase):
             repo._deb.get_packages_in_base(base="core20"),
             Equals(
                 [
-                    DebPackage(name="adduser"),
-                    DebPackage(name="apparmor"),
-                    DebPackage(name="apt"),
-                    DebPackage(name="base-files"),
-                    DebPackage(name="base-passwd"),
-                    DebPackage(name="zlib1g", arch="amd64"),
+                    "adduser",
+                    "apparmor",
+                    "apt",
+                    "base-files",
+                    "base-passwd",
+                    "zlib1g:amd64",
                 ]
             ),
         )

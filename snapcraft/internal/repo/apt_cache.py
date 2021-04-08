@@ -248,20 +248,26 @@ class AptCache(ContextDecorator):
 
             self._verify_marked_install(package)
 
-    def unmark_packages(self, unmark_names: Set[str]) -> None:
+    def unmark_packages(
+        self, *, required_names: Set[str], filtered_names: Set[str]
+    ) -> None:
         skipped_essential = set()
-        skipped_filtered = set()
+        skipped_blacklisted = set()
 
         for package in self.cache:
+            # Explicitly listed packages are never filtered.
+            if package.name in required_names:
+                continue
+
             if package.candidate.priority == "essential":
                 # Filter 'essential' packages.
                 skipped_essential.add(package.name)
                 package.mark_keep()
                 continue
 
-            if package.name in unmark_names:
+            if package.name in filtered_names:
                 # Filter packages from given list.
-                skipped_filtered.add(package.name)
+                skipped_blacklisted.add(package.name)
                 package.mark_keep()
                 continue
 
@@ -270,9 +276,9 @@ class AptCache(ContextDecorator):
                 f"Skipping priority essential packages: {sorted(skipped_essential)}"
             )
 
-        if skipped_filtered:
+        if skipped_blacklisted:
             logger.debug(
-                f"Skipping filtered manifest packages: {sorted(skipped_filtered)}"
+                f"Skipping blacklisted from manifest packages: {sorted(skipped_blacklisted)}"
             )
 
         # Unmark dependencies that are no longer required.
