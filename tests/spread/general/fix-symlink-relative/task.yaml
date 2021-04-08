@@ -1,0 +1,19 @@
+summary: Build a snap that fixes absolute symlink to relative if found in install.
+systems: [ubuntu-20*]
+
+environment:
+  SNAP_DIR: snaps/fix-symlink-relative
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+
+execute: |
+  cd "$SNAP_DIR"
+  output="$(snapcraft prime)"
+
+  # Ensure we are not copying from host.
+  echo "$output" | NOMATCH "Copying needed symlink target"
+
+  # Ensure link is correct.
+  readlink "prime/usr/lib/ssl/openssl.cnf" | MATCH "^../../../etc/ssl/openssl.cnf$"
