@@ -27,7 +27,7 @@ from ._dashboard_api import DashboardAPI
 from ._snap_api import SnapAPI
 from ._up_down_client import UpDownClient
 from .constants import DEFAULT_SERIES
-from .v2 import channel_map, releases
+from .v2 import channel_map, releases, whoami
 
 
 logger = logging.getLogger(__name__)
@@ -92,9 +92,9 @@ class StoreClient:
     def logout(self):
         self.auth_client.logout()
 
-    def whoami(self) -> Dict[str, str]:
+    def whoami(self) -> whoami.WhoAmI:
         """Return user relevant login information."""
-        return self.get_account_information()
+        return self.dashboard.whoami()
 
     def acl(self) -> Dict[str, Any]:
         """Return permissions for the logged-in user."""

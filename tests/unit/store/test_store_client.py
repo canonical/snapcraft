@@ -28,7 +28,7 @@ from testtools.matchers import Contains, Equals, FileExists, Is, IsInstance, Not
 import tests
 from snapcraft import storeapi
 from snapcraft.storeapi import errors, http_clients
-from snapcraft.storeapi.v2 import channel_map, releases
+from snapcraft.storeapi.v2 import channel_map, releases, whoami
 from tests import fixture_setup, unit
 
 
@@ -1347,6 +1347,14 @@ class SnapReleasesTest(StoreTestCase):
         self.assertThat(
             self.client.get_snap_releases(snap_name="basic"),
             IsInstance(releases.Releases),
+        )
+
+
+class WhoAmITest(StoreTestCase):
+    def test_whoami(self):
+        self.client.login(email="dummy", password="test correct password")
+        self.assertThat(
+            self.client.whoami(), IsInstance(whoami.WhoAmI),
         )
 
 
