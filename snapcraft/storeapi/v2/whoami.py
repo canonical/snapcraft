@@ -68,9 +68,6 @@ class WhoAmI:
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "WhoAmI":
         jsonschema.validate(payload, WHOAMI_JSONSCHEMA)
-        import pprint
-
-        pprint.pprint(payload)
         return cls(account=Account.unmarshal(payload["account"]))
 
     def marshal(self) -> Dict[str, Any]:
