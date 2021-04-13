@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2020 Canonical Ltd
+# Copyright (C) 2017-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -167,6 +167,8 @@ class SnapPackage:
 
     def is_valid(self) -> bool:
         """Check if the snap is valid."""
+        if self.installed and self.get_local_snap_info()["channel"] == self.channel:
+            return True
         if not self.in_store:
             return False
         store_channels = self._get_store_channels()
@@ -215,20 +217,18 @@ class SnapPackage:
 
     def install(self):
         """Installs the snap onto the system."""
-        if not self.is_valid():
-            raise errors.SnapUnavailableError(
-                snap_name=self.name, snap_channel=self.channel
-            )
-
         snap_install_cmd = []
         if _snap_command_requires_sudo():
             snap_install_cmd = ["sudo"]
         snap_install_cmd.extend(["snap", "install", self.name])
         if self._original_channel:
             snap_install_cmd.extend(["--channel", self._original_channel])
-        if self.is_classic():
-            # TODO make this a user explicit choice
-            snap_install_cmd.append("--classic")
+        try:
+            if self.is_classic():
+                # TODO make this a user explicit choice
+                snap_install_cmd.append("--classic")
+        except (errors.SnapUnavailableError, KeyError):
+            pass
         try:
             check_call(snap_install_cmd)
         except CalledProcessError:
@@ -241,20 +241,18 @@ class SnapPackage:
 
     def refresh(self):
         """Refreshes a snap onto a channel on the system."""
-        if not self.is_valid():
-            raise errors.SnapUnavailableError(
-                snap_name=self.name, snap_channel=self.channel
-            )
-
         snap_refresh_cmd = []
         if _snap_command_requires_sudo():
             snap_refresh_cmd = ["sudo"]
         snap_refresh_cmd.extend(
             ["snap", "refresh", self.name, "--channel", self.channel]
         )
-        if self.is_classic():
-            # TODO make this a user explicit choice
-            snap_refresh_cmd.append("--classic")
+        try:
+            if self.is_classic():
+                # TODO make this a user explicit choice
+                snap_refresh_cmd.append("--classic")
+        except (errors.SnapUnavailableError, KeyError):
+            pass
         try:
             check_call(snap_refresh_cmd)
         except CalledProcessError:
