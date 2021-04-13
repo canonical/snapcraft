@@ -26,7 +26,7 @@ from simplejson.scanner import JSONDecodeError
 from . import _metadata, constants, errors, http_clients
 from ._requests import Requests
 from ._status_tracker import StatusTracker
-from .v2 import channel_map, releases
+from .v2 import channel_map, releases, whoami
 
 
 logger = logging.getLogger(__name__)
@@ -356,3 +356,14 @@ class DashboardAPI(Requests):
             raise errors.StoreSnapChannelMapError(snap_name=snap_name)
 
         return releases.Releases.unmarshal(response.json())
+
+    def whoami(self) -> whoami.WhoAmI:
+        response = self.get(
+            "/api/v2/tokens/whoami",
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+        )
+
+        if not response.ok:
+            raise errors.GeneralStoreError(message="whoami failed.", response=response)
+
+        return whoami.WhoAmI.unmarshal(response.json())

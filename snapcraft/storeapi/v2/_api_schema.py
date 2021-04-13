@@ -144,7 +144,6 @@ RELEASES_JSONSCHEMA: Dict[str, Any] = {
 
 
 CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
-    "additionalProperties": False,
     "properties": {
         "channel-map": {
             "items": {
@@ -337,5 +336,132 @@ CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
         },
     },
     "required": ["channel-map", "revisions", "snap"],
+    "type": "object",
+}
+
+# Version 27, found at https://dashboard.snapcraft.io/docs/v2/en/tokens.html#api-tokens-whoami
+WHOAMI_JSONSCHEMA: Dict[str, Any] = {
+    "properties": {
+        "account": {
+            "properties": {
+                "email": {
+                    "description": "The primary email for the user",
+                    "type": "string",
+                },
+                "id": {
+                    "description": "The store account ID for the user",
+                    "type": "string",
+                },
+                "name": {
+                    "description": "The display name for the user",
+                    "type": "string",
+                },
+                "username": {
+                    "description": "The store username for the user",
+                    "type": "string",
+                },
+            },
+            "required": ["email", "id", "name", "username"],
+            "type": "object",
+        },
+        "channels": {
+            "oneOf": [
+                {
+                    "description": "A list of channels to restrict the macaroon to, allows wildcards in the fnmatch format (https://docs.python.org/3/library/fnmatch.html)",
+                    "items": {"description": "Valid channel name.", "type": "string"},
+                    "minItems": 1,
+                    "type": "array",
+                    "uniqueItems": True,
+                },
+                {"type": "null"},
+            ]
+        },
+        "errors": {
+            "items": {
+                "properties": {
+                    "code": {"type": "string"},
+                    "extra": {"additionalProperties": True, "type": "object"},
+                    "message": {"type": "string"},
+                },
+                "required": ["code", "message", "extra"],
+                "type": "object",
+            },
+            "type": "array",
+        },
+        "expires": {
+            "oneOf": [
+                {
+                    "description": "A timestamp (string formatted per ISO8601) after which the macaroon should not be valid",
+                    "format": "date-time",
+                    "type": "string",
+                },
+                {"type": "null"},
+            ]
+        },
+        "packages": {
+            "oneOf": [
+                {
+                    "description": 'A list of packages to restrict the macaroon to. Those can be defined in two ways: 1- by name: each item in the list should be a json dict like `{"name": "the-name"}`, or 2- by snap_id: each item in the list should be a json dict like `{"snap_id": "some-snap-id-1234"}`.',
+                    "items": {
+                        "anyOf": [{"required": ["snap_id"]}, {"required": ["name"]}],
+                        "description": "Package identifier: a dict with at least name or snap_id keys.",
+                        "properties": {
+                            "name": {"type": "string"},
+                            "snap_id": {"type": "string"},
+                        },
+                        "type": "object",
+                    },
+                    "minItems": 1,
+                    "type": "array",
+                    "uniqueItems": True,
+                },
+                {"type": "null"},
+            ]
+        },
+        "permissions": {
+            "oneOf": [
+                {
+                    "description": "A list of permissions to restrict the macaroon to",
+                    "items": {
+                        "description": "A valid token permission.",
+                        "enum": [
+                            "edit_account",
+                            "modify_account_key",
+                            "package_access",
+                            "package_manage",
+                            "package_metrics",
+                            "package_purchase",
+                            "package_push",
+                            "package_register",
+                            "package_release",
+                            "package_update",
+                            "package_upload",
+                            "package_upload_request",
+                            "store_admin",
+                            "store_review",
+                        ],
+                        "type": "string",
+                    },
+                    "minItems": 1,
+                    "type": "array",
+                    "uniqueItems": True,
+                },
+                {"type": "null"},
+            ]
+        },
+        "store_ids": {
+            "oneOf": [
+                {
+                    "description": "A list of store IDs to restrict the macaroon to",
+                    "items": {"description": "A store ID.", "type": "string"},
+                    "minItems": 1,
+                    "type": "array",
+                    "uniqueItems": True,
+                },
+                {"type": "null"},
+            ]
+        },
+    },
+    "required": ["account", "channels", "packages", "permissions"],
     "type": "object",
 }

@@ -61,6 +61,9 @@ execute: |
     snapcraft login --with login
   fi
 
+  # Who Am I?
+  snapcraft whoami
+
   # Register
   snapcraft register --yes "${snap_name}"
 
