@@ -58,7 +58,7 @@ class ArchitectureMissing(SnapcraftException):
         self.snap_arch = snap_arch
 
     def get_brief(self) -> str:
-        return f"Architecture {self.snap_arch!r} is not supported."
+        return f"Architecture {self.snap_arch!r} is not supported with the 'conda' plugin."
 
     def get_resolution(self) -> str:
         return "Ensure running the build on a supported architecture for this plugin."
