@@ -1,0 +1,28 @@
+name: python-with-stage-package-in-base
+version: "1.0"
+summary: A simple hello world in python
+description: |
+  This is a basic python snap that relies on a stage-package dep found
+  in the base.  This validates the stage package dep was not filtered
+  and can be found without requiring PYTHONPATH pointing to base.
+
+grade: devel
+base: core20
+confinement: strict
+
+apps:
+  python-with-stage-package-in-base:
+    command: bin/hello
+    environment:
+      PYTHONPATH: $SNAP/usr/lib/python3/dist-packages
+
+parts:
+  hello:
+    source: .
+    plugin: python
+    stage-packages:
+      - python3-yaml
+    python-packages:
+      - pip==20.0.2
+    build-environment:
+      - PYTHONPATH: $SNAPCRAFT_PART_INSTALL/usr/lib/python3/dist-packages:$PYTHONPATH

@@ -1,0 +1,7 @@
+#!/usr/bin/env python3
+
+import yaml
+
+obj = yaml.load("msg: hello world", Loader=yaml.Loader)
+
+print(obj["msg"])

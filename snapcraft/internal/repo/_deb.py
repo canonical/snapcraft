@@ -162,6 +162,51 @@ _DEFAULT_FILTERED_STAGE_PACKAGES: List[str] = [
 ]
 
 
+IGNORE_FILTERS: Dict[str, Set[str]] = {
+    "core20": {
+        "python3-attr",
+        "python3-blinker",
+        "python3-certifi",
+        "python3-cffi-backend",
+        "python3-chardet",
+        "python3-configobj",
+        "python3-cryptography",
+        # Rely on setuptools installed by plugin or found in base, unless
+        # explicitly requested.
+        # "python3-distutils"
+        "python3-idna",
+        "python3-importlib-metadata",
+        "python3-jinja2",
+        "python3-json-pointer",
+        "python3-jsonpatch",
+        "python3-jsonschema",
+        "python3-jwt",
+        "python3-lib2to3",
+        "python3-markupsafe",
+        # Provides /usr/bin/python3, don't bring in unless explicitly requested.
+        # "python3-minimal"
+        "python3-more-itertools",
+        "python3-netifaces",
+        "python3-oauthlib",
+        # Rely on version brought in by setuptools, unless explicitly requested.
+        # "python3-pkg-resources"
+        "python3-pyrsistent",
+        "python3-pyudev",
+        "python3-requests",
+        "python3-requests-unixsocket",
+        "python3-serial",
+        # Rely on version installed by plugin or found in base, unless
+        # explicitly requested.
+        # "python3-setuptools"
+        "python3-six",
+        "python3-urllib3",
+        "python3-urwid",
+        "python3-yaml",
+        "python3-zipp",
+    }
+}
+
+
 @functools.lru_cache(maxsize=256)
 def _run_dpkg_query_search(file_path: str) -> str:
     try:
@@ -210,7 +255,9 @@ def _get_filtered_stage_package_names(
     manifest_packages = [p.name for p in get_packages_in_base(base=base)]
     stage_packages = [p.name for p in package_list]
 
-    return set(manifest_packages) - set(stage_packages)
+    return (
+        set(manifest_packages) - set(stage_packages) - IGNORE_FILTERS.get(base, set())
+    )
 
 
 def get_packages_in_base(*, base: str) -> List[DebPackage]:
