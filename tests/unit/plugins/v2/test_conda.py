@@ -119,7 +119,10 @@ def test_get_miniconda_source_unsupported_dev_env(monkeypatch):
 def test_architecture_missing_exception():
     exception = ArchitectureMissing("amd64")
 
-    assert exception.get_brief() == "Architecture 'amd64' is not supported."
+    assert (
+        exception.get_brief()
+        == "Architecture 'amd64' is not supported with the 'conda' plugin."
+    )
     assert (
         exception.get_resolution()
         == "Ensure running the build on a supported architecture for this plugin."
