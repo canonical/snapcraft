@@ -1,0 +1,13 @@
+name: fix-symlink-relative
+version: "1.0"
+summary: Verify symlink to root is re-written to relative found in snap
+description: Fix symlink tests
+
+base: core20
+grade: devel
+confinement: strict
+
+parts:
+  part1:
+    plugin: nil
+    stage-packages: [openssl]

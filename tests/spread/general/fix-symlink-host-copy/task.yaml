@@ -1,0 +1,25 @@
+summary: Build a snap that resorts to copying a file from host to satisfy a symlink
+systems: [ubuntu-20*]
+
+environment:
+  SNAP_DIR: snaps/fix-symlink-host-copy
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+
+prepare: |
+  apt-get install -y dpkg-dev
+  apt-mark auto dpkg-dev
+
+execute: |
+  host_arch_triplet="$(dpkg-architecture  | grep DEB_BUILD_MULTIARCH | cut -f 2 -d=)"
+
+  cd "$SNAP_DIR"
+  output="$(snapcraft prime)"
+
+  # Ensure it is logged.
+  echo "$output" | MATCH "Copying needed symlink target '/usr/lib/$host_arch_triplet/libz.so.1.2.* from host to satisfy .*/install/usr/lib/$host_arch_triplet/libz.so"
+
+  # Ensure link is correct.
+  readlink "prime/usr/lib/$host_arch_triplet/libz.so" | MATCH "^../../../lib/$host_arch_triplet/libz.so.1.2.*$"

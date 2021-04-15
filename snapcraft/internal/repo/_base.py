@@ -291,18 +291,11 @@ class BaseRepo:
 
         # Use relative symlink if target is found in unpack directory.
         target_in_unpack_dir = os.path.join(unpack_dir, symlink_target[1:])
-        if os.path.exists(target_in_unpack_dir):
-            relative_target = os.path.relpath(
-                target_in_unpack_dir, os.path.dirname(symlink_path)
-            )
-
-            # Relink to relative path.
-            os.unlink(symlink_path)
-            os.symlink(relative_target, symlink_path)
-            return
-
-        # Copy the file from host, if it exists - but warn about it.
-        if os.path.isfile(resolved_path):
+        relative_target = os.path.relpath(
+            target_in_unpack_dir, os.path.dirname(symlink_path)
+        )
+        # Copy the file from host if we need it, but warn about it.
+        if not os.path.exists(target_in_unpack_dir) and os.path.isfile(resolved_path):
             logger.warning(
                 "Copying needed symlink target %r from host to satisfy %r.",
                 resolved_path,
@@ -310,6 +303,11 @@ class BaseRepo:
             )
             os.makedirs(os.path.dirname(target_in_unpack_dir), exist_ok=True)
             shutil.copyfile(resolved_path, target_in_unpack_dir)
+
+        # Relink to relative path.
+        if os.path.exists(target_in_unpack_dir):
+            os.unlink(symlink_path)
+            os.symlink(relative_target, symlink_path)
             return
 
         # Cannot find target, issue a warning.

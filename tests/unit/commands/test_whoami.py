@@ -14,64 +14,38 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import re
-from unittest import mock
+from textwrap import dedent
 
-import fixtures
-import xdg
-from testtools.matchers import MatchesRegex
+import pytest
 
-from snapcraft import storeapi
-from tests.unit import commands
+from snapcraft.storeapi.v2 import whoami
+from snapcraft.storeapi import StoreClient
 
 
-class WhoamiCommandBaseTestCase(commands.CommandBaseTestCase):
-    @mock.patch.object(
-        storeapi._dashboard_api.DashboardAPI,
-        "get_account_information",
-        return_value={"account_id": "test_account_id"},
+@pytest.fixture
+def fake_dashboard_whoami(monkeypatch):
+    monkeypatch.setattr(
+        StoreClient,
+        "whoami",
+        lambda x: whoami.WhoAmI(
+            account=whoami.Account(
+                email="foo@bar.baz",
+                account_id="1234567890",
+                name="Foo from Baz",
+                username="foo",
+            )
+        ),
     )
-    def test_unknown_email(self, mock_get_account_information):
-        self.useFixture(fixtures.EnvironmentVariable("HOME", self.path))
 
-        config_file_path = os.path.join(
-            xdg.BaseDirectory.save_config_path("snapcraft"), "snapcraft.cfg"
-        )
-        with open(config_file_path, "w") as config_file:
-            config_file.write("[login.ubuntu.com]\n")
-            config_file.write("account_id = test_account_id\n")
 
-        result = self.run_command(["whoami"])
-        self.assertThat(
-            result.output,
-            MatchesRegex(
-                ".*email: +unknown\ndeveloper-id: +test_account_id\n", flags=re.DOTALL,
-            ),
-        )
+@pytest.mark.usefixtures("fake_dashboard_whoami")
+def test_whoami(click_run):
+    result = click_run(["whoami"])
 
-    @mock.patch.object(
-        storeapi._dashboard_api.DashboardAPI,
-        "get_account_information",
-        return_value={"account_id": "test_account_id"},
+    assert result.exit_code == 0
+    assert result.output == dedent(
+        """\
+        email:        foo@bar.baz
+        developer-id: 1234567890
+        """
     )
-    def test_whoami_must_print_email_and_developer_id(
-        self, mock_get_account_information
-    ):
-        self.useFixture(fixtures.EnvironmentVariable("HOME", self.path))
-        config_file_path = os.path.join(
-            xdg.BaseDirectory.save_config_path("snapcraft"), "snapcraft.cfg"
-        )
-        with open(config_file_path, "w") as config_file:
-            config_file.write("[login.ubuntu.com]\n")
-            config_file.write("email = test@example.com\n")
-            config_file.write("account_id = test_account_id\n")
-
-        result = self.run_command(["whoami"])
-        self.assertThat(
-            result.output,
-            MatchesRegex(
-                ".*email: +test@example.com\ndeveloper-id: +test_account_id\n",
-                flags=re.DOTALL,
-            ),
-        )

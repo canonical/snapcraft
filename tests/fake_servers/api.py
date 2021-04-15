@@ -159,6 +159,12 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         configurator.add_view(self.snap_releases, route_name="snap_releases")
 
         configurator.add_route(
+            "whoami", "/api/v2/tokens/whoami", request_method="GET",
+        )
+
+        configurator.add_view(self.whoami, route_name="whoami")
+
+        configurator.add_route(
             "snap_validations",
             urllib.parse.urljoin(self._DEV_API_PATH, "snaps/{snap_id}/validations"),
             request_method="GET",
@@ -1495,4 +1501,28 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         content_type = "application/json"
         return response.Response(
             payload, response_code, [("Content-Type", content_type)]
+        )
+
+    def whoami(self, request):
+        if self.fake_store.needs_refresh:
+            return self._refresh_error()
+        logger.debug("Handling whoami request")
+        payload = {
+            "account": {
+                "email": "foo@bar.baz",
+                "id": "1234567890",
+                "name": "Foo from Bar",
+                "username": "baz",
+            },
+            "channels": None,
+            "packages": None,
+            "permissions": None,
+        }
+
+        response_code = 200
+        content_type = "application/json"
+        return response.Response(
+            json.dumps(payload).encode(),
+            response_code,
+            [("Content-Type", content_type)],
         )

@@ -2,7 +2,8 @@ ARG RISK=edge
 ARG UBUNTU=xenial
 
 FROM ubuntu:$UBUNTU as builder
-
+ARG RISK
+ARG UBUNTU
 RUN echo "Building snapcraft:$RISK in ubuntu:$UBUNTU"
 
 # Grab dependencies
