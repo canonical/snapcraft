@@ -4,7 +4,7 @@ By default the `Dockerfile` builds Ubuntu 16 (xenial) image with `snapcraft` fro
 
     docker build . --no-cache
 
-It is however possible to choose base Ubuntu version and one of these channels (risk levels):
+It is however possible to choose the base Ubuntu version and the Snapcraft channel (risk levels):
 
 - `edge`
 - `beta`
