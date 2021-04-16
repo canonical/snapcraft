@@ -1,27 +1,16 @@
 # Creating docker containers for snapcraft
 
-## Setup
+By default the `Dockerfile` builds Ubuntu 16.04 (Xenial) image with `snapcraft` from the `edge` channel.
 
-    sudo snap install docker
+    docker build . --no-cache
 
-Ensure networking works, in some cases `dockerd` might need to have something
-like `--dns=8.8.8.8` added to the command.
+It is however possible to choose the base Ubuntu version and the Snapcraft channel (risk levels):
 
-## Creating containers
+- `edge`
+- `beta`
+- `candidate`
+- `stable`
 
-The Dockerfile here can build images for these risk levels:
+To do that, use `--build-arg RISK=<risk>` and `--build-arg UBUNTU=<name>` arguments:
 
-- **edge**: Using the snap from edge
-- **beta**: Using the snap from beta
-- **candidate**: Using the snap from candidate
-- **stable**: Using the snap from stable
-
-By default, the `edge` image will be built. Pass `--build-arg RISK=<risk>` to
-choose needed risk level for target container:
-
-    export RISK=beta
-    docker build --no-cache --tag snapcore/snapcraft:$RISK --build-arg RISK=$RISK .
-
-You can push that image with:
-
-    docker push snapcore/snapcraft:$RISK
+    docker build . --no-cache --build-arg RISK=beta --build-arg UBUNTU=bionic
