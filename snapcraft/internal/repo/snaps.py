@@ -275,10 +275,6 @@ def download_snaps(*, snaps_list: Sequence[str], directory: str) -> None:
     os.makedirs(directory, exist_ok=True)
     for snap in snaps_list:
         snap_pkg = SnapPackage(snap)
-        if not snap_pkg.is_valid():
-            raise errors.SnapUnavailableError(
-                snap_name=snap_pkg.name, snap_channel=snap_pkg.channel
-            )
 
         # TODO: use dependency injected echoer
         logger.info("Downloading snap {!r}".format(snap_pkg.name))
