@@ -583,3 +583,62 @@ class TestGetPackagesInBase(testtools.TestCase):
         mock_dpkg_list_path.return_value = dpkg_list_path
 
         self.expectThat(repo._deb.get_packages_in_base(base="core22"), Equals(list()))
+
+
+@mock.patch.object(repo._deb, "get_packages_in_base")
+def test_get_filtered_stage_package_restricts_core20_ignore_filter(
+    mock_get_packages_in_base,
+):
+    mock_get_packages_in_base.return_value = [
+        DebPackage(name="foo"),
+        DebPackage(name="foo2"),
+        DebPackage(name="python3-attr"),
+        DebPackage(name="python3-blinker"),
+        DebPackage(name="python3-certifi"),
+        DebPackage(name="python3-cffi-backend"),
+        DebPackage(name="python3-chardet"),
+        DebPackage(name="python3-configobj"),
+        DebPackage(name="python3-cryptography"),
+        DebPackage(name="python3-idna"),
+        DebPackage(name="python3-importlib-metadata"),
+        DebPackage(name="python3-jinja2"),
+        DebPackage(name="python3-json-pointer"),
+        DebPackage(name="python3-jsonpatch"),
+        DebPackage(name="python3-jsonschema"),
+        DebPackage(name="python3-jwt"),
+        DebPackage(name="python3-lib2to3"),
+        DebPackage(name="python3-markupsafe"),
+        DebPackage(name="python3-more-itertools"),
+        DebPackage(name="python3-netifaces"),
+        DebPackage(name="python3-oauthlib"),
+        DebPackage(name="python3-pyrsistent"),
+        DebPackage(name="python3-pyudev"),
+        DebPackage(name="python3-requests"),
+        DebPackage(name="python3-requests-unixsocket"),
+        DebPackage(name="python3-serial"),
+        DebPackage(name="python3-six"),
+        DebPackage(name="python3-urllib3"),
+        DebPackage(name="python3-urwid"),
+        DebPackage(name="python3-yaml"),
+        DebPackage(name="python3-zipp"),
+    ]
+
+    filtered_names = repo._deb._get_filtered_stage_package_names(
+        base="core20", package_list=[]
+    )
+
+    assert filtered_names == {"foo", "foo2"}
+
+
+@mock.patch.object(repo._deb, "get_packages_in_base")
+def test_get_filtered_stage_package_empty_ignore_filter(mock_get_packages_in_base):
+    mock_get_packages_in_base.return_value = [
+        DebPackage(name="some-base-pkg"),
+        DebPackage(name="some-other-base-pkg"),
+    ]
+
+    filtered_names = repo._deb._get_filtered_stage_package_names(
+        base="core00", package_list=[]
+    )
+
+    assert filtered_names == {"some-base-pkg", "some-other-base-pkg"}
