@@ -387,6 +387,7 @@ class FakeSnapCommand(fixtures.Fixture):
         self.calls = []
         self.install_success = True
         self.refresh_success = True
+        self.download_side_effect = None
         self._email = "-"
 
     def _setUp(self):
@@ -446,6 +447,12 @@ class FakeSnapCommand(fixtures.Fixture):
             raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
         elif cmd == "whoami":
             return "email: {}".format(self._email).encode()
+        elif (
+            cmd == "download"
+            and self.download_side_effect is not None
+            and not self.download_side_effect.pop(0)
+        ):
+            raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
         elif cmd == "download":
             return "Downloaded  ".encode()
 

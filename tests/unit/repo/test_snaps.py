@@ -505,21 +505,23 @@ class SnapPackageLifecycleTest(unit.TestCase):
     def test_download_snaps_with_invalid(self):
         self.fake_snapd.find_result = [
             {"fake-snap": {"channels": {"latest/stable": {"confinement": "strict"}}}},
-            {
-                "other-fake-snap": {
-                    "channels": {"latest/stable": {"confinement": "strict"}}
-                }
-            },
         ]
+        self.fake_snap_command.download_side_effect = [True, False]
 
         self.assertRaises(
-            errors.SnapUnavailableError,
+            errors.SnapDownloadError,
             snaps.download_snaps,
             snaps_list=["fake-snap", "other-invalid"],
             directory="fakedir",
         )
         self.assertThat(
-            self.fake_snap_command.calls, Equals([["snap", "download", "fake-snap"]])
+            self.fake_snap_command.calls,
+            Equals(
+                [
+                    ["snap", "download", "fake-snap"],
+                    ["snap", "download", "other-invalid"],
+                ]
+            ),
         )
 
     def test_refresh_to_classic(self):
