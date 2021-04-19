@@ -301,9 +301,8 @@ function make_user_fontconfig {
       echo "  <dir>${data_dirs_array[$i]}/fonts</dir>"
     fi
   done
-  # We need to include this default cachedir first so that caching
-  # works: without it, fontconfig will try to write to the real user home
-  # cachedir and be blocked by AppArmor.
+  # We need to include a user-writable cachedir first to support
+  # caching of per-user fonts.
   echo '  <cachedir prefix="xdg">fontconfig</cachedir>'
   echo "  <cachedir>$SNAP_COMMON/fontconfig</cachedir>"
   echo "</fontconfig>"
