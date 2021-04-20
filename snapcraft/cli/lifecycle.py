@@ -37,6 +37,7 @@ from snapcraft.internal import (
     project_loader,
     steps,
 )
+from snapcraft.internal.repo import ua_manager
 from snapcraft.project._sanity_checks import conduct_project_sanity_check
 
 from . import echo
@@ -66,13 +67,16 @@ def _execute(  # noqa: C901
     shell: bool = False,
     shell_after: bool = False,
     setup_prime_try: bool = False,
+    ua_token: Optional[str] = None,
     **kwargs,
 ) -> "Project":
     # Cleanup any previous errors.
     _clean_provider_error()
 
     build_provider = get_build_provider(**kwargs)
-    build_provider_flags = get_build_provider_flags(build_provider, **kwargs)
+    build_provider_flags = get_build_provider_flags(
+        build_provider, ua_token=ua_token, **kwargs
+    )
     apply_host_provider_flags(build_provider_flags)
 
     is_managed_host = build_provider == "managed-host"
@@ -94,14 +98,15 @@ def _execute(  # noqa: C901
         )
 
     if build_provider in ["host", "managed-host"]:
-        project_config = project_loader.load_config(project)
-        lifecycle.execute(step, project_config, parts)
-        if pack_project:
-            _pack(
-                project.prime_dir,
-                compression=project._snap_meta.compression,
-                output=output,
-            )
+        with ua_manager.ua_manager(ua_token):
+            project_config = project_loader.load_config(project)
+            lifecycle.execute(step, project_config, parts)
+            if pack_project:
+                _pack(
+                    project.prime_dir,
+                    compression=project._snap_meta.compression,
+                    output=output,
+                )
     else:
         build_provider_class = build_providers.get_provider_for(build_provider)
         try:
@@ -169,7 +174,7 @@ def _run_pack(snap_command: List[Union[str, pathlib.Path]]) -> str:
             echo.info("Snapping...")
             ret = proc.wait()
         else:
-            message = f"\033[0;32mSnapping \033[0m"
+            message = "\033[0;32mSnapping \033[0m"
             progress_indicator = progressbar.ProgressBar(
                 widgets=[message, progressbar.AnimatedMarker()],
                 # From progressbar.ProgressBar.update(...).

@@ -1,0 +1,15 @@
+name: ua-token-test
+version: "1.0"
+summary: Quick snap to ensure ESM PPA is enabled
+description: Quick snap to ensure ESM PPA is enabled
+
+base: core
+grade: devel
+confinement: strict
+
+parts:
+  part1:
+    plugin: nil
+    override-build: |
+      sleep 0
+      snapcraftctl build
