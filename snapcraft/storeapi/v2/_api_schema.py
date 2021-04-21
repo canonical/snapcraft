@@ -465,3 +465,75 @@ WHOAMI_JSONSCHEMA: Dict[str, Any] = {
     "required": ["account", "channels", "packages", "permissions"],
     "type": "object",
 }
+
+# https://dashboard.snapcraft.io/docs/v2/en/validation-sets.html
+BUILD_ASSERTION_JSONSCHEMA: Dict[str, Any] = {
+    "properties": {
+        "account-id": {
+            "description": 'The "account-id" assertion header',
+            "type": "string",
+        },
+        "authority-id": {
+            "description": 'The "authority-id" assertion header',
+            "type": "string",
+        },
+        "name": {"description": 'The "name" assertion header', "type": "string"},
+        "revision": {
+            "description": 'The "revision" assertion header',
+            "type": "string",
+        },
+        "sequence": {
+            "description": 'The "sequence" assertion header',
+            "type": "string",
+        },
+        "series": {"description": 'The "series" assertion header', "type": "string"},
+        "snaps": {
+            "items": {
+                "description": "List of snaps in a Validation Set assertion",
+                "properties": {
+                    "id": {
+                        "description": "Snap ID",
+                        "maxLength": 100,
+                        "type": "string",
+                    },
+                    "name": {
+                        "description": "Snap name",
+                        "maxLength": 100,
+                        "type": "string",
+                    },
+                    "presence": {
+                        "description": "Snap presence",
+                        "enum": ["required", "optional", "invalid"],
+                        "type": "string",
+                    },
+                    "revision": {"description": "Snap revision", "type": "string"},
+                },
+                "required": ["name"],
+                "type": "object",
+            },
+            "minItems": 1,
+            "type": "array",
+        },
+        "timestamp": {
+            "description": 'The "timestamp" assertion header',
+            "type": "string",
+        },
+        "type": {
+            "const": "validation-set",
+            "description": 'The "type" assertion header',
+            "type": "string",
+        },
+    },
+    "required": [
+        "type",
+        "authority-id",
+        "series",
+        "account-id",
+        "name",
+        "sequence",
+        # "revision",
+        "timestamp",
+        "snaps",
+    ],
+    "type": "object",
+}
