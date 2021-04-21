@@ -14,11 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
+import json
+from snapcraft.internal.errors import details_from_command_error
 import subprocess
 import tempfile
 from datetime import datetime
 from textwrap import dedent
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import click
 from tabulate import tabulate
@@ -45,6 +47,29 @@ _COLLABORATION_HEADER = dedent(
     # the current time. Do not remove entries or use an until time in the past
     # unless you want existing snaps provided by the developer to stop working."""
 )  # noqa
+
+
+_VALIDATIONS_SETS_SNAPS_TEMPLATE = dedent(
+    """\
+    snaps:
+    #  - name: <name>  # The name of the snap.
+    #    id:   <id>    # The ID of the snap. Optional, defaults to the current ID for
+                       # the provided name.
+    #    presence: [required|optional|invalid]  # Optional, defaults to required.
+    #    revision: <n> # The revision of the snap. Optional.
+"""
+)
+
+_VALIDATION_SETS_TEMPLATE = dedent(
+    """\
+    account-id: {account_id}
+    name: {set_name}
+    sequence: {sequence}
+    # The revision for this validation set
+    # revision: {revision}
+    {snaps}
+    """
+)
 
 
 @click.group()
@@ -202,6 +227,96 @@ def list_validation_sets(name, sequence):
         click.echo(
             tabulate(assertions, numalign="left", headers=headers, tablefmt="plain")
         )
+
+
+@assertionscli.command("edit-validation-sets")
+@click.argument("account-id", metavar="<account-id>")
+@click.argument("set-name", metavar="<set-name>")
+@click.argument("sequence", metavar="<sequence>", type=int)
+@click.option("--key-name", metavar="<key-name>")
+def edit_validation_sets(account_id: str, set_name: str, sequence: int, key_name: str):
+    """Edit the list of validations for <set-name>.
+
+    Refer to https://snapcraft.io/docs/validation-sets for further information
+    on Validation Sets.
+    """
+    store_client = StoreClientCLI()
+
+    asserted_validation_sets = store_client.get_validation_sets(
+        name=set_name, sequence=str(sequence)
+    )
+
+    try:
+        # assertions should only have one item since a specific
+        # sequence was requested.
+        revision = asserted_validation_sets.assertions[0].revision
+        snaps = yaml_utils.dump(
+            {
+                "snaps": [
+                    s.marshal() for s in asserted_validation_sets.assertions[0].snaps
+                ]
+            }
+        )
+    except IndexError:
+        # If there is no assertion for a given sequence, the store API
+        # will return an empty list.
+        revision = "0"
+        snaps = _VALIDATIONS_SETS_SNAPS_TEMPLATE
+
+    unverified_validation_sets = _VALIDATION_SETS_TEMPLATE.format(
+        account_id=account_id,
+        set_name=set_name,
+        sequence=sequence,
+        revision=revision,
+        snaps=snaps,
+    )
+
+    edited_validation_sets = _edit_validation_sets(unverified_validation_sets)
+    if edited_validation_sets == yaml_utils.load(unverified_validation_sets):
+        echo.warning("No changes made.")
+    else:
+        build_assertion = store_client.post_validation_sets_build_assertion(
+            validation_sets=edited_validation_sets
+        )
+        signed_validation_sets = _sign_assertion(
+            build_assertion.marshal(), key_name=key_name
+        )
+        store_client.post_validation_sets(signed_validation_sets=signed_validation_sets)
+
+
+def _edit_validation_sets(validation_sets: str) -> Dict[str, Any]:
+    """Spawn an editor to modify the validation-sets."""
+    editor_cmd = os.getenv("EDITOR", "vi")
+
+    with tempfile.NamedTemporaryFile() as ft:
+        ft.close()
+        with open(ft.name, "w") as fw:
+            print(validation_sets, file=fw)
+        subprocess.run([editor_cmd, ft.name], check=True)
+        with open(ft.name, "r") as fr:
+            edited_validation_sets = yaml_utils.load(fr)
+
+    return edited_validation_sets
+
+
+def _sign_assertion(assertion: Dict[str, Any], *, key_name: str) -> bytes:
+    cmdline = ["snap", "sign"]
+    if key_name:
+        cmdline += ["-k", key_name]
+    snap_sign = subprocess.Popen(
+        cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    signed_assertion, err = snap_sign.communicate(input=json.dumps(assertion).encode())
+    if snap_sign.returncode != 0:
+        echo.exit_error(
+            brief=details_from_command_error(
+                cmd=cmdline, returncode=snap_sign.returncode
+            ),
+            details="Command returned: {}".format(err.decode()),
+            exit_code=snap_sign.returncode,
+        )
+
+    return signed_assertion
 
 
 def _update_developers(developers: List[Dict[str, str]]) -> List[Dict[str, str]]:

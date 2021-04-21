@@ -67,7 +67,7 @@ def load_yaml_file(yaml_file_path: str) -> collections.OrderedDict:
     return yaml_contents
 
 
-def load(stream: TextIO) -> Any:
+def load(stream: Union[TextIO, str]) -> Any:
     """Safely load YAML in ordered manner."""
     return yaml.load(stream, Loader=_SafeOrderedLoader)
 
