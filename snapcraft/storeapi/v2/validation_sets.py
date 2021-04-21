@@ -118,7 +118,6 @@ class BuildAssertion:
             self.name == other.name
             and self.account_id == other.account_id
             and self.authority_id == other.authority_id
-            and self.name == other.name
             and self.revision == other.revision
             and self.sequence == other.sequence
             and self.snaps == other.snaps
