@@ -20,6 +20,8 @@ import os
 import re
 import urllib.parse
 import uuid
+from datetime import datetime
+from typing import Any, Dict
 
 import pymacaroons
 from pyramid import response
@@ -40,6 +42,8 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         self.account_keys = []
         self.registered_names = {}
         self.pushed_snaps = set()
+        self.validation_set_revisions = dict()
+        self.validation_set_assertions = dict()
 
     def configure(self, configurator):
         # POST
@@ -122,7 +126,40 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             self.snap_binary_metadata, route_name="snap_binary_metadata_post"
         )
 
+        configurator.add_route(
+            "post_validation_sets_build_assertion",
+            "/api/v2/validation-sets/build-assertion",
+            request_method="POST",
+        )
+        configurator.add_view(
+            self.post_validation_sets_build_assertion,
+            route_name="post_validation_sets_build_assertion",
+        )
+
+        configurator.add_route(
+            "post_validation_sets", "/api/v2/validation-sets", request_method="POST",
+        )
+        configurator.add_view(
+            self.post_validation_sets, route_name="post_validation_sets",
+        )
+
         # GET
+        configurator.add_route(
+            "get_validation_sets", "/api/v2/validation-sets", request_method="GET",
+        )
+        configurator.add_view(
+            self.get_validation_sets, route_name="get_validation_sets",
+        )
+
+        configurator.add_route(
+            "get_validation_sets_name",
+            "/api/v2/validation-sets/{name}",
+            request_method="GET",
+        )
+        configurator.add_view(
+            self.get_validation_sets, route_name="get_validation_sets_name",
+        )
+
         configurator.add_route(
             "details",
             urllib.parse.urljoin(self._DEV_API_PATH, "/details/upload-id/{snap}"),
@@ -1525,4 +1562,114 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             json.dumps(payload).encode(),
             response_code,
             [("Content-Type", content_type)],
+        )
+
+    def _get_validation_sets_revision(self, name: str) -> str:
+        if name not in self.validation_set_revisions:
+            self.validation_set_revisions[name] = 0
+        else:
+            self.validation_set_revisions[name] += 1
+
+        return str(self.validation_set_revisions[name])
+
+    def post_validation_sets_build_assertion(self, request):
+        if request.json_body["sequence"] > 0:
+            payload = request.json_body
+            payload["sequence"] = str(payload["sequence"])
+            # Get a revision for this assertion.
+            payload["revision"] = self._get_validation_sets_revision(payload["name"])
+            # Convert revisions for snaps into strings and add ids if not there.
+            for snap in payload["snaps"]:
+                if "revision" in snap:
+                    snap["revision"] = str(snap["revision"])
+                if "id" not in snap:
+                    snap["id"] = "snap-id" + snap["name"]
+            # Send and authority-id for this assertion.
+            payload["authority-id"] = payload["account-id"]
+            # And add all the other required fields for this response.
+            payload["type"] = "validation-set"
+            payload["timestamp"] = datetime.strftime(
+                datetime.now(), "%Y-%m-%dT%H:%M:%S.%fZ"
+            )
+            payload["series"] = "16"
+            response_code = 200
+        else:
+            payload = {
+                "error-list": [
+                    {
+                        "message": "0 is less than the minimum of 1 at /sequence",
+                        "code": "invalid-request",
+                    }
+                ]
+            }
+            response_code = 400
+
+        return response.Response(
+            json.dumps(payload).encode(),
+            response_code,
+            [("Content-Type", "application/json")],
+        )
+
+    def _save_validation_sets_assertion(self, assertion: Dict[str, Any]) -> None:
+        self.validation_set_assertions[assertion["name"]] = assertion
+
+    def post_validation_sets(self, request):
+        assertion_data = json.loads(request.body.decode().splitlines()[0])
+
+        if assertion_data["authority-id"] == assertion_data["account-id"]:
+            response_code = 200
+            # API has a response with the assertion as json, but we don't use it.
+            payload = {"assertions": [{"headers": assertion_data}]}
+            self._save_validation_sets_assertion(assertion_data)
+        else:
+            payload = {
+                "error-list": [
+                    {
+                        "message": "account-id and authority-id must match the requesting user.",
+                        "code": "invalid-request",
+                    }
+                ]
+            }
+            response_code = 400
+
+        return response.Response(
+            json.dumps(payload).encode(),
+            response_code,
+            [("Content-Type", "application/json")],
+        )
+
+    def get_validation_sets(self, request):
+        # This fake does not parse the sequence, it just verifies it is used
+        # in some capacity.
+        # TODO: support specific name.
+        parsed_qs = urllib.parse.parse_qs(urllib.parse.urlparse(request.url).query)
+
+        try:
+            name = request.matchdict["name"]
+        except KeyError:
+            name = None
+
+        if name is not None and name in self.validation_set_assertions:
+            assertions = [self.validation_set_assertions[name]]
+        else:
+            assertions = self.validation_set_assertions.values()
+
+        if "sequence" not in parsed_qs or ["sequence"] == "latest":
+            payload = {"assertions": [{"headers": a} for a in assertions]}
+            response_code = 200
+        else:
+            payload = {
+                "error-list": [
+                    {
+                        "message": "sequence must be one of ['all', 'latest'] or a positive integer higher than 0.",
+                        "code": "invalid-request",
+                    }
+                ]
+            }
+            response_code = 400
+
+        return response.Response(
+            json.dumps(payload).encode(),
+            response_code,
+            [("Content-Type", "application/json")],
         )

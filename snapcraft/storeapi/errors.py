@@ -567,6 +567,25 @@ class StoreValidationError(StoreError):
         )
 
 
+class StoreValidationSetsError(StoreError):
+
+    fmt = "Issues encountered with validation set: {error}"
+
+    def __init__(self, response):
+        error = "{} {}".format(response.status_code, response.reason)
+        try:
+            response_json = response.json()
+
+            if "error-list" in response_json:
+                error = " ".join(
+                    error["message"] for error in response_json["error-list"]
+                )
+        except JSONDecodeError:
+            pass
+
+        super().__init__(response=response, error=error)
+
+
 class StoreSnapBuildError(StoreError):
 
     fmt = "Could not assert build: {error}"
