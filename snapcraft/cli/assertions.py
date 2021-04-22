@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,8 +21,10 @@ from textwrap import dedent
 from typing import Dict, List
 
 import click
+from tabulate import tabulate
 
 import snapcraft
+from snapcraft._store import StoreClientCLI
 from snapcraft import storeapi, yaml_utils
 from snapcraft.storeapi import assertions
 
@@ -149,6 +151,45 @@ def edit_collaborators(snap_name, key_name):
             new_dev_assertion.push(force=True)
         else:
             echo.warning("The collaborators for this snap have not been altered.")
+
+
+@assertionscli.command("list-validation-sets")
+@click.option("--name", metavar="<name>", help="Name filter.")
+@click.option("--sequence", metavar="<sequence>", help="Sequence filter.")
+def list_validation_sets(name, sequence):
+    """Get the list of validation sets.
+
+    Refer to https://snapcraft.io/docs/validation-sets for further information
+    on Validation Sets.
+    """
+    store_client = StoreClientCLI()
+    asserted_validation_sets = store_client.get_validation_sets(
+        name=name, sequence=sequence,
+    )
+
+    if not asserted_validation_sets.assertions and (name or sequence):
+        echo.warning("No validation sets found for the requested name or sequence.")
+    elif not asserted_validation_sets.assertions:
+        echo.warning("No validation sets found for this account.")
+    else:
+        headers = ["Account-ID", "Name", "Sequence", "Revision", "When"]
+        assertions = list()
+        for assertion in asserted_validation_sets.assertions:
+            assertions.append(
+                [
+                    assertion.account_id,
+                    assertion.name,
+                    assertion.sequence,
+                    assertion.revision,
+                    datetime.strptime(
+                        assertion.timestamp, "%Y-%m-%dT%H:%M:%SZ"
+                    ).strftime("%Y-%m-%d"),
+                ]
+            )
+
+        click.echo(
+            tabulate(assertions, numalign="left", headers=headers, tablefmt="plain")
+        )
 
 
 def _update_developers(developers: List[Dict[str, str]]) -> List[Dict[str, str]]:
