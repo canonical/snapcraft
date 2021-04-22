@@ -34,6 +34,7 @@ class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):
                 {
                     "assumes": ["snapd2.43"],
                     "plugs": {
+                        "desktop": {"mount-host-font-cache": False},
                         "gtk-3-themes": {
                             "interface": "content",
                             "target": "$SNAP/data-dir/themes",
