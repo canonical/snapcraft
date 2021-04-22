@@ -140,7 +140,6 @@ def test_list_validation_sets(click_run, fake_dashboard_get_validation_sets):
         AccountIDXXXOfTheRequestingUserX  acme-qa           2           2           2020-10-29
         """
     )
-
     fake_dashboard_get_validation_sets.assert_called_once_with(
         name=None, sequence=None,
     )
