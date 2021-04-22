@@ -27,7 +27,7 @@ from ._dashboard_api import DashboardAPI
 from ._snap_api import SnapAPI
 from ._up_down_client import UpDownClient
 from .constants import DEFAULT_SERIES
-from .v2 import channel_map, releases, whoami
+from .v2 import channel_map, releases, validation_sets, whoami
 
 
 logger = logging.getLogger(__name__)
@@ -191,6 +191,21 @@ class StoreClient:
 
     def get_snap_releases(self, *, snap_name: str) -> releases.Releases:
         return self.dashboard.get_snap_releases(snap_name=snap_name)
+
+    def post_validation_sets_build_assertion(
+        self, *, validation_sets: Dict[str, Any]
+    ) -> validation_sets.BuildAssertion:
+        return self.dashboard.post_validation_sets_build_assertion(validation_sets)
+
+    def post_validation_sets(
+        self, *, signed_validation_sets: bytes
+    ) -> validation_sets.ValidationSets:
+        return self.dashboard.post_validation_sets(signed_validation_sets)
+
+    def get_validation_sets(
+        self, *, name: Optional[str] = None, sequence: Optional[str] = None
+    ) -> validation_sets.ValidationSets:
+        return self.dashboard.get_validation_sets(name=name, sequence=sequence)
 
     def close_channels(self, snap_id, channel_names):
         return self.dashboard.close_channels(snap_id, channel_names)
