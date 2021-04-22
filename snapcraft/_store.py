@@ -52,7 +52,6 @@ if TYPE_CHECKING:
     from snapcraft.storeapi._status_tracker import StatusTracker
     from snapcraft.storeapi.v2.channel_map import ChannelMap
     from snapcraft.storeapi.v2.releases import Releases
-    from snapcraft.storeapi.v2.validation_sets import ValidationSets
 
 
 logger = logging.getLogger(__name__)
