@@ -154,10 +154,22 @@ def edit_collaborators(snap_name, key_name):
 
 
 @assertionscli.command("list-validation-sets")
-@click.option("--name", metavar="<name>", help="Name filter.")
-@click.option("--sequence", metavar="<sequence>", help="Sequence filter.")
+@click.option(
+    "--name",
+    metavar="<name>",
+    help="Only show results for a given Validation Set name.",
+)
+@click.option("--sequence", metavar="<sequence>", help="Sequences to show.")
 def list_validation_sets(name, sequence):
     """Get the list of validation sets.
+
+    The sequence option can be a sequence number or a keyword.
+
+    \b
+    Examples:
+        snapcraft list-validation-sets
+        snapcraft list-validation-sets --sequence all
+        snapcraft list-validation-sets --name my-set --sequence 1
 
     Refer to https://snapcraft.io/docs/validation-sets for further information
     on Validation Sets.
