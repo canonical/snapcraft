@@ -25,6 +25,7 @@ def test_extension_core18():
     assert kde_neon_extension.root_snippet == {
         "assumes": ["snapd2.43"],
         "plugs": {
+            "desktop": {"mount-host-font-cache": False},
             "icon-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/icons",
@@ -82,6 +83,7 @@ def test_extension_core20():
             }
         },
         "plugs": {
+            "desktop": {"mount-host-font-cache": False},
             "icon-themes": {
                 "default-provider": "gtk-common-themes",
                 "interface": "content",

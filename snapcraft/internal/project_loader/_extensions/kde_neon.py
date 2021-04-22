@@ -84,6 +84,7 @@ class ExtensionImpl(Extension):
         self.root_snippet = {
             "assumes": ["snapd2.43"],  # for 'snapctl is-connected'
             "plugs": {
+                "desktop": {"mount-host-font-cache": False},
                 "icon-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/icons",
