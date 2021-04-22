@@ -19,7 +19,6 @@ from unittest import mock
 
 import pytest
 
-from snapcraft.storeapi.http_clients import errors
 from snapcraft.storeapi.v2 import validation_sets
 from snapcraft.storeapi import StoreClient
 
