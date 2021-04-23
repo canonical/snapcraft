@@ -34,4 +34,5 @@ if sys.platform == "linux":
     from .npm import NpmPlugin  # noqa: F401
     from .python import PythonPlugin  # noqa: F401
     from .qmake import QMakePlugin  # noqa: F401
+    from .ruby import RubyPlugin  # noqa: F401
     from .rust import RustPlugin  # noqa: F401
