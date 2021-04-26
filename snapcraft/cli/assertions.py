@@ -303,16 +303,14 @@ def _sign_assertion(assertion: Dict[str, Any], *, key_name: str) -> bytes:
     cmdline = ["snap", "sign"]
     if key_name:
         cmdline += ["-k", key_name]
-    snap_sign = subprocess.Popen(
-        cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-    signed_assertion, err = snap_sign.communicate(input=json.dumps(assertion).encode())
+    snap_sign = subprocess.Popen(cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    signed_assertion, _ = snap_sign.communicate(input=json.dumps(assertion).encode())
     if snap_sign.returncode != 0:
         echo.exit_error(
-            brief=details_from_command_error(
+            brief="Failed to sign assertion.",
+            details=details_from_command_error(
                 cmd=cmdline, returncode=snap_sign.returncode
             ),
-            details="Command returned: {}".format(err.decode()),
             exit_code=snap_sign.returncode,
         )
 
