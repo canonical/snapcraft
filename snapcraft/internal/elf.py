@@ -14,9 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import contextlib
+import functools
 import glob
 import logging
 import os
+import pathlib
 import re
 import shutil
 import subprocess
@@ -30,8 +32,15 @@ from pkg_resources import parse_version
 
 from snapcraft import file_utils
 from snapcraft.internal import common, errors, repo
+from snapcraft.project._project_options import ProjectOptions
 
 logger = logging.getLogger(__name__)
+
+
+@functools.lru_cache()
+def _get_host_libc_path() -> pathlib.Path:
+    arch_triplet = ProjectOptions().arch_triplet
+    return pathlib.Path("/lib") / arch_triplet / "libc.so.6"
 
 
 def _ldd_resolve(soname: str, soname_path: str) -> Tuple[str, str]:
@@ -51,33 +60,34 @@ def _ldd_resolve(soname: str, soname_path: str) -> Tuple[str, str]:
     return soname, soname
 
 
-def ldd(path: str, ld_library_paths: List[str]) -> Dict[str, str]:
-    """Return a set of resolved library mappings using specified library paths.
-
-    Returns a dictionary of mappings of soname -> soname_path.
-    If library is not resolved, the soname itself is the soname_path.
-    """
-
-    libraries: Dict[str, str] = dict()
-
+def _check_output(cmd: List[str], *, extra_env: Dict[str, str]) -> str:
     env = os.environ.copy()
-    env["LD_LIBRARY_PATH"] = ":".join(ld_library_paths)
-    logger.debug(f"invoking ldd with ld library paths: {ld_library_paths!r}")
+    env.update(extra_env)
 
-    try:
-        # ldd output sample:
-        # linux-vdso.so.1 =>  (0x00007ffdc13ec000)   <== ubuntu 16.04 ldd
-        # linux-vdso.so.1 (0x00007ffdc13ec000)       <== newer ldd
-        # /lib64/ld-linux-x86-64.so.2 (0x00007fb3c5298000)
-        # libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fb3bef03000)
-        # libmissing.so.2 => not found
-        ldd_lines = (
-            subprocess.check_output(["ldd", path], env=env).decode().splitlines()
-        )
-        logger.debug(f"ldd output:\n{ldd_lines}")
-    except subprocess.CalledProcessError:
-        logger.warning("Unable to determine library dependencies for {!r}".format(path))
-        return libraries
+    debug_cmd = [f"{k}={v}" for k, v in extra_env.items()]
+    debug_cmd += cmd
+
+    logger.debug("executing: %s", " ".join(debug_cmd))
+    output = subprocess.check_output(cmd, env=env).decode()
+
+    return output
+
+
+def _parse_ldd_output(output: str) -> Dict[str, str]:
+    """Parse ldd output.
+
+    Example ldd outputs:
+
+    linux-vdso.so.1 =>  (0x00007ffdc13ec000)   <== ubuntu 16.04 ldd
+    linux-vdso.so.1 (0x00007ffdc13ec000)       <== newer ldd
+    /lib64/ld-linux-x86-64.so.2 (0x00007fb3c5298000)
+    libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fb3bef03000)
+    libmissing.so.2 => not found
+
+    :returns: Dictionary of dependencies, mapping library name to path.
+    """
+    libraries: Dict[str, str] = {}
+    ldd_lines = output.splitlines()
 
     for line in ldd_lines:
         # First match against libraries that are found.
@@ -97,8 +107,55 @@ def ldd(path: str, ld_library_paths: List[str]) -> Dict[str, str]:
         soname, soname_path = _ldd_resolve(match.group(1), match.group(2))
         libraries[soname] = soname_path
 
-    logger.debug(f"ldd results: {libraries!r}")
     return libraries
+
+
+def _ld_trace(path: str, ld_library_paths: List[str]) -> Dict[str, str]:
+    """Use LD_TRACE_LOADED_OBJECTS to determine library dependencies."""
+    env = {
+        "LD_TRACE_LOADED_OBJECTS": "1",
+        "LD_LIBRARY_PATH": ":".join(ld_library_paths),
+    }
+
+    return _parse_ldd_output(_check_output([path], extra_env=env))
+
+
+def _ldd(
+    path: str, ld_library_paths: List[str], *, ld_preload: Optional[str] = None
+) -> Dict[str, str]:
+    """Use host ldd to determine library dependencies."""
+    ldd_path = str(
+        file_utils.get_host_tool_path(command_name="ldd", package_name="libc-bin")
+    )
+    env = {
+        "LD_LIBRARY_PATH": ":".join(ld_library_paths),
+    }
+
+    if ld_preload:
+        env["LD_PRELOAD"] = ld_preload
+
+    return _parse_ldd_output(_check_output([ldd_path, path], extra_env=env))
+
+
+def _determine_libraries(*, path: str, ld_library_paths: List[str]) -> Dict[str, str]:
+    # Try the usual method with ldd.
+    with contextlib.suppress(subprocess.CalledProcessError):
+        return _ldd(path, ld_library_paths)
+
+    # Fall back to trying ldd with LD_PRELOAD explicitly loading libc.
+    libc_path = _get_host_libc_path()
+    if libc_path.is_file():
+        with contextlib.suppress(subprocess.CalledProcessError):
+            return _ldd(path, ld_library_paths, ld_preload=str(libc_path))
+
+    # Fall back to trying ld trace method which may fail with permission error
+    # for non-executable shared objects, or OSError 8 Exec format error if
+    # target is for different arch.
+    with contextlib.suppress(PermissionError, OSError, subprocess.CalledProcessError):
+        return _ld_trace(path, ld_library_paths)
+
+    logger.warning("Unable to determine library dependencies for %r", path)
+    return {}
 
 
 class NeededLibrary:
@@ -449,7 +506,9 @@ class ElfFile:
         for path in search_paths:
             ld_library_paths.extend(common.get_library_paths(path, arch_triplet))
 
-        libraries = ldd(self.path, ld_library_paths)
+        libraries = _determine_libraries(
+            path=self.path, ld_library_paths=ld_library_paths
+        )
         for soname, soname_path in libraries.items():
             if self.arch is None:
                 raise RuntimeError("failed to parse architecture")
@@ -543,6 +602,7 @@ class Patcher:
 
             cmd = [self._patchelf_cmd] + patchelf_args + [temp_file.name]
             try:
+                logger.debug("executing: %s", " ".join(cmd))
                 subprocess.check_call(cmd)
             # There is no need to catch FileNotFoundError as patchelf should be
             # bundled with snapcraft which means its lack of existence is a
