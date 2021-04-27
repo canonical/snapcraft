@@ -72,13 +72,15 @@ def _check_output(cmd: List[str], *, extra_env: Dict[str, str]) -> str:
 def _parse_ldd_output(output: str) -> Dict[str, str]:
     """Parse ldd output.
 
-    ldd output sample:
+    Example ldd outputs:
 
     linux-vdso.so.1 =>  (0x00007ffdc13ec000)   <== ubuntu 16.04 ldd
     linux-vdso.so.1 (0x00007ffdc13ec000)       <== newer ldd
     /lib64/ld-linux-x86-64.so.2 (0x00007fb3c5298000)
     libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fb3bef03000)
-    # libmissing.so.2 => not found
+    libmissing.so.2 => not found
+
+    :returns: Dictionary of dependencies, mapping library name to path.
     """
     libraries: Dict[str, str] = {}
     ldd_lines = output.splitlines()
