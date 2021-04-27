@@ -142,7 +142,7 @@ def _determine_libraries(
 
     # Fall back to trying ldd with LD_PRELOAD explicitly loading libc.
     libc_path = _get_host_libc_path(arch_triplet)
-    if libc_path.exists():
+    if libc_path.is_file():
         with contextlib.suppress(subprocess.CalledProcessError):
             return _ldd(path, ld_library_paths, ld_preload=str(libc_path))
 
