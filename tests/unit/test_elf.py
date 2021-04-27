@@ -16,7 +16,6 @@
 
 import logging
 import os
-import subprocess
 import sys
 import tempfile
 from unittest import mock
@@ -611,16 +610,54 @@ class TestLddParsing:
         ),
     ]
 
-    def test_scenario(self, ldd_output, expected, monkeypatch):
+    def test_ldd(self, ldd_output, expected, monkeypatch, fake_process):
         def fake_abspath(path):
             return path
 
         monkeypatch.setattr(os.path, "exists", lambda f: True)
         monkeypatch.setattr(os.path, "abspath", fake_abspath)
-        monkeypatch.setattr(
-            subprocess, "check_output", lambda *args, **kwargs: ldd_output.encode()
+
+        fake_process.register_subprocess(
+            ["/usr/bin/ldd", "/bin/foo"], stdout=ldd_output.encode()
         )
 
-        libraries = elf.ldd(path="/bin/foo", ld_library_paths=[])
+        libraries = elf._determine_libraries(
+            path="/bin/foo", ld_library_paths=[], arch_triplet="test-triplet"
+        )
+
+        assert libraries == expected
+
+    def test_ldd_with_preload(self, ldd_output, expected, monkeypatch, fake_process):
+        def fake_abspath(path):
+            return path
+
+        monkeypatch.setattr(os.path, "exists", lambda f: True)
+        monkeypatch.setattr(os.path, "abspath", fake_abspath)
+
+        fake_process.register_subprocess(["/usr/bin/ldd", "/bin/foo"], returncode=1)
+        fake_process.register_subprocess(
+            ["/usr/bin/ldd", "/bin/foo"], stdout=ldd_output.encode()
+        )
+
+        libraries = elf._determine_libraries(
+            path="/bin/foo", ld_library_paths=[], arch_triplet="test-triplet"
+        )
+
+        assert libraries == expected
+
+    def test_ld_trace(self, ldd_output, expected, monkeypatch, fake_process):
+        def fake_abspath(path):
+            return path
+
+        monkeypatch.setattr(os.path, "exists", lambda f: True)
+        monkeypatch.setattr(os.path, "abspath", fake_abspath)
+
+        fake_process.register_subprocess(["/usr/bin/ldd", "/bin/foo"], returncode=1)
+        fake_process.register_subprocess(["/usr/bin/ldd", "/bin/foo"], returncode=1)
+        fake_process.register_subprocess(["/bin/foo"], stdout=ldd_output.encode())
+
+        libraries = elf._determine_libraries(
+            path="/bin/foo", ld_library_paths=[], arch_triplet="test-triplet"
+        )
 
         assert libraries == expected
