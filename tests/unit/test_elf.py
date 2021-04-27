@@ -611,11 +611,8 @@ class TestLddParsing:
     ]
 
     def test_ldd(self, ldd_output, expected, monkeypatch, fake_process):
-        def fake_abspath(path):
-            return path
-
         monkeypatch.setattr(os.path, "exists", lambda f: True)
-        monkeypatch.setattr(os.path, "abspath", fake_abspath)
+        monkeypatch.setattr(os.path, "abspath", lambda p: p)
 
         fake_process.register_subprocess(
             ["/usr/bin/ldd", "/bin/foo"], stdout=ldd_output.encode()
@@ -679,7 +676,7 @@ def test_ld_trace_os_error_for_wrong_arch(monkeypatch, fake_process, tmp_path):
 
     fake_process.register_subprocess(["/usr/bin/ldd", "/bin/foo"], returncode=1)
 
-    def raise_os_error(args, **kwargs):
+    def raise_os_error(*args, **kwargs):
         raise OSError(8, "Exec format error:", "does-not-exist")
 
     fake_process.register_subprocess(["/bin/foo"], callback=raise_os_error)
