@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import contextlib
+import functools
 import glob
 import logging
 import os
@@ -31,11 +32,14 @@ from pkg_resources import parse_version
 
 from snapcraft import file_utils
 from snapcraft.internal import common, errors, repo
+from snapcraft.project._project_options import ProjectOptions
 
 logger = logging.getLogger(__name__)
 
 
-def _get_host_libc_path(arch_triplet: str) -> pathlib.Path:
+@functools.lru_cache()
+def _get_host_libc_path() -> pathlib.Path:
+    arch_triplet = ProjectOptions().arch_triplet
     return pathlib.Path("/lib") / arch_triplet / "libc.so.6"
 
 
@@ -133,15 +137,13 @@ def _ldd(
     return _parse_ldd_output(_check_output([ldd_path, path], extra_env=env))
 
 
-def _determine_libraries(
-    *, path: str, ld_library_paths: List[str], arch_triplet: str
-) -> Dict[str, str]:
+def _determine_libraries(*, path: str, ld_library_paths: List[str]) -> Dict[str, str]:
     # Try the usual method with ldd.
     with contextlib.suppress(subprocess.CalledProcessError):
         return _ldd(path, ld_library_paths)
 
     # Fall back to trying ldd with LD_PRELOAD explicitly loading libc.
-    libc_path = _get_host_libc_path(arch_triplet)
+    libc_path = _get_host_libc_path()
     if libc_path.is_file():
         with contextlib.suppress(subprocess.CalledProcessError):
             return _ldd(path, ld_library_paths, ld_preload=str(libc_path))
@@ -505,7 +507,7 @@ class ElfFile:
             ld_library_paths.extend(common.get_library_paths(path, arch_triplet))
 
         libraries = _determine_libraries(
-            path=self.path, ld_library_paths=ld_library_paths, arch_triplet=arch_triplet
+            path=self.path, ld_library_paths=ld_library_paths
         )
         for soname, soname_path in libraries.items():
             if self.arch is None:
