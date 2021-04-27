@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import contextlib
-import functools
 import glob
 import logging
 import os
@@ -36,7 +35,6 @@ from snapcraft.internal import common, errors, repo
 logger = logging.getLogger(__name__)
 
 
-@functools.lru_cache()
 def _get_host_libc_path(arch_triplet: str) -> pathlib.Path:
     return pathlib.Path("/lib") / arch_triplet / "libc.so.6"
 
