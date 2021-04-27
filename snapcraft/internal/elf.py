@@ -141,14 +141,15 @@ def _determine_libraries(
         return _ldd(path, ld_library_paths)
 
     # Fall back to trying ldd with LD_PRELOAD explicitly loading libc.
-    with contextlib.suppress(subprocess.CalledProcessError):
-        return _ldd(
-            path, ld_library_paths, ld_preload=str(_get_host_libc_path(arch_triplet))
-        )
+    libc_path = _get_host_libc_path(arch_triplet)
+    if libc_path.exists():
+        with contextlib.suppress(subprocess.CalledProcessError):
+            return _ldd(path, ld_library_paths, ld_preload=str(libc_path))
 
     # Fall back to trying ld trace method which may fail with permission error
-    # for non-executable shared objects.
-    with contextlib.suppress(PermissionError, subprocess.CalledProcessError):
+    # for non-executable shared objects, or OSError 8 Exec format error if
+    # target is for different arch.
+    with contextlib.suppress(PermissionError, OSError, subprocess.CalledProcessError):
         return _ld_trace(path, ld_library_paths)
 
     logger.warning("Unable to determine library dependencies for %r", path)

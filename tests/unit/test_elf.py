@@ -627,12 +627,18 @@ class TestLddParsing:
 
         assert libraries == expected
 
-    def test_ldd_with_preload(self, ldd_output, expected, monkeypatch, fake_process):
+    def test_ldd_with_preload(
+        self, ldd_output, expected, monkeypatch, fake_process, tmp_path
+    ):
         def fake_abspath(path):
             return path
 
+        libc_path = tmp_path / "libc.so.6"
+        libc_path.write_text("")
+
         monkeypatch.setattr(os.path, "exists", lambda f: True)
         monkeypatch.setattr(os.path, "abspath", fake_abspath)
+        monkeypatch.setattr(elf, "_get_host_libc_path", lambda x: libc_path)
 
         fake_process.register_subprocess(["/usr/bin/ldd", "/bin/foo"], returncode=1)
         fake_process.register_subprocess(
@@ -661,3 +667,43 @@ class TestLddParsing:
         )
 
         assert libraries == expected
+
+
+def test_ldd_with_preload_no_libc(monkeypatch, fake_process, tmp_path):
+    monkeypatch.setattr(os.path, "exists", lambda f: True)
+    monkeypatch.setattr(os.path, "abspath", lambda p: p)
+    monkeypatch.setattr(
+        elf, "_get_host_libc_path", lambda x: tmp_path / "does-not-exist"
+    )
+
+    fake_process.register_subprocess(["/usr/bin/ldd", "/bin/foo"], returncode=1)
+    fake_process.register_subprocess(
+        ["/bin/foo"], stdout="\tlibx.so.0 => /lib/libx.so (0x0123)".encode()
+    )
+
+    libraries = elf._determine_libraries(
+        path="/bin/foo", ld_library_paths=[], arch_triplet="test-triplet"
+    )
+
+    assert libraries == {"libx.so.0": "/lib/libx.so"}
+
+
+def test_ld_trace_os_error_for_wrong_arch(monkeypatch, fake_process, tmp_path):
+    monkeypatch.setattr(os.path, "exists", lambda f: True)
+    monkeypatch.setattr(os.path, "abspath", lambda p: p)
+    monkeypatch.setattr(
+        elf, "_get_host_libc_path", lambda x: tmp_path / "does-not-exist"
+    )
+
+    fake_process.register_subprocess(["/usr/bin/ldd", "/bin/foo"], returncode=1)
+
+    def raise_os_error(args, **kwargs):
+        raise OSError(8, "Exec format error:", "does-not-exist")
+
+    fake_process.register_subprocess(["/bin/foo"], callback=raise_os_error)
+
+    libraries = elf._determine_libraries(
+        path="/bin/foo", ld_library_paths=[], arch_triplet="test-triplet"
+    )
+
+    assert libraries == {}
