@@ -36,7 +36,7 @@ backends:
       - ubuntu-18.04
       - ubuntu-20.04
   google:
-    location: computeengine/us-east1-b
+    location: snapd-spread/us-east1-b
     systems:
       - ubuntu-16.04-64:
           workers: 12
