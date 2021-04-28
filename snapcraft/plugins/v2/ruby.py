@@ -25,19 +25,19 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - ruby-flavor:
       (string)
       Other flavors of ruby supported by ruby-install (e.g. 'jruby', ...)
-    - gems:
+    - ruby-gems:
       (list)
       A list of gems to install.
-    - use-bundler
+    - ruby-use-bundler
       (boolean)
       Use bundler to install gems from a Gemfile (defaults 'false').
-    - use-jemalloc:
-      (boolean)
-      Build ruby with libjemalloc (defaults 'false').
-    - shared:
+    - ruby-shared:
       (boolean)
       Build ruby as a shared library (defaults 'false').
-    - configure-options:
+    - ruby-use-jemalloc:
+      (boolean)
+      Build ruby with libjemalloc (defaults 'false').
+    - ruby-configure-options:
       (array of strings)
       Additional configure options to use when configuring ruby.
 """
@@ -67,24 +67,24 @@ class RubyPlugin(PluginV2):
                     "default": "3.0",
                     "pattern": r"^\d+\.\d+(\.\d+)?$",
                 },
-                "use-bundler": {
+                "ruby-use-bundler": {
                     "type": "boolean",
                     "default": False,
                 },
-                "use-jemalloc": {
+                "ruby-use-jemalloc": {
                     "type": "boolean",
                     "default": False,
                 },
-                "shared": {
+                "ruby-shared": {
                     "type": "boolean",
                     "default": False,
                 },
-                "configure-options": {
+                "ruby-configure-options": {
                     "type": "array",
                     "items": {"type": "string"},
                     "default": [],
                 },
-                "gems": {
+                "ruby-gems": {
                     "type": "array",
                     "items": {"type": "string"},
                     "default": [],
@@ -98,7 +98,7 @@ class RubyPlugin(PluginV2):
     def get_build_packages(self) -> Set[str]:
         packages = {"curl", "jq"}
 
-        if self.options.use_jemalloc:
+        if self.options.ruby_use_jemalloc:
             packages.add("libjemalloc-dev")
 
         return packages
@@ -108,9 +108,9 @@ class RubyPlugin(PluginV2):
             "PATH": "${SNAPCRAFT_PART_INSTALL}/bin:${PATH}",
         }
 
-        if self.options.shared:
+        if self.options.ruby_shared:
             # for finding ruby.so when running `gem` or `bundle`
-            env["LD_LIBRARY_PATH"] = "${SNAPCRAFT_PART_INSTALL}/lib:${LD_LIBRARY_PATH}"
+            env["LD_LIBRARY_PATH"] = "${SNAPCRAFT_PART_INSTALL}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
         return env
 
@@ -119,16 +119,16 @@ class RubyPlugin(PluginV2):
             "--without-baseruby",
             "--enable-load-relative",
             "--disable-install-doc",
-        ] + self.options.configure_options
+        ] + self.options.ruby_configure_options
 
-        if self.options.shared:
+        if self.options.ruby_shared:
             configure_opts.append("--enable-shared")
-        if self.options.use_jemalloc:
+        if self.options.ruby_use_jemalloc:
             configure_opts.append("--with-jemalloc")
 
         return configure_opts
 
-    def _get_install_commands(self) -> List[str]:
+    def get_build_commands(self) -> List[str]:
         commands = []
         commands.append("ruby_install_url=$(curl -L --proto '=https' --tlsv1.2 'https://api.github.com/repos/postmodern/ruby-install/tags' | jq -r '.[0].tarball_url')")
         commands.append("curl -L --proto '=https' --tlsv1.2 $ruby_install_url | tar xz")
@@ -142,15 +142,10 @@ class RubyPlugin(PluginV2):
         commands.append("rm -f ${SNAPCRAFT_PART_INSTALL}/bin/{bundle,bundler}")
         commands.append("gem install --env-shebang --no-document bundler")
 
-        if self.options.use_bundler:
+        if self.options.ruby_use_bundler:
             commands.append("bundle")
 
-        if self.options.gems:
-            commands.append("gem install --env-shebang --no-document {}".format(' '.join(self.options.gems)))
+        if self.options.ruby_gems:
+            commands.append("gem install --env-shebang --no-document {}".format(' '.join(self.options.ruby_gems)))
 
-        return commands
-
-    def get_build_commands(self) -> List[str]:
-        commands = []
-        commands.extend(self._get_install_commands())
         return commands
