@@ -27,7 +27,7 @@ jobs:
           sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
 
   integration-spread-tests:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     strategy:
       # FIXME: enable fail-fast mode once spread can cancel an executing job.
@@ -54,9 +54,6 @@ jobs:
           name: snap
           path: tests
 
-      - name: Install spread
-        run: curl -s https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz | sudo tar xzv -C /usr/bin
-
       - name: Run spread
         env:
           SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
@@ -71,7 +68,7 @@ jobs:
           done
 
   integration-spread-tests-store:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     strategy:
       # FIXME: enable fail-fast mode once spread can cancel an executing job.
@@ -105,10 +102,6 @@ jobs:
         with:
           name: snap
           path: tests
-
-      - if: steps.decisions.outputs.RUN == 'true'
-        name: Install spread
-        run: curl -s https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz | sudo tar xzv -C /usr/bin
 
       - if: steps.decisions.outputs.RUN == 'true'
         name: Run spread
