@@ -36,7 +36,9 @@ backends:
       - ubuntu-18.04
       - ubuntu-20.04
   google:
-    location: computeengine/us-east1-b
+    key: '$(HOST: echo "$SPREAD_GOOGLE_KEY")'
+    location: snapd-spread/us-east1-b
+    halt-timeout: 2h
     systems:
       - ubuntu-16.04-64:
           workers: 12
