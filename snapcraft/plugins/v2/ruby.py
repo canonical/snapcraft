@@ -31,6 +31,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - ruby-use-bundler
       (boolean)
       Use bundler to install gems from a Gemfile (defaults 'false').
+    - ruby-prefix:
+      (string)
+      Prefix directory for installation (defaults '/usr').
     - ruby-shared:
       (boolean)
       Build ruby as a shared library (defaults 'false').
@@ -71,6 +74,10 @@ class RubyPlugin(PluginV2):
                     "type": "boolean",
                     "default": False,
                 },
+                "ruby-prefix": {
+                    "type": "string",
+                    "default": "/usr",
+                },
                 "ruby-use-jemalloc": {
                     "type": "boolean",
                     "default": False,
@@ -105,12 +112,13 @@ class RubyPlugin(PluginV2):
 
     def get_build_environment(self) -> Dict[str, str]:
         env = {
-            "PATH": "${SNAPCRAFT_PART_INSTALL}/bin:${PATH}",
+            "PATH": "${{SNAPCRAFT_PART_INSTALL}}{}/bin:${PATH}".format(self.options.ruby_prefix),
         }
 
         if self.options.ruby_shared:
             # for finding ruby.so when running `gem` or `bundle`
-            env["LD_LIBRARY_PATH"] = "${SNAPCRAFT_PART_INSTALL}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+            env["LD_LIBRARY_PATH"] = "${{SNAPCRAFT_PART_INSTALL}}{}/lib${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}".format(
+                    self.options.ruby_prefix)
 
         return env
 
@@ -132,14 +140,15 @@ class RubyPlugin(PluginV2):
         commands = []
         commands.append("ruby_install_url=$(curl -L --proto '=https' --tlsv1.2 'https://api.github.com/repos/postmodern/ruby-install/tags' | jq -r '.[0].tarball_url')")
         commands.append("curl -L --proto '=https' --tlsv1.2 $ruby_install_url | tar xz")
-        commands.append("postmodern-ruby-install-*/bin/ruby-install -i ${{SNAPCRAFT_PART_INSTALL}} --package-manager apt -j${{SNAPCRAFT_PARALLEL_BUILD_COUNT}} {}-{} -- {}".format(
+        commands.append("postmodern-ruby-install-*/bin/ruby-install -i ${{SNAPCRAFT_PART_INSTALL}}{} --package-manager apt -j${{SNAPCRAFT_PARALLEL_BUILD_COUNT}} {}-{} -- {}".format(
+            self.options.ruby_prefix,
             self.options.ruby_flavor,
             self.options.ruby_version,
             ' '.join(self._configure_opts())))
 
         # NOTE: Update bundler. Avoid conflicts/prompts about replacing bundler
         #       executables by removing them first.
-        commands.append("rm -f ${SNAPCRAFT_PART_INSTALL}/bin/{bundle,bundler}")
+        commands.append("rm -f ${{SNAPCRAFT_PART_INSTALL}}{}/bin/{{bundle,bundler}}".format(self.options.ruby_prefix))
         commands.append("gem install --env-shebang --no-document bundler")
 
         if self.options.ruby_use_bundler:
