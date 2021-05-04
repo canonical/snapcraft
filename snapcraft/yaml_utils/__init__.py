@@ -16,11 +16,14 @@
 
 import codecs
 import collections
+import logging
 from typing import Any, Dict, Optional, TextIO, Union
 
 import yaml
 
 from snapcraft.yaml_utils.errors import YamlValidationError
+
+logger = logging.getLogger(__name__)
 
 try:
     # The C-based loaders/dumpers aren't available everywhere, but they're much faster.
@@ -31,7 +34,9 @@ except ImportError:
     raise RuntimeError("Snapcraft requires PyYAML to be built with libyaml bindings")
 
 
-def load_yaml_file(yaml_file_path: str) -> collections.OrderedDict:
+def load_yaml_file(
+    yaml_file_path: str, *, warn_duplicate_keys: bool = False
+) -> collections.OrderedDict:
     """Load YAML with wrapped YamlValidationError."""
     with open(yaml_file_path, "rb") as fp:
         bs = fp.read(2)
@@ -43,7 +48,7 @@ def load_yaml_file(yaml_file_path: str) -> collections.OrderedDict:
 
     try:
         with open(yaml_file_path, encoding=encoding) as fp:  # type: ignore
-            yaml_contents = load(fp)  # type: ignore
+            yaml_contents = load(fp, warn_duplicate_keys=warn_duplicate_keys)  # type: ignore
     except yaml.MarkedYAMLError as e:
         raise YamlValidationError(
             "{} on line {}, column {}".format(
@@ -67,9 +72,14 @@ def load_yaml_file(yaml_file_path: str) -> collections.OrderedDict:
     return yaml_contents
 
 
-def load(stream: Union[TextIO, str]) -> Any:
+def load(stream: Union[TextIO, str], *, warn_duplicate_keys: bool = False) -> Any:
     """Safely load YAML in ordered manner."""
-    return yaml.load(stream, Loader=_SafeOrderedLoader)
+
+    class YamlLoader(_SafeOrderedLoader):
+        pass
+
+    YamlLoader.warn_duplicate_keys = warn_duplicate_keys
+    return yaml.load(stream, Loader=YamlLoader)
 
 
 def dump(
@@ -90,8 +100,11 @@ def dump(
 
 
 class _SafeOrderedLoader(CSafeLoader):
+    warn_duplicate_keys: bool = False
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.add_constructor(
             yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _dict_constructor
         )
@@ -117,7 +130,19 @@ def _dict_representer(dumper, data):
     return dumper.represent_dict(data.items())
 
 
+def _check_duplicate_keys(loader, node):
+    mappings = set()
+    for key_node, value_node in node.value:
+        if key_node.value in mappings:
+            logger.warning("Duplicate key in YAML detected: %r", key_node.value)
+            return
+        mappings.add(key_node.value)
+
+
 def _dict_constructor(loader, node):
+    if loader.warn_duplicate_keys:
+        _check_duplicate_keys(loader, node)
+
     # Necessary in order to make yaml merge tags work
     loader.flatten_mapping(node)
     value = loader.construct_pairs(node)

@@ -27,7 +27,9 @@ class ProjectInfo:
 
     def __init__(self, *, snapcraft_yaml_file_path) -> None:
         self.snapcraft_yaml_file_path = snapcraft_yaml_file_path
-        self.__raw_snapcraft = yaml_utils.load_yaml_file(snapcraft_yaml_file_path)
+        self.__raw_snapcraft = yaml_utils.load_yaml_file(
+            snapcraft_yaml_file_path, warn_duplicate_keys=True
+        )
 
         try:
             self.name = self.__raw_snapcraft["name"]
