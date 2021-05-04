@@ -132,11 +132,16 @@ def _dict_representer(dumper, data):
 
 def _check_duplicate_keys(loader, node):
     mappings = set()
+
     for key_node, value_node in node.value:
-        if key_node.value in mappings:
-            logger.warning("Duplicate key in YAML detected: %r", key_node.value)
-            return
-        mappings.add(key_node.value)
+        try:
+            if key_node.value in mappings:
+                logger.warning("Duplicate key in YAML detected: %r", key_node.value)
+                return
+            mappings.add(key_node.value)
+        except TypeError:
+            # Ignore errors for malformed inputs that will be caught later.
+            pass
 
 
 def _dict_constructor(loader, node):
