@@ -90,6 +90,73 @@ if sys.platform == "linux":
 else:
     scripts = []
 
+dev_requires = [
+    "codespell",
+    "coverage",
+    "flake8==3.7.9",
+    "pyflakes==2.1.1",
+    "fixtures",
+    "isort",
+    "mccabe",
+    "mypy==0.770",
+    "testscenarios",
+    "pexpect",
+    "pip",
+    "pycodestyle==2.5.0",
+    "pyftpdlib",
+    "pyramid",
+    "pyinstaller",
+    "pytest",
+    "pytest-cov",
+    "pytest-subprocess",
+]
+
+install_requires = [
+    "click",
+    "cryptography==3.4",
+    "gnupg",
+    "jsonschema",
+    "launchpadlib",
+    "lazr.restfulclient",
+    "macaroonbakery",
+    "mypy-extensions",
+    "progressbar",
+    "pyelftools",
+    "pymacaroons",
+    "pysha3",
+    "pyxdg",
+    "pyyaml",
+    "raven",
+    "requests-toolbelt",
+    "requests-unixsocket",
+    "requests",
+    "simplejson",
+    "tabulate",
+    "typing-extensions",
+]
+
+try:
+    os_release = open("/etc/os-release").read()
+    ubuntu = "ID=ubuntu" in os_release
+except FileNotFoundError:
+    ubuntu = False
+
+if sys.platform == "linux":
+    install_requires += [
+        "pylxd",
+    ]
+
+if ubuntu:
+    install_requires += [
+        "catkin-pkg",
+        "python-apt",
+        "python-debian",
+    ]
+
+extras_requires = {
+    "dev": dev_requires,
+}
+
 setup(
     name=name,
     version=determine_version(),
@@ -106,6 +173,7 @@ setup(
         + recursive_data_files("keyrings", "share/snapcraft")
         + recursive_data_files("extensions", "share/snapcraft")
     ),
-    install_requires=["pysha3", "pyxdg", "requests"],
+    install_requires=install_requires,
+    extras_require=extras_requires,
     test_suite="tests.unit",
 )

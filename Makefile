@@ -2,6 +2,10 @@
 autoformat-black:
 	black .
 
+.PHONY: freeze-requirements
+freeze-requirements:
+	tools/freeze-requirements.sh
+
 .PHONY: test-black
 test-black:
 	black --check --diff .
