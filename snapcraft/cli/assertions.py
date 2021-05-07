@@ -129,7 +129,7 @@ def sign_build(snap_file: str, key_name: str, local: bool) -> None:
 def validate(snap_name: str, validations: list, key_name: str, revoke: bool) -> None:
     """Validate a gated snap.
 
-    Each validation can be presented with ether syntax:
+    Each validation can be presented with either syntax:
 
     -  <snap-name>=<revision>
     -  <snap-id>=<revision>

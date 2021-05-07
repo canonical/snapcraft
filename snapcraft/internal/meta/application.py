@@ -180,7 +180,7 @@ class Application:
         return app
 
     def to_dict(self) -> Dict[str, Any]:
-        """Returns and ordered dictonary with the transformed app entry."""
+        """Returns and ordered dictionary with the transformed app entry."""
 
         app_dict = deepcopy(self._app_properties)
 
