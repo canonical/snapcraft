@@ -118,6 +118,7 @@ install_requires = [
     "jsonschema",
     "launchpadlib",
     "lazr.restfulclient",
+    "lxml",
     "macaroonbakery",
     "mypy-extensions",
     "progressbar",
