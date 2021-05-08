@@ -19,6 +19,7 @@ requirements_fixups() {
 
   # We updated setuptools in venv, forget it.
   sed -i '/setuptools/d' "$req_file"
+  echo 'setuptools==49.6.0' >> "$req_file"
 }
 
 venv_dir="$(mktemp -d)"
