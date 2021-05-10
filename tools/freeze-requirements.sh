@@ -11,7 +11,7 @@ requirements_fixups() {
   # PyNaCl 1.4.0 has crypto related symbol issues when using the system
   # provided sodium.  Ensure it is compiled on linux by pointing to source.
   sed -i '/PyNaCl=*/d' "$req_file"
-  echo 'PyNaCl==1.3.0; sys.platform != "linux"' >> "$req_file"
+  echo 'PyNaCl==1.4.0; sys.platform != "linux"' >> "$req_file"
   echo 'PyNaCl @ https://files.pythonhosted.org/packages/61/ab/2ac6dea8489fa713e2b4c6c5b549cc962dd4a842b5998d9e80cf8440b7cd/PyNaCl-1.3.0.tar.gz; sys.platform == "linux"' >> "$req_file"
 
   # https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1635463

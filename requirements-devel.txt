@@ -1,4 +1,3 @@
-altgraph==0.17
 attrs==21.2.0
 catkin-pkg==0.4.23
 certifi==2020.12.5
@@ -51,8 +50,6 @@ pycparser==2.20
 pyelftools==0.27
 pyflakes==2.1.1
 pyftpdlib==1.5.6
-pyinstaller==4.3
-pyinstaller-hooks-contrib==2021.1
 pylxd==2.3.0
 pymacaroons==0.13.0
 pyparsing==2.4.7
@@ -98,6 +95,6 @@ zope.deprecation==4.4.0
 zope.interface==5.4.0
 python-apt @ http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_1.6.5ubuntu0.5.tar.xz; sys.platform == "linux"
 python-distutils-extra @ https://launchpad.net/python-distutils-extra/trunk/2.39/+download/python-distutils-extra-2.39.tar.gz; sys_platform == "linux"
-PyNaCl==1.3.0; sys.platform != "linux"
+PyNaCl==1.4.0; sys.platform != "linux"
 PyNaCl @ https://files.pythonhosted.org/packages/61/ab/2ac6dea8489fa713e2b4c6c5b549cc962dd4a842b5998d9e80cf8440b7cd/PyNaCl-1.3.0.tar.gz; sys.platform == "linux"
 setuptools==49.6.0
