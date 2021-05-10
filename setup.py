@@ -111,7 +111,7 @@ dev_requires = [
 ]
 
 if sys.platform == "win32":
-    dev_requires.append("pyinstaller==4.3")
+    dev_requires.append("pyinstaller")
 
 install_requires = [
     "click",
