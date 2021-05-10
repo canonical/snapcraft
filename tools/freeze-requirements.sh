@@ -37,7 +37,7 @@ site_pkgs="$(readlink -f "$venv_dir"/lib/python3.*/site-packages/)"
 temp_dir="$(mktemp -d)"
 pushd "$temp_dir"
 apt download python3-apt
-dpkg -x *.deb .
+dpkg -x ./*.deb .
 cp -r usr/lib/python3/dist-packages/* "$site_pkgs"
 popd
 
