@@ -48,6 +48,7 @@ simplejson==3.17.2
 six==1.16.0
 tabulate==0.8.9
 testresources==2.0.1
+tinydb==4.4.0
 toml==0.10.2
 typing-extensions==3.10.0.0
 urllib3==1.26.4
