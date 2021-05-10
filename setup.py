@@ -105,11 +105,13 @@ dev_requires = [
     "pycodestyle==2.5.0",
     "pyftpdlib",
     "pyramid",
-    "pyinstaller",
     "pytest",
     "pytest-cov",
     "pytest-subprocess",
 ]
+
+if sys.platform == "win32":
+    dev_requires.append("pyinstaller==4.1")
 
 install_requires = [
     "click",
