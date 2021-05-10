@@ -20,6 +20,12 @@ requirements_fixups() {
   # We updated setuptools in venv, forget it.
   sed -i '/setuptools/d' "$req_file"
   echo 'setuptools==49.6.0' >> "$req_file"
+
+  # Pinned pyinstaller for windows.
+  if [[ "$req_file" == "requirements-devel.txt" ]]; then
+      sed -i '/pyinstaller/d' "$req_file"
+      echo 'pyinstaller==4.3; sys.platform == "win32"' >> "$req_file"
+  fi
 }
 
 venv_dir="$(mktemp -d)"
