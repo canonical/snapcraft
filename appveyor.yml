@@ -22,7 +22,6 @@ install:
     python -m pip install -r requirements.txt
     python -m pip install -r requirements-devel.txt
     python -m pip install --prefix %VIRTUAL_ENV% -e .
-    python -m pip install pyinstaller==4.1
     venv\Scripts\deactivate.bat
 
 build_script:
