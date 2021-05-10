@@ -8,6 +8,7 @@ data = [
         ("keyrings", os.path.join("share", "snapcraft", "keyrings")),
         ("schema", os.path.join("share", "snapcraft", "schema")),
     ]
+data += collect_data_files("launchpadlib")
 data += collect_data_files("lazr.restfulclient")
 data += collect_data_files("lazr.uri")
 data += collect_data_files("wadllib")
