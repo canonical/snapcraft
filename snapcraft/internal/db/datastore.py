@@ -89,7 +89,7 @@ class Datastore:
         self._snapcraft_version = snapcraft_version
 
         if read_only:
-            storage_class = _YAMLStorageReadOnly
+            storage_class: Type[_YAMLStorage] = _YAMLStorageReadOnly
         else:
             storage_class = _YAMLStorage
 
