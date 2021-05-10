@@ -110,9 +110,6 @@ dev_requires = [
     "pytest-subprocess",
 ]
 
-if sys.platform == "win32":
-    dev_requires.append("pyinstaller==4.1")
-
 install_requires = [
     "click",
     "cryptography==3.4",
