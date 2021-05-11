@@ -128,7 +128,7 @@ install_requires = [
     "pymacaroons",
     "pysha3",
     "pyxdg",
-    "pyyaml",
+    "pyyaml==5.3",
     "raven",
     "requests-toolbelt",
     "requests-unixsocket",

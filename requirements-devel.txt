@@ -65,7 +65,7 @@ python-debian==0.1.39
 python-mimeparse==1.6.0
 pytz==2021.1
 pyxdg==0.27
-PyYAML==5.4.1
+PyYAML==5.3
 raven==6.10.0
 requests==2.25.1
 requests-toolbelt==0.9.1
