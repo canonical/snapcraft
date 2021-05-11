@@ -21,7 +21,7 @@ importlib-metadata==4.0.1
 iniconfig==1.1.1
 isort==5.8.0
 jeepney==0.6.0
-jsonschema==3.2.0
+jsonschema==2.5.1
 keyring==23.0.1
 launchpadlib==1.10.13
 lazr.restfulclient==0.14.3
@@ -55,7 +55,6 @@ pymacaroons==0.13.0
 pyparsing==2.4.7
 pyramid==2.0
 pyRFC3339==1.1
-pyrsistent==0.17.3
 pysha3==1.0.2
 pytest==6.2.4
 pytest-cov==2.11.1

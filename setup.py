@@ -117,7 +117,7 @@ install_requires = [
     "click",
     "cryptography==3.4",
     "gnupg",
-    "jsonschema",
+    "jsonschema==2.5.1",
     "launchpadlib",
     "lazr.restfulclient",
     "lxml",
