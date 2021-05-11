@@ -114,6 +114,7 @@ if sys.platform == "win32":
     dev_requires.append("pyinstaller")
 
 install_requires = [
+    "attrs",
     "click",
     "cryptography==3.4",
     "gnupg",
