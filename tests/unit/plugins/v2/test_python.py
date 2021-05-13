@@ -32,7 +32,7 @@ def test_schema():
                 "uniqueItems": True,
             },
             "python-packages": {
-                "default": ["pip", "setuptools", "wheel"],
+                "default": [],
                 "items": {"type": "string"},
                 "type": "array",
                 "uniqueItems": True,
@@ -43,6 +43,7 @@ def test_schema():
                 "type": "array",
                 "uniqueItems": True,
             },
+            "update-pip": {"type": "boolean", "default": True},
         },
         "type": "object",
     }
@@ -106,6 +107,7 @@ def test_get_build_commands():
         constraints = list()
         requirements = list()
         python_packages = list()
+        update_pip = bool()
 
     plugin = PythonPlugin(part_name="my-part", options=Options())
 
@@ -125,6 +127,7 @@ def test_get_build_commands_with_all_properties():
         constraints = ["constraints.txt"]
         requirements = ["requirements.txt"]
         python_packages = ["pip", "some-pkg; sys_platform != 'win32'"]
+        update_pip = True
 
     plugin = PythonPlugin(part_name="my-part", options=Options())
 
@@ -133,6 +136,7 @@ def test_get_build_commands_with_all_properties():
         == [
             '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} "${SNAPCRAFT_PART_INSTALL}"',
             'SNAPCRAFT_PYTHON_VENV_INTERP_PATH="${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"',
+            "pip install -U pip wheel setuptools",
             "pip install -c 'constraints.txt' -U pip 'some-pkg; sys_platform != '\"'\"'win32'\"'\"''",
             "pip install -c 'constraints.txt' -U -r 'requirements.txt'",
             "[ -f setup.py ] && pip install -c 'constraints.txt' -U .",

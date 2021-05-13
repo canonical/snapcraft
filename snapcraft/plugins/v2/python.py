@@ -38,8 +38,12 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
     - python-packages
       (list)
-      A list of dependencies to get from PyPI. If needed, pip,
-      setuptools and wheel can be upgraded here.
+      A list of dependencies to get from PyPI.
+
+    - update-pip
+      (boolean)
+      If set to true, build with the latest versions
+      of pip, wheel, and setuptools.
 
 This plugin also interprets these specific build-environment entries:
 
@@ -94,8 +98,9 @@ class PythonPlugin(PluginV2):
                     "type": "array",
                     "uniqueItems": True,
                     "items": {"type": "string"},
-                    "default": ["pip", "setuptools", "wheel"],
+                    "default": [],
                 },
+                "update-pip": {"type": "boolean", "default": True},
             },
         }
 
@@ -122,6 +127,9 @@ class PythonPlugin(PluginV2):
             '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} "${SNAPCRAFT_PART_INSTALL}"',
             'SNAPCRAFT_PYTHON_VENV_INTERP_PATH="${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"',
         ]
+
+        if self.options.update_pip:
+            build_commands.append("pip install -U pip wheel setuptools")
 
         if self.options.constraints:
             constraints = " ".join(f"-c {c!r}" for c in self.options.constraints)
