@@ -27,7 +27,13 @@ def test_schema():
                 "uniqueItems": True,
                 "items": {"type": "string"},
                 "default": [],
-            }
+            },
+            "autotools-configure-env-variables": {
+                "type": "array",
+                "uniqueItems": True,
+                "items": {"type": "string"},
+                "default": [],
+            },
         },
     }
 
@@ -53,6 +59,7 @@ def test_get_build_environment():
 def test_get_build_commands():
     class Options:
         autotools_configure_parameters = list()
+        autotools_configure_env_variables = list()
 
     plugin = AutotoolsPlugin(part_name="my-part", options=Options())
 
@@ -60,7 +67,7 @@ def test_get_build_commands():
         "[ ! -f ./configure ] && [ -f ./autogen.sh ] && env NOCONFIGURE=1 ./autogen.sh",
         "[ ! -f ./configure ] && [ -f ./bootstrap ] && env NOCONFIGURE=1 ./bootstrap",
         "[ ! -f ./configure ] && autoreconf --install",
-        "./configure",
+        "CC=${SNAPCRAFT_ARCH_TRIPLET}-gcc ./configure --host=${SNAPCRAFT_ARCH_TRIPLET}",
         'make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
         'make install DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
     ]
@@ -69,6 +76,7 @@ def test_get_build_commands():
 def test_get_build_commands_with_configure_parameters():
     class Options:
         autotools_configure_parameters = ["--with-foo=true", "--prefix=/foo"]
+        autotools_configure_env_variables = ["FOO=BAR", "BAR=FOO"]
 
     plugin = AutotoolsPlugin(part_name="my-part", options=Options())
 
@@ -76,7 +84,7 @@ def test_get_build_commands_with_configure_parameters():
         "[ ! -f ./configure ] && [ -f ./autogen.sh ] && env NOCONFIGURE=1 ./autogen.sh",
         "[ ! -f ./configure ] && [ -f ./bootstrap ] && env NOCONFIGURE=1 ./bootstrap",
         "[ ! -f ./configure ] && autoreconf --install",
-        "./configure --with-foo=true --prefix=/foo",
+        "CC=${SNAPCRAFT_ARCH_TRIPLET}-gcc FOO=BAR BAR=FOO ./configure --with-foo=true --prefix=/foo --host=${SNAPCRAFT_ARCH_TRIPLET}",
         'make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
         'make install DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
     ]
