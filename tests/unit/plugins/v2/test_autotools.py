@@ -28,7 +28,7 @@ def test_schema():
                 "items": {"type": "string"},
                 "default": [],
             },
-            "autotools-configure-env-variables": {
+            "autotools-configure-environment": {
                 "type": "array",
                 "uniqueItems": True,
                 "items": {"type": "string"},
@@ -59,7 +59,7 @@ def test_get_build_environment():
 def test_get_build_commands():
     class Options:
         autotools_configure_parameters = list()
-        autotools_configure_env_variables = list()
+        autotools_configure_environment = list()
 
     plugin = AutotoolsPlugin(part_name="my-part", options=Options())
 
@@ -76,7 +76,7 @@ def test_get_build_commands():
 def test_get_build_commands_with_configure_parameters():
     class Options:
         autotools_configure_parameters = ["--with-foo=true", "--prefix=/foo"]
-        autotools_configure_env_variables = ["FOO=BAR", "BAR=FOO"]
+        autotools_configure_environment = ["FOO=BAR", "BAR=FOO"]
 
     plugin = AutotoolsPlugin(part_name="my-part", options=Options())
 

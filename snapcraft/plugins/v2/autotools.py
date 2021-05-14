@@ -33,7 +33,7 @@ In addition, this plugin uses the following plugin-specific keywords:
       configure flags to pass to the build such as those shown by running
       './configure --help'
 
-    - autotools-configure-env-variables
+    - autotools-configure-environment
       (list of strings)
       environment variables to set for the build such as those shown by running
       './configure --help'
@@ -58,7 +58,7 @@ class AutotoolsPlugin(PluginV2):
                     "items": {"type": "string"},
                     "default": [],
                 },
-                "autotools-configure-env-variables": {
+                "autotools-configure-environment": {
                     "type": "array",
                     "uniqueItems": True,
                     "items": {"type": "string"},
@@ -78,7 +78,7 @@ class AutotoolsPlugin(PluginV2):
 
     def _get_configure_command(self) -> str:
         cmd = ["CC=${SNAPCRAFT_ARCH_TRIPLET}-gcc"]
-        cmd += self.options.autotools_configure_env_variables
+        cmd += self.options.autotools_configure_environment
         cmd += ["./configure"]
         cmd += self.options.autotools_configure_parameters
         cmd.append("--host=${SNAPCRAFT_ARCH_TRIPLET}")
