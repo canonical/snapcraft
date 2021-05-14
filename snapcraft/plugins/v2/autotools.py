@@ -32,6 +32,11 @@ In addition, this plugin uses the following plugin-specific keywords:
       (list of strings)
       configure flags to pass to the build such as those shown by running
       './configure --help'
+
+    - autotools-configure-env-variables
+      (list of strings)
+      environment variables to set for the build such as those shown by running
+      './configure --help'
 """
 
 from typing import Any, Dict, List, Set
@@ -52,7 +57,13 @@ class AutotoolsPlugin(PluginV2):
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],
-                }
+                },
+                "autotools-configure-env-variables": {
+                    "type": "array",
+                    "uniqueItems": True,
+                    "items": {"type": "string"},
+                    "default": [],
+                },
             },
         }
 
@@ -66,7 +77,9 @@ class AutotoolsPlugin(PluginV2):
         return dict()
 
     def _get_configure_command(self) -> str:
-        cmd = ["./configure"] + self.options.autotools_configure_parameters
+        cmd = self.options.autotools_configure_env_variables
+        cmd += ["./configure"]
+        cmd += self.options.autotools_configure_parameters
 
         return " ".join(cmd)
 
