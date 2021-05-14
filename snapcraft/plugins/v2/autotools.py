@@ -77,9 +77,11 @@ class AutotoolsPlugin(PluginV2):
         return dict()
 
     def _get_configure_command(self) -> str:
-        cmd = self.options.autotools_configure_env_variables
+        cmd = ["CC=${SNAPCRAFT_ARCH_TRIPLET}-gcc"]
+        cmd += self.options.autotools_configure_env_variables
         cmd += ["./configure"]
         cmd += self.options.autotools_configure_parameters
+        cmd.append("--host=${SNAPCRAFT_ARCH_TRIPLET}")
 
         return " ".join(cmd)
 
