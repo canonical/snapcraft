@@ -20,7 +20,14 @@ import logging
 import subprocess
 from typing import Any, Dict, Iterator, Optional
 
+from snapcraft.internal import repo
+
 logger = logging.getLogger(__name__)
+
+
+def _install_ua_tools() -> None:
+    """Ensure UA tools are installed."""
+    repo.Repo.install_build_packages(package_names=["ubuntu-advantage-tools"])
 
 
 def _attach(ua_token: str) -> None:
@@ -60,6 +67,9 @@ def ua_manager(ua_token: Optional[str]) -> Iterator[None]:
     ua_needs_detach = False
 
     if ua_token is not None:
+        # Make sure the tools are installed first.
+        _install_ua_tools()
+
         if _is_attached():
             logger.warning(
                 "Refusing to attach specified UA token as system is already attached. "
