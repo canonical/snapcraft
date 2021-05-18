@@ -1,0 +1,16 @@
+name: managed-environment
+version: '0.1'
+summary: Help verify managed environment configuration is correct.
+description: |
+  Help verify managed environment configuration is correct.
+
+grade: devel
+base: core18
+confinement: devmode
+
+parts:
+  test:
+    plugin: nil
+    override-pull: |
+      if [ "$(hostname)" != "snapcraft-managed-environment" ]; then exit 1; fi
+      if [ "$(hostname)" != "$(cat /etc/hostname)" ]; then exit 1; fi
