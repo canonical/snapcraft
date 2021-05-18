@@ -148,7 +148,7 @@ class AptCache(ContextDecorator):
                 package.mark_keep()
 
     def _set_pkg_version(self, package: apt.Package, version: str) -> None:
-        # Set cadidate version to a specific version if available
+        # Set candidate version to a specific version if available
         if version in package.versions:
             version = package.versions.get(version)
             package.candidate = version

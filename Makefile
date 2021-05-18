@@ -2,13 +2,17 @@
 autoformat-black:
 	black .
 
+.PHONY: freeze-requirements
+freeze-requirements:
+	tools/freeze-requirements.sh
+
 .PHONY: test-black
 test-black:
 	black --check --diff .
 
 .PHONY: test-codespell
 test-codespell:
-	codespell --quiet-level 4 --ignore-words-list keyserver --skip '*.tar,*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,changelog,.git,.hg,.mypy_cache,.tox,.venv,_build,buck-out,__pycache__,build,dist,.vscode,parts,stage,prime,test_appstream.py,./snapcraft.spec,./.direnv'
+	codespell --quiet-level 4 --ignore-words-list crate,keyserver --skip '*.tar,*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,changelog,.git,.hg,.mypy_cache,.tox,.venv,_build,buck-out,__pycache__,build,dist,.vscode,parts,stage,prime,test_appstream.py,./snapcraft.spec,./.direnv'
 
 .PHONY: test-flake8
 test-flake8:

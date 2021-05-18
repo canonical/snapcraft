@@ -31,7 +31,7 @@ python3 -m venv "${SNAPCRAFT_VIRTUAL_ENV_DIR}"
 source "${SNAPCRAFT_VIRTUAL_ENV_DIR}/bin/activate"
 
 # Install python dependencies
-pip install --upgrade wheel
+pip install --upgrade wheel pip==20.1.1
 pip install -r "${SNAPCRAFT_DIR}/requirements-devel.txt"
 pip install -r "${SNAPCRAFT_DIR}/requirements.txt"
 
