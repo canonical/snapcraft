@@ -22,6 +22,10 @@ restore: |
       exit 0
   fi
 
+  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+      export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
+  fi
+
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
@@ -34,6 +38,10 @@ execute: |
   if [ -z "$SNAPCRAFT_UA_TOKEN" ]; then
       echo "Skipping UA token test, no token found."
       exit 0
+  fi
+
+  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+      export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
   fi
 
   cd "$SNAP_DIR"
