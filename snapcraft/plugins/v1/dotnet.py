@@ -41,7 +41,7 @@ from snapcraft import formatting_utils, sources
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import PluginV1
 
-_DOTNET_RELEASE_METADATA_URL = "http://dotnetcli.blob.core.windows.net/dotnet/release-metadata/{version}/releases.json"  # noqa
+_DOTNET_RELEASE_METADATA_URL = "https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/{version}/releases.json"  # noqa
 _RUNTIME_DEFAULT = "2.0.9"
 _VERSION_DEFAULT = "2.0"
 
