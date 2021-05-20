@@ -19,7 +19,6 @@ install:
     %PYTHON%\python.exe -m venv venv
     venv\Scripts\activate.bat
     python -c "import sys; print(sys.executable)"
-    python -m pip install -r requirements.txt
     python -m pip install -r requirements-devel.txt
     python -m pip install --prefix %VIRTUAL_ENV% -e .
     venv\Scripts\deactivate.bat

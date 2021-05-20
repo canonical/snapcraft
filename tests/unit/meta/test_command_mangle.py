@@ -167,7 +167,7 @@ class TestCommandMangle:
             ),
         ),
         (
-            "find in non stardard path and preferred over root",
+            "find in non standard path and preferred over root",
             dict(
                 command_path="bar/sh",
                 command_value="sh bar",

@@ -65,7 +65,7 @@ class Local(Base):
             for directory in directories:
                 path = os.path.join(root, directory)
                 if os.lstat(path).st_mtime >= target_mtime:
-                    # Don't decend into this directory-- we'll just copy it
+                    # Don't descend into this directory-- we'll just copy it
                     # entirely.
                     directories.remove(directory)
 

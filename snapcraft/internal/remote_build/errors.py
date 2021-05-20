@@ -125,7 +125,8 @@ class AcceptPublicUploadError(RemoteBuildBaseError):
 
     fmt = (
         "Remote build needs explicit acknowledgement that data sent to build servers "
-        "is public.\nIn non-interactive runs, please use option --launchpad-accept-public-upload."
+        "is public.\n"
+        "In non-interactive runs, please use option --launchpad-accept-public-upload."
     )
 
 

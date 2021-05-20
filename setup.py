@@ -90,6 +90,78 @@ if sys.platform == "linux":
 else:
     scripts = []
 
+dev_requires = [
+    "codespell",
+    "coverage",
+    "flake8==3.7.9",
+    "pyflakes==2.1.1",
+    "fixtures",
+    "isort",
+    "mccabe",
+    "mypy==0.770",
+    "testscenarios",
+    "pexpect",
+    "pip",
+    "pycodestyle==2.5.0",
+    "pyftpdlib",
+    "pyramid",
+    "pytest",
+    "pytest-cov",
+    "pytest-subprocess",
+]
+
+if sys.platform == "win32":
+    dev_requires.append("pyinstaller")
+
+install_requires = [
+    "attrs",
+    "click",
+    "cryptography==3.4",
+    "gnupg",
+    "jsonschema==2.5.1",
+    "launchpadlib",
+    "lazr.restfulclient",
+    "lxml",
+    "macaroonbakery",
+    "mypy-extensions",
+    "progressbar",
+    "pyelftools",
+    "pymacaroons",
+    "pysha3",
+    "pyxdg",
+    "pyyaml==5.3",
+    "raven",
+    "requests-toolbelt",
+    "requests-unixsocket",
+    "requests",
+    "simplejson",
+    "tabulate",
+    "tinydb",
+    "typing-extensions",
+]
+
+try:
+    os_release = open("/etc/os-release").read()
+    ubuntu = "ID=ubuntu" in os_release
+except FileNotFoundError:
+    ubuntu = False
+
+if sys.platform == "linux":
+    install_requires += [
+        "pylxd",
+    ]
+
+if ubuntu:
+    install_requires += [
+        "catkin-pkg",
+        "python-apt",
+        "python-debian",
+    ]
+
+extras_requires = {
+    "dev": dev_requires,
+}
+
 setup(
     name=name,
     version=determine_version(),
@@ -106,6 +178,7 @@ setup(
         + recursive_data_files("keyrings", "share/snapcraft")
         + recursive_data_files("extensions", "share/snapcraft")
     ),
-    install_requires=["pysha3", "pyxdg", "requests"],
+    install_requires=install_requires,
+    extras_require=extras_requires,
     test_suite="tests.unit",
 )

@@ -28,26 +28,7 @@ usage() {
 }
 
 run_static_tests() {
-    echo "Running black"
-    black --check --diff .
-
-    echo "Running flake8"
-    python3 -m flake8 .
-
-    echo "Running mypy"
-    mypy .
-
-    echo "Running codespell"
-    codespell -q4 -L keyserver \
-      -S "*.tar,*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,changelog,.git,.hg,.mypy_cache,.tox,.venv,_build,buck-out,__pycache__,build,dist,.vscode,parts,stage,prime,test_appstream.py,./snapcraft.spec,./.direnv"
-
-    echo "Running shellcheck"
-    # Need to skip 'demos/gradle/gradlew' as it wasn't written by us and has
-    # tons of issues.
-    find . \( -name .git -o -name gradlew \) -prune -o -print0 | xargs -0 file -N | awk -F": " '$2~/shell.script/{print $1}' | xargs shellcheck
-
-    echo "Running shellcheck inside spread yaml"
-    ./tools/spread-shellcheck.py spread.yaml tests/spread/
+    make tests-static
 }
 
 run_snapcraft_tests(){

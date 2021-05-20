@@ -105,7 +105,7 @@ class RustPlugin(PluginV1):
             self.source_path = Path(self.sourcedir)
 
     def enable_cross_compilation(self):
-        # The logic is applied transparently trough internal
+        # The logic is applied transparently through internal
         # rust tooling.
         pass
 
