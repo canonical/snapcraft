@@ -51,14 +51,6 @@ def conduct_project_sanity_check(project: Project, **kwargs) -> None:
         # TODO: move this check to the ProjectInfo class.
         _check_snap_dir(snap_dir_path)
 
-    if project._snap_meta.package_repositories and not os.getenv(
-        "SNAPCRAFT_ENABLE_EXPERIMENTAL_PACKAGE_REPOSITORIES"
-    ):
-        raise SnapcraftEnvironmentError(
-            "*EXPERIMENTAL* 'package-repositories' configured, but not enabled. "
-            "Enable with '--enable-experimental-package-repositories' flag."
-        )
-
     if (
         project._get_build_base() in ["core20"]
         and kwargs.get("target_arch") is not None
