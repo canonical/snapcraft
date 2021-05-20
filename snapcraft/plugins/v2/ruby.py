@@ -112,7 +112,7 @@ class RubyPlugin(PluginV2):
 
     def get_build_environment(self) -> Dict[str, str]:
         env = {
-            "PATH": "${{SNAPCRAFT_PART_INSTALL}}{}/bin:${PATH}".format(self.options.ruby_prefix),
+            "PATH": f"${{SNAPCRAFT_PART_INSTALL}}{self.options.ruby_prefix}/bin:${PATH}",
         }
 
         if self.options.ruby_shared:
