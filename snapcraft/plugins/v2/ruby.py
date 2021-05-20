@@ -148,7 +148,7 @@ class RubyPlugin(PluginV2):
 
         # NOTE: Update bundler. Avoid conflicts/prompts about replacing bundler
         #       executables by removing them first.
-        commands.append("rm -f ${{SNAPCRAFT_PART_INSTALL}}{}/bin/{{bundle,bundler}}".format(self.options.ruby_prefix))
+        commands.append(f"rm -f ${{SNAPCRAFT_PART_INSTALL}}{self.options.ruby_prefix}/bin/{{bundle,bundler}}")
         commands.append("gem install --env-shebang --no-document bundler")
 
         if self.options.ruby_use_bundler:
