@@ -25,6 +25,7 @@ from typing import Callable
 from unittest import mock
 
 import fixtures
+import jsonschema
 
 import snapcraft
 from snapcraft.internal import elf
@@ -371,12 +372,30 @@ class FakeExtension(fixtures.Fixture):
             extension_name
         )
         self._extension_class = extension_class
+        self._extension_name = extension_name
 
     def _setUp(self):
         extension_module = ModuleType(self._import_name)
         setattr(extension_module, self._extension_class.__name__, self._extension_class)
         sys.modules[self._import_name] = extension_module
         self.addCleanup(self._remove_module)
+
+        json_schema_validator = jsonschema.validate
+
+        def validate(snapcraft, schema, *, format_checker=None):
+            try:
+                json_schema_validator(snapcraft, schema, format_checker=format_checker)
+            except jsonschema.exceptions.ValidationError as error:
+                # Ignore validation errors arising from extension usage.
+                if (
+                    error.instance == self._extension_name
+                    and error.path[0] == "apps"
+                    and error.path[2] == "extensions"
+                ):
+                    return None
+                raise
+
+        self.useFixture(fixtures.MonkeyPatch("jsonschema.validate", validate))
 
     def _remove_module(self):
         del sys.modules[self._import_name]
