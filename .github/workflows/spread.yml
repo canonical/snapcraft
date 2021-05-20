@@ -57,6 +57,7 @@ jobs:
       - name: Run spread
         env:
           SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
+          UA_TOKEN: ${{ secrets.UA_TOKEN }}
         run: spread ${{ matrix.spread-jobs }}
 
       - name: Discard spread workers
