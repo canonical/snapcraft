@@ -117,8 +117,7 @@ class RubyPlugin(PluginV2):
 
         if self.options.ruby_shared:
             # for finding ruby.so when running `gem` or `bundle`
-            env["LD_LIBRARY_PATH"] = "${{SNAPCRAFT_PART_INSTALL}}{}/lib${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}".format(
-                    self.options.ruby_prefix)
+            env["LD_LIBRARY_PATH"] = f"${{SNAPCRAFT_PART_INSTALL}}{self.options.ruby_prefix}/lib${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
 
         return env
 
