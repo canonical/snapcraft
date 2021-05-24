@@ -180,13 +180,6 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
-        param_decls="--enable-experimental-package-repositories",
-        is_flag=True,
-        help="Enable `package-repositories` support in schema.",
-        envvar="SNAPCRAFT_ENABLE_EXPERIMENTAL_PACKAGE_REPOSITORIES",
-        supported_providers=["host", "lxd", "managed-host", "multipass"],
-    ),
-    dict(
         param_decls="--enable-experimental-target-arch",
         is_flag=True,
         help="Enable experimental `--target-arch` support for core20.",
@@ -411,9 +404,6 @@ def apply_host_provider_flags(build_provider_flags: Dict[str, str]) -> None:
 
 def issue_build_provider_warnings(build_provider_flags: Dict[str, str]) -> None:
     # Log any experimental flags in use.
-    if build_provider_flags.get("SNAPCRAFT_ENABLE_EXPERIMENTAL_PACKAGE_REPOSITORIES"):
-        warning("*EXPERIMENTAL* package-repositories enabled.")
-
     if build_provider_flags.get("SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS"):
         warning("*EXPERIMENTAL* extensions enabled.")
 
