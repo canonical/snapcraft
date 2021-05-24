@@ -152,3 +152,19 @@ class Project(ProjectOptions):
     def _get_start_time(self) -> datetime:
         """Returns the timestamp for when a snapcraft project was loaded."""
         return self._start_time
+
+    def is_legacy_project(self) -> bool:
+        """Determine if project is legacy."""
+        # Not in an actual project.
+        if self.info is None:
+            return False
+        # Building a base is not legacy.
+        elif self.info.type == "base":
+            return False
+        elif self.info.build_base is not None:
+            return False
+        # A self with no base set is legacy.
+        elif self.info.base is None:
+            return True
+        else:
+            return False

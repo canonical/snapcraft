@@ -371,12 +371,12 @@ def get_project(*, is_managed_host: bool = False, **kwargs):
     )
 
     # Validate yaml info from schema prior to consumption.
-    if project.info is not None:
+    if project.info is not None and not project.is_legacy_project():
         project.info.validate_raw_snapcraft()
 
-    # TODO: this should be automatic on get_project().
-    # This is not the complete meta parsed by the project loader.
-    project._snap_meta = Snap.from_dict(project.info.get_raw_snapcraft())
+        # TODO: this should be automatic on get_project().
+        # This is not the complete meta parsed by the project loader.
+        project._snap_meta = Snap.from_dict(project.info.get_raw_snapcraft())
 
     return project
 

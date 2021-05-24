@@ -62,19 +62,11 @@ class SnapcraftProjectCommand(click.Command):
             # where the error should be properly handled.
             return False
 
-        # Not in an actual project.
-        if project is None or project.info is None:
+        # Not in a project.
+        if project is None:
             return False
-        # Building a base is not legacy.
-        elif project.info.type == "base":
-            return False
-        elif project.info.build_base is not None:
-            return False
-        # A project with no base set is legacy.
-        elif project.info.base is None:
-            return True
-        else:
-            return False
+
+        return project.is_legacy_project()
 
     def get_help(self, ctx):
         if self._is_legacy():
