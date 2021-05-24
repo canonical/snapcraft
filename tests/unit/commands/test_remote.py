@@ -28,7 +28,13 @@ from . import CommandBaseTestCase
 class RemoteBuildTests(CommandBaseTestCase):
     def setUp(self):
         super().setUp()
-        self.useFixture(fixture_setup.SnapcraftYaml(self.path))
+        self.snapcraft_yaml = fixture_setup.SnapcraftYaml(
+            self.path,
+            parts={
+                "part0": {"plugin": "nil"},
+            },
+        )
+        self.useFixture(self.snapcraft_yaml)
 
         self.mock_lc = self.useFixture(
             fixtures.MockPatch("snapcraft.cli.remote.LaunchpadClient", autospec=True)
