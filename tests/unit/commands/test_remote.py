@@ -29,10 +29,7 @@ class RemoteBuildTests(CommandBaseTestCase):
     def setUp(self):
         super().setUp()
         self.snapcraft_yaml = fixture_setup.SnapcraftYaml(
-            self.path,
-            parts={
-                "part0": {"plugin": "nil"},
-            },
+            self.path, parts={"part0": {"plugin": "nil"}},
         )
         self.useFixture(self.snapcraft_yaml)
 
