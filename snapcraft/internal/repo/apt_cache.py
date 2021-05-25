@@ -158,6 +158,10 @@ class AptCache(ContextDecorator):
     def _verify_marked_install(self, package: apt.Package):
         if not package.installed and not package.marked_install:
             broken_deps: List[str] = list()
+
+            if package.candidate is None:
+                raise errors.PackageNotFoundError(package.name)
+
             for package_dependencies in package.candidate.dependencies:
                 for dep in package_dependencies:
                     if not dep.target_versions:
@@ -194,6 +198,9 @@ class AptCache(ContextDecorator):
             except apt.package.FetchError as e:
                 raise errors.PackageFetchError(str(e))
 
+            if package.candidate is None:
+                raise errors.PackageNotFoundError(package.name)
+
             downloaded.append((package.name, package.candidate.version, Path(dl_path)))
         return downloaded
 
@@ -205,11 +212,17 @@ class AptCache(ContextDecorator):
         return installed
 
     def get_packages_marked_for_installation(self) -> List[Tuple[str, str]]:
-        return [
-            (package.name, package.candidate.version)
-            for package in self.cache.get_changes()
-            if package.marked_install
-        ]
+        packages: List[Tuple[str, str]] = []
+        for package in self.cache.get_changes():
+            if not package.marked_install:
+                continue
+
+            if package.candidate is None:
+                raise errors.PackageNotFoundError(package.name)
+
+            packages.append((package.name, package.candidate.version))
+
+        return packages
 
     def mark_packages(self, package_names: Set[str]) -> None:
         for name in package_names:
@@ -253,6 +266,9 @@ class AptCache(ContextDecorator):
         skipped_filtered = set()
 
         for package in self.cache:
+            if package.candidate is None:
+                raise errors.PackageNotFoundError(package.name)
+
             if package.candidate.priority == "essential":
                 # Filter 'essential' packages.
                 skipped_essential.add(package.name)
