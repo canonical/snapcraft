@@ -1,6 +1,6 @@
-summary: Build a snap that uses build-environment
+summary: Verify --ua-token functionality
 
-systems: [ubuntu-16*]
+systems: [ubuntu-16*, ubuntu-18*, ubuntu-20*]
 
 environment:
   SNAP_DIR: snaps/ua-token-test
@@ -17,18 +17,13 @@ prepare: |
   cd "$SNAP_DIR"
   set_base "snap/snapcraft.yaml"
 
-  apt-get install software-properties-common --yes
-  apt-mark auto software-properties-common
-
-  add-apt-repository ppa:ua-client/daily --yes
-  apt-get update
-
-  apt-get install ubuntu-advantage-tools --yes
-  apt-mark auto ubuntu-advantage-tools
-
 restore: |
   if [ -z "$SNAPCRAFT_UA_TOKEN" ]; then
       exit 0
+  fi
+
+  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+      export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
   fi
 
   cd "$SNAP_DIR"
@@ -39,13 +34,14 @@ restore: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   restore_yaml "snap/snapcraft.yaml"
 
-  add-apt-repository ppa:ua-client/daily --yes --remove
-  apt-get update
-
 execute: |
   if [ -z "$SNAPCRAFT_UA_TOKEN" ]; then
       echo "Skipping UA token test, no token found."
       exit 0
+  fi
+
+  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+      export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
   fi
 
   cd "$SNAP_DIR"
