@@ -212,17 +212,18 @@ class AptCache(ContextDecorator):
         return installed
 
     def get_packages_marked_for_installation(self) -> List[Tuple[str, str]]:
-        packages: List[Tuple[str, str]] = []
-        for package in self.cache.get_changes():
-            if not package.marked_install:
-                continue
+        changed_packages = self.cache.get_changes()
+        marked_install_packages = [p for p in changed_packages if p.marked_install]
+        package_names_missing_installation_candidate = [
+            p.name for p in marked_install_packages if p.candidate is None
+        ]
 
-            if package.candidate is None:
-                raise errors.PackageNotFoundError(package.name)
+        if package_names_missing_installation_candidate:
+            raise errors.PackagesNotFoundError(
+                package_names_missing_installation_candidate
+            )
 
-            packages.append((package.name, package.candidate.version))
-
-        return packages
+        return [(p.name, p.candidate.version) for p in marked_install_packages]
 
     def mark_packages(self, package_names: Set[str]) -> None:
         for name in package_names:
