@@ -149,3 +149,35 @@ class TestAptGPGKeyInstallError:
         assert exception.get_details() == expected_details
         assert exception.get_docs_url() == expected_docs_url
         assert exception.get_reportable() == expected_reportable
+
+
+def test_packages_not_found_error():
+    exception = errors.PackagesNotFoundError(["foo"])
+
+    assert (
+        exception.get_brief()
+        == "Failed to find installation candidate for packages: 'foo'"
+    )
+    assert (
+        exception.get_resolution()
+        == "Verify APT repository configuration and package names are correct."
+    )
+    assert exception.get_details() is None
+    assert exception.get_docs_url() is None
+    assert exception.get_reportable() is False
+
+
+def test_multiple_packages_not_found_error():
+    exception = errors.PackagesNotFoundError(["foo", "foo2", "foo3"])
+
+    assert (
+        exception.get_brief()
+        == "Failed to find installation candidate for packages: 'foo', 'foo2', and 'foo3'"
+    )
+    assert (
+        exception.get_resolution()
+        == "Verify APT repository configuration and package names are correct."
+    )
+    assert exception.get_details() is None
+    assert exception.get_docs_url() is None
+    assert exception.get_reportable() is False
