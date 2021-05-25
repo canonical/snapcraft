@@ -16,6 +16,7 @@
 
 from typing import List, Optional, Sequence
 
+from snapcraft import formatting_utils
 from snapcraft.internal import errors
 from snapcraft.internal.errors import SnapcraftException
 from snapcraft.internal.os_release import OsRelease
@@ -115,6 +116,18 @@ class PackageNotFoundError(RepoError):
 
     def __str__(self):
         return self.message
+
+
+class PackagesNotFoundError(SnapcraftException):
+    def __init__(self, packages: List[str]) -> None:
+        self.packages = packages
+
+    def get_brief(self) -> str:
+        missing_pkgs = formatting_utils.humanize_list(self.packages, "and")
+        return f"Failed to find installation candidate for packages: {missing_pkgs}"
+
+    def get_resolution(self) -> str:
+        return "Verify APT repository configuration and package names are correct."
 
 
 class UnpackError(RepoError):
