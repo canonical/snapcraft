@@ -265,7 +265,7 @@ class AptCache(ContextDecorator):
         skipped_essential = set()
         skipped_filtered = set()
 
-        for package in self.cache:
+        for package in self.cache.get_changes():
             if package.candidate is None:
                 raise errors.PackageNotFoundError(package.name)
 
