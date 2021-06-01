@@ -49,6 +49,7 @@ backends:
       - ubuntu-20.04-64:
           workers: 6
           image: ubuntu-2004-64
+          storage: 40G
 
   multipass:
     type: adhoc
@@ -473,8 +474,8 @@ suites:
 
 # External snap tests
  tests/spread/snaps/:
-   systems:
-   - ubuntu-18.04-64
+   environment:
+     SNAPCRAFT_BUILD_ENVIRONMENT: ""
    manual: true
    summary: external snaps
    prepare: |
