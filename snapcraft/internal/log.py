@@ -23,12 +23,12 @@ from snapcraft.internal.indicators import is_dumb_terminal
 
 class _StdoutFilter(logging.Filter):
     def filter(self, record):
-        return record.levelno <= logging.WARNING
+        return record.levelno <= logging.INFO
 
 
 class _StderrFilter(logging.Filter):
     def filter(self, record):
-        return record.levelno >= logging.ERROR
+        return record.levelno >= logging.WARNING
 
 
 class _ColoredFormatter(logging.Formatter):

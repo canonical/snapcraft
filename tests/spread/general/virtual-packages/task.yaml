@@ -21,7 +21,7 @@ execute: |
   fi
 
   cd "$SNAP_DIR"
-  snapcraft build | MATCH "is a virtual package"
+  snapcraft build 2>&1 >/dev/null | MATCH "is a virtual package"
 
   if [ ! -f "${test_file}" ]; then
     echo "failed to install uglifyjs build package"

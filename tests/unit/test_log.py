@@ -40,27 +40,27 @@ class LogTestCase(unit.TestCase):
 
         logger.debug("Test debug")
         logger.info("Test info")
-        logger.warning("Test warning")
 
         stdout = self.fake_terminal.getvalue()
         self.assertThat(stdout, Contains("Test debug"))
         expected_info = "{}Test info\033[0m".format(self.info_color)
         self.assertThat(stdout, Contains(expected_info))
-        expected_warning = "{}Test warning\033[0m".format(self.warning_color)
-        self.assertThat(stdout, Contains(expected_warning))
         self.assertThat(self.fake_terminal.getvalue(stderr=True), Equals(""))
 
-    def test_configure_must_send_errors_to_stderr(self):
+    def test_configure_must_send_warnings_and_errors_to_stderr(self):
         logger_name = self.id()
         log.configure(logger_name)
         logger = logging.getLogger(logger_name)
         # Overwrite the level to log everything.
         logger.setLevel(logging.DEBUG)
 
+        logger.warning("Test warning")
         logger.error("Test error")
         logger.critical("Test critical")
 
         stderr = self.fake_terminal.getvalue(stderr=True)
+        expected_warning = "{}Test warning\033[0m".format(self.warning_color)
+        self.assertThat(stderr, Contains(expected_warning))
         expected_error = "{}Test error\033[0m".format(self.error_color)
         self.assertThat(stderr, Contains(expected_error))
         expected_crit = "{}Test critical\033[0m".format(self.critical_color)
@@ -82,10 +82,10 @@ class LogTestCase(unit.TestCase):
         self.assertThat(stdout, Not(Contains("Test debug")))
         expected_info = "{}Test info\033[0m".format(self.info_color)
         self.assertThat(stdout, Contains(expected_info))
-        expected_warning = "{}Test warning\033[0m".format(self.warning_color)
-        self.assertThat(stdout, Contains(expected_warning))
 
         stderr = self.fake_terminal.getvalue(stderr=True)
+        expected_warning = "{}Test warning\033[0m".format(self.warning_color)
+        self.assertThat(stderr, Contains(expected_warning))
         expected_error = "{}Test error\033[0m".format(self.error_color)
         self.assertThat(stderr, Contains(expected_error))
         expected_crit = "{}Test critical\033[0m".format(self.critical_color)
@@ -106,10 +106,10 @@ class LogTestCase(unit.TestCase):
         self.assertThat(stdout, Contains("Test debug"))
         expected_info = "{}Test info\033[0m".format(self.info_color)
         self.assertThat(stdout, Contains(expected_info))
-        expected_warning = "{}Test warning\033[0m".format(self.warning_color)
-        self.assertThat(stdout, Contains(expected_warning))
 
         stderr = self.fake_terminal.getvalue(stderr=True)
+        expected_warning = "{}Test warning\033[0m".format(self.warning_color)
+        self.assertThat(stderr, Contains(expected_warning))
         expected_error = "{}Test error\033[0m".format(self.error_color)
         self.assertThat(stderr, Contains(expected_error))
         expected_crit = "{}Test critical\033[0m".format(self.critical_color)
@@ -132,11 +132,11 @@ class LogTestCase(unit.TestCase):
         self.assertThat(stdout, Contains("Test debug"))
         self.assertThat(stdout, Contains("Test info"))
         self.assertThat(stdout, Not(Contains(self.info_color)))
-        self.assertThat(stdout, Contains("Test warning"))
-        self.assertThat(stdout, Not(Contains(self.warning_color)))
-        self.assertThat(stdout, Not(Contains("\033[0m")))
 
         stderr = self.fake_terminal.getvalue(stderr=True)
+        self.assertThat(stderr, Contains("Test warning"))
+        self.assertThat(stderr, Not(Contains(self.warning_color)))
+        self.assertThat(stderr, Not(Contains("\033[0m")))
         self.assertThat(stderr, Contains("Test error"))
         self.assertThat(stderr, Not(Contains(self.error_color)))
         self.assertThat(stderr, Contains("Test critical"))
