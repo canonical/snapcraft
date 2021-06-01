@@ -19,7 +19,7 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
-  output="$(snapcraft)"
+  output="$(snapcraft 2>&1 >/dev/null)"
 
   echo "$output" | MATCH "The 'pciutils' part is missing libraries that are not included in the snap or base."
   echo "$output" | MATCH -- "- libpci3"
