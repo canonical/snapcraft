@@ -49,6 +49,7 @@ backends:
       - ubuntu-20.04-64:
           workers: 6
           image: ubuntu-2004-64
+          storage: 40G
 
   multipass:
     type: adhoc
