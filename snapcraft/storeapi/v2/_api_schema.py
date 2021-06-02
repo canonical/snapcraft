@@ -114,6 +114,7 @@ RELEASES_JSONSCHEMA: Dict[str, Any] = {
                             "NeedsInformation",
                             "AutomaticallyRejected",
                             "Rejected",
+                            "ReviewInProgress",
                         ],
                         "introduced_at": 1,
                         "type": "string",
