@@ -66,6 +66,15 @@ class RosPlugin(PluginV2):
         return [
             'state="$(set +o)"',
             "set +u",
+            'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO/setup.sh ]; then',
+            "set -- --local",
+            "_CATKIN_SETUP_DIR={path} . {path}/setup.sh".format(
+                path='"${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO'
+            ),
+            "set -- --local --extend",
+            "else",
+            "set -- --local",
+            "fi",
             ". /opt/ros/$ROS_DISTRO/setup.sh",
             'eval "${state}"',
         ]
