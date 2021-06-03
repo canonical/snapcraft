@@ -67,7 +67,7 @@ class RosPlugin(PluginV2):
             'state="$(set +o)"',
             "set +u",
             ". /opt/ros/$ROS_DISTRO/setup.sh",
-            'eval "$(state)"',
+            'eval "${state}"',
         ]
 
     @abc.abstractmethod
