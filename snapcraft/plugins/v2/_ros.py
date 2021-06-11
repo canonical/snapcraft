@@ -161,8 +161,13 @@ def stage_runtime_dependencies(
     # TODO: support python packages (only apt currently supported)
     apt_packages: Set[str] = set()
 
+    installed_pkgs = catkin_packages.find_packages(part_install).values()
     for pkg in catkin_packages.find_packages(part_src).values():
         for dep in pkg.exec_depends:
+            # No need to resolve this dependency if we know it's local
+            if any(p for p in installed_pkgs if p.name == dep.name):
+                continue
+
             cmd = ["rosdep", "resolve", dep.name, "--rosdistro", ros_distro]
             try:
                 click.echo(f"Running {cmd!r}")
