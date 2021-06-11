@@ -195,6 +195,21 @@ class TestPackages(unit.TestCase):
         )
         self.assertThat(str(raised), Equals("Package fetch error: foo"))
 
+    @mock.patch.object(repo._deb.Ubuntu, "normalize")
+    def test_unpack_stage_packages_dont_normalize(self, mock_normalize):
+        packages_path = Path(self.path, "pkg")
+        install_path = Path(self.path, "install")
+
+        # no packages in packages_path, no need to normalize
+        packages_path.mkdir()
+        install_path.mkdir()
+
+        repo.Ubuntu.unpack_stage_packages(
+            stage_packages_path=packages_path, install_path=install_path
+        )
+
+        mock_normalize.assert_not_called()
+
 
 class BuildPackagesTestCase(unit.TestCase):
     def setUp(self):
