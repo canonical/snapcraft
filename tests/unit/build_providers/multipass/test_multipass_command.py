@@ -129,9 +129,7 @@ class MultipassCommandSetupMultipassTest(MultipassCommandBaseTest):
     def test_darwin(self):
         MultipassCommand.setup_multipass(platform="darwin", echoer=self.echoer_mock)
 
-        self.check_call_mock.assert_called_once_with(
-            ["brew", "cask", "install", "multipass"]
-        )
+        self.check_call_mock.assert_called_once_with(["brew", "install", "multipass"])
         self.echoer_mock.wrapped.assert_called_once_with("Waiting for multipass...")
 
     def test_unkown_platform_raises(self):
