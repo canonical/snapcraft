@@ -37,6 +37,15 @@ _ARCH_TRANSLATIONS = {
         "triplet": "aarch64-linux-gnu",
         "core-dynamic-linker": "lib/ld-linux-aarch64.so.1",
     },
+    "arm64": {
+        "kernel": "arm64",
+        "deb": "arm64",
+        "uts_machine": "aarch64",
+        "cross-compiler-prefix": "aarch64-linux-gnu-",
+        "cross-build-packages": ["gcc-aarch64-linux-gnu", "libc6-dev-arm64-cross"],
+        "triplet": "aarch64-linux-gnu",
+        "core-dynamic-linker": "lib/ld-linux-aarch64.so.1",
+    },
     "armv7l": {
         "kernel": "arm",
         "deb": "armhf",
