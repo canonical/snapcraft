@@ -31,7 +31,6 @@ pylxd==2.3.0
 pymacaroons==0.13.0
 pyparsing==2.4.7
 pyRFC3339==1.1
-pysha3==1.0.2
 python-dateutil==2.8.1
 python-debian==0.1.39
 pytz==2021.1
