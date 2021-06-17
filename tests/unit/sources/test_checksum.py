@@ -16,7 +16,6 @@
 
 import hashlib
 import os
-import sys
 import zipfile
 
 from testtools.matchers import Equals
@@ -24,9 +23,6 @@ from testtools.matchers import Equals
 from snapcraft.internal.sources import errors
 from snapcraft.internal.sources._checksum import verify_checksum
 from tests import unit
-
-if sys.version_info < (3, 6):
-    import sha3  # noqa
 
 
 class TestChecksum(unit.TestCase):
