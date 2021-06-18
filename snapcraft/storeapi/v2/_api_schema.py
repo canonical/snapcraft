@@ -402,19 +402,14 @@ WHOAMI_JSONSCHEMA: Dict[str, Any] = {
         "packages": {
             "oneOf": [
                 {
-                    "description": 'A list of packages to restrict the macaroon to. Those can be defined in two ways: 1- by name: each item in the list should be a json dict like `{"name": "the-name"}`, or 2- by snap_id: each item in the list should be a json dict like `{"snap_id": "some-snap-id-1234"}`.',
+                    "type": "array",
                     "items": {
-                        "anyOf": [{"required": ["snap_id"]}, {"required": ["name"]}],
-                        "description": "Package identifier: a dict with at least name or snap_id keys.",
-                        "properties": {
-                            "name": {"type": "string"},
-                            "snap_id": {"type": "string"},
-                        },
-                        "type": "object",
+                        "type": "string",
+                        "description": "Package identifier (snap_id).",
                     },
                     "minItems": 1,
-                    "type": "array",
                     "uniqueItems": True,
+                    "description": "A list of snap_ids to restrict the macaroon to.",
                 },
                 {"type": "null"},
             ]
