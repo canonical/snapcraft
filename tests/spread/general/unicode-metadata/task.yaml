@@ -1,16 +1,19 @@
 summary: "Test that unicode in metadata still looks good once dumped"
 
-# We currently only have core18 on a stable channel
-systems:
-  - ubuntu-18.04-64
-  - ubuntu-18.04-amd64
-
 prepare: |
   apt-get install diffutils
   apt-mark auto diffutils
 
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snap/snapcraft.yaml"
+
 restore: |
   snapcraft clean
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
 
 execute: |
   snapcraft prime

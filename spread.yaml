@@ -32,7 +32,6 @@ backends:
   lxd:
     systems:
       # -native is added for clarity and for ubuntu-20.04* to match.
-      - ubuntu-16.04
       - ubuntu-18.04
       - ubuntu-20.04
   google:
@@ -40,9 +39,6 @@ backends:
     location: snapd-spread/us-east1-b
     halt-timeout: 2h
     systems:
-      - ubuntu-16.04-64:
-          workers: 12
-          image: ubuntu-1604-64
       - ubuntu-18.04-64:
           workers: 18
           image: ubuntu-1804-64
@@ -110,26 +106,6 @@ backends:
       ADDRESS localhost:22
     discard: echo "Discarding ad-hoc $SPREAD_SYSTEM"
     systems:
-      # No Trusty systems since the deb doesn't exist there
-      # Xenial
-      - ubuntu-16.04-amd64:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-16.04-i386:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-16.04-ppc64el:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-16.04-armhf:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-16.04-s390x:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-16.04-arm64:
-          username: ubuntu
-          password: ubuntu
       # Bionic
       - ubuntu-18.04-amd64:
           username: ubuntu
@@ -199,7 +175,7 @@ prepare: |
   snap install snapd
   snap wait system seed.loaded
 
-  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+  if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
       # Remove lxd and lxd-client deb packages as our implementation (pylxd) does not
       # nicely handle the snap and deb being installed at the same time.
       apt-get remove --purge --yes lxd lxd-client
@@ -214,7 +190,7 @@ prepare: |
   snap watch --last=auto-refresh?
   snap watch --last=install?
 
-  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+  if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
       /snap/bin/lxd waitready --timeout=30
       /snap/bin/lxd init --auto
   fi
@@ -246,23 +222,19 @@ suites:
  # General, core suite
  tests/spread/general/:
    summary: tests of snapcraft core functionality
-   # TODO: enable once we have python plugin support for core20.
-   systems:
-   - ubuntu-16.04*
-   - ubuntu-18.04*
 
  # General, core suite
  tests/spread/cross-compile/:
    summary: tests of supported cross-compile functionality
    systems:
-   - ubuntu-18.04*
-   - ubuntu-20.04*
+   - ubuntu-20.04
+   - ubuntu-20.04-64
+   - ubuntu-20.04-amd64
 
  # Use of multipass and lxd build providers
  tests/spread/build-providers/:
    summary: tests of snapcraft using build providers
    systems:
-   - ubuntu-16.04-64
    - ubuntu-18.04-64
    - ubuntu-20.04-64
    kill-timeout: 180m
@@ -273,30 +245,14 @@ suites:
  tests/spread/plugins/v1/ant/:
    summary: tests of snapcraft's Ant plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
- tests/spread/plugins/v1/ament/:
-   summary: tests of snapcraft's Ament plugin when not using a base
-   systems:
-   - ubuntu-16.04-amd64
-   - ubuntu-16.04-arm64
-   - ubuntu-16.04-armhf
-   - ubuntu-16.04
-   - ubuntu-16.04-64
-   kill-timeout: 360m
  tests/spread/plugins/v1/autotools/:
    summary: tests of snapcraft's Autotools plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/catkin/:
    summary: tests of snapcraft's Catkin plugin
    systems:
-   - ubuntu-16.04
-   - ubuntu-16.04-64
-   - ubuntu-16.04-amd64
-   - ubuntu-16.04-arm64
-   - ubuntu-16.04-armhf
    - ubuntu-18.04
    - ubuntu-18.04-64
    - ubuntu-18.04-amd64
@@ -317,21 +273,13 @@ suites:
    systems:
    - ubuntu-18.04
    - ubuntu-18.04-64
-   # Network errors on autopkgtest infra
-   # - ubuntu-18.04-amd64
-   - ubuntu-16.04
-   - ubuntu-16.04-64
-   # Network errors on autopkgtest infra
-   # - ubuntu-16.04-amd64
  tests/spread/plugins/v1/copy/:
    summary: tests of snapcraft's Copy plugin when not using a base
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/cmake/:
    summary: tests of snapcraft's CMake plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/crystal/:
    summary: tests of snapcraft's Crystal plugin
@@ -339,16 +287,12 @@ suites:
    - ubuntu-18.04
    - ubuntu-18.04-64
    - ubuntu-18.04-amd64
-   - ubuntu-16.04
-   - ubuntu-16.04-64
-   - ubuntu-16.04-amd64
  tests/spread/plugins/v1/dotnet/:
    summary: tests of snapcraft's Dotnet plugin
-   # Keep this 16.04 as it is the only supported system for this plugin
    systems:
-   - ubuntu-16.04
-   - ubuntu-16.04-64
-   - ubuntu-16.04-amd64
+   - ubuntu-18.04
+   - ubuntu-18.04-64
+   - ubuntu-18.04-amd64
  tests/spread/plugins/v1/flutter/:
    summary: tests of snapcraft's Flutter plugin
    # Keep this 18.04 as the tests makes use of the GNOME 3.28 extension.
@@ -359,17 +303,14 @@ suites:
  tests/spread/plugins/v1/go/:
    summary: tests of snapcraft's Go plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/godeps/:
    summary: tests of snapcraft's Godeps plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/gradle/:
    summary: tests of snapcraft's Gradle plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
    priority: 50  # Run this test early so we're not waiting for it
    kill-timeout: 40m
@@ -377,54 +318,44 @@ suites:
  tests/spread/plugins/v1/kbuild/:
    summary: tests of snapcraft's Kbuild plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/make/:
    summary: tests of snapcraft's Make plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/maven/:
    summary: tests of snapcraft's Maven plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/meson/:
    summary: tests of snapcraft's Meson plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/nodejs/:
    summary: tests of snapcraft's Nodejs plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/nil/:
    summary: tests of snapcraft's Nil plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/plainbox/:
    summary: tests of snapcraft's Plainbox plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
    kill-timeout: 20m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
  tests/spread/plugins/v1/python/:
    summary: tests of snapcraft's Python plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/qmake/:
    summary: tests of snapcraft's qmake plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/ruby/:
    summary: tests of snapcraft's Ruby plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
    kill-timeout: 180m
  tests/spread/plugins/v1/rust/:
@@ -436,31 +367,21 @@ suites:
    - ubuntu-18.04-i386
    - ubuntu-18.04-armhf
    - ubuntu-18.04-s390x
-   - ubuntu-16.04
-   - ubuntu-16.04-64
-   - ubuntu-16.04-amd64
-   - ubuntu-16.04-i386
-   - ubuntu-16.04-armhf
-   - ubuntu-16.04-s390x
  tests/spread/plugins/v1/scons/:
    summary: tests of snapcraft's SCons plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/tar-content/:
    summary: tests of snapcraft's tar-content plugin when not using a base
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/waf/:
    summary: tests of snapcraft's Waf plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/x-local/:
    summary: tests of snapcraft's local plugins
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v2/:
    summary: tests of snapcraft's v2 plugins
@@ -485,10 +406,6 @@ suites:
 # Electron builder tests
  tests/spread/electron-builder/:
    summary: electron-builder tests
-
-# Legacy tests
- tests/spread/legacy/:
-   summary: legacy snapcraft tests
 
 # Legacy pending migration away from python runners
  tests/spread/legacy_python/:

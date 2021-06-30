@@ -9,11 +9,19 @@ prepare: |
   echo -e 'dir-file' > expected_local_part_subdir_src.txt
   echo -e 'dir\ndir/dir-file\nroot-file\ndir-file' | sort > expected_stage.txt
 
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snap/snapcraft.yaml"
+
 restore: |
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
   rm -f ./*.txt
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
 
 execute: |
   compare_dir_contents()

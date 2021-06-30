@@ -1,6 +1,0 @@
----
-description: A test part with snap/snapcraft.yaml
-maintainer: John Doe <john.doe@example.com>
-parts: [testpart]
-origin: $ORIGIN
-origin-type: git

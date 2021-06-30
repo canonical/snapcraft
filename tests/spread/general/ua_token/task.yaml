@@ -1,7 +1,5 @@
 summary: Verify --ua-token functionality
 
-systems: [ubuntu-16*, ubuntu-18*, ubuntu-20*]
-
 environment:
   SNAP_DIR: snaps/ua-token-test
   SNAPCRAFT_UA_TOKEN: "$(HOST: echo ${UA_TOKEN})"
@@ -40,7 +38,7 @@ execute: |
       exit 0
   fi
 
-  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+  if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
       export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
   fi
 
