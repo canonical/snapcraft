@@ -171,7 +171,7 @@ class CrystalPluginTest(CrystalPluginBaseTest):
                 mock.call(["shards", "build", "--without-development"], cwd=plugin.builddir),
             ]
         )
-        self.assertThat(self.fake_run.mock.call_count, Equals(2))
+        self.assertThat(self.fake_run.mock.call_count, Equals(1))
 
         for b in binaries:
             self.assertThat(os.path.join(plugin.installdir, "bin", b), FileExists())
@@ -206,7 +206,7 @@ class CrystalPluginTest(CrystalPluginBaseTest):
                 ),
             ]
         )
-        self.assertThat(self.fake_run.mock.call_count, Equals(2))
+        self.assertThat(self.fake_run.mock.call_count, Equals(1))
         for b in binaries:
             self.assertThat(os.path.join(plugin.installdir, "bin", b), FileExists())
 
