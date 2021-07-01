@@ -41,6 +41,7 @@ from snapcraft.plugins.v1 import PluginV1
 
 _CRYSTAL_CHANNEL = "latest/stable"
 
+
 class CrystalPlugin(PluginV1):
     @classmethod
     def schema(cls):
@@ -75,23 +76,29 @@ class CrystalPlugin(PluginV1):
         self.build_snaps.append("crystal/{}".format(self.options.crystal_channel))
 
         # See https://github.com/crystal-lang/distribution-scripts/blob/8bc01e26291dc518390129e15df8f757d687871c/docker/ubuntu.Dockerfile#L9
-        self.build_packages.extend([
-            "git",
-            "make",
-            "gcc",
-            "pkg-config",
-            "libssl-dev",
-            "libxml2-dev",
-            "libyaml-dev",
-            "libgmp-dev",
-            "libpcre3-dev",
-            "libevent-dev",
-            "libz-dev",
-        ])
+        self.build_packages.extend(
+            [
+                "git",
+                "make",
+                "gcc",
+                "pkg-config",
+                "libssl-dev",
+                "libxml2-dev",
+                "libyaml-dev",
+                "libgmp-dev",
+                "libpcre3-dev",
+                "libevent-dev",
+                "libz-dev",
+            ]
+        )
 
     def build(self):
         super().build()
-        self.run(["shards", "build", "--without-development"] + self.options.crystal_build_options, self.builddir)
+        self.run(
+            ["shards", "build", "--without-development"]
+            + self.options.crystal_build_options,
+            self.builddir,
+        )
 
         output_bin = os.path.join(self.builddir, "bin")
         if not os.path.exists(output_bin):

@@ -168,7 +168,9 @@ class CrystalPluginTest(CrystalPluginBaseTest):
 
         self.fake_run.mock.assert_has_calls(
             [
-                mock.call(["shards", "build", "--without-development"], cwd=plugin.builddir),
+                mock.call(
+                    ["shards", "build", "--without-development"], cwd=plugin.builddir
+                )
             ]
         )
         self.assertThat(self.fake_run.mock.call_count, Equals(1))
@@ -203,7 +205,7 @@ class CrystalPluginTest(CrystalPluginBaseTest):
                 mock.call(
                     ["shards", "build", "--without-development", "-Dpreview_mt"],
                     cwd=plugin.builddir,
-                ),
+                )
             ]
         )
         self.assertThat(self.fake_run.mock.call_count, Equals(1))
