@@ -21,6 +21,6 @@ description: |
   character to character code conversion, and more.
 architectures:
 - amd64
-base: core18
+base: {{BASE}}
 confinement: devmode
 grade: devel

@@ -8,6 +8,9 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "snap/snapcraft.yaml"
 
+  base=$(get_base)
+  sed -e "s/base: {{BASE}}/base: ${base}/g" expected_snap_tmpl.yaml > expected_snap.yaml
+
 restore: |
   snapcraft clean
 
@@ -15,12 +18,12 @@ restore: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   restore_yaml "snap/snapcraft.yaml"
 
+  rm -rf expected_snap.yaml
+
 execute: |
   snapcraft prime
 
-  expected_snap_yaml="$PWD/expected_snap.yaml"
-
-  if ! diff prime/meta/snap.yaml "$expected_snap_yaml"; then
+  if ! diff prime/meta/snap.yaml expected_snap.yaml; then
       echo "The formatting for snap.yaml is incorrect"
       exit 1
   fi
