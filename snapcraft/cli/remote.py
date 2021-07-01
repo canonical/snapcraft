@@ -119,7 +119,6 @@ def remote_build(
 
     project = get_project()
 
-    # TODO: use project.is_legacy() when available.
     try:
         project._get_build_base()
     except RuntimeError:

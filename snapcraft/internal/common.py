@@ -41,8 +41,6 @@ _DEFAULT_EXTENSIONSDIR = os.path.join(sys.prefix, "share", "snapcraft", "extensi
 _extensionsdir = _DEFAULT_EXTENSIONSDIR
 _DEFAULT_KEYRINGSDIR = os.path.join(sys.prefix, "share", "snapcraft", "keyrings")
 _keyringsdir = _DEFAULT_KEYRINGSDIR
-_DEFAULT_LEGACY_SNAPCRAFT_DIR = os.path.join(sys.prefix, "legacy_snapcraft")
-_legacy_snapcraft_dir = _DEFAULT_LEGACY_SNAPCRAFT_DIR
 
 _DOCKERENV_FILE = "/.dockerenv"
 _PODMAN_FILE = "/run/.containerenv"
@@ -230,15 +228,6 @@ def get_arch():
 
 def get_parallel_build_count():
     raise errors.PluginOutdatedError("use 'parallel_build_count'")
-
-
-def set_legacy_snapcraft_dir(snapcraftdir):
-    global _legacy_snapcraft_dir
-    _legacy_snapcraft_dir = snapcraftdir
-
-
-def get_legacy_snapcraft_dir():
-    return _legacy_snapcraft_dir
 
 
 def get_python2_path(root):
