@@ -29,7 +29,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
     - crystal-build-options
       (list of strings, default: '[]')
-      Options to use during shards build.
+      These options are passed to `shards build`.
 """
 
 import os
@@ -40,7 +40,6 @@ from snapcraft.internal import common, elf, errors
 from snapcraft.plugins.v1 import PluginV1
 
 _CRYSTAL_CHANNEL = "latest/stable"
-
 
 class CrystalPlugin(PluginV1):
     @classmethod
@@ -74,26 +73,25 @@ class CrystalPlugin(PluginV1):
         super().__init__(name, options, project)
 
         self.build_snaps.append("crystal/{}".format(self.options.crystal_channel))
-        self.build_packages.extend(
-            [
-                "gcc",
-                "pkg-config",
-                "libpcre3-dev",
-                "libevent-dev",
-                "libyaml-dev",
-                "libgmp-dev",
-                "libxml2-dev",
-            ]
-        )
+
+        # See https://github.com/crystal-lang/distribution-scripts/blob/8bc01e26291dc518390129e15df8f757d687871c/docker/ubuntu.Dockerfile#L9
+        self.build_packages.extend([
+            "git",
+            "make",
+            "gcc",
+            "pkg-config",
+            "libssl-dev",
+            "libxml2-dev",
+            "libyaml-dev",
+            "libgmp-dev",
+            "libpcre3-dev",
+            "libevent-dev",
+            "libz-dev",
+        ])
 
     def build(self):
         super().build()
-
-        self.run(["shards", "install", "--production"], self.builddir)
-        self.run(
-            ["shards", "build", "--production"] + self.options.crystal_build_options,
-            self.builddir,
-        )
+        self.run(["shards", "build", "--without-development"] + self.options.crystal_build_options, self.builddir)
 
         output_bin = os.path.join(self.builddir, "bin")
         if not os.path.exists(output_bin):
