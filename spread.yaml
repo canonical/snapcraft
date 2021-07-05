@@ -273,10 +273,6 @@ suites:
    systems:
    - ubuntu-18.04
    - ubuntu-18.04-64
- tests/spread/plugins/v1/copy/:
-   summary: tests of snapcraft's Copy plugin when not using a base
-   systems:
-   - ubuntu-18.04*
  tests/spread/plugins/v1/cmake/:
    summary: tests of snapcraft's CMake plugin
    systems:
@@ -369,10 +365,6 @@ suites:
    - ubuntu-18.04-s390x
  tests/spread/plugins/v1/scons/:
    summary: tests of snapcraft's SCons plugin
-   systems:
-   - ubuntu-18.04*
- tests/spread/plugins/v1/tar-content/:
-   summary: tests of snapcraft's tar-content plugin when not using a base
    systems:
    - ubuntu-18.04*
  tests/spread/plugins/v1/waf/:
