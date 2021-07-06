@@ -99,7 +99,7 @@ class BuildEnvironmentParsingTest(LifecycleCommandsBaseTestCase):
 
         self.useFixture(fixture_setup.FakeMultipass())
 
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base="core")
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base="core20")
         snapcraft_yaml.update_part("part1", dict(plugin="nil"))
         self.useFixture(snapcraft_yaml)
 
@@ -251,7 +251,7 @@ class BuildProviderYamlValidationTest(LifecycleCommandsBaseTestCase):
         self.useFixture(fixture_setup.FakeMultipass())
 
     def test_validation_passes(self):
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base="core")
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base="core20")
         snapcraft_yaml.update_part("part1", dict(plugin="nil"))
         self.useFixture(snapcraft_yaml)
 
@@ -261,7 +261,7 @@ class BuildProviderYamlValidationTest(LifecycleCommandsBaseTestCase):
 
     def test_validation_fails(self):
         snapcraft_yaml = fixture_setup.SnapcraftYaml(
-            self.path, name="name with spaces", base="core"
+            self.path, name="name with spaces", base="core20"
         )
         snapcraft_yaml.update_part("part1", dict(plugin="nil"))
         self.useFixture(snapcraft_yaml)
@@ -298,7 +298,7 @@ class BuildProviderDebugCommandTestCase(LifecycleCommandsBaseTestCase):
 
         self.shell_mock = shell_mock
 
-        self.make_snapcraft_yaml("pull", base="core")
+        self.make_snapcraft_yaml("pull", base="core20")
 
     def test_step_with_debug_using_build_provider_fails(self):
         result = self.run_command(["--debug", "pull"])
@@ -350,7 +350,7 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
         self.pack_project_mock = pack_project_mock
         self.execute_step_mock = execute_step_mock
 
-        self.make_snapcraft_yaml("pull", base="core")
+        self.make_snapcraft_yaml("pull", base="core20")
 
     def test_step_with_shell_after(self):
         result = self.run_command(["pull", "--shell-after"])
@@ -442,7 +442,7 @@ class BuildProviderTryCommandTestCase(LifecycleCommandsBaseTestCase):
 
         self.mount_prime_mock = mount_prime_mock
 
-        self.make_snapcraft_yaml("pull", base="core")
+        self.make_snapcraft_yaml("pull", base="core20")
 
     def test_try(self):
         result = self.run_command(["try"])
@@ -483,7 +483,7 @@ class BuildProviderCleanCommandTestCase(LifecycleCommandsBaseTestCase):
         self.clean_project_mock = clean_project_mock
         self.clean_mock = clean_mock
 
-        self.make_snapcraft_yaml("pull", base="core")
+        self.make_snapcraft_yaml("pull", base="core20")
 
     @mock.patch("snapcraft.internal.lifecycle.clean")
     def test_clean(self, lifecycle_clean_mock):
@@ -522,7 +522,7 @@ class BuildProviderCleanCommandTestCase(LifecycleCommandsBaseTestCase):
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "managed-host")
         )
         project_mock = mock.Mock()
-        project_mock.info.base.return_value = "core"
+        project_mock.info.base.return_value = "core20"
         get_project_mock.return_value = project_mock
 
         result = self.run_command(["clean", "--unprime"])

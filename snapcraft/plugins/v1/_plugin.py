@@ -87,11 +87,7 @@ class PluginV1:
         self.options = options
 
         if project:
-            if isinstance(project, Project) and project._get_build_base() not in (
-                "core",
-                "core16",
-                "core18",
-            ):
+            if isinstance(project, Project) and project._get_build_base() != "core18":
                 raise errors.PluginBaseError(
                     part_name=self.name, base=project._get_build_base()
                 )

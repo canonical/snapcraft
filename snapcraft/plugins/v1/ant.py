@@ -157,10 +157,7 @@ class AntPlugin(PluginV1):
         self._setup_base_tools(project._get_build_base())
 
     def _setup_base_tools(self, base):
-        if base in ("core", "core16"):
-            valid_versions = ["8", "9"]
-        elif base == "core18":
-            valid_versions = ["8", "11"]
+        valid_versions = ["8", "11"]
 
         version = self.options.ant_openjdk_version
         if not version:
@@ -229,10 +226,6 @@ class AntPlugin(PluginV1):
         self._create_symlinks()
 
     def _create_symlinks(self):
-        base = self.project._get_build_base()
-        if base not in ("core18", "core16", "core"):
-            raise errors.PluginBaseError(part_name=self.name, base=base)
-
         os.makedirs(os.path.join(self.installdir, "bin"), exist_ok=True)
         java_bin = glob(
             os.path.join(

@@ -74,9 +74,10 @@ def test_pull_with_revision(mock_subprocess_run, flutter_plugin):
     flutter_plugin.pull()
 
     expected_cwd = pathlib.Path("parts/test-part/src").absolute()
-    assert mock_subprocess_run.mock_calls == [
+    assert (
         call("yes | flutter version foo", shell=True, check=True, cwd=expected_cwd)
-    ]
+        in mock_subprocess_run.mock_calls
+    )
 
 
 def test_pull_from_subdir(mock_subprocess_run, flutter_plugin):

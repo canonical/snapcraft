@@ -152,7 +152,7 @@ class MultipassTest(BaseProviderBaseTest):
             cpus="2",
             mem="2G",
             disk="256G",
-            image="snapcraft:core16",
+            image="snapcraft:core20",
         )
         # Given SnapInjector is mocked, we only need to verify the commands
         # called from the Multipass class.
@@ -213,7 +213,7 @@ class MultipassTest(BaseProviderBaseTest):
             cpus="64",
             mem="2G",
             disk="256G",
-            image="snapcraft:core16",
+            image="snapcraft:core20",
         )
 
     def test_launch_for_type_base(self):
@@ -259,7 +259,7 @@ class MultipassTest(BaseProviderBaseTest):
             cpus="2",
             mem="4G",
             disk="256G",
-            image="snapcraft:core16",
+            image="snapcraft:core20",
         )
 
     def test_launch_with_disk_from_environment(self):
@@ -275,7 +275,7 @@ class MultipassTest(BaseProviderBaseTest):
             cpus="2",
             mem="2G",
             disk="400G",
-            image="snapcraft:core16",
+            image="snapcraft:core20",
         )
 
     def test_push_file(self):
@@ -433,7 +433,7 @@ class MultipassTest(BaseProviderBaseTest):
 class TestMultipassWithBases:
 
     scenarios = (
-        ("linux", dict(base="core16", expected_image="snapcraft:core16")),
+        ("linux", dict(base="core20", expected_image="snapcraft:core20")),
         ("linux", dict(base="core18", expected_image="snapcraft:core18")),
     )
 

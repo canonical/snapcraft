@@ -278,11 +278,20 @@ class PluginError(SnapcraftError):
 
 
 class PluginBaseError(SnapcraftError):
-
-    fmt = "The plugin used by part {part_name!r} does not support snaps using base {base!r}."
-
-    def __init__(self, *, part_name, base):
-        super().__init__(part_name=part_name, base=base)
+    def __init__(
+        self,
+        *,
+        base: str,
+        part_name: Optional[str] = None,
+        plugin_name: Optional[str] = None,
+    ):
+        super().__init__(base=base, part_name=part_name, plugin_name=plugin_name)
+        if part_name is not None:
+            self.fmt = f"The plugin used by part {part_name!r} does not support snaps using base {base!r}."
+        elif plugin_name is not None:
+            self.fmt = f"The plugin {plugin_name!r} does not support snaps using base {base!r}."
+        else:
+            raise RuntimeError("Either 'plugin_name' or 'part_name' must be set.")
 
 
 class SnapcraftPartConflictError(SnapcraftError):

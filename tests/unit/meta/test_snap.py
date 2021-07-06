@@ -128,7 +128,7 @@ class SnapTests(unit.TestCase):
             "apps": {"test-app": {"command": "test-app"}},
             "architectures": ["all"],
             "assumes": ["command-chain"],
-            "base": "core",
+            "base": "core18",
             "confinement": "strict",
             "compression": "xz",
             "environment": {"TESTING": "1"},
@@ -163,7 +163,6 @@ class SnapTests(unit.TestCase):
 
         expected_dict = snap_dict.copy()
         expected_dict.pop("adopt-info")
-        expected_dict.pop("base")
         expected_dict.pop("compression")
         expected_dict.pop("package-repositories")
         expected_dict.update(expected_dict.pop("passthrough"))
@@ -181,7 +180,7 @@ class SnapTests(unit.TestCase):
             "apps": {"test-app": {"command": "test-app"}},
             "architectures": ["all"],
             "assumes": ["command-chain"],
-            "base": "core",
+            "base": "core18",
             "confinement": "strict",
             "compression": "lzo",
             "environment": {"TESTING": "1"},
@@ -462,32 +461,6 @@ class SnapTests(unit.TestCase):
         snap.validate()
 
         self.assertEqual({"command-chain"}, snap.assumes)
-
-    def test_build_base_and_write_snap_yaml_skips_base_core(self):
-        snap_dict = OrderedDict(
-            {
-                "name": "snap-test",
-                "version": "snap-version",
-                "summary": "snap-summary",
-                "description": "snap-description",
-                "base": "core",
-                "grade": "devel",
-            }
-        )
-
-        snap = Snap.from_dict(snap_dict=snap_dict)
-        snap.validate()
-
-        # Write snap yaml.
-        snap_yaml_path = os.path.join(self.path, "snap.yaml")
-        snap.write_snap_yaml(path=snap_yaml_path)
-
-        # Read snap yaml.
-        written_snap_yaml = open(snap_yaml_path, "r").read()
-
-        self.assertEqual(snap_dict, snap.to_dict())
-        self.assertFalse("base" in written_snap_yaml)
-        self.assertEqual(snap.get_build_base(), "core")
 
     def test_build_base_write_snap_yaml_skips_build_base(self):
         snap_dict = OrderedDict(

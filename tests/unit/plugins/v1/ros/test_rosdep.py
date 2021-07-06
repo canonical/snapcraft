@@ -32,12 +32,12 @@ class RosdepTestCase(unit.TestCase):
         self.project = snapcraft.ProjectOptions()
 
         self.rosdep = rosdep.Rosdep(
-            ros_distro="kinetic",
+            ros_distro="melodic",
             ros_version="1",
             ros_package_path="package_path",
             rosdep_path="rosdep_path",
-            ubuntu_distro="xenial",
-            base="core",
+            ubuntu_distro="bionic",
+            base="core18",
             target_arch=self.project._get_stage_packages_target_arch(),
         )
 
@@ -63,7 +63,7 @@ class RosdepTestCase(unit.TestCase):
                     mock.call(
                         stage_packages_path=self.rosdep._rosdep_stage_packages_path,
                         package_names=["python-rosdep"],
-                        base="core",
+                        base="core18",
                         target_arch=self.project._get_stage_packages_target_arch(),
                     )
                 ]
@@ -177,9 +177,9 @@ class RosdepTestCase(unit.TestCase):
                 "resolve",
                 "foo",
                 "--rosdistro",
-                "kinetic",
+                "melodic",
                 "--os",
-                "ubuntu:xenial",
+                "ubuntu:bionic",
             ],
             env=mock.ANY,
         )

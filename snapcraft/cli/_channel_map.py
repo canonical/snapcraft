@@ -111,10 +111,10 @@ def _get_channel_lines_for_channel(  # noqa: C901
     channel_info = snap_channel_map.get_channel_info(channel_name)
 
     try:
-        progressive_mapped_channel: Optional[MappedChannel] = (
-            snap_channel_map.get_mapped_channel(
-                channel_name=channel_name, architecture=architecture, progressive=True
-            )
+        progressive_mapped_channel: Optional[
+            MappedChannel
+        ] = snap_channel_map.get_mapped_channel(
+            channel_name=channel_name, architecture=architecture, progressive=True
         )
     except ValueError:
         progressive_mapped_channel = None

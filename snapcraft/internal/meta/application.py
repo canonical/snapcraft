@@ -27,7 +27,7 @@ from .command import Command
 from .desktop import DesktopFile
 
 _COMMAND_ENTRIES = ["command", "stop-command"]
-_MASSAGED_BASES = ["core", "core18"]
+_MASSAGED_BASES = ["core18"]
 
 
 @enum.unique

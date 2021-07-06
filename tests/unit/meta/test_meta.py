@@ -113,16 +113,6 @@ class CreateTestCase(CreateBaseTestCase):
 
         self.assertThat(y, Equals(expected))
 
-    def test_create_meta_with_core_as_base(self):
-        self.config_data["base"] = "core"
-        self.fake_snapd.snaps_result = [
-            dict(name="core", channel="stable", revision="10")
-        ]
-
-        y = self.generate_meta_yaml()
-
-        self.assertThat(y, Not(Contains("base")))
-
     def test_create_meta_default_architecture(self):
         del self.config_data["architectures"]
 

@@ -77,8 +77,8 @@ class Tar(FileBase):
 
             def filter_members(tar):
                 """Filters members and member names:
-                    - strips common prefix
-                    - bans dangerous names"""
+                - strips common prefix
+                - bans dangerous names"""
                 members = tar.getmembers()
                 common = os.path.commonprefix([m.name for m in members])
 

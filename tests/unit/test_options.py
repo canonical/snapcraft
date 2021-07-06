@@ -193,9 +193,9 @@ class TestNativeOptions:
         monkeypatch.setattr(os.path, "lexists", lambda x: True)
         monkeypatch.setattr(os.path, "islink", lambda x: False)
         expected_linker_path = os.path.join(
-            common.get_installed_snap_path("core"), expected_core_dynamic_linker
+            common.get_installed_snap_path("core18"), expected_core_dynamic_linker
         )
-        assert options.get_core_dynamic_linker("core") == expected_linker_path
+        assert options.get_core_dynamic_linker("core18") == expected_linker_path
 
     def test_get_platform_architecture(
         self,
@@ -243,12 +243,14 @@ class OptionsTestCase(unit.TestCase):
 class TestHostIsCompatibleWithTargetBase:
 
     scenarios = (
-        ("trusty core", dict(codename="trusty", base="core", is_compatible=True)),
-        ("xenial core", dict(codename="xenial", base="core", is_compatible=True)),
+        ("trusty core", dict(codename="trusty", base="core", is_compatible=False)),
+        ("xenial core", dict(codename="xenial", base="core", is_compatible=False)),
         ("bionic core", dict(codename="bionic", base="core", is_compatible=False)),
-        ("trusty core18", dict(codename="trusty", base="core18", is_compatible=True)),
-        ("xenial core18", dict(codename="xenial", base="core18", is_compatible=True)),
+        ("trusty core18", dict(codename="trusty", base="core18", is_compatible=False)),
+        ("xenial core18", dict(codename="xenial", base="core18", is_compatible=False)),
         ("bionic core18", dict(codename="bionic", base="core18", is_compatible=True)),
+        ("bionic core20", dict(codename="bionic", base="core20", is_compatible=False)),
+        ("focal core20", dict(codename="focal", base="core20", is_compatible=True)),
         (
             "Random codename core18",
             dict(codename="random", base="core18", is_compatible=False),
@@ -279,10 +281,10 @@ class TestLinkerVersionForBase(unit.TestCase):
         self.get_linker_version_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-    def test_get_linker_version_for_core(self):
+    def test_get_linker_version_for_core20(self):
         self.assertThat(
-            snapcraft.ProjectOptions()._get_linker_version_for_base("core"),
-            Equals("2.23"),
+            snapcraft.ProjectOptions()._get_linker_version_for_base("core20"),
+            Equals("2.31"),
         )
         self.get_linker_version_mock.assert_not_called()
 

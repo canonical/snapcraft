@@ -262,7 +262,7 @@ def _get_filtered_stage_package_names(
 
 def get_packages_in_base(*, base: str) -> List[DebPackage]:
     # We do not want to break what we already have.
-    if base in ("core", "core16", "core18"):
+    if base == "core18":
         return [DebPackage.from_unparsed(p) for p in _DEFAULT_FILTERED_STAGE_PACKAGES]
 
     base_package_list_path = _get_dpkg_list_path(base)

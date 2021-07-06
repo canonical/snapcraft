@@ -173,10 +173,8 @@ class GoPlugin(PluginV1):
     def _setup_base_tools(self, go_channel: str, base: Optional[str]) -> None:
         if go_channel:
             self.build_snaps.append("go/{}".format(go_channel))
-        elif base in ("core", "core16", "core18"):
-            self.build_packages.append("golang-go")
         else:
-            raise errors.PluginBaseError(part_name=self.name, base=base)
+            self.build_packages.append("golang-go")
 
     def _get_parsed_go_version(self) -> Tuple[str, ...]:
         if self._go_version is not None:

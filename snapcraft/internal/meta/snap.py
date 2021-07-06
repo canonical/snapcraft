@@ -490,11 +490,6 @@ class Snap:
     def to_snap_yaml_dict(self) -> OrderedDict:
         snap_dict = self.to_dict()
 
-        # If the base is core in snapcraft.yaml we do not set it in
-        # snap.yaml LP: #1819290
-        if self.base == "core":
-            snap_dict.pop("base")
-
         # Remove keys that are not for snap.yaml.
         snap_dict.pop("build-base", None)
         snap_dict.pop("adopt-info", None)
