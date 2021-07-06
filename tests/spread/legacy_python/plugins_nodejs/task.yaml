@@ -1,5 +1,0 @@
-summary: Run the python driven plugin tests for the nodejs plugin
-
-execute: |
-  cd /snapcraft
-  ./runtests.sh tests/integration/plugins_nodejs

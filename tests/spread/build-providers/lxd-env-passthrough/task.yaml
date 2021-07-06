@@ -3,9 +3,6 @@ summary: Verify environment passthrough flags are configured for LXD
 environment:
   SNAP_DIR: ../snaps/env-passthrough
 
-systems:
-- ubuntu-18.04-64
-
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"

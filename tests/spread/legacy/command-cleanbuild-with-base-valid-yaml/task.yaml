@@ -1,9 +1,0 @@
-summary: cleanbuild failure for valid yaml when using bases
-
-environment:
-  SNAP_DIR: ../snaps/cleanbuild-with-base-valid-yaml
-
-execute: |
-  cd "$SNAP_DIR"
-
-  snapcraft cleanbuild | MATCH "The cleanbuild command is no longer supported when using the base keyword."
