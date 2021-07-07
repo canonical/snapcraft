@@ -29,9 +29,6 @@ from typing import Callable, Generator, List, Optional, Pattern, Set
 
 from snapcraft.internal import common, errors
 
-if sys.version_info < (3, 6):
-    import sha3  # noqa
-
 
 logger = logging.getLogger(__name__)
 

@@ -258,6 +258,15 @@ class FixPkgConfigTestCase(RepoBaseTestCase):
 
         self.assertThat(pc_file, FileContains(expected_pc_file_content))
 
+    def test_skip_directories_matching_pc(self):
+        snap_pc_dir = os.path.join(self.tempdir, "snap.pc")
+
+        os.mkdir(snap_pc_dir)
+
+        # Verify the directory is not passed to fileinput, which would
+        # try to file copy snap.pc to snap.pc.bak for the inplace replace.
+        BaseRepo.normalize(self.tempdir)
+
 
 class TestFixSymlinks(RepoBaseTestCase):
     def assert_fix(self, src, dst):

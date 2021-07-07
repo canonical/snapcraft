@@ -1,8 +1,0 @@
----
-description: Wiki with invalid origin modifiers
-maintainer: Marco Trevisan <marco@ubuntu.com>
-parts: [desktop-glib-only]
-origin: $ORIGIN
-origin-type: git
-origin-branch: really-I-don-t-have-this-branch
-origin-commit: ThisIsNotACommitID

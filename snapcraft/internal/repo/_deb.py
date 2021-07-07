@@ -475,7 +475,12 @@ class Ubuntu(BaseRepo):
     def unpack_stage_packages(
         cls, *, stage_packages_path: pathlib.Path, install_path: pathlib.Path
     ) -> None:
-        for pkg_path in stage_packages_path.glob("*.deb"):
+        stage_packages = stage_packages_path.glob("*.deb")
+
+        if not stage_packages:
+            return
+
+        for pkg_path in stage_packages:
             with tempfile.TemporaryDirectory(suffix="deb-extract") as extract_dir:
                 # Extract deb package.
                 cls._extract_deb(pkg_path, extract_dir)

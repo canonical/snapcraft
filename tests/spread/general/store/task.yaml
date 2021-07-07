@@ -1,9 +1,5 @@
 summary: Test the store workflow
 
-systems:
-  # core20 is not on the Staging Store.
-  - ubuntu-18.04*
-
 manual: true
 
 environment:

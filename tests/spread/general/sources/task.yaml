@@ -1,0 +1,37 @@
+summary: Test pulling different source types
+
+environment:
+  SNAP_DIR/7z: snaps/7z
+  SNAP_DIR/bzr_commit: snaps/bzr-commit
+  SNAP_DIR/bzr_head: snaps/bzr-head
+  SNAP_DIR/bzr_tag: snaps/bzr-tag
+  SNAP_DIR/deb: snaps/deb
+  SNAP_DIR/deb_with_checksum: snaps/deb-with-checksum
+  SNAP_DIR/deb_with_symlink: snaps/deb-with-symlink
+  SNAP_DIR/git_commit: snaps/git-commit
+  SNAP_DIR/git_depth: snaps/git-depth
+  SNAP_DIR/git_head: snaps/git-head
+  SNAP_DIR/local_source: snaps/local-source
+  SNAP_DIR/local_source_subfolders: snaps/local-source-subfolders
+  SNAP_DIR/local_source_type: snaps/local-source-type
+  SNAP_DIR/rpm: snaps/rpm
+  SNAP_DIR/rpm_with_checksum: snaps/rpm-with-checksum
+  SNAP_DIR/zip: snaps/zip
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "${SNAP_DIR}/snapcraft.yaml"
+
+restore: |
+  cd "${SNAP_DIR}"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snapcraft.yaml"
+
+execute: |
+  cd "${SNAP_DIR}"
+  snapcraft pull

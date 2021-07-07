@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -78,7 +78,7 @@ classifiers = [
     "Natural Language :: English",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.6",
     "Topic :: Software Development :: Build Tools",
     "Topic :: System :: Software Distribution",
 ]
@@ -127,7 +127,6 @@ install_requires = [
     "progressbar",
     "pyelftools",
     "pymacaroons",
-    "pysha3",
     "pyxdg",
     "pyyaml==5.3",
     "raven",

@@ -118,12 +118,12 @@ class MultipassCommand:
             repo.snaps.install_snaps(["multipass/latest/stable"])
         elif platform == "darwin":
             try:
-                subprocess.check_call(["brew", "cask", "install", "multipass"])
+                subprocess.check_call(["brew", "install", "multipass"])
             except subprocess.CalledProcessError:
                 raise SnapcraftEnvironmentError(
                     "Failed to install multipass using homebrew.\n"
                     "Verify your homebrew installation and try again.\n"
-                    "Alternatively, manually install multipass by running 'brew cask install multipass'."
+                    "Alternatively, manually install multipass by running 'brew install multipass'."
                 )
         elif platform == "win32":
             windows_install_multipass(echoer)

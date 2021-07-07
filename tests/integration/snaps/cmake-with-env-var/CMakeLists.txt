@@ -1,7 +1,0 @@
-cmake_minimum_required(VERSION 3.2)
-project(cmake-with-env-var C)
-add_definitions(-DPART_SRC=${PART_SRC})
-add_definitions(-DPART_BUILD=${PART_BUILD})
-add_definitions(-DPART_INSTALL=${PART_INSTALL})
-add_executable(cmake-with-env-var test.c)
-install(TARGETS cmake-with-env-var RUNTIME DESTINATION bin)

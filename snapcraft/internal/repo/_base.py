@@ -253,7 +253,11 @@ class BaseRepo:
                 elif os.path.exists(path):
                     _fix_filemode(path)
 
-                if path.endswith(".pc") and not os.path.islink(path):
+                if (
+                    path.endswith(".pc")
+                    and os.path.isfile(path)
+                    and not os.path.islink(path)
+                ):
                     fix_pkg_config(unpackdir, path)
 
     @classmethod

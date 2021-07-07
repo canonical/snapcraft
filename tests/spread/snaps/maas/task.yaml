@@ -1,0 +1,32 @@
+summary: Build and test MaaS
+kill-timeout: 90m
+
+systems:
+- ubuntu-18.04-64
+- ubuntu-18.04
+- ubuntu-20.04-64
+- ubuntu-20.04
+
+environment:
+  SNAP_REPO: https://git.launchpad.net/maas
+  # TODO Add lxd variant when package-repositories is used.
+  # PROVIDER_OPTION/LXD: "--use-lxd"
+  PROVIDER_OPTION/DESTRUCTIVE: "--destructive-mode"
+
+prepare: |
+  # shellcheck source=tests/spread/snaps/maas/maas_helpers.sh
+  . maas_helpers.sh
+  
+  prepare
+
+restore: |
+  # shellcheck source=tests/spread/snaps/maas/maas_helpers.sh
+  . maas_helpers.sh
+  
+  restore
+
+execute: |
+  # shellcheck source=tests/spread/snaps/maas/maas_helpers.sh
+  . maas_helpers.sh
+
+  execute
