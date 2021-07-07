@@ -102,7 +102,6 @@ def setup_dirs() -> None:
         common.set_schemadir(os.path.join(parent_dir, "schema"))
         common.set_extensionsdir(os.path.join(parent_dir, "extensions"))
         common.set_keyringsdir(os.path.join(parent_dir, "keyrings"))
-        common.set_legacy_snapcraft_dir(os.path.join(snap_path, "legacy_snapcraft"))
 
     elif sys.platform == "win32":
         common.set_plugindir(os.path.join(topdir, "snapcraft", "plugins"))
@@ -114,7 +113,7 @@ def setup_dirs() -> None:
 
     else:
         # Make sure required data directories exist in the default locations.
-        # Plugins and legacy snapcraft directory are not required.
+        # Plugins directory is not required.
         for d in [
             common.get_schemadir(),
             common.get_extensionsdir(),

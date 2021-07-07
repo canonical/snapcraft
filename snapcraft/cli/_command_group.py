@@ -45,8 +45,6 @@ _CMD_DEPRECATION_NOTICES = {
     "registered": "dn12",
 }
 
-_CMD_LEGACY = ["cleanbuild", "refresh", "search", "update", "define"]
-
 
 class SnapcraftGroup(click.Group):
     def get_command(self, ctx, cmd_name):
@@ -73,10 +71,6 @@ class SnapcraftGroup(click.Group):
         # Let's keep edit-collaborators hidden until we get the green light
         # from the store.
         commands.pop(commands.index("edit-collaborators"))
-
-        # Hide the legacy commands
-        for command in _CMD_LEGACY:
-            commands.pop(commands.index(command))
 
         # Hide commands with unstable cli
         commands.pop(commands.index("promote"))

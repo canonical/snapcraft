@@ -117,25 +117,3 @@ parts:
         "$SNAPCRAFT_PART_INSTALL/usr/bin/python3" -m compileall -q .
 
     after: [snapcraft-libs]
-
-  legacy-snapcraft:
-    plugin: python
-    python-packages:
-        # Lock down cryptography to 3.4 to override the rust dependency.
-        - cryptography==3.4
-    source: https://github.com/snapcore/snapcraft.git
-    source-branch: legacy
-    source-depth: 1
-    requirements:
-        - requirements.txt
-    build-environment:
-        - "CRYPTOGRAPHY_DONT_BUILD_RUST": "1"
-        - "SODIUM_INSTALL": "system"
-    override-build: |
-        snapcraftctl build
-        $SNAPCRAFT_PROJECT_DIR/tools/snapcraft-override-build.sh
-
-        sed -ri 's|(lib/.*/site-packages)|legacy_snapcraft/\1|' $SNAPCRAFT_PART_INSTALL/usr/lib/python3.6/sitecustomize.py
-    organize:
-        '*': legacy_snapcraft/
-    after: [snapcraft-libs]
