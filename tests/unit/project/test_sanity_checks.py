@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018-2019 Canonical Ltd
+# Copyright (C) 2018-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,7 +21,7 @@ from textwrap import dedent
 import pytest
 
 import snapcraft.internal.errors
-from snapcraft.project import Project
+from snapcraft.project import Project, errors
 from snapcraft.project._sanity_checks import conduct_project_sanity_check
 
 
@@ -190,3 +190,12 @@ def test_unexpected_things(caplog_warning, project):
         "If you must store these files within the 'snap' directory, move them "
         "to 'snap/local', which is ignored by snapcraft."
     )
+
+
+def test_core_unsupported(project):
+    project.info.base = "core"
+
+    with pytest.raises(errors.UnsupportedBase) as exc_info:
+        conduct_project_sanity_check(project)
+
+    assert exc_info.value.base == "core"

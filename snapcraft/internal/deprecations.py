@@ -40,7 +40,7 @@ _DEPRECATION_MESSAGES = {
     "the 'snapcraftctl set-version' part scriptlet.",
     "dn11": "The 'push' set of commands have been replaced with 'upload'.",
     "dn12": "The 'registered' and 'list-registered' commands have with replaced with 'list'.",
-    "dn13": "Support will be removed for legacy and core-based projects in Snapcraft 5.0 (expected July 22, 2021).",
+    # dn14 is the next available slot.
 }
 
 _DEPRECATION_URL_FMT = "http://snapcraft.io/docs/deprecation-notices/{id}"

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018-2020 Canonical Ltd
+# Copyright (C) 2018-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,6 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from typing import Optional
 
 from snapcraft.internal.errors import SnapcraftError, SnapcraftException
 
@@ -58,3 +60,31 @@ class SnapcraftExperimentalExtensionsRequiredError(SnapcraftException):
 
     def get_resolution(self) -> str:
         return "This extension may be enabled with the '--enable-experimental-extensions' parameter."
+
+
+class UnsupportedBase(SnapcraftException):
+    def __init__(self, *, base: str) -> None:
+        self.base = base
+
+    def get_brief(self) -> str:
+        return f"Using {self.base!r} as a 'base' or 'build-base' is not supported."
+
+    def get_details(self) -> Optional[str]:
+        if self.base == "core":
+            return (
+                "'core' is currently under Extended Security Maintenance which "
+                "requires a different version of Snapcraft to run."
+            )
+        return None
+
+    def get_resolution(self) -> str:
+        if self.base == "core":
+            return (
+                "Switch to Snapcraft's 4.x channel track or consider upgrading "
+                "to a newer base."
+            )
+        else:
+            return "Ensure a valid base is set in 'snapcraft.yaml'."
+
+    def get_docs_url(self) -> Optional[str]:
+        return "https://snapcraft.io/docs/base-snaps"
