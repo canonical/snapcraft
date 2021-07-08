@@ -92,14 +92,6 @@ class AppCommandTest(unit.TestCase):
         self.expectThat("command-foo.wrapper", FileExists())
         self.expectThat("stop-command-foo.wrapper", FileExists())
 
-    def test_massaged_core(self):
-        app = application.Application.from_dict(
-            app_name="foo", app_dict={"command": "$SNAP/test-command"}
-        )
-        app.prime_commands(base="core", prime_dir=self.path)
-
-        self.assertThat(app.to_dict(), Equals({"command": "test-command"}))
-
     def test_massaged_core18(self):
         app = application.Application.from_dict(
             app_name="foo", app_dict={"command": "$SNAP/test-command"}
@@ -156,10 +148,6 @@ class TestWrapperUse:
         (
             "wrapper allowed for plain command on core18",
             dict(extra_app_properties={}, base="core18", expect_wrappers=True),
-        ),
-        (
-            "wrapper allowed for plain command on core",
-            dict(extra_app_properties={}, base="core", expect_wrappers=True),
         ),
         (
             "wrapper not allowed for not core or core18 base",

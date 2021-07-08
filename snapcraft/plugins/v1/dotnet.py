@@ -111,23 +111,18 @@ class DotNetPlugin(PluginV1):
         self._dotnet_cmd = os.path.join(self._dotnet_sdk_dir, "dotnet")
 
     def _setup_base_tools(self, base):
-        extra_packages = [
+        self.stage_packages = [
             "libcurl3",
             "libcurl3-gnutls",
             "liblttng-ust0",
             "libunwind8",
             "lldb",
+            "libicu60",
             "libssl1.0.0",
             "libgssapi-krb5-2",
             "zlib1g",
             "libgcc1",
         ]
-        if base in ("core", "core16"):
-            self.stage_packages += extra_packages + ["libicu55"]
-        elif base in ("core18",):
-            self.stage_packages += extra_packages + ["libicu60"]
-        else:
-            raise errors.PluginBaseError(part_name=self.name, base=base)
 
     def _get_sdk(self):
         sdk_arch = self.project.deb_arch

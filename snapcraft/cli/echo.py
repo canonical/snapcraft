@@ -29,7 +29,7 @@ from snapcraft.internal import common
 
 
 def is_tty_connected() -> bool:
-    """ Check to see if running under TTY. """
+    """Check to see if running under TTY."""
     if distutils.util.strtobool(os.getenv("SNAPCRAFT_HAS_TTY", "n")) == 1:
         return True
 

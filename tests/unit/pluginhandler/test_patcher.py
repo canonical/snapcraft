@@ -40,6 +40,18 @@ def mock_partpatcher():
     patcher.stop()
 
 
+@pytest.fixture(autouse=True)
+def mock_find_linker():
+    """Return a mock for snapcraft.internal.elf.find_linker."""
+    patcher = mock.patch(
+        "snapcraft.internal.elf.find_linker",
+        autospec=True,
+        return_value="/snap/test-snap/current/lib/x86_64-linux-gnu/ld-2.27.so",
+    )
+    yield patcher.start()
+    patcher.stop()
+
+
 class TestStaticBasePatching:
     scenarios = (
         ("strict", dict(confinement="strict")),
@@ -52,7 +64,7 @@ class TestStaticBasePatching:
             "test-part",
             snap_type="app",
             base="bare",
-            build_base="core",
+            build_base="core18",
             confinement=confinement,
         )
 
@@ -79,7 +91,7 @@ class TestStaticBasePatching:
             "test-part",
             snap_type="app",
             base="bare",
-            build_base="core",
+            build_base="core18",
             confinement=confinement,
         )
 
@@ -99,7 +111,7 @@ class TestStaticBasePatching:
             "test-part",
             snap_type="app",
             base=None,
-            build_base="core",
+            build_base="core18",
             confinement=confinement,
         )
 

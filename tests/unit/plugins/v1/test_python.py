@@ -561,25 +561,6 @@ class PythonCore18Test(PythonPluginBaseTest):
         )
 
 
-class PythonCoreTest(PythonPluginBaseTest):
-    def setUp(self):
-        super().setUp()
-
-        self.project._snap_meta.base = "core"
-
-    def test_plugin_stage_packages_python2(self):
-        self.options.python_version = "python2"
-
-        plugin = python.PythonPlugin("test-part", self.options, self.project)
-        self.assertThat(plugin.plugin_stage_packages, Equals(["python"]))
-
-    def test_plugin_stage_packages_python3(self):
-        self.options.python_version = "python3"
-
-        plugin = python.PythonPlugin("test-part", self.options, self.project)
-        self.assertThat(plugin.plugin_stage_packages, Equals(["python3"]))
-
-
 class FileMissingPythonPluginTest(PythonPluginBaseTest):
     def test_constraints_file_missing(self):
         self.options.constraints = "constraints.txt"

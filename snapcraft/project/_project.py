@@ -144,7 +144,7 @@ class Project(ProjectOptions):
 
         :return: The appropriate default architecture to stage.
         """
-        if self._get_build_base() in ["core16", "core18"]:
+        if self._get_build_base() == "core18":
             return self.deb_arch
         else:
             return self.target_arch

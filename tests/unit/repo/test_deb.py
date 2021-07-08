@@ -86,7 +86,7 @@ class TestPackages(unit.TestCase):
         fetched_packages = repo.Ubuntu.fetch_stage_packages(
             package_names=["fake-package"],
             stage_packages_path=self.stage_packages_path,
-            base="core",
+            base="core18",
             target_arch="amd64",
         )
 
@@ -125,7 +125,7 @@ class TestPackages(unit.TestCase):
         fetched_packages = repo.Ubuntu.fetch_stage_packages(
             package_names=package_names,
             stage_packages_path=self.stage_packages_path,
-            base="core",
+            base="core18",
             target_arch="amd64",
         )
 
@@ -152,7 +152,7 @@ class TestPackages(unit.TestCase):
         fetched_packages = repo.Ubuntu.fetch_stage_packages(
             package_names=["virtual-fake-package"],
             stage_packages_path=self.stage_packages_path,
-            base="core",
+            base="core18",
             target_arch="amd64",
         )
 
@@ -171,7 +171,7 @@ class TestPackages(unit.TestCase):
         fetched_packages = repo.Ubuntu.fetch_stage_packages(
             package_names=["fake-package"],
             stage_packages_path=self.stage_packages_path,
-            base="core",
+            base="core18",
             target_arch="amd64",
         )
 
@@ -190,7 +190,7 @@ class TestPackages(unit.TestCase):
             repo.Ubuntu.fetch_stage_packages,
             package_names=["fake-package"],
             stage_packages_path=Path(self.path),
-            base="core",
+            base="core18",
             target_arch="amd64",
         )
         self.assertThat(str(raised), Equals("Package fetch error: foo"))
@@ -529,13 +529,12 @@ class PackageForFileTest(unit.TestCase):
 
 
 class TestGetPackagesInBase(testtools.TestCase):
-    def test_hardcoded_bases(self):
-        for base in ("core", "core16", "core18"):
-            packages = [
-                DebPackage.from_unparsed(p)
-                for p in repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES
-            ]
-            assert repo._deb.get_packages_in_base(base=base) == packages
+    def test_hardcoded_core18(self):
+        packages = [
+            DebPackage.from_unparsed(p)
+            for p in repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES
+        ]
+        assert repo._deb.get_packages_in_base(base="core18") == packages
 
     @mock.patch.object(repo._deb, "_get_dpkg_list_path")
     def test_package_list_from_dpkg_list(self, mock_dpkg_list_path):

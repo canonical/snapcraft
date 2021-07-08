@@ -120,15 +120,11 @@ _32BIT_USERSPACE_ARCHITECTURE = {
 _WINDOWS_TRANSLATIONS = {"AMD64": "x86_64"}
 
 
-_HOST_CODENAME_FOR_BASE = {"core18": "bionic", "core": "xenial"}
-_HOST_COMPATIBILITY = {
-    "xenial": ["trusty", "xenial"],
-    "bionic": ["trusty", "xenial", "bionic"],
-}
+_HOST_CODENAME_FOR_BASE = {"core18": "bionic", "core20": "focal"}
 _STATIC_BASES = ["bare"]
 
 # TODO: just check the base.
-_LINKER_VERSION_FOR_BASE = {"core20": "2.31", "core18": "2.27", "core": "2.23"}
+_LINKER_VERSION_FOR_BASE = {"core20": "2.31", "core18": "2.27"}
 
 
 def _get_platform_architecture():
@@ -291,13 +287,8 @@ class ProjectOptions:
 
         logger.debug("Running on {!r}".format(codename))
 
-        build_host_for_base = _HOST_CODENAME_FOR_BASE.get(base)
-        if build_host_for_base is None:
-            return False
-
-        compatible_hosts = _HOST_COMPATIBILITY.get(build_host_for_base, [])
-
-        return codename in compatible_hosts
+        # TODO: we should get rid of this check.
+        return _HOST_CODENAME_FOR_BASE.get(base) == codename
 
     # This is private to not make the API public given that base
     # will be part of the new Project.

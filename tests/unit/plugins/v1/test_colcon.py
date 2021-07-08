@@ -142,21 +142,6 @@ class ColconPluginTest(ColconPluginTestBase):
         self.assertThat(raised.part_name, Equals("test-part"))
         self.assertThat(raised.base, Equals("unsupported-base"))
 
-    def test_unsupported_base_and_rosdistro(self):
-        self.project._snap_meta.base = "core"
-
-        raised = self.assertRaises(
-            colcon.ColconPluginBaseError,
-            colcon.ColconPlugin,
-            "test-part",
-            self.properties,
-            self.project,
-        )
-
-        self.assertThat(raised.part_name, Equals("test-part"))
-        self.assertThat(raised.base, Equals("core"))
-        self.assertThat(raised.rosdistro, Equals("crystal"))
-
     def test_schema_colcon_rosdistro(self):
         schema = colcon.ColconPlugin.schema()
 
@@ -1103,7 +1088,7 @@ class TestBuildArgs:
         run_output_mock,
         run_mock,
         tmp_work_path,
-        project_core18,
+        project,
         options,
         disable_parallel,
         build_attributes,
@@ -1121,7 +1106,7 @@ class TestBuildArgs:
         options.colcon_ament_cmake_args = colcon_ament_cmake_args
         options.disable_parallel = disable_parallel
 
-        plugin = colcon.ColconPlugin("test-part", options, project_core18)
+        plugin = colcon.ColconPlugin("test-part", options, project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         plugin.build()

@@ -31,7 +31,7 @@ class UserAgentTestCase(unit.TestCase):
         self.useFixture(FakeOsRelease())
 
         arch = ProjectOptions().deb_arch
-        expected = f"snapcraft/{snapcraft_version} Ubuntu/16.04 ({arch})"
+        expected = f"snapcraft/{snapcraft_version} Ubuntu/18.04 ({arch})"
 
         self.expectThat(agent.get_user_agent("linux"), Equals(expected))
 

@@ -108,7 +108,7 @@ class BaseProviderTest(BaseProviderBaseTest):
         provider.save_info_mock.assert_called_once_with(
             {
                 "data": {
-                    "base": "core16",
+                    "base": "core20",
                     "created-by-snapcraft-version": "4.0",
                     "host-project-directory": self.project._project_dir,
                 }
@@ -419,7 +419,7 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
         self.snap_injector_mock().add.assert_has_calls(
             [
                 call(snap_name="snapd"),
-                call(snap_name="core16"),
+                call(snap_name="core20"),
                 call(snap_name="core18"),
                 call(snap_name="snapcraft"),
             ]
@@ -444,29 +444,12 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
         self.snap_injector_mock().add.assert_has_calls(
             [
                 call(snap_name="snapd"),
-                call(snap_name="core16"),
+                call(snap_name="core20"),
                 call(snap_name="core18"),
                 call(snap_name="snapcraft"),
             ]
         )
         self.assertThat(self.snap_injector_mock().add.call_count, Equals(4))
-        self.snap_injector_mock().apply.assert_called_once_with()
-
-    def test_setup_snapcraft_with_core(self):
-        self.project._snap_meta.base = "core"
-        self.project._snap_meta.confinement = "classic"
-
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider._setup_snapcraft()
-
-        self.snap_injector_mock().add.assert_has_calls(
-            [
-                call(snap_name="core"),
-                call(snap_name="core18"),
-                call(snap_name="snapcraft"),
-            ]
-        )
-        self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))
         self.snap_injector_mock().apply.assert_called_once_with()
 
     def test_setup_snapcraft_for_classic_build(self):
@@ -543,8 +526,8 @@ class TestCompatibilityClean:
         (
             "same-base-no-clean",
             dict(
-                base="core16",
-                loaded_info={"base": "core16", "created-by-snapcraft-version": "1.0"},
+                base="core20",
+                loaded_info={"base": "core20", "created-by-snapcraft-version": "1.0"},
                 version="1.0",
                 expect_clean=False,
             ),
@@ -552,7 +535,7 @@ class TestCompatibilityClean:
         (
             "different-base-clean",
             dict(
-                base="core16",
+                base="core20",
                 loaded_info={"base": "core18", "created-by-snapcraft-version": "1.0"},
                 version="1.0",
                 expect_clean=True,
@@ -678,9 +661,7 @@ _ARCHIVES = {
         ("aarch64", _ARCHIVES["ports"]),
     ],
 )
-@pytest.mark.parametrize(
-    "distro", [("core", "xenial"), ("core18", "bionic"), ("core20", "focal")]
-)
+@pytest.mark.parametrize("distro", [("core18", "bionic"), ("core20", "focal")])
 def test_setup_environment_content_x86(
     tmp_work_path, monkeypatch, machine_platform, distro
 ):
