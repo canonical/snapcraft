@@ -66,8 +66,17 @@ class RosPlugin(PluginV2):
         return [
             'state="$(set +o)"',
             "set +u",
+            'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO/setup.sh ]; then',
+            "set -- --local",
+            "_CATKIN_SETUP_DIR={path} . {path}/setup.sh".format(
+                path='"${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO'
+            ),
+            "set -- --local --extend",
+            "else",
+            "set -- --local",
+            "fi",
             ". /opt/ros/$ROS_DISTRO/setup.sh",
-            'eval "$(state)"',
+            'eval "${state}"',
         ]
 
     @abc.abstractmethod
@@ -152,8 +161,13 @@ def stage_runtime_dependencies(
     # TODO: support python packages (only apt currently supported)
     apt_packages: Set[str] = set()
 
+    installed_pkgs = catkin_packages.find_packages(part_install).values()
     for pkg in catkin_packages.find_packages(part_src).values():
         for dep in pkg.exec_depends:
+            # No need to resolve this dependency if we know it's local
+            if any(p for p in installed_pkgs if p.name == dep.name):
+                continue
+
             cmd = ["rosdep", "resolve", dep.name, "--rosdistro", ros_distro]
             try:
                 click.echo(f"Running {cmd!r}")

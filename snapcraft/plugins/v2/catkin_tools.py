@@ -117,11 +117,3 @@ class CatkinToolsPlugin(_ros.RosPlugin):
         commands.append(" ".join(catkin_command))
 
         return commands
-
-    def _get_workspace_activation_commands(self) -> List[str]:
-        return [
-            'state="$(set +o)"',
-            "set +u",
-            "_CATKIN_SETUP_DIR=/opt/ros/$ROS_DISTRO . /opt/ros/$ROS_DISTRO/setup.sh",
-            'eval "$(state)"',
-        ]
