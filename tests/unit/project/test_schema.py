@@ -1181,7 +1181,8 @@ def test_invalid_command_chain(data, command_chain):
 
 
 class SystemUsernamesTests(ProjectBaseTest):
-    def test_yaml_valid_system_usernames_long(self):
+    @pytest.mark.parametrize("username", ["snap_daemon", "snap_microk8s"])
+    def test_yaml_valid_system_usernames_long(self, username):
         self.assertValidationPasses(
             dedent(
                 """\
@@ -1195,13 +1196,16 @@ class SystemUsernamesTests(ProjectBaseTest):
                   part1:
                     plugin: nil
                 system-usernames:
-                  snap_daemon:
+                  {}:
                     scope: shared
-                """
+                """.format(
+                    username
+                )
             )
         )
 
-    def test_yaml_valid_system_usernames_short(self):
+    @pytest.mark.parametrize("username", ["snap_daemon", "snap_microk8s"])
+    def test_yaml_valid_system_usernames_short(self, username):
         self.assertValidationPasses(
             dedent(
                 """\
@@ -1215,8 +1219,10 @@ class SystemUsernamesTests(ProjectBaseTest):
                   part1:
                     plugin: nil
                 system-usernames:
-                  snap_daemon: shared
-                """
+                  {}: shared
+                """.format(
+                    username
+                )
             )
         )
 
