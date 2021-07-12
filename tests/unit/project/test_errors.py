@@ -67,8 +67,8 @@ def test_SnapcraftExperimentalExtensionsRequiredError():
     assert error.get_exit_code() == 2
 
 
-def test_UnsupportedBase_core():
-    error = errors.UnsupportedBase(base="core")
+def test_UnsupportedBaseError_core():
+    error = errors.UnsupportedBaseError(base="core")
 
     assert (
         error.get_brief()
@@ -86,8 +86,8 @@ def test_UnsupportedBase_core():
     assert error.get_exit_code() == 2
 
 
-def test_UnsupportedBase_other():
-    error = errors.UnsupportedBase(base="core100")
+def test_UnsupportedBaseError_other():
+    error = errors.UnsupportedBaseError(base="core100")
 
     assert (
         error.get_brief()

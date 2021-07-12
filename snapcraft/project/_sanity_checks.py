@@ -48,7 +48,7 @@ def conduct_project_sanity_check(project: Project, **kwargs) -> None:
         project.info.validate_raw_snapcraft()
 
     if project._get_build_base() == "core":
-        raise errors.UnsupportedBase(base="core")
+        raise errors.UnsupportedBaseError(base="core")
 
     snap_dir_path = os.path.join(project._get_snapcraft_assets_dir())
     if os.path.isdir(snap_dir_path):

@@ -62,7 +62,7 @@ class SnapcraftExperimentalExtensionsRequiredError(SnapcraftException):
         return "This extension may be enabled with the '--enable-experimental-extensions' parameter."
 
 
-class UnsupportedBase(SnapcraftException):
+class UnsupportedBaseError(SnapcraftException):
     def __init__(self, *, base: str) -> None:
         self.base = base
 

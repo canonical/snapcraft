@@ -195,7 +195,7 @@ def test_unexpected_things(caplog_warning, project):
 def test_core_unsupported(project):
     project.info.base = "core"
 
-    with pytest.raises(errors.UnsupportedBase) as exc_info:
+    with pytest.raises(errors.UnsupportedBaseError) as exc_info:
         conduct_project_sanity_check(project)
 
     assert exc_info.value.base == "core"
