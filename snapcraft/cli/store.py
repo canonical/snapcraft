@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import functools
+import json
+import logging
 import operator
 import os
 import stat
@@ -29,11 +31,13 @@ import snapcraft
 from snapcraft import formatting_utils, storeapi
 from snapcraft._store import StoreClientCLI
 from snapcraft.storeapi.constants import DEFAULT_SERIES
+from snapcraft.storeapi.v2 import metrics as metrics_module
 
 from . import echo
 from ._channel_map import get_tabulated_channel_map
 from ._review import review_snap
 
+logger = logging.getLogger(__name__)
 _MESSAGE_REGISTER_PRIVATE = dedent(
     """\
     Even though this is private snap, you should think carefully about
@@ -823,7 +827,9 @@ def login(login_file, experimental_login: bool):
         except NotImplementedError:
             echo.info("Login successful.")
     else:
-        echo.info("Login successful.")
+        human_acls = _human_readable_acls(store_client)
+        echo.info("Login successful. You now have these capabilities:\n")
+        echo.info(human_acls)
 
 
 @storecli.command()
@@ -923,3 +929,64 @@ def list_tracks(snap_name: str) -> None:
             tablefmt="plain",
         )
     )
+
+
+@storecli.command()
+@click.argument("snap-name", metavar="<snap-name>", required=True)
+@click.option(
+    "--metric-name",
+    metavar="<metric name>",
+    help="Metric name",
+    type=click.Choice([x.value for x in metrics_module.MetricsNames]),
+    required=True,
+)
+@click.option(
+    "--start", metavar="<start date>", help="Date in format YYYY-MM-DD", required=True,
+)
+@click.option(
+    "--end", metavar="<end date>", help="Date in format YYYY-MM-DD", required=True,
+)
+@click.option(
+    "--transpose", is_flag=True, help="Transpose table (flip axes).",
+)
+@click.option(
+    "--format",
+    metavar="<format>",
+    help="Format for output",
+    type=click.Choice(["table", "json"]),
+    required=True,
+    default="table",
+)
+def metrics(
+    snap_name: str, start: str, end: str, metric_name: str, transpose: bool, format: str
+):
+    """Get metrics for <snap-name>.
+    """
+    store = storeapi.StoreClient()
+    account_info = store.get_account_information()
+
+    try:
+        snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
+    except KeyError:
+        raise RuntimeError("No permissions for snap.")
+
+    mf = metrics_module.MetricsFilter(
+        snap_id=snap_id, metric_name=metric_name, start=start, end=end
+    )
+
+    results = store.get_metrics([mf])
+
+    # We only support one query at a time, make sure we only have one response.
+    if len(results.metrics) != 1:
+        raise RuntimeError(f"Unexpected results from store: {results}")
+
+    metric_results = results.metrics[0]
+
+    rows = metric_results.convert_to_table(transpose=transpose)
+
+    if format == "json":
+        output = json.dumps(rows)
+    elif format == "table":
+        output = tabulate(rows, tablefmt="plain")
+
+    click.echo(output)

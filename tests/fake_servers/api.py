@@ -326,7 +326,12 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         acl = {
             "snap_ids": None,
             "channels": None,
-            "permissions": ["package_upload", "package_access", "package_manage"],
+            "permissions": [
+                "package_upload",
+                "package_access",
+                "package_manage",
+                "package_metrics",
+            ],
         }
 
         payload = json.dumps(acl).encode()
