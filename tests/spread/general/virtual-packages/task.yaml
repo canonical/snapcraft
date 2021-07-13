@@ -4,7 +4,6 @@ environment:
   SNAP_DIR: snaps/virtual-packages-test
 
 systems:
-  - ubuntu-16*
   - ubuntu-18*
 
 restore: |

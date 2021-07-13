@@ -270,7 +270,7 @@ def _sanity_check_build_provider_flags(build_provider: str, **kwargs) -> None:
         )
 
 
-def get_build_provider(skip_sanity_checks: bool = False, **kwargs) -> str:
+def get_build_provider(**kwargs) -> str:
     """Get build provider and determine if running as managed instance."""
 
     provider = kwargs.get("provider")
@@ -286,9 +286,7 @@ def get_build_provider(skip_sanity_checks: bool = False, **kwargs) -> str:
             # Default is multipass.
             provider = "multipass"
 
-    # Sanity checks may be skipped for the purpose of checking legacy.
-    if not skip_sanity_checks:
-        _sanity_check_build_provider_flags(provider, **kwargs)
+    _sanity_check_build_provider_flags(provider, **kwargs)
 
     return provider
 
@@ -364,7 +362,7 @@ def get_project(*, is_managed_host: bool = False, **kwargs):
     )
 
     # Validate yaml info from schema prior to consumption.
-    if project.info is not None and not project.is_legacy_project():
+    if project.info is not None:
         project.info.validate_raw_snapcraft()
 
         # TODO: this should be automatic on get_project().

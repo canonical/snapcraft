@@ -43,7 +43,7 @@ def _try_get_base_from_project() -> str:
 
 
 def _get_modules_iter(base: str) -> Iterable:
-    if base in ("core", "core16", "core18"):
+    if base == "core18":
         modules_path = snapcraft.plugins.v1.__path__  # type: ignore  # mypy issue #1422
     else:
         modules_path = snapcraft.plugins.v2.__path__  # type: ignore  # mypy issue #1422
@@ -56,7 +56,7 @@ def _get_modules_iter(base: str) -> Iterable:
 @click.option(
     "--base",
     help="Show plugins for specific base",
-    type=click.Choice(["core", "core16", "core18", "core20"]),
+    type=click.Choice(["core18", "core20"]),
 )
 def list_plugins(base):
     """List the available plugins that handle different types of part.

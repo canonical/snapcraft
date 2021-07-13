@@ -72,7 +72,7 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
         )
 
     def test_print_module_help_for_valid_plugin_with_base(self):
-        for base in ("core", "core18", "core20"):
+        for base in ("core18", "core20"):
             result = self.run_command(["help", "nil", "--base", base])
 
             expected = f"Displaying help for the 'nil' plugin for {base!r}."

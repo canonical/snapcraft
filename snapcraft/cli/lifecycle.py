@@ -41,7 +41,6 @@ from snapcraft.internal.repo import ua_manager
 from snapcraft.project._sanity_checks import conduct_project_sanity_check
 
 from . import echo
-from ._command import SnapcraftProjectCommand
 from ._errors import TRACEBACK_HOST, TRACEBACK_MANAGED
 from ._options import (
     add_provider_options,
@@ -288,7 +287,7 @@ def init():
     )
 
 
-@lifecyclecli.command(cls=SnapcraftProjectCommand)
+@lifecyclecli.command()
 @click.pass_context
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
@@ -304,7 +303,7 @@ def pull(ctx, parts, **kwargs):
     _execute(steps.PULL, parts, **kwargs)
 
 
-@lifecyclecli.command(cls=SnapcraftProjectCommand)
+@lifecyclecli.command()
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def build(parts, **kwargs):
@@ -319,7 +318,7 @@ def build(parts, **kwargs):
     _execute(steps.BUILD, parts, **kwargs)
 
 
-@lifecyclecli.command(cls=SnapcraftProjectCommand)
+@lifecyclecli.command()
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def stage(parts, **kwargs):
@@ -334,7 +333,7 @@ def stage(parts, **kwargs):
     _execute(steps.STAGE, parts, **kwargs)
 
 
-@lifecyclecli.command(cls=SnapcraftProjectCommand)
+@lifecyclecli.command()
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def prime(parts, **kwargs):
@@ -366,7 +365,7 @@ def try_command(**kwargs):
     echo.info("You can now run `snap try {}`.".format(project.prime_dir))
 
 
-@lifecyclecli.command(cls=SnapcraftProjectCommand)
+@lifecyclecli.command()
 @add_provider_options()
 @click.argument("directory", required=False)
 @click.option("--output", "-o", help="path to the resulting snap.")
@@ -388,7 +387,7 @@ def snap(directory, output, **kwargs):
         _execute(steps.PRIME, parts=tuple(), pack_project=True, output=output, **kwargs)
 
 
-@lifecyclecli.command(cls=SnapcraftProjectCommand)
+@lifecyclecli.command()
 @click.argument("directory")
 @click.option("--output", "-o", help="path to the resulting snap.")
 def pack(directory, output, **kwargs):
@@ -406,13 +405,12 @@ def pack(directory, output, **kwargs):
     _pack(directory, output=output)
 
 
-@lifecyclecli.command(cls=SnapcraftProjectCommand)
+@lifecyclecli.command()
 @click.pass_context
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 @click.option("--unprime", is_flag=True, required=False, hidden=True)
-@click.option("--step", "-s", required=False, hidden=True)
-def clean(ctx, parts, unprime, step, **kwargs):
+def clean(ctx, parts, unprime, **kwargs):
     """Remove a part's assets.
 
     \b
@@ -420,11 +418,6 @@ def clean(ctx, parts, unprime, step, **kwargs):
         snapcraft clean
         snapcraft clean my-part
     """
-    # This option is only valid in legacy.
-    if step:
-        option = "--step" if "--step" in ctx.obj["argv"] else "-s"
-        raise click.BadOptionUsage(option, "no such option: {}".format(option))
-
     build_provider = get_build_provider(**kwargs)
     build_provider_flags = get_build_provider_flags(build_provider, **kwargs)
     apply_host_provider_flags(build_provider_flags)

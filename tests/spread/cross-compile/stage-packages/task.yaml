@@ -1,10 +1,5 @@
 summary: Cross-compiliation stage-package test
 
-systems:
-  - ubuntu-20.04
-  - ubuntu-20.04-64
-  - ubuntu-20.04-amd64
-
 environment:
   SNAP_DIR: .
 

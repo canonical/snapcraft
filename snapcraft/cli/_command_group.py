@@ -32,7 +32,6 @@ _CMD_ALIASES = {
     "keys": "list-keys",
     "revisions": "list-revisions",
     "plugins": "list-plugins",
-    "collaborators": "edit-collaborators",
     "extensions": "list-extensions",
     "tracks": "list-tracks",
 }
@@ -44,8 +43,6 @@ _CMD_DEPRECATION_NOTICES = {
     "list-registered": "dn12",
     "registered": "dn12",
 }
-
-_CMD_LEGACY = ["cleanbuild", "refresh", "search", "update", "define"]
 
 
 class SnapcraftGroup(click.Group):
@@ -70,13 +67,6 @@ class SnapcraftGroup(click.Group):
 
     def list_commands(self, ctx):
         commands = super().list_commands(ctx)
-        # Let's keep edit-collaborators hidden until we get the green light
-        # from the store.
-        commands.pop(commands.index("edit-collaborators"))
-
-        # Hide the legacy commands
-        for command in _CMD_LEGACY:
-            commands.pop(commands.index(command))
 
         # Hide commands with unstable cli
         commands.pop(commands.index("promote"))

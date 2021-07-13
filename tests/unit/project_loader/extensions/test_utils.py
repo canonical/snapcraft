@@ -506,7 +506,7 @@ class InvalidExtensionTest(ExtensionTestBase):
                 version: "1"
                 summary: test
                 description: test
-                base: core16
+                base: core20
                 grade: stable
                 confinement: strict
 
@@ -602,7 +602,7 @@ class InvalidExtensionTest(ExtensionTestBase):
                 version: "1"
                 summary: test
                 description: test
-                base: core16
+                base: core20
                 grade: stable
                 confinement: strict
 

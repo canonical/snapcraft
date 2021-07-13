@@ -1,6 +1,0 @@
----
-description: a test part
-maintainer: John Doe <john.doe@example.com>
-parts: [testpart]
-origin: $ORIGIN
-origin-type: git

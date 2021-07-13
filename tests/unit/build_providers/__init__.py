@@ -129,7 +129,7 @@ class ProviderImpl(Provider):
         self.shell_mock("shell")
 
 
-def get_project(base: str = "core16") -> Project:
+def get_project(base: str = "core20") -> Project:
     project = Project()
     project._snap_meta = Snap(
         name="project-name", base=base, version="1.0", confinement="strict"

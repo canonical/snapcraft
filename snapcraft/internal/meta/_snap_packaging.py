@@ -25,7 +25,7 @@ import re
 import shutil
 import stat
 import urllib
-from typing import Any, Dict, List, Optional, Set  # noqa
+from typing import Any, Dict, Optional, Set
 
 import requests
 
@@ -552,7 +552,7 @@ class _SnapPackaging:
             return ""
 
         env = list()
-        if self._project_config.project._snap_meta.base in ("core", "core16", "core18"):
+        if self._project_config.project._snap_meta.base == "core18":
             common.env = self._project_config.snap_env()
             assembled_env = common.assemble_env()
             common.reset_env()
@@ -595,7 +595,7 @@ class _SnapPackaging:
         # No more command-chain for core20 and classic confinement.
         # This was a workaround for LP: #1860369.
         if (
-            self._snap_meta.base not in ("core", "core16", "core18", None)
+            self._snap_meta.base != "core18"
             and self._snap_meta.confinement == "classic"
         ):
             return None

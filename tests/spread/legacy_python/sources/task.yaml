@@ -1,5 +1,0 @@
-summary: Run the python driven source tests
-
-execute: |
-  cd /snapcraft
-  ./runtests.sh tests/integration/sources

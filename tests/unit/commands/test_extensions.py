@@ -57,9 +57,9 @@ class ExtensionsCommandTest(CommandBaseTestCase):
                     """\
                     Extension name    Supported bases
                     ----------------  -----------------
-                    test1             core16
-                    test2             core16
-                    test3             core16, core18
+                    test1             core20
+                    test2             core20
+                    test3             core18, core20
                     """
                 )
             ),
@@ -122,7 +122,7 @@ class ExtensionsCommandTest(CommandBaseTestCase):
                 version: '1'
                 summary: test
                 description: test
-                base: core16
+                base: core20
                 grade: stable
                 confinement: strict
 
@@ -150,7 +150,7 @@ class ExtensionsCommandTest(CommandBaseTestCase):
                     version: '1'
                     summary: test
                     description: test
-                    base: core16
+                    base: core20
                     grade: stable
                     confinement: strict
                     apps:
@@ -191,7 +191,7 @@ def _test1_extension_fixture():
 
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core16",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -215,7 +215,7 @@ def _test2_extension_fixture():
 
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core16",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -233,7 +233,7 @@ def _test3_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core16", "core18")
+            return ("core18", "core20")
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -250,7 +250,7 @@ def _test4_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core16", "core18")
+            return ("core20", "core18")
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
