@@ -32,7 +32,6 @@ _CMD_ALIASES = {
     "keys": "list-keys",
     "revisions": "list-revisions",
     "plugins": "list-plugins",
-    "collaborators": "edit-collaborators",
     "extensions": "list-extensions",
     "tracks": "list-tracks",
 }
@@ -68,9 +67,6 @@ class SnapcraftGroup(click.Group):
 
     def list_commands(self, ctx):
         commands = super().list_commands(ctx)
-        # Let's keep edit-collaborators hidden until we get the green light
-        # from the store.
-        commands.pop(commands.index("edit-collaborators"))
 
         # Hide commands with unstable cli
         commands.pop(commands.index("promote"))

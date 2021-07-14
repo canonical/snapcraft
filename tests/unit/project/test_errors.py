@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018, 2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -64,4 +64,36 @@ def test_SnapcraftExperimentalExtensionsRequiredError():
         == "This extension may be enabled with the '--enable-experimental-extensions' parameter."
     )
     assert error.get_docs_url() is None
+    assert error.get_exit_code() == 2
+
+
+def test_UnsupportedBaseError_core():
+    error = errors.UnsupportedBaseError(base="core")
+
+    assert (
+        error.get_brief()
+        == "Using 'core' as a 'base' or 'build-base' is not supported."
+    )
+    assert (
+        error.get_details()
+        == "'core' is currently under Extended Security Maintenance which requires a different version of Snapcraft to run."
+    )
+    assert (
+        error.get_resolution()
+        == "Switch to Snapcraft's 4.x channel track or consider upgrading to a newer base."
+    )
+    assert error.get_docs_url() == "https://snapcraft.io/docs/base-snaps"
+    assert error.get_exit_code() == 2
+
+
+def test_UnsupportedBaseError_other():
+    error = errors.UnsupportedBaseError(base="core100")
+
+    assert (
+        error.get_brief()
+        == "Using 'core100' as a 'base' or 'build-base' is not supported."
+    )
+    assert error.get_details() is None
+    assert error.get_resolution() == "Ensure a valid base is set in 'snapcraft.yaml'."
+    assert error.get_docs_url() == "https://snapcraft.io/docs/base-snaps"
     assert error.get_exit_code() == 2

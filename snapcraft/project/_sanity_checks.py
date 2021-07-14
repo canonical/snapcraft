@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018-2019 Canonical Ltd
+# Copyright (C) 2018-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,9 +18,9 @@ import logging
 import os
 import re
 
-from snapcraft.internal import deprecations
 from snapcraft.internal.errors import SnapcraftEnvironmentError
-from snapcraft.project import Project
+from snapcraft.project import Project, errors
+
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ def conduct_project_sanity_check(project: Project, **kwargs) -> None:
         project.info.validate_raw_snapcraft()
 
     if project._get_build_base() == "core":
-        deprecations.handle_deprecation_notice("dn13")
+        raise errors.UnsupportedBaseError(base="core")
 
     snap_dir_path = os.path.join(project._get_snapcraft_assets_dir())
     if os.path.isdir(snap_dir_path):
