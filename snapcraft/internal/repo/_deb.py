@@ -475,12 +475,9 @@ class Ubuntu(BaseRepo):
     def unpack_stage_packages(
         cls, *, stage_packages_path: pathlib.Path, install_path: pathlib.Path
     ) -> None:
-        stage_packages = stage_packages_path.glob("*.deb")
+        pkg_path = None
 
-        if not stage_packages:
-            return
-
-        for pkg_path in stage_packages:
+        for pkg_path in stage_packages_path.glob("*.deb"):
             with tempfile.TemporaryDirectory(suffix="deb-extract") as extract_dir:
                 # Extract deb package.
                 cls._extract_deb(pkg_path, extract_dir)
@@ -489,7 +486,9 @@ class Ubuntu(BaseRepo):
                 cls._mark_origin_stage_package(extract_dir, marked_name)
                 # Stage files to install_dir.
                 file_utils.link_or_copy_tree(extract_dir, install_path.as_posix())
-        cls.normalize(str(install_path))
+
+        if pkg_path:
+            cls.normalize(str(install_path))
 
     @classmethod
     def build_package_is_valid(cls, package_name) -> bool:
