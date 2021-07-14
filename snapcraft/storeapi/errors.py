@@ -282,6 +282,8 @@ class StoreRegistrationError(StoreError):
 
     __FMT_INVALID = "{message}"
 
+    _FMT_CODE = "Registration failed ({code})."
+
     fmt = "Registration failed."
 
     __error_messages = {
@@ -311,13 +313,18 @@ class StoreRegistrationError(StoreError):
         if error_list is None:
             error_code = response_json.get("code")
             # we default to self.fmt in case error_code is not mapped yet.
-            fmt = self.__error_messages.get(error_code, self.fmt)
+            if error_code is not None:
+                fmt = self.__error_messages.get(error_code, self._FMT_CODE).format(
+                    **response_json
+                )
+            else:
+                fmt = self.fmt
             self._errors.append(fmt.format(**response_json))
             return
 
         # Support new style formatted errors.
         for error in error_list:
-            fmt = self.__error_messages.get(error["code"], self.fmt)
+            fmt = self.__error_messages.get(error["code"], self._FMT_CODE)
             # Augment 'error' with remaining top-level keys. Should be a
             # no-op once they are moved to their specific error record.
             error.update(response_json)
