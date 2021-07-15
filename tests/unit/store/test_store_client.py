@@ -668,7 +668,9 @@ class RegisterTestCase(StoreTestCase):
             self.client.register,
             "snap-name-no-clear-error",
         )
-        self.assertThat(str(raised), Equals("Registration failed."))
+        self.assertThat(
+            str(raised), Equals("Registration failed (nonexistent_error_code).")
+        )
 
 
 class ValidationSetsTestCase(StoreTestCase):
