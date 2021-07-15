@@ -40,13 +40,28 @@ class RemoteBuildTests(CommandBaseTestCase):
         type(self.mock_lc).architectures = self.mock_lc_architectures
         self.mock_lc.has_outstanding_build.return_value = False
 
-    def test_remote_build(self):
+    @mock.patch("snapcraft.cli.remote.echo.confirm")
+    def test_remote_build_prompts(self, mock_confirm):
+        result = self.run_command(["remote-build"])
+
+        self.mock_lc.start_build.assert_called_once()
+        self.mock_lc.cleanup.assert_called_once()
+        self.assertThat(result.output, Contains("Building snap package for i386."))
+        self.assertThat(result.exit_code, Equals(0))
+        mock_confirm.assert_called_once_with(
+            "All data sent to remote builders will be publicly available. Are you sure you want to continue?",
+            default=True,
+        )
+
+    @mock.patch("snapcraft.cli.remote.echo.confirm")
+    def test_remote_build_with_accept_option_doesnt_prompt(self, mock_confirm):
         result = self.run_command(["remote-build", "--launchpad-accept-public-upload"])
 
         self.mock_lc.start_build.assert_called_once()
         self.mock_lc.cleanup.assert_called_once()
         self.assertThat(result.output, Contains("Building snap package for i386."))
         self.assertThat(result.exit_code, Equals(0))
+        mock_confirm.assert_not_called()
 
     def test_remote_build_multiple_arch(self):
         self.mock_lc_architectures.return_value = ["i386", "amd64", "arm64"]
@@ -83,10 +98,28 @@ class RemoteBuildTests(CommandBaseTestCase):
         self.useFixture(fixtures.MockPatch("os.geteuid", return_value=0))
 
         self.run_command(["remote-build", "--launchpad-accept-public-upload"])
-        assert mock_echo.has_calls(
+        mock_echo.assert_has_calls(
             [
                 mock.call.warning(
                     "Running with 'sudo' may cause permission errors and is discouraged."
                 )
             ]
         )
+
+    @mock.patch("snapcraft.cli.remote.echo")
+    def test_remote_build_recover_doesnt_prompt(self, mock_echo):
+        result = self.run_command(["remote-build", "--recover"])
+
+        self.mock_lc.start_build.assert_not_called()
+        self.assertThat(result.exit_code, Equals(0))
+        mock_echo.info.assert_called_with("No build found.")
+        mock_echo.confirm.assert_not_called()
+
+    @mock.patch("snapcraft.cli.remote.echo")
+    def test_remote_build_status_doesnt_prompt(self, mock_echo):
+        result = self.run_command(["remote-build", "--status"])
+
+        self.mock_lc.start_build.assert_not_called()
+        self.assertThat(result.exit_code, Equals(0))
+        mock_echo.info.assert_called_with("No build found.")
+        mock_echo.confirm.assert_not_called()
