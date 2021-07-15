@@ -798,7 +798,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         )
 
     def _register_name_unclear_error(self):
-        payload = json.dumps({"status": 409, "code": "unexistent_error_code"}).encode()
+        payload = json.dumps({"status": 409, "code": "nonexistent_error_code"}).encode()
         response_code = 409
         content_type = "application/json"
         return response.Response(

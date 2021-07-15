@@ -47,7 +47,9 @@ class DashboardAPI(Requests):
 
     def _request(self, method: str, urlpath: str, **kwargs) -> requests.Response:
         url = urljoin(self._root_url, urlpath)
-        return self._auth_client.request(method, url, **kwargs)
+        response = self._auth_client.request(method, url, **kwargs)
+        logger.debug("Call to %s returned: %s", url, response.text)
+        return response
 
     def get_macaroon(
         self,
