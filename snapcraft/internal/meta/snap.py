@@ -326,8 +326,8 @@ class Snap:
         # - the top level entries would never exist in snap.yaml
         #   (snap pack would reject them).
         # snap.yaml can have a contact entry at the top level which is equivalent
-        # to .links.contact[0] so even if snapcraft does not perfora a snap.yaml
-        # to snap.yaml transformation today it would lead to a compatible result.
+        # to .links.contact[0] so even if snapcraft does not perform a snap.yaml
+        # to snap.yaml transformation today, it would lead to a compatible result.
         links = snap_dict.pop("links", None)
         if links is None:
             links = dict()
