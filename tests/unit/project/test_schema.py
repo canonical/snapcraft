@@ -1494,3 +1494,78 @@ class TestInvalidAptConfigurations:
             Validator(data).validate()
 
         assert message_contains in str(error.value)
+
+
+@pytest.mark.parametrize(
+    "contact",
+    ("mailto:project@acme.com", ["mailto:project@acme.com", "team@acme.com"], None),
+)
+@pytest.mark.parametrize(
+    "donation",
+    (
+        "https://paypal.com",
+        ["https://paypal.com", "https://cafecito.app", "https://ko-fi.com"],
+        None,
+    ),
+)
+@pytest.mark.parametrize(
+    "issues",
+    (
+        "https://github.com/acme/project/issues",
+        [
+            "https://github.com/acme/project/issues",
+            "https://bugs.launchpad.net/project/+filebug",
+        ],
+        None,
+    ),
+)
+@pytest.mark.parametrize("source_code", ("https://github.com/acme/project.git", None))
+@pytest.mark.parametrize("website", ("https://project.acme.org", None))
+def test_valid_metadata_links(data, contact, donation, issues, source_code, website):
+    if all(ml is None for ml in [contact, donation, issues, source_code, website]):
+        pytest.skip("All metadata links are unset")
+    if contact is not None:
+        data["contact"] = contact
+    if donation is not None:
+        data["donation"] = donation
+    if issues is not None:
+        data["issues"] = issues
+    if source_code is not None:
+        data["source-code"] = source_code
+    if website is not None:
+        data["website"] = website
+
+    Validator(data).validate()
+
+
+@pytest.mark.parametrize(
+    "contact", (1, {"mailto:project@acme.com", "team@acme.com"}, None),
+)
+@pytest.mark.parametrize(
+    "donation",
+    (1, {"https://paypal.com", "https://cafecito.app", "https://ko-fi.com"}, None,),
+)
+@pytest.mark.parametrize(
+    "issues",
+    (
+        1,
+        {
+            "https://github.com/acme/project/issues",
+            "https://bugs.launchpad.net/project/+filebug",
+        },
+        None,
+    ),
+)
+@pytest.mark.parametrize(
+    "source_code", (1, ["https://github.com/acme/project.git"], None)
+)
+@pytest.mark.parametrize("website", (1, ["https://project.acme.org"], None))
+def test_invalid_metadata_links(data, contact, donation, issues, source_code, website):
+    data["contact"] = contact
+    data["donation"] = donation
+    data["issues"] = issues
+    data["source-code"] = source_code
+    data["website"] = website
+
+    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError):
+        Validator(data).validate()
