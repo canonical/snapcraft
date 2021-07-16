@@ -321,13 +321,15 @@ class Snap:
         license = snap_dict.pop("license", None)
 
         # snap.yaml will have links, snapcraft.yaml the top level entries.
-        # some considerations:
+        # Some considerations:
         # - links should not be allowed in snapcraft.yaml by the schema.
-        # - the top level entries would never exist in snap.yaml
-        #   (snap pack would reject them).
-        # snap.yaml can have a contact entry at the top level which is equivalent
-        # to .links.contact[0] so even if snapcraft does not perform a snap.yaml
-        # to snap.yaml transformation today, it would lead to a compatible result.
+        # - the top level entries would never exist in snap.yaml if generated with
+        #   Snapcraft (contact was never allowed).
+        #
+        # snap.yaml can have a contact entry (this was never supported by Snapcraft)
+        # at the top level which is equivalent to .links.contact[0] so even if
+        # Snapcraft does not perform a snap.yaml to snap.yaml transformation
+        # today it would lead to a compatible result once snapd supports this.
         links = snap_dict.pop("links", None)
         if links is None:
             links = dict()
