@@ -90,8 +90,8 @@ def test_extension_core20():
                 "target": "$SNAP/data-dir/icons",
             },
             "kde-frameworks-5-plug": {
-                "content": "kde-frameworks-5-qt-5-15-core20-all",
-                "default-provider": "kde-frameworks-5-qt-5-15-core20",
+                "content": "kde-frameworks-5-qt-5-15-3-core20-all",
+                "default-provider": "kde-frameworks-5-qt-5-15-3-core20",
                 "interface": "content",
                 "target": "$SNAP/kf5",
             },
@@ -109,14 +109,14 @@ def test_extension_core20():
     assert kde_neon_extension.part_snippet == {
         "build-environment": [
             {
-                "SNAPCRAFT_CMAKE_ARGS": "-DCMAKE_FIND_ROOT_PATH=/snap/kde-frameworks-5-qt-5-15-core20-sdk/current"
+                "SNAPCRAFT_CMAKE_ARGS": "-DCMAKE_FIND_ROOT_PATH=/snap/kde-frameworks-5-qt-5-15-3-core20-sdk/current"
             }
         ]
     }
     assert kde_neon_extension.parts == {
         "kde-neon-extension": {
             "build-packages": ["g++"],
-            "build-snaps": ["kde-frameworks-5-qt-5-15-core20-sdk/latest/candidate"],
+            "build-snaps": ["kde-frameworks-5-qt-5-15-3-core20-sdk/latest/candidate"],
             "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-plug"],
             "plugin": "make",
             "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",

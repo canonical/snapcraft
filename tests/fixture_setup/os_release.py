@@ -27,7 +27,7 @@ class FakeOsRelease(fixtures.Fixture):
     def __init__(
         self,
         id: str = "ubuntu",
-        version_id: Optional[str] = "16.04",
+        version_id: Optional[str] = "18.04",
         version_codename: Optional[str] = None,
         name: Optional[str] = "Ubuntu",
     ) -> None:
@@ -45,14 +45,14 @@ class FakeOsRelease(fixtures.Fixture):
 
             print(
                 dedent(
-                    f"""\
-                VERSION="16.04.3 LTS (Xenial Xerus)"
+                    """\
+                VERSION="18.04.3 LTS (Xenial Xerus)"
                 ID_LIKE=debian
-                PRETTY_NAME="Ubuntu 16.04.3 LTS"
+                PRETTY_NAME="Ubuntu 18.04.3 LTS"
                 HOME_URL="http://www.ubuntu.com/"
                 SUPPORT_URL="http://help.ubuntu.com/"
                 BUG_REPORT_URL="http://bugs.launchpad.net/ubuntu/"
-                UBUNTU_CODENAME=xenial"""
+                UBUNTU_CODENAME=bionic"""
                 ),
                 file=release_file,
             )

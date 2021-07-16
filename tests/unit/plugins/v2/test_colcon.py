@@ -107,8 +107,15 @@ def test_get_build_commands(monkeypatch):
     assert plugin.get_build_commands() == [
         'state="$(set +o)"',
         "set +u",
+        'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO/setup.sh ]; then',
+        "set -- --local",
+        '_CATKIN_SETUP_DIR="${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO . "${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO/setup.sh',
+        "set -- --local --extend",
+        "else",
+        "set -- --local",
+        "fi",
         ". /opt/ros/$ROS_DISTRO/setup.sh",
-        'eval "$(state)"',
+        'eval "${state}"',
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
         "rosdep update --include-eol-distros --rosdistro $ROS_DISTRO",
@@ -155,8 +162,15 @@ def test_get_build_commands_with_all_properties(monkeypatch):
     assert plugin.get_build_commands() == [
         'state="$(set +o)"',
         "set +u",
+        'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO/setup.sh ]; then',
+        "set -- --local",
+        '_CATKIN_SETUP_DIR="${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO . "${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO/setup.sh',
+        "set -- --local --extend",
+        "else",
+        "set -- --local",
+        "fi",
         ". /opt/ros/$ROS_DISTRO/setup.sh",
-        'eval "$(state)"',
+        'eval "${state}"',
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
         "rosdep update --include-eol-distros --rosdistro $ROS_DISTRO",

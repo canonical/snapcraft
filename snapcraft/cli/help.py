@@ -43,7 +43,7 @@ def helpcli():
 @click.option(
     "--base",
     help="Show help for specific base",
-    type=click.Choice(["core", "core16", "core18", "core20"]),
+    type=click.Choice(["core18", "core20"]),
 )
 @click.pass_context
 def help_command(ctx, topic, devel, base):

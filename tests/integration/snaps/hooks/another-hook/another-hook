@@ -1,3 +1,0 @@
-#!/bin/sh
-
-echo "I'm another hook. I'm not actually valid, but snapcraft doesn't care."

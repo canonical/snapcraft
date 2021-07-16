@@ -23,25 +23,13 @@ from snapcraft.project import Project
 
 
 @pytest.fixture
-def project_core18(monkeypatch, tmp_work_path):
-    """Return project for core18"""
-    monkeypatch.setattr(Project, "parallel_build_count", 2)
-
-    snapcraft_project = Project()
-    snapcraft_project._snap_meta = Snap(
-        name="test-snap", base="core18", confinement="strict"
-    )
-    return snapcraft_project
-
-
-@pytest.fixture(params=["core", "core18"])
 def project(monkeypatch, tmp_work_path, request):
     """Return project variants for core and core18"""
     monkeypatch.setattr(Project, "parallel_build_count", 2)
 
     snapcraft_project = Project()
     snapcraft_project._snap_meta = Snap(
-        name="test-snap", base=request.param, confinement="strict"
+        name="test-snap", base="core18", confinement="strict"
     )
     return snapcraft_project
 

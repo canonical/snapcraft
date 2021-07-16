@@ -99,11 +99,3 @@ class CatkinPlugin(_ros.RosPlugin):
             cmd.extend(["--cmake-args", *self.options.catkin_cmake_args])
 
         return [" ".join(cmd)]
-
-    def _get_workspace_activation_commands(self) -> List[str]:
-        return [
-            'state="$(set +o)"',
-            "set +u",
-            "_CATKIN_SETUP_DIR=/opt/ros/$ROS_DISTRO . /opt/ros/$ROS_DISTRO/setup.sh",
-            'eval "$(state)"',
-        ]

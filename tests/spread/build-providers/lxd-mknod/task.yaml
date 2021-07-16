@@ -1,8 +1,5 @@
 summary: Verify LXD builds can make (some) device nodes
 
-systems:
-  - -ubuntu-16.04*    # kernel does not support syscall interception
-
 environment:
   SNAP_DIR: ../snaps/devices
 

@@ -1,9 +1,0 @@
-summary: cleanbuild backwards compatibility for invalid yaml when a base is set
-
-environment:
-  SNAP_DIR: ../snaps/cleanbuild-with-base-invalid-yaml
-
-execute: |
-  cd "$SNAP_DIR"
-
-  snapcraft cleanbuild | MATCH "Issues while validating snapcraft.yaml:"

@@ -66,13 +66,10 @@ def test_build_properties():
 
 
 def _get_expected_java_version(gradle_plugin) -> str:
-    base = gradle_plugin.project._snap_meta.base
     ant_openjdk_version = gradle_plugin.options.gradle_openjdk_version
 
     if ant_openjdk_version:
         expected_java_version = ant_openjdk_version
-    elif base in ("core", "core16"):
-        expected_java_version = "9"
     else:
         expected_java_version = "11"
 
@@ -80,10 +77,6 @@ def _get_expected_java_version(gradle_plugin) -> str:
 
 
 _BASE_JAVA_COMBINATIONS = [
-    ("", "core"),
-    ("8", "core"),
-    ("", "core16"),
-    ("8", "core16"),
     ("", "core18"),
     ("11", "core18"),
 ]
@@ -341,28 +334,6 @@ class GradlePluginUnsupportedBase(PluginsV1BaseTestCase):
 
 class TestUnsupportedJDKVersionError:
     scenarios = (
-        (
-            "core",
-            dict(
-                base="core",
-                version="11",
-                expected_message=(
-                    "The gradle-openjdk-version plugin property was set to '11'.\n"
-                    "Valid values for the 'core' base are: '8' or '9'."
-                ),
-            ),
-        ),
-        (
-            "core16",
-            dict(
-                base="core16",
-                version="11",
-                expected_message=(
-                    "The gradle-openjdk-version plugin property was set to '11'.\n"
-                    "Valid values for the 'core16' base are: '8' or '9'."
-                ),
-            ),
-        ),
         (
             "core18",
             dict(

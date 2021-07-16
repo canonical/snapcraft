@@ -153,8 +153,7 @@ class Provider(abc.ABC):
         """Mount host source directory to target mount point."""
 
     def _mount_project(self) -> None:
-        """Provider steps needed to make the project available to the instance.
-        """
+        """Provider steps needed to make the project available to the instance."""
         target = (self._get_home_directory() / "project").as_posix()
         self._mount(self.project._project_dir, target)
 
@@ -180,8 +179,7 @@ class Provider(abc.ABC):
         self._mount(src, target)
 
     def expose_prime(self) -> None:
-        """Provider steps needed to expose the prime directory to the host.
-        """
+        """Provider steps needed to expose the prime directory to the host."""
         os.makedirs(self.project.prime_dir, exist_ok=True)
         if not self._mount_prime_directory():
             self._run(command=["snapcraft", "clean", "--unprime"])
@@ -360,12 +358,7 @@ class Provider(abc.ABC):
     def _get_code_name_from_build_base(self):
         build_base = self.project._get_build_base()
 
-        return {
-            "core": "xenial",
-            "core16": "xenial",
-            "core18": "bionic",
-            "core20": "focal",
-        }[build_base]
+        return {"core18": "bionic", "core20": "focal"}[build_base]
 
     def _get_primary_mirror(self) -> str:
         primary_mirror = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR", None)
@@ -495,17 +488,11 @@ class Provider(abc.ABC):
             inject_from_host=inject_from_host,
         )
 
-        # Note that snap injection order is important.
-        # If the build base is core, we do not need to inject snapd.
-        # Check for None as this build can be driven from a non snappy enabled
-        # system, so we may find ourselves in a situation where the base is not
-        # set like on OSX or Windows.
-        build_base = self.project._get_build_base()
-        if build_base is not None and build_base != "core":
-            snap_injector.add(snap_name="snapd")
+        snap_injector.add(snap_name="snapd")
 
         # Prevent injecting core18 twice.
-        if build_base is not None and build_base != "core18":
+        build_base = self.project._get_build_base()
+        if build_base != "core18":
             snap_injector.add(snap_name=build_base)
 
         # Inject snapcraft

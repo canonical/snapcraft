@@ -259,7 +259,6 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             description: test
             confinement: classic
             grade: stable
-            base: core
 
             parts:
               part1:
@@ -451,7 +450,6 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             description: test
             confinement: strict
             grade: stable
-            base: core
 
             parts:
               part1:
@@ -477,7 +475,6 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             description: test
             confinement: strict
             grade: stable
-            base: core
 
             parts:
               part1:
@@ -517,7 +514,6 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             description: test
             confinement: strict
             grade: stable
-            base: core
 
             parts:
               part1:
@@ -557,7 +553,6 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             description: test
             confinement: strict
             grade: stable
-            base: core
 
             parts:
               part1:

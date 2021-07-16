@@ -1,8 +1,5 @@
 summary: Valid licenses can pack properly
 
-# We currently only have core18 on a stable channel
-systems: [ubuntu-18*]
-
 prepare: |
   mkdir test-snap
   cd test-snap

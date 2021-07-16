@@ -121,7 +121,7 @@ def _get_url_from_error(error: storeapi.errors.StoreAccountInformationError) -> 
 
 
 def _check_dev_agreement_and_namespace_statuses(store) -> None:
-    """ Check the agreement and namespace statuses of the dev.
+    """Check the agreement and namespace statuses of the dev.
     Fail if either of those conditions is not met.
     Re-raise `StoreAccountInformationError` if we get an error and
     the error is not either of these.

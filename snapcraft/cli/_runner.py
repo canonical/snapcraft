@@ -32,7 +32,6 @@ from .containers import containerscli
 from .discovery import discoverycli
 from .extensions import extensioncli
 from .help import helpcli
-from .legacy import legacycli
 from .lifecycle import lifecyclecli
 from .remote import remotecli
 from .store import storecli
@@ -46,7 +45,6 @@ command_groups = [
     containerscli,
     discoverycli,
     helpcli,
-    legacycli,
     lifecyclecli,
     extensioncli,
     versioncli,

@@ -1,0 +1,12 @@
+name: bzr-head
+base: core20
+version: "0.1"
+summary: one line summary
+description: a longer description
+confinement: strict
+
+parts:
+    bzr:
+       plugin: dump
+       source: lp:gnuhello
+       source-type: bzr

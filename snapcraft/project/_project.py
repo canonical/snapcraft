@@ -144,7 +144,7 @@ class Project(ProjectOptions):
 
         :return: The appropriate default architecture to stage.
         """
-        if self._get_build_base() in ["core16", "core18"]:
+        if self._get_build_base() == "core18":
             return self.deb_arch
         else:
             return self.target_arch
@@ -152,19 +152,3 @@ class Project(ProjectOptions):
     def _get_start_time(self) -> datetime:
         """Returns the timestamp for when a snapcraft project was loaded."""
         return self._start_time
-
-    def is_legacy_project(self) -> bool:
-        """Determine if project is legacy."""
-        # Not in an actual project.
-        if self.info is None:
-            return False
-        # Building a base is not legacy.
-        elif self.info.type == "base":
-            return False
-        elif self.info.build_base is not None:
-            return False
-        # A self with no base set is legacy.
-        elif self.info.base is None:
-            return True
-        else:
-            return False

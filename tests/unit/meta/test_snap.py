@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019-2020 Canonical Ltd
+# Copyright (C) 2019-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -128,7 +128,7 @@ class SnapTests(unit.TestCase):
             "apps": {"test-app": {"command": "test-app"}},
             "architectures": ["all"],
             "assumes": ["command-chain"],
-            "base": "core",
+            "base": "core18",
             "confinement": "strict",
             "compression": "xz",
             "environment": {"TESTING": "1"},
@@ -137,6 +137,17 @@ class SnapTests(unit.TestCase):
             "hooks": {"test-hook": {"command-chain": ["cmd1"], "plugs": ["network"]}},
             "layout": {"/target": {"bind": "$SNAP/foo"}},
             "license": "GPL",
+            "links": {
+                "issues": ["https://bug_url.org"],
+                "donation": [
+                    "https://paypal.com",
+                    "https://cafecito.app/",
+                    "https://ko-fi.com/",
+                ],
+                "contact": ["mailto:contact1@contact.org", "contact2@team.org"],
+                "source-code": ["https://github.com/org/source"],
+                "website": ["https://webfront.org"],
+            },
             "package-repositories": [
                 {"type": "apt", "ppa": "test/ppa"},
                 {
@@ -163,13 +174,47 @@ class SnapTests(unit.TestCase):
 
         expected_dict = snap_dict.copy()
         expected_dict.pop("adopt-info")
-        expected_dict.pop("base")
         expected_dict.pop("compression")
         expected_dict.pop("package-repositories")
         expected_dict.update(expected_dict.pop("passthrough"))
 
         self.assertEqual(expected_dict, snap.to_snap_yaml_dict())
         self.assertEqual(True, snap.is_passthrough_enabled)
+
+    def test_snapcraft_yaml_links(self):
+        snap_dict = {
+            "name": "snap-test",
+            "version": "test-version",
+            "summary": "test-summary",
+            "description": "test-description",
+            "issues": "https://bug_url.org",
+            "donation": [
+                "https://paypal.com",
+                "https://cafecito.app/",
+                "https://ko-fi.com/",
+            ],
+            "contact": ["mailto:contact1@contact.org", "contact2@team.org"],
+            "source-code": "https://github.com/org/source",
+            "website": "https://webfront.org",
+        }
+
+        snap = Snap.from_dict(snap_dict=snap_dict)
+        snap.validate()
+
+        self.assertEqual(
+            {
+                "issues": ["https://bug_url.org"],
+                "donation": [
+                    "https://paypal.com",
+                    "https://cafecito.app/",
+                    "https://ko-fi.com/",
+                ],
+                "contact": ["mailto:contact1@contact.org", "contact2@team.org"],
+                "source-code": ["https://github.com/org/source"],
+                "website": ["https://webfront.org"],
+            },
+            snap.to_snap_yaml_dict()["links"],
+        )
 
     def test_all_keys(self):
         snap_dict = {
@@ -181,7 +226,7 @@ class SnapTests(unit.TestCase):
             "apps": {"test-app": {"command": "test-app"}},
             "architectures": ["all"],
             "assumes": ["command-chain"],
-            "base": "core",
+            "base": "core18",
             "confinement": "strict",
             "compression": "lzo",
             "environment": {"TESTING": "1"},
@@ -462,32 +507,6 @@ class SnapTests(unit.TestCase):
         snap.validate()
 
         self.assertEqual({"command-chain"}, snap.assumes)
-
-    def test_build_base_and_write_snap_yaml_skips_base_core(self):
-        snap_dict = OrderedDict(
-            {
-                "name": "snap-test",
-                "version": "snap-version",
-                "summary": "snap-summary",
-                "description": "snap-description",
-                "base": "core",
-                "grade": "devel",
-            }
-        )
-
-        snap = Snap.from_dict(snap_dict=snap_dict)
-        snap.validate()
-
-        # Write snap yaml.
-        snap_yaml_path = os.path.join(self.path, "snap.yaml")
-        snap.write_snap_yaml(path=snap_yaml_path)
-
-        # Read snap yaml.
-        written_snap_yaml = open(snap_yaml_path, "r").read()
-
-        self.assertEqual(snap_dict, snap.to_dict())
-        self.assertFalse("base" in written_snap_yaml)
-        self.assertEqual(snap.get_build_base(), "core")
 
     def test_build_base_write_snap_yaml_skips_build_base(self):
         snap_dict = OrderedDict(

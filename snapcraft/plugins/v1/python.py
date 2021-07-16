@@ -463,10 +463,10 @@ class PythonPlugin(PluginV1):
 def simple_env_bzr(bin_dir):
     """Create an appropriate environment to run bzr.
 
-       The python plugin sets up PYTHONUSERBASE and PYTHONHOME which
-       conflicts with bzr when using python3 as those two environment
-       variables will make bzr look for modules in the wrong location.
-       """
+    The python plugin sets up PYTHONUSERBASE and PYTHONHOME which
+    conflicts with bzr when using python3 as those two environment
+    variables will make bzr look for modules in the wrong location.
+    """
     os.makedirs(bin_dir, exist_ok=True)
     bzr_bin = os.path.join(bin_dir, "bzr")
     real_bzr_bin = which("bzr")

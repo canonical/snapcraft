@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019-2020 Canonical Ltd
+# Copyright (C) 2019-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -53,6 +53,7 @@ class Snap:
         hooks: Optional[Dict[str, Hook]] = None,
         layout: Optional[Dict[str, Any]] = None,
         license: Optional[str] = None,
+        links: Optional[Dict[str, List[str]]] = None,
         name: Optional[str] = None,
         package_repositories: Optional[List[PackageRepository]] = None,
         passthrough: Optional[Dict[str, Any]] = None,
@@ -106,6 +107,7 @@ class Snap:
             self.layout = layout
 
         self.license = license
+        self.links = links
         self.name = name
 
         if package_repositories is None:
@@ -317,6 +319,33 @@ class Snap:
 
         layout = snap_dict.pop("layout", None)
         license = snap_dict.pop("license", None)
+
+        # snap.yaml will have links, snapcraft.yaml the top level entries.
+        # Some considerations:
+        # - links should not be allowed in snapcraft.yaml by the schema.
+        # - the top level entries would never exist in snap.yaml if generated with
+        #   Snapcraft (contact was never allowed).
+        #
+        # snap.yaml can have a contact entry (this was never supported by Snapcraft)
+        # at the top level which is equivalent to .links.contact[0] so even if
+        # Snapcraft does not perform a snap.yaml to snap.yaml transformation
+        # today it would lead to a compatible result once snapd supports this.
+        links = snap_dict.pop("links", None)
+        if links is None:
+            links = dict()
+            for link_name in (
+                "contact",
+                "donation",
+                "issues",
+                "source-code",
+                "website",
+            ):
+                link_value = snap_dict.pop(link_name, None)
+                if isinstance(link_value, str):
+                    links[link_name] = [link_value]
+                elif isinstance(link_value, list):
+                    links[link_name] = link_value
+
         name = snap_dict.pop("name", None)
 
         raw_repositories = snap_dict.pop("package-repositories", None)
@@ -381,6 +410,7 @@ class Snap:
             hooks=hooks,
             layout=layout,
             license=license,
+            links=links,
             name=name,
             passthrough=passthrough,
             package_repositories=package_repositories,
@@ -457,6 +487,9 @@ class Snap:
         if self.license is not None:
             snap_dict["license"] = self.license
 
+        if self.links:
+            snap_dict["links"] = self.links
+
         package_repos = [repo.marshal() for repo in self.package_repositories]
         if package_repos:
             snap_dict["package-repositories"] = package_repos
@@ -489,11 +522,6 @@ class Snap:
 
     def to_snap_yaml_dict(self) -> OrderedDict:
         snap_dict = self.to_dict()
-
-        # If the base is core in snapcraft.yaml we do not set it in
-        # snap.yaml LP: #1819290
-        if self.base == "core":
-            snap_dict.pop("base")
 
         # Remove keys that are not for snap.yaml.
         snap_dict.pop("build-base", None)

@@ -50,10 +50,6 @@ def remotecli():
 @click.option(
     "--launchpad-accept-public-upload",
     is_flag=True,
-    prompt=(
-        "All data sent to remote builders will be publicly available. "
-        "Are you sure you want to continue?"
-    ),
     help="Acknowledge that uploaded code will be publicly available.",
     cls=PromptOption,
 )
@@ -110,16 +106,12 @@ def remote_build(
             "Running with 'sudo' may cause permission errors and is discouraged."
         )
 
-    if not launchpad_accept_public_upload:
-        raise errors.AcceptPublicUploadError()
-
     echo.warning(
         "snapcraft remote-build is experimental and is subject to change - use with caution."
     )
 
     project = get_project()
 
-    # TODO: use project.is_legacy() when available.
     try:
         project._get_build_base()
     except RuntimeError:
@@ -148,7 +140,11 @@ def remote_build(
         _print_status(lp)
         return
 
-    if lp.has_outstanding_build():
+    has_outstanding_build = lp.has_outstanding_build()
+    if recover and not has_outstanding_build:
+        echo.info("No build found.")
+        return
+    elif has_outstanding_build:
         echo.info("Found previously started build.")
         _print_status(lp)
 
@@ -159,6 +155,15 @@ def remote_build(
 
         # Otherwise clean running build before we start a new one.
         _clean_build(lp)
+
+    if not (
+        launchpad_accept_public_upload
+        or echo.confirm(
+            "All data sent to remote builders will be publicly available. Are you sure you want to continue?",
+            default=True,
+        )
+    ):
+        raise errors.AcceptPublicUploadError()
 
     _start_build(
         lp=lp,

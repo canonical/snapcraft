@@ -7,11 +7,6 @@ environment:
   SNAP/test_apt_ppa: test-apt-ppa
   SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
-systems:
-  - ubuntu-16*
-  - ubuntu-18*
-  - ubuntu-20*
-
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"

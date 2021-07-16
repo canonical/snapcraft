@@ -18,8 +18,6 @@
 
 The rosdistro used depends upon the base of the snap:
 
-  - core: Uses Kinetic
-  - core16: Uses Kinetic
   - core18: Uses Melodic
 
 This plugin uses the common plugin keywords as well as those for "sources".
@@ -97,10 +95,10 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 # Map bases to ROS releases
-_BASE_TO_ROS_RELEASE_MAP = {"core": "kinetic", "core16": "kinetic", "core18": "melodic"}
+_BASE_TO_ROS_RELEASE_MAP = {"core18": "melodic"}
 
 # Map bases to Ubuntu releases
-_BASE_TO_UBUNTU_RELEASE_MAP = {"core": "xenial", "core16": "xenial", "core18": "bionic"}
+_BASE_TO_UBUNTU_RELEASE_MAP = {"core18": "bionic"}
 
 _SUPPORTED_DEPENDENCY_TYPES = {"apt", "pip"}
 

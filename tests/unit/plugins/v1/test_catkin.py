@@ -50,7 +50,7 @@ class CatkinPluginBaseTest(PluginsV1BaseTestCase):
         super().setUp()
 
         # Most Catkin test use core.
-        self.project._snap_meta.base = "core"
+        self.project._snap_meta.base = "core18"
 
         class props:
             catkin_packages = ["my_package"]
@@ -66,9 +66,9 @@ class CatkinPluginBaseTest(PluginsV1BaseTestCase):
             disable_parallel = False
 
         self.properties = props()
-        self.ros_distro = "kinetic"
+        self.ros_distro = "melodic"
         self.ros_version = "1"
-        self.ubuntu_distro = "xenial"
+        self.ubuntu_distro = "bionic"
 
         patcher = mock.patch("snapcraft.repo.Ubuntu")
         self.ubuntu_mock = patcher.start()
@@ -108,7 +108,7 @@ class CatkinPluginBaseTest(PluginsV1BaseTestCase):
                     ros_package_path=package_path,
                     rosdep_path=rosdep_path,
                     ubuntu_distro=ubuntu_distro,
-                    base="core",
+                    base="core18",
                     target_arch=self.project._get_stage_packages_target_arch(),
                 ),
                 mock.call().setup(),
@@ -118,7 +118,7 @@ class CatkinPluginBaseTest(PluginsV1BaseTestCase):
     def assert_wstool_setup(self, package_path, wstool_path):
         self.wstool_mock.assert_has_calls(
             [
-                mock.call(package_path, wstool_path, self.project, "core"),
+                mock.call(package_path, wstool_path, self.project, "core18"),
                 mock.call().setup(),
             ]
         )
@@ -1504,7 +1504,7 @@ class TestBuildArgs:
         prepare_build_mock,
         run_output_mock,
         run_mock,
-        project_core18,
+        project,
         options,
         build_attributes,
         catkin_cmake_args,
@@ -1515,7 +1515,7 @@ class TestBuildArgs:
         options.catkin_cmake_args += catkin_cmake_args
         options.disable_parallel = disable_parallel
 
-        plugin = catkin.CatkinPlugin("test-part", options, project_core18)
+        plugin = catkin.CatkinPlugin("test-part", options, project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         plugin.build()
@@ -1558,7 +1558,7 @@ class TestBuildArgs:
         prepare_build_mock,
         run_output_mock,
         run_mock,
-        project_core18,
+        project,
         options,
         build_attributes,
         catkin_cmake_args,
@@ -1569,7 +1569,7 @@ class TestBuildArgs:
         options.catkin_cmake_args += catkin_cmake_args
         options.disable_parallel = disable_parallel
 
-        plugin = catkin.CatkinPlugin("test-part", options, project_core18)
+        plugin = catkin.CatkinPlugin("test-part", options, project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         plugin.build()
@@ -2119,7 +2119,7 @@ class CatkinFindTestCase(unit.TestCase):
         super().setUp()
 
         self.project = snapcraft.project.Project()
-        self.project._snap_meta.build_base = "core"
+        self.project._snap_meta.build_base = "core18"
         self.catkin = catkin._Catkin(
             "kinetic", "workspace_path", "catkin_path", self.project
         )

@@ -1,5 +1,9 @@
 summary: Build a snap that is missing a library dependency
 
+# TODO LP: #1934403
+systems:
+  - ubuntu-18.04*
+
 environment:
   SNAP_DIR: snaps/missing-lib
 
