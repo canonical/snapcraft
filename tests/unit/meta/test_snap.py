@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019-2020 Canonical Ltd
+# Copyright (C) 2019-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -137,6 +137,17 @@ class SnapTests(unit.TestCase):
             "hooks": {"test-hook": {"command-chain": ["cmd1"], "plugs": ["network"]}},
             "layout": {"/target": {"bind": "$SNAP/foo"}},
             "license": "GPL",
+            "links": {
+                "issues": ["https://bug_url.org"],
+                "donation": [
+                    "https://paypal.com",
+                    "https://cafecito.app/",
+                    "https://ko-fi.com/",
+                ],
+                "contact": ["mailto:contact1@contact.org", "contact2@team.org"],
+                "source-code": ["https://github.com/org/source"],
+                "website": ["https://webfront.org"],
+            },
             "package-repositories": [
                 {"type": "apt", "ppa": "test/ppa"},
                 {
@@ -169,6 +180,41 @@ class SnapTests(unit.TestCase):
 
         self.assertEqual(expected_dict, snap.to_snap_yaml_dict())
         self.assertEqual(True, snap.is_passthrough_enabled)
+
+    def test_snapcraft_yaml_links(self):
+        snap_dict = {
+            "name": "snap-test",
+            "version": "test-version",
+            "summary": "test-summary",
+            "description": "test-description",
+            "issues": "https://bug_url.org",
+            "donation": [
+                "https://paypal.com",
+                "https://cafecito.app/",
+                "https://ko-fi.com/",
+            ],
+            "contact": ["mailto:contact1@contact.org", "contact2@team.org"],
+            "source-code": "https://github.com/org/source",
+            "website": "https://webfront.org",
+        }
+
+        snap = Snap.from_dict(snap_dict=snap_dict)
+        snap.validate()
+
+        self.assertEqual(
+            {
+                "issues": ["https://bug_url.org"],
+                "donation": [
+                    "https://paypal.com",
+                    "https://cafecito.app/",
+                    "https://ko-fi.com/",
+                ],
+                "contact": ["mailto:contact1@contact.org", "contact2@team.org"],
+                "source-code": ["https://github.com/org/source"],
+                "website": ["https://webfront.org"],
+            },
+            snap.to_snap_yaml_dict()["links"],
+        )
 
     def test_all_keys(self):
         snap_dict = {
