@@ -18,7 +18,7 @@ import hashlib
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Set
+from typing import List, Set
 
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.meta.snap import Snap
@@ -84,9 +84,25 @@ class Project(ProjectOptions):
         return self._snap_meta.get_build_base()
 
     def _get_project_directory_hash(self) -> str:
-        m = hashlib.sha1()
-        m.update(self._project_dir.encode())
-        return m.hexdigest()[:6]
+        # This function uses md5 hashes because they are fast, and because
+        # the hashes only need to be unique per project, so clashes are
+        # tremendously unlikely and not a big deal even if they happen.
+        hashes: List[str] = list()
+        for root, dirs, files in os.walk(self._project_dir):
+            # Sort contents, we need this to be stable so it's reproducible
+            dirs.sort()
+            files.sort()
+
+            for filename in files:
+                md5_hash = hashlib.md5()
+                # Read files in chunks in case they are big
+                with open(os.path.join(root, filename), "rb") as f:
+                    for block in iter(lambda: f.read(4096), b""):
+                        md5_hash.update(block)
+                hashes.append(md5_hash.hexdigest())
+
+        # Return final hash of hashes for the directory
+        return hashlib.md5("".join(hashes).encode()).hexdigest()
 
     def _get_content_snaps(self) -> Set[str]:
         """Return the set of content snaps from snap_meta."""
