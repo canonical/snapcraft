@@ -541,6 +541,63 @@
                 }
             }
         },
+        "donation": {
+            "oneOf": [
+                {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": [
+                        {
+                            "type": "string"
+                        }
+                    ]
+                },
+                {
+                    "type": "string"
+                }
+            ]
+        },
+        "issues": {
+            "oneOf": [
+                {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": [
+                        {
+                            "type": "string"
+                        }
+                    ]
+                },
+                {
+                    "type": "string"
+                }
+            ]
+        },
+        "contact": {
+            "oneOf": [
+                {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": [
+                        {
+                            "type": "string"
+                        }
+                    ]
+                },
+                {
+                    "type": "string"
+                }
+            ]
+        },
+        "source-code": {
+            "type": "string"
+        },
+        "website": {
+            "type": "string"
+        },
         "apps": {
             "type": "object",
             "additionalProperties": false,

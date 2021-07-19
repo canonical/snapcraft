@@ -1,0 +1,58 @@
+summary: Metadata links transformation from snapcraft.yaml to snap.yaml
+
+environment:
+  SNAP_YAML: prime/meta/snap.yaml
+
+prepare: |
+  snap install yq
+
+restore: |
+  snapcraft clean
+  rm -rf ./*.snap
+
+execute: |
+  # Create a snap to trigger `snap pack`.
+  snapcraft
+
+  # Links exists
+  # SC2002: cat is useful for confined applications!
+  # shellcheck disable=SC2002
+  cat "${SNAP_YAML}" | yq eval --exit-status '.links' -
+
+  # Contact
+  # shellcheck disable=SC2002
+  cat "${SNAP_YAML}" | yq eval --exit-status '.links.contact' -
+  # shellcheck disable=SC2002
+  cat "${SNAP_YAML}" | yq eval '.links.contact[0]' - | MATCH "mailto:project@acme.com"
+  # shellcheck disable=SC2002
+  cat "${SNAP_YAML}" | yq eval '.links.contact[1]' - | MATCH "team@acme.com"
+
+  # Donation
+  # shellcheck disable=SC2002
+  cat "${SNAP_YAML}" | yq eval --exit-status '.links.donation' -
+  # shellcheck disable=SC2002
+  cat "${SNAP_YAML}" | yq eval '.links.donation[0]' - | MATCH "https://paypal.com"
+  # shellcheck disable=SC2002
+  cat "${SNAP_YAML}" | yq eval '.links.donation[1]' - | MATCH "https://cafecito.app/"
+  # shellcheck disable=SC2002
+  cat "${SNAP_YAML}" | yq eval '.links.donation[2]' - | MATCH "https://ko-fi.com/"
+
+  # Issues
+  # shellcheck disable=SC2002
+  cat "${SNAP_YAML}" | yq eval --exit-status '.links.issues' -
+  # shellcheck disable=SC2002
+  cat "${SNAP_YAML}" | yq eval '.links.issues[0]' - | MATCH "https://github.com/acme/project/issues"
+  # shellcheck disable=SC2002
+  cat "${SNAP_YAML}" | yq eval '.links.issues[1]' - | MATCH "https://bugs.launchpad.net/project/filebug"
+
+  # Source Code
+  # shellcheck disable=SC2002
+  cat "${SNAP_YAML}" | yq eval --exit-status '.links.source-code' -
+  # shellcheck disable=SC2002
+  cat "${SNAP_YAML}" | yq eval '.links.source-code[0]' - | MATCH "https://github.com/acme/project.git"
+
+  # Website
+  # shellcheck disable=SC2002
+  cat "${SNAP_YAML}" | yq eval --exit-status '.links.website' -
+  # shellcheck disable=SC2002
+  cat "${SNAP_YAML}" | yq eval '.links.website[0]' - | MATCH "https://project.acme.org"

@@ -1,0 +1,25 @@
+name: metadata-links
+summary: test metadata links
+description: |
+  Verify that top level metadata links in snapcraft.yaml are created at a top level
+  links entry in snap.yaml.
+version: "1.0"
+grade: stable
+confinement: strict
+base: core20
+issues:
+  - https://github.com/acme/project/issues
+  - https://bugs.launchpad.net/project/filebug
+donation:
+  - https://paypal.com
+  - https://cafecito.app/
+  - https://ko-fi.com/
+contact:
+  - mailto:project@acme.com
+  - team@acme.com
+source-code: https://github.com/acme/project.git
+website: https://project.acme.org
+
+parts:
+  nil:
+    plugin: nil
