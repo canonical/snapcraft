@@ -20,6 +20,7 @@ click.echo adding the corresponding color codes for each level.
 """
 import distutils.util
 import os
+import shutil
 import sys
 from typing import Any, Optional
 
@@ -68,6 +69,21 @@ def error(msg: str) -> None:
     If the terminal supports color the output will be red.
     """
     click.echo("\033[0;31m{}\033[0m".format(msg), err=True)
+
+
+def echo_with_pager_if_needed(msg: str) -> None:
+    """Output msg to stdout using pager if output is too large for terminal."""
+    term_size = shutil.get_terminal_size()
+    split_output = msg.splitlines()
+
+    # Account for final newline when checking row counts.
+    output_lines = len(split_output) + 1
+    if output_lines > term_size.lines or any(
+        len(l) > term_size.columns for l in split_output
+    ):
+        click.echo_via_pager(msg)
+    else:
+        click.echo(msg)
 
 
 def exit_error(

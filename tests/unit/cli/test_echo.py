@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2019 Canonical Ltd
+# Copyright (C) 2017-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,13 +14,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 from textwrap import dedent
 from unittest import mock
 
 import fixtures
+import pytest
 
 from snapcraft.cli import echo
 from tests import unit
+
+
+@pytest.fixture()
+def mock_click():
+    with mock.patch("snapcraft.cli.echo.click", autospec=True) as mock_click:
+        yield mock_click
+
+
+@pytest.fixture()
+def mock_shutil_get_terminal_size():
+    fake_terminal = os.terminal_size([80, 24])
+    with mock.patch(
+        "snapcraft.cli.echo.shutil.get_terminal_size", return_value=fake_terminal
+    ) as mock_terminal_size:
+        yield mock_terminal_size
 
 
 class EchoTestCase(unit.TestCase):
@@ -115,6 +132,38 @@ class EchoTestCase(unit.TestCase):
             show_default=True,
             err=False,
         )
+
+
+@pytest.mark.parametrize(
+    "columns,rows,output,uses_pager",
+    [
+        (0, 0, "", True),
+        (0, 0, "a", True),
+        (0, 0, "\n", True),
+        (1, 1, "", False),
+        (1, 1, "a", True),
+        (1, 1, "ab", True),
+        (1, 1, "a\n", True),
+        (1, 1, "a\nb", True),
+        (2, 2, "", False),
+        (2, 2, "a", False),
+        (2, 2, "ab", False),
+        (2, 2, "abc", True),
+        (2, 2, "a\n", False),
+        (2, 2, "a\nb", True),
+    ],
+)
+def test_echo_with_pager_if_needed_u(
+    mock_click, mock_shutil_get_terminal_size, columns, rows, output, uses_pager
+):
+    mock_shutil_get_terminal_size.return_value = os.terminal_size([columns, rows])
+
+    echo.echo_with_pager_if_needed(output)
+
+    if uses_pager:
+        assert mock_click.mock_calls == [mock.call.echo_via_pager(output)]
+    else:
+        assert mock_click.mock_calls == [mock.call.echo(output)]
 
 
 def test_exit_error_required_kwargs(mock_echo_error, mock_sys_exit):
