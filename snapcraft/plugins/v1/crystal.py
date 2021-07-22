@@ -29,7 +29,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
     - crystal-build-options
       (list of strings, default: '[]')
-      Options to use during shards build.
+      These options are passed to `shards build`.
 """
 
 import os
@@ -74,24 +74,29 @@ class CrystalPlugin(PluginV1):
         super().__init__(name, options, project)
 
         self.build_snaps.append("crystal/{}".format(self.options.crystal_channel))
+
+        # See https://github.com/crystal-lang/distribution-scripts/blob/8bc01e26291dc518390129e15df8f757d687871c/docker/ubuntu.Dockerfile#L9
         self.build_packages.extend(
             [
+                "git",
+                "make",
                 "gcc",
                 "pkg-config",
-                "libpcre3-dev",
-                "libevent-dev",
+                "libssl-dev",
+                "libxml2-dev",
                 "libyaml-dev",
                 "libgmp-dev",
-                "libxml2-dev",
+                "libpcre3-dev",
+                "libevent-dev",
+                "libz-dev",
             ]
         )
 
     def build(self):
         super().build()
-
-        self.run(["shards", "install", "--production"], self.builddir)
         self.run(
-            ["shards", "build", "--production"] + self.options.crystal_build_options,
+            ["shards", "build", "--without-development"]
+            + self.options.crystal_build_options,
             self.builddir,
         )
 
