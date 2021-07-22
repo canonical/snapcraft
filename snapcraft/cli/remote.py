@@ -48,6 +48,14 @@ def remotecli():
     help="Set architectures to build on.",
 )
 @click.option(
+    "--build-id",
+    metavar="<build-id>",
+    type=str,
+    nargs=1,
+    required=False,
+    help="Build ID to use. If not provided, build ID will be calculated from working tree.",
+)
+@click.option(
     "--launchpad-accept-public-upload",
     is_flag=True,
     help="Acknowledge that uploaded code will be publicly available.",
@@ -74,6 +82,7 @@ def remote_build(
     recover: bool,
     status: bool,
     build_on: str,
+    build_id: str,
     launchpad_accept_public_upload: bool,
     launchpad_timeout: int,
     package_all_sources: bool,
@@ -99,7 +108,9 @@ def remote_build(
         snapcraft remote-build --build-on=amd64
         snapcraft remote-build --build-on=amd64,arm64,armhf,i386,ppc64el,s390x
         snapcraft remote-build --recover
+        snapcraft remote-build --recover --build-id snapcraft-my-snap-b98a6bd3
         snapcraft remote-build --status
+        snapcraft remote-build --status --build-id snapcraft-my-snap-b98a6bd3
     """
     if os.getenv("SUDO_USER") and os.geteuid() == 0:
         echo.warning(
@@ -117,10 +128,15 @@ def remote_build(
     except RuntimeError:
         raise errors.BaseRequiredError()
 
-    # Use a hash of current working directory to distinguish between other
-    # potential project builds occurring in parallel elsewhere.
-    project_hash = project._get_project_directory_hash()
-    build_id = f"snapcraft-{project.info.name}-{project_hash}"
+    if not build_id:
+        # If the option wasn't provided, use the project directory hash
+        # to create one unique to the status of the working tree, allowing
+        # us to distinguish between multiple builds for this project
+        # (and others).
+        project_hash = project._get_project_directory_hash()
+        build_id = f"snapcraft-{project.info.name}-{project_hash}"
+
+    echo.info(f"Using build ID {build_id}")
     architectures = _determine_architectures(project, build_on)
 
     # Calculate timeout timestamp, if specified.
@@ -156,14 +172,7 @@ def remote_build(
         # Otherwise clean running build before we start a new one.
         _clean_build(lp)
 
-    if not (
-        launchpad_accept_public_upload
-        or echo.confirm(
-            "All data sent to remote builders will be publicly available. Are you sure you want to continue?",
-            default=True,
-        )
-    ):
-        raise errors.AcceptPublicUploadError()
+    _check_launchpad_acceptance(launchpad_accept_public_upload)
 
     _start_build(
         lp=lp,
@@ -173,6 +182,17 @@ def remote_build(
     )
 
     _monitor_build(lp)
+
+
+def _check_launchpad_acceptance(launchpad_accept_public_upload):
+    if not (
+        launchpad_accept_public_upload
+        or echo.confirm(
+            "All data sent to remote builders will be publicly available. Are you sure you want to continue?",
+            default=True,
+        )
+    ):
+        raise errors.AcceptPublicUploadError()
 
 
 def _clean_build(lp: LaunchpadClient):
@@ -201,7 +221,9 @@ def _start_build(
 
     # Start building.
     lp.start_build()
-    echo.info("If interrupted, resume with: 'snapcraft remote-build --recover'")
+    echo.info(
+        f"If interrupted, resume with: 'snapcraft remote-build --recover --build-id {build_id}'"
+    )
 
 
 def _monitor_build(lp: LaunchpadClient) -> None:

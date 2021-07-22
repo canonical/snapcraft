@@ -20,6 +20,7 @@ import fixtures
 from testtools.matchers import Contains, Equals
 
 import snapcraft.internal.remote_build.errors as errors
+import snapcraft.project
 from tests import fixture_setup
 
 from . import CommandBaseTestCase
@@ -33,17 +34,32 @@ class RemoteBuildTests(CommandBaseTestCase):
         )
         self.useFixture(self.snapcraft_yaml)
 
-        self.mock_lc = self.useFixture(
+        self.mock_lc_init = self.useFixture(
             fixtures.MockPatch("snapcraft.cli.remote.LaunchpadClient", autospec=True)
-        ).mock.return_value
+        ).mock
+        self.mock_lc = self.mock_lc_init.return_value
         self.mock_lc_architectures = mock.PropertyMock(return_value=["i386"])
         type(self.mock_lc).architectures = self.mock_lc_architectures
         self.mock_lc.has_outstanding_build.return_value = False
+
+        self.mock_project = self.useFixture(
+            fixtures.MockPatchObject(
+                snapcraft.project.Project,
+                "_get_project_directory_hash",
+                return_value="fakehash123",
+            )
+        )
 
     @mock.patch("snapcraft.cli.remote.echo.confirm")
     def test_remote_build_prompts(self, mock_confirm):
         result = self.run_command(["remote-build"])
 
+        self.mock_lc_init.assert_called_once_with(
+            project=mock.ANY,
+            architectures=mock.ANY,
+            deadline=mock.ANY,
+            build_id="snapcraft-test-snap-fakehash123",
+        )
         self.mock_lc.start_build.assert_called_once()
         self.mock_lc.cleanup.assert_called_once()
         self.assertThat(result.output, Contains("Building snap package for i386."))
@@ -62,6 +78,34 @@ class RemoteBuildTests(CommandBaseTestCase):
         self.assertThat(result.output, Contains("Building snap package for i386."))
         self.assertThat(result.exit_code, Equals(0))
         mock_confirm.assert_not_called()
+
+    @mock.patch("snapcraft.cli.remote.echo.confirm")
+    def test_remote_build_without_acceptance_raises(self, mock_confirm):
+        mock_confirm.return_value = False
+        self.assertRaises(
+            errors.AcceptPublicUploadError, self.run_command, ["remote-build"]
+        )
+
+    def test_remote_build_with_build_id(self):
+        result = self.run_command(
+            [
+                "remote-build",
+                "--launchpad-accept-public-upload",
+                "--build-id",
+                "snapcraft-test-snap-foo",
+            ]
+        )
+
+        self.mock_lc_init.assert_called_once_with(
+            project=mock.ANY,
+            architectures=mock.ANY,
+            deadline=mock.ANY,
+            build_id="snapcraft-test-snap-foo",
+        )
+        self.mock_lc.start_build.assert_called_once()
+        self.mock_lc.cleanup.assert_called_once()
+        self.assertThat(result.output, Contains("Building snap package for i386."))
+        self.assertThat(result.exit_code, Equals(0))
 
     def test_remote_build_multiple_arch(self):
         self.mock_lc_architectures.return_value = ["i386", "amd64", "arm64"]
@@ -123,3 +167,67 @@ class RemoteBuildTests(CommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         mock_echo.info.assert_called_with("No build found.")
         mock_echo.confirm.assert_not_called()
+
+    @mock.patch("snapcraft.cli.remote.echo")
+    def test_remote_build_recover_uses_calculated_hash(self, mock_echo):
+        result = self.run_command(
+            ["remote-build", "--launchpad-accept-public-upload", "--recover"]
+        )
+        self.assertThat(result.exit_code, Equals(0))
+        self.mock_lc_init.assert_called_once_with(
+            project=mock.ANY,
+            architectures=mock.ANY,
+            deadline=mock.ANY,
+            build_id="snapcraft-test-snap-fakehash123",
+        )
+
+    @mock.patch("snapcraft.cli.remote.echo")
+    def test_remote_build_recover_uses_build_id(self, mock_echo):
+        result = self.run_command(
+            [
+                "remote-build",
+                "--launchpad-accept-public-upload",
+                "--recover",
+                "--build-id",
+                "snapcraft-test-snap-foo",
+            ]
+        )
+        self.assertThat(result.exit_code, Equals(0))
+        self.mock_lc_init.assert_called_once_with(
+            project=mock.ANY,
+            architectures=mock.ANY,
+            deadline=mock.ANY,
+            build_id="snapcraft-test-snap-foo",
+        )
+
+    @mock.patch("snapcraft.cli.remote.echo")
+    def test_remote_build_status_uses_calculated_hash(self, mock_echo):
+        result = self.run_command(
+            ["remote-build", "--launchpad-accept-public-upload", "--status"]
+        )
+        self.assertThat(result.exit_code, Equals(0))
+        self.mock_lc_init.assert_called_once_with(
+            project=mock.ANY,
+            architectures=mock.ANY,
+            deadline=mock.ANY,
+            build_id="snapcraft-test-snap-fakehash123",
+        )
+
+    @mock.patch("snapcraft.cli.remote.echo")
+    def test_remote_build_status_uses_build_id(self, mock_echo):
+        result = self.run_command(
+            [
+                "remote-build",
+                "--launchpad-accept-public-upload",
+                "--status",
+                "--build-id",
+                "snapcraft-test-snap-foo",
+            ]
+        )
+        self.assertThat(result.exit_code, Equals(0))
+        self.mock_lc_init.assert_called_once_with(
+            project=mock.ANY,
+            architectures=mock.ANY,
+            deadline=mock.ANY,
+            build_id="snapcraft-test-snap-foo",
+        )
