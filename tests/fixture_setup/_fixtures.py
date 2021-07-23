@@ -144,8 +144,9 @@ class _FakeStderr(io.StringIO):
 
 
 class _FakeTerminalSize:
-    def __init__(self, columns=80):
+    def __init__(self, columns=80, lines=24):
         self.columns = columns
+        self.lines = lines
 
 
 class FakeTerminal(fixtures.Fixture):
