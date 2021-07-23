@@ -22,13 +22,13 @@ from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
 import requests
 
 from snapcraft.internal.indicators import download_requests_stream
-from . import _upload, errors, http_clients
+
+from . import _upload, errors, http_clients, metrics
 from ._dashboard_api import DashboardAPI
 from ._snap_api import SnapAPI
 from ._up_down_client import UpDownClient
 from .constants import DEFAULT_SERIES
 from .v2 import channel_map, releases, validation_sets, whoami
-
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +75,7 @@ class StoreClient:
             acls = [
                 "package_access",
                 "package_manage",
+                "package_metrics",
                 "package_push",
                 "package_register",
                 "package_release",
@@ -188,6 +189,11 @@ class StoreClient:
 
     def get_snap_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
         return self.dashboard.get_snap_channel_map(snap_name=snap_name)
+
+    def get_metrics(
+        self, *, filters: List[metrics.MetricsFilter], snap_name: str,
+    ) -> metrics.MetricsResults:
+        return self.dashboard.get_metrics(filters=filters, snap_name=snap_name)
 
     def get_snap_releases(self, *, snap_name: str) -> releases.Releases:
         return self.dashboard.get_snap_releases(snap_name=snap_name)

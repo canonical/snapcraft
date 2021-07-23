@@ -83,6 +83,13 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         configurator.add_view(self.snap_close, route_name="snap_close")
 
         configurator.add_route(
+            "snaps_metrics",
+            urllib.parse.urljoin(self._DEV_API_PATH, "snaps/metrics"),
+            request_method="POST",
+        )
+        configurator.add_view(self.snaps_metrics, route_name="snaps_metrics")
+
+        configurator.add_route(
             "snap_push",
             urllib.parse.urljoin(self._DEV_API_PATH, "snap-push/"),
             request_method="POST",
@@ -326,7 +333,12 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         acl = {
             "snap_ids": None,
             "channels": None,
-            "permissions": ["package_upload", "package_access", "package_manage"],
+            "permissions": [
+                "package_upload",
+                "package_access",
+                "package_manage",
+                "package_metrics",
+            ],
         }
 
         payload = json.dumps(acl).encode()
@@ -981,6 +993,68 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         content_type = "application/json"
         return response.Response(
             payload, response_code, [("Content-Type", content_type)]
+        )
+
+    def snaps_metrics(self, request):
+        logger.debug("Handling snaps metrics request")
+
+        try:
+            snap_id = request.json_body["filters"][0]["snap_id"]
+        except (KeyError, IndexError):
+            snap_id = "err"
+
+        if snap_id == "good":
+            response_data = {
+                "metrics": [
+                    {
+                        "buckets": ["2021-01-01"],
+                        "metric_name": "installed_base_by_channel",
+                        "series": [
+                            {"currently_released": True, "name": "edge", "values": [2]},
+                            {
+                                "currently_released": True,
+                                "name": "stable",
+                                "values": [12],
+                            },
+                        ],
+                        "snap_id": snap_id,
+                        "status": "OK",
+                    }
+                ]
+            }
+            response_code = 200
+        elif snap_id == "err":
+            response_data = {
+                "error_list": [{"code": "test-code", "message": "test-error"}]
+            }
+            response_code = 503
+        elif snap_id == "err-invalid-date-interval":
+            response_data = {
+                "error_list": [
+                    {
+                        "code": "invalid-date-interval",
+                        "extra": {
+                            "end": "2021-07-22",
+                            "index": 0,
+                            "start": "2022-04-04",
+                        },
+                        "message": "Filter with start > end at index 0",
+                    }
+                ]
+            }
+            response_code = 400
+        elif snap_id == "err-unexpected-format":
+            response_data = {"metrics": [{"bad": "data"}]}
+            response_code = 200
+        else:
+            response_data = {}
+            response_code = 500
+
+        content_type = "application/json"
+        return response.Response(
+            json.dumps(response_data).encode(),
+            response_code,
+            [("Content-Type", content_type)],
         )
 
     # GET

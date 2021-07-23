@@ -18,16 +18,15 @@ import json
 import logging
 import os
 from typing import Any, Dict, Iterable, List, Optional
-from urllib.parse import urljoin, urlencode
+from urllib.parse import urlencode, urljoin
 
 import requests
 from simplejson.scanner import JSONDecodeError
 
-from . import _metadata, constants, errors, http_clients
+from . import _metadata, constants, errors, http_clients, metrics
 from ._requests import Requests
 from ._status_tracker import StatusTracker
 from .v2 import channel_map, releases, validation_sets, whoami
-
 
 logger = logging.getLogger(__name__)
 
@@ -347,6 +346,27 @@ class DashboardAPI(Requests):
             raise errors.StoreSnapChannelMapError(snap_name=snap_name)
 
         return channel_map.ChannelMap.unmarshal(response.json())
+
+    def get_metrics(
+        self, filters: List[metrics.MetricsFilter], snap_name: str
+    ) -> metrics.MetricsResults:
+        url = "/dev/api/snaps/metrics"
+        data = {"filters": [f.marshal() for f in filters]}
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
+
+        response = self.post(url, data=json.dumps(data), headers=headers)
+        if not response.ok:
+            raise errors.StoreMetricsError(
+                filters=filters, response=response, snap_name=snap_name
+            )
+
+        try:
+            results = response.json()
+            return metrics.MetricsResults.unmarshal(results)
+        except ValueError as error:
+            raise errors.StoreMetricsUnmarshalError(
+                filters=filters, snap_name=snap_name, response=response
+            ) from error
 
     def get_snap_releases(self, *, snap_name: str) -> releases.Releases:
         response = self.get(

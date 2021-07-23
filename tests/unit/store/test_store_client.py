@@ -23,6 +23,7 @@ from textwrap import dedent
 from unittest import mock
 
 import fixtures
+import pytest
 from testtools.matchers import (
     Contains,
     Equals,
@@ -35,8 +36,8 @@ from testtools.matchers import (
 
 import tests
 from snapcraft import storeapi
-from snapcraft.storeapi import errors, http_clients
-from snapcraft.storeapi.v2 import channel_map, releases, whoami, validation_sets
+from snapcraft.storeapi import errors, http_clients, metrics
+from snapcraft.storeapi.v2 import channel_map, releases, validation_sets, whoami
 from tests import fixture_setup, unit
 
 
@@ -1518,6 +1519,95 @@ class SnapReleasesTest(StoreTestCase):
         self.assertThat(
             self.client.get_snap_releases(snap_name="basic"),
             IsInstance(releases.Releases),
+        )
+
+
+class SnapsMetricsTest(StoreTestCase):
+    def test_get_metrics(self):
+        mf = metrics.MetricsFilter(
+            snap_id="good",
+            metric_name="test-name",
+            start="2021-01-01",
+            end="2021-01-01",
+        )
+        self.client.login(email="dummy", password="test correct password")
+        self.assertThat(
+            self.client.get_metrics(snap_name="basic", filters=[mf]),
+            IsInstance(metrics.MetricsResults),
+        )
+
+    def test_get_metrics_general_error(self):
+        mf = metrics.MetricsFilter(
+            snap_id="err",
+            metric_name="test-name",
+            start="2021-01-01",
+            end="2021-01-01",
+        )
+        self.client.login(email="dummy", password="test correct password")
+
+        raised = self.assertRaises(
+            http_clients.errors.StoreServerError,
+            self.client.get_metrics,
+            snap_name="error",
+            filters=[mf],
+        )
+        self.assertThat(raised.error_code, Equals(503))
+
+    def test_get_metrics_invalid_date_error(self):
+        mf = metrics.MetricsFilter(
+            snap_id="err-invalid-date-interval",
+            metric_name="test-name",
+            start="2021-01-01",
+            end="2021-01-01",
+        )
+        self.client.login(email="dummy", password="test correct password")
+
+        with pytest.raises(errors.StoreMetricsError) as exc_info:
+            self.client.get_metrics(snap_name="error", filters=[mf])
+
+        assert (
+            exc_info.value.get_brief()
+            == "Failed to query requested metrics for snap 'error'."
+        )
+        assert exc_info.value.get_details() == dedent(
+            """\
+                Queries:
+                - test-name with range 2021-01-01..2021-01-01
+                Errors:
+                - Code: invalid-date-interval
+                  Message: Filter with start > end at index 0
+                  Extra: {'end': '2021-07-22', 'index': 0, 'start': '2022-04-04'}"""
+        )
+        assert (
+            exc_info.value.get_resolution()
+            == "Ensure the snap name, metric, start and end dates are correct."
+        )
+
+    def test_get_metrics_unmarshal_error(self):
+        mf = metrics.MetricsFilter(
+            snap_id="err-unexpected-format",
+            metric_name="test-name",
+            start="2021-01-01",
+            end="2021-01-01",
+        )
+        self.client.login(email="dummy", password="test correct password")
+
+        with pytest.raises(errors.StoreMetricsUnmarshalError) as exc_info:
+            self.client.get_metrics(snap_name="error", filters=[mf])
+
+        assert (
+            exc_info.value.get_brief()
+            == "Failed to unmarshal requested metrics for snap 'error'."
+        )
+        assert exc_info.value.get_details() == dedent(
+            """\
+                Queries:
+                - test-name with range 2021-01-01..2021-01-01
+                Store response: {'metrics': [{'bad': 'data'}]}"""
+        )
+        assert (
+            exc_info.value.get_resolution()
+            == "Please report this issue to https://bugs.launchpad.net/snapcraft"
         )
 
 
