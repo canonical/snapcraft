@@ -47,6 +47,7 @@ from snapcraft.internal.deltas.errors import (
 )
 from snapcraft.internal.errors import SnapDataExtractionError, ToolMissingError
 from snapcraft.storeapi.constants import DEFAULT_SERIES
+from snapcraft.storeapi.metrics import MetricsFilter, MetricsResults
 
 if TYPE_CHECKING:
     from snapcraft.storeapi._status_tracker import StatusTracker
@@ -320,6 +321,12 @@ class StoreClientCLI(storeapi.StoreClient):
         self, *, snap_id: str, channel_names: List[str]
     ) -> Dict[str, Any]:
         return super().close_channels(snap_id=snap_id, channel_names=channel_names)
+
+    @_login_wrapper
+    def get_metrics(
+        self, *, filters: List[MetricsFilter], snap_name: str
+    ) -> MetricsResults:
+        return super().get_metrics(filters=filters, snap_name=snap_name)
 
     @_login_wrapper
     def get_snap_releases(self, *, snap_name: str) -> "Releases":

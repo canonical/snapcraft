@@ -16,14 +16,18 @@
 
 import contextlib
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from simplejson.scanner import JSONDecodeError
 
 from snapcraft import formatting_utils
-from snapcraft.internal.errors import SnapcraftError, SnapcraftException
+from snapcraft.internal.errors import (
+    SnapcraftError,
+    SnapcraftException,
+    SnapcraftReportableException,
+)
 
-from . import channels, status
+from . import channels, metrics, status
 
 logger = logging.getLogger(__name__)
 
@@ -658,6 +662,81 @@ class StoreSnapChannelMapError(SnapcraftException):
             "Ensure the snap name is correct and that you have permissions to "
             "access it."
         )
+
+
+def _format_error_list_details(error_list: List[Dict[str, Any]]) -> str:
+    lines = []
+    for i, error in enumerate(error_list):
+        code = error.get("code")
+        message = error.get("message")
+        extra = error.get("extra")
+
+        lines.append(f"Errors:")
+        if code:
+            lines.append(f"- Code: {code}")
+
+        if message:
+            lines.append(f"  Message: {message}")
+
+        if extra:
+            lines.append(f"  Extra: {extra!r}")
+
+    return "\n".join(lines)
+
+
+def _format_query_list_details(filters: List[metrics.MetricsFilter]) -> str:
+    details = ["Queries:"]
+
+    details.extend(
+        [
+            f"- {f.metric_name} with range {f.start}..{f.end}"
+            for i, f in enumerate(filters)
+        ]
+    )
+
+    return "\n".join(details)
+
+
+class StoreMetricsError(SnapcraftException):
+    def __init__(
+        self, *, response, filters: List[metrics.MetricsFilter], snap_name: str
+    ) -> None:
+        self.filters = filters
+        self.response = response
+        self.snap_name = snap_name
+        self.error_list = response.json().get("error_list")
+        self.error_list_details = _format_error_list_details(self.error_list)
+        self.query_list_details = _format_query_list_details(self.filters)
+
+    def get_brief(self) -> str:
+        return f"Failed to query requested metrics for snap {self.snap_name!r}."
+
+    def get_details(self) -> str:
+        return "\n".join([self.query_list_details, self.error_list_details])
+
+    def get_resolution(self) -> str:
+        return "Ensure the snap name, metric, start and end dates are correct."
+
+
+class StoreMetricsUnmarshalError(SnapcraftReportableException):
+    def __init__(
+        self, *, response, filters: List[metrics.MetricsFilter], snap_name: str,
+    ) -> None:
+        self.snap_name = snap_name
+        self.filters = filters
+        self.query_list_details = _format_query_list_details(self.filters)
+        self.response = response
+
+    def get_brief(self) -> str:
+        return f"Failed to unmarshal requested metrics for snap {self.snap_name!r}."
+
+    def get_details(self) -> str:
+        return "\n".join(
+            [self.query_list_details, f"Store response: {self.response.json()!r}"]
+        )
+
+    def get_resolution(self) -> str:
+        return "Please report this issue to https://bugs.launchpad.net/snapcraft"
 
 
 class StoreSnapStatusError(StoreSnapRevisionsError):
