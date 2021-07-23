@@ -65,7 +65,7 @@ def test_series(values, currently_released):
 
 @pytest.mark.parametrize("name", [False, {1}, 1])
 def test_series_invalid_name(name):
-    series = {"name": "test-name", "name": name}
+    series = {"name": name, "values": []}
 
     with pytest.raises(ValueError, match=f"Invalid metric name: {name!r}"):
         Series.unmarshal(series)
