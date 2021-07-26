@@ -84,5 +84,9 @@ execute: |
   # List tracks
   snapcraft list-tracks "${snap_name}"
 
+  # Show metrics for a snap that we have registered in the past (empty metrics as no users!).
+  snapcraft metrics fun --format json --name installed_base_by_operating_system
+  snapcraft metrics fun --format table --name installed_base_by_operating_system
+
   # Logout
   snapcraft logout
