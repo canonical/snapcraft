@@ -15,8 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
-from pathlib import PosixPath
 import subprocess
+from pathlib import PosixPath
 from textwrap import dedent
 from unittest import mock
 
@@ -25,6 +25,7 @@ from click.testing import CliRunner
 
 from snapcraft import storeapi
 from snapcraft.cli._runner import run
+from snapcraft.storeapi import metrics
 from snapcraft.storeapi.v2.channel_map import ChannelMap
 from snapcraft.storeapi.v2.releases import Releases
 from tests import fixture_setup, unit
@@ -174,31 +175,33 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
         )
         self.useFixture(self.fake_store_register)
 
+        self.fake_store_account_info_data = {
+            "account_id": "abcd",
+            "account_keys": list(),
+            "snaps": {
+                "16": {
+                    "snap-test": {
+                        "snap-id": "snap-test-snap-id",
+                        "status": "Approved",
+                        "private": False,
+                        "since": "2016-12-12T01:01Z",
+                        "price": "0",
+                    },
+                    "basic": {
+                        "snap-id": "basic-snap-id",
+                        "status": "Approved",
+                        "private": False,
+                        "since": "2016-12-12T01:01Z",
+                        "price": "0",
+                    },
+                }
+            },
+        }
+
         self.fake_store_account_info = fixtures.MockPatchObject(
             storeapi._dashboard_api.DashboardAPI,
             "get_account_information",
-            return_value={
-                "account_id": "abcd",
-                "account_keys": list(),
-                "snaps": {
-                    "16": {
-                        "snap-test": {
-                            "snap-id": "snap-test-snap-id",
-                            "status": "Approved",
-                            "private": False,
-                            "since": "2016-12-12T01:01Z",
-                            "price": "0",
-                        },
-                        "basic": {
-                            "snap-id": "basic-snap-id",
-                            "status": "Approved",
-                            "private": False,
-                            "since": "2016-12-12T01:01Z",
-                            "price": "0",
-                        },
-                    }
-                },
-            },
+            return_value=self.fake_store_account_info_data,
         )
         self.useFixture(self.fake_store_account_info)
 
@@ -330,6 +333,34 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
             storeapi.StoreClient, "get_snap_channel_map", return_value=self.channel_map
         )
         self.useFixture(self.fake_store_get_snap_channel_map)
+
+        self.metrics = metrics.MetricsResults(
+            metrics=[
+                metrics.MetricResults(
+                    status=metrics.MetricsStatus["OK"],
+                    snap_id="test-snap-id",
+                    metric_name="daily_device_change",
+                    buckets=["2021-01-01", "2021-01-02", "2021-01-03"],
+                    series=[
+                        metrics.Series(
+                            name="continued",
+                            values=[10, 11, 12],
+                            currently_released=None,
+                        ),
+                        metrics.Series(
+                            name="lost", values=[1, 2, 3], currently_released=None
+                        ),
+                        metrics.Series(
+                            name="new", values=[2, 3, 4], currently_released=None
+                        ),
+                    ],
+                )
+            ]
+        )
+        self.fake_store_get_metrics = fixtures.MockPatchObject(
+            storeapi.StoreClient, "get_metrics", return_value=self.metrics
+        )
+        self.useFixture(self.fake_store_get_metrics)
 
         self.releases = Releases.unmarshal(
             {
