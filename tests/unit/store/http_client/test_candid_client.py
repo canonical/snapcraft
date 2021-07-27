@@ -26,6 +26,8 @@ from pymacaroons.macaroon import Macaroon
 from snapcraft.storeapi.http_clients._candid_client import (
     CandidClient,
     CandidConfig,
+    WebBrowserWaitingInteractor,
+    errors,
     _http_client,
 )
 
@@ -132,7 +134,7 @@ def test_login_with_config_fd(candid_client, snapcraft_macaroon):
     with io.StringIO() as config_fd:
         print("[dashboard.snapcraft.io]", file=config_fd)
         print(f"macaroon = {snapcraft_macaroon}", file=config_fd)
-        print(f"auth = 1234567890noshare", file=config_fd)
+        print("auth = 1234567890noshare", file=config_fd)
         config_fd.seek(0)
 
         candid_client.login(config_fd=config_fd)
@@ -146,7 +148,7 @@ def test_login_with_config_fd_no_save(candid_client, snapcraft_macaroon):
     with io.StringIO() as config_fd:
         print("[dashboard.snapcraft.io]", file=config_fd)
         print(f"macaroon = {snapcraft_macaroon}", file=config_fd)
-        print(f"auth = 1234567890noshare", file=config_fd)
+        print("auth = 1234567890noshare", file=config_fd)
         config_fd.seek(0)
 
         candid_client.login(config_fd=config_fd, save=False)
@@ -220,6 +222,72 @@ def request_mock():
         yield patched.start()
     finally:
         patched.stop()
+
+
+@pytest.fixture
+def token_response_mock():
+    class Response:
+        MOCK_JSON = {
+            "kind": "kind",
+            "token": "TOKEN",
+            "token64": b"VE9LRU42NA==",
+        }
+
+        status_code = 200
+
+        def json(self):
+            return self.MOCK_JSON
+
+    return Response()
+
+
+def test_wait_for_token_success(request_mock, token_response_mock):
+    request_mock.return_value = token_response_mock
+
+    wbi = WebBrowserWaitingInteractor()
+    discharged_token = wbi._wait_for_token(ctx=None, wait_token_url="https://localhost")
+
+    assert discharged_token.kind == "kind"
+    assert discharged_token.value == "TOKEN"
+
+
+def test_wait_for_token64_success(request_mock, token_response_mock):
+    token_response_mock.MOCK_JSON.pop("token")
+    request_mock.return_value = token_response_mock
+
+    wbi = WebBrowserWaitingInteractor()
+    discharged_token = wbi._wait_for_token(ctx=None, wait_token_url="https://localhost")
+
+    assert discharged_token.kind == "kind"
+    assert discharged_token.value == b"TOKEN64"
+
+
+def test_wait_for_token_requests_status_not_200(request_mock, token_response_mock):
+    token_response_mock.status_code = 504
+    request_mock.return_value = token_response_mock
+
+    wbi = WebBrowserWaitingInteractor()
+    with pytest.raises(errors.TokenTimeoutError):
+        wbi._wait_for_token(ctx=None, wait_token_url="https://localhost")
+
+
+def test_wait_for_token_requests_no_kind(request_mock, token_response_mock):
+    token_response_mock.MOCK_JSON.pop("kind")
+    request_mock.return_value = token_response_mock
+
+    wbi = WebBrowserWaitingInteractor()
+    with pytest.raises(errors.TokenKindError):
+        wbi._wait_for_token(ctx=None, wait_token_url="https://localhost")
+
+
+def test_wait_for_token_requests_no_token(request_mock, token_response_mock):
+    token_response_mock.MOCK_JSON.pop("token")
+    token_response_mock.MOCK_JSON.pop("token64")
+    request_mock.return_value = token_response_mock
+
+    wbi = WebBrowserWaitingInteractor()
+    with pytest.raises(errors.TokenValueError):
+        wbi._wait_for_token(ctx=None, wait_token_url="https://localhost")
 
 
 @pytest.mark.parametrize("method", ["GET", "PUT", "POST"])

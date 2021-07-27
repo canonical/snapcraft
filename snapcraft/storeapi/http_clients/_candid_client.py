@@ -11,7 +11,35 @@ from macaroonbakery import bakery, httpbakery
 from xdg import BaseDirectory
 
 from snapcraft.storeapi import constants
-from . import agent, _config, _http_client
+from . import agent, errors, _config, _http_client
+
+
+class WebBrowserWaitingInteractor(httpbakery.WebBrowserInteractor):
+    """WebBrowserInteractor implementation using .http_client.Client.
+
+    Waiting for a token is implemented using _http_client.Client which mounts
+    a session with backoff retires.
+
+    Better exception classes and messages are  provided to handle errors.
+    """
+
+    # TODO: transfer implementation to macaroonbakery.
+    def _wait_for_token(self, ctx, wait_token_url):
+        request_client = _http_client.Client()
+        resp = request_client.request("GET", wait_token_url)
+        if resp.status_code != 200:
+            raise errors.TokenTimeoutError(url=wait_token_url)
+        json_resp = resp.json()
+        kind = json_resp.get("kind")
+        if kind is None:
+            raise errors.TokenKindError(url=wait_token_url)
+        token_val = json_resp.get("token")
+        if token_val is None:
+            token_val = json_resp.get("token64")
+            if token_val is None:
+                raise errors.TokenValueError(url=wait_token_url)
+            token_val = base64.b64decode(token_val)
+        return httpbakery._interactor.DischargeToken(kind=kind, value=token_val)
 
 
 class CandidConfig(_config.Config):
@@ -57,14 +85,16 @@ class CandidClient(_http_client.Client):
             self._conf.save()
 
     def __init__(
-        self,
-        *,
-        user_agent: str = agent.get_user_agent(),
-        bakery_client=httpbakery.Client(),
+        self, *, user_agent: str = agent.get_user_agent(), bakery_client=None
     ) -> None:
         super().__init__(user_agent=user_agent)
 
-        self.bakery_client = bakery_client
+        if bakery_client is None:
+            self.bakery_client = httpbakery.Client(
+                interaction_methods=[WebBrowserWaitingInteractor()]
+            )
+        else:
+            self.bakery_client = bakery_client
         self._conf = CandidConfig()
         self._conf_save = True
 
