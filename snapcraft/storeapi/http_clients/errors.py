@@ -119,3 +119,18 @@ class InvalidLoginConfig(HttpClientError):
 
     def __init__(self, error):
         super().__init__(error=error)
+
+
+class TokenTimeoutError(SnapcraftError):
+    def __init__(self, *, url: str) -> None:
+        self.fmt = f"Timed out waiting for token response from {url!r}."
+
+
+class TokenKindError(SnapcraftError):
+    def __init__(self, *, url: str) -> None:
+        self.fmt = f"Empty token kind returned from {url!r}."
+
+
+class TokenValueError(SnapcraftError):
+    def __init__(self, *, url: str) -> None:
+        self.fmt = f"Empty token value returned from {url!r}."

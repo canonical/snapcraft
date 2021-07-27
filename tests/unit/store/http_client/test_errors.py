@@ -106,6 +106,32 @@ class TestSnapcraftException:
                 ),
             },
         ),
+        (
+            "TokenTimeoutError",
+            {
+                "exception_class": errors.TokenTimeoutError,
+                "kwargs": {"url": "https://foo"},
+                "expected_message": (
+                    "Timed out waiting for token response from 'https://foo'."
+                ),
+            },
+        ),
+        (
+            "TokenKindError",
+            {
+                "exception_class": errors.TokenKindError,
+                "kwargs": {"url": "https://foo"},
+                "expected_message": ("Empty token kind returned from 'https://foo'."),
+            },
+        ),
+        (
+            "TokenValueError",
+            {
+                "exception_class": errors.TokenValueError,
+                "kwargs": {"url": "https://foo"},
+                "expected_message": ("Empty token value returned from 'https://foo'."),
+            },
+        ),
     )
 
     def test_error_formatting(self, exception_class, expected_message, kwargs):
