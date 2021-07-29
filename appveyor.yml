@@ -34,11 +34,16 @@ build_script:
     powershell.exe windows\generate-self-signed-cert.ps1
     "%SIGNTOOL%" sign /fd SHA256 /td SHA256 /tr "%TIMESTAMP_SERVICE%" /f test-signing.pfx /p Password1234 dist\snapcraft.exe
 
+    echo "Setting Snapcraft version..."
+    venv\Scripts\activate.bat
+    python -m tools.version set-snapcraft-iss
+    venv\Scripts\deactivate.bat
     echo "Building snapcraft inno installer..."
     "%INNOCC%" windows\snapcraft.iss
 
+    copy dist\snapcraft-installer.exe dist\snapcraft-installer-self-signed.exe
     echo "Test signing snapcraft inno installer..."
-    "%SIGNTOOL%" sign /fd SHA256 /td SHA256 /tr "%TIMESTAMP_SERVICE%" /f test-signing.pfx /p Password1234 dist\snapcraft-installer.exe
+    "%SIGNTOOL%" sign /fd SHA256 /td SHA256 /tr "%TIMESTAMP_SERVICE%" /f test-signing.pfx /p Password1234 dist\snapcraft-installer-self-signed.exe
 
     echo "Building snapcraft msix installer..."
     mkdir dist\msix
@@ -60,11 +65,11 @@ test_script:
     ..\dist\snapcraft.exe init
     cd ..
 
-    echo "Smoke testing snapcraft-installer.exe..."
-    start /wait "SNAPCRAFT INSTALLER" dist\snapcraft-installer.exe /VERYSILENT /ALLUSERS
+    echo "Smoke testing snapcraft-installer-self-signed.exe..."
+    start /wait "SNAPCRAFT INSTALLER" dist\snapcraft-installer-self-signed.exe /VERYSILENT /ALLUSERS
     "%SNAPCRAFT_INSTALLED_EXE%" version
 
-#artifacts:
+artifacts:
 #- path: dist\snapcraft.exe
-#- path: dist\snapcraft-installer.exe
+- path: dist\snapcraft-installer.exe
 #- path: dist\snapcraft-installer.msix
