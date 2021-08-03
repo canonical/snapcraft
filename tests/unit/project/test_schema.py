@@ -950,6 +950,12 @@ class EnvironmentTest(ProjectBaseTest):
                   LOCALE: C
                   PLUGIN_PATH: $SNAP_USER_DATA/plugins
 
+            hooks:
+              configure:
+                environment:
+                  CONFIGURE_ENV: FOOBAR
+                  CONFIGURE_ENV_INT: 1
+
             parts:
               main:
                 plugin: nil
@@ -965,6 +971,10 @@ class EnvironmentTest(ProjectBaseTest):
         self.assertThat(
             snapcraft_yaml["apps"]["app1"]["environment"],
             Equals(dict(LOCALE="C", PLUGIN_PATH="$SNAP_USER_DATA/plugins")),
+        )
+        self.assertThat(
+            snapcraft_yaml["hooks"]["configure"]["environment"],
+            Equals(dict(CONFIGURE_ENV="FOOBAR", CONFIGURE_ENV_INT=1)),
         )
 
     def test_invalid_environment(self):

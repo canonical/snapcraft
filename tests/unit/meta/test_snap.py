@@ -134,7 +134,13 @@ class SnapTests(unit.TestCase):
             "environment": {"TESTING": "1"},
             "epoch": 0,
             "grade": "devel",
-            "hooks": {"test-hook": {"command-chain": ["cmd1"], "plugs": ["network"]}},
+            "hooks": {
+                "test-hook": {
+                    "command-chain": ["cmd1"],
+                    "environment": {"FOO": "BAR"},
+                    "plugs": ["network"],
+                }
+            },
             "layout": {"/target": {"bind": "$SNAP/foo"}},
             "license": "GPL",
             "links": {
@@ -232,7 +238,13 @@ class SnapTests(unit.TestCase):
             "environment": {"TESTING": "1"},
             "epoch": 0,
             "grade": "devel",
-            "hooks": {"test-hook": {"command-chain": ["cmd1"], "plugs": ["network"]}},
+            "hooks": {
+                "test-hook": {
+                    "command-chain": ["cmd1"],
+                    "environment": {"FOO": "BAR"},
+                    "plugs": ["network"],
+                }
+            },
             "layout": {"/target": {"bind": "$SNAP/foo"}},
             "license": "GPL",
             "passthrough": {"test": "value"},
