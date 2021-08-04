@@ -156,7 +156,7 @@ class ColconPlugin(_ros.RosPlugin):
             "$SNAPCRAFT_PART_BUILD",
             "--merge-install",
             "--install-base",
-            "$SNAPCRAFT_PART_INSTALL",
+            "$SNAPCRAFT_PART_INSTALL/opt/ros/snap",
         ]
 
         if self.options.colcon_packages_ignore:

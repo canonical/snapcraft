@@ -14,6 +14,6 @@ function source_with_prefix() {
 original_args=("$@")
 
 source_with_prefix "$SNAP/opt/ros/$ROS_DISTRO"
-source_with_prefix "$SNAP"
+source_with_prefix "$SNAP/opt/ros/snap"
 
 exec "${original_args[@]}"
