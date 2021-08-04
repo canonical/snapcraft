@@ -174,4 +174,10 @@ class ColconPlugin(_ros.RosPlugin):
         # Specify the number of workers
         cmd.extend(["--parallel-workers", "${SNAPCRAFT_PARALLEL_BUILD_COUNT}"])
 
-        return [" ".join(cmd)]
+        return [" ".join(cmd)] + [
+            # Remove the COLCON_IGNORE marker so that, at staging,
+            # catkin can crawl the entire folder to look up for packages.
+            'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE ]; then',
+            'rm "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE',
+            "fi",
+        ]
