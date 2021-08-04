@@ -49,6 +49,7 @@ class RosPlugin(PluginV2):
     def out_of_source_build(self):
         return True
 
+    @abc.abstractmethod
     def _get_workspace_activation_commands(self) -> List[str]:
         """Return a list of commands source a ROS workspace.
 
@@ -60,24 +61,6 @@ class RosPlugin(PluginV2):
         snapcraftctl can be used in the script to call out to snapcraft
         specific functionality.
         """
-
-        # There are a number of unbound vars, disable flag
-        # after saving current state to restore after.
-        return [
-            'state="$(set +o)"',
-            "set +u",
-            'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO/setup.sh ]; then',
-            "set -- --local",
-            "_CATKIN_SETUP_DIR={path} . {path}/setup.sh".format(
-                path='"${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO'
-            ),
-            "set -- --local --extend",
-            "else",
-            "set -- --local",
-            "fi",
-            ". /opt/ros/$ROS_DISTRO/setup.sh",
-            'eval "${state}"',
-        ]
 
     @abc.abstractmethod
     def _get_build_commands(self) -> List[str]:

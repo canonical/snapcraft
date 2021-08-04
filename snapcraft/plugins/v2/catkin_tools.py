@@ -68,6 +68,36 @@ class CatkinToolsPlugin(_ros.RosPlugin):
             "python3-osrf-pycommon",
         }
 
+    def _get_workspace_activation_commands(self) -> List[str]:
+        """Return a list of commands to source a ROS workspace.
+
+        The commands returned will be run before doing anything else.
+        They will be run in a single shell instance with the rest of
+        the build step, so these commands can affect the commands that
+        follow.
+
+        snapcraftctl can be used in the script to call out to snapcraft
+        specific functionality.
+        """
+
+        # There are a number of unbound vars, disable flag
+        # after saving current state to restore after.
+        return [
+            'state="$(set +o)"',
+            "set +u",
+            'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO/setup.sh ]; then',
+            "set -- --local",
+            "_CATKIN_SETUP_DIR={path} . {path}/setup.sh".format(
+                path='"${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO'
+            ),
+            "set -- --local --extend",
+            "else",
+            "set -- --local",
+            "fi",
+            ". /opt/ros/$ROS_DISTRO/setup.sh",
+            'eval "${state}"',
+        ]
+
     def _get_build_commands(self) -> List[str]:
         # It's possible that this workspace wasn't initialized to be used with
         # catkin-tools, so initialize it first. Note that this is a noop if it

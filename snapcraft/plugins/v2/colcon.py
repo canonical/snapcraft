@@ -119,6 +119,33 @@ class ColconPlugin(_ros.RosPlugin):
 
         return env
 
+    def _get_workspace_activation_commands(self) -> List[str]:
+        """Return a list of commands source a ROS 2 workspace.
+
+        The commands returned will be run before doing anything else.
+        They will be run in a single shell instance with the rest of
+        the build step, so these commands can affect the commands that
+        follow.
+
+        snapcraftctl can be used in the script to call out to snapcraft
+        specific functionality.
+        """
+
+        # There are a number of unbound vars, disable flag
+        # after saving current state to restore after.
+        return [
+            'state="$(set +o)"',
+            "set +u",
+            # If it exists, source the stage-snap underlay
+            'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/setup.sh ]; then',
+            "COLCON_CURRENT_PREFIX={path} . {path}/setup.sh".format(
+                path='"${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap'
+            ),
+            "fi",
+            ". /opt/ros/$ROS_DISTRO/local_setup.sh",
+            'eval "${state}"',
+        ]
+
     def _get_build_commands(self) -> List[str]:
         cmd = [
             "colcon",
