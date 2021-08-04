@@ -1190,124 +1190,43 @@ def test_invalid_command_chain(data, command_chain):
     assert expected_message in str(error.value)
 
 
-class SystemUsernamesTests(ProjectBaseTest):
-    def test_yaml_valid_system_usernames_long(self):
-        self.assertValidationPasses(
-            dedent(
-                """\
-                name: test
-                base: core18
-                version: "1"
-                summary: test
-                description: nothing
-                license: MIT
-                parts:
-                  part1:
-                    plugin: nil
-                system-usernames:
-                  snap_daemon:
-                    scope: shared
-                """
-            )
-        )
+@pytest.mark.parametrize("username", ["snap_daemon", "snap_microk8s"])
+def test_yaml_valid_system_usernames_long(data, username):
+    data["system-usernames"] = {username: {"scope": "shared"}}
+    Validator(data).validate()
 
-    def test_yaml_valid_system_usernames_short(self):
-        self.assertValidationPasses(
-            dedent(
-                """\
-                name: test
-                base: core18
-                version: "1"
-                summary: test
-                description: nothing
-                license: MIT
-                parts:
-                  part1:
-                    plugin: nil
-                system-usernames:
-                  snap_daemon: shared
-                """
-            )
-        )
 
-    def test_invalid_yaml_invalid_username(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: nothing
-            license: MIT
-            parts:
-              part1:
-                plugin: nil
-            system-usernames:
-              snap_user: shared
-            """
-            )
-        )
+@pytest.mark.parametrize("username", ["snap_daemon", "snap_microk8s"])
+def test_yaml_valid_system_usernames_short(data, username):
+    data["system-usernames"] = {username: "shared"}
+    Validator(data).validate()
 
-        self.assertThat(
-            raised.message,
-            Equals(
-                "The 'system-usernames' property does not match the required schema: 'snap_user' is not a valid system-username."
-            ),
-        )
 
-    def test_invalid_yaml_invalid_short_scope(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: nothing
-            license: MIT
-            parts:
-              part1:
-                plugin: nil
-            system-usernames:
-              snap_daemon: invalid-scope
-            """
-            )
-        )
+def test_invalid_yaml_invalid_username(data):
+    data["system-usernames"] = {"snap_user": "shared"}
+    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+        Validator(data).validate()
 
-        self.assertThat(
-            raised.message,
-            Equals(
-                "The 'system-usernames/snap_daemon' property does not match the required schema: 'invalid-scope' is not valid under any of the given schemas"
-            ),
-        )
+    expected_message = "The 'system-usernames' property does not match the required schema: 'snap_user' is not a valid system-username."
+    assert expected_message in str(error.value)
 
-    def test_invalid_yaml_invalid_long_scope(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: nothing
-            license: MIT
-            parts:
-              part1:
-                plugin: nil
-            system-usernames:
-              snap_daemon:
-                scope: invalid-scope
-            """
-            )
-        )
 
-        self.assertThat(
-            raised.message,
-            Equals(
-                "The 'system-usernames/snap_daemon' property does not match the required schema: OrderedDict([('scope', 'invalid-scope')]) is not valid under any of the given schemas"
-            ),
-        )
+def test_invalid_yaml_invalid_short_scope(data):
+    data["system-usernames"] = {"snap_daemon": "invalid-scope"}
+    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+        Validator(data).validate()
+
+    expected_message = "The 'system-usernames/snap_daemon' property does not match the required schema: 'invalid-scope' is not valid under any of the given schemas"
+    assert expected_message in str(error.value)
+
+
+def test_invalid_yaml_invalid_long_scope(data):
+    data["system-usernames"] = {"snap_daemon": {"scope": "invalid-scope"}}
+    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+        Validator(data).validate()
+
+    expected_message = "The 'system-usernames/snap_daemon' property does not match the required schema: {'scope': 'invalid-scope'} is not valid under any of the given schemas"
+    assert expected_message in str(error.value)
 
 
 class PackageManagement(ProjectBaseTest):
