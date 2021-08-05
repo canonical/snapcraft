@@ -267,6 +267,22 @@
                 "shared"
             ],
             "validation-failure": "{!r} is not a valid user scope. Valid scopes include: 'shared'"
+        },
+        "environment": {
+            "type": "object",
+            "description": "environment entries",
+            "minItems": 1,
+            "additionalProperties": {
+                "anyOf": [
+                    {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    {
+                        "type": "number"
+                    }
+                ]
+            }
         }
     },
     "title": "snapcraft schema",
@@ -472,20 +488,8 @@
             ]
         },
         "environment": {
-            "type": "object",
             "description": "environment entries for the snap as a whole",
-            "minItems": 1,
-            "additionalProperties": {
-                "anyOf": [
-                    {
-                        "type": "string",
-                        "minLength": 1
-                    },
-                    {
-                        "type": "number"
-                    }
-                ]
-            }
+            "$ref": "#/definitions/environment"
         },
         "passthrough": {
             "type": "object",
@@ -820,20 +824,8 @@
                             }
                         },
                         "environment": {
-                            "type": "object",
                             "description": "environment entries for the specific app.",
-                            "minItems": 1,
-                            "additionalProperties": {
-                                "anyOf": [
-                                    {
-                                        "type": "string",
-                                        "minLength": 1
-                                    },
-                                    {
-                                        "type": "number"
-                                    }
-                                ]
-                            }
+                            "$ref": "#/definitions/environment"
                         },
                         "adapter": {
                             "$comment": "Full should be the default, but it requires command-chain which isn't available in snapd until 2.36, which isn't yet stable. Until 2.36 is generally available, continue with legacy as the default.",
@@ -931,6 +923,10 @@
                                 "pattern": "^[A-Za-z0-9/._#:$-]*$",
                                 "validation-failure": "{.instance!r} is not a valid command-chain entry. Command chain entries must be strings, and can only use ASCII alphanumeric characters and the following special characters: / . _ # : $ -"
                             }
+                        },
+                        "environment": {
+                            "description": "environment entries for this hook",
+                            "$ref": "#/definitions/environment"
                         },
                         "plugs": {
                             "type": "array",
