@@ -84,6 +84,13 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
+        param_decls="--offline",
+        is_flag=True,
+        help="Ignore non-fatal network errors.",
+        envvar="SNAPCRAFT_OFFLINE",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+    ),
+    dict(
         param_decls="--shell",
         is_flag=True,
         help="Shells into the environment in lieu of the step to run.",
