@@ -314,6 +314,10 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def refresh_build_packages(cls) -> None:
+        if os.getenv("SNAPCRAFT_OFFLINE"):
+            logger.warning("Skipping apt cache refresh due to --offline usage.")
+            return
+
         try:
             cmd = ["sudo", "--preserve-env", "apt-get", "update"]
             logger.debug(f"Executing: {cmd!r}")
