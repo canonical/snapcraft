@@ -789,7 +789,7 @@ class PluginHandler:
 
         installed_snaps = [
             "{}={}".format(snap["name"], snap["revision"])
-            for snap in repo.snaps.get_installed_snaps()
+            for snap in repo.snaps.get_installed_snaps().values()
         ]
         return {
             "uname": uname,
