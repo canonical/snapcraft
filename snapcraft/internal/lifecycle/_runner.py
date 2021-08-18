@@ -72,6 +72,15 @@ def _install_build_snaps(build_snaps: Set[str], content_snaps: Set[str]) -> List
             )
         )
     else:
+        installed_snaps = repo.snaps.get_installed_snaps()
+
+        import os
+
+        if os.getenv("SNAPCRAFT_OFFLINE") and all(
+            s in installed_snaps for s in build_snaps | content_snaps
+        ):
+            return sorted(build_snaps | content_snaps)
+
         installed_snaps = repo.snaps.install_snaps(build_snaps)
         for content_snap in content_snaps:
             try:

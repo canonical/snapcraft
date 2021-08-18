@@ -787,10 +787,14 @@ class PluginHandler:
             logger.warning("Could not decode output for 'uname' correctly")
             uname = output.decode("latin-1", "surrogateescape").strip()
 
+        installed_snaps = [
+            "{}={}".format(snap["name"], snap["revision"])
+            for snap in repo.snaps.get_installed_snaps()
+        ]
         return {
             "uname": uname,
             "installed-packages": sorted(repo.Repo.get_installed_packages()),
-            "installed-snaps": sorted(repo.snaps.get_installed_snaps()),
+            "installed-snaps": sorted(installed_snaps),
         }
 
     def clean_build(self):

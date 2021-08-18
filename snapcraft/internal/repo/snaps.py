@@ -110,7 +110,10 @@ class SnapPackage:
             # Some environments timeout often, like the armv7 testing
             # infrastructure. Given that constraint, we add some retry
             # logic.
-            retry_count = 5
+            if os.getenv("SNAPCRAFT_OFFLINE"):
+                retry_count = 1
+            else:
+                retry_count = 5
             while retry_count > 0:
                 try:
                     self._store_snap_info = _get_store_snap_info(self.name)
@@ -291,8 +294,10 @@ def install_snaps(snaps_list: Union[Sequence[str], Set[str]]) -> List[str]:
         snap_pkg = SnapPackage(snap)
 
         # Allow bases to be installed from non stable channels.
-        snap_pkg_channel = snap_pkg.get_store_snap_info()["channel"]
-        snap_pkg_type = snap_pkg.get_store_snap_info()["type"]
+        snap_info = snap_pkg.get_store_snap_info()
+
+        snap_pkg_channel = snap_info["channel"]
+        snap_pkg_type = snap_info["type"]
         if snap_pkg_channel != "stable" and snap_pkg_type == "base":
             snap_pkg = SnapPackage(
                 "{snap_name}/latest/{channel}".format(
@@ -391,14 +396,13 @@ def _get_store_snap_info(snap_name):
 def get_installed_snaps():
     """Return all the snaps installed in the system.
 
-    :return: a list of "name=revision" for the snaps installed.
+    :return: Dictionary of installed snaps and their info.
     """
     slug = "snaps"
     url = get_snapd_socket_path_template().format(slug)
     try:
         snap_info = requests_unixsocket.get(url)
         snap_info.raise_for_status()
-        local_snaps = snap_info.json()["result"]
+        return {r["name"]: r for r in snap_info.json()["result"]}
     except exceptions.ConnectionError:
-        local_snaps = []
-    return ["{}={}".format(snap["name"], snap["revision"]) for snap in local_snaps]
+        return {}
