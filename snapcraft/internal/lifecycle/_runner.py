@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import os
 from typing import List, Optional, Sequence, Set
 
 from snapcraft import config, plugins, storeapi
@@ -42,9 +43,18 @@ def _get_required_grade(*, base: Optional[str], arch: str) -> str:
     if base is None:
         return "stable"
 
-    # This will make a request over the network.
-    # We use storeapi instead of repo.snaps so this can work under Docker
-    # and related environments.
+    # Check if base is stable, first using snapd (if available),
+    # falling back to a store request for Docker's sake.
+    try:
+        installed_snaps = repo.snaps.get_installed_snaps()
+        core_snap = installed_snaps.get(base)
+        if "/stable" in core_snap["channel"]:
+            return "stable"
+        else:
+            return "devel"
+    except:
+        pass
+
     try:
         base_info = storeapi.StoreClient().snap.get_info(base)
         base_info.get_channel_mapping(risk="stable", arch=arch)
@@ -73,8 +83,6 @@ def _install_build_snaps(build_snaps: Set[str], content_snaps: Set[str]) -> List
         )
     else:
         installed_snaps = repo.snaps.get_installed_snaps()
-
-        import os
 
         if os.getenv("SNAPCRAFT_OFFLINE") and all(
             s in installed_snaps for s in build_snaps | content_snaps
@@ -143,6 +151,7 @@ def execute(
     global_state.save(filepath=project_config.project._get_global_state_file_path())
 
     executor = _Executor(project_config)
+
     executor.run(step, part_names)
     if not executor.steps_were_run:
         logger.warning(
