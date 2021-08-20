@@ -49,12 +49,13 @@ def test_extension(extension_class):
         "command-chain": ["snap/command-chain/ros2-launch"],
         "environment": {
             "PYTHONPATH": "$SNAP/opt/ros/foxy/lib/python3.8/site-packages:$SNAP/usr/lib/python3/dist-packages:${PYTHONPATH}",
+            "ROS_VERSION": "2",
             "ROS_DISTRO": "foxy",
         },
     }
 
     assert ros2_extension.part_snippet == {
-        "build-environment": [{"ROS_DISTRO": "foxy"}]
+        "build-environment": [{"ROS_VERSION": "2"}, {"ROS_DISTRO": "foxy"}],
     }
 
     assert ros2_extension.parts == {

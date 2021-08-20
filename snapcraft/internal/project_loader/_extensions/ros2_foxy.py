@@ -28,6 +28,7 @@ _PLATFORM_SNAP = dict(core18="gnome-3-34-1804")
 class ExtensionImpl(Extension):
     """Drives ROS 2 build and runtime environment for snap."""
 
+    ROS_VERSION: Final[str] = "2"
     ROS_DISTRO: Final[str] = "foxy"
 
     @staticmethod
@@ -68,12 +69,18 @@ class ExtensionImpl(Extension):
         self.app_snippet = {
             "command-chain": ["snap/command-chain/ros2-launch"],
             "environment": {
+                "ROS_VERSION": self.ROS_VERSION,
                 "ROS_DISTRO": self.ROS_DISTRO,
                 "PYTHONPATH": ":".join(python_paths),
             },
         }
 
-        self.part_snippet = {"build-environment": [{"ROS_DISTRO": self.ROS_DISTRO}]}
+        self.part_snippet = {
+            "build-environment": [
+                {"ROS_VERSION": self.ROS_VERSION},
+                {"ROS_DISTRO": self.ROS_DISTRO},
+            ],
+        }
 
         self.parts = {
             f"ros2-{self.ROS_DISTRO}-extension": {
