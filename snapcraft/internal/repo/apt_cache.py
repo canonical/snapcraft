@@ -86,6 +86,7 @@ class AptCache(ContextDecorator):
 
         apt.apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg")
         apt.apt_pkg.config.set("Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/")
+        apt.apt_pkg.config.set("Dir::State", "/var/lib/apt")
 
         # Clear up apt's Post-Invoke-Success as we are not running
         # on the system.
@@ -294,11 +295,3 @@ class AptCache(ContextDecorator):
 
         # Unmark dependencies that are no longer required.
         self._autokeep_packages()
-
-    def update(self) -> None:
-        try:
-            self.cache.update(fetch_progress=self.progress, sources_list=None)
-            self.cache.close()
-            self.cache = apt.Cache(rootdir=str(self.stage_cache), memonly=True)
-        except apt.cache.FetchFailedException as e:
-            raise errors.CacheUpdateFailedError(str(e))
