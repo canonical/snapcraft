@@ -184,8 +184,14 @@ class Provider(abc.ABC):
         if not self._mount_prime_directory():
             self._run(command=["snapcraft", "clean", "--unprime"])
 
-    def execute_step(self, step: steps.Step) -> None:
-        self._run(command=["snapcraft", step.name])
+    def execute_step(
+        self, step: steps.Step, part_names: Optional[Sequence[str]] = None
+    ) -> None:
+        command = ["snapcraft", step.name]
+        if part_names:
+            command += list(part_names)
+
+        self._run(command=command)
 
     def clean_parts(self, part_names: Sequence[str]) -> None:
         self._run(command=["snapcraft", "clean"] + list(part_names))
