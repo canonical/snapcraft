@@ -91,16 +91,16 @@ class CatkinPlugin(_ros.RosPlugin):
         return [
             'state="$(set +o)"',
             "set +u",
-            'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO/setup.sh ]; then',
+            'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
             "set -- --local",
-            "_CATKIN_SETUP_DIR={path} . {path}/setup.sh".format(
-                path='"${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO'
+            '_CATKIN_SETUP_DIR="{path}" . "{path}/setup.sh"'.format(
+                path="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}"
             ),
             "set -- --local --extend",
             "else",
             "set -- --local",
             "fi",
-            ". /opt/ros/$ROS_DISTRO/setup.sh",
+            '. /opt/ros/"${ROS_DISTRO}"/setup.sh',
             'eval "${state}"',
         ]
 
@@ -110,13 +110,13 @@ class CatkinPlugin(_ros.RosPlugin):
             "--install",
             "--merge",
             "--source-space",
-            "$SNAPCRAFT_PART_SRC",
+            '"${SNAPCRAFT_PART_SRC}"',
             "--build-space",
-            "$SNAPCRAFT_PART_BUILD",
+            '"${SNAPCRAFT_PART_BUILD}"',
             "--install-space",
-            "$SNAPCRAFT_PART_INSTALL/opt/ros/$ROS_DISTRO",
+            '"${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}"',
             "-j",
-            "$SNAPCRAFT_PARALLEL_BUILD_COUNT",
+            '"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
         ]
 
         if self.options.catkin_packages:

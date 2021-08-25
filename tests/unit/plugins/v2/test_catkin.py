@@ -86,27 +86,27 @@ def test_get_build_commands(monkeypatch):
     assert plugin.get_build_commands() == [
         'state="$(set +o)"',
         "set +u",
-        'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO/setup.sh ]; then',
+        'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
         "set -- --local",
-        '_CATKIN_SETUP_DIR="${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO . "${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO/setup.sh',
+        '_CATKIN_SETUP_DIR="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh"',
         "set -- --local --extend",
         "else",
         "set -- --local",
         "fi",
-        ". /opt/ros/$ROS_DISTRO/setup.sh",
+        '. /opt/ros/"${ROS_DISTRO}"/setup.sh',
         'eval "${state}"',
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
-        "rosdep update --include-eol-distros --rosdistro $ROS_DISTRO",
-        "rosdep install --default-yes --ignore-packages-from-source --from-paths $SNAPCRAFT_PART_SRC",
+        'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
+        'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC}"',
         "catkin_make_isolated --install --merge "
-        "--source-space $SNAPCRAFT_PART_SRC --build-space $SNAPCRAFT_PART_BUILD "
-        "--install-space $SNAPCRAFT_PART_INSTALL/opt/ros/$ROS_DISTRO "
-        "-j $SNAPCRAFT_PARALLEL_BUILD_COUNT",
+        '--source-space "${SNAPCRAFT_PART_SRC}" --build-space "${SNAPCRAFT_PART_BUILD}" '
+        '--install-space "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" '
+        '-j "${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
         "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 /test/python3 -I "
         "/test/_ros.py "
-        "stage-runtime-dependencies --part-src $SNAPCRAFT_PART_SRC --part-install $SNAPCRAFT_PART_INSTALL "
-        "--ros-distro $ROS_DISTRO --target-arch $SNAPCRAFT_TARGET_ARCH",
+        'stage-runtime-dependencies --part-src "${SNAPCRAFT_PART_SRC}" --part-install "${SNAPCRAFT_PART_INSTALL}" '
+        '--ros-distro "${ROS_DISTRO}" --target-arch "${SNAPCRAFT_TARGET_ARCH}"',
     ]
 
 
@@ -139,29 +139,29 @@ def test_get_build_commands_with_all_properties(monkeypatch):
     assert plugin.get_build_commands() == [
         'state="$(set +o)"',
         "set +u",
-        'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO/setup.sh ]; then',
+        'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
         "set -- --local",
-        '_CATKIN_SETUP_DIR="${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO . "${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO/setup.sh',
+        '_CATKIN_SETUP_DIR="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh"',
         "set -- --local --extend",
         "else",
         "set -- --local",
         "fi",
-        ". /opt/ros/$ROS_DISTRO/setup.sh",
+        '. /opt/ros/"${ROS_DISTRO}"/setup.sh',
         'eval "${state}"',
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
-        "rosdep update --include-eol-distros --rosdistro $ROS_DISTRO",
-        "rosdep install --default-yes --ignore-packages-from-source --from-paths $SNAPCRAFT_PART_SRC",
+        'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
+        'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC}"',
         "catkin_make_isolated --install --merge "
-        "--source-space $SNAPCRAFT_PART_SRC --build-space $SNAPCRAFT_PART_BUILD "
-        "--install-space $SNAPCRAFT_PART_INSTALL/opt/ros/$ROS_DISTRO "
-        "-j $SNAPCRAFT_PARALLEL_BUILD_COUNT --pkg package1 package2... "
+        '--source-space "${SNAPCRAFT_PART_SRC}" --build-space "${SNAPCRAFT_PART_BUILD}" '
+        '--install-space "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" '
+        '-j "${SNAPCRAFT_PARALLEL_BUILD_COUNT}" --pkg package1 package2... '
         "--ignore-pkg ipackage1 ipackage2... --cmake-args cmake args...",
         "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/bin:/test SNAP=TESTSNAP "
         "SNAP_ARCH=TESTARCH SNAP_NAME=TESTSNAPNAME SNAP_VERSION=TESTV1 "
         "http_proxy=http://foo https_proxy=https://bar "
         "/test/python3 -I "
         "/test/_ros.py "
-        "stage-runtime-dependencies --part-src $SNAPCRAFT_PART_SRC --part-install $SNAPCRAFT_PART_INSTALL "
-        "--ros-distro $ROS_DISTRO --target-arch $SNAPCRAFT_TARGET_ARCH",
+        'stage-runtime-dependencies --part-src "${SNAPCRAFT_PART_SRC}" --part-install "${SNAPCRAFT_PART_INSTALL}" '
+        '--ros-distro "${ROS_DISTRO}" --target-arch "${SNAPCRAFT_TARGET_ARCH}"',
     ]

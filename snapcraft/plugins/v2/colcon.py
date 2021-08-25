@@ -142,7 +142,7 @@ class ColconPlugin(_ros.RosPlugin):
                 path='"${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap'
             ),
             "fi",
-            ". /opt/ros/$ROS_DISTRO/local_setup.sh",
+            '. /opt/ros/"${ROS_DISTRO}"/local_setup.sh',
             'eval "${state}"',
         ]
 
@@ -151,12 +151,12 @@ class ColconPlugin(_ros.RosPlugin):
             "colcon",
             "build",
             "--base-paths",
-            "$SNAPCRAFT_PART_SRC",
+            '"${SNAPCRAFT_PART_SRC}"',
             "--build-base",
-            "$SNAPCRAFT_PART_BUILD",
+            '"${SNAPCRAFT_PART_BUILD}"',
             "--merge-install",
             "--install-base",
-            "$SNAPCRAFT_PART_INSTALL/opt/ros/snap",
+            '"${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap',
         ]
 
         if self.options.colcon_packages_ignore:
@@ -172,7 +172,7 @@ class ColconPlugin(_ros.RosPlugin):
             cmd.extend(["--catkin-cmake-args", *self.options.colcon_catkin_cmake_args])
 
         # Specify the number of workers
-        cmd.extend(["--parallel-workers", "${SNAPCRAFT_PARALLEL_BUILD_COUNT}"])
+        cmd.extend(["--parallel-workers", '"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"'])
 
         return [" ".join(cmd)] + [
             # Remove the COLCON_IGNORE marker so that, at staging,

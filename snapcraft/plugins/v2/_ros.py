@@ -103,13 +103,13 @@ class RosPlugin(PluginV2):
                     os.path.abspath(__file__),
                     "stage-runtime-dependencies",
                     "--part-src",
-                    "$SNAPCRAFT_PART_SRC",
+                    '"${SNAPCRAFT_PART_SRC}"',
                     "--part-install",
-                    "$SNAPCRAFT_PART_INSTALL",
+                    '"${SNAPCRAFT_PART_INSTALL}"',
                     "--ros-distro",
-                    "$ROS_DISTRO",
+                    '"${ROS_DISTRO}"',
                     "--target-arch",
-                    "$SNAPCRAFT_TARGET_ARCH",
+                    '"${SNAPCRAFT_TARGET_ARCH}"',
                 ]
             )
         ]
@@ -119,8 +119,8 @@ class RosPlugin(PluginV2):
             self._get_workspace_activation_commands()
             + [
                 "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep init; fi",
-                "rosdep update --include-eol-distros --rosdistro $ROS_DISTRO",
-                "rosdep install --default-yes --ignore-packages-from-source --from-paths $SNAPCRAFT_PART_SRC",
+                'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
+                'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC}"',
             ]
             + self._get_build_commands()
             + self._get_stage_runtime_dependencies_commands()
