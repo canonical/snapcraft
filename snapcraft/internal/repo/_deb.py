@@ -314,10 +314,6 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def refresh_build_packages(cls) -> None:
-        if os.getenv("SNAPCRAFT_OFFLINE"):
-            logger.warning("Skipping apt cache refresh due to --offline usage.")
-            return
-
         try:
             cmd = ["sudo", "--preserve-env", "apt-get", "update"]
             logger.debug(f"Executing: {cmd!r}")
@@ -387,6 +383,9 @@ class Ubuntu(BaseRepo):
         # Ensure we have an up-to-date cache first if we will have to
         # install anything.
         if not cls._check_if_all_packages_installed(package_names):
+            if os.getenv("SNAPCRAFT_OFFLINE"):
+                raise RuntimeError("Build packages need to be installed, but cannot in offline mode.")
+
             install_required = True
             cls.refresh_build_packages()
 
