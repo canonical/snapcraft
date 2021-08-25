@@ -252,13 +252,14 @@ class Provider(abc.ABC):
             # image, but may be required for snapcraft to function.
             self._run(["apt-get", "install", "--yes", "apt-transport-https"])
 
-        # Always setup snapcraft after a start to bring it up to speed with
-        # what is on the host.
-        self._setup_snapcraft()
+        if not os.getenv("SNAPCRAFT_OFFLINE"):
+            # Always setup snapcraft after a start to bring it up to speed with
+            # what is on the host.
+            self._setup_snapcraft()
 
-        # Always update snapd proxy settings to match current http(s) proxy
-        # settings.
-        self._setup_snapd_proxy()
+            # Always update snapd proxy settings to match current http(s) proxy
+            # settings.
+            self._setup_snapd_proxy()
 
         # Install any CA certificates requested by the user.
         certs_path = self.build_provider_flags.get("SNAPCRAFT_ADD_CA_CERTIFICATES")
