@@ -110,10 +110,7 @@ class SnapPackage:
             # Some environments timeout often, like the armv7 testing
             # infrastructure. Given that constraint, we add some retry
             # logic.
-            if os.getenv("SNAPCRAFT_OFFLINE"):
-                retry_count = 1
-            else:
-                retry_count = 5
+            retry_count = 5
             while retry_count > 0:
                 try:
                     self._store_snap_info = _get_store_snap_info(self.name)
