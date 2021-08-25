@@ -16,10 +16,14 @@
 
 import collections
 import contextlib
+import logging
+import os
 from typing import Any, Dict, List, Optional, Set
 
 import snapcraft.internal.project_loader._config as _config
 from snapcraft.internal import errors, pluginhandler, steps
+
+logger = logging.getLogger(__name__)
 
 _DirtyReport = Dict[str, Dict[steps.Step, Optional[pluginhandler.DirtyReport]]]
 _OutdatedReport = Dict[str, Dict[steps.Step, Optional[pluginhandler.OutdatedReport]]]
@@ -184,6 +188,10 @@ class StatusCache:
                     )
 
             if changed_dependencies:
+                if os.getenv("SNAPCRAFT_OFFLINE"):
+                    logger.info(f"Skipping part cleaning for {part.name} after changed dependency (offline mode)")
+                    return
+
                 self._dirty_reports[part.name][step] = pluginhandler.DirtyReport(
                     changed_dependencies=changed_dependencies
                 )
