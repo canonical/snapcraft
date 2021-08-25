@@ -5,57 +5,24 @@ description: Verify that ROS 2 stage-snaps are checked for dependencies.
 confinement: strict
 base: core20
 
-package-repositories:
-  - components:
-      - main
-    formats:
-      - deb
-    key-id: C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
-    key-server: keyserver.ubuntu.com
-    suites:
-      - focal
-    type: apt
-    url: http://repo.ros2.org/ubuntu/main
-
 parts:
-  ros2-foxy-extension:
-      build-packages:
-        - python3-colcon-common-extensions
-        - ros-foxy-ros-core
-      override-build: install -D -m 0755 launch ${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros2-launch
-      plugin: nil
-      source: $SNAPCRAFT_EXTENSIONS_DIR/ros2
   colcon-part:
     plugin: colcon
     source: .
     build-packages: [g++, make]
     stage-packages: [ros-foxy-ros2launch]
     stage-snaps: [test-snapcraft-fake-ros2-package-core20/latest/edge]
-    build-environment:
-      - ROS_DISTRO: foxy
 
 apps:
   colcon-stage-snaps:
     command: opt/ros/foxy/bin/ros2 launch test_minimal_subscriber talker_subscriber.launch.py
     plugs: [network, network-bind]
-    command-chain:
-      - snap/command-chain/ros2-launch
-    environment:
-      PYTHONPATH: $SNAP/opt/ros/foxy/lib/python3.8/site-packages:$SNAP/usr/lib/python3/dist-packages:${PYTHONPATH}
-      ROS_DISTRO: foxy
+    extensions: [ros2-foxy]
   subscriber:
     command: opt/ros/foxy/bin/ros2 run test_minimal_subscriber test_minimal_subscriber_node
     plugs: [network, network-bind]
-    command-chain:
-      - snap/command-chain/ros2-launch
-    environment:
-      PYTHONPATH: $SNAP/opt/ros/foxy/lib/python3.8/site-packages:$SNAP/usr/lib/python3/dist-packages:${PYTHONPATH}
-      ROS_DISTRO: foxy
+    extensions: [ros2-foxy]
   publisher:
     command: opt/ros/foxy/bin/ros2 run test_minimal_publisher test_minimal_publisher_node
     plugs: [network, network-bind]
-    command-chain:
-      - snap/command-chain/ros2-launch
-    environment:
-      PYTHONPATH: $SNAP/opt/ros/foxy/lib/python3.8/site-packages:$SNAP/usr/lib/python3/dist-packages:${PYTHONPATH}
-      ROS_DISTRO: foxy
+    extensions: [ros2-foxy]
