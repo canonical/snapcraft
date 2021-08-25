@@ -473,7 +473,8 @@ class LXD(Provider):
         self._run(["systemctl", "start", "snapd"], hide_output=True)
 
     def _setup_snapcraft(self):
-        self._wait_for_network()
+        if not os.getenv("SNAPCRAFT_OFFLINE"):
+            self._wait_for_network()
         super()._setup_snapcraft()
 
     def _ensure_container_running(self) -> None:
