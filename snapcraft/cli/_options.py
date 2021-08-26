@@ -90,6 +90,13 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
+        param_decls="--offline",
+        is_flag=True,
+        help="Operate in offline mode.",
+        envvar="SNAPCRAFT_OFFLINE",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+    ),
+    dict(
         param_decls="--shell-after",
         is_flag=True,
         help="Shells into the environment after the step has run.",
@@ -407,3 +414,6 @@ def issue_build_provider_warnings(build_provider_flags: Dict[str, str]) -> None:
 
     if build_provider_flags.get("SNAPCRAFT_ENABLE_EXPERIMENTAL_TARGET_ARCH"):
         warning("*EXPERIMENTAL* --target-arch for core20 enabled.")
+
+    if build_provider_flags.get("SNAPCRAFT_OFFLINE"):
+        warning("*EXPERIMENTAL* --offline enabled.")
