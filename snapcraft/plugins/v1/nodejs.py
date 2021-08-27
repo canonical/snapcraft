@@ -147,7 +147,11 @@ class NodePlugin(PluginV1):
             self._yarn_tar.download()
 
         # install node and yarn.
-        self._install_node_and_yarn(rootdir=self.sourcedir)
+        if self.options.source_subdir != None:
+            self._install_node_and_yarn(
+                rootdir=os.path.join(self.options.source_subdir, self.sourcedir))
+        else:
+            self._install_node_and_yarn(rootdir=self.sourcedir)
 
     def clean_pull(self):
         super().clean_pull()
