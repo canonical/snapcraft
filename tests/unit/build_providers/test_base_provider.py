@@ -26,6 +26,7 @@ import fixtures
 import pytest
 from testtools.matchers import DirExists, EndsWith, Equals, Not
 
+from snapcraft.internal import steps
 from snapcraft.internal.build_providers import errors
 from snapcraft.internal.meta.snap import Snap
 from snapcraft.project import Project
@@ -334,6 +335,22 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         provider.run_mock.assert_called_once_with(
             ["snapcraft", "clean", "part1", "part2"]
+        )
+
+    def test_execute_step(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+
+        provider.execute_step(step=steps.PULL)
+
+        provider.run_mock.assert_called_once_with(["snapcraft", "pull"])
+
+    def test_execute_step_with_parts(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+
+        provider.execute_step(step=steps.PULL, part_names=("part1", "part2"))
+
+        provider.run_mock.assert_called_once_with(
+            ["snapcraft", "pull", "part1", "part2"]
         )
 
     def test_passthrough_environment_flags_empty(self):

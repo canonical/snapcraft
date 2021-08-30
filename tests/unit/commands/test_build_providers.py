@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from typing import Optional
+from typing import Optional, Sequence
 from unittest import mock
 
 import fixtures
@@ -282,9 +282,18 @@ class BuildProviderDebugCommandTestCase(LifecycleCommandsBaseTestCase):
         shell_mock = mock.Mock()
 
         class Provider(ProviderImpl):
-            def execute_step(self, step: steps.Step) -> None:
+            def execute_step(
+                self, step: steps.Step, part_names: Optional[Sequence[str]] = None
+            ) -> None:
+                if part_names is None:
+                    part_names = []
+                else:
+                    part_names = list(part_names)
+
                 raise ProviderExecError(
-                    provider_name="fake", command=["snapcraft", "pull"], exit_code=1
+                    provider_name="fake",
+                    command=["snapcraft", "pull"] + part_names,
+                    exit_code=1,
                 )
 
             def shell(self):
@@ -334,8 +343,10 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
             def pack_project(self, *, output: Optional[str] = None) -> None:
                 pack_project_mock(output)
 
-            def execute_step(self, step: steps.Step) -> None:
-                execute_step_mock(step)
+            def execute_step(
+                self, step: steps.Step, part_names: Optional[Sequence[str]] = None
+            ) -> None:
+                execute_step_mock(step, part_names=part_names)
 
             def shell(self):
                 shell_mock()
@@ -357,7 +368,17 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.pack_project_mock.assert_not_called()
-        self.execute_step_mock.assert_called_once_with(steps.PULL)
+        self.execute_step_mock.assert_called_once_with(steps.PULL, part_names=())
+        self.shell_mock.assert_called_once_with()
+
+    def test_step_with_parts_and_shell_after(self):
+        result = self.run_command(["pull", "part1", "part2", "--shell-after"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.pack_project_mock.assert_not_called()
+        self.execute_step_mock.assert_called_once_with(
+            steps.PULL, part_names=("part1", "part2")
+        )
         self.shell_mock.assert_called_once_with()
 
     def test_snap_with_shell_after(self):
@@ -373,7 +394,7 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.pack_project_mock.assert_not_called()
-        self.execute_step_mock.assert_called_once_with(steps.PULL)
+        self.execute_step_mock.assert_called_once_with(steps.PULL, part_names=())
         self.shell_mock.assert_not_called()
 
     def test_error_with_shell_after_error_and_debug(self):
@@ -384,7 +405,7 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
         )
 
         self.pack_project_mock.assert_not_called()
-        self.execute_step_mock.assert_called_once_with(steps.PULL)
+        self.execute_step_mock.assert_called_once_with(steps.PULL, part_names=())
         self.shell_mock.assert_called_once_with()
 
     def test_pull_step_with_shell(self):
@@ -400,7 +421,7 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.pack_project_mock.assert_not_called()
-        self.execute_step_mock.assert_called_once_with(steps.BUILD)
+        self.execute_step_mock.assert_called_once_with(steps.BUILD, part_names=())
         self.shell_mock.assert_called_once_with()
 
     def test_snap_with_shell(self):
@@ -408,7 +429,7 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.pack_project_mock.assert_not_called()
-        self.execute_step_mock.assert_called_once_with(steps.PRIME)
+        self.execute_step_mock.assert_called_once_with(steps.PRIME, part_names=())
         self.shell_mock.assert_called_once_with()
 
     def test_snap_without_shell(self):
@@ -463,9 +484,18 @@ class BuildProviderCleanCommandTestCase(LifecycleCommandsBaseTestCase):
         clean_mock = mock.Mock()
 
         class Provider(ProviderImpl):
-            def execute_step(self, step: steps.Step) -> None:
+            def execute_step(
+                self, step: steps.Step, part_names: Optional[Sequence[str]] = None
+            ) -> None:
+                if part_names is None:
+                    part_names = []
+                else:
+                    part_names = list(part_names)
+
                 raise ProviderExecError(
-                    provider_name="fake", command=["snapcraft", "pull"], exit_code=1
+                    provider_name="fake",
+                    command=["snapcraft", "pull"] + part_names,
+                    exit_code=1,
                 )
 
             def clean_project(self):
