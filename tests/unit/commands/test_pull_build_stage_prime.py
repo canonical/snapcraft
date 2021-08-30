@@ -24,12 +24,17 @@ from . import LifecycleCommandsBaseTestCase
 
 
 class TestPullBuildStagePrimeCommand(LifecycleCommandsBaseTestCase):
-    def assert_build_provider_calls(self, step: steps.Step):
+    def assert_build_provider_calls(self, step: steps.Step, part_names=None):
+        if part_names is None:
+            part_names = tuple()
+
         self.fake_lifecycle_execute.mock.assert_not_called()
         if step is None:
             self.provider_mock.execute_step.assert_not_called()
         else:
-            self.provider_mock.execute_step.assert_called_once_with(step)
+            self.provider_mock.execute_step.assert_called_once_with(
+                step, part_names=part_names
+            )
         self.assert_clean_not_called()
 
     def run_test_using_defaults(self, step):
@@ -45,7 +50,7 @@ class TestPullBuildStagePrimeCommand(LifecycleCommandsBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_get_provider_for.mock.assert_called_once_with("multipass")
-        self.assert_build_provider_calls(step)
+        self.assert_build_provider_calls(step, part_names=("part0", "part1", "part2"))
         self.provider_mock.shell.assert_not_called()
 
     def run_test_shell_using_defaults(self, step, previous_step):
@@ -77,7 +82,7 @@ class TestPullBuildStagePrimeCommand(LifecycleCommandsBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_get_provider_for.mock.assert_called_once_with("lxd")
-        self.assert_build_provider_calls(step)
+        self.assert_build_provider_calls(step, part_names=("part0", "part1", "part2"))
         self.provider_mock.shell.assert_not_called()
 
     def run_test_using_destructive_mode(self, step):
