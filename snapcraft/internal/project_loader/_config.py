@@ -224,6 +224,12 @@ class Config:
             parts=self.data, project=project, validator=self.validator
         )
 
+        self.v1_behavior = any(
+            part.plugin
+            for part in self.all_parts
+            if isinstance(part.plugin, plugins.v1.PluginV1)
+        )
+
     def _ensure_no_duplicate_app_aliases(self):
         # Prevent multiple apps within a snap from having duplicate alias names
         aliases = []

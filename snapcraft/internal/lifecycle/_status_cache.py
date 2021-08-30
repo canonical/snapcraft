@@ -156,7 +156,12 @@ class StatusCache:
         # properties specific to that part. If it's not dirty because of those,
         # we need to expand it here to also take its dependencies (if any) into
         # account
-        prerequisite_step = steps.get_dependency_prerequisite_step(step)
+        prerequisite_step = steps.get_dependency_prerequisite_step(
+            step, v1_behavior=self.config.v1_behavior
+        )
+        if prerequisite_step is None:
+            return
+
         dependencies = self.config.parts.get_dependencies(part.name, recursive=True)
 
         changed_dependencies: List[pluginhandler.Dependency] = []

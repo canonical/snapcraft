@@ -69,6 +69,7 @@ class PluginHandler:
     ) -> None:
         self.valid = False
         self.plugin = plugin
+        self.v1_behavior = isinstance(self.plugin, plugins.v1.PluginV1)
         self._part_properties = _expand_part_properties(part_properties, part_schema)
         self.stage_packages: List[str] = list()
         self._stage_packages_repo = stage_packages_repo
@@ -125,7 +126,7 @@ class PluginHandler:
             steps.Step, snapcraft.extractors.ExtractedMetadata
         ] = collections.defaultdict(snapcraft.extractors.ExtractedMetadata)
 
-        if isinstance(plugin, plugins.v2.PluginV2):
+        if not self.v1_behavior:
             self._shell = "/bin/bash"
             self._shell_flags = "set -xeuo pipefail"
 
@@ -506,14 +507,14 @@ class PluginHandler:
         if self.source_handler:
             self.source_handler.pull()
 
-        if isinstance(self.plugin, plugins.v1.PluginV1):
+        if self.v1_behavior:
             self.plugin.pull()
 
     def mark_pull_done(self):
         # Send an empty pull_properties for state. This makes it easy
         # to keep using what we have or to back out of not doing any
         # pulling in the plugins.
-        if isinstance(self.plugin, plugins.v1.PluginV1):
+        if self.v1_behavior:
             pull_properties = self.plugin.get_pull_properties()
         else:
             pull_properties = dict()

@@ -288,23 +288,22 @@ class _Executor:
 
         # Filter dependencies down to only those that need to run the
         # prerequisite step
-        prerequisite_step = steps.get_dependency_prerequisite_step(step)
-        dependencies = {
-            p
-            for p in all_dependencies
-            if self._cache.should_step_run(p, prerequisite_step)
-        }
+        prerequisite_step = steps.get_dependency_prerequisite_step(
+            step, v1_behavior=self.config.v1_behavior
+        )
+        if prerequisite_step is not None:
+            dependencies = {p for p in all_dependencies}
 
-        if dependencies:
-            dependency_names = {p.name for p in dependencies}
-            # Dependencies need to go all the way to the prerequisite step to
-            # be able to share the common assets that make them a dependency
-            logger.info(
-                "{!r} has dependencies that need to be {}d: {}".format(
-                    part.name, prerequisite_step.name, " ".join(dependency_names)
+            if dependencies:
+                dependency_names = {p.name for p in dependencies}
+                # Dependencies need to go all the way to the prerequisite step to
+                # be able to share the common assets that make them a dependency
+                logger.info(
+                    "{!r} has dependencies that need to be {}d: {}".format(
+                        part.name, prerequisite_step.name, " ".join(dependency_names)
+                    )
                 )
-            )
-            self.run(prerequisite_step, dependency_names)
+                self.run(prerequisite_step, dependency_names)
 
         # Run the preparation function for this step (if implemented)
         preparation_function = getattr(part, "prepare_{}".format(step.name), None)

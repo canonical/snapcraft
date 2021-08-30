@@ -131,7 +131,11 @@ def get_step_by_name(step_name):
         return STEPS[0]
 
 
-def get_dependency_prerequisite_step(step):
+def get_dependency_prerequisite_step(step, v1_behavior: bool):
+    # Don't attempt to handle dependencies for pull if offline.
+    if not v1_behavior and step == PULL:
+        return None
+
     if step <= STAGE:
         return STAGE
     else:
