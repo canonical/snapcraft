@@ -291,8 +291,9 @@ def install_snaps(snaps_list: Union[Sequence[str], Set[str]]) -> List[str]:
         snap_pkg = SnapPackage(snap)
 
         # Allow bases to be installed from non stable channels.
-        snap_pkg_channel = snap_pkg.get_store_snap_info()["channel"]
-        snap_pkg_type = snap_pkg.get_store_snap_info()["type"]
+        snap_info = snap_pkg.get_store_snap_info()
+        snap_pkg_channel = snap_info["channel"]
+        snap_pkg_type = snap_info["type"]
         if snap_pkg_channel != "stable" and snap_pkg_type == "base":
             snap_pkg = SnapPackage(
                 "{snap_name}/latest/{channel}".format(

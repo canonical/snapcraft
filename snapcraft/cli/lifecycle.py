@@ -22,7 +22,7 @@ import subprocess
 import sys
 import time
 import typing
-from typing import List, Optional, Union
+from typing import List, Optional, Sequence, Union
 
 import click
 import progressbar
@@ -60,7 +60,7 @@ if typing.TYPE_CHECKING:
 # TODO: when snap is a real step we can simplify the arguments here.
 def _execute(  # noqa: C901
     step: steps.Step,
-    parts: str,
+    parts: Sequence[str],
     pack_project: bool = False,
     output: Optional[str] = None,
     shell: bool = False,
@@ -138,14 +138,14 @@ def _execute(  # noqa: C901
                         previous_step = step.previous_step()
                     # steps.PULL is the first step, so we would directly shell into it.
                     if previous_step:
-                        instance.execute_step(previous_step)
+                        instance.execute_step(previous_step, part_names=parts)
                 elif pack_project:
                     instance.pack_project(output=output)
                 elif setup_prime_try:
                     instance.expose_prime()
-                    instance.execute_step(step)
+                    instance.execute_step(step, part_names=parts)
                 else:
-                    instance.execute_step(step)
+                    instance.execute_step(step, part_names=parts)
             except Exception:
                 _retrieve_provider_error(instance)
                 if project.debug:

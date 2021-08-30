@@ -33,7 +33,7 @@ venv_dir="$(mktemp -d)"
 # Enable system-site-packages to find python3-apt.
 python3 -m venv "$venv_dir"
 
-# shellcheck disable=SC1090
+# shellcheck disable=SC1090,SC1091
 source "$venv_dir/bin/activate"
 
 pip install -U setuptools pip wheel

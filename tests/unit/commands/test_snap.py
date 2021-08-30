@@ -66,7 +66,9 @@ class TestSnap(LifecycleCommandsBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.fake_get_provider_for.mock.assert_called_once_with("multipass")
         self.assert_build_provider_calls(shell=True)
-        self.provider_mock.execute_step.assert_called_once_with(steps.PRIME)
+        self.provider_mock.execute_step.assert_called_once_with(
+            steps.PRIME, part_names=()
+        )
 
     def test_shell_after_using_defaults(self):
         result = self.run_command(["snap", "--shell-after"])
