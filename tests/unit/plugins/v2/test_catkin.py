@@ -106,7 +106,7 @@ def test_get_build_commands(monkeypatch):
         "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 /test/python3 -I "
         "/test/_ros.py "
         "stage-runtime-dependencies --part-src $SNAPCRAFT_PART_SRC --part-install $SNAPCRAFT_PART_INSTALL "
-        "--ros-distro $ROS_DISTRO --target-arch $SNAPCRAFT_TARGET_ARCH",
+        "--ros-version $ROS_VERSION --ros-distro $ROS_DISTRO --target-arch $SNAPCRAFT_TARGET_ARCH",
     ]
 
 
@@ -163,5 +163,5 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "/test/python3 -I "
         "/test/_ros.py "
         "stage-runtime-dependencies --part-src $SNAPCRAFT_PART_SRC --part-install $SNAPCRAFT_PART_INSTALL "
-        "--ros-distro $ROS_DISTRO --target-arch $SNAPCRAFT_TARGET_ARCH",
+        "--ros-version $ROS_VERSION --ros-distro $ROS_DISTRO --target-arch $SNAPCRAFT_TARGET_ARCH",
     ]

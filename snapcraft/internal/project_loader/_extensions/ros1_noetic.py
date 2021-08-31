@@ -26,6 +26,7 @@ from ._extension import Extension
 class ExtensionImpl(Extension):
     """Setup a ROS 1 build and runtime environment suitable for a snap."""
 
+    ROS_VERSION: Final[str] = "1"
     ROS_DISTRO: Final[str] = "noetic"
 
     @staticmethod
@@ -66,12 +67,18 @@ class ExtensionImpl(Extension):
         self.app_snippet = {
             "command-chain": ["snap/command-chain/ros1-launch"],
             "environment": {
+                "ROS_VERSION": self.ROS_VERSION,
                 "ROS_DISTRO": self.ROS_DISTRO,
                 "PYTHONPATH": ":".join(python_paths),
             },
         }
 
-        self.part_snippet = {"build-environment": [{"ROS_DISTRO": self.ROS_DISTRO}]}
+        self.part_snippet = {
+            "build-environment": [
+                {"ROS_VERSION": self.ROS_VERSION},
+                {"ROS_DISTRO": self.ROS_DISTRO},
+            ],
+        }
 
         self.parts = {
             f"ros1-{self.ROS_DISTRO}-extension": {
