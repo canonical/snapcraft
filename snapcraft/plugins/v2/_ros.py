@@ -106,6 +106,8 @@ class RosPlugin(PluginV2):
                     '"${SNAPCRAFT_PART_SRC}"',
                     "--part-install",
                     '"${SNAPCRAFT_PART_INSTALL}"',
+                    "--ros-version",
+                    '"${ROS_VERSION}"',
                     "--ros-distro",
                     '"${ROS_DISTRO}"',
                     "--target-arch",
@@ -135,10 +137,15 @@ def plugin_cli():
 @plugin_cli.command()
 @click.option("--part-src", envvar="SNAPCRAFT_PART_SRC", required=True)
 @click.option("--part-install", envvar="SNAPCRAFT_PART_INSTALL", required=True)
+@click.option("--ros-version", envvar="ROS_VERSION", required=True)
 @click.option("--ros-distro", envvar="ROS_DISTRO", required=True)
 @click.option("--target-arch", envvar="SNAPCRAFT_TARGET_ARCH", required=True)
 def stage_runtime_dependencies(
-    part_src: str, part_install: str, ros_distro: str, target_arch: str
+    part_src: str,
+    part_install: str,
+    ros_version: str,
+    ros_distro: str,
+    target_arch: str,
 ):
     click.echo("Staging runtime dependencies...")
     # TODO: support python packages (only apt currently supported)
@@ -146,7 +153,18 @@ def stage_runtime_dependencies(
 
     installed_pkgs = catkin_packages.find_packages(part_install).values()
     for pkg in catkin_packages.find_packages(part_src).values():
-        for dep in pkg.exec_depends:
+        # Evaluate the conditions of all dependencies
+        pkg.evaluate_conditions(
+            {
+                "ROS_VERSION": ros_version,
+                "ROS_DISTRO": ros_distro,
+                "ROS_PYTHON_VERSION": "3",
+            }
+        )
+        # Retrieve only the 'exec_depends' which condition are true
+        for dep in (
+            exec_dep for exec_dep in pkg.exec_depends if exec_dep.evaluated_condition
+        ):
             # No need to resolve this dependency if we know it's local
             if any(p for p in installed_pkgs if p.name == dep.name):
                 continue

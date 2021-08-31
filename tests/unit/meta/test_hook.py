@@ -90,3 +90,13 @@ class GenericHookTests(unit.TestCase):
                 "failed to validate hook=hook-test: '&/foo/bar' is not a valid command-chain command."
             ),
         )
+
+    def test_environment(self):
+        hook_dict = OrderedDict({"environment": {"FOO": "BAR"}})
+        hook_name = "hook-test"
+
+        hook = Hook.from_dict(hook_dict=hook_dict, hook_name=hook_name)
+        hook.validate()
+
+        self.assertEqual(hook.to_dict(), hook_dict)
+        self.assertEqual(hook.hook_name, hook_name)

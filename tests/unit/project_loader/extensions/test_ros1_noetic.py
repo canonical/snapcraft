@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2020 Canonical Ltd
+# Copyright (C) 2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,22 +16,22 @@
 
 import pytest
 
-from snapcraft.internal.project_loader._extensions.ros2_foxy import (
-    ExtensionImpl as Ros2FoxyExtension,
+from snapcraft.internal.project_loader._extensions.ros1_noetic import (
+    ExtensionImpl as Ros1NoeticExtension,
 )
 
 
-@pytest.fixture(params=[Ros2FoxyExtension])
+@pytest.fixture(params=[Ros1NoeticExtension])
 def extension_class(request):
     return request.param
 
 
 def test_extension(extension_class):
-    ros2_extension = extension_class(
-        extension_name="ros2-foxy", yaml_data=dict(base="core20")
+    ros1_extension = extension_class(
+        extension_name="ros1-noetic", yaml_data=dict(base="core20")
     )
 
-    assert ros2_extension.root_snippet == {
+    assert ros1_extension.root_snippet == {
         "package-repositories": [
             {
                 "components": ["main"],
@@ -40,31 +40,31 @@ def test_extension(extension_class):
                 "key-server": "keyserver.ubuntu.com",
                 "suites": ["focal"],
                 "type": "apt",
-                "url": "http://repo.ros2.org/ubuntu/main",
+                "url": "http://packages.ros.org/ros/ubuntu",
             }
         ]
     }
 
-    assert ros2_extension.app_snippet == {
-        "command-chain": ["snap/command-chain/ros2-launch"],
+    assert ros1_extension.app_snippet == {
+        "command-chain": ["snap/command-chain/ros1-launch"],
         "environment": {
-            "PYTHONPATH": "$SNAP/opt/ros/foxy/lib/python3.8/site-packages:$SNAP/usr/lib/python3/dist-packages:${PYTHONPATH}",
-            "ROS_VERSION": "2",
-            "ROS_DISTRO": "foxy",
+            "PYTHONPATH": "$SNAP/opt/ros/noetic/lib/python3.8/site-packages:$SNAP/usr/lib/python3/dist-packages:${PYTHONPATH}",
+            "ROS_VERSION": "1",
+            "ROS_DISTRO": "noetic",
         },
     }
 
-    assert ros2_extension.part_snippet == {
-        "build-environment": [{"ROS_VERSION": "2"}, {"ROS_DISTRO": "foxy"}],
+    assert ros1_extension.part_snippet == {
+        "build-environment": [{"ROS_VERSION": "1"}, {"ROS_DISTRO": "noetic"}]
     }
 
-    assert ros2_extension.parts == {
-        "ros2-foxy-extension": {
-            "build-packages": ["ros-foxy-ros-core"],
+    assert ros1_extension.parts == {
+        "ros1-noetic-extension": {
+            "build-packages": ["ros-noetic-catkin"],
             "override-build": "install -D -m 0755 launch "
-            "${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros2-launch",
+            "${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros1-launch",
             "plugin": "nil",
-            "source": "$SNAPCRAFT_EXTENSIONS_DIR/ros2",
+            "source": "$SNAPCRAFT_EXTENSIONS_DIR/ros1",
         }
     }
 

@@ -29,6 +29,7 @@ class Hook:
         *,
         hook_name: str,
         command_chain: Optional[List[str]] = None,
+        environment: Optional[Dict[str, str]] = None,
         plugs: Optional[List[str]] = None,
         passthrough: Optional[Dict[str, Any]] = None,
     ) -> None:
@@ -37,6 +38,10 @@ class Hook:
         self.command_chain: List[str] = list()
         if command_chain:
             self.command_chain = command_chain
+
+        self.environment: Dict[str, str] = dict()
+        if environment:
+            self.environment = environment
 
         self.plugs: List[str] = list()
         if plugs:
@@ -84,9 +89,15 @@ class Hook:
     def from_dict(cls, hook_dict: Dict[str, Any], hook_name: str) -> "Hook":
         """Create hook from dictionary."""
 
+        environment = hook_dict.get("environment", dict())
+        for k, v in environment.items():
+            # Ensure alll environment values are converted to string.
+            environment[k] = str(v)
+
         return Hook(
             hook_name=hook_name,
             command_chain=hook_dict.get("command-chain", None),
+            environment=environment,
             plugs=hook_dict.get("plugs", None),
             passthrough=hook_dict.get("passthrough", None),
         )
@@ -98,6 +109,9 @@ class Hook:
 
         if self.command_chain:
             hook_dict["command-chain"] = self.command_chain
+
+        if self.environment:
+            hook_dict["environment"] = self.environment
 
         if self.plugs:
             hook_dict["plugs"] = self.plugs
