@@ -49,6 +49,7 @@ class RosPlugin(PluginV2):
     def out_of_source_build(self):
         return True
 
+    @abc.abstractmethod
     def _get_workspace_activation_commands(self) -> List[str]:
         """Return a list of commands source a ROS workspace.
 
@@ -60,24 +61,6 @@ class RosPlugin(PluginV2):
         snapcraftctl can be used in the script to call out to snapcraft
         specific functionality.
         """
-
-        # There are a number of unbound vars, disable flag
-        # after saving current state to restore after.
-        return [
-            'state="$(set +o)"',
-            "set +u",
-            'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO/setup.sh ]; then',
-            "set -- --local",
-            "_CATKIN_SETUP_DIR={path} . {path}/setup.sh".format(
-                path='"${SNAPCRAFT_PART_INSTALL}"/opt/ros/$ROS_DISTRO'
-            ),
-            "set -- --local --extend",
-            "else",
-            "set -- --local",
-            "fi",
-            ". /opt/ros/$ROS_DISTRO/setup.sh",
-            'eval "${state}"',
-        ]
 
     @abc.abstractmethod
     def _get_build_commands(self) -> List[str]:
@@ -120,15 +103,15 @@ class RosPlugin(PluginV2):
                     os.path.abspath(__file__),
                     "stage-runtime-dependencies",
                     "--part-src",
-                    "$SNAPCRAFT_PART_SRC",
+                    '"${SNAPCRAFT_PART_SRC}"',
                     "--part-install",
-                    "$SNAPCRAFT_PART_INSTALL",
+                    '"${SNAPCRAFT_PART_INSTALL}"',
                     "--ros-version",
-                    "$ROS_VERSION",
+                    '"${ROS_VERSION}"',
                     "--ros-distro",
-                    "$ROS_DISTRO",
+                    '"${ROS_DISTRO}"',
                     "--target-arch",
-                    "$SNAPCRAFT_TARGET_ARCH",
+                    '"${SNAPCRAFT_TARGET_ARCH}"',
                 ]
             )
         ]
@@ -138,8 +121,8 @@ class RosPlugin(PluginV2):
             self._get_workspace_activation_commands()
             + [
                 "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep init; fi",
-                "rosdep update --include-eol-distros --rosdistro $ROS_DISTRO",
-                "rosdep install --default-yes --ignore-packages-from-source --from-paths $SNAPCRAFT_PART_SRC",
+                'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
+                'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC}"',
             ]
             + self._get_build_commands()
             + self._get_stage_runtime_dependencies_commands()

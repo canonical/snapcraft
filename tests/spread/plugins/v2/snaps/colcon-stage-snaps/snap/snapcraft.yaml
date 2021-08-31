@@ -1,0 +1,28 @@
+name: colcon-stage-snaps
+version: '1.0'
+summary: ROS 2 stage-snaps test
+description: Verify that ROS 2 stage-snaps are checked for dependencies.
+confinement: strict
+base: core20
+
+parts:
+  colcon-part:
+    plugin: colcon
+    source: .
+    build-packages: [g++, make]
+    stage-packages: [ros-foxy-ros2launch]
+    stage-snaps: [test-snapcraft-fake-ros2-package-core20/latest/edge]
+
+apps:
+  colcon-stage-snaps:
+    command: opt/ros/foxy/bin/ros2 launch test_minimal_subscriber talker_subscriber.launch.py
+    plugs: [network, network-bind]
+    extensions: [ros2-foxy]
+  subscriber:
+    command: opt/ros/foxy/bin/ros2 run test_minimal_subscriber test_minimal_subscriber_node
+    plugs: [network, network-bind]
+    extensions: [ros2-foxy]
+  publisher:
+    command: opt/ros/foxy/bin/ros2 run test_minimal_publisher test_minimal_publisher_node
+    plugs: [network, network-bind]
+    extensions: [ros2-foxy]

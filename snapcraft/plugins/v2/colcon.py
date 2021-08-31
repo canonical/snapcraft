@@ -119,17 +119,44 @@ class ColconPlugin(_ros.RosPlugin):
 
         return env
 
+    def _get_workspace_activation_commands(self) -> List[str]:
+        """Return a list of commands source a ROS 2 workspace.
+
+        The commands returned will be run before doing anything else.
+        They will be run in a single shell instance with the rest of
+        the build step, so these commands can affect the commands that
+        follow.
+
+        snapcraftctl can be used in the script to call out to snapcraft
+        specific functionality.
+        """
+
+        # There are a number of unbound vars, disable flag
+        # after saving current state to restore after.
+        return [
+            'state="$(set +o)"',
+            "set +u",
+            # If it exists, source the stage-snap underlay
+            'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/setup.sh ]; then',
+            "COLCON_CURRENT_PREFIX={path} . {path}/setup.sh".format(
+                path='"${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap'
+            ),
+            "fi",
+            '. /opt/ros/"${ROS_DISTRO}"/local_setup.sh',
+            'eval "${state}"',
+        ]
+
     def _get_build_commands(self) -> List[str]:
         cmd = [
             "colcon",
             "build",
             "--base-paths",
-            "$SNAPCRAFT_PART_SRC",
+            '"${SNAPCRAFT_PART_SRC}"',
             "--build-base",
-            "$SNAPCRAFT_PART_BUILD",
+            '"${SNAPCRAFT_PART_BUILD}"',
             "--merge-install",
             "--install-base",
-            "$SNAPCRAFT_PART_INSTALL",
+            '"${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap',
         ]
 
         if self.options.colcon_packages_ignore:
@@ -145,6 +172,12 @@ class ColconPlugin(_ros.RosPlugin):
             cmd.extend(["--catkin-cmake-args", *self.options.colcon_catkin_cmake_args])
 
         # Specify the number of workers
-        cmd.extend(["--parallel-workers", "${SNAPCRAFT_PARALLEL_BUILD_COUNT}"])
+        cmd.extend(["--parallel-workers", '"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"'])
 
-        return [" ".join(cmd)]
+        return [" ".join(cmd)] + [
+            # Remove the COLCON_IGNORE marker so that, at staging,
+            # catkin can crawl the entire folder to look up for packages.
+            'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE ]; then',
+            'rm "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE',
+            "fi",
+        ]

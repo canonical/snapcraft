@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>test_minimal_subscriber</name>
+  <version>0.0.0</version>
+  <description>A description</description>
+  <maintainer email="me@example.com">me</maintainer>
+  <license>GPLv3</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>test_minimal_publisher</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

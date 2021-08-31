@@ -1,0 +1,51 @@
+name: test-snapcraft-fake-ros2-package-core20
+base: core20
+version: '0.1'
+summary: Bare-bones ROS 2 dependency for snapcraft CLI test
+description: |
+  This snap contains a single unusable ROS 2 package. This snap is not meant to
+  be used for anything other than snapcraft CLI tests.
+
+grade: stable
+confinement: strict
+architectures:
+  - build-on: amd64
+  - build-on: arm64
+
+package-repositories:
+  - components:
+      - main
+    formats:
+      - deb
+    key-id: C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+    key-server: keyserver.ubuntu.com
+    suites:
+      - focal
+    type: apt
+    url: http://repo.ros2.org/ubuntu/main
+
+parts:
+  ros2-foxy-extension:
+    build-packages:
+      - python3-colcon-common-extensions
+      - ros-foxy-ros-core
+    stage-packages:
+      - ros-foxy-ros2run
+    override-build: install -D -m 0755 launch ${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros2-launch
+    plugin: nil
+    source: $SNAPCRAFT_EXTENSIONS_DIR/ros2
+  colcon-part:
+    plugin: colcon
+    source: .
+    build-environment:
+      - ROS_DISTRO: foxy
+
+apps:
+  test-snapcraft-fake-ros2-package-core20:
+    command: opt/ros/foxy/bin/ros2 run test_minimal_publisher test_minimal_publisher_node
+    plugs: [network, network-bind]
+    command-chain:
+      - snap/command-chain/ros2-launch
+    environment:
+      PYTHONPATH: $SNAP/opt/ros/foxy/lib/python3.8/site-packages:$SNAP/usr/lib/python3/dist-packages:${PYTHONPATH}
+      ROS_DISTRO: foxy
