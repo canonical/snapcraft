@@ -98,6 +98,7 @@ class CrystalPlugin(PluginV1):
 
         with contextlib.suppress(FileNotFoundError):
             shutil.rmtree(os.path.join(self.sourcedir, "bin"))
+            shutil.rmtree(os.path.join(self.sourcedir, "lib"))
 
     def build(self):
         super().build()
