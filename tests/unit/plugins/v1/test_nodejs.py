@@ -41,7 +41,7 @@ class NodePluginBaseTest(PluginsV1BaseTestCase):
             nodejs_version = nodejs._NODEJS_VERSION
             nodejs_package_manager = "npm"
             nodejs_yarn_version = ""
-            source = "."
+            source_subdir = "."
 
         self.options = Options()
 
@@ -74,7 +74,7 @@ class NodePluginBaseTest(PluginsV1BaseTestCase):
         single_bin=False,
         skip_package_json=False,
     ):
-        for directory in (plugin.sourcedir, plugin.builddir):
+        for directory in (os.path.join(plugin.sourcedir, plugin.options.source_subdir), plugin.builddir):
             os.makedirs(directory)
             if not skip_package_json:
                 with open(os.path.join(directory, "package.json"), "w") as json_file:
@@ -477,13 +477,13 @@ def nodejs_plugin(project, request):
         nodejs_version = nodejs._NODEJS_VERSION
         nodejs_package_manager = request.param
         nodejs_yarn_version = ""
-        source = "."
+        source_subdir = "."
 
     return nodejs.NodePlugin("test-part", Options(), project)
 
 
 def _create_assets(nodejs_plugin, mock_tar, package_name="test-nodejs"):
-    for directory in (nodejs_plugin.sourcedir, nodejs_plugin.builddir):
+    for directory in (os.path.join(nodejs_plugin.sourcedir, nodejs_plugin.options.source_subdir), nodejs_plugin.builddir):
         directory_path = pathlib.Path(directory)
         directory_path.mkdir(parents=True)
 
