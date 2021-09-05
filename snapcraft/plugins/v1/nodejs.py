@@ -149,7 +149,8 @@ class NodePlugin(PluginV1):
         # install node and yarn.
         if self.options.source_subdir != None:
             self._install_node_and_yarn(
-                rootdir=os.path.join(self.options.source_subdir, self.sourcedir))
+                rootdir=os.path.join(self.options.source_subdir, self.sourcedir)
+            )
         else:
             self._install_node_and_yarn(rootdir=self.sourcedir)
 
