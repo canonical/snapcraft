@@ -143,10 +143,10 @@ class TestCommandMangle:
             dict(
                 command_path=None,
                 command_value="sh bar",
-                expected_command="/bin/sh bar",
+                expected_command="/usr/bin/sh bar",
                 expected_logs=[
-                    "The command 'sh' for 'sh bar' was resolved to '/bin/sh'.",
-                    "The command 'sh bar' has been changed to '/bin/sh bar'.",
+                    "The command 'sh' for 'sh bar' was resolved to '/usr/bin/sh'.",
+                    "The command 'sh bar' has been changed to '/usr/bin/sh bar'.",
                 ],
                 shebang="",
                 interpreter_path=None,

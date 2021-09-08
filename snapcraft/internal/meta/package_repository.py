@@ -268,7 +268,7 @@ class PackageRepositoryApt(PackageRepository):
             )
 
     @classmethod  # noqa: C901
-    def unmarshal(cls, data: Dict[str, Any]) -> "PackageRepositoryApt":
+    def unmarshal(cls, data: Dict[str, Any]) -> "PackageRepositoryApt":  # noqa: C901
         if not isinstance(data, dict):
             raise errors.PackageRepositoryValidationError(
                 url=str(data),
