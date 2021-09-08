@@ -755,6 +755,17 @@ class TestOrganize:
                 expected_overwrite=None,
             ),
         ),
+        (
+            "*_for_hidden_files",
+            dict(
+                setup_dirs=["foo"],
+                setup_files=["foo/.hidden"],
+                organize_set={"foo/*": "foooo/"},
+                expected=[([".hidden"], "foooo")],
+                expected_message=None,
+                expected_overwrite=None
+            )
+        )
     ]
 
     def _organize_and_assert(
