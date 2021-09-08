@@ -578,10 +578,11 @@ class MigratableFilesetsTestCase(unit.TestCase):
         open("install/foo/2", "w").close()
         open("install/foo/bar/3", "w").close()
         open("install/foo/bar/baz/4", "w").close()
+        open("install/.5", 'w').close()
 
     def test_migratable_filesets_everything(self):
         files, dirs = pluginhandler._migratable_filesets(["*"], "install")
-        self.assertThat(files, Equals({"1", "foo/2", "foo/bar/3", "foo/bar/baz/4"}))
+        self.assertThat(files, Equals({"1", "foo/2", "foo/bar/3", "foo/bar/baz/4", ".5"}))
         self.assertThat(dirs, Equals({"foo", "foo/bar", "foo/bar/baz"}))
 
     def test_migratable_filesets_foo(self):
