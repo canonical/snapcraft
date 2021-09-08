@@ -1290,12 +1290,12 @@ def _migrate_files(
 
 def _organize_filesets(part_name, fileset, base_dir, overwrite):
     for key in sorted(fileset, key=lambda x: ["*" in x, x]):
-        src = os.path.join(base_dir, key)
-        # Remove the leading slash if there so os.path.join
-        # actually joins
-        dst = os.path.join(base_dir, fileset[key].lstrip("/"))
+        base_dir = pathlib.Path(base_dir)
 
-        sources = iglob(src, recursive=True)
+        # Have to remove the leading slash
+        dst = base_dir / fileset[key].lstrip("/")
+
+        sources = pathlib.Path(base_dir).glob(key)
 
         # Keep track of the number of glob expansions so we can properly error if more
         # than one tries to organize to the same file
@@ -1303,22 +1303,22 @@ def _organize_filesets(part_name, fileset, base_dir, overwrite):
         for src in sources:
             src_count += 1
 
-            if os.path.isdir(src) and "*" not in key:
+            if src.is_dir() and "*" not in key:
                 file_utils.link_or_copy_tree(src, dst)
                 # TODO create alternate organization location to avoid
                 # deletions.
                 shutil.rmtree(src)
                 continue
-            elif os.path.isfile(dst):
+            elif dst.is_file():
                 if overwrite and src_count <= 1:
                     with contextlib.suppress(FileNotFoundError):
-                        os.remove(dst)
+                        dst.unlink()
                 elif src_count > 1:
                     raise errors.SnapcraftOrganizeError(
                         part_name,
                         "multiple files to be organized into {!r}. If this is supposed "
                         "to be a directory, end it with a forward slash.".format(
-                            os.path.relpath(dst, base_dir)
+                            dst.relative_to(base_dir).as_posix()
                         ),
                     )
                 else:
@@ -1326,18 +1326,21 @@ def _organize_filesets(part_name, fileset, base_dir, overwrite):
                         part_name,
                         "trying to organize file {key!r} to {dst!r}, but {dst!r} "
                         "already exists".format(
-                            key=key, dst=os.path.relpath(dst, base_dir)
+                            key=key, dst=dst.relative_to(base_dir).as_posix()
                         ),
                     )
-            if os.path.isdir(dst) and overwrite:
-                real_dst = os.path.join(dst, os.path.basename(src))
-                if os.path.isdir(real_dst):
+            if dst.is_dir() and overwrite:
+                real_dst = dst / src.name
+                if real_dst.is_dir(): 
                     shutil.rmtree(real_dst)
                 else:
                     with contextlib.suppress(FileNotFoundError):
-                        os.remove(real_dst)
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
-            shutil.move(src, dst)
+                        real_dst.unlink()
+            
+            # pathlib doesn't seem to care about the trailing slash
+            if fileset[key].endswith('/'):
+                dst.mkdir(parents=True, exist_ok=True)
+            shutil.move(src.as_posix(), dst)
 
 
 def _clean_migrated_files(snap_files, snap_dirs, directory):
