@@ -1215,14 +1215,15 @@ def _migratable_filesets(fileset, srcdir):
     snap_files = include_files - exclude_files
     for exclude_dir in exclude_dirs:
         # TODO: Change as_posix usage to is_relative_to (Python 3.9+)
-        snap_files = {x for x in snap_files if not x.as_posix().startswith(exclude_dir.as_posix() + "/")}
+        snap_files = {
+            x
+            for x in snap_files
+            if not x.as_posix().startswith(exclude_dir.as_posix() + "/")
+        }
 
     # Separate dirs from files.
     snap_dirs = {
-        x
-        for x in snap_files
-        if (srcdir / x).is_dir()
-        and not (srcdir / x).is_symlink()
+        x for x in snap_files if (srcdir / x).is_dir() and not (srcdir / x).is_symlink()
     }
 
     # Remove snap_dirs from snap_files.
@@ -1331,14 +1332,13 @@ def _organize_filesets(part_name, fileset, base_dir, overwrite):
                     )
             if dst.is_dir() and overwrite:
                 real_dst = dst / src.name
-                if real_dst.is_dir(): 
+                if real_dst.is_dir():
                     shutil.rmtree(real_dst)
                 else:
                     with contextlib.suppress(FileNotFoundError):
                         real_dst.unlink()
-            
             # pathlib doesn't seem to care about the trailing slash
-            if fileset[key].endswith('/'):
+            if fileset[key].endswith("/"):
                 dst.mkdir(parents=True, exist_ok=True)
             shutil.move(src.as_posix(), dst)
 
@@ -1397,12 +1397,8 @@ def _generate_include_set(directory, includes):
             include_files |= set(matches)
         else:
             include_files |= {pathlib.Path(directory) / include_pattern}
-    
-    include_dirs = {
-        x for x in include_files if x.is_dir() and not x.is_symlink()
-    }
+    include_dirs = {x for x in include_files if x.is_dir() and not x.is_symlink()}
     include_files = {x.relative_to(directory) for x in include_files}
-
     # Expand includeFiles, so that an exclude like '*/*.so' will still match
     # files from an include like 'lib'
     for include_dir in include_dirs:
@@ -1424,9 +1420,7 @@ def _generate_exclude_set(directory, excludes):
         matches = pathlib.Path(directory).glob(exclude_pattern)
         exclude_files |= set(matches)
 
-    exclude_dirs = {
-        x.relative_to(directory) for x in exclude_files if x.is_dir()
-    }
+    exclude_dirs = {x.relative_to(directory) for x in exclude_files if x.is_dir()}
     exclude_files = {x.relative_to(directory) for x in exclude_files}
 
     return exclude_files, exclude_dirs
