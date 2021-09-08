@@ -1205,6 +1205,7 @@ def _expand_part_properties(part_properties, part_schema):
 
 
 def _migratable_filesets(fileset, srcdir):
+    srcdir = pathlib.Path(srcdir)
     includes, excludes = _get_file_list(fileset)
 
     include_files = _generate_include_set(srcdir, includes)
@@ -1213,17 +1214,16 @@ def _migratable_filesets(fileset, srcdir):
     # Chop files, including whole trees if any dirs are mentioned.
     snap_files = include_files - exclude_files
     for exclude_dir in exclude_dirs:
-        snap_files = set([x for x in snap_files if not x.startswith(exclude_dir + "/")])
+        # TODO: Change as_posix usage to is_relative_to (Python 3.9+)
+        snap_files = {x for x in snap_files if not x.as_posix().startswith(exclude_dir.as_posix() + "/")}
 
     # Separate dirs from files.
-    snap_dirs = set(
-        [
-            x
-            for x in snap_files
-            if os.path.isdir(os.path.join(srcdir, x))
-            and not os.path.islink(os.path.join(srcdir, x))
-        ]
-    )
+    snap_dirs = {
+        x
+        for x in snap_files
+        if (srcdir / x).is_dir()
+        and not (srcdir / x).is_symlink()
+    }
 
     # Remove snap_dirs from snap_files.
     snap_files = snap_files - snap_dirs
@@ -1391,29 +1391,28 @@ def _get_file_list(stage_set):
 
 def _generate_include_set(directory, includes):
     include_files = set()
-    for include in includes:
-        if "*" in include:
-            pattern = os.path.join(directory, include)
-            matches = iglob(pattern, recursive=True)
+    for include_pattern in includes:
+        if "*" in include_pattern:
+            matches = pathlib.Path(directory).glob(include_pattern)
             include_files |= set(matches)
         else:
-            include_files |= set([os.path.join(directory, include)])
-
-    include_dirs = [
-        x for x in include_files if os.path.isdir(x) and not os.path.islink(x)
-    ]
-    include_files = set([os.path.relpath(x, directory) for x in include_files])
+            include_files |= {pathlib.Path(directory) / include_pattern}
+    
+    include_dirs = {
+        x for x in include_files if x.is_dir() and not x.is_symlink()
+    }
+    include_files = {x.relative_to(directory) for x in include_files}
 
     # Expand includeFiles, so that an exclude like '*/*.so' will still match
     # files from an include like 'lib'
     for include_dir in include_dirs:
         for root, dirs, files in os.walk(include_dir):
-            include_files |= set(
-                [os.path.relpath(os.path.join(root, d), directory) for d in dirs]
-            )
-            include_files |= set(
-                [os.path.relpath(os.path.join(root, f), directory) for f in files]
-            )
+            include_files |= {
+                (pathlib.Path(root) / d).relative_to(directory) for d in dirs
+            }
+            include_files |= {
+                (pathlib.Path(root) / f).relative_to(directory) for f in files
+            }
 
     return include_files
 
@@ -1421,15 +1420,14 @@ def _generate_include_set(directory, includes):
 def _generate_exclude_set(directory, excludes):
     exclude_files = set()
 
-    for exclude in excludes:
-        pattern = os.path.join(directory, exclude)
-        matches = iglob(pattern, recursive=True)
+    for exclude_pattern in excludes:
+        matches = pathlib.Path(directory).glob(exclude_pattern)
         exclude_files |= set(matches)
 
-    exclude_dirs = [
-        os.path.relpath(x, directory) for x in exclude_files if os.path.isdir(x)
-    ]
-    exclude_files = set([os.path.relpath(x, directory) for x in exclude_files])
+    exclude_dirs = {
+        x.relative_to(directory) for x in exclude_files if x.is_dir()
+    }
+    exclude_files = {x.relative_to(directory) for x in exclude_files}
 
     return exclude_files, exclude_dirs
 
