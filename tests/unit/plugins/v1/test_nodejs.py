@@ -74,7 +74,10 @@ class NodePluginBaseTest(PluginsV1BaseTestCase):
         single_bin=False,
         skip_package_json=False,
     ):
-        for directory in (os.path.join(plugin.sourcedir, plugin.options.source_subdir), plugin.builddir):
+        for directory in (
+            os.path.join(plugin.sourcedir, plugin.options.source_subdir),
+            plugin.builddir,
+        ):
             os.makedirs(directory)
             if not skip_package_json:
                 with open(os.path.join(directory, "package.json"), "w") as json_file:
@@ -483,7 +486,10 @@ def nodejs_plugin(project, request):
 
 
 def _create_assets(nodejs_plugin, mock_tar, package_name="test-nodejs"):
-    for directory in (os.path.join(nodejs_plugin.sourcedir, nodejs_plugin.options.source_subdir), nodejs_plugin.builddir):
+    for directory in (
+        os.path.join(nodejs_plugin.sourcedir, nodejs_plugin.options.source_subdir),
+        nodejs_plugin.builddir,
+    ):
         directory_path = pathlib.Path(directory)
         directory_path.mkdir(parents=True)
 
