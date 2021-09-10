@@ -141,8 +141,8 @@ class CommandWithoutWrapperAllowedTestErrors(unit.TestCase):
         self.assertThat(
             self.fake_logger.output.strip(),
             Equals(
-                "The command 'sh' for 'sh' was resolved to '/bin/sh'.\n"
-                "The command 'sh' has been changed to '/bin/sh'."
+                "The command 'sh' for 'sh' was resolved to '/usr/bin/sh'.\n"
+                "The command 'sh' has been changed to '/usr/bin/sh'."
             ),
         )
 
@@ -301,13 +301,15 @@ class CommandWithWrapperTest(unit.TestCase):
 
         self.expectThat(cmd.command, Equals("command-foo.wrapper"))
         self.assertThat(wrapper_path, FileExists())
-        self.assertThat(wrapper_path, FileContains('#!/bin/sh\nexec /bin/sh "$@"\n'))
+        self.assertThat(
+            wrapper_path, FileContains('#!/bin/sh\nexec /usr/bin/sh "$@"\n')
+        )
         self.assertThat(
             self.fake_logger.output.strip(),
             Equals(
-                "The command 'sh' for 'sh' was resolved to '/bin/sh'.\n"
-                "The command 'sh' has been changed to '/bin/sh'.\n"
-                "A shell wrapper will be generated for command '/bin/sh' "
+                "The command 'sh' for 'sh' was resolved to '/usr/bin/sh'.\n"
+                "The command 'sh' has been changed to '/usr/bin/sh'.\n"
+                "A shell wrapper will be generated for command '/usr/bin/sh' "
                 "as it does not conform with the command pattern expected "
                 "by the runtime. Commands must be relative to the prime "
                 "directory and can only consist of alphanumeric characters, "

@@ -1,5 +1,5 @@
 name: snapcraft
-base: core18
+base: core20
 summary: easily create snaps
 description: |
     Snapcraft aims to make upstream developers' lives easier and as such is not
@@ -18,7 +18,7 @@ apps:
       PATH: "/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
       # https://github.com/lxc/pylxd/pull/361
       PYLXD_WARNINGS: "none"
-    command: usr/bin/python3 $SNAP/bin/snapcraft
+    command: bin/python $SNAP/bin/snapcraft
     completer: snapcraft-completion
 
 build-packages:
@@ -33,6 +33,8 @@ build-packages:
   - libxslt1-dev
   - libyaml-dev
   - patch
+  - pkg-config
+  - python3-dev
   - sed
 
 parts:
@@ -47,12 +49,16 @@ parts:
     source: https://github.com/snapcore/patchelf
     source-type: git
     source-branch: '0.9+snapcraft'
+    autotools-configure-parameters:
+      - --prefix=/
     build-packages:
       - g++
       - make
     override-build: |
       snapcraftctl build
       make check
+    prime:
+      - bin/patchelf
 
   snapcraft-libs:
     plugin: nil
@@ -64,10 +70,21 @@ parts:
         - execstack
         - gpg
         - gpgv
-        - libffi6
+        - libffi7
         - libsodium23
         - libxml2
         - libxslt1.1
+        - libpython3-stdlib
+        - libpython3.8-stdlib
+        - libpython3.8-minimal
+        - python3-pip
+        - python3-setuptools
+        - python3-wheel
+        - python3-venv
+        - python3-minimal
+        - python3-distutils
+        - python3-pkg-resources
+        - python3.8-minimal
         - squashfs-tools
         - xdelta3
     override-build: |
@@ -79,6 +96,7 @@ parts:
       # Remove so the link can be recreated on re-builds
       rm -f "$TRIPLET_PATH/libsodium.so"
       ln -s "$LIBSODIUM" "$TRIPLET_PATH/libsodium.so"
+      $SNAPCRAFT_PROJECT_DIR/tools/snapcraft-override-build.sh
 
   snapcraft:
     source: .
@@ -86,6 +104,9 @@ parts:
     python-packages:
         # Lock down cryptography to 3.4 to override the rust dependency.
         - cryptography==3.4
+        - wheel
+        - pip
+        - setuptools
     requirements:
         - requirements.txt
     organize:
@@ -95,11 +116,8 @@ parts:
     build-environment:
         - "CRYPTOGRAPHY_DONT_BUILD_RUST": "1"
         - "SODIUM_INSTALL": "system"
+        - "CFLAGS": "$(pkg-config python-3.8 yaml-0.1 --cflags)"
     override-build: |
-        # pip 20.2 breaks python3-apt, so we pin
-        # the version of pip installed before building
-        PYTHONHOME=/usr PYTHONUSERBASE=$SNAPCRAFT_PART_INSTALL $SNAPCRAFT_PART_INSTALL/usr/bin/python3 -m pip install pip==20.1 --user
-
         snapcraftctl build
 
         version="$(python3 setup.py --version)"
@@ -107,13 +125,5 @@ parts:
 
         [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
         snapcraftctl set-grade "$grade"
-
-        $SNAPCRAFT_PROJECT_DIR/tools/snapcraft-override-build.sh
-    override-prime: |
-        snapcraftctl prime
-
-        echo "Compiling pyc files..."
-        # This is the last step, let's now compile all our pyc files.
-        "$SNAPCRAFT_PART_INSTALL/usr/bin/python3" -m compileall -q .
-
+        ln -sf ../usr/bin/python3.8 $SNAPCRAFT_PART_INSTALL/bin/python3
     after: [snapcraft-libs]

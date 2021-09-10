@@ -60,7 +60,6 @@ class AptCache(ContextDecorator):
 
     def __exit__(self, *exc) -> None:
         self.cache.close()
-        self.cache = None
 
     def _configure_apt(self):
         # Do not install recommends.
@@ -150,8 +149,8 @@ class AptCache(ContextDecorator):
     def _set_pkg_version(self, package: apt.Package, version: str) -> None:
         # Set candidate version to a specific version if available
         if version in package.versions:
-            version = package.versions.get(version)
-            package.candidate = version
+            package_version = package.versions.get(version)
+            package.candidate = package_version
         else:
             raise errors.PackageNotFoundError("{}={}".format(package.name, version))
 
@@ -184,17 +183,18 @@ class AptCache(ContextDecorator):
                 resolve_virtual_packages=resolve_virtual_packages,
             )
 
+        package_version = None
         if package_name in self.cache:
             if self.cache[package_name].installed is not None:
-                return self.cache[package_name].installed.version
-        return None
+                package_version = self.cache[package_name].installed.version  # type: ignore
+        return package_version
 
     def fetch_archives(self, download_path: Path) -> List[Tuple[str, str, Path]]:
         """Fetches archives, list of (<package-name>, <package-version>, <dl-path>)."""
         downloaded = list()
         for package in self.cache.get_changes():
             try:
-                dl_path = package.candidate.fetch_binary(str(download_path))
+                dl_path = package.candidate.fetch_binary(str(download_path))  # type: ignore
             except apt.package.FetchError as e:
                 raise errors.PackageFetchError(str(e))
 
@@ -223,7 +223,7 @@ class AptCache(ContextDecorator):
                 package_names_missing_installation_candidate
             )
 
-        return [(p.name, p.candidate.version) for p in marked_install_packages]
+        return [(p.name, p.candidate.version) for p in marked_install_packages]  # type: ignore
 
     def mark_packages(self, package_names: Set[str]) -> None:
         for name in package_names:

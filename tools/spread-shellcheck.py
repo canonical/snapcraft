@@ -140,7 +140,7 @@ def checksection(data):
 def checkfile(path):
     logging.debug("checking file %s", path)
     with open(path) as inf:
-        data = yaml.load(inf)
+        data = yaml.safe_load(inf)
 
     errors = ShellcheckError(path)
 

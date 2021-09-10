@@ -276,8 +276,8 @@ class Snap:
                 self.assumes.add("command-chain")
                 return
 
-    @classmethod  # noqa: C901
-    def from_dict(cls, snap_dict: Dict[str, Any]) -> "Snap":
+    @classmethod
+    def from_dict(cls, snap_dict: Dict[str, Any]) -> "Snap":  # noqa: C901
         snap_dict = deepcopy(snap_dict)
 
         # Using pop() so we can catch if we *miss* fields
