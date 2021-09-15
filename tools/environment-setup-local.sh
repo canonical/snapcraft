@@ -33,6 +33,7 @@ python3 -m venv "${SNAPCRAFT_VIRTUAL_ENV_DIR}"
 source "${SNAPCRAFT_VIRTUAL_ENV_DIR}/bin/activate"
 
 # Install python dependencies
+export CRYPTOGRAPHY_DONT_BUILD_RUST=1
 pip install --upgrade wheel pip setuptools
 pip install -r "${SNAPCRAFT_DIR}/requirements-devel.txt"
 pip install -r "${SNAPCRAFT_DIR}/requirements.txt"
