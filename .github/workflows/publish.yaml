@@ -35,7 +35,7 @@ jobs:
       - if: steps.decisions.outputs.PUBLISH == 'true'
         name: Build Snapcraft Snap
         id: build-snapcraft
-        uses: snapcore/action-build@v1
+        uses: snapcore/action-build@v1.0.9
 
       - if: steps.decisions.outputs.PUBLISH == 'true'
         name: Verify Snapcraft Snap
