@@ -496,13 +496,13 @@ class Provider(abc.ABC):
 
         snap_injector.add(snap_name="snapd")
 
-        # Prevent injecting core18 twice.
+        # Prevent injecting core20 twice (Snapcraft's base).
         build_base = self.project._get_build_base()
-        if build_base != "core18":
+        if build_base != "core20":
             snap_injector.add(snap_name=build_base)
 
-        # Inject snapcraft
-        snap_injector.add(snap_name="core18")
+        # Inject snapcraft and its base.
+        snap_injector.add(snap_name="core20")
         snap_injector.add(snap_name="snapcraft")
 
         snap_injector.apply()
