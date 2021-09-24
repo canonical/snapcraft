@@ -34,9 +34,7 @@ except ImportError:
     raise RuntimeError("Snapcraft requires PyYAML to be built with libyaml bindings")
 
 
-def load_yaml_file(
-    yaml_file_path: str, *, warn_duplicate_keys: bool = False
-) -> collections.OrderedDict:
+def load_yaml_file(yaml_file_path: str) -> collections.OrderedDict:
     """Load YAML with wrapped YamlValidationError."""
     with open(yaml_file_path, "rb") as fp:
         bs = fp.read(2)
@@ -48,7 +46,7 @@ def load_yaml_file(
 
     try:
         with open(yaml_file_path, encoding=encoding) as fp:  # type: ignore
-            yaml_contents = load(fp, warn_duplicate_keys=warn_duplicate_keys)  # type: ignore
+            yaml_contents = load(fp)  # type: ignore
     except yaml.MarkedYAMLError as e:
         raise YamlValidationError(
             "{} on line {}, column {}".format(
@@ -72,14 +70,13 @@ def load_yaml_file(
     return yaml_contents
 
 
-def load(stream: Union[TextIO, str], *, warn_duplicate_keys: bool = False) -> Any:
+def load(stream: Union[TextIO, str]) -> Any:
     """Safely load YAML in ordered manner."""
 
     class YamlLoader(_SafeOrderedLoader):
         pass
 
-    YamlLoader.warn_duplicate_keys = warn_duplicate_keys
-    return yaml.load(stream, Loader=YamlLoader)
+    return yaml.load(stream, Loader=_SafeOrderedLoader)
 
 
 def dump(
@@ -100,8 +97,6 @@ def dump(
 
 
 class _SafeOrderedLoader(CSafeLoader):
-    warn_duplicate_keys: bool = False
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -145,8 +140,7 @@ def _check_duplicate_keys(loader, node):
 
 
 def _dict_constructor(loader, node):
-    if loader.warn_duplicate_keys:
-        _check_duplicate_keys(loader, node)
+    _check_duplicate_keys(loader, node)
 
     # Necessary in order to make yaml merge tags work
     loader.flatten_mapping(node)

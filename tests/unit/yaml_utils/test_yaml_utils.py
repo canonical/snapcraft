@@ -46,7 +46,7 @@ def test_load_yaml_file_with_duplicate_warnings(caplog, tmp_path):
     yaml_path = tmp_path / "test.yaml"
     yaml_path.write_text("foo: bar\nfoo: bar2")
 
-    cfg = yaml_utils.load_yaml_file(str(yaml_path), warn_duplicate_keys=True)
+    cfg = yaml_utils.load_yaml_file(str(yaml_path))
 
     assert cfg == {"foo": "bar2"}
     assert [r.message for r in caplog.records] == [
