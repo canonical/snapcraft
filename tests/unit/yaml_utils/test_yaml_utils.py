@@ -54,6 +54,18 @@ def test_load_yaml_file_with_duplicate_warnings(caplog, tmp_path):
     ]
 
 
+def test_load_yaml_file_with_nested_duplicates(caplog, tmp_path):
+    yaml_path = tmp_path / "test.yaml"
+    yaml_path.write_text("foo: bar\nnest:\n  foo: bar2\n  baz: bar3\n  baz: bar4")
+
+    cfg = yaml_utils.load_yaml_file(str(yaml_path))
+
+    assert cfg == {"foo": "bar", "nest": {"foo": "bar2", "baz": "bar4"}}
+    assert [r.message for r in caplog.records] == [
+        "Duplicate key in YAML detected: 'baz'"
+    ]
+
+
 def test_dump_octint(tmp_path):
     output = io.StringIO()
     yaml_utils.dump(dict(number=yaml_utils.OctInt(8)), stream=output)
