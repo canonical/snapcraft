@@ -132,8 +132,8 @@ def _check_duplicate_keys(loader, node):
         try:
             if key_node.value in mappings:
                 logger.warning("Duplicate key in YAML detected: %r", key_node.value)
-                return
-            mappings.add(key_node.value)
+            else:
+                mappings.add(key_node.value)
         except TypeError:
             # Ignore errors for malformed inputs that will be caught later.
             pass
