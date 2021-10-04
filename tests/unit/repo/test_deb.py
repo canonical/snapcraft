@@ -94,7 +94,6 @@ class TestPackages(unit.TestCase):
             [
                 call(stage_cache=self.stage_cache_path, stage_cache_arch="amd64"),
                 call().__enter__(),
-                call().__enter__().update(),
                 call().__enter__().mark_packages({"fake-package"}),
                 call()
                 .__enter__()
@@ -133,7 +132,6 @@ class TestPackages(unit.TestCase):
             [
                 call(stage_cache=self.stage_cache_path, stage_cache_arch="amd64"),
                 call().__enter__(),
-                call().__enter__().update(),
                 call().__enter__().mark_packages(set(package_names)),
                 call().__enter__().unmark_packages({"filtered-pkg-4"}),
                 call().__enter__().fetch_archives(self.debs_path),
