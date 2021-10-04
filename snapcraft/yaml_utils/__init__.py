@@ -16,11 +16,14 @@
 
 import codecs
 import collections
+import logging
 from typing import Any, Dict, Optional, TextIO, Union
 
 import yaml
 
 from snapcraft.yaml_utils.errors import YamlValidationError
+
+logger = logging.getLogger(__name__)
 
 try:
     # The C-based loaders/dumpers aren't available everywhere, but they're much faster.
@@ -69,6 +72,10 @@ def load_yaml_file(yaml_file_path: str) -> collections.OrderedDict:
 
 def load(stream: Union[TextIO, str]) -> Any:
     """Safely load YAML in ordered manner."""
+
+    class YamlLoader(_SafeOrderedLoader):
+        pass
+
     return yaml.load(stream, Loader=_SafeOrderedLoader)
 
 
@@ -92,6 +99,7 @@ def dump(
 class _SafeOrderedLoader(CSafeLoader):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.add_constructor(
             yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _dict_constructor
         )
@@ -117,7 +125,23 @@ def _dict_representer(dumper, data):
     return dumper.represent_dict(data.items())
 
 
+def _check_duplicate_keys(loader, node):
+    mappings = set()
+
+    for key_node, value_node in node.value:
+        try:
+            if key_node.value in mappings:
+                logger.warning("Duplicate key in YAML detected: %r", key_node.value)
+            else:
+                mappings.add(key_node.value)
+        except TypeError:
+            # Ignore errors for malformed inputs that will be caught later.
+            pass
+
+
 def _dict_constructor(loader, node):
+    _check_duplicate_keys(loader, node)
+
     # Necessary in order to make yaml merge tags work
     loader.flatten_mapping(node)
     value = loader.construct_pairs(node)
