@@ -457,7 +457,6 @@ class Ubuntu(BaseRepo):
         with AptCache(
             stage_cache=_STAGE_CACHE_DIR, stage_cache_arch=target_arch
         ) as apt_cache:
-            apt_cache.update()
             apt_cache.mark_packages(set(package_names))
             apt_cache.unmark_packages(filtered_names)
             for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
