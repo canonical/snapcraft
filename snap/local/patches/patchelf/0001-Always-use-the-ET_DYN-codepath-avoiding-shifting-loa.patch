@@ -1,0 +1,35 @@
+From 9734c99f47ba2365825269a1f131e98a17c7c328 Mon Sep 17 00:00:00 2001
+From: William Grant <william.grant@canonical.com>
+Date: Mon, 20 Sep 2021 19:10:15 +1000
+Subject: [PATCH 1/2] Always use the ET_DYN codepath, avoiding shifting load
+ start
+
+The executable codepath of operations like --set-rpath can cause the
+first address of a binary to move earlier, causing segfaults on startup
+of some binaries on e.g.  riscv64 where the default base address matches
+the kernel's mmap_min_addr.
+
+PIE executables, which are the great majority, already use the library
+path, so this must be pretty safe for the remaining few.
+---
+ src/patchelf.cc | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/patchelf.cc b/src/patchelf.cc
+index dbe5ea7..94bb9ca 100644
+--- a/src/patchelf.cc
++++ b/src/patchelf.cc
+@@ -793,8 +793,8 @@ void ElfFile<ElfFileParamNames>::rewriteSections()
+         debug("this is a dynamic library\n");
+         rewriteSectionsLibrary();
+     } else if (rdi(hdr->e_type) == ET_EXEC) {
+-        debug("this is an executable\n");
+-        rewriteSectionsExecutable();
++        debug("this is an executable, but using library codepath to avoid shifting start forward\n");
++        rewriteSectionsLibrary();
+     } else error("unknown ELF type");
+ }
+ 
+-- 
+2.25.1
+
