@@ -54,7 +54,7 @@ class StoreClient:
         else:
             self.auth_client = http_clients.UbuntuOneAuthClient()
 
-        self.snap = SnapAPI(self.client)
+        self.snap = SnapAPI(self.auth_client)
         self.dashboard = DashboardAPI(self.auth_client)
         self._updown = UpDownClient(self.client)
 
