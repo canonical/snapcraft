@@ -89,9 +89,7 @@ append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/mesa-egl"
 # Tell libGL and libva where to find the drivers
 export LIBGL_DRIVERS_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/dri"
 append_dir LD_LIBRARY_PATH "$LIBGL_DRIVERS_PATH"
-if ls "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/dri/"*_drv_video.so 1> /dev/null 2>&1; then
-  prepend_dir LIBVA_DRIVERS_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/dri"
-fi
+append_dir LIBVA_DRIVERS_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/dri"
 
 # Set where the VDPAU drivers are located
 export VDPAU_DRIVER_PATH="/usr/lib/$ARCH/vdpau/"
