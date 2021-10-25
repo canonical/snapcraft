@@ -20,7 +20,7 @@ import re
 import stat
 import tempfile
 from textwrap import dedent
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import fixtures
 import pytest
@@ -1447,6 +1447,26 @@ class StagePackagesTestCase(unit.TestCase):
         self.assertThat(
             raised.message, Equals("The package 'non-existing' was not found.")
         )
+
+    def test_stage_packages_offline(self):
+        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_OFFLINE", "True"))
+        part = self.load_part("offline-test", plugin_name="nil")
+
+        with patch(
+            "snapcraft.internal.pluginhandler.PluginHandler._fetch_stage_packages"
+        ) as fetch_stage_packages, patch(
+            "snapcraft.internal.pluginhandler.PluginHandler._fetch_stage_snaps"
+        ) as fetch_stage_snaps, patch(
+            "snapcraft.internal.pluginhandler.PluginHandler._unpack_stage_packages"
+        ) as unpack_stage_packages, patch(
+            "snapcraft.internal.pluginhandler.PluginHandler._unpack_stage_snaps"
+        ) as unpack_stage_snaps:
+            part.prepare_pull()
+
+        assert fetch_stage_packages.mock_calls == []
+        assert fetch_stage_snaps.mock_calls == []
+        assert unpack_stage_packages.mock_calls == [call()]
+        assert unpack_stage_snaps.mock_calls == [call()]
 
 
 class FilesetsTestCase(unit.TestCase):

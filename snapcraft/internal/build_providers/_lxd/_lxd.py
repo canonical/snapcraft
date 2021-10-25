@@ -24,7 +24,7 @@ from textwrap import dedent
 from time import sleep
 from typing import Dict, Optional, Sequence
 
-from snapcraft.internal import repo
+from snapcraft.internal import common, repo
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 
 from .._base_provider import Provider, errors
@@ -399,6 +399,10 @@ class LXD(Provider):
             self.echoer.warning("Timed out waiting for systemd to be ready...")
 
     def _wait_for_network(self) -> None:
+        if common.is_offline():
+            logger.debug("Offline mode, don't wait for network.")
+            return
+
         self.echoer.wrapped("Waiting for network to be ready...")
         for i in range(40):
             try:
