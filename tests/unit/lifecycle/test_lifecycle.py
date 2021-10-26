@@ -33,7 +33,7 @@ import snapcraft
 from snapcraft.internal import errors, lifecycle, pluginhandler, project_loader, steps
 from snapcraft.internal.lifecycle._runner import _replace_in_part
 from snapcraft.project import Project
-from tests import fixture_setup
+from tests import fixture_setup, unit
 
 from . import LifecycleTestBase
 
@@ -449,3 +449,43 @@ class RecordSnapcraftYamlTestCase(LifecycleTestBase):
             os.path.join(steps.PRIME.name, "snap", "snapcraft.yaml"),
             FileContains(expected),
         )
+
+
+class OfflineTestCase(unit.TestCase):
+    def test_install_build_packages(self):
+        with mock.patch("snapcraft.repo.Repo.install_build_packages") as mock_install:
+            lifecycle._runner._install_build_packages({"pkg1", "pkg2"})
+
+        assert mock_install.mock_calls == [mock.call({"pkg1", "pkg2"})]
+
+    def test_install_build_packages_offline(self):
+        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_OFFLINE", "True"))
+
+        with mock.patch("snapcraft.repo.Repo.install_build_packages") as mock_install:
+            pkgs = lifecycle._runner._install_build_packages({"pkg1", "pkg2"})
+
+        assert mock_install.mock_calls == []
+        assert pkgs == []
+
+    def test_install_build_snaps(self):
+        with mock.patch("snapcraft.repo.snaps.install_snaps") as mock_install:
+            lifecycle._runner._install_build_snaps(
+                {"build_snap1", "build_snap2"}, {"content_snap"}
+            )
+
+        assert mock_install.mock_calls == [
+            mock.call({"build_snap1", "build_snap2"}),
+            mock.call(["content_snap"]),
+            mock.call().__iadd__(mock.ANY),
+        ]
+
+    def test_install_build_snaps_offline(self):
+        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_OFFLINE", "True"))
+
+        with mock.patch("snapcraft.repo.snaps.install_snaps") as mock_install:
+            snaps = lifecycle._runner._install_build_snaps(
+                {"build_snap1", "build_snap2"}, {"content_snap"}
+            )
+
+        assert mock_install.mock_calls == []
+        assert snaps == []

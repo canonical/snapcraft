@@ -167,6 +167,10 @@ def format_snap_name(snap, *, allow_empty_version: bool = False) -> str:
     return extension.format(**snap)
 
 
+def is_offline() -> bool:
+    return os.getenv("SNAPCRAFT_OFFLINE") is not None
+
+
 def is_snap() -> bool:
     snap_name = os.environ.get("SNAP_NAME", "")
     is_snap = snap_name == "snapcraft"

@@ -472,8 +472,11 @@ class PluginHandler:
 
     def prepare_pull(self, force=False):
         self.makedirs()
-        self._fetch_stage_packages()
-        self._fetch_stage_snaps()
+
+        if not common.is_offline():
+            self._fetch_stage_packages()
+            self._fetch_stage_snaps()
+
         self._unpack_stage_packages()
         self._unpack_stage_snaps()
 

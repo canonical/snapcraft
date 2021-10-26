@@ -22,7 +22,7 @@ import tempfile
 from typing import Any, Callable, Dict, List, Optional  # noqa: F401
 
 from snapcraft import storeapi, yaml_utils
-from snapcraft.internal import repo
+from snapcraft.internal import common, repo
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +77,10 @@ class _SnapManager:
 
     def get_op(self) -> _SnapOp:
         if self.__required_operation is not None:
+            return self.__required_operation
+
+        if common.is_offline():
+            self.__required_operation = _SnapOp.INJECT
             return self.__required_operation
 
         # From the point of view of multiple architectures if the target host (this)
@@ -193,6 +197,7 @@ class _SnapManager:
         elif op == _SnapOp.INSTALL or op == _SnapOp.REFRESH:
             install_cmd = ["snap", op.name.lower()]
             snap_channel = _get_snap_channel(self.snap_name)
+
             store_snap_info = storeapi.StoreClient().snap.get_info(self.snap_name)
             snap_channel_map = store_snap_info.get_channel_mapping(
                 risk=snap_channel.risk, track=snap_channel.track
