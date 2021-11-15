@@ -24,6 +24,7 @@ def test_extension_core18():
 
     assert kde_neon_extension.root_snippet == {
         "assumes": ["snapd2.43"],
+        "compression": "lzo",
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
             "icon-themes": {
@@ -76,6 +77,7 @@ def test_extension_core20():
 
     assert kde_neon_extension.root_snippet == {
         "assumes": ["snapd2.43"],
+        "compression": "lzo",
         "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
         "hooks": {
             "configure": {

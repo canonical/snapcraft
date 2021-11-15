@@ -77,6 +77,7 @@ class ExtensionImpl(Extension):
         info = _Info[yaml_data["base"]]
         self.root_snippet = {
             "assumes": ["snapd2.43"],  # for 'snapctl is-connected'
+            "compression": "lzo",
             "plugs": {
                 "desktop": {"mount-host-font-cache": False},
                 "icon-themes": {
