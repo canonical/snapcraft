@@ -95,7 +95,7 @@ class ExtensionImpl(Extension):
                     "target": "$SNAP/data-dir/sounds",
                     "default-provider": "gtk-common-themes",
                 },
-                "kde-frameworks-5-plug": {
+                info.provider: {
                     "content": info.content,
                     "interface": "content",
                     "default-provider": info.provider,
@@ -126,7 +126,7 @@ class ExtensionImpl(Extension):
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                 "source-subdir": "kde-neon",
                 "plugin": "make",
-                "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-plug"],
+                "make-parameters": [f"PLATFORM_PLUG={info.provider}"],
                 "build-packages": ["g++"],
                 "build-snaps": info.build_snaps,
             }

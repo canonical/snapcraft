@@ -36,7 +36,7 @@ def test_extension_core18():
                 "target": "$SNAP/data-dir/sounds",
                 "default-provider": "gtk-common-themes",
             },
-            "kde-frameworks-5-plug": {
+            "kde-frameworks-5-core18": {
                 "content": "kde-frameworks-5-core18-all",
                 "interface": "content",
                 "target": "$SNAP/kf5",
@@ -61,7 +61,7 @@ def test_extension_core18():
             "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
             "source-subdir": "kde-neon",
             "plugin": "make",
-            "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-plug"],
+            "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-core18"],
             "build-packages": ["g++"],
             "build-snaps": ["kde-frameworks-5-core18-sdk/latest/stable"],
         }
@@ -89,7 +89,7 @@ def test_extension_core20():
                 "interface": "content",
                 "target": "$SNAP/data-dir/icons",
             },
-            "kde-frameworks-5-plug": {
+            "kde-frameworks-5-qt-5-15-3-core20": {
                 "content": "kde-frameworks-5-qt-5-15-3-core20-all",
                 "default-provider": "kde-frameworks-5-qt-5-15-3-core20",
                 "interface": "content",
@@ -117,7 +117,7 @@ def test_extension_core20():
         "kde-neon-extension": {
             "build-packages": ["g++"],
             "build-snaps": ["kde-frameworks-5-qt-5-15-3-core20-sdk/latest/candidate"],
-            "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-plug"],
+            "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-qt-5-15-3-core20"],
             "plugin": "make",
             "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
             "source-subdir": "kde-neon",
