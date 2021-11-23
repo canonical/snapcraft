@@ -16,7 +16,7 @@
 
 from textwrap import dedent
 
-from snapcraft.plugins.v2.python import PythonPlugin
+from snapcraft_legacy.plugins.v2.python import PythonPlugin
 
 
 def test_schema():

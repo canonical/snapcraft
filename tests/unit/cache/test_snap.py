@@ -22,10 +22,10 @@ from textwrap import dedent
 import fixtures
 from testtools.matchers import Contains, Equals, Not
 
-import snapcraft
+import snapcraft_legacy
 import tests
-from snapcraft import file_utils
-from snapcraft.internal import cache
+from snapcraft_legacy import file_utils
+from snapcraft_legacy.internal import cache
 from tests.unit.commands import CommandBaseTestCase
 
 
@@ -33,7 +33,7 @@ class SnapCacheBaseTestCase(CommandBaseTestCase):
     def setUp(self):
         super().setUp()
 
-        self.deb_arch = snapcraft.ProjectOptions().deb_arch
+        self.deb_arch = snapcraft_legacy.ProjectOptions().deb_arch
         self.snap_path = os.path.join(
             os.path.dirname(tests.__file__), "data", "test-snap.snap"
         )

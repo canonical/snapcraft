@@ -18,9 +18,9 @@ from unittest import mock
 
 from testtools.matchers import Equals
 
-from snapcraft import project
-from snapcraft.internal import steps
-from snapcraft.internal.project_loader import inspection
+from snapcraft_legacy import project
+from snapcraft_legacy.internal import steps
+from snapcraft_legacy.internal.project_loader import inspection
 from tests import unit
 
 

@@ -23,9 +23,9 @@ import jsonschema
 import pytest
 from testtools.matchers import Contains, DirExists, Equals, HasLength, Not
 
-from snapcraft.internal import errors, meta
-from snapcraft.plugins.v1 import go
-from snapcraft.project import Project
+from snapcraft_legacy.internal import errors, meta
+from snapcraft_legacy.plugins.v1 import go
+from snapcraft_legacy.project import Project
 from tests import fixture_setup, unit
 
 from . import PluginsV1BaseTestCase
@@ -47,13 +47,13 @@ class GoPluginBaseTest(PluginsV1BaseTestCase):
 
         fake_run = self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.internal.common.run", side_effect=fake_go_build
+                "snapcraft_legacy.internal.common.run", side_effect=fake_go_build
             )
         )
         self.run_mock = fake_run.mock
 
         fake_run_output = self.useFixture(
-            fixtures.MockPatch("snapcraft.internal.common.run_output")
+            fixtures.MockPatch("snapcraft_legacy.internal.common.run_output")
         )
         self.run_output_mock = fake_run_output.mock
 
@@ -716,7 +716,7 @@ class GoPluginTest(GoPluginBaseTest):
             ),
         )
 
-    @mock.patch("snapcraft.internal.elf.ElfFile")
+    @mock.patch("snapcraft_legacy.internal.elf.ElfFile")
     def test_build_classic_dynamic_relink(self, mock_elffile):
         class Options:
             source = ""
@@ -762,7 +762,7 @@ class GoPluginTest(GoPluginBaseTest):
 
         self.assert_go_paths(plugin)
 
-    @mock.patch("snapcraft.internal.elf.ElfFile")
+    @mock.patch("snapcraft_legacy.internal.elf.ElfFile")
     def test_build_go_mod_classic_dynamic_relink(self, mock_elffile):
         class Options:
             source = ""

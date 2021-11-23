@@ -18,7 +18,7 @@ from textwrap import dedent
 
 from testtools.matchers import Equals
 
-from snapcraft.internal import errors, os_release
+from snapcraft_legacy.internal import errors, os_release
 from tests import unit
 
 

@@ -21,8 +21,8 @@ from unittest import mock
 import jsonschema
 from testtools.matchers import Equals, HasLength
 
-from snapcraft.internal import errors
-from snapcraft.plugins.v1 import python
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.plugins.v1 import python
 from tests import fixture_setup, unit
 
 from . import PluginsV1BaseTestCase
@@ -71,7 +71,7 @@ class PythonPluginBaseTest(PluginsV1BaseTestCase):
 
         self.options = Options()
 
-        patcher = mock.patch("snapcraft.plugins.v1._python.Pip")
+        patcher = mock.patch("snapcraft_legacy.plugins.v1._python.Pip")
         self.mock_pip = patcher.start()
         self.addCleanup(patcher.stop)
 

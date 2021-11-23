@@ -16,11 +16,11 @@
 
 import pytest
 
-from snapcraft.cli._metrics import (
+from snapcraft_legacy.cli._metrics import (
     convert_metrics_to_table,
     get_series_label_from_metric_name,
 )
-from snapcraft.storeapi import metrics
+from snapcraft_legacy.storeapi import metrics
 
 
 def test_get_series_label_from_metric_name():

@@ -19,10 +19,10 @@ from unittest.mock import call
 
 import pytest
 
-from snapcraft.internal import errors
-from snapcraft.internal.meta.snap import Snap
-from snapcraft.plugins.v1 import flutter
-from snapcraft.project import Project
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.internal.meta.snap import Snap
+from snapcraft_legacy.plugins.v1 import flutter
+from snapcraft_legacy.project import Project
 
 
 def test_schema():

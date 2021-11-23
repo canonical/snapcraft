@@ -18,7 +18,7 @@ from textwrap import dedent
 
 import pytest
 
-from snapcraft import storeapi
+from snapcraft_legacy import storeapi
 
 from . import FakeStoreCommandsBaseTestCase
 

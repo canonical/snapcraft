@@ -22,8 +22,8 @@ import fixtures
 from testtools.matchers import Contains, Equals, Not
 
 import tests
-from snapcraft import storeapi
-from snapcraft.storeapi.errors import StoreUploadError
+from snapcraft_legacy import storeapi
+from snapcraft_legacy.storeapi.errors import StoreUploadError
 
 from . import CommandBaseTestCase
 
@@ -33,7 +33,7 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
         super().setUp()
 
         self.fake_precheck = fixtures.MockPatch(
-            "snapcraft.storeapi.StoreClient.upload_precheck"
+            "snapcraft_legacy.storeapi.StoreClient.upload_precheck"
         )
         self.useFixture(self.fake_precheck)
 
@@ -89,7 +89,7 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
 
     def test_simple(self):
         # upload metadata
-        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
+        with mock.patch("snapcraft_legacy.storeapi._status_tracker.StatusTracker"):
             result = self.run_command(["upload-metadata", self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
 
@@ -108,7 +108,7 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
         )
 
         # upload metadata
-        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
+        with mock.patch("snapcraft_legacy.storeapi._status_tracker.StatusTracker"):
             result = self.run_command(["upload-metadata", self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
 
@@ -126,7 +126,7 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
             fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "yes")
         )
         # upload metadata
-        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
+        with mock.patch("snapcraft_legacy.storeapi._status_tracker.StatusTracker"):
             result = self.run_command(["upload-metadata", self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
 
@@ -223,7 +223,7 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
         )
 
         # upload metadata
-        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
+        with mock.patch("snapcraft_legacy.storeapi._status_tracker.StatusTracker"):
             result = self.run_command(["upload-metadata", snap_file])
         self.assertThat(result.exit_code, Equals(0))
 
@@ -236,7 +236,7 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
         self.useFixture(fake_logger)
 
         # upload metadata
-        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
+        with mock.patch("snapcraft_legacy.storeapi._status_tracker.StatusTracker"):
             result = self.run_command(["push-metadata", self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(

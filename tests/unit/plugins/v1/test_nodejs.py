@@ -25,8 +25,8 @@ import fixtures
 import pytest
 from testtools.matchers import Equals, FileExists, HasLength
 
-from snapcraft.internal import errors
-from snapcraft.plugins.v1 import nodejs
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.plugins.v1 import nodejs
 from tests import fixture_setup, unit
 
 from . import PluginsV1BaseTestCase
@@ -48,16 +48,16 @@ class NodePluginBaseTest(PluginsV1BaseTestCase):
         # always have a package.json stub under source
         open("package.json", "w").close()
 
-        patcher = mock.patch("snapcraft.internal.common.run")
+        patcher = mock.patch("snapcraft_legacy.internal.common.run")
         self.run_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("snapcraft.internal.common.run_output")
+        patcher = mock.patch("snapcraft_legacy.internal.common.run_output")
         self.run_output_mock = patcher.start()
         self.addCleanup(patcher.stop)
         self.run_output_mock.return_value = '{"dependencies": []}'
 
-        patcher = mock.patch("snapcraft.sources.Tar")
+        patcher = mock.patch("snapcraft_legacy.sources.Tar")
         self.tar_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -708,7 +708,7 @@ class TestNodeRelease:
 
 
 class NodePluginUnsupportedArchTest(NodePluginBaseTest):
-    @mock.patch("snapcraft.project.Project.deb_arch", "ppcel64")
+    @mock.patch("snapcraft_legacy.project.Project.deb_arch", "ppcel64")
     def test_unsupported_arch_raises_exception(self):
         raised = self.assertRaises(
             errors.SnapcraftEnvironmentError,

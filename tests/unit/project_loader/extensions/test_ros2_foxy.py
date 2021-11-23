@@ -16,7 +16,7 @@
 
 import pytest
 
-from snapcraft.internal.project_loader._extensions.ros2_foxy import (
+from snapcraft_legacy.internal.project_loader._extensions.ros2_foxy import (
     ExtensionImpl as Ros2FoxyExtension,
 )
 

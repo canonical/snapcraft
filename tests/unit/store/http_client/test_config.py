@@ -18,8 +18,8 @@ import pathlib
 
 import pytest
 
-from snapcraft.storeapi.http_clients import errors
-from snapcraft.storeapi.http_clients._config import Config
+from snapcraft_legacy.storeapi.http_clients import errors
+from snapcraft_legacy.storeapi.http_clients._config import Config
 
 
 class ConfigImpl(Config):

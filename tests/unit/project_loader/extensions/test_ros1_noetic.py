@@ -16,7 +16,7 @@
 
 import pytest
 
-from snapcraft.internal.project_loader._extensions.ros1_noetic import (
+from snapcraft_legacy.internal.project_loader._extensions.ros1_noetic import (
     ExtensionImpl as Ros1NoeticExtension,
 )
 

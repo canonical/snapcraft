@@ -23,7 +23,7 @@ import pytest
 from simplejson.scanner import JSONDecodeError
 from testtools.matchers import Contains, Equals, MatchesRegex, Not
 
-from snapcraft import storeapi
+from snapcraft_legacy import storeapi
 
 from . import FakeStoreCommandsBaseTestCase
 

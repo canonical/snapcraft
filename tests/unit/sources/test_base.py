@@ -20,7 +20,7 @@ from unittest import mock
 import requests
 from testtools.matchers import Contains, Equals
 
-from snapcraft.internal.sources import _base, errors
+from snapcraft_legacy.internal.sources import _base, errors
 from tests import unit
 
 
@@ -30,7 +30,7 @@ class TestFileBase(unit.TestCase):
         setattr(file_src, "provision", mock.Mock())
         return file_src
 
-    @mock.patch("snapcraft.internal.sources._base.FileBase.download")
+    @mock.patch("snapcraft_legacy.internal.sources._base.FileBase.download")
     def test_pull_url(self, mock_download):
         mock_download.return_value = "dir"
         file_src = self.get_mock_file_base("http://snapcraft.io/snapcraft.yaml", "dir")
@@ -62,9 +62,9 @@ class TestFileBase(unit.TestCase):
             str(raised), Contains("Failed to pull source: 'does-not-exist.tar.gz'")
         )
 
-    @mock.patch("snapcraft.internal.sources._base.requests")
-    @mock.patch("snapcraft.internal.sources._base.download_requests_stream")
-    @mock.patch("snapcraft.internal.sources._base.download_urllib_source")
+    @mock.patch("snapcraft_legacy.internal.sources._base.requests")
+    @mock.patch("snapcraft_legacy.internal.sources._base.download_requests_stream")
+    @mock.patch("snapcraft_legacy.internal.sources._base.download_urllib_source")
     def test_download_file_destination(self, dus, drs, req):
         file_src = self.get_mock_file_base("http://snapcraft.io/snapcraft.yaml", "dir")
         self.assertFalse(hasattr(file_src, "file"))
@@ -78,7 +78,7 @@ class TestFileBase(unit.TestCase):
             ),
         )
 
-    @mock.patch("snapcraft.internal.common.get_url_scheme", return_value=False)
+    @mock.patch("snapcraft_legacy.internal.common.get_url_scheme", return_value=False)
     @mock.patch("requests.get", side_effect=requests.exceptions.ConnectionError("foo"))
     def test_download_error(self, mock_get, mock_gus):
         base = self.get_mock_file_base("", "")
@@ -88,8 +88,8 @@ class TestFileBase(unit.TestCase):
 
         self.assertThat(str(raised), Contains("Network request error"))
 
-    @mock.patch("snapcraft.internal.sources._base.download_requests_stream")
-    @mock.patch("snapcraft.internal.sources._base.requests")
+    @mock.patch("snapcraft_legacy.internal.sources._base.download_requests_stream")
+    @mock.patch("snapcraft_legacy.internal.sources._base.requests")
     def test_download_http(self, mock_requests, mock_download):
         file_src = self.get_mock_file_base("http://snapcraft.io/snapcraft.yaml", "dir")
 
@@ -104,7 +104,7 @@ class TestFileBase(unit.TestCase):
         mock_request.raise_for_status.assert_called_once_with()
         mock_download.assert_called_once_with(mock_request, file_src.file)
 
-    @mock.patch("snapcraft.internal.sources._base.download_urllib_source")
+    @mock.patch("snapcraft_legacy.internal.sources._base.download_urllib_source")
     def test_download_ftp(self, mock_download):
         file_src = self.get_mock_file_base("ftp://snapcraft.io/snapcraft.yaml", "dir")
 
@@ -112,7 +112,7 @@ class TestFileBase(unit.TestCase):
 
         mock_download.assert_called_once_with(file_src.source, file_src.file)
 
-    @mock.patch("snapcraft.internal.indicators.urlretrieve")
+    @mock.patch("snapcraft_legacy.internal.indicators.urlretrieve")
     def test_download_ftp_url_opener(self, mock_urlretrieve):
         file_src = self.get_mock_file_base("ftp://snapcraft.io/snapcraft.yaml", "dir")
 

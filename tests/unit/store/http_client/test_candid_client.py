@@ -23,7 +23,7 @@ import pytest
 from macaroonbakery import bakery, httpbakery
 from pymacaroons.macaroon import Macaroon
 
-from snapcraft.storeapi.http_clients._candid_client import (
+from snapcraft_legacy.storeapi.http_clients._candid_client import (
     CandidClient,
     CandidConfig,
     WebBrowserWaitingInteractor,

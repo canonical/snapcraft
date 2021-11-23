@@ -16,7 +16,7 @@
 
 from typing import List, Set
 
-from snapcraft.plugins.v2 import nil
+from snapcraft_legacy.plugins.v2 import nil
 
 
 class PluginImpl(nil.NilPlugin):

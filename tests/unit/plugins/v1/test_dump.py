@@ -18,15 +18,15 @@ import os
 
 from testtools.matchers import Equals
 
-import snapcraft
-from snapcraft.plugins.v1.dump import DumpInvalidSymlinkError, DumpPlugin
+import snapcraft_legacy
+from snapcraft_legacy.plugins.v1.dump import DumpInvalidSymlinkError, DumpPlugin
 from tests import unit
 
 
 class DumpPluginTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
-        self.project_options = snapcraft.ProjectOptions()
+        self.project_options = snapcraft_legacy.ProjectOptions()
 
         class Options:
             source = "."
@@ -169,7 +169,7 @@ class DumpPluginTestCase(unit.TestCase):
 
         # Even though this symlink is absolute, since it's to libc the copy
         # plugin shouldn't try to follow it or modify it.
-        libc_libs = snapcraft.repo.Repo.get_package_libraries("libc6")
+        libc_libs = snapcraft_legacy.repo.Repo.get_package_libraries("libc6")
 
         # We don't care which lib we're testing with, as long as it's a .so.
         libc_library_path = [lib for lib in libc_libs if ".so" in lib][0]

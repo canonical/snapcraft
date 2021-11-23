@@ -19,8 +19,8 @@ import textwrap
 
 import fixtures
 
-import snapcraft
-from snapcraft.internal import project_loader
+import snapcraft_legacy
+from snapcraft_legacy.internal import project_loader
 from tests import unit
 
 
@@ -30,30 +30,30 @@ class LifecycleTestBase(unit.TestCase):
 
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
-        self.project_options = snapcraft.ProjectOptions()
+        self.project_options = snapcraft_legacy.ProjectOptions()
 
         self.fake_install_build_packages = fixtures.MockPatch(
-            "snapcraft.internal.lifecycle._runner._install_build_packages",
+            "snapcraft_legacy.internal.lifecycle._runner._install_build_packages",
             return_value=list(),
         )
         self.useFixture(self.fake_install_build_packages)
 
         self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.internal.project_loader._config.Config.get_build_packages",
+                "snapcraft_legacy.internal.project_loader._config.Config.get_build_packages",
                 return_value=set(),
             )
         )
 
         self.fake_install_build_snaps = fixtures.MockPatch(
-            "snapcraft.internal.lifecycle._runner._install_build_snaps",
+            "snapcraft_legacy.internal.lifecycle._runner._install_build_snaps",
             return_value=list(),
         )
         self.useFixture(self.fake_install_build_snaps)
 
         self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.internal.project_loader._config.Config.get_build_snaps",
+                "snapcraft_legacy.internal.project_loader._config.Config.get_build_snaps",
                 return_value=set(),
             )
         )
@@ -77,7 +77,7 @@ class LifecycleTestBase(unit.TestCase):
         self.snapcraft_yaml_file_path = self.make_snapcraft_yaml(
             yaml.format(parts=parts, type=snap_type)
         )
-        project = snapcraft.project.Project(
+        project = snapcraft_legacy.project.Project(
             snapcraft_yaml_file_path=self.snapcraft_yaml_file_path
         )
         return project_loader.load_config(project)

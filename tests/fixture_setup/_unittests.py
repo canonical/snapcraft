@@ -27,9 +27,9 @@ from unittest import mock
 import fixtures
 import jsonschema
 
-import snapcraft
-from snapcraft.internal import elf
-from snapcraft.plugins._plugin_finder import get_plugin_for_base
+import snapcraft_legacy
+from snapcraft_legacy.internal import elf
+from snapcraft_legacy.plugins._plugin_finder import get_plugin_for_base
 from tests.file_utils import get_snapcraft_path
 
 
@@ -50,13 +50,13 @@ class FakeProjectOptions(fixtures.Fixture):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch("snapcraft.project.Project")
+        patcher = mock.patch("snapcraft_legacy.project.Project")
         patcher.start()
         self.addCleanup(patcher.stop)
 
         # Special handling is required as ProjectOptions attributes are
         # handled with the @property decorator.
-        project_options_t = type(snapcraft.project.Project.return_value)
+        project_options_t = type(snapcraft_legacy.project.Project.return_value)
         for key in self._kwargs:
             setattr(project_options_t, key, self._kwargs[key])
 
@@ -67,13 +67,13 @@ class FakeMetadataExtractor(fixtures.Fixture):
     def __init__(
         self,
         extractor_name: str,
-        extractor: Callable[[str], snapcraft.extractors.ExtractedMetadata],
+        extractor: Callable[[str], snapcraft_legacy.extractors.ExtractedMetadata],
         exported_name="extract",
     ) -> None:
         super().__init__()
         self._extractor_name = extractor_name
         self._exported_name = exported_name
-        self._import_name = "snapcraft.extractors.{}".format(extractor_name)
+        self._import_name = "snapcraft_legacy.extractors.{}".format(extractor_name)
         self._extractor = extractor
 
     def _setUp(self) -> None:
@@ -85,7 +85,7 @@ class FakeMetadataExtractor(fixtures.Fixture):
         real_iter_modules = pkgutil.iter_modules
 
         def _fake_iter_modules(path):
-            if path == snapcraft.extractors.__path__:
+            if path == snapcraft_legacy.extractors.__path__:
                 yield None, self._extractor_name, False
             else:
                 yield real_iter_modules(path)
@@ -109,7 +109,8 @@ class FakePlugin(fixtures.Fixture):
     def _setUp(self):
         self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.plugins.get_plugin_for_base", side_effect=self.get_plugin
+                "snapcraft_legacy.plugins.get_plugin_for_base",
+                side_effect=self.get_plugin,
             )
         )
 
@@ -368,7 +369,7 @@ class FakeExtension(fixtures.Fixture):
 
     def __init__(self, extension_name, extension_class):
         super().__init__()
-        self._import_name = "snapcraft.internal.project_loader._extensions.{}".format(
+        self._import_name = "snapcraft_legacy.internal.project_loader._extensions.{}".format(
             extension_name
         )
         self._extension_class = extension_class
@@ -410,8 +411,8 @@ class FakeSnapCommand(fixtures.Fixture):
         self._email = "-"
 
     def _setUp(self):
-        original_check_call = snapcraft.internal.repo.snaps.check_call
-        original_check_output = snapcraft.internal.repo.snaps.check_output
+        original_check_call = snapcraft_legacy.internal.repo.snaps.check_call
+        original_check_output = snapcraft_legacy.internal.repo.snaps.check_output
 
         def side_effect_check_call(cmd, *args, **kwargs):
             return side_effect(original_check_call, cmd, *args, **kwargs)
@@ -432,12 +433,14 @@ class FakeSnapCommand(fixtures.Fixture):
 
         self.useFixture(
             fixtures.MonkeyPatch(
-                "snapcraft.internal.repo.snaps.check_call", side_effect_check_call
+                "snapcraft_legacy.internal.repo.snaps.check_call",
+                side_effect_check_call,
             )
         )
         self.useFixture(
             fixtures.MonkeyPatch(
-                "snapcraft.internal.repo.snaps.check_output", side_effect_check_output
+                "snapcraft_legacy.internal.repo.snaps.check_output",
+                side_effect_check_output,
             )
         )
 
@@ -498,10 +501,10 @@ class FakeSnapcraftctl(fixtures.Fixture):
                 import sys
                 sys.path.append('{snapcraft_path!s}')
 
-                import snapcraft.cli.__main__
+                import snapcraft_legacy.cli.__main__
 
                 if __name__ == '__main__':
-                    snapcraft.cli.__main__.run_snapcraftctl(
+                    snapcraft_legacy.cli.__main__.run_snapcraftctl(
                         prog_name='snapcraftctl')
             """.format(
                         snapcraft_path=snapcraft_path

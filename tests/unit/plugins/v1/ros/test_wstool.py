@@ -21,20 +21,20 @@ from unittest import mock
 
 from testtools.matchers import Contains, Equals
 
-import snapcraft
-from snapcraft.plugins.v1._ros import wstool
+import snapcraft_legacy
+from snapcraft_legacy.plugins.v1._ros import wstool
 from tests import unit
 
 
 class WstoolTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
-        self.project = snapcraft.ProjectOptions()
+        self.project = snapcraft_legacy.ProjectOptions()
         self.wstool = wstool.Wstool(
             "package_path", "wstool_path", self.project, "core18"
         )
 
-        patcher = mock.patch("snapcraft.repo.Ubuntu")
+        patcher = mock.patch("snapcraft_legacy.repo.Ubuntu")
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
 

@@ -20,7 +20,7 @@ from textwrap import dedent
 
 from testtools.matchers import Equals, FileContains, FileExists, Not
 
-from snapcraft.internal.repo._base import BaseRepo, get_pkg_name_parts
+from snapcraft_legacy.internal.repo._base import BaseRepo, get_pkg_name_parts
 from tests import unit
 
 from . import RepoBaseTestCase

@@ -21,8 +21,8 @@ import pytest
 
 @pytest.fixture
 def mock_echo_error():
-    """Return a mock for snapcraft.cli.echo.error."""
-    patcher = mock.patch("snapcraft.cli.echo.error")
+    """Return a mock for snapcraft_legacy.cli.echo.error."""
+    patcher = mock.patch("snapcraft_legacy.cli.echo.error")
     yield patcher.start()
     patcher.stop()
 

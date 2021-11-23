@@ -19,8 +19,10 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Equals
 
-from snapcraft.internal import repo
-from snapcraft.internal.pluginhandler._dependencies import MissingDependencyResolver
+from snapcraft_legacy.internal import repo
+from snapcraft_legacy.internal.pluginhandler._dependencies import (
+    MissingDependencyResolver,
+)
 from tests import unit
 
 
@@ -39,7 +41,7 @@ class MissingDependencyTest(unit.TestCase):
 
         self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.internal.repo.Repo.get_package_for_file",
+                "snapcraft_legacy.internal.repo.Repo.get_package_for_file",
                 side_effect=fake_repo_query,
             )
         )

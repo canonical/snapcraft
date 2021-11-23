@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.plugins.v2.cmake import CMakePlugin
+from snapcraft_legacy.plugins.v2.cmake import CMakePlugin
 
 
 def test_schema():

@@ -19,8 +19,8 @@ from unittest import mock
 
 from testtools.matchers import Equals, HasLength
 
-from snapcraft.internal import errors
-from snapcraft.plugins.v1 import cmake
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.plugins.v1 import cmake
 from tests import fixture_setup, unit
 
 from . import PluginsV1BaseTestCase
@@ -40,7 +40,7 @@ class CMakeBaseTest(PluginsV1BaseTestCase):
 
         self.options = Options()
 
-        patcher = mock.patch("snapcraft.internal.common.run")
+        patcher = mock.patch("snapcraft_legacy.internal.common.run")
         self.run_mock = patcher.start()
         self.addCleanup(patcher.stop)
 

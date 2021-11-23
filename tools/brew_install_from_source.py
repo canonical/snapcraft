@@ -28,11 +28,11 @@ def main():
         temp_dir = tempfile.mkdtemp()
         compressed_snapcraft_source = download_snapcraft_source(temp_dir)
         compressed_snapcraft_sha256 = sha256_checksum(compressed_snapcraft_source)
-        brew_formula_path = os.path.join(temp_dir, "snapcraft.rb")
+        brew_formula_path = os.path.join(temp_dir, "snapcraft_legacy.rb")
         download_brew_formula(brew_formula_path)
         patched_dir = os.path.join(temp_dir, "patched")
         os.mkdir(patched_dir)
-        brew_formula_from_source_path = os.path.join(patched_dir, "snapcraft.rb")
+        brew_formula_from_source_path = os.path.join(patched_dir, "snapcraft_legacy.rb")
         patch_brew_formula_source(
             brew_formula_path,
             brew_formula_from_source_path,

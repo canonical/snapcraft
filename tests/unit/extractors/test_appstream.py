@@ -20,7 +20,7 @@ import textwrap
 import testscenarios
 from testtools.matchers import Equals
 
-from snapcraft.extractors import ExtractedMetadata, _errors, appstream
+from snapcraft_legacy.extractors import ExtractedMetadata, _errors, appstream
 from tests import unit
 
 
@@ -269,7 +269,7 @@ class AppstreamIconsTestCase(unit.TestCase):
 
 class AppstreamTest(unit.TestCase):
     def test_appstream_with_ul(self):
-        file_name = "snapcraft.appdata.xml"
+        file_name = "snapcraft_legacy.appdata.xml"
         content = textwrap.dedent(
             """\
             <?xml version="1.0" encoding="utf-8"?>
@@ -322,7 +322,7 @@ class AppstreamTest(unit.TestCase):
         )
 
     def test_appstream_with_ol(self):
-        file_name = "snapcraft.appdata.xml"
+        file_name = "snapcraft_legacy.appdata.xml"
         content = textwrap.dedent(
             """\
             <?xml version="1.0" encoding="utf-8"?>
@@ -375,7 +375,7 @@ class AppstreamTest(unit.TestCase):
         )
 
     def test_appstream_with_ul_in_p(self):
-        file_name = "snapcraft.appdata.xml"
+        file_name = "snapcraft_legacy.appdata.xml"
         content = textwrap.dedent(
             """\
             <?xml version="1.0" encoding="UTF-8"?>

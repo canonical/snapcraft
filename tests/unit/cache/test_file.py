@@ -17,7 +17,7 @@
 import os
 import shutil
 
-from snapcraft.file_utils import calculate_hash
+from snapcraft_legacy.file_utils import calculate_hash
 
 
 class TestFileCache:

@@ -21,9 +21,9 @@ from unittest import mock
 
 from testtools.matchers import Contains, Equals, HasLength
 
-import snapcraft
-from snapcraft.internal import lifecycle, pluginhandler, states, steps
-from snapcraft.internal.lifecycle._status_cache import StatusCache
+import snapcraft_legacy
+from snapcraft_legacy.internal import lifecycle, pluginhandler, states, steps
+from snapcraft_legacy.internal.lifecycle._status_cache import StatusCache
 
 from . import LifecycleTestBase
 
@@ -155,9 +155,9 @@ class OrderTestBase(LifecycleTestBase):
         )
 
         # Set the option to automatically clean dirty/outdated steps
-        with snapcraft.config.CLIConfig() as cli_config:
+        with snapcraft_legacy.config.CLIConfig() as cli_config:
             cli_config.set_outdated_step_action(
-                snapcraft.config.OutdatedStepAction.CLEAN
+                snapcraft_legacy.config.OutdatedStepAction.CLEAN
             )
 
     def set_attributes(self, kwargs):

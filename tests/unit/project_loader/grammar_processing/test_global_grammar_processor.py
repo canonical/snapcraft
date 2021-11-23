@@ -16,7 +16,7 @@
 
 import doctest
 
-from snapcraft.internal.project_loader.grammar_processing import (
+from snapcraft_legacy.internal.project_loader.grammar_processing import (
     _global_grammar_processor as processor,
 )
 

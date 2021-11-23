@@ -20,7 +20,7 @@ import subprocess
 
 import fixtures
 
-from snapcraft.internal import review_tools
+from snapcraft_legacy.internal import review_tools
 from tests import unit
 
 
@@ -37,7 +37,7 @@ class RunTest(unit.TestCase):
         self.user_common_path = pathlib.Path(self.path) / "common"
         self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.internal.review_tools._runner._get_review_tools_user_common",
+                "snapcraft_legacy.internal.review_tools._runner._get_review_tools_user_common",
                 return_value=self.user_common_path,
             )
         )

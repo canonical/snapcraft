@@ -19,8 +19,8 @@ from unittest import mock
 
 from testtools.matchers import Contains, Equals, HasLength, Not
 
-from snapcraft.internal import errors
-from snapcraft.plugins.v1 import godeps
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.plugins.v1 import godeps
 from tests import unit
 
 from . import PluginsV1BaseTestCase
@@ -30,7 +30,7 @@ class GodepsPluginBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch("snapcraft.internal.common.run")
+        patcher = mock.patch("snapcraft_legacy.internal.common.run")
         self.run_mock = patcher.start()
         self.addCleanup(patcher.stop)
 

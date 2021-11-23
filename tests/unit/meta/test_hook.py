@@ -18,8 +18,8 @@ from collections import OrderedDict
 
 from testtools.matchers import Equals
 
-from snapcraft.internal.meta import errors
-from snapcraft.internal.meta.hooks import Hook
+from snapcraft_legacy.internal.meta import errors
+from snapcraft_legacy.internal.meta.hooks import Hook
 from tests import unit
 
 

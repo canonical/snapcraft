@@ -19,9 +19,9 @@ import re
 
 import pytest
 
-import snapcraft
-import snapcraft.internal.project_loader.grammar._to as _to
-from snapcraft.internal.project_loader import grammar
+import snapcraft_legacy
+import snapcraft_legacy.internal.project_loader.grammar._to as _to
+from snapcraft_legacy.internal.project_loader import grammar
 
 
 @pytest.mark.parametrize(
@@ -35,7 +35,7 @@ def test_duplicates(entry):
     """Test that multiple identical selector sets is an error."""
 
     processor = grammar.GrammarProcessor(
-        entry, snapcraft.ProjectOptions(), lambda x: True
+        entry, snapcraft_legacy.ProjectOptions(), lambda x: True
     )
     with pytest.raises(grammar.errors.GrammarSyntaxError) as error:
         processor.process()
@@ -314,7 +314,7 @@ class TestBasicGrammar:
         monkeypatch.setattr(platform, "machine", lambda: host_arch)
         monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
 
-        project = snapcraft.ProjectOptions(target_deb_arch=target_arch)
+        project = snapcraft_legacy.ProjectOptions(target_deb_arch=target_arch)
 
         processor = grammar.GrammarProcessor(
             grammar_entry, project, lambda x: "invalid" not in x
@@ -391,7 +391,7 @@ class TestTransformerGrammar:
 
         processor = grammar.GrammarProcessor(
             grammar_entry,
-            snapcraft.ProjectOptions(target_deb_arch="i386"),
+            snapcraft_legacy.ProjectOptions(target_deb_arch="i386"),
             lambda x: True,
             transformer=_transformer,
         )
@@ -427,7 +427,7 @@ class TestInvalidGrammar:
 
     def test_invalid_grammar(self, grammar_entry, expected_exception):
         processor = grammar.GrammarProcessor(
-            grammar_entry, snapcraft.ProjectOptions(), lambda x: True
+            grammar_entry, snapcraft_legacy.ProjectOptions(), lambda x: True
         )
 
         with pytest.raises(grammar.errors.GrammarSyntaxError) as error:

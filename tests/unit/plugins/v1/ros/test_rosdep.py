@@ -21,15 +21,15 @@ from unittest import mock
 
 from testtools.matchers import Equals
 
-import snapcraft
-from snapcraft.plugins.v1._ros import rosdep
+import snapcraft_legacy
+from snapcraft_legacy.plugins.v1._ros import rosdep
 from tests import unit
 
 
 class RosdepTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
-        self.project = snapcraft.ProjectOptions()
+        self.project = snapcraft_legacy.ProjectOptions()
 
         self.rosdep = rosdep.Rosdep(
             ros_distro="melodic",
@@ -41,7 +41,7 @@ class RosdepTestCase(unit.TestCase):
             target_arch=self.project._get_stage_packages_target_arch(),
         )
 
-        patcher = mock.patch("snapcraft.repo.Ubuntu")
+        patcher = mock.patch("snapcraft_legacy.repo.Ubuntu")
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
 

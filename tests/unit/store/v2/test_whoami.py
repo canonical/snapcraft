@@ -17,7 +17,7 @@
 import pytest
 from jsonschema.exceptions import ValidationError
 
-from snapcraft.storeapi.v2 import whoami
+from snapcraft_legacy.storeapi.v2 import whoami
 
 
 @pytest.fixture

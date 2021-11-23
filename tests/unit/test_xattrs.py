@@ -20,8 +20,8 @@ from unittest import mock
 
 from testtools.matchers import Equals
 
-from snapcraft.internal import xattrs
-from snapcraft.internal.errors import XAttributeTooLongError
+from snapcraft_legacy.internal import xattrs
+from snapcraft_legacy.internal.errors import XAttributeTooLongError
 from tests import unit
 
 

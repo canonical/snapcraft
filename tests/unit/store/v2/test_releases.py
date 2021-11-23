@@ -16,7 +16,7 @@
 
 import pytest
 
-from snapcraft.storeapi.v2 import releases
+from snapcraft_legacy.storeapi.v2 import releases
 
 
 @pytest.mark.parametrize(

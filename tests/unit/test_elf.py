@@ -24,8 +24,8 @@ import fixtures
 import pytest
 from testtools.matchers import Contains, EndsWith, Equals, NotEquals, StartsWith
 
-from snapcraft import ProjectOptions
-from snapcraft.internal import elf, errors
+from snapcraft_legacy import ProjectOptions
+from snapcraft_legacy.internal import elf, errors
 from tests import fixture_setup, unit
 
 
@@ -262,7 +262,9 @@ class TestGetLibraries(TestElfBase):
                 else:
                     return super()._is_valid_elf(resolved_path)
 
-        with mock.patch("snapcraft.internal.elf.Library", side_effect=MooLibrary):
+        with mock.patch(
+            "snapcraft_legacy.internal.elf.Library", side_effect=MooLibrary
+        ):
             libs = elf_file.load_dependencies(
                 root_path=self.fake_elf.root_path,
                 core_base_path=self.fake_elf.core_base_path,
@@ -290,7 +292,7 @@ class TestLibrary(TestElfBase):
 
         self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.internal.elf.ElfFile",
+                "snapcraft_legacy.internal.elf.ElfFile",
                 side_effect=errors.CorruptedElfFileError(
                     path=soname_path, error=RuntimeError()
                 ),
@@ -526,7 +528,9 @@ class HandleGlibcTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch("snapcraft.internal.repo.Repo.get_package_libraries")
+        patcher = mock.patch(
+            "snapcraft_legacy.internal.repo.Repo.get_package_libraries"
+        )
         self.get_packages_mock = patcher.start()
         self.get_packages_mock.return_value = self._setup_libc6()
         self.addCleanup(patcher.stop)

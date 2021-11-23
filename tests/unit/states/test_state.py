@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.internal.states._state import PartState
+from snapcraft_legacy.internal.states._state import PartState
 
 
 class _TestState(PartState):

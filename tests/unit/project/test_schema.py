@@ -22,9 +22,9 @@ from testtools import TestCase
 from testtools.matchers import Contains, Equals
 
 # required for schema format checkers
-import snapcraft.internal.project_loader._config  # noqa: F401
-import snapcraft.yaml_utils.errors
-from snapcraft.project._schema import Validator
+import snapcraft_legacy.internal.project_loader._config  # noqa: F401
+import snapcraft_legacy.yaml_utils.errors
+from snapcraft_legacy.project._schema import Validator
 
 from . import ProjectBaseTest
 
@@ -58,7 +58,7 @@ class ValidationTest(ValidationBaseTest):
     def test_summary_too_long(self):
         self.data["summary"] = "a" * 80
         raised = self.assertRaises(
-            snapcraft.yaml_utils.errors.YamlValidationError,
+            snapcraft_legacy.yaml_utils.errors.YamlValidationError,
             Validator(self.data).validate,
         )
 
@@ -72,7 +72,7 @@ class ValidationTest(ValidationBaseTest):
         self.data["apps"] = {"service1": {}}
 
         raised = self.assertRaises(
-            snapcraft.yaml_utils.errors.YamlValidationError,
+            snapcraft_legacy.yaml_utils.errors.YamlValidationError,
             Validator(self.data).validate,
         )
 
@@ -87,9 +87,13 @@ class ValidationTest(ValidationBaseTest):
         mock_the_open = mock.mock_open()
         mock_the_open.side_effect = FileNotFoundError()
 
-        with mock.patch("snapcraft.project._schema.open", mock_the_open, create=True):
+        with mock.patch(
+            "snapcraft_legacy.project._schema.open", mock_the_open, create=True
+        ):
             raised = self.assertRaises(
-                snapcraft.yaml_utils.errors.YamlValidationError, Validator, self.data
+                snapcraft_legacy.yaml_utils.errors.YamlValidationError,
+                Validator,
+                self.data,
             )
 
         expected_message = "snapcraft validation file is missing from installation path"
@@ -180,7 +184,7 @@ class ValidationTest(ValidationBaseTest):
         }
 
         raised = self.assertRaises(
-            snapcraft.yaml_utils.errors.YamlValidationError,
+            snapcraft_legacy.yaml_utils.errors.YamlValidationError,
             Validator(self.data).validate,
         )
 
@@ -199,7 +203,7 @@ class ValidationTest(ValidationBaseTest):
         del self.data["adopt-info"]
 
         raised = self.assertRaises(
-            snapcraft.yaml_utils.errors.YamlValidationError,
+            snapcraft_legacy.yaml_utils.errors.YamlValidationError,
             Validator(self.data).validate,
         )
 
@@ -218,7 +222,7 @@ class ValidationTest(ValidationBaseTest):
         }
 
         raised = self.assertRaises(
-            snapcraft.yaml_utils.errors.YamlValidationError,
+            snapcraft_legacy.yaml_utils.errors.YamlValidationError,
             Validator(self.data).validate,
         )
 
@@ -241,7 +245,7 @@ class ValidationTest(ValidationBaseTest):
 def test_daemon_dependency(data, option, value):
     data["apps"] = {"service1": {"command": "binary1", option: value}}
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     assert str(error.value).endswith(
@@ -254,7 +258,7 @@ def test_daemon_dependency(data, option, value):
 def test_required_properties(data, key):
     del data[key]
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     assert f"{key!r} is a required property" in str(error.value)
@@ -309,7 +313,9 @@ class TestInvalidNames:
     def test(self, data, name, err):
         data["name"] = name
 
-        with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+        with pytest.raises(
+            snapcraft_legacy.yaml_utils.errors.YamlValidationError
+        ) as error:
             Validator(data).validate()
 
         assert str(error.value).endswith(
@@ -341,7 +347,7 @@ _TYPE_ENUM_TMPL = (
 def test_invalid_types(data, snap_type):
     data["type"] = snap_type
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError):
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError):
         Validator(data).validate()
 
 
@@ -355,7 +361,7 @@ def test_type_base_and_no_base(data):
 def test_type_base_and_base(data):
     data["type"] = "base"
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     assert _BASE_TYPE_MSG in str(error.value)
@@ -440,7 +446,7 @@ def test_valid_app_names(data, name):
 def test_invalid_app_names(data, name):
     data["apps"] = {name: {"command": "1"}}
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     expected_message = (
@@ -486,7 +492,7 @@ def test_valid_refresh_modes(data, mode):
 def test_refresh_mode_daemon_missing_errors(data, mode):
     data["apps"] = {"service1": {"command": "binary1", "refresh-mode": mode}}
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError):
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError):
         Validator(data).validate()
 
 
@@ -514,7 +520,7 @@ def test_valid_modes(data, mode):
 def test_daemon_missing_errors(data, mode):
     data["apps"] = {"service1": {"command": "binary1", "stop-mode": mode}}
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError):
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError):
         Validator(data).validate()
 
 
@@ -549,7 +555,7 @@ def test_daemon_missing_errors(data, mode):
 def test_invalid_hook_names(data, name):
     data["hooks"] = {name: {"plugs": ["network"]}}
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     expected_message = (
@@ -567,7 +573,7 @@ def test_invalid_hook_names(data, name):
 def test_invalid_part_names(data, name):
     data["parts"] = {name: {"plugin": "nil"}}
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     expected_message = (
@@ -699,7 +705,9 @@ class TestInvalidArchitectures:
     def test(self, data, architectures, message):
         data["architectures"] = architectures
 
-        with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+        with pytest.raises(
+            snapcraft_legacy.yaml_utils.errors.YamlValidationError
+        ) as error:
             Validator(data).validate()
 
         assert message in str(error.value)
@@ -758,7 +766,7 @@ _EXPECTED_ERROR_TEMPLATE = {
 def test_invalid_title(data, title, error_template):
     data["title"] = title
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     assert _EXPECTED_ERROR_TEMPLATE[error_template].format(title) in str(error.value)
@@ -881,7 +889,7 @@ def test_valid_version(data, version):
 def test_invalid_version(data, version):
     data["version"] = version
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     expected_message = (
@@ -899,7 +907,7 @@ def test_invalid_version(data, version):
 def test_invalid_version_type(data):
     data["version"] = 0.1
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     expected_message = (
@@ -916,7 +924,7 @@ def test_invalid_version_type(data):
 def test_invalid_version_length(data):
     data["version"] = "this.is.a.really.too.long.version"
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     expected_message = (
@@ -1018,7 +1026,7 @@ def test_valid_compression(data, compression):
 def test_invalid_compression(data, compression):
     data["compression"] = compression
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     expected_message = (
@@ -1039,7 +1047,7 @@ def test_valid_confinement(data, confinement):
 def test_invalid_confinement(data, confinement):
     data["confinement"] = confinement
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     expected_message = (
@@ -1060,7 +1068,7 @@ def test_valid_description(data, desc):
 def test_invalid_description(data, desc):
     data["description"] = desc
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     expected_message = (
@@ -1081,7 +1089,7 @@ def test_valid_grade(data, grade):
 def test_invalid_grade(data, grade):
     data["grade"] = grade
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     expected_message = (
@@ -1119,7 +1127,7 @@ def test_valid_epoch(data, epoch):
 def test_invalid_epoch(data, epoch):
     data["epoch"] = epoch
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     expected_message = (
@@ -1138,7 +1146,7 @@ def test_valid_license(data):
 def test_invalid_license(data):
     data["license"] = 1234
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     expected_message = (
@@ -1159,7 +1167,7 @@ def test_valid_adapter(data, adapter):
 def test_invalid_adapter(data, adapter):
     data["apps"] = {"foo": {"command": "foo", "adapter": adapter}}
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     expected_message = "The 'apps/foo/adapter' property does not match"
@@ -1173,7 +1181,7 @@ def test_invalid_adapter(data, adapter):
 def test_invalid_part_build_environment_key_type(data, build_environment):
     data["parts"]["part1"]["build-environment"] = build_environment
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError):
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError):
         Validator(data).validate()
 
 
@@ -1183,7 +1191,7 @@ def test_invalid_part_build_environment_key_type(data, build_environment):
 def test_invalid_command_chain(data, command_chain):
     data["apps"] = {"foo": {"command": "foo", "command-chain": command_chain}}
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     expected_message = "The 'apps/foo/command-chain"
@@ -1204,7 +1212,7 @@ def test_yaml_valid_system_usernames_short(data, username):
 
 def test_invalid_yaml_invalid_username(data):
     data["system-usernames"] = {"snap_user": "shared"}
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     expected_message = "The 'system-usernames' property does not match the required schema: 'snap_user' is not a valid system-username."
@@ -1213,7 +1221,7 @@ def test_invalid_yaml_invalid_username(data):
 
 def test_invalid_yaml_invalid_short_scope(data):
     data["system-usernames"] = {"snap_daemon": "invalid-scope"}
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     expected_message = "The 'system-usernames/snap_daemon' property does not match the required schema: 'invalid-scope' is not valid under any of the given schemas"
@@ -1222,7 +1230,7 @@ def test_invalid_yaml_invalid_short_scope(data):
 
 def test_invalid_yaml_invalid_long_scope(data):
     data["system-usernames"] = {"snap_daemon": {"scope": "invalid-scope"}}
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError) as error:
         Validator(data).validate()
 
     expected_message = "The 'system-usernames/snap_daemon' property does not match the required schema: {'scope': 'invalid-scope'} is not valid under any of the given schemas"
@@ -1419,7 +1427,9 @@ class TestInvalidAptConfigurations:
     def test_invalid(self, data, packages, message_contains):
         data["package-repositories"] = packages
 
-        with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError) as error:
+        with pytest.raises(
+            snapcraft_legacy.yaml_utils.errors.YamlValidationError
+        ) as error:
             Validator(data).validate()
 
         assert message_contains in str(error.value)
@@ -1496,5 +1506,5 @@ def test_invalid_metadata_links(data, contact, donation, issues, source_code, we
     data["source-code"] = source_code
     data["website"] = website
 
-    with pytest.raises(snapcraft.yaml_utils.errors.YamlValidationError):
+    with pytest.raises(snapcraft_legacy.yaml_utils.errors.YamlValidationError):
         Validator(data).validate()

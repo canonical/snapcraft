@@ -18,8 +18,8 @@ from textwrap import dedent
 
 from testtools.matchers import Equals
 
-from snapcraft.internal.build_providers import errors
-from snapcraft.internal.build_providers._multipass._instance_info import (  # noqa: E501
+from snapcraft_legacy.internal.build_providers import errors
+from snapcraft_legacy.internal.build_providers._multipass._instance_info import (  # noqa: E501
     InstanceInfo,
 )
 from tests import unit

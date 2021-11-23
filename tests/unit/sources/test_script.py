@@ -19,7 +19,7 @@ from unittest import mock
 
 from testtools.matchers import FileExists
 
-from snapcraft.internal.sources import Script
+from snapcraft_legacy.internal.sources import Script
 from tests import unit
 
 
@@ -32,7 +32,7 @@ class TestScript(unit.TestCase):
         self.source.file = os.path.join("destination", "file")
         open(self.source.file, "w").close()
 
-    @mock.patch("snapcraft.internal.sources._script.FileBase.download")
+    @mock.patch("snapcraft_legacy.internal.sources._script.FileBase.download")
     def test_download_makes_executable(self, mock_download):
         self.source.file = os.path.join("destination", "file")
         self.source.download()

@@ -19,9 +19,9 @@ import logging
 import fixtures
 from testtools.matchers import Contains, Equals
 
-from snapcraft import extractors
-from snapcraft.internal import errors
-from snapcraft.internal.pluginhandler import extract_metadata
+from snapcraft_legacy import extractors
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.internal.pluginhandler import extract_metadata
 from tests import fixture_setup, unit
 
 

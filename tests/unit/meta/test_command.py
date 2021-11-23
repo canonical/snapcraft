@@ -21,7 +21,7 @@ import shutil
 import fixtures
 from testtools.matchers import Equals, FileContains, FileExists, Is
 
-from snapcraft.internal.meta import command, errors
+from snapcraft_legacy.internal.meta import command, errors
 from tests import unit
 
 

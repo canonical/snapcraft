@@ -19,7 +19,7 @@ from textwrap import dedent
 from testtools import TestCase
 from testtools.matchers import Equals
 
-from snapcraft.plugins.v2.rust import RustPlugin
+from snapcraft_legacy.plugins.v2.rust import RustPlugin
 
 
 class RustPluginTest(TestCase):

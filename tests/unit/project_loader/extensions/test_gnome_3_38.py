@@ -16,7 +16,9 @@
 
 from testtools.matchers import Equals
 
-from snapcraft.internal.project_loader._extensions.gnome_3_38 import ExtensionImpl
+from snapcraft_legacy.internal.project_loader._extensions.gnome_3_38 import (
+    ExtensionImpl,
+)
 from tests.unit.commands import CommandBaseTestCase
 
 from .. import ProjectLoaderBaseTest

@@ -17,7 +17,7 @@
 from testtools import TestCase
 from testtools.matchers import Equals
 
-from snapcraft.plugins.v2.nil import NilPlugin
+from snapcraft_legacy.plugins.v2.nil import NilPlugin
 
 
 class NilPluginTest(TestCase):

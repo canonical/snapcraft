@@ -20,8 +20,8 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Equals, FileExists, HasLength
 
-from snapcraft.internal import errors
-from snapcraft.plugins.v1 import crystal
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.plugins.v1 import crystal
 from tests import unit
 
 from . import PluginsV1BaseTestCase
@@ -31,7 +31,7 @@ class CrystalPluginBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
-        self.fake_run = fixtures.MockPatch("snapcraft.internal.common.run")
+        self.fake_run = fixtures.MockPatch("snapcraft_legacy.internal.common.run")
         self.useFixture(self.fake_run)
 
 
@@ -155,7 +155,7 @@ class CrystalPluginTest(CrystalPluginBaseTest):
         # fake binaries being built
         self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.internal.elf.ElfFile", side_effect=MockElfFile
+                "snapcraft_legacy.internal.elf.ElfFile", side_effect=MockElfFile
             )
         )
         binaries = ["foo", "bar"]
@@ -189,7 +189,7 @@ class CrystalPluginTest(CrystalPluginBaseTest):
         # fake binaries being built
         self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.internal.elf.ElfFile", side_effect=MockElfFile
+                "snapcraft_legacy.internal.elf.ElfFile", side_effect=MockElfFile
             )
         )
         binaries = ["foo", "bar"]

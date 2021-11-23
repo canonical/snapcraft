@@ -35,9 +35,9 @@ from testtools.matchers import (
 )
 
 import tests
-from snapcraft import storeapi
-from snapcraft.storeapi import errors, http_clients, metrics
-from snapcraft.storeapi.v2 import channel_map, releases, validation_sets, whoami
+from snapcraft_legacy import storeapi
+from snapcraft_legacy.storeapi import errors, http_clients, metrics
+from snapcraft_legacy.storeapi.v2 import channel_map, releases, validation_sets, whoami
 from tests import fixture_setup, unit
 
 
@@ -958,8 +958,8 @@ class UploadTestCase(StoreTestCase):
         )
         # These should eventually converge to the same module
         pbars = (
-            "snapcraft.storeapi._upload.ProgressBar",
-            "snapcraft.storeapi._status_tracker.ProgressBar",
+            "snapcraft_legacy.storeapi._upload.ProgressBar",
+            "snapcraft_legacy.storeapi._status_tracker.ProgressBar",
         )
         for pbar in pbars:
             patcher = mock.patch(pbar, new=unit.SilentProgressBar)

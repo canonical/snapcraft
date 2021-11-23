@@ -22,9 +22,9 @@ import fixtures
 import pytest
 from testtools.matchers import Equals, HasLength
 
-import snapcraft
-from snapcraft.internal import errors, meta
-from snapcraft.plugins.v1 import kbuild
+import snapcraft_legacy
+from snapcraft_legacy.internal import errors, meta
+from snapcraft_legacy.plugins.v1 import kbuild
 
 from . import PluginsV1BaseTestCase
 
@@ -299,7 +299,7 @@ ACCEPT=n
 @pytest.mark.parametrize("deb_arch", ["armhf", "arm64", "i386", "ppc64el"])
 @mock.patch("subprocess.check_call")
 def test_cross_compile(mock_check_call, monkeypatch, mock_run, deb_arch):
-    monkeypatch.setattr(snapcraft.project.Project, "is_cross_compiling", True)
+    monkeypatch.setattr(snapcraft_legacy.project.Project, "is_cross_compiling", True)
 
     class Options:
         build_parameters = []
@@ -309,7 +309,7 @@ def test_cross_compile(mock_check_call, monkeypatch, mock_run, deb_arch):
         kconfigs = []
         build_attributes = []
 
-    project = snapcraft.project.Project(target_deb_arch=deb_arch)
+    project = snapcraft_legacy.project.Project(target_deb_arch=deb_arch)
     project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
     plugin = kbuild.KBuildPlugin("test-part", Options(), project)

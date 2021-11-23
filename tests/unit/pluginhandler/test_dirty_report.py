@@ -16,8 +16,11 @@
 
 from testscenarios import multiply_scenarios
 
-from snapcraft.internal import steps
-from snapcraft.internal.pluginhandler._dirty_report import Dependency, DirtyReport
+from snapcraft_legacy.internal import steps
+from snapcraft_legacy.internal.pluginhandler._dirty_report import (
+    Dependency,
+    DirtyReport,
+)
 
 
 class TestDirtyReportGetReport:

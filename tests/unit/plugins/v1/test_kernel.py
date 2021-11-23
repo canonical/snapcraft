@@ -25,10 +25,10 @@ import fixtures
 import pytest
 from testtools.matchers import Contains, Equals, FileContains, HasLength
 
-import snapcraft
-from snapcraft import storeapi
-from snapcraft.internal import errors, meta
-from snapcraft.plugins.v1 import kernel
+import snapcraft_legacy
+from snapcraft_legacy import storeapi
+from snapcraft_legacy.internal import errors, meta
+from snapcraft_legacy.plugins.v1 import kernel
 
 from . import PluginsV1BaseTestCase
 
@@ -65,7 +65,7 @@ class KernelPluginTestCase(PluginsV1BaseTestCase):
         self.run_output_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("snapcraft.BasePlugin.build")
+        patcher = mock.patch("snapcraft_legacy.BasePlugin.build")
         self.base_build_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -133,7 +133,7 @@ class KernelPluginTestCase(PluginsV1BaseTestCase):
         ]
         resulting_build_properties = kernel.KernelPlugin.get_build_properties()
         expected_build_properties.extend(
-            snapcraft.plugins.v1.kbuild.KBuildPlugin.get_build_properties()
+            snapcraft_legacy.plugins.v1.kbuild.KBuildPlugin.get_build_properties()
         )
 
         self.assertThat(
@@ -360,7 +360,7 @@ class KernelPluginTestCase(PluginsV1BaseTestCase):
             [mock.call(modprobe_cmd + ["vfat"], env=mock.ANY)]
         )
 
-    @mock.patch.object(snapcraft.ProjectOptions, "kernel_arch", new="not_arm")
+    @mock.patch.object(snapcraft_legacy.ProjectOptions, "kernel_arch", new="not_arm")
     def test_build_with_kconfigfile(self):
         self.options.kconfigfile = "config"
         with open(self.options.kconfigfile, "w") as f:
@@ -405,7 +405,7 @@ class KernelPluginTestCase(PluginsV1BaseTestCase):
         self.assertThat(config_contents, Equals("ACCEPT=y\n"))
         self._assert_common_assets(plugin.installdir)
 
-    @mock.patch.object(snapcraft.ProjectOptions, "kernel_arch", new="not_arm")
+    @mock.patch.object(snapcraft_legacy.ProjectOptions, "kernel_arch", new="not_arm")
     def test_build_verbose_with_kconfigfile(self):
         fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
         self.useFixture(fake_logger)
@@ -476,7 +476,7 @@ class KernelPluginTestCase(PluginsV1BaseTestCase):
         self.assertThat(config_contents, Equals("ACCEPT=y\n"))
         self._assert_common_assets(plugin.installdir)
 
-    @mock.patch.object(snapcraft.ProjectOptions, "kernel_arch", new="not_arm")
+    @mock.patch.object(snapcraft_legacy.ProjectOptions, "kernel_arch", new="not_arm")
     def test_check_config(self):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(fake_logger)
@@ -501,7 +501,7 @@ class KernelPluginTestCase(PluginsV1BaseTestCase):
         for warn in required_opts:
             self.assertIn("CONFIG_{}".format(warn), fake_logger.output)
 
-    @mock.patch.object(snapcraft.ProjectOptions, "kernel_arch", new="not_arm")
+    @mock.patch.object(snapcraft_legacy.ProjectOptions, "kernel_arch", new="not_arm")
     def test_check_initrd(self):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(fake_logger)
@@ -521,7 +521,7 @@ class KernelPluginTestCase(PluginsV1BaseTestCase):
         for module in kernel.required_boot:
             self.assertIn("CONFIG_{}".format(module.upper()), fake_logger.output)
 
-    @mock.patch.object(snapcraft.ProjectOptions, "kernel_arch", new="not_arm")
+    @mock.patch.object(snapcraft_legacy.ProjectOptions, "kernel_arch", new="not_arm")
     def test_build_with_kconfigfile_and_kconfigs(self):
         self.options.kconfigfile = "config"
         self.options.kconfigs = ["SOMETHING=y", "ACCEPT=n"]
@@ -576,7 +576,7 @@ ACCEPT=n
         self.assertThat(config_contents, Equals(expected_config))
         self._assert_common_assets(plugin.installdir)
 
-    @mock.patch.object(snapcraft.ProjectOptions, "kernel_arch", new="not_arm")
+    @mock.patch.object(snapcraft_legacy.ProjectOptions, "kernel_arch", new="not_arm")
     def test_build_with_defconfig_and_kconfigs(self):
         self.options.kdefconfig = ["defconfig"]
         self.options.kconfigs = ["SOMETHING=y", "ACCEPT=n"]
@@ -638,7 +638,7 @@ ACCEPT=n
         self.assertThat(config_contents, Equals(expected_config))
         self._assert_common_assets(plugin.installdir)
 
-    @mock.patch.object(snapcraft.ProjectOptions, "kernel_arch", new="not_arm")
+    @mock.patch.object(snapcraft_legacy.ProjectOptions, "kernel_arch", new="not_arm")
     def test_build_with_two_defconfigs(self):
         self.options.kdefconfig = ["defconfig", "defconfig2"]
 
@@ -686,7 +686,7 @@ ACCEPT=n
         self.assertTrue(os.path.exists(config_file))
         self._assert_common_assets(plugin.installdir)
 
-    @mock.patch.object(snapcraft.ProjectOptions, "kernel_arch", new="not_arm")
+    @mock.patch.object(snapcraft_legacy.ProjectOptions, "kernel_arch", new="not_arm")
     def test_build_with_kconfigfile_and_dtbs(self):
         self.options.kconfigfile = "config"
         with open(self.options.kconfigfile, "w") as f:
@@ -753,7 +753,7 @@ ACCEPT=n
             str(raised), Equals("No match for dtb 'fake-dtb.dtb' was found")
         )
 
-    @mock.patch.object(snapcraft.ProjectOptions, "kernel_arch", new="not_arm")
+    @mock.patch.object(snapcraft_legacy.ProjectOptions, "kernel_arch", new="not_arm")
     def test_build_with_kconfigfile_and_modules(self):
         self.options.kconfigfile = "config"
         with open(self.options.kconfigfile, "w") as f:
@@ -854,7 +854,7 @@ ACCEPT=n
         self.assertThat(config_contents, Equals("ACCEPT=y\n"))
         self._assert_common_assets(plugin.installdir)
 
-    @mock.patch.object(snapcraft.ProjectOptions, "kernel_arch", new="not_arm")
+    @mock.patch.object(snapcraft_legacy.ProjectOptions, "kernel_arch", new="not_arm")
     def test_build_with_kconfigfile_and_firmware(self):
         self.options.kconfigfile = "config"
         with open(self.options.kconfigfile, "w") as f:
@@ -916,7 +916,7 @@ ACCEPT=n
             os.path.exists(os.path.join(plugin.installdir, "firmware", "fake-fw-dir"))
         )
 
-    @mock.patch.object(snapcraft.ProjectOptions, "kernel_arch", new="not_arm")
+    @mock.patch.object(snapcraft_legacy.ProjectOptions, "kernel_arch", new="not_arm")
     def test_build_with_kconfigfile_and_no_firmware(self):
         self.options.kconfigfile = "config"
         with open(self.options.kconfigfile, "w") as f:
@@ -958,7 +958,7 @@ ACCEPT=n
         config_file = os.path.join(plugin.builddir, ".config")
         self.assertTrue(os.path.exists(config_file))
 
-    @mock.patch.object(snapcraft.ProjectOptions, "kernel_arch", new="not_arm")
+    @mock.patch.object(snapcraft_legacy.ProjectOptions, "kernel_arch", new="not_arm")
     def test_build_with_kconfigflavour(self):
         arch = self.project.deb_arch
         branch = "master"
@@ -1109,7 +1109,7 @@ ACCEPT=n
         )
 
     def test_enable_cross_compilation(self):
-        project = snapcraft.project.Project(target_deb_arch="arm64")
+        project = snapcraft_legacy.project.Project(target_deb_arch="arm64")
         project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
         plugin = kernel.KernelPlugin("test-part", self.options, project)
@@ -1131,7 +1131,7 @@ ACCEPT=n
         )
 
     def test_override_cross_compile(self):
-        project = snapcraft.project.Project(target_deb_arch="arm64")
+        project = snapcraft_legacy.project.Project(target_deb_arch="arm64")
         project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
         plugin = kernel.KernelPlugin("test-part", self.options, project)
@@ -1156,7 +1156,7 @@ ACCEPT=n
         )
 
     def test_override_cross_compile_empty(self):
-        project = snapcraft.project.Project(target_deb_arch="arm64")
+        project = snapcraft_legacy.project.Project(target_deb_arch="arm64")
         project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
         plugin = kernel.KernelPlugin("test-part", self.options, project)
@@ -1180,7 +1180,7 @@ ACCEPT=n
 
     def test_kernel_image_target_as_map(self):
         self.options.kernel_image_target = {"arm64": "Image"}
-        project = snapcraft.project.Project(target_deb_arch="arm64")
+        project = snapcraft_legacy.project.Project(target_deb_arch="arm64")
         project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
         plugin = kernel.KernelPlugin("test-part", self.options, project)
@@ -1189,7 +1189,7 @@ ACCEPT=n
 
     def test_kernel_image_target_as_string(self):
         self.options.kernel_image_target = "Image"
-        project = snapcraft.project.Project(target_deb_arch="arm64")
+        project = snapcraft_legacy.project.Project(target_deb_arch="arm64")
         project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
         plugin = kernel.KernelPlugin("test-part", self.options, project)
@@ -1208,7 +1208,7 @@ ACCEPT=n
             kernel_device_trees = []
             kernel_initrd_compression = "gz"
 
-        project = snapcraft.project.Project(target_deb_arch="arm64")
+        project = snapcraft_legacy.project.Project(target_deb_arch="arm64")
         project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
         plugin = kernel.KernelPlugin("test-part", self.options, project)
@@ -1266,7 +1266,7 @@ def test_target(deb_arch, expected_target):
         kernel_device_trees = []
         kernel_initrd_compression = "gz"
 
-    project = snapcraft.project.Project(target_deb_arch=deb_arch)
+    project = snapcraft_legacy.project.Project(target_deb_arch=deb_arch)
     project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
     plugin = kernel.KernelPlugin("test-part", Options(), project)

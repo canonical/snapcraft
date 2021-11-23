@@ -18,8 +18,8 @@ from unittest import mock
 
 import pytest
 
-from snapcraft.internal.meta.snap import Snap
-from snapcraft.project import Project
+from snapcraft_legacy.internal.meta.snap import Snap
+from snapcraft_legacy.project import Project
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ def project(monkeypatch, tmp_work_path, request):
 @pytest.fixture
 def mock_common_run_output():
     """A no-op common.run_output mock."""
-    patcher = mock.patch("snapcraft.internal.common.run_output")
+    patcher = mock.patch("snapcraft_legacy.internal.common.run_output")
     yield patcher.start()
     patcher.stop()
 
@@ -45,7 +45,7 @@ def mock_common_run_output():
 @pytest.fixture
 def mock_run():
     """A no-op run mock."""
-    patcher = mock.patch("snapcraft.plugins.v1.PluginV1.run")
+    patcher = mock.patch("snapcraft_legacy.plugins.v1.PluginV1.run")
     yield patcher.start()
     patcher.stop()
 
@@ -53,7 +53,7 @@ def mock_run():
 @pytest.fixture
 def mock_run_output():
     """A no-op run_output mock."""
-    patcher = mock.patch("snapcraft.plugins.v1.PluginV1.run_output")
+    patcher = mock.patch("snapcraft_legacy.plugins.v1.PluginV1.run_output")
     yield patcher.start()
     patcher.stop()
 
@@ -61,7 +61,7 @@ def mock_run_output():
 @pytest.fixture
 def mock_tar():
     """A no-op tar source mock."""
-    patcher = mock.patch("snapcraft.internal.sources.Tar")
+    patcher = mock.patch("snapcraft_legacy.internal.sources.Tar")
     yield patcher.start()
     patcher.stop()
 
@@ -69,6 +69,6 @@ def mock_tar():
 @pytest.fixture
 def mock_zip():
     """A no-op zip source mock."""
-    patcher = mock.patch("snapcraft.internal.sources.Zip")
+    patcher = mock.patch("snapcraft_legacy.internal.sources.Zip")
     yield patcher.start()
     patcher.stop()

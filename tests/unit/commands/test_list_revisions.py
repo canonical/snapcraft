@@ -20,7 +20,7 @@ from textwrap import dedent
 import fixtures
 from testtools.matchers import Contains, Equals
 
-from snapcraft import storeapi
+from snapcraft_legacy import storeapi
 
 from . import FakeStoreCommandsBaseTestCase
 

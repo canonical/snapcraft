@@ -19,7 +19,7 @@ from unittest import mock
 
 import pytest
 
-from snapcraft.plugins.v1 import catkin_tools
+from snapcraft_legacy.plugins.v1 import catkin_tools
 
 from . import PluginsV1BaseTestCase
 
@@ -42,7 +42,7 @@ class CatkinToolsPluginBaseTest(PluginsV1BaseTestCase):
 
         self.properties = props()
 
-        patcher = mock.patch("snapcraft.plugins.v1._python.Pip")
+        patcher = mock.patch("snapcraft_legacy.plugins.v1._python.Pip")
         self.pip_mock = patcher.start()
         self.addCleanup(patcher.stop)
         self.pip_mock.return_value.list.return_value = {}
@@ -52,7 +52,7 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTest):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch("snapcraft.repo.Ubuntu")
+        patcher = mock.patch("snapcraft_legacy.repo.Ubuntu")
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
 

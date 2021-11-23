@@ -37,7 +37,7 @@ from tests.subprocess_utils import call, call_with_output
 
 # we do not want snapcraft imports for the integration tests
 try:
-    from snapcraft import yaml_utils
+    from snapcraft_legacy import yaml_utils
 except ImportError:
     import yaml as yaml_utils  # type: ignore
 
@@ -707,14 +707,14 @@ class FakeBaseEnvironment(fixtures.Fixture):
         self.addCleanup(patcher.stop)
 
         self.core_path = self.useFixture(fixtures.TempDir()).path
-        patcher = mock.patch("snapcraft.internal.common.get_installed_snap_path")
+        patcher = mock.patch("snapcraft_legacy.internal.common.get_installed_snap_path")
         mock_core_path = patcher.start()
         mock_core_path.return_value = self.core_path
         self.addCleanup(patcher.stop)
 
         self.content_dirs = set([])
         mock_content_dirs = fixtures.MockPatch(
-            "snapcraft.project._project.Project._get_provider_content_dirs",
+            "snapcraft_legacy.project._project.Project._get_provider_content_dirs",
             return_value=self.content_dirs,
         )
         self.useFixture(mock_content_dirs)

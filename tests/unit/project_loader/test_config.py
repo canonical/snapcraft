@@ -18,8 +18,8 @@ from textwrap import dedent
 
 from testtools.matchers import Contains, Equals
 
-import snapcraft.internal.project_loader._config as _config
-from snapcraft.internal.project_loader import errors
+import snapcraft_legacy.internal.project_loader._config as _config
+from snapcraft_legacy.internal.project_loader import errors
 from tests import unit
 
 from . import LoadPartBaseTest, ProjectLoaderBaseTest

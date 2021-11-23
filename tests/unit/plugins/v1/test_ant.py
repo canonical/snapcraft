@@ -22,10 +22,10 @@ import fixtures
 import pytest
 from testtools.matchers import Equals, HasLength
 
-from snapcraft.internal import errors
-from snapcraft.internal.meta.snap import Snap
-from snapcraft.plugins.v1 import ant
-from snapcraft.project import Project
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.internal.meta.snap import Snap
+from snapcraft_legacy.plugins.v1 import ant
+from snapcraft_legacy.project import Project
 from tests import unit
 
 from . import PluginsV1BaseTestCase
@@ -229,10 +229,10 @@ class AntPluginSnapTest(PluginsV1BaseTestCase):
         self.options = Options()
 
         self.run_mock = self.useFixture(
-            fixtures.MockPatch("snapcraft.internal.common.run")
+            fixtures.MockPatch("snapcraft_legacy.internal.common.run")
         ).mock
         self.tar_mock = self.useFixture(
-            fixtures.MockPatch("snapcraft.internal.sources.Tar")
+            fixtures.MockPatch("snapcraft_legacy.internal.sources.Tar")
         ).mock
 
     def create_assets(self, plugin):

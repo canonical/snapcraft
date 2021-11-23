@@ -18,8 +18,8 @@ import io
 import pytest
 
 
-from snapcraft import yaml_utils
-from snapcraft.yaml_utils import YamlValidationError
+from snapcraft_legacy import yaml_utils
+from snapcraft_legacy.yaml_utils import YamlValidationError
 
 
 def test_load_yaml_file(caplog, tmp_path):

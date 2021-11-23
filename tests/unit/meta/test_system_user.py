@@ -16,8 +16,8 @@
 
 from testtools.matchers import Equals
 
-from snapcraft.internal.meta import errors
-from snapcraft.internal.meta.system_user import SystemUser, SystemUserScope
+from snapcraft_legacy.internal.meta import errors
+from snapcraft_legacy.internal.meta.system_user import SystemUser, SystemUserScope
 from tests import unit
 
 

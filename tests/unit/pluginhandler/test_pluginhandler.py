@@ -26,8 +26,8 @@ import fixtures
 import pytest
 from testtools.matchers import Contains, Equals, FileExists, Not
 
-import snapcraft
-from snapcraft.internal import (
+import snapcraft_legacy
+from snapcraft_legacy.internal import (
     common,
     errors,
     lifecycle,
@@ -37,8 +37,8 @@ from snapcraft.internal import (
     states,
     steps,
 )
-from snapcraft.internal.sources.errors import SnapcraftSourceUnhandledError
-from snapcraft.project import Project
+from snapcraft_legacy.internal.sources.errors import SnapcraftSourceUnhandledError
+from snapcraft_legacy.project import Project
 from tests import fixture_setup, unit
 
 from . import mocks
@@ -119,7 +119,7 @@ class PluginTestCase(unit.TestCase):
         )
         self.assertThat(exclude, Equals(["etc", "usr/lib/*.a"]))
 
-    @patch.object(snapcraft.plugins.v1.nil.NilPlugin, "snap_fileset")
+    @patch.object(snapcraft_legacy.plugins.v1.nil.NilPlugin, "snap_fileset")
     def test_migratable_fileset_for_no_options_modification(self, mock_snap_fileset):
         """Making sure migratable_fileset_for() doesn't modify options"""
 
@@ -448,7 +448,7 @@ class PluginTestCase(unit.TestCase):
 
         self.assertThat(raised.message, Equals('path "/abs/exclude" must be relative'))
 
-    @patch("snapcraft.internal.pluginhandler._organize_filesets")
+    @patch("snapcraft_legacy.internal.pluginhandler._organize_filesets")
     def test_build_organizes(self, mock_organize):
         handler = self.load_part("test-part")
         handler.build()
@@ -456,9 +456,9 @@ class PluginTestCase(unit.TestCase):
             "test-part", {}, handler.part_install_dir, False
         )
 
-    @patch("snapcraft.internal.pluginhandler._organize_filesets")
+    @patch("snapcraft_legacy.internal.pluginhandler._organize_filesets")
     def test_update_build_organizes_with_overwrite(self, mock_organize):
-        class TestPlugin(snapcraft.BasePlugin):
+        class TestPlugin(snapcraft_legacy.BasePlugin):
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)
                 self.out_of_source_build = True
@@ -836,13 +836,13 @@ class RealStageTestCase(unit.TestCase):
         super().setUp()
 
         fake_install_build_packages = fixtures.MockPatch(
-            "snapcraft.internal.lifecycle._runner._install_build_packages",
+            "snapcraft_legacy.internal.lifecycle._runner._install_build_packages",
             return_value=list(),
         )
         self.useFixture(fake_install_build_packages)
 
         fake_install_build_snaps = fixtures.MockPatch(
-            "snapcraft.internal.lifecycle._runner._install_build_snaps",
+            "snapcraft_legacy.internal.lifecycle._runner._install_build_snaps",
             return_value=list(),
         )
         self.useFixture(fake_install_build_snaps)
@@ -1100,7 +1100,7 @@ class IsDirtyTestCase(unit.TestCase):
             self.handler.is_dirty(steps.BUILD), "Expected build step to be dirty"
         )
 
-    @patch.object(snapcraft.BasePlugin, "enable_cross_compilation")
+    @patch.object(snapcraft_legacy.BasePlugin, "enable_cross_compilation")
     def test_build_is_dirty_from_project(self, mock_enable_cross_compilation):
         project = Project(target_deb_arch="amd64")
         self.handler = self.load_part("test-part", project=project)
@@ -1157,7 +1157,7 @@ class IsDirtyTestCase(unit.TestCase):
             self.handler.is_dirty(steps.PULL), "Expected pull step to be dirty"
         )
 
-    @patch.object(snapcraft.BasePlugin, "enable_cross_compilation")
+    @patch.object(snapcraft_legacy.BasePlugin, "enable_cross_compilation")
     def test_pull_is_dirty_from_project(self, mock_enable_cross_compilation):
         project = Project(target_deb_arch="amd64")
         self.handler = self.load_part("test-part", project=project)
@@ -1453,13 +1453,13 @@ class StagePackagesTestCase(unit.TestCase):
         part = self.load_part("offline-test", plugin_name="nil")
 
         with patch(
-            "snapcraft.internal.pluginhandler.PluginHandler._fetch_stage_packages"
+            "snapcraft_legacy.internal.pluginhandler.PluginHandler._fetch_stage_packages"
         ) as fetch_stage_packages, patch(
-            "snapcraft.internal.pluginhandler.PluginHandler._fetch_stage_snaps"
+            "snapcraft_legacy.internal.pluginhandler.PluginHandler._fetch_stage_snaps"
         ) as fetch_stage_snaps, patch(
-            "snapcraft.internal.pluginhandler.PluginHandler._unpack_stage_packages"
+            "snapcraft_legacy.internal.pluginhandler.PluginHandler._unpack_stage_packages"
         ) as unpack_stage_packages, patch(
-            "snapcraft.internal.pluginhandler.PluginHandler._unpack_stage_snaps"
+            "snapcraft_legacy.internal.pluginhandler.PluginHandler._unpack_stage_snaps"
         ) as unpack_stage_snaps:
             part.prepare_pull()
 

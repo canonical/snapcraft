@@ -18,9 +18,9 @@ import pathlib
 from typing import Dict, Optional
 from unittest import mock
 
-from snapcraft.internal.build_providers._base_provider import Provider
-from snapcraft.internal.meta.snap import Snap
-from snapcraft.project import Project
+from snapcraft_legacy.internal.build_providers._base_provider import Provider
+from snapcraft_legacy.internal.meta.snap import Snap
+from snapcraft_legacy.project import Project
 from tests import fixture_setup, unit
 
 
@@ -146,7 +146,7 @@ class BaseProviderBaseTest(unit.TestCase):
         self.instance_name = "snapcraft-project-name"
 
         patcher = mock.patch(
-            "snapcraft.internal.build_providers._base_provider.SnapInjector"
+            "snapcraft_legacy.internal.build_providers._base_provider.SnapInjector"
         )
         self.snap_injector_mock = patcher.start()
         self.addCleanup(patcher.stop)
@@ -163,7 +163,7 @@ class MacBaseProviderWithBasesBaseTest(unit.TestCase):
         self.instance_name = "snapcraft-project-name"
 
         patcher = mock.patch(
-            "snapcraft.internal.build_providers._base_provider.SnapInjector"
+            "snapcraft_legacy.internal.build_providers._base_provider.SnapInjector"
         )
         self.snap_injector_mock = patcher.start()
         self.addCleanup(patcher.stop)
@@ -171,7 +171,7 @@ class MacBaseProviderWithBasesBaseTest(unit.TestCase):
         self.project = get_project()
 
         patcher = mock.patch(
-            "snapcraft.internal.build_providers._base_provider._get_platform",
+            "snapcraft_legacy.internal.build_providers._base_provider._get_platform",
             return_value="darwin",
         )
         patcher.start()

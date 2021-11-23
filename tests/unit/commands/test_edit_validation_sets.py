@@ -20,8 +20,8 @@ from unittest import mock
 
 import pytest
 
-from snapcraft.storeapi.v2 import validation_sets
-from snapcraft.storeapi import StoreClient
+from snapcraft_legacy.storeapi.v2 import validation_sets
+from snapcraft_legacy.storeapi import StoreClient
 
 
 @pytest.fixture
@@ -93,7 +93,7 @@ def fake_snap_sign():
         return (json.dumps(assertion) + f"\n\nSIGNED{key_name}").encode()
 
     patched_snap_sign = mock.patch(
-        "snapcraft.cli.assertions._sign_assertion", side_effect=sign
+        "snapcraft_legacy.cli.assertions._sign_assertion", side_effect=sign
     )
     yield patched_snap_sign.start()
     patched_snap_sign.stop()
@@ -129,7 +129,7 @@ def test_edit_validation_sets_with_no_changes_to_existing_set(
 @pytest.fixture
 def fake_edit_validation_sets():
     patched_edit_validation_sets = mock.patch(
-        "snapcraft.cli.assertions._edit_validation_sets"
+        "snapcraft_legacy.cli.assertions._edit_validation_sets"
     )
     yield patched_edit_validation_sets.start()
     patched_edit_validation_sets.stop()

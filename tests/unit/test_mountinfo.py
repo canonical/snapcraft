@@ -20,7 +20,7 @@ from textwrap import dedent
 import fixtures
 from testtools.matchers import Equals, HasLength
 
-from snapcraft.internal import errors, mountinfo
+from snapcraft_legacy.internal import errors, mountinfo
 from tests import unit
 
 
