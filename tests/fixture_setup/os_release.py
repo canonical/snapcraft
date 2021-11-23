@@ -20,7 +20,7 @@ from unittest import mock
 
 import fixtures
 
-from snapcraft.internal import os_release
+from snapcraft_legacy.internal import os_release
 
 
 class FakeOsRelease(fixtures.Fixture):
@@ -73,7 +73,7 @@ class FakeOsRelease(fixtures.Fixture):
             return release
 
         patcher = mock.patch(
-            "snapcraft.internal.os_release.OsRelease", wraps=_create_os_release
+            "snapcraft_legacy.internal.os_release.OsRelease", wraps=_create_os_release
         )
         patcher.start()
         self.addCleanup(patcher.stop)

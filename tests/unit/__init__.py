@@ -27,7 +27,7 @@ import progressbar
 import testscenarios
 import testtools
 
-from snapcraft.internal import common, steps
+from snapcraft_legacy.internal import common, steps
 from tests import fake_servers, fixture_setup
 from tests.file_utils import get_snapcraft_path
 from tests.unit.part_loader import load_part
@@ -159,13 +159,13 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
 
         # We do not want the paths to affect every test we have.
         patcher = mock.patch(
-            "snapcraft.file_utils.get_snap_tool_path", side_effect=lambda x: x
+            "snapcraft_legacy.file_utils.get_snap_tool_path", side_effect=lambda x: x
         )
         patcher.start()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch(
-            "snapcraft.internal.indicators.ProgressBar", new=SilentProgressBar
+            "snapcraft_legacy.internal.indicators.ProgressBar", new=SilentProgressBar
         )
         patcher.start()
         self.addCleanup(patcher.stop)

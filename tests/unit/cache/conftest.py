@@ -16,7 +16,7 @@
 
 import pytest
 
-from snapcraft.internal import cache
+from snapcraft_legacy.internal import cache
 
 
 @pytest.fixture()

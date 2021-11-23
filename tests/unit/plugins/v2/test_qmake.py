@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.plugins.v2.qmake import QMakePlugin
+from snapcraft_legacy.plugins.v2.qmake import QMakePlugin
 
 
 def test_schema():

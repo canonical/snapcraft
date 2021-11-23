@@ -21,10 +21,10 @@ from unittest import mock
 
 from testtools.matchers import Contains, DirExists, Equals, FileExists, Not
 
-import snapcraft
-from snapcraft import file_utils
-from snapcraft.internal import sources
-from snapcraft.plugins.v1 import dotnet
+import snapcraft_legacy
+from snapcraft_legacy import file_utils
+from snapcraft_legacy.internal import sources
+from snapcraft_legacy.plugins.v1 import dotnet
 from tests import unit
 
 from . import PluginsV1BaseTestCase
@@ -70,7 +70,7 @@ class DotNetProjectBaseTest(PluginsV1BaseTestCase):
 
         # Only amd64 is supported for now.
         patcher = mock.patch(
-            "snapcraft.ProjectOptions.deb_arch",
+            "snapcraft_legacy.ProjectOptions.deb_arch",
             new_callable=mock.PropertyMock,
             return_value="amd64",
         )
@@ -117,8 +117,8 @@ class DotNetProjectBaseTest(PluginsV1BaseTestCase):
         urlopen_mock.side_effect = fake_urlopen
         self.addCleanup(patcher.stop)
 
-        original_check_call = snapcraft.internal.common.run
-        patcher = mock.patch("snapcraft.internal.common.run")
+        original_check_call = snapcraft_legacy.internal.common.run
+        patcher = mock.patch("snapcraft_legacy.internal.common.run")
         self.mock_check_call = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -177,7 +177,7 @@ class DotNetProjectTest(DotNetProjectBaseTest):
 
     def test_init_with_non_amd64_architecture(self):
         with mock.patch(
-            "snapcraft.ProjectOptions.deb_arch",
+            "snapcraft_legacy.ProjectOptions.deb_arch",
             new_callable=mock.PropertyMock,
             return_value="non-amd64",
         ):

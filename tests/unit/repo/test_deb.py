@@ -26,9 +26,9 @@ import pytest
 import testtools
 from testtools.matchers import Equals
 
-from snapcraft.internal import repo
-from snapcraft.internal.repo import errors
-from snapcraft.internal.repo.deb_package import DebPackage
+from snapcraft_legacy.internal import repo
+from snapcraft_legacy.internal.repo import errors
+from snapcraft_legacy.internal.repo.deb_package import DebPackage
 from tests import unit
 
 
@@ -43,7 +43,7 @@ class TestPackages(unit.TestCase):
         super().setUp()
 
         self.fake_apt_cache = self.useFixture(
-            fixtures.MockPatch("snapcraft.internal.repo._deb.AptCache")
+            fixtures.MockPatch("snapcraft_legacy.internal.repo._deb.AptCache")
         ).mock
 
         self.fake_run = self.useFixture(
@@ -65,7 +65,7 @@ class TestPackages(unit.TestCase):
 
         self.fake_tmp_mock = self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.internal.repo._deb.tempfile.TemporaryDirectory",
+                "snapcraft_legacy.internal.repo._deb.tempfile.TemporaryDirectory",
                 new=fake_tempdir,
             )
         ).mock
@@ -73,7 +73,7 @@ class TestPackages(unit.TestCase):
         self.stage_packages_path = Path(self.path)
 
     @mock.patch(
-        "snapcraft.internal.repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES",
+        "snapcraft_legacy.internal.repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES",
         {"filtered-pkg-1", "filtered-pkg-2"},
     )
     def test_fetch_stage_packages(self):
@@ -105,7 +105,7 @@ class TestPackages(unit.TestCase):
         self.assertThat(fetched_packages, Equals(["fake-package=1.0"]))
 
     @mock.patch(
-        "snapcraft.internal.repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES",
+        "snapcraft_legacy.internal.repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES",
         {"filtered-pkg-1", "filtered-pkg-2", "filtered-pkg-3:amd64", "filtered-pkg-4"},
     )
     def test_fetch_stage_package_filtered_arch_version(self):
@@ -214,7 +214,7 @@ class BuildPackagesTestCase(unit.TestCase):
         super().setUp()
 
         self.fake_apt_cache = self.useFixture(
-            fixtures.MockPatch("snapcraft.internal.repo._deb.AptCache")
+            fixtures.MockPatch("snapcraft_legacy.internal.repo._deb.AptCache")
         ).mock
 
         self.fake_run = self.useFixture(
@@ -230,7 +230,7 @@ class BuildPackagesTestCase(unit.TestCase):
 
         self.fake_is_dumb_terminal = self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.repo._deb.is_dumb_terminal", return_value=True
+                "snapcraft_legacy.repo._deb.is_dumb_terminal", return_value=True
             )
         ).mock
 
@@ -467,7 +467,7 @@ class BuildPackagesTestCase(unit.TestCase):
         ]
         self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.internal.repo._deb.Ubuntu.refresh_build_packages"
+                "snapcraft_legacy.internal.repo._deb.Ubuntu.refresh_build_packages"
             )
         )
 

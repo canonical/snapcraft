@@ -26,10 +26,10 @@ import fixtures
 import pytest
 from testtools.matchers import DirExists, EndsWith, Equals, Not
 
-from snapcraft.internal import steps
-from snapcraft.internal.build_providers import errors
-from snapcraft.internal.meta.snap import Snap
-from snapcraft.project import Project
+from snapcraft_legacy.internal import steps
+from snapcraft_legacy.internal.build_providers import errors
+from snapcraft_legacy.internal.meta.snap import Snap
+from snapcraft_legacy.project import Project
 
 from . import (
     BaseProviderBaseTest,

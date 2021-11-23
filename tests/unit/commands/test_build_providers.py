@@ -21,9 +21,9 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Equals
 
-import snapcraft.yaml_utils.errors
-from snapcraft.internal import steps
-from snapcraft.internal.build_providers.errors import ProviderExecError
+import snapcraft_legacy.yaml_utils.errors
+from snapcraft_legacy.internal import steps
+from snapcraft_legacy.internal.build_providers.errors import ProviderExecError
 from tests import fixture_setup
 from tests.unit.build_providers import ProviderImpl
 
@@ -75,7 +75,7 @@ class BuildEnvironmentParsingTest(LifecycleCommandsBaseTestCase):
 
         # Don't actually run clean - we only want to test the command
         # line interface flag parsing.
-        self.useFixture(fixtures.MockPatch("snapcraft.internal.lifecycle.clean"))
+        self.useFixture(fixtures.MockPatch("snapcraft_legacy.internal.lifecycle.clean"))
 
         # tests.unit.TestCase sets SNAPCRAFT_BUILD_ENVIRONMENT to host.
         # These build provider tests will want to set this explicitly.
@@ -85,7 +85,7 @@ class BuildEnvironmentParsingTest(LifecycleCommandsBaseTestCase):
 
         self.mock_get_provider_for = self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.internal.build_providers.get_provider_for",
+                "snapcraft_legacy.internal.build_providers.get_provider_for",
                 return_value=ProviderImpl,
             )
         ).mock
@@ -93,7 +93,8 @@ class BuildEnvironmentParsingTest(LifecycleCommandsBaseTestCase):
         # Tests need to dictate this (or not).
         self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.internal.common.is_process_container", return_value=False
+                "snapcraft_legacy.internal.common.is_process_container",
+                return_value=False,
             )
         )
 
@@ -108,7 +109,8 @@ class AssortedBuildEnvironmentParsingTests(BuildEnvironmentParsingTest):
     def test_host_container(self):
         self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.internal.common.is_process_container", return_value=True
+                "snapcraft_legacy.internal.common.is_process_container",
+                return_value=True,
             )
         )
         result = self.run_command([self.step])
@@ -242,7 +244,7 @@ class BuildProviderYamlValidationTest(LifecycleCommandsBaseTestCase):
         )
 
         patcher = mock.patch(
-            "snapcraft.internal.build_providers.get_provider_for",
+            "snapcraft_legacy.internal.build_providers.get_provider_for",
             return_value=ProviderImpl,
         )
         self.provider = patcher.start()
@@ -267,7 +269,9 @@ class BuildProviderYamlValidationTest(LifecycleCommandsBaseTestCase):
         self.useFixture(snapcraft_yaml)
 
         self.assertRaises(
-            snapcraft.yaml_utils.errors.YamlValidationError, self.run_command, ["pull"]
+            snapcraft_legacy.yaml_utils.errors.YamlValidationError,
+            self.run_command,
+            ["pull"],
         )
 
 
@@ -300,7 +304,8 @@ class BuildProviderDebugCommandTestCase(LifecycleCommandsBaseTestCase):
                 shell_mock()
 
         patcher = mock.patch(
-            "snapcraft.internal.build_providers.get_provider_for", return_value=Provider
+            "snapcraft_legacy.internal.build_providers.get_provider_for",
+            return_value=Provider,
         )
         self.provider = patcher.start()
         self.addCleanup(patcher.stop)
@@ -352,7 +357,8 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
                 shell_mock()
 
         patcher = mock.patch(
-            "snapcraft.internal.build_providers.get_provider_for", return_value=Provider
+            "snapcraft_legacy.internal.build_providers.get_provider_for",
+            return_value=Provider,
         )
         self.provider = patcher.start()
         self.addCleanup(patcher.stop)
@@ -456,7 +462,8 @@ class BuildProviderTryCommandTestCase(LifecycleCommandsBaseTestCase):
                 return mount_prime_mock()
 
         patcher = mock.patch(
-            "snapcraft.internal.build_providers.get_provider_for", return_value=Provider
+            "snapcraft_legacy.internal.build_providers.get_provider_for",
+            return_value=Provider,
         )
         self.provider = patcher.start()
         self.addCleanup(patcher.stop)
@@ -505,7 +512,8 @@ class BuildProviderCleanCommandTestCase(LifecycleCommandsBaseTestCase):
                 clean_mock(part_names=part_names)
 
         patcher = mock.patch(
-            "snapcraft.internal.build_providers.get_provider_for", return_value=Provider
+            "snapcraft_legacy.internal.build_providers.get_provider_for",
+            return_value=Provider,
         )
         self.provider = patcher.start()
         self.addCleanup(patcher.stop)
@@ -515,7 +523,7 @@ class BuildProviderCleanCommandTestCase(LifecycleCommandsBaseTestCase):
 
         self.make_snapcraft_yaml("pull", base="core20")
 
-    @mock.patch("snapcraft.internal.lifecycle.clean")
+    @mock.patch("snapcraft_legacy.internal.lifecycle.clean")
     def test_clean(self, lifecycle_clean_mock):
         result = self.run_command(["clean"])
 
@@ -545,8 +553,8 @@ class BuildProviderCleanCommandTestCase(LifecycleCommandsBaseTestCase):
         self.clean_project_mock.assert_not_called()
         self.clean_mock.assert_not_called()
 
-    @mock.patch("snapcraft.cli.lifecycle.get_project")
-    @mock.patch("snapcraft.internal.lifecycle.clean")
+    @mock.patch("snapcraft_legacy.cli.lifecycle.get_project")
+    @mock.patch("snapcraft_legacy.internal.lifecycle.clean")
     def test_unprime_in_managed_host(self, lifecycle_clean_mock, get_project_mock):
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "managed-host")

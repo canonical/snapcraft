@@ -23,11 +23,11 @@ from unittest import mock
 import fixtures
 from click.testing import CliRunner
 
-from snapcraft import storeapi
-from snapcraft.cli._runner import run
-from snapcraft.storeapi import metrics
-from snapcraft.storeapi.v2.channel_map import ChannelMap
-from snapcraft.storeapi.v2.releases import Releases
+from snapcraft_legacy import storeapi
+from snapcraft_legacy.cli._runner import run
+from snapcraft_legacy.storeapi import metrics
+from snapcraft_legacy.storeapi.v2.channel_map import ChannelMap
+from snapcraft_legacy.storeapi.v2.releases import Releases
 from tests import fixture_setup, unit
 
 _sample_keys = [
@@ -94,7 +94,9 @@ class CommandBaseTestCase(unit.TestCase):
         # For click testing, runner will overwrite the descriptors for stdio -
         # ensure TTY always appears connected.
         self.useFixture(
-            fixtures.MockPatch("snapcraft.cli.echo.is_tty_connected", return_value=True)
+            fixtures.MockPatch(
+                "snapcraft_legacy.cli.echo.is_tty_connected", return_value=True
+            )
         )
 
         with mock.patch("sys.argv", args):
@@ -108,16 +110,16 @@ class LifecycleCommandsBaseTestCase(CommandBaseTestCase):
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT"))
 
         self.fake_lifecycle_clean = fixtures.MockPatch(
-            "snapcraft.internal.lifecycle.clean"
+            "snapcraft_legacy.internal.lifecycle.clean"
         )
         self.useFixture(self.fake_lifecycle_clean)
 
         self.fake_lifecycle_execute = fixtures.MockPatch(
-            "snapcraft.internal.lifecycle.execute"
+            "snapcraft_legacy.internal.lifecycle.execute"
         )
         self.useFixture(self.fake_lifecycle_execute)
 
-        self.fake_pack = fixtures.MockPatch("snapcraft.cli.lifecycle._pack")
+        self.fake_pack = fixtures.MockPatch("snapcraft_legacy.cli.lifecycle._pack")
         self.useFixture(self.fake_pack)
 
         self.snapcraft_yaml = fixture_setup.SnapcraftYaml(
@@ -137,7 +139,7 @@ class LifecycleCommandsBaseTestCase(CommandBaseTestCase):
         )
 
         self.fake_get_provider_for = fixtures.MockPatch(
-            "snapcraft.internal.build_providers.get_provider_for",
+            "snapcraft_legacy.internal.build_providers.get_provider_for",
             return_value=self.provider_class_mock,
         )
         self.useFixture(self.fake_get_provider_for)
@@ -458,6 +460,7 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
 
         # Pretend that the snap command is available
         self.fake_package_installed = fixtures.MockPatch(
-            "snapcraft.internal.repo.Repo.is_package_installed", return_value=True
+            "snapcraft_legacy.internal.repo.Repo.is_package_installed",
+            return_value=True,
         )
         self.useFixture(self.fake_package_installed)

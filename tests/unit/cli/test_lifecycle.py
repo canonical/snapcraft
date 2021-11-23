@@ -18,7 +18,7 @@ from unittest import mock
 
 import pytest
 
-from snapcraft.cli import lifecycle
+from snapcraft_legacy.cli import lifecycle
 
 
 @pytest.mark.parametrize(
@@ -32,8 +32,8 @@ from snapcraft.cli import lifecycle
 @pytest.mark.parametrize(
     "compression", ["xz", "lzo", None],
 )
-@mock.patch("snapcraft.file_utils.get_host_tool_path", return_value="/bin/snap")
-@mock.patch("snapcraft.cli.lifecycle._run_pack", return_value="ignore.snap")
+@mock.patch("snapcraft_legacy.file_utils.get_host_tool_path", return_value="/bin/snap")
+@mock.patch("snapcraft_legacy.cli.lifecycle._run_pack", return_value="ignore.snap")
 def test_pack(mock_run_pack, mock_host_tool, compression, output, pack_name, pack_dir):
     lifecycle._pack(directory="/my/snap", compression=compression, output=output)
 

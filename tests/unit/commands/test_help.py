@@ -21,8 +21,8 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Contains, Equals, StartsWith
 
-from snapcraft.cli._runner import run
-from snapcraft.cli.help import _TOPICS
+from snapcraft_legacy.cli._runner import run
+from snapcraft_legacy.cli.help import _TOPICS
 from tests import fixture_setup
 
 from . import CommandBaseTestCase
@@ -115,7 +115,9 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
     def test_show_module_help_with_devel_for_valid_plugin(self):
         result = self.run_command(["help", "nil", "--devel"])
 
-        expected = "Help on module snapcraft.plugins.v2.nil in snapcraft.plugins"
+        expected = (
+            "Help on module snapcraft_legacy.plugins.v2.nil in snapcraft_legacy.plugins"
+        )
         output = result.output[: len(expected)]
 
         self.assertThat(
@@ -164,9 +166,9 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
         import os
         from pathlib import Path
 
-        import snapcraft.plugins
+        import snapcraft_legacy.plugins
 
-        for plugin in Path(snapcraft.plugins.__path__[0]).glob("*.py"):
+        for plugin in Path(snapcraft_legacy.plugins.__path__[0]).glob("*.py"):
             if os.path.isfile(str(plugin)) and not os.path.basename(
                 str(plugin)
             ).startswith("_"):

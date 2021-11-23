@@ -18,7 +18,7 @@ from unittest import mock
 
 from testtools.matchers import Equals, MatchesRegex
 
-from snapcraft.storeapi import StoreClient
+from snapcraft_legacy.storeapi import StoreClient
 
 from . import CommandBaseTestCase
 

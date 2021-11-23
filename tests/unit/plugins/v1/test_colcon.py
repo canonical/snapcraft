@@ -24,9 +24,9 @@ import pytest
 from testscenarios import multiply_scenarios
 from testtools.matchers import Contains, Equals, FileExists, HasLength, LessThan, Not
 
-from snapcraft import repo
-from snapcraft.internal import errors
-from snapcraft.plugins.v1 import _ros, colcon
+from snapcraft_legacy import repo
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.plugins.v1 import _ros, colcon
 from tests import unit
 
 from . import PluginsV1BaseTestCase
@@ -53,21 +53,22 @@ class ColconPluginTestBase(PluginsV1BaseTestCase):
         self.ubuntu_distro = "bionic"
 
         self.ubuntu_mock = self.useFixture(
-            fixtures.MockPatch("snapcraft.repo.Ubuntu")
+            fixtures.MockPatch("snapcraft_legacy.repo.Ubuntu")
         ).mock
 
         self.dependencies_mock = self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.plugins.v1.colcon._find_system_dependencies", return_value={}
+                "snapcraft_legacy.plugins.v1.colcon._find_system_dependencies",
+                return_value={},
             )
         ).mock
 
         self.rosdep_mock = self.useFixture(
-            fixtures.MockPatch("snapcraft.plugins.v1._ros.rosdep.Rosdep")
+            fixtures.MockPatch("snapcraft_legacy.plugins.v1._ros.rosdep.Rosdep")
         ).mock
 
         self.pip_mock = self.useFixture(
-            fixtures.MockPatch("snapcraft.plugins.v1._python.Pip")
+            fixtures.MockPatch("snapcraft_legacy.plugins.v1._python.Pip")
         ).mock
         self.pip_mock.return_value.list.return_value = {}
 
@@ -537,7 +538,7 @@ class PrepareBuildTest(ColconPluginTestBase):
         super().setUp()
         self.plugin = colcon.ColconPlugin("test-part", self.properties, self.project)
 
-    @mock.patch("snapcraft.internal.mangling.rewrite_python_shebangs")
+    @mock.patch("snapcraft_legacy.internal.mangling.rewrite_python_shebangs")
     def test_in_snap_python_is_used(self, shebangs_mock):
         # Mangling has its own tests. Here we just need to make sure
         # _prepare_build actually uses it.
@@ -676,7 +677,7 @@ class FinishBuildTest(ColconPluginTestBase):
         super().setUp()
         self.plugin = colcon.ColconPlugin("test-part", self.properties, self.project)
 
-    @mock.patch("snapcraft.internal.mangling.rewrite_python_shebangs")
+    @mock.patch("snapcraft_legacy.internal.mangling.rewrite_python_shebangs")
     def test_in_snap_python_is_used(self, shebangs_mock):
         # Mangling has its own tests. Here we just need to make sure
         # _prepare_build actually uses it.

@@ -21,7 +21,7 @@ import fixtures
 import progressbar
 import requests
 
-from snapcraft.internal import indicators
+from snapcraft_legacy.internal import indicators
 from tests import unit
 
 

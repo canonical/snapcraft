@@ -22,12 +22,12 @@ from unittest.mock import call
 import gnupg
 import pytest
 
-from snapcraft.internal.meta.package_repository import (
+from snapcraft_legacy.internal.meta.package_repository import (
     PackageRepositoryApt,
     PackageRepositoryAptPpa,
 )
-from snapcraft.internal.repo import apt_ppa, errors
-from snapcraft.internal.repo.apt_key_manager import AptKeyManager
+from snapcraft_legacy.internal.repo import apt_ppa, errors
+from snapcraft_legacy.internal.repo.apt_key_manager import AptKeyManager
 
 
 @pytest.fixture(autouse=True)
@@ -54,7 +54,7 @@ def mock_run():
 @pytest.fixture(autouse=True)
 def mock_apt_ppa_get_signing_key():
     with mock.patch(
-        "snapcraft.internal.repo.apt_ppa.get_launchpad_ppa_key_id",
+        "snapcraft_legacy.internal.repo.apt_ppa.get_launchpad_ppa_key_id",
         spec=apt_ppa.get_launchpad_ppa_key_id,
         return_value="FAKE-PPA-SIGNING-KEY",
     ) as m:
@@ -220,7 +220,9 @@ def test_install_key_from_keyserver_with_apt_key_failure(
     assert exc_info.value._key_id == "fake-key-id"
 
 
-@mock.patch("snapcraft.internal.repo.apt_key_manager.AptKeyManager.is_key_installed")
+@mock.patch(
+    "snapcraft_legacy.internal.repo.apt_key_manager.AptKeyManager.is_key_installed"
+)
 @pytest.mark.parametrize(
     "is_installed", [True, False],
 )
@@ -242,10 +244,10 @@ def test_install_package_repository_key_already_installed(
 
 
 @mock.patch(
-    "snapcraft.internal.repo.apt_key_manager.AptKeyManager.is_key_installed",
+    "snapcraft_legacy.internal.repo.apt_key_manager.AptKeyManager.is_key_installed",
     return_value=False,
 )
-@mock.patch("snapcraft.internal.repo.apt_key_manager.AptKeyManager.install_key")
+@mock.patch("snapcraft_legacy.internal.repo.apt_key_manager.AptKeyManager.install_key")
 def test_install_package_repository_key_from_asset(
     mock_install_key, mock_is_key_installed, apt_gpg, key_assets,
 ):
@@ -267,11 +269,11 @@ def test_install_package_repository_key_from_asset(
 
 
 @mock.patch(
-    "snapcraft.internal.repo.apt_key_manager.AptKeyManager.is_key_installed",
+    "snapcraft_legacy.internal.repo.apt_key_manager.AptKeyManager.is_key_installed",
     return_value=False,
 )
 @mock.patch(
-    "snapcraft.internal.repo.apt_key_manager.AptKeyManager.install_key_from_keyserver"
+    "snapcraft_legacy.internal.repo.apt_key_manager.AptKeyManager.install_key_from_keyserver"
 )
 def test_install_package_repository_key_apt_from_keyserver(
     mock_install_key_from_keyserver, mock_is_key_installed, apt_gpg,
@@ -295,11 +297,11 @@ def test_install_package_repository_key_apt_from_keyserver(
 
 
 @mock.patch(
-    "snapcraft.internal.repo.apt_key_manager.AptKeyManager.is_key_installed",
+    "snapcraft_legacy.internal.repo.apt_key_manager.AptKeyManager.is_key_installed",
     return_value=False,
 )
 @mock.patch(
-    "snapcraft.internal.repo.apt_key_manager.AptKeyManager.install_key_from_keyserver"
+    "snapcraft_legacy.internal.repo.apt_key_manager.AptKeyManager.install_key_from_keyserver"
 )
 def test_install_package_repository_key_ppa_from_keyserver(
     mock_install_key_from_keyserver, mock_is_key_installed, apt_gpg,

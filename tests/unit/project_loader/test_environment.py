@@ -24,8 +24,8 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Contains, Equals, GreaterThan, Not
 
-import snapcraft
-from snapcraft.internal import common
+import snapcraft_legacy
+from snapcraft_legacy.internal import common
 from tests.fixture_setup.os_release import FakeOsRelease
 
 from . import ProjectLoaderBaseTest
@@ -95,7 +95,8 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             )
 
     @mock.patch.object(
-        snapcraft.internal.pluginhandler.PluginHandler, "get_primed_dependency_paths"
+        snapcraft_legacy.internal.pluginhandler.PluginHandler,
+        "get_primed_dependency_paths",
     )
     def test_config_snap_environment_with_dependencies(self, mock_get_dependencies):
         library_paths = {
@@ -120,7 +121,8 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         )
 
     @mock.patch.object(
-        snapcraft.internal.pluginhandler.PluginHandler, "get_primed_dependency_paths"
+        snapcraft_legacy.internal.pluginhandler.PluginHandler,
+        "get_primed_dependency_paths",
     )
     def test_config_snap_environment_with_dependencies_but_no_paths(
         self, mock_get_dependencies
@@ -304,7 +306,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
 
         self.useFixture(fixtures.EnvironmentVariable("PATH", "/bin"))
 
-        arch_triplet = snapcraft.ProjectOptions().arch_triplet
+        arch_triplet = snapcraft_legacy.ProjectOptions().arch_triplet
         self.maxDiff = None
         paths = [
             os.path.join(self.stage_dir, "lib"),

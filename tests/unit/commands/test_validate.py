@@ -18,7 +18,7 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Contains, Equals, FileExists
 
-import snapcraft.storeapi.errors
+import snapcraft_legacy.storeapi.errors
 
 from . import StoreCommandsBaseTestCase
 
@@ -27,7 +27,7 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch("snapcraft._store.Popen")
+        patcher = mock.patch("snapcraft_legacy._store.Popen")
         self.popen_mock = patcher.start()
         rv_mock = mock.Mock()
         rv_mock.returncode = 0
@@ -81,7 +81,7 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
 
     def test_validate_unknown_snap(self):
         raised = self.assertRaises(
-            snapcraft.storeapi.errors.SnapNotFoundError,
+            snapcraft_legacy.storeapi.errors.SnapNotFoundError,
             self.run_command,
             ["validate", "notfound", "core=3", "test-snap=4"],
         )
@@ -90,7 +90,7 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
 
     def test_validate_bad_argument(self):
         raised = self.assertRaises(
-            snapcraft.storeapi.errors.InvalidValidationRequestsError,
+            snapcraft_legacy.storeapi.errors.InvalidValidationRequestsError,
             self.run_command,
             ["validate", "core", "core=foo"],
         )
@@ -99,7 +99,7 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
 
     def test_validate_with_snap_name(self):
         self.fake_sign = fixtures.MockPatch(
-            "snapcraft._store._sign_assertion", return_value=b""
+            "snapcraft_legacy._store._sign_assertion", return_value=b""
         )
         self.useFixture(self.fake_sign)
 
@@ -124,7 +124,7 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
 
     def test_revoke(self):
         self.fake_sign = fixtures.MockPatch(
-            "snapcraft._store._sign_assertion", return_value=b""
+            "snapcraft_legacy._store._sign_assertion", return_value=b""
         )
         self.useFixture(self.fake_sign)
 
@@ -149,7 +149,7 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
 
     def test_no_revoke(self):
         self.fake_sign = fixtures.MockPatch(
-            "snapcraft._store._sign_assertion", return_value=b""
+            "snapcraft_legacy._store._sign_assertion", return_value=b""
         )
         self.useFixture(self.fake_sign)
 
@@ -174,7 +174,7 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
 
     def test_validate_fallback_to_snap_id(self):
         self.fake_sign = fixtures.MockPatch(
-            "snapcraft._store._sign_assertion", return_value=b""
+            "snapcraft_legacy._store._sign_assertion", return_value=b""
         )
         self.useFixture(self.fake_sign)
 
@@ -200,7 +200,7 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
 
     def test_validate_with_revoke(self):
         self.fake_sign = fixtures.MockPatch(
-            "snapcraft._store._sign_assertion", return_value=b""
+            "snapcraft_legacy._store._sign_assertion", return_value=b""
         )
         self.useFixture(self.fake_sign)
 
@@ -225,7 +225,7 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
 
     def test_validate_with_no_revoke(self):
         self.fake_sign = fixtures.MockPatch(
-            "snapcraft._store._sign_assertion", return_value=b""
+            "snapcraft_legacy._store._sign_assertion", return_value=b""
         )
         self.useFixture(self.fake_sign)
 

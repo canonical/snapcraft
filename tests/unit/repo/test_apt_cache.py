@@ -22,7 +22,7 @@ from unittest.mock import call
 import fixtures
 from testtools.matchers import Equals
 
-from snapcraft.internal.repo.apt_cache import AptCache
+from snapcraft_legacy.internal.repo.apt_cache import AptCache
 from tests import unit
 
 
@@ -67,7 +67,7 @@ class TestMockedApt(unit.TestCase):
         stage_cache = Path(self.path, "cache")
         stage_cache.mkdir(exist_ok=True, parents=True)
         self.fake_apt = self.useFixture(
-            fixtures.MockPatch("snapcraft.internal.repo.apt_cache.apt")
+            fixtures.MockPatch("snapcraft_legacy.internal.repo.apt_cache.apt")
         ).mock
 
         with AptCache(stage_cache=stage_cache):
@@ -98,7 +98,7 @@ class TestMockedApt(unit.TestCase):
 
     def test_stage_cache_in_snap(self):
         self.fake_apt = self.useFixture(
-            fixtures.MockPatch("snapcraft.internal.repo.apt_cache.apt")
+            fixtures.MockPatch("snapcraft_legacy.internal.repo.apt_cache.apt")
         ).mock
 
         stage_cache = Path(self.path, "cache")
@@ -108,7 +108,9 @@ class TestMockedApt(unit.TestCase):
         snap.mkdir(exist_ok=True, parents=True)
 
         self.useFixture(
-            fixtures.MockPatch("snapcraft.internal.common.is_snap", return_value=True)
+            fixtures.MockPatch(
+                "snapcraft_legacy.internal.common.is_snap", return_value=True
+            )
         )
         self.useFixture(fixtures.EnvironmentVariable("SNAP", str(snap)))
 
@@ -155,7 +157,7 @@ class TestMockedApt(unit.TestCase):
 
     def test_host_cache_setup(self):
         self.fake_apt = self.useFixture(
-            fixtures.MockPatch("snapcraft.internal.repo.apt_cache.apt")
+            fixtures.MockPatch("snapcraft_legacy.internal.repo.apt_cache.apt")
         ).mock
 
         with AptCache() as _:

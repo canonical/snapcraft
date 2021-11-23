@@ -21,9 +21,9 @@ from unittest import mock
 
 from testtools.matchers import Equals
 
-from snapcraft.internal.meta import errors
-from snapcraft.internal.meta.snap import Snap
-from snapcraft.internal.meta.system_user import SystemUserScope
+from snapcraft_legacy.internal.meta import errors
+from snapcraft_legacy.internal.meta.snap import Snap
+from snapcraft_legacy.internal.meta.system_user import SystemUserScope
 from tests import unit
 
 
@@ -481,7 +481,7 @@ class SnapTests(unit.TestCase):
         snap = Snap.from_dict(snap_dict=snap_dict)
         snap.validate()
 
-        patcher = mock.patch("snapcraft.internal.common.get_installed_snap_path")
+        patcher = mock.patch("snapcraft_legacy.internal.common.get_installed_snap_path")
         mock_core_path = patcher.start()
         mock_core_path.return_value = self.path
         self.addCleanup(patcher.stop)

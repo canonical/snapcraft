@@ -16,7 +16,7 @@
 
 from textwrap import dedent
 
-from snapcraft.internal.states import GlobalState
+from snapcraft_legacy.internal.states import GlobalState
 
 _scenarios = [
     (

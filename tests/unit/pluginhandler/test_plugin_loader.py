@@ -22,10 +22,10 @@ from textwrap import dedent
 import fixtures
 from testtools.matchers import Equals, IsInstance
 
-from snapcraft.internal import errors
-from snapcraft.plugins._plugin_finder import _PLUGINS
-from snapcraft.plugins.v1 import PluginV1
-from snapcraft.plugins.v2 import PluginV2
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.plugins._plugin_finder import _PLUGINS
+from snapcraft_legacy.plugins.v1 import PluginV1
+from snapcraft_legacy.plugins.v2 import PluginV2
 from tests import unit
 
 
@@ -49,8 +49,8 @@ class NonLocalTest(unit.TestCase):
             print(
                 dedent(
                     """\
-                import snapcraft.plugins.v1
-                class Local(snapcraft.plugins.v1.PluginV1):
+                import snapcraft_legacy.plugins.v1
+                class Local(snapcraft_legacy.plugins.v1.PluginV1):
                     pass
                 """
                 ),

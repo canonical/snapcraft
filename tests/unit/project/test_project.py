@@ -20,7 +20,7 @@ from textwrap import dedent
 
 import pytest
 
-from snapcraft.project import Project
+from snapcraft_legacy.project import Project
 
 
 def test_project_with_arguments():

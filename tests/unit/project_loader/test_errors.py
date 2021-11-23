@@ -16,7 +16,7 @@
 
 import pathlib
 
-from snapcraft.internal.project_loader import errors
+from snapcraft_legacy.internal.project_loader import errors
 
 
 def test_SnapcraftProjectUnusedKeyAssetError():

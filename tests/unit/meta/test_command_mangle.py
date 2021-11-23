@@ -16,7 +16,7 @@
 
 import logging
 
-from snapcraft.internal.meta import command
+from snapcraft_legacy.internal.meta import command
 
 
 class TestCommandMangle:

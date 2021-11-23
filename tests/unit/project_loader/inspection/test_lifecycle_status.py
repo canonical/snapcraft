@@ -19,8 +19,8 @@ import textwrap
 
 from testtools.matchers import Equals
 
-from snapcraft.internal import steps
-from snapcraft.internal.project_loader import inspection
+from snapcraft_legacy.internal import steps
+from snapcraft_legacy.internal.project_loader import inspection
 
 from .. import ProjectLoaderBaseTest
 

@@ -19,7 +19,7 @@ import os
 import fixtures
 from click.testing import CliRunner
 
-from snapcraft.cli.snapcraftctl._runner import run
+from snapcraft_legacy.cli.snapcraftctl._runner import run
 from tests import unit
 
 

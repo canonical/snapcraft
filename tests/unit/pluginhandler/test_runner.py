@@ -22,8 +22,8 @@ from unittest import mock
 
 from testtools.matchers import Contains, FileContains, FileExists
 
-from snapcraft.internal import errors
-from snapcraft.internal.pluginhandler import _runner
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.internal.pluginhandler import _runner
 from tests import fixture_setup, unit
 
 

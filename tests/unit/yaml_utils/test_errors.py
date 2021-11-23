@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.yaml_utils import errors
+from snapcraft_legacy.yaml_utils import errors
 
 
 def test_YamlvalidationError():

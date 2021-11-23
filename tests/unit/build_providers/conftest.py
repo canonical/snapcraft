@@ -23,7 +23,7 @@ import pytest
 def snap_injector():
     """Fake SnapManager"""
     patcher = mock.patch(
-        "snapcraft.internal.build_providers._base_provider.SnapInjector"
+        "snapcraft_legacy.internal.build_providers._base_provider.SnapInjector"
     )
     snap_injector_mock = patcher.start()
     yield snap_injector_mock

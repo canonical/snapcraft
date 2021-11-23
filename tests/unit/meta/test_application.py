@@ -19,8 +19,8 @@ import pathlib
 
 from testtools.matchers import Contains, Equals, FileExists, Not
 
-from snapcraft import yaml_utils
-from snapcraft.internal.meta import application, desktop, errors
+from snapcraft_legacy import yaml_utils
+from snapcraft_legacy.internal.meta import application, desktop, errors
 from tests import unit
 
 

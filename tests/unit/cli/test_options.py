@@ -20,7 +20,7 @@ import click
 import fixtures
 from testtools.matchers import Equals
 
-import snapcraft.cli._options as options
+import snapcraft_legacy.cli._options as options
 from tests import unit
 
 
@@ -320,7 +320,7 @@ class TestSudo(unit.TestCase):
             fixtures.MockPatch("os.geteuid", return_value=0)
         ).mock
 
-    @mock.patch("snapcraft.cli._options.warning")
+    @mock.patch("snapcraft_legacy.cli._options.warning")
     def test_click_warn_sudo(self, warning_mock):
         options._sanity_check_build_provider_flags("host")
         warning_mock.assert_called_once_with(

@@ -18,8 +18,8 @@ from unittest import mock
 
 from testtools.matchers import Equals
 
-import snapcraft.internal
-from snapcraft import yaml_utils
+import snapcraft_legacy.internal
+from snapcraft_legacy import yaml_utils
 from tests import unit
 
 from .conftest import Project
@@ -33,16 +33,16 @@ class PullStateBaseTestCase(unit.TestCase):
         self.property_names = ["foo"]
         self.part_properties = {"foo": "bar"}
 
-        self.state = snapcraft.internal.states.PullState(
+        self.state = snapcraft_legacy.internal.states.PullState(
             self.property_names, self.part_properties, self.project
         )
 
 
 class PullStateTestCase(PullStateBaseTestCase):
     @mock.patch.object(
-        snapcraft.internal.states.PullState,
+        snapcraft_legacy.internal.states.PullState,
         "__init__",
-        wraps=snapcraft.internal.states.PullState.__init__,
+        wraps=snapcraft_legacy.internal.states.PullState.__init__,
     )
     def test_yaml_conversion(self, init_spy):
         state_string = yaml_utils.dump(self.state)
@@ -58,7 +58,7 @@ class PullStateTestCase(PullStateBaseTestCase):
         init_spy.assert_not_called()
 
     def test_comparison(self):
-        other = snapcraft.internal.states.PullState(
+        other = snapcraft_legacy.internal.states.PullState(
             self.property_names, self.part_properties, self.project
         )
 

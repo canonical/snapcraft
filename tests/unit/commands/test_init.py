@@ -18,7 +18,7 @@ from textwrap import dedent
 
 from testtools.matchers import Contains, Equals, FileContains
 
-import snapcraft.internal.errors
+import snapcraft_legacy.internal.errors
 
 from . import CommandBaseTestCase
 
@@ -75,7 +75,7 @@ class InitCommandExistingProjectTestCase(CommandBaseTestCase):
         open(yaml_path, "w").close()
 
         raised = self.assertRaises(
-            snapcraft.internal.errors.SnapcraftEnvironmentError,
+            snapcraft_legacy.internal.errors.SnapcraftEnvironmentError,
             self.run_command,
             ["init"],
         )

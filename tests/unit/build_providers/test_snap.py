@@ -22,7 +22,7 @@ from unittest.mock import ANY, call, patch
 import fixtures
 from testtools.matchers import Contains, Equals, FileContains, Not
 
-from snapcraft.internal.build_providers._snap import (
+from snapcraft_legacy.internal.build_providers._snap import (
     SnapInjector,
     _get_snap_channel,
     repo,
@@ -36,7 +36,7 @@ class SnapInjectionTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = patch("snapcraft.internal.repo.snaps.get_assertion")
+        patcher = patch("snapcraft_legacy.internal.repo.snaps.get_assertion")
         self.get_assertion_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -502,7 +502,7 @@ class SnapInjectionTest(unit.TestCase):
         snap_injector.add("snapcraft")
 
         with patch(
-            "snapcraft.internal.repo.snaps.SnapPackage.get_local_snap_info",
+            "snapcraft_legacy.internal.repo.snaps.SnapPackage.get_local_snap_info",
             side_effect=repo.errors.SnapdConnectionError("core", "url"),
         ):
             snap_injector.apply()

@@ -22,7 +22,7 @@ import subprocess
 import fixtures
 from testtools.matchers import Equals, MatchesRegex
 
-from snapcraft.internal import sources
+from snapcraft_legacy.internal import sources
 from tests import unit
 
 

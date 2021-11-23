@@ -20,9 +20,9 @@ import re
 
 import pytest
 
-import snapcraft
-import snapcraft.internal.project_loader.grammar._on as on
-from snapcraft.internal.project_loader import grammar
+import snapcraft_legacy
+import snapcraft_legacy.internal.project_loader.grammar._on as on
+from snapcraft_legacy.internal.project_loader import grammar
 
 
 def load_tests(loader, tests, ignore):
@@ -162,7 +162,7 @@ class TestOnStatementGrammar:
         monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
 
         processor = grammar.GrammarProcessor(
-            None, snapcraft.ProjectOptions(), lambda x: True
+            None, snapcraft_legacy.ProjectOptions(), lambda x: True
         )
         statement = on.OnStatement(on=on_arch, body=body, processor=processor)
 
@@ -235,7 +235,7 @@ class TestOnStatementInvalidGrammar:
     def test(self, on_arch, body, else_bodies, expected_exception):
         with pytest.raises(grammar.errors.OnStatementSyntaxError) as error:
             processor = grammar.GrammarProcessor(
-                None, snapcraft.ProjectOptions(), lambda x: "invalid" not in x
+                None, snapcraft_legacy.ProjectOptions(), lambda x: "invalid" not in x
             )
             statement = on.OnStatement(on=on_arch, body=body, processor=processor)
 
@@ -252,7 +252,7 @@ def test_else_fail(monkeypatch):
     monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
 
     processor = grammar.GrammarProcessor(
-        None, snapcraft.ProjectOptions(), lambda x: True
+        None, snapcraft_legacy.ProjectOptions(), lambda x: True
     )
     statement = on.OnStatement(on="on i386", body=["foo"], processor=processor)
 

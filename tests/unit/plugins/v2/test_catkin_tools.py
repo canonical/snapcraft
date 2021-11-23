@@ -17,8 +17,8 @@
 import os
 import sys
 
-import snapcraft.plugins.v2._ros as _ros
-import snapcraft.plugins.v2.catkin_tools as catkin_tools
+import snapcraft_legacy.plugins.v2._ros as _ros
+import snapcraft_legacy.plugins.v2.catkin_tools as catkin_tools
 
 
 def test_schema():

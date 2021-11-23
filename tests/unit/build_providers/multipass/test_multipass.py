@@ -23,10 +23,13 @@ import fixtures
 import pytest
 from testtools.matchers import Equals
 
-from snapcraft.internal import steps
-from snapcraft.internal.build_providers import _base_provider, errors
-from snapcraft.internal.build_providers._multipass import Multipass, MultipassCommand
-from snapcraft.internal.errors import SnapcraftEnvironmentError
+from snapcraft_legacy.internal import steps
+from snapcraft_legacy.internal.build_providers import _base_provider, errors
+from snapcraft_legacy.internal.build_providers._multipass import (
+    Multipass,
+    MultipassCommand,
+)
+from snapcraft_legacy.internal.errors import SnapcraftEnvironmentError
 from tests.unit.build_providers import BaseProviderBaseTest, get_project
 
 _DEFAULT_INSTANCE_INFO = dedent(
@@ -77,7 +80,8 @@ def multipass_cmd():
         return b""
 
     patcher = mock.patch(
-        "snapcraft.internal.build_providers._multipass." "_multipass.MultipassCommand",
+        "snapcraft_legacy.internal.build_providers._multipass."
+        "_multipass.MultipassCommand",
         spec=MultipassCommand,
     )
     multipass_cmd_mock = patcher.start()
@@ -113,7 +117,7 @@ class MultipassTest(BaseProviderBaseTest):
         super().setUp()
 
         patcher = mock.patch(
-            "snapcraft.internal.build_providers._multipass."
+            "snapcraft_legacy.internal.build_providers._multipass."
             "_multipass.MultipassCommand",
             spec=MultipassCommand,
         )
@@ -121,7 +125,7 @@ class MultipassTest(BaseProviderBaseTest):
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch(
-            "snapcraft.internal.build_providers._base_provider.Provider.clean_project",
+            "snapcraft_legacy.internal.build_providers._base_provider.Provider.clean_project",
             return_value=True,
         )
         patcher.start()

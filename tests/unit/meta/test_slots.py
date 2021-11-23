@@ -18,8 +18,8 @@ from collections import OrderedDict
 
 from testtools.matchers import Equals
 
-from snapcraft.internal.meta import errors
-from snapcraft.internal.meta.slots import ContentSlot, DbusSlot, Slot
+from snapcraft_legacy.internal.meta import errors
+from snapcraft_legacy.internal.meta.slots import ContentSlot, DbusSlot, Slot
 from tests import unit
 
 

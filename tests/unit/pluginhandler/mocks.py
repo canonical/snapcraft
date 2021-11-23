@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
+import snapcraft_legacy
 
 
-class TestPlugin(snapcraft.BasePlugin):
+class TestPlugin(snapcraft_legacy.BasePlugin):
     @classmethod
     def schema(cls):
         return {

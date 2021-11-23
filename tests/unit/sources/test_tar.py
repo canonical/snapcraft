@@ -21,12 +21,12 @@ from unittest import mock
 import requests
 from testtools.matchers import Equals
 
-from snapcraft.internal import sources
+from snapcraft_legacy.internal import sources
 from tests import unit
 
 
 class TestTar(unit.FakeFileHTTPServerBasedTestCase):
-    @mock.patch("snapcraft.sources.Tar.provision")
+    @mock.patch("snapcraft_legacy.sources.Tar.provision")
     def test_pull_tarball_must_download_to_sourcedir(self, mock_prov):
         plugin_name = "test_plugin"
         dest_dir = os.path.join("parts", plugin_name, "src")
@@ -44,7 +44,7 @@ class TestTar(unit.FakeFileHTTPServerBasedTestCase):
         with open(os.path.join(dest_dir, tar_file_name), "r") as tar_file:
             self.assertThat(tar_file.read(), Equals("Test fake file"))
 
-    @mock.patch("snapcraft.sources.Tar.provision")
+    @mock.patch("snapcraft_legacy.sources.Tar.provision")
     def test_pull_twice_downloads_once(self, mock_prov):
         """If a source checksum is defined, the cache should be tried first."""
         source = "http://{}:{}/{file_name}".format(

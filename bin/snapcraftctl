@@ -30,10 +30,10 @@ quote()
 python3_command="${SNAPCRAFT_INTERPRETER:-$(command -v python3)}"
 
 snapcraftctl_command="$python3_command -I -c '
-import snapcraft.cli.__main__
+import snapcraft_legacy.cli.__main__
 
 # Click strips off the first arg by default, so the -c will not be passed
-snapcraft.cli.__main__.run_snapcraftctl(prog_name=\"snapcraftctl\")
+snapcraft_legacy.cli.__main__.run_snapcraftctl(prog_name=\"snapcraftctl\")
 '"
 
 snapcraftctl_args=$(quote "$@")

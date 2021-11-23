@@ -17,7 +17,7 @@
 import fixtures
 from testtools.matchers import Contains, Equals
 
-import snapcraft
+import snapcraft_legacy
 from tests import fixture_setup
 
 from . import CommandBaseTestCase
@@ -89,7 +89,7 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
             result.output, Contains("Displaying plugins available for 'core18")
         )
         self.fake_iter_modules.mock.assert_called_once_with(
-            snapcraft.plugins.v1.__path__
+            snapcraft_legacy.plugins.v1.__path__
         )
 
     def test_alias(self):
@@ -115,15 +115,15 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
         )
 
         self.fake_iter_modules.mock.assert_called_once_with(
-            snapcraft.plugins.v2.__path__
+            snapcraft_legacy.plugins.v2.__path__
         )
 
     def test_core2y_list(self):
         # Note that core2y is some future base, _not_ allowed to be used from cmdline
         # This tests that addition of the next base will use the latest version of plugins
-        snapcraft.cli.discovery.list_plugins.callback("core2y")
+        snapcraft_legacy.cli.discovery.list_plugins.callback("core2y")
         self.fake_iter_modules.mock.assert_called_once_with(
-            snapcraft.plugins.v2.__path__
+            snapcraft_legacy.plugins.v2.__path__
         )
 
     def test_list_plugins_non_tty(self):
@@ -135,7 +135,7 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(self.default_plugin_output))
         self.fake_iter_modules.mock.assert_called_once_with(
-            snapcraft.plugins.v1.__path__
+            snapcraft_legacy.plugins.v1.__path__
         )
 
     def test_list_plugins_large_terminal(self):
@@ -147,7 +147,7 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(self.default_plugin_output))
         self.fake_iter_modules.mock.assert_called_once_with(
-            snapcraft.plugins.v1.__path__
+            snapcraft_legacy.plugins.v1.__path__
         )
 
     def test_list_plugins_small_terminal(self):
@@ -169,5 +169,5 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
         output_slice = [o.strip() for o in result.output.splitlines()][1:]
         self.assertThat(output_slice, Equals(expected_output))
         self.fake_iter_modules.mock.assert_called_once_with(
-            snapcraft.plugins.v1.__path__
+            snapcraft_legacy.plugins.v1.__path__
         )

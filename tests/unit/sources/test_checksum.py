@@ -20,8 +20,8 @@ import zipfile
 
 from testtools.matchers import Equals
 
-from snapcraft.internal.sources import errors
-from snapcraft.internal.sources._checksum import verify_checksum
+from snapcraft_legacy.internal.sources import errors
+from snapcraft_legacy.internal.sources._checksum import verify_checksum
 from tests import unit
 
 

@@ -29,10 +29,16 @@ from testtools.matchers import (
     Not,
 )
 
-import snapcraft
-from snapcraft.internal import errors, lifecycle, pluginhandler, project_loader, steps
-from snapcraft.internal.lifecycle._runner import _replace_in_part
-from snapcraft.project import Project
+import snapcraft_legacy
+from snapcraft_legacy.internal import (
+    errors,
+    lifecycle,
+    pluginhandler,
+    project_loader,
+    steps,
+)
+from snapcraft_legacy.internal.lifecycle._runner import _replace_in_part
+from snapcraft_legacy.project import Project
 from tests import fixture_setup, unit
 
 from . import LifecycleTestBase
@@ -62,7 +68,7 @@ class ExecutionTestCase(LifecycleTestBase):
 
         self.assertThat(new_part.plugin.options.source, Equals(part.part_install_dir))
 
-    @mock.patch("snapcraft.repo.snaps.install_snaps")
+    @mock.patch("snapcraft_legacy.repo.snaps.install_snaps")
     def test_dependency_is_staged_when_required(self, mock_install_build_snaps):
         project_config = self.make_snapcraft_project(
             textwrap.dedent(
@@ -85,7 +91,7 @@ class ExecutionTestCase(LifecycleTestBase):
             Contains("'part2' has dependencies that need to be staged: part1"),
         )
 
-    @mock.patch("snapcraft.repo.snaps.install_snaps")
+    @mock.patch("snapcraft_legacy.repo.snaps.install_snaps")
     def test_no_exception_when_dependency_is_required_but_already_staged(
         self, mock_install_build_snaps
     ):
@@ -116,9 +122,9 @@ class ExecutionTestCase(LifecycleTestBase):
 
     def test_dirty_stage_part_with_built_dependent_raises(self):
         # Set the option to error on dirty/outdated steps
-        with snapcraft.config.CLIConfig() as cli_config:
+        with snapcraft_legacy.config.CLIConfig() as cli_config:
             cli_config.set_outdated_step_action(
-                snapcraft.config.OutdatedStepAction.ERROR
+                snapcraft_legacy.config.OutdatedStepAction.ERROR
             )
 
         project_config = self.make_snapcraft_project(
@@ -169,12 +175,12 @@ class ExecutionTestCase(LifecycleTestBase):
         self.assertThat(raised.part, Equals("part2"))
         self.assertThat(raised.report, Equals("A dependency has changed: 'part1'\n"))
 
-    @mock.patch("snapcraft.repo.snaps.install_snaps")
+    @mock.patch("snapcraft_legacy.repo.snaps.install_snaps")
     def test_dirty_build_raises(self, mock_install_build_snaps):
         # Set the option to error on dirty/outdated steps
-        with snapcraft.config.CLIConfig() as cli_config:
+        with snapcraft_legacy.config.CLIConfig() as cli_config:
             cli_config.set_outdated_step_action(
-                snapcraft.config.OutdatedStepAction.ERROR
+                snapcraft_legacy.config.OutdatedStepAction.ERROR
             )
 
         project_config = self.make_snapcraft_project(
@@ -219,12 +225,12 @@ class ExecutionTestCase(LifecycleTestBase):
         )
         self.assertThat(raised.parts_names, Equals("part1"))
 
-    @mock.patch("snapcraft.repo.snaps.install_snaps")
+    @mock.patch("snapcraft_legacy.repo.snaps.install_snaps")
     def test_dirty_pull_raises(self, mock_install_build_snaps):
         # Set the option to error on dirty/outdated steps
-        with snapcraft.config.CLIConfig() as cli_config:
+        with snapcraft_legacy.config.CLIConfig() as cli_config:
             cli_config.set_outdated_step_action(
-                snapcraft.config.OutdatedStepAction.ERROR
+                snapcraft_legacy.config.OutdatedStepAction.ERROR
             )
 
         project_config = self.make_snapcraft_project(
@@ -266,9 +272,9 @@ class ExecutionTestCase(LifecycleTestBase):
             Equals("The 'bar' and 'foo' project options appear to have changed.\n"),
         )
 
-    @mock.patch.object(snapcraft.BasePlugin, "enable_cross_compilation")
-    @mock.patch("snapcraft.repo.Repo.install_build_packages")
-    @mock.patch("snapcraft.repo.snaps.install_snaps")
+    @mock.patch.object(snapcraft_legacy.BasePlugin, "enable_cross_compilation")
+    @mock.patch("snapcraft_legacy.repo.Repo.install_build_packages")
+    @mock.patch("snapcraft_legacy.repo.snaps.install_snaps")
     def test_pull_is_dirty_if_target_arch_changes(
         self,
         mock_install_build_snaps,
@@ -276,9 +282,9 @@ class ExecutionTestCase(LifecycleTestBase):
         mock_enable_cross_compilation,
     ):
         # Set the option to error on dirty/outdated steps
-        with snapcraft.config.CLIConfig() as cli_config:
+        with snapcraft_legacy.config.CLIConfig() as cli_config:
             cli_config.set_outdated_step_action(
-                snapcraft.config.OutdatedStepAction.ERROR
+                snapcraft_legacy.config.OutdatedStepAction.ERROR
             )
 
         mock_install_build_packages.return_value = []
@@ -375,7 +381,7 @@ class CleanTestCase(LifecycleTestBase):
         lifecycle.clean(project_config.project, parts=None)
         self.assertThat(os.path.join("snap", ".snapcraft"), Not(DirExists()))
 
-    @mock.patch("snapcraft.internal.mountinfo.MountInfo.for_root")
+    @mock.patch("snapcraft_legacy.internal.mountinfo.MountInfo.for_root")
     def test_clean_leaves_prime_alone_for_tried(self, mock_for_root):
         project_config = self.make_snapcraft_project(
             textwrap.dedent(
@@ -453,7 +459,9 @@ class RecordSnapcraftYamlTestCase(LifecycleTestBase):
 
 class OfflineTestCase(unit.TestCase):
     def test_install_build_packages(self):
-        with mock.patch("snapcraft.repo.Repo.install_build_packages") as mock_install:
+        with mock.patch(
+            "snapcraft_legacy.repo.Repo.install_build_packages"
+        ) as mock_install:
             lifecycle._runner._install_build_packages({"pkg1", "pkg2"})
 
         assert mock_install.mock_calls == [mock.call({"pkg1", "pkg2"})]
@@ -461,14 +469,16 @@ class OfflineTestCase(unit.TestCase):
     def test_install_build_packages_offline(self):
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_OFFLINE", "True"))
 
-        with mock.patch("snapcraft.repo.Repo.install_build_packages") as mock_install:
+        with mock.patch(
+            "snapcraft_legacy.repo.Repo.install_build_packages"
+        ) as mock_install:
             pkgs = lifecycle._runner._install_build_packages({"pkg1", "pkg2"})
 
         assert mock_install.mock_calls == []
         assert pkgs == []
 
     def test_install_build_snaps(self):
-        with mock.patch("snapcraft.repo.snaps.install_snaps") as mock_install:
+        with mock.patch("snapcraft_legacy.repo.snaps.install_snaps") as mock_install:
             lifecycle._runner._install_build_snaps(
                 {"build_snap1", "build_snap2"}, {"content_snap"}
             )
@@ -482,7 +492,7 @@ class OfflineTestCase(unit.TestCase):
     def test_install_build_snaps_offline(self):
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_OFFLINE", "True"))
 
-        with mock.patch("snapcraft.repo.snaps.install_snaps") as mock_install:
+        with mock.patch("snapcraft_legacy.repo.snaps.install_snaps") as mock_install:
             snaps = lifecycle._runner._install_build_snaps(
                 {"build_snap1", "build_snap2"}, {"content_snap"}
             )

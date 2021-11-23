@@ -21,10 +21,10 @@ from unittest import mock
 import testtools
 from testtools.matchers import Equals
 
-import snapcraft
-from snapcraft.internal import common
-from snapcraft.internal.errors import SnapcraftEnvironmentError
-from snapcraft.project._project_options import (
+import snapcraft_legacy
+from snapcraft_legacy.internal import common
+from snapcraft_legacy.internal.errors import SnapcraftEnvironmentError
+from snapcraft_legacy.project._project_options import (
     _32BIT_USERSPACE_ARCHITECTURE,
     _get_platform_architecture,
 )
@@ -181,7 +181,7 @@ class TestNativeOptions:
         monkeypatch.setattr(platform, "architecture", lambda: architecture)
         monkeypatch.setattr(platform, "machine", lambda: machine)
 
-        options = snapcraft.ProjectOptions()
+        options = snapcraft_legacy.ProjectOptions()
 
         assert options.arch_triplet == expected_arch_triplet
         assert options.deb_arch == expected_deb_arch
@@ -221,7 +221,7 @@ class TestNativeOptions:
 
 class OptionsTestCase(unit.TestCase):
     def test_cross_compiler_prefix_missing(self):
-        options = snapcraft.ProjectOptions(target_deb_arch="x86_64")
+        options = snapcraft_legacy.ProjectOptions(target_deb_arch="x86_64")
 
         with testtools.ExpectedException(
             SnapcraftEnvironmentError,
@@ -236,7 +236,7 @@ class OptionsTestCase(unit.TestCase):
     ):
         mock_platform_machine.return_value = "x86_64"
         mock_platform_architecture.return_value = ("64bit", "ELF")
-        options = snapcraft.ProjectOptions(target_deb_arch="i386")
+        options = snapcraft_legacy.ProjectOptions(target_deb_arch="i386")
         self.assertThat(options.cross_compiler_prefix, Equals(""))
 
 
@@ -263,13 +263,13 @@ class TestHostIsCompatibleWithTargetBase:
 
     def test_compatibility(self, monkeypatch, codename, base, is_compatible):
         monkeypatch.setattr(
-            snapcraft.internal.os_release.OsRelease,
+            snapcraft_legacy.internal.os_release.OsRelease,
             "version_codename",
             lambda x: codename,
         )
 
         assert (
-            snapcraft.ProjectOptions().is_host_compatible_with_base(base)
+            snapcraft_legacy.ProjectOptions().is_host_compatible_with_base(base)
             is is_compatible
         )
 
@@ -277,20 +277,20 @@ class TestHostIsCompatibleWithTargetBase:
 class TestLinkerVersionForBase(unit.TestCase):
     def setUp(self):
         super().setUp()
-        patcher = mock.patch("snapcraft.file_utils.get_linker_version_from_file")
+        patcher = mock.patch("snapcraft_legacy.file_utils.get_linker_version_from_file")
         self.get_linker_version_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
     def test_get_linker_version_for_core20(self):
         self.assertThat(
-            snapcraft.ProjectOptions()._get_linker_version_for_base("core20"),
+            snapcraft_legacy.ProjectOptions()._get_linker_version_for_base("core20"),
             Equals("2.31"),
         )
         self.get_linker_version_mock.assert_not_called()
 
     def test_get_linker_version_for_core18(self):
         self.assertThat(
-            snapcraft.ProjectOptions()._get_linker_version_for_base("core18"),
+            snapcraft_legacy.ProjectOptions()._get_linker_version_for_base("core18"),
             Equals("2.27"),
         )
         self.get_linker_version_mock.assert_not_called()
@@ -298,7 +298,7 @@ class TestLinkerVersionForBase(unit.TestCase):
     def test_get_linker_version_for_random_core(self):
         self.get_linker_version_mock.return_value = "4.10"
         self.assertThat(
-            snapcraft.ProjectOptions()._get_linker_version_for_base("random"),
+            snapcraft_legacy.ProjectOptions()._get_linker_version_for_base("random"),
             Equals("4.10"),
         )
         self.get_linker_version_mock.assert_called_once_with("ld-2.23.so")

@@ -17,7 +17,7 @@
 import pytest
 from testtools.matchers import Equals
 
-from snapcraft import formatting_utils
+from snapcraft_legacy import formatting_utils
 from tests import unit
 
 

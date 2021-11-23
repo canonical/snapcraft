@@ -21,8 +21,8 @@ from unittest.mock import call, patch
 import fixtures
 from testtools.matchers import Contains, Equals
 
-from snapcraft import extractors, plugins
-from snapcraft.internal import elf, errors, states, steps
+from snapcraft_legacy import extractors, plugins
+from snapcraft_legacy.internal import elf, errors, states, steps
 from tests import fixture_setup, unit
 
 
@@ -32,13 +32,15 @@ class StateBaseTestCase(unit.TestCase):
 
         self.get_pull_properties_mock = self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.plugins.v1.PluginV1.get_pull_properties", return_value=[]
+                "snapcraft_legacy.plugins.v1.PluginV1.get_pull_properties",
+                return_value=[],
             )
         ).mock
 
         self.get_build_properties_mock = self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.plugins.v1.PluginV1.get_build_properties", return_value=[]
+                "snapcraft_legacy.plugins.v1.PluginV1.get_build_properties",
+                return_value=[],
             )
         ).mock
 
@@ -47,13 +49,14 @@ class StateBaseTestCase(unit.TestCase):
 
         self.get_elf_files_mock = self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.internal.elf.get_elf_files", return_value=frozenset()
+                "snapcraft_legacy.internal.elf.get_elf_files", return_value=frozenset()
             )
         ).mock
 
         self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.internal.xattrs.read_origin_stage_package", return_value=None
+                "snapcraft_legacy.internal.xattrs.read_origin_stage_package",
+                return_value=None,
             )
         )
 
@@ -98,7 +101,7 @@ class PullStateTestCase(StateBaseTestCase):
 
 
 class StateTestCase(StateBaseTestCase):
-    @patch("snapcraft.internal.repo.Repo")
+    @patch("snapcraft_legacy.internal.repo.Repo")
     def test_pull_state(self, repo_mock):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
@@ -131,7 +134,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue("deb_arch" in state.project_options)
 
-    @patch("snapcraft.internal.repo.Repo")
+    @patch("snapcraft_legacy.internal.repo.Repo")
     def test_pull_state_with_extracted_metadata(self, repo_mock):
         self.handler = self.load_part(
             "test_part",
@@ -202,7 +205,7 @@ class StateTestCase(StateBaseTestCase):
             files, Equals([os.path.join(self.handler.part_source_dir, "metadata-file")])
         )
 
-    @patch("snapcraft.internal.repo.Repo")
+    @patch("snapcraft_legacy.internal.repo.Repo")
     def test_pull_state_with_scriptlet_metadata(self, repo_mock):
         self.handler = self.load_part(
             "test_part",
@@ -756,9 +759,9 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
-    @patch("snapcraft.internal.elf.ElfFile._extract_attributes")
-    @patch("snapcraft.internal.elf.ElfFile.load_dependencies")
-    @patch("snapcraft.internal.pluginhandler._migrate_files")
+    @patch("snapcraft_legacy.internal.elf.ElfFile._extract_attributes")
+    @patch("snapcraft_legacy.internal.elf.ElfFile.load_dependencies")
+    @patch("snapcraft_legacy.internal.pluginhandler._migrate_files")
     def test_prime_state_with_dependencies(
         self, mock_migrate_files, mock_load_dependencies, mock_get_symbols
     ):
@@ -827,9 +830,9 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
-    @patch("snapcraft.internal.elf.ElfFile._extract_attributes")
-    @patch("snapcraft.internal.elf.ElfFile.load_dependencies")
-    @patch("snapcraft.internal.pluginhandler._migrate_files")
+    @patch("snapcraft_legacy.internal.elf.ElfFile._extract_attributes")
+    @patch("snapcraft_legacy.internal.elf.ElfFile.load_dependencies")
+    @patch("snapcraft_legacy.internal.pluginhandler._migrate_files")
     def test_prime_state_missing_libraries(
         self, mock_migrate_files, mock_load_dependencies, mock_get_symbols
     ):
@@ -885,9 +888,9 @@ class StateTestCase(StateBaseTestCase):
         # The rest should be considered missing.
         self.assertThat(state.dependency_paths, Equals({"lib3"}))
 
-    @patch("snapcraft.internal.elf.ElfFile._extract_attributes")
-    @patch("snapcraft.internal.elf.ElfFile.load_dependencies")
-    @patch("snapcraft.internal.pluginhandler._migrate_files")
+    @patch("snapcraft_legacy.internal.elf.ElfFile._extract_attributes")
+    @patch("snapcraft_legacy.internal.elf.ElfFile.load_dependencies")
+    @patch("snapcraft_legacy.internal.pluginhandler._migrate_files")
     def test_prime_state_with_shadowed_dependencies(
         self, mock_migrate_files, mock_load_dependencies, mock_get_symbols
     ):

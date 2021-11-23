@@ -16,7 +16,7 @@
 
 from testtools.matchers import Equals, HasLength
 
-from snapcraft.storeapi import channels, errors, status
+from snapcraft_legacy.storeapi import channels, errors, status
 from tests import unit
 
 

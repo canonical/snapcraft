@@ -18,10 +18,12 @@ import textwrap
 from subprocess import CalledProcessError
 from typing import List
 
-from snapcraft.internal import errors, pluginhandler, steps
-from snapcraft.internal.project_loader import errors as project_loader_errors
-from snapcraft.internal.project_loader.inspection import errors as inspection_errors
-from snapcraft.internal.repo import errors as repo_errors
+from snapcraft_legacy.internal import errors, pluginhandler, steps
+from snapcraft_legacy.internal.project_loader import errors as project_loader_errors
+from snapcraft_legacy.internal.project_loader.inspection import (
+    errors as inspection_errors,
+)
+from snapcraft_legacy.internal.repo import errors as repo_errors
 
 
 def test_details_from_called_process_error():

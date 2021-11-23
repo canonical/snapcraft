@@ -34,11 +34,11 @@ from testtools.matchers import (
     Not,
 )
 
-from snapcraft import extractors, yaml_utils
-from snapcraft.internal import errors, project_loader, states
-from snapcraft.internal.meta import _snap_packaging
-from snapcraft.internal.meta import errors as meta_errors
-from snapcraft.project import Project
+from snapcraft_legacy import extractors, yaml_utils
+from snapcraft_legacy.internal import errors, project_loader, states
+from snapcraft_legacy.internal.meta import _snap_packaging
+from snapcraft_legacy.internal.meta import errors as meta_errors
+from snapcraft_legacy.project import Project
 from tests import fixture_setup, unit
 
 
@@ -1231,7 +1231,7 @@ class GenerateHookWrappersTestCase(CreateBaseTestCase):
                 ),
             )
 
-    @patch("snapcraft.internal.project_loader._config.Config.snap_env")
+    @patch("snapcraft_legacy.internal.project_loader._config.Config.snap_env")
     def test_generated_hook_wrappers_include_environment(self, mock_snap_env):
         mock_snap_env.return_value = ["PATH={}/foo".format(self.prime_dir)]
 
@@ -1517,7 +1517,7 @@ class RequiredGradeTest(CreateBaseTestCase):
         global_state_path = "global_state"
         self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.project.Project._get_global_state_file_path",
+                "snapcraft_legacy.project.Project._get_global_state_file_path",
                 return_value=global_state_path,
             )
         )
@@ -1534,7 +1534,7 @@ class RequiredGradeTest(CreateBaseTestCase):
         global_state_path = "global_state"
         self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.project.Project._get_global_state_file_path",
+                "snapcraft_legacy.project.Project._get_global_state_file_path",
                 return_value=global_state_path,
             )
         )

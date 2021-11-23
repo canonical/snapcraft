@@ -36,10 +36,10 @@ from testtools.matchers import (
     Not,
 )
 
-import snapcraft
-from snapcraft import repo
-from snapcraft.internal import errors
-from snapcraft.plugins.v1 import _ros, catkin
+import snapcraft_legacy
+from snapcraft_legacy import repo
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.plugins.v1 import _ros, catkin
 from tests import unit
 
 from . import PluginsV1BaseTestCase
@@ -70,29 +70,30 @@ class CatkinPluginBaseTest(PluginsV1BaseTestCase):
         self.ros_version = "1"
         self.ubuntu_distro = "bionic"
 
-        patcher = mock.patch("snapcraft.repo.Ubuntu")
+        patcher = mock.patch("snapcraft_legacy.repo.Ubuntu")
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch(
-            "snapcraft.plugins.v1.catkin._find_system_dependencies", return_value={}
+            "snapcraft_legacy.plugins.v1.catkin._find_system_dependencies",
+            return_value={},
         )
         self.dependencies_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("snapcraft.plugins.v1._ros.rosdep.Rosdep")
+        patcher = mock.patch("snapcraft_legacy.plugins.v1._ros.rosdep.Rosdep")
         self.rosdep_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("snapcraft.plugins.v1.catkin._Catkin")
+        patcher = mock.patch("snapcraft_legacy.plugins.v1.catkin._Catkin")
         self.catkin_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("snapcraft.plugins.v1._ros.wstool.Wstool")
+        patcher = mock.patch("snapcraft_legacy.plugins.v1._ros.wstool.Wstool")
         self.wstool_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("snapcraft.plugins.v1._python.Pip")
+        patcher = mock.patch("snapcraft_legacy.plugins.v1._python.Pip")
         self.pip_mock = patcher.start()
         self.addCleanup(patcher.stop)
         self.pip_mock.return_value.list.return_value = {}
@@ -1494,7 +1495,7 @@ class TestBuildArgs:
         ),
     ]
 
-    @mock.patch("snapcraft.plugins.v1.catkin.CatkinPlugin.run", autospec=True)
+    @mock.patch("snapcraft_legacy.plugins.v1.catkin.CatkinPlugin.run", autospec=True)
     @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="foo")
     @mock.patch.object(catkin.CatkinPlugin, "_prepare_build")
     @mock.patch.object(catkin.CatkinPlugin, "_finish_build")
@@ -2118,13 +2119,13 @@ class CatkinFindTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.project = snapcraft.project.Project()
+        self.project = snapcraft_legacy.project.Project()
         self.project._snap_meta.build_base = "core18"
         self.catkin = catkin._Catkin(
             "kinetic", "workspace_path", "catkin_path", self.project
         )
 
-        patcher = mock.patch("snapcraft.repo.Ubuntu")
+        patcher = mock.patch("snapcraft_legacy.repo.Ubuntu")
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
 

@@ -18,7 +18,7 @@ import json
 
 from testtools.matchers import Contains, Equals, FileExists
 
-from snapcraft.internal import errors
+from snapcraft_legacy.internal import errors
 
 from . import CommandBaseNoFifoTestCase, CommandBaseTestCase
 

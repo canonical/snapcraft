@@ -17,7 +17,7 @@
 import fixtures
 from testtools.matchers import Equals
 
-from snapcraft import storeapi
+from snapcraft_legacy import storeapi
 
 from . import FakeStoreCommandsBaseTestCase, get_sample_key
 

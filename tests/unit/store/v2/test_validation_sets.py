@@ -16,7 +16,7 @@
 
 import pytest
 
-from snapcraft.storeapi.v2 import validation_sets
+from snapcraft_legacy.storeapi.v2 import validation_sets
 
 
 @pytest.mark.parametrize("snap_id", (None, "snap_id"))

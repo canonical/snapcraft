@@ -20,9 +20,9 @@ from textwrap import dedent
 
 import pytest
 
-import snapcraft.internal.errors
-from snapcraft.project import Project, errors
-from snapcraft.project._sanity_checks import conduct_project_sanity_check
+import snapcraft_legacy.internal.errors
+from snapcraft_legacy.project import Project, errors
+from snapcraft_legacy.project._sanity_checks import conduct_project_sanity_check
 
 
 @pytest.fixture
@@ -104,7 +104,9 @@ def test_icon(tmp_work_path):
     )
 
     # Test without icon raises error
-    with pytest.raises(snapcraft.internal.errors.SnapcraftEnvironmentError) as exc_info:
+    with pytest.raises(
+        snapcraft_legacy.internal.errors.SnapcraftEnvironmentError
+    ) as exc_info:
         conduct_project_sanity_check(project)
 
     assert exc_info.value.get_brief() == "Specified icon 'foo.png' does not exist."

@@ -19,9 +19,9 @@ from unittest import mock
 
 from testtools.matchers import Equals, HasLength
 
-import snapcraft
-from snapcraft.internal import errors
-from snapcraft.plugins.v1 import ruby
+import snapcraft_legacy
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.plugins.v1 import ruby
 
 from . import PluginsV1BaseTestCase
 
@@ -30,7 +30,7 @@ class RubyPluginTestCase(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
-        class Options(snapcraft.ProjectOptions):
+        class Options(snapcraft_legacy.ProjectOptions):
             source = "."
             ruby_version = "2.4.2"
             gems = []
@@ -126,7 +126,7 @@ class RubyPluginTestCase(PluginsV1BaseTestCase):
         os.makedirs(os.path.join(part_dir, "lib", "ruby", "gems", "test-version2"))
 
         error = self.assertRaises(
-            snapcraft.internal.errors.SnapcraftEnvironmentError,
+            snapcraft_legacy.internal.errors.SnapcraftEnvironmentError,
             plugin.env,
             "test-part-path",
         )
@@ -149,7 +149,7 @@ class RubyPluginTestCase(PluginsV1BaseTestCase):
             open(os.path.join(real_arch_libdir1, "rbconfig.rb"), "w").close()
 
         error = self.assertRaises(
-            snapcraft.internal.errors.SnapcraftEnvironmentError,
+            snapcraft_legacy.internal.errors.SnapcraftEnvironmentError,
             plugin.env,
             "test-part-path",
         )
@@ -185,7 +185,7 @@ class RubyPluginTestCase(PluginsV1BaseTestCase):
         with mock.patch.multiple(
             plugin, _ruby_tar=mock.DEFAULT, _gem_install=mock.DEFAULT
         ) as mocks:
-            with mock.patch("snapcraft.internal.common.run") as mock_run:
+            with mock.patch("snapcraft_legacy.internal.common.run") as mock_run:
                 plugin.pull()
 
         ruby_expected_dir = os.path.join(self.path, "parts", "test-part", "ruby")
@@ -218,7 +218,7 @@ class RubyPluginTestCase(PluginsV1BaseTestCase):
         with mock.patch.multiple(
             plugin, _ruby_tar=mock.DEFAULT, _ruby_install=mock.DEFAULT
         ):
-            with mock.patch("snapcraft.internal.common.run") as mock_run:
+            with mock.patch("snapcraft_legacy.internal.common.run") as mock_run:
                 plugin.pull()
 
         test_part_dir = os.path.join(self.path, "parts", "test-part")
@@ -243,7 +243,7 @@ class RubyPluginTestCase(PluginsV1BaseTestCase):
         with mock.patch.multiple(
             plugin, _ruby_tar=mock.DEFAULT, _ruby_install=mock.DEFAULT
         ):
-            with mock.patch("snapcraft.internal.common.run") as mock_run:
+            with mock.patch("snapcraft_legacy.internal.common.run") as mock_run:
                 plugin.pull()
         test_part_dir = os.path.join(self.path, "parts", "test-part")
         mock_run.assert_has_calls(

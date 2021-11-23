@@ -23,10 +23,10 @@ import pytest
 from testscenarios.scenarios import multiply_scenarios
 from testtools.matchers import Contains, Equals
 
-import snapcraft.yaml_utils.errors
-from snapcraft import project
-from snapcraft.internal.errors import PluginError
-from snapcraft.internal.project_loader import errors, load_config
+import snapcraft_legacy.yaml_utils.errors
+from snapcraft_legacy import project
+from snapcraft_legacy.internal.errors import PluginError
+from snapcraft_legacy.internal.project_loader import errors, load_config
 from tests import fixture_setup
 
 from . import ProjectLoaderBaseTest
@@ -280,7 +280,7 @@ class AliasesTest(ProjectLoaderBaseTest):
     def test_invalid_alias(self):
         apps = [("test", dict(command="test", aliases=[".test"]))]
         raised = self.assertRaises(
-            snapcraft.yaml_utils.errors.YamlValidationError,
+            snapcraft_legacy.yaml_utils.errors.YamlValidationError,
             self.make_snapcraft_project,
             apps,
         )

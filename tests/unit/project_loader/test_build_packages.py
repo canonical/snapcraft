@@ -19,8 +19,8 @@ from textwrap import dedent
 
 import pytest
 
-from snapcraft.internal import project_loader
-from snapcraft.project import Project
+from snapcraft_legacy.internal import project_loader
+from snapcraft_legacy.project import Project
 
 
 def get_project_config(snapcraft_yaml_content):

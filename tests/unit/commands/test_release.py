@@ -18,8 +18,8 @@ from textwrap import dedent
 
 from testtools.matchers import Contains, Equals
 
-from snapcraft import storeapi
-from snapcraft.storeapi.v2.channel_map import (
+from snapcraft_legacy import storeapi
+from snapcraft_legacy.storeapi.v2.channel_map import (
     MappedChannel,
     Progressive,
     Revision,

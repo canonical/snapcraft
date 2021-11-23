@@ -23,8 +23,8 @@ from unittest import mock
 import pytest
 from testtools.matchers import Equals
 
-from snapcraft.internal.build_providers import errors
-from snapcraft.internal.build_providers._multipass import MultipassCommand
+from snapcraft_legacy.internal.build_providers import errors
+from snapcraft_legacy.internal.build_providers._multipass import MultipassCommand
 from tests import unit
 
 

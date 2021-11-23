@@ -18,7 +18,7 @@ from textwrap import dedent
 
 from testtools.matchers import Contains, Equals
 
-from snapcraft import storeapi
+from snapcraft_legacy import storeapi
 
 from . import FakeStoreCommandsBaseTestCase
 

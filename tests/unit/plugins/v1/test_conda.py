@@ -21,8 +21,8 @@ import fixtures
 import pytest
 from testtools.matchers import DirExists, Equals, HasLength, Not
 
-from snapcraft.internal import errors
-from snapcraft.plugins.v1 import conda
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.plugins.v1 import conda
 from tests import unit
 
 from . import PluginsV1BaseTestCase
@@ -224,7 +224,9 @@ class CondaPluginTest(CondaPluginBaseTest):
         class Options:
             conda_miniconda_version = "latest"
 
-        fake_source_script = fixtures.MockPatch("snapcraft.internal.sources.Script")
+        fake_source_script = fixtures.MockPatch(
+            "snapcraft_legacy.internal.sources.Script"
+        )
         self.useFixture(fake_source_script)
 
         plugin = conda.CondaPlugin("test-part", Options(), self.project)

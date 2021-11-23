@@ -22,7 +22,7 @@ import fixtures
 from simplejson.scanner import JSONDecodeError
 from testtools.matchers import Contains, Equals
 
-from snapcraft import storeapi
+from snapcraft_legacy import storeapi
 
 from . import FakeStoreCommandsBaseTestCase, get_sample_key
 
@@ -109,7 +109,9 @@ class RegisterKeyTestCase(FakeStoreCommandsBaseTestCase):
         )
 
         # Fake the login check
-        self.useFixture(fixtures.MockPatch("snapcraft._store.login", return_value=True))
+        self.useFixture(
+            fixtures.MockPatch("snapcraft_legacy._store.login", return_value=True)
+        )
 
         raised = self.assertRaises(
             storeapi.errors.StoreAccountInformationError,

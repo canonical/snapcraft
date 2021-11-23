@@ -19,8 +19,8 @@ import os
 import xdg
 from testtools.matchers import Equals
 
-from snapcraft import config
-from snapcraft.internal.errors import SnapcraftInvalidCLIConfigError
+from snapcraft_legacy import config
+from snapcraft_legacy.internal.errors import SnapcraftInvalidCLIConfigError
 from tests import unit
 
 

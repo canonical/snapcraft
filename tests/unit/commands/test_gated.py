@@ -18,7 +18,7 @@ import textwrap
 
 from testtools.matchers import Contains, Equals
 
-import snapcraft.storeapi.errors
+import snapcraft_legacy.storeapi.errors
 
 from . import StoreCommandsBaseTestCase
 
@@ -30,7 +30,7 @@ class GatedCommandTestCase(StoreCommandsBaseTestCase):
         self.client.login(email="dummy", password="test correct password")
 
         raised = self.assertRaises(
-            snapcraft.storeapi.errors.SnapNotFoundError,
+            snapcraft_legacy.storeapi.errors.SnapNotFoundError,
             self.run_command,
             ["gated", "notfound"],
         )

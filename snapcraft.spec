@@ -14,7 +14,7 @@ data += collect_data_files("lazr.uri")
 data += collect_data_files("wadllib")
 
 a = Analysis(
-    ["snapcraft\\cli\\__main__.py"],
+    ["snapcraft_legacy\\cli\\__main__.py"],
     pathex=[],
     binaries=[],
     datas=data,

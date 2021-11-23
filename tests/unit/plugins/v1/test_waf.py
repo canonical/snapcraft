@@ -20,9 +20,9 @@ from unittest import mock
 import pytest
 from testtools.matchers import Equals, HasLength
 
-from snapcraft.internal import errors, meta
-from snapcraft.plugins.v1 import waf
-from snapcraft.project import Project
+from snapcraft_legacy.internal import errors, meta
+from snapcraft_legacy.plugins.v1 import waf
+from snapcraft_legacy.project import Project
 from tests import unit
 
 from . import PluginsV1BaseTestCase

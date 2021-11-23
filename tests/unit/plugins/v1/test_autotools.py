@@ -23,9 +23,9 @@ from unittest import mock
 import pytest
 from testtools.matchers import Equals, HasLength
 
-import snapcraft
-from snapcraft.internal import errors, meta
-from snapcraft.plugins.v1 import autotools, make
+import snapcraft_legacy
+from snapcraft_legacy.internal import errors, meta
+from snapcraft_legacy.plugins.v1 import autotools, make
 
 from . import PluginsV1BaseTestCase
 
@@ -443,9 +443,9 @@ class AutotoolsPluginTestCase(PluginsV1BaseTestCase):
 )
 @mock.patch.object(autotools.AutotoolsPlugin, "run")
 def test_cross_compile(mock_run, monkeypatch, project, options, deb_arch, triplet):
-    monkeypatch.setattr(snapcraft.project.Project, "is_cross_compiling", True)
+    monkeypatch.setattr(snapcraft_legacy.project.Project, "is_cross_compiling", True)
 
-    project = snapcraft.project.Project(target_deb_arch=deb_arch)
+    project = snapcraft_legacy.project.Project(target_deb_arch=deb_arch)
     project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
     plugin = autotools.AutotoolsPlugin("test-part", options, project)

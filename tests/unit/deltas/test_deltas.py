@@ -21,7 +21,7 @@ import fixtures
 from testtools import TestCase
 from testtools import matchers as m
 
-from snapcraft.internal import deltas
+from snapcraft_legacy.internal import deltas
 from tests import fixture_setup
 
 
@@ -44,7 +44,7 @@ class BaseDeltaGenerationTestCase(TestCase):
 
         self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.file_utils.get_snap_tool_path",
+                "snapcraft_legacy.file_utils.get_snap_tool_path",
                 side_effect=lambda x: os.path.join("/usr", "bin", x),
             )
         )

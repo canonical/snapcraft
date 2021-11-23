@@ -17,7 +17,7 @@
 from testtools import TestCase
 from testtools.matchers import Equals
 
-from snapcraft.plugins.v2.meson import MesonPlugin
+from snapcraft_legacy.plugins.v2.meson import MesonPlugin
 
 
 class MesonPluginTest(TestCase):

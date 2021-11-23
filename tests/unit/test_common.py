@@ -19,7 +19,7 @@ import os
 import pytest
 from testtools.matchers import Equals
 
-from snapcraft.internal import common, errors
+from snapcraft_legacy.internal import common, errors
 from tests import unit
 
 
