@@ -55,10 +55,18 @@ def _get_required_grade(*, base: Optional[str], arch: str) -> str:
 
 
 def _install_build_packages(build_packages: Set[str]) -> List[str]:
+    if common.is_offline():
+        logger.warning("Offline mode, not installing build packages.")
+        return []
+
     return repo.Repo.install_build_packages(build_packages)
 
 
 def _install_build_snaps(build_snaps: Set[str], content_snaps: Set[str]) -> List[str]:
+    if common.is_offline():
+        logger.warning("Offline mode, not installing build packages.")
+        return []
+
     if common.is_process_container() and build_snaps:
         installed_snaps: List[str] = []
         logger.warning(

@@ -17,7 +17,6 @@
 import os
 import unittest
 from pathlib import Path
-from unittest import mock
 from unittest.mock import call
 
 import fixtures
@@ -39,8 +38,6 @@ class TestAptStageCache(unit.TestCase):
         stage_cache.mkdir(exist_ok=True, parents=True)
 
         with AptCache(stage_cache=stage_cache) as apt_cache:
-            apt_cache.update()
-
             package_names = {"pciutils"}
             filtered_names = {"base-files", "libc6", "libkmod2", "libudev1", "zlib1g"}
 
@@ -73,8 +70,8 @@ class TestMockedApt(unit.TestCase):
             fixtures.MockPatch("snapcraft.internal.repo.apt_cache.apt")
         ).mock
 
-        with AptCache(stage_cache=stage_cache) as apt_cache:
-            apt_cache.update()
+        with AptCache(stage_cache=stage_cache):
+            pass
 
         self.assertThat(
             self.fake_apt.mock_calls,
@@ -90,11 +87,9 @@ class TestMockedApt(unit.TestCase):
                     call.apt_pkg.config.set(
                         "Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/"
                     ),
+                    call.apt_pkg.config.set("Dir::State", "/var/lib/apt"),
                     call.apt_pkg.config.clear("APT::Update::Post-Invoke-Success"),
                     call.progress.text.AcquireProgress(),
-                    call.Cache(memonly=True, rootdir=str(stage_cache)),
-                    call.Cache().update(fetch_progress=mock.ANY, sources_list=None),
-                    call.Cache().close(),
                     call.Cache(memonly=True, rootdir=str(stage_cache)),
                     call.Cache().close(),
                 ]
@@ -117,8 +112,8 @@ class TestMockedApt(unit.TestCase):
         )
         self.useFixture(fixtures.EnvironmentVariable("SNAP", str(snap)))
 
-        with AptCache(stage_cache=stage_cache) as apt_cache:
-            apt_cache.update()
+        with AptCache(stage_cache=stage_cache):
+            pass
 
         self.assertThat(
             self.fake_apt.mock_calls,
@@ -149,11 +144,9 @@ class TestMockedApt(unit.TestCase):
                     call.apt_pkg.config.set(
                         "Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/"
                     ),
+                    call.apt_pkg.config.set("Dir::State", "/var/lib/apt"),
                     call.apt_pkg.config.clear("APT::Update::Post-Invoke-Success"),
                     call.progress.text.AcquireProgress(),
-                    call.Cache(memonly=True, rootdir=str(stage_cache)),
-                    call.Cache().update(fetch_progress=mock.ANY, sources_list=None),
-                    call.Cache().close(),
                     call.Cache(memonly=True, rootdir=str(stage_cache)),
                     call.Cache().close(),
                 ]

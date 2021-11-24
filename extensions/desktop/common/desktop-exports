@@ -89,7 +89,7 @@ append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/mesa-egl"
 # Tell libGL and libva where to find the drivers
 export LIBGL_DRIVERS_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/dri"
 append_dir LD_LIBRARY_PATH "$LIBGL_DRIVERS_PATH"
-export LIBVA_DRIVERS_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/dri"
+append_dir LIBVA_DRIVERS_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/dri"
 
 # Set where the VDPAU drivers are located
 export VDPAU_DRIVER_PATH="/usr/lib/$ARCH/vdpau/"
@@ -301,6 +301,10 @@ function make_user_fontconfig {
       echo "  <dir>${data_dirs_array[$i]}/fonts</dir>"
     fi
   done
+  # fix font render for modified fonts, that discussed on Snapcraft Forum:
+  # https://forum.snapcraft.io/t/snap-package-cannot-read-fonts-conf/16657
+  echo '  <include ignore_missing="yes">/etc/fonts/conf.d</include>'
+  echo '  <include ignore_missing="yes">conf.d</include>'
   # We need to include a user-writable cachedir first to support
   # caching of per-user fonts.
   echo '  <cachedir prefix="xdg">fontconfig</cachedir>'
