@@ -38,13 +38,11 @@ execute: |
 
   if [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
     output="$(snapcraft --enable-experimental-extensions)"
-    snap install neon-hello_*.snap --dangerous
-    # This snap requires manual connection
-    snap connect neon-hello:kde-frameworks-5-plug kde-frameworks-5-qt-5-15-3-core20:kde-frameworks-5-qt-5-15-3-core20-slot
   else
     output="$(snapcraft)"
-    snap install neon-hello_*.snap --dangerous
   fi
+  
+  snap install neon-hello_*.snap --dangerous
 
   [ "$(neon-hello)" = "hello world" ]
 
