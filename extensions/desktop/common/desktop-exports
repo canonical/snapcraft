@@ -57,7 +57,7 @@ function update_xdg_dirs_values() {
 function is_subpath() {
   dir="$(realpath "$1")"
   parent="$(realpath "$2")"
-  [ "${dir##$parent/}" != "$dir" ] && return 0 || return 1
+  [ "${dir##"${parent}"/}" != "${dir}" ] && return 0 || return 1
 }
 
 if ! snapctl is-connected "%PLATFORM_PLUG%"; then
