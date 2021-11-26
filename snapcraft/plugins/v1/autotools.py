@@ -40,7 +40,7 @@ In addition, this plugin uses the following plugin-specific keywords:
 """
 
 import os
-import stat
+from pathlib import Path
 
 from snapcraft.plugins.v1 import make
 
@@ -88,32 +88,25 @@ class AutotoolsPlugin(make.MakePlugin):
         pass
 
     def build(self):
-        if not os.path.exists(os.path.join(self.builddir, "configure")):
-            generated = False
-            scripts = ["autogen.sh", "bootstrap"]
-            for script in scripts:
-                path = os.path.join(self.builddir, script)
-                if not os.path.exists(path) or os.path.isdir(path):
-                    continue
-                # Make sure it's executable
-                if not os.access(path, os.X_OK):
-                    os.chmod(
-                        path,
-                        stat.S_IRUSR
-                        | stat.S_IWUSR
-                        | stat.S_IXUSR
-                        | stat.S_IRGRP
-                        | stat.S_IWGRP
-                        | stat.S_IXGRP
-                        | stat.S_IROTH
-                        | stat.S_IWOTH
-                        | stat.S_IXOTH,
-                    )
-                self.run(["env", "NOCONFIGURE=1", "./{}".format(script)])
-                generated = True
-                break
-            if not generated:
+        configure_script = Path(self.builddir) / "configure"
+        if not configure_script.exists():
+            potential_scripts = [
+                Path(self.builddir) / s for s in ["autogen.sh", "bootstrap"]
+            ]
+            existing_scripts = [
+                s for s in potential_scripts if s.exists() and s.is_file()
+            ]
+
+            # If there are not alternative configure scripts, run autoreconf.
+            if not existing_scripts:
                 self.run(["autoreconf", "-i"])
+            else:
+                # Pick the first one.
+                script = existing_scripts[0]
+                # Make sure it's executable.
+                if not os.access(script, os.X_OK):
+                    script.chmod(0o755)
+                self.run(["env", "NOCONFIGURE=1", script])
 
         configure_command = ["./configure"]
 
