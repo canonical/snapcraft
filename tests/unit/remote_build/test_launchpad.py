@@ -318,13 +318,7 @@ class LaunchpadTestCase(unit.TestCase):
         self.assertThat(
             fake_snap.mock_calls,
             Equals(
-                [
-                    mock.call.requestBuilds(
-                        archive="main_archive",
-                        channels={"core18": "stable", "snapcraft": "stable"},
-                        pocket="Updates",
-                    )
-                ]
+                [mock.call.requestBuilds(archive="main_archive", pocket="Updates",)]
             ),
         )
 

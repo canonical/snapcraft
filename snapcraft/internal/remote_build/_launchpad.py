@@ -187,14 +187,7 @@ class LaunchpadClient:
     def _issue_build_request(self, snap: Entry) -> Entry:
         dist = self._lp.distributions["ubuntu"]
         archive = dist.main_archive
-        return snap.requestBuilds(
-            archive=archive,
-            channels={
-                "core18": self._core18_channel,
-                "snapcraft": self._snapcraft_channel,
-            },
-            pocket="Updates",
-        )
+        return snap.requestBuilds(archive=archive, pocket="Updates",)
 
     def _lp_load_url(self, url: str) -> Entry:
         """Load Launchpad url with a retry in case the connection is lost."""
