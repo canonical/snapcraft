@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import pathlib
 import stat
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -258,12 +258,13 @@ class AutotoolsPluginTestCase(PluginsV1BaseTestCase):
         self.assertThat(run_mock.call_count, Equals(4))
         run_mock.assert_has_calls(
             [
-                mock.call(["env", "NOCONFIGURE=1", "./autogen.sh"]),
+                mock.call(
+                    ["env", "NOCONFIGURE=1", Path(plugin.builddir) / "autogen.sh"]
+                ),
                 mock.call(["./configure", "--prefix="]),
                 mock.call(["make", "-j2"], env=None),
                 mock.call(
-                    ["make", "install", "DESTDIR={}".format(plugin.installdir)],
-                    env=None,
+                    ["make", "install", f"DESTDIR={plugin.installdir}"], env=None,
                 ),
             ]
         )
@@ -275,7 +276,9 @@ class AutotoolsPluginTestCase(PluginsV1BaseTestCase):
         self.assertThat(run_mock.call_count, Equals(4))
         run_mock.assert_has_calls(
             [
-                mock.call(["env", "NOCONFIGURE=1", "./bootstrap"]),
+                mock.call(
+                    ["env", "NOCONFIGURE=1", Path(plugin.builddir) / "bootstrap"]
+                ),
                 mock.call(["./configure", "--prefix="]),
                 mock.call(["make", "-j2"], env=None),
                 mock.call(
@@ -292,7 +295,9 @@ class AutotoolsPluginTestCase(PluginsV1BaseTestCase):
         self.assertThat(run_mock.call_count, Equals(4))
         run_mock.assert_has_calls(
             [
-                mock.call(["env", "NOCONFIGURE=1", "./autogen.sh"]),
+                mock.call(
+                    ["env", "NOCONFIGURE=1", Path(plugin.builddir) / "autogen.sh"]
+                ),
                 mock.call(["./configure", "--prefix="]),
                 mock.call(["make", "-j2"], env=None),
                 mock.call(
@@ -310,7 +315,9 @@ class AutotoolsPluginTestCase(PluginsV1BaseTestCase):
         self.assertThat(run_mock.call_count, Equals(4))
         run_mock.assert_has_calls(
             [
-                mock.call(["env", "NOCONFIGURE=1", "./autogen.sh"]),
+                mock.call(
+                    ["env", "NOCONFIGURE=1", Path(plugin.builddir) / "autogen.sh"]
+                ),
                 mock.call(["./configure", "--prefix={}".format(plugin.installdir)]),
                 mock.call(["make", "-j2"], env=None),
                 mock.call(["make", "install"], env=None),
@@ -443,7 +450,7 @@ def test_cross_compile(mock_run, monkeypatch, project, options, deb_arch, triple
 
     plugin = autotools.AutotoolsPlugin("test-part", options, project)
     plugin.enable_cross_compilation()
-    configure_file = pathlib.Path(plugin.builddir) / "configure"
+    configure_file = Path(plugin.builddir) / "configure"
     configure_file.parent.mkdir(parents=True)
     configure_file.touch()
 
