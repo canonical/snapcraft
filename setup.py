@@ -84,6 +84,8 @@ if sys.platform == "win32":
 install_requires = [
     "attrs",
     "click",
+    "craft-parts",
+    "craft-providers",
     "cryptography==3.4",
     "gnupg",
     "jsonschema==2.5.1",
@@ -140,7 +142,10 @@ setup(
     classifiers=classifiers,
     scripts=scripts,
     entry_points=dict(
-        console_scripts=["snapcraft_legacy = snapcraft_legacy.cli.__main__:run"]
+        console_scripts=[
+            "snapcraft_legacy = snapcraft_legacy.cli.__main__:run",
+            "snapcraft = snapcraft.cli:run",
+        ]
     ),
     data_files=(
         recursive_data_files("schema", "share/snapcraft")
