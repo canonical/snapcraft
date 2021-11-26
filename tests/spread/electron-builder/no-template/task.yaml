@@ -12,8 +12,7 @@ environment:
   SNAPCRAFT_BUILD_INFO: "1"
 
 prepare: |
-  snap install node --channel 17 --classic
-  npm install -g npm
+  snap install node --classic
 
 restore: |
   snap remove node
@@ -26,9 +25,8 @@ execute: |
   expected_snapcraft_yaml="$(readlink -e expected_snapcraft.yaml)"
 
   cd "$SNAP_DIR"
-  npm --version
-  npm install --verbose
-  npm run dist
+  yarn install --verbose
+  yarn run dist
 
   snap install dist/electron-builder-hello-world_1.0.0_amd64.snap --dangerous
 
