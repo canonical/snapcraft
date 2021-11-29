@@ -22,11 +22,15 @@ from typing import Optional, Sequence
 
 from craft_cli.errors import CraftError
 
-from . import lifecycle, ui
+from . import legacy, lifecycle, ui
 
 
 def run(argv: Optional[Sequence] = None):
     """Run the CLI."""
+
+    # just pass everything to legacy for now
+    legacy.run()
+
     if argv is None:
         argv = sys.argv
 
