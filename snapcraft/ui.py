@@ -21,7 +21,6 @@ from craft_cli.messages import Emitter, EmitterMode
 
 import snapcraft
 from snapcraft import utils
-from snapcraft.errors import SnapcraftError
 
 emit = Emitter()
 
@@ -31,13 +30,10 @@ def init(argv) -> None:
     emitter_mode = EmitterMode.NORMAL
 
     try:
-        if len(argv) < 2 or argv[1] != "pack":
-            raise SnapcraftError("Only pack is supported.")
-
-        if len(argv) == 3 and argv[2] == "--verbose":
+        if len(argv) == 2 and argv[1] == "--verbose":
             emitter_mode = EmitterMode.VERBOSE
-        elif len(argv) == 3 and argv[2] != "--verbose":
-            raise SnapcraftError("Only option supported for pack is '--verbose'.")
+        elif len(argv) == 3 and argv[2] == "--verbose":
+            emitter_mode = EmitterMode.VERBOSE
     finally:
         args = {
             "mode": emitter_mode,

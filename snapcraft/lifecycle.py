@@ -19,17 +19,15 @@
 import subprocess
 from pathlib import Path
 
-from . import providers, utils
-from .parts import PartsLifecycle, Step
-from .project import Project, load_project
-from .providers import capture_logs_from_instance
+from snapcraft import providers, utils
+from snapcraft.parts import PartsLifecycle, Step
+from snapcraft.projects import Project
+from snapcraft.providers import capture_logs_from_instance
 
 
-def pack():
+def run(project: Project):
     """Pack a snap."""
-    project = load_project("snapcraft.yaml")
-
-    destructive_mode = False  # XXX: obtain from command line
+    destructive_mode = True  # XXX: obtain from command line
 
     managed_mode = utils.is_managed_mode()
     if not managed_mode and not destructive_mode:
@@ -57,7 +55,7 @@ def pack_in_provider(project: Project):
     output_dir = utils.get_managed_environment_project_path()
 
     with provider.launched_environment(
-        project_name=project.name, project_path=Path().absolute(), base=project.base,
+        project_name=project.name, project_path=Path().absolute(), base=project.base
     ) as instance:
         try:
             instance.execute_run(

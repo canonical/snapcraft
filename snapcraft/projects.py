@@ -16,8 +16,10 @@
 
 """Project definition and helpers."""
 
+from typing import Any, Dict, List, Optional, Tuple
+
 # XXX: mypy 0.770 doesn't like typing.Literal
-from typing import Any, Dict, Literal, Optional, Tuple  # type: ignore
+from typing import Literal  # type: ignore
 
 import pydantic
 import yaml
@@ -34,14 +36,8 @@ class ProjectValidationError(SnapcraftError):
     """Error validatiing snapcraft.yaml."""
 
 
-class Project(pydantic.BaseModel):
-    """Snapcraft project definition."""
-
-    name: str
-    version: str
-    base: Literal["bare", "core18", "core20", "core22"]
-    build_base: Optional[str]
-    parts: Dict[str, Any]
+class ProjectModel(pydantic.BaseModel):
+    """Base model for snapcraft project classes."""
 
     class Config:  # pylint: disable=too-few-public-methods
         """Pydantic model configuration."""
@@ -51,6 +47,31 @@ class Project(pydantic.BaseModel):
         allow_mutation = False
         allow_population_by_field_name = True
         alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+
+
+class App(ProjectModel):
+    """Snapcraft app definition."""
+
+    command: str
+    command_chain: List[str] = []
+
+
+class Project(ProjectModel):
+    """Snapcraft project definition.
+
+    See https://snapcraft.io/docs/snapcraft-yaml-reference
+    """
+
+    name: str
+    version: Optional[str]  # not declared if using snapcraftctl
+    summary: str
+    description: str
+    base: Literal["core22"]  # we only support core22 for now
+    build_base: Optional[str]
+    license: Optional[str]
+    type: Literal["app"] = "app"  # we only support app for now
+    apps: Optional[Dict[str, App]]
+    parts: Dict[str, Any]  # parts are handled by craft-parts
 
     @pydantic.validator("build_base", always=True)
     @classmethod

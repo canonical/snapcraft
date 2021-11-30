@@ -25,8 +25,7 @@ from craft_providers.actions import snap_installer
 from snapcraft import utils
 
 BASE_TO_BUILDD_IMAGE_ALIAS = {
-    "ubuntu:18.04": bases.BuilddBaseAlias.BIONIC,
-    "ubuntu:20.04": bases.BuilddBaseAlias.FOCAL,
+    "core22": bases.BuilddBaseAlias.FOCAL,  # XXX: core22 base not available yet
 }
 
 
