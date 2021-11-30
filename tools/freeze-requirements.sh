@@ -5,7 +5,7 @@ requirements_fixups() {
 
   # Python apt library pinned to source.
   sed -i '/python-apt=*/d' "$req_file"
-  echo 'python-apt @ http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_1.6.5ubuntu0.5.tar.xz; sys.platform == "linux"' >> "$req_file"
+  echo 'python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.0ubuntu0.20.04.6/python-apt_2.0.0ubuntu0.20.04.6.tar.xz; sys_platform == "linux"' >> "$req_file"
   echo 'python-distutils-extra @ https://launchpad.net/python-distutils-extra/trunk/2.39/+download/python-distutils-extra-2.39.tar.gz; sys_platform == "linux"' >> "$req_file"
 
   # PyNaCl 1.4.0 has crypto related symbol issues when using the system
@@ -13,6 +13,10 @@ requirements_fixups() {
   sed -i '/PyNaCl=*/d' "$req_file"
   echo 'PyNaCl==1.4.0; sys.platform != "linux"' >> "$req_file"
   echo 'PyNaCl @ https://files.pythonhosted.org/packages/61/ab/2ac6dea8489fa713e2b4c6c5b549cc962dd4a842b5998d9e80cf8440b7cd/PyNaCl-1.3.0.tar.gz; sys.platform == "linux"' >> "$req_file"
+
+  # Craft-cli from git
+  sed -i '/craft-cli=*/d' "$req_file"
+  echo 'craft-cli @ git+https://github.com/canonical/craft-cli.git@a42cfc508bbbe55b0f96abbc7f4de97b657eaef0' >> "$req_file"
 
   # https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1635463
   sed -i '/pkg-resources==0.0.0/d' "$req_file"

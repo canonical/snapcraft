@@ -12,10 +12,11 @@ environment:
   SNAPCRAFT_BUILD_INFO: "1"
 
 prepare: |
-  sudo snap install node --classic
+  snap install node --channel 17 --classic
+  npm install -g npm
 
 restore: |
-  sudo snap remove node
+  snap remove node
 
   cd "$SNAP_DIR"
   rm -rf dist node_modules package-lock.json
@@ -25,10 +26,11 @@ execute: |
   expected_snapcraft_yaml="$(readlink -e expected_snapcraft.yaml)"
 
   cd "$SNAP_DIR"
-  npm install
+  npm --version
+  npm install --verbose
   npm run dist
 
-  sudo snap install dist/electron-builder-hello-world_1.0.0_amd64.snap --dangerous
+  snap install dist/electron-builder-hello-world_1.0.0_amd64.snap --dangerous
 
   actual_snap_yaml="$(readlink -e /snap/electron-builder-hello-world/current/meta/snap.yaml)"
   actual_snapcraft_yaml="$(readlink -e /snap/electron-builder-hello-world/current/snap/snapcraft.yaml)"
