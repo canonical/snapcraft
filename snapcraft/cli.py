@@ -17,6 +17,7 @@
 """Temporary CLI implementation."""
 
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Optional, Sequence
@@ -30,6 +31,12 @@ def run(argv: Optional[Sequence] = None):
     """Run the CLI."""
     if argv is None:
         argv = sys.argv
+
+    # check legacy managed environment
+    if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
+        print("On a legacy managed environment, executing legacy snapcraft")
+        legacy.run()
+        return
 
     # TODO: add proper command parsing using craft-cli.
     #       for now it runs the new code if snapcraft is invoked without arguments
