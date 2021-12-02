@@ -32,9 +32,11 @@ def run(argv: Optional[Sequence] = None):
     if argv is None:
         argv = sys.argv
 
+    ui.init(argv)
+
     # check legacy managed environment
     if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
-        print("On a legacy managed environment, executing legacy snapcraft")
+        ui.emit.message("On a legacy managed environment, executing legacy snapcraft")
         legacy.run()
         return
 
@@ -43,12 +45,15 @@ def run(argv: Optional[Sequence] = None):
     #       or with a step name.
     if len(argv) > 1 and argv[1] not in ["pull", "build", "stage", "prime"]:
         # legacy passthrough
-        print("Not a step command, executing legacy snapcraft")
+        ui.emit.message("Not a step command, executing legacy snapcraft.")
         legacy.run()
         return
 
     if not load_and_process_project(argv):
         legacy.run()
+        return
+
+    ui.emit.ended_ok()
 
 
 def load_and_process_project(argv: Sequence):
@@ -65,17 +70,17 @@ def load_and_process_project(argv: Sequence):
                 project = load_project(project_file)
             except SnapcraftError:
                 # legacy passthrough
-                print("Error loading project, executing legacy snapcraft")
+                print("Error loading project, executing legacy snapcraft.")
                 return False
 
     if not project:
         # legacy passthrough
-        print("Couldn't find project yaml, executing legacy snapcraft")
+        ui.emit.message("Couldn't find project yaml, executing legacy snapcraft.")
         return False
 
     if project.base != "core22":
         # legacy passthrough
-        print("Base not core22, executing legacy snapcraft")
+        ui.emit.message("Base not core22, executing legacy snapcraft.")
         return False
 
     # set lib loggers to debug level so that all messages are sent to Emitter
@@ -84,12 +89,9 @@ def load_and_process_project(argv: Sequence):
         logger.setLevel(logging.DEBUG)
 
     try:
-        ui.init(argv)
         lifecycle.run(project)
     except SnapcraftError as error:
         ui.emit.error(error)
         sys.exit(1)
-    finally:
-        ui.emit.ended_ok()
 
     return True
