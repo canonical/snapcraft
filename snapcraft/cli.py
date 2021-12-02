@@ -43,7 +43,11 @@ def run(argv: Optional[Sequence] = None):
     # TODO: add proper command parsing using craft-cli.
     #       for now it runs the new code if snapcraft is invoked without arguments
     #       or with a step name.
-    if len(argv) > 1 and argv[1] not in ["pull", "build", "stage", "prime"]:
+    if (
+        len(argv) > 1
+        and not argv[1].startswith("-")
+        and argv[1] not in ["pull", "build", "stage", "prime"]
+    ):
         # legacy passthrough
         ui.emit.message("Not a step command, executing legacy snapcraft.")
         legacy.run()
