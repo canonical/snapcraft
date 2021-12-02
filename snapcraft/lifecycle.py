@@ -20,6 +20,7 @@ import subprocess
 from pathlib import Path
 
 from snapcraft import providers, utils
+from snapcraft.meta import snap_yaml
 from snapcraft.parts import PartsLifecycle, Step
 from snapcraft.projects import Project
 from snapcraft.providers import capture_logs_from_instance
@@ -41,6 +42,8 @@ def run(project: Project):
 
     lifecycle = PartsLifecycle(project.parts, work_dir=work_dir,)
     lifecycle.run(Step.PRIME)
+
+    snap_yaml.write(project, lifecycle.prime_dir, arch=lifecycle.target_arch)
 
 
 def pack_in_provider(project: Project):

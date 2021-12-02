@@ -66,10 +66,12 @@ class Project(ProjectModel):
     version: Optional[str]  # not declared if using snapcraftctl
     summary: str
     description: str
-    base: Literal["core22"]  # we only support core22 for now
+    base: Literal["core18", "core20", "core22"]  # we only support core22
     build_base: Optional[str]
     license: Optional[str]
     type: Literal["app"] = "app"  # we only support app for now
+    confinement: str
+    grade: str
     apps: Optional[Dict[str, App]]
     parts: Dict[str, Any]  # parts are handled by craft-parts
 
