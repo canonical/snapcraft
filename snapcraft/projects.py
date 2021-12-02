@@ -54,6 +54,8 @@ class App(ProjectModel):
 
     command: str
     command_chain: List[str] = []
+    environment: Optional[Dict[str, str]]
+    plugs: Optional[List[str]]
 
 
 class Project(ProjectModel):

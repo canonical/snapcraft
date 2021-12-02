@@ -16,8 +16,9 @@
 
 """Lifecycle integration."""
 
+import textwrap
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Dict, List, Optional
 
 from pydantic_yaml import YamlModel  # type: ignore
 
@@ -27,6 +28,8 @@ from snapcraft.projects import Project
 class SnapApp(YamlModel):
     command: str
     command_chain: List[str]
+    environment: Optional[Dict[str, str]]
+    plugs: Optional[List[str]]
 
     class Config:  # pylint: disable=too-few-public-methods
         """Pydantic model configuration."""
@@ -53,10 +56,15 @@ def write(project: Project, prime_dir: Path, *, arch: str):
     meta = prime_dir / "meta"
     meta.mkdir(exist_ok=True)
 
+    _write_snapcraft_runner(prime_dir)
+
     snap_apps: Dict[str, SnapApp] = {}
     for name, app in project.apps.items():
         snap_apps[name] = SnapApp(
-            command=app.command, command_chain=["snap/command-chain/snapcraft-runner"]
+            command=app.command,
+            command_chain=["snap/command-chain/snapcraft-runner"],
+            environment=app.environment,
+            plugs=app.plugs,
         )
 
     snap_metadata = SnapMetadata(
@@ -74,5 +82,20 @@ def write(project: Project, prime_dir: Path, *, arch: str):
 
     yaml_data = snap_metadata.yaml()
 
-    snap_yaml = meta / "snap.yaml"
-    snap_yaml.write_text(yaml_data)
+    snap_yaml_path = meta / "snap.yaml"
+    snap_yaml_path.write_text(yaml_data)
+
+
+def _write_snapcraft_runner(prime_dir: Path):
+    content = textwrap.dedent(
+        """#!/bin/sh
+        export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
+        export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
+        exec "$@"
+        """
+    )
+
+    runner_path = prime_dir / "snap/command-chain/snapcraft-runner"
+    runner_path.parent.mkdir(parents=True, exist_ok=True)
+    runner_path.write_text(content)
+    runner_path.chmod(0o755)
