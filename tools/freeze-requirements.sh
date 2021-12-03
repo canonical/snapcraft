@@ -19,7 +19,7 @@ requirements_fixups() {
   echo 'craft-cli @ git+https://github.com/canonical/craft-cli.git@a42cfc508bbbe55b0f96abbc7f4de97b657eaef0' >> "$req_file"
 
   # https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1635463
-  sed -i '/pkg-resources==0.0.0/d' "$req_file"
+  sed -i '/pkg[-_]resources==0.0.0/d' "$req_file"
 
   # We updated setuptools in venv, forget it.
   sed -i '/setuptools/d' "$req_file"
