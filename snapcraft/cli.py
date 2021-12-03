@@ -49,7 +49,8 @@ def run(argv: Optional[Sequence] = None):
         and argv[1] not in ["pull", "build", "stage", "prime"]
     ):
         # legacy passthrough
-        ui.emit.message("Not a step command, executing legacy snapcraft.")
+        # be quiet (at least until we handle the version command)
+        # ui.emit.message("Not a step command, executing legacy snapcraft.")
         legacy.run()
         return
 
@@ -79,7 +80,8 @@ def load_and_process_project(argv: Sequence):
 
     if not project:
         # legacy passthrough
-        ui.emit.message("Couldn't find project yaml, executing legacy snapcraft.")
+        # be quiet (at least until we handle the version command)
+        # ui.emit.message("Couldn't find project yaml, executing legacy snapcraft.")
         return False
 
     if project.base != "core22":
