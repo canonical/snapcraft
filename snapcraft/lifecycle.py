@@ -19,7 +19,8 @@
 import subprocess
 from pathlib import Path
 
-from snapcraft import providers, utils
+from snapcraft import providers, ui, utils
+from snapcraft.meta import snap_yaml
 from snapcraft.parts import PartsLifecycle, Step
 from snapcraft.projects import Project
 from snapcraft.providers import capture_logs_from_instance
@@ -27,7 +28,7 @@ from snapcraft.providers import capture_logs_from_instance
 
 def run(project: Project):
     """Pack a snap."""
-    destructive_mode = True  # XXX: obtain from command line
+    destructive_mode = False  # XXX: obtain from command line
 
     managed_mode = utils.is_managed_mode()
     if not managed_mode and not destructive_mode:
@@ -41,6 +42,16 @@ def run(project: Project):
 
     lifecycle = PartsLifecycle(project.parts, work_dir=work_dir,)
     lifecycle.run(Step.PRIME)
+
+    prime_dir = lifecycle.prime_dir
+
+    ui.emit.progress("Creating snap.yaml...")
+    snap_yaml.write(project, prime_dir, arch=lifecycle.target_arch)
+    ui.emit.message("Created snap.yaml", intermediate=True)
+
+    ui.emit.progress("Creating snap package...")
+    subprocess.run(["snap", "pack", "--compression=xz", prime_dir], capture_output=True)  # type: ignore
+    ui.emit.message("Created snap package", intermediate=True)
 
 
 def pack_in_provider(project: Project):

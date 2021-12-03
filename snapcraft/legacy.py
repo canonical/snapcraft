@@ -16,9 +16,11 @@
 
 """Legacy snapcraft execution."""
 
+from snapcraft import ui
 from snapcraft_legacy.cli.legacy import legacy_run
 
 
 def run():
     """Run the legacy CLI."""
+    ui.emit.ended_ok()
     legacy_run()

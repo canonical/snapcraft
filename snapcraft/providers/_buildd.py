@@ -16,6 +16,7 @@
 
 """Buildd-related helpers for Snapcraft."""
 
+import enum
 import sys
 from typing import Optional
 
@@ -24,8 +25,17 @@ from craft_providers.actions import snap_installer
 
 from snapcraft import utils
 
+
+# XXX: update in craft-providers
+class _BuilddBaseAlias(enum.Enum):
+    """Mappings for supported buildd images."""
+
+    JAMMY = "22.04"
+
+
 BASE_TO_BUILDD_IMAGE_ALIAS = {
-    "core22": bases.BuilddBaseAlias.FOCAL,  # XXX: core22 base not available yet
+    # "core22": bases.BuilddBaseAlias.JAMMY,
+    "core22": _BuilddBaseAlias.JAMMY,
 }
 
 

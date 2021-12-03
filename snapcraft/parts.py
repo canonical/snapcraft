@@ -65,6 +65,11 @@ class PartsLifecycle:
         """Return the parts prime directory path."""
         return self._lcm.project_info.prime_dir
 
+    @property
+    def target_arch(self) -> str:
+        """Return the parts project target architecture."""
+        return self._lcm.project_info.target_arch
+
     def run(self, target_step: Step) -> None:
         """Run the parts lifecycle.
 

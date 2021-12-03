@@ -30,7 +30,8 @@ from ._provider import Provider, ProviderError
 
 logger = logging.getLogger(__name__)
 
-_BASE_IMAGE = {"core22": "20.04"}  # core22 base not available yet
+_BASE_IMAGE = {"core22": "ubuntu-daily:22.04"}
+# _BASE_IMAGE = {"core22": "20.04"}
 
 
 class LXDProvider(Provider):
@@ -148,21 +149,29 @@ class LXDProvider(Provider):
             project_name=project_name, project_path=project_path,
         )
 
+        base_image = _BASE_IMAGE[base]
+        if ":" in base_image:
+            image_remote, image_name = base_image.split(":", 1)
+        else:
+            try:
+                image_remote = lxd.configure_buildd_image_remote()
+                image_name = base_image
+            except lxd.LXDError as error:
+                raise ProviderError(str(error)) from error
+
         environment = self.get_command_environment()
-        try:
-            image_remote = lxd.configure_buildd_image_remote()
-        except lxd.LXDError as error:
-            raise ProviderError(str(error)) from error
 
         base_configuration = SnapcraftBuilddBaseConfiguration(
-            alias=alias, environment=environment, hostname=instance_name
+            alias=alias,  # type: ignore
+            environment=environment,
+            hostname=instance_name,
         )
 
         try:
             instance = lxd.launch(
                 name=instance_name,
                 base_configuration=base_configuration,
-                image_name=_BASE_IMAGE[base],
+                image_name=image_name,
                 image_remote=image_remote,
                 auto_clean=True,
                 auto_create_project=True,

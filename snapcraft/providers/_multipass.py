@@ -136,7 +136,9 @@ class MultipassProvider(Provider):
 
         environment = self.get_command_environment()
         base_configuration = SnapcraftBuilddBaseConfiguration(
-            alias=alias, environment=environment, hostname=instance_name
+            alias=alias,  # type: ignore
+            environment=environment,
+            hostname=instance_name,
         )
 
         try:

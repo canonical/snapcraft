@@ -7,7 +7,7 @@ environment:
   TIMESTAMP_SERVICE: http://timestamp.digicert.com
 
   matrix:
-  - PYTHON: C:\Python37-x64
+  - PYTHON: C:\Python38-x64
 
 cache:
 - '%LOCALAPPDATA%\pip\Cache\http'
@@ -18,6 +18,7 @@ install:
 - cmd: |
     %PYTHON%\python.exe -m venv venv
     venv\Scripts\activate.bat
+    python --version
     python -c "import sys; print(sys.executable)"
     python -m pip install -r requirements-devel.txt
     python -m pip install --prefix %VIRTUAL_ENV% -e .
@@ -27,7 +28,7 @@ build_script:
 - cmd: |
     echo "Building snapcraft.exe..."
     venv\Scripts\activate.bat
-    pyinstaller.exe --onefile snapcraft.spec
+    pyinstaller.exe --copy-metadata lazr.restfulclient --onefile snapcraft.spec
     venv\Scripts\deactivate.bat
 
     echo "Test signing snapcraft.exe..."
