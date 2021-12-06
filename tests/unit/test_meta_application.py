@@ -134,9 +134,7 @@ class InvalidCommandChainTest(unit.TestCase):
 class AppPassthroughTests(unit.TestCase):
     def test_no_passthrough(self):
         app = application.Application(
-            app_name="foo",
-            command_chain=["test-command-chain"],
-            passthrough=None,
+            app_name="foo", command_chain=["test-command-chain"], passthrough=None,
         )
 
         app_dict = app.to_dict()

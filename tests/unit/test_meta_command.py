@@ -84,8 +84,6 @@ class CommandWithoutWrapperAllowedTestErrors(unit.TestCase):
         cmd = command.Command(app_name="foo", command_name="command", command="foo")
 
         self.assertRaises(
-            errors.InvalidAppCommandNotFound,
-            cmd.prime_command,
-            prime_dir=self.path,
+            errors.InvalidAppCommandNotFound, cmd.prime_command, prime_dir=self.path,
         )
         self.assertThat(self.fake_logger.output.strip(), Equals(""))
