@@ -28,9 +28,13 @@ test-shellcheck:
 	find . \( -name .git -o -name gradlew \) -prune -o -print0 | xargs -0 file -N | grep shell.script | cut -f1 -d: | xargs shellcheck
 	./tools/spread-shellcheck.py spread.yaml tests/spread/
 
+.PHONY: test-legacy-units
+test-legacy-units:
+	pytest --cov-report=xml --cov=snapcraft tests/legacy/unit
+
 .PHONY: test-units
-test-units:
-	pytest --cov-report=xml --cov=snapcraft tests/unit
+test-units: test-legacy-units
+	# pytest --cov-report=xml --cov=snapcraft tests/unit
 
 .PHONY: tests
 tests: tests-static test-units
