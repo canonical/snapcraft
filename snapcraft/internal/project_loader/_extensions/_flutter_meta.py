@@ -135,7 +135,10 @@ class FlutterMetaExtension(type):
                     "default-provider": "gtk-common-themes",
                 },
             },
-            "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform"},
+            "environment": {
+                "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+                "GDK_GL": "gles",
+                },
             "layout": {
                 "/usr/share/xml/iso-codes": {
                     "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
