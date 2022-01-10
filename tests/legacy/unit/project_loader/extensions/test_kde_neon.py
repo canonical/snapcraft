@@ -116,7 +116,7 @@ def test_extension_core20():
     assert kde_neon_extension.parts == {
         "kde-neon-extension": {
             "build-packages": ["g++"],
-            "build-snaps": ["kde-frameworks-5-qt-5-15-3-core20-sdk/latest/candidate"],
+            "build-snaps": ["kde-frameworks-5-qt-5-15-3-core20-sdk/latest/stable"],
             "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-qt-5-15-3-core20"],
             "plugin": "make",
             "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
@@ -137,7 +137,7 @@ def test_experimental_core20():
     kde_neon_extension = ExtensionImpl(
         extension_name="kde-neon", yaml_data=dict(base="core20")
     )
-    assert kde_neon_extension.is_experimental(base="core20") is True
+    assert kde_neon_extension.is_experimental(base="core20") is False
 
 
 def test_experimental_core18():
