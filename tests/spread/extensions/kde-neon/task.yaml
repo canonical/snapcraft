@@ -35,13 +35,7 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
-
-  if [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
-    output="$(snapcraft --enable-experimental-extensions)"
-  else
-    output="$(snapcraft)"
-  fi
-  
+  output="$(snapcraft)"
   snap install neon-hello_*.snap --dangerous
 
   [ "$(neon-hello)" = "hello world" ]
