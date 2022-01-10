@@ -16,7 +16,7 @@
 
 from textwrap import dedent
 
-from snapcraft.storeapi import errors
+from snapcraft_legacy.storeapi import errors
 
 
 class TestSnapcraftException:

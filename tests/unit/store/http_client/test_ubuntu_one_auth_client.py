@@ -19,7 +19,7 @@ import pathlib
 import pymacaroons
 import pytest
 
-from snapcraft.storeapi import http_clients
+from snapcraft_legacy.storeapi import http_clients
 
 
 def test_invalid_macaroon_root_raises_exception(tmp_work_path):

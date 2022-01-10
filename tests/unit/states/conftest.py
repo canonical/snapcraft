@@ -2,7 +2,7 @@
 
 import pytest
 
-from snapcraft.internal import states
+from snapcraft_legacy.internal import states
 
 
 class Project:

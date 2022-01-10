@@ -17,8 +17,8 @@
 import fixtures
 from testtools.matchers import Contains, Equals
 
-import snapcraft
-from snapcraft import storeapi
+import snapcraft_legacy
+from snapcraft_legacy import storeapi
 
 from . import FakeStoreCommandsBaseTestCase
 
@@ -63,7 +63,8 @@ class SetDefaultTrackCommandTestCase(FakeStoreCommandsBaseTestCase):
     def test_invalid_track_fails(self):
         mock_wrap = self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.cli.echo.exit_error", wraps=snapcraft.cli.echo.exit_error
+                "snapcraft_legacy.cli.echo.exit_error",
+                wraps=snapcraft_legacy.cli.echo.exit_error,
             )
         ).mock
 

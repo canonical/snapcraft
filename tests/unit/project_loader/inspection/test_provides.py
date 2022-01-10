@@ -18,8 +18,8 @@ import os
 
 from testtools.matchers import Equals
 
-from snapcraft import project
-from snapcraft.internal.project_loader import inspection
+from snapcraft_legacy import project
+from snapcraft_legacy.internal.project_loader import inspection
 from tests import unit
 
 

@@ -16,7 +16,7 @@
 
 import pytest
 
-from snapcraft.storeapi import channels
+from snapcraft_legacy.storeapi import channels
 
 
 class TestChannel:

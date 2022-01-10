@@ -25,8 +25,8 @@ import testtools
 from testscenarios.scenarios import multiply_scenarios
 from testtools.matchers import Equals
 
-from snapcraft import yaml_utils
-from snapcraft.internal import errors
+from snapcraft_legacy import yaml_utils
+from snapcraft_legacy.internal import errors
 from tests import unit
 from tests.unit.commands import CommandBaseTestCase
 
@@ -63,13 +63,13 @@ class ScriptletCommandsTestCase(CommandBaseTestCase):
         open(os.path.join("src", "version.txt"), "w").write("v1.0")
 
         fake_install_build_packages = fixtures.MockPatch(
-            "snapcraft.internal.lifecycle._runner._install_build_packages",
+            "snapcraft_legacy.internal.lifecycle._runner._install_build_packages",
             return_value=list(),
         )
         self.useFixture(fake_install_build_packages)
 
         fake_install_build_snaps = fixtures.MockPatch(
-            "snapcraft.internal.lifecycle._runner._install_build_snaps",
+            "snapcraft_legacy.internal.lifecycle._runner._install_build_snaps",
             return_value=list(),
         )
         self.useFixture(fake_install_build_snaps)

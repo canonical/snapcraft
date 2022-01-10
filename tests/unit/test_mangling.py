@@ -19,7 +19,7 @@ import textwrap
 
 from testtools.matchers import FileContains, FileExists, Not
 
-from snapcraft.internal import mangling
+from snapcraft_legacy.internal import mangling
 from tests import fixture_setup, unit
 
 

@@ -18,7 +18,7 @@ import re
 
 import pytest
 
-from snapcraft.storeapi.metrics import (
+from snapcraft_legacy.storeapi.metrics import (
     MetricResults,
     MetricsFilter,
     MetricsNames,

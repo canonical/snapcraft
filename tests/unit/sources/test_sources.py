@@ -16,7 +16,7 @@
 
 import pytest
 
-from snapcraft.internal import sources
+from snapcraft_legacy.internal import sources
 
 
 class TestUri:

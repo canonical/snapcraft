@@ -18,9 +18,9 @@ import doctest
 
 import pytest
 
-import snapcraft
-import snapcraft.internal.project_loader.grammar._try as _try
-from snapcraft.internal.project_loader import grammar
+import snapcraft_legacy
+import snapcraft_legacy.internal.project_loader.grammar._try as _try
+from snapcraft_legacy.internal.project_loader import grammar
 
 
 def load_tests(loader, tests, ignore):
@@ -111,7 +111,7 @@ class TestTryStatementGrammar:
 
     def test_try_statement_grammar(self, body, else_bodies, expected_packages):
         processor = grammar.GrammarProcessor(
-            None, snapcraft.ProjectOptions(), lambda x: "invalid" not in x
+            None, snapcraft_legacy.ProjectOptions(), lambda x: "invalid" not in x
         )
         statement = _try.TryStatement(body=body, processor=processor)
 
@@ -123,7 +123,7 @@ class TestTryStatementGrammar:
 
 def test_else_fail():
     processor = grammar.GrammarProcessor(
-        None, snapcraft.ProjectOptions(), lambda x: "invalid" not in x
+        None, snapcraft_legacy.ProjectOptions(), lambda x: "invalid" not in x
     )
     statement = _try.TryStatement(body=["invalid"], processor=processor)
 

@@ -21,13 +21,13 @@ from unittest import mock
 import fixtures
 import pytest
 
-from snapcraft.cli import echo
+from snapcraft_legacy.cli import echo
 from tests import unit
 
 
 @pytest.fixture()
 def mock_click():
-    with mock.patch("snapcraft.cli.echo.click", autospec=True) as mock_click:
+    with mock.patch("snapcraft_legacy.cli.echo.click", autospec=True) as mock_click:
         yield mock_click
 
 
@@ -35,7 +35,7 @@ def mock_click():
 def mock_shutil_get_terminal_size():
     fake_terminal = os.terminal_size([80, 24])
     with mock.patch(
-        "snapcraft.cli.echo.shutil.get_terminal_size", return_value=fake_terminal
+        "snapcraft_legacy.cli.echo.shutil.get_terminal_size", return_value=fake_terminal
     ) as mock_terminal_size:
         yield mock_terminal_size
 
@@ -63,13 +63,13 @@ class EchoTestCase(unit.TestCase):
 
         self.assertEqual(result, True)
 
-    @mock.patch("snapcraft.cli.echo.is_tty_connected", return_value=False)
+    @mock.patch("snapcraft_legacy.cli.echo.is_tty_connected", return_value=False)
     def test_echo_confirm_is_not_tty(self, tty_mock):
         echo.confirm("message")
 
         self.click_confirm.mock.assert_not_called()
 
-    @mock.patch("snapcraft.cli.echo.is_tty_connected", return_value=True)
+    @mock.patch("snapcraft_legacy.cli.echo.is_tty_connected", return_value=True)
     def test_echo_confirm_is_tty(self, tty_mock):
         echo.confirm("message")
 
@@ -82,7 +82,7 @@ class EchoTestCase(unit.TestCase):
             err=False,
         )
 
-    @mock.patch("snapcraft.cli.echo.is_tty_connected", return_value=True)
+    @mock.patch("snapcraft_legacy.cli.echo.is_tty_connected", return_value=True)
     def test_echo_confirm_default(self, tty_mock):
         echo.confirm("message", default="the new default")
 
@@ -95,13 +95,13 @@ class EchoTestCase(unit.TestCase):
             err=False,
         )
 
-    @mock.patch("snapcraft.cli.echo.is_tty_connected", return_value=False)
+    @mock.patch("snapcraft_legacy.cli.echo.is_tty_connected", return_value=False)
     def test_echo_prompt_is_not_tty(self, tty_mock):
         echo.prompt("message")
 
         self.click_prompt.mock.assert_not_called()
 
-    @mock.patch("snapcraft.cli.echo.is_tty_connected", return_value=True)
+    @mock.patch("snapcraft_legacy.cli.echo.is_tty_connected", return_value=True)
     def test_echo_prompt_is_tty(self, tty_mock):
         echo.prompt("message")
 
@@ -117,7 +117,7 @@ class EchoTestCase(unit.TestCase):
             err=False,
         )
 
-    @mock.patch("snapcraft.cli.echo.is_tty_connected", return_value=True)
+    @mock.patch("snapcraft_legacy.cli.echo.is_tty_connected", return_value=True)
     def test_echo_prompt_default(self, tty_mock):
         echo.prompt("message", default="the new default")
 

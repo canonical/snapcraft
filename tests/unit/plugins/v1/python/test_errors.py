@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from snapcraft.plugins.v1._python import errors
+from snapcraft_legacy.plugins.v1._python import errors
 
 
 class TestErrorFormatting:

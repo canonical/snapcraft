@@ -20,10 +20,12 @@ from unittest import mock
 
 from testscenarios import multiply_scenarios
 
-from snapcraft import project
-from snapcraft.internal import repo as snapcraft_repo
-from snapcraft.internal.project_loader.grammar_processing import PartGrammarProcessor
-from snapcraft.internal.project_loader.grammar_processing import (
+from snapcraft_legacy import project
+from snapcraft_legacy.internal import repo as snapcraft_repo
+from snapcraft_legacy.internal.project_loader.grammar_processing import (
+    PartGrammarProcessor,
+)
+from snapcraft_legacy.internal.project_loader.grammar_processing import (
     _part_grammar_processor as processor,
 )
 

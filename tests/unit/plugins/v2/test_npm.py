@@ -20,7 +20,7 @@ import fixtures
 from testtools import TestCase
 from testtools.matchers import Equals
 
-from snapcraft.plugins.v2.npm import NpmPlugin
+from snapcraft_legacy.plugins.v2.npm import NpmPlugin
 
 
 class NpmPluginTest(TestCase):

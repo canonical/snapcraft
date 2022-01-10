@@ -19,7 +19,7 @@ from typing import List
 import pytest
 from click.testing import CliRunner
 
-from snapcraft.cli._runner import run
+from snapcraft_legacy.cli._runner import run
 
 
 @pytest.fixture

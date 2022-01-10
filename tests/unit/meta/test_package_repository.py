@@ -17,8 +17,8 @@
 
 import pytest
 
-from snapcraft.internal.meta import errors
-from snapcraft.internal.meta.package_repository import (
+from snapcraft_legacy.internal.meta import errors
+from snapcraft_legacy.internal.meta.package_repository import (
     PackageRepository,
     PackageRepositoryApt,
     PackageRepositoryAptPpa,

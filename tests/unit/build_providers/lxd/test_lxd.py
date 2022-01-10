@@ -22,10 +22,10 @@ from unittest import mock
 
 from testtools.matchers import Equals, FileContains, FileExists
 
-from snapcraft.internal.build_providers import _base_provider, errors
-from snapcraft.internal.build_providers._lxd import LXD
-from snapcraft.internal.errors import SnapcraftEnvironmentError
-from snapcraft.internal.repo.errors import SnapdConnectionError
+from snapcraft_legacy.internal.build_providers import _base_provider, errors
+from snapcraft_legacy.internal.build_providers._lxd import LXD
+from snapcraft_legacy.internal.errors import SnapcraftEnvironmentError
+from snapcraft_legacy.internal.repo.errors import SnapdConnectionError
 from tests.unit.build_providers import BaseProviderBaseTest
 
 if sys.platform == "linux":
@@ -173,7 +173,7 @@ class LXDBaseTest(BaseProviderBaseTest):
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch(
-            "snapcraft.internal.build_providers._base_provider.Provider.clean_project",
+            "snapcraft_legacy.internal.build_providers._base_provider.Provider.clean_project",
             return_value=True,
         )
 
@@ -483,7 +483,8 @@ class EnsureLXDTest(LXDBaseTest):
 
         # Thou shall not fail
         with mock.patch(
-            "snapcraft.internal.repo.Repo.is_package_installed", return_value=False
+            "snapcraft_legacy.internal.repo.Repo.is_package_installed",
+            return_value=False,
         ):
             LXD.ensure_provider()
 
@@ -494,7 +495,8 @@ class EnsureLXDTest(LXDBaseTest):
 
         # Thou shall not fail
         with mock.patch(
-            "snapcraft.internal.repo.Repo.is_package_installed", return_value=True
+            "snapcraft_legacy.internal.repo.Repo.is_package_installed",
+            return_value=True,
         ):
             raised = self.assertRaises(SnapcraftEnvironmentError, LXD.ensure_provider)
 
@@ -519,7 +521,7 @@ class EnsureLXDTest(LXDBaseTest):
 
     def test_snap_support_missing(self):
         with mock.patch(
-            "snapcraft.internal.repo.snaps.SnapPackage.is_snap_installed",
+            "snapcraft_legacy.internal.repo.snaps.SnapPackage.is_snap_installed",
             side_effect=SnapdConnectionError(snap_name="lxd", url="fake"),
         ):
             raised = self.assertRaises(errors.ProviderNotFound, LXD.ensure_provider)

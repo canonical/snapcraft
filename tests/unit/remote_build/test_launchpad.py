@@ -20,10 +20,10 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Contains, Equals
 
-import snapcraft
-from snapcraft.internal.remote_build import LaunchpadClient, errors
-from snapcraft.internal.sources._git import Git
-from snapcraft.internal.sources.errors import SnapcraftPullError
+import snapcraft_legacy
+from snapcraft_legacy.internal.remote_build import LaunchpadClient, errors
+from snapcraft_legacy.internal.sources._git import Git
+from snapcraft_legacy.internal.sources.errors import SnapcraftPullError
 from tests import unit
 
 from . import TestDir
@@ -217,7 +217,7 @@ class LaunchpadTestCase(unit.TestCase):
     def test_login(self):
         self.assertThat(self.lpc.user, Equals("user"))
         self.fake_login_with.mock.assert_called_with(
-            "snapcraft remote-build {}".format(snapcraft.__version__),
+            "snapcraft remote-build {}".format(snapcraft_legacy.__version__),
             "production",
             mock.ANY,
             credentials_file=mock.ANY,
@@ -322,7 +322,7 @@ class LaunchpadTestCase(unit.TestCase):
             ),
         )
 
-    @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
+    @mock.patch("snapcraft_legacy.internal.remote_build.LaunchpadClient._download_file")
     def test_monitor_build(self, mock_download_file):
         open("test_i386.txt", "w").close()
         open("test_i386.1.txt", "w").close()
@@ -356,7 +356,7 @@ class LaunchpadTestCase(unit.TestCase):
             ),
         )
 
-    @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
+    @mock.patch("snapcraft_legacy.internal.remote_build.LaunchpadClient._download_file")
     @mock.patch(
         "tests.unit.remote_build.test_launchpad.BuildImpl.getFileUrls", return_value=[]
     )
@@ -384,7 +384,7 @@ class LaunchpadTestCase(unit.TestCase):
             ),
         )
 
-    @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
+    @mock.patch("snapcraft_legacy.internal.remote_build.LaunchpadClient._download_file")
     @mock.patch("time.time", return_value=500)
     def test_monitor_build_error_timeout(self, mock_time, mock_rb):
         self.lpc.deadline = 499
@@ -423,7 +423,7 @@ class LaunchpadTestCase(unit.TestCase):
             """
         )
         snapcraft_yaml_file_path = self.make_snapcraft_yaml(yaml)
-        project = snapcraft.project.Project(
+        project = snapcraft_legacy.project.Project(
             snapcraft_yaml_file_path=snapcraft_yaml_file_path
         )
         return project

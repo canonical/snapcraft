@@ -17,8 +17,8 @@
 import os
 import textwrap
 
-from snapcraft.internal import lifecycle, states, steps
-from snapcraft.internal.lifecycle._status_cache import StatusCache
+from snapcraft_legacy.internal import lifecycle, states, steps
+from snapcraft_legacy.internal.lifecycle._status_cache import StatusCache
 
 from . import LifecycleTestBase
 

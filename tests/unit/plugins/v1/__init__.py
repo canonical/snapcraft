@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.internal.meta.snap import Snap
-from snapcraft.project import Project
+from snapcraft_legacy.internal.meta.snap import Snap
+from snapcraft_legacy.project import Project
 from tests import unit
 
 

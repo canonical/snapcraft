@@ -23,7 +23,7 @@ import fixtures
 import pytest
 from testtools.matchers import Contains, Equals, HasLength
 
-from snapcraft.plugins.v1._python import _pip, errors
+from snapcraft_legacy.plugins.v1._python import _pip, errors
 
 from ._basesuite import PythonBaseTestCase
 
@@ -32,11 +32,11 @@ class PipRunBaseTestCase(PythonBaseTestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch("snapcraft.internal.common.run_output")
+        patcher = mock.patch("snapcraft_legacy.internal.common.run_output")
         self.mock_run_output = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("snapcraft.internal.common.run")
+        patcher = mock.patch("snapcraft_legacy.internal.common.run")
         self.mock_run = patcher.start()
         self.addCleanup(patcher.stop)
 

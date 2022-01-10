@@ -25,19 +25,19 @@ import fixtures
 import xdg
 from testtools.matchers import Equals, FileContains
 
-import snapcraft.cli.echo
-import snapcraft.internal.errors
-from snapcraft.cli._errors import (
+import snapcraft_legacy.cli.echo
+import snapcraft_legacy.internal.errors
+from snapcraft_legacy.cli._errors import (
     _get_exception_exit_code,
     _is_reportable_error,
     _print_exception_message,
     exception_handler,
 )
-from snapcraft.internal.build_providers.errors import ProviderExecError
+from snapcraft_legacy.internal.build_providers.errors import ProviderExecError
 from tests import fixture_setup, unit
 
 
-class SnapcraftTError(snapcraft.internal.errors.SnapcraftError):
+class SnapcraftTError(snapcraft_legacy.internal.errors.SnapcraftError):
 
     fmt = "{message}"
 
@@ -48,7 +48,7 @@ class SnapcraftTError(snapcraft.internal.errors.SnapcraftError):
         return 123
 
 
-class SnapcraftTException(snapcraft.internal.errors.SnapcraftException):
+class SnapcraftTException(snapcraft_legacy.internal.errors.SnapcraftException):
     def __init__(self):
         self._brief = ""
         self._resolution = ""
@@ -80,7 +80,7 @@ class TestSnapcraftExceptionHandling(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch("snapcraft.cli._errors.echo.error")
+        patcher = mock.patch("snapcraft_legacy.cli._errors.echo.error")
         self.error_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -146,7 +146,11 @@ https://docs.snapcraft.io/the-snapcraft-format/8337"""
     def test_snapcraft_exception_reportable(self):
         exception = SnapcraftTException()
         exception._brief = "something's strange, in the neighborhood"
-        exc_info = (snapcraft.internal.errors.SnapcraftException, exception, None)
+        exc_info = (
+            snapcraft_legacy.internal.errors.SnapcraftException,
+            exception,
+            None,
+        )
 
         # Test default (is false).
         self.assertFalse(_is_reportable_error(exc_info))
@@ -192,7 +196,7 @@ class ErrorsBaseTestCase(unit.TestCase):
         self.print_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("snapcraft.cli._errors.echo.error")
+        patcher = mock.patch("snapcraft_legacy.cli._errors.echo.error")
         self.error_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -241,12 +245,12 @@ class ErrorsTestCase(ErrorsBaseTestCase):
     def setUp(self):
         super().setUp()
 
-    @mock.patch.object(snapcraft.cli._errors, "RavenClient")
-    @mock.patch("snapcraft.internal.common.is_snap", return_value=False)
+    @mock.patch.object(snapcraft_legacy.cli._errors, "RavenClient")
+    @mock.patch("snapcraft_legacy.internal.common.is_snap", return_value=False)
     def test_handler_no_raven_traceback_non_snapcraft_exceptions_debug(
         self, is_snap_mock, raven_client_mock
     ):
-        snapcraft.cli._errors.RavenClient = None
+        snapcraft_legacy.cli._errors.RavenClient = None
         try:
             self.call_handler(RuntimeError("not a SnapcraftError"), True)
         except Exception:
@@ -318,13 +322,13 @@ class ProviderErrorTest(ErrorsBaseTestCase):
         self.assertThat(self.print_exception_mock.call_count, Equals(1))
 
     @mock.patch("os.path.isfile", return_value=False)
-    @mock.patch.object(snapcraft.cli._errors, "RavenClient")
+    @mock.patch.object(snapcraft_legacy.cli._errors, "RavenClient")
     def test_provider_error_inner(self, isfile_function, raven_client_mock):
         # Error raised inside the build provider
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "managed-host")
         )
-        snapcraft.cli._errors.RavenClient = "something"
+        snapcraft_legacy.cli._errors.RavenClient = "something"
         self._raise_other_error()
         self.move_mock.assert_not_called()
         self.assertThat(self.print_exception_mock.call_count, Equals(2))
@@ -347,15 +351,15 @@ class SendToSentryBaseTest(ErrorsBaseTestCase):
         except ImportError:
             self.skipTest("raven needs to be installed for this test.")
 
-        patcher = mock.patch("snapcraft.cli.echo.prompt")
+        patcher = mock.patch("snapcraft_legacy.cli.echo.prompt")
         self.prompt_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("snapcraft.cli._errors.RequestsHTTPTransport")
+        patcher = mock.patch("snapcraft_legacy.cli._errors.RequestsHTTPTransport")
         self.raven_request_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("snapcraft.cli._errors.RavenClient")
+        patcher = mock.patch("snapcraft_legacy.cli._errors.RavenClient")
         self.raven_client_mock = patcher.start()
         self.addCleanup(patcher.stop)
 

@@ -16,7 +16,7 @@
 
 import pytest
 
-from snapcraft.internal.repo import ua_manager
+from snapcraft_legacy.internal.repo import ua_manager
 
 
 def test_ua_manager(fake_process):

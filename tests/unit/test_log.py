@@ -18,7 +18,7 @@ import logging
 
 from testtools.matchers import Contains, Equals, Not
 
-from snapcraft.internal import log
+from snapcraft_legacy.internal import log
 from tests import fixture_setup, unit
 
 

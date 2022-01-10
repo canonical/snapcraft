@@ -16,7 +16,7 @@
 
 from testtools.matchers import Equals
 
-from snapcraft.plugins.v1.nil import NilPlugin
+from snapcraft_legacy.plugins.v1.nil import NilPlugin
 from tests import unit
 
 

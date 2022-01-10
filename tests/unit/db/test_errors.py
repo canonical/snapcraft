@@ -16,7 +16,7 @@
 
 import pathlib
 
-from snapcraft.internal.db import errors
+from snapcraft_legacy.internal.db import errors
 
 
 def test_SnapcraftDatastoreVersionUnsupported():

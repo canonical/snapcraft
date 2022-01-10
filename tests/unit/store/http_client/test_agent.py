@@ -19,9 +19,9 @@ import os
 import fixtures
 from testtools.matchers import Equals
 
-from snapcraft import ProjectOptions
-from snapcraft import __version__ as snapcraft_version
-from snapcraft.storeapi.http_clients import agent
+from snapcraft_legacy import ProjectOptions
+from snapcraft_legacy import __version__ as snapcraft_version
+from snapcraft_legacy.storeapi.http_clients import agent
 from tests import unit
 from tests.fixture_setup.os_release import FakeOsRelease
 

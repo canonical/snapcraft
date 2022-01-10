@@ -20,7 +20,7 @@ from unittest.mock import Mock
 import pytest
 import tinydb
 
-from snapcraft.internal.db import migration
+from snapcraft_legacy.internal.db import migration
 
 
 @pytest.fixture

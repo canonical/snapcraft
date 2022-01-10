@@ -18,10 +18,10 @@ import fixtures
 from testtools import TestCase
 from testtools.matchers import Equals
 
-from snapcraft.internal import lifecycle, project_loader, states, steps
-from snapcraft.project import Project
-from snapcraft.storeapi.errors import SnapNotFoundError
-from snapcraft.storeapi.info import SnapInfo
+from snapcraft_legacy.internal import lifecycle, project_loader, states, steps
+from snapcraft_legacy.project import Project
+from snapcraft_legacy.storeapi.errors import SnapNotFoundError
+from snapcraft_legacy.storeapi.info import SnapInfo
 from tests import fixture_setup
 
 
@@ -54,11 +54,13 @@ class TestGlobalState(TestCase):
         )
 
         self.useFixture(
-            fixtures.MockPatch("snapcraft.internal.lifecycle._runner._Executor.run")
+            fixtures.MockPatch(
+                "snapcraft_legacy.internal.lifecycle._runner._Executor.run"
+            )
         )
 
         self.useFixture(
-            fixtures.MockPatch("snapcraft.internal.repo.snaps.install_snaps")
+            fixtures.MockPatch("snapcraft_legacy.internal.repo.snaps.install_snaps")
         )
 
         # Avoid unnecessary calls to info.
@@ -100,7 +102,7 @@ class TestGlobalState(TestCase):
             "snap-id": "CSO04Jhav2yK0uz97cr0ipQRyqg0qQL6",
         }
         self.fake_storeapi_get_info = fixtures.MockPatch(
-            "snapcraft.storeapi._snap_api.SnapAPI.get_info",
+            "snapcraft_legacy.storeapi._snap_api.SnapAPI.get_info",
             return_value=SnapInfo(info),
         )
         self.useFixture(self.fake_storeapi_get_info)

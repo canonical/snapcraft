@@ -18,8 +18,8 @@ from unittest.mock import MagicMock, call, patch
 
 from testtools.matchers import Equals
 
-from snapcraft import file_utils
-from snapcraft.internal import errors, pluginhandler, steps
+from snapcraft_legacy import file_utils
+from snapcraft_legacy.internal import errors, pluginhandler, steps
 from tests.unit import TestCase, load_part
 
 

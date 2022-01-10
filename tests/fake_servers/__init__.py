@@ -26,7 +26,7 @@ import pymacaroons
 
 # we do not want snapcraft imports for the integration tests
 try:
-    from snapcraft import yaml_utils
+    from snapcraft_legacy import yaml_utils
 except ImportError:
     import yaml as yaml_utils  # type: ignore
 

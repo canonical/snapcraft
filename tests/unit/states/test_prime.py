@@ -18,8 +18,8 @@ from unittest import mock
 
 from testtools.matchers import Equals
 
-import snapcraft.internal
-from snapcraft import yaml_utils
+import snapcraft_legacy.internal
+from snapcraft_legacy import yaml_utils
 from tests import unit
 
 from .conftest import Project
@@ -38,7 +38,7 @@ class PrimeStateBaseTestCase(unit.TestCase):
             "prime": ["qux"],
         }
 
-        self.state = snapcraft.internal.states.PrimeState(
+        self.state = snapcraft_legacy.internal.states.PrimeState(
             self.files,
             self.directories,
             self.dependency_paths,
@@ -49,9 +49,9 @@ class PrimeStateBaseTestCase(unit.TestCase):
 
 class PrimeStateTestCase(PrimeStateBaseTestCase):
     @mock.patch.object(
-        snapcraft.internal.states.PrimeState,
+        snapcraft_legacy.internal.states.PrimeState,
         "__init__",
-        wraps=snapcraft.internal.states.PrimeState.__init__,
+        wraps=snapcraft_legacy.internal.states.PrimeState.__init__,
     )
     def test_yaml_conversion(self, init_spy):
         state_string = yaml_utils.dump(self.state)
@@ -67,7 +67,7 @@ class PrimeStateTestCase(PrimeStateBaseTestCase):
         init_spy.assert_not_called()
 
     def test_comparison(self):
-        other = snapcraft.internal.states.PrimeState(
+        other = snapcraft_legacy.internal.states.PrimeState(
             self.files,
             self.directories,
             self.dependency_paths,

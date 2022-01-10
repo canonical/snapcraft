@@ -23,7 +23,7 @@ import fixtures
 from progressbar import AnimatedMarker, ProgressBar
 from testtools import matchers as m
 
-from snapcraft.internal import deltas
+from snapcraft_legacy.internal import deltas
 from tests import fixture_setup, unit
 
 

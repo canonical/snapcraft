@@ -19,7 +19,7 @@ from unittest import mock
 from simplejson.scanner import JSONDecodeError
 from testtools.matchers import Contains, Equals, Not
 
-from snapcraft import storeapi
+from snapcraft_legacy import storeapi
 
 from . import FakeStoreCommandsBaseTestCase
 

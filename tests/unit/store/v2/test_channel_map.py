@@ -17,7 +17,7 @@
 import pytest
 from testtools.matchers import Equals, HasLength, Is, IsInstance
 
-from snapcraft.storeapi.v2 import channel_map
+from snapcraft_legacy.storeapi.v2 import channel_map
 from tests import unit
 
 

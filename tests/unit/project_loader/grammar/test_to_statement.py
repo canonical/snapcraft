@@ -20,9 +20,9 @@ import re
 
 import pytest
 
-import snapcraft
-import snapcraft.internal.project_loader.grammar._to as to
-from snapcraft.internal.project_loader import grammar
+import snapcraft_legacy
+import snapcraft_legacy.internal.project_loader.grammar._to as to
+from snapcraft_legacy.internal.project_loader import grammar
 
 
 def load_tests(loader, tests, ignore):
@@ -191,7 +191,9 @@ class TestToStatementGrammar:
         monkeypatch.setattr(platform, "machine", lambda: "x86_64")
         monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
         processor = grammar.GrammarProcessor(
-            None, snapcraft.ProjectOptions(target_deb_arch=target_arch), lambda x: True
+            None,
+            snapcraft_legacy.ProjectOptions(target_deb_arch=target_arch),
+            lambda x: True,
         )
         statement = to.ToStatement(to=to_arch, body=body, processor=processor)
 
@@ -271,7 +273,7 @@ class TestToStatementInvalidGrammar:
         with pytest.raises(grammar.errors.ToStatementSyntaxError) as error:
             processor = grammar.GrammarProcessor(
                 None,
-                snapcraft.ProjectOptions(target_deb_arch=target_arch),
+                snapcraft_legacy.ProjectOptions(target_deb_arch=target_arch),
                 lambda x: True,
             )
             statement = to.ToStatement(to=to_arch, body=body, processor=processor)
@@ -289,7 +291,7 @@ def test_else_fail(monkeypatch):
     monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
 
     processor = grammar.GrammarProcessor(
-        None, snapcraft.ProjectOptions(target_deb_arch="i386"), lambda x: True
+        None, snapcraft_legacy.ProjectOptions(target_deb_arch="i386"), lambda x: True
     )
     statement = to.ToStatement(to="to armhf", body=["foo"], processor=processor)
 

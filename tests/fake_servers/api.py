@@ -932,7 +932,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             )
         else:
             # POST/PUT
-            # snapcraft.storeapi._metadata._build_binary_request_data
+            # snapcraft_legacy.storeapi._metadata._build_binary_request_data
             if type(request.params["info"]) == bytes:
                 info = json.loads(request.params["info"].decode())
             else:

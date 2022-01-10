@@ -19,8 +19,8 @@ from textwrap import dedent
 
 from testtools.matchers import Equals
 
-from snapcraft.internal import project_loader
-from snapcraft.project import Project
+from snapcraft_legacy.internal import project_loader
+from snapcraft_legacy.project import Project
 from tests import fixture_setup
 
 from . import LoadPartBaseTest, ProjectLoaderBaseTest

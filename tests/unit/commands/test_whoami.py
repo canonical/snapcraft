@@ -18,8 +18,8 @@ from textwrap import dedent
 
 import pytest
 
-from snapcraft.storeapi.v2 import whoami
-from snapcraft.storeapi import StoreClient
+from snapcraft_legacy.storeapi.v2 import whoami
+from snapcraft_legacy.storeapi import StoreClient
 
 
 @pytest.fixture

@@ -19,7 +19,7 @@ import fixtures
 from testtools import TestCase
 from testtools.matchers import Contains
 
-from snapcraft.internal.lifecycle._runner import _install_build_snaps
+from snapcraft_legacy.internal.lifecycle._runner import _install_build_snaps
 
 
 class TestSnapInstall(TestCase):
@@ -29,7 +29,7 @@ class TestSnapInstall(TestCase):
         self.fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(self.fake_logger)
 
-    @mock.patch("snapcraft.repo.snaps.install_snaps")
+    @mock.patch("snapcraft_legacy.repo.snaps.install_snaps")
     def test_install(self, mock_install_build_snaps):
         _install_build_snaps({"foo/latest/stable", "bar/default/edge"}, set())
 
@@ -37,7 +37,7 @@ class TestSnapInstall(TestCase):
             {"foo/latest/stable", "bar/default/edge"}
         )
 
-    @mock.patch("snapcraft.repo.snaps.install_snaps")
+    @mock.patch("snapcraft_legacy.repo.snaps.install_snaps")
     def test_install_with_content_snap(self, mock_install_build_snaps):
         _install_build_snaps({"foo/latest/stable"}, {"content1/latest/stable"})
 
@@ -45,8 +45,10 @@ class TestSnapInstall(TestCase):
             [mock.call({"foo/latest/stable"}), mock.call(["content1/latest/stable"])]
         )
 
-    @mock.patch("snapcraft.internal.common.is_process_container", return_value=True)
-    @mock.patch("snapcraft.repo.snaps.install_snaps")
+    @mock.patch(
+        "snapcraft_legacy.internal.common.is_process_container", return_value=True
+    )
+    @mock.patch("snapcraft_legacy.repo.snaps.install_snaps")
     def test_install_on_docker(self, mock_install_build_snaps, mock_docker_instance):
         _install_build_snaps({"foo/latest/stable", "bar/default/edge"}, set())
 
@@ -59,8 +61,10 @@ class TestSnapInstall(TestCase):
             ),
         )
 
-    @mock.patch("snapcraft.internal.common.is_process_container", return_value=True)
-    @mock.patch("snapcraft.repo.snaps.install_snaps")
+    @mock.patch(
+        "snapcraft_legacy.internal.common.is_process_container", return_value=True
+    )
+    @mock.patch("snapcraft_legacy.repo.snaps.install_snaps")
     def test_install_with_content_snap_on_docker(
         self, mock_install_build_snaps, mock_docker_instance
     ):

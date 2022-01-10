@@ -22,8 +22,8 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Equals
 
-from snapcraft.internal import sources
-from snapcraft.internal.sources import errors
+from snapcraft_legacy.internal import sources
+from snapcraft_legacy.internal.sources import errors
 from tests import unit
 from tests.subprocess_utils import call, call_with_output
 
@@ -37,7 +37,7 @@ class TestGit(unit.sources.SourceTestCase):  # type: ignore
     def setUp(self):
 
         super().setUp()
-        patcher = mock.patch("snapcraft.sources.Git._get_source_details")
+        patcher = mock.patch("snapcraft_legacy.sources.Git._get_source_details")
         self.mock_get_source_details = patcher.start()
         self.mock_get_source_details.return_value = ""
         self.addCleanup(patcher.stop)

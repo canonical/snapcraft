@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.internal.project_loader._extensions.kde_neon import ExtensionImpl
+from snapcraft_legacy.internal.project_loader._extensions.kde_neon import ExtensionImpl
 
 
 def test_extension_core18():

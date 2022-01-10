@@ -18,8 +18,8 @@ from unittest import mock
 
 from testtools.matchers import Equals
 
-import snapcraft.internal
-from snapcraft import yaml_utils
+import snapcraft_legacy.internal
+from snapcraft_legacy import yaml_utils
 from tests import unit
 
 from .conftest import Project
@@ -38,16 +38,16 @@ class StageStateBaseTestCase(unit.TestCase):
             "stage": ["baz"],
         }
 
-        self.state = snapcraft.internal.states.StageState(
+        self.state = snapcraft_legacy.internal.states.StageState(
             self.files, self.directories, self.part_properties, self.project
         )
 
 
 class StateStageTestCase(StageStateBaseTestCase):
     @mock.patch.object(
-        snapcraft.internal.states.StageState,
+        snapcraft_legacy.internal.states.StageState,
         "__init__",
-        wraps=snapcraft.internal.states.StageState.__init__,
+        wraps=snapcraft_legacy.internal.states.StageState.__init__,
     )
     def test_yaml_conversion(self, init_spy):
         state_string = yaml_utils.dump(self.state)
@@ -63,7 +63,7 @@ class StateStageTestCase(StageStateBaseTestCase):
         init_spy.assert_not_called()
 
     def test_comparison(self):
-        other = snapcraft.internal.states.StageState(
+        other = snapcraft_legacy.internal.states.StageState(
             self.files, self.directories, self.part_properties, self.project
         )
 

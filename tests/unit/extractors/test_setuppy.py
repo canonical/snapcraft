@@ -19,7 +19,7 @@ from textwrap import dedent
 from testscenarios import multiply_scenarios
 from testtools.matchers import Equals
 
-from snapcraft.extractors import ExtractedMetadata, _errors, setuppy
+from snapcraft_legacy.extractors import ExtractedMetadata, _errors, setuppy
 from tests import unit
 
 

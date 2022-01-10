@@ -19,8 +19,8 @@ from unittest import mock
 
 from testtools.matchers import Equals, HasLength
 
-from snapcraft.internal import errors
-from snapcraft.plugins.v1 import make
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.plugins.v1 import make
 
 from . import PluginsV1BaseTestCase
 
@@ -217,8 +217,8 @@ class MakePluginTest(PluginsV1BaseTestCase):
         )
 
     @mock.patch.object(make.MakePlugin, "run")
-    @mock.patch("snapcraft.file_utils.link_or_copy_tree")
-    @mock.patch("snapcraft.file_utils.link_or_copy")
+    @mock.patch("snapcraft_legacy.file_utils.link_or_copy_tree")
+    @mock.patch("snapcraft_legacy.file_utils.link_or_copy")
     def test_build_artifacts(self, link_or_copy_mock, link_or_copy_tree_mock, run_mock):
         self.options.artifacts = ["dir_artifact", "file_artifact"]
         plugin = make.MakePlugin("test-part", self.options, self.project)

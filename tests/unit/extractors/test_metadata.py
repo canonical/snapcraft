@@ -16,7 +16,7 @@
 
 from testtools.matchers import Equals, Not
 
-from snapcraft.extractors._metadata import ExtractedMetadata
+from snapcraft_legacy.extractors._metadata import ExtractedMetadata
 from tests import unit
 
 

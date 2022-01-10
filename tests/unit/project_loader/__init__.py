@@ -16,8 +16,8 @@
 
 from unittest import mock
 
-from snapcraft.internal import project_loader
-from snapcraft.project import Project as _Project
+from snapcraft_legacy.internal import project_loader
+from snapcraft_legacy.project import Project as _Project
 from tests import unit
 
 
@@ -37,7 +37,7 @@ class LoadPartBaseTest(ProjectLoaderBaseTest):
         super().setUp()
 
         patcher = mock.patch(
-            "snapcraft.internal.project_loader._parts_config.PartsConfig.load_part"
+            "snapcraft_legacy.internal.project_loader._parts_config.PartsConfig.load_part"
         )
         self.mock_load_part = patcher.start()
         self.addCleanup(patcher.stop)

@@ -17,8 +17,8 @@
 import os
 import sys
 
-import snapcraft.plugins.v2._ros as _ros
-import snapcraft.plugins.v2.colcon as colcon
+import snapcraft_legacy.plugins.v2._ros as _ros
+import snapcraft_legacy.plugins.v2.colcon as colcon
 
 
 def test_schema():

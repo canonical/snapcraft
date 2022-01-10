@@ -19,8 +19,8 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Contains, Equals
 
-import snapcraft.internal.remote_build.errors as errors
-import snapcraft.project
+import snapcraft_legacy.internal.remote_build.errors as errors
+import snapcraft_legacy.project
 from tests import fixture_setup
 
 from . import CommandBaseTestCase
@@ -35,7 +35,9 @@ class RemoteBuildTests(CommandBaseTestCase):
         self.useFixture(self.snapcraft_yaml)
 
         self.mock_lc_init = self.useFixture(
-            fixtures.MockPatch("snapcraft.cli.remote.LaunchpadClient", autospec=True)
+            fixtures.MockPatch(
+                "snapcraft_legacy.cli.remote.LaunchpadClient", autospec=True
+            )
         ).mock
         self.mock_lc = self.mock_lc_init.return_value
         self.mock_lc_architectures = mock.PropertyMock(return_value=["i386"])
@@ -44,13 +46,13 @@ class RemoteBuildTests(CommandBaseTestCase):
 
         self.mock_project = self.useFixture(
             fixtures.MockPatchObject(
-                snapcraft.project.Project,
+                snapcraft_legacy.project.Project,
                 "_get_project_directory_hash",
                 return_value="fakehash123",
             )
         )
 
-    @mock.patch("snapcraft.cli.remote.echo.confirm")
+    @mock.patch("snapcraft_legacy.cli.remote.echo.confirm")
     def test_remote_build_prompts(self, mock_confirm):
         result = self.run_command(["remote-build"])
 
@@ -69,7 +71,7 @@ class RemoteBuildTests(CommandBaseTestCase):
             default=True,
         )
 
-    @mock.patch("snapcraft.cli.remote.echo.confirm")
+    @mock.patch("snapcraft_legacy.cli.remote.echo.confirm")
     def test_remote_build_with_accept_option_doesnt_prompt(self, mock_confirm):
         result = self.run_command(["remote-build", "--launchpad-accept-public-upload"])
 
@@ -79,7 +81,7 @@ class RemoteBuildTests(CommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         mock_confirm.assert_not_called()
 
-    @mock.patch("snapcraft.cli.remote.echo.confirm")
+    @mock.patch("snapcraft_legacy.cli.remote.echo.confirm")
     def test_remote_build_without_acceptance_raises(self, mock_confirm):
         mock_confirm.return_value = False
         self.assertRaises(
@@ -136,7 +138,7 @@ class RemoteBuildTests(CommandBaseTestCase):
         self.mock_lc.start_build.assert_not_called()
         self.mock_lc.cleanup.assert_not_called()
 
-    @mock.patch("snapcraft.cli.remote.echo")
+    @mock.patch("snapcraft_legacy.cli.remote.echo")
     def test_remote_build_sudo_errors(self, mock_echo):
         self.useFixture(fixtures.EnvironmentVariable("SUDO_USER", "testuser"))
         self.useFixture(fixtures.MockPatch("os.geteuid", return_value=0))
@@ -150,7 +152,7 @@ class RemoteBuildTests(CommandBaseTestCase):
             ]
         )
 
-    @mock.patch("snapcraft.cli.remote.echo")
+    @mock.patch("snapcraft_legacy.cli.remote.echo")
     def test_remote_build_recover_doesnt_prompt(self, mock_echo):
         result = self.run_command(["remote-build", "--recover"])
 
@@ -159,7 +161,7 @@ class RemoteBuildTests(CommandBaseTestCase):
         mock_echo.info.assert_called_with("No build found.")
         mock_echo.confirm.assert_not_called()
 
-    @mock.patch("snapcraft.cli.remote.echo")
+    @mock.patch("snapcraft_legacy.cli.remote.echo")
     def test_remote_build_status_doesnt_prompt(self, mock_echo):
         result = self.run_command(["remote-build", "--status"])
 
@@ -168,7 +170,7 @@ class RemoteBuildTests(CommandBaseTestCase):
         mock_echo.info.assert_called_with("No build found.")
         mock_echo.confirm.assert_not_called()
 
-    @mock.patch("snapcraft.cli.remote.echo")
+    @mock.patch("snapcraft_legacy.cli.remote.echo")
     def test_remote_build_recover_uses_calculated_hash(self, mock_echo):
         result = self.run_command(
             ["remote-build", "--launchpad-accept-public-upload", "--recover"]
@@ -181,7 +183,7 @@ class RemoteBuildTests(CommandBaseTestCase):
             build_id="snapcraft-test-snap-fakehash123",
         )
 
-    @mock.patch("snapcraft.cli.remote.echo")
+    @mock.patch("snapcraft_legacy.cli.remote.echo")
     def test_remote_build_recover_uses_build_id(self, mock_echo):
         result = self.run_command(
             [
@@ -200,7 +202,7 @@ class RemoteBuildTests(CommandBaseTestCase):
             build_id="snapcraft-test-snap-foo",
         )
 
-    @mock.patch("snapcraft.cli.remote.echo")
+    @mock.patch("snapcraft_legacy.cli.remote.echo")
     def test_remote_build_status_uses_calculated_hash(self, mock_echo):
         result = self.run_command(
             ["remote-build", "--launchpad-accept-public-upload", "--status"]
@@ -213,7 +215,7 @@ class RemoteBuildTests(CommandBaseTestCase):
             build_id="snapcraft-test-snap-fakehash123",
         )
 
-    @mock.patch("snapcraft.cli.remote.echo")
+    @mock.patch("snapcraft_legacy.cli.remote.echo")
     def test_remote_build_status_uses_build_id(self, mock_echo):
         result = self.run_command(
             [

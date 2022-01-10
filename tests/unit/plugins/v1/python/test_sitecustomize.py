@@ -19,7 +19,7 @@ from textwrap import dedent
 
 from testtools.matchers import Contains, FileContains
 
-from snapcraft.plugins.v1 import _python
+from snapcraft_legacy.plugins.v1 import _python
 
 from ._basesuite import PythonBaseTestCase
 

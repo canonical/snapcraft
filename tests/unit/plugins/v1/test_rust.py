@@ -25,9 +25,9 @@ import pytest
 import toml
 from testtools.matchers import Contains, Equals, FileExists, Not
 
-import snapcraft
-from snapcraft.internal import errors, meta
-from snapcraft.plugins.v1 import rust
+import snapcraft_legacy
+from snapcraft_legacy.internal import errors, meta
+from snapcraft_legacy.plugins.v1 import rust
 from tests import fixture_setup, unit
 
 from . import PluginsV1BaseTestCase
@@ -49,11 +49,11 @@ class RustPluginBaseTest(PluginsV1BaseTestCase):
 
         self.options = Options()
 
-        patcher = mock.patch("snapcraft.internal.common.run")
+        patcher = mock.patch("snapcraft_legacy.internal.common.run")
         self.run_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("snapcraft.internal.common.run_output")
+        patcher = mock.patch("snapcraft_legacy.internal.common.run_output")
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -150,7 +150,7 @@ class TestRustPluginCrossCompile:
         ("s390x", dict(deb_arch="s390x", target="s390x-unknown-linux-gnu")),
     ]
 
-    @mock.patch("snapcraft.internal.sources._script.Script.download")
+    @mock.patch("snapcraft_legacy.internal.sources._script.Script.download")
     def test_cross_compile(
         self,
         mock_download,
@@ -162,8 +162,10 @@ class TestRustPluginCrossCompile:
         deb_arch,
         target,
     ):
-        monkeypatch.setattr(snapcraft.project.Project, "is_cross_compiling", True)
-        project = snapcraft.project.Project(target_deb_arch=deb_arch)
+        monkeypatch.setattr(
+            snapcraft_legacy.project.Project, "is_cross_compiling", True
+        )
+        project = snapcraft_legacy.project.Project(target_deb_arch=deb_arch)
         project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
         plugin = rust.RustPlugin("test-part", options, project)
@@ -493,7 +495,7 @@ class RustPluginTest(RustPluginBaseTest):
             ]
         )
 
-    @mock.patch("snapcraft.ProjectOptions.deb_arch", "fantasy-arch")
+    @mock.patch("snapcraft_legacy.ProjectOptions.deb_arch", "fantasy-arch")
     def test_unsupported_target_arch_raises_exception(self):
         self.assertRaises(errors.SnapcraftEnvironmentError, self.plugin._get_target)
 

@@ -16,9 +16,9 @@
 
 from unittest import mock
 
-from snapcraft.internal import elf, pluginhandler
-from snapcraft.internal.project_loader import grammar_processing
-from snapcraft.project import Project, _schema
+from snapcraft_legacy.internal import elf, pluginhandler
+from snapcraft_legacy.internal.project_loader import grammar_processing
+from snapcraft_legacy.project import Project, _schema
 
 
 def load_part(

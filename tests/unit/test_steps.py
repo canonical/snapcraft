@@ -16,7 +16,7 @@
 
 import pytest
 
-from snapcraft.internal import steps
+from snapcraft_legacy.internal import steps
 
 
 def test_step_order():

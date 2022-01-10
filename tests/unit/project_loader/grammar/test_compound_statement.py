@@ -19,11 +19,11 @@ import re
 
 import pytest
 
-import snapcraft
-import snapcraft.internal.project_loader.grammar._compound as compound
-import snapcraft.internal.project_loader.grammar._on as on
-import snapcraft.internal.project_loader.grammar._to as to
-from snapcraft.internal.project_loader import grammar
+import snapcraft_legacy
+import snapcraft_legacy.internal.project_loader.grammar._compound as compound
+import snapcraft_legacy.internal.project_loader.grammar._on as on
+import snapcraft_legacy.internal.project_loader.grammar._to as to
+from snapcraft_legacy.internal.project_loader import grammar
 
 
 class TestCompoundStatementGrammar:
@@ -199,7 +199,9 @@ class TestCompoundStatementGrammar:
         monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
 
         processor = grammar.GrammarProcessor(
-            None, snapcraft.ProjectOptions(target_deb_arch="armhf"), lambda x: True
+            None,
+            snapcraft_legacy.ProjectOptions(target_deb_arch="armhf"),
+            lambda x: True,
         )
         statements = [
             on.OnStatement(on=on_arch, body=None, processor=processor),
@@ -250,7 +252,7 @@ class TestCompoundStatementInvalidGrammar:
         with pytest.raises(expected_exception) as error:
             processor = grammar.GrammarProcessor(
                 None,
-                snapcraft.ProjectOptions(target_deb_arch="armhf"),
+                snapcraft_legacy.ProjectOptions(target_deb_arch="armhf"),
                 lambda x: "invalid" not in x,
             )
             statements = [

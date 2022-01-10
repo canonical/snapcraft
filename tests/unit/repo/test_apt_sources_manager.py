@@ -23,17 +23,17 @@ from unittest.mock import call
 
 import pytest
 
-from snapcraft.internal.meta.package_repository import (
+from snapcraft_legacy.internal.meta.package_repository import (
     PackageRepositoryApt,
     PackageRepositoryAptPpa,
 )
-from snapcraft.internal.repo import apt_ppa, apt_sources_manager, errors
+from snapcraft_legacy.internal.repo import apt_ppa, apt_sources_manager, errors
 
 
 @pytest.fixture(autouse=True)
 def mock_apt_ppa_get_signing_key():
     with mock.patch(
-        "snapcraft.internal.repo.apt_ppa.get_launchpad_ppa_key_id",
+        "snapcraft_legacy.internal.repo.apt_ppa.get_launchpad_ppa_key_id",
         spec=apt_ppa.get_launchpad_ppa_key_id,
         return_value="FAKE-PPA-SIGNING-KEY",
     ) as m:
@@ -48,7 +48,9 @@ def mock_environ_copy():
 
 @pytest.fixture(autouse=True)
 def mock_host_arch():
-    with mock.patch("snapcraft.internal.repo.apt_sources_manager.ProjectOptions") as m:
+    with mock.patch(
+        "snapcraft_legacy.internal.repo.apt_sources_manager.ProjectOptions"
+    ) as m:
         m.return_value.deb_arch = "FAKE-HOST-ARCH"
         yield m
 
@@ -65,7 +67,7 @@ def mock_sudo_write():
         dst_path.write_bytes(content)
 
     with mock.patch(
-        "snapcraft.internal.repo.apt_sources_manager._sudo_write_file"
+        "snapcraft_legacy.internal.repo.apt_sources_manager._sudo_write_file"
     ) as m:
         m.side_effect = write_file
         yield m
@@ -74,7 +76,7 @@ def mock_sudo_write():
 @pytest.fixture(autouse=True)
 def mock_version_codename():
     with mock.patch(
-        "snapcraft.internal.os_release.OsRelease.version_codename",
+        "snapcraft_legacy.internal.os_release.OsRelease.version_codename",
         return_value="FAKE-CODENAME",
     ) as m:
         yield m

@@ -21,7 +21,7 @@ from unittest.mock import Mock
 import pytest
 import tinydb
 
-from snapcraft.internal.db import datastore, errors, migration
+from snapcraft_legacy.internal.db import datastore, errors, migration
 
 
 @pytest.fixture(autouse=True)

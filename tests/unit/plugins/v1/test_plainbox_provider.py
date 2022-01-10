@@ -19,8 +19,8 @@ from unittest import mock
 
 from testtools.matchers import Equals, HasLength
 
-from snapcraft.internal import errors
-from snapcraft.plugins.v1 import plainbox_provider
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.plugins.v1 import plainbox_provider
 from tests import fixture_setup, unit
 
 from . import PluginsV1BaseTestCase

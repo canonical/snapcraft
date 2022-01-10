@@ -21,9 +21,9 @@ from pathlib import Path
 
 from testtools.matchers import Equals
 
-from snapcraft import yaml_utils
-from snapcraft.internal.remote_build import WorkTree
-from snapcraft.project import Project
+from snapcraft_legacy import yaml_utils
+from snapcraft_legacy.internal.remote_build import WorkTree
+from snapcraft_legacy.project import Project
 from tests import fixture_setup, unit
 
 from . import TestDir

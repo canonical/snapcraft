@@ -21,12 +21,12 @@ from unittest import mock
 
 from testtools.matchers import DirExists, Equals, FileContains, FileExists, Not
 
-from snapcraft.internal import common, errors, sources
+from snapcraft_legacy.internal import common, errors, sources
 from tests import unit
 
 
 class TestLocal(unit.TestCase):
-    @mock.patch("snapcraft.internal.sources._local.glob.glob")
+    @mock.patch("snapcraft_legacy.internal.sources._local.glob.glob")
     def test_pull_does_not_change_snapcraft_files_list(self, mock_glob):
         # Regression test for https://bugs.launchpad.net/snapcraft/+bug/1614913
         # Verify that SNAPCRAFT_FILES was not modified by the pull when there

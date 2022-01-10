@@ -21,7 +21,7 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Equals
 
-from snapcraft.internal import sources
+from snapcraft_legacy.internal import sources
 from tests import unit
 
 
@@ -32,7 +32,7 @@ class TestBazaar(unit.sources.SourceTestCase):  # type: ignore
 
         # Mock _get_source_details() since not all tests have a
         # full repo checkout
-        patcher = mock.patch("snapcraft.sources.Bazaar._get_source_details")
+        patcher = mock.patch("snapcraft_legacy.sources.Bazaar._get_source_details")
         self.mock_get_source_details = patcher.start()
         self.mock_get_source_details.return_value = ""
         self.addCleanup(patcher.stop)

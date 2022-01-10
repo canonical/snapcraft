@@ -19,7 +19,7 @@ from unittest import mock
 
 from testtools.matchers import Equals
 
-from snapcraft.internal import sources
+from snapcraft_legacy.internal import sources
 from tests import unit
 
 

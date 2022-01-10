@@ -18,7 +18,7 @@ import requests
 import urllib3
 from unittest import mock
 
-from snapcraft.storeapi.http_clients import errors
+from snapcraft_legacy.storeapi.http_clients import errors
 
 
 def _fake_error_response(status_code, reason):

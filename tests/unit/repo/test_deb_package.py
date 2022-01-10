@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.internal.repo.deb_package import DebPackage
+from snapcraft_legacy.internal.repo.deb_package import DebPackage
 
 
 def test_basic():

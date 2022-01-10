@@ -23,9 +23,9 @@ from testtools.matchers import Contains, Equals, FileExists, Not
 from xdg import BaseDirectory
 
 import tests
-from snapcraft import file_utils, internal, storeapi
-from snapcraft.internal import review_tools
-from snapcraft.storeapi.errors import (
+from snapcraft_legacy import file_utils, internal, storeapi
+from snapcraft_legacy.internal import review_tools
+from snapcraft_legacy.storeapi.errors import (
     StoreDeltaApplicationError,
     StoreUpDownError,
     StoreUploadError,
@@ -43,12 +43,12 @@ class UploadCommandBaseTestCase(FakeStoreCommandsBaseTestCase):
         )
 
         self.fake_review_tools_run = fixtures.MockPatch(
-            "snapcraft.internal.review_tools.run"
+            "snapcraft_legacy.internal.review_tools.run"
         )
         self.useFixture(self.fake_review_tools_run)
 
         self.fake_review_tools_is_available = fixtures.MockPatch(
-            "snapcraft.internal.review_tools.is_available", return_value=False
+            "snapcraft_legacy.internal.review_tools.is_available", return_value=False
         )
         self.useFixture(self.fake_review_tools_is_available)
 
@@ -390,7 +390,7 @@ class UploadCommandDeltasTestCase(UploadCommandBaseTestCase):
     def test_upload_with_delta_generation_failure_falls_back(self):
         # Upload and ensure fallback is called
         with mock.patch(
-            "snapcraft._store._upload_delta",
+            "snapcraft_legacy._store._upload_delta",
             side_effect=StoreDeltaApplicationError("error"),
         ):
             result = self.run_command(["upload", self.snap_file])
@@ -477,7 +477,7 @@ class UploadCommandDeltasTestCase(UploadCommandBaseTestCase):
         ]
 
         # Upload and ensure fallback is called
-        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
+        with mock.patch("snapcraft_legacy.storeapi._status_tracker.StatusTracker"):
             result = self.run_command(["upload", self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
         self.fake_store_upload.mock.assert_has_calls(

@@ -18,33 +18,35 @@ from unittest import mock
 
 import pytest
 
-from snapcraft import file_utils
-from snapcraft.internal import errors
-from snapcraft.internal.pluginhandler import PartPatcher
+from snapcraft_legacy import file_utils
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.internal.pluginhandler import PartPatcher
 from tests.unit import load_part
 
 
 @pytest.fixture
 def mock_elf_patcher():
-    """Return a mock for snapcraft.internal.elf.Patcher."""
-    patcher = mock.patch("snapcraft.internal.elf.Patcher", autospec=True)
+    """Return a mock for snapcraft_legacy.internal.elf.Patcher."""
+    patcher = mock.patch("snapcraft_legacy.internal.elf.Patcher", autospec=True)
     yield patcher.start()
     patcher.stop()
 
 
 @pytest.fixture
 def mock_partpatcher():
-    """Return a mock for snapcraft.internal.pluginhandler.PartPatcher."""
-    patcher = mock.patch("snapcraft.internal.pluginhandler.PartPatcher", autospec=True)
+    """Return a mock for snapcraft_legacy.internal.pluginhandler.PartPatcher."""
+    patcher = mock.patch(
+        "snapcraft_legacy.internal.pluginhandler.PartPatcher", autospec=True
+    )
     yield patcher.start()
     patcher.stop()
 
 
 @pytest.fixture(autouse=True)
 def mock_find_linker():
-    """Return a mock for snapcraft.internal.elf.find_linker."""
+    """Return a mock for snapcraft_legacy.internal.elf.find_linker."""
     patcher = mock.patch(
-        "snapcraft.internal.elf.find_linker",
+        "snapcraft_legacy.internal.elf.find_linker",
         autospec=True,
         return_value="/snap/test-snap/current/lib/x86_64-linux-gnu/ld-2.27.so",
     )

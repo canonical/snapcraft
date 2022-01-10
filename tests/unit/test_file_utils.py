@@ -25,8 +25,8 @@ import pytest
 import testtools
 from testtools.matchers import Equals
 
-from snapcraft import file_utils
-from snapcraft.internal import common, errors
+from snapcraft_legacy import file_utils
+from snapcraft_legacy.internal import common, errors
 from tests import fixture_setup, unit
 
 

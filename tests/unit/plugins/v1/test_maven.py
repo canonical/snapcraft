@@ -26,10 +26,10 @@ import fixtures
 import pytest
 from testtools.matchers import Equals, FileExists, HasLength
 
-from snapcraft.internal import errors
-from snapcraft.internal.meta.snap import Snap
-from snapcraft.plugins.v1 import maven
-from snapcraft.project import Project
+from snapcraft_legacy.internal import errors
+from snapcraft_legacy.internal.meta.snap import Snap
+from snapcraft_legacy.plugins.v1 import maven
+from snapcraft_legacy.project import Project
 from tests import unit
 
 from . import PluginsV1BaseTestCase
@@ -276,11 +276,11 @@ class TestBuildWithProxies(PluginsV1BaseTestCase):
 
         self.options = Options()
 
-        patcher = mock.patch("snapcraft.internal.common.run")
+        patcher = mock.patch("snapcraft_legacy.internal.common.run")
         self.run_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("snapcraft.sources.Tar")
+        patcher = mock.patch("snapcraft_legacy.sources.Tar")
         self.tar_mock = patcher.start()
         self.addCleanup(patcher.stop)
 

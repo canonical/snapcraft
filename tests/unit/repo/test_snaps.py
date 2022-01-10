@@ -19,7 +19,7 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Equals, FileContains, FileExists, Is
 
-from snapcraft.internal.repo import errors, snaps
+from snapcraft_legacy.internal.repo import errors, snaps
 from tests import unit
 
 
@@ -311,7 +311,8 @@ class SnapPackageLifecycleTest(unit.TestCase):
 
     def test_download_from_host(self):
         fake_get_assertion = fixtures.MockPatch(
-            "snapcraft.internal.repo.snaps.get_assertion", return_value=b"foo-assert"
+            "snapcraft_legacy.internal.repo.snaps.get_assertion",
+            return_value=b"foo-assert",
         )
         self.useFixture(fake_get_assertion)
 
@@ -350,7 +351,8 @@ class SnapPackageLifecycleTest(unit.TestCase):
 
     def test_download_from_host_dangerous(self):
         fake_get_assertion = fixtures.MockPatch(
-            "snapcraft.internal.repo.snaps.get_assertion", return_value=b"foo-assert"
+            "snapcraft_legacy.internal.repo.snaps.get_assertion",
+            return_value=b"foo-assert",
         )
         self.useFixture(fake_get_assertion)
         self.fake_snapd.snaps_result = [
@@ -658,7 +660,7 @@ class SnapdNotInstalledTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
         socket_path_patcher = mock.patch(
-            "snapcraft.internal.repo.snaps.get_snapd_socket_path_template"
+            "snapcraft_legacy.internal.repo.snaps.get_snapd_socket_path_template"
         )
         mock_socket_path = socket_path_patcher.start()
         mock_socket_path.return_value = "http+unix://nonexisting"

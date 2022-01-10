@@ -21,7 +21,7 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Equals
 
-from snapcraft.internal import sources
+from snapcraft_legacy.internal import sources
 from tests import unit
 
 
@@ -30,7 +30,7 @@ class TestSubversion(unit.sources.SourceTestCase):  # type: ignore
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch("snapcraft.sources.Subversion._get_source_details")
+        patcher = mock.patch("snapcraft_legacy.sources.Subversion._get_source_details")
         self.mock_get_source_details = patcher.start()
         self.mock_get_source_details.return_value = ""
         self.addCleanup(patcher.stop)

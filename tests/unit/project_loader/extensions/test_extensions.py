@@ -19,7 +19,10 @@ import textwrap
 
 from testscenarios import multiply_scenarios
 
-from snapcraft.internal.project_loader import find_extension, supported_extension_names
+from snapcraft_legacy.internal.project_loader import (
+    find_extension,
+    supported_extension_names,
+)
 
 from .. import ProjectLoaderBaseTest
 

@@ -18,8 +18,8 @@ from textwrap import dedent
 import fixtures
 from testtools.matchers import Contains, Equals
 
-import snapcraft.storeapi.errors
-from snapcraft import storeapi
+import snapcraft_legacy.storeapi.errors
+from snapcraft_legacy import storeapi
 
 from . import FakeStoreCommandsBaseTestCase
 
@@ -43,7 +43,7 @@ class CloseCommandTestCase(FakeStoreCommandsBaseTestCase):
         }
 
         raised = self.assertRaises(
-            snapcraft.storeapi.errors.StoreChannelClosingPermissionError,
+            snapcraft_legacy.storeapi.errors.StoreChannelClosingPermissionError,
             self.run_command,
             ["close", "foo", "beta"],
         )

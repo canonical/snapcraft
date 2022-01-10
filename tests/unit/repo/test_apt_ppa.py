@@ -21,13 +21,13 @@ from unittest.mock import call
 import launchpadlib
 import pytest
 
-from snapcraft.internal.repo import apt_ppa, errors
+from snapcraft_legacy.internal.repo import apt_ppa, errors
 
 
 @pytest.fixture
 def mock_launchpad(autouse=True):
     with mock.patch(
-        "snapcraft.internal.repo.apt_ppa.Launchpad",
+        "snapcraft_legacy.internal.repo.apt_ppa.Launchpad",
         spec=launchpadlib.launchpad.Launchpad,
     ) as m:
         m.login_anonymously.return_value.load.return_value.signing_key_fingerprint = (
