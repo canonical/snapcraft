@@ -67,7 +67,8 @@ def test_extension(extension_class):
         "layout": {
             "/usr/share/xml/iso-codes": {
                 "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
-            }
+            },
+            "/usr/share/libdrm": {"bind": "$SNAP/gnome-platform/usr/share/libdrm"},
         },
     }
 

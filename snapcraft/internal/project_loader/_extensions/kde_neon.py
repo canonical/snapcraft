@@ -17,7 +17,7 @@
 # Import types and tell flake8 to ignore the "unused" List.
 
 from collections import namedtuple
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 from ._extension import Extension
 
@@ -35,7 +35,7 @@ _Info = dict(
         cmake_args="-DCMAKE_FIND_ROOT_PATH=/snap/kde-frameworks-5-qt-5-15-3-core20-sdk/current",
         content="kde-frameworks-5-qt-5-15-3-core20-all",
         provider="kde-frameworks-5-qt-5-15-3-core20",
-        build_snaps=["kde-frameworks-5-qt-5-15-3-core20-sdk/latest/candidate"],
+        build_snaps=["kde-frameworks-5-qt-5-15-3-core20-sdk/latest/stable"],
     ),
 )
 
@@ -63,11 +63,6 @@ class ExtensionImpl(Extension):
     - wayland (https://snapcraft.io/docs/wayland-interface)
     - x11 (https://snapcraft.io/docs/x11-interface)
     """
-
-    @staticmethod
-    def is_experimental(base: Optional[str]) -> bool:
-        # TODO: remove experimental once sdk is on stable
-        return base == "core20"
 
     @staticmethod
     def get_supported_bases() -> Tuple[str, ...]:
