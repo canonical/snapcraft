@@ -15,6 +15,8 @@ jobs:
       - name: Build snapcraft snap
         id: build-snapcraft
         uses: snapcore/action-build@v1.0.9
+        with:
+          snapcraft-channel: latest/edge
 
       - name: Upload snapcraft snap
         uses: actions/upload-artifact@v2
