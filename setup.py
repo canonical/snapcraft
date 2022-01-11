@@ -141,7 +141,10 @@ setup(
     classifiers=classifiers,
     scripts=scripts,
     entry_points=dict(
-        console_scripts=["snapcraft = snapcraft_legacy.cli.__main__:run"]
+        console_scripts=[
+            "snapcraft_legacy = snapcraft_legacy.cli.__main__:run",
+            "snapcraft = snapcraft.cli:run",
+        ]
     ),
     data_files=(
         recursive_data_files("schema", "share/snapcraft")
