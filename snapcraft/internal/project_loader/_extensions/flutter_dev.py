@@ -22,5 +22,5 @@ from ._flutter_meta import FlutterMetaExtension
 
 class ExtensionImpl(metaclass=FlutterMetaExtension):
     channel = "dev"
-    supported_bases = ("core18",)
+    supported_bases = ("core18", "core20")
     supported_confinement = ("strict", "devmode")

@@ -19,7 +19,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from .. import errors
 
-_PLATFORM_SNAP = dict(core18="gnome-3-28-1804")
+_PLATFORM_SNAP = dict(core18="gnome-3-28-1804", core20="gnome-3-38-2004")
 _DOC_TEMPLATE = textwrap.dedent(
     """\
    This extension eases creation of snaps that use Flutter
@@ -36,7 +36,7 @@ _DOC_TEMPLATE = textwrap.dedent(
     - GTK3 Themes.
     - Common Icon Themes.
     - Common Sound Themes.
-    - The GNOME runtime libraries and utilities corresponding to 3.28.
+    - The GNOME runtime libraries and utilities corresponding to 3.28/3.38.
 
     For easier desktop integration, it also configures each application
     entry with these additional plugs:
@@ -99,6 +99,27 @@ class FlutterMetaExtension(type):
                     }
                 }
             )
+            self.parts = {
+                "gnome-extension": {
+                    "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
+                    "source-subdir": "gnome",
+                    "plugin": "make",
+                    "make-parameters": ["PLATFORM_PLUG=" + platform_snap],
+                    "build-packages": ["gcc", "libgtk-3-dev"],
+                },
+                "flutter-extension": {
+                    "plugin": "nil",
+                    "override-pull": textwrap.dedent(
+                        f"""\
+                        flutter channel {attrs["channel"]}
+                        flutter config --enable-linux-desktop
+                        flutter upgrade
+                        flutter doctor
+                        """
+                    ),
+                    "build-snaps": ["flutter/latest/stable"],
+                },
+            }
 
         x = super().__new__(
             cls,
@@ -156,27 +177,5 @@ class FlutterMetaExtension(type):
         }
 
         x.part_snippet = dict()
-
-        x.parts = {
-            "gnome-3-28-extension": {
-                "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
-                "source-subdir": "gnome",
-                "plugin": "make",
-                "make-parameters": ["PLATFORM_PLUG=gnome-3-28-1804"],
-                "build-packages": ["gcc", "libgtk-3-dev"],
-            },
-            "flutter-extension": {
-                "plugin": "nil",
-                "override-pull": textwrap.dedent(
-                    f"""\
-                    flutter channel {attrs["channel"]}
-                    flutter config --enable-linux-desktop
-                    flutter upgrade
-                    flutter doctor
-                    """
-                ),
-                "build-snaps": ["flutter/latest/stable"],
-            },
-        }
 
         return x
