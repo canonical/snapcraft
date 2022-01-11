@@ -103,6 +103,7 @@ install_requires = [
     "requests",
     "simplejson",
     "tabulate",
+    "toml",
     "tinydb",
     "typing-extensions",
 ]
