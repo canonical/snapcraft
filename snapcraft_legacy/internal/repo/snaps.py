@@ -303,8 +303,6 @@ def install_snaps(snaps_list: Union[Sequence[str], Set[str]]) -> List[str]:
 
         if not snap_pkg.installed:
             snap_pkg.install()
-        elif snap_pkg.get_current_channel() != snap_pkg.channel:
-            snap_pkg.refresh()
 
         snaps_installed.append(
             "{}={}".format(snap_pkg.name, snap_pkg.get_local_snap_info()["revision"])
