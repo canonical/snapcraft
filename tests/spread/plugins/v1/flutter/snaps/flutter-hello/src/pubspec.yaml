@@ -32,7 +32,7 @@ dependencies:
 
   url_launcher_fde:
     git:
-      url: git://github.com/google/flutter-desktop-embedding.git
+      url: https://github.com/google/flutter-desktop-embedding.git
       path: plugins/flutter_plugins/url_launcher_fde
       ref: b0794faf2c000576515aee56ca6bb5bee64cece4
 
