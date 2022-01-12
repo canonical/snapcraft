@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2021 Canonical Ltd
+# Copyright 2015-2022 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -59,19 +59,24 @@ else:
     scripts = []
 
 dev_requires = [
+    "black",
     "codespell",
     "coverage",
-    "flake8==3.7.9",
+    "flake8",
     "pyflakes==2.1.1",
     "fixtures",
     "isort",
     "mccabe",
-    "mypy==0.770",
+    "mypy",
     "testscenarios",
     "pexpect",
     "pip",
-    "pycodestyle==2.5.0",
+    "pycodestyle",
+    "pydocstyle",
     "pyftpdlib",
+    "pylint<2.12.0",
+    "pylint-fixme-info",
+    "pylint-pytest",
     "pyramid",
     "pytest",
     "pytest-cov",
