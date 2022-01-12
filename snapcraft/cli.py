@@ -16,11 +16,9 @@
 
 """Command-line application entry point."""
 
-from typing import Optional, Sequence
-
 from snapcraft_legacy.cli import legacy
 
 
-def run(argv: Optional[Sequence] = None):
+def run():
     """Run the CLI."""
     legacy.legacy_run()
