@@ -290,20 +290,13 @@ class _Executor:
     def _reprime(self, part, hint=""):
         self._rerun_step(step=steps.PRIME, part=part, progress="Re-priming", hint=hint)
 
-    def _handle_part_dependencies(
-        self, *, step: steps.Step, part: pluginhandler.PluginHandler
-    ) -> None:
-        # core20 uses Plugins V2 which does not require staging parts for pull
-        # like V1 Plugins do.
-        if self.project._get_build_base() == "core20" and step == steps.PULL:
-            return
-
+    def _prepare_step(self, *, step: steps.Step, part: pluginhandler.PluginHandler):
+        common.reset_env()
         all_dependencies = self.parts_config.get_dependencies(part.name)
 
         # Filter dependencies down to only those that need to run the
         # prerequisite step
         prerequisite_step = steps.get_dependency_prerequisite_step(step)
-
         dependencies = {
             p
             for p in all_dependencies
@@ -320,11 +313,6 @@ class _Executor:
                 )
             )
             self.run(prerequisite_step, dependency_names)
-
-    def _prepare_step(self, *, step: steps.Step, part: pluginhandler.PluginHandler):
-        common.reset_env()
-
-        self._handle_part_dependencies(step=step, part=part)
 
         # Run the preparation function for this step (if implemented)
         preparation_function = getattr(part, "prepare_{}".format(step.name), None)
