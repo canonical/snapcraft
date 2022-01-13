@@ -270,6 +270,37 @@ class TestGit(unit.sources.SourceTestCase):  # type: ignore
             ]
         )
 
+    def test_pull_with_recurse_submodules_default(self):
+        git = sources.Git("git://my-source", "source_dir")
+
+        git.pull()
+
+        self.mock_run.assert_called_once_with(
+            ["git", "clone", "--recursive", "git://my-source", "source_dir"]
+        )
+
+    def test_pull_with_recurse_submodules_true(self):
+        git = sources.Git(
+            "git://my-source", "source_dir", source_recurse_submodules=True
+        )
+
+        git.pull()
+
+        self.mock_run.assert_called_once_with(
+            ["git", "clone", "--recursive", "git://my-source", "source_dir"]
+        )
+
+    def test_pull_with_recurse_submodules_false(self):
+        git = sources.Git(
+            "git://my-source", "source_dir", source_recurse_submodules=False
+        )
+
+        git.pull()
+
+        self.mock_run.assert_called_once_with(
+            ["git", "clone", "git://my-source", "source_dir"]
+        )
+
     def test_pull_existing(self):
         self.mock_path_exists.return_value = True
 
@@ -424,6 +455,95 @@ class TestGit(unit.sources.SourceTestCase):  # type: ignore
                         "--recursive",
                         "--force",
                     ]
+                ),
+            ]
+        )
+
+    def test_pull_existing_with_recurse_submodule_default(self):
+        self.mock_path_exists.return_value = True
+
+        git = sources.Git("git://my-source", "source_dir")
+        git.pull()
+
+        self.mock_run.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        "source_dir",
+                        "fetch",
+                        "--prune",
+                        "--recurse-submodules=yes",
+                    ]
+                ),
+                mock.call(
+                    ["git", "-C", "source_dir", "reset", "--hard", "origin/master"]
+                ),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        "source_dir",
+                        "submodule",
+                        "update",
+                        "--recursive",
+                        "--force",
+                    ]
+                ),
+            ]
+        )
+
+    def test_pull_existing_with_recurse_submodule_true(self):
+        self.mock_path_exists.return_value = True
+
+        git = sources.Git(
+            "git://my-source", "source_dir", source_recurse_submodules=True
+        )
+        git.pull()
+
+        self.mock_run.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        "source_dir",
+                        "fetch",
+                        "--prune",
+                        "--recurse-submodules=yes",
+                    ]
+                ),
+                mock.call(
+                    ["git", "-C", "source_dir", "reset", "--hard", "origin/master"]
+                ),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        "source_dir",
+                        "submodule",
+                        "update",
+                        "--recursive",
+                        "--force",
+                    ]
+                ),
+            ]
+        )
+
+    def test_pull_existing_with_recurse_submodule_false(self):
+        self.mock_path_exists.return_value = True
+
+        git = sources.Git(
+            "git://my-source", "source_dir", source_recurse_submodules=False
+        )
+        git.pull()
+
+        self.mock_run.assert_has_calls(
+            [
+                mock.call(["git", "-C", "source_dir", "fetch", "--prune"]),
+                mock.call(
+                    ["git", "-C", "source_dir", "reset", "--hard", "origin/master"]
                 ),
             ]
         )

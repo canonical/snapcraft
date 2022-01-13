@@ -65,6 +65,12 @@ code for that part, and how to unpack it if necessary.
     When building, Snapcraft will set the working directory to be this
     subdirectory within the source.
 
+  - source-recurse-submodule: <boolean>
+
+    If true, snapcraft will recursively fetch submodules from the source tree.
+    If false, submodules are not fetched.
+    Default is true.
+
 Note that plugins might well define their own semantics for the 'source'
 keywords, because they handle specific build systems, and many languages
 have their own built-in packaging systems (think CPAN, PyPI, NPM). In those
@@ -147,6 +153,7 @@ __SOURCE_DEFAULTS = {
     "source-type": None,
     "source-branch": None,
     "source-subdir": None,
+    "source-recurse-submodules": None,
 }
 
 
@@ -168,6 +175,7 @@ def get(sourcedir, builddir, options):
         source_tag=getattr(options, "source_tag", None),
         source_commit=getattr(options, "source_commit", None),
         source_branch=getattr(options, "source_branch", None),
+        source_recurse_submodules=getattr(options, "source_recurse_submodules", None),
     )
 
     handler_class = get_source_handler(options.source, source_type=source_type)

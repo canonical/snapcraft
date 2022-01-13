@@ -110,6 +110,7 @@ class Git(Base):
         source_depth=None,
         silent=False,
         source_checksum=None,
+        source_recurse_submodules=True,
     ):
         super().__init__(
             source,
@@ -119,6 +120,7 @@ class Git(Base):
             source_branch,
             source_depth,
             source_checksum,
+            source_recurse_submodules,
             "git",
         )
         if source_tag and source_branch:
@@ -175,17 +177,17 @@ class Git(Base):
 
         reset_spec = refspec if refspec != "HEAD" else "origin/master"
 
-        self._run(
-            [
-                self.command,
-                "-C",
-                self.source_dir,
-                "fetch",
-                "--prune",
-                "--recurse-submodules=yes",
-            ],
-            **self._call_kwargs
-        )
+        command = [
+            self.command,
+            "-C",
+            self.source_dir,
+            "fetch",
+            "--prune",
+        ]
+
+        if self.source_recurse_submodules:
+            command.extend(["--recurse-submodules=yes"])
+        self._run(command, **self._call_kwargs)
 
         self._run(
             [self.command, "-C", self.source_dir, "reset", "--hard", reset_spec],
@@ -193,21 +195,24 @@ class Git(Base):
         )
 
         # Merge any updates for the submodules (if any).
-        self._run(
-            [
-                self.command,
-                "-C",
-                self.source_dir,
-                "submodule",
-                "update",
-                "--recursive",
-                "--force",
-            ],
-            **self._call_kwargs
-        )
+        if self.source_recurse_submodules:
+            self._run(
+                [
+                    self.command,
+                    "-C",
+                    self.source_dir,
+                    "submodule",
+                    "update",
+                    "--recursive",
+                    "--force",
+                ],
+                **self._call_kwargs
+            )
 
     def _clone_new(self):
-        command = [self.command, "clone", "--recursive"]
+        command = [self.command, "clone"]
+        if self.source_recurse_submodules:
+            command.extend(["--recursive"])
         if self.source_tag or self.source_branch:
             command.extend(["--branch", self.source_tag or self.source_branch])
         if self.source_depth:

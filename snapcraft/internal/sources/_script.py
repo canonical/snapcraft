@@ -30,6 +30,7 @@ class Script(FileBase):
         source_branch=None,
         source_depth=None,
         source_checksum=None,
+        source_recurse_submodules=None,
     ):
         super().__init__(
             source,
@@ -39,6 +40,7 @@ class Script(FileBase):
             source_branch,
             source_depth,
             source_checksum,
+            source_recurse_submodules,
         )
 
     def download(self, filepath: str = None) -> str:

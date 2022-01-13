@@ -983,6 +983,10 @@
                             "type": "integer",
                             "default": 0
                         },
+                        "source-recurse-submodules": {
+                            "type": "boolean",
+                            "default": true
+                        },
                         "source-subdir": {
                             "type": "string",
                             "default": ""

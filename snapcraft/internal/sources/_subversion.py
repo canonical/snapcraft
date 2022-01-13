@@ -32,6 +32,7 @@ class Subversion(Base):
         source_depth=None,
         source_checksum=None,
         silent=False,
+        source_recurse_submodules=None,
     ):
         super().__init__(
             source,
@@ -41,6 +42,7 @@ class Subversion(Base):
             source_branch,
             source_depth,
             source_checksum,
+            source_recurse_submodules,
             "svn",
         )
         if source_tag:
