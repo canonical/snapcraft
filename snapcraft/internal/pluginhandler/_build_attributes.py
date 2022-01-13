@@ -19,6 +19,9 @@ class BuildAttributes:
     def __init__(self, build_attributes):
         self._attributes = build_attributes
 
+    def core22_step_dependencies(self):
+        return "core22-step-dependencies" in self._attributes
+
     def enable_patchelf(self):
         return "enable-patchelf" in self._attributes
 

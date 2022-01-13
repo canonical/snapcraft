@@ -1,0 +1,20 @@
+name: core22-step-dependencies
+version: "1.0"
+summary: Quick snap to ensure only pull happens when deps are used
+description: |
+  Only pull should happen when using after and the core22-step-depdendencies
+  build-attributes entry on core20.
+
+base: core20
+grade: devel
+confinement: strict
+
+parts:
+  part1:
+    plugin: nil
+    override-build: |
+      touch $SNAPCRAFT_PART_INSTALL/part1
+  part2:
+    build-attributes: [core22-step-dependencies]
+    plugin: nil
+    after: [part1]
