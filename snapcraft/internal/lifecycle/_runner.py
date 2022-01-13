@@ -295,8 +295,19 @@ class _Executor:
     ) -> None:
         # core20 uses Plugins V2 which does not require staging parts for pull
         # like V1 Plugins do.
-        if self.project._get_build_base() == "core20" and step == steps.PULL:
+        if (
+            part._build_attributes.core22_step_dependencies()
+            and self.project._get_build_base() == "core20"
+            and step == steps.PULL
+        ):
             return
+        elif (
+            part._build_attributes.core22_step_dependencies()
+            and self.project._get_build_base() != "core20"
+        ):
+            logger.warning(
+                f"Ignoring core22 lifecycle request for {part.name!r} as it is only supported for core20."
+            )
 
         all_dependencies = self.parts_config.get_dependencies(part.name)
 

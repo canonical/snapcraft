@@ -1,0 +1,15 @@
+summary: Pull a snap that with the core22 step dependencies
+
+systems: [ubuntu-20*]
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  snapcraft pull
+
+  if [ -f stage/part1 ]; then
+    echo "FAIL: staged files from part1 found"
+    exit 1
+  fi

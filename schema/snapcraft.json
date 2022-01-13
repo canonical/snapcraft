@@ -1053,6 +1053,7 @@
                             "items": {
                                 "type": "string",
                                 "enum": [
+                                    "core22-step-dependencies",
                                     "enable-patchelf",
                                     "no-patchelf",
                                     "no-install",
