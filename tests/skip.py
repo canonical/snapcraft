@@ -22,7 +22,7 @@ from tests import os_release
 
 
 def skip_unless_codename(codename, message: str) -> Callable[..., Callable[..., None]]:
-    if type(codename) is str:
+    if isinstance(codename, str):
         codename = [codename]
 
     def _wrap(func: Callable[..., None]) -> Callable[..., None]:

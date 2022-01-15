@@ -11,9 +11,15 @@ jobs:
           fetch-depth: 0
       - name: Install dependencies
         run: |
-          ./tools/environment-setup-local.sh
+          sudo apt update
+          sudo apt install -y python3-pip python3-venv libapt-pkg-dev libyaml-dev xdelta3 shellcheck
+          python3 -m venv ${HOME}/.venv/snapcraft
+          source ${HOME}/.venv/snapcraft/bin/activate
+          pip install -U -r requirements.txt -r requirements-devel.txt
+          pip install .
       - name: Run black
         run: |
+          source ${HOME}/.venv/snapcraft/bin/activate
           make test-black
       - name: Run codespell
         run: |
@@ -23,6 +29,10 @@ jobs:
         run: |
           source ${HOME}/.venv/snapcraft/bin/activate
           make test-flake8
+      - name: Run isort
+        run: |
+          source ${HOME}/.venv/snapcraft/bin/activate
+          make test-isort
       - name: Run mypy
         run: |
           source ${HOME}/.venv/snapcraft/bin/activate
@@ -30,6 +40,16 @@ jobs:
       - name: Run shellcheck
         run: |
           make test-shellcheck
+      - name: Run pydocstyle
+        run: |
+          source ${HOME}/.venv/snapcraft/bin/activate
+          make test-pydocstyle
+      - name: Run pyright
+        run: |
+          source ${HOME}/.venv/snapcraft/bin/activate
+          sudo snap install --classic node
+          sudo snap install --classic pyright
+          make test-pyright
       - name: Run unit tests
         run: |
           source ${HOME}/.venv/snapcraft/bin/activate
