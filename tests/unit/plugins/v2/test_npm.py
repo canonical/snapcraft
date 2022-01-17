@@ -96,6 +96,7 @@ class NpmPluginTest(TestCase):
                     fi
                     """
                     ),
+                    "npm config set unsafe-perm true",
                     'npm install -g --prefix "${SNAPCRAFT_PART_INSTALL}" $(npm pack . | tail -1)',
                 ]
             ),
