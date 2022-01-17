@@ -91,7 +91,7 @@ class NpmPlugin(PluginV2):
         return dedent(
             f"""\
         if [ ! -f "${{SNAPCRAFT_PART_INSTALL}}/bin/node" ]; then
-            curl -s "{node_uri}" | tar xzf - -C "${{SNAPCRAFT_PART_INSTALL}}/" --strip-components=1
+            curl -s "{node_uri}" | tar xzf - -C "${{SNAPCRAFT_PART_INSTALL}}/" --no-same-owner --strip-components=1
         fi
         """
         )
