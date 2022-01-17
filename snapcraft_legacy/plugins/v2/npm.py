@@ -102,5 +102,6 @@ class NpmPlugin(PluginV2):
     def get_build_commands(self) -> List[str]:
         return [
             self._get_node_command(),
+            "npm config set unsafe-perm true",
             'npm install -g --prefix "${SNAPCRAFT_PART_INSTALL}" $(npm pack . | tail -1)',
         ]
