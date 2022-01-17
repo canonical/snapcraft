@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2022 Canonical Ltd.
+# Copyright 2022 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,9 +16,45 @@
 
 """Command-line application entry point."""
 
+import sys
+
+import craft_cli
+from craft_cli import EmitterMode, emit
+
+from snapcraft import __version__
 from snapcraft_legacy.cli import legacy
+
+from . import commands
+
+COMMAND_GROUPS = [
+    craft_cli.CommandGroup("Basic", [commands.VersionCommand]),
+]
+
+GLOBAL_ARGS = [
+    craft_cli.GlobalArgument(
+        "version", "flag", "-V", "--version", "Show the application version and exit"
+    )
+]
 
 
 def run():
     """Run the CLI."""
-    legacy.legacy_run()
+    emit.init(EmitterMode.NORMAL, "snapcraft", f"Starting Snapcraft {__version__}")
+    dispatcher = craft_cli.Dispatcher(
+        "snapcraft",
+        COMMAND_GROUPS,
+        summary="What's the app about",
+        extra_global_args=GLOBAL_ARGS,
+    )
+
+    try:
+        global_args = dispatcher.pre_parse_args(sys.argv[1:])
+        if global_args.get("version"):
+            emit.message(f"snapcraft {__version__}")
+        else:
+            dispatcher.load_command(None)
+            dispatcher.run()
+        emit.ended_ok()
+    except craft_cli.ArgumentParsingError:
+        emit.ended_ok()
+        legacy.legacy_run()
