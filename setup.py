@@ -89,6 +89,7 @@ if sys.platform == "win32":
 install_requires = [
     "attrs",
     "click",
+    "craft-cli",
     "cryptography==3.4",
     "gnupg",
     "jsonschema==2.5.1",
