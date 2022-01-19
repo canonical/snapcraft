@@ -80,6 +80,7 @@ dev_requires = [
     "pyramid",
     "pytest",
     "pytest-cov",
+    "pytest-mock",
     "pytest-subprocess",
 ]
 
