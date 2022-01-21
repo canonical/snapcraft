@@ -23,6 +23,7 @@ properties:
   source-subdir: ''
   source-tag: ''
   source-type: ''
+  source-recurse-submodules: False
   stage-packages: []
 schema_properties:
 - foo

@@ -11,6 +11,7 @@ environment:
   SNAP_DIR/git_commit: snaps/git-commit
   SNAP_DIR/git_depth: snaps/git-depth
   SNAP_DIR/git_head: snaps/git-head
+  SNAP_DIR/git_recurse_submodules: snaps/git-recurse-submodules
   SNAP_DIR/local_source: snaps/local-source
   SNAP_DIR/local_source_subfolders: snaps/local-source-subfolders
   SNAP_DIR/local_source_type: snaps/local-source-type

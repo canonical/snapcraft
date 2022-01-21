@@ -49,6 +49,7 @@ class MockOptions:
         source_depth=None,
         source_commit=None,
         source_checksum=None,
+        source_recurse_submodules=None,
         disable_parallel=False,
     ):
         self.source = source
@@ -58,6 +59,7 @@ class MockOptions:
         self.source_commit = source_commit
         self.source_tag = source_tag
         self.source_subdir = source_subdir
+        self.source_recurse_submodules = source_recurse_submodules
         self.disable_parallel = disable_parallel
 
 

@@ -204,6 +204,7 @@ class WorkTreeTestCase(unit.TestCase):
                 "source-subdir": "test-sub-dir",
                 "source-tag": "strip-me",
                 "source-type": "local",
+                "source-recurse-submodules": "strip-me",
             },
         )
 
