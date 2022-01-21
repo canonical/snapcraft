@@ -96,7 +96,10 @@ class PullStateTestCase(PullStateBaseTestCase):
         self.assertThat(properties["source-type"], Equals("test-source-type"))
         self.assertThat(properties["source-branch"], Equals("test-source-branch"))
         self.assertThat(properties["source-subdir"], Equals("test-source-subdir"))
-        self.assertThat(properties["source-recurse-submodules"], Equals("test-source-recurse-submodules"))
+        self.assertThat(
+            properties["source-recurse-submodules"],
+            Equals("test-source-recurse-submodules"),
+        )
 
     def test_project_options_of_interest(self):
         options = self.state.project_options_of_interest(self.project)
