@@ -41,6 +41,7 @@ class Snap(FileBase):
         source_branch: str = None,
         source_depth: str = None,
         source_checksum: str = None,
+        source_recurse_submodules=None,
     ) -> None:
         super().__init__(
             source,
@@ -50,6 +51,7 @@ class Snap(FileBase):
             source_branch,
             source_depth,
             source_checksum,
+            source_recurse_submodules,
             "unsquashfs",
         )
         if source_tag:

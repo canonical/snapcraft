@@ -30,6 +30,7 @@ def _schema_properties():
         "source-type",
         "source-branch",
         "source-subdir",
+        "source-recurse-submodules",
         "stage-packages",
     }
 
