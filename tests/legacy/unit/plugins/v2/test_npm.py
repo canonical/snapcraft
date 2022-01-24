@@ -92,7 +92,7 @@ class NpmPluginTest(TestCase):
                     dedent(
                         """\
                     if [ ! -f "${SNAPCRAFT_PART_INSTALL}/bin/node" ]; then
-                        curl -s "https://nodejs.org/dist/v6.0.0/node-v6.0.0-linux-x64.tar.gz" | tar xzf - -C "${SNAPCRAFT_PART_INSTALL}/" --strip-components=1
+                        curl -s "https://nodejs.org/dist/v6.0.0/node-v6.0.0-linux-x64.tar.gz" | tar xzf - -C "${SNAPCRAFT_PART_INSTALL}/" --no-same-owner --strip-components=1
                     fi
                     """
                     ),
