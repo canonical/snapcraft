@@ -82,6 +82,7 @@ dev_requires = [
     "pytest-cov",
     "pytest-mock",
     "pytest-subprocess",
+    "types-setuptools",
 ]
 
 if sys.platform == "win32":

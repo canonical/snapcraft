@@ -18,7 +18,7 @@
 
 import os
 
-import pkg_resources  # type: ignore
+import pkg_resources
 
 
 def _get_version():

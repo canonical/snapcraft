@@ -91,6 +91,7 @@ tinydb==4.6.1
 toml==0.10.2
 tomli==1.2.3
 translationstring==1.4
+types-setuptools==57.4.7
 typing_extensions==4.0.1
 urllib3==1.26.8
 venusian==3.0.0
