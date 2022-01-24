@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright 2022 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,25 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import click
-
-import snapcraft_legacy
-
-SNAPCRAFT_VERSION_TEMPLATE = "snapcraft %(version)s"
+from snapcraft import __version__
+from snapcraft.commands.version import VersionCommand
 
 
-@click.group()
-def versioncli():
-    """Version commands"""
-    pass
-
-
-@versioncli.command("version")
-def version():
-    """Obtain snapcraft's version number.
-
-    Examples:
-        snapcraft version
-        snapcraft --version
-    """
-    click.echo(SNAPCRAFT_VERSION_TEMPLATE % {"version": snapcraft_legacy.__version__})
+def test_version_command(emitter):
+    cmd = VersionCommand(None)
+    cmd.run([])
+    emitter.assert_recorded([f"snapcraft {__version__}"])

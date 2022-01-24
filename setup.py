@@ -80,7 +80,9 @@ dev_requires = [
     "pyramid",
     "pytest",
     "pytest-cov",
+    "pytest-mock",
     "pytest-subprocess",
+    "types-setuptools",
 ]
 
 if sys.platform == "win32":
@@ -89,6 +91,7 @@ if sys.platform == "win32":
 install_requires = [
     "attrs",
     "click",
+    "craft-cli",
     "cryptography==3.4",
     "gnupg",
     "jsonschema==2.5.1",

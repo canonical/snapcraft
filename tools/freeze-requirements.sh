@@ -17,7 +17,7 @@ requirements_fixups() {
   sed -i '/pkg[-_]resources==0.0.0/d' "$req_file"
 
   # We updated setuptools in venv, forget it.
-  sed -i '/setuptools/d' "$req_file"
+  sed -i '/^setuptools/d' "$req_file"
   echo 'setuptools==49.6.0' >> "$req_file"
 
   # Pinned pyinstaller for windows.
