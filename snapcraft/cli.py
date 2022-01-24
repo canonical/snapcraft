@@ -27,7 +27,7 @@ from snapcraft_legacy.cli import legacy
 from . import commands
 
 COMMAND_GROUPS = [
-    craft_cli.CommandGroup("Basic", [commands.VersionCommand]),
+    craft_cli.CommandGroup("Other", [commands.VersionCommand]),
 ]
 
 GLOBAL_ARGS = [
