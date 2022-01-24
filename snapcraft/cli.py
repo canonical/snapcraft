@@ -39,6 +39,11 @@ GLOBAL_ARGS = [
 
 def run():
     """Run the CLI."""
+    # Let legacy snapcraft handle --help until we have all command stubs registered
+    # in craft-cli.
+    if "-h" in sys.argv or "--help" in sys.argv:
+        legacy.legacy_run()
+
     emit.init(EmitterMode.NORMAL, "snapcraft", f"Starting Snapcraft {__version__}")
     dispatcher = craft_cli.Dispatcher(
         "snapcraft",
