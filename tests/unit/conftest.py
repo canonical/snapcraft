@@ -22,6 +22,7 @@ import pytest
 from craft_cli import messages
 
 
+# XXX: This can be removed once testing fixtures are provided by craft-cli.
 class RecordingEmitter:
     """Record what is shown using the emitter and provide a nice API for tests."""
 
