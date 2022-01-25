@@ -20,6 +20,7 @@ properties:
   source-branch: ''
   source-commit: ''
   source-depth: 0
+  source-submodules: []
   source-subdir: ''
   source-tag: ''
   source-type: ''

@@ -33,6 +33,7 @@ class Rpm(FileBase):
         source_branch=None,
         source_depth=None,
         source_checksum=None,
+        source_submodules=None,
     ):
         super().__init__(
             source,
@@ -42,6 +43,7 @@ class Rpm(FileBase):
             source_branch,
             source_depth,
             source_checksum,
+            source_submodules,
             "rpm2cpio",
         )
         if source_tag:
