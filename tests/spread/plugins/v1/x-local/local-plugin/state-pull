@@ -20,8 +20,8 @@ properties:
   source-branch: ''
   source-commit: ''
   source-depth: 0
-  source-submodules: []
   source-subdir: ''
+  source-submodules: null
   source-tag: ''
   source-type: ''
   stage-packages: []
