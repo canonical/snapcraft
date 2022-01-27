@@ -16,4 +16,10 @@
 
 """Snapcraft commands."""
 
+from .lifecycle import (  # noqa: F401
+    BuildCommand,
+    PrimeCommand,
+    PullCommand,
+    StageCommand,
+)
 from .version import VersionCommand  # noqa: F401
