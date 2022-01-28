@@ -14,21 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Snapcraft error definitions."""
+import os
 
-from craft_cli import CraftError
-
-
-class SnapcraftError(CraftError):
-    """Failure in a Snapcraft operation."""
+import pytest
 
 
-class FeatureNotImplemented(SnapcraftError):
-    """Attempt to use an unimplemented feature."""
+@pytest.fixture
+def new_dir(tmpdir):
+    """Change to a new temporary directory."""
 
-    def __init__(self, msg: str) -> None:
-        super().__init__(f"Command or feature not implemented: {msg}")
+    cwd = os.getcwd()
+    os.chdir(tmpdir)
 
+    yield tmpdir
 
-class LegacyFallback(Exception):
-    """Fall back to legacy snapcraft implementation."""
+    os.chdir(cwd)

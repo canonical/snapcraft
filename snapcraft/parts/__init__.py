@@ -14,21 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Snapcraft error definitions."""
+"""Parts lifecycle processing."""
 
-from craft_cli import CraftError
-
-
-class SnapcraftError(CraftError):
-    """Failure in a Snapcraft operation."""
-
-
-class FeatureNotImplemented(SnapcraftError):
-    """Attempt to use an unimplemented feature."""
-
-    def __init__(self, msg: str) -> None:
-        super().__init__(f"Command or feature not implemented: {msg}")
-
-
-class LegacyFallback(Exception):
-    """Fall back to legacy snapcraft implementation."""
+from .lifecycle import run_lifecycle  # noqa: F401

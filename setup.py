@@ -82,6 +82,7 @@ dev_requires = [
     "pytest-cov",
     "pytest-mock",
     "pytest-subprocess",
+    "types-PyYAML",
     "types-setuptools",
 ]
 
