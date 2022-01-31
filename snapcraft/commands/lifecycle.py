@@ -93,11 +93,11 @@ class PrimeCommand(_LifecycleCommand):
     """Prepare the final payload for packing."""
 
     name = "prime"
-    help_msg = "Build artifacts defined for a part"
+    help_msg = "Prime artifacts defined for a part"
     overview = textwrap.dedent(
         """
-        Prepare the final payload to be packed as a snap. If part names are
-        specified only those parts will be primed. The default is to prime
-        all parts.
+        Prepare the final payload to be packed as a snap, performing additional
+        processing and adding metadata files. If part names are specified only
+        those parts will be primed. The default is to prime all parts.
         """
     )
