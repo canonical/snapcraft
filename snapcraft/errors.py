@@ -24,7 +24,7 @@ class SnapcraftError(CraftError):
 
 
 class FeatureNotImplemented(SnapcraftError):
-    """Attempt to execute an unimplemented feature."""
+    """Attempt to use an unimplemented feature."""
 
-    def __init__(self):
-        super().__init__("This command or feature is not implemented in this release.")
+    def __init__(self, msg: str) -> None:
+        super().__init__(f"Command or feature not implemented: {msg}")
