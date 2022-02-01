@@ -14,21 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Snapcraft version command."""
+"""Snapcraft error definitions."""
 
-from craft_cli import BaseCommand, emit
-
-from snapcraft import __version__
+from craft_cli import CraftError
 
 
-class VersionCommand(BaseCommand):
-    """Show the snapcraft version."""
+class SnapcraftError(CraftError):
+    """Failure in a Snapcraft operation."""
 
-    name = "version"
-    help_msg = "Show the application version and exit"
-    overview = "Show the application version and exit"
-    common = True
 
-    def run(self, parsed_args):
-        """Run the command."""
-        emit.message(f"snapcraft {__version__}")
+class FeatureNotImplemented(SnapcraftError):
+    """Attempt to use an unimplemented feature."""
+
+    def __init__(self, msg: str) -> None:
+        super().__init__(f"Command or feature not implemented: {msg}")

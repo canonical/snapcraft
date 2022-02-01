@@ -53,7 +53,7 @@ test-legacy-units:
 
 .PHONY: test-units
 test-units: test-legacy-units
-	# pytest --cov-report=xml --cov=snapcraft tests/unit
+	pytest --cov-report=xml --cov=snapcraft tests/unit
 
 .PHONY: tests
 tests: tests-static test-units

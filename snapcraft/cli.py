@@ -21,12 +21,21 @@ import sys
 import craft_cli
 from craft_cli import EmitterMode, emit
 
-from snapcraft import __version__
+from snapcraft import __version__, errors
 from snapcraft_legacy.cli import legacy
 
 from . import commands
 
 COMMAND_GROUPS = [
+    craft_cli.CommandGroup(
+        "Lifecycle",
+        [
+            commands.PullCommand,
+            commands.BuildCommand,
+            commands.StageCommand,
+            commands.PrimeCommand,
+        ],
+    ),
     craft_cli.CommandGroup("Other", [commands.VersionCommand]),
 ]
 
@@ -60,6 +69,8 @@ def run():
             dispatcher.load_command(None)
             dispatcher.run()
         emit.ended_ok()
+    except errors.SnapcraftError as err:
+        emit.error(err)
     except craft_cli.ArgumentParsingError:
         emit.ended_ok()
         legacy.legacy_run()

@@ -100,6 +100,7 @@ install_requires = [
     "lxml",
     "macaroonbakery",
     "mypy-extensions",
+    "overrides",
     "progressbar",
     "pyelftools",
     "pymacaroons",
