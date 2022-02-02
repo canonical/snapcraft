@@ -16,6 +16,7 @@
 
 """Command-line application entry point."""
 
+import os
 import sys
 
 import craft_cli
@@ -48,6 +49,10 @@ GLOBAL_ARGS = [
 
 def run():
     """Run the CLI."""
+    # Run the legacy implementation if inside a legacy managed environment.
+    if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
+        legacy.legacy_run()
+
     # Let legacy snapcraft handle --help until we have all command stubs registered
     # in craft-cli.
     if "-h" in sys.argv or "--help" in sys.argv:

@@ -16,8 +16,13 @@
 
 """Legacy execution entry points."""
 
+import sys
+
 from ._runner import run  # noqa: F401
 
 
 def legacy_run():
     run()
+
+    # ensure this call never returns
+    sys.exit()
