@@ -24,6 +24,7 @@ import yaml.error
 from craft_cli import emit
 
 from snapcraft import errors
+from snapcraft.projects import Project
 
 if TYPE_CHECKING:
     import argparse
@@ -37,7 +38,7 @@ _PROJECT_FILES = [
 ]
 
 
-def run_lifecycle(step_name: str, parsed_args: "argparse.Namespace") -> None:
+def run(step_name: str, parsed_args: "argparse.Namespace") -> None:
     """Run the parts lifecycle.
 
     :raises SnapcraftError: if the step name is invalid, or the project
@@ -57,14 +58,23 @@ def run_lifecycle(step_name: str, parsed_args: "argparse.Namespace") -> None:
             resolution="To start a new project, use `snapcraft init`",
         )
 
+    # only execute the new codebase from core22 onwards
     if yaml_data.get("base") != "core22":
         raise errors.LegacyFallback("base is not core22")
 
-    _run_step(step_name, parsed_args, yaml_data)
+    # TODO: apply extensions
+    # yaml_data = apply_extensions(yaml_data)
+
+    # TODO: process grammar
+    # yaml_data = process_grammar(yaml_data)
+
+    project = Project.unmarshal(yaml_data)
+
+    _run_step(step_name, project, parsed_args)
 
 
 def _run_step(
-    step_name: str, parsed_args: "argparse.Namespace", yaml_data: Dict[str, Any]
+    step_name: str, project: Project, parsed_args: "argparse.Namespace",
 ) -> None:
     raise errors.FeatureNotImplemented(f"core22 {step_name} handler")
 

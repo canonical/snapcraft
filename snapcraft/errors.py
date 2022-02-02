@@ -30,5 +30,9 @@ class FeatureNotImplemented(SnapcraftError):
         super().__init__(f"Command or feature not implemented: {msg}")
 
 
+class ProjectValidationError(SnapcraftError):
+    """Error validatiing snapcraft.yaml."""
+
+
 class LegacyFallback(Exception):
     """Fall back to legacy snapcraft implementation."""

@@ -31,7 +31,10 @@ ensure_newline_before_comments = true
 line_length = 88
 
 [tool.pylint.messages_control]
-disable = "fixme"
+disable = "too-few-public-methods,fixme"
 
 [tool.pylint.MASTER]
+extension-pkg-allow-list = [
+    "pydantic"
+]
 load-plugins = "pylint_fixme_info,pylint_pytest"

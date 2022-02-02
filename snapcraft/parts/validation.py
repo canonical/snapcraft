@@ -14,4 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Parts lifecycle processing."""
+"""Part schema validation."""
+
+from typing import Any, Dict
+
+
+def validate_part(data: Dict[str, Any]) -> None:  # pylint: disable=unused-argument
+    """Validate the given part data against common and plugin models."""
+    # TODO: implement after craft-parts integration

@@ -22,7 +22,9 @@ from unittest.mock import call
 
 import pytest
 
-from snapcraft import errors, parts
+from snapcraft import errors
+from snapcraft.parts import lifecycle as parts_lifecycle
+from snapcraft.projects import Project
 
 _SNAPCRAFT_YAML_FILENAMES = [
     "snap/snapcraft.yaml",
@@ -40,7 +42,7 @@ def snapcraft_yaml():
         content = textwrap.dedent(
             f"""
             name: mytest
-            version: 0.1.1
+            version: '0.1'
             base: {base}
             summary: Just some test data
             description: This is just some test data.
@@ -58,13 +60,33 @@ def snapcraft_yaml():
 
         return {
             "name": "mytest",
-            "version": "0.1.1",
+            "title": None,
             "base": base,
+            "compression": "xz",
+            "version": "0.1",
+            "contact": None,
+            "donation": None,
+            "issues": None,
+            "source-code": None,
+            "website": None,
             "summary": "Just some test data",
             "description": "This is just some test data.",
-            "grade": "stable",
+            "type": "app",
             "confinement": "strict",
+            "icon": None,
+            "layout": None,
+            "license": None,
+            "grade": "stable",
+            "adopt-info": None,
+            "architectures": [],
+            "assumes": [],
+            "hooks": None,
+            "passthrough": None,
+            "apps": None,
+            "plugs": None,
+            "slots": None,
             "parts": {"part1": {"plugin": "nil"}},
+            "epoch": None,
         }
 
     yield write_file
@@ -73,7 +95,7 @@ def snapcraft_yaml():
 def test_config_not_found(new_dir):
     """If snapcraft.yaml is not found, raise an error."""
     with pytest.raises(errors.SnapcraftError) as raised:
-        parts.run_lifecycle("pull", argparse.Namespace())
+        parts_lifecycle.run("pull", argparse.Namespace())
 
     assert str(raised.value) == (
         "Could not find snap/snapcraft.yaml. Are you sure you are in the right "
@@ -88,10 +110,12 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
     yaml_data = snapcraft_yaml(base="core22", filename=filename)
     run_step_mock = mocker.patch("snapcraft.parts.lifecycle._run_step")
 
-    parts.run_lifecycle("pull", argparse.Namespace(parts=["part1"]))
+    parts_lifecycle.run("pull", argparse.Namespace(parts=["part1"]))
+
+    project = Project.unmarshal(yaml_data)
 
     assert run_step_mock.mock_calls == [
-        call("pull", argparse.Namespace(parts=["part1"]), yaml_data)
+        call("pull", project, argparse.Namespace(parts=["part1"]))
     ]
 
 
@@ -101,7 +125,7 @@ def test_snapcraft_yaml_parse_error(new_dir, snapcraft_yaml, mocker):
     run_step_mock = mocker.patch("snapcraft.parts.lifecycle._run_step")
 
     with pytest.raises(errors.SnapcraftError) as raised:
-        parts.run_lifecycle("pull", argparse.Namespace(parts=["part1"]))
+        parts_lifecycle.run("pull", argparse.Namespace(parts=["part1"]))
 
     assert str(raised.value) == (
         "YAML parsing error: mapping values are not allowed here\n"
@@ -114,6 +138,6 @@ def test_legacy_base_not_core22(new_dir, snapcraft_yaml):
     """Only core22 is processed by the new code, use legacy otherwise."""
     snapcraft_yaml(base="core20")
     with pytest.raises(errors.LegacyFallback) as raised:
-        parts.run_lifecycle("pull", argparse.Namespace())
+        parts_lifecycle.run("pull", argparse.Namespace())
 
     assert str(raised.value) == "base is not core22"

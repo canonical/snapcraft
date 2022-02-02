@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING
 from craft_cli import BaseCommand, emit
 from overrides import overrides
 
-from snapcraft import parts
+from snapcraft.parts import lifecycle as parts_lifecycle
 
 if TYPE_CHECKING:
     import argparse
@@ -45,7 +45,7 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             raise RuntimeError("command name not specified")
 
         emit.trace(f"lifecycle command: {self.name!r}, arguments: {parsed_args!r}")
-        parts.run_lifecycle(self.name, parsed_args)
+        parts_lifecycle.run(self.name, parsed_args)
 
 
 class PullCommand(_LifecycleCommand):
