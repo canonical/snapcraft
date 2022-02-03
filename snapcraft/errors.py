@@ -28,3 +28,7 @@ class FeatureNotImplemented(SnapcraftError):
 
     def __init__(self, msg: str) -> None:
         super().__init__(f"Command or feature not implemented: {msg}")
+
+
+class LegacyFallback(Exception):
+    """Fall back to legacy snapcraft implementation."""

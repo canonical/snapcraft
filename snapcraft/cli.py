@@ -16,10 +16,11 @@
 
 """Command-line application entry point."""
 
+import os
 import sys
 
 import craft_cli
-from craft_cli import EmitterMode, emit
+from craft_cli import ArgumentParsingError, EmitterMode, emit
 
 from snapcraft import __version__, errors
 from snapcraft_legacy.cli import legacy
@@ -48,6 +49,10 @@ GLOBAL_ARGS = [
 
 def run():
     """Run the CLI."""
+    # Run the legacy implementation if inside a legacy managed environment.
+    if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
+        legacy.legacy_run()
+
     # Let legacy snapcraft handle --help until we have all command stubs registered
     # in craft-cli.
     if "-h" in sys.argv or "--help" in sys.argv:
@@ -69,8 +74,9 @@ def run():
             dispatcher.load_command(None)
             dispatcher.run()
         emit.ended_ok()
-    except errors.SnapcraftError as err:
-        emit.error(err)
-    except craft_cli.ArgumentParsingError:
+    except (errors.LegacyFallback, ArgumentParsingError) as err:
+        emit.trace(f"run legacy implementation: {err!s}")
         emit.ended_ok()
         legacy.legacy_run()
+    except errors.SnapcraftError as err:
+        emit.error(err)

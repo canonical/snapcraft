@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2022 Canonical Ltd.
+# Copyright 2022 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,15 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Legacy execution entry points."""
+"""Parts lifecycle processing."""
 
-import sys
-
-from ._runner import run  # noqa: F401
-
-
-def legacy_run():
-    run()
-
-    # ensure this call never returns
-    sys.exit()
+from .lifecycle import run_lifecycle  # noqa: F401

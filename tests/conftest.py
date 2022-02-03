@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2022 Canonical Ltd.
+# Copyright 2022 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,15 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Legacy execution entry points."""
+import os
 
-import sys
-
-from ._runner import run  # noqa: F401
+import pytest
 
 
-def legacy_run():
-    run()
+@pytest.fixture
+def new_dir(tmpdir):
+    """Change to a new temporary directory."""
 
-    # ensure this call never returns
-    sys.exit()
+    cwd = os.getcwd()
+    os.chdir(tmpdir)
+
+    yield tmpdir
+
+    os.chdir(cwd)
