@@ -208,11 +208,11 @@ IGNORE_FILTERS: Dict[str, Set[str]] = {
 
 
 @functools.lru_cache(maxsize=256)
-def _run_dpkg_query_search(file_path: str) -> str:
+def _run_dpkg_query_search(file_path: pathlib.Path) -> str:
     try:
         output = (
             subprocess.check_output(
-                ["dpkg-query", "-S", os.path.join(os.path.sep, file_path)],
+                ["dpkg-query", "-S", file_path],
                 stderr=subprocess.STDOUT,
                 env=dict(LANG="C.UTF-8"),
             )
@@ -220,9 +220,7 @@ def _run_dpkg_query_search(file_path: str) -> str:
             .strip()
         )
     except subprocess.CalledProcessError as call_error:
-        logger.debug(
-            "Error finding package for {}: {}".format(file_path, str(call_error))
-        )
+        logger.debug(f"Error finding package for {file_path}: {call_error}")
         raise errors.FileProviderNotFound(file_path=file_path) from call_error
 
     # Remove diversions
@@ -289,7 +287,16 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def get_package_for_file(cls, file_path: str) -> str:
-        return _run_dpkg_query_search(file_path)
+        try:
+            absolute_file_path = pathlib.Path(os.path.sep, file_path)
+            logger.debug(f"searching for {absolute_file_path}")
+            return _run_dpkg_query_search(absolute_file_path)
+        except errors.FileProviderNotFound:
+            # follow symlinks to custom library paths
+            # or to libraries moved by usrmerge
+            real_file_path = pathlib.Path(os.path.sep, file_path).resolve()
+            logger.debug(f"searching for {real_file_path}")
+            return _run_dpkg_query_search(real_file_path)
 
     @classmethod
     def get_packages_for_source_type(cls, source_type):
