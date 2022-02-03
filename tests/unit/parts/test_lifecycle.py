@@ -77,8 +77,9 @@ def test_config_not_found(new_dir):
 
     assert str(raised.value) == (
         "Could not find snap/snapcraft.yaml. Are you sure you are in the right "
-        "directory?\nTo start a new project, use `snapcraft init`"
+        "directory?"
     )
+    assert raised.value.resolution == "To start a new project, use `snapcraft init`"
 
 
 @pytest.mark.parametrize("filename", _SNAPCRAFT_YAML_FILENAMES)

@@ -53,7 +53,8 @@ def run_lifecycle(step_name: str, parsed_args: "argparse.Namespace") -> None:
     else:
         raise errors.SnapcraftError(
             "Could not find snap/snapcraft.yaml. Are you sure you are in the "
-            "right directory?\nTo start a new project, use `snapcraft init`"
+            "right directory?",
+            resolution="To start a new project, use `snapcraft init`",
         )
 
     if yaml_data.get("base") != "core22":
