@@ -99,7 +99,7 @@ def _run(cmd: List[str], runner: Callable, **kwargs):
     # Finally, execute desired command.
     lines.append("#############################")
     lines.append("# Execute command:")
-    cmd_string = " ".join([shlex.quote(c) for c in cmd])
+    cmd_string = " ".join([shlex.quote(str(c)) for c in cmd])
     lines.append(f"exec {cmd_string}")
 
     # Save script executed by snapcraft.
