@@ -206,6 +206,7 @@ class PluginHandler:
                 source_tag=properties["source-tag"],
                 source_depth=properties["source-depth"],
                 source_commit=properties["source-commit"],
+                source_submodules=properties["source-submodules"],
             )
 
         return source_handler
