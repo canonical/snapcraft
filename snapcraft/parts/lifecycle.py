@@ -24,6 +24,7 @@ import yaml.error
 from craft_cli import emit
 
 from snapcraft import errors
+from snapcraft.parts import PartsLifecycle
 from snapcraft.projects import Project
 
 if TYPE_CHECKING:
@@ -76,7 +77,14 @@ def run(step_name: str, parsed_args: "argparse.Namespace") -> None:
 def _run_step(
     step_name: str, project: Project, parsed_args: "argparse.Namespace",
 ) -> None:
-    raise errors.FeatureNotImplemented(f"core22 {step_name} handler")
+
+    # TODO: check destructive and managed modes and run in provider
+    _ = parsed_args
+
+    work_dir = Path("work").absolute()
+
+    lifecycle = PartsLifecycle(project.parts, work_dir=work_dir)
+    lifecycle.run(step_name)
 
 
 def _load_yaml(filename: Path) -> Dict[str, Any]:
