@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 from typing import Sequence, Set
 
 from snapcraft_legacy.internal import repo
@@ -53,9 +52,7 @@ class MissingDependencyResolver:
     def _process(self, elf_files: Sequence[str]) -> None:
         for elf_file in elf_files:
             try:
-                stage_package = repo.Repo.get_package_for_file(
-                    file_path=os.path.join(os.path.sep, elf_file)
-                )
+                stage_package = repo.Repo.get_package_for_file(file_path=elf_file)
                 self._stage_packages_dependencies.add(stage_package)
             except repo.errors.FileProviderNotFound:
                 self._unhandled_dependencies.add(elf_file)

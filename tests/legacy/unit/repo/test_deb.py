@@ -506,18 +506,23 @@ class PackageForFileTest(unit.TestCase):
 
         def fake_dpkg_query(*args, **kwargs):
             # dpkg-query -S file_path
-            if args[0][2] == "/bin/bash":
+            if args[0][2].as_posix() == "/bin/bash":
                 return "bash: /bin/bash\n".encode()
-            elif args[0][2] == "/bin/sh":
+            elif args[0][2].as_posix() == "/bin/sh":
                 return (
                     "diversion by dash from: /bin/sh\n"
                     "diversion by dash to: /bin/sh.distrib\n"
                     "dash: /bin/sh\n"
                 ).encode()
+            elif "symlink" in args[0][2].as_posix():
+                raise CalledProcessError(
+                    1, f"dpkg-query: no path found matching pattern {args[0][2]}",
+                )
+            elif "target" in args[0][2].as_posix():
+                return "coreutils: /usr/bin/dirname\n".encode()
             else:
                 raise CalledProcessError(
-                    1,
-                    "dpkg-query: no path found matching pattern {}".format(args[0][2]),
+                    1, f"dpkg-query: no path found matching pattern {args[0][2]}",
                 )
 
         self.useFixture(
@@ -539,6 +544,12 @@ class PackageForFileTest(unit.TestCase):
             repo.Ubuntu.get_package_for_file,
             "/bin/not-found",
         )
+
+    def test_get_package_with_symlink(self):
+        symlink = Path.cwd() / "symlink"
+        target = Path.cwd() / "target"
+        symlink.symlink_to(target)
+        self.assertThat(repo.Ubuntu.get_package_for_file(symlink), Equals("coreutils"))
 
 
 class TestGetPackagesInBase(testtools.TestCase):
