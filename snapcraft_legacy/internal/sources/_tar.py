@@ -34,6 +34,7 @@ class Tar(FileBase):
         source_branch=None,
         source_depth=None,
         source_checksum=None,
+        source_submodules=None,
     ):
         super().__init__(
             source,
@@ -43,6 +44,7 @@ class Tar(FileBase):
             source_branch,
             source_depth,
             source_checksum,
+            source_submodules,
         )
         if source_tag:
             raise errors.SnapcraftSourceInvalidOptionError("tar", "source-tag")

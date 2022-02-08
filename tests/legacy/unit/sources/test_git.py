@@ -270,6 +270,44 @@ class TestGit(unit.sources.SourceTestCase):  # type: ignore
             ]
         )
 
+    def test_pull_with_submodules_default(self):
+        git = sources.Git("git://my-source", "source_dir")
+
+        git.pull()
+
+        self.mock_run.assert_called_once_with(
+            ["git", "clone", "--recursive", "git://my-source", "source_dir"]
+        )
+
+    def test_pull_with_submodules_empty(self):
+        git = sources.Git("git://my-source", "source_dir", source_submodules=[])
+
+        git.pull()
+
+        self.mock_run.assert_called_once_with(
+            ["git", "clone", "git://my-source", "source_dir"]
+        )
+
+    def test_pull_with_submodules(self):
+        git = sources.Git(
+            "git://my-source",
+            "source_dir",
+            source_submodules=["submodule_1", "dir/submodule_2"],
+        )
+
+        git.pull()
+
+        self.mock_run.assert_called_once_with(
+            [
+                "git",
+                "clone",
+                "--recursive=submodule_1",
+                "--recursive=dir/submodule_2",
+                "git://my-source",
+                "source_dir",
+            ]
+        )
+
     def test_pull_existing(self):
         self.mock_path_exists.return_value = True
 
@@ -423,6 +461,97 @@ class TestGit(unit.sources.SourceTestCase):  # type: ignore
                         "update",
                         "--recursive",
                         "--force",
+                    ]
+                ),
+            ]
+        )
+
+    def test_pull_existing_with_submodules_default(self):
+        self.mock_path_exists.return_value = True
+
+        git = sources.Git("git://my-source", "source_dir")
+        git.pull()
+
+        self.mock_run.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        "source_dir",
+                        "fetch",
+                        "--prune",
+                        "--recurse-submodules=yes",
+                    ]
+                ),
+                mock.call(
+                    ["git", "-C", "source_dir", "reset", "--hard", "origin/master"]
+                ),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        "source_dir",
+                        "submodule",
+                        "update",
+                        "--recursive",
+                        "--force",
+                    ]
+                ),
+            ]
+        )
+
+    def test_pull_existing_with_submodules_empty(self):
+        self.mock_path_exists.return_value = True
+
+        git = sources.Git("git://my-source", "source_dir", source_submodules=[])
+        git.pull()
+
+        self.mock_run.assert_has_calls(
+            [
+                mock.call(["git", "-C", "source_dir", "fetch", "--prune"]),
+                mock.call(
+                    ["git", "-C", "source_dir", "reset", "--hard", "origin/master"]
+                ),
+            ]
+        )
+
+    def test_pull_existing_with_submodules(self):
+        self.mock_path_exists.return_value = True
+
+        git = sources.Git(
+            "git://my-source",
+            "source_dir",
+            source_submodules=["submodule_1", "dir/submodule_2"],
+        )
+        git.pull()
+
+        self.mock_run.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        "source_dir",
+                        "fetch",
+                        "--prune",
+                        "--recurse-submodules=yes",
+                    ]
+                ),
+                mock.call(
+                    ["git", "-C", "source_dir", "reset", "--hard", "origin/master"]
+                ),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        "source_dir",
+                        "submodule",
+                        "update",
+                        "--recursive",
+                        "--force",
+                        "submodule_1",
+                        "dir/submodule_2",
                     ]
                 ),
             ]

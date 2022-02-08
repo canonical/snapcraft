@@ -32,6 +32,7 @@ class Mercurial(Base):
         source_depth=None,
         source_checksum=None,
         silent=False,
+        source_submodules=None,
     ):
         super().__init__(
             source,
@@ -41,6 +42,7 @@ class Mercurial(Base):
             source_branch,
             source_depth,
             source_checksum,
+            source_submodules,
             "hg",
         )
         if source_tag and source_branch:

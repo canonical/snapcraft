@@ -116,7 +116,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, "Expected pull to save state YAML")
         self.assertTrue(type(state) is states.PullState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(11))
+        self.assertThat(len(state.properties), Equals(12))
         for expected in [
             "source",
             "source-branch",
@@ -125,6 +125,7 @@ class StateTestCase(StateBaseTestCase):
             "source-subdir",
             "source-tag",
             "source-type",
+            "source-submodules",
             "plugin",
             "stage-packages",
             "parse-info",
@@ -170,7 +171,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, "Expected pull to save state YAML")
         self.assertTrue(type(state) is states.PullState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(11))
+        self.assertThat(len(state.properties), Equals(12))
         for expected in [
             "source",
             "source-branch",
@@ -179,6 +180,7 @@ class StateTestCase(StateBaseTestCase):
             "source-subdir",
             "source-tag",
             "source-type",
+            "source-submodules",
             "plugin",
             "stage-packages",
             "parse-info",
@@ -227,7 +229,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, "Expected pull to save state YAML")
         self.assertTrue(type(state) is states.PullState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(11))
+        self.assertThat(len(state.properties), Equals(12))
         for expected in [
             "source",
             "source-branch",
@@ -236,6 +238,7 @@ class StateTestCase(StateBaseTestCase):
             "source-subdir",
             "source-tag",
             "source-type",
+            "source-submodules",
             "plugin",
             "stage-packages",
             "parse-info",

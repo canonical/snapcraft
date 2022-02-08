@@ -99,6 +99,7 @@ class WorkTree:
             source_tag=part_config.get("source-tag"),
             source_depth=part_config.get("source-depth"),
             source_commit=part_config.get("source-commit"),
+            source_submodules=part_config.get("source-submodules"),
         )
 
     def _get_part_cache_dir(self, part_name: str, selector=None) -> str:

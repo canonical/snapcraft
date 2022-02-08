@@ -983,6 +983,15 @@
                             "type": "integer",
                             "default": 0
                         },
+                        "source-submodules": {
+                            "type": "array",
+                            "minItems": 0,
+                            "uniqueItems": true,
+                            "items": {
+                                "type": "string",
+                                "description": "submodules to fetch, by pathname in source tree"
+                            }
+                        },
                         "source-subdir": {
                             "type": "string",
                             "default": ""
