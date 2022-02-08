@@ -59,7 +59,6 @@ class TestProjectDefaults:
         assert project.icon is None
         assert project.layout is None
         assert project.license is None
-        assert project.adopt_info is None
         assert project.architectures == []
         assert project.assumes == []
         assert project.hooks is None
@@ -81,7 +80,6 @@ class TestProjectDefaults:
         assert app.autostart is None
         assert app.common_id is None
         assert app.bus_name is None
-        assert app.desktop is None
         assert app.completer is None
         assert app.stop_command is None
         assert app.post_stop_command is None
@@ -292,6 +290,37 @@ class TestProjectValidation:
         error = "ensure this value has at most 78 characters"
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(yaml_data(summary=summary))
+
+    @pytest.mark.parametrize(
+        "epoch",
+        [
+            "0",
+            "1",
+            "1*",
+            "12345",
+            "12345*",
+        ],
+    )
+    def test_project_epoch_valid(self, epoch, yaml_data):
+        project = Project.unmarshal(yaml_data(epoch=epoch))
+        assert project.epoch == epoch
+
+    @pytest.mark.parametrize(
+        "epoch",
+        [
+            "",
+            "invalid",
+            "0*",
+            "012345",
+            "-1",
+            "*1",
+            "1**",
+        ],
+    )
+    def test_project_epoch_invalid(self, epoch, yaml_data):
+        error = "Epoch is a positive integer followed by an optional asterisk"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(yaml_data(epoch=epoch))
 
 
 class TestAppValidation:

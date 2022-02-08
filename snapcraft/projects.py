@@ -63,7 +63,6 @@ class App(ProjectModel):
     autostart: Optional[str]
     common_id: Optional[str]
     bus_name: Optional[str]
-    desktop: Optional[str]
     completer: Optional[str]
     stop_command: Optional[str]
     post_stop_command: Optional[str]
@@ -160,10 +159,9 @@ class Project(ProjectModel):
 
     XXX: Not implemented in this version
     - environment (top-level)
-    - frameworks
     - system-usernames
     - package-repositories
-    - version-script (deprecated)
+    - adopt-info (after adding craftctl support to craft-parts)
     """
 
     name: constr(max_length=40)  # type: ignore
@@ -175,8 +173,8 @@ class Project(ProjectModel):
     contact: Optional[Union[str, UniqueStrList]]
     donation: Optional[Union[str, UniqueStrList]]
     issues: Optional[Union[str, UniqueStrList]]
-    source_code: Optional[str]  # XXX: should we validate as URL?
-    website: Optional[str]  # XXX: should we validate as URL?
+    source_code: Optional[str]
+    website: Optional[str]
     summary: constr(max_length=78)  # type: ignore
     description: str
     type: Literal["app", "base", "gadget", "kernel", "snapd"] = "app"
@@ -185,7 +183,6 @@ class Project(ProjectModel):
     layout: Optional[Dict[str, Dict[str, Any]]]
     license: Optional[str]
     grade: Literal["stable", "devel"]
-    adopt_info: Optional[str]
     architectures: List[Architecture] = []
     assumes: UniqueStrList = []
     hooks: Optional[Dict[str, Hook]]
@@ -194,7 +191,7 @@ class Project(ProjectModel):
     plugs: Optional[Dict[str, Dict[str, str]]]  # TODO: add plug name validation
     slots: Optional[Dict[str, Dict[str, str]]]  # TODO: add slot name validation
     parts: Dict[str, Any]  # parts are handled by craft-parts
-    epoch: Optional[int]
+    epoch: Optional[str]
 
     @pydantic.root_validator(pre=True)
     @classmethod
@@ -260,6 +257,17 @@ class Project(ProjectModel):
         """Verify each part (craft-parts will re-validate this)."""
         parts_validation.validate_part(item)
         return item
+
+    @pydantic.validator("epoch")
+    @classmethod
+    def _validate_epoch(cls, epoch):
+        """Verify epoch format."""
+        if epoch is not None and not re.match(r"^(?:0|[1-9][0-9]*[*]?)$", epoch):
+            raise ValueError(
+                "Epoch is a positive integer followed by an optional asterisk"
+            )
+
+        return epoch
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "Project":
