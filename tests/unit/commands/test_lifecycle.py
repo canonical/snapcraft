@@ -37,7 +37,7 @@ from snapcraft.commands.lifecycle import (
     ],
 )
 def test_lifecycle_command(step_name, cmd_class, mocker):
-    lifecycle_run_mock = mocker.patch("snapcraft.parts.run_lifecycle")
+    lifecycle_run_mock = mocker.patch("snapcraft.parts.lifecycle.run")
     cmd = cmd_class(None)
     cmd.run(argparse.Namespace(parts=["part1", "part2"]))
     assert lifecycle_run_mock.mock_calls == [
