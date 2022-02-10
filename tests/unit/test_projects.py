@@ -96,10 +96,10 @@ class TestProjectDefaults:
         assert app.stop_mode is None
         assert app.restart_condition is None
         assert app.install_mode is None
-        assert app.slots == []
-        assert app.plugs == []
-        assert app.aliases == []
-        assert app.environment == []
+        assert app.slots is None
+        assert app.plugs is None
+        assert app.aliases is None
+        assert app.environment is None
         assert app.command_chain == []
 
 

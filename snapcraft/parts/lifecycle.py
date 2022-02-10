@@ -24,6 +24,7 @@ import yaml.error
 from craft_cli import emit
 
 from snapcraft import errors
+from snapcraft.meta import snap_yaml
 from snapcraft.parts import PartsLifecycle
 from snapcraft.projects import Project
 
@@ -85,6 +86,8 @@ def _run_step(
 
     lifecycle = PartsLifecycle(project.parts, work_dir=work_dir)
     lifecycle.run(step_name)
+
+    snap_yaml.write(project, lifecycle.prime_dir, arch=lifecycle.target_arch)
 
 
 def _load_yaml(filename: Path) -> Dict[str, Any]:

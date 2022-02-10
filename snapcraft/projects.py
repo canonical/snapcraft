@@ -100,10 +100,10 @@ class App(ProjectModel):
         ]
     ]
     install_mode: Optional[Literal["enable", "disable"]]
-    slots: UniqueStrList = []
-    plugs: UniqueStrList = []
-    aliases: UniqueAliasList = []
-    environment: List[Dict[str, str]] = []
+    slots: Optional[UniqueStrList]
+    plugs: Optional[UniqueStrList]
+    aliases: Optional[UniqueAliasList]
+    environment: Optional[List[Dict[str, str]]]
     command_chain: List[CommandChainStr] = []
     # TODO: sockets
 
