@@ -18,7 +18,30 @@
 
 from typing import Any, Dict
 
+from craft_parts import plugins
+from craft_parts.parts import PartSpec
 
-def validate_part(data: Dict[str, Any]) -> None:  # pylint: disable=unused-argument
-    """Validate the given part data against common and plugin models."""
-    # TODO: implement after craft-parts integration
+
+def validate_part(data: Dict[str, Any]) -> None:
+    """Validate the given part data against common and plugin models.
+
+    :param data: The part data to validate.
+    """
+    if not isinstance(data, dict):
+        raise TypeError("value must be a dictionary")
+
+    # copy the original data, we'll modify it
+    spec = data.copy()
+
+    plugin_name = spec.get("plugin")
+    if not plugin_name:
+        raise ValueError("'plugin' not defined")
+
+    plugin_class = plugins.get_plugin_class(plugin_name)
+
+    # validate plugin properties
+    plugin_class.properties_class.unmarshal(spec)
+
+    # validate common part properties
+    part_spec = plugins.extract_part_properties(spec, plugin_name=plugin_name)
+    PartSpec(**part_spec)

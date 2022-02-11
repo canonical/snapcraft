@@ -17,6 +17,25 @@
 import os
 
 import pytest
+import xdg
+
+
+@pytest.fixture(autouse=True)
+def temp_xdg(tmpdir, mocker):
+    """Use a temporary locaction for XDG directories."""
+
+    mocker.patch(
+        "xdg.BaseDirectory.xdg_config_home", new=os.path.join(tmpdir, ".config")
+    )
+    mocker.patch("xdg.BaseDirectory.xdg_data_home", new=os.path.join(tmpdir, ".local"))
+    mocker.patch("xdg.BaseDirectory.xdg_cache_home", new=os.path.join(tmpdir, ".cache"))
+    mocker.patch(
+        "xdg.BaseDirectory.xdg_config_dirs", new=[xdg.BaseDirectory.xdg_config_home]
+    )
+    mocker.patch(
+        "xdg.BaseDirectory.xdg_data_dirs", new=[xdg.BaseDirectory.xdg_data_home]
+    )
+    mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": os.path.join(tmpdir, ".config")})
 
 
 @pytest.fixture

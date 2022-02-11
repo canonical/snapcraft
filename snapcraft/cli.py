@@ -16,6 +16,7 @@
 
 """Command-line application entry point."""
 
+import logging
 import os
 import sys
 
@@ -57,6 +58,12 @@ def run():
     # in craft-cli.
     if "-h" in sys.argv or "--help" in sys.argv:
         legacy.legacy_run()
+
+    # set lib loggers to debug level so that all messages are sent to Emitter
+    # TODO: add craft_providers
+    for lib_name in ("craft_parts",):
+        logger = logging.getLogger(lib_name)
+        logger.setLevel(logging.DEBUG)
 
     emit.init(EmitterMode.NORMAL, "snapcraft", f"Starting Snapcraft {__version__}")
     dispatcher = craft_cli.Dispatcher(

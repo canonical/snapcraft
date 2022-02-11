@@ -46,7 +46,7 @@ classifiers = [
     "Natural Language :: English",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.8",
     "Topic :: Software Development :: Build Tools",
     "Topic :: System :: Software Distribution",
 ]
@@ -93,6 +93,7 @@ install_requires = [
     "attrs",
     "click",
     "craft-cli",
+    "craft-parts",
     "cryptography==3.4",
     "gnupg",
     "jsonschema==2.5.1",

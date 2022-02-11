@@ -30,6 +30,10 @@ class FeatureNotImplemented(SnapcraftError):
         super().__init__(f"Command or feature not implemented: {msg}")
 
 
+class PartsLifecycleError(SnapcraftError):
+    """Error during parts processing."""
+
+
 class ProjectValidationError(SnapcraftError):
     """Error validatiing snapcraft.yaml."""
 
