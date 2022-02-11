@@ -39,12 +39,12 @@ def temp_xdg(tmpdir, mocker):
 
 
 @pytest.fixture
-def new_dir(tmpdir):
+def new_dir(tmp_path):
     """Change to a new temporary directory."""
 
     cwd = os.getcwd()
-    os.chdir(tmpdir)
+    os.chdir(tmp_path)
 
-    yield tmpdir
+    yield tmp_path
 
     os.chdir(cwd)
