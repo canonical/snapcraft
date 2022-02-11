@@ -174,7 +174,8 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         '--base-paths "${SNAPCRAFT_PART_SRC}" --build-base "${SNAPCRAFT_PART_BUILD}" '
         '--merge-install --install-base "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap '
         "--packages-ignore ipackage1 ipackage2... --packages-select package1 "
-        "package2... --ament-cmake-args ament args... --catkin-cmake-args catkin "
+        "package2... --cmake-args cmake args... "
+        "--ament-cmake-args ament args... --catkin-cmake-args catkin "
         'args... --parallel-workers "${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
         'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE ]; then',
         'rm "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE',
