@@ -108,13 +108,13 @@ def test_config_not_found(new_dir):
 def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
     """Snapcraft.yaml should be parsed as a valid yaml file."""
     yaml_data = snapcraft_yaml(base="core22", filename=filename)
-    run_step_mock = mocker.patch("snapcraft.parts.lifecycle._run_step")
+    run_command_mock = mocker.patch("snapcraft.parts.lifecycle._run_command")
 
     parts_lifecycle.run("pull", argparse.Namespace(parts=["part1"]))
 
     project = Project.unmarshal(yaml_data)
 
-    assert run_step_mock.mock_calls == [
+    assert run_command_mock.mock_calls == [
         call("pull", project, argparse.Namespace(parts=["part1"]))
     ]
 
@@ -122,7 +122,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
 def test_snapcraft_yaml_parse_error(new_dir, snapcraft_yaml, mocker):
     """If snapcraft.yaml is not a valid yaml, raise an error."""
     snapcraft_yaml(base="invalid: true")
-    run_step_mock = mocker.patch("snapcraft.parts.lifecycle._run_step")
+    run_command_mock = mocker.patch("snapcraft.parts.lifecycle._run_command")
 
     with pytest.raises(errors.SnapcraftError) as raised:
         parts_lifecycle.run("pull", argparse.Namespace(parts=["part1"]))
@@ -131,7 +131,7 @@ def test_snapcraft_yaml_parse_error(new_dir, snapcraft_yaml, mocker):
         "YAML parsing error: mapping values are not allowed here\n"
         '  in "snap/snapcraft.yaml", line 4, column 14'
     )
-    assert run_step_mock.mock_calls == []
+    assert run_command_mock.mock_calls == []
 
 
 def test_legacy_base_not_core22(new_dir, snapcraft_yaml):
@@ -141,3 +141,40 @@ def test_legacy_base_not_core22(new_dir, snapcraft_yaml):
         parts_lifecycle.run("pull", argparse.Namespace())
 
     assert str(raised.value) == "base is not core22"
+
+
+@pytest.mark.parametrize(
+    "cmd,step",
+    [
+        ("pull", "pull"),
+        ("build", "build"),
+        ("stage", "stage"),
+        ("prime", "prime"),
+    ],
+)
+def test_lifecycle_run_command_step(cmd, step, snapcraft_yaml, new_dir, mocker):
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch("snapcraft.meta.snap_yaml.write")
+    pack_mock = mocker.patch("snapcraft.pack.pack_snap")
+
+    parts_lifecycle._run_command(cmd, project, argparse.Namespace())
+
+    assert run_mock.mock_calls == [call(step)]
+    assert pack_mock.mock_calls == []
+
+
+def test_lifecycle_run_command_pack(snapcraft_yaml, new_dir, mocker):
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch("snapcraft.meta.snap_yaml.write")
+    pack_mock = mocker.patch("snapcraft.pack.pack_snap")
+
+    parts_lifecycle._run_command(
+        "pack", project, argparse.Namespace(directory=None, output=None)
+    )
+
+    assert run_mock.mock_calls == [call("prime")]
+    assert pack_mock.mock_calls == [
+        call(new_dir / "work/prime", output=None, compression="xz")
+    ]
