@@ -36,6 +36,7 @@ COMMAND_GROUPS = [
             commands.BuildCommand,
             commands.StageCommand,
             commands.PrimeCommand,
+            commands.PackCommand,
         ],
     ),
     craft_cli.CommandGroup("Other", [commands.VersionCommand]),
@@ -71,6 +72,7 @@ def run():
         COMMAND_GROUPS,
         summary="What's the app about",
         extra_global_args=GLOBAL_ARGS,
+        default_command=commands.PackCommand,
     )
 
     try:

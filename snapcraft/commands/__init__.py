@@ -18,6 +18,7 @@
 
 from .lifecycle import (  # noqa: F401
     BuildCommand,
+    PackCommand,
     PrimeCommand,
     PullCommand,
     StageCommand,

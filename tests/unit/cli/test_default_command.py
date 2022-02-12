@@ -18,23 +18,25 @@ import argparse
 import sys
 from unittest.mock import call
 
-from snapcraft import __version__, cli
+import pytest
+
+from snapcraft import cli
 
 
-def test_version_command(mocker):
-    mocker.patch.object(sys, "argv", ["cmd", "version"])
-    mock_version_cmd = mocker.patch("snapcraft.commands.version.VersionCommand.run")
+def test_default_command(mocker):
+    mocker.patch.object(sys, "argv", ["cmd"])
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
     cli.run()
-    assert mock_version_cmd.mock_calls == [call(argparse.Namespace())]
+    assert mock_pack_cmd.mock_calls == [
+        call(argparse.Namespace(directory=None, output=None))
+    ]
 
 
-def test_version_argument(mocker, emitter):
-    mocker.patch.object(sys, "argv", ["cmd", "--version"])
+@pytest.mark.parametrize("option", ["-o", "--output"])
+def test_default_command_output(mocker, option):
+    mocker.patch.object(sys, "argv", ["cmd", option, "name"])
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
     cli.run()
-    emitter.assert_recorded([f"snapcraft {__version__}"])
-
-
-def test_version_argument_with_command(mocker, emitter):
-    mocker.patch.object(sys, "argv", ["cmd", "--version", "version"])
-    cli.run()
-    emitter.assert_recorded([f"snapcraft {__version__}"])
+    assert mock_pack_cmd.mock_calls == [
+        call(argparse.Namespace(directory=None, output="name"))
+    ]

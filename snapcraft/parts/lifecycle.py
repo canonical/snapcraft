@@ -23,7 +23,7 @@ import yaml
 import yaml.error
 from craft_cli import emit
 
-from snapcraft import errors
+from snapcraft import errors, pack
 from snapcraft.meta import snap_yaml
 from snapcraft.parts import PartsLifecycle
 from snapcraft.projects import Project
@@ -40,14 +40,14 @@ _PROJECT_FILES = [
 ]
 
 
-def run(step_name: str, parsed_args: "argparse.Namespace") -> None:
+def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     """Run the parts lifecycle.
 
     :raises SnapcraftError: if the step name is invalid, or the project
         yaml file cannot be loaded.
     :raises LegacyFallback: if the project's base is not core22.
     """
-    emit.trace(f"{step_name} parts, arguments: {parsed_args}")
+    emit.trace(f"command: {command_name}, arguments: {parsed_args}")
     yaml_data = {}
     for project_file in _PROJECT_FILES:
         if project_file.is_file():
@@ -72,15 +72,19 @@ def run(step_name: str, parsed_args: "argparse.Namespace") -> None:
 
     project = Project.unmarshal(yaml_data)
 
-    _run_step(step_name, project, parsed_args)
+    _run_command(command_name, project, parsed_args)
 
 
-def _run_step(
-    step_name: str, project: Project, parsed_args: "argparse.Namespace",
+def _run_command(
+    command_name: str,
+    project: Project,
+    parsed_args: "argparse.Namespace",
 ) -> None:
 
     # TODO: check destructive and managed modes and run in provider
     _ = parsed_args
+
+    step_name = "prime" if command_name == "pack" else command_name
 
     work_dir = Path("work").absolute()
 
@@ -88,6 +92,13 @@ def _run_step(
     lifecycle.run(step_name)
 
     snap_yaml.write(project, lifecycle.prime_dir, arch=lifecycle.target_arch)
+
+    if command_name == "pack":
+        pack.pack_snap(
+            lifecycle.prime_dir,
+            output=parsed_args.output,
+            compression=project.compression,
+        )
 
 
 def _load_yaml(filename: Path) -> Dict[str, Any]:

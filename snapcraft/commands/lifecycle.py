@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING
 from craft_cli import BaseCommand, emit
 from overrides import overrides
 
+from snapcraft import pack
 from snapcraft.parts import lifecycle as parts_lifecycle
 
 if TYPE_CHECKING:
@@ -30,13 +31,12 @@ if TYPE_CHECKING:
 
 
 class _LifecycleCommand(BaseCommand, abc.ABC):
-    """Run lifecycle commands."""
+    """Run lifecycle-related commands."""
 
     @overrides
     def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
-        parser.add_argument(
-            "parts", metavar="parts", type=str, nargs="*", help="Parts to process"
-        )
+        # TODO: add arguments for all step commands and pack
+        pass
 
     @overrides
     def run(self, parsed_args):
@@ -48,7 +48,18 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
         parts_lifecycle.run(self.name, parsed_args)
 
 
-class PullCommand(_LifecycleCommand):
+class _LifecycleStepCommand(_LifecycleCommand):
+    """Run lifecycle step commands."""
+
+    @overrides
+    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+        super().fill_parser(parser)
+        parser.add_argument(
+            "parts", metavar="parts", type=str, nargs="*", help="Parts to process"
+        )
+
+
+class PullCommand(_LifecycleStepCommand):
     """Run the lifecycle up to the pull step."""
 
     name = "pull"
@@ -62,7 +73,7 @@ class PullCommand(_LifecycleCommand):
     )
 
 
-class BuildCommand(_LifecycleCommand):
+class BuildCommand(_LifecycleStepCommand):
     """Run the lifecycle up to the build step."""
 
     name = "build"
@@ -75,7 +86,7 @@ class BuildCommand(_LifecycleCommand):
     )
 
 
-class StageCommand(_LifecycleCommand):
+class StageCommand(_LifecycleStepCommand):
     """Run the lifecycle up to the stage step."""
 
     name = "stage"
@@ -89,7 +100,7 @@ class StageCommand(_LifecycleCommand):
     )
 
 
-class PrimeCommand(_LifecycleCommand):
+class PrimeCommand(_LifecycleStepCommand):
     """Prepare the final payload for packing."""
 
     name = "prime"
@@ -101,3 +112,45 @@ class PrimeCommand(_LifecycleCommand):
         those parts will be primed. The default is to prime all parts.
         """
     )
+
+
+class PackCommand(_LifecycleCommand):
+    """Prepare the final payload for packing."""
+
+    name = "pack"
+    help_msg = "Build artifacts defined for a part"
+    overview = textwrap.dedent(
+        """
+        Prepare the final payload to be packed as a snap. If part names are
+        specified only those parts will be primed. The default is to prime
+        all parts.
+        """
+    )
+
+    @overrides
+    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+        """Add arguments specific to the pack command."""
+        super().fill_parser(parser)
+        parser.add_argument(
+            "directory",
+            metavar="directory",
+            type=str,
+            nargs="?",
+            default=None,
+            help="Directory to pack",
+        )
+        parser.add_argument(
+            "-o",
+            "--output",
+            metavar="filename",
+            type=str,
+            help="Path to the resulting snap",
+        )
+
+    @overrides
+    def run(self, parsed_args):
+        """Run the command."""
+        if parsed_args.directory:
+            pack.pack_snap(parsed_args.directory, output=parsed_args.output)
+        else:
+            super().run(parsed_args)

@@ -55,3 +55,31 @@ def test_lifecycle_command_arguments(cmd, run_method, mocker):
     assert mock_lifecycle_cmd.mock_calls == [
         call(argparse.Namespace(parts=["part1", "part2"]))
     ]
+
+
+def test_lifecycle_command_pack(mocker):
+    mocker.patch.object(sys, "argv", ["cmd", "pack"])
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(argparse.Namespace(directory=None, output=None))
+    ]
+
+
+@pytest.mark.parametrize("option", ["-o", "--output"])
+def test_lifecycle_command_pack_output(mocker, option):
+    mocker.patch.object(sys, "argv", ["cmd", "pack", option, "name"])
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(argparse.Namespace(directory=None, output="name"))
+    ]
+
+
+def test_lifecycle_command_pack_directory(mocker):
+    mocker.patch.object(sys, "argv", ["cmd", "pack", "name"])
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(argparse.Namespace(directory="name", output=None))
+    ]
