@@ -201,7 +201,7 @@ prepare: |
     if stat /snapcraft/tests/*.snap 2>/dev/null; then
       snap install --classic --dangerous /snapcraft/tests/*.snap
     else
-      echo "Expected a snap to exist in /snapcraft/. If your intention"\
+      echo "Expected a snap to exist in /snapcraft/tests/. If your intention"\
            "was to install from the store, set \$SNAPCRAFT_CHANNEL."
       exit 1
     fi
