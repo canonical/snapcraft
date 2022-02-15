@@ -156,8 +156,17 @@ class StatusCache:
         # properties specific to that part. If it's not dirty because of those,
         # we need to expand it here to also take its dependencies (if any) into
         # account
-        prerequisite_step = steps.get_dependency_prerequisite_step(step)
         dependencies = self.config.parts.get_dependencies(part.name, recursive=True)
+
+        # core20 uses Plugins V2 which does not require staging parts for pull
+        # like V1 Plugins do.
+        if (
+            self.config.project._get_build_base() == "core20"
+            and part._build_attributes.core22_step_dependencies()
+        ):
+            prerequisite_step = step
+        else:
+            prerequisite_step = steps.get_dependency_prerequisite_step(step)
 
         changed_dependencies: List[pluginhandler.Dependency] = []
         with contextlib.suppress(errors.StepHasNotRunError):
