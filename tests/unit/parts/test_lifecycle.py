@@ -79,6 +79,7 @@ def snapcraft_yaml():
             "grade": "stable",
             "adopt-info": None,
             "architectures": [],
+            "package-repositories": [],
             "assumes": [],
             "hooks": None,
             "passthrough": None,
@@ -114,8 +115,18 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
 
     project = Project.unmarshal(yaml_data)
 
+    if filename == "build-aux/snap/snapcraft.yaml":
+        assets_dir = Path("build-aux/snap")
+    else:
+        assets_dir = Path("snap")
+
     assert run_command_mock.mock_calls == [
-        call("pull", project, argparse.Namespace(parts=["part1"]))
+        call(
+            "pull",
+            project=project,
+            assets_dir=assets_dir,
+            parsed_args=argparse.Namespace(parts=["part1"])
+        ),
     ]
 
 
@@ -158,7 +169,9 @@ def test_lifecycle_run_command_step(cmd, step, snapcraft_yaml, new_dir, mocker):
     mocker.patch("snapcraft.meta.snap_yaml.write")
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
 
-    parts_lifecycle._run_command(cmd, project, argparse.Namespace())
+    parts_lifecycle._run_command(
+        cmd, project=project, assets_dir=Path(), parsed_args=argparse.Namespace()
+    )
 
     assert run_mock.mock_calls == [call(step)]
     assert pack_mock.mock_calls == []
@@ -171,7 +184,10 @@ def test_lifecycle_run_command_pack(snapcraft_yaml, new_dir, mocker):
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
 
     parts_lifecycle._run_command(
-        "pack", project, argparse.Namespace(directory=None, output=None)
+        "pack",
+        project=project,
+        assets_dir=Path(),
+        parsed_args=argparse.Namespace(directory=None, output=None),
     )
 
     assert run_mock.mock_calls == [call("prime")]

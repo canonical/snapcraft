@@ -31,7 +31,7 @@ def parts_data():
 
 @pytest.mark.parametrize("step_name", ["pull", "overlay", "build", "stage", "prime"])
 def test_parts_lifecycle_run(parts_data, step_name, new_dir, emitter):
-    lifecycle = PartsLifecycle(parts_data, work_dir=new_dir)
+    lifecycle = PartsLifecycle(parts_data, work_dir=new_dir, assets_dir=Path())
     lifecycle.run(step_name)
     assert lifecycle.prime_dir == Path(new_dir, "prime")
     assert lifecycle.prime_dir.is_dir()
@@ -39,14 +39,14 @@ def test_parts_lifecycle_run(parts_data, step_name, new_dir, emitter):
 
 
 def test_parts_lifecycle_run_bad_step(parts_data, new_dir):
-    lifecycle = PartsLifecycle(parts_data, work_dir=new_dir)
+    lifecycle = PartsLifecycle(parts_data, work_dir=new_dir, assets_dir=Path())
     with pytest.raises(RuntimeError) as raised:
         lifecycle.run("invalid")
     assert str(raised.value) == "Invalid target step 'invalid'"
 
 
 def test_parts_lifecycle_run_internal_error(parts_data, new_dir, mocker):
-    lifecycle = PartsLifecycle(parts_data, work_dir=new_dir)
+    lifecycle = PartsLifecycle(parts_data, work_dir=new_dir, assets_dir=Path())
     mocker.patch("craft_parts.LifecycleManager.plan", side_effect=RuntimeError("crash"))
     with pytest.raises(RuntimeError) as raised:
         lifecycle.run("prime")
@@ -55,7 +55,7 @@ def test_parts_lifecycle_run_internal_error(parts_data, new_dir, mocker):
 
 def test_parts_lifecycle_run_parts_error(new_dir):
     lifecycle = PartsLifecycle(
-        {"p1": {"plugin": "dump", "source": "foo"}}, work_dir=new_dir
+        {"p1": {"plugin": "dump", "source": "foo"}}, work_dir=new_dir, assets_dir=Path()
     )
     with pytest.raises(errors.PartsLifecycleError) as raised:
         lifecycle.run("prime")

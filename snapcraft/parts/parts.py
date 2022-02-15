@@ -17,14 +17,15 @@
 """Craft-parts lifecycle wrapper."""
 
 import pathlib
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 import craft_parts
 from craft_cli import emit
 from craft_parts import ActionType, Step
 from xdg import BaseDirectory  # type: ignore
 
-from snapcraft.errors import PartsLifecycleError
+from snapcraft import errors
+from snapcraft.repo import AptKeyManager, AptSourcesManager, PackageRepository
 
 _LIFECYCLE_STEPS = {
     "pull": Step.PULL,
@@ -40,17 +41,36 @@ class PartsLifecycle:
 
     :param all_parts: A dictionary containing the parts defined in the project.
     :param work_dir: The working directory for parts processing.
+    :param assets_dir: The directory containing project assets.
 
     :raises PartsLifecycleError: On error initializing the parts lifecycle.
     """
 
     def __init__(
-        self, all_parts: Dict[str, Any], *, work_dir: pathlib.Path,
+        self,
+        all_parts: Dict[str, Any],
+        *,
+        work_dir: pathlib.Path,
+        assets_dir: pathlib.Path,
+        package_repositories: Optional[List[PackageRepository]] = None,
     ):
+        self._assets_dir = assets_dir
+
+        if package_repositories:
+            self._package_repositories = package_repositories
+        else:
+            self._package_repositories = []
+
         emit.progress("Initializing parts lifecycle")
 
         # set the cache dir for parts package management
         cache_dir = BaseDirectory.save_cache_path("snapcraft")
+
+        extra_build_packages = []
+        if self._package_repositories:
+            # Install pre-requisite packages for apt-key, if not installed.
+            # FIXME: package names should be plataform-specific
+            extra_build_packages.extend(["gnupg", "dirmngr"])
 
         try:
             self._lcm = craft_parts.LifecycleManager(
@@ -61,7 +81,7 @@ class PartsLifecycle:
                 ignore_local_sources=["*.snap"],
             )
         except craft_parts.PartsError as err:
-            raise PartsLifecycleError(str(err)) from err
+            raise errors.PartsLifecycleError(str(err)) from err
 
     @property
     def prime_dir(self) -> pathlib.Path:
@@ -86,9 +106,19 @@ class PartsLifecycle:
             raise RuntimeError(f"Invalid target step {step_name!r}")
 
         try:
+            actions = self._lcm.plan(target_step)
+
+            emit.progress("Installing package repositories...")
+
+            if self._package_repositories:
+                refresh_required = self._install_package_repositories()
+                if refresh_required:
+                    self._lcm.refresh_packages_list()
+
+            emit.message("Installed package repositories", intermediate=True)
+
             emit.progress("Executing parts lifecycle...")
 
-            actions = self._lcm.plan(target_step)
             with self._lcm.action_executor() as aex:
                 for action in actions:
                     message = _action_message(action)
@@ -102,9 +132,41 @@ class PartsLifecycle:
             msg = err.strerror
             if err.filename:
                 msg = f"{err.filename}: {msg}"
-            raise PartsLifecycleError(msg) from err
+            raise errors.PartsLifecycleError(msg) from err
         except Exception as err:
-            raise PartsLifecycleError(str(err)) from err
+            raise errors.PartsLifecycleError(str(err)) from err
+
+    def _install_package_repositories(self) -> bool:
+        key_assets = self._assets_dir / "keys"
+        key_manager = AptKeyManager(key_assets=key_assets)
+        sources_manager = AptSourcesManager()
+
+        refresh_required = False
+        for package_repo in self._package_repositories:
+            refresh_required |= key_manager.install_package_repository_key(
+                package_repo=package_repo
+            )
+            refresh_required |= sources_manager.install_package_repository_sources(
+                package_repo=package_repo
+            )
+
+        _verify_all_key_assets_installed(
+            key_assets=key_assets, key_manager=key_manager
+        )
+
+        return refresh_required
+
+def _verify_all_key_assets_installed(
+    *, key_assets: pathlib.Path, key_manager: AptKeyManager,
+) -> None:
+    """Verify all configured key assets are utilized, error if not."""
+    for key_asset in key_assets.glob("*"):
+        key = key_asset.read_text()
+        for key_id in key_manager.get_key_fingerprints(key=key):
+            if not key_manager.is_key_installed(key_id=key_id):
+                raise errors.SnapcraftError("Found unused key asset {key_asset!r}.",
+                    details="All configured key assets must be utilized.",
+                    resolution="Verify key usage and remove all unused keys.")
 
 
 def _action_message(action: craft_parts.Action) -> str:
