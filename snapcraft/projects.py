@@ -104,7 +104,7 @@ class App(ProjectModel):
     slots: Optional[UniqueStrList]
     plugs: Optional[UniqueStrList]
     aliases: Optional[UniqueAliasList]
-    environment: Optional[Dict[str, str]]
+    environment: Optional[Dict[str, Any]]
     command_chain: List[CommandChainStr] = []
     # TODO: sockets
 
@@ -159,7 +159,6 @@ class Project(ProjectModel):
     See https://snapcraft.io/docs/snapcraft-yaml-reference
 
     XXX: Not implemented in this version
-    - environment (top-level)
     - system-usernames
     - adopt-info (after adding craftctl support to craft-parts)
     """
@@ -193,6 +192,7 @@ class Project(ProjectModel):
     slots: Optional[Dict[str, Dict[str, str]]]  # TODO: add slot name validation
     parts: Dict[str, Any]  # parts are handled by craft-parts
     epoch: Optional[str]
+    environment: Optional[Dict[str, Any]]
 
     @pydantic.root_validator(pre=True)
     @classmethod

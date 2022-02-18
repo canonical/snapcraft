@@ -18,7 +18,7 @@
 
 import textwrap
 from pathlib import Path
-from typing import Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 import yaml
 from pydantic_yaml import YamlModel
@@ -37,7 +37,7 @@ class SnapApp(YamlModel):
 
     command: str
     command_chain: List[str]
-    environment: Optional[Dict[str, str]]
+    environment: Optional[Dict[str, Any]]
     plugs: Optional[List[str]]
 
     class Config:  # pylint: disable=too-few-public-methods
@@ -70,6 +70,7 @@ class SnapMetadata(YamlModel):
     apps: Optional[Dict[str, SnapApp]]
     confinement: str
     grade: str
+    environment: Optional[Dict[str, Any]]
 
 
 def write(project: Project, prime_dir: Path, *, arch: str):
@@ -105,6 +106,7 @@ def write(project: Project, prime_dir: Path, *, arch: str):
         apps=snap_apps,
         confinement=project.confinement,
         grade=project.grade,
+        environment=project.environment,
     )
 
     yaml.add_representer(str, _repr_str, Dumper=yaml.SafeDumper)
