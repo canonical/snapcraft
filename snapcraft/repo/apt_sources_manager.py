@@ -17,11 +17,8 @@
 """Manage the host's apt source repository configuration."""
 
 import io
-import os
 import pathlib
 import re
-import subprocess
-import tempfile
 from typing import List, Optional
 
 from craft_cli import emit

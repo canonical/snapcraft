@@ -15,10 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import pathlib
-import subprocess
 from textwrap import dedent
-from unittest.mock import call
 
 import pytest
 
@@ -56,16 +53,6 @@ def mock_run(mocker):
     yield mocker.patch("subprocess.run")
 
 
-@pytest.fixture()
-def mock_sudo_write(mocker):
-    def write_file(*, dst_path: pathlib.Path, content: bytes) -> None:
-        dst_path.write_bytes(content)
-
-    yield mocker.patch(
-        "snapcraft.repo.apt_sources_manager._sudo_write_file", side_effect=write_file
-    )
-
-
 @pytest.fixture(autouse=True)
 def mock_version_codename(mocker):
     yield mocker.patch(
@@ -81,57 +68,6 @@ def apt_sources_mgr(tmp_path):
 
     yield apt_sources_manager.AptSourcesManager(
         sources_list_d=sources_list_d,
-    )
-
-
-def test_sudo_write_file(mock_run, tmp_path, mocker):
-    mock_unlink = mocker.patch("os.unlink")
-    mock_tempfile = mocker.patch("tempfile.NamedTemporaryFile")
-    mock_tempfile.return_value.__enter__.return_value.name = "/tmp/foobar"
-
-    apt_sources_manager._sudo_write_file(
-        dst_path=pathlib.Path("/foo/bar"), content=b"some-content"
-    )
-
-    assert mock_tempfile.mock_calls == [
-        call(delete=False),
-        call().__enter__(),
-        call().__enter__().write(b"some-content"),
-        call().__enter__().flush(),
-        call().__exit__(None, None, None),
-    ]
-    assert mock_run.mock_calls == [
-        call(
-            [
-                "sudo",
-                "install",
-                "--owner=root",
-                "--group=root",
-                "--mode=0644",
-                "/tmp/foobar",
-                "/foo/bar",
-            ],
-            check=True,
-        )
-    ]
-    assert mock_unlink.mock_calls == [call("/tmp/foobar")]
-
-
-def test_sudo_write_file_fails(mock_run):
-    mock_run.side_effect = subprocess.CalledProcessError(
-        cmd=["sudo"], returncode=1, output=b"some error"
-    )
-
-    with pytest.raises(RuntimeError) as error:
-        apt_sources_manager._sudo_write_file(
-            dst_path=pathlib.Path("/foo/bar"), content=b"some-content"
-        )
-
-    assert (
-        str(error.value).startswith(
-            "Failed to install repository config with: ['sudo', 'install'"
-        )
-        is True
     )
 
 
@@ -226,7 +162,7 @@ def test_sudo_write_file_fails(mock_run):
         ),
     ],
 )
-def test_install(package_repo, name, content, apt_sources_mgr, mock_sudo_write):
+def test_install(package_repo, name, content, apt_sources_mgr):
     sources_path = apt_sources_mgr._sources_list_d / name
 
     changed = apt_sources_mgr.install_package_repository_sources(
@@ -235,23 +171,14 @@ def test_install(package_repo, name, content, apt_sources_mgr, mock_sudo_write):
 
     assert changed is True
     assert sources_path.read_bytes() == content
-    assert mock_sudo_write.mock_calls == [
-        call(
-            content=content,
-            dst_path=sources_path,
-        )
-    ]
 
     # Verify a second-run does not incur any changes.
-    mock_sudo_write.reset_mock()
-
     changed = apt_sources_mgr.install_package_repository_sources(
         package_repo=package_repo
     )
 
     assert changed is False
     assert sources_path.read_bytes() == content
-    assert mock_sudo_write.mock_calls == []
 
 
 def test_install_ppa_invalid(apt_sources_mgr):

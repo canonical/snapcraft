@@ -133,7 +133,7 @@ def test_is_key_installed(
     assert is_installed is expected
     assert mock_run.mock_calls == [
         call(
-            ["sudo", "apt-key", "export", "foo"],
+            ["apt-key", "export", "foo"],
             check=True,
             stderr=subprocess.STDOUT,
             stdout=subprocess.PIPE,
@@ -164,7 +164,7 @@ def test_install_key(
 
     assert mock_run.mock_calls == [
         call(
-            ["sudo", "apt-key", "--keyring", str(gpg_keyring), "add", "-"],
+            ["apt-key", "--keyring", str(gpg_keyring), "add", "-"],
             check=True,
             env={"LANG": "C.UTF-8"},
             input=b"some-fake-key",
@@ -191,7 +191,6 @@ def test_install_key_from_keyserver(apt_gpg, gpg_keyring, mock_run):
     assert mock_run.mock_calls == [
         call(
             [
-                "sudo",
                 "apt-key",
                 "--keyring",
                 str(gpg_keyring),
