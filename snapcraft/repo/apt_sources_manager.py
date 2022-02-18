@@ -117,7 +117,7 @@ class AptSourcesManager:
             emit.trace(f"Ignoring unchanged sources: {config_path!s}")
             return False
 
-        config_path.write_text(config.encode())
+        config_path.write_text(config)
         emit.trace(f"Installed sources: {config_path!s}")
         return True
 
