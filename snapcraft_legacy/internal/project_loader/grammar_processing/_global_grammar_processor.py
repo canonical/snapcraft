@@ -16,9 +16,10 @@
 
 from typing import Any, Dict, Set
 
+from craft_grammar import GrammarProcessor
+
 from snapcraft_legacy import project
 from snapcraft_legacy.internal import repo
-from snapcraft_legacy.internal.project_loader import grammar
 
 
 class GlobalGrammarProcessor:
@@ -34,19 +35,24 @@ class GlobalGrammarProcessor:
     {'hello'}
     """
 
-    def __init__(self, *, properties: Dict[str, Any], project: project.Project) -> None:
-        self._project = project
+    def __init__(
+        self, *, properties: Dict[str, Any], arch: str, target_arch: str
+    ) -> None:
+        self._arch = arch
+        self._target_arch = target_arch
 
         self._build_package_grammar = properties.get("build-packages", [])
         self.__build_packages = set()  # type: Set[str]
 
     def get_build_packages(self) -> Set[str]:
         if not self.__build_packages:
-            processor = grammar.GrammarProcessor(
-                self._build_package_grammar,
-                self._project,
-                repo.Repo.build_package_is_valid,
+            processor = GrammarProcessor(
+                arch=self._arch,
+                target_arch=self._target_arch,
+                checker=repo.Repo.build_package_is_valid,
             )
-            self.__build_packages = set(processor.process())
+            self.__build_packages = set(
+                processor.process(grammar=self._build_package_grammar)
+            )
 
         return self.__build_packages

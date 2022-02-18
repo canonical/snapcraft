@@ -67,7 +67,11 @@ def load_part(
     if not stage_packages_repo:
         stage_packages_repo = mock.Mock()
     grammar_processor = grammar_processing.PartGrammarProcessor(
-        plugin=plugin, properties=properties, project=project, repo=stage_packages_repo
+        plugin=plugin,
+        properties=properties,
+        arch=project.deb_arch,
+        target_arch=project.target_arch,
+        repo=stage_packages_repo,
     )
 
     return pluginhandler.PluginHandler(

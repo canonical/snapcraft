@@ -93,6 +93,7 @@ install_requires = [
     "attrs",
     "click",
     "craft-cli",
+    "craft-grammar",
     "craft-parts",
     "cryptography==3.4",
     "gnupg",
