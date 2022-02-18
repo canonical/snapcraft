@@ -213,7 +213,7 @@ class Config:
         self._ensure_no_duplicate_app_aliases()
 
         self._global_grammar_processor = grammar_processing.GlobalGrammarProcessor(
-            properties=self.data, project=project
+            properties=self.data, arch=project.deb_arch, target_arch=project.target_arch
         )
 
         # XXX: Resetting snap_meta due to above mangling of data.
@@ -257,7 +257,10 @@ class Config:
         return package_repos
 
     def _verify_all_key_assets_installed(
-        self, *, key_assets: pathlib.Path, key_manager: apt_key_manager.AptKeyManager,
+        self,
+        *,
+        key_assets: pathlib.Path,
+        key_manager: apt_key_manager.AptKeyManager,
     ) -> None:
         """Verify all configured key assets are utilized, error if not."""
         for key_asset in key_assets.glob("*"):

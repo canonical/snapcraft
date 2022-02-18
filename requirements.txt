@@ -6,6 +6,7 @@ chardet==4.0.0
 charset-normalizer==2.0.11
 click==8.0.3
 craft-cli==0.2.0
+craft-grammar==1.0.0
 craft-parts==1.1.2
 cryptography==3.4
 Deprecated==1.2.13

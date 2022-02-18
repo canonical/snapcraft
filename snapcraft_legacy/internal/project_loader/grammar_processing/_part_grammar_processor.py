@@ -16,9 +16,10 @@
 
 from typing import Any, Dict, List, Set
 
+from craft_grammar import Grammar, GrammarProcessor
+
 from snapcraft_legacy import BasePlugin, project
 from snapcraft_legacy.internal import repo
-from snapcraft_legacy.internal.project_loader import grammar
 
 from ._package_transformer import package_transformer
 
@@ -77,12 +78,14 @@ class PartGrammarProcessor:
         *,
         plugin: BasePlugin,
         properties: Dict[str, Any],
-        project: project.Project,
+        arch: str,
+        target_arch: str,
         repo: "repo.Ubuntu"
     ) -> None:
         self._plugin = plugin
         self._properties = properties
-        self._project = project
+        self._arch = arch
+        self._target_arch = target_arch
         self._repo = repo
 
         self.__build_environment: List[Dict[str, str]] = list()
@@ -103,68 +106,86 @@ class PartGrammarProcessor:
         if not self.__source:
             # The grammar is array-based, even though we only support a single
             # source.
-            processor = grammar.GrammarProcessor(
-                self._source_grammar, self._project, lambda s: True
+            processor = GrammarProcessor(
+                arch=self._arch,
+                target_arch=self._target_arch,
+                checker=lambda s: True,
             )
-            source_array = processor.process()
+            source_array = processor.process(grammar=self._source_grammar)
             if len(source_array) > 0:
                 self.__source = source_array.pop()
         return self.__source
 
-    def _get_property(self, attr: str) -> grammar.typing.Grammar:
+    def _get_property(self, attr: str) -> Grammar:
         prop = self._properties.get(attr, set())
         return getattr(self._plugin, attr.replace("-", "_"), prop)
 
     def get_build_environment(self) -> List[Dict[str, str]]:
         if not self.__build_environment:
-            processor = grammar.GrammarProcessor(
-                self._get_property("build-environment"), self._project, lambda x: True,
+            processor = GrammarProcessor(
+                arch=self._arch,
+                target_arch=self._target_arch,
+                checker=lambda s: True,
             )
-            self.__build_environment = processor.process()
+            self.__build_environment = processor.process(
+                grammar=self._get_property("build-environment"),
+            )
 
         return self.__build_environment
 
     def get_build_snaps(self) -> Set[str]:
         if not self.__build_snaps:
-            processor = grammar.GrammarProcessor(
-                self._get_property("build-snaps"),
-                self._project,
-                repo.snaps.SnapPackage.is_valid_snap,
+            processor = GrammarProcessor(
+                arch=self._arch,
+                target_arch=self._target_arch,
+                checker=repo.snaps.SnapPackage.is_valid_snap,
             )
-            self.__build_snaps = set(processor.process())
+            self.__build_snaps = set(
+                processor.process(grammar=self._get_property("build-snaps"))
+            )
 
         return self.__build_snaps
 
     def get_stage_snaps(self) -> Set[str]:
         if not self.__stage_snaps:
-            processor = grammar.GrammarProcessor(
-                self._get_property("stage-snaps"),
-                self._project,
-                repo.snaps.SnapPackage.is_valid_snap,
+            processor = GrammarProcessor(
+                arch=self._arch,
+                target_arch=self._target_arch,
+                checker=repo.snaps.SnapPackage.is_valid_snap,
             )
-            self.__stage_snaps = set(processor.process())
+            self.__stage_snaps = set(
+                processor.process(grammar=self._get_property("stage-snaps"))
+            )
 
         return self.__stage_snaps
 
     def get_build_packages(self) -> Set[str]:
         if not self.__build_packages:
-            processor = grammar.GrammarProcessor(
-                self._get_property("build-packages"),
-                self._project,
-                self._repo.build_package_is_valid,
+            processor = GrammarProcessor(
+                arch=self._arch,
+                target_arch=self._target_arch,
+                checker=self._repo.build_package_is_valid,
             )
-            self.__build_packages = set(processor.process())
+            self.__build_packages = set(
+                processor.process(
+                    grammar=self._get_property("build-packages"),
+                )
+            )
 
         return self.__build_packages
 
     def get_stage_packages(self) -> Set[str]:
         if not self.__stage_packages:
-            processor = grammar.GrammarProcessor(
-                self._get_property("stage-packages"),
-                self._project,
-                self._repo.build_package_is_valid,
+            processor = GrammarProcessor(
+                arch=self._arch,
+                target_arch=self._target_arch,
+                checker=self._repo.build_package_is_valid,
                 transformer=package_transformer,
             )
-            self.__stage_packages = set(processor.process())
+            self.__stage_packages = set(
+                processor.process(
+                    grammar=self._get_property("stage-packages"),
+                )
+            )
 
         return self.__stage_packages

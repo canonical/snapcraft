@@ -198,26 +198,22 @@ class TestPartGrammarSource:
     ]
 
     arch_scenarios = [
-        ("amd64", {"host_arch": "x86_64", "target_arch": "amd64"}),
-        ("i386", {"host_arch": "i686", "target_arch": "i386"}),
-        ("amd64 to armhf", {"host_arch": "x86_64", "target_arch": "armhf"}),
+        ("amd64", {"arch": "amd64", "target_arch": "amd64"}),
+        ("i386", {"arch": "i386", "target_arch": "i386"}),
+        ("amd64 to armhf", {"arch": "amd64", "target_arch": "armhf"}),
     ]
 
     scenarios = multiply_scenarios(source_scenarios, arch_scenarios)
 
     def test(
         self,
-        monkeypatch,
-        host_arch,
+        arch,
         target_arch,
         properties,
         expected_amd64,
         expected_i386,
         expected_armhf,
     ):
-        monkeypatch.setattr(platform, "machine", lambda: host_arch)
-        monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
-
         repo = mock.Mock()
         plugin = mock.Mock()
         plugin.properties = properties.copy()
@@ -231,7 +227,8 @@ class TestPartGrammarSource:
             PartGrammarProcessor(
                 plugin=plugin,
                 properties=plugin.properties,
-                project=project.Project(target_deb_arch=target_arch),
+                arch=arch,
+                target_arch=target_arch,
                 repo=repo,
             ).get_source()
             == expected_arch[f"expected_{target_arch}"]
@@ -310,9 +307,9 @@ class TestPartGrammarBuildAndStageSnaps:
     ]
 
     arch_scenarios = [
-        ("amd64", {"host_arch": "x86_64", "target_arch": "amd64"}),
-        ("i386", {"host_arch": "i686", "target_arch": "i386"}),
-        ("amd64 to armhf", {"host_arch": "x86_64", "target_arch": "armhf"}),
+        ("amd64", {"arch": "amd64", "target_arch": "amd64"}),
+        ("i386", {"arch": "i386", "target_arch": "i386"}),
+        ("amd64 to armhf", {"arch": "amd64", "target_arch": "armhf"}),
     ]
 
     scenarios = multiply_scenarios(source_scenarios, arch_scenarios)
@@ -320,15 +317,13 @@ class TestPartGrammarBuildAndStageSnaps:
     def test_snaps(
         self,
         monkeypatch,
-        host_arch,
+        arch,
         target_arch,
         snaps,
         expected_amd64,
         expected_i386,
         expected_armhf,
     ):
-        monkeypatch.setattr(platform, "machine", lambda: host_arch)
-        monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
         monkeypatch.setattr(
             snapcraft_repo.snaps.SnapPackage,
             "is_valid_snap",
@@ -348,7 +343,8 @@ class TestPartGrammarBuildAndStageSnaps:
                 "build-snaps": {"plugin-preferred"},
                 "stage-snaps": "plugin-preferred",
             },
-            project=project.Project(target_deb_arch=target_arch),
+            arch=arch,
+            target_arch=target_arch,
             repo=repo,
         )
 
@@ -363,15 +359,13 @@ class TestPartGrammarBuildAndStageSnaps:
     def test_snaps_no_plugin_attribute(
         self,
         monkeypatch,
-        host_arch,
+        arch,
         target_arch,
         snaps,
         expected_amd64,
         expected_i386,
         expected_armhf,
     ):
-        monkeypatch.setattr(platform, "machine", lambda: host_arch)
-        monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
         monkeypatch.setattr(
             snapcraft_repo.snaps.SnapPackage,
             "is_valid_snap",
@@ -387,7 +381,8 @@ class TestPartGrammarBuildAndStageSnaps:
         processor = PartGrammarProcessor(
             plugin=plugin,
             properties={"build-snaps": snaps, "stage-snaps": snaps},
-            project=project.Project(target_deb_arch=target_arch),
+            arch=arch,
+            target_arch=target_arch,
             repo=repo,
         )
 
@@ -460,26 +455,22 @@ class TestPartGrammarStagePackages:
     ]
 
     arch_scenarios = [
-        ("amd64", {"host_arch": "x86_64", "target_arch": "amd64"}),
-        ("i386", {"host_arch": "i686", "target_arch": "i386"}),
-        ("amd64 to armhf", {"host_arch": "x86_64", "target_arch": "armhf"}),
+        ("amd64", {"arch": "amd64", "target_arch": "amd64"}),
+        ("i386", {"arch": "i386", "target_arch": "i386"}),
+        ("amd64 to armhf", {"arch": "amd64", "target_arch": "armhf"}),
     ]
 
     scenarios = multiply_scenarios(source_scenarios, arch_scenarios)
 
     def test_packages(
         self,
-        monkeypatch,
-        host_arch,
+        arch,
         target_arch,
         packages,
         expected_amd64,
         expected_i386,
         expected_armhf,
     ):
-        monkeypatch.setattr(platform, "machine", lambda: host_arch)
-        monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
-
         repo = mock.Mock()
 
         class Plugin:
@@ -490,7 +481,8 @@ class TestPartGrammarStagePackages:
         processor = PartGrammarProcessor(
             plugin=plugin,
             properties={"stage-packages": "plugin-preferred"},
-            project=project.Project(target_deb_arch=target_arch),
+            arch=arch,
+            target_arch=target_arch,
             repo=repo,
         )
 
@@ -505,17 +497,13 @@ class TestPartGrammarStagePackages:
 
     def test_packages_plugin_no_attr(
         self,
-        monkeypatch,
-        host_arch,
+        arch,
         target_arch,
         packages,
         expected_amd64,
         expected_i386,
         expected_armhf,
     ):
-        monkeypatch.setattr(platform, "machine", lambda: host_arch)
-        monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
-
         repo = mock.Mock()
 
         class Plugin:
@@ -525,7 +513,8 @@ class TestPartGrammarStagePackages:
         processor = PartGrammarProcessor(
             plugin=plugin,
             properties={"stage-packages": packages},
-            project=project.Project(target_deb_arch=target_arch),
+            arch=arch,
+            target_arch=target_arch,
             repo=repo,
         )
 
@@ -599,26 +588,22 @@ class TestPartGrammarBuildPackages:
     ]
 
     arch_scenarios = [
-        ("amd64", {"host_arch": "x86_64", "target_arch": "amd64"}),
-        ("i386", {"host_arch": "i686", "target_arch": "i386"}),
-        ("amd64 to armhf", {"host_arch": "x86_64", "target_arch": "armhf"}),
+        ("amd64", {"arch": "amd64", "target_arch": "amd64"}),
+        ("i386", {"arch": "i386", "target_arch": "i386"}),
+        ("amd64 to armhf", {"arch": "amd64", "target_arch": "armhf"}),
     ]
 
     scenarios = multiply_scenarios(source_scenarios, arch_scenarios)
 
     def test_packages(
         self,
-        monkeypatch,
-        host_arch,
+        arch,
         target_arch,
         packages,
         expected_amd64,
         expected_i386,
         expected_armhf,
     ):
-        monkeypatch.setattr(platform, "machine", lambda: host_arch)
-        monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
-
         repo = mock.Mock()
 
         class Plugin:
@@ -629,7 +614,8 @@ class TestPartGrammarBuildPackages:
         processor = PartGrammarProcessor(
             plugin=plugin,
             properties={"build-packages": {"plugin-preferred"}},
-            project=project.Project(target_deb_arch=target_arch),
+            arch=arch,
+            target_arch=target_arch,
             repo=repo,
         )
 
@@ -644,17 +630,13 @@ class TestPartGrammarBuildPackages:
 
     def test_packages_plugin_no_attr(
         self,
-        monkeypatch,
-        host_arch,
+        arch,
         target_arch,
         packages,
         expected_amd64,
         expected_i386,
         expected_armhf,
     ):
-        monkeypatch.setattr(platform, "machine", lambda: host_arch)
-        monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
-
         repo = mock.Mock()
 
         class Plugin:
@@ -664,7 +646,8 @@ class TestPartGrammarBuildPackages:
         processor = PartGrammarProcessor(
             plugin=plugin,
             properties={"build-packages": packages},
-            project=project.Project(target_deb_arch=target_arch),
+            arch=arch,
+            target_arch=target_arch,
             repo=repo,
         )
 

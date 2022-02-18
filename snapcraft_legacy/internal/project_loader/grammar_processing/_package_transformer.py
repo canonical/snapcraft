@@ -14,13 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft_legacy import project
-from snapcraft_legacy.internal.project_loader.grammar import (
-    CompoundStatement,
-    Statement,
-    ToStatement,
-    typing,
-)
+from craft_grammar import CallStack, CompoundStatement, Statement, ToStatement
 
 
 def _is_or_contains_to_statement(statement: Statement) -> bool:
@@ -37,11 +31,11 @@ def _is_or_contains_to_statement(statement: Statement) -> bool:
 
 
 def package_transformer(
-    call_stack: typing.CallStack, package_name: str, project: project.Project
+    call_stack: CallStack, package_name: str, target_arch: str
 ) -> str:
     if any(_is_or_contains_to_statement(s) for s in call_stack):
         if ":" not in package_name:
             # deb_arch is target arch or host arch if both are the same
-            package_name += ":{}".format(project.deb_arch)
+            package_name = f"{package_name}:{target_arch}"
 
     return package_name

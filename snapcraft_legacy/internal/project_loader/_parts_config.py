@@ -194,7 +194,8 @@ class PartsConfig:
         grammar_processor = grammar_processing.PartGrammarProcessor(
             plugin=plugin,
             properties=part_properties,
-            project=self._project,
+            arch=self._project.deb_arch,
+            target_arch=self._project.target_arch,
             repo=stage_packages_repo,
         )
 
