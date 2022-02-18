@@ -16,5 +16,7 @@ parts:
       touch $SNAPCRAFT_PART_INSTALL/part1
   part2:
     build-attributes: [core22-step-dependencies]
-    plugin: nil
+    source: ./testfile.zip
+    source-type: zip
+    plugin: dump
     after: [part1]
