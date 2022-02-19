@@ -34,6 +34,7 @@ line_length = 88
 disable = "too-few-public-methods,fixme"
 
 [tool.pylint.format]
+max-attributes = 15
 good-names = "id"
 
 [tool.pylint.MASTER]

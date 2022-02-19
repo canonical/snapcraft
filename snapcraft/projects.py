@@ -47,10 +47,12 @@ class ProjectModel(pydantic.BaseModel):
 # fmt: off
 if TYPE_CHECKING:
     CommandChainStr = str
+    KeyIdStr = str
     UniqueStrList = List[str]
     UniqueAliasList = List[str]
 else:
     CommandChainStr = constr(regex=r"^[A-Za-z0-9/._#:$-]*$")
+    KeyIdStr = constr(regex=r"^[A-Z0-9]{40}$")
     UniqueStrList = conlist(str, unique_items=True)
     UniqueAliasList = conlist(constr(regex=r"^[a-zA-Z0-9][-_.a-zA-Z0-9]*$"), unique_items=True)
 # fmt: on
@@ -103,7 +105,7 @@ class App(ProjectModel):
     slots: Optional[UniqueStrList]
     plugs: Optional[UniqueStrList]
     aliases: Optional[UniqueAliasList]
-    environment: Optional[List[Dict[str, str]]]
+    environment: Optional[Dict[str, str]]
     command_chain: List[CommandChainStr] = []
     # TODO: sockets
 
@@ -152,6 +154,27 @@ class Architecture(ProjectModel):
     build_to: Optional[Union[str, UniqueStrList]]
 
 
+class AptDeb(ProjectModel):
+    """Apt package repository definition."""
+
+    type: Literal["apt"]
+    url: str
+    key_id: KeyIdStr
+    architectures: Optional[List[str]]
+    formats: Optional[List[Literal["deb", "deb-src"]]]
+    components: Optional[List[str]]
+    key_server: Optional[str]
+    path: Optional[str]
+    suites: Optional[List[str]]
+
+
+class AptPPA(ProjectModel):
+    """PPA package repository definition."""
+
+    type: Literal["apt"]
+    ppa: str
+
+
 class Project(ProjectModel):
     """Snapcraft project definition.
 
@@ -160,8 +183,10 @@ class Project(ProjectModel):
     XXX: Not implemented in this version
     - environment (top-level)
     - system-usernames
-    - package-repositories
     - adopt-info (after adding craftctl support to craft-parts)
+
+    FIXME: package-repositories needs better validation and less
+           confusing error messages
     """
 
     name: constr(max_length=40)  # type: ignore
@@ -185,6 +210,7 @@ class Project(ProjectModel):
     grade: Literal["stable", "devel"]
     architectures: List[Architecture] = []
     assumes: UniqueStrList = []
+    package_repositories: List[Union[AptDeb, AptPPA]] = []
     hooks: Optional[Dict[str, Hook]]
     passthrough: Optional[Dict[str, Any]]
     apps: Optional[Dict[str, App]]

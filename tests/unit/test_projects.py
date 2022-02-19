@@ -18,7 +18,7 @@ from typing import Any, Dict
 
 import pytest
 
-from snapcraft import errors
+from snapcraft import errors, projects
 from snapcraft.projects import Project
 
 
@@ -60,6 +60,7 @@ class TestProjectDefaults:
         assert project.layout is None
         assert project.license is None
         assert project.architectures == []
+        assert project.package_repositories == []
         assert project.assumes == []
         assert project.hooks is None
         assert project.passthrough is None
@@ -322,6 +323,24 @@ class TestProjectValidation:
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(yaml_data(epoch=epoch))
 
+    def test_project_package_repository(self, yaml_data):
+        repos = [
+            {
+                "type": "apt",
+                "ppa": "test/somerepo",
+            },
+            {
+                "type": "apt",
+                "url": "https://some/url",
+                "key_id": "KEYID12345" * 4,
+            },
+        ]
+        project = Project.unmarshal(yaml_data(package_repositories=repos))
+        assert project.package_repositories == [
+            projects.AptPPA(**repos[0]),  # type: ignore
+            projects.AptDeb(**repos[1]),  # type: ignore
+        ]
+
 
 class TestAppValidation:
     """Validate apps."""
@@ -426,5 +445,120 @@ class TestAppValidation:
             assert project.apps["app1"].install_mode == install_mode
         else:
             error = ".*unexpected value; permitted: 'enable', 'disable'"
+            with pytest.raises(errors.ProjectValidationError, match=error):
+                Project.unmarshal(data)
+
+
+class TestAptPPAValidation:
+    """AptPPA field validation."""
+
+    def test_apt_ppa_valid(self, yaml_data):
+        repos = [
+            {
+                "type": "apt",
+                "ppa": "test/somerepo",
+            },
+        ]
+        project = Project.unmarshal(yaml_data(package_repositories=repos))
+        assert project.package_repositories == [
+            projects.AptPPA(**x) for x in repos  # type: ignore
+        ]
+
+    def test_apt_ppa_repository_invalid(self, yaml_data):
+        repos = [
+            {
+                "ppa": "test/somerepo",
+            },
+        ]
+        error = "field 'type' required"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(yaml_data(package_repositories=repos))
+
+    def test_project_package_ppa_repository_bad_type(self, yaml_data):
+        repos = [
+            {
+                "type": "invalid",
+                "ppa": "test/somerepo",
+            },
+        ]
+        error = "unexpected value; permitted: 'apt'"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(yaml_data(package_repositories=repos))
+
+
+class TestAptDebValidation:
+    """AptDeb field validation."""
+
+    @pytest.mark.parametrize(
+        "repo",
+        [
+            {
+                "type": "apt",
+                "url": "https://some/url",
+                "key_id": "KEYID12345" * 4,
+            },
+            {
+                "type": "apt",
+                "url": "https://some/url",
+                "key_id": "KEYID12345" * 4,
+                "formats": ["deb"],
+                "components": ["some", "components"],
+                "keyserver": "my-key-server",
+                "path": "my/path",
+                "suites": ["some", "suites"],
+            },
+        ],
+    )
+    def test_apt_deb_valid(self, yaml_data, repo):
+        project = Project.unmarshal(yaml_data(package_repositories=[repo]))
+        assert project.package_repositories == [projects.AptDeb(**repo)]
+
+    @pytest.mark.parametrize(
+        "key_id,error",
+        [
+            ("KEYID12345" * 4, None),
+            ("KEYID12345", "string does not match regex"),
+            ("keyid12345" * 4, "string does not match regex"),
+        ],
+    )
+    def test_apt_deb_key_id(self, yaml_data, key_id, error):
+        repo = {
+            "type": "apt",
+            "url": "https://some/url",
+            "key_id": key_id,
+        }
+
+        data = yaml_data(package_repositories=[repo])
+
+        if not error:
+            project = Project.unmarshal(data)
+            assert project.package_repositories == [projects.AptDeb(**repo)]
+        else:
+            with pytest.raises(errors.ProjectValidationError, match=error):
+                Project.unmarshal(data)
+
+    @pytest.mark.parametrize(
+        "formats",
+        [
+            ["deb"],
+            ["deb-src"],
+            ["deb", "deb-src"],
+            ["_invalid"],
+        ],
+    )
+    def test_apt_deb_formats(self, formats, yaml_data):
+        repo = {
+            "type": "apt",
+            "url": "https://some/url",
+            "key_id": "KEYID12345" * 4,
+            "formats": formats,
+        }
+        data = yaml_data(package_repositories=[repo])
+
+        if formats != ["_invalid"]:
+            project = Project.unmarshal(data)
+            assert project.package_repositories == [projects.AptDeb(**repo)]
+        else:
+            error = ".*unexpected value; permitted: 'deb', 'deb-src'"
             with pytest.raises(errors.ProjectValidationError, match=error):
                 Project.unmarshal(data)

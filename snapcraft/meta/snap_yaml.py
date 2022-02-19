@@ -37,7 +37,7 @@ class SnapApp(YamlModel):
 
     command: str
     command_chain: List[str]
-    environment: Optional[List[Dict[str, str]]]
+    environment: Optional[Dict[str, str]]
     plugs: Optional[List[str]]
 
     class Config:  # pylint: disable=too-few-public-methods
