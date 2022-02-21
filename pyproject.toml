@@ -33,6 +33,9 @@ line_length = 88
 [tool.pylint.messages_control]
 disable = "too-few-public-methods,fixme"
 
+[tool.pylint.format]
+good-names = "id"
+
 [tool.pylint.MASTER]
 extension-pkg-allow-list = [
     "pydantic"
