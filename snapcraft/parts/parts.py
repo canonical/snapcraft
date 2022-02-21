@@ -17,14 +17,14 @@
 """Craft-parts lifecycle wrapper."""
 
 import pathlib
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import craft_parts
 from craft_cli import emit
 from craft_parts import ActionType, Step
 from xdg import BaseDirectory  # type: ignore
 
-from snapcraft.errors import PartsLifecycleError
+from snapcraft import errors, repo
 
 _LIFECYCLE_STEPS = {
     "pull": Step.PULL,
@@ -40,17 +40,32 @@ class PartsLifecycle:
 
     :param all_parts: A dictionary containing the parts defined in the project.
     :param work_dir: The working directory for parts processing.
+    :param assets_dir: The directory containing project assets.
 
     :raises PartsLifecycleError: On error initializing the parts lifecycle.
     """
 
     def __init__(
-        self, all_parts: Dict[str, Any], *, work_dir: pathlib.Path,
+        self,
+        all_parts: Dict[str, Any],
+        *,
+        work_dir: pathlib.Path,
+        assets_dir: pathlib.Path,
+        package_repositories: List[Dict[str, Any]],
     ):
+        self._assets_dir = assets_dir
+        self._package_repositories = package_repositories
+
         emit.progress("Initializing parts lifecycle")
 
         # set the cache dir for parts package management
         cache_dir = BaseDirectory.save_cache_path("snapcraft")
+
+        extra_build_packages = []
+        if self._package_repositories:
+            # Install pre-requisite packages for apt-key, if not installed.
+            # FIXME: package names should be plataform-specific
+            extra_build_packages.extend(["gnupg", "dirmngr"])
 
         try:
             self._lcm = craft_parts.LifecycleManager(
@@ -61,7 +76,7 @@ class PartsLifecycle:
                 ignore_local_sources=["*.snap"],
             )
         except craft_parts.PartsError as err:
-            raise PartsLifecycleError(str(err)) from err
+            raise errors.PartsLifecycleError(str(err)) from err
 
     @property
     def prime_dir(self) -> pathlib.Path:
@@ -86,9 +101,21 @@ class PartsLifecycle:
             raise RuntimeError(f"Invalid target step {step_name!r}")
 
         try:
+            actions = self._lcm.plan(target_step)
+
+            emit.progress("Installing package repositories...")
+
+            if self._package_repositories:
+                refresh_required = repo.install(
+                    self._package_repositories, key_assets=self._assets_dir / "keys"
+                )
+                if refresh_required:
+                    self._lcm.refresh_packages_list()
+
+            emit.message("Installed package repositories", intermediate=True)
+
             emit.progress("Executing parts lifecycle...")
 
-            actions = self._lcm.plan(target_step)
             with self._lcm.action_executor() as aex:
                 for action in actions:
                     message = _action_message(action)
@@ -102,9 +129,9 @@ class PartsLifecycle:
             msg = err.strerror
             if err.filename:
                 msg = f"{err.filename}: {msg}"
-            raise PartsLifecycleError(msg) from err
+            raise errors.PartsLifecycleError(msg) from err
         except Exception as err:
-            raise PartsLifecycleError(str(err)) from err
+            raise errors.PartsLifecycleError(str(err)) from err
 
 
 def _action_message(action: craft_parts.Action) -> str:

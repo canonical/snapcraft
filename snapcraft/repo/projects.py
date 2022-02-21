@@ -27,7 +27,7 @@ from pydantic import constr
 if TYPE_CHECKING:
     KeyIdStr = str
 else:
-    KeyIdStr = constr(regex=r"^[A-Z0-9]{40}$")
+    KeyIdStr = constr(regex=r"^[0-9A-F]{40}$")
 
 
 class ProjectModel(pydantic.BaseModel):
@@ -41,6 +41,11 @@ class ProjectModel(pydantic.BaseModel):
         allow_population_by_field_name = True
         alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
         extra = "forbid"
+
+
+# TODO: Project repo definitions are almost the same as PackageRepository
+#       ported from legacy. Check if we can consolidate them and remove
+#       field validation (moving all validation rules to pydantic).
 
 
 class AptDeb(ProjectModel):

@@ -17,7 +17,7 @@ restore: |
   if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
       snapcraft clean --use-lxd
   else
-      snapcraft --destructive-mode
+      snapcraft clean --destructive-mode
   fi
 
   rm -f ./*.snap
