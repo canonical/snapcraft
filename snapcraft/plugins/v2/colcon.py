@@ -165,6 +165,9 @@ class ColconPlugin(_ros.RosPlugin):
         if self.options.colcon_packages:
             cmd.extend(["--packages-select", *self.options.colcon_packages])
 
+        if self.options.colcon_cmake_args:
+            cmd.extend(["--cmake-args", *self.options.colcon_cmake_args])
+
         if self.options.colcon_ament_cmake_args:
             cmd.extend(["--ament-cmake-args", *self.options.colcon_ament_cmake_args])
 
