@@ -77,7 +77,6 @@ def snapcraft_yaml():
             "layout": None,
             "license": None,
             "grade": "stable",
-            "adopt-info": None,
             "architectures": [],
             "assumes": [],
             "hooks": None,

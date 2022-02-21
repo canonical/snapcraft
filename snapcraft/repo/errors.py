@@ -21,7 +21,11 @@ from typing import Optional
 from snapcraft.errors import SnapcraftError
 
 
-class PackageRepositoryValidationError(SnapcraftError):
+class PackageRepositoryError(SnapcraftError):
+    """Package repository error base."""
+
+
+class PackageRepositoryValidationError(PackageRepositoryError):
     """Package repository is invalid."""
 
     def __init__(
@@ -38,7 +42,7 @@ class PackageRepositoryValidationError(SnapcraftError):
         )
 
 
-class AptPPAInstallError(SnapcraftError):
+class AptPPAInstallError(PackageRepositoryError):
     """Installation of a PPA repository failed."""
 
     def __init__(self, ppa: str, reason: str):
@@ -48,7 +52,7 @@ class AptPPAInstallError(SnapcraftError):
         )
 
 
-class AptGPGKeyInstallError(SnapcraftError):
+class AptGPGKeyInstallError(PackageRepositoryError):
     """Installation of GPG key failed."""
 
     def __init__(

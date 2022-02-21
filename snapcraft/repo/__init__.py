@@ -16,8 +16,8 @@
 
 """Package repository helpers."""
 
-from .apt_key_manager import AptKeyManager  # noqa: F401
-from .apt_sources_manager import AptSourcesManager  # noqa: F401
-from .package_repository import PackageRepository  # noqa: F401
-from .package_repository import PackageRepositoryApt  # noqa: F401
-from .package_repository import PackageRepositoryAptPPA  # noqa: F401
+from .projects import validate_repository
+
+__all__ = [
+    "validate_repository",
+]
