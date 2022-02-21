@@ -68,8 +68,4 @@ class SnapcraftGroup(click.Group):
     def list_commands(self, ctx):
         commands = super().list_commands(ctx)
 
-        # Hide commands with unstable cli
-        commands.pop(commands.index("promote"))
-        commands.pop(commands.index("remote-build"))
-
         return commands
