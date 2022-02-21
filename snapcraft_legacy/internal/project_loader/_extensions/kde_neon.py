@@ -21,7 +21,6 @@ from typing import Any, Dict, Tuple
 
 from ._extension import Extension
 
-
 _ExtensionInfo = namedtuple("ExtensionInfo", "cmake_args content provider build_snaps")
 
 _Info = dict(
@@ -104,6 +103,7 @@ class ExtensionImpl(Extension):
                     "command-chain": ["snap/command-chain/hooks-configure-desktop"],
                 }
             },
+            "layout": {"/usr/share/X11": {"symlink": "$SNAP/kf5/usr/share/X11"}},
         }
 
         if info.cmake_args is not None:

@@ -50,6 +50,7 @@ def test_extension_core18():
                 "command-chain": ["snap/command-chain/hooks-configure-desktop"],
             }
         },
+        "layout": {"/usr/share/X11": {"symlink": "$SNAP/kf5/usr/share/X11"}},
     }
     assert kde_neon_extension.app_snippet == {
         "command-chain": ["snap/command-chain/desktop-launch"],
@@ -82,6 +83,7 @@ def test_extension_core20():
                 "plugs": ["desktop"],
             }
         },
+        "layout": {"/usr/share/X11": {"symlink": "$SNAP/kf5/usr/share/X11"}},
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
             "icon-themes": {
