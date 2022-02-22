@@ -78,11 +78,12 @@ class PullStateTestCase(PullStateBaseTestCase):
                 "source-type": "test-source-type",
                 "source-branch": "test-source-branch",
                 "source-subdir": "test-source-subdir",
+                "source-submodules": "test-source-submodules",
             }
         )
 
         properties = self.state.properties_of_interest(self.part_properties)
-        self.assertThat(len(properties), Equals(12))
+        self.assertThat(len(properties), Equals(13))
         self.assertThat(properties["foo"], Equals("bar"))
         self.assertThat(properties["override-pull"], Equals("touch override-pull"))
         self.assertThat(properties["plugin"], Equals("test-plugin"))
@@ -95,6 +96,9 @@ class PullStateTestCase(PullStateBaseTestCase):
         self.assertThat(properties["source-type"], Equals("test-source-type"))
         self.assertThat(properties["source-branch"], Equals("test-source-branch"))
         self.assertThat(properties["source-subdir"], Equals("test-source-subdir"))
+        self.assertThat(
+            properties["source-submodules"], Equals("test-source-submodules"),
+        )
 
     def test_project_options_of_interest(self):
         options = self.state.project_options_of_interest(self.project)

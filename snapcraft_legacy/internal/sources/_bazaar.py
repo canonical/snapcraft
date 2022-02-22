@@ -31,6 +31,7 @@ class Bazaar(Base):
         source_branch=None,
         source_depth=None,
         source_checksum=None,
+        source_submodules=None,
         silent=False,
     ):
         super().__init__(
@@ -41,6 +42,7 @@ class Bazaar(Base):
             source_branch,
             source_depth,
             source_checksum,
+            source_submodules,
             "bzr",
         )
         if source_branch:
