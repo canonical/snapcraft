@@ -2,7 +2,7 @@ SOURCES=setup.py snapcraft tests/*.py tests/unit
 
 .PHONY: autoformat-black
 autoformat-black:
-	black .
+	black $(SOURCES)
 
 .PHONY: freeze-requirements
 freeze-requirements:
