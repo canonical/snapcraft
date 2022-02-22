@@ -60,6 +60,7 @@ class TestProjectDefaults:
         assert project.layout is None
         assert project.license is None
         assert project.architectures == []
+        assert project.package_repositories == []
         assert project.assumes == []
         assert project.hooks is None
         assert project.passthrough is None
@@ -321,6 +322,42 @@ class TestProjectValidation:
         error = "Epoch is a positive integer followed by an optional asterisk"
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(yaml_data(epoch=epoch))
+
+    def test_project_package_repository(self, yaml_data):
+        repos = [
+            {
+                "type": "apt",
+                "ppa": "test/somerepo",
+            },
+            {
+                "type": "apt",
+                "url": "https://some/url",
+                "key_id": "KEYID12345" * 4,
+            },
+        ]
+        project = Project.unmarshal(yaml_data(package_repositories=repos))
+        assert project.package_repositories == repos
+
+    def test_project_package_repository_missing_fields(self, yaml_data):
+        repos = [
+            {
+                "type": "apt",
+            },
+        ]
+        error = r".*\n- field 'url' required .*\n- field 'key-id' required"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(yaml_data(package_repositories=repos))
+
+    def test_project_package_repository_extra_fields(self, yaml_data):
+        repos = [
+            {
+                "type": "apt",
+                "extra": "something",
+            },
+        ]
+        error = r".*\n- extra field 'extra' not permitted"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(yaml_data(package_repositories=repos))
 
 
 class TestAppValidation:

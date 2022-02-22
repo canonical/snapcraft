@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 import pydantic
 from pydantic import conlist, constr
 
+from snapcraft import repo
 from snapcraft.errors import ProjectValidationError
 from snapcraft.parts import validation as parts_validation
 
@@ -36,7 +37,7 @@ class ProjectModel(pydantic.BaseModel):
         """Pydantic model configuration."""
 
         validate_assignment = True
-        # extra = "forbid"
+        extra = "allow"  # FIXME: change to 'forbid' after model complete
         allow_mutation = False
         allow_population_by_field_name = True
         alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
@@ -103,7 +104,7 @@ class App(ProjectModel):
     slots: Optional[UniqueStrList]
     plugs: Optional[UniqueStrList]
     aliases: Optional[UniqueAliasList]
-    environment: Optional[List[Dict[str, str]]]
+    environment: Optional[Dict[str, str]]
     command_chain: List[CommandChainStr] = []
     # TODO: sockets
 
@@ -160,7 +161,6 @@ class Project(ProjectModel):
     XXX: Not implemented in this version
     - environment (top-level)
     - system-usernames
-    - package-repositories
     - adopt-info (after adding craftctl support to craft-parts)
     """
 
@@ -185,6 +185,7 @@ class Project(ProjectModel):
     grade: Literal["stable", "devel"]
     architectures: List[Architecture] = []
     assumes: UniqueStrList = []
+    package_repositories: Optional[List[Any]] = []  # handled by repo
     hooks: Optional[Dict[str, Hook]]
     passthrough: Optional[Dict[str, Any]]
     apps: Optional[Dict[str, App]]
@@ -250,6 +251,13 @@ class Project(ProjectModel):
         if not build_base:
             build_base = values.get("base")
         return build_base
+
+    @pydantic.validator("package_repositories", each_item=True)
+    @classmethod
+    def _validate_package_repositories(cls, item):
+        """Ensure package-repositories format is correct."""
+        repo.validate_repository(item)
+        return item
 
     @pydantic.validator("parts", each_item=True)
     @classmethod
