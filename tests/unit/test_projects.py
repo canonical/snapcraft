@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 from typing import Any, Dict
 
 import pytest
@@ -68,6 +69,7 @@ class TestProjectDefaults:
         assert project.plugs is None
         assert project.slots is None
         assert project.epoch is None
+        assert project.environment is None
 
     def test_app_defaults(self, yaml_data):
         data = yaml_data(apps={"app1": {"command": "/bin/true"}})
@@ -359,6 +361,32 @@ class TestProjectValidation:
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(yaml_data(package_repositories=repos))
 
+    @pytest.mark.parametrize(
+        "environment",
+        [
+            {"SINGLE_VARIABLE": "foo"},
+            {"FIRST_VARIABLE": "foo", "SECOND_VARIABLE": "bar"},
+        ],
+    )
+    def test_project_environment_valid(self, environment, yaml_data):
+        project = Project.unmarshal(yaml_data(environment=environment))
+        assert project.environment == environment
+
+    @pytest.mark.parametrize(
+        "environment",
+        [
+            "i am a string",
+            ["i", "am", "a", "list"],
+            [{"i": "am"}, {"a": "list"}, {"of": "dictionaries"}],
+        ],
+    )
+    def test_project_environment_invalid(self, environment, yaml_data):
+        error = re.escape(
+            "Bad snapcraft.yaml content:\n- value is not a valid dict (in field 'environment')"
+        )
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(yaml_data(environment=environment))
+
 
 class TestAppValidation:
     """Validate apps."""
@@ -465,3 +493,38 @@ class TestAppValidation:
             error = ".*unexpected value; permitted: 'enable', 'disable'"
             with pytest.raises(errors.ProjectValidationError, match=error):
                 Project.unmarshal(data)
+
+    @pytest.mark.parametrize(
+        "environment",
+        [
+            {"SINGLE_VARIABLE": "foo"},
+            {"FIRST_VARIABLE": "foo", "SECOND_VARIABLE": "bar"},
+        ],
+    )
+    def test_app_environment_valid(self, environment, yaml_data):
+        data = yaml_data(
+            apps={"app1": {"command": "/bin/true", "environment": environment}}
+        )
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+        assert project.apps["app1"].environment == environment
+
+    @pytest.mark.parametrize(
+        "environment",
+        [
+            "i am a string",
+            ["i", "am", "a", "list"],
+            [{"i": "am"}, {"a": "list"}, {"of": "dictionaries"}],
+        ],
+    )
+    def test_app_environment_invalid(self, environment, yaml_data):
+        data = yaml_data(
+            apps={"app1": {"command": "/bin/true", "environment": environment}}
+        )
+
+        error = re.escape(
+            "Bad snapcraft.yaml content:\n"
+            "- value is not a valid dict (in field 'apps.app1.environment')"
+        )
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(data)

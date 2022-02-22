@@ -41,6 +41,9 @@ def simple_project():
         grade: stable
         confinement: strict
 
+        environment:
+          GLOBAL_VARIABLE: "my-global-variable"
+
         parts:
           part1:
             plugin: nil
@@ -48,6 +51,8 @@ def simple_project():
         apps:
           app1:
             command: bin/mytest
+            environment:
+              APP_VARIABLE: "my-app-variable"
         """
     )
     data = yaml.safe_load(snapcraft_yaml)
@@ -81,7 +86,11 @@ def test_snap_yaml(simple_project, new_dir):
             command: bin/mytest
             command_chain:
             - snap/command-chain/snapcraft-runner
+            environment:
+              APP_VARIABLE: my-app-variable
         confinement: strict
         grade: stable
+        environment:
+          GLOBAL_VARIABLE: my-global-variable
         """
     )
