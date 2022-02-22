@@ -81,6 +81,8 @@ jobs:
           pip install -U -r requirements.txt -r requirements-devel.txt
           pip install .
       - name: Run unit tests
+        env:
+          SNAPCRAFT_IGNORE_YAML_BINDINGS: "1"
         run: |
           make test-units
       - name: Upload code coverage

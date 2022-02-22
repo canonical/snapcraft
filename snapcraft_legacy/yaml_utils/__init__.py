@@ -17,6 +17,7 @@
 import codecs
 import collections
 import logging
+import os
 from typing import Any, Dict, Optional, TextIO, Union
 
 import yaml
@@ -29,9 +30,14 @@ try:
     # The C-based loaders/dumpers aren't available everywhere, but they're much faster.
     # Use them if possible. If not, we could fallback to the normal loader/dumper, but
     # they actually behave differently, so raise an error instead.
-    from yaml import CSafeDumper, CSafeLoader  # type: ignore
+    from yaml import CSafeDumper as SafeDumper  # type: ignore
+    from yaml import CSafeLoader as SafeLoader  # type: ignore
 except ImportError:
-    raise RuntimeError("Snapcraft requires PyYAML to be built with libyaml bindings")
+    if not os.getenv("SNAPCRAFT_IGNORE_YAML_BINDINGS"):
+        raise RuntimeError(
+            "Snapcraft requires PyYAML to be built with libyaml bindings"
+        )
+    from yaml import SafeDumper, SafeLoader
 
 
 def load_yaml_file(yaml_file_path: str) -> collections.OrderedDict:
@@ -96,7 +102,7 @@ def dump(
     )
 
 
-class _SafeOrderedLoader(CSafeLoader):
+class _SafeOrderedLoader(SafeLoader):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -105,7 +111,7 @@ class _SafeOrderedLoader(CSafeLoader):
         )
 
 
-class _SafeOrderedDumper(CSafeDumper):
+class _SafeOrderedDumper(SafeDumper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_representer(str, _str_presenter)
@@ -166,7 +172,7 @@ def _str_presenter(dumper, data):
 class OctInt(SnapcraftYAMLObject):
     """An int represented in octal form."""
 
-    yaml_tag = u"!OctInt"
+    yaml_tag = "!OctInt"
 
     def __init__(self, value):
         super().__init__()
