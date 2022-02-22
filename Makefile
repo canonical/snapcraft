@@ -35,7 +35,7 @@ test-pydocstyle:
 .PHONY: test-pylint
 test-pylint:
 	pylint snapcraft
-	pylint tests/*.py tests/unit --disable=invalid-name,missing-module-docstring,missing-function-docstring,no-self-use,duplicate-code,protected-access,unspecified-encoding
+	pylint tests/*.py tests/unit --disable=invalid-name,missing-module-docstring,missing-function-docstring,no-self-use,duplicate-code,protected-access,unspecified-encoding,too-many-public-methods
 
 .PHONY: test-pyright
 test-pyright:

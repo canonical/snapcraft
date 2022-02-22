@@ -43,3 +43,6 @@ extension-pkg-allow-list = [
     "pytest",
 ]
 load-plugins = "pylint_fixme_info,pylint_pytest"
+
+[tool.pylint.SIMILARITIES]
+min-similarity-lines=10

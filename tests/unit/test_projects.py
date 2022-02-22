@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
 from typing import Any, Dict
 
 import pytest
@@ -24,8 +23,8 @@ from snapcraft.projects import Project
 
 
 @pytest.fixture
-def yaml_data():
-    def _yaml_data(
+def project_yaml_data():
+    def _project_yaml_data(
         *, name: str = "name", version: str = "0.1", summary: str = "summary", **kwargs
     ) -> Dict[str, Any]:
         return {
@@ -40,14 +39,34 @@ def yaml_data():
             **kwargs,
         }
 
-    yield _yaml_data
+    yield _project_yaml_data
+
+
+@pytest.fixture
+def app_yaml_data(project_yaml_data):
+    def _app_yaml_data(**kwargs) -> Dict[str, Any]:
+        data = project_yaml_data()
+        data["apps"] = {"app1": {"command": "/bin/true", **kwargs}}
+        return data
+
+    yield _app_yaml_data
+
+
+@pytest.fixture
+def socket_yaml_data(app_yaml_data):
+    def _socket_yaml_data(**kwargs) -> Dict[str, Any]:
+        data = app_yaml_data()
+        data["apps"]["app1"]["sockets"] = {"socket1": {**kwargs}}
+        return data
+
+    yield _socket_yaml_data
 
 
 class TestProjectDefaults:
     """Ensure unspecified items have the correct default value."""
 
-    def test_project_defaults(self, yaml_data):
-        project = Project.unmarshal(yaml_data())
+    def test_project_defaults(self, project_yaml_data):
+        project = Project.unmarshal(project_yaml_data())
 
         assert project.build_base == project.base
         assert project.compression == "xz"
@@ -71,8 +90,8 @@ class TestProjectDefaults:
         assert project.epoch is None
         assert project.environment is None
 
-    def test_app_defaults(self, yaml_data):
-        data = yaml_data(apps={"app1": {"command": "/bin/true"}})
+    def test_app_defaults(self, project_yaml_data):
+        data = project_yaml_data(apps={"app1": {"command": "/bin/true"}})
         project = Project.unmarshal(data)
         assert project.apps is not None
 
@@ -120,8 +139,8 @@ class TestProjectValidation:
             "parts",
         ],
     )
-    def test_mandatory_fields(self, field, yaml_data):
-        data = yaml_data()
+    def test_mandatory_fields(self, field, project_yaml_data):
+        data = project_yaml_data()
         data.pop(field)
         error = f"field {field!r} required in top-level configuration"
         with pytest.raises(errors.ProjectValidationError, match=error):
@@ -137,8 +156,8 @@ class TestProjectValidation:
             ("snapd", False),
         ],
     )
-    def test_mandatory_base(self, snap_type, requires_base, yaml_data):
-        data = yaml_data(type=snap_type)
+    def test_mandatory_base(self, snap_type, requires_base, project_yaml_data):
+        data = project_yaml_data(type=snap_type)
         data.pop("base")
 
         if requires_base:
@@ -149,15 +168,15 @@ class TestProjectValidation:
             project = Project.unmarshal(data)
             assert project.base is None
 
-    def test_mandatory_version(self, yaml_data):
-        data = yaml_data()
+    def test_mandatory_version(self, project_yaml_data):
+        data = project_yaml_data()
         data.pop("version")
         error = "Snap version is required if not using adopt-info"
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(data)
 
-    def test_version_not_required(self, yaml_data):
-        data = yaml_data()
+    def test_version_not_required(self, project_yaml_data):
+        data = project_yaml_data()
         data.pop("version")
         data["adopt-info"] = "part1"
         project = Project.unmarshal(data)
@@ -173,8 +192,8 @@ class TestProjectValidation:
             "a234567890123456789012345678901234567890",
         ],
     )
-    def test_project_name_valid(self, name, yaml_data):
-        project = Project.unmarshal(yaml_data(name=name))
+    def test_project_name_valid(self, name, project_yaml_data):
+        project = Project.unmarshal(project_yaml_data(name=name))
         assert project.name == name
 
     @pytest.mark.parametrize(
@@ -193,9 +212,9 @@ class TestProjectValidation:
             ),
         ],
     )
-    def test_project_name_invalid(self, name, error, yaml_data):
+    def test_project_name_invalid(self, name, error, project_yaml_data):
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(yaml_data(name=name))
+            Project.unmarshal(project_yaml_data(name=name))
 
     @pytest.mark.parametrize(
         "version",
@@ -209,8 +228,8 @@ class TestProjectValidation:
             "12345678901234567890123456789012",
         ],
     )
-    def test_project_version_valid(self, version, yaml_data):
-        project = Project.unmarshal(yaml_data(version=version))
+    def test_project_version_valid(self, version, project_yaml_data):
+        project = Project.unmarshal(project_yaml_data(version=version))
         assert project.version == version
 
     @pytest.mark.parametrize(
@@ -232,16 +251,16 @@ class TestProjectValidation:
             ),  # too large
         ],
     )
-    def test_project_version_invalid(self, version, error, yaml_data):
+    def test_project_version_invalid(self, version, error, project_yaml_data):
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(yaml_data(version=version))
+            Project.unmarshal(project_yaml_data(version=version))
 
     @pytest.mark.parametrize(
         "snap_type",
         ["app", "gadget", "kernel", "snapd", "base", "_invalid"],
     )
-    def test_project_type(self, snap_type, yaml_data):
-        data = yaml_data(type=snap_type)
+    def test_project_type(self, snap_type, project_yaml_data):
+        data = project_yaml_data(type=snap_type)
         if snap_type in ["base", "kernel", "snapd"]:
             data.pop("base")
 
@@ -257,8 +276,8 @@ class TestProjectValidation:
         "confinement",
         ["strict", "devmode", "classic", "_invalid"],
     )
-    def test_project_confinement(self, confinement, yaml_data):
-        data = yaml_data(confinement=confinement)
+    def test_project_confinement(self, confinement, project_yaml_data):
+        data = project_yaml_data(confinement=confinement)
 
         if confinement != "_invalid":
             project = Project.unmarshal(data)
@@ -272,8 +291,8 @@ class TestProjectValidation:
         "grade",
         ["devel", "stable", "_invalid"],
     )
-    def test_project_grade(self, grade, yaml_data):
-        data = yaml_data(grade=grade)
+    def test_project_grade(self, grade, project_yaml_data):
+        data = project_yaml_data(grade=grade)
 
         if grade != "_invalid":
             project = Project.unmarshal(data)
@@ -283,16 +302,16 @@ class TestProjectValidation:
             with pytest.raises(errors.ProjectValidationError, match=error):
                 Project.unmarshal(data)
 
-    def test_project_summary_valid(self, yaml_data):
+    def test_project_summary_valid(self, project_yaml_data):
         summary = "x" * 78
-        project = Project.unmarshal(yaml_data(summary=summary))
+        project = Project.unmarshal(project_yaml_data(summary=summary))
         assert project.summary == summary
 
-    def test_project_summary_invalid(self, yaml_data):
+    def test_project_summary_invalid(self, project_yaml_data):
         summary = "x" * 79
         error = "ensure this value has at most 78 characters"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(yaml_data(summary=summary))
+            Project.unmarshal(project_yaml_data(summary=summary))
 
     @pytest.mark.parametrize(
         "epoch",
@@ -304,8 +323,8 @@ class TestProjectValidation:
             "12345*",
         ],
     )
-    def test_project_epoch_valid(self, epoch, yaml_data):
-        project = Project.unmarshal(yaml_data(epoch=epoch))
+    def test_project_epoch_valid(self, epoch, project_yaml_data):
+        project = Project.unmarshal(project_yaml_data(epoch=epoch))
         assert project.epoch == epoch
 
     @pytest.mark.parametrize(
@@ -320,12 +339,12 @@ class TestProjectValidation:
             "1**",
         ],
     )
-    def test_project_epoch_invalid(self, epoch, yaml_data):
+    def test_project_epoch_invalid(self, epoch, project_yaml_data):
         error = "Epoch is a positive integer followed by an optional asterisk"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(yaml_data(epoch=epoch))
+            Project.unmarshal(project_yaml_data(epoch=epoch))
 
-    def test_project_package_repository(self, yaml_data):
+    def test_project_package_repository(self, project_yaml_data):
         repos = [
             {
                 "type": "apt",
@@ -337,29 +356,29 @@ class TestProjectValidation:
                 "key-id": "ABCDE12345" * 4,
             },
         ]
-        project = Project.unmarshal(yaml_data(package_repositories=repos))
+        project = Project.unmarshal(project_yaml_data(package_repositories=repos))
         assert project.package_repositories == repos
 
-    def test_project_package_repository_missing_fields(self, yaml_data):
+    def test_project_package_repository_missing_fields(self, project_yaml_data):
         repos = [
             {
                 "type": "apt",
             },
         ]
-        error = r".*\n- field 'url' required .*\n- field 'key-id' required"
+        error = r".*- field 'url' required .*\n- field 'key-id' required"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(yaml_data(package_repositories=repos))
+            Project.unmarshal(project_yaml_data(package_repositories=repos))
 
-    def test_project_package_repository_extra_fields(self, yaml_data):
+    def test_project_package_repository_extra_fields(self, project_yaml_data):
         repos = [
             {
                 "type": "apt",
                 "extra": "something",
             },
         ]
-        error = r".*\n- extra field 'extra' not permitted"
+        error = r".*- extra field 'extra' not permitted"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(yaml_data(package_repositories=repos))
+            Project.unmarshal(project_yaml_data(package_repositories=repos))
 
     @pytest.mark.parametrize(
         "environment",
@@ -368,8 +387,8 @@ class TestProjectValidation:
             {"FIRST_VARIABLE": "foo", "SECOND_VARIABLE": "bar"},
         ],
     )
-    def test_project_environment_valid(self, environment, yaml_data):
-        project = Project.unmarshal(yaml_data(environment=environment))
+    def test_project_environment_valid(self, environment, project_yaml_data):
+        project = Project.unmarshal(project_yaml_data(environment=environment))
         assert project.environment == environment
 
     @pytest.mark.parametrize(
@@ -380,23 +399,175 @@ class TestProjectValidation:
             [{"i": "am"}, {"a": "list"}, {"of": "dictionaries"}],
         ],
     )
-    def test_project_environment_invalid(self, environment, yaml_data):
-        error = re.escape(
-            "Bad snapcraft.yaml content:\n- value is not a valid dict (in field 'environment')"
-        )
+    def test_project_environment_invalid(self, environment, project_yaml_data):
+        error = ".*value is not a valid dict"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(yaml_data(environment=environment))
+            Project.unmarshal(project_yaml_data(environment=environment))
 
 
 class TestAppValidation:
     """Validate apps."""
 
+    def test_app_command(self, app_yaml_data):
+        data = app_yaml_data(command="test-command")
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+        assert project.apps["app1"].command == "test-command"
+
+    @pytest.mark.parametrize(
+        "autostart",
+        ["myapp.desktop", "_invalid"],
+    )
+    def test_app_autostart(self, autostart, app_yaml_data):
+        data = app_yaml_data(autostart=autostart)
+
+        if autostart != "_invalid":
+            project = Project.unmarshal(data)
+            assert project.apps is not None
+            assert project.apps["app1"].autostart == autostart
+        else:
+            error = ".*'_invalid' is not a valid desktop file name"
+            with pytest.raises(errors.ProjectValidationError, match=error):
+                Project.unmarshal(data)
+
+    def test_app_common_id(self, app_yaml_data):
+        data = app_yaml_data(common_id="test-common-id")
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+        assert project.apps["app1"].common_id == "test-common-id"
+
+    @pytest.mark.parametrize(
+        "bus_name",
+        ["test-bus-name", "_invalid!"],
+    )
+    def test_app_bus_name(self, bus_name, app_yaml_data):
+        data = app_yaml_data(bus_name=bus_name)
+
+        if bus_name != "_invalid!":
+            project = Project.unmarshal(data)
+            assert project.apps is not None
+            assert project.apps["app1"].bus_name == bus_name
+        else:
+            error = ".*'_invalid!' is not a valid bus name"
+            with pytest.raises(errors.ProjectValidationError, match=error):
+                Project.unmarshal(data)
+
+    def test_app_completer(self, app_yaml_data):
+        data = app_yaml_data(completer="test-completer")
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+        assert project.apps["app1"].completer == "test-completer"
+
+    def test_app_stop_command(self, app_yaml_data):
+        data = app_yaml_data(stop_command="test-stop-command")
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+        assert project.apps["app1"].stop_command == "test-stop-command"
+
+    def test_app_post_stop_command(self, app_yaml_data):
+        data = app_yaml_data(post_stop_command="test-post-stop-command")
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+        assert project.apps["app1"].post_stop_command == "test-post-stop-command"
+
+    @pytest.mark.parametrize(
+        "start_timeout", ["10", "10ns", "10us", "10ms", "10s", "10m"]
+    )
+    def test_app_start_timeout_valid(self, start_timeout, app_yaml_data):
+        data = app_yaml_data(start_timeout=start_timeout)
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+        assert project.apps["app1"].start_timeout == start_timeout
+
+    @pytest.mark.parametrize(
+        "start_timeout",
+        ["10 s", "10 seconds", "1:00", "invalid"],
+    )
+    def test_app_start_timeout_invalid(self, start_timeout, app_yaml_data):
+        data = app_yaml_data(start_timeout=start_timeout)
+
+        error = f".*'{start_timeout}' is not a valid time value"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(data)
+
+    @pytest.mark.parametrize(
+        "stop_timeout", ["10", "10ns", "10us", "10ms", "10s", "10m"]
+    )
+    def test_app_stop_timeout_valid(self, stop_timeout, app_yaml_data):
+        data = app_yaml_data(stop_timeout=stop_timeout)
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+        assert project.apps["app1"].stop_timeout == stop_timeout
+
+    @pytest.mark.parametrize(
+        "stop_timeout",
+        ["10 s", "10 seconds", "1:00", "invalid"],
+    )
+    def test_app_stop_timeout_invalid(self, stop_timeout, app_yaml_data):
+        data = app_yaml_data(stop_timeout=stop_timeout)
+
+        error = f".*'{stop_timeout}' is not a valid time value"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(data)
+
+    @pytest.mark.parametrize(
+        "watchdog_timeout", ["10", "10ns", "10us", "10ms", "10s", "10m"]
+    )
+    def test_app_watchdog_timeout_valid(self, watchdog_timeout, app_yaml_data):
+        data = app_yaml_data(watchdog_timeout=watchdog_timeout)
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+        assert project.apps["app1"].watchdog_timeout == watchdog_timeout
+
+    @pytest.mark.parametrize(
+        "watchdog_timeout",
+        ["10 s", "10 seconds", "1:00", "invalid"],
+    )
+    def test_app_watchdog_timeout_invalid(self, watchdog_timeout, app_yaml_data):
+        data = app_yaml_data(watchdog_timeout=watchdog_timeout)
+
+        error = f".*'{watchdog_timeout}' is not a valid time value"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(data)
+
+    def test_app_reload_command(self, app_yaml_data):
+        data = app_yaml_data(reload_command="test-reload-command")
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+        assert project.apps["app1"].reload_command == "test-reload-command"
+
+    @pytest.mark.parametrize(
+        "restart_delay", ["10", "10ns", "10us", "10ms", "10s", "10m"]
+    )
+    def test_app_restart_delay_valid(self, restart_delay, app_yaml_data):
+        data = app_yaml_data(restart_delay=restart_delay)
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+        assert project.apps["app1"].restart_delay == restart_delay
+
+    @pytest.mark.parametrize(
+        "restart_delay",
+        ["10 s", "10 seconds", "1:00", "invalid"],
+    )
+    def test_app_restart_delay_invalid(self, restart_delay, app_yaml_data):
+        data = app_yaml_data(restart_delay=restart_delay)
+
+        error = f".*'{restart_delay}' is not a valid time value"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(data)
+
+    def test_app_timer(self, app_yaml_data):
+        data = app_yaml_data(timer="test-timer")
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+        assert project.apps["app1"].timer == "test-timer"
+
     @pytest.mark.parametrize(
         "daemon",
         ["simple", "forking", "oneshot", "notify", "dbus", "_invalid"],
     )
-    def test_app_daemon(self, daemon, yaml_data):
-        data = yaml_data(apps={"app1": {"command": "/bin/true", "daemon": daemon}})
+    def test_app_daemon(self, daemon, app_yaml_data):
+        data = app_yaml_data(daemon=daemon)
 
         if daemon != "_invalid":
             project = Project.unmarshal(data)
@@ -407,11 +578,61 @@ class TestAppValidation:
             with pytest.raises(errors.ProjectValidationError, match=error):
                 Project.unmarshal(data)
 
+    @pytest.mark.parametrize(
+        "after",
+        [
+            "i am a string",
+            ["i", "am", "a", "list"],
+        ],
+    )
+    def test_app_after(self, after, app_yaml_data):
+        data = app_yaml_data(after=after)
+
+        if after == "i am a string":
+            error = ".*value is not a valid list"
+            with pytest.raises(errors.ProjectValidationError, match=error):
+                Project.unmarshal(data)
+        else:
+            project = Project.unmarshal(data)
+            assert project.apps is not None
+            assert project.apps["app1"].after == after
+
+    def test_app_duplicate_after(self, app_yaml_data):
+        data = app_yaml_data(after=["duplicate", "duplicate"])
+
+        error = ".*duplicate entries in 'after' not permitted"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(data)
+
+    @pytest.mark.parametrize(
+        "before",
+        [
+            "i am a string",
+            ["i", "am", "a", "list"],
+        ],
+    )
+    def test_app_before(self, before, app_yaml_data):
+        data = app_yaml_data(before=before)
+
+        if before == "i am a string":
+            error = ".*value is not a valid list"
+            with pytest.raises(errors.ProjectValidationError, match=error):
+                Project.unmarshal(data)
+        else:
+            project = Project.unmarshal(data)
+            assert project.apps is not None
+            assert project.apps["app1"].before == before
+
+    def test_app_duplicate_before(self, app_yaml_data):
+        data = app_yaml_data(before=["duplicate", "duplicate"])
+
+        error = ".*duplicate entries in 'before' not permitted"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(data)
+
     @pytest.mark.parametrize("refresh_mode", ["endure", "restart", "_invalid"])
-    def test_app_refresh_mode(self, refresh_mode, yaml_data):
-        data = yaml_data(
-            apps={"app1": {"command": "/bin/true", "refresh-mode": refresh_mode}}
-        )
+    def test_app_refresh_mode(self, refresh_mode, app_yaml_data):
+        data = app_yaml_data(refresh_mode=refresh_mode)
 
         if refresh_mode != "_invalid":
             project = Project.unmarshal(data)
@@ -436,10 +657,8 @@ class TestAppValidation:
             "_invalid",
         ],
     )
-    def test_app_stop_mode(self, stop_mode, yaml_data):
-        data = yaml_data(
-            apps={"app1": {"command": "/bin/true", "stop-mode": stop_mode}}
-        )
+    def test_app_stop_mode(self, stop_mode, app_yaml_data):
+        data = app_yaml_data(stop_mode=stop_mode)
 
         if stop_mode != "_invalid":
             project = Project.unmarshal(data)
@@ -463,12 +682,8 @@ class TestAppValidation:
             "_invalid",
         ],
     )
-    def test_app_restart_condition(self, restart_condition, yaml_data):
-        data = yaml_data(
-            apps={
-                "app1": {"command": "/bin/true", "restart-condition": restart_condition}
-            }
-        )
+    def test_app_restart_condition(self, restart_condition, app_yaml_data):
+        data = app_yaml_data(restart_condition=restart_condition)
 
         if restart_condition != "_invalid":
             project = Project.unmarshal(data)
@@ -480,10 +695,8 @@ class TestAppValidation:
                 Project.unmarshal(data)
 
     @pytest.mark.parametrize("install_mode", ["enable", "disable", "_invalid"])
-    def test_app_install_mode(self, install_mode, yaml_data):
-        data = yaml_data(
-            apps={"app1": {"command": "/bin/true", "install-mode": install_mode}}
-        )
+    def test_app_install_mode(self, install_mode, app_yaml_data):
+        data = app_yaml_data(install_mode=install_mode)
 
         if install_mode != "_invalid":
             project = Project.unmarshal(data)
@@ -494,6 +707,39 @@ class TestAppValidation:
             with pytest.raises(errors.ProjectValidationError, match=error):
                 Project.unmarshal(data)
 
+    def test_app_valid_aliases(self, app_yaml_data):
+        data = app_yaml_data(aliases=["i", "am", "a", "list"])
+
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+        assert project.apps["app1"].aliases == ["i", "am", "a", "list"]
+
+    @pytest.mark.parametrize(
+        "aliases",
+        [
+            "i am a string",
+            ["_invalid!"],
+        ],
+    )
+    def test_app_invalid_aliases(self, aliases, app_yaml_data):
+        data = app_yaml_data(aliases=aliases)
+
+        if isinstance(aliases, list):
+            error = f".*'{aliases[0]}' is not a valid alias"
+            with pytest.raises(errors.ProjectValidationError, match=error):
+                Project.unmarshal(data)
+        else:
+            error = ".*value is not a valid list"
+            with pytest.raises(errors.ProjectValidationError, match=error):
+                Project.unmarshal(data)
+
+    def test_app_duplicate_aliases(self, app_yaml_data):
+        data = app_yaml_data(aliases=["duplicate", "duplicate"])
+
+        error = ".*duplicate entries in 'aliases' not permitted"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(data)
+
     @pytest.mark.parametrize(
         "environment",
         [
@@ -501,10 +747,8 @@ class TestAppValidation:
             {"FIRST_VARIABLE": "foo", "SECOND_VARIABLE": "bar"},
         ],
     )
-    def test_app_environment_valid(self, environment, yaml_data):
-        data = yaml_data(
-            apps={"app1": {"command": "/bin/true", "environment": environment}}
-        )
+    def test_app_environment_valid(self, environment, app_yaml_data):
+        data = app_yaml_data(environment=environment)
         project = Project.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].environment == environment
@@ -517,14 +761,85 @@ class TestAppValidation:
             [{"i": "am"}, {"a": "list"}, {"of": "dictionaries"}],
         ],
     )
-    def test_app_environment_invalid(self, environment, yaml_data):
-        data = yaml_data(
-            apps={"app1": {"command": "/bin/true", "environment": environment}}
-        )
+    def test_app_environment_invalid(self, environment, app_yaml_data):
+        data = app_yaml_data(environment=environment)
 
-        error = re.escape(
-            "Bad snapcraft.yaml content:\n"
-            "- value is not a valid dict (in field 'apps.app1.environment')"
-        )
+        error = ".*value is not a valid dict"
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(data)
+
+    @pytest.mark.parametrize("adapter", ["none", "full", "_invalid"])
+    def test_app_adapter(self, adapter, app_yaml_data):
+        data = app_yaml_data(adapter=adapter)
+
+        if adapter != "_invalid":
+            project = Project.unmarshal(data)
+            assert project.apps is not None
+            assert project.apps["app1"].adapter == adapter
+        else:
+            error = ".*unexpected value; permitted: 'none', 'full'"
+            with pytest.raises(errors.ProjectValidationError, match=error):
+                Project.unmarshal(data)
+
+    @pytest.mark.parametrize(
+        "command_chain",
+        [
+            "i am a string",
+            ["_invalid!"],
+            ["snap/command-chain/snapcraft-runner"],
+            ["i", "am", "a", "list"],
+        ],
+    )
+    def test_app_command_chain(self, command_chain, app_yaml_data):
+        data = app_yaml_data(command_chain=command_chain)
+
+        if command_chain == "i am a string":
+            error = ".*value is not a valid list"
+            with pytest.raises(errors.ProjectValidationError, match=error):
+                Project.unmarshal(data)
+        elif command_chain == ["_invalid!"]:
+            error = f".*'{command_chain[0]}' is not a valid command chain"
+            with pytest.raises(errors.ProjectValidationError, match=error):
+                Project.unmarshal(data)
+        else:
+            project = Project.unmarshal(data)
+            assert project.apps is not None
+            assert project.apps["app1"].command_chain == command_chain
+
+    @pytest.mark.parametrize("listen_stream", [1, 100, 65535, "/tmp/mysocket.sock"])
+    def test_app_sockets_valid_listen_stream(self, listen_stream, socket_yaml_data):
+        data = socket_yaml_data(listen_stream=listen_stream)
+
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+        assert project.apps["app1"].sockets is not None
+        assert project.apps["app1"].sockets["socket1"].listen_stream == listen_stream
+
+    @pytest.mark.parametrize("listen_stream", [-1, 0, 65536])
+    def test_app_sockets_invalid_listen_stream(self, listen_stream, socket_yaml_data):
+        data = socket_yaml_data(listen_stream=listen_stream)
+
+        error = f".*{listen_stream} is not an integer between 1 and 65535"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(data)
+
+    def test_app_sockets_missing_listen_stream(self, socket_yaml_data):
+        data = socket_yaml_data()
+
+        error = ".*field 'listen-stream' required"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(data)
+
+    @pytest.mark.parametrize("socket_mode", [1, "_invalid"])
+    def test_app_sockets_valid_socket_mode(self, socket_mode, socket_yaml_data):
+        data = socket_yaml_data(listen_stream="test", socket_mode=socket_mode)
+
+        if socket_mode != "_invalid":
+            project = Project.unmarshal(data)
+            assert project.apps is not None
+            assert project.apps["app1"].sockets is not None
+            assert project.apps["app1"].sockets["socket1"].socket_mode == socket_mode
+        else:
+            error = ".*value is not a valid integer"
+            with pytest.raises(errors.ProjectValidationError, match=error):
+                Project.unmarshal(data)

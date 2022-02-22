@@ -286,7 +286,7 @@ class AliasesTest(ProjectLoaderBaseTest):
         )
         expected = (
             "The {path!r} property does not match the required schema: "
-            "{alias!r} does not match ".format(
+            "{alias!r} is not a valid alias.".format(
                 path="apps/test/aliases[0]", alias=".test"
             )
         )
