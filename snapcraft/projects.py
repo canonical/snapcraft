@@ -184,7 +184,7 @@ class Project(ProjectModel):
     grade: Literal["stable", "devel"]
     architectures: List[Architecture] = []
     assumes: UniqueStrList = []
-    package_repositories: Optional[List[Any]] = []  # handled by repo
+    package_repositories: List[Dict[str, Any]] = []  # handled by repo
     hooks: Optional[Dict[str, Hook]]
     passthrough: Optional[Dict[str, Any]]
     apps: Optional[Dict[str, App]]

@@ -334,7 +334,7 @@ class TestProjectValidation:
             {
                 "type": "apt",
                 "url": "https://some/url",
-                "key_id": "KEYID12345" * 4,
+                "key-id": "ABCDE12345" * 4,
             },
         ]
         project = Project.unmarshal(yaml_data(package_repositories=repos))

@@ -59,12 +59,12 @@ class TestAptDebValidation:
             {
                 "type": "apt",
                 "url": "https://some/url",
-                "key_id": "KEYID12345" * 4,
+                "key-id": "BCDEF12345" * 4,
             },
             {
                 "type": "apt",
                 "url": "https://some/url",
-                "key_id": "KEYID12345" * 4,
+                "key-id": "BCDEF12345" * 4,
                 "formats": ["deb"],
                 "components": ["some", "components"],
                 "key-server": "my-key-server",
@@ -77,7 +77,7 @@ class TestAptDebValidation:
         apt_deb = AptDeb.unmarshal(repo)
         assert apt_deb.type == "apt"
         assert apt_deb.url == "https://some/url"
-        assert apt_deb.key_id == "KEYID12345" * 4
+        assert apt_deb.key_id == "BCDEF12345" * 4
         assert apt_deb.formats == (["deb"] if "formats" in repo else None)
         assert apt_deb.components == (
             ["some", "components"] if "components" in repo else None
@@ -89,9 +89,9 @@ class TestAptDebValidation:
     @pytest.mark.parametrize(
         "key_id,error",
         [
-            ("KEYID12345" * 4, None),
-            ("KEYID12345", "string does not match regex"),
-            ("keyid12345" * 4, "string does not match regex"),
+            ("ABCDE12345" * 4, None),
+            ("KEYID12345" * 4, "string does not match regex"),
+            ("abcde12345" * 4, "string does not match regex"),
         ],
     )
     def test_apt_deb_key_id(self, key_id, error):
@@ -121,7 +121,7 @@ class TestAptDebValidation:
         repo = {
             "type": "apt",
             "url": "https://some/url",
-            "key-id": "KEYID12345" * 4,
+            "key-id": "ABCDE12345" * 4,
             "formats": formats,
         }
 

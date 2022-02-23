@@ -49,8 +49,14 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     """
     emit.trace(f"command: {command_name}, arguments: {parsed_args}")
     yaml_data = {}
+    assets_dir = Path("snap")
+
     for project_file in _PROJECT_FILES:
         if project_file.is_file():
+
+            if project_file.parent.name == "snap":
+                assets_dir = project_file.parent
+
             yaml_data = _load_yaml(project_file)
             break
     else:
@@ -72,12 +78,16 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
 
     project = Project.unmarshal(yaml_data)
 
-    _run_command(command_name, project, parsed_args)
+    _run_command(
+        command_name, project=project, assets_dir=assets_dir, parsed_args=parsed_args
+    )
 
 
 def _run_command(
     command_name: str,
+    *,
     project: Project,
+    assets_dir: Path,
     parsed_args: "argparse.Namespace",
 ) -> None:
 
@@ -85,10 +95,14 @@ def _run_command(
     _ = parsed_args
 
     step_name = "prime" if command_name == "pack" else command_name
-
     work_dir = Path("work").absolute()
 
-    lifecycle = PartsLifecycle(project.parts, work_dir=work_dir)
+    lifecycle = PartsLifecycle(
+        project.parts,
+        work_dir=work_dir,
+        assets_dir=assets_dir,
+        package_repositories=project.package_repositories,
+    )
     lifecycle.run(step_name)
 
     snap_yaml.write(project, lifecycle.prime_dir, arch=lifecycle.target_arch)
