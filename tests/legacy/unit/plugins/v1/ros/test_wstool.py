@@ -19,6 +19,7 @@ import pathlib
 import subprocess
 from unittest import mock
 
+import fixtures
 from testtools.matchers import Contains, Equals
 
 import snapcraft_legacy
@@ -171,6 +172,8 @@ class WstoolTestCase(unit.TestCase):
         # Create a single library directory for asserting LD_LIBRARY_PATH is set
         # properly.
         os.makedirs(os.path.join(wstool._wstool_install_path, "lib"))
+
+        self.useFixture(fixtures.EnvironmentVariable("LD_LIBRARY_PATH", None))
 
         wstool._run(["init"])
 
