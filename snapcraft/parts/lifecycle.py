@@ -22,11 +22,14 @@ from typing import TYPE_CHECKING, Any, Dict
 import yaml
 import yaml.error
 from craft_cli import emit
+from craft_parts import infos
 
 from snapcraft import errors, pack
 from snapcraft.meta import snap_yaml
 from snapcraft.parts import PartsLifecycle
 from snapcraft.projects import Project
+
+from . import grammar
 
 if TYPE_CHECKING:
     import argparse
@@ -73,8 +76,12 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     # TODO: apply extensions
     # yaml_data = apply_extensions(yaml_data)
 
-    # TODO: process grammar
-    # yaml_data = process_grammar(yaml_data)
+    # TODO: support for target_arch
+    arch = _get_arch()
+    if "parts" in yaml_data:
+        yaml_data["parts"] = grammar.process_parts(
+            parts_yaml_data=yaml_data["parts"], arch=arch, target_arch=arch
+        )
 
     project = Project.unmarshal(yaml_data)
 
@@ -132,3 +139,10 @@ def _load_yaml(filename: Path) -> Dict[str, Any]:
         raise errors.SnapcraftError(msg) from err
     except yaml.error.YAMLError as err:
         raise errors.SnapcraftError(f"YAML parsing error: {err!s}") from err
+
+
+# TODO Needs exposure from craft-parts.
+def _get_arch() -> str:
+    machine = infos._get_host_architecture()  # pylint: disable=protected-access
+    # FIXME Raise the potential KeyError.
+    return infos._ARCH_TRANSLATIONS[machine]["deb"]  # pylint: disable=protected-access
