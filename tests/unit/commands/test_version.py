@@ -14,11 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from argparse import Namespace
+
 from snapcraft import __version__
 from snapcraft.commands.version import VersionCommand
 
 
 def test_version_command(emitter):
     cmd = VersionCommand(None)
-    cmd.run([])
+    cmd.run(Namespace())
     emitter.assert_recorded([f"snapcraft {__version__}"])
