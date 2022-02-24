@@ -23,6 +23,7 @@ from typing import Literal  # type: ignore
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import pydantic
+from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from pydantic import conlist, constr
 
 from snapcraft import repo
@@ -347,6 +348,36 @@ class Project(ProjectModel):
             raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
 
         return project
+
+
+class _GrammarAwareModel(pydantic.BaseModel):
+    class Config:
+        """Default configuration for grammar-aware models."""
+
+        validate_assignment = True
+        extra = "allow"  # this is required to verify only grammar-aware parts
+        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+        allow_population_by_field_name = True
+
+
+class _GrammarAwarePart(_GrammarAwareModel):
+    source: Optional[GrammarStr]
+    build_environment: Optional[GrammarSingleEntryDictList]
+    build_packages: Optional[GrammarStrList]
+    stage_packages: Optional[GrammarStrList]
+    build_snaps: Optional[GrammarStrList]
+    stage_snaps: Optional[GrammarStrList]
+
+
+class GrammarAwareProject(_GrammarAwareModel):
+    """Project definition containing grammar-aware components."""
+
+    parts: Dict[str, _GrammarAwarePart]
+
+    @classmethod
+    def validate_grammar(cls, data: Dict[str, Any]) -> None:
+        """Ensure grammar-enabled entries are syntactically valid."""
+        cls(**data)
 
 
 def _format_pydantic_errors(errors, *, file_name: str = "snapcraft.yaml"):

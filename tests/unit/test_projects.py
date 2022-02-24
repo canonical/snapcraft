@@ -16,10 +16,11 @@
 
 from typing import Any, Dict
 
+import pydantic
 import pytest
 
 from snapcraft import errors
-from snapcraft.projects import Project
+from snapcraft.projects import GrammarAwareProject, Project
 
 
 @pytest.fixture
@@ -35,7 +36,7 @@ def project_yaml_data():
             "description": "description",
             "grade": "stable",
             "confinement": "strict",
-            "parts": [],
+            "parts": {},
             **kwargs,
         }
 
@@ -843,3 +844,150 @@ class TestAppValidation:
             error = ".*value is not a valid integer"
             with pytest.raises(errors.ProjectValidationError, match=error):
                 Project.unmarshal(data)
+
+
+class TestGrammarValidation:
+    """Basic grammar validation testing."""
+
+    def test_grammar_trivial(self, project_yaml_data):
+        data = project_yaml_data(
+            parts={
+                "p1": {
+                    "plugin": "nil",
+                }
+            }
+        )
+        GrammarAwareProject.validate_grammar(data)
+
+    def test_grammar_without_grammar(self, project_yaml_data):
+        data = project_yaml_data(
+            parts={
+                "p1": {
+                    "plugin": "nil",
+                    "sources": ".",
+                    "build-environment": [
+                        {"FOO": "1"},
+                        {"BAR": "2"},
+                    ],
+                    "build-packages": ["a", "b"],
+                    "build-snaps": ["d", "e"],
+                    "stage-packages": ["foo", "bar"],
+                    "stage-snaps": ["baz", "quux"],
+                }
+            }
+        )
+        GrammarAwareProject.validate_grammar(data)
+
+    def test_grammar_simple(self, project_yaml_data):
+        data = project_yaml_data(
+            parts={
+                "p1": {
+                    "plugin": "nil",
+                    "sources": [
+                        {"on arm64": "this"},
+                        {"else": "that"},
+                    ],
+                    "build-environment": [
+                        {
+                            "on amd64": [
+                                {"FOO": "1"},
+                                {"BAR": "2"},
+                            ]
+                        },
+                    ],
+                    "build-packages": [{"to arm64,amd64": ["a", "b"]}, "else fail"],
+                    "build-snaps": [
+                        {"on somearch": ["d", "e"]},
+                    ],
+                    "stage-packages": [
+                        "pkg1",
+                        "pkg2",
+                        {"to somearch": ["foo", "bar"]},
+                    ],
+                    "stage-snaps": [
+                        {"on arch to otherarch": ["baz", "quux"]},
+                    ],
+                }
+            }
+        )
+        GrammarAwareProject.validate_grammar(data)
+
+    def test_grammar_recursive(self, project_yaml_data):
+        data = project_yaml_data(
+            parts={
+                "p1": {
+                    "plugin": "nil",
+                    "sources": [
+                        {"on arm64": [{"to amd64": "this"}, "else fail"]},
+                        {"else": "that"},
+                    ],
+                }
+            }
+        )
+        GrammarAwareProject.validate_grammar(data)
+
+    def test_grammar_try(self, project_yaml_data):
+        data = project_yaml_data(
+            parts={
+                "p1": {
+                    "plugin": "nil",
+                    "source": [
+                        {"try": "this"},
+                        {"else": "that"},
+                    ],
+                }
+            }
+        )
+
+        with pytest.raises(pydantic.ValidationError) as raised:
+            GrammarAwareProject.validate_grammar(data)
+
+        err = raised.value.errors()
+        assert len(err) == 1
+        assert err[0]["loc"] == ("parts", "p1", "source")
+        assert err[0]["type"] == "value_error"
+        assert (
+            err[0]["msg"] == "'try' was removed from grammar, use 'on <arch>' instead"
+        )
+
+    def test_grammar_type_error(self, project_yaml_data):
+        data = project_yaml_data(
+            parts={
+                "p1": {
+                    "plugin": "nil",
+                    "source": [
+                        {"on amd64": [25]},
+                    ],
+                }
+            }
+        )
+
+        with pytest.raises(pydantic.ValidationError) as raised:
+            GrammarAwareProject.validate_grammar(data)
+
+        err = raised.value.errors()
+        assert len(err) == 1
+        assert err[0]["loc"] == ("parts", "p1", "source")
+        assert err[0]["type"] == "type_error"
+        assert err[0]["msg"] == "value must be a string: [25]"
+
+    def test_grammar_syntax_error(self, project_yaml_data):
+        data = project_yaml_data(
+            parts={
+                "p1": {
+                    "plugin": "nil",
+                    "source": [
+                        {"on amd64,,arm64": "foo"},
+                    ],
+                }
+            }
+        )
+
+        with pytest.raises(pydantic.ValidationError) as raised:
+            GrammarAwareProject.validate_grammar(data)
+
+        err = raised.value.errors()
+        assert len(err) == 1
+        assert err[0]["loc"] == ("parts", "p1", "source")
+        assert err[0]["type"] == "value_error"
+        assert err[0]["msg"] == "syntax error in 'on' selector"

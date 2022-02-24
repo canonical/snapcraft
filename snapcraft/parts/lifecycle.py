@@ -27,7 +27,7 @@ from craft_parts import infos
 from snapcraft import errors, pack
 from snapcraft.meta import snap_yaml
 from snapcraft.parts import PartsLifecycle
-from snapcraft.projects import Project
+from snapcraft.projects import GrammarAwareProject, Project
 
 from . import grammar
 
@@ -68,6 +68,9 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
             "right directory?",
             resolution="To start a new project, use `snapcraft init`",
         )
+
+    # validate project grammar
+    GrammarAwareProject.validate_grammar(yaml_data)
 
     # only execute the new codebase from core22 onwards
     if yaml_data.get("base") != "core22":
