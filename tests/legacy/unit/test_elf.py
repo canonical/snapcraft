@@ -68,9 +68,9 @@ class TestLdLibraryPathParser(unit.TestCase):
 class TestElfFileSmoketest(unit.TestCase):
     def test_bin_echo(self):
         # Try parsing a file without the pyelftools logic mocked out
-        elf_file = elf.ElfFile(path=sys.executable)
+        elf_file = elf.ElfFile(path="/bin/ls")
 
-        self.assertThat(elf_file.path, Equals(sys.executable))
+        self.assertThat(elf_file.path, Equals("/bin/ls"))
 
         # The arch attribute will be a tuple of three strings
         self.assertTrue(isinstance(elf_file.arch, tuple))
@@ -110,7 +110,7 @@ class TestElfFileSmoketest(unit.TestCase):
         self.assertTrue(isinstance(elf_file.has_debug_info, bool))
 
         # Ensure type is detered as executable.
-        self.assertThat(elf_file.elf_type, Equals("ET_EXEC"))
+        self.assertThat(elf_file.elf_type, Equals("ET_DYN"))
 
 
 class TestInvalidElf(unit.TestCase):

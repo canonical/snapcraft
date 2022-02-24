@@ -187,8 +187,12 @@ prepare: |
 
   # Hold snap refreshes for 24h.
   snap set system refresh.hold="$(date --date=tomorrow +%Y-%m-%dT%H:%M:%S%:z)"
-  snap watch --last=auto-refresh?
-  snap watch --last=install?
+  if ! snap watch --last=auto-refresh?; then
+      journalctl -xe
+  fi
+  if ! snap watch --last=install?; then
+      journalctl -xe
+  fi
 
   if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
       /snap/bin/lxd waitready --timeout=30
