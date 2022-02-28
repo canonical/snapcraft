@@ -47,14 +47,33 @@ class ProjectModel(pydantic.BaseModel):
 # see https://github.com/samuelcolvin/pydantic/issues/975#issuecomment-551147305
 # fmt: off
 if TYPE_CHECKING:
-    CommandChainStr = str
     UniqueStrList = List[str]
-    UniqueAliasList = List[str]
 else:
-    CommandChainStr = constr(regex=r"^[A-Za-z0-9/._#:$-]*$")
     UniqueStrList = conlist(str, unique_items=True)
-    UniqueAliasList = conlist(constr(regex=r"^[a-zA-Z0-9][-_.a-zA-Z0-9]*$"), unique_items=True)
 # fmt: on
+
+
+class Socket(ProjectModel):
+    """Snapcraft app socket definition."""
+
+    listen_stream: Union[int, str]
+    socket_mode: Optional[int]
+
+    @pydantic.validator("listen_stream")
+    @classmethod
+    def _validate_list_stream(cls, listen_stream):
+        if isinstance(listen_stream, int):
+            if listen_stream < 1 or listen_stream > 65535:
+                raise ValueError(
+                    f"{listen_stream!r} is not an integer between 1 and 65535 (inclusive)."
+                )
+        elif isinstance(listen_stream, str):
+            if not re.match(r"^[A-Za-z0-9/._#:$-]*$", listen_stream):
+                raise ValueError(
+                    f"{listen_stream!r} is not a valid socket path (e.g. /tmp/mysocket.sock)."
+                )
+
+        return listen_stream
 
 
 class App(ProjectModel):
@@ -64,6 +83,7 @@ class App(ProjectModel):
     autostart: Optional[str]
     common_id: Optional[str]
     bus_name: Optional[str]
+    desktop: Optional[str]
     completer: Optional[str]
     stop_command: Optional[str]
     post_stop_command: Optional[str]
@@ -103,15 +123,17 @@ class App(ProjectModel):
     install_mode: Optional[Literal["enable", "disable"]]
     slots: Optional[UniqueStrList]
     plugs: Optional[UniqueStrList]
-    aliases: Optional[UniqueAliasList]
+    aliases: Optional[UniqueStrList]
     environment: Optional[Dict[str, Any]]
-    command_chain: List[CommandChainStr] = []
-    # TODO: sockets
+    adapter: Optional[Literal["none", "full"]]
+    command_chain: List[str] = []
+    sockets: Optional[Dict[str, Socket]]
+    # TODO: implement passthrough (CRAFT-854)
 
     @pydantic.validator("autostart")
     @classmethod
-    def _validate_desktop_name(cls, name):
-        if not re.match(r"^[A-Za-z0-9. _#:$-]+\\.desktop$", name):
+    def _validate_autostart_name(cls, name):
+        if not re.match(r"^[A-Za-z0-9. _#:$-]+\.desktop$", name):
             raise ValueError(
                 f"{name!r} is not a valid desktop file name (e.g. myapp.desktop)"
             )
@@ -136,11 +158,37 @@ class App(ProjectModel):
 
         return timeval
 
+    @pydantic.validator("command_chain")
+    @classmethod
+    def _validate_command_chain(cls, command_chains):
+        for command_chain in command_chains:
+            if not re.match(r"^[A-Za-z0-9/._#:$-]*$", command_chain):
+                raise ValueError(
+                    f"{command_chain!r} is not a valid command chain. Command chain entries must "
+                    "be strings, and can only use ASCII alphanumeric characters and the following "
+                    "special characters: / . _ # : $ -"
+                )
+
+        return command_chains
+
+    @pydantic.validator("aliases")
+    @classmethod
+    def _validate_aliases(cls, aliases):
+        for alias in aliases:
+            if not re.match(r"^[a-zA-Z0-9][-_.a-zA-Z0-9]*$", alias):
+                raise ValueError(
+                    f"{alias!r} is not a valid alias. Aliases must be strings, begin with an ASCII "
+                    "alphanumeric character, and can only use ASCII alphanumeric characters and "
+                    "the following special characters: . _ -"
+                )
+
+        return aliases
+
 
 class Hook(ProjectModel):
     """Snapcraft project hook definition."""
 
-    command_chain: List[CommandChainStr] = []
+    command_chain: List[str] = []
     environment: List[Dict[str, str]] = []
     plugs: UniqueStrList = []
     passthrough: Optional[Dict[str, Any]]
@@ -332,6 +380,11 @@ def _format_pydantic_errors(errors, *, file_name: str = "snapcraft.yaml"):
             field_name, location = _printable_field_location_split(formatted_loc)
             combined.append(
                 f"- extra field {field_name} not permitted in {location} configuration"
+            )
+        elif formatted_msg == "the list has duplicated items":
+            field_name, location = _printable_field_location_split(formatted_loc)
+            combined.append(
+                f" - duplicate entries in {field_name} not permitted in {location} configuration"
             )
         elif formatted_loc == "__root__":
             combined.append(f"- {formatted_msg}")
