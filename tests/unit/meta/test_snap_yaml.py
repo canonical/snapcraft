@@ -146,6 +146,17 @@ def complex_project():
               test-socket-2:
                 listen_stream: 100
                 socket_mode: 1
+        plugs:
+          empty-plug:
+          string-plug: home
+          dict-plug:
+            string-parameter: foo
+            bool-parameter: True
+          content-interface:
+            interface: content
+            target: test-target
+            content: test-content
+            default-provider: test-provider
         """
     )
     data = yaml.safe_load(snapcraft_yaml)
@@ -219,5 +230,16 @@ def test_complex_snap_yaml(complex_project, new_dir):
         grade: stable
         environment:
           GLOBAL_VARIABLE: test-global-variable
+        plugs:
+          empty-plug: null
+          string-plug: home
+          dict-plug:
+            string-parameter: foo
+            bool-parameter: true
+          content-interface:
+            content: test-content
+            interface: content
+            target: test-target
+            default_provider: test-provider
         """
     )

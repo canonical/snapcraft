@@ -20,7 +20,9 @@ import pydantic
 import pytest
 
 from snapcraft import errors
-from snapcraft.projects import GrammarAwareProject, Project
+from snapcraft.projects import ContentPlug, GrammarAwareProject, Project
+
+# pylint: disable=too-many-lines
 
 
 @pytest.fixture
@@ -404,6 +406,59 @@ class TestProjectValidation:
         error = ".*value is not a valid dict"
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(project_yaml_data(environment=environment))
+
+    @pytest.mark.parametrize(
+        "plugs",
+        [
+            {"empty-plug": None},
+            {"string-plug": "home"},
+            {"dict-plug": {"string-parameter": "foo", "bool-parameter": True}},
+        ],
+    )
+    def test_project_plugs_valid(self, plugs, project_yaml_data):
+        project = Project.unmarshal(project_yaml_data(plugs=plugs))
+        assert project.plugs == plugs
+
+    @pytest.mark.parametrize(
+        "plugs",
+        [
+            "i am a string",
+            ["i", "am", "a", "list"],
+            [{"i": "am"}, {"a": "list"}, {"of": "dictionaries"}],
+        ],
+    )
+    def test_project_plugs_invalid(self, plugs, project_yaml_data):
+        error = ".*value is not a valid dict"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(project_yaml_data(plugs=plugs))
+
+    def test_project_content_plugs_valid(self, project_yaml_data):
+        content_plug_data = {
+            "content-interface": {
+                "interface": "content",
+                "target": "test-target",
+                "content": "test-content",
+                "default-provider": "test-provider",
+            }
+        }
+        content_plug = ContentPlug(**content_plug_data["content-interface"])
+
+        project = Project.unmarshal(project_yaml_data(plugs=content_plug_data))
+        assert project.plugs is not None
+        assert project.plugs["content-interface"] == content_plug
+
+    def test_project_content_plugs_missing_target(self, project_yaml_data):
+        content_plug = {
+            "content-interface": {
+                "interface": "content",
+                "content": "test-content",
+                "default-provider": "test-provider",
+            }
+        }
+        error = ".*'content-interface' must have a 'target' parameter"
+
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(project_yaml_data(plugs=content_plug))
 
 
 class TestAppValidation:
