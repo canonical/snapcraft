@@ -31,10 +31,10 @@ _Info = dict(
         build_snaps=["kde-frameworks-5-core18-sdk/latest/stable"],
     ),
     core20=_ExtensionInfo(
-        cmake_args="-DCMAKE_FIND_ROOT_PATH=/snap/kde-frameworks-5-qt-5-15-3-core20-sdk/current",
-        content="kde-frameworks-5-qt-5-15-3-core20-all",
-        provider="kde-frameworks-5-qt-5-15-3-core20",
-        build_snaps=["kde-frameworks-5-qt-5-15-3-core20-sdk/latest/stable"],
+        cmake_args="-DCMAKE_FIND_ROOT_PATH=/snap/kde-frameworks-5-91-qt-5-15-3-core20-sdk/current",
+        content="kde-frameworks-5-91-qt-5-15-3-core20-all",
+        provider="kde-frameworks-5-91-qt-5-15-3-core20",
+        build_snaps=["kde-frameworks-5-91-qt-5-15-3-core20-sdk/latest/stable"],
     ),
 )
 
