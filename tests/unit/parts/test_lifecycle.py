@@ -124,7 +124,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
             "pull",
             project=project,
             assets_dir=assets_dir,
-            parsed_args=argparse.Namespace(parts=["part1"])
+            parsed_args=argparse.Namespace(parts=["part1"]),
         ),
     ]
 
@@ -169,7 +169,12 @@ def test_lifecycle_run_command_step(cmd, step, snapcraft_yaml, new_dir, mocker):
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
 
     parts_lifecycle._run_command(
-        cmd, project=project, assets_dir=Path(), parsed_args=argparse.Namespace()
+        cmd,
+        project=project,
+        assets_dir=Path(),
+        parsed_args=argparse.Namespace(
+            destructive_mode=True, use_lxd=False, provider=None
+        ),
     )
 
     assert run_mock.mock_calls == [call(step)]
@@ -186,10 +191,115 @@ def test_lifecycle_run_command_pack(snapcraft_yaml, new_dir, mocker):
         "pack",
         project=project,
         assets_dir=Path(),
-        parsed_args=argparse.Namespace(directory=None, output=None),
+        parsed_args=argparse.Namespace(
+            directory=None,
+            output=None,
+            destructive_mode=True,
+            use_lxd=False,
+            provider=None,
+        ),
     )
 
     assert run_mock.mock_calls == [call("prime")]
     assert pack_mock.mock_calls == [
         call(new_dir / "work/prime", output=None, compression="xz")
+    ]
+
+
+def test_lifecycle_pack_destructive_mode(snapcraft_yaml, new_dir, mocker):
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
+    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    pack_mock = mocker.patch("snapcraft.pack.pack_snap")
+    mocker.patch("snapcraft.meta.snap_yaml.write")
+    mocker.patch("snapcraft.utils.is_managed_mode", return_value=True)
+    mocker.patch(
+        "snapcraft.utils.get_managed_environment_home_path",
+        return_value=new_dir / "home",
+    )
+
+    parts_lifecycle._run_command(
+        "pack",
+        project=project,
+        assets_dir=Path(),
+        parsed_args=argparse.Namespace(
+            directory=None,
+            output=None,
+            destructive_mode=True,
+            use_lxd=False,
+            provider=None,
+        ),
+    )
+
+    assert run_in_provider_mock.mock_calls == []
+    assert run_mock.mock_calls == [call("prime")]
+    assert pack_mock.mock_calls == [
+        call(new_dir / "home/prime", output=None, compression="xz")
+    ]
+
+
+def test_lifecycle_pack_managed(snapcraft_yaml, new_dir, mocker):
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
+    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    pack_mock = mocker.patch("snapcraft.pack.pack_snap")
+    mocker.patch("snapcraft.meta.snap_yaml.write")
+    mocker.patch("snapcraft.utils.is_managed_mode", return_value=True)
+    mocker.patch(
+        "snapcraft.utils.get_managed_environment_home_path",
+        return_value=new_dir / "home",
+    )
+
+    parts_lifecycle._run_command(
+        "pack",
+        project=project,
+        assets_dir=Path(),
+        parsed_args=argparse.Namespace(
+            directory=None,
+            output=None,
+            destructive_mode=False,
+            use_lxd=False,
+            provider=None,
+        ),
+    )
+
+    assert run_in_provider_mock.mock_calls == []
+    assert run_mock.mock_calls == [call("prime")]
+    assert pack_mock.mock_calls == [
+        call(new_dir / "home/prime", output=None, compression="xz")
+    ]
+
+
+def test_lifecycle_pack_not_managed(snapcraft_yaml, new_dir, mocker):
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
+    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch("snapcraft.utils.is_managed_mode", return_value=False)
+
+    parts_lifecycle._run_command(
+        "pack",
+        project=project,
+        assets_dir=Path(),
+        parsed_args=argparse.Namespace(
+            directory=None,
+            output=None,
+            destructive_mode=False,
+            use_lxd=False,
+            provider=None,
+        ),
+    )
+
+    assert run_mock.mock_calls == []
+    assert run_in_provider_mock.mock_calls == [
+        call(
+            project,
+            "pack",
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                destructive_mode=False,
+                use_lxd=False,
+                provider=None,
+            ),
+        )
     ]

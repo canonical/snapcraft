@@ -61,8 +61,7 @@ def run():
         legacy.legacy_run()
 
     # set lib loggers to debug level so that all messages are sent to Emitter
-    # TODO: add craft_providers
-    for lib_name in ("craft_parts",):
+    for lib_name in ("craft_parts", "craft_providers"):
         logger = logging.getLogger(lib_name)
         logger.setLevel(logging.DEBUG)
 

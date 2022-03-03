@@ -35,8 +35,21 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
 
     @overrides
     def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
-        # TODO: add arguments for all step commands and pack
-        pass
+        parser.add_argument(
+            "--destructive-mode",
+            action="store_true",
+            help="Build in the current host (implies `--provider=host`)",
+        )
+        parser.add_argument(
+            "--provider",
+            choices=["host", "lxd", "multipass"],
+            help="The build provider to use",
+        )
+        parser.add_argument(
+            "--use-lxd",
+            action="store_true",
+            help="Use LXD to build (implies `--provider=lxd`)",
+        )
 
     @overrides
     def run(self, parsed_args):

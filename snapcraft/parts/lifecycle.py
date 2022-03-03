@@ -16,18 +16,20 @@
 
 """Parts lifecycle preparation and execution."""
 
+import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, cast
 
 import yaml
 import yaml.error
 from craft_cli import emit
 from craft_parts import infos
 
-from snapcraft import errors, pack
+from snapcraft import errors, pack, providers, utils
 from snapcraft.meta import snap_yaml
 from snapcraft.parts import PartsLifecycle
 from snapcraft.projects import GrammarAwareProject, Project
+from snapcraft.providers import capture_logs_from_instance
 
 from . import grammar
 
@@ -100,12 +102,19 @@ def _run_command(
     assets_dir: Path,
     parsed_args: "argparse.Namespace",
 ) -> None:
+    destructive_mode = parsed_args.destructive_mode or parsed_args.provider == "host"
+    managed_mode = utils.is_managed_mode()
 
-    # TODO: check destructive and managed modes and run in provider
-    _ = parsed_args
+    if not managed_mode and not destructive_mode:
+        _run_in_provider(project, command_name, parsed_args)
+        return
+
+    if managed_mode:
+        work_dir = utils.get_managed_environment_home_path()
+    else:
+        work_dir = Path("work").absolute()
 
     step_name = "prime" if command_name == "pack" else command_name
-    work_dir = Path("work").absolute()
 
     lifecycle = PartsLifecycle(
         project.parts,
@@ -142,6 +151,36 @@ def _load_yaml(filename: Path) -> Dict[str, Any]:
         raise errors.SnapcraftError(msg) from err
     except yaml.error.YAMLError as err:
         raise errors.SnapcraftError(f"YAML parsing error: {err!s}") from err
+
+
+def _run_in_provider(project: Project, command_name: str, parsed_args: "argparse.Namespace"):
+    """Pack image in provider instance."""
+    provider = "lxd" if parsed_args.use_lxd else parsed_args.provider
+
+    emit.progress("Checking build provider availability")
+    provider = providers.get_provider(provider)
+    provider.ensure_provider_is_available()
+
+    cmd = ["snapcraft", command_name]
+
+    if hasattr(parsed_args, "parts"):
+        cmd.extend(parsed_args.parts)
+
+    output_dir = utils.get_managed_environment_project_path()
+
+    emit.progress("Launching build provider")
+    with provider.launched_environment(
+        project_name=project.name, project_path=Path().absolute(), base=cast(str, project.base)
+    ) as instance:
+        try:
+            instance.execute_run(
+                cmd, check=True, cwd=output_dir,
+            )
+        except subprocess.CalledProcessError as err:
+            capture_logs_from_instance(instance)
+            raise providers.ProviderError(
+                f"Failed to pack image '{project.name}:{project.version}'."
+            ) from err
 
 
 # TODO Needs exposure from craft-parts.

@@ -95,6 +95,7 @@ install_requires = [
     "craft-cli",
     "craft-grammar",
     "craft-parts",
+    "craft-providers",
     "cryptography==3.4",
     "gnupg",
     "jsonschema==2.5.1",
