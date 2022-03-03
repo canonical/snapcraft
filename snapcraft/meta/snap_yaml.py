@@ -33,15 +33,6 @@ class Socket(YamlModel):
     socket_mode: Optional[int]
 
 
-class ContentPlug(YamlModel):
-    """snap.yaml content plug entry."""
-
-    content: Optional[str]
-    interface: str
-    target: str
-    default_provider: Optional[str]
-
-
 class SnapApp(YamlModel):
     """Snap.yaml app entry.
 
@@ -95,7 +86,6 @@ class SnapMetadata(YamlModel):
     https://snapcraft.io/docs/snap-format for details.
 
     TODO: implement adopt-info (CRAFT-803)
-    TODO: implement hooks (CRAFT-808)
     """
 
     name: str
@@ -113,7 +103,8 @@ class SnapMetadata(YamlModel):
     confinement: str
     grade: str
     environment: Optional[Dict[str, Any]]
-    plugs: Optional[Dict[str, Union[ContentPlug, Any]]]
+    plugs: Optional[Dict[str, Any]]
+    hooks: Optional[Dict[str, Any]]
 
 
 def write(project: Project, prime_dir: Path, *, arch: str):
@@ -182,6 +173,7 @@ def write(project: Project, prime_dir: Path, *, arch: str):
         grade=project.grade,
         environment=project.environment,
         plugs=project.plugs,
+        hooks=project.hooks,
     )
 
     yaml.add_representer(str, _repr_str, Dumper=yaml.SafeDumper)
