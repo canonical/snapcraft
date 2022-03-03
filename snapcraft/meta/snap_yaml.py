@@ -33,6 +33,15 @@ class Socket(YamlModel):
     socket_mode: Optional[int]
 
 
+class ContentPlug(YamlModel):
+    """snap.yaml content plug entry."""
+
+    content: Optional[str]
+    interface: str
+    target: str
+    default_provider: Optional[str]
+
+
 class SnapApp(YamlModel):
     """Snap.yaml app entry.
 
@@ -104,6 +113,7 @@ class SnapMetadata(YamlModel):
     confinement: str
     grade: str
     environment: Optional[Dict[str, Any]]
+    plugs: Optional[Dict[str, Union[ContentPlug, Any]]]
 
 
 def write(project: Project, prime_dir: Path, *, arch: str):
@@ -171,6 +181,7 @@ def write(project: Project, prime_dir: Path, *, arch: str):
         confinement=project.confinement,
         grade=project.grade,
         environment=project.environment,
+        plugs=project.plugs,
     )
 
     yaml.add_representer(str, _repr_str, Dumper=yaml.SafeDumper)

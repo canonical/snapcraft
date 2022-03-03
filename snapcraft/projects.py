@@ -202,6 +202,15 @@ class Architecture(ProjectModel):
     build_to: Optional[Union[str, UniqueStrList]]
 
 
+class ContentPlug(ProjectModel):
+    """Snapcraft project content plug definition."""
+
+    content: Optional[str]
+    interface: str
+    target: str
+    default_provider: Optional[str]
+
+
 class Project(ProjectModel):
     """Snapcraft project definition.
 
@@ -237,11 +246,29 @@ class Project(ProjectModel):
     hooks: Optional[Dict[str, Hook]]
     passthrough: Optional[Dict[str, Any]]
     apps: Optional[Dict[str, App]]
-    plugs: Optional[Dict[str, Dict[str, str]]]  # TODO: add plug name validation
+    plugs: Optional[Dict[str, Union[ContentPlug, Any]]]
     slots: Optional[Dict[str, Dict[str, str]]]  # TODO: add slot name validation
     parts: Dict[str, Any]  # parts are handled by craft-parts
     epoch: Optional[str]
     environment: Optional[Dict[str, Any]]
+
+    @pydantic.validator("plugs")
+    @classmethod
+    def _validate_plugs(cls, plugs):
+        if plugs is not None:
+            for plug_name, plug in plugs.items():
+                if (
+                    isinstance(plug, dict)
+                    and plug.get("interface") == "content"
+                    and not plug.get("target")
+                ):
+                    raise ValueError(
+                        f"ContentPlug '{plug_name}' must have a 'target' parameter."
+                    )
+                if isinstance(plug, list):
+                    raise ValueError(f"Plug '{plug_name}' cannot be a list.")
+
+        return plugs
 
     @pydantic.root_validator(pre=True)
     @classmethod
