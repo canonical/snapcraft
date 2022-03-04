@@ -25,11 +25,21 @@ restore: |
 execute: |
   cd "$SNAP"
 
-  # Build what we have.
   if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
-      snapcraft --verbose
+      # No jammy for this ppa yet
+      if [ "$(basename "$SNAP")" != "test-apt-ppa" ]; then
+          # Build what we have.
+          snapcraft --verbose --use-lxd
 
-      # And verify the snap runs as expected.
+          # And verify the snap runs as expected.
+          snap install "${SNAP}"_1.0_*.snap --dangerous
+          snap_executable="${SNAP}.test-ppa"
+          [ "$("${snap_executable}")" = "hello!" ]
+      fi
+
+      # Do it again in destructive mode
+      snap remove "${SNAP}"
+      snapcraft --verbose --destructive-mode
       snap install "${SNAP}"_1.0_*.snap --dangerous
       snap_executable="${SNAP}.test-ppa"
       [ "$("${snap_executable}")" = "hello!" ]
