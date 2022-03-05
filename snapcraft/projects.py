@@ -54,6 +54,19 @@ else:
 # fmt: on
 
 
+def _validate_command_chain(command_chains: Optional[List[str]]) -> Optional[List[str]]:
+    """Validate command_chain."""
+    if command_chains is not None:
+        for command_chain in command_chains:
+            if not re.match(r"^[A-Za-z0-9/._#:$-]*$", command_chain):
+                raise ValueError(
+                    f"{command_chain!r} is not a valid command chain. Command chain entries must "
+                    "be strings, and can only use ASCII alphanumeric characters and the following "
+                    "special characters: / . _ # : $ -"
+                )
+    return command_chains
+
+
 class Socket(ProjectModel):
     """Snapcraft app socket definition."""
 
@@ -162,15 +175,7 @@ class App(ProjectModel):
     @pydantic.validator("command_chain")
     @classmethod
     def _validate_command_chain(cls, command_chains):
-        for command_chain in command_chains:
-            if not re.match(r"^[A-Za-z0-9/._#:$-]*$", command_chain):
-                raise ValueError(
-                    f"{command_chain!r} is not a valid command chain. Command chain entries must "
-                    "be strings, and can only use ASCII alphanumeric characters and the following "
-                    "special characters: / . _ # : $ -"
-                )
-
-        return command_chains
+        return _validate_command_chain(command_chains)
 
     @pydantic.validator("aliases")
     @classmethod
@@ -189,10 +194,22 @@ class App(ProjectModel):
 class Hook(ProjectModel):
     """Snapcraft project hook definition."""
 
-    command_chain: List[str] = []
-    environment: List[Dict[str, str]] = []
-    plugs: UniqueStrList = []
+    command_chain: Optional[List[str]]
+    environment: Optional[Dict[str, Any]]
+    plugs: Optional[UniqueStrList]
     passthrough: Optional[Dict[str, Any]]
+
+    @pydantic.validator("command_chain")
+    @classmethod
+    def _validate_command_chain(cls, command_chains):
+        return _validate_command_chain(command_chains)
+
+    @pydantic.validator("plugs")
+    @classmethod
+    def _validate_plugs(cls, plugs):
+        if not plugs:
+            raise ValueError("'plugs' field cannot be empty.")
+        return plugs
 
 
 class Architecture(ProjectModel):

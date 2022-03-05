@@ -20,7 +20,7 @@ import pydantic
 import pytest
 
 from snapcraft import errors
-from snapcraft.projects import ContentPlug, GrammarAwareProject, Project
+from snapcraft.projects import ContentPlug, GrammarAwareProject, Hook, Project
 
 # pylint: disable=too-many-lines
 
@@ -459,6 +459,62 @@ class TestProjectValidation:
 
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(project_yaml_data(plugs=content_plug))
+
+
+class TestHookValidation:
+    """Validate hooks."""
+
+    @pytest.mark.parametrize(
+        "hooks",
+        [
+            {"configure": {}},
+            {
+                "configure": {
+                    "command-chain": ["test-1", "test-2"],
+                    "build-environment": {
+                        "FIRST_VARIABLE": "test-3",
+                        "SECOND_VARIABLE": "test-4",
+                    },
+                    "plugs": ["home", "network"],
+                }
+            },
+        ],
+    )
+    def test_project_hooks_valid(self, hooks, project_yaml_data):
+        configure_hook_data = Hook(**hooks["configure"])
+        project = Project.unmarshal(project_yaml_data(hooks=hooks))
+
+        assert project.hooks is not None
+        assert project.hooks["configure"] == configure_hook_data
+
+    def test_project_hooks_command_chain_invalid(self, project_yaml_data):
+        hook = {"configure": {"command-chain": ["_invalid!"]}}
+        error = "'_invalid!' is not a valid command chain"
+
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(project_yaml_data(hooks=hook))
+
+    @pytest.mark.parametrize(
+        "environment",
+        [
+            "i am a string",
+            ["i", "am", "a", "list"],
+            [{"i": "am"}, {"a": "list"}, {"of": "dictionaries"}],
+        ],
+    )
+    def test_project_hooks_environment_invalid(self, environment, project_yaml_data):
+        hooks = {"configure": {"environment": environment}}
+
+        error = ".*value is not a valid dict"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(project_yaml_data(hooks=hooks))
+
+    def test_project_hooks_plugs_empty(self, project_yaml_data):
+        hook = {"configure": {"plugs": []}}
+        error = ".*'plugs' field cannot be empty"
+
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(project_yaml_data(hooks=hook))
 
 
 class TestAppValidation:
