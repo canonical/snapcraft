@@ -6,7 +6,9 @@ kill-timeout: 180m
 
 environment:
   SNAP/catkin_noetic_hello: catkin-noetic-hello
+  SNAP/catkin_noetic_subdir: catkin-noetic-subdir
   SNAP/catkin_tools_noetic_hello: catkin-tools-noetic-hello
+  SNAP/catkin_tools_noetic_subdir: catkin-tools-noetic-subdir
   SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
 systems:
@@ -25,7 +27,8 @@ restore: |
   snapcraft clean
   rm -f ./*.snap
 
-  git checkout src/snapcraft_hello/src/hello.cpp
+  [ -f src/snapcraft_hello/src/hello.cpp ] && git checkout src/snapcraft_hello/src/hello.cpp
+  [ -f subdir/src/snapcraft_hello/src/hello.cpp ] && git checkout subdir/src/snapcraft_hello/src/hello.cpp
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
@@ -46,7 +49,14 @@ execute: |
   [ "$($SNAP)" = "hello world" ]
 
   # Make sure that what we built runs with the changes applied.
-  modified_file=src/snapcraft_hello/src/hello.cpp
+  if [ -f src/snapcraft_hello/src/hello.cpp ]; then
+    modified_file=src/snapcraft_hello/src/hello.cpp
+  elif [ -f subdir/src/snapcraft_hello/src/hello.cpp ]; then
+    modified_file=subdir/src/snapcraft_hello/src/hello.cpp
+  else
+    FATAL "Cannot setup ${SNAP} for rebuilding"
+  fi
+
   sed -i "${modified_file}" -e 's/hello world/hello rebuilt world/'
 
   snapcraft
