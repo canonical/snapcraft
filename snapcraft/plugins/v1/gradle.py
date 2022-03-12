@@ -49,8 +49,8 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
     - gradle-openjdk-version:
       (string)
-      openjdk version available to the base to use. If not set the latest
-      version available to the base will be used.
+      openjdk version available to the base to use. If not set, version 11
+      will be used.
 """
 
 import logging
@@ -149,11 +149,11 @@ class GradlePlugin(PluginV1):
         self._setup_base_tools(project._get_build_base())
 
     def _setup_base_tools(self, base):
-        valid_versions = ["8", "11"]
+        valid_versions = ["8", "11", "17"]
 
         version = self.options.gradle_openjdk_version
         if not version:
-            version = valid_versions[-1]
+            version = "11"
         elif version not in valid_versions:
             raise UnsupportedJDKVersionError(
                 version=version, base=base, valid_versions=valid_versions
