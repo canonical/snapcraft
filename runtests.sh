@@ -39,7 +39,7 @@ run_snapcraft_tests(){
 
 run_spread(){
     TMP_SPREAD="$(mktemp -d)"
-    curl -s https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz | tar xzv -C "$TMP_SPREAD"
+    curl -s https://storage.googleapis.com/snapd-spread-tests/spread/spread-amd64.tar.gz | tar xzv -C "$TMP_SPREAD"
 
     if [[ "$#" -eq 0 ]]; then
         "$TMP_SPREAD/spread" -v lxd:
