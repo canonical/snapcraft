@@ -157,7 +157,7 @@ def _run_in_provider(project: Project, command_name: str, parsed_args: "argparse
     """Pack image in provider instance."""
     provider = "lxd" if parsed_args.use_lxd else parsed_args.provider
 
-    emit.progress("Checking build provider availability")
+    emit.trace("Checking build provider availability")
     provider = providers.get_provider(provider)
     provider.ensure_provider_is_available()
 
