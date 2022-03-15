@@ -170,11 +170,13 @@ def _run_in_provider(project: Project, command_name: str, parsed_args: "argparse
 
     output_dir = utils.get_managed_environment_project_path()
 
-    emit.progress("Launching build provider")
+    # FIXME: pause emitter when executing instance (needs craft-cli support)
+    emit.progress("Launching instance...")
     with provider.launched_environment(
         project_name=project.name, project_path=Path().absolute(), base=cast(str, project.base)
     ) as instance:
         try:
+            emit.message("Launched instance", intermediate=True)
             instance.execute_run(
                 cmd, check=True, cwd=output_dir,
             )
