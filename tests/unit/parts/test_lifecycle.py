@@ -202,7 +202,7 @@ def test_lifecycle_run_command_pack(snapcraft_yaml, new_dir, mocker):
 
     assert run_mock.mock_calls == [call("prime")]
     assert pack_mock.mock_calls == [
-        call(new_dir / "work/prime", output=None, compression="xz")
+        call(new_dir / "prime", output=None, compression="xz")
     ]
 
 

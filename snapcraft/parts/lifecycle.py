@@ -112,7 +112,7 @@ def _run_command(
     if managed_mode:
         work_dir = utils.get_managed_environment_home_path()
     else:
-        work_dir = Path("work").absolute()
+        work_dir = Path.cwd()
 
     step_name = "prime" if command_name == "pack" else command_name
 
