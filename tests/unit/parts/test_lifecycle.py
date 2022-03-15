@@ -110,7 +110,12 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
     yaml_data = snapcraft_yaml(base="core22", filename=filename)
     run_command_mock = mocker.patch("snapcraft.parts.lifecycle._run_command")
 
-    parts_lifecycle.run("pull", argparse.Namespace(parts=["part1"]))
+    parts_lifecycle.run(
+        "pull",
+        argparse.Namespace(
+            parts=["part1"], destructive_mode=True, use_lxd=False, provider=None
+        ),
+    )
 
     project = Project.unmarshal(yaml_data)
 
@@ -124,7 +129,9 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
             "pull",
             project=project,
             assets_dir=assets_dir,
-            parsed_args=argparse.Namespace(parts=["part1"]),
+            parsed_args=argparse.Namespace(
+                parts=["part1"], destructive_mode=True, use_lxd=False, provider=None
+            ),
         ),
     ]
 
@@ -153,6 +160,46 @@ def test_legacy_base_not_core22(new_dir, snapcraft_yaml):
     assert str(raised.value) == "base is not core22"
 
 
+@pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime", "pack"])
+def test_lifecycle_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
+    """Option --provider is not supported in core22."""
+    snapcraft_yaml(base="core22")
+    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        parts_lifecycle.run(
+            cmd,
+            parsed_args=argparse.Namespace(
+                destructive_mode=False,
+                use_lxd=False,
+                provider="some",
+            ),
+        )
+
+    assert run_mock.mock_calls == []
+    assert str(raised.value) == "Option --provider is not supported."
+
+
+@pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime"])
+def test_lifecycle_legacy_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
+    """Option --provider is supported by legacy."""
+    snapcraft_yaml(base="core20")
+    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
+
+    with pytest.raises(errors.LegacyFallback) as raised:
+        parts_lifecycle.run(
+            cmd,
+            parsed_args=argparse.Namespace(
+                destructive_mode=False,
+                use_lxd=False,
+                provider="some",
+            ),
+        )
+
+    assert run_mock.mock_calls == []
+    assert str(raised.value) == "base is not core22"
+
+
 @pytest.mark.parametrize(
     "cmd,step",
     [
@@ -172,9 +219,7 @@ def test_lifecycle_run_command_step(cmd, step, snapcraft_yaml, new_dir, mocker):
         cmd,
         project=project,
         assets_dir=Path(),
-        parsed_args=argparse.Namespace(
-            destructive_mode=True, use_lxd=False, provider=None
-        ),
+        parsed_args=argparse.Namespace(destructive_mode=True, use_lxd=False),
     )
 
     assert run_mock.mock_calls == [call(step)]
@@ -196,7 +241,6 @@ def test_lifecycle_run_command_pack(snapcraft_yaml, new_dir, mocker):
             output=None,
             destructive_mode=True,
             use_lxd=False,
-            provider=None,
         ),
     )
 
@@ -227,7 +271,6 @@ def test_lifecycle_pack_destructive_mode(snapcraft_yaml, new_dir, mocker):
             output=None,
             destructive_mode=True,
             use_lxd=False,
-            provider=None,
         ),
     )
 
@@ -259,7 +302,6 @@ def test_lifecycle_pack_managed(snapcraft_yaml, new_dir, mocker):
             output=None,
             destructive_mode=False,
             use_lxd=False,
-            provider=None,
         ),
     )
 
@@ -285,7 +327,6 @@ def test_lifecycle_pack_not_managed(snapcraft_yaml, new_dir, mocker):
             output=None,
             destructive_mode=False,
             use_lxd=False,
-            provider=None,
         ),
     )
 
@@ -299,7 +340,6 @@ def test_lifecycle_pack_not_managed(snapcraft_yaml, new_dir, mocker):
                 output=None,
                 destructive_mode=False,
                 use_lxd=False,
-                provider=None,
             ),
         )
     ]

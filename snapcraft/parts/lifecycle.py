@@ -78,6 +78,10 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     if yaml_data.get("base") != "core22":
         raise errors.LegacyFallback("base is not core22")
 
+    # argument --provider is only supported by legacy snapcraft
+    if parsed_args.provider:
+        raise errors.SnapcraftError("Option --provider is not supported.")
+
     # TODO: apply extensions
     # yaml_data = apply_extensions(yaml_data)
 
@@ -102,10 +106,9 @@ def _run_command(
     assets_dir: Path,
     parsed_args: "argparse.Namespace",
 ) -> None:
-    destructive_mode = parsed_args.destructive_mode or parsed_args.provider == "host"
     managed_mode = utils.is_managed_mode()
 
-    if not managed_mode and not destructive_mode:
+    if not managed_mode and not parsed_args.destructive_mode:
         _run_in_provider(project, command_name, parsed_args)
         return
 
@@ -155,10 +158,9 @@ def _load_yaml(filename: Path) -> Dict[str, Any]:
 
 def _run_in_provider(project: Project, command_name: str, parsed_args: "argparse.Namespace"):
     """Pack image in provider instance."""
-    provider = "lxd" if parsed_args.use_lxd else parsed_args.provider
-
     emit.trace("Checking build provider availability")
-    provider = providers.get_provider(provider)
+    provider_name = "lxd" if parsed_args.use_lxd else None
+    provider = providers.get_provider(provider_name)
     provider.ensure_provider_is_available()
 
     cmd = ["snapcraft", command_name]

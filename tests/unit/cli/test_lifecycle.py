@@ -61,9 +61,41 @@ def test_lifecycle_command_arguments(cmd, run_method, mocker):
         [
             "cmd",
             cmd,
+            "part1",
+            "part2",
+        ],
+    )
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                parts=["part1", "part2"],
+                destructive_mode=False,
+                use_lxd=False,
+                provider=None,
+            )
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    "cmd,run_method",
+    [
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+    ],
+)
+def test_lifecycle_command_arguments_destructive_mode(cmd, run_method, mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "cmd",
+            cmd,
             "--destructive-mode",
-            "--use-lxd",
-            "--provider=lxd",
             "part1",
             "part2",
         ],
@@ -75,16 +107,54 @@ def test_lifecycle_command_arguments(cmd, run_method, mocker):
             argparse.Namespace(
                 parts=["part1", "part2"],
                 destructive_mode=True,
-                use_lxd=True,
-                provider="lxd",
+                use_lxd=False,
+                provider=None,
             )
         )
     ]
 
 
-@pytest.mark.parametrize("provider", ["host", "lxd", "multipass"])
-def test_lifecycle_command_provider(mocker, provider):
-    mocker.patch.object(sys, "argv", ["cmd", "pack", "--provider=" + provider])
+@pytest.mark.parametrize(
+    "cmd,run_method",
+    [
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+    ],
+)
+def test_lifecycle_command_arguments_use_lxd(cmd, run_method, mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "cmd",
+            cmd,
+            "--use-lxd",
+            "part1",
+            "part2",
+        ],
+    )
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                parts=["part1", "part2"],
+                destructive_mode=False,
+                use_lxd=True,
+                provider=None,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack(mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack"],
+    )
     mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
@@ -94,23 +164,17 @@ def test_lifecycle_command_provider(mocker, provider):
                 output=None,
                 destructive_mode=False,
                 use_lxd=False,
-                provider=provider,
+                provider=None,
             )
         )
     ]
 
 
-def test_lifecycle_command_provider_invalid(mocker):
-    mocker.patch.object(sys, "argv", ["cmd", "pack", "--provider=foo"])
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
-    assert mock_pack_cmd.mock_calls == []
-
-
-def test_lifecycle_command_pack(mocker):
+def test_lifecycle_command_pack_destructive_mode(mocker):
     mocker.patch.object(
         sys,
         "argv",
-        ["cmd", "pack", "--destructive-mode", "--use-lxd", "--provider=lxd"],
+        ["cmd", "pack", "--destructive-mode"],
     )
     mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
     cli.run()
@@ -120,8 +184,29 @@ def test_lifecycle_command_pack(mocker):
                 directory=None,
                 output=None,
                 destructive_mode=True,
+                use_lxd=False,
+                provider=None,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_use_lxd(mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack", "--use-lxd"],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                destructive_mode=False,
                 use_lxd=True,
-                provider="lxd",
+                provider=None,
             )
         )
     ]
