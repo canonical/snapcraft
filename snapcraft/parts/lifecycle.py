@@ -25,7 +25,7 @@ import yaml.error
 from craft_cli import emit
 from craft_parts import infos
 
-from snapcraft import errors, pack, providers, utils
+from snapcraft import errors, extensions, pack, providers, utils
 from snapcraft.meta import snap_yaml
 from snapcraft.parts import PartsLifecycle
 from snapcraft.projects import GrammarAwareProject, Project
@@ -82,11 +82,10 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     if parsed_args.provider:
         raise errors.SnapcraftError("Option --provider is not supported.")
 
-    # TODO: apply extensions
-    # yaml_data = apply_extensions(yaml_data)
-
     # TODO: support for target_arch
     arch = _get_arch()
+    yaml_data = extensions.apply_extensions(yaml_data, arch=arch, target_arch=arch)
+
     if "parts" in yaml_data:
         yaml_data["parts"] = grammar.process_parts(
             parts_yaml_data=yaml_data["parts"], arch=arch, target_arch=arch
