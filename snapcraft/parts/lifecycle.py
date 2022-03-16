@@ -177,9 +177,7 @@ def _run_in_provider(project: Project, command_name: str, parsed_args: "argparse
     ) as instance:
         try:
             emit.message("Launched instance", intermediate=True)
-            instance.execute_run(
-                cmd, check=True, cwd=output_dir,
-            )
+            instance.execute_run(cmd, check=True, cwd=output_dir)
         except subprocess.CalledProcessError as err:
             capture_logs_from_instance(instance)
             raise providers.ProviderError(
