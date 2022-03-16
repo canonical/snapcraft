@@ -16,7 +16,6 @@
 
 """Buildd-related helpers for Snapcraft."""
 
-import enum
 import sys
 from typing import Optional
 
@@ -25,17 +24,8 @@ from craft_providers.actions import snap_installer
 
 from snapcraft import utils
 
-
-# FIXME: update in craft-providers
-class _BuilddBaseAlias(enum.Enum):
-    """Mappings for supported buildd images."""
-
-    JAMMY = "22.04"
-
-
 BASE_TO_BUILDD_IMAGE_ALIAS = {
-    # "core22": bases.BuilddBaseAlias.JAMMY,
-    "core22": _BuilddBaseAlias.JAMMY,
+    "core22": bases.BuilddBaseAlias.JAMMY,
 }
 
 
@@ -73,6 +63,9 @@ class SnapcraftBuilddBaseConfiguration(bases.BuilddBase):
         snap_channel = utils.get_managed_environment_snap_channel()
         if snap_channel is None and sys.platform != "linux":
             snap_channel = "stable"
+
+        # FIXME: don't reinstall snapcraft if already installed.
+        #        See https://github.com/canonical/craft-providers/issues/91
 
         if snap_channel:
             try:
