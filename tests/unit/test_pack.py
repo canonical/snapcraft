@@ -26,7 +26,12 @@ def test_pack_snap(mocker, new_dir):
     mock_run = mocker.patch("subprocess.run")
     pack.pack_snap(new_dir, output=None)
     assert mock_run.mock_calls == [
-        call(["snap", "pack", new_dir], capture_output=True, check=True)
+        call(
+            ["snap", "pack", new_dir],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        )
     ]
 
 
@@ -34,7 +39,12 @@ def test_pack_snap_compression_none(mocker, new_dir):
     mock_run = mocker.patch("subprocess.run")
     pack.pack_snap(new_dir, output=None, compression=None)
     assert mock_run.mock_calls == [
-        call(["snap", "pack", new_dir], capture_output=True, check=True)
+        call(
+            ["snap", "pack", new_dir],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        )
     ]
 
 
@@ -46,6 +56,7 @@ def test_pack_snap_compression(mocker, new_dir):
             ["snap", "pack", "--compression", "zz", new_dir],
             capture_output=True,
             check=True,
+            universal_newlines=True,
         )
     ]
 
@@ -58,6 +69,7 @@ def test_pack_snap_output_file(mocker, new_dir):
             ["snap", "pack", "--filename", "foo", new_dir, "/tmp"],
             capture_output=True,
             check=True,
+            universal_newlines=True,
         )
     ]
 
@@ -70,6 +82,7 @@ def test_pack_snap_output_dir(mocker, new_dir):
             ["snap", "pack", new_dir, str(new_dir)],
             capture_output=True,
             check=True,
+            universal_newlines=True,
         )
     ]
 

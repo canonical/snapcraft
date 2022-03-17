@@ -16,18 +16,20 @@
 
 """Parts lifecycle preparation and execution."""
 
+import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, cast
 
 import yaml
 import yaml.error
 from craft_cli import emit
 from craft_parts import infos
 
-from snapcraft import errors, pack
+from snapcraft import errors, pack, providers, utils
 from snapcraft.meta import snap_yaml
 from snapcraft.parts import PartsLifecycle
 from snapcraft.projects import GrammarAwareProject, Project
+from snapcraft.providers import capture_logs_from_instance
 
 from . import grammar
 
@@ -76,6 +78,10 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     if yaml_data.get("base") != "core22":
         raise errors.LegacyFallback("base is not core22")
 
+    # argument --provider is only supported by legacy snapcraft
+    if parsed_args.provider:
+        raise errors.SnapcraftError("Option --provider is not supported.")
+
     # TODO: apply extensions
     # yaml_data = apply_extensions(yaml_data)
 
@@ -100,12 +106,18 @@ def _run_command(
     assets_dir: Path,
     parsed_args: "argparse.Namespace",
 ) -> None:
+    managed_mode = utils.is_managed_mode()
 
-    # TODO: check destructive and managed modes and run in provider
-    _ = parsed_args
+    if not managed_mode and not parsed_args.destructive_mode:
+        _run_in_provider(project, command_name, parsed_args)
+        return
+
+    if managed_mode:
+        work_dir = utils.get_managed_environment_home_path()
+    else:
+        work_dir = Path.cwd()
 
     step_name = "prime" if command_name == "pack" else command_name
-    work_dir = Path("work").absolute()
 
     lifecycle = PartsLifecycle(
         project.parts,
@@ -142,6 +154,35 @@ def _load_yaml(filename: Path) -> Dict[str, Any]:
         raise errors.SnapcraftError(msg) from err
     except yaml.error.YAMLError as err:
         raise errors.SnapcraftError(f"YAML parsing error: {err!s}") from err
+
+
+def _run_in_provider(project: Project, command_name: str, parsed_args: "argparse.Namespace"):
+    """Pack image in provider instance."""
+    emit.trace("Checking build provider availability")
+    provider_name = "lxd" if parsed_args.use_lxd else None
+    provider = providers.get_provider(provider_name)
+    provider.ensure_provider_is_available()
+
+    cmd = ["snapcraft", command_name]
+
+    if hasattr(parsed_args, "parts"):
+        cmd.extend(parsed_args.parts)
+
+    output_dir = utils.get_managed_environment_project_path()
+
+    # FIXME: pause emitter when executing instance (needs craft-cli support)
+    emit.progress("Launching instance...")
+    with provider.launched_environment(
+        project_name=project.name, project_path=Path().absolute(), base=cast(str, project.base)
+    ) as instance:
+        try:
+            emit.message("Launched instance", intermediate=True)
+            instance.execute_run(cmd, check=True, cwd=output_dir)
+        except subprocess.CalledProcessError as err:
+            capture_logs_from_instance(instance)
+            raise providers.ProviderError(
+                f"Failed to pack image '{project.name}:{project.version}'."
+            ) from err
 
 
 # TODO Needs exposure from craft-parts.

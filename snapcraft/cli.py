@@ -23,7 +23,7 @@ import sys
 import craft_cli
 from craft_cli import ArgumentParsingError, EmitterMode, emit
 
-from snapcraft import __version__, errors
+from snapcraft import __version__, errors, utils
 from snapcraft_legacy.cli import legacy
 
 from . import commands
@@ -61,12 +61,21 @@ def run():
         legacy.legacy_run()
 
     # set lib loggers to debug level so that all messages are sent to Emitter
-    # TODO: add craft_providers
-    for lib_name in ("craft_parts",):
+    for lib_name in ("craft_parts", "craft_providers"):
         logger = logging.getLogger(lib_name)
         logger.setLevel(logging.DEBUG)
 
-    emit.init(EmitterMode.NORMAL, "snapcraft", f"Starting Snapcraft {__version__}")
+    emit_args = {
+        "mode": EmitterMode.NORMAL,
+        "appname": "snapcraft",
+        "greeting": f"Starting Snapcraft {__version__}",
+    }
+
+    if utils.is_managed_mode():
+        emit_args["log_filepath"] = utils.get_managed_environment_log_path()
+
+    emit.init(**emit_args)
+
     dispatcher = craft_cli.Dispatcher(
         "snapcraft",
         COMMAND_GROUPS,
@@ -89,3 +98,4 @@ def run():
         legacy.legacy_run()
     except errors.SnapcraftError as err:
         emit.error(err)
+        sys.exit(1)

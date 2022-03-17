@@ -31,7 +31,8 @@ ensure_newline_before_comments = true
 line_length = 88
 
 [tool.pylint.messages_control]
-disable = "too-few-public-methods,fixme,use-implicit-booleaness-not-comparison"
+# duplicate-code can't be disabled locally: https://github.com/PyCQA/pylint/issues/214
+disable = "too-few-public-methods,fixme,use-implicit-booleaness-not-comparison,duplicate-code"
 
 [tool.pylint.format]
 max-attributes = 15

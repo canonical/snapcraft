@@ -17,8 +17,8 @@
 """Snapcraft lifecycle commands."""
 
 import abc
+import argparse
 import textwrap
-from typing import TYPE_CHECKING
 
 from craft_cli import BaseCommand, emit
 from overrides import overrides
@@ -26,17 +26,25 @@ from overrides import overrides
 from snapcraft import pack
 from snapcraft.parts import lifecycle as parts_lifecycle
 
-if TYPE_CHECKING:
-    import argparse
-
 
 class _LifecycleCommand(BaseCommand, abc.ABC):
     """Run lifecycle-related commands."""
 
     @overrides
     def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
-        # TODO: add arguments for all step commands and pack
-        pass
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument(
+            "--destructive-mode",
+            action="store_true",
+            help="Build in the current host",
+        )
+        group.add_argument(
+            "--use-lxd",
+            action="store_true",
+            help="Use LXD to build",
+        )
+        # --provider is only available in legacy
+        parser.add_argument("--provider", help=argparse.SUPPRESS)
 
     @overrides
     def run(self, parsed_args):
