@@ -115,9 +115,9 @@ def test_get_build_commands(monkeypatch):
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
         'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
-        'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC}"',
+        'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
         "colcon build "
-        '--base-paths "${SNAPCRAFT_PART_SRC}" --build-base "${SNAPCRAFT_PART_BUILD}" '
+        '--base-paths "${SNAPCRAFT_PART_SRC_WORK}" --build-base "${SNAPCRAFT_PART_BUILD}" '
         '--merge-install --install-base "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap '
         '--parallel-workers "${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
         'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE ]; then',
@@ -125,7 +125,7 @@ def test_get_build_commands(monkeypatch):
         "fi",
         "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 /test/python3 -I "
         "/test/_ros.py "
-        'stage-runtime-dependencies --part-src "${SNAPCRAFT_PART_SRC}" --part-install "${SNAPCRAFT_PART_INSTALL}" '
+        'stage-runtime-dependencies --part-src "${SNAPCRAFT_PART_SRC_WORK}" --part-install "${SNAPCRAFT_PART_INSTALL}" '
         '--ros-version "${ROS_VERSION}" --ros-distro "${ROS_DISTRO}" --target-arch "${SNAPCRAFT_TARGET_ARCH}"',
     ]
 
@@ -169,9 +169,9 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
         'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
-        'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC}"',
+        'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
         "colcon build "
-        '--base-paths "${SNAPCRAFT_PART_SRC}" --build-base "${SNAPCRAFT_PART_BUILD}" '
+        '--base-paths "${SNAPCRAFT_PART_SRC_WORK}" --build-base "${SNAPCRAFT_PART_BUILD}" '
         '--merge-install --install-base "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap '
         "--packages-ignore ipackage1 ipackage2... --packages-select package1 "
         "package2... --cmake-args cmake args... "
@@ -184,6 +184,6 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "SNAP_ARCH=TESTARCH SNAP_NAME=TESTSNAPNAME SNAP_VERSION=TESTV1 "
         "http_proxy=http://foo https_proxy=https://bar "
         "/test/python3 -I /test/_ros.py "
-        'stage-runtime-dependencies --part-src "${SNAPCRAFT_PART_SRC}" --part-install "${SNAPCRAFT_PART_INSTALL}" '
+        'stage-runtime-dependencies --part-src "${SNAPCRAFT_PART_SRC_WORK}" --part-install "${SNAPCRAFT_PART_INSTALL}" '
         '--ros-version "${ROS_VERSION}" --ros-distro "${ROS_DISTRO}" --target-arch "${SNAPCRAFT_TARGET_ARCH}"',
     ]

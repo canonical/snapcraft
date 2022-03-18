@@ -151,7 +151,7 @@ class ColconPlugin(_ros.RosPlugin):
             "colcon",
             "build",
             "--base-paths",
-            '"${SNAPCRAFT_PART_SRC}"',
+            '"${SNAPCRAFT_PART_SRC_WORK}"',
             "--build-base",
             '"${SNAPCRAFT_PART_BUILD}"',
             "--merge-install",
