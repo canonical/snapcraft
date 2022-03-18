@@ -96,7 +96,7 @@ install_requires = [
     "pyelftools",
     "pymacaroons",
     "pyxdg",
-    "pyyaml==5.3",
+    "pyyaml==5.4",
     "raven",
     "requests-toolbelt",
     "requests-unixsocket",
