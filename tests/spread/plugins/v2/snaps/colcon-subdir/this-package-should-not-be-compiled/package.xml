@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>this_package_should_not_be_compiled</name>
+  <version>0.0.1</version>
+  <description>this package should not be compiled</description>
+  <maintainer email="me@example.com">me</maintainer>
+  <license>GPLv3</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <build_depend>this_dependency_does_not_exist</build_depend>
+
+  <exec_depend>this_dependency_does_not_exist</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

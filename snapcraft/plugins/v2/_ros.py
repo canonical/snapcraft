@@ -103,7 +103,7 @@ class RosPlugin(PluginV2):
                     os.path.abspath(__file__),
                     "stage-runtime-dependencies",
                     "--part-src",
-                    '"${SNAPCRAFT_PART_SRC}"',
+                    '"${SNAPCRAFT_PART_SRC_WORK}"',
                     "--part-install",
                     '"${SNAPCRAFT_PART_INSTALL}"',
                     "--ros-version",
@@ -122,7 +122,7 @@ class RosPlugin(PluginV2):
             + [
                 "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep init; fi",
                 'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
-                'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC}"',
+                'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
             ]
             + self._get_build_commands()
             + self._get_stage_runtime_dependencies_commands()
@@ -135,7 +135,7 @@ def plugin_cli():
 
 
 @plugin_cli.command()
-@click.option("--part-src", envvar="SNAPCRAFT_PART_SRC", required=True)
+@click.option("--part-src", envvar="SNAPCRAFT_PART_SRC_WORK", required=True)
 @click.option("--part-install", envvar="SNAPCRAFT_PART_INSTALL", required=True)
 @click.option("--ros-version", envvar="ROS_VERSION", required=True)
 @click.option("--ros-distro", envvar="ROS_DISTRO", required=True)

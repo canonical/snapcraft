@@ -49,7 +49,6 @@ def test_get_build_packages():
     assert plugin.get_build_packages() == {
         "python3-rosdep",
         "python3-catkin-tools",
-        "python3-osrf-pycommon",
     }
 
 
@@ -94,16 +93,16 @@ def test_get_build_commands(monkeypatch):
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
         'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
-        'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC}"',
+        'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
         "catkin init",
         "catkin profile add -f default",
         "catkin config --profile default --install "
-        '--source-space "${SNAPCRAFT_PART_SRC}" --build-space "${SNAPCRAFT_PART_BUILD}" '
+        '--source-space "${SNAPCRAFT_PART_SRC_WORK}" --build-space "${SNAPCRAFT_PART_BUILD}" '
         '--install-space "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}"',
         'catkin build --no-notify --profile default -j "${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
         "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 /test/python3 -I "
         "/test/_ros.py "
-        'stage-runtime-dependencies --part-src "${SNAPCRAFT_PART_SRC}" --part-install "${SNAPCRAFT_PART_INSTALL}" '
+        'stage-runtime-dependencies --part-src "${SNAPCRAFT_PART_SRC_WORK}" --part-install "${SNAPCRAFT_PART_INSTALL}" '
         '--ros-version "${ROS_VERSION}" --ros-distro "${ROS_DISTRO}" --target-arch "${SNAPCRAFT_TARGET_ARCH}"',
     ]
 
@@ -148,11 +147,11 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
         'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
-        'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC}"',
+        'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
         "catkin init",
         "catkin profile add -f default",
         "catkin config --profile default --install "
-        '--source-space "${SNAPCRAFT_PART_SRC}" --build-space "${SNAPCRAFT_PART_BUILD}" '
+        '--source-space "${SNAPCRAFT_PART_SRC_WORK}" --build-space "${SNAPCRAFT_PART_BUILD}" '
         '--install-space "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" --cmake-args cmake args...',
         'catkin build --no-notify --profile default -j "${SNAPCRAFT_PARALLEL_BUILD_COUNT}" package1 package2...',
         "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/bin:/test SNAP=TESTSNAP "
@@ -160,6 +159,6 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "http_proxy=http://foo https_proxy=https://bar "
         "/test/python3 -I "
         "/test/_ros.py "
-        'stage-runtime-dependencies --part-src "${SNAPCRAFT_PART_SRC}" --part-install "${SNAPCRAFT_PART_INSTALL}" '
+        'stage-runtime-dependencies --part-src "${SNAPCRAFT_PART_SRC_WORK}" --part-install "${SNAPCRAFT_PART_INSTALL}" '
         '--ros-version "${ROS_VERSION}" --ros-distro "${ROS_DISTRO}" --target-arch "${SNAPCRAFT_TARGET_ARCH}"',
     ]
