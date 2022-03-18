@@ -616,6 +616,9 @@
                         "bus-name": [
                             "daemon"
                         ],
+                        "activates-on": [
+                            "daemon"
+                        ],
                         "refresh-mode": [
                             "daemon"
                         ],
@@ -673,9 +676,18 @@
                         },
                         "bus-name": {
                             "type": "string",
-                            "description": "D-Bus name this service is reachable as (mandatory if daemon=dbus)",
+                            "description": "D-Bus name this service is reachable as",
                             "pattern": "^[A-Za-z0-9/. _#:$-]*$",
                             "validation-failure": "{.instance!r} is not a valid bus name."
+                        },
+                        "activates-on": {
+                            "type": "array",
+                            "description": "dbus interface slots this service activates on",
+                            "minitems": 1,
+                            "uniqueItems": true,
+                            "items": {
+                                "type": "string"
+                            }
                         },
                         "desktop": {
                             "type": "string",
