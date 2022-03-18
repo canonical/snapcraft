@@ -20,7 +20,7 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
-from craft_cli import emit
+from craft_cli import EmitterMode, emit
 from craft_parts import infos
 
 from snapcraft import errors, extensions, pack, providers, utils
@@ -149,16 +149,25 @@ def _run_in_provider(project: Project, command_name: str, parsed_args: "argparse
     if hasattr(parsed_args, "parts"):
         cmd.extend(parsed_args.parts)
 
+    if emit.get_mode() == EmitterMode.VERBOSE:
+        cmd.append("--verbose")
+    elif emit.get_mode() == EmitterMode.QUIET:
+        cmd.append("--quiet")
+    elif emit.get_mode() == EmitterMode.TRACE:
+        cmd.append("--trace")
+
     output_dir = utils.get_managed_environment_project_path()
 
-    # FIXME: pause emitter when executing instance (needs craft-cli support)
     emit.progress("Launching instance...")
     with provider.launched_environment(
-        project_name=project.name, project_path=Path().absolute(), base=cast(str, project.base)
+        project_name=project.name,
+        project_path=Path().absolute(),
+        base=cast(str, project.base),
     ) as instance:
         try:
-            emit.message("Launched instance", intermediate=True)
-            instance.execute_run(cmd, check=True, cwd=output_dir)
+            with emit.pause():
+                instance.execute_run(cmd, check=True, cwd=output_dir)
+            capture_logs_from_instance(instance)
         except subprocess.CalledProcessError as err:
             capture_logs_from_instance(instance)
             raise providers.ProviderError(
