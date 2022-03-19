@@ -47,7 +47,7 @@ class StoreClient:
 
         candid_has_credentials = http_clients.CandidClient.has_credentials()
         logger.debug(
-            f"Candid forced: {use_candid}. Candid crendendials: {candid_has_credentials}."
+            f"Candid forced: {use_candid}. Candid credentials: {candid_has_credentials}."
         )
         if use_candid or candid_has_credentials:
             self.auth_client: http_clients.AuthClient = http_clients.CandidClient()
