@@ -38,5 +38,9 @@ class ProjectValidationError(SnapcraftError):
     """Error validatiing snapcraft.yaml."""
 
 
+class ExtensionError(SnapcraftError):
+    """Error during parts processing."""
+
+
 class LegacyFallback(Exception):
     """Fall back to legacy snapcraft implementation."""
