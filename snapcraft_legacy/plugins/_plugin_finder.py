@@ -63,6 +63,7 @@ if sys.platform == "linux" or TYPE_CHECKING:
             "cmake": v2.CMakePlugin,
             "colcon": v2.ColconPlugin,
             "conda": v2.CondaPlugin,
+            "crystal": v2.CrystalPlugin,
             "dump": v2.DumpPlugin,
             "go": v2.GoPlugin,
             "make": v2.MakePlugin,

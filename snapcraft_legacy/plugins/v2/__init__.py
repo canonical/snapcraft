@@ -26,6 +26,7 @@ if sys.platform == "linux":
     from .cmake import CMakePlugin  # noqa: F401
     from .colcon import ColconPlugin  # noqa: F401
     from .conda import CondaPlugin  # noqa: F401
+    from .crystal import CrystalPlugin  # noqa: F401
     from .dump import DumpPlugin  # noqa: F401
     from .go import GoPlugin  # noqa: F401
     from .make import MakePlugin  # noqa: F401

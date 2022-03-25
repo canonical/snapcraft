@@ -227,6 +227,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
                     'SNAPCRAFT_ARCH_TRIPLET="{}"'.format(
                         project_config.project.arch_triplet
                     ),
+                    'SNAPCRAFT_CONTENT_DIRS=""',
                     'SNAPCRAFT_EXTENSIONS_DIR="{}"'.format(common.get_extensionsdir()),
                     'SNAPCRAFT_PARALLEL_BUILD_COUNT="2"',
                     'SNAPCRAFT_PART_BUILD="{}/parts/main/build"'.format(self.path),
@@ -439,6 +440,20 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         project_config = self.make_snapcraft_project(self.snapcraft_yaml)
         env = project_config.parts.build_env_for_part(project_config.parts.all_parts[0])
         self.assertThat(env, Contains('SNAPCRAFT_PROJECT_DIR="{}"'.format(self.path)))
+
+    def test_content_dirs_default(self):
+        project_config = self.make_snapcraft_project(self.snapcraft_yaml)
+        env = project_config.parts.build_env_for_part(project_config.parts.all_parts[0])
+        self.assertThat(env, Contains('SNAPCRAFT_CONTENT_DIRS=""'))
+
+    @mock.patch(
+        "snapcraft_legacy.project._project.Project._get_provider_content_dirs",
+        return_value=sorted({"/tmp/test1", "/tmp/test2"}),
+    )
+    def test_content_dirs(self, mock_get_content_dirs):
+        project_config = self.make_snapcraft_project(self.snapcraft_yaml)
+        env = project_config.parts.build_env_for_part(project_config.parts.all_parts[0])
+        self.assertThat(env, Contains('SNAPCRAFT_CONTENT_DIRS="/tmp/test1:/tmp/test2"'))
 
     def test_build_environment(self):
         self.useFixture(FakeOsRelease())
