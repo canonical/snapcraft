@@ -18,10 +18,8 @@
 
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, cast
+from typing import TYPE_CHECKING, cast
 
-import yaml
-import yaml.error
 from craft_cli import emit
 from craft_parts import infos
 
@@ -31,7 +29,7 @@ from snapcraft.parts import PartsLifecycle
 from snapcraft.projects import GrammarAwareProject, Project
 from snapcraft.providers import capture_logs_from_instance
 
-from . import grammar
+from . import grammar, yaml_utils
 
 if TYPE_CHECKING:
     import argparse
@@ -62,8 +60,15 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
             if project_file.parent.name == "snap":
                 assets_dir = project_file.parent
 
-            yaml_data = _load_yaml(project_file)
-            break
+            try:
+                with open(project_file, encoding="utf-8") as yaml_file:
+                    yaml_data = yaml_utils.load(yaml_file)
+                break
+            except OSError as err:
+                msg = err.strerror
+                if err.filename:
+                    msg = f"{msg}: {err.filename!r}."
+                raise errors.SnapcraftError(msg) from err
     else:
         raise errors.SnapcraftError(
             "Could not find snap/snapcraft.yaml. Are you sure you are in the "
@@ -134,25 +139,6 @@ def _run_command(
             output=parsed_args.output,
             compression=project.compression,
         )
-
-
-def _load_yaml(filename: Path) -> Dict[str, Any]:
-    """Load and parse a YAML-formatted file.
-
-    :param filename: The YAML file to load.
-
-    :raises SnapcraftError: if loading didn't succeed.
-    """
-    try:
-        with open(filename, encoding="utf-8") as yaml_file:
-            return yaml.safe_load(yaml_file)
-    except OSError as err:
-        msg = err.strerror
-        if err.filename:
-            msg = f"{msg}: {err.filename!r}."
-        raise errors.SnapcraftError(msg) from err
-    except yaml.error.YAMLError as err:
-        raise errors.SnapcraftError(f"YAML parsing error: {err!s}") from err
 
 
 def _run_in_provider(project: Project, command_name: str, parsed_args: "argparse.Namespace"):
