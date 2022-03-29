@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Extension base class definition."""
+
 import abc
 import os
 from typing import Any, Dict, Optional, Tuple, final
@@ -90,7 +92,8 @@ class Extension(abc.ABC):
                 f"Extension is experimental: {extension_name!r}",
                 docs_url="https://snapcraft.io/docs/supported-extensions",
             )
-        elif self.is_experimental(base):
+
+        if self.is_experimental(base):
             emit.message(
                 f"*EXPERIMENTAL* extension {extension_name!r} enabled",
                 intermediate=True,
@@ -116,5 +119,6 @@ class Extension(abc.ABC):
         ]
         if invalid_parts:
             raise ValueError(
-                f"Extension has invalid part names: {invalid_parts!r}. Format is <extension-name>/<part-name>"
+                f"Extension has invalid part names: {invalid_parts!r}. "
+                "Format is <extension-name>/<part-name>"
             )

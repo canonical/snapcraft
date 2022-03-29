@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Extension application helpers."""
+
 import collections
 import contextlib
 import copy
@@ -40,7 +42,7 @@ def apply_extensions(
     # applied.
     declared_extensions: Dict[str, Set[str]] = collections.defaultdict(set)
 
-    for app_name, app_definition in yaml_data.get("apps", dict()).items():
+    for app_name, app_definition in yaml_data.get("apps", {}).items():
         extension_names = app_definition.get("extensions", [])
 
         for extension_name in extension_names:
@@ -110,9 +112,7 @@ def _apply_extension_property(existing_property: Any, extension_property: Any) -
 
             return merged
 
-        elif isinstance(existing_property, dict) and isinstance(
-            extension_property, dict
-        ):
+        if isinstance(existing_property, dict) and isinstance(extension_property, dict):
             for key, value in extension_property.items():
                 existing_property[key] = _apply_extension_property(
                     existing_property.get(key), value
@@ -126,7 +126,7 @@ def _apply_extension_property(existing_property: Any, extension_property: Any) -
 def _remove_list_duplicates(seq: List[str]) -> List[str]:
     """De-dupe string list maintaining ordering."""
     seen: Set[str] = set()
-    deduped: List[str] = list()
+    deduped: List[str] = []
 
     for item in seq:
         if item not in seen:
