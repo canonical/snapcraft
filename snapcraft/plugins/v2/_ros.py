@@ -38,6 +38,7 @@ class RosPlugin(PluginV2):
     def get_build_packages(self) -> Set[str]:
         return {
             "python3-rosdep",
+            "rospack-tools",
         }
 
     def get_build_environment(self) -> Dict[str, str]:
@@ -122,7 +123,31 @@ class RosPlugin(PluginV2):
             + [
                 "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep init; fi",
                 'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
-                'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
+            ]
+            # If there exists a workspace in the install-part prior to building the sources (e.g. stage-snap)
+            # we establish the lists of all (resolved) dependencies that are coming along
+            + [
+                'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
+                #
+                # List all (resolved) ROS packages available on the (ROS) filesystem
+                # which is already sourced above (_get_workspace_activation_commands).
+                'rospack list-names | xargs rosdep resolve --rosdistro "${ROS_DISTRO}" '
+                '| grep -v "#" > "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+                #
+                # List all (resolved) non-ROS dependencies of the workspace(s)
+                'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" --ignore-packages-from-source '
+                '| xargs rosdep resolve --rosdistro "${ROS_DISTRO}" | grep -v "#" >> "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+                #
+                # Note, we can't directly pass the common path prefix ${SNAPCRAFT_PART_INSTALL}/opt/ros
+                # because rosdep may crash if it finds the same package twice
+                'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/snap/setup.sh" ]; then',
+                'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths "${SNAPCRAFT_PART_INSTALL}/opt/ros/snap" --ignore-packages-from-source '
+                '| xargs rosdep resolve --rosdistro "${ROS_DISTRO}" | grep -v "#" >> "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+                "fi",
+                "fi",
+            ]
+            + [
+                'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"'
             ]
             + self._get_build_commands()
             + self._get_stage_runtime_dependencies_commands()
@@ -190,20 +215,29 @@ def stage_runtime_dependencies(
             if parsed:
                 click.echo(f"unhandled dependencies: {parsed!r}")
 
+    installed_packages: Set[str] = set()
+    try:
+        with open(part_install + "/.installed_packages.txt", "r") as f:
+            installed_packages = set(f.read().split())
+            click.echo(f"Will not fetch staged packages: {installed_packages!r}")
+    except IOError:
+        pass
+
     if apt_packages:
         package_names = sorted(apt_packages)
         install_path = pathlib.Path(part_install)
         stage_packages_path = install_path.parent / "stage_packages"
 
         click.echo(f"Fetching stage packages: {package_names!r}")
-        Repo.fetch_stage_packages(
+        fetched_package_names = Repo.fetch_stage_packages(
             package_names=package_names,
             base="core20",
             stage_packages_path=stage_packages_path,
             target_arch=target_arch,
+            filters=installed_packages,
         )
 
-        click.echo(f"Unpacking stage packages: {package_names!r}")
+        click.echo(f"Unpacking stage packages: {fetched_package_names!r}")
         Repo.unpack_stage_packages(
             stage_packages_path=stage_packages_path, install_path=install_path
         )
