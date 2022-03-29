@@ -23,7 +23,7 @@ SCAN_STATUS_POLL_RETRIES = 5
 
 STORE_DASHBOARD_URL = "https://dashboard.snapcraft.io/"
 STORE_API_URL = "https://api.snapcraft.io/"
-STORE_UPLOAD_URL = "https://upload.apps.ubuntu.com/"
+STORE_UPLOAD_URL = "https://storage.snapcraftcontent.com/"
 
 # Messages and warnings.
 MISSING_AGREEMENT = "Developer has not signed agreement."

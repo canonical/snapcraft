@@ -341,7 +341,7 @@ class StagingStore(fixtures.Fixture):
         )
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "STORE_UPLOAD_URL", "https://upload.apps.staging.ubuntu.com/",
+                "STORE_UPLOAD_URL", "https://storage.staging.snapcraftcontent.com/",
             )
         )
         self.useFixture(
