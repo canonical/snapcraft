@@ -92,6 +92,7 @@ class TestProjectDefaults:
         assert project.slots is None
         assert project.epoch is None
         assert project.environment is None
+        assert project.adopt_info is None
 
     def test_app_defaults(self, project_yaml_data):
         data = project_yaml_data(apps={"app1": {"command": "/bin/true"}})

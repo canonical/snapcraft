@@ -107,7 +107,7 @@ class SnapMetadata(YamlModel):
     hooks: Optional[Dict[str, Any]]
 
 
-def write(project: Project, prime_dir: Path, *, arch: str):
+def write(project: Project, prime_dir: Path, *, arch: str, version: str, grade: str):
     """Create a snap.yaml file."""
     meta_dir = prime_dir / "meta"
     meta_dir.mkdir(parents=True, exist_ok=True)
@@ -159,7 +159,7 @@ def write(project: Project, prime_dir: Path, *, arch: str):
     snap_metadata = SnapMetadata(
         name=project.name,
         title=project.title,
-        version=project.version,  # type: ignore
+        version=version,
         summary=project.summary,
         description=project.description,
         license=project.license,
@@ -170,7 +170,7 @@ def write(project: Project, prime_dir: Path, *, arch: str):
         epoch=project.epoch,
         apps=snap_apps,
         confinement=project.confinement,
-        grade=project.grade,
+        grade=grade,
         environment=project.environment,
         plugs=project.plugs,
         hooks=project.hooks,

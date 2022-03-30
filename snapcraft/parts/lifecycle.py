@@ -118,16 +118,45 @@ def _run_command(
         work_dir = Path.cwd()
 
     step_name = "prime" if command_name == "pack" else command_name
+    part_names = getattr(parsed_args, "parts", [])
 
     lifecycle = PartsLifecycle(
         project.parts,
         work_dir=work_dir,
         assets_dir=assets_dir,
         package_repositories=project.package_repositories,
+        part_names=part_names,
+        adopt_info=project.adopt_info,
+        project_vars={
+            "version": project.version or "",
+            "grade": project.grade,
+        }
     )
     lifecycle.run(step_name)
 
-    snap_yaml.write(project, lifecycle.prime_dir, arch=lifecycle.target_arch)
+    # Generate snap.yaml
+    project_vars = lifecycle.project_vars
+    if step_name == "prime" and not part_names:
+        version = project_vars["version"]
+        if not version:
+            raise errors.SnapcraftError("snap version cannot be empty")
+
+        # FIXME: refactor craft-parts to define validators for project variables
+        grade = project_vars["grade"]
+        if grade not in ("stable", "devel"):
+            raise errors.SnapcraftError(
+                f"invalid grade {grade!r}, must be either 'stable' or 'devel'"
+            )
+
+        emit.progress("Generating snap metadata...")
+        snap_yaml.write(
+            project,
+            lifecycle.prime_dir,
+            arch=lifecycle.target_arch,
+            version=version,
+            grade=grade,
+        )
+        emit.message("Generated snap metadata", intermediate=True)
 
     if command_name == "pack":
         pack.pack_snap(
@@ -137,7 +166,9 @@ def _run_command(
         )
 
 
-def _run_in_provider(project: Project, command_name: str, parsed_args: "argparse.Namespace"):
+def _run_in_provider(
+    project: Project, command_name: str, parsed_args: "argparse.Namespace"
+):
     """Pack image in provider instance."""
     emit.trace("Checking build provider availability")
     provider_name = "lxd" if parsed_args.use_lxd else None

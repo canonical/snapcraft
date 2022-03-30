@@ -15,7 +15,7 @@ assumes:
 apps:
   snapcraft:
     environment:
-      PATH: "/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      PATH: "$SNAP/libexec/snapcraft:/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
       # https://github.com/lxc/pylxd/pull/361
       PYLXD_WARNINGS: "none"
     command: bin/python $SNAP/bin/snapcraft
@@ -134,4 +134,7 @@ parts:
         [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
         snapcraftctl set-grade "$grade"
         ln -sf ../usr/bin/python3.8 $SNAPCRAFT_PART_INSTALL/bin/python3
+        mkdir -p $SNAPCRAFT_PART_INSTALL/libexec/snapcraft
+        mv $SNAPCRAFT_PART_INSTALL/bin/craftctl $SNAPCRAFT_PART_INSTALL/libexec/snapcraft/
+        sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python|' $SNAPCRAFT_PART_INSTALL/libexec/snapcraft/craftctl
     after: [snapcraft-libs]

@@ -43,6 +43,7 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             action="store_true",
             help="Use LXD to build",
         )
+
         # --provider is only available in legacy
         parser.add_argument("--provider", help=argparse.SUPPRESS)
 
@@ -63,7 +64,11 @@ class _LifecycleStepCommand(_LifecycleCommand):
     def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
         super().fill_parser(parser)
         parser.add_argument(
-            "parts", metavar="parts", type=str, nargs="*", help="Parts to process"
+            "parts",
+            metavar="part-name",
+            type=str,
+            nargs="*",
+            help="Optional list of parts to process",
         )
 
 

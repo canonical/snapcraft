@@ -18,7 +18,7 @@ import argparse
 import textwrap
 from pathlib import Path
 from typing import Any, Dict
-from unittest.mock import call
+from unittest.mock import PropertyMock, call
 
 import pytest
 
@@ -90,6 +90,15 @@ def snapcraft_yaml():
         }
 
     yield write_file
+
+
+@pytest.fixture
+def project_vars(mocker):
+    yield mocker.patch(
+        "snapcraft.parts.PartsLifecycle.project_vars",
+        new_callable=PropertyMock,
+        return_value={"version": "0.1", "grade": "stable"},
+    )
 
 
 def test_config_not_found(new_dir):
@@ -185,7 +194,7 @@ def test_lifecycle_legacy_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
         ("prime", "prime"),
     ],
 )
-def test_lifecycle_run_command_step(cmd, step, snapcraft_yaml, new_dir, mocker):
+def test_lifecycle_run_command_step(cmd, step, snapcraft_yaml, project_vars, new_dir, mocker):
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     mocker.patch("snapcraft.meta.snap_yaml.write")
@@ -195,14 +204,14 @@ def test_lifecycle_run_command_step(cmd, step, snapcraft_yaml, new_dir, mocker):
         cmd,
         project=project,
         assets_dir=Path(),
-        parsed_args=argparse.Namespace(destructive_mode=True, use_lxd=False),
+        parsed_args=argparse.Namespace(destructive_mode=True, use_lxd=False, parts=[]),
     )
 
     assert run_mock.mock_calls == [call(step)]
     assert pack_mock.mock_calls == []
 
 
-def test_lifecycle_run_command_pack(snapcraft_yaml, new_dir, mocker):
+def test_lifecycle_run_command_pack(snapcraft_yaml, project_vars, new_dir, mocker):
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     mocker.patch("snapcraft.meta.snap_yaml.write")
@@ -217,6 +226,7 @@ def test_lifecycle_run_command_pack(snapcraft_yaml, new_dir, mocker):
             output=None,
             destructive_mode=True,
             use_lxd=False,
+            parts=[],
         ),
     )
 
@@ -226,7 +236,7 @@ def test_lifecycle_run_command_pack(snapcraft_yaml, new_dir, mocker):
     ]
 
 
-def test_lifecycle_pack_destructive_mode(snapcraft_yaml, new_dir, mocker):
+def test_lifecycle_pack_destructive_mode(snapcraft_yaml, project_vars, new_dir, mocker):
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
@@ -247,6 +257,7 @@ def test_lifecycle_pack_destructive_mode(snapcraft_yaml, new_dir, mocker):
             output=None,
             destructive_mode=True,
             use_lxd=False,
+            parts=[],
         ),
     )
 
@@ -257,7 +268,7 @@ def test_lifecycle_pack_destructive_mode(snapcraft_yaml, new_dir, mocker):
     ]
 
 
-def test_lifecycle_pack_managed(snapcraft_yaml, new_dir, mocker):
+def test_lifecycle_pack_managed(snapcraft_yaml, project_vars, new_dir, mocker):
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
@@ -278,6 +289,7 @@ def test_lifecycle_pack_managed(snapcraft_yaml, new_dir, mocker):
             output=None,
             destructive_mode=False,
             use_lxd=False,
+            parts=[],
         ),
     )
 
@@ -303,6 +315,7 @@ def test_lifecycle_pack_not_managed(snapcraft_yaml, new_dir, mocker):
             output=None,
             destructive_mode=False,
             use_lxd=False,
+            parts=[],
         ),
     )
 
@@ -316,6 +329,7 @@ def test_lifecycle_pack_not_managed(snapcraft_yaml, new_dir, mocker):
                 output=None,
                 destructive_mode=False,
                 use_lxd=False,
+                parts=[],
             ),
         )
     ]

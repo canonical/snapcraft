@@ -235,7 +235,6 @@ class Project(ProjectModel):
 
     XXX: Not implemented in this version
     - system-usernames
-    - adopt-info (after adding craftctl support to craft-parts)
     """
 
     name: constr(max_length=40)  # type: ignore
@@ -267,6 +266,7 @@ class Project(ProjectModel):
     slots: Optional[Dict[str, Dict[str, str]]]  # TODO: add slot name validation
     parts: Dict[str, Any]  # parts are handled by craft-parts
     epoch: Optional[str]
+    adopt_info: Optional[str]
     environment: Optional[Dict[str, Any]]
 
     @pydantic.validator("plugs")
@@ -326,7 +326,10 @@ class Project(ProjectModel):
 
     @pydantic.validator("version")
     @classmethod
-    def _validate_version(cls, version):
+    def _validate_version(cls, version, values):
+        if not version and "adopt_info" not in values:
+            raise ValueError("Version must be declared if not adopting metadata")
+
         if not re.match(r"^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$", version):
             raise ValueError(
                 "Snap versions consist of upper- and lower-case alphanumeric characters, "
