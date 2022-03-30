@@ -27,6 +27,8 @@ def fake_extension():
     """Basic extension."""
 
     class ExtensionImpl(extensions.Extension):
+        """The test extension implementation."""
+
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core22",)
@@ -61,6 +63,8 @@ def fake_extension_extra():
     """A variation of fake_extension with some conflicts and new code."""
 
     class ExtensionImpl(extensions.Extension):
+        """The test extension implementation."""
+
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core22",)
@@ -93,6 +97,8 @@ def fake_extension_extra():
 @pytest.fixture
 def fake_extension_invalid_parts():
     class ExtensionImpl(extensions.Extension):
+        """The test extension implementation."""
+
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core22",)
@@ -127,6 +133,8 @@ def fake_extension_experimental():
     """Basic extension."""
 
     class ExtensionImpl(extensions.Extension):
+        """The test extension implementation."""
+
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core22",)

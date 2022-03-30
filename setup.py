@@ -74,7 +74,7 @@ dev_requires = [
     "pycodestyle",
     "pydocstyle",
     "pyftpdlib",
-    "pylint<2.12.0",
+    "pylint",
     "pylint-fixme-info",
     "pylint-pytest",
     "pyramid",

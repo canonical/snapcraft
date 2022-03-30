@@ -168,9 +168,9 @@ def test_apply_extension_invalid_parts():
     with pytest.raises(ValueError) as raised:
         extensions.apply_extensions(yaml_data, arch="amd64", target_arch="amd64")
 
-    assert (
-        str(raised.value)
-        == "Extension has invalid part names: ['fake-part', 'fake-part-2']. Format is <extension-name>/<part-name>"
+    assert str(raised.value) == (
+        "Extension has invalid part names: ['fake-part', 'fake-part-2']. "
+        "Format is <extension-name>/<part-name>"
     )
 
 
