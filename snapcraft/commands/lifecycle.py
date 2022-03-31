@@ -43,7 +43,6 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             action="store_true",
             help="Use LXD to build",
         )
-
         # --provider is only available in legacy
         parser.add_argument("--provider", help=argparse.SUPPRESS)
 
