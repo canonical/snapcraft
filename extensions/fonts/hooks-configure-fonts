@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -e
+
+[ ! -d "${SNAP_COMMON}/fontconfig" ] && mkdir -p "${SNAP_COMMON}/fontconfig"
+
+function append_dir() {
+  local -n var="$1"
+  local dir="$2"
+  # We can't check if the dir exists when the dir contains variables
+  if [[ "$dir" == *"\$"*  || -d "$dir" ]]; then
+    export "${!var}=${var:+$var:}${dir}"
+  fi
+}
+
+if [ "$SNAP_ARCH" = "amd64" ]; then
+  ARCH="x86_64-linux-gnu"
+elif [ "$SNAP_ARCH" = "armhf" ]; then
+  ARCH="arm-linux-gnueabihf"
+elif [ "$SNAP_ARCH" = "arm64" ]; then
+  ARCH="aarch64-linux-gnu"
+elif [ "$SNAP_ARCH" = "ppc64el" ]; then
+  ARCH="powerpc64le-linux-gnu"
+else
+  ARCH="$SNAP_ARCH-linux-gnu"
+fi
+
+append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/lib/$ARCH"
+append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH"
+append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib"
+append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/lib"
+append_dir PATH "$SNAP_DESKTOP_RUNTIME/usr/bin"
+
+cat > "${SNAP_COMMON}/fontconfig/fonts.conf" <<EOF
+<fontconfig>
+  <cachedir>${SNAP_COMMON}/fontconfig</cachedir>
+  <include ignore_missing="yes">/etc/fonts/fonts.conf</include>
+</fontconfig>
+EOF
+
+export FONTCONFIG_FILE="${SNAP_COMMON}/fontconfig/fonts.conf"
+
+"${SNAP_DESKTOP_RUNTIME}/usr/bin/fc-cache" --force --system-only --verbose || echo "configure hook: font generation failed"
+
+exec "$@"

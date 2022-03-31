@@ -19,10 +19,13 @@
 import collections
 import contextlib
 import copy
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Set, TYPE_CHECKING
 
-from ._extension import Extension
 from .registry import get_extension_class
+
+
+if TYPE_CHECKING:
+    from .extension import Extension
 
 
 def apply_extensions(
@@ -68,7 +71,7 @@ def apply_extensions(
 def _apply_extension(
     yaml_data: Dict[str, Any],
     app_names: Set[str],
-    extension: Extension,
+    extension: "Extension",
 ) -> None:
     # Apply the root components of the extension (if any)
     root_extension = extension.get_root_snippet()

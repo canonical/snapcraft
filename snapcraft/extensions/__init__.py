@@ -16,12 +16,12 @@
 
 """Extension processor and related utilities."""
 
-from ._extension import Extension
+from . import extension
 from ._utils import apply_extensions
 from .registry import get_extension_class, get_extension_names, register, unregister
 
 __all__ = [
-    "Extension",
+    "extension",
     "get_extension_class",
     "get_extension_names",
     "apply_extensions",

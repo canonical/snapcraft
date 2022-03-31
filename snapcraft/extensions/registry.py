@@ -16,15 +16,18 @@
 
 """Extension registry."""
 
-from typing import Dict, List, Type
+from typing import Dict, List, Type, TYPE_CHECKING
 
 from snapcraft import errors
 
-from ._extension import Extension
+from .gnome import GNOME
 
-ExtensionType = Type[Extension]
+if TYPE_CHECKING:
+    from .extension import Extension
+    ExtensionType = Type[Extension]
 
-_EXTENSIONS: Dict[str, ExtensionType] = {}
+
+_EXTENSIONS: Dict[str, "ExtensionType"] = {"gnome": GNOME}
 
 
 def get_extension_names() -> List[str]:
@@ -37,7 +40,7 @@ def get_extension_names() -> List[str]:
     return list(_EXTENSIONS.keys())
 
 
-def get_extension_class(extension_name: str) -> ExtensionType:
+def get_extension_class(extension_name: str) -> "ExtensionType":
     """Obtain a extension class given the name.
 
     :param name: The extension name.
@@ -52,7 +55,7 @@ def get_extension_class(extension_name: str) -> ExtensionType:
         ) from key_error
 
 
-def register(extension_name: str, extension_class: ExtensionType) -> None:
+def register(extension_name: str, extension_class: "ExtensionType") -> None:
     """Register extension.
 
     :param extension_name: the name to register.
