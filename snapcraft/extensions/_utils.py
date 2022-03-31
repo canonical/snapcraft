@@ -27,6 +27,10 @@ if TYPE_CHECKING:
     from .extension import Extension
 
 
+if TYPE_CHECKING:
+    from .extension import Extension
+
+
 def apply_extensions(
     yaml_data: Dict[str, Any], *, arch: str, target_arch: str
 ) -> Dict[str, Any]:
