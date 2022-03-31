@@ -66,7 +66,7 @@ def test_yaml_load_duplicates_errors():
 
     assert str(raised.value) == dedent(
         """\
-        YAML parsing error: while constructing a mapping
+        snapcraft.yaml parsing error: while constructing a mapping
         found duplicate key 'entry'
           in "<file>", line 1, column 1"""
     )
@@ -87,7 +87,7 @@ def test_yaml_load_unhashable_errors():
 
     assert str(raised.value) == dedent(
         """\
-        YAML parsing error: while constructing a mapping
+        snapcraft.yaml parsing error: while constructing a mapping
           in "<file>", line 2, column 8
         found unhashable key
           in "<file>", line 2, column 9"""

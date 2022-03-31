@@ -84,9 +84,9 @@ def load(filestream: TextIO) -> Dict[str, Any]:
     except KeyError as key_error:
         raise errors.LegacyFallback("no base defined") from key_error
     except yaml.error.YAMLError as err:
-        raise errors.SnapcraftError(f"YAML parsing error: {err!s}") from err
+        raise errors.SnapcraftError(f"snapcraft.yaml parsing error: {err!s}") from err
     filestream.seek(0)
     try:
         return yaml.load(filestream, Loader=_SafeLoader)
     except yaml.error.YAMLError as err:
-        raise errors.SnapcraftError(f"YAML parsing error: {err!s}") from err
+        raise errors.SnapcraftError(f"snapcraft.yaml parsing error: {err!s}") from err
