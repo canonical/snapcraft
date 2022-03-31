@@ -75,7 +75,17 @@ def load(filestream: TextIO) -> Dict[str, Any]:
     :param filename: The YAML file to load.
 
     :raises SnapcraftError: if loading didn't succeed.
+    :raises LegacyFallback: if the project's base is not core22.
     """
+    try:
+        # TODO: support for build-base.
+        if yaml.safe_load(filestream)["base"] != "core22":
+            raise errors.LegacyFallback("base is not core22")
+    except KeyError as key_error:
+        raise errors.LegacyFallback("no base defined") from key_error
+    except yaml.error.YAMLError as err:
+        raise errors.SnapcraftError(f"YAML parsing error: {err!s}") from err
+    filestream.seek(0)
     try:
         return yaml.load(filestream, Loader=_SafeLoader)
     except yaml.error.YAMLError as err:

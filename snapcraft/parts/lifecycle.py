@@ -79,10 +79,6 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     # validate project grammar
     GrammarAwareProject.validate_grammar(yaml_data)
 
-    # only execute the new codebase from core22 onwards
-    if yaml_data.get("base") != "core22":
-        raise errors.LegacyFallback("base is not core22")
-
     # argument --provider is only supported by legacy snapcraft
     if parsed_args.provider:
         raise errors.SnapcraftError("Option --provider is not supported.")
