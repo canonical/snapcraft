@@ -1,0 +1,56 @@
+summary: Build and run a basic gnome snap using extensions
+
+# The content snap required for the test to succeed is only
+# available on a subset of all the architectures this testbed
+# can run on.
+systems:
+  - ubuntu-22.04
+  - ubuntu-22.04-64
+  - ubuntu-22.04-amd64
+
+environment:
+  SNAP_DIR: ../snaps/gtk3-hello
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+  sed -i 's/gnome-3-28/gnome/' "$SNAP_DIR/snap/snapcraft.yaml"
+  sed -i 's/bin\/gtk3-hello/usr\/local\/bin\/gtk3-hello/' "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "$SNAP_DIR"
+
+  output="$(snapcraft pack)"
+
+  snap install gtk3-hello_*.snap --dangerous
+  snap connect gtk3-hello:gnome-42-2204 gnome-42-2204
+  [ "$(gtk3-hello)" = "hello world" ]
+
+  # Verify that the extension command chain went through the proper setup procedure
+  snap_user_data="$HOME/snap/gtk3-hello/current"
+  [ -d "$snap_user_data/.config" ]
+  [ -d "$snap_user_data/.local" ]
+  [ -h "$snap_user_data/.themes" ]
+
+  [ -f "$snap_user_data/.last_revision" ]
+  [ "$(cat "$snap_user_data/.last_revision")" = "SNAP_DESKTOP_LAST_REVISION=x1" ]
+
+  # Verify content snap was installed for dependency checks.
+  snap list gnome-42-2204
+  snap list gtk-common-themes
+
+  # Verify all dependencies were found.
+  if echo "$output" | grep -q "part is missing libraries"; then
+    echo "failed to find content snaps' libraries"
+    exit 1
+  fi
