@@ -120,7 +120,8 @@ class PartsLifecycle:
                 for action in actions:
                     message = _action_message(action)
                     emit.progress(f"Executing parts lifecycle: {message}")
-                    aex.execute(action)
+                    with emit.open_stream("Executing action") as stream:
+                        aex.execute(action, stdout=stream, stderr=stream)
 
             emit.message("Executed parts lifecycle", intermediate=True)
         except RuntimeError as err:
