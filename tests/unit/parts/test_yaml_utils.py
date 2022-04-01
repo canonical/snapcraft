@@ -30,6 +30,7 @@ def test_yaml_load():
             io.StringIO(
                 dedent(
                     """\
+        base: core22
         entry:
             sub-entry:
               - list1
@@ -40,6 +41,7 @@ def test_yaml_load():
             )
         )
         == {
+            "base": "core22",
             "entry": {
                 "sub-entry": ["list1", "list2"],
             },
@@ -54,6 +56,7 @@ def test_yaml_load_duplicates_errors():
             io.StringIO(
                 dedent(
                     """\
+            base: core22
             entry: value1
             entry: value2
     """
@@ -63,7 +66,7 @@ def test_yaml_load_duplicates_errors():
 
     assert str(raised.value) == dedent(
         """\
-        YAML parsing error: while constructing a mapping
+        snapcraft.yaml parsing error: while constructing a mapping
         found duplicate key 'entry'
           in "<file>", line 1, column 1"""
     )
@@ -75,6 +78,7 @@ def test_yaml_load_unhashable_errors():
             io.StringIO(
                 dedent(
                     """\
+            base: core22
             entry: {{value}}
     """
                 )
@@ -83,7 +87,38 @@ def test_yaml_load_unhashable_errors():
 
     assert str(raised.value) == dedent(
         """\
-        YAML parsing error: while constructing a mapping
+        snapcraft.yaml parsing error: while constructing a mapping
+          in "<file>", line 2, column 8
         found unhashable key
-          in "<file>", line 1, column 8"""
+          in "<file>", line 2, column 9"""
     )
+
+
+def test_yaml_load_not_core22_base():
+    with pytest.raises(errors.LegacyFallback) as raised:
+        yaml_utils.load(
+            io.StringIO(
+                dedent(
+                    """\
+            base: core20
+    """
+                )
+            )
+        )
+
+    assert str(raised.value) == "base is not core22"
+
+
+def test_yaml_load_no_base():
+    with pytest.raises(errors.LegacyFallback) as raised:
+        yaml_utils.load(
+            io.StringIO(
+                dedent(
+                    """\
+            entry: foo
+    """
+                )
+            )
+        )
+
+    assert str(raised.value) == "no base defined"

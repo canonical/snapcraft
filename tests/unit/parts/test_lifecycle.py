@@ -136,30 +136,6 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
     ]
 
 
-def test_snapcraft_yaml_parse_error(new_dir, snapcraft_yaml, mocker):
-    """If snapcraft.yaml is not a valid yaml, raise an error."""
-    snapcraft_yaml(base="invalid: true")
-    run_command_mock = mocker.patch("snapcraft.parts.lifecycle._run_command")
-
-    with pytest.raises(errors.SnapcraftError) as raised:
-        parts_lifecycle.run("pull", argparse.Namespace(parts=["part1"]))
-
-    assert str(raised.value) == (
-        "YAML parsing error: mapping values are not allowed here\n"
-        '  in "snap/snapcraft.yaml", line 4, column 14'
-    )
-    assert run_command_mock.mock_calls == []
-
-
-def test_legacy_base_not_core22(new_dir, snapcraft_yaml):
-    """Only core22 is processed by the new code, use legacy otherwise."""
-    snapcraft_yaml(base="core20")
-    with pytest.raises(errors.LegacyFallback) as raised:
-        parts_lifecycle.run("pull", argparse.Namespace())
-
-    assert str(raised.value) == "base is not core22"
-
-
 @pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime", "pack"])
 def test_lifecycle_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
     """Option --provider is not supported in core22."""
