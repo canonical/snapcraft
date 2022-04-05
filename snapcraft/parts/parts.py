@@ -17,7 +17,7 @@
 """Craft-parts lifecycle wrapper."""
 
 import pathlib
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import craft_parts
 from craft_cli import emit
@@ -41,6 +41,7 @@ class PartsLifecycle:
     :param all_parts: A dictionary containing the parts defined in the project.
     :param work_dir: The working directory for parts processing.
     :param assets_dir: The directory containing project assets.
+    :param adopt_info: The name of the part containing metadata do adopt.
 
     :raises PartsLifecycleError: On error initializing the parts lifecycle.
     """
@@ -52,9 +53,13 @@ class PartsLifecycle:
         work_dir: pathlib.Path,
         assets_dir: pathlib.Path,
         package_repositories: List[Dict[str, Any]],
+        part_names: Optional[List[str]],
+        adopt_info: Optional[str],
+        project_vars: Dict[str, str],
     ):
         self._assets_dir = assets_dir
         self._package_repositories = package_repositories
+        self._part_names = part_names
 
         emit.progress("Initializing parts lifecycle")
 
@@ -74,6 +79,8 @@ class PartsLifecycle:
                 work_dir=work_dir,
                 cache_dir=cache_dir,
                 ignore_local_sources=["*.snap"],
+                project_vars_part_name=adopt_info,
+                project_vars=project_vars,
             )
         except craft_parts.PartsError as err:
             raise errors.PartsLifecycleError(str(err)) from err
@@ -88,6 +95,14 @@ class PartsLifecycle:
         """Return the parts project target architecture."""
         return self._lcm.project_info.target_arch
 
+    @property
+    def project_vars(self) -> Dict[str, str]:
+        """Return the value of project variable ``version``."""
+        return {
+            "version": self._lcm.project_info.get_project_var("version"),
+            "grade": self._lcm.project_info.get_project_var("grade"),
+        }
+
     def run(self, step_name: str) -> None:
         """Run the parts lifecycle.
 
@@ -101,7 +116,7 @@ class PartsLifecycle:
             raise RuntimeError(f"Invalid target step {step_name!r}")
 
         try:
-            actions = self._lcm.plan(target_step)
+            actions = self._lcm.plan(target_step, part_names=self._part_names)
 
             emit.progress("Installing package repositories...")
 
@@ -122,6 +137,7 @@ class PartsLifecycle:
                     emit.progress(f"Executing parts lifecycle: {message}")
                     with emit.open_stream("Executing action") as stream:
                         aex.execute(action, stdout=stream, stderr=stream)
+                    emit.message(f"Executed: {message}", intermediate=True)
 
             emit.message("Executed parts lifecycle", intermediate=True)
         except RuntimeError as err:

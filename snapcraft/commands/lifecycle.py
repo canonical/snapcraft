@@ -63,7 +63,11 @@ class _LifecycleStepCommand(_LifecycleCommand):
     def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
         super().fill_parser(parser)
         parser.add_argument(
-            "parts", metavar="parts", type=str, nargs="*", help="Parts to process"
+            "parts",
+            metavar="part-name",
+            type=str,
+            nargs="*",
+            help="Optional list of parts to process",
         )
 
 

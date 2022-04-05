@@ -32,7 +32,13 @@ def parts_data():
 @pytest.mark.parametrize("step_name", ["pull", "overlay", "build", "stage", "prime"])
 def test_parts_lifecycle_run(parts_data, step_name, new_dir, emitter):
     lifecycle = PartsLifecycle(
-        parts_data, work_dir=new_dir, assets_dir=new_dir, package_repositories=[]
+        parts_data,
+        work_dir=new_dir,
+        assets_dir=new_dir,
+        part_names=[],
+        package_repositories=[],
+        adopt_info=None,
+        project_vars={"version": "1", "grade": "stable"},
     )
     lifecycle.run(step_name)
     assert lifecycle.prime_dir == Path(new_dir, "prime")
@@ -42,7 +48,13 @@ def test_parts_lifecycle_run(parts_data, step_name, new_dir, emitter):
 
 def test_parts_lifecycle_run_bad_step(parts_data, new_dir):
     lifecycle = PartsLifecycle(
-        parts_data, work_dir=new_dir, assets_dir=new_dir, package_repositories=[]
+        parts_data,
+        work_dir=new_dir,
+        assets_dir=new_dir,
+        part_names=[],
+        package_repositories=[],
+        adopt_info=None,
+        project_vars={"version": "1", "grade": "stable"},
     )
     with pytest.raises(RuntimeError) as raised:
         lifecycle.run("invalid")
@@ -51,7 +63,13 @@ def test_parts_lifecycle_run_bad_step(parts_data, new_dir):
 
 def test_parts_lifecycle_run_internal_error(parts_data, new_dir, mocker):
     lifecycle = PartsLifecycle(
-        parts_data, work_dir=new_dir, assets_dir=new_dir, package_repositories=[]
+        parts_data,
+        work_dir=new_dir,
+        assets_dir=new_dir,
+        part_names=[],
+        package_repositories=[],
+        adopt_info=None,
+        project_vars={"version": "1", "grade": "stable"},
     )
     mocker.patch("craft_parts.LifecycleManager.plan", side_effect=RuntimeError("crash"))
     with pytest.raises(RuntimeError) as raised:
@@ -64,11 +82,13 @@ def test_parts_lifecycle_run_parts_error(new_dir):
         {"p1": {"plugin": "dump", "source": "foo"}},
         work_dir=new_dir,
         assets_dir=new_dir,
+        part_names=[],
         package_repositories=[],
+        adopt_info=None,
+        project_vars={"version": "1", "grade": "stable"},
     )
     with pytest.raises(errors.PartsLifecycleError) as raised:
         lifecycle.run("prime")
-    assert (
-        str(raised.value)
-        == "Failed to pull source: unable to determine source type of 'foo'."
+    assert str(raised.value) == (
+        "Failed to pull source: unable to determine source type of 'foo'."
     )

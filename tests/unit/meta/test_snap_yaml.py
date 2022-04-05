@@ -55,7 +55,13 @@ def simple_project():
 
 
 def test_simple_snap_yaml(simple_project, new_dir):
-    snap_yaml.write(simple_project, prime_dir=Path(new_dir), arch="arch")
+    snap_yaml.write(
+        simple_project,
+        prime_dir=Path(new_dir),
+        arch="arch",
+        version="1.30",
+        grade="stable",
+    )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
 
@@ -63,7 +69,7 @@ def test_simple_snap_yaml(simple_project, new_dir):
     assert content == textwrap.dedent(
         """\
         name: mytest
-        version: 1.29.3
+        version: '1.30'
         summary: Single-line elevator pitch for your amazing snap
         description: |
           This is my-snap's description. You have a paragraph or two to tell the
@@ -178,7 +184,13 @@ def complex_project():
 
 
 def test_complex_snap_yaml(complex_project, new_dir):
-    snap_yaml.write(complex_project, prime_dir=Path(new_dir), arch="arch")
+    snap_yaml.write(
+        complex_project,
+        prime_dir=Path(new_dir),
+        arch="arch",
+        version="1.30",
+        grade="devel",
+    )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
 
@@ -186,7 +198,7 @@ def test_complex_snap_yaml(complex_project, new_dir):
     assert content == textwrap.dedent(
         """\
         name: mytest
-        version: 1.29.3
+        version: '1.30'
         summary: Single-line elevator pitch for your amazing snap
         description: |
           This is my-snap's description. You have a paragraph or two to tell the
@@ -241,7 +253,7 @@ def test_complex_snap_yaml(complex_project, new_dir):
                 listen_stream: 100
                 socket_mode: 1
         confinement: strict
-        grade: stable
+        grade: devel
         environment:
           GLOBAL_VARIABLE: test-global-variable
         plugs:
