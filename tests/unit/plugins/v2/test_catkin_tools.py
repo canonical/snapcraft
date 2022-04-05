@@ -48,6 +48,7 @@ def test_get_build_packages():
 
     assert plugin.get_build_packages() == {
         "python3-rosdep",
+        "rospack-tools",
         "python3-catkin-tools",
     }
 
@@ -93,6 +94,16 @@ def test_get_build_commands(monkeypatch):
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
         'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
+        'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
+        'rospack list-names | xargs rosdep resolve --rosdistro "${ROS_DISTRO}" '
+        '| grep -v "#" > "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+        'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" --ignore-packages-from-source '
+        '| xargs rosdep resolve --rosdistro "${ROS_DISTRO}" | grep -v "#" >> "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+        'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/snap/setup.sh" ]; then',
+        'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths "${SNAPCRAFT_PART_INSTALL}/opt/ros/snap" --ignore-packages-from-source '
+        '| xargs rosdep resolve --rosdistro "${ROS_DISTRO}" | grep -v "#" >> "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+        "fi",
+        "fi",
         'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
         "catkin init",
         "catkin profile add -f default",
@@ -147,6 +158,16 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
         'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
+        'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
+        'rospack list-names | xargs rosdep resolve --rosdistro "${ROS_DISTRO}" '
+        '| grep -v "#" > "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+        'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" --ignore-packages-from-source '
+        '| xargs rosdep resolve --rosdistro "${ROS_DISTRO}" | grep -v "#" >> "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+        'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/snap/setup.sh" ]; then',
+        'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths "${SNAPCRAFT_PART_INSTALL}/opt/ros/snap" --ignore-packages-from-source '
+        '| xargs rosdep resolve --rosdistro "${ROS_DISTRO}" | grep -v "#" >> "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+        "fi",
+        "fi",
         'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
         "catkin init",
         "catkin profile add -f default",
