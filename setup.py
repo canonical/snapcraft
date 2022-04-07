@@ -84,6 +84,7 @@ dev_requires = [
     "pytest-subprocess",
     "types-PyYAML",
     "types-setuptools",
+    "types-tabulate",
 ]
 
 if sys.platform == "win32":
