@@ -17,9 +17,12 @@
 import os
 import tempfile
 from pathlib import Path
+from typing import Any, Dict, Optional, Tuple
 
 import pytest
 from craft_cli import messages
+
+from snapcraft import extensions
 
 
 # XXX: This can be removed once testing fixtures are provided by craft-cli.
@@ -98,3 +101,181 @@ def emitter(monkeypatch):
     monkeypatch.setattr(messages.emit, "trace", lambda text: rec.record("trace", text))
 
     return rec
+
+
+@pytest.fixture
+def fake_extension():
+    """Basic extension."""
+
+    class ExtensionImpl(extensions.Extension):
+        """The test extension implementation."""
+
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core22",)
+
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
+        @staticmethod
+        def is_experimental(base: Optional[str] = None) -> bool:
+            return False
+
+        def get_root_snippet(self) -> Dict[str, Any]:
+            return {"grade": "fake-grade"}
+
+        def get_app_snippet(self) -> Dict[str, Any]:
+            return {"plugs": ["fake-plug"]}
+
+        def get_part_snippet(self) -> Dict[str, Any]:
+            return {"after": ["fake-extension/fake-part"]}
+
+        def get_parts_snippet(self) -> Dict[str, Any]:
+            return {"fake-extension/fake-part": {"plugin": "nil"}}
+
+    extensions.register("fake-extension", ExtensionImpl)
+    yield ExtensionImpl
+    extensions.unregister("fake-extension")
+
+
+@pytest.fixture
+def fake_extension_extra():
+    """A variation of fake_extension with some conflicts and new code."""
+
+    class ExtensionImpl(extensions.Extension):
+        """The test extension implementation."""
+
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core22",)
+
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
+        @staticmethod
+        def is_experimental(base: Optional[str] = None) -> bool:
+            return False
+
+        def get_root_snippet(self) -> Dict[str, Any]:
+            return {}
+
+        def get_app_snippet(self) -> Dict[str, Any]:
+            return {"plugs": ["fake-plug", "fake-plug-extra"]}
+
+        def get_part_snippet(self) -> Dict[str, Any]:
+            return {"after": ["fake-extension-extra/fake-part"]}
+
+        def get_parts_snippet(self) -> Dict[str, Any]:
+            return {"fake-extension-extra/fake-part": {"plugin": "nil"}}
+
+    extensions.register("fake-extension-extra", ExtensionImpl)
+    yield ExtensionImpl
+    extensions.unregister("fake-extension-extra")
+
+
+@pytest.fixture
+def fake_extension_invalid_parts():
+    class ExtensionImpl(extensions.Extension):
+        """The test extension implementation."""
+
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core22",)
+
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
+        @staticmethod
+        def is_experimental(base: Optional[str] = None) -> bool:
+            return False
+
+        def get_root_snippet(self) -> Dict[str, Any]:
+            return {"grade": "fake-grade"}
+
+        def get_app_snippet(self) -> Dict[str, Any]:
+            return {"plugs": ["fake-plug"]}
+
+        def get_part_snippet(self) -> Dict[str, Any]:
+            return {"after": ["fake-extension/fake-part"]}
+
+        def get_parts_snippet(self) -> Dict[str, Any]:
+            return {"fake-part": {"plugin": "nil"}, "fake-part-2": {"plugin": "nil"}}
+
+    extensions.register("fake-extension-invalid-parts", ExtensionImpl)
+    yield ExtensionImpl
+    extensions.unregister("fake-extension-invalid-parts")
+
+
+@pytest.fixture
+def fake_extension_experimental():
+    """Basic extension."""
+
+    class ExtensionImpl(extensions.Extension):
+        """The test extension implementation."""
+
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core22",)
+
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
+        @staticmethod
+        def is_experimental(base: Optional[str] = None) -> bool:
+            return True
+
+        def get_root_snippet(self) -> Dict[str, Any]:
+            return {}
+
+        def get_app_snippet(self) -> Dict[str, Any]:
+            return {}
+
+        def get_part_snippet(self) -> Dict[str, Any]:
+            return {}
+
+        def get_parts_snippet(self) -> Dict[str, Any]:
+            return {}
+
+    extensions.register("fake-extension-experimental", ExtensionImpl)
+    yield ExtensionImpl
+    extensions.unregister("fake-extension-experimental")
+
+
+@pytest.fixture
+def fake_extension_name_from_legacy():
+    """A fake_extension variant with a name collision with legacy."""
+
+    class ExtensionImpl(extensions.Extension):
+        """The test extension implementation."""
+
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core22",)
+
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
+        @staticmethod
+        def is_experimental(base: Optional[str] = None) -> bool:
+            return False
+
+        def get_root_snippet(self) -> Dict[str, Any]:
+            return {}
+
+        def get_app_snippet(self) -> Dict[str, Any]:
+            return {"plugs": ["fake-plug", "fake-plug-extra"]}
+
+        def get_part_snippet(self) -> Dict[str, Any]:
+            return {"after": ["fake-extension-extra/fake-part"]}
+
+        def get_parts_snippet(self) -> Dict[str, Any]:
+            return {"fake-extension-extra/fake-part": {"plugin": "nil"}}
+
+    extensions.register("ros2-foxy", ExtensionImpl)
+    yield ExtensionImpl
+    extensions.unregister("ros2-foxy")

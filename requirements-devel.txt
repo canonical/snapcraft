@@ -102,6 +102,7 @@ translationstring==1.4
 types-Deprecated==1.2.5
 types-PyYAML==6.0.5
 types-setuptools==57.4.11
+types-tabulate==0.8.6
 typing-utils==0.1.0
 typing_extensions==4.1.1
 urllib3==1.26.9

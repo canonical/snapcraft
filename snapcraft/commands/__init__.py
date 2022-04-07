@@ -16,11 +16,23 @@
 
 """Snapcraft commands."""
 
-from .lifecycle import (  # noqa: F401
+from .extensions import ExtensionsCommand, ListExtensionsCommand
+from .lifecycle import (
     BuildCommand,
     PackCommand,
     PrimeCommand,
     PullCommand,
     StageCommand,
 )
-from .version import VersionCommand  # noqa: F401
+from .version import VersionCommand
+
+__all__ = [
+    "BuildCommand",
+    "PackCommand",
+    "PrimeCommand",
+    "PullCommand",
+    "StageCommand",
+    "ExtensionsCommand",
+    "ListExtensionsCommand",
+    "VersionCommand",
+]
