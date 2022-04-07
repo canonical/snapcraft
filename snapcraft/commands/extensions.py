@@ -21,11 +21,13 @@ import textwrap
 from typing import Dict, List
 
 import tabulate
+import yaml
 from craft_cli import BaseCommand, emit
 from overrides import overrides
 from pydantic import BaseModel
 
 from snapcraft import extensions
+from snapcraft.parts.lifecycle import get_snap_project, process_yaml
 from snapcraft_legacy.internal.project_loader import (
     find_extension,
     supported_extension_names,
@@ -93,3 +95,23 @@ class ExtensionsCommand(ListExtensionsCommand, abc.ABC):
 
     name = "extensions"
     hidden = True
+
+
+class ExpandExtensionsCommand(BaseCommand, abc.ABC):
+    """A command to expand the yaml from extensions."""
+
+    name = "expand-extensions"
+    help_msg = "Expand extensions in snapcraft.yaml"
+    overview = textwrap.dedent(
+        """
+        Extensions defined under apps in snapcraft.yaml will be
+        expanded and shown as output.
+        """
+    )
+
+    @overrides
+    def run(self, parsed_args):
+        snap_project = get_snap_project()
+        yaml_data = process_yaml(snap_project.project_file)
+
+        emit.message(yaml.safe_dump(yaml_data, indent=4, sort_keys=False))

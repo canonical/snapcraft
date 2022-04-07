@@ -53,7 +53,11 @@ _SNAP_PROJECT_FILES = [
 ]
 
 
-def _get_snap_project() -> _SnapProject:
+def get_snap_project() -> _SnapProject:
+    """Find the snapcraft.yaml to load.
+
+    :raises SnapcraftError: if the project yaml file cannot be found.
+    """
     for snap_project in _SNAP_PROJECT_FILES:
         if snap_project.project_file.exists():
             return snap_project
@@ -105,7 +109,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     """
     emit.trace(f"command: {command_name}, arguments: {parsed_args}")
 
-    snap_project = _get_snap_project()
+    snap_project = get_snap_project()
     yaml_data = process_yaml(snap_project.project_file)
 
     # argument --provider is only supported by legacy snapcraft

@@ -45,6 +45,7 @@ COMMAND_GROUPS = [
             commands.ListExtensionsCommand,
             # hidden command, alias to list-extensions.
             commands.ExtensionsCommand,
+            commands.ExpandExtensionsCommand,
         ],
     ),
     craft_cli.CommandGroup("Other", [commands.VersionCommand]),
