@@ -23,6 +23,7 @@ from .extensions import (
 )
 from .lifecycle import (
     BuildCommand,
+    CleanCommand,
     PackCommand,
     PrimeCommand,
     PullCommand,
@@ -32,6 +33,7 @@ from .version import VersionCommand
 
 __all__ = [
     "BuildCommand",
+    "CleanCommand",
     "ExpandExtensionsCommand",
     "PackCommand",
     "PrimeCommand",

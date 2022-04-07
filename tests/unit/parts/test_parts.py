@@ -92,3 +92,31 @@ def test_parts_lifecycle_run_parts_error(new_dir):
     assert str(raised.value) == (
         "Failed to pull source: unable to determine source type of 'foo'."
     )
+
+
+def test_parts_lifecycle_clean(parts_data, new_dir, emitter):
+    lifecycle = PartsLifecycle(
+        parts_data,
+        work_dir=new_dir,
+        assets_dir=new_dir,
+        part_names=[],
+        package_repositories=[],
+        adopt_info=None,
+        project_vars={"version": "1", "grade": "stable"},
+    )
+    lifecycle.clean(part_names=None)
+    emitter.assert_recorded(["Cleaning all parts"])
+
+
+def test_parts_lifecycle_clean_parts(parts_data, new_dir, emitter):
+    lifecycle = PartsLifecycle(
+        parts_data,
+        work_dir=new_dir,
+        assets_dir=new_dir,
+        part_names=[],
+        package_repositories=[],
+        adopt_info=None,
+        project_vars={"version": "1", "grade": "stable"},
+    )
+    lifecycle.clean(part_names=["p1"])
+    emitter.assert_recorded(["Cleaning parts: p1"])

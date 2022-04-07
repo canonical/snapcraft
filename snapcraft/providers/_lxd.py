@@ -69,7 +69,10 @@ class LXDProvider(Provider):
         if not self.is_provider_available():
             return deleted
 
-        inode = str(project_path.stat().st_ino)
+        instance_name = self.get_instance_name(
+            project_name=project_name,
+            project_path=project_path,
+        )
 
         try:
             names = self.lxc.list_names(
@@ -79,7 +82,7 @@ class LXDProvider(Provider):
             raise ProviderError(str(error)) from error
 
         for name in names:
-            if name == f"snapcraft-{project_name}-{inode}":
+            if name == instance_name:
                 logger.debug("Deleting container %r.", name)
                 try:
                     self.lxc.delete(

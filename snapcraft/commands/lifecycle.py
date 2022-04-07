@@ -166,3 +166,16 @@ class PackCommand(_LifecycleCommand):
             pack.pack_snap(parsed_args.directory, output=parsed_args.output)
         else:
             super().run(parsed_args)
+
+
+class CleanCommand(_LifecycleStepCommand):
+    """Remove a part's assets."""
+
+    name = "clean"
+    help_msg = "Remove a part's assets"
+    overview = textwrap.dedent(
+        """
+        Clean up artifacts belonging to parts. If no parts are specified,
+        remove the managed snap packing environment (VM or container).
+        """
+    )

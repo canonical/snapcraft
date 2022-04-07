@@ -21,6 +21,7 @@ import pytest
 
 from snapcraft.commands.lifecycle import (
     BuildCommand,
+    CleanCommand,
     PackCommand,
     PrimeCommand,
     PullCommand,
@@ -35,6 +36,7 @@ from snapcraft.commands.lifecycle import (
         ("build", BuildCommand),
         ("stage", StageCommand),
         ("prime", PrimeCommand),
+        ("clean", CleanCommand),
     ],
 )
 def test_lifecycle_command(cmd_name, cmd_class, mocker):
