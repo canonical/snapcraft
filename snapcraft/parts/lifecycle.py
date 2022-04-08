@@ -17,8 +17,9 @@
 """Parts lifecycle preparation and execution."""
 
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, Dict, cast
 
 from craft_cli import EmitterMode, emit
 from craft_parts import infos
@@ -35,53 +36,57 @@ if TYPE_CHECKING:
     import argparse
 
 
-_PROJECT_FILES = [
-    Path("snapcraft.yaml"),
-    Path("snap/snapcraft.yaml"),
-    Path("build-aux/snap/snapcraft.yaml"),
-    Path(".snapcraft.yaml"),
+@dataclass
+class _SnapProject:
+    project_file: Path
+    assets_dir: Path = Path("snap")
+
+
+_SNAP_PROJECT_FILES = [
+    _SnapProject(project_file=Path("snapcraft.yaml")),
+    _SnapProject(project_file=Path("snap/snapcraft.yaml")),
+    _SnapProject(
+        project_file=Path("build-aux/snap/snapcraft.yaml"),
+        assets_dir=Path("build-aux/snap"),
+    ),
+    _SnapProject(project_file=Path(".snapcraft.yaml")),
 ]
 
 
-def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
-    """Run the parts lifecycle.
+def get_snap_project() -> _SnapProject:
+    """Find the snapcraft.yaml to load.
 
-    :raises SnapcraftError: if the step name is invalid, or the project
-        yaml file cannot be loaded.
-    :raises LegacyFallback: if the project's base is not core22.
+    :raises SnapcraftError: if the project yaml file cannot be found.
     """
-    emit.trace(f"command: {command_name}, arguments: {parsed_args}")
+    for snap_project in _SNAP_PROJECT_FILES:
+        if snap_project.project_file.exists():
+            return snap_project
+
+    raise errors.SnapcraftError(
+        "Could not find snap/snapcraft.yaml. Are you sure you are in the "
+        "right directory?",
+        resolution="To start a new project, use `snapcraft init`",
+    )
+
+
+def process_yaml(project_file: Path) -> Dict[str, Any]:
+    """Process the yaml from project file.
+
+    :raises SnapcraftError: if the project yaml file cannot be loaded.
+    """
     yaml_data = {}
-    assets_dir = Path("snap")
 
-    for project_file in _PROJECT_FILES:
-        if project_file.is_file():
-
-            if project_file.parent.name == "snap":
-                assets_dir = project_file.parent
-
-            try:
-                with open(project_file, encoding="utf-8") as yaml_file:
-                    yaml_data = yaml_utils.load(yaml_file)
-                break
-            except OSError as err:
-                msg = err.strerror
-                if err.filename:
-                    msg = f"{msg}: {err.filename!r}."
-                raise errors.SnapcraftError(msg) from err
-    else:
-        raise errors.SnapcraftError(
-            "Could not find snap/snapcraft.yaml. Are you sure you are in the "
-            "right directory?",
-            resolution="To start a new project, use `snapcraft init`",
-        )
+    try:
+        with open(project_file, encoding="utf-8") as yaml_file:
+            yaml_data = yaml_utils.load(yaml_file)
+    except OSError as err:
+        msg = err.strerror
+        if err.filename:
+            msg = f"{msg}: {err.filename!r}."
+        raise errors.SnapcraftError(msg) from err
 
     # validate project grammar
     GrammarAwareProject.validate_grammar(yaml_data)
-
-    # argument --provider is only supported by legacy snapcraft
-    if parsed_args.provider:
-        raise errors.SnapcraftError("Option --provider is not supported.")
 
     # TODO: support for target_arch
     arch = _get_arch()
@@ -92,10 +97,32 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
             parts_yaml_data=yaml_data["parts"], arch=arch, target_arch=arch
         )
 
+    return yaml_data
+
+
+def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
+    """Run the parts lifecycle.
+
+    :raises SnapcraftError: if the step name is invalid, or the project
+        yaml file cannot be loaded.
+    :raises LegacyFallback: if the project's base is not core22.
+    """
+    emit.trace(f"command: {command_name}, arguments: {parsed_args}")
+
+    snap_project = get_snap_project()
+    yaml_data = process_yaml(snap_project.project_file)
+
+    # argument --provider is only supported by legacy snapcraft
+    if parsed_args.provider:
+        raise errors.SnapcraftError("Option --provider is not supported.")
+
     project = Project.unmarshal(yaml_data)
 
     _run_command(
-        command_name, project=project, assets_dir=assets_dir, parsed_args=parsed_args
+        command_name,
+        project=project,
+        assets_dir=snap_project.assets_dir,
+        parsed_args=parsed_args,
     )
 
 
@@ -130,7 +157,7 @@ def _run_command(
         project_vars={
             "version": project.version or "",
             "grade": project.grade,
-        }
+        },
     )
     lifecycle.run(step_name)
 
