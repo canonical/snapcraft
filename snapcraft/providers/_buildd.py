@@ -21,6 +21,7 @@ from typing import Optional
 
 from craft_providers import Executor, bases
 from craft_providers.actions import snap_installer
+from overrides import overrides
 
 from snapcraft import utils
 
@@ -90,6 +91,7 @@ class SnapcraftBuilddBaseConfiguration(bases.BuilddBase):
                     "Failed to inject host snapcraft snap into target environment."
                 ) from error
 
+    @overrides
     def setup(
         self,
         *,
@@ -109,6 +111,7 @@ class SnapcraftBuilddBaseConfiguration(bases.BuilddBase):
         super().setup(executor=executor, retry_wait=retry_wait, timeout=timeout)
         self._setup_snapcraft(executor=executor)
 
+    @overrides
     def warmup(
         self,
         *,
