@@ -64,8 +64,8 @@ class SnapcraftBuilddBaseConfiguration(bases.BuilddBase):
         if snap_channel is None and sys.platform != "linux":
             snap_channel = "stable"
 
-        # FIXME: don't reinstall snapcraft if already installed.
-        #        See https://github.com/canonical/craft-providers/issues/91
+        # Snaps that are already installed won't be reinstalled.
+        # See https://github.com/canonical/craft-providers/issues/91
 
         if snap_channel:
             try:
@@ -100,12 +100,33 @@ class SnapcraftBuilddBaseConfiguration(bases.BuilddBase):
         """Prepare base instance for use by the application.
 
         :param executor: Executor for target container.
-        :param retry_wait: Duration to sleep() between status checks (if
-            required).
+        :param retry_wait: Duration to sleep() between status checks (if required).
         :param timeout: Timeout in seconds.
 
         :raises BaseCompatibilityError: if instance is incompatible.
         :raises BaseConfigurationError: on other unexpected error.
         """
         super().setup(executor=executor, retry_wait=retry_wait, timeout=timeout)
+        self._setup_snapcraft(executor=executor)
+
+    def warmup(
+        self,
+        *,
+        executor: Executor,
+        retry_wait: float = 0.25,
+        timeout: Optional[float] = None,
+    ) -> None:
+        """Prepare a previously created and setup instance for use by the application.
+
+        In addition to the guarantees provided by buildd:
+            - snapcraft installed
+
+        :param executor: Executor for target container.
+        :param retry_wait: Duration to sleep() between status checks (if required).
+        :param timeout: Timeout in seconds.
+
+        :raises BaseCompatibilityError: if instance is incompatible.
+        :raises BaseConfigurationError: on other unexpected error.
+        """
+        super().warmup(executor=executor, retry_wait=retry_wait, timeout=timeout)
         self._setup_snapcraft(executor=executor)
