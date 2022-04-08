@@ -59,11 +59,12 @@ else:
     scripts = []
 
 dev_requires = [
+    "mccabe<0.7.0",  # to resolve version conflict
     "black",
     "codespell",
     "coverage",
     "flake8",
-    "pyflakes==2.1.1",
+    "pyflakes",
     "fixtures",
     "isort",
     "mccabe",
