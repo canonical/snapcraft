@@ -1,0 +1,60 @@
+summary: Test craftctl commands on core22
+
+environment:
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  # set_base "$SNAP/snap/snapcraft.yaml"
+  snap install core22 --edge
+
+restore: |
+  rm -f ./*.snap
+  rm -Rf work
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  snapcraft pack
+  snapcraft clean part1
+  lxc --project=snapcraft list | grep snapcraft-clean
+
+  snapcraft pack 2>&1 | tee output.txt
+
+  grep "Executing parts lifecycle: pull part1" < output.txt
+  grep "Executing parts lifecycle: skip pull part2 (already ran)" < output.txt
+  grep "Executing parts lifecycle: overlay part1" < output.txt
+  grep "Executing parts lifecycle: skip overlay part2 (already ran)" < output.txt
+  grep "Executing parts lifecycle: build part1" < output.txt
+  grep "Executing parts lifecycle: skip build part2 (already ran)" < output.txt
+  grep "Executing parts lifecycle: stage part1" < output.txt
+  grep "Executing parts lifecycle: skip stage part2 (already ran)" < output.txt
+  grep "Executing parts lifecycle: prime part1" < output.txt
+  grep "Executing parts lifecycle: skip prime part2 (already ran)" < output.txt
+
+  snapcraft clean
+  if lxc --project=snapcraft list | grep snapcraft-clean; then
+    echo "instance not removed"
+    exit 1
+  fi
+
+  # also try it in destructive mode
+  test ! -d parts && test ! -d stage && test ! -d prime 
+
+  snapcraft pack --destructive-mode
+
+  test -d parts && test -d stage && test -d prime 
+  test ! -z "$(ls -A parts/part1/state)"
+  test ! -z "$(ls -A parts/part1/state)"
+
+  snapcraft clean --destructive-mode part1
+
+  test -d parts && test -d stage && test -d prime 
+  test -z "$(ls -A parts/part1/state)"
+  test ! -z "$(ls -A parts/part2/state)"
+
+  snapcraft clean --destructive-mode
+
+  test ! -d parts && test ! -d stage && test ! -d prime 
