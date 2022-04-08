@@ -145,7 +145,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
     ]
 
 
-@pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime", "pack"])
+@pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime", "pack", "clean"])
 def test_lifecycle_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
     """Option --provider is not supported in core22."""
     snapcraft_yaml(base="core22")
@@ -165,7 +165,7 @@ def test_lifecycle_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
     assert str(raised.value) == "Option --provider is not supported."
 
 
-@pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime"])
+@pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime", "clean"])
 def test_lifecycle_legacy_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
     """Option --provider is supported by legacy."""
     snapcraft_yaml(base="core20")
@@ -194,7 +194,9 @@ def test_lifecycle_legacy_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
         ("prime", "prime"),
     ],
 )
-def test_lifecycle_run_command_step(cmd, step, snapcraft_yaml, project_vars, new_dir, mocker):
+def test_lifecycle_run_command_step(
+    cmd, step, snapcraft_yaml, project_vars, new_dir, mocker
+):
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     mocker.patch("snapcraft.meta.snap_yaml.write")
@@ -333,3 +335,133 @@ def test_lifecycle_pack_not_managed(snapcraft_yaml, new_dir, mocker):
             ),
         )
     ]
+
+
+def test_lifecycle_run_command_clean(snapcraft_yaml, project_vars, new_dir, mocker):
+    """Clean provider project when called without parts."""
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    clean_mock = mocker.patch(
+        "snapcraft.providers.LXDProvider.clean_project_environments",
+        return_value=["instance-name"],
+    )
+
+    parts_lifecycle._run_command(
+        "clean",
+        project=project,
+        assets_dir=Path(),
+        parsed_args=argparse.Namespace(
+            directory=None,
+            output=None,
+            destructive_mode=False,
+            use_lxd=False,
+            parts=None,
+        ),
+    )
+
+    assert clean_mock.mock_calls == [call(project_name="mytest", project_path=new_dir)]
+
+
+def test_lifecycle_clean_destructive_mode(
+    snapcraft_yaml, project_vars, new_dir, mocker
+):
+    """Clean local project if called in destructive mode."""
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    clean_mock = mocker.patch("snapcraft.parts.PartsLifecycle.clean")
+
+    parts_lifecycle._run_command(
+        "clean",
+        project=project,
+        assets_dir=Path(),
+        parsed_args=argparse.Namespace(
+            directory=None,
+            output=None,
+            destructive_mode=True,
+            use_lxd=False,
+            parts=None,
+        ),
+    )
+
+    assert clean_mock.mock_calls == [call(part_names=None)]
+
+
+def test_lifecycle_clean_part_names(snapcraft_yaml, project_vars, new_dir, mocker):
+    """Clean project inside provider if called with part names."""
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
+
+    parts_lifecycle._run_command(
+        "clean",
+        project=project,
+        assets_dir=Path(),
+        parsed_args=argparse.Namespace(
+            directory=None,
+            output=None,
+            destructive_mode=False,
+            use_lxd=False,
+            parts=["part1"],
+        ),
+    )
+
+    assert run_in_provider_mock.mock_calls == [
+        call(
+            project,
+            "clean",
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                destructive_mode=False,
+                use_lxd=False,
+                parts=["part1"],
+            ),
+        )
+    ]
+
+
+def test_lifecycle_clean_part_names_destructive_mode(
+    snapcraft_yaml, project_vars, new_dir, mocker
+):
+    """Clean local project if called in destructive mode."""
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    clean_mock = mocker.patch("snapcraft.parts.PartsLifecycle.clean")
+
+    parts_lifecycle._run_command(
+        "clean",
+        project=project,
+        assets_dir=Path(),
+        parsed_args=argparse.Namespace(
+            directory=None,
+            output=None,
+            destructive_mode=True,
+            use_lxd=False,
+            parts=["part1"],
+        ),
+    )
+
+    assert clean_mock.mock_calls == [call(part_names=["part1"])]
+
+
+def test_lifecycle_clean_managed(snapcraft_yaml, project_vars, new_dir, mocker):
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
+    clean_mock = mocker.patch("snapcraft.parts.PartsLifecycle.clean")
+    mocker.patch("snapcraft.utils.is_managed_mode", return_value=True)
+    mocker.patch(
+        "snapcraft.utils.get_managed_environment_home_path",
+        return_value=new_dir / "home",
+    )
+
+    parts_lifecycle._run_command(
+        "clean",
+        project=project,
+        assets_dir=Path(),
+        parsed_args=argparse.Namespace(
+            directory=None,
+            output=None,
+            destructive_mode=False,
+            use_lxd=False,
+            parts=["part1"],
+        ),
+    )
+
+    assert run_in_provider_mock.mock_calls == []
+    assert clean_mock.mock_calls == [call(part_names=["part1"])]

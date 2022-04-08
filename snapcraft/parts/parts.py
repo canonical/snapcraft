@@ -150,6 +150,20 @@ class PartsLifecycle:
         except Exception as err:
             raise errors.PartsLifecycleError(str(err)) from err
 
+    def clean(self, *, part_names: Optional[List[str]] = None) -> None:
+        """Remove lifecycle artifacts.
+
+        :param part_names: The names of the parts to clean. If not
+            specified, all parts will be cleaned.
+        """
+        if part_names:
+            message = "Cleaning parts: " + ", ".join(part_names)
+        else:
+            message = "Cleaning all parts"
+
+        emit.message(message, intermediate=True)
+        self._lcm.clean(part_names=part_names)
+
 
 def _action_message(action: craft_parts.Action) -> str:
     msg = {

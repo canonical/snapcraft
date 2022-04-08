@@ -134,9 +134,13 @@ def _run_command(
     parsed_args: "argparse.Namespace",
 ) -> None:
     managed_mode = utils.is_managed_mode()
+    part_names = getattr(parsed_args, "parts", None)
 
     if not managed_mode and not parsed_args.destructive_mode:
-        _run_in_provider(project, command_name, parsed_args)
+        if command_name == "clean" and not part_names:
+            _clean_provider(project, parsed_args)
+        else:
+            _run_in_provider(project, command_name, parsed_args)
         return
 
     if managed_mode:
@@ -145,7 +149,6 @@ def _run_command(
         work_dir = Path.cwd()
 
     step_name = "prime" if command_name == "pack" else command_name
-    part_names = getattr(parsed_args, "parts", [])
 
     lifecycle = PartsLifecycle(
         project.parts,
@@ -159,6 +162,10 @@ def _run_command(
             "grade": project.grade,
         },
     )
+    if command_name == "clean":
+        lifecycle.clean(part_names=part_names)
+        return
+
     lifecycle.run(step_name)
 
     # Generate snap.yaml
@@ -193,9 +200,26 @@ def _run_command(
         )
 
 
+def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None:
+    """Clean the provider environment.
+
+    :param project: The project to clean.
+    """
+    emit.trace("Clean build provider")
+    provider_name = "lxd" if parsed_args.use_lxd else None
+    provider = providers.get_provider(provider_name)
+    instance_names = provider.clean_project_environments(
+        project_name=project.name, project_path=Path().absolute()
+    )
+    if instance_names:
+        emit.message(f"Removed instance: {', '.join(instance_names)}")
+    else:
+        emit.message("No instances to remove")
+
+
 def _run_in_provider(
     project: Project, command_name: str, parsed_args: "argparse.Namespace"
-):
+) -> None:
     """Pack image in provider instance."""
     emit.trace("Checking build provider availability")
     provider_name = "lxd" if parsed_args.use_lxd else None
@@ -229,7 +253,7 @@ def _run_in_provider(
         except subprocess.CalledProcessError as err:
             capture_logs_from_instance(instance)
             raise providers.ProviderError(
-                f"Failed to pack image '{project.name}:{project.version}'."
+                f"Failed to execute {command_name} in instance."
             ) from err
 
 
