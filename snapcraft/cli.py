@@ -21,7 +21,7 @@ import os
 import sys
 
 import craft_cli
-from craft_cli import ArgumentParsingError, EmitterMode, emit
+from craft_cli import ArgumentParsingError, EmitterMode, ProvideHelpException, emit
 
 from snapcraft import __version__, errors, utils
 from snapcraft_legacy.cli import legacy
@@ -89,7 +89,7 @@ def run():
     dispatcher = craft_cli.Dispatcher(
         "snapcraft",
         COMMAND_GROUPS,
-        summary="What's the app about",
+        summary="Package, distribute, and update snaps for Linux and IoT",
         extra_global_args=GLOBAL_ARGS,
         default_command=commands.PackCommand,
     )
@@ -102,7 +102,7 @@ def run():
             dispatcher.load_command(None)
             dispatcher.run()
         emit.ended_ok()
-    except (errors.LegacyFallback, ArgumentParsingError) as err:
+    except (ProvideHelpException, errors.LegacyFallback, ArgumentParsingError) as err:
         emit.trace(f"run legacy implementation: {err!s}")
         emit.ended_ok()
         legacy.legacy_run()
