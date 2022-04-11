@@ -148,7 +148,7 @@ def _run_command(
     else:
         work_dir = Path.cwd()
 
-    step_name = "prime" if command_name == "pack" else command_name
+    step_name = "prime" if command_name in ("pack", "snap") else command_name
 
     lifecycle = PartsLifecycle(
         project.parts,
@@ -192,7 +192,7 @@ def _run_command(
         )
         emit.message("Generated snap metadata", intermediate=True)
 
-    if command_name == "pack":
+    if command_name in ("pack", "snap"):
         pack.pack_snap(
             lifecycle.prime_dir,
             output=parsed_args.output,
@@ -230,6 +230,9 @@ def _run_in_provider(
 
     if hasattr(parsed_args, "parts"):
         cmd.extend(parsed_args.parts)
+
+    if getattr(parsed_args, "output", None):
+        cmd.extend(["--output", parsed_args.output])
 
     if emit.get_mode() == EmitterMode.VERBOSE:
         cmd.append("--verbose")

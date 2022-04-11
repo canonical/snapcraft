@@ -38,14 +38,14 @@ COMMAND_GROUPS = [
             commands.StageCommand,
             commands.PrimeCommand,
             commands.PackCommand,
+            commands.SnapCommand,  # hidden (legacy compatibility)
         ],
     ),
     craft_cli.CommandGroup(
         "Extensions",
         [
             commands.ListExtensionsCommand,
-            # hidden command, alias to list-extensions.
-            commands.ExtensionsCommand,
+            commands.ExtensionsCommand,  # hidden (alias to list-extensions)
             commands.ExpandExtensionsCommand,
         ],
     ),

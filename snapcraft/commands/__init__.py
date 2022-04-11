@@ -27,6 +27,7 @@ from .lifecycle import (
     PackCommand,
     PrimeCommand,
     PullCommand,
+    SnapCommand,
     StageCommand,
 )
 from .version import VersionCommand
@@ -38,6 +39,7 @@ __all__ = [
     "PackCommand",
     "PrimeCommand",
     "PullCommand",
+    "SnapCommand",
     "StageCommand",
     "ExtensionsCommand",
     "ListExtensionsCommand",
