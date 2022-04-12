@@ -136,6 +136,11 @@ def _run_command(
     managed_mode = utils.is_managed_mode()
     part_names = getattr(parsed_args, "parts", None)
 
+    if not managed_mode and command_name == "snap":
+        emit.message(
+            "The 'snap' command is deprecated, use 'pack' instead.", intermediate=True
+        )
+
     if not managed_mode and not parsed_args.destructive_mode:
         if command_name == "clean" and not part_names:
             _clean_provider(project, parsed_args)
