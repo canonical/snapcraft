@@ -141,6 +141,11 @@ def _run_command(
             "The 'snap' command is deprecated, use 'pack' instead.", intermediate=True
         )
 
+    if parsed_args.use_lxd and providers.get_platform_default_provider() == "lxd":
+        emit.message(
+            "LXD is used by default on this platform.", intermediate=True
+        )
+
     if not managed_mode and not parsed_args.destructive_mode:
         if command_name == "clean" and not part_names:
             _clean_provider(project, parsed_args)
