@@ -38,7 +38,7 @@ def get_provider(provider: Optional[str] = None) -> Provider:
     :return: Provider instance.
     """
     if provider is None:
-        provider = _get_platform_default_provider()
+        provider = get_platform_default_provider()
 
     if provider == "lxd":
         return LXDProvider()
@@ -49,7 +49,11 @@ def get_provider(provider: Optional[str] = None) -> Provider:
     raise RuntimeError(f"Unsupported provider specified: {provider!r}.")
 
 
-def _get_platform_default_provider() -> str:
+def get_platform_default_provider() -> str:
+    """Obtain the default provider for the host platform.
+
+    :return: Default provider name.
+    """
     if sys.platform == "linux":
         return "lxd"
 

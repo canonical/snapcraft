@@ -127,15 +127,15 @@ class PrimeCommand(_LifecycleStepCommand):
 
 
 class PackCommand(_LifecycleCommand):
-    """Prepare the final payload for packing."""
+    """Pack the final snap payload."""
 
     name = "pack"
-    help_msg = "Build artifacts defined for a part"
+    help_msg = "Create the snap package"
     overview = textwrap.dedent(
         """
-        Prepare the final payload to be packed as a snap. If part names are
-        specified only those parts will be primed. The default is to prime
-        all parts.
+        Process parts and create a snap file containing the project payload
+        with the provided metadata. If a directory is specified, pack its
+        contents instead.
         """
     )
 
@@ -166,6 +166,32 @@ class PackCommand(_LifecycleCommand):
             pack.pack_snap(parsed_args.directory, output=parsed_args.output)
         else:
             super().run(parsed_args)
+
+
+class SnapCommand(_LifecycleCommand):
+    """Pack the final snap payload. This is a legacy compatibility command."""
+
+    name = "snap"
+    help_msg = "Create a snap"
+    hidden = True
+    overview = textwrap.dedent(
+        """
+        Process parts and create a snap file containing the project payload
+        with the provided metadata.
+        """
+    )
+
+    @overrides
+    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+        """Add arguments specific to the pack command."""
+        super().fill_parser(parser)
+        parser.add_argument(
+            "-o",
+            "--output",
+            metavar="filename",
+            type=str,
+            help="Path to the resulting snap",
+        )
 
 
 class CleanCommand(_LifecycleStepCommand):

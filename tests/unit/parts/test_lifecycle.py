@@ -145,7 +145,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
     ]
 
 
-@pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime", "pack", "clean"])
+@pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime", "pack", "snap", "clean"])
 def test_lifecycle_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
     """Option --provider is not supported in core22."""
     snapcraft_yaml(base="core22")
@@ -165,7 +165,7 @@ def test_lifecycle_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
     assert str(raised.value) == "Option --provider is not supported."
 
 
-@pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime", "clean"])
+@pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime", "snap", "clean"])
 def test_lifecycle_legacy_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
     """Option --provider is supported by legacy."""
     snapcraft_yaml(base="core20")
@@ -213,14 +213,15 @@ def test_lifecycle_run_command_step(
     assert pack_mock.mock_calls == []
 
 
-def test_lifecycle_run_command_pack(snapcraft_yaml, project_vars, new_dir, mocker):
+@pytest.mark.parametrize("cmd", ["pack", "snap"])
+def test_lifecycle_run_command_pack(cmd, snapcraft_yaml, project_vars, new_dir, mocker):
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     mocker.patch("snapcraft.meta.snap_yaml.write")
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
 
     parts_lifecycle._run_command(
-        "pack",
+        cmd,
         project=project,
         assets_dir=Path(),
         parsed_args=argparse.Namespace(
@@ -238,7 +239,8 @@ def test_lifecycle_run_command_pack(snapcraft_yaml, project_vars, new_dir, mocke
     ]
 
 
-def test_lifecycle_pack_destructive_mode(snapcraft_yaml, project_vars, new_dir, mocker):
+@pytest.mark.parametrize("cmd", ["pack", "snap"])
+def test_lifecycle_pack_destructive_mode(cmd, snapcraft_yaml, project_vars, new_dir, mocker):
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
@@ -251,7 +253,7 @@ def test_lifecycle_pack_destructive_mode(snapcraft_yaml, project_vars, new_dir, 
     )
 
     parts_lifecycle._run_command(
-        "pack",
+        cmd,
         project=project,
         assets_dir=Path(),
         parsed_args=argparse.Namespace(
@@ -270,7 +272,8 @@ def test_lifecycle_pack_destructive_mode(snapcraft_yaml, project_vars, new_dir, 
     ]
 
 
-def test_lifecycle_pack_managed(snapcraft_yaml, project_vars, new_dir, mocker):
+@pytest.mark.parametrize("cmd", ["pack", "snap"])
+def test_lifecycle_pack_managed(cmd, snapcraft_yaml, project_vars, new_dir, mocker):
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
@@ -283,7 +286,7 @@ def test_lifecycle_pack_managed(snapcraft_yaml, project_vars, new_dir, mocker):
     )
 
     parts_lifecycle._run_command(
-        "pack",
+        cmd,
         project=project,
         assets_dir=Path(),
         parsed_args=argparse.Namespace(
@@ -302,14 +305,15 @@ def test_lifecycle_pack_managed(snapcraft_yaml, project_vars, new_dir, mocker):
     ]
 
 
-def test_lifecycle_pack_not_managed(snapcraft_yaml, new_dir, mocker):
+@pytest.mark.parametrize("cmd", ["pack", "snap"])
+def test_lifecycle_pack_not_managed(cmd, snapcraft_yaml, new_dir, mocker):
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     mocker.patch("snapcraft.utils.is_managed_mode", return_value=False)
 
     parts_lifecycle._run_command(
-        "pack",
+        cmd,
         project=project,
         assets_dir=Path(),
         parsed_args=argparse.Namespace(
@@ -325,7 +329,7 @@ def test_lifecycle_pack_not_managed(snapcraft_yaml, new_dir, mocker):
     assert run_in_provider_mock.mock_calls == [
         call(
             project,
-            "pack",
+            cmd,
             argparse.Namespace(
                 directory=None,
                 output=None,

@@ -136,6 +136,16 @@ def _run_command(
     managed_mode = utils.is_managed_mode()
     part_names = getattr(parsed_args, "parts", None)
 
+    if not managed_mode and command_name == "snap":
+        emit.message(
+            "The 'snap' command is deprecated, use 'pack' instead.", intermediate=True
+        )
+
+    if parsed_args.use_lxd and providers.get_platform_default_provider() == "lxd":
+        emit.message(
+            "LXD is used by default on this platform.", intermediate=True
+        )
+
     if not managed_mode and not parsed_args.destructive_mode:
         if command_name == "clean" and not part_names:
             _clean_provider(project, parsed_args)
@@ -148,7 +158,7 @@ def _run_command(
     else:
         work_dir = Path.cwd()
 
-    step_name = "prime" if command_name == "pack" else command_name
+    step_name = "prime" if command_name in ("pack", "snap") else command_name
 
     lifecycle = PartsLifecycle(
         project.parts,
@@ -192,7 +202,7 @@ def _run_command(
         )
         emit.message("Generated snap metadata", intermediate=True)
 
-    if command_name == "pack":
+    if command_name in ("pack", "snap"):
         pack.pack_snap(
             lifecycle.prime_dir,
             output=parsed_args.output,
@@ -230,6 +240,9 @@ def _run_in_provider(
 
     if hasattr(parsed_args, "parts"):
         cmd.extend(parsed_args.parts)
+
+    if getattr(parsed_args, "output", None):
+        cmd.extend(["--output", parsed_args.output])
 
     if emit.get_mode() == EmitterMode.VERBOSE:
         cmd.append("--verbose")

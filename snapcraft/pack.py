@@ -33,6 +33,8 @@ def pack_snap(
     :param output: Snap file name or directory.
     :param compression: Compression type to use, None for defaults.
     """
+    emit.trace(f"pack_snap: output={output!r}, compression={compression!r}")
+
     output_file = None
     output_dir = None
 
@@ -61,6 +63,7 @@ def pack_snap(
         command.append(output_dir)
 
     emit.progress("Creating snap package...")
+    emit.trace(f"Pack command: {command}")
     try:
         subprocess.run(
             command, capture_output=True, check=True, universal_newlines=True

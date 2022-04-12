@@ -25,6 +25,7 @@ from snapcraft.commands.lifecycle import (
     PackCommand,
     PrimeCommand,
     PullCommand,
+    SnapCommand,
     StageCommand,
 )
 
@@ -48,13 +49,43 @@ def test_lifecycle_command(cmd_name, cmd_class, mocker):
     ]
 
 
-def test_pack_command(mocker):
+@pytest.mark.parametrize(
+    "cmd_name,cmd_class",
+    [
+        ("pack", PackCommand),
+        ("snap", SnapCommand),
+    ],
+)
+def test_pack_command(mocker, cmd_name, cmd_class):
     lifecycle_run_mock = mocker.patch("snapcraft.parts.lifecycle.run")
-    cmd = PackCommand(None)
+    cmd = cmd_class(None)
     cmd.run(argparse.Namespace(directory=None, output=None, compression=None))
     assert lifecycle_run_mock.mock_calls == [
-        call("pack", argparse.Namespace(directory=None, output=None, compression=None))
+        call(
+            cmd_name, argparse.Namespace(directory=None, output=None, compression=None)
+        )
     ]
+
+
+@pytest.mark.parametrize(
+    "cmd_name,cmd_class",
+    [
+        ("pack", PackCommand),
+        ("snap", SnapCommand),
+    ],
+)
+def test_pack_command_with_output(mocker, cmd_name, cmd_class):
+    lifecycle_run_mock = mocker.patch("snapcraft.parts.lifecycle.run")
+    pack_mock = mocker.patch("snapcraft.pack.pack_snap")
+    cmd = cmd_class(None)
+    cmd.run(argparse.Namespace(directory=None, output="output", compression=None))
+    assert lifecycle_run_mock.mock_calls == [
+        call(
+            cmd_name,
+            argparse.Namespace(compression=None, directory=None, output="output"),
+        )
+    ]
+    assert pack_mock.mock_calls == []
 
 
 def test_pack_command_with_directory(mocker):
