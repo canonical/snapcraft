@@ -133,8 +133,9 @@ class PackCommand(_LifecycleCommand):
     help_msg = "Create the snap package"
     overview = textwrap.dedent(
         """
-        Process parts and create a snap file containing the project payload.
-        If a directory is specified, pack its contents instead.
+        Process parts and create a snap file containing the project payload
+        with the provided metadata. If a directory is specified, pack its
+        contents instead.
         """
     )
 
@@ -171,11 +172,12 @@ class SnapCommand(_LifecycleCommand):
     """Pack the final snap payload. This is a legacy compatibility command."""
 
     name = "snap"
-    help_msg = "Build artifacts defined for a part"
+    help_msg = "Create a snap"
     hidden = True
     overview = textwrap.dedent(
         """
-        Process parts and create a snap file containing the project payload.
+        Process parts and create a snap file containing the project payload
+        with the provided metadata.
         """
     )
 
