@@ -16,12 +16,13 @@
 
 from unittest import mock
 
+import craft_store
 from simplejson.scanner import JSONDecodeError
 from testtools.matchers import Contains, Equals, Not
 
 from snapcraft_legacy import storeapi
 
-from . import FakeStoreCommandsBaseTestCase
+from . import FakeStoreCommandsBaseTestCase, FakeResponse
 
 
 class RegisterTestCase(FakeStoreCommandsBaseTestCase):
@@ -33,7 +34,9 @@ class RegisterTestCase(FakeStoreCommandsBaseTestCase):
 
     def test_register_without_login_must_ask(self):
         self.fake_store_register.mock.side_effect = [
-            storeapi.http_clients.errors.InvalidCredentialsError("error"),
+            craft_store.errors.StoreServerError(
+                FakeResponse(status_code=403, content="error")
+            ),
             None,
         ]
 
@@ -104,8 +107,8 @@ class RegisterTestCase(FakeStoreCommandsBaseTestCase):
     def test_registration_failed(self):
         response = mock.Mock()
         response.json.side_effect = JSONDecodeError("mock-fail", "doc", 1)
-        self.fake_store_register.mock.side_effect = storeapi.errors.StoreRegistrationError(
-            "test-snap", response
+        self.fake_store_register.mock.side_effect = (
+            storeapi.errors.StoreRegistrationError("test-snap", response)
         )
 
         raised = self.assertRaises(
@@ -120,8 +123,8 @@ class RegisterTestCase(FakeStoreCommandsBaseTestCase):
     def test_registration_cancelled(self):
         response = mock.Mock()
         response.json.side_effect = JSONDecodeError("mock-fail", "doc", 1)
-        self.fake_store_register.mock.side_effect = storeapi.errors.StoreRegistrationError(
-            "test-snap", response
+        self.fake_store_register.mock.side_effect = (
+            storeapi.errors.StoreRegistrationError("test-snap", response)
         )
 
         result = self.run_command(["register", "test-snap"], input="n\n")

@@ -14,29 +14,40 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import base64
+import contextlib
 import functools
 import json
 import operator
 import os
 import stat
-import sys
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from textwrap import dedent
 from typing import Dict, List, Optional, Set, Union
+from urllib.parse import urlparse
 
 import click
+import configparser
+import craft_store
+import keyring
 from tabulate import tabulate
 
 import snapcraft_legacy
 from snapcraft_legacy import formatting_utils, storeapi
 from snapcraft_legacy._store import StoreClientCLI
 from snapcraft_legacy.storeapi import metrics as metrics_module
-from snapcraft_legacy.storeapi.constants import DEFAULT_SERIES
+from snapcraft_legacy.storeapi import constants
+from snapcraft_legacy.internal.errors import SnapcraftEnvironmentError
 
 from . import echo
 from ._channel_map import get_tabulated_channel_map
 from ._metrics import convert_metrics_to_table
 from ._review import review_snap
+
+_VALID_DATE_FORMATS = [
+    "%Y-%m-%d",
+    "%Y-%m-%dT%H:%M:%SZ",
+]
 
 _MESSAGE_REGISTER_PRIVATE = dedent(
     """\
@@ -447,10 +458,10 @@ def close(snap_name, channels):
     account_info = store.get_account_information()
 
     try:
-        snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
+        snap_id = account_info["snaps"][constants.DEFAULT_SERIES][snap_name]["snap-id"]
     except KeyError:
         raise storeapi.errors.StoreChannelClosingPermissionError(
-            snap_name, DEFAULT_SERIES
+            snap_name, constants.DEFAULT_SERIES
         )
 
     # Returned closed_channels cannot be trusted as it returns risks.
@@ -706,6 +717,9 @@ def export_login(
 
         snapcraft export-login --expires="2019-01-01T00:00:00" exported
     """
+    # Workaround for ephemeral keyring
+    # TODO implement ephemeral login in craft-store.
+    keyring.set_keyring(craft_store.auth.MemoryKeyring())
 
     snap_list = None
     channel_list = None
@@ -714,7 +728,7 @@ def export_login(
     if snaps:
         snap_list = []
         for package in snaps.split(","):
-            snap_list.append({"name": package, "series": DEFAULT_SERIES})
+            snap_list.append({"name": package, "series": constants.DEFAULT_SERIES})
 
     if channels:
         channel_list = channels.split(",")
@@ -722,59 +736,70 @@ def export_login(
     if acls:
         acl_list = acls.split(",")
 
-    store_client = storeapi.StoreClient(use_candid=experimental_login)
-    if store_client.use_candid:
-        store_client.login(
-            packages=snap_list,
-            channels=channel_list,
-            acls=acl_list,
-            expires=expires,
-            save=False,
+    if experimental_login:
+        raise click.BadOptionUsage(
+            "--experimental-login",
+            "--experimental-login no longer supported. "
+            f"Set {constants.ENVIRONMENT_STORE_AUTH}=candid instead",
         )
+
+    if expires is not None:
+        for date_format in _VALID_DATE_FORMATS:
+            with contextlib.suppress(ValueError):
+                expiry_date = datetime.strptime(expires, date_format)
+                break
+        else:
+            valid_formats = formatting_utils.humanize_list(_VALID_DATE_FORMATS, "or")
+            raise click.BadParameter(
+                message=f"The expiry follow an ISO 8601 format ({valid_formats})"
+            )
+
+        ttl = int((expiry_date - datetime.now()).total_seconds())
     else:
-        snapcraft_legacy.login(
-            store=store_client,
-            packages=snap_list,
-            channels=channel_list,
-            acls=acl_list,
-            expires=expires,
-            save=False,
-        )
+        # Default to 1y
+        ttl = int((datetime.now() + timedelta(days=365)).timestamp())
+
+    store_client = storeapi.StoreClient()
+    credentials = snapcraft_legacy.login(
+        store_client=store_client,
+        packages=snap_list,
+        channels=channel_list,
+        acls=acl_list,
+        ttl=ttl,
+    )
 
     # Support a login_file of '-', which indicates a desire to print to stdout
     if login_file.strip() == "-":
         echo.info("\nExported login starts on next line:")
-        store_client.export_login(config_fd=sys.stdout, encode=True)
-        print()
+
+        echo.info(credentials)
 
         preamble = "Login successfully exported and printed above"
-        login_action = 'echo "<login>" | snapcraft login --with -'
+        credentials_action = f"{constants.ENVIRONMENT_STORE_CREDENTIALS}='<credentials>' snapcraft <store-command>"
     else:
         # This is sensitive-- it should only be accessible by the owner
         private_open = functools.partial(os.open, mode=0o600)
 
         # mypy doesn't have the opener arg in its stub. Ignore its warning
-        with open(login_file, "w", opener=private_open) as f:  # type: ignore
-            store_client.export_login(config_fd=f)
+        with open(login_file, "w", opener=private_open) as login_fd:
+            print(credentials, file=login_fd)
 
         # Now that the file has been written, we can just make it
         # owner-readable
         os.chmod(login_file, stat.S_IRUSR)
 
-        preamble = "Login successfully exported to {0!r}".format(login_file)
-        login_action = "snapcraft login --with {0}".format(login_file)
+        preamble = f"Login successfully exported to {login_file!r}"
+        credentials_action = f"{constants.ENVIRONMENT_STORE_CREDENTIALS}=$(cat {login_file}) snapcraft <store-command>"
 
     print()
     echo.info(
         dedent(
-            """\
-        {}. This can now be used with
+            f"""\
+        {preamble}. Any store action that now requires authentication can be used by running
 
-            {}
+            {credentials_action}
 
-        """.format(
-                preamble, login_action
-            )
+        """
         )
     )
     try:
@@ -811,23 +836,25 @@ def login(login_file, experimental_login: bool):
     If you do not have an Ubuntu One account, you can create one at
     https://snapcraft.io/account
     """
-    store_client = storeapi.StoreClient(use_candid=experimental_login)
-    if store_client.use_candid:
-        store_client.login(config_fd=login_file, save=True)
-    else:
-        snapcraft_legacy.login(store=store_client, config_fd=login_file)
-
-    print()
-
+    # Backwards compatibility with Github Actions.
     if login_file:
-        try:
-            human_acls = _human_readable_acls(store_client)
-            echo.info("Login successful. You now have these capabilities:\n")
-            echo.info(human_acls)
-        except NotImplementedError:
-            echo.info("Login successful.")
-    else:
-        echo.info("Login successful.")
+        raise click.BadOptionUsage(
+            "--with",
+            "--with is no longer supported, export the auth to the environment "
+            f"variable {constants.ENVIRONMENT_STORE_CREDENTIALS!r} instead",
+        )
+
+    if experimental_login:
+        raise click.BadOptionUsage(
+            "--experimental-login",
+            "--experimental-login no longer supported. "
+            f"Set {constants.ENVIRONMENT_STORE_AUTH}=candid instead",
+        )
+
+    store_client = storeapi.StoreClient()
+    snapcraft_legacy.login(store_client=store_client)
+
+    echo.info("Login successful.")
 
 
 @storecli.command()
@@ -963,13 +990,12 @@ _YESTERDAY = str(date.today() - timedelta(days=1))
     required=True,
 )
 def metrics(snap_name: str, name: str, start: str, end: str, format: str):
-    """Get metrics for <snap-name>.
-    """
+    """Get metrics for <snap-name>."""
     store = storeapi.StoreClient()
     account_info = store.get_account_information()
 
     try:
-        snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
+        snap_id = account_info["snaps"][constants.DEFAULT_SERIES][snap_name]["snap-id"]
     except KeyError:
         echo.exit_error(
             brief="No permissions for snap.",

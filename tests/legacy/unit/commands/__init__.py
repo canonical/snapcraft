@@ -19,8 +19,11 @@ import subprocess
 from pathlib import PosixPath
 from textwrap import dedent
 from unittest import mock
+from craft_store.auth import MemoryKeyring
 
 import fixtures
+import keyring
+import requests
 from click.testing import CliRunner
 
 from snapcraft_legacy import storeapi
@@ -55,7 +58,11 @@ original_check_output = subprocess.check_output
 def mock_check_output(command, *args, **kwargs):
     if isinstance(command[0], PosixPath):
         command[0] = str(command[0])
-    if command[0].endswith("unsquashfs") or command[0].endswith("xdelta3"):
+    if (
+        command[0].endswith("unsquashfs")
+        or command[0].endswith("xdelta3")
+        or command[0] == "file"
+    ):
         return original_check_output(command, *args, **kwargs)
     elif command[0].endswith("snap") and command[1:] == ["keys", "--json"]:
         return json.dumps(_sample_keys)
@@ -81,6 +88,8 @@ def mock_check_output(command, *args, **kwargs):
         "new-key",
     ]:
         pass
+    elif command[0].endswith("snap") and command[1] == "sign-build":
+        return b"Mocked assertion"
     else:
         raise AssertionError("Unhandled command: {}".format(command))
 
@@ -161,6 +170,9 @@ class StoreCommandsBaseTestCase(CommandBaseTestCase):
 class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
     def setUp(self):
         super().setUp()
+
+        self.original_keyring = keyring.get_keyring()
+        keyring.set_keyring(MemoryKeyring())
 
         # Our experimental environment variable is sticky
         self.useFixture(
@@ -464,3 +476,33 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
             return_value=True,
         )
         self.useFixture(self.fake_package_installed)
+
+    def tearDown(self):
+        super().tearDown()
+
+        keyring.set_keyring(self.original_keyring)
+
+
+class FakeResponse(requests.Response):
+    def __init__(self, content, status_code):
+        self._content = content
+        self.status_code = status_code
+
+    @property
+    def content(self):
+        return self._content
+
+    @property
+    def ok(self):
+        return self.status_code == 200
+
+    def json(self):
+        return json.loads(self._content)  # type: ignore
+
+    @property
+    def reason(self):
+        return self._content
+
+    @property
+    def text(self):
+        return self.content

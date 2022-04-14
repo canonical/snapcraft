@@ -18,6 +18,7 @@ import logging
 import os
 from unittest import mock
 
+import craft_store
 import fixtures
 from testtools.matchers import Contains, Equals, Not
 
@@ -25,7 +26,7 @@ import tests.legacy
 from snapcraft_legacy import storeapi
 from snapcraft_legacy.storeapi.errors import StoreUploadError
 
-from . import CommandBaseTestCase
+from . import CommandBaseTestCase, FakeResponse
 
 
 class UploadMetadataCommandTestCase(CommandBaseTestCase):
@@ -162,7 +163,9 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
         self.useFixture(self.fake_store_account_info)
 
         self.fake_metadata.mock.side_effect = [
-            storeapi.http_clients.errors.InvalidCredentialsError("error"),
+            craft_store.errors.StoreServerError(
+                FakeResponse(status_code=403, content="error")
+            ),
             None,
         ]
 

@@ -18,10 +18,9 @@ import pathlib
 import re
 from unittest import mock
 
-import fixtures
 import pytest
 from simplejson.scanner import JSONDecodeError
-from testtools.matchers import Contains, Equals, MatchesRegex, Not
+from testtools.matchers import Contains, Equals
 
 from snapcraft_legacy import storeapi
 
@@ -44,134 +43,30 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             acls=None,
             packages=None,
             channels=None,
-            expires=None,
-            save=True,
-            config_fd=None,
-        )
-
-    def test_login_with_2fa(self):
-        self.fake_store_login.mock.side_effect = [
-            storeapi.http_clients.errors.StoreTwoFactorAuthenticationRequired(),
-            None,
-        ]
-
-        # no exception raised.
-        result = self.run_command(["login"], input="user@example.com\nsecret\n123456\n")
-
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(
-            result.output, Not(Contains(storeapi.constants.TWO_FACTOR_WARNING))
-        )
-        self.assertThat(result.output, Contains("Login successful."))
-
-        self.assertThat(self.fake_store_login.mock.call_count, Equals(2))
-        self.fake_store_login.mock.assert_has_calls(
-            [
-                mock.call(
-                    email="user@example.com",
-                    password="secret",
-                    acls=None,
-                    packages=None,
-                    channels=None,
-                    expires=None,
-                    save=True,
-                    config_fd=None,
-                ),
-                mock.call(
-                    email="user@example.com",
-                    password="secret",
-                    otp="123456",
-                    acls=None,
-                    packages=None,
-                    channels=None,
-                    expires=None,
-                    save=True,
-                    config_fd=None,
-                ),
-            ]
+            ttl=31536000,
         )
 
     def test_successful_login_with(self):
-        self.useFixture(
-            fixtures.MockPatchObject(
-                storeapi.StoreClient,
-                "acl",
-                return_value={
-                    "snap_ids": None,
-                    "channels": None,
-                    "permissions": None,
-                    "expires": "2018-01-01T00:00:00",
-                },
-            )
-        )
-        self.fake_store_login.mock.side_effect = None
-
         pathlib.Path("exported-login").touch()
 
         result = self.run_command(["login", "--with", "exported-login"])
 
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("Login successful"))
         self.assertThat(
-            result.output, MatchesRegex(r".*snaps:.*?No restriction", re.DOTALL)
+            result.output,
+            Contains(
+                "--with is no longer supported, export the auth to the environment "
+                "variable 'SNAPCRAFT_STORE_CREDENTIALS' instead"
+            ),
         )
-        self.assertThat(
-            result.output, MatchesRegex(r".*channels:.*?No restriction", re.DOTALL)
-        )
-        self.assertThat(
-            result.output, MatchesRegex(r".*permissions:.*?No restriction", re.DOTALL)
-        )
-        self.assertThat(
-            result.output, MatchesRegex(r".*expires:.*?2018-01-01T00:00:00", re.DOTALL)
-        )
-
-        self.fake_store_login.mock.assert_called_once_with(
-            email="",
-            password="",
-            acls=None,
-            packages=None,
-            channels=None,
-            expires=None,
-            save=True,
-            config_fd=mock.ANY,
-        )
-
-    def test_login_failed_with_invalid_credentials(self):
-        self.fake_store_login.mock.side_effect = storeapi.http_clients.errors.InvalidCredentialsError(
-            "error"
-        )
-
-        with pytest.raises(
-            storeapi.http_clients.errors.InvalidCredentialsError
-        ) as exc_info:
-            self.run_command(["login"], input="user@example.com\nbadsecret\n")
-
-        assert (
-            str(exc_info.value)
-            == 'Invalid credentials: error. Have you run "snapcraft login"?'
-        )
-
-    def test_login_failed_with_store_authentication_error(self):
-        self.fake_store_login.mock.side_effect = storeapi.http_clients.errors.StoreAuthenticationError(
-            "error"
-        )
-
-        raised = self.assertRaises(
-            storeapi.http_clients.errors.StoreAuthenticationError,
-            self.run_command,
-            ["login"],
-            input="user@example.com\nbad-secret\n",
-        )
-
-        self.assertThat(raised.message, Equals("error"))
+        self.assertThat(result.exit_code, Equals(2))
 
     def test_failed_login_with_store_account_info_error(self):
         response = mock.Mock()
         response.json.side_effect = JSONDecodeError("mock-fail", "doc", 1)
         response.status_code = 500
         response.reason = "Internal Server Error"
-        self.fake_store_login.mock.side_effect = storeapi.errors.StoreAccountInformationError(
-            response
+        self.fake_store_login.mock.side_effect = (
+            storeapi.errors.StoreAccountInformationError(response)
         )
 
         with pytest.raises(storeapi.errors.StoreAccountInformationError) as exc_info:
@@ -195,8 +90,8 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             ]
         }
         response.json.return_value = content
-        self.fake_store_account_info.mock.side_effect = storeapi.errors.StoreAccountInformationError(
-            response
+        self.fake_store_account_info.mock.side_effect = (
+            storeapi.errors.StoreAccountInformationError(response)
         )
 
         with pytest.raises(storeapi.errors.NeedTermsSignedError) as exc_info:
@@ -221,8 +116,8 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             ]
         }
         response.json.return_value = content
-        self.fake_store_account_info.mock.side_effect = storeapi.errors.StoreAccountInformationError(
-            response
+        self.fake_store_account_info.mock.side_effect = (
+            storeapi.errors.StoreAccountInformationError(response)
         )
 
         with pytest.raises(storeapi.errors.StoreAccountInformationError) as exc_info:
@@ -246,8 +141,8 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             ]
         }
         response.json.return_value = content
-        self.fake_store_account_info.mock.side_effect = storeapi.errors.StoreAccountInformationError(
-            response
+        self.fake_store_account_info.mock.side_effect = (
+            storeapi.errors.StoreAccountInformationError(response)
         )
 
         with pytest.raises(storeapi.errors.NeedTermsSignedError) as exc_info:
@@ -271,8 +166,8 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             ]
         }
         response.json.return_value = content
-        self.fake_store_account_info.mock.side_effect = storeapi.errors.StoreAccountInformationError(
-            response
+        self.fake_store_account_info.mock.side_effect = (
+            storeapi.errors.StoreAccountInformationError(response)
         )
 
         with pytest.raises(storeapi.errors.NeedTermsSignedError) as exc_info:

@@ -19,7 +19,7 @@ from unittest import mock
 
 import fixtures
 import pytest
-from testtools.matchers import Contains, Equals, MatchesRegex, Not
+from testtools.matchers import Contains, Equals, MatchesRegex
 
 from snapcraft_legacy import storeapi
 
@@ -70,9 +70,7 @@ class ExportLoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             acls=None,
             packages=None,
             channels=None,
-            expires=None,
-            save=False,
-            config_fd=None,
+            ttl=mock.ANY,
         )
 
     def test_successful_export_stdout(self):
@@ -105,9 +103,7 @@ class ExportLoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             acls=None,
             packages=None,
             channels=None,
-            expires=None,
-            save=False,
-            config_fd=None,
+            ttl=mock.ANY,
         )
 
     def test_successful_export_expires(self):
@@ -125,10 +121,9 @@ class ExportLoginCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
 
         result = self.run_command(
-            ["export-login", "--expires=2018-02-01T00:00:00", "exported"],
+            ["export-login", "--expires=2018-02-01T00:00:00Z", "exported"],
             input="user@example.com\nsecret\n",
         )
-        self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(storeapi.constants.TWO_FACTOR_WARNING))
         self.assertThat(result.output, Contains("Login successfully exported"))
         self.assertThat(
@@ -143,6 +138,7 @@ class ExportLoginCommandTestCase(FakeStoreCommandsBaseTestCase):
         self.assertThat(
             result.output, MatchesRegex(r".*expires:.*?2018-02-01T00:00:00", re.DOTALL)
         )
+        self.assertThat(result.exit_code, Equals(0))
 
         self.fake_store_login.mock.assert_called_once_with(
             email="user@example.com",
@@ -150,80 +146,19 @@ class ExportLoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             acls=None,
             packages=None,
             channels=None,
-            expires="2018-02-01T00:00:00",
-            save=False,
-            config_fd=None,
+            ttl=mock.ANY,
         )
 
-    def test_successful_login_with_2fa(self):
-        self.fake_store_login.mock.side_effect = [
-            storeapi.http_clients.errors.StoreTwoFactorAuthenticationRequired(),
-            None,
-        ]
-
+    def test_bad_date_format(self):
         result = self.run_command(
-            ["export-login", "exported"], input="user@example.com\nsecret\n123456"
+            ["export-login", "--expires=20180201", "exported"],
+            input="user@example.com\nsecret\n",
         )
-
-        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.exit_code, Equals(2))
         self.assertThat(
-            result.output, Not(Contains(storeapi.constants.TWO_FACTOR_WARNING))
-        )
-        self.assertThat(result.output, Contains("Login successfully exported"))
-        self.assertThat(
-            result.output, MatchesRegex(r".*snaps:.*?No restriction", re.DOTALL)
-        )
-        self.assertThat(
-            result.output, MatchesRegex(r".*channels:.*?['edge']", re.DOTALL)
-        )
-        self.assertThat(
-            result.output, MatchesRegex(r".*permissions:.*?No restriction", re.DOTALL)
-        )
-        self.assertThat(
-            result.output, MatchesRegex(r".*expires:.*?2018-01-01T00:00:00", re.DOTALL)
-        )
-
-        self.assertThat(self.fake_store_login.mock.call_count, Equals(2))
-        self.fake_store_login.mock.assert_has_calls(
-            [
-                mock.call(
-                    email="user@example.com",
-                    password="secret",
-                    acls=None,
-                    packages=None,
-                    channels=None,
-                    expires=None,
-                    save=False,
-                    config_fd=None,
-                ),
-                mock.call(
-                    email="user@example.com",
-                    password="secret",
-                    otp="123456",
-                    acls=None,
-                    packages=None,
-                    channels=None,
-                    expires=None,
-                    save=False,
-                    config_fd=None,
-                ),
-            ]
-        )
-
-    def test_failed_login_with_invalid_credentials(self):
-        self.fake_store_login.mock.side_effect = storeapi.http_clients.errors.InvalidCredentialsError(
-            "error"
-        )
-
-        with pytest.raises(
-            storeapi.http_clients.errors.InvalidCredentialsError
-        ) as exc_info:
-            self.run_command(
-                ["export-login", "exported"],
-                input="bad-user@example.com\nbad-password\n",
-            )
-
-        assert (
-            str(exc_info.value)
-            == 'Invalid credentials: error. Have you run "snapcraft login"?'
+            result.output,
+            Contains(
+                "Error: Invalid value: The expiry follow an ISO 8601 format "
+                "('%Y-%m-%d' or '%Y-%m-%dT%H:%M:%SZ')"
+            ),
         )

@@ -18,6 +18,7 @@ import logging
 import os
 from typing import Dict
 from urllib.parse import urljoin
+import craft_store
 
 import requests
 
@@ -90,11 +91,15 @@ class SnapAPI(Requests):
             params["architecture"] = arch
         logger.debug("Getting information for {}".format(snap_name))
         url = "/v2/snaps/info/{}".format(snap_name)
-        resp = self.get(url, headers=headers, params=params)
 
-        if resp.status_code == 404:
-            raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
-        resp.raise_for_status()
+        try:
+            resp = self.get(url, headers=headers, params=params)
+        except craft_store.errors.StoreServerError as craft_error:
+            if craft_error.response.status_code == 404:
+                raise errors.SnapNotFoundError(
+                    snap_name=snap_name, arch=arch
+                ) from craft_error
+            raise
 
         return SnapInfo(resp.json())
 

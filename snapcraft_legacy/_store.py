@@ -23,11 +23,21 @@ import os
 import re
 import subprocess
 import tempfile
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import Popen
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, TextIO, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+)
 from urllib.parse import urljoin
+import craft_store
+import keyring
 
 from tabulate import tabulate
 
@@ -45,7 +55,11 @@ from snapcraft_legacy.internal.deltas.errors import (
     DeltaGenerationError,
     DeltaGenerationTooBigError,
 )
-from snapcraft_legacy.internal.errors import SnapDataExtractionError, ToolMissingError
+from snapcraft_legacy.internal.errors import (
+    SnapDataExtractionError,
+    SnapcraftEnvironmentError,
+    ToolMissingError,
+)
 from snapcraft_legacy.storeapi.constants import DEFAULT_SERIES
 from snapcraft_legacy.storeapi.metrics import MetricsFilter, MetricsResults
 
@@ -169,99 +183,98 @@ def _try_login(
     email: str,
     password: str,
     *,
-    store: storeapi.StoreClient,
-    save: bool = True,
-    packages: Iterable[Dict[str, str]] = None,
-    acls: Iterable[str] = None,
-    channels: Iterable[str] = None,
-    expires: str = None,
-    config_fd: TextIO = None,
-) -> None:
+    store_client: storeapi.StoreClient,
+    ttl: int,
+    acls: Optional[Sequence[str]] = None,
+    packages: Optional[Sequence[str]] = None,
+    channels: Optional[Sequence[str]] = None,
+) -> str:
     try:
-        store.login(
+        credentials = store_client.login(
             email=email,
             password=password,
             packages=packages,
             acls=acls,
             channels=channels,
-            expires=expires,
-            config_fd=config_fd,
-            save=save,
+            ttl=ttl,
         )
-        if not config_fd:
-            print()
-            echo.wrapped(storeapi.constants.TWO_FACTOR_WARNING)
-    except storeapi.http_clients.errors.StoreTwoFactorAuthenticationRequired:
+        print()
+        echo.wrapped(storeapi.constants.TWO_FACTOR_WARNING)
+    except craft_store.errors.StoreServerError as store_error:
+        if "twofactor-required" not in store_error.error_list:
+            raise
+
         one_time_password = echo.prompt("Second-factor auth")
-        store.login(
+        credentials = store_client.login(
             email=email,
             password=password,
             otp=one_time_password,
             acls=acls,
             packages=packages,
             channels=channels,
-            expires=expires,
-            config_fd=config_fd,
-            save=save,
+            ttl=ttl,
         )
 
     # Continue if agreement and namespace conditions are met.
-    _check_dev_agreement_and_namespace_statuses(store)
+    _check_dev_agreement_and_namespace_statuses(store_client)
+
+    return credentials
 
 
 def login(
     *,
-    store: storeapi.StoreClient,
-    packages: Iterable[Dict[str, str]] = None,
-    save: bool = True,
-    acls: Iterable[str] = None,
-    channels: Iterable[str] = None,
-    expires: str = None,
-    config_fd: TextIO = None,
-) -> bool:
-    if not store:
-        store = storeapi.StoreClient()
+    store_client: storeapi.StoreClient,
+    ttl: int = int(timedelta(days=365).total_seconds()),
+    acls: Optional[Sequence[str]] = None,
+    packages: Optional[Sequence[str]] = None,
+    channels: Optional[Sequence[str]] = None,
+) -> str:
+    if store_client.use_candid() is True:
+        return store_client.login(
+            acls=acls, packages=packages, channels=packages, ttl=ttl
+        )
 
     email = ""
     password = ""
 
-    if not config_fd:
-        echo.wrapped("Enter your Ubuntu One e-mail address and password.")
-        echo.wrapped(
-            "If you do not have an Ubuntu One account, you can create one "
-            "at https://snapcraft.io/account"
-        )
-        email = echo.prompt("Email")
-        if os.getenv("SNAPCRAFT_TEST_INPUT"):
-            # Integration tests do not work well with hidden input.
-            echo.warning("Password will be visible.")
-            hide_input = False
-        else:
-            hide_input = True
-        password = echo.prompt("Password", hide_input=hide_input)
+    echo.wrapped("Enter your Ubuntu One e-mail address and password.")
+    echo.wrapped(
+        "If you do not have an Ubuntu One account, you can create one "
+        "at https://snapcraft.io/account"
+    )
+    email = echo.prompt("Email")
+    if os.getenv("SNAPCRAFT_TEST_INPUT"):
+        # Integration tests do not work well with hidden input.
+        echo.warning("Password will be visible.")
+        hide_input = False
+    else:
+        hide_input = True
+    password = echo.prompt("Password", hide_input=hide_input)
 
-    _try_login(
+    return _try_login(
         email,
         password,
-        store=store,
-        packages=packages,
+        store_client=store_client,
+        ttl=ttl,
         acls=acls,
+        packages=packages,
         channels=channels,
-        expires=expires,
-        config_fd=config_fd,
-        save=save,
     )
-
-    return True
 
 
 def _login_wrapper(method):
     def login_decorator(self, *args, **kwargs):
         try:
             return method(self, *args, **kwargs)
-        except storeapi.http_clients.errors.InvalidCredentialsError:
+        except craft_store.errors.StoreServerError as store_error:
+            if store_error.response.status_code == 401:
+                if os.getenv(constants.ENVIRONMENT_STORE_AUTH):
+                    raise SnapcraftEnvironmentError(
+                        "Provided credentials are no longer valid for the Snap Store. "
+                        "Regenerate them and try again."
+                    )
             print("You are required to login before continuing.")
-            login(store=self)
+            login(store_client=self)
             return method(self, *args, **kwargs)
 
     return login_decorator
@@ -525,11 +538,12 @@ def create_key(name):
         enabled_names = {
             account_key["name"] for account_key in account_info["account_keys"]
         }
-    except storeapi.http_clients.errors.InvalidCredentialsError:
-        # Don't require a login here; if they don't have valid credentials,
-        # then they probably also don't have a key registered with the store
-        # yet.
-        enabled_names = set()
+    except craft_store.errors.StoreServerError as store_error:
+        if store_error.response.status_code == 401:
+            # Don't require a login here; if they don't have valid credentials,
+            # then they probably also don't have a key registered with the store
+            # yet.
+            enabled_names = set()
     if name in enabled_names:
         raise storeapi.errors.KeyAlreadyRegisteredError(name)
     subprocess.check_call(["snap", "create-key", name])
@@ -545,15 +559,19 @@ def _maybe_prompt_for_key(name):
     return _select_key(keys)
 
 
-def register_key(name, use_candid: bool = False) -> None:
-    key = _maybe_prompt_for_key(name)
-    store_client = StoreClientCLI(use_candid=use_candid)
+def register_key(name) -> None:
+    # Workaround for ephemeral keyring
+    # TODO implement ephemeral login in craft-store.
+    keyring.set_keyring(craft_store.auth.MemoryKeyring())
 
-    # TODO: remove coupling.
-    if isinstance(store_client.auth_client, storeapi.http_clients.CandidClient):
-        store_client.login(acls=["modify_account_key"], save=False)
-    else:
-        login(store=store_client, acls=["modify_account_key"], save=False)
+    key = _maybe_prompt_for_key(name)
+    store_client = StoreClientCLI()
+
+    login(
+        store_client=store_client,
+        acls=["modify_account_key"],
+        ttl=int(timedelta(days=1).total_seconds()),
+    )
 
     logger.info("Registering key ...")
     account_info = store_client.get_account_information()
@@ -807,8 +825,9 @@ def _upload_delta(
             raise storeapi.errors.StoreDeltaApplicationError(str(e))
         else:
             raise
-    except storeapi.http_clients.errors.StoreServerError as e:
-        raise storeapi.errors.StoreUploadError(snap_name, e.response)
+    except craft_store.errors.StoreServerError as store_error:
+        if store_error.response.status_code == 401:
+            raise storeapi.errors.StoreUploadError(snap_name, store_error.response)
     finally:
         if os.path.isfile(delta_filename):
             try:

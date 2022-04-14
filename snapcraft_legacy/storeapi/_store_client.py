@@ -16,14 +16,17 @@
 
 import logging
 import os
+import platform
 from time import sleep
-from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import requests
+import craft_store
 
 from snapcraft_legacy.internal.indicators import download_requests_stream
 
-from . import _upload, errors, http_clients, metrics
+from . import agent, constants
+from . import _upload, errors, metrics
 from ._dashboard_api import DashboardAPI
 from ._snap_api import SnapAPI
 from ._up_down_client import UpDownClient
@@ -33,44 +36,61 @@ from .v2 import channel_map, releases, validation_sets, whoami
 logger = logging.getLogger(__name__)
 
 
+def _get_hostname() -> str:
+    """Return the computer's network name or UNNKOWN if it cannot be determined."""
+    hostname = platform.node()
+    if not hostname:
+        hostname = "UNKNOWN"
+    return hostname
+
+
 class StoreClient:
     """High-level client Snap resources."""
 
-    @property
-    def use_candid(self) -> bool:
-        return isinstance(self.auth_client, http_clients.CandidClient)
+    def __init__(self) -> None:
+        self.client = craft_store.HTTPClient(user_agent=agent.get_user_agent())
 
-    def __init__(self, use_candid: bool = False) -> None:
-        super().__init__()
-
-        self.client = http_clients.Client()
-
-        candid_has_credentials = http_clients.CandidClient.has_credentials()
-        logger.debug(
-            f"Candid forced: {use_candid}. Candid crendendials: {candid_has_credentials}."
-        )
-        if use_candid or candid_has_credentials:
-            self.auth_client: http_clients.AuthClient = http_clients.CandidClient()
+        self._root_url = os.getenv("STORE_DASHBOARD_URL", constants.STORE_DASHBOARD_URL)
+        storage_base_url = os.getenv("STORE_UPLOAD_URL", constants.STORE_UPLOAD_URL)
+        user_agent = agent.get_user_agent()
+        if self.use_candid() is True:
+            self.auth_client = craft_store.StoreClient(
+                application_name="snapcraft",
+                base_url=self._root_url,
+                storage_base_url=storage_base_url,
+                endpoints=craft_store.endpoints.SNAP_STORE,
+                user_agent=user_agent,
+                environment_auth=constants.ENVIRONMENT_STORE_CREDENTIALS,
+            )
         else:
-            self.auth_client = http_clients.UbuntuOneAuthClient()
+            auth_url = os.getenv("UBUNTU_ONE_SSO_URL", constants.UBUNTU_ONE_SSO_URL)
+            self.auth_client = craft_store.UbuntuOneStoreClient(
+                application_name="snapcraft",
+                base_url=self._root_url,
+                storage_base_url=storage_base_url,
+                auth_url=auth_url,
+                endpoints=craft_store.endpoints.U1_SNAP_STORE,
+                user_agent=user_agent,
+                environment_auth=constants.ENVIRONMENT_STORE_CREDENTIALS,
+            )
 
         self.snap = SnapAPI(self.client)
         self.dashboard = DashboardAPI(self.auth_client)
         self._updown = UpDownClient(self.client)
 
+    @staticmethod
+    def use_candid() -> bool:
+        return os.getenv(constants.ENVIRONMENT_STORE_AUTH) == "candid"
+
     def login(
         self,
         *,
-        acls: Iterable[str] = None,
-        channels: Iterable[str] = None,
-        packages: Iterable[Dict[str, str]] = None,
-        expires: str = None,
-        config_fd: TextIO = None,
+        ttl: int,
+        acls: Optional[Sequence[str]] = None,
+        channels: Optional[Sequence[str]] = None,
+        packages: Optional[Sequence[str]] = None,
         **kwargs,
-    ) -> None:
-        if config_fd is not None:
-            return self.auth_client.login(config_fd=config_fd, **kwargs)
-
+    ) -> str:
         if acls is None:
             acls = [
                 "package_access",
@@ -82,13 +102,24 @@ class StoreClient:
                 "package_update",
             ]
 
-        macaroon = self.dashboard.get_macaroon(
-            acls=acls, packages=packages, channels=channels, expires=expires,
-        )
-        self.auth_client.login(macaroon=macaroon, **kwargs)
+        if channels is None:
+            channels = []
 
-    def export_login(self, *, config_fd: TextIO, encode=False) -> None:
-        self.auth_client.export_login(config_fd=config_fd, encode=encode)
+        if packages is None:
+            packages = []
+
+        # Used to identify the login on Ubuntu SSO to ease future revokations.
+        hostname = _get_hostname()
+        description = f"snapcraft@{hostname}"
+
+        return self.auth_client.login(
+            permissions=acls,
+            description=description,
+            ttl=ttl,
+            channels=channels,
+            packages=[craft_store.endpoints.Package(p, "snap") for p in packages],
+            **kwargs,
+        )
 
     def logout(self):
         self.auth_client.logout()
@@ -123,7 +154,10 @@ class StoreClient:
 
     def register(self, snap_name: str, is_private: bool = False, store_id: str = None):
         return self.dashboard.register(
-            snap_name, is_private=is_private, store_id=store_id, series=DEFAULT_SERIES,
+            snap_name,
+            is_private=is_private,
+            store_id=store_id,
+            series=DEFAULT_SERIES,
         )
 
     def upload_precheck(self, snap_name):
@@ -191,7 +225,10 @@ class StoreClient:
         return self.dashboard.get_snap_channel_map(snap_name=snap_name)
 
     def get_metrics(
-        self, *, filters: List[metrics.MetricsFilter], snap_name: str,
+        self,
+        *,
+        filters: List[metrics.MetricsFilter],
+        snap_name: str,
     ) -> metrics.MetricsResults:
         return self.dashboard.get_metrics(filters=filters, snap_name=snap_name)
 

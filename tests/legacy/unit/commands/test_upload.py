@@ -18,6 +18,7 @@ import logging
 import os
 from unittest import mock
 
+import craft_store
 import fixtures
 from testtools.matchers import Contains, Equals, FileExists, Not
 from xdg import BaseDirectory
@@ -31,7 +32,7 @@ from snapcraft_legacy.storeapi.errors import (
     StoreUploadError,
 )
 
-from . import FakeStoreCommandsBaseTestCase
+from . import FakeStoreCommandsBaseTestCase, FakeResponse
 
 
 class UploadCommandBaseTestCase(FakeStoreCommandsBaseTestCase):
@@ -159,7 +160,9 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
 
     def test_upload_without_login_must_ask(self):
         self.fake_store_upload_precheck.mock.side_effect = [
-            storeapi.http_clients.errors.InvalidCredentialsError("error"),
+            craft_store.errors.StoreServerError(
+                FakeResponse(status_code=403, content="error")
+            ),
             None,
         ]
 
@@ -427,60 +430,6 @@ class UploadCommandDeltasTestCase(UploadCommandBaseTestCase):
         # Upload and ensure fallback is called
         result = self.run_command(["upload", self.snap_file])
 
-        self.assertThat(result.exit_code, Equals(0))
-        self.fake_store_upload.mock.assert_has_calls(
-            [
-                mock.call(
-                    snap_name="basic",
-                    snap_filename=mock.ANY,
-                    built_at=None,
-                    channels=None,
-                    delta_format="xdelta3",
-                    delta_hash=mock.ANY,
-                    source_hash=mock.ANY,
-                    target_hash=mock.ANY,
-                ),
-                mock.call(
-                    snap_name="basic",
-                    snap_filename=self.snap_file,
-                    built_at=None,
-                    channels=None,
-                    delta_format=None,
-                    delta_hash=None,
-                    source_hash=None,
-                    target_hash=None,
-                ),
-            ]
-        )
-
-    def test_upload_with_disabled_delta_falls_back(self):
-        # Upload
-        result = self.run_command(["upload", self.snap_file])
-
-        self.assertThat(result.exit_code, Equals(0))
-
-        class _FakeResponse:
-            status_code = 501
-            reason = "disabled"
-
-            def json(self):
-                return {
-                    "error_list": [
-                        {
-                            "code": "feature-disabled",
-                            "message": "The delta upload support is currently disabled.",
-                        }
-                    ]
-                }
-
-        self.fake_store_upload.mock.side_effect = [
-            storeapi.http_clients.errors.StoreServerError(_FakeResponse()),
-            self.mock_tracker,
-        ]
-
-        # Upload and ensure fallback is called
-        with mock.patch("snapcraft_legacy.storeapi._status_tracker.StatusTracker"):
-            result = self.run_command(["upload", self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
         self.fake_store_upload.mock.assert_has_calls(
             [

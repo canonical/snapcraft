@@ -16,6 +16,7 @@
 
 from textwrap import dedent
 
+import craft_store
 from testtools.matchers import Contains, Equals
 
 from snapcraft_legacy import storeapi
@@ -26,7 +27,7 @@ from snapcraft_legacy.storeapi.v2.channel_map import (
     SnapChannel,
 )
 
-from . import FakeStoreCommandsBaseTestCase
+from . import FakeStoreCommandsBaseTestCase, FakeResponse
 
 
 class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
@@ -38,7 +39,9 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
 
     def test_status_without_login_must_ask(self):
         self.fake_store_get_snap_channel_map.mock.side_effect = [
-            storeapi.http_clients.errors.InvalidCredentialsError("error"),
+            craft_store.errors.StoreServerError(
+                FakeResponse(status_code=403, content="error")
+            ),
             self.channel_map,
         ]
 

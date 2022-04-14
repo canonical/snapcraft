@@ -27,7 +27,7 @@ from tabulate import tabulate
 
 import snapcraft_legacy
 from snapcraft_legacy._store import StoreClientCLI
-from snapcraft_legacy import yaml_utils
+from snapcraft_legacy import storeapi, yaml_utils
 from . import echo
 
 
@@ -85,7 +85,11 @@ def create_key(key_name: str) -> None:
 )
 def register_key(key_name: str, experimental_login: bool) -> None:
     """Register a key with the store to sign assertions."""
-    snapcraft_legacy.register_key(key_name, use_candid=experimental_login)
+    if experimental_login:
+        raise click.BadArgumentUsage(
+            f"Set {storeapi.constants.ENVIRONMENT_STORE_AUTH}=candid instead"
+        )
+    snapcraft_legacy.register_key(key_name)
 
 
 @assertionscli.command("sign-build")
@@ -149,7 +153,8 @@ def list_validation_sets(name, sequence):
     """
     store_client = StoreClientCLI()
     asserted_validation_sets = store_client.get_validation_sets(
-        name=name, sequence=sequence,
+        name=name,
+        sequence=sequence,
     )
 
     if not asserted_validation_sets.assertions and (name or sequence):
