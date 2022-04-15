@@ -35,7 +35,7 @@ jobs:
       - if: steps.decisions.outputs.PUBLISH == 'true'
         name: Build Snapcraft Snap
         id: build-snapcraft
-        uses: snapcore/action-build@v1.0.9
+        uses: snapcore/action-build
 
       - if: steps.decisions.outputs.PUBLISH == 'true'
         name: Verify Snapcraft Snap
@@ -44,8 +44,10 @@ jobs:
           sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
 
       - if: steps.decisions.outputs.PUBLISH == 'true' && steps.decisions.outputs.PUBLISH_BRANCH != null
-        uses: snapcore/action-publish@v1
+        # TODO change back once we have an agreed to mechanism to publish.
+        uses: sergiusens/action-publish
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
         with:
-          store_login: ${{ secrets.STORE_LOGIN }}
           snap: ${{ steps.build-snapcraft.outputs.snap }}
           release: ${{ steps.decisions.outputs.PUBLISH_BRANCH }}
