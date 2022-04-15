@@ -198,7 +198,7 @@ class _SnapManager:
             install_cmd = ["snap", op.name.lower()]
             snap_channel = _get_snap_channel(self.snap_name)
 
-            store_snap_info = storeapi.StoreClient().snap.get_info(self.snap_name)
+            store_snap_info = storeapi.SnapAPI().get_info(self.snap_name)
             snap_channel_map = store_snap_info.get_channel_mapping(
                 risk=snap_channel.risk, track=snap_channel.track
             )
