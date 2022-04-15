@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2017, 2020-2021 Canonical Ltd
+# Copyright 2016-2017, 2020-2022 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,12 +16,22 @@
 
 import logging
 
-from . import errors  # noqa: F401 isort:skip
-from . import channels  # noqa: F401 isort:skip
-from . import status  # noqa: F401 isort:skip
-from . import http_clients  # noqa: F401 isort: skip
+from . import errors  # isort:skip
+from . import channels  # isort:skip
+from . import status  # isort:skip
+from . import http_clients  # isort: skip
 
 logger = logging.getLogger(__name__)
 
 
-from ._store_client import StoreClient  # noqa
+from ._store_client import StoreClient
+from ._snap_api import SnapAPI
+
+__all__ = [
+    "errors",
+    "channels",
+    "status",
+    "http_clients",
+    "SnapAPI",
+    "StoreClient",
+]
