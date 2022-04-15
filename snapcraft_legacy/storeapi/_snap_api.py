@@ -16,13 +16,14 @@
 
 import logging
 import os
-from typing import Dict
+from typing import Dict, Optional
 from urllib.parse import urljoin
 import craft_store
 
+import craft_store
 import requests
 
-from . import constants, errors
+from . import agent, constants, errors
 from ._requests import Requests
 from .info import SnapInfo
 
@@ -37,7 +38,9 @@ class SnapAPI(Requests):
     at http://api.snapcraft.io/docs/.
     """
 
-    def __init__(self, client):
+    def __init__(self, client: Optional[craft_store.HTTPClient] = None) -> None:
+        if client is None:
+            client = craft_store.HTTPClient(user_agent=agent.get_user_agent())
         self._client = client
         self._root_url = os.environ.get("STORE_API_URL", constants.STORE_API_URL)
 

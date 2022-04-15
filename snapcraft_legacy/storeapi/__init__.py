@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 from ._store_client import StoreClient  # isort:skip
+from ._store_client import SnapAPI  # isort:skip
 
 
 __all__ = [
@@ -32,5 +33,6 @@ __all__ = [
     "constants",
     "channels",
     "status",
+    "SnapAPI",
     "StoreClient",
 ]
