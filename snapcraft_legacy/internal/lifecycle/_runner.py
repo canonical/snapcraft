@@ -46,7 +46,7 @@ def _get_required_grade(*, base: Optional[str], arch: str) -> str:
     # We use storeapi instead of repo.snaps so this can work under Docker
     # and related environments.
     try:
-        base_info = storeapi.StoreClient().snap.get_info(base)
+        base_info = storeapi.SnapAPI().get_info(base)
         base_info.get_channel_mapping(risk="stable", arch=arch)
     except storeapi.errors.SnapNotFoundError:
         return "devel"
