@@ -39,6 +39,7 @@ def test_parts_lifecycle_run(parts_data, step_name, new_dir, emitter):
         package_repositories=[],
         adopt_info=None,
         project_name="test-project",
+        parse_info={},
         project_vars={"version": "1", "grade": "stable"},
     )
     lifecycle.run(step_name)
@@ -55,6 +56,7 @@ def test_parts_lifecycle_run_bad_step(parts_data, new_dir):
         part_names=[],
         package_repositories=[],
         adopt_info=None,
+        parse_info={},
         project_name="test-project",
         project_vars={"version": "1", "grade": "stable"},
     )
@@ -72,6 +74,7 @@ def test_parts_lifecycle_run_internal_error(parts_data, new_dir, mocker):
         package_repositories=[],
         adopt_info=None,
         project_name="test-project",
+        parse_info={},
         project_vars={"version": "1", "grade": "stable"},
     )
     mocker.patch("craft_parts.LifecycleManager.plan", side_effect=RuntimeError("crash"))
@@ -89,6 +92,7 @@ def test_parts_lifecycle_run_parts_error(new_dir):
         package_repositories=[],
         adopt_info=None,
         project_name="test-project",
+        parse_info={},
         project_vars={"version": "1", "grade": "stable"},
     )
     with pytest.raises(errors.PartsLifecycleError) as raised:
@@ -107,6 +111,7 @@ def test_parts_lifecycle_clean(parts_data, new_dir, emitter):
         package_repositories=[],
         adopt_info=None,
         project_name="test-project",
+        parse_info={},
         project_vars={"version": "1", "grade": "stable"},
     )
     lifecycle.clean(part_names=None)
@@ -122,6 +127,7 @@ def test_parts_lifecycle_clean_parts(parts_data, new_dir, emitter):
         package_repositories=[],
         adopt_info=None,
         project_name="test-project",
+        parse_info={},
         project_vars={"version": "1", "grade": "stable"},
     )
     lifecycle.clean(part_names=["p1"])

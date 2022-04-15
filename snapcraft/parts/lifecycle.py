@@ -19,19 +19,19 @@
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, cast
+from typing import TYPE_CHECKING, Any, Dict, List, cast
 
-import pydantic
 from craft_cli import EmitterMode, emit
 from craft_parts import infos
 
 from snapcraft import errors, extensions, pack, providers, utils
 from snapcraft.meta import snap_yaml
 from snapcraft.parts import PartsLifecycle
-from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, GrammarAwareProject, Project
+from snapcraft.projects import GrammarAwareProject, Project
 from snapcraft.providers import capture_logs_from_instance
 
 from . import grammar, yaml_utils
+from .update_metadata import update_project_metadata
 
 if TYPE_CHECKING:
     import argparse
@@ -101,6 +101,23 @@ def process_yaml(project_file: Path) -> Dict[str, Any]:
     return yaml_data
 
 
+def _extract_parse_info(yaml_data: Dict[str, Any]) -> Dict[str, List[str]]:
+    """Remove parse-info data from parts.
+
+    :param yaml_data: The project YAML data.
+
+    :return: The extracted parse info for each part.
+    """
+    parse_info: Dict[str, List[str]] = {}
+
+    if "parts" in yaml_data:
+        for name, data in yaml_data["parts"].items():
+            if "parse-info" in data:
+                parse_info[name] = data.pop("parse-info")
+
+    return parse_info
+
+
 def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     """Run the parts lifecycle.
 
@@ -112,6 +129,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
 
     snap_project = get_snap_project()
     yaml_data = process_yaml(snap_project.project_file)
+    parse_info = _extract_parse_info(yaml_data)
 
     # argument --provider is only supported by legacy snapcraft
     if parsed_args.provider:
@@ -122,6 +140,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     _run_command(
         command_name,
         project=project,
+        parse_info=parse_info,
         assets_dir=snap_project.assets_dir,
         parsed_args=parsed_args,
     )
@@ -131,6 +150,7 @@ def _run_command(
     command_name: str,
     *,
     project: Project,
+    parse_info: Dict[str, List[str]],
     assets_dir: Path,
     parsed_args: "argparse.Namespace",
 ) -> None:
@@ -167,6 +187,7 @@ def _run_command(
         part_names=part_names,
         adopt_info=project.adopt_info,
         project_name=project.name,
+        parse_info=parse_info,
         project_vars={
             "version": project.version or "",
             "grade": project.grade or "",
@@ -178,10 +199,19 @@ def _run_command(
 
     lifecycle.run(step_name)
 
-    # Generate snap.yaml
+    # Extract metadata and generate snap.yaml
     project_vars = lifecycle.project_vars
     if step_name == "prime" and not part_names:
-        _update_project_metadata(project, project_vars)
+        metadata_list = lifecycle.extract_metadata()
+        update_project_metadata(
+            project,
+            project_vars=project_vars,
+            metadata_list=metadata_list,
+            assets_dir=assets_dir,
+            prime_dir=lifecycle.prime_dir,
+        )
+
+        # TODO: copy meta/gui assets
 
         emit.progress("Generating snap metadata...")
         snap_yaml.write(
@@ -197,48 +227,6 @@ def _run_command(
             output=parsed_args.output,
             compression=project.compression,
         )
-
-
-def _update_project_metadata(project: Project, project_vars: Dict[str, str]) -> None:
-    """Set project fields using corresponding adopted entries.
-
-    :param project: The project to update.
-    :param project_vars: The variables updated during lifecycle execution.
-
-    :raises SnapcraftError: If project update failed.
-    """
-    # Update project variables
-    try:
-        if project_vars["version"]:
-            project.version = project_vars["version"]
-        if project_vars["grade"]:
-            project.grade = project_vars["grade"]  # type: ignore
-    except pydantic.ValidationError as err:
-        _raise_formatted_validation_error(err)
-        raise errors.SnapcraftError(f"error setting variable: {err}")
-
-    # Fields that must not end empty
-    for field in MANDATORY_ADOPTABLE_FIELDS:
-        if not getattr(project, field):
-            raise errors.SnapcraftError(
-                f"Field {field!r} was not adopted from metadata"
-            )
-
-
-def _raise_formatted_validation_error(err: pydantic.ValidationError):
-    error_list = err.errors()
-    if len(error_list) != 1:
-        return
-
-    error = error_list[0]
-    loc = error.get("loc")
-    msg = error.get("msg")
-
-    if not (loc and msg) or not isinstance(loc, tuple):
-        return
-
-    varname = ".".join((x for x in loc if isinstance(x, str)))
-    raise errors.SnapcraftError(f"error setting {varname}: {msg}")
 
 
 def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None:

@@ -399,7 +399,7 @@ class Project(ProjectModel):
         :raise TypeError: If data is not a dictionary.
         """
         if not isinstance(data, dict):
-            raise TypeError("part data is not a dictionary")
+            raise TypeError("Project data is not a dictionary")
 
         try:
             project = Project(**data)
@@ -426,6 +426,7 @@ class _GrammarAwarePart(_GrammarAwareModel):
     stage_packages: Optional[GrammarStrList]
     build_snaps: Optional[GrammarStrList]
     stage_snaps: Optional[GrammarStrList]
+    parse_info: Optional[List[str]]
 
 
 class GrammarAwareProject(_GrammarAwareModel):
@@ -436,7 +437,10 @@ class GrammarAwareProject(_GrammarAwareModel):
     @classmethod
     def validate_grammar(cls, data: Dict[str, Any]) -> None:
         """Ensure grammar-enabled entries are syntactically valid."""
-        cls(**data)
+        try:
+            cls(**data)
+        except pydantic.ValidationError as err:
+            raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
 
 
 def _format_pydantic_errors(errors, *, file_name: str = "snapcraft.yaml"):

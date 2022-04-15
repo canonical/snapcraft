@@ -653,8 +653,18 @@ class TestAppstreamContent:
             appstream.extract(file_name, workdir=".")
 
         assert str(raised.value) == (
-            "Error extracting metadata from './snapcraft_legacy.appdata.xml'"
+            "Error extracting metadata from './snapcraft_legacy.appdata.xml': "
+            "Opening and ending tag mismatch: provides line 11 and component, "
+            "line 13, column 13 (snapcraft_legacy.appdata.xml, line 13)"
         )
+
+    def test_appstream_parse_os_error(self):
+        file_name = "snapcraft_legacy.appdata.xml"
+        assert not Path(file_name).is_file()
+
+        error = "Error reading file './snapcraft_legacy.appdata.xml': failed to load"
+        with pytest.raises(errors.SnapcraftError, match=error):
+            appstream.extract(file_name, workdir=".")
 
 
 @pytest.mark.usefixtures("new_dir")

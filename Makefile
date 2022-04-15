@@ -14,7 +14,7 @@ test-black:
 
 .PHONY: test-codespell
 test-codespell:
-	codespell --quiet-level 4 --ignore-words-list crate,keyserver --skip '*.tar,*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,*.so,changelog,.git,.hg,.mypy_cache,.tox,.venv,_build,buck-out,__pycache__,build,dist,.vscode,parts,stage,prime,test_appstream.py,./snapcraft.spec,./.direnv,./.pytest_cache'
+	codespell --quiet-level 4 --ignore-words-list crate,keyserver,comandos --skip '*.tar,*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,*.so,changelog,.git,.hg,.mypy_cache,.tox,.venv,_build,buck-out,__pycache__,build,dist,.vscode,parts,stage,prime,test_appstream.py,./snapcraft.spec,./.direnv,./.pytest_cache'
 
 .PHONY: test-flake8
 test-flake8:
