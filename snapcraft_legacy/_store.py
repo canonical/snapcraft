@@ -169,7 +169,7 @@ def _try_login(
     email: str,
     password: str,
     *,
-    store: storeapi.StoreClient,
+    store_client: storeapi.StoreClient,
     save: bool = True,
     packages: Iterable[Dict[str, str]] = None,
     acls: Iterable[str] = None,
@@ -178,7 +178,7 @@ def _try_login(
     config_fd: TextIO = None,
 ) -> None:
     try:
-        store.login(
+        store_client.login(
             email=email,
             password=password,
             packages=packages,
@@ -193,7 +193,7 @@ def _try_login(
             echo.wrapped(storeapi.constants.TWO_FACTOR_WARNING)
     except storeapi.http_clients.errors.StoreTwoFactorAuthenticationRequired:
         one_time_password = echo.prompt("Second-factor auth")
-        store.login(
+        store_client.login(
             email=email,
             password=password,
             otp=one_time_password,
@@ -205,54 +205,64 @@ def _try_login(
             save=save,
         )
 
-    # Continue if agreement and namespace conditions are met.
-    _check_dev_agreement_and_namespace_statuses(store)
+
+def _prompt_login() -> Tuple[str, str]:
+    echo.wrapped("Enter your Ubuntu One e-mail address and password.")
+    echo.wrapped(
+        "If you do not have an Ubuntu One account, you can create one "
+        "at https://snapcraft.io/account"
+    )
+    email = echo.prompt("Email")
+    if os.getenv("SNAPCRAFT_TEST_INPUT"):
+        # Integration tests do not work well with hidden input.
+        echo.warning("Password will be visible.")
+        hide_input = False
+    else:
+        hide_input = True
+    password = echo.prompt("Password", hide_input=hide_input)
+
+    return (email, password)
 
 
 def login(
     *,
-    store: storeapi.StoreClient,
+    store_client: storeapi.StoreClient,
     packages: Iterable[Dict[str, str]] = None,
     save: bool = True,
     acls: Iterable[str] = None,
     channels: Iterable[str] = None,
     expires: str = None,
     config_fd: TextIO = None,
-) -> bool:
-    if not store:
-        store = storeapi.StoreClient()
-
-    email = ""
-    password = ""
-
-    if not config_fd:
-        echo.wrapped("Enter your Ubuntu One e-mail address and password.")
-        echo.wrapped(
-            "If you do not have an Ubuntu One account, you can create one "
-            "at https://snapcraft.io/account"
+) -> None:
+    if store_client.use_candid() is True:
+        store_client.login(
+            acls=acls,
+            channels=channels,
+            packages=packages,
+            expires=expires,
+            config_fd=config_fd,
         )
-        email = echo.prompt("Email")
-        if os.getenv("SNAPCRAFT_TEST_INPUT"):
-            # Integration tests do not work well with hidden input.
-            echo.warning("Password will be visible.")
-            hide_input = False
+    else:
+        if config_fd:
+            email = ""
+            password = ""
         else:
-            hide_input = True
-        password = echo.prompt("Password", hide_input=hide_input)
+            email, password = _prompt_login()
 
-    _try_login(
-        email,
-        password,
-        store=store,
-        packages=packages,
-        acls=acls,
-        channels=channels,
-        expires=expires,
-        config_fd=config_fd,
-        save=save,
-    )
+        _try_login(
+            email,
+            password,
+            store_client=store_client,
+            packages=packages,
+            acls=acls,
+            channels=channels,
+            expires=expires,
+            config_fd=config_fd,
+            save=save,
+        )
 
-    return True
+    # Continue if agreement and namespace conditions are met.
+    _check_dev_agreement_and_namespace_statuses(store_client)
 
 
 def _login_wrapper(method):
@@ -261,7 +271,7 @@ def _login_wrapper(method):
             return method(self, *args, **kwargs)
         except storeapi.http_clients.errors.InvalidCredentialsError:
             print("You are required to login before continuing.")
-            login(store=self)
+            login(store_client=self)
             return method(self, *args, **kwargs)
 
     return login_decorator
@@ -545,15 +555,11 @@ def _maybe_prompt_for_key(name):
     return _select_key(keys)
 
 
-def register_key(name, use_candid: bool = False) -> None:
+def register_key(name) -> None:
     key = _maybe_prompt_for_key(name)
-    store_client = StoreClientCLI(use_candid=use_candid)
 
-    # TODO: remove coupling.
-    if isinstance(store_client.auth_client, storeapi.http_clients.CandidClient):
-        store_client.login(acls=["modify_account_key"], save=False)
-    else:
-        login(store=store_client, acls=["modify_account_key"], save=False)
+    store_client = StoreClientCLI()
+    login(store_client=store_client, acls=["modify_account_key"], save=False)
 
     logger.info("Registering key ...")
     account_info = store_client.get_account_information()
