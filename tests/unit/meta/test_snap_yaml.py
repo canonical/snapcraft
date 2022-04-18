@@ -85,7 +85,7 @@ def test_simple_snap_yaml(simple_project, new_dir):
         apps:
           app1:
             command: bin/mytest
-            command_chain:
+            command-chain:
             - snap/command-chain/snapcraft-runner
         confinement: strict
         grade: stable
@@ -121,37 +121,37 @@ def complex_project():
           app1:
             command: bin/mytest
             autostart: test-app.desktop
-            common_id: test-common-id
-            bus_name: test-bus-name
+            common-id: test-common-id
+            bus-name: test-bus-name
             completer: test-completer
-            stop_command: test-stop-command
-            post_stop_command: test-post-stop-command
-            start_timeout: 1s
-            stop_timeout: 2s
-            watchdog_timeout: 3s
-            reload_command: test-reload-command
-            restart_delay: 4s
+            stop-command: test-stop-command
+            post-stop-command: test-post-stop-command
+            start-timeout: 1s
+            stop-timeout: 2s
+            watchdog-timeout: 3s
+            reload-command: test-reload-command
+            restart-delay: 4s
             timer: test-timer
             daemon: simple
             after: [test-after-1, test-after-2]
             before: [test-before-1, test-before-2]
-            refresh_mode: endure
-            stop_mode: sigterm
-            restart_condition: on-success
-            install_mode: enable
+            refresh-mode: endure
+            stop-mode: sigterm
+            restart-condition: on-success
+            install-mode: enable
             aliases: [test-alias-1, test-alias-2]
             environment:
               APP_VARIABLE: test-app-variable
             adapter: none
-            command_chain:
+            command-chain:
             - snap/command-chain/snapcraft-runner
             sockets:
               test-socket-1:
-                listen_stream: /tmp/test-socket.sock
-                socket_mode: 0
+                listen-stream: /tmp/test-socket.sock
+                socket-mode: 0
               test-socket-2:
-                listen_stream: 100
-                socket_mode: 1
+                listen-stream: 100
+                socket-mode: 1
 
         plugs:
           empty-plug:
@@ -215,16 +215,16 @@ def test_complex_snap_yaml(complex_project, new_dir):
           app1:
             command: bin/mytest
             autostart: test-app.desktop
-            common_id: test-common-id
-            bus_name: test-bus-name
+            common-id: test-common-id
+            bus-name: test-bus-name
             completer: test-completer
-            stop_command: test-stop-command
-            post_stop_command: test-post-stop-command
-            start_timeout: 1s
-            stop_timeout: 2s
-            watchdog_timeout: 3s
-            reload_command: test-reload-command
-            restart_delay: 4s
+            stop-command: test-stop-command
+            post-stop-command: test-post-stop-command
+            start-timeout: 1s
+            stop-timeout: 2s
+            watchdog-timeout: 3s
+            reload-command: test-reload-command
+            restart-delay: 4s
             timer: test-timer
             daemon: simple
             after:
@@ -233,25 +233,25 @@ def test_complex_snap_yaml(complex_project, new_dir):
             before:
             - test-before-1
             - test-before-2
-            refresh_mode: endure
-            stop_mode: sigterm
-            restart_condition: on-success
-            install_mode: enable
+            refresh-mode: endure
+            stop-mode: sigterm
+            restart-condition: on-success
+            install-mode: enable
             aliases:
             - test-alias-1
             - test-alias-2
             environment:
               APP_VARIABLE: test-app-variable
             adapter: none
-            command_chain:
+            command-chain:
             - snap/command-chain/snapcraft-runner
             sockets:
               test-socket-1:
-                listen_stream: /tmp/test-socket.sock
-                socket_mode: 0
+                listen-stream: /tmp/test-socket.sock
+                socket-mode: 0
               test-socket-2:
-                listen_stream: 100
-                socket_mode: 1
+                listen-stream: 100
+                socket-mode: 1
         confinement: strict
         grade: devel
         environment:
@@ -266,10 +266,10 @@ def test_complex_snap_yaml(complex_project, new_dir):
             content: test-content
             interface: content
             target: test-target
-            default_provider: test-provider
+            default-provider: test-provider
         hooks:
           configure:
-            command_chain:
+            command-chain:
             - test
             environment:
               test-variable-1: test
