@@ -46,3 +46,10 @@ TWO_FACTOR_WARNING = (
     "We strongly recommend enabling multi-factor authentication: "
     "https://help.ubuntu.com/community/SSO/FAQs/2FA"
 )
+
+ENVIRONMENT_STORE_AUTH = "SNAPCRAFT_STORE_AUTH"
+"""Environment variable used to set an alterntive login method.
+
+The only setting that changes the behavior is `candid`, every
+other value uses Ubuntu SSO.
+"""

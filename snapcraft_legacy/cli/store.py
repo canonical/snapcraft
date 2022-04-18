@@ -31,7 +31,6 @@ import snapcraft_legacy
 from snapcraft_legacy import formatting_utils, storeapi
 from snapcraft_legacy._store import StoreClientCLI
 from snapcraft_legacy.storeapi import metrics as metrics_module
-from snapcraft_legacy.storeapi.constants import DEFAULT_SERIES
 
 from . import echo
 from ._channel_map import get_tabulated_channel_map
@@ -447,10 +446,12 @@ def close(snap_name, channels):
     account_info = store.get_account_information()
 
     try:
-        snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
+        snap_id = account_info["snaps"][storeapi.constants.DEFAULT_SERIES][snap_name][
+            "snap-id"
+        ]
     except KeyError:
         raise storeapi.errors.StoreChannelClosingPermissionError(
-            snap_name, DEFAULT_SERIES
+            snap_name, storeapi.constants.DEFAULT_SERIES
         )
 
     # Returned closed_channels cannot be trusted as it returns risks.
@@ -706,6 +707,12 @@ def export_login(
 
         snapcraft export-login --expires="2019-01-01T00:00:00" exported
     """
+    if experimental_login:
+        raise click.BadOptionUsage(
+            "--experimental-login",
+            "--experimental-login no longer supported. "
+            f"Set {storeapi.constants.ENVIRONMENT_STORE_AUTH}=candid instead",
+        )
 
     snap_list = None
     channel_list = None
@@ -714,7 +721,9 @@ def export_login(
     if snaps:
         snap_list = []
         for package in snaps.split(","):
-            snap_list.append({"name": package, "series": DEFAULT_SERIES})
+            snap_list.append(
+                {"name": package, "series": storeapi.constants.DEFAULT_SERIES}
+            )
 
     if channels:
         channel_list = channels.split(",")
@@ -722,24 +731,15 @@ def export_login(
     if acls:
         acl_list = acls.split(",")
 
-    store_client = storeapi.StoreClient(use_candid=experimental_login)
-    if store_client.use_candid:
-        store_client.login(
-            packages=snap_list,
-            channels=channel_list,
-            acls=acl_list,
-            expires=expires,
-            save=False,
-        )
-    else:
-        snapcraft_legacy.login(
-            store=store_client,
-            packages=snap_list,
-            channels=channel_list,
-            acls=acl_list,
-            expires=expires,
-            save=False,
-        )
+    store_client = storeapi.StoreClient()
+    snapcraft_legacy.login(
+        store_client=store_client,
+        packages=snap_list,
+        channels=channel_list,
+        acls=acl_list,
+        expires=expires,
+        save=False,
+    )
 
     # Support a login_file of '-', which indicates a desire to print to stdout
     if login_file.strip() == "-":
@@ -811,14 +811,17 @@ def login(login_file, experimental_login: bool):
     If you do not have an Ubuntu One account, you can create one at
     https://snapcraft.io/account
     """
-    store_client = storeapi.StoreClient(use_candid=experimental_login)
-    if store_client.use_candid:
-        store_client.login(config_fd=login_file, save=True)
-    else:
-        snapcraft_legacy.login(store=store_client, config_fd=login_file)
+    if experimental_login:
+        raise click.BadOptionUsage(
+            "--experimental-login",
+            "--experimental-login no longer supported. "
+            f"Set {storeapi.constants.ENVIRONMENT_STORE_AUTH}=candid instead",
+        )
+
+    store_client = storeapi.StoreClient()
+    snapcraft_legacy.login(store_client=store_client, config_fd=login_file)
 
     print()
-
     if login_file:
         try:
             human_acls = _human_readable_acls(store_client)
@@ -963,13 +966,14 @@ _YESTERDAY = str(date.today() - timedelta(days=1))
     required=True,
 )
 def metrics(snap_name: str, name: str, start: str, end: str, format: str):
-    """Get metrics for <snap-name>.
-    """
+    """Get metrics for <snap-name>."""
     store = storeapi.StoreClient()
     account_info = store.get_account_information()
 
     try:
-        snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
+        snap_id = account_info["snaps"][storeapi.constants.DEFAULT_SERIES][snap_name][
+            "snap-id"
+        ]
     except KeyError:
         echo.exit_error(
             brief="No permissions for snap.",

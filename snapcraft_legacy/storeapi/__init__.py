@@ -18,6 +18,7 @@ import logging
 
 from . import errors  # isort:skip
 from . import channels  # isort:skip
+from . import constants  # isort:skip
 from . import status  # isort:skip
 from . import http_clients  # isort: skip
 
@@ -30,6 +31,7 @@ from ._snap_api import SnapAPI
 __all__ = [
     "errors",
     "channels",
+    "constants",
     "status",
     "http_clients",
     "SnapAPI",

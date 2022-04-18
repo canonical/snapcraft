@@ -23,7 +23,7 @@ import requests
 
 from snapcraft_legacy.internal.indicators import download_requests_stream
 
-from . import _upload, errors, http_clients, metrics
+from . import _upload, constants, errors, http_clients, metrics
 from ._dashboard_api import DashboardAPI
 from ._snap_api import SnapAPI
 from ._up_down_client import UpDownClient
@@ -36,20 +36,10 @@ logger = logging.getLogger(__name__)
 class StoreClient:
     """High-level client Snap resources."""
 
-    @property
-    def use_candid(self) -> bool:
-        return isinstance(self.auth_client, http_clients.CandidClient)
-
-    def __init__(self, use_candid: bool = False) -> None:
-        super().__init__()
-
+    def __init__(self) -> None:
         self.client = http_clients.Client()
 
-        candid_has_credentials = http_clients.CandidClient.has_credentials()
-        logger.debug(
-            f"Candid forced: {use_candid}. Candid crendendials: {candid_has_credentials}."
-        )
-        if use_candid or candid_has_credentials:
+        if self.use_candid() is True:
             self.auth_client: http_clients.AuthClient = http_clients.CandidClient()
         else:
             self.auth_client = http_clients.UbuntuOneAuthClient()
@@ -57,6 +47,10 @@ class StoreClient:
         self.snap = SnapAPI(self.client)
         self.dashboard = DashboardAPI(self.auth_client)
         self._updown = UpDownClient(self.client)
+
+    @staticmethod
+    def use_candid() -> bool:
+        return os.getenv(constants.ENVIRONMENT_STORE_AUTH) == "candid"
 
     def login(
         self,
@@ -83,7 +77,10 @@ class StoreClient:
             ]
 
         macaroon = self.dashboard.get_macaroon(
-            acls=acls, packages=packages, channels=channels, expires=expires,
+            acls=acls,
+            packages=packages,
+            channels=channels,
+            expires=expires,
         )
         self.auth_client.login(macaroon=macaroon, **kwargs)
 
@@ -123,7 +120,10 @@ class StoreClient:
 
     def register(self, snap_name: str, is_private: bool = False, store_id: str = None):
         return self.dashboard.register(
-            snap_name, is_private=is_private, store_id=store_id, series=DEFAULT_SERIES,
+            snap_name,
+            is_private=is_private,
+            store_id=store_id,
+            series=DEFAULT_SERIES,
         )
 
     def upload_precheck(self, snap_name):
@@ -191,7 +191,10 @@ class StoreClient:
         return self.dashboard.get_snap_channel_map(snap_name=snap_name)
 
     def get_metrics(
-        self, *, filters: List[metrics.MetricsFilter], snap_name: str,
+        self,
+        *,
+        filters: List[metrics.MetricsFilter],
+        snap_name: str,
     ) -> metrics.MetricsResults:
         return self.dashboard.get_metrics(filters=filters, snap_name=snap_name)
 
