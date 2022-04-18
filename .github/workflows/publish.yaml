@@ -12,15 +12,16 @@ jobs:
         run: |
           # Secrets cannot be used in conditionals, so this is our dance:
           # https://github.com/actions/runner/issues/520
-          if [[ -n "${{ secrets.STORE_LOGIN }}" ]]; then
-            echo "::set-output name=PUBLISH::true"
-            if [[ ${{ github.event_name }} == 'pull_request' ]]; then
-              echo "::set-output name=PUBLISH_BRANCH::edge/pr-${{ github.event.number }}"
-            else
-              echo "::set-output name=PUBLISH_BRANCH::"
-            fi
+          if [[ -n "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}" ]]; then
+            echo "::set-output name=PUBLISH::env"
+          elif [[ -n "${{ secrets.STORE_LOGIN }}" ]]; then
+            echo "::set-output name=PUBLISH::legacy"
           else
             echo "::set-output name=PUBLISH::"
+
+          if [[ ${{ github.event_name }} == 'pull_request' ]]; then
+            echo "::set-output name=PUBLISH_BRANCH::edge/pr-${{ github.event.number }}"
+          else
             echo "::set-output name=PUBLISH_BRANCH::"
           fi
 
@@ -43,9 +44,18 @@ jobs:
           # Make sure it is installable.
           sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
 
-      - if: steps.decisions.outputs.PUBLISH == 'true' && steps.decisions.outputs.PUBLISH_BRANCH != null
+      - if: steps.decisions.outputs.PUBLISH == 'legacy' && steps.decisions.outputs.PUBLISH_BRANCH != null
         uses: snapcore/action-publish@v1
         with:
           store_login: ${{ secrets.STORE_LOGIN }}
+          snap: ${{ steps.build-snapcraft.outputs.snap }}
+          release: ${{ steps.decisions.outputs.PUBLISH_BRANCH }}
+
+      - if: steps.decisions.outputs.PUBLISH == 'env' && steps.decisions.outputs.PUBLISH_BRANCH != null
+        # Use this until snapcore/action-publish#27 it is merged.
+        uses: sergiusens/action-publish
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        with:
           snap: ${{ steps.build-snapcraft.outputs.snap }}
           release: ${{ steps.decisions.outputs.PUBLISH_BRANCH }}
