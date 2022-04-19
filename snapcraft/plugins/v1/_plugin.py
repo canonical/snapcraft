@@ -187,7 +187,7 @@ class PluginV1:
     def run(self, cmd, cwd=None, **kwargs):
         if not cwd:
             cwd = self.builddir
-        cmd_string = " ".join([shlex.quote(c) for c in cmd])
+        cmd_string = " ".join([shlex.quote(str(c)) for c in cmd])
         print(cmd_string)
         os.makedirs(cwd, exist_ok=True)
         try:
