@@ -23,6 +23,7 @@ from textwrap import dedent
 from typing import Dict
 
 import click
+import craft_store
 from raven import Client as RavenClient
 from raven.transport import RequestsHTTPTransport
 
@@ -84,8 +85,10 @@ def _is_reportable_error(exc_info) -> bool:
         return exc_info[1].get_reportable()
 
     # Report non-snapcraft errors.
-    if not issubclass(exc_info[0], errors.SnapcraftError) and not isinstance(
-        exc_info[1], KeyboardInterrupt
+    if (
+        not issubclass(exc_info[0], errors.SnapcraftError)
+        and not issubclass(exc_info[0], craft_store.errors.CraftStoreError)
+        and not isinstance(exc_info[1], KeyboardInterrupt)
     ):
         return True
 

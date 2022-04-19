@@ -20,7 +20,10 @@ from pathlib import PosixPath
 from textwrap import dedent
 from unittest import mock
 
+import craft_store
 import fixtures
+import pytest
+import requests
 from click.testing import CliRunner
 
 from snapcraft_legacy import storeapi
@@ -55,7 +58,11 @@ original_check_output = subprocess.check_output
 def mock_check_output(command, *args, **kwargs):
     if isinstance(command[0], PosixPath):
         command[0] = str(command[0])
-    if command[0].endswith("unsquashfs") or command[0].endswith("xdelta3"):
+    if (
+        command[0].endswith("unsquashfs")
+        or command[0].endswith("xdelta3")
+        or command[0].endswith("file")
+    ):
         return original_check_output(command, *args, **kwargs)
     elif command[0].endswith("snap") and command[1:] == ["keys", "--json"]:
         return json.dumps(_sample_keys)
@@ -81,10 +88,13 @@ def mock_check_output(command, *args, **kwargs):
         "new-key",
     ]:
         pass
+    elif command[0].endswith("snap") and command[1] == "sign-build":
+        return b"Mocked assertion"
     else:
         raise AssertionError("Unhandled command: {}".format(command))
 
 
+@pytest.mark.usefixtures("memory_keyring")
 class CommandBaseTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
@@ -157,6 +167,8 @@ class StoreCommandsBaseTestCase(CommandBaseTestCase):
         self.useFixture(self.fake_store)
         self.client = storeapi.StoreClient()
 
+        self.client.login(email="dummy", password="test correct password", ttl=1)
+
 
 class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
     def setUp(self):
@@ -171,6 +183,11 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
 
         self.fake_store_login = fixtures.MockPatchObject(storeapi.StoreClient, "login")
         self.useFixture(self.fake_store_login)
+
+        self.fake_store_logout = fixtures.MockPatchObject(
+            storeapi.StoreClient, "logout"
+        )
+        self.useFixture(self.fake_store_logout)
 
         self.fake_store_register = fixtures.MockPatchObject(
             storeapi._dashboard_api.DashboardAPI, "register"
@@ -464,3 +481,33 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
             return_value=True,
         )
         self.useFixture(self.fake_package_installed)
+
+
+class FakeResponse(requests.Response):
+    def __init__(self, content, status_code):
+        self._content = content
+        self.status_code = status_code
+
+    @property
+    def content(self):
+        return self._content
+
+    @property
+    def ok(self):
+        return self.status_code == 200
+
+    def json(self):
+        return json.loads(self._content)  # type: ignore
+
+    @property
+    def reason(self):
+        return self._content
+
+    @property
+    def text(self):
+        return self.content
+
+
+FAKE_UNAUTHORIZED_ERROR = craft_store.errors.StoreServerError(
+    FakeResponse(status_code=requests.codes.unauthorized, content="error")
+)

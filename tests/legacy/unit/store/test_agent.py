@@ -21,7 +21,7 @@ from testtools.matchers import Equals
 
 from snapcraft_legacy import ProjectOptions
 from snapcraft_legacy import __version__ as snapcraft_version
-from snapcraft_legacy.storeapi.http_clients import agent
+from snapcraft_legacy.storeapi import agent
 from tests.legacy import unit
 from tests.legacy.fixture_setup.os_release import FakeOsRelease
 

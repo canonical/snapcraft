@@ -19,11 +19,10 @@ import os
 from typing import Dict, Optional
 from urllib.parse import urljoin
 
+import craft_store
 import requests
 
-from snapcraft_legacy.storeapi import http_clients
-
-from . import constants, errors
+from . import agent, constants, errors
 from ._requests import Requests
 from .info import SnapInfo
 
@@ -38,9 +37,9 @@ class SnapAPI(Requests):
     at http://api.snapcraft.io/docs/.
     """
 
-    def __init__(self, client: Optional[http_clients.Client] = None):
+    def __init__(self, client: Optional[craft_store.HTTPClient] = None):
         if client is None:
-            client = http_clients.Client()
+            client = craft_store.HTTPClient(user_agent=agent.get_user_agent())
         self._client = client
         self._root_url = os.environ.get("STORE_API_URL", constants.STORE_API_URL)
 
@@ -94,13 +93,17 @@ class SnapAPI(Requests):
             params["architecture"] = arch
         logger.debug("Getting information for {}".format(snap_name))
         url = "/v2/snaps/info/{}".format(snap_name)
-        resp = self.get(url, headers=headers, params=params)
 
-        if resp.status_code == 404:
-            raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
-        resp.raise_for_status()
+        try:
+            response = self.get(url, headers=headers, params=params)
+        except craft_store.errors.StoreServerError as store_error:
+            if store_error.response.status_code == 404:
+                raise errors.SnapNotFoundError(
+                    snap_name=snap_name, arch=arch
+                ) from store_error
+            raise
 
-        return SnapInfo(resp.json())
+        return SnapInfo(response.json())
 
     def get_assertion(
         self, assertion_type: str, snap_id: str
@@ -115,7 +118,11 @@ class SnapAPI(Requests):
         headers = self._get_default_headers(api="v1")
         logger.debug("Getting snap-declaration for {}".format(snap_id))
         url = f"/api/v1/snaps/assertions/{assertion_type}/{constants.DEFAULT_SERIES}/{snap_id}"
-        response = self.get(url, headers=headers)
-        if response.status_code != 200:
-            raise errors.SnapNotFoundError(snap_id=snap_id)
+        try:
+            response = self.get(url, headers=headers)
+        except craft_store.errors.StoreServerError as store_error:
+            if store_error.response.status_code == 404:
+                raise errors.SnapNotFoundError(snap_id=snap_id) from store_error
+            raise
+
         return response.json()

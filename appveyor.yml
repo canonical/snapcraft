@@ -58,7 +58,6 @@ build_script:
 test_script:
 - cmd: |
     echo "Smoke testing snapcraft.exe..."
-    dist\snapcraft.exe logout
     dist\snapcraft.exe version
     mkdir test
     cd test

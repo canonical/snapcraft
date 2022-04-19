@@ -18,9 +18,7 @@ from textwrap import dedent
 
 import pytest
 
-from snapcraft_legacy import storeapi
-
-from . import FakeStoreCommandsBaseTestCase
+from . import FAKE_UNAUTHORIZED_ERROR, FakeStoreCommandsBaseTestCase
 
 
 class MetricsCommandTestCase(FakeStoreCommandsBaseTestCase):
@@ -49,7 +47,7 @@ class MetricsCommandTestCase(FakeStoreCommandsBaseTestCase):
     @pytest.mark.skip("needs more work")
     def test_status_without_login_must_ask(self):
         self.fake_store_account_info.mock.side_effect = [
-            storeapi.http_clients.errors.InvalidCredentialsError("error"),
+            FAKE_UNAUTHORIZED_ERROR,
             self.fake_store_account_info_data,
         ]
 

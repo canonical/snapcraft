@@ -14,15 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import base64
+import contextlib
 import functools
 import json
 import operator
 import os
 import stat
 import sys
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from textwrap import dedent
 from typing import Dict, List, Optional, Set, Union
+from urllib.parse import urlparse
 
 import click
 from tabulate import tabulate
@@ -36,6 +39,11 @@ from . import echo
 from ._channel_map import get_tabulated_channel_map
 from ._metrics import convert_metrics_to_table
 from ._review import review_snap
+
+_VALID_DATE_FORMATS = [
+    "%Y-%m-%d",
+    "%Y-%m-%dT%H:%M:%SZ",
+]
 
 _MESSAGE_REGISTER_PRIVATE = dedent(
     """\
@@ -731,50 +739,62 @@ def export_login(
     if acls:
         acl_list = acls.split(",")
 
-    store_client = storeapi.StoreClient()
-    snapcraft_legacy.login(
+    if expires is not None:
+        for date_format in _VALID_DATE_FORMATS:
+            with contextlib.suppress(ValueError):
+                expiry_date = datetime.strptime(expires, date_format)
+                break
+        else:
+            valid_formats = formatting_utils.humanize_list(_VALID_DATE_FORMATS, "or")
+            raise click.BadParameter(
+                message=f"The expiry follow an ISO 8601 format ({valid_formats})"
+            )
+
+        ttl = int((expiry_date - datetime.now()).total_seconds())
+    else:
+        # Default to 1y
+        ttl = int((datetime.now() + timedelta(days=365)).timestamp())
+
+    store_client = storeapi.StoreClient(ephemeral=True)
+    credentials = snapcraft_legacy.login(
         store_client=store_client,
         packages=snap_list,
         channels=channel_list,
         acls=acl_list,
-        expires=expires,
-        save=False,
+        ttl=ttl,
     )
 
     # Support a login_file of '-', which indicates a desire to print to stdout
     if login_file.strip() == "-":
         echo.info("\nExported login starts on next line:")
-        store_client.export_login(config_fd=sys.stdout, encode=True)
-        print()
+
+        echo.info(credentials)
 
         preamble = "Login successfully exported and printed above"
-        login_action = 'echo "<login>" | snapcraft login --with -'
+        credentials_action = f"{storeapi.constants.ENVIRONMENT_STORE_CREDENTIALS}='<credentials>' snapcraft <store-command>"
     else:
         # This is sensitive-- it should only be accessible by the owner
         private_open = functools.partial(os.open, mode=0o600)
 
-        # mypy doesn't have the opener arg in its stub. Ignore its warning
-        with open(login_file, "w", opener=private_open) as f:  # type: ignore
-            store_client.export_login(config_fd=f)
+        with open(login_file, "w", opener=private_open) as login_fd:
+            print(credentials, file=login_fd)
 
         # Now that the file has been written, we can just make it
         # owner-readable
         os.chmod(login_file, stat.S_IRUSR)
 
-        preamble = "Login successfully exported to {0!r}".format(login_file)
-        login_action = "snapcraft login --with {0}".format(login_file)
+        preamble = f"Login successfully exported to {login_file!r}"
+        credentials_action = f"{storeapi.constants.ENVIRONMENT_STORE_CREDENTIALS}=$(cat {login_file}) snapcraft <store-command>"
 
     print()
     echo.info(
         dedent(
-            """\
-        {}. This can now be used with
+            f"""\
+        {preamble}. Any store action that now requires authentication can be used by running
 
-            {}
+            {credentials_action}
 
-        """.format(
-                preamble, login_action
-            )
+        """
         )
     )
     try:
@@ -811,6 +831,13 @@ def login(login_file, experimental_login: bool):
     If you do not have an Ubuntu One account, you can create one at
     https://snapcraft.io/account
     """
+    if login_file:
+        raise click.BadOptionUsage(
+            "--with",
+            "--with is no longer supported, export the auth to the environment "
+            f"variable {storeapi.constants.ENVIRONMENT_STORE_CREDENTIALS!r} instead",
+        )
+
     if experimental_login:
         raise click.BadOptionUsage(
             "--experimental-login",
@@ -819,18 +846,9 @@ def login(login_file, experimental_login: bool):
         )
 
     store_client = storeapi.StoreClient()
-    snapcraft_legacy.login(store_client=store_client, config_fd=login_file)
+    snapcraft_legacy.login(store_client=store_client)
 
-    print()
-    if login_file:
-        try:
-            human_acls = _human_readable_acls(store_client)
-            echo.info("Login successful. You now have these capabilities:\n")
-            echo.info(human_acls)
-        except NotImplementedError:
-            echo.info("Login successful.")
-    else:
-        echo.info("Login successful.")
+    echo.info("Login successful.")
 
 
 @storecli.command()

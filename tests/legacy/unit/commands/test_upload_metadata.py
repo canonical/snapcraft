@@ -25,7 +25,7 @@ import tests.legacy
 from snapcraft_legacy import storeapi
 from snapcraft_legacy.storeapi.errors import StoreUploadError
 
-from . import CommandBaseTestCase
+from . import FAKE_UNAUTHORIZED_ERROR, CommandBaseTestCase
 
 
 class UploadMetadataCommandTestCase(CommandBaseTestCase):
@@ -140,6 +140,9 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
         self.fake_store_login = fixtures.MockPatchObject(storeapi.StoreClient, "login")
         self.useFixture(self.fake_store_login)
 
+        self.fake_store_login = fixtures.MockPatchObject(storeapi.StoreClient, "logout")
+        self.useFixture(self.fake_store_login)
+
         self.fake_store_account_info = fixtures.MockPatchObject(
             storeapi._dashboard_api.DashboardAPI,
             "get_account_information",
@@ -162,7 +165,7 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
         self.useFixture(self.fake_store_account_info)
 
         self.fake_metadata.mock.side_effect = [
-            storeapi.http_clients.errors.InvalidCredentialsError("error"),
+            FAKE_UNAUTHORIZED_ERROR,
             None,
         ]
 

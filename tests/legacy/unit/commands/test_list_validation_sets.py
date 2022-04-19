@@ -58,6 +58,7 @@ combinations = [
 ]
 
 
+@pytest.mark.usefixtures("memory_keyring")
 @pytest.mark.parametrize("combo,", combinations)
 def test_no_sets(click_run, fake_dashboard_get_validation_sets, combo):
     cmd = ["list-validation-sets"]
@@ -75,6 +76,7 @@ def test_no_sets(click_run, fake_dashboard_get_validation_sets, combo):
     )
 
 
+@pytest.mark.usefixtures("memory_keyring")
 def test_list_validation_sets(click_run, fake_dashboard_get_validation_sets):
     fake_dashboard_get_validation_sets.return_value = validation_sets.ValidationSets.unmarshal(
         {
@@ -141,5 +143,6 @@ def test_list_validation_sets(click_run, fake_dashboard_get_validation_sets):
         """
     )
     fake_dashboard_get_validation_sets.assert_called_once_with(
-        name=None, sequence=None,
+        name=None,
+        sequence=None,
     )

@@ -27,8 +27,6 @@ account_info_data = {"snaps": {"16": {"core": {"snap-id": "good"}}}}
 
 class GatedCommandTestCase(StoreCommandsBaseTestCase):
     def test_gated_unknown_snap(self):
-        self.client.login(email="dummy", password="test correct password")
-
         raised = self.assertRaises(
             snapcraft_legacy.storeapi.errors.SnapNotFoundError,
             self.run_command,
@@ -38,8 +36,6 @@ class GatedCommandTestCase(StoreCommandsBaseTestCase):
         self.assertThat(str(raised), Equals("Snap 'notfound' was not found."))
 
     def test_gated_success(self):
-        self.client.login(email="dummy", password="test correct password")
-
         result = self.run_command(["gated", "core"])
 
         self.assertThat(result.exit_code, Equals(0))
@@ -53,8 +49,6 @@ class GatedCommandTestCase(StoreCommandsBaseTestCase):
         self.assertThat(result.output, Contains(expected_output))
 
     def test_gated_no_validations(self):
-        self.client.login(email="dummy", password="test correct password")
-
         result = self.run_command(["gated", "test-snap-with-no-validations"])
 
         self.assertThat(result.exit_code, Equals(0))

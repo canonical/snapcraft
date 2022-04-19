@@ -18,6 +18,8 @@ import hashlib
 import json
 import os
 
+import craft_store
+
 from snapcraft_legacy.storeapi.errors import StoreMetadataError
 
 
@@ -43,12 +45,12 @@ class StoreMetadataHandler:
             "Accept": "application/json",
         }
         method = "PUT" if force else "POST"
-        response = self._request(
-            method, url, data=json.dumps(metadata), headers=headers
-        )
-
-        if not response.ok:
-            raise StoreMetadataError(self.snap_name, response, metadata)
+        try:
+            self._request(method, url, json=metadata, headers=headers)
+        except craft_store.errors.StoreServerError as store_error:
+            raise StoreMetadataError(
+                self.snap_name, store_error.response, metadata
+            ) from store_error
 
     def _current_binary_metadata(self):
         """Get current icons and screenshots as set in the store."""
@@ -119,8 +121,11 @@ class StoreMetadataHandler:
             "Accept": "application/json",
         }
         method = "PUT" if force else "POST"
-        response = self._request(method, url, data=data, files=files, headers=headers)
-        if not response.ok:
+        try:
+            self._request(method, url, data=data, files=files, headers=headers)
+        except craft_store.errors.StoreServerError as store_error:
             icon = metadata.get("icon")
             icon_name = os.path.basename(icon.name) if icon else None
-            raise StoreMetadataError(self.snap_name, response, {"icon": icon_name})
+            raise StoreMetadataError(
+                self.snap_name, store_error.response, {"icon": icon_name}
+            ) from store_error

@@ -245,7 +245,8 @@ class FakeStore(fixtures.Fixture):
         self.useFixture(self.fake_store_upload_server_fixture)
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "STORE_UPLOAD_URL", self.fake_store_upload_server_fixture.url,
+                "STORE_UPLOAD_URL",
+                self.fake_store_upload_server_fixture.url,
             )
         )
 
@@ -261,7 +262,8 @@ class FakeStore(fixtures.Fixture):
         self.useFixture(self.fake_store_search_server_fixture)
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "STORE_API_URL", self.fake_store_search_server_fixture.url,
+                "STORE_API_URL",
+                self.fake_store_search_server_fixture.url,
             )
         )
 
@@ -281,7 +283,7 @@ class FakeServerRunning(fixtures.Fixture):
         server_thread = threading.Thread(target=self.server.serve_forever)
         server_thread.start()
         self.addCleanup(self._stop_fake_server, server_thread)
-        self.url = "http://localhost:{}/".format(self.server.server_port)
+        self.url = "http://localhost:{}".format(self.server.server_port)
 
     def _stop_fake_server(self, thread):
         self.server.shutdown()
@@ -336,22 +338,24 @@ class StagingStore(fixtures.Fixture):
         super().setUp()
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "STORE_DASHBOARD_URL", "https://dashboard.staging.snapcraft.io/",
+                "STORE_DASHBOARD_URL",
+                "https://dashboard.staging.snapcraft.io",
             )
         )
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "STORE_UPLOAD_URL", "https://upload.apps.staging.ubuntu.com/",
+                "STORE_UPLOAD_URL",
+                "https://storage.staging.snapcraftcontent.com",
             )
         )
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "UBUNTU_ONE_SSO_URL", "https://login.staging.ubuntu.com/"
+                "UBUNTU_ONE_SSO_URL", "https://login.staging.ubuntu.com"
             )
         )
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "STORE_API_URL", "https://api.staging.snapcraft.io/"
+                "STORE_API_URL", "https://api.staging.snapcraft.io"
             )
         )
 

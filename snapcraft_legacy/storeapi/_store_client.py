@@ -16,14 +16,16 @@
 
 import logging
 import os
+import platform
 from time import sleep
-from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
+import craft_store
 import requests
 
 from snapcraft_legacy.internal.indicators import download_requests_stream
 
-from . import _upload, constants, errors, http_clients, metrics
+from . import _upload, agent, constants, errors, metrics
 from ._dashboard_api import DashboardAPI
 from ._snap_api import SnapAPI
 from ._up_down_client import UpDownClient
@@ -33,16 +35,46 @@ from .v2 import channel_map, releases, validation_sets, whoami
 logger = logging.getLogger(__name__)
 
 
+def _get_hostname() -> str:
+    """Return the computer's network name or UNNKOWN if it cannot be determined."""
+    hostname = platform.node()
+    if not hostname:
+        hostname = "UNKNOWN"
+    return hostname
+
+
 class StoreClient:
     """High-level client Snap resources."""
 
-    def __init__(self) -> None:
-        self.client = http_clients.Client()
+    def __init__(self, ephemeral=False) -> None:
+        user_agent = agent.get_user_agent()
+
+        self._root_url = os.getenv("STORE_DASHBOARD_URL", constants.STORE_DASHBOARD_URL)
+        storage_base_url = os.getenv("STORE_UPLOAD_URL", constants.STORE_UPLOAD_URL)
+
+        self.client = craft_store.HTTPClient(user_agent=user_agent)
 
         if self.use_candid() is True:
-            self.auth_client: http_clients.AuthClient = http_clients.CandidClient()
+            self.auth_client = craft_store.StoreClient(
+                application_name="snapcraft",
+                base_url=self._root_url,
+                storage_base_url=storage_base_url,
+                endpoints=craft_store.endpoints.SNAP_STORE,
+                user_agent=user_agent,
+                environment_auth=constants.ENVIRONMENT_STORE_CREDENTIALS,
+                ephemeral=ephemeral,
+            )
         else:
-            self.auth_client = http_clients.UbuntuOneAuthClient()
+            self.auth_client = craft_store.UbuntuOneStoreClient(
+                application_name="snapcraft",
+                base_url=self._root_url,
+                storage_base_url=storage_base_url,
+                auth_url=os.getenv("UBUNTU_ONE_SSO_URL", constants.UBUNTU_ONE_SSO_URL),
+                endpoints=craft_store.endpoints.U1_SNAP_STORE,
+                user_agent=user_agent,
+                environment_auth=constants.ENVIRONMENT_STORE_CREDENTIALS,
+                ephemeral=ephemeral,
+            )
 
         self.snap = SnapAPI(self.client)
         self.dashboard = DashboardAPI(self.auth_client)
@@ -55,16 +87,12 @@ class StoreClient:
     def login(
         self,
         *,
-        acls: Iterable[str] = None,
-        channels: Iterable[str] = None,
-        packages: Iterable[Dict[str, str]] = None,
-        expires: str = None,
-        config_fd: TextIO = None,
+        ttl: int,
+        acls: Optional[Sequence[str]] = None,
+        channels: Optional[Sequence[str]] = None,
+        packages: Optional[Sequence[str]] = None,
         **kwargs,
-    ) -> None:
-        if config_fd is not None:
-            return self.auth_client.login(config_fd=config_fd, **kwargs)
-
+    ) -> str:
         if acls is None:
             acls = [
                 "package_access",
@@ -76,16 +104,20 @@ class StoreClient:
                 "package_update",
             ]
 
-        macaroon = self.dashboard.get_macaroon(
-            acls=acls,
-            packages=packages,
-            channels=channels,
-            expires=expires,
-        )
-        self.auth_client.login(macaroon=macaroon, **kwargs)
+        if channels is None:
+            channels = []
 
-    def export_login(self, *, config_fd: TextIO, encode=False) -> None:
-        self.auth_client.export_login(config_fd=config_fd, encode=encode)
+        if packages is None:
+            packages = []
+
+        return self.auth_client.login(
+            permissions=acls,
+            description=f"snapcraft@{_get_hostname()}",
+            ttl=ttl,
+            channels=channels,
+            packages=[craft_store.endpoints.Package(p, "snap") for p in packages],
+            **kwargs,
+        )
 
     def logout(self):
         self.auth_client.logout()
@@ -219,8 +251,9 @@ class StoreClient:
     def close_channels(self, snap_id, channel_names):
         return self.dashboard.close_channels(snap_id, channel_names)
 
+    @classmethod
     def download(
-        self,
+        cls,
         snap_name,
         *,
         risk: str,
@@ -229,7 +262,7 @@ class StoreClient:
         arch: Optional[str] = None,
         except_hash: str = "",
     ):
-        snap_info = self.snap.get_info(snap_name)
+        snap_info = SnapAPI().get_info(snap_name)
         channel_mapping = snap_info.get_channel_mapping(
             risk=risk, track=track, arch=arch
         )
@@ -239,12 +272,13 @@ class StoreClient:
         try:
             channel_mapping.download.verify(download_path)
         except errors.StoreDownloadError:
-            self._download_snap(channel_mapping.download, download_path)
+            cls._download_snap(channel_mapping.download, download_path)
 
         channel_mapping.download.verify(download_path)
         return channel_mapping.download.sha3_384
 
-    def _download_snap(self, download_details, download_path):
+    @classmethod
+    def _download_snap(cls, download_details, download_path):
         # we only resume when redirected to our CDN since we use internap's
         # special sauce.
         total_read = 0
@@ -265,7 +299,7 @@ class StoreClient:
             if resume_possible and os.path.exists(download_path):
                 total_read = os.path.getsize(download_path)
                 headers["Range"] = "bytes={}-".format(total_read)
-            request = self.client.request(
+            request = craft_store.HTTPClient(user_agent=agent.get_user_agent()).request(
                 "GET", download_url, headers=headers, stream=True
             )
             request.raise_for_status()

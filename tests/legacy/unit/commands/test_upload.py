@@ -14,11 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
 import logging
 import os
 from unittest import mock
 
+import craft_store
 import fixtures
+import requests
 from testtools.matchers import Contains, Equals, FileExists, Not
 from xdg import BaseDirectory
 
@@ -31,7 +34,7 @@ from snapcraft_legacy.storeapi.errors import (
     StoreUploadError,
 )
 
-from . import FakeStoreCommandsBaseTestCase
+from . import FAKE_UNAUTHORIZED_ERROR, FakeResponse, FakeStoreCommandsBaseTestCase
 
 
 class UploadCommandBaseTestCase(FakeStoreCommandsBaseTestCase):
@@ -159,7 +162,7 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
 
     def test_upload_without_login_must_ask(self):
         self.fake_store_upload_precheck.mock.side_effect = [
-            storeapi.http_clients.errors.InvalidCredentialsError("error"),
+            FAKE_UNAUTHORIZED_ERROR,
             None,
         ]
 
@@ -459,22 +462,22 @@ class UploadCommandDeltasTestCase(UploadCommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
 
-        class _FakeResponse:
-            status_code = 501
-            reason = "disabled"
-
-            def json(self):
-                return {
-                    "error_list": [
-                        {
-                            "code": "feature-disabled",
-                            "message": "The delta upload support is currently disabled.",
-                        }
-                    ]
-                }
-
         self.fake_store_upload.mock.side_effect = [
-            storeapi.http_clients.errors.StoreServerError(_FakeResponse()),
+            craft_store.errors.StoreServerError(
+                FakeResponse(
+                    status_code=requests.codes.not_implemented,
+                    content=json.dumps(
+                        {
+                            "error_list": [
+                                {
+                                    "code": "feature-disabled",
+                                    "message": "The delta upload support is currently disabled.",
+                                }
+                            ]
+                        }
+                    ),
+                )
+            ),
             self.mock_tracker,
         ]
 
