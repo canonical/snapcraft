@@ -32,6 +32,12 @@ class Socket(YamlModel):
     listen_stream: Union[int, str]
     socket_mode: Optional[int]
 
+    class Config:  # pylint: disable=too-few-public-methods
+        """Pydantic model configuration."""
+
+        allow_population_by_field_name = True
+        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+
 
 class SnapApp(YamlModel):
     """Snap.yaml app entry.
@@ -177,7 +183,9 @@ def write(project: Project, prime_dir: Path, *, arch: str, version: str, grade: 
     )
 
     yaml.add_representer(str, _repr_str, Dumper=yaml.SafeDumper)
-    yaml_data = snap_metadata.yaml(exclude_none=True, sort_keys=False, width=1000)
+    yaml_data = snap_metadata.yaml(
+        by_alias=True, exclude_none=True, sort_keys=False, width=1000
+    )
 
     snap_yaml = meta_dir / "snap.yaml"
     snap_yaml.write_text(yaml_data)
