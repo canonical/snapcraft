@@ -55,6 +55,7 @@ class PartsLifecycle:
         package_repositories: List[Dict[str, Any]],
         part_names: Optional[List[str]],
         adopt_info: Optional[str],
+        project_name: str,
         project_vars: Dict[str, str],
     ):
         self._assets_dir = assets_dir
@@ -79,6 +80,7 @@ class PartsLifecycle:
                 work_dir=work_dir,
                 cache_dir=cache_dir,
                 ignore_local_sources=["*.snap"],
+                project_name=project_name,
                 project_vars_part_name=adopt_info,
                 project_vars=project_vars,
             )

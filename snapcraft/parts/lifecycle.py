@@ -167,6 +167,7 @@ def _run_command(
         package_repositories=project.package_repositories,
         part_names=part_names,
         adopt_info=project.adopt_info,
+        project_name=project.name,
         project_vars={
             "version": project.version or "",
             "grade": project.grade,
