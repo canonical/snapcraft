@@ -341,6 +341,60 @@ def test_lifecycle_pack_not_managed(cmd, snapcraft_yaml, new_dir, mocker):
     ]
 
 
+@pytest.mark.parametrize("cmd", ["pack", "snap"])
+def test_lifecycle_pack_metadata_error(cmd, snapcraft_yaml, new_dir, mocker):
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch("snapcraft.utils.is_managed_mode", return_value=True)
+    mocker.patch(
+        "snapcraft.utils.get_managed_environment_home_path",
+        return_value=new_dir / "home",
+    )
+    mocker.patch(
+        "snapcraft.parts.PartsLifecycle.project_vars",
+        new_callable=PropertyMock,
+        return_value={"version": "0.1", "grade": "invalid"},  # invalid value
+    )
+    pack_mock = mocker.patch("snapcraft.pack.pack_snap")
+    mocker.patch("snapcraft.meta.snap_yaml.write")
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        parts_lifecycle._run_command(
+            cmd,
+            project=project,
+            assets_dir=Path(),
+            parsed_args=argparse.Namespace(
+                directory=None,
+                output=None,
+                destructive_mode=False,
+                use_lxd=False,
+                parts=[],
+            ),
+        )
+
+    assert str(raised.value) == (
+        "error setting grade: unexpected value; permitted: 'stable', 'devel'"
+    )
+    assert run_mock.mock_calls == [call("prime")]
+    assert pack_mock.mock_calls == []
+
+
+@pytest.mark.parametrize("field", ["version", "summary", "description", "grade"])
+def test_lifecycle_metadata_empty(field, snapcraft_yaml):
+    """Adoptable fields shouldn't be empty after adoption."""
+    yaml_data = snapcraft_yaml(base="core22")
+    yaml_data.pop(field)
+    yaml_data["adopt-info"] = "part"
+    project = Project.unmarshal(yaml_data)
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        parts_lifecycle._update_project_metadata(
+            project, project_vars={"version": "", "grade": ""}
+        )
+
+    assert str(raised.value) == f"Field {field!r} was not adopted from metadata"
+
+
 def test_lifecycle_run_command_clean(snapcraft_yaml, project_vars, new_dir, mocker):
     """Clean provider project when called without parts."""
     project = Project.unmarshal(snapcraft_yaml(base="core22"))

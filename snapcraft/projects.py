@@ -17,10 +17,7 @@
 """Project file definition and helpers."""
 
 import re
-
-# XXX: mypy doesn't like Literal
-from typing import Literal  # type: ignore
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
 
 import pydantic
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
@@ -39,7 +36,7 @@ class ProjectModel(pydantic.BaseModel):
 
         validate_assignment = True
         extra = "allow"  # FIXME: change to 'forbid' after model complete
-        allow_mutation = False
+        allow_mutation = True
         allow_population_by_field_name = True
         alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
 
@@ -248,14 +245,14 @@ class Project(ProjectModel):
     issues: Optional[Union[str, UniqueStrList]]
     source_code: Optional[str]
     website: Optional[str]
-    summary: constr(max_length=78)  # type: ignore
-    description: str
+    summary: Optional[constr(max_length=78)]  # type: ignore
+    description: Optional[str]
     type: Literal["app", "base", "gadget", "kernel", "snapd"] = "app"
     icon: Optional[str]
     confinement: Literal["classic", "devmode", "strict"]
     layout: Optional[Dict[str, Dict[str, Any]]]
     license: Optional[str]
-    grade: Literal["stable", "devel"]
+    grade: Optional[Literal["stable", "devel"]]
     architectures: List[Architecture] = []
     assumes: UniqueStrList = []
     package_repositories: List[Dict[str, Any]] = []  # handled by repo
@@ -289,9 +286,10 @@ class Project(ProjectModel):
 
     @pydantic.root_validator(pre=True)
     @classmethod
-    def _validate_mandatory_version(cls, values):
-        if "version" not in values and "adopt-info" not in values:
-            raise ValueError("Snap version is required if not using adopt-info")
+    def _validate_adoptable_fields(cls, values):
+        for field in ("version", "summary", "description", "grade"):
+            if field not in values and "adopt-info" not in values:
+                raise ValueError(f"Snap {field} is required if not using adopt-info")
         return values
 
     @pydantic.root_validator(pre=True)
@@ -330,7 +328,9 @@ class Project(ProjectModel):
         if not version and "adopt_info" not in values:
             raise ValueError("Version must be declared if not adopting metadata")
 
-        if not re.match(r"^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$", version):
+        if version and not re.match(
+            r"^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$", version
+        ):
             raise ValueError(
                 "Snap versions consist of upper- and lower-case alphanumeric characters, "
                 "as well as periods, colons, plus signs, tildes, and hyphens. They cannot "
@@ -339,6 +339,15 @@ class Project(ProjectModel):
             )
 
         return version
+
+    @pydantic.validator("grade", "summary", "description")
+    @classmethod
+    def _validate_adoptable_field(cls, field_value, values, field):
+        if not field_value and "adopt_info" not in values:
+            raise ValueError(
+                f"{field.name.capitalize()} must be declared if not adopting metadata"
+            )
+        return field_value
 
     @pydantic.validator("build_base", always=True)
     @classmethod

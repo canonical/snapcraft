@@ -132,17 +132,7 @@ class TestProjectDefaults:
 class TestProjectValidation:
     """Validate top-level project items."""
 
-    @pytest.mark.parametrize(
-        "field",
-        [
-            "name",
-            "summary",
-            "description",
-            "grade",
-            "confinement",
-            "parts",
-        ],
-    )
+    @pytest.mark.parametrize("field", ["name", "confinement", "parts"])
     def test_mandatory_fields(self, field, project_yaml_data):
         data = project_yaml_data()
         data.pop(field)
@@ -172,19 +162,27 @@ class TestProjectValidation:
             project = Project.unmarshal(data)
             assert project.base is None
 
-    def test_mandatory_version(self, project_yaml_data):
+    @pytest.mark.parametrize("field", ["version", "summary", "description", "grade"])
+    def test_adoptable_fields(self, field, project_yaml_data):
         data = project_yaml_data()
-        data.pop("version")
-        error = "Snap version is required if not using adopt-info"
+        data.pop(field)
+        error = f"Snap {field} is required if not using adopt-info"
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(data)
 
-    def test_version_not_required(self, project_yaml_data):
+    @pytest.mark.parametrize("field", ["version", "summary", "description", "grade"])
+    def test_adoptable_field_not_required(self, field, project_yaml_data):
         data = project_yaml_data()
-        data.pop("version")
+        data.pop(field)
         data["adopt-info"] = "part1"
         project = Project.unmarshal(data)
-        assert project.version is None
+        assert getattr(project, field) is None
+
+    @pytest.mark.parametrize("field", ["version", "summary", "description", "grade"])
+    def test_adoptable_field_assignment(self, field, project_yaml_data):
+        data = project_yaml_data()
+        project = Project.unmarshal(data)
+        setattr(project, field, None)
 
     @pytest.mark.parametrize(
         "name",
@@ -277,8 +275,7 @@ class TestProjectValidation:
                 Project.unmarshal(data)
 
     @pytest.mark.parametrize(
-        "confinement",
-        ["strict", "devmode", "classic", "_invalid"],
+        "confinement", ["strict", "devmode", "classic", "_invalid"]
     )
     def test_project_confinement(self, confinement, project_yaml_data):
         data = project_yaml_data(confinement=confinement)
@@ -291,10 +288,7 @@ class TestProjectValidation:
             with pytest.raises(errors.ProjectValidationError, match=error):
                 Project.unmarshal(data)
 
-    @pytest.mark.parametrize(
-        "grade",
-        ["devel", "stable", "_invalid"],
-    )
+    @pytest.mark.parametrize("grade", ["devel", "stable", "_invalid"])
     def test_project_grade(self, grade, project_yaml_data):
         data = project_yaml_data(grade=grade)
 
@@ -305,6 +299,18 @@ class TestProjectValidation:
             error = ".*unexpected value; permitted: 'stable', 'devel'"
             with pytest.raises(errors.ProjectValidationError, match=error):
                 Project.unmarshal(data)
+
+    @pytest.mark.parametrize("grade", ["devel", "stable", "_invalid"])
+    def test_project_grade_assignment(self, grade, project_yaml_data):
+        data = project_yaml_data()
+
+        project = Project.unmarshal(data)
+        if grade != "_invalid":
+            project.grade = grade
+        else:
+            error = ".*unexpected value; permitted: 'stable', 'devel'"
+            with pytest.raises(pydantic.ValidationError, match=error):
+                project.grade = grade
 
     def test_project_summary_valid(self, project_yaml_data):
         summary = "x" * 78
