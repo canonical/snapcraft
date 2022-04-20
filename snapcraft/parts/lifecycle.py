@@ -21,13 +21,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, cast
 
+import pydantic
 from craft_cli import EmitterMode, emit
 from craft_parts import infos
 
 from snapcraft import errors, extensions, pack, providers, utils
 from snapcraft.meta import snap_yaml
 from snapcraft.parts import PartsLifecycle
-from snapcraft.projects import GrammarAwareProject, Project
+from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, GrammarAwareProject, Project
 from snapcraft.providers import capture_logs_from_instance
 
 from . import grammar, yaml_utils
@@ -142,9 +143,7 @@ def _run_command(
         )
 
     if parsed_args.use_lxd and providers.get_platform_default_provider() == "lxd":
-        emit.message(
-            "LXD is used by default on this platform.", intermediate=True
-        )
+        emit.message("LXD is used by default on this platform.", intermediate=True)
 
     if not managed_mode and not parsed_args.destructive_mode:
         if command_name == "clean" and not part_names:
@@ -170,7 +169,7 @@ def _run_command(
         project_name=project.name,
         project_vars={
             "version": project.version or "",
-            "grade": project.grade,
+            "grade": project.grade or "",
         },
     )
     if command_name == "clean":
@@ -182,24 +181,13 @@ def _run_command(
     # Generate snap.yaml
     project_vars = lifecycle.project_vars
     if step_name == "prime" and not part_names:
-        version = project_vars["version"]
-        if not version:
-            raise errors.SnapcraftError("snap version cannot be empty")
-
-        # FIXME: refactor craft-parts to define validators for project variables
-        grade = project_vars["grade"]
-        if grade not in ("stable", "devel"):
-            raise errors.SnapcraftError(
-                f"invalid grade {grade!r}, must be either 'stable' or 'devel'"
-            )
+        _update_project_metadata(project, project_vars)
 
         emit.progress("Generating snap metadata...")
         snap_yaml.write(
             project,
             lifecycle.prime_dir,
             arch=lifecycle.target_arch,
-            version=version,
-            grade=grade,
         )
         emit.message("Generated snap metadata", intermediate=True)
 
@@ -209,6 +197,48 @@ def _run_command(
             output=parsed_args.output,
             compression=project.compression,
         )
+
+
+def _update_project_metadata(project: Project, project_vars: Dict[str, str]) -> None:
+    """Set project fields using corresponding adopted entries.
+
+    :param project: The project to update.
+    :param project_vars: The variables updated during lifecycle execution.
+
+    :raises SnapcraftError: If project update failed.
+    """
+    # Update project variables
+    try:
+        if project_vars["version"]:
+            project.version = project_vars["version"]
+        if project_vars["grade"]:
+            project.grade = project_vars["grade"]  # type: ignore
+    except pydantic.ValidationError as err:
+        _raise_formatted_validation_error(err)
+        raise errors.SnapcraftError(f"error setting variable: {err}")
+
+    # Fields that must not end empty
+    for field in MANDATORY_ADOPTABLE_FIELDS:
+        if not getattr(project, field):
+            raise errors.SnapcraftError(
+                f"Field {field!r} was not adopted from metadata"
+            )
+
+
+def _raise_formatted_validation_error(err: pydantic.ValidationError):
+    error_list = err.errors()
+    if len(error_list) != 1:
+        return
+
+    error = error_list[0]
+    loc = error.get("loc")
+    msg = error.get("msg")
+
+    if not (loc and msg) or not isinstance(loc, tuple):
+        return
+
+    varname = ".".join((x for x in loc if isinstance(x, str)))
+    raise errors.SnapcraftError(f"error setting {varname}: {msg}")
 
 
 def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None:
