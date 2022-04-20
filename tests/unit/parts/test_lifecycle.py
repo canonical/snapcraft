@@ -380,7 +380,7 @@ def test_lifecycle_pack_metadata_error(cmd, snapcraft_yaml, new_dir, mocker):
 
 
 @pytest.mark.parametrize("field", ["version", "summary", "description", "grade"])
-def test_lifecycle_metadata_empty(field, snapcraft_yaml):
+def test_lifecycle_metadata_empty(field, snapcraft_yaml, new_dir):
     """Adoptable fields shouldn't be empty after adoption."""
     yaml_data = snapcraft_yaml(base="core22")
     yaml_data.pop(field)
