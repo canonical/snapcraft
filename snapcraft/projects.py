@@ -36,7 +36,7 @@ class ProjectModel(pydantic.BaseModel):
 
         validate_assignment = True
         extra = "allow"  # FIXME: change to 'forbid' after model complete
-        allow_mutation = True
+        allow_mutation = True  # project is updated with adopted metadata
         allow_population_by_field_name = True
         alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
 
