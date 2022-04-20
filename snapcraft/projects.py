@@ -225,6 +225,9 @@ class ContentPlug(ProjectModel):
     default_provider: Optional[str]
 
 
+MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description", "grade")
+
+
 class Project(ProjectModel):
     """Snapcraft project definition.
 
@@ -287,7 +290,7 @@ class Project(ProjectModel):
     @pydantic.root_validator(pre=True)
     @classmethod
     def _validate_adoptable_fields(cls, values):
-        for field in ("version", "summary", "description", "grade"):
+        for field in MANDATORY_ADOPTABLE_FIELDS:
             if field not in values and "adopt-info" not in values:
                 raise ValueError(f"Snap {field} is required if not using adopt-info")
         return values

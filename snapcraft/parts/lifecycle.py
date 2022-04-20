@@ -28,7 +28,7 @@ from craft_parts import infos
 from snapcraft import errors, extensions, pack, providers, utils
 from snapcraft.meta import snap_yaml
 from snapcraft.parts import PartsLifecycle
-from snapcraft.projects import GrammarAwareProject, Project
+from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, GrammarAwareProject, Project
 from snapcraft.providers import capture_logs_from_instance
 
 from . import grammar, yaml_utils
@@ -143,9 +143,7 @@ def _run_command(
         )
 
     if parsed_args.use_lxd and providers.get_platform_default_provider() == "lxd":
-        emit.message(
-            "LXD is used by default on this platform.", intermediate=True
-        )
+        emit.message("LXD is used by default on this platform.", intermediate=True)
 
     if not managed_mode and not parsed_args.destructive_mode:
         if command_name == "clean" and not part_names:
@@ -219,11 +217,12 @@ def _update_project_metadata(project: Project, project_vars: Dict[str, str]) -> 
         raise errors.SnapcraftError(f"error setting variable: {err}")
 
     # Fields that must not end empty
-    for field in ("version", "grade", "summary", "description"):
+    for field in MANDATORY_ADOPTABLE_FIELDS:
         if not getattr(project, field):
             raise errors.SnapcraftError(
                 f"Field {field!r} was not adopted from metadata"
-        )
+            )
+
 
 def _raise_formatted_validation_error(err: pydantic.ValidationError):
     error_list = err.errors()

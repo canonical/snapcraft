@@ -20,7 +20,13 @@ import pydantic
 import pytest
 
 from snapcraft import errors
-from snapcraft.projects import ContentPlug, GrammarAwareProject, Hook, Project
+from snapcraft.projects import (
+    MANDATORY_ADOPTABLE_FIELDS,
+    ContentPlug,
+    GrammarAwareProject,
+    Hook,
+    Project,
+)
 
 # pylint: disable=too-many-lines
 
@@ -162,7 +168,15 @@ class TestProjectValidation:
             project = Project.unmarshal(data)
             assert project.base is None
 
-    @pytest.mark.parametrize("field", ["version", "summary", "description", "grade"])
+    def test_mandatory_adoptable_fields_definition(self):
+        assert MANDATORY_ADOPTABLE_FIELDS == (
+            "version",
+            "summary",
+            "description",
+            "grade",
+        )
+
+    @pytest.mark.parametrize("field", MANDATORY_ADOPTABLE_FIELDS)
     def test_adoptable_fields(self, field, project_yaml_data):
         data = project_yaml_data()
         data.pop(field)
@@ -170,7 +184,7 @@ class TestProjectValidation:
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(data)
 
-    @pytest.mark.parametrize("field", ["version", "summary", "description", "grade"])
+    @pytest.mark.parametrize("field", MANDATORY_ADOPTABLE_FIELDS)
     def test_adoptable_field_not_required(self, field, project_yaml_data):
         data = project_yaml_data()
         data.pop(field)
@@ -178,7 +192,7 @@ class TestProjectValidation:
         project = Project.unmarshal(data)
         assert getattr(project, field) is None
 
-    @pytest.mark.parametrize("field", ["version", "summary", "description", "grade"])
+    @pytest.mark.parametrize("field", MANDATORY_ADOPTABLE_FIELDS)
     def test_adoptable_field_assignment(self, field, project_yaml_data):
         data = project_yaml_data()
         project = Project.unmarshal(data)
