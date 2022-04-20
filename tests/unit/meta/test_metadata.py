@@ -14,7 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Snap metadata definitions and helpers."""
+from unittest.mock import call
 
-from .extracted_metadata import ExtractedMetadata  # noqa: F401
-from .metadata import extract_metadata  # noqa: F401
+from snapcraft import meta
+
+
+def test_extract_metadata(mocker):
+    mock_appstream_extract = mocker.patch("snapcraft.meta.appstream.extract")
+    meta.extract_metadata("some/file", workdir="workdir")
+
+    assert mock_appstream_extract.mock_calls == [
+        call("some/file", workdir="workdir"),
+    ]

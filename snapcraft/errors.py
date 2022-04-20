@@ -42,5 +42,12 @@ class ExtensionError(SnapcraftError):
     """Error during parts processing."""
 
 
+class MetadataExtractionError(SnapcraftError):
+    """Attempt to extract metadata from file was unsuccessful."""
+
+    def __init__(self, filename: str) -> None:
+        super().__init__(f"Error extracting metadata from {filename!r}")
+
+
 class LegacyFallback(Exception):
     """Fall back to legacy snapcraft implementation."""

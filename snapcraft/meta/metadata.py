@@ -14,7 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Snap metadata definitions and helpers."""
+"""External metadata helpers."""
 
-from .extracted_metadata import ExtractedMetadata  # noqa: F401
-from .metadata import extract_metadata  # noqa: F401
+from typing import Optional
+
+from . import appstream
+from .extracted_metadata import ExtractedMetadata
+
+
+def extract_metadata(file_relpath: str, *, workdir: str) -> Optional[ExtractedMetadata]:
+    """Retrieve external metadata from part files.
+
+    :param file_relpath: Relative path to the file containing metadata.
+    :param workdir: The part working directory where the metadata file is located.
+
+    :return: The extracted metadata, if any.
+    """
+    return appstream.extract(file_relpath, workdir=workdir)
