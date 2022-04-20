@@ -84,7 +84,7 @@ jobs:
         run: |
           # Secrets cannot be used in conditionals, so this is our dance:
           # https://github.com/actions/runner/issues/520
-          if [[ -n "${{ secrets.SNAP_STORE_MACAROON }}" ]]; then
+          if [[ -n "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}" ]]; then
             echo "::set-output name=RUN::true"
           else
             echo "::set-output name=RUN::"
@@ -107,8 +107,8 @@ jobs:
         name: Run spread
         env:
           SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
-          SNAP_STORE_MACAROON: ${{ secrets.SNAP_STORE_MACAROON }}
-          SNAP_STORE_CANDID_MACAROON: ${{ secrets.SNAP_STORE_CANDID_MACAROON }}
+          SNAPCRAFT_STORE_CREDENTIALS_STAGING: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}"
+          SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID }}"
         run: spread google:ubuntu-18.04-64:tests/spread/general/store
 
       - name: Discard spread workers

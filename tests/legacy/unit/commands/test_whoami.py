@@ -38,6 +38,7 @@ def fake_dashboard_whoami(monkeypatch):
     )
 
 
+@pytest.mark.usefixtures("memory_keyring")
 @pytest.mark.usefixtures("fake_dashboard_whoami")
 def test_whoami(click_run):
     result = click_run(["whoami"])

@@ -21,9 +21,11 @@ DEFAULT_SERIES = "16"
 SCAN_STATUS_POLL_DELAY = 5
 SCAN_STATUS_POLL_RETRIES = 5
 
-STORE_DASHBOARD_URL = "https://dashboard.snapcraft.io/"
-STORE_API_URL = "https://api.snapcraft.io/"
-STORE_UPLOAD_URL = "https://upload.apps.ubuntu.com/"
+STORE_DASHBOARD_URL = "https://dashboard.snapcraft.io"
+STORE_API_URL = "https://api.snapcraft.io"
+STORE_UPLOAD_URL = "storage.snapcraftcontent.com"
+
+UBUNTU_ONE_SSO_URL = "https://login.ubuntu.com"
 
 # Messages and warnings.
 MISSING_AGREEMENT = "Developer has not signed agreement."
@@ -46,6 +48,9 @@ TWO_FACTOR_WARNING = (
     "We strongly recommend enabling multi-factor authentication: "
     "https://help.ubuntu.com/community/SSO/FAQs/2FA"
 )
+
+ENVIRONMENT_STORE_CREDENTIALS = "SNAPCRAFT_STORE_CREDENTIALS"
+"""Environment variable where credentials can be picked up from."""
 
 ENVIRONMENT_STORE_AUTH = "SNAPCRAFT_STORE_AUTH"
 """Environment variable used to set an alterntive login method.

@@ -9,6 +9,7 @@ craft-cli==0.4.0
 craft-grammar==1.1.1
 craft-parts==1.4.2
 craft-providers==1.2.0
+craft-store==2.1.0
 cryptography==3.4
 Deprecated==1.2.13
 distro==1.7.0
@@ -28,7 +29,7 @@ macaroonbakery==1.3.1
 mypy-extensions==0.4.3
 oauthlib==3.2.0
 overrides==6.1.0
-platformdirs==2.5.1
+platformdirs==2.5.2
 progressbar==2.5
 protobuf==3.20.0
 psutil==5.9.0
@@ -38,7 +39,7 @@ pydantic-yaml==0.6.3
 pyelftools==0.28
 pylxd==2.3.1
 pymacaroons==0.13.0
-pyparsing==3.0.7
+pyparsing==3.0.8
 pyRFC3339==1.1
 python-dateutil==2.8.2
 python-debian==0.1.43
@@ -49,7 +50,7 @@ raven==6.10.0
 requests==2.27.1
 requests-toolbelt==0.9.1
 requests-unixsocket==0.3.0
-SecretStorage==3.3.1
+SecretStorage==3.3.2
 semantic-version==2.9.0
 semver==2.13.0
 simplejson==3.17.6
@@ -57,9 +58,9 @@ six==1.16.0
 tabulate==0.8.9
 tinydb==4.7.0
 toml==0.10.2
-types-Deprecated==1.2.5
+types-Deprecated==1.2.6
 typing-utils==0.1.0
-typing_extensions==4.1.1
+typing_extensions==4.2.0
 urllib3==1.26.9
 wadllib==1.3.6
 wrapt==1.14.0

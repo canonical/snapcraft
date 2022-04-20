@@ -16,8 +16,10 @@
 
 import os
 
+import keyring
 import pytest
 import xdg
+from craft_store.auth import MemoryKeyring
 
 
 @pytest.fixture(autouse=True)
@@ -48,3 +50,12 @@ def new_dir(tmp_path):
     yield tmp_path
 
     os.chdir(cwd)
+
+
+@pytest.fixture
+def memory_keyring():
+    """In memory keyring backend for testing."""
+    current_keyring = keyring.get_keyring()
+    keyring.set_keyring(MemoryKeyring())
+    yield
+    keyring.set_keyring(current_keyring)

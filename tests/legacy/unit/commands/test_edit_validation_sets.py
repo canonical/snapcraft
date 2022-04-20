@@ -99,6 +99,7 @@ def fake_snap_sign():
     patched_snap_sign.stop()
 
 
+@pytest.mark.usefixtures("memory_keyring")
 @pytest.mark.usefixtures("mock_subprocess_run")
 def test_edit_validation_sets_with_no_changes_to_existing_set(
     click_run,
@@ -135,6 +136,7 @@ def fake_edit_validation_sets():
     patched_edit_validation_sets.stop()
 
 
+@pytest.mark.usefixtures("memory_keyring")
 @pytest.mark.parametrize("key_name", [None, "general", "main"])
 def test_edit_validation_sets_with_changes_to_existing_set(
     click_run,
@@ -201,7 +203,8 @@ def test_edit_validation_sets_with_changes_to_existing_set(
         ).encode()
     )
     fake_snap_sign.assert_called_once_with(
-        validation_sets_payload.assertions[0].marshal(), key_name=key_name,
+        validation_sets_payload.assertions[0].marshal(),
+        key_name=key_name,
     )
     assert result.exit_code == 0
     assert result.output.strip() == ""

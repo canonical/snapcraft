@@ -35,8 +35,6 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
         self.popen_mock.return_value = rv_mock
         self.addCleanup(patcher.stop)
 
-        self.client.login(email="dummy", password="test correct password")
-
     def test_validate_success(self):
         result = self.run_command(["validate", "core", "core=3", "test-snap=4"])
 

@@ -20,9 +20,7 @@ from textwrap import dedent
 import fixtures
 from testtools.matchers import Contains, Equals
 
-from snapcraft_legacy import storeapi
-
-from . import FakeStoreCommandsBaseTestCase
+from . import FAKE_UNAUTHORIZED_ERROR, FakeStoreCommandsBaseTestCase
 
 
 class RevisionsCommandTestCase(FakeStoreCommandsBaseTestCase):
@@ -37,7 +35,7 @@ class RevisionsCommandTestCase(FakeStoreCommandsBaseTestCase):
 
     def test_revisions_without_login_must_ask(self):
         self.fake_store_get_releases.mock.side_effect = [
-            storeapi.http_clients.errors.InvalidCredentialsError("error"),
+            FAKE_UNAUTHORIZED_ERROR,
             self.releases,
         ]
 

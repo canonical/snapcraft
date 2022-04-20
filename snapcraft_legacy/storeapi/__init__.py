@@ -20,7 +20,6 @@ from . import errors  # isort:skip
 from . import channels  # isort:skip
 from . import constants  # isort:skip
 from . import status  # isort:skip
-from . import http_clients  # isort: skip
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +32,6 @@ __all__ = [
     "channels",
     "constants",
     "status",
-    "http_clients",
     "SnapAPI",
     "StoreClient",
 ]

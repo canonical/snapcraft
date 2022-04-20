@@ -48,9 +48,8 @@ class RegisterKeyTestCase(FakeStoreCommandsBaseTestCase):
             acls=["modify_account_key"],
             packages=None,
             channels=None,
-            expires=None,
-            save=False,
-            config_fd=None,
+            # one day
+            ttl=86400,
         )
         self.fake_store_register_key.mock.call_once_with(
             dedent(
@@ -83,29 +82,13 @@ class RegisterKeyTestCase(FakeStoreCommandsBaseTestCase):
             str(raised), Contains("You have no usable key named 'nonexistent'")
         )
 
-    def test_register_key_login_failed(self):
-        self.fake_store_login.mock.side_effect = storeapi.http_clients.errors.InvalidCredentialsError(
-            "error"
-        )
-
-        raised = self.assertRaises(
-            storeapi.http_clients.errors.InvalidCredentialsError,
-            self.run_command,
-            ["register-key", "default"],
-            input="user@example.com\nsecret\n",
-        )
-
-        assert (
-            str(raised) == 'Invalid credentials: error. Have you run "snapcraft login"?'
-        )
-
     def test_register_key_account_info_failed(self):
         response = mock.Mock()
         response.json.side_effect = JSONDecodeError("mock-fail", "doc", 1)
         response.status_code = 500
         response.reason = "Internal Server Error"
-        self.fake_store_account_info.mock.side_effect = storeapi.errors.StoreAccountInformationError(
-            response
+        self.fake_store_account_info.mock.side_effect = (
+            storeapi.errors.StoreAccountInformationError(response)
         )
 
         # Fake the login check
@@ -132,8 +115,8 @@ class RegisterKeyTestCase(FakeStoreCommandsBaseTestCase):
         response.json.side_effect = JSONDecodeError("mock-fail", "doc", 1)
         response.status_code = 500
         response.reason = "Internal Server Error"
-        self.fake_store_register_key.mock.side_effect = storeapi.errors.StoreKeyRegistrationError(
-            response
+        self.fake_store_register_key.mock.side_effect = (
+            storeapi.errors.StoreKeyRegistrationError(response)
         )
 
         raised = self.assertRaises(

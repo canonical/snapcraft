@@ -18,9 +18,7 @@ from textwrap import dedent
 
 from testtools.matchers import Contains, Equals
 
-from snapcraft_legacy import storeapi
-
-from . import FakeStoreCommandsBaseTestCase
+from . import FAKE_UNAUTHORIZED_ERROR, FakeStoreCommandsBaseTestCase
 
 
 class ListTest(FakeStoreCommandsBaseTestCase):
@@ -30,7 +28,7 @@ class ListTest(FakeStoreCommandsBaseTestCase):
     def test_command_without_login_must_ask(self):
         # TODO: look into why this many calls are done inside snapcraft_legacy.storeapi
         self.fake_store_account_info.mock.side_effect = [
-            storeapi.http_clients.errors.InvalidCredentialsError("error"),
+            FAKE_UNAUTHORIZED_ERROR,
             {"account_id": "abcd", "snaps": dict()},
             {"account_id": "abcd", "snaps": dict()},
             {"account_id": "abcd", "snaps": dict()},

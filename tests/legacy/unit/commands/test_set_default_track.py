@@ -20,7 +20,7 @@ from testtools.matchers import Contains, Equals
 import snapcraft_legacy
 from snapcraft_legacy import storeapi
 
-from . import FakeStoreCommandsBaseTestCase
+from . import FAKE_UNAUTHORIZED_ERROR, FakeStoreCommandsBaseTestCase
 
 
 class SetDefaultTrackCommandTestCase(FakeStoreCommandsBaseTestCase):
@@ -40,7 +40,7 @@ class SetDefaultTrackCommandTestCase(FakeStoreCommandsBaseTestCase):
 
     def test_set_default_track_without_login_must_ask(self):
         self.fake_metadata.mock.side_effect = [
-            storeapi.http_clients.errors.InvalidCredentialsError("error"),
+            FAKE_UNAUTHORIZED_ERROR,
             None,
         ]
 

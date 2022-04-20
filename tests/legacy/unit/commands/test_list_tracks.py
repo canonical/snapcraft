@@ -18,9 +18,7 @@ from textwrap import dedent
 
 from testtools.matchers import Contains, Equals
 
-from snapcraft_legacy import storeapi
-
-from . import FakeStoreCommandsBaseTestCase
+from . import FAKE_UNAUTHORIZED_ERROR, FakeStoreCommandsBaseTestCase
 
 
 class ListTracksCommandTestCase(FakeStoreCommandsBaseTestCase):
@@ -32,7 +30,7 @@ class ListTracksCommandTestCase(FakeStoreCommandsBaseTestCase):
 
     def test_list_tracks_without_login_must_ask(self):
         self.fake_store_get_snap_channel_map.mock.side_effect = [
-            storeapi.http_clients.errors.InvalidCredentialsError("error"),
+            FAKE_UNAUTHORIZED_ERROR,
             self.channel_map,
         ]
 

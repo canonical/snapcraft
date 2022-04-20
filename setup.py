@@ -98,6 +98,7 @@ install_requires = [
     "craft-grammar",
     "craft-parts",
     "craft-providers",
+    "craft-store",
     "cryptography==3.4",
     "gnupg",
     "jsonschema==2.5.1",

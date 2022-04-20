@@ -16,14 +16,14 @@
 
 import json
 import logging
-import os
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlencode, urljoin
+import craft_store
 
 import requests
 from simplejson.scanner import JSONDecodeError
 
-from . import _metadata, constants, errors, http_clients, metrics
+from . import _metadata, constants, errors, metrics
 from ._requests import Requests
 from ._status_tracker import StatusTracker
 from .v2 import channel_map, releases, validation_sets, whoami
@@ -38,79 +38,65 @@ class DashboardAPI(Requests):
     at https://dashboard.snapcraft.io/docs/.
     """
 
-    def __init__(self, auth_client: http_clients.AuthClient) -> None:
+    def __init__(self, auth_client: craft_store.BaseClient) -> None:
+        super().__init__()
+
         self._auth_client = auth_client
-        self._root_url = os.environ.get(
-            "STORE_DASHBOARD_URL", constants.STORE_DASHBOARD_URL
-        )
 
     def _request(self, method: str, urlpath: str, **kwargs) -> requests.Response:
-        url = urljoin(self._root_url, urlpath)
+        url = urljoin(self._auth_client._base_url, urlpath)
         response = self._auth_client.request(method, url, **kwargs)
         logger.debug("Call to %s returned: %s", url, response.text)
         return response
 
-    def get_macaroon(
-        self,
-        *,
-        acls: Iterable[str],
-        packages: Optional[Iterable[Dict[str, str]]] = None,
-        channels: Optional[Iterable[str]] = None,
-        expires: Optional[Iterable[str]] = None,
-    ):
-        data: Dict[str, Any] = {"permissions": acls}
-        if packages is not None:
-            data["packages"] = packages
-        if channels is not None:
-            data["channels"] = channels
-        if expires is not None:
-            data["expires"] = expires
-
-        headers = {"Content-Type": "application/json", "Accept": "application/json"}
-
-        if isinstance(self._auth_client, http_clients.CandidClient):
-            urlpath = "/api/v2/tokens"
-        else:
-            urlpath = "/dev/api/acl/"
-
-        response = self.post(urlpath, json=data, headers=headers, auth_header=False)
-
-        if response.ok:
-            return response.json()["macaroon"]
-        else:
-            raise errors.GeneralStoreError("Failed to get macaroon", response)
-
     def verify_acl(self):
-        if not isinstance(self._auth_client, http_clients.UbuntuOneAuthClient):
+        if not isinstance(self._auth_client, craft_store.UbuntuOneStoreClient):
             raise NotImplementedError("Only supports UbuntuOneAuthClient.")
 
-        response = self.post(
-            "/dev/api/acl/verify/",
-            json={"auth_data": {"authorization": self._auth_client.auth}},
-            headers={"Accept": "application/json"},
-            auth_header=False,
-        )
-        if response.ok:
-            return response.json()
-        else:
-            raise errors.StoreAccountInformationError(response)
+        try:
+            response = self.post(
+                "/dev/api/acl/verify/",
+                json={
+                    "auth_data": {
+                        "authorization": self._auth_client._auth.get_credentials()
+                    }
+                },
+                headers={"Accept": "application/json"},
+            )
+        except craft_store.errors.StoreServerError as store_error:
+            raise errors.StoreAccountInformationError(
+                store_error.response
+            ) from store_error
+
+        return response.json()
 
     def get_account_information(self) -> Dict[str, Any]:
-        response = self.get("/dev/api/account", headers={"Accept": "application/json"})
-        if response.ok:
-            return response.json()
-        else:
-            raise errors.StoreAccountInformationError(response)
+        try:
+            response = self.get(
+                "/dev/api/account", headers={"Accept": "application/json"}
+            )
+        except craft_store.errors.StoreServerError as store_error:
+            raise errors.StoreAccountInformationError(
+                store_error.response
+            ) from store_error
+
+        return response.json()
 
     def register_key(self, account_key_request):
         data = {"account_key_request": account_key_request}
-        response = self.post(
-            "/dev/api/account/account-key",
-            data=json.dumps(data),
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-        )
-        if not response.ok:
-            raise errors.StoreKeyRegistrationError(response)
+        try:
+            self.post(
+                "/dev/api/account/account-key",
+                json=data,
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+        except craft_store.errors.StoreServerError as store_error:
+            raise errors.StoreKeyRegistrationError(
+                store_error.response
+            ) from store_error
 
     def register(
         self, snap_name: str, *, is_private: bool, series: str, store_id: Optional[str]
@@ -118,23 +104,32 @@ class DashboardAPI(Requests):
         data = dict(snap_name=snap_name, is_private=is_private, series=series)
         if store_id is not None:
             data["store"] = store_id
-        response = self.post(
-            "/dev/api/register-name/",
-            data=json.dumps(data),
-            headers={"Content-Type": "application/json"},
-        )
-        if not response.ok:
-            raise errors.StoreRegistrationError(snap_name, response)
+        try:
+            self.post(
+                "/dev/api/register-name/",
+                json=data,
+                headers={"Content-Type": "application/json"},
+            )
+        except craft_store.errors.StoreServerError as store_error:
+            raise errors.StoreRegistrationError(
+                snap_name, store_error.response
+            ) from store_error
 
-    def snap_upload_precheck(self, snap_name):
+    def snap_upload_precheck(self, snap_name) -> None:
         data = {"name": snap_name, "dry_run": True}
-        response = self.post(
-            "/dev/api/snap-push/",
-            data=json.dumps(data),
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-        )
-        if not response.ok:
-            raise errors.StoreUploadError(snap_name, response)
+        try:
+            self.post(
+                "/dev/api/snap-push/",
+                json=data,
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+        except craft_store.errors.StoreServerError as store_error:
+            raise errors.StoreUploadError(
+                snap_name, store_error.response
+            ) from store_error
 
     def snap_upload_metadata(
         self,
@@ -164,27 +159,37 @@ class DashboardAPI(Requests):
             data["built_at"] = built_at
         if channels is not None:
             data["channels"] = channels
-        response = self.post(
-            "/dev/api/snap-push/",
-            data=json.dumps(data),
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-        )
-        if not response.ok:
-            raise errors.StoreUploadError(data["name"], response)
+        try:
+            response = self.post(
+                "/dev/api/snap-push/",
+                json=data,
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+        except craft_store.errors.StoreServerError as store_error:
+            raise errors.StoreUploadError(
+                data["name"], store_error.response
+            ) from store_error
 
         return StatusTracker(response.json()["status_details_url"])
 
     def upload_metadata(self, snap_id, snap_name, metadata, force):
         """Upload the metadata to SCA."""
         metadata_handler = _metadata.StoreMetadataHandler(
-            request_method=self._request, snap_id=snap_id, snap_name=snap_name,
+            request_method=self._request,
+            snap_id=snap_id,
+            snap_name=snap_name,
         )
         metadata_handler.upload(metadata, force)
 
     def upload_binary_metadata(self, snap_id, snap_name, metadata, force):
         """Upload the binary metadata to SCA."""
         metadata_handler = _metadata.StoreMetadataHandler(
-            request_method=self._request, snap_id=snap_id, snap_name=snap_name,
+            request_method=self._request,
+            snap_id=snap_id,
+            snap_name=snap_name,
         )
         metadata_handler.upload_binary(metadata, force)
 
@@ -204,13 +209,19 @@ class DashboardAPI(Requests):
                 "percentage": progressive_percentage,
                 "paused": False,
             }
-        response = self.post(
-            "/dev/api/snap-release/",
-            data=json.dumps(data),
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-        )
-        if not response.ok:
-            raise errors.StoreReleaseError(data["name"], response)
+        try:
+            response = self.post(
+                "/dev/api/snap-release/",
+                json=data,
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+        except craft_store.errors.StoreServerError as store_error:
+            raise errors.StoreReleaseError(
+                data["name"], store_error.response
+            ) from store_error
 
         response_json = response.json()
 
@@ -231,14 +242,20 @@ class DashboardAPI(Requests):
         if force:
             url = url + "?ignore_revoked_uploads"
 
-        response = self.put(
-            url,
-            json=data,
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-        )
+        try:
+            response = self.put(
+                url,
+                json=data,
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+        except craft_store.errors.StoreServerError as craft_error:
+            raise errors.StoreValidationError(
+                snap_id, craft_error.response
+            ) from craft_error
 
-        if not response.ok:
-            raise errors.StoreValidationError(snap_id, response)
         try:
             response_json = response.json()
         except JSONDecodeError:
@@ -253,13 +270,20 @@ class DashboardAPI(Requests):
         return response_json
 
     def get_assertion(self, snap_id, endpoint, params=None):
-        response = self.get(
-            f"/dev/api/snaps/{snap_id}/{endpoint}",
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-            params=params,
-        )
-        if not response.ok:
-            raise errors.StoreValidationError(snap_id, response)
+        try:
+            response = self.get(
+                f"/dev/api/snaps/{snap_id}/{endpoint}",
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+                params=params,
+            )
+        except craft_store.errors.StoreServerError as craft_error:
+            raise errors.StoreValidationError(
+                snap_id, craft_error.response
+            ) from craft_error
+
         try:
             response_json = response.json()
         except JSONDecodeError:
@@ -279,9 +303,10 @@ class DashboardAPI(Requests):
         headers = {
             "Content-Type": "application/json",
         }
-        response = self.post(url, data=data, headers=headers)
-        if not response.ok:
-            raise errors.StoreSnapBuildError(response)
+        try:
+            self.post(url, data=data, headers=headers)
+        except craft_store.errors.StoreServerError as craft_error:
+            raise errors.StoreSnapBuildError(craft_error.response) from craft_error
 
     def snap_status(self, snap_id, series, arch):
         qs = {}
@@ -292,12 +317,18 @@ class DashboardAPI(Requests):
         url = "/dev/api/snaps/" + snap_id + "/state"
         if qs:
             url += "?" + urlencode(qs)
-        response = self.get(
-            url,
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-        )
-        if not response.ok:
-            raise errors.StoreSnapStatusError(response, snap_id, series, arch)
+        try:
+            response = self.get(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+        except craft_store.errors.StoreServerError as craft_error:
+            raise errors.StoreSnapStatusError(
+                craft_error.response, snap_id, series, arch
+            ) from craft_error
 
         response_json = response.json()
 
@@ -308,42 +339,51 @@ class DashboardAPI(Requests):
         data = {"channels": channel_names}
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
-        response = self.post(url, data=json.dumps(data), headers=headers)
-        if not response.ok:
-            raise errors.StoreChannelClosingError(response)
+        try:
+            response = self.post(url, json=data, headers=headers)
+        except craft_store.errors.StoreServerError as craft_error:
+            raise errors.StoreChannelClosingError(craft_error.response) from craft_error
 
         try:
             results = response.json()
-            return results["closed_channels"], results["channel_map_tree"]
         except (JSONDecodeError, KeyError):
             logger.debug(
                 "Invalid response from the server on channel closing:\n"
-                "{} {}\n{}".format(
-                    response.status_code, response.reason, response.content
-                )
+                f"{response.status_code} {response.reason}\n{response.content}"
             )
             raise errors.StoreChannelClosingError(response)
 
+        return results["closed_channels"], results["channel_map_tree"]
+
     def sign_developer_agreement(self, latest_tos_accepted=False):
         data = {"latest_tos_accepted": latest_tos_accepted}
-        response = self.post(
-            "/dev/api/agreement/",
-            json=data,
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-        )
+        try:
+            response = self.post(
+                "/dev/api/agreement/",
+                json=data,
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+        except craft_store.errors.StoreServerError as store_error:
+            raise errors.DeveloperAgreementSignError(
+                store_error.response
+            ) from store_error
 
-        if not response.ok:
-            raise errors.DeveloperAgreementSignError(response)
         return response.json()
 
     def get_snap_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
-        response = self.get(
-            f"/api/v2/snaps/{snap_name}/channel-map",
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-        )
-
-        if not response.ok:
-            raise errors.StoreSnapChannelMapError(snap_name=snap_name)
+        try:
+            response = self.get(
+                f"/api/v2/snaps/{snap_name}/channel-map",
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+        except craft_store.errors.StoreServerError as store_error:
+            raise errors.StoreSnapChannelMapError(snap_name=snap_name) from store_error
 
         return channel_map.ChannelMap.unmarshal(response.json())
 
@@ -354,11 +394,13 @@ class DashboardAPI(Requests):
         data = {"filters": [f.marshal() for f in filters]}
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
-        response = self.post(url, data=json.dumps(data), headers=headers)
-        if not response.ok:
+        try:
+            response = self.post(url, json=data, headers=headers)
+
+        except craft_store.errors.StoreServerError as store_error:
             raise errors.StoreMetricsError(
-                filters=filters, response=response, snap_name=snap_name
-            )
+                filters=filters, response=store_error.response, snap_name=snap_name
+            ) from store_error
 
         try:
             results = response.json()
@@ -369,57 +411,66 @@ class DashboardAPI(Requests):
             ) from error
 
     def get_snap_releases(self, *, snap_name: str) -> releases.Releases:
-        response = self.get(
-            f"/api/v2/snaps/{snap_name}/releases",
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-        )
-
-        if not response.ok:
-            raise errors.StoreSnapChannelMapError(snap_name=snap_name)
+        try:
+            response = self.get(
+                f"/api/v2/snaps/{snap_name}/releases",
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+        except craft_store.errors.StoreServerError as store_error:
+            raise errors.StoreSnapChannelMapError(snap_name=snap_name) from store_error
 
         return releases.Releases.unmarshal(response.json())
 
     def whoami(self) -> whoami.WhoAmI:
-        response = self.get(
-            "/api/v2/tokens/whoami",
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-        )
-
-        if not response.ok:
-            raise errors.GeneralStoreError(message="whoami failed.", response=response)
+        try:
+            response = self.get(
+                "/api/v2/tokens/whoami",
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+        except craft_store.errors.StoreServerError as store_error:
+            raise errors.GeneralStoreError(
+                message="whoami failed.", response=store_error.response
+            ) from store_error
 
         return whoami.WhoAmI.unmarshal(response.json())
 
     def post_validation_sets_build_assertion(
         self, validation_sets_data: Dict[str, Any]
     ) -> validation_sets.BuildAssertion:
-        url = "/api/v2/validation-sets/build-assertion"
-        response = self.post(
-            url,
-            headers={"Accept": "application/json", "Content-Type": "application/json"},
-            json=validation_sets_data,
-        )
-
-        if not response.ok:
-            raise errors.StoreValidationSetsError(response)
+        try:
+            response = self.post(
+                "/api/v2/validation-sets/build-assertion",
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+                json=validation_sets_data,
+            )
+        except craft_store.errors.StoreServerError as store_error:
+            raise errors.StoreValidationSetsError(store_error.response) from store_error
 
         return validation_sets.BuildAssertion.unmarshal(response.json())
 
     def post_validation_sets(
         self, signed_validation_sets: bytes
     ) -> validation_sets.ValidationSets:
-        url = "/api/v2/validation-sets"
-        response = self.post(
-            url,
-            headers={
-                "Accept": "application/json",
-                "Content-Type": "application/x.ubuntu.assertion",
-            },
-            data=signed_validation_sets,
-        )
-
-        if not response.ok:
-            raise errors.StoreValidationSetsError(response)
+        try:
+            response = self.post(
+                "/api/v2/validation-sets",
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/x.ubuntu.assertion",
+                },
+                data=signed_validation_sets,
+            )
+        except craft_store.errors.StoreServerError as store_error:
+            raise errors.StoreValidationSetsError(store_error.response) from store_error
 
         return validation_sets.ValidationSets.unmarshal(response.json())
 
@@ -432,10 +483,11 @@ class DashboardAPI(Requests):
         params = dict()
         if sequence is not None:
             params["sequence"] = sequence
-
-        response = self.get(url, headers={"Accept": "application/json"}, params=params)
-
-        if not response.ok:
-            raise errors.StoreValidationSetsError(response)
+        try:
+            response = self.get(
+                url, headers={"Accept": "application/json"}, params=params
+            )
+        except craft_store.errors.StoreServerError as store_error:
+            raise errors.StoreValidationSetsError(store_error.response) from store_error
 
         return validation_sets.ValidationSets.unmarshal(response.json())
