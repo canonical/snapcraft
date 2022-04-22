@@ -22,6 +22,7 @@ import os
 import sys
 
 import craft_cli
+import craft_store
 from craft_cli import ArgumentParsingError, EmitterMode, ProvideHelpException, emit
 
 from snapcraft import __version__, errors, utils
@@ -40,6 +41,15 @@ COMMAND_GROUPS = [
             commands.PrimeCommand,
             commands.PackCommand,
             commands.SnapCommand,  # hidden (legacy compatibility)
+        ],
+    ),
+    craft_cli.CommandGroup(
+        "Store Account",
+        [
+            commands.StoreLoginCommand,
+            commands.StoreExportLoginCommand,
+            commands.StoreLogoutCommand,
+            commands.StoreWhoAmICommand,
         ],
     ),
     craft_cli.CommandGroup(
@@ -128,6 +138,9 @@ def run():
         emit.trace(f"run legacy implementation: {err!s}")
         emit.ended_ok()
         legacy.legacy_run()
+    except craft_store.errors.CraftStoreError as err:
+        emit.error(craft_cli.errors.CraftError(f"craft-store error: {err}"))
+        retcode = 1
     except errors.SnapcraftError as err:
         emit.error(err)
         retcode = 1

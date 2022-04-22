@@ -21,9 +21,12 @@ import pathlib
 import platform
 import sys
 from dataclasses import dataclass
+from getpass import getpass
 from typing import Iterable, Optional
 
 from craft_cli import emit
+
+from snapcraft import errors
 
 
 @dataclass
@@ -132,7 +135,7 @@ def get_managed_environment_snap_channel() -> Optional[str]:
     return os.getenv("SNAPCRAFT_INSTALL_SNAP_CHANNEL")
 
 
-def confirm_with_user(prompt, default=False) -> bool:
+def confirm_with_user(prompt_text, default=False) -> bool:
     """Query user for yes/no answer.
 
     If stdin is not a tty, the default value is returned.
@@ -151,7 +154,7 @@ def confirm_with_user(prompt, default=False) -> bool:
 
     choices = " [Y/n]: " if default else " [y/N]: "
 
-    reply = str(input(prompt + choices)).lower().strip()
+    reply = str(input(prompt_text + choices)).lower().strip()
     if reply and reply[0] == "y":
         return True
 
@@ -159,6 +162,27 @@ def confirm_with_user(prompt, default=False) -> bool:
         return False
 
     return default
+
+
+def prompt(prompt_text: str, *, hide: bool = False) -> str:
+    """Prompt and return the entered string.
+
+    :param prompt_text: string used for the prompt.
+    :param hide: hide user input if True.
+    """
+    if is_managed_mode():
+        raise RuntimeError("prompting not yet supported in managed-mode")
+
+    if not sys.stdin.isatty():
+        raise errors.SnapcraftError("prompting not possible with no tty")
+
+    if hide:
+        method = getpass
+    else:
+        method = input  # type: ignore
+
+    with emit.pause():
+        return str(method(prompt_text))
 
 
 def humanize_list(
