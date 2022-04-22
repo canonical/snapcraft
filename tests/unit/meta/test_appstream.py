@@ -21,6 +21,7 @@ from typing import Optional
 
 import pytest
 
+from snapcraft import errors
 from snapcraft.meta import ExtractedMetadata, appstream
 
 
@@ -624,6 +625,35 @@ class TestAppstreamContent:
 
             - Build snaps.
             - Publish snaps to the store."""
+        )
+
+    def test_appstream_parse_error(self):
+        file_name = "snapcraft_legacy.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="utf-8"?>
+            <component type="desktop">
+              <id>io.snapcraft.snapcraft</id>
+              <metadata_license>CC0-1.0</metadata_license>
+              <project_license>GPL-3.0</project_license>
+              <name>snapcraft</name>
+              <summary>Create snaps</summary>
+              <description>
+                <p>Command Line Utility to create snaps.</p>
+              </description>
+              <provides>
+                <binary>snapcraft</binary>
+            </component>
+        """
+        )
+
+        Path(file_name).write_text(content)
+
+        with pytest.raises(errors.MetadataExtractionError) as raised:
+            appstream.extract(file_name, workdir=".")
+
+        assert str(raised.value) == (
+            "Error extracting metadata from './snapcraft_legacy.appdata.xml'"
         )
 
 
