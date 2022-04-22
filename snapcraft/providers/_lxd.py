@@ -31,8 +31,7 @@ from ._provider import Provider, ProviderError
 
 logger = logging.getLogger(__name__)
 
-# FIXME: use final 22.04 image
-_BASE_IMAGE = {"core22": "ubuntu-daily:22.04"}
+_BASE_IMAGE = {"core22": "ubuntu:22.04"}
 
 
 class LXDProvider(Provider):
