@@ -194,3 +194,27 @@ def test_get_host_architecture(platform_arch, mocker, deb_arch):
     mocker.patch("platform.machine", return_value=platform_arch)
 
     assert utils.get_host_architecture() == deb_arch
+
+
+#################
+# Humanize List #
+#################
+
+
+@pytest.mark.parametrize(
+    "items,conjunction,expected",
+    (
+        ([], "and", ""),
+        (["foo"], "and", "'foo'"),
+        (["foo", "bar"], "and", "'bar' and 'foo'"),
+        (["foo", "bar", "baz"], "and", "'bar', 'baz', and 'foo'"),
+        (["foo", "bar", "baz", "qux"], "and", "'bar', 'baz', 'foo', and 'qux'"),
+        ([], "or", ""),
+        (["foo"], "or", "'foo'"),
+        (["foo", "bar"], "or", "'bar' or 'foo'"),
+        (["foo", "bar", "baz"], "or", "'bar', 'baz', or 'foo'"),
+        (["foo", "bar", "baz", "qux"], "or", "'bar', 'baz', 'foo', or 'qux'"),
+    ),
+)
+def test_humanize_list(items, conjunction, expected):
+    assert utils.humanize_list(items, conjunction) == expected
