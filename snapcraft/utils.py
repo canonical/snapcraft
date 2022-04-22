@@ -16,16 +16,74 @@
 
 """Utilities for snapcraft."""
 
-import logging
 import os
 import pathlib
+import platform
 import sys
-from collections import namedtuple
+from dataclasses import dataclass
 from typing import Optional
 
-logger = logging.getLogger(__name__)
+from craft_cli import emit
 
-OSPlatform = namedtuple("OSPlatform", "system release machine")
+
+@dataclass
+class OSPlatform:
+    """Platform definition for a given host."""
+
+    system: str
+    release: str
+    machine: str
+
+    def __str__(self) -> str:
+        """Return the string representation of an OSPlatform."""
+        return f"{self.system}/{self.release} ({self.machine})"
+
+
+# translations from what the platform module informs to the term deb and
+# snaps actually use
+ARCH_TRANSLATIONS = {
+    "aarch64": "arm64",
+    "armv7l": "armhf",
+    "i686": "i386",
+    "ppc": "powerpc",
+    "ppc64le": "ppc64el",
+    "x86_64": "amd64",
+    "AMD64": "amd64",  # Windows support
+}
+
+
+def get_os_platform(filepath=pathlib.Path("/etc/os-release")):
+    """Determine a system/release combo for an OS using /etc/os-release if available."""
+    system = platform.system()
+    release = platform.release()
+    machine = platform.machine()
+
+    if system == "Linux":
+        try:
+            with filepath.open("rt", encoding="utf-8") as release_file:
+                lines = release_file.readlines()
+        except FileNotFoundError:
+            emit.trace("Unable to locate 'os-release' file, using default values")
+        else:
+            os_release = {}
+            for line in lines:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.rstrip().split("=", 1)
+                if value[0] == value[-1] and value[0] in ('"', "'"):
+                    value = value[1:-1]
+                os_release[key] = value
+            system = os_release.get("ID", system)
+            release = os_release.get("VERSION_ID", release)
+
+    return OSPlatform(system=system, release=release, machine=machine)
+
+
+def get_host_architecture():
+    """Get host architecture in deb format suitable for base definition."""
+    os_platform = get_os_platform()
+    return ARCH_TRANSLATIONS.get(os_platform.machine, os_platform.machine)
 
 
 def strtobool(value: str) -> bool:
