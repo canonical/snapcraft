@@ -41,6 +41,7 @@ good-names = "id"
 
 [tool.pylint.MASTER]
 extension-pkg-allow-list = [
+    "lxml.etree",
     "pydantic",
     "pytest",
 ]
