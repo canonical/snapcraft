@@ -39,7 +39,14 @@ def test_lifecycle_command(cmd, run_method, mocker):
     assert mock_lifecycle_cmd.mock_calls == [
         call(
             argparse.Namespace(
-                parts=[], destructive_mode=False, use_lxd=False, provider=None
+                parts=[],
+                destructive_mode=False,
+                use_lxd=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
+                provider=None,
             )
         )
     ]
@@ -73,6 +80,10 @@ def test_lifecycle_command_arguments(cmd, run_method, mocker):
                 parts=["part1", "part2"],
                 destructive_mode=False,
                 use_lxd=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
                 provider=None,
             )
         )
@@ -108,6 +119,10 @@ def test_lifecycle_command_arguments_destructive_mode(cmd, run_method, mocker):
                 parts=["part1", "part2"],
                 destructive_mode=True,
                 use_lxd=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
                 provider=None,
             )
         )
@@ -143,6 +158,10 @@ def test_lifecycle_command_arguments_use_lxd(cmd, run_method, mocker):
                 parts=["part1", "part2"],
                 destructive_mode=False,
                 use_lxd=True,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
                 provider=None,
             )
         )
@@ -164,6 +183,10 @@ def test_lifecycle_command_pack(mocker):
                 output=None,
                 destructive_mode=False,
                 use_lxd=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
                 provider=None,
             )
         )
@@ -185,6 +208,10 @@ def test_lifecycle_command_pack_destructive_mode(mocker):
                 output=None,
                 destructive_mode=True,
                 use_lxd=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
                 provider=None,
             )
         )
@@ -206,6 +233,10 @@ def test_lifecycle_command_pack_use_lxd(mocker):
                 output=None,
                 destructive_mode=False,
                 use_lxd=True,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
                 provider=None,
             )
         )
@@ -224,6 +255,10 @@ def test_lifecycle_command_pack_output(mocker, option):
                 output="name",
                 destructive_mode=False,
                 use_lxd=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
                 provider=None,
             )
         )
@@ -241,6 +276,10 @@ def test_lifecycle_command_pack_directory(mocker):
                 output=None,
                 destructive_mode=False,
                 use_lxd=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
                 provider=None,
             )
         )

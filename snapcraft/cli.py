@@ -16,6 +16,7 @@
 
 """Command-line application entry point."""
 
+import contextlib
 import logging
 import os
 import sys
@@ -59,15 +60,13 @@ GLOBAL_ARGS = [
 ]
 
 
-def run():
-    """Run the CLI."""
+def get_dispatcher() -> craft_cli.Dispatcher:
+    """Return an instance of Dispatcher.
+
+    Run all the checks and setup required to ensure the Dispatcher can run.
+    """
     # Run the legacy implementation if inside a legacy managed environment.
     if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
-        legacy.legacy_run()
-
-    # Let legacy snapcraft handle --help until we have all command stubs registered
-    # in craft-cli.
-    if "-h" in sys.argv or "--help" in sys.argv:
         legacy.legacy_run()
 
     # set lib loggers to debug level so that all messages are sent to Emitter
@@ -75,18 +74,19 @@ def run():
         logger = logging.getLogger(lib_name)
         logger.setLevel(logging.DEBUG)
 
-    emit_args = {
-        "mode": EmitterMode.NORMAL,
-        "appname": "snapcraft",
-        "greeting": f"Starting Snapcraft {__version__}",
-    }
-
     if utils.is_managed_mode():
-        emit_args["log_filepath"] = utils.get_managed_environment_log_path()
+        log_filepath = utils.get_managed_environment_log_path()
+    else:
+        log_filepath = None
 
-    emit.init(**emit_args)
+    emit.init(
+        mode=EmitterMode.NORMAL,
+        appname="snapcraft",
+        greeting=f"Starting Snapcraft {__version__}",
+        log_filepath=log_filepath,
+    )
 
-    dispatcher = craft_cli.Dispatcher(
+    return craft_cli.Dispatcher(
         "snapcraft",
         COMMAND_GROUPS,
         summary="Package, distribute, and update snaps for Linux and IoT",
@@ -94,6 +94,10 @@ def run():
         default_command=commands.PackCommand,
     )
 
+
+def run():
+    """Run the CLI."""
+    dispatcher = get_dispatcher()
     try:
         global_args = dispatcher.pre_parse_args(sys.argv[1:])
         if global_args.get("version"):
@@ -102,10 +106,30 @@ def run():
             dispatcher.load_command(None)
             dispatcher.run()
         emit.ended_ok()
-    except (ProvideHelpException, errors.LegacyFallback, ArgumentParsingError) as err:
+        retcode = 0
+    except ArgumentParsingError as err:
+        # TODO https://github.com/canonical/craft-cli/issues/78
+        with contextlib.suppress(KeyError, IndexError):
+            if (
+                err.__context__ is not None
+                and err.__context__.args[0] not in dispatcher.commands
+            ):
+                emit.trace(f"run legacy implementation: {err!s}")
+                emit.ended_ok()
+                legacy.legacy_run()
+        print(err, file=sys.stderr)  # to stderr, as argparse normally does
+        emit.ended_ok()
+        retcode = 1
+    except ProvideHelpException as err:
+        print(err, file=sys.stderr)  # to stderr, as argparse normally does
+        emit.ended_ok()
+        retcode = 0
+    except errors.LegacyFallback as err:
         emit.trace(f"run legacy implementation: {err!s}")
         emit.ended_ok()
         legacy.legacy_run()
     except errors.SnapcraftError as err:
         emit.error(err)
-        sys.exit(1)
+        retcode = 1
+
+    return retcode

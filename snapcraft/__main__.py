@@ -16,6 +16,8 @@
 
 """Main entry point."""
 
+import sys
+
 from snapcraft import cli
 
-cli.run()
+sys.exit(cli.run())
