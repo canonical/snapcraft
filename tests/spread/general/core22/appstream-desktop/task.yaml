@@ -26,11 +26,9 @@ execute: |
       exit 1
   fi
 
-  # Enable after installing assets
-  #
-  # expected_desktop="$PWD/../../appstream-desktop/expected_appstream-desktop.desktop"
-  #
-  # if ! diff -U10 prime/meta/gui/appstream-desktop.desktop "$expected_desktop"; then
-  #     echo "The formatting for appstream-desktop.desktop is incorrect"
-  #     exit 1
-  # fi
+  expected_desktop="../../expected_appstream-desktop.desktop"
+
+  if ! diff -U10 prime/meta/gui/appstream-desktop.desktop "$expected_desktop"; then
+      echo "The formatting for appstream-desktop.desktop is incorrect"
+      exit 1
+  fi

@@ -49,5 +49,12 @@ class MetadataExtractionError(SnapcraftError):
         super().__init__(f"Error extracting metadata from {filename!r}: {message}")
 
 
+class DesktopFileError(SnapcraftError):
+    """Failed to create application desktop file."""
+
+    def __init__(self, filename: str, message: str) -> None:
+        super().__init__(f"Failed to generate desktop file {filename!r}: {message}")
+
+
 class LegacyFallback(Exception):
     """Fall back to legacy snapcraft implementation."""

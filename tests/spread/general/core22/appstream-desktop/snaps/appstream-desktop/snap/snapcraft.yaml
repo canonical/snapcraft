@@ -15,7 +15,6 @@ parts:
   appstream-desktop:
     plugin: nil
     source: .
-    build-packages: [gcc, libc6-dev]
     parse-info: [usr/share/metainfo/io.snapcraft.appstream.metainfo.xml]
     override-build: |
       install -D -m 0644 io.snapcraft.appstream.desktop $CRAFT_PART_INSTALL/usr/share/applications/io.snapcraft.appstream.desktop

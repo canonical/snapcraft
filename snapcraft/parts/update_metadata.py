@@ -108,7 +108,7 @@ def _update_project_icon(
         if Path(icon_file).is_file():
             break
     else:
-        if metadata.icon and Path(prime_dir, metadata.icon).is_file():
+        if metadata.icon and Path(prime_dir, metadata.icon.lstrip("/")).is_file():
             project.icon = metadata.icon
 
 
@@ -145,7 +145,7 @@ def _update_project_app_desktop_file(
 
         if metadata.desktop_file_paths:
             for filename in metadata.desktop_file_paths:
-                if Path(prime_dir, filename).is_file():
+                if Path(prime_dir, filename.lstrip("/")).is_file():
                     project.apps[app_name].desktop = filename
                     emit.trace(f"use desktop file {filename!r}")
                     break
