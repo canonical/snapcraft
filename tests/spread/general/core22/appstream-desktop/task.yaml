@@ -1,0 +1,36 @@
+summary: Build a snap that tests appstream settings
+
+# This test snap uses core18, and is limited to amd64 arch due to
+# architectures specified in expected_snap.yaml.
+systems:
+  - ubuntu-20.04-64
+  - ubuntu-20.04-amd64
+  - ubuntu-20.04
+
+environment:
+  SNAP_DIR: snaps/appstream-desktop
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft prime --destructive-mode
+
+  expected_snap_yaml="../../expected_snap.yaml"
+
+  if ! diff -U10 prime/meta/snap.yaml "$expected_snap_yaml"; then
+      echo "The formatting for snap.yaml is incorrect"
+      exit 1
+  fi
+
+  # Enable after installing assets
+  #
+  # expected_desktop="$PWD/../../appstream-desktop/expected_appstream-desktop.desktop"
+  #
+  # if ! diff -U10 prime/meta/gui/appstream-desktop.desktop "$expected_desktop"; then
+  #     echo "The formatting for appstream-desktop.desktop is incorrect"
+  #     exit 1
+  # fi
