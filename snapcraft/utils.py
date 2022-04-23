@@ -21,7 +21,7 @@ import pathlib
 import platform
 import sys
 from dataclasses import dataclass
-from typing import Optional
+from typing import Iterable, Optional
 
 from craft_cli import emit
 
@@ -159,3 +159,28 @@ def confirm_with_user(prompt, default=False) -> bool:
         return False
 
     return default
+
+
+def humanize_list(
+    items: Iterable[str], conjunction: str, item_format: str = "{!r}"
+) -> str:
+    """Format a list into a human-readable string.
+
+    :param items: list to humanize.
+    :param conjunction: the conjunction used to join the final element to
+                        the rest of the list (e.g. 'and').
+    :param item_format: format string to use per item.
+    """
+    if not items:
+        return ""
+
+    quoted_items = [item_format.format(item) for item in sorted(items)]
+    if len(quoted_items) == 1:
+        return quoted_items[0]
+
+    humanized = ", ".join(quoted_items[:-1])
+
+    if len(quoted_items) > 2:
+        humanized += ","
+
+    return f"{humanized} {conjunction} {quoted_items[-1]}"
