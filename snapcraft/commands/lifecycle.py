@@ -43,6 +43,26 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             action="store_true",
             help="Use LXD to build",
         )
+        # --enable-experimental-extensions is only available in legacy
+        parser.add_argument(
+            "--enable-experimental-extensions",
+            action="store_true",
+            help=argparse.SUPPRESS,
+        )
+        # --enable-developer-debug is only available in legacy
+        parser.add_argument(
+            "--enable-developer-debug",
+            action="store_true",
+            help=argparse.SUPPRESS,
+        )
+        # --enable-experimental-target-arch is only available in legacy
+        parser.add_argument(
+            "--enable-experimental-target-arch",
+            action="store_true",
+            help=argparse.SUPPRESS,
+        )
+        # --target-arch is only available in legacy
+        parser.add_argument("--target-arch", help=argparse.SUPPRESS)
         # --provider is only available in legacy
         parser.add_argument("--provider", help=argparse.SUPPRESS)
 

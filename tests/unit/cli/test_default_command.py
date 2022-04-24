@@ -34,6 +34,10 @@ def test_default_command(mocker):
                 output=None,
                 destructive_mode=False,
                 use_lxd=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
                 provider=None,
             )
         )
@@ -51,6 +55,10 @@ def test_default_command_destructive_mode(mocker):
                 output=None,
                 destructive_mode=True,
                 use_lxd=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
                 provider=None,
             )
         )
@@ -68,6 +76,10 @@ def test_default_command_use_lxd(mocker):
                 output=None,
                 destructive_mode=False,
                 use_lxd=True,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
                 provider=None,
             )
         )
@@ -86,6 +98,10 @@ def test_default_command_output(mocker, option):
                 output="name",
                 destructive_mode=False,
                 use_lxd=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
                 provider=None,
             )
         )
