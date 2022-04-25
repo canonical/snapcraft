@@ -16,6 +16,12 @@
 
 """Snapcraft commands."""
 
+from .account import (
+    StoreExportLoginCommand,
+    StoreLoginCommand,
+    StoreLogoutCommand,
+    StoreWhoAmICommand,
+)
 from .extensions import (
     ExpandExtensionsCommand,
     ExtensionsCommand,
@@ -41,6 +47,10 @@ __all__ = [
     "PullCommand",
     "SnapCommand",
     "StageCommand",
+    "StoreLoginCommand",
+    "StoreExportLoginCommand",
+    "StoreLogoutCommand",
+    "StoreWhoAmICommand",
     "ExtensionsCommand",
     "ListExtensionsCommand",
     "VersionCommand",

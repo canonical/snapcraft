@@ -103,6 +103,8 @@ types-Deprecated==1.2.6
 types-PyYAML==6.0.6
 types-setuptools==57.4.14
 types-tabulate==0.8.7
+types-requests==2.27.20
+types-urllib3==1.26.13
 typing-utils==0.1.0
 typing_extensions==4.2.0
 urllib3==1.26.9

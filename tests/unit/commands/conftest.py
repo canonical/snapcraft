@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright 2022 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,22 +13,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import re
-from unittest import mock
-
-from testtools.matchers import Equals, MatchesRegex
-
-from snapcraft_legacy.storeapi import StoreClient
-
-from . import CommandBaseTestCase
 
 
-class LogoutCommandTestCase(CommandBaseTestCase):
-    @mock.patch.object(StoreClient, "logout")
-    def test_logout_clears_config(self, mock_logout):
-        result = self.run_command(["logout"])
+import pytest
 
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(
-            result.output, MatchesRegex(".*Credentials cleared.\n", flags=re.DOTALL)
-        )
+
+@pytest.fixture
+def fake_client(mocker):
+    """Forces get_client to return a fake craft_store.BaseClient"""
+    client = mocker.patch("craft_store.BaseClient", autospec=True)
+    mocker.patch("snapcraft.commands.store.client.get_client", return_value=client)
+    return client
