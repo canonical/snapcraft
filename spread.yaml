@@ -426,6 +426,10 @@ suites:
    summary: tests of snapcraft's v2 plugins
    systems:
    - ubuntu-20.04*
+ tests/spread/plugins/craft-parts/:
+   summary: tests of snapcraft's craft-part's based plugins
+   systems:
+   - ubuntu-22.04*
 
 # Extensions tests
  tests/spread/extensions/:

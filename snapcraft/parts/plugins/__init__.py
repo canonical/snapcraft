@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Parts lifecycle processing."""
+"""Snapcraft specific plugins."""
 
-from .parts import PartsLifecycle
 
-__all__ = ["PartsLifecycle"]
+from .conda_plugin import CondaPlugin
+from .register import register
+
+__all__ = ["CondaPlugin", "register"]
