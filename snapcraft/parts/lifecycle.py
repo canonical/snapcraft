@@ -16,6 +16,7 @@
 
 """Parts lifecycle preparation and execution."""
 
+import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -131,7 +132,6 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     yaml_data = process_yaml(snap_project.project_file)
     parse_info = _extract_parse_info(yaml_data)
 
-    # argument --provider is only supported by legacy snapcraft
     if parsed_args.provider:
         raise errors.SnapcraftError("Option --provider is not supported.")
 
@@ -165,7 +165,11 @@ def _run_command(
     if parsed_args.use_lxd and providers.get_platform_default_provider() == "lxd":
         emit.message("LXD is used by default on this platform.", intermediate=True)
 
-    if not managed_mode and not parsed_args.destructive_mode:
+    if (
+        not managed_mode
+        and not parsed_args.destructive_mode
+        and not os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "host"
+    ):
         if command_name == "clean" and not part_names:
             _clean_provider(project, parsed_args)
         else:

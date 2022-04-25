@@ -16,6 +16,7 @@
 
 """Build environment provider support for snapcraft."""
 
+import os
 import sys
 from typing import Optional
 
@@ -33,11 +34,17 @@ def get_provider(provider: Optional[str] = None) -> Provider:
     (1) use provider specified in the function argument,
     (2) use provider specified with snap configuration if running
         as snap,
-    (3) default to platform default (LXD on Linux).
+    (3) get the provider from the environment if valid,
+    (4) default to platform default (LXD on Linux).
 
     :return: Provider instance.
     """
-    if provider is None:
+    env_provider = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT")
+    env_provider_is_valid = env_provider in ("lxd", "multipass")
+
+    if provider is None and env_provider_is_valid:
+        provider = env_provider
+    elif provider is None:
         provider = get_platform_default_provider()
 
     if provider == "lxd":
