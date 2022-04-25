@@ -138,8 +138,10 @@ def _get_transformed_dom(path: str):
 def _get_dom(path: str) -> lxml.etree.ElementTree:
     try:
         return lxml.etree.parse(path)
+    except OSError as err:
+        raise errors.SnapcraftError(str(err)) from err
     except lxml.etree.ParseError as err:
-        raise errors.MetadataExtractionError(path) from err
+        raise errors.MetadataExtractionError(path, str(err)) from err
 
 
 def _get_xslt():

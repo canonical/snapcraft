@@ -24,6 +24,7 @@ import pytest
 
 from snapcraft import errors
 from snapcraft.parts import lifecycle as parts_lifecycle
+from snapcraft.parts.update_metadata import update_project_metadata
 from snapcraft.projects import Project
 
 _SNAPCRAFT_YAML_FILENAMES = [
@@ -137,6 +138,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
         call(
             "pull",
             project=project,
+            parse_info={},
             assets_dir=assets_dir,
             parsed_args=argparse.Namespace(
                 parts=["part1"], destructive_mode=True, use_lxd=False, provider=None
@@ -145,7 +147,9 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
     ]
 
 
-@pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime", "pack", "snap", "clean"])
+@pytest.mark.parametrize(
+    "cmd", ["pull", "build", "stage", "prime", "pack", "snap", "clean"]
+)
 def test_lifecycle_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
     """Option --provider is not supported in core22."""
     snapcraft_yaml(base="core22")
@@ -205,6 +209,7 @@ def test_lifecycle_run_command_step(
     parts_lifecycle._run_command(
         cmd,
         project=project,
+        parse_info={},
         assets_dir=Path(),
         parsed_args=argparse.Namespace(destructive_mode=True, use_lxd=False, parts=[]),
     )
@@ -223,6 +228,7 @@ def test_lifecycle_run_command_pack(cmd, snapcraft_yaml, project_vars, new_dir, 
     parts_lifecycle._run_command(
         cmd,
         project=project,
+        parse_info={},
         assets_dir=Path(),
         parsed_args=argparse.Namespace(
             directory=None,
@@ -240,7 +246,9 @@ def test_lifecycle_run_command_pack(cmd, snapcraft_yaml, project_vars, new_dir, 
 
 
 @pytest.mark.parametrize("cmd", ["pack", "snap"])
-def test_lifecycle_pack_destructive_mode(cmd, snapcraft_yaml, project_vars, new_dir, mocker):
+def test_lifecycle_pack_destructive_mode(
+    cmd, snapcraft_yaml, project_vars, new_dir, mocker
+):
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
@@ -255,6 +263,7 @@ def test_lifecycle_pack_destructive_mode(cmd, snapcraft_yaml, project_vars, new_
     parts_lifecycle._run_command(
         cmd,
         project=project,
+        parse_info={},
         assets_dir=Path(),
         parsed_args=argparse.Namespace(
             directory=None,
@@ -288,6 +297,7 @@ def test_lifecycle_pack_managed(cmd, snapcraft_yaml, project_vars, new_dir, mock
     parts_lifecycle._run_command(
         cmd,
         project=project,
+        parse_info={},
         assets_dir=Path(),
         parsed_args=argparse.Namespace(
             directory=None,
@@ -315,6 +325,7 @@ def test_lifecycle_pack_not_managed(cmd, snapcraft_yaml, new_dir, mocker):
     parts_lifecycle._run_command(
         cmd,
         project=project,
+        parse_info={},
         assets_dir=Path(),
         parsed_args=argparse.Namespace(
             directory=None,
@@ -363,6 +374,7 @@ def test_lifecycle_pack_metadata_error(cmd, snapcraft_yaml, new_dir, mocker):
             cmd,
             project=project,
             assets_dir=Path(),
+            parse_info={},
             parsed_args=argparse.Namespace(
                 directory=None,
                 output=None,
@@ -388,8 +400,12 @@ def test_lifecycle_metadata_empty(field, snapcraft_yaml, new_dir):
     project = Project.unmarshal(yaml_data)
 
     with pytest.raises(errors.SnapcraftError) as raised:
-        parts_lifecycle._update_project_metadata(
-            project, project_vars={"version": "", "grade": ""}
+        update_project_metadata(
+            project,
+            project_vars={"version": "", "grade": ""},
+            metadata_list=[],
+            assets_dir=new_dir,
+            prime_dir=new_dir,
         )
 
     assert str(raised.value) == f"Field {field!r} was not adopted from metadata"
@@ -406,6 +422,7 @@ def test_lifecycle_run_command_clean(snapcraft_yaml, project_vars, new_dir, mock
     parts_lifecycle._run_command(
         "clean",
         project=project,
+        parse_info={},
         assets_dir=Path(),
         parsed_args=argparse.Namespace(
             directory=None,
@@ -429,6 +446,7 @@ def test_lifecycle_clean_destructive_mode(
     parts_lifecycle._run_command(
         "clean",
         project=project,
+        parse_info={},
         assets_dir=Path(),
         parsed_args=argparse.Namespace(
             directory=None,
@@ -450,6 +468,7 @@ def test_lifecycle_clean_part_names(snapcraft_yaml, project_vars, new_dir, mocke
     parts_lifecycle._run_command(
         "clean",
         project=project,
+        parse_info={},
         assets_dir=Path(),
         parsed_args=argparse.Namespace(
             directory=None,
@@ -485,6 +504,7 @@ def test_lifecycle_clean_part_names_destructive_mode(
     parts_lifecycle._run_command(
         "clean",
         project=project,
+        parse_info={},
         assets_dir=Path(),
         parsed_args=argparse.Namespace(
             directory=None,
@@ -511,6 +531,7 @@ def test_lifecycle_clean_managed(snapcraft_yaml, project_vars, new_dir, mocker):
     parts_lifecycle._run_command(
         "clean",
         project=project,
+        parse_info={},
         assets_dir=Path(),
         parsed_args=argparse.Namespace(
             directory=None,
@@ -523,3 +544,13 @@ def test_lifecycle_clean_managed(snapcraft_yaml, project_vars, new_dir, mocker):
 
     assert run_in_provider_mock.mock_calls == []
     assert clean_mock.mock_calls == [call(part_names=["part1"])]
+
+
+def test_extract_parse_info():
+    yaml_data = {
+        "name": "foo",
+        "parts": {"p1": {"plugin": "nil", "parse-info": "foo/metadata.xml"}, "p2": {}},
+    }
+    parse_info = parts_lifecycle._extract_parse_info(yaml_data)
+    assert yaml_data == {"name": "foo", "parts": {"p1": {"plugin": "nil"}, "p2": {}}}
+    assert parse_info == {"p1": "foo/metadata.xml"}

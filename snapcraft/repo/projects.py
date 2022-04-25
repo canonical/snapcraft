@@ -16,8 +16,7 @@
 
 """Project model definitions and helpers."""
 
-from typing import Literal  # type: ignore
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional
 
 import pydantic
 from pydantic import constr

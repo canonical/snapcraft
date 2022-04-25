@@ -21,10 +21,11 @@ from typing import Any, Dict, List, Optional
 
 import craft_parts
 from craft_cli import emit
-from craft_parts import ActionType, Step
+from craft_parts import ActionType, Part, Step
 from xdg import BaseDirectory  # type: ignore
 
 from snapcraft import errors, repo
+from snapcraft.meta import ExtractedMetadata, extract_metadata
 
 _LIFECYCLE_STEPS = {
     "pull": Step.PULL,
@@ -55,12 +56,15 @@ class PartsLifecycle:
         package_repositories: List[Dict[str, Any]],
         part_names: Optional[List[str]],
         adopt_info: Optional[str],
+        parse_info: Dict[str, List[str]],
         project_name: str,
         project_vars: Dict[str, str],
     ):
         self._assets_dir = assets_dir
         self._package_repositories = package_repositories
         self._part_names = part_names
+        self._adopt_info = adopt_info
+        self._parse_info = parse_info
 
         emit.progress("Initializing parts lifecycle")
 
@@ -165,6 +169,33 @@ class PartsLifecycle:
 
         emit.message(message, intermediate=True)
         self._lcm.clean(part_names=part_names)
+
+    def extract_metadata(self) -> List[ExtractedMetadata]:
+        """Obtain metadata information."""
+        if self._adopt_info is None or self._adopt_info not in self._parse_info:
+            return []
+
+        part = Part(self._adopt_info, {})
+        locations = (
+            part.part_src_dir,
+            part.part_build_dir,
+            part.part_install_dir,
+        )
+        metadata_list: List[ExtractedMetadata] = []
+
+        for metadata_file in self._parse_info[self._adopt_info]:
+            emit.trace(f"extract metadata: parse info from {metadata_file}")
+
+            for location in locations:
+                if pathlib.Path(location, metadata_file).is_file():
+                    metadata = extract_metadata(metadata_file, workdir=str(location))
+                    if metadata:
+                        metadata_list.append(metadata)
+                        break
+
+                    emit.message(f"No metadata extracted from {metadata_file}", intermediate=True)
+
+        return metadata_list
 
 
 def _action_message(action: craft_parts.Action) -> str:

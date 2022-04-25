@@ -1071,16 +1071,9 @@ class TestGrammarValidation:
             }
         )
 
-        with pytest.raises(pydantic.ValidationError) as raised:
+        error = r".*- 'try' was removed from grammar, use 'on <arch>' instead"
+        with pytest.raises(errors.ProjectValidationError, match=error):
             GrammarAwareProject.validate_grammar(data)
-
-        err = raised.value.errors()
-        assert len(err) == 1
-        assert err[0]["loc"] == ("parts", "p1", "source")
-        assert err[0]["type"] == "value_error"
-        assert (
-            err[0]["msg"] == "'try' was removed from grammar, use 'on <arch>' instead"
-        )
 
     def test_grammar_type_error(self, project_yaml_data):
         data = project_yaml_data(
@@ -1094,14 +1087,9 @@ class TestGrammarValidation:
             }
         )
 
-        with pytest.raises(pydantic.ValidationError) as raised:
+        error = r".*- value must be a string: \[25\]"
+        with pytest.raises(errors.ProjectValidationError, match=error):
             GrammarAwareProject.validate_grammar(data)
-
-        err = raised.value.errors()
-        assert len(err) == 1
-        assert err[0]["loc"] == ("parts", "p1", "source")
-        assert err[0]["type"] == "type_error"
-        assert err[0]["msg"] == "value must be a string: [25]"
 
     def test_grammar_syntax_error(self, project_yaml_data):
         data = project_yaml_data(
@@ -1115,11 +1103,6 @@ class TestGrammarValidation:
             }
         )
 
-        with pytest.raises(pydantic.ValidationError) as raised:
+        error = r".*- syntax error in 'on' selector"
+        with pytest.raises(errors.ProjectValidationError, match=error):
             GrammarAwareProject.validate_grammar(data)
-
-        err = raised.value.errors()
-        assert len(err) == 1
-        assert err[0]["loc"] == ("parts", "p1", "source")
-        assert err[0]["type"] == "value_error"
-        assert err[0]["msg"] == "syntax error in 'on' selector"
