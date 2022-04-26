@@ -19,38 +19,46 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y python3-pip python3-venv libapt-pkg-dev libyaml-dev xdelta3 shellcheck
+          python3 -mvenv ~/.venv/snapcraft
+          . ~/.venv/snapcraft/bin/activate
           pip install -U -r requirements.txt -r requirements-devel.txt
           pip install .
           echo =======================================================================
           pip list
           echo =======================================================================
-          dpkg -l
-          echo =======================================================================
       - name: Run black
         run: |
+          . ~/.venv/snapcraft/bin/activate
           make test-black
       - name: Run codespell
         run: |
+          . ~/.venv/snapcraft/bin/activate
           make test-codespell
       - name: Run flake8
         run: |
+          . ~/.venv/snapcraft/bin/activate
           make test-flake8
       - name: Run isort
         run: |
+          . ~/.venv/snapcraft/bin/activate
           make test-isort
       - name: Run mypy
         run: |
+          . ~/.venv/snapcraft/bin/activate
           make test-mypy
       - name: Run pydocstyle
         run: |
+          . ~/.venv/snapcraft/bin/activate
           make test-pydocstyle
       - name: Run pyright
         run: |
+          . ~/.venv/snapcraft/bin/activate
           sudo snap install --classic node
           sudo snap install --classic pyright
           make test-pyright
       - name: Run pylint
         run: |
+          . ~/.venv/snapcraft/bin/activate
           make test-pylint
       - name: Run shellcheck
         run: |
