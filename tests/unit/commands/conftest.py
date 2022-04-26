@@ -24,3 +24,11 @@ def fake_client(mocker):
     client = mocker.patch("craft_store.BaseClient", autospec=True)
     mocker.patch("snapcraft.commands.store.client.get_client", return_value=client)
     return client
+
+
+@pytest.fixture
+def fake_confirmation_prompt(mocker):
+    """Fake the confirmation prompt."""
+    return mocker.patch(
+        "snapcraft.utils.confirm_with_user", return_value=False, autospec=True
+    )

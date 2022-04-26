@@ -36,6 +36,12 @@ from .lifecycle import (
     SnapCommand,
     StageCommand,
 )
+from .names import (
+    StoreLegacyListCommand,
+    StoreLegacyListRegisteredCommand,
+    StoreNamesCommand,
+    StoreRegisterCommand,
+)
 from .version import VersionCommand
 
 __all__ = [
@@ -48,8 +54,12 @@ __all__ = [
     "SnapCommand",
     "StageCommand",
     "StoreLoginCommand",
+    "StoreNamesCommand",
     "StoreExportLoginCommand",
     "StoreLogoutCommand",
+    "StoreRegisterCommand",
+    "StoreLegacyListCommand",
+    "StoreLegacyListRegisteredCommand",
     "StoreWhoAmICommand",
     "ExtensionsCommand",
     "ListExtensionsCommand",
