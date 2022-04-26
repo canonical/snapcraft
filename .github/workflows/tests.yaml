@@ -21,6 +21,11 @@ jobs:
           sudo apt install -y python3-pip python3-venv libapt-pkg-dev libyaml-dev xdelta3 shellcheck
           pip install -U -r requirements.txt -r requirements-devel.txt
           pip install .
+          echo =======================================================================
+          pip list
+          echo =======================================================================
+          dpkg -l
+          echo =======================================================================
       - name: Run black
         run: |
           make test-black
