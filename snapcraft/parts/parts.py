@@ -42,6 +42,7 @@ class PartsLifecycle:
     :param all_parts: A dictionary containing the parts defined in the project.
     :param work_dir: The working directory for parts processing.
     :param assets_dir: The directory containing project assets.
+    :param base: the base to build for.
     :param adopt_info: The name of the part containing metadata do adopt.
 
     :raises PartsLifecycleError: On error initializing the parts lifecycle.
@@ -53,6 +54,7 @@ class PartsLifecycle:
         *,
         work_dir: pathlib.Path,
         assets_dir: pathlib.Path,
+        base: Optional[str],
         package_repositories: List[Dict[str, Any]],
         part_names: Optional[List[str]],
         adopt_info: Optional[str],
@@ -76,6 +78,9 @@ class PartsLifecycle:
             # Install pre-requisite packages for apt-key, if not installed.
             # FIXME: package names should be plataform-specific
             extra_build_packages.extend(["gnupg", "dirmngr"])
+        extra_snap_packages = []
+        if base is not None:
+            extra_snap_packages.append(base)
 
         try:
             self._lcm = craft_parts.LifecycleManager(
@@ -84,6 +89,8 @@ class PartsLifecycle:
                 work_dir=work_dir,
                 cache_dir=cache_dir,
                 ignore_local_sources=["*.snap"],
+                extra_build_packages=extra_build_packages,
+                extra_snap_packages=extra_snap_packages,
                 project_name=project_name,
                 project_vars_part_name=adopt_info,
                 project_vars=project_vars,
@@ -193,7 +200,9 @@ class PartsLifecycle:
                         metadata_list.append(metadata)
                         break
 
-                    emit.message(f"No metadata extracted from {metadata_file}", intermediate=True)
+                    emit.message(
+                        f"No metadata extracted from {metadata_file}", intermediate=True
+                    )
 
         return metadata_list
 
