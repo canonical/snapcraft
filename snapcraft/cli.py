@@ -53,6 +53,15 @@ COMMAND_GROUPS = [
         ],
     ),
     craft_cli.CommandGroup(
+        "Store Snap Names",
+        [
+            commands.StoreRegisterCommand,
+            commands.StoreNamesCommand,
+            commands.StoreLegacyListRegisteredCommand,
+            commands.StoreLegacyListCommand,
+        ],
+    ),
+    craft_cli.CommandGroup(
         "Extensions",
         [
             commands.ListExtensionsCommand,

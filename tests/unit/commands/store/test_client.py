@@ -22,6 +22,7 @@ import pytest
 import requests
 from craft_store import endpoints
 
+from snapcraft import errors
 from snapcraft.commands.store import client
 from snapcraft.utils import OSPlatform
 
@@ -254,7 +255,7 @@ def test_login_otp(fake_client):
 
 
 @pytest.mark.usefixtures("fake_user_password", "fake_hostname")
-def test_with_params(fake_client):
+def test_login_with_params(fake_client):
     client.StoreClientCLI().login(
         ttl=20,
         acls=["package_access", "package_push"],
@@ -278,4 +279,130 @@ def test_with_params(fake_client):
             email="fake-username@acme.com",
             password="fake-password",
         )
+    ]
+
+
+###########
+# Request #
+###########
+
+
+@pytest.mark.usefixtures("fake_user_password", "fake_hostname")
+def test_login_from_401_request(fake_client):
+    fake_client.request.side_effect = [
+        craft_store.errors.StoreServerError(
+            FakeResponse(
+                status_code=401,
+                content=json.dumps(
+                    {
+                        "error_list": [
+                            {
+                                "code": "macaroon-needs-refresh",
+                                "message": "Expired macaroon (age: 1234567 seconds)",
+                            }
+                        ]
+                    }
+                ),
+            )
+        ),
+        FakeResponse(status_code=200, content="text"),
+    ]
+
+    client.StoreClientCLI().request("GET", "http://url.com/path")
+
+    assert fake_client.request.mock_calls == [
+        call("GET", "http://url.com/path"),
+        call("GET", "http://url.com/path"),
+    ]
+    assert fake_client.login.mock_calls == [
+        call(
+            ttl=31536000,
+            permissions=[
+                "package_access",
+                "package_manage",
+                "package_metrics",
+                "package_push",
+                "package_register",
+                "package_release",
+                "package_update",
+            ],
+            channels=None,
+            packages=[],
+            description="snapcraft@fake-host",
+            email="fake-username@acme.com",
+            password="fake-password",
+        )
+    ]
+
+
+def test_login_from_401_request_with_env_credentials(monkeypatch, fake_client):
+    monkeypatch.setenv(client.constants.ENVIRONMENT_STORE_CREDENTIALS, "foo")
+    fake_client.request.side_effect = [
+        craft_store.errors.StoreServerError(
+            FakeResponse(
+                status_code=401,
+                content=json.dumps(
+                    {
+                        "error_list": [
+                            {
+                                "code": "macaroon-needs-refresh",
+                                "message": "Expired macaroon (age: 1234567 seconds)",
+                            }
+                        ]
+                    }
+                ),
+            )
+        ),
+    ]
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        client.StoreClientCLI().request("GET", "http://url.com/path")
+
+    assert str(raised.value) == (
+        "Provided credentials are no longer valid for the Snap Store. "
+        "Regenerate them and try again."
+    )
+
+
+############
+# Register #
+############
+
+
+@pytest.mark.parametrize("private", [True, False])
+@pytest.mark.parametrize("store_id", [None, "one-store", "other-store"])
+def test_register(fake_client, private, store_id):
+    client.StoreClientCLI().register("snap", is_private=private, store_id=store_id)
+
+    expected_json = {
+        "snap_name": "snap",
+        "is_private": private,
+        "series": "16",
+    }
+    if store_id:
+        expected_json["store"] = store_id
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/dev/api/register-name/",
+            json=expected_json,
+        )
+    ]
+
+
+###########################
+# Get Account Information #
+###########################
+
+
+def test_get_account_info(fake_client):
+    client.StoreClientCLI().get_account_info()
+
+    assert fake_client.request.mock_calls == [
+        call(
+            "GET",
+            "https://dashboard.snapcraft.io/dev/api/account",
+            headers={"Accept": "application/json"},
+        ),
+        call().json(),
     ]

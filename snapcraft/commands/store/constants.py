@@ -36,3 +36,6 @@ STORE_UPLOAD_URL: Final[str] = "https://storage.snapcraftcontent.com"
 
 UBUNTU_ONE_SSO_URL = "https://login.ubuntu.com"
 """Default Ubuntu One Login URL."""
+
+DEFAULT_SERIES = "16"
+"""Legacy value for older generation Snap Store APIs."""

@@ -14,18 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import base64
-import contextlib
-import functools
 import json
 import operator
 import os
-import stat
-import sys
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from textwrap import dedent
 from typing import Dict, List, Optional, Set, Union
-from urllib.parse import urlparse
 
 import click
 from tabulate import tabulate
@@ -39,42 +33,6 @@ from . import echo
 from ._channel_map import get_tabulated_channel_map
 from ._metrics import convert_metrics_to_table
 from ._review import review_snap
-
-_VALID_DATE_FORMATS = [
-    "%Y-%m-%d",
-    "%Y-%m-%dT%H:%M:%SZ",
-]
-
-_MESSAGE_REGISTER_PRIVATE = dedent(
-    """\
-    Even though this is private snap, you should think carefully about
-    the choice of name and make sure you are confident nobody else will
-    have a stronger claim to that particular name. If you are unsure
-    then we suggest you prefix the name with your developer identity,
-    As '$username-yoyodyne-www-site-content'."""
-)
-_MESSAGE_REGISTER_CONFIRM = dedent(
-    """
-    We always want to ensure that users get the software they expect
-    for a particular name.
-
-    If needed, we will rename snaps to ensure that a particular name
-    reflects the software most widely expected by our community.
-
-    For example, most people would expect 'thunderbird' to be published by
-    Mozilla. They would also expect to be able to get other snaps of
-    Thunderbird as '$username-thunderbird'.
-
-    Would you say that MOST users will expect {!r} to come from
-    you, and be the software you intend to publish there?"""
-)
-_MESSAGE_REGISTER_SUCCESS = "Congrats! You are now the publisher of {!r}."
-_MESSAGE_REGISTER_NO = dedent(
-    """
-    Thank you! {!r} will remain available.
-
-    In the meantime you can register an alternative name."""
-)
 
 
 @click.group()
@@ -116,30 +74,6 @@ def _human_readable_acls(store_client: storeapi.StoreClient) -> str:
             **human_readable_acl
         )
     )
-
-
-@storecli.command()
-@click.argument("snap-name", metavar="<snap-name>")
-@click.option("--private", is_flag=True, help="Register the snap as a private one")
-@click.option("--store", metavar="<store>", help="Store to register with")
-@click.option("--yes", is_flag=True)
-def register(snap_name, private, store, yes):
-    """Register <snap-name> with the store.
-
-    You can use this command to register an available <snap-name> and become
-    the publisher for this snap.
-
-    \b
-    Examples:
-        snapcraft register thunderbird
-    """
-    if private:
-        click.echo(_MESSAGE_REGISTER_PRIVATE.format(snap_name))
-    if yes or echo.confirm(_MESSAGE_REGISTER_CONFIRM.format(snap_name)):
-        snapcraft_legacy.register(snap_name, is_private=private, store_id=store)
-        click.echo(_MESSAGE_REGISTER_SUCCESS.format(snap_name))
-    else:
-        click.echo(_MESSAGE_REGISTER_NO.format(snap_name))
 
 
 @storecli.command()
@@ -647,17 +581,6 @@ def list_revisions(snap_name, arch):
         click.echo(tabulated_revisions)
     else:
         click.echo_via_pager(tabulated_revisions)
-
-
-@storecli.command("list")
-def list_registered():
-    """List snap names registered or shared with you.
-
-    \b
-    Examples:
-        snapcraft list
-    """
-    snapcraft_legacy.list_registered()
 
 
 @storecli.command()

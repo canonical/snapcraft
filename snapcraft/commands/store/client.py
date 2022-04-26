@@ -22,9 +22,10 @@ from datetime import timedelta
 from typing import Any, Dict, Optional, Sequence, Tuple
 
 import craft_store
+import requests
 from craft_cli import emit
 
-from snapcraft import __version__, utils
+from snapcraft import __version__, errors, utils
 
 from . import constants
 
@@ -125,6 +126,7 @@ class StoreClientCLI:
 
     def __init__(self, ephemeral=False):
         self.store_client = get_client(ephemeral=ephemeral)
+        self._base_url = get_store_url()
 
     def login(
         self,
@@ -182,3 +184,71 @@ class StoreClientCLI:
             )
 
         return credentials
+
+    def request(self, *args, **kwargs) -> requests.Response:
+        """Request using the BaseClient and wrap responses that require action.
+
+        Actionable items are those that could prompt a login or registration.
+        """
+        try:
+            return self.store_client.request(*args, **kwargs)
+        except craft_store.errors.StoreServerError as store_error:
+            if (
+                store_error.response.status_code
+                == requests.codes.unauthorized  # pylint: disable=no-member
+            ):
+                if os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS):
+                    raise errors.SnapcraftError(
+                        "Provided credentials are no longer valid for the Snap Store. "
+                        "Regenerate them and try again."
+                    ) from store_error
+
+                emit.message(
+                    "You are required to re-login before continuing",
+                    intermediate=True,
+                )
+                self.store_client.logout()
+            else:
+                raise
+        except craft_store.errors.CredentialsUnavailable:
+            emit.message(
+                "You are required to login before continuing", intermediate=True
+            )
+
+        self.login()
+        return self.store_client.request(*args, **kwargs)
+
+    def register(
+        self,
+        snap_name: str,
+        *,
+        is_private: bool = False,
+        store_id: Optional[str] = None,
+    ) -> None:
+        """Register snap_name with the Snap Store.
+
+        :param snap_name: the name of the snap to register with the Snap Store
+        :param is_private: makes the registered snap a private snap
+        :param store_id: alternative store to register with
+        """
+        data = dict(
+            snap_name=snap_name, is_private=is_private, series=constants.DEFAULT_SERIES
+        )
+        if store_id is not None:
+            data["store"] = store_id
+
+        self.request(
+            "POST",
+            self._base_url + "/dev/api/register-name/",
+            json=data,
+        )
+
+    def get_account_info(
+        self,
+    ) -> Dict[str, Any]:
+        """Return account information."""
+        return self.request(
+            "GET",
+            self._base_url + "/dev/api/account",
+            headers={"Accept": "application/json"},
+        ).json()
