@@ -25,7 +25,7 @@ import pytest
 from snapcraft import errors
 from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts.update_metadata import update_project_metadata
-from snapcraft.projects import Project
+from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Project
 
 _SNAPCRAFT_YAML_FILENAMES = [
     "snap/snapcraft.yaml",
@@ -391,7 +391,7 @@ def test_lifecycle_pack_metadata_error(cmd, snapcraft_yaml, new_dir, mocker):
     assert pack_mock.mock_calls == []
 
 
-@pytest.mark.parametrize("field", ["version", "summary", "description", "grade"])
+@pytest.mark.parametrize("field", MANDATORY_ADOPTABLE_FIELDS)
 def test_lifecycle_metadata_empty(field, snapcraft_yaml, new_dir):
     """Adoptable fields shouldn't be empty after adoption."""
     yaml_data = snapcraft_yaml(base="core22")
@@ -544,6 +544,26 @@ def test_lifecycle_clean_managed(snapcraft_yaml, project_vars, new_dir, mocker):
 
     assert run_in_provider_mock.mock_calls == []
     assert clean_mock.mock_calls == [call(part_names=["part1"])]
+
+
+def test_lifecycle_adopt_project_vars(snapcraft_yaml, new_dir):
+    """Adoptable fields shouldn't be empty after adoption."""
+    yaml_data = snapcraft_yaml(base="core22")
+    yaml_data.pop("version")
+    yaml_data.pop("grade")
+    yaml_data["adopt-info"] = "part"
+    project = Project.unmarshal(yaml_data)
+
+    update_project_metadata(
+        project,
+        project_vars={"version": "42", "grade": "devel"},
+        metadata_list=[],
+        assets_dir=new_dir,
+        prime_dir=new_dir,
+    )
+
+    assert project.version == "42"
+    assert project.grade == "devel"
 
 
 def test_extract_parse_info():

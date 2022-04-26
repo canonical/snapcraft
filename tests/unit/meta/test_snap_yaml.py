@@ -38,7 +38,6 @@ def simple_project():
           we live in tweetspace and your description wants to look good in the snap
           store.
 
-        grade: stable
         confinement: strict
 
         parts:
@@ -105,7 +104,7 @@ def complex_project():
           we live in tweetspace and your description wants to look good in the snap
           store.
 
-        grade: stable
+        grade: devel
         confinement: strict
 
         environment:
@@ -249,7 +248,7 @@ def test_complex_snap_yaml(complex_project, new_dir):
                 listen-stream: 100
                 socket-mode: 1
         confinement: strict
-        grade: stable
+        grade: devel
         environment:
           GLOBAL_VARIABLE: test-global-variable
         plugs:

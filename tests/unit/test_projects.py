@@ -173,7 +173,6 @@ class TestProjectValidation:
             "version",
             "summary",
             "description",
-            "grade",
         )
 
     @pytest.mark.parametrize("field", MANDATORY_ADOPTABLE_FIELDS)

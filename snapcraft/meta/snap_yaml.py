@@ -161,7 +161,6 @@ def write(project: Project, prime_dir: Path, *, arch: str):
                 sockets=app_sockets if app_sockets else None,
             )
 
-    # FIXME: handle adopted parameters
     snap_metadata = SnapMetadata(
         name=project.name,
         title=project.title,
@@ -176,7 +175,7 @@ def write(project: Project, prime_dir: Path, *, arch: str):
         epoch=project.epoch,
         apps=snap_apps,
         confinement=project.confinement,
-        grade=project.grade,  # type: ignore
+        grade=project.grade or "stable",
         environment=project.environment,
         plugs=project.plugs,
         hooks=project.hooks,
