@@ -21,6 +21,7 @@ import logging
 import pathlib
 from typing import Generator, List
 
+from craft_cli import emit
 from craft_providers import Executor, bases, multipass
 from craft_providers.multipass.errors import MultipassError
 
@@ -91,11 +92,13 @@ class MultipassProvider(Provider):
         :raises ProviderError: if provider is not available.
         """
         if not multipass.is_installed():
-            if confirm_with_user(
-                "Multipass is required, but not installed. Do you wish to install Multipass "
-                "and configure it with the defaults?",
-                default=False,
-            ):
+            with emit.pause():
+                confirmation = confirm_with_user(
+                    "Multipass is required, but not installed. Do you wish to install Multipass "
+                    "and configure it with the defaults?",
+                    default=False,
+                )
+            if confirmation:
                 try:
                     multipass.install()
                 except multipass.MultipassInstallationError as error:
