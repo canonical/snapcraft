@@ -225,7 +225,7 @@ class ContentPlug(ProjectModel):
     default_provider: Optional[str]
 
 
-MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description", "grade")
+MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
 
 class Project(ProjectModel):
