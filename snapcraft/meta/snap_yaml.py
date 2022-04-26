@@ -16,7 +16,6 @@
 
 """Create snap.yaml metadata file."""
 
-import textwrap
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, cast
 
@@ -118,8 +117,6 @@ def write(project: Project, prime_dir: Path, *, arch: str):
     meta_dir = prime_dir / "meta"
     meta_dir.mkdir(parents=True, exist_ok=True)
 
-    _write_snapcraft_runner(prime_dir)
-
     snap_apps: Dict[str, SnapApp] = {}
     if project.apps:
         for name, app in project.apps.items():
@@ -188,21 +185,6 @@ def write(project: Project, prime_dir: Path, *, arch: str):
 
     snap_yaml = meta_dir / "snap.yaml"
     snap_yaml.write_text(yaml_data)
-
-
-def _write_snapcraft_runner(prime_dir: Path):
-    content = textwrap.dedent(
-        """#!/bin/sh
-        export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
-        export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
-        exec "$@"
-        """
-    )
-
-    runner_path = prime_dir / "snap/command-chain/snapcraft-runner"
-    runner_path.parent.mkdir(parents=True, exist_ok=True)
-    runner_path.write_text(content)
-    runner_path.chmod(0o755)
 
 
 def _repr_str(dumper, data):

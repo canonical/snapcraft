@@ -194,7 +194,7 @@ class PartsLifecycle:
             emit.trace(f"extract metadata: parse info from {metadata_file}")
 
             for location in locations:
-                if pathlib.Path(location, metadata_file).is_file():
+                if pathlib.Path(location, metadata_file.lstrip("/")).is_file():
                     metadata = extract_metadata(metadata_file, workdir=str(location))
                     if metadata:
                         metadata_list.append(metadata)

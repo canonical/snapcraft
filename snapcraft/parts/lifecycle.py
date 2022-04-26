@@ -32,6 +32,7 @@ from snapcraft.projects import GrammarAwareProject, Project
 from snapcraft.providers import capture_logs_from_instance
 
 from . import grammar, yaml_utils
+from .setup_assets import setup_assets
 from .update_metadata import update_project_metadata
 
 if TYPE_CHECKING:
@@ -207,6 +208,7 @@ def _run_command(
     # Extract metadata and generate snap.yaml
     project_vars = lifecycle.project_vars
     if step_name == "prime" and not part_names:
+        emit.progress("Extracting and updating metadata...")
         metadata_list = lifecycle.extract_metadata()
         update_project_metadata(
             project,
@@ -216,7 +218,12 @@ def _run_command(
             prime_dir=lifecycle.prime_dir,
         )
 
-        # TODO: copy meta/gui assets
+        emit.progress("Copying snap assets...")
+        setup_assets(
+            project,
+            assets_dir=assets_dir,
+            prime_dir=lifecycle.prime_dir,
+        )
 
         emit.progress("Generating snap metadata...")
         snap_yaml.write(

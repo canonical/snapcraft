@@ -84,6 +84,7 @@ dev_requires = [
     "pytest-mock",
     "pytest-subprocess",
     "types-PyYAML",
+    "types-requests",
     "types-setuptools",
     "types-tabulate",
 ]
