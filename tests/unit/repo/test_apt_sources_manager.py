@@ -42,8 +42,8 @@ def mock_environ_copy(mocker):
 
 @pytest.fixture(autouse=True)
 def mock_host_arch(mocker):
-    m = mocker.patch("snapcraft.repo.apt_sources_manager.ProjectOptions")
-    m.return_value.deb_arch = "FAKE-HOST-ARCH"
+    m = mocker.patch("snapcraft.utils.get_host_architecture")
+    m.return_value = "FAKE-HOST-ARCH"
 
     yield m
 

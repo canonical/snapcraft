@@ -23,8 +23,7 @@ from typing import List, Optional
 
 from craft_cli import emit
 
-from snapcraft import os_release
-from snapcraft_legacy.project._project_options import ProjectOptions
+from snapcraft import os_release, utils
 
 from . import apt_ppa, package_repository
 
@@ -58,15 +57,11 @@ def _construct_deb822_source(
         if architectures:
             arch_text = " ".join(architectures)
         else:
-            arch_text = _get_host_arch()
+            arch_text = utils.get_host_architecture()
 
         print(f"Architectures: {arch_text}", file=deb822)
 
         return deb822.getvalue()
-
-
-def _get_host_arch() -> str:
-    return ProjectOptions().deb_arch
 
 
 class AptSourcesManager:
