@@ -187,6 +187,7 @@ def _run_command(
         project.parts,
         work_dir=work_dir,
         assets_dir=assets_dir,
+        base=project.base,
         package_repositories=project.package_repositories,
         part_names=part_names,
         adopt_info=project.adopt_info,
