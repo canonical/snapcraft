@@ -27,25 +27,23 @@ from snapcraft.commands import ExtensionsCommand, ListExtensionsCommand
 def test_command(emitter, command):
     cmd = command(None)
     cmd.run(Namespace())
-    emitter.assert_recorded(
-        [
-            dedent(
-                """\
-            Extension name    Supported bases
-            ----------------  -----------------
-            fake-extension    core22
-            flutter-beta      core18
-            flutter-dev       core18
-            flutter-master    core18
-            flutter-stable    core18
-            gnome-3-28        core18
-            gnome-3-34        core18
-            gnome-3-38        core20
-            kde-neon          core18, core20
-            ros1-noetic       core20
-            ros2-foxy         core20"""
-            )
-        ]
+    emitter.assert_message(
+        dedent(
+            """\
+        Extension name    Supported bases
+        ----------------  -----------------
+        fake-extension    core22
+        flutter-beta      core18
+        flutter-dev       core18
+        flutter-master    core18
+        flutter-stable    core18
+        gnome-3-28        core18
+        gnome-3-34        core18
+        gnome-3-38        core20
+        kde-neon          core18, core20
+        ros1-noetic       core20
+        ros2-foxy         core20"""
+        )
     )
 
 
@@ -54,22 +52,20 @@ def test_command(emitter, command):
 def test_command_extension_dups(emitter, command):
     cmd = command(None)
     cmd.run(Namespace())
-    emitter.assert_recorded(
-        [
-            dedent(
-                """\
-            Extension name    Supported bases
-            ----------------  -----------------
-            flutter-beta      core18
-            flutter-dev       core18
-            flutter-master    core18
-            flutter-stable    core18
-            gnome-3-28        core18
-            gnome-3-34        core18
-            gnome-3-38        core20
-            kde-neon          core18, core20
-            ros1-noetic       core20
-            ros2-foxy         core20, core22"""
-            )
-        ]
+    emitter.assert_message(
+        dedent(
+            """\
+        Extension name    Supported bases
+        ----------------  -----------------
+        flutter-beta      core18
+        flutter-dev       core18
+        flutter-master    core18
+        flutter-stable    core18
+        gnome-3-28        core18
+        gnome-3-34        core18
+        gnome-3-38        core20
+        kde-neon          core18, core20
+        ros1-noetic       core20
+        ros2-foxy         core20, core22"""
+        )
     )

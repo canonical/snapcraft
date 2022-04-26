@@ -31,10 +31,10 @@ def test_version_command(mocker):
 def test_version_argument(mocker, emitter):
     mocker.patch.object(sys, "argv", ["cmd", "--version"])
     cli.run()
-    emitter.assert_recorded([f"snapcraft {__version__}"])
+    emitter.assert_message(f"snapcraft {__version__}")
 
 
 def test_version_argument_with_command(mocker, emitter):
     mocker.patch.object(sys, "argv", ["cmd", "--version", "version"])
     cli.run()
-    emitter.assert_recorded([f"snapcraft {__version__}"])
+    emitter.assert_message(f"snapcraft {__version__}")

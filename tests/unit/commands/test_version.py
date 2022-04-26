@@ -23,4 +23,4 @@ from snapcraft.commands.version import VersionCommand
 def test_version_command(emitter):
     cmd = VersionCommand(None)
     cmd.run(Namespace())
-    emitter.assert_recorded([f"snapcraft {__version__}"])
+    emitter.assert_message(f"snapcraft {__version__}")
