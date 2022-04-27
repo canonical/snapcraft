@@ -30,6 +30,7 @@ def test_default_command(mocker):
     assert mock_pack_cmd.mock_calls == [
         call(
             argparse.Namespace(
+                debug=False,
                 directory=None,
                 output=None,
                 destructive_mode=False,
@@ -53,6 +54,7 @@ def test_default_command_destructive_mode(mocker):
             argparse.Namespace(
                 directory=None,
                 output=None,
+                debug=False,
                 destructive_mode=True,
                 use_lxd=False,
                 enable_experimental_extensions=False,
@@ -74,6 +76,7 @@ def test_default_command_use_lxd(mocker):
             argparse.Namespace(
                 directory=None,
                 output=None,
+                debug=False,
                 destructive_mode=False,
                 use_lxd=True,
                 enable_experimental_extensions=False,
@@ -96,6 +99,7 @@ def test_default_command_output(mocker, option):
             argparse.Namespace(
                 directory=None,
                 output="name",
+                debug=False,
                 destructive_mode=False,
                 use_lxd=False,
                 enable_experimental_extensions=False,
