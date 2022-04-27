@@ -1,5 +1,15 @@
 summary: Build a strict snap and validate elf patching
 
+# TODO patchelf'ing not supported in 22.04
+systems:
+  - -ubuntu-22.04
+  - -ubuntu-22.04-64
+  - -ubuntu-22.04-amd64
+  - -ubuntu-22.04-arm64
+  - -ubuntu-22.04-armhf
+  - -ubuntu-22.04-s390x
+  - -ubuntu-22.04-ppc64el
+
 environment:
   SNAP_DIR: ../snaps/strict-patchelf
 

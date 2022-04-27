@@ -1,12 +1,5 @@
 summary: Build a snap that tests appstream settings
 
-# This test snap uses core18, and is limited to amd64 arch due to
-# architectures specified in expected_snap.yaml.
-systems:
-  - ubuntu-20.04-64
-  - ubuntu-20.04-amd64
-  - ubuntu-20.04
-
 environment:
   SNAP_DIR: snaps/appstream-desktop
 

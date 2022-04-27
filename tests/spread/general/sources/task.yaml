@@ -1,5 +1,15 @@
 summary: Test pulling different source types
 
+# These are tested on craft-parts for 22.04 and not all of them are available.
+systems:
+  - -ubuntu-22.04
+  - -ubuntu-22.04-64
+  - -ubuntu-22.04-amd64
+  - -ubuntu-22.04-arm64
+  - -ubuntu-22.04-armhf
+  - -ubuntu-22.04-s390x
+  - -ubuntu-22.04-ppc64el
+
 environment:
   SNAP_DIR/7z: snaps/7z
   SNAP_DIR/bzr_commit: snaps/bzr-commit
