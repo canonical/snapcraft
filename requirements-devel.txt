@@ -9,7 +9,7 @@ charset-normalizer==2.0.12
 click==8.1.2
 codespell==2.1.0
 coverage==6.3.2
-craft-cli==0.4.0
+craft-cli==0.5.0
 craft-grammar==1.1.1
 craft-parts==1.5.1
 craft-providers==1.2.0
@@ -20,7 +20,7 @@ dill==0.3.4
 distro==1.7.0
 docutils==0.18.1
 extras==1.0.0
-fixtures==3.0.0
+fixtures==4.0.0
 flake8==4.0.1
 gnupg==2.3.1
 httplib2==0.20.4
@@ -53,7 +53,7 @@ plaster-pastedeploy==0.7
 platformdirs==2.5.2
 pluggy==1.0.0
 progressbar==2.5
-protobuf==3.20.0
+protobuf==3.20.1
 psutil==5.9.0
 ptyprocess==0.7.0
 py==1.11.0
@@ -73,7 +73,7 @@ pymacaroons==0.13.0
 pyparsing==3.0.8
 pyramid==2.0
 pyRFC3339==1.1
-pytest==7.1.1
+pytest==7.1.2
 pytest-cov==3.0.0
 pytest-mock==3.7.0
 pytest-subprocess==1.4.1
@@ -81,7 +81,7 @@ python-dateutil==2.8.2
 python-debian==0.1.43
 pytz==2022.1
 pyxdg==0.27
-PyYAML==5.3
+PyYAML==6.0
 raven==6.10.0
 requests==2.27.1
 requests-toolbelt==0.9.1
@@ -100,10 +100,10 @@ toml==0.10.2
 tomli==2.0.1
 translationstring==1.4
 types-Deprecated==1.2.6
-types-PyYAML==6.0.6
+types-PyYAML==6.0.7
+types-requests==2.27.20
 types-setuptools==57.4.14
 types-tabulate==0.8.7
-types-requests==2.27.20
 types-urllib3==1.26.13
 typing-utils==0.1.0
 typing_extensions==4.2.0
