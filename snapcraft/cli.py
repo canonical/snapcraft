@@ -62,6 +62,10 @@ COMMAND_GROUPS = [
         ],
     ),
     craft_cli.CommandGroup(
+        "Store Snap Release Management",
+        [commands.StoreReleaseCommand, commands.StoreCloseCommand],
+    ),
+    craft_cli.CommandGroup(
         "Extensions",
         [
             commands.ListExtensionsCommand,

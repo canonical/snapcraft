@@ -252,3 +252,46 @@ class StoreClientCLI:
             self._base_url + "/dev/api/account",
             headers={"Accept": "application/json"},
         ).json()
+
+    def release(
+        self,
+        snap_name: str,
+        *,
+        revision: int,
+        channels: Sequence[str],
+        progressive_percentage: Optional[int] = None,
+    ) -> None:
+        """Register snap_name with the Snap Store.
+
+        :param snap_name: the name of the snap to register with the Snap Store
+        :param revision: the revision of the snap to release
+        :param channels: the channels to release to
+        :param progressive_percentage: enable progressive releases up to a given percentage
+        """
+        data: Dict[str, Any] = {
+            "name": snap_name,
+            "revision": str(revision),
+            "channels": channels,
+        }
+        if progressive_percentage is not None and progressive_percentage != 100:
+            data["progressive"] = {
+                "percentage": progressive_percentage,
+                "paused": False,
+            }
+        self.request(
+            "POST",
+            self._base_url + "/dev/api/snap-release/",
+            json=data,
+        )
+
+    def close(self, snap_id: str, channel: str) -> None:
+        """Close channel for snap_id.
+
+        :param snap_id: the id for the snap to close
+        :param channel: the channel to close
+        """
+        self.request(
+            "POST",
+            self._base_url + f"/dev/api/snaps/{snap_id}/close",
+            json={"channels": [channel]},
+        )
