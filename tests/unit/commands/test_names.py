@@ -16,7 +16,6 @@
 
 import argparse
 from textwrap import dedent
-from typing import List
 from unittest.mock import ANY, call
 
 import pytest
@@ -89,7 +88,7 @@ def test_register_default(emitter, fake_confirmation_prompt, fake_store_register
     assert fake_store_register.mock_calls == [
         call(ANY, "test-snap", is_private=False, store_id=None)
     ]
-    emitter.assert_recorded(["Registered 'test-snap'"])
+    emitter.assert_message("Registered 'test-snap'")
     assert fake_confirmation_prompt.mock_calls == [
         call(
             dedent(
@@ -124,7 +123,7 @@ def test_register_yes(emitter, fake_store_register):
     assert fake_store_register.mock_calls == [
         call(ANY, "test-snap", is_private=False, store_id=None)
     ]
-    emitter.assert_recorded(["Registered 'test-snap'"])
+    emitter.assert_message("Registered 'test-snap'")
 
 
 @pytest.mark.usefixtures("memory_keyring")
@@ -138,7 +137,7 @@ def test_register_no(emitter, fake_confirmation_prompt, fake_store_register):
     )
 
     assert fake_store_register.mock_calls == []
-    emitter.assert_recorded(["Snap name 'test-snap' not registered"])
+    emitter.assert_messages(["Snap name 'test-snap' not registered"])
     assert fake_confirmation_prompt.mock_calls == [
         call(
             dedent(
@@ -171,18 +170,19 @@ def test_register_private(emitter, fake_store_register):
     )
 
     assert fake_store_register.mock_calls == []
-    emitter.assert_recorded(
-        [
-            dedent(
-                """\
+    emitter.assert_message(
+        dedent(
+            """\
             Even though this is private snap, you should think carefully about
             the choice of name and make sure you are confident nobody else will
             have a stronger claim to that particular name. If you are unsure
             then we suggest you prefix the name with your developer identity,
             As '$username-yoyodyne-www-site-content'."""
-            ),
-            "Snap name 'test-snap' not registered",
-        ]
+        ),
+        intermediate=True,
+    )
+    emitter.assert_message(
+        "Snap name 'test-snap' not registered",
     )
 
 
@@ -199,7 +199,7 @@ def test_register_store_id(emitter, fake_store_register):
     assert fake_store_register.mock_calls == [
         call(ANY, "test-snap", is_private=False, store_id="1234")
     ]
-    emitter.assert_recorded(["Registered 'test-snap'"])
+    emitter.assert_message("Registered 'test-snap'")
 
 
 #################
@@ -226,10 +226,9 @@ def test_names(emitter, fake_store_get_account_info, command_class):
     )
 
     assert fake_store_get_account_info.mock_calls == [call(ANY)]
-    recorded: List[str] = []
     if command_class.hidden:
-        recorded = ["This command is deprecated: use 'names' instead"]
-    recorded.append(
+        emitter.assert_progress("This command is deprecated: use 'names' instead")
+    emitter.assert_message(
         dedent(
             """\
             Name               Since                 Visibility    Notes
@@ -237,4 +236,3 @@ def test_names(emitter, fake_store_get_account_info, command_class):
             test-snap-public   2016-07-26T20:18:32Z  public        -"""
         )
     )
-    emitter.assert_recorded(recorded)

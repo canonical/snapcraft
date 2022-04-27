@@ -50,29 +50,27 @@ def test_command(new_dir, emitter):
 
     cmd = ExpandExtensionsCommand(None)
     cmd.run(Namespace())
-    emitter.assert_recorded(
-        [
-            dedent(
-                """\
-            name: test-name
-            version: '0.1'
-            summary: testing extensions
-            description: expand a fake extension
-            base: core22
-            apps:
-                app1:
-                    command: app1
-                    plugs:
-                    - fake-plug
-            parts:
-                part1:
-                    plugin: nil
-                    after:
-                    - fake-extension/fake-part
-                fake-extension/fake-part:
-                    plugin: nil
-            grade: fake-grade
-            """
-            )
-        ]
+    emitter.assert_message(
+        dedent(
+            """\
+        name: test-name
+        version: '0.1'
+        summary: testing extensions
+        description: expand a fake extension
+        base: core22
+        apps:
+            app1:
+                command: app1
+                plugs:
+                - fake-plug
+        parts:
+            part1:
+                plugin: nil
+                after:
+                - fake-extension/fake-part
+            fake-extension/fake-part:
+                plugin: nil
+        grade: fake-grade
+        """
+        )
     )

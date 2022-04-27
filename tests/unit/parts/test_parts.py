@@ -63,7 +63,7 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
             project_vars={"version": "1", "grade": "stable"},
         )
     ]
-    emitter.assert_recorded([f"Executing parts lifecycle: {step_name} p1"])
+    emitter.assert_progress(f"Executing parts lifecycle: {step_name} p1")
 
 
 def test_parts_lifecycle_run_bad_step(parts_data, new_dir):
@@ -137,7 +137,7 @@ def test_parts_lifecycle_clean(parts_data, new_dir, emitter):
         project_vars={"version": "1", "grade": "stable"},
     )
     lifecycle.clean(part_names=None)
-    emitter.assert_recorded(["Cleaning all parts"])
+    emitter.assert_message("Cleaning all parts", intermediate=True)
 
 
 def test_parts_lifecycle_clean_parts(parts_data, new_dir, emitter):
@@ -154,7 +154,7 @@ def test_parts_lifecycle_clean_parts(parts_data, new_dir, emitter):
         project_vars={"version": "1", "grade": "stable"},
     )
     lifecycle.clean(part_names=["p1"])
-    emitter.assert_recorded(["Cleaning parts: p1"])
+    emitter.assert_message("Cleaning parts: p1", intermediate=True)
 
 
 def test_parts_lifecycle_initialize_with_no_base(

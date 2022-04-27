@@ -54,7 +54,7 @@ def test_login(emitter, fake_store_login):
             ANY,
         )
     ]
-    emitter.assert_recorded(["Login successful"])
+    emitter.assert_message("Login successful")
 
 
 def test_login_with_file_fails():
@@ -104,7 +104,7 @@ def test_export_login(emitter, fake_store_login):
             ANY,
         )
     ]
-    emitter.assert_recorded(["Exported login credentials:\nsecret"])
+    emitter.assert_message("Exported login credentials:\nsecret")
 
 
 def test_export_login_file(new_dir, emitter, fake_store_login):
@@ -126,7 +126,7 @@ def test_export_login_file(new_dir, emitter, fake_store_login):
             ANY,
         )
     ]
-    emitter.assert_recorded(["Exported login credentials to 'target_file'"])
+    emitter.assert_message("Exported login credentials to 'target_file'")
     login_file = new_dir / "target_file"
     assert login_file.exists()
     assert login_file.read_text() == "secret"
@@ -155,7 +155,7 @@ def test_export_login_with_params(emitter, fake_store_login):
             ttl=ANY,
         )
     ]
-    emitter.assert_recorded(["Exported login credentials:\nsecret"])
+    emitter.assert_message("Exported login credentials:\nsecret")
 
 
 def test_export_login_with_experimental_fails():
@@ -203,7 +203,7 @@ def test_who(emitter, fake_client):
         channels: no restrictions
         expires: 2023-04-22T21:48:57.000Z"""
     )
-    emitter.assert_recorded([expected_message])
+    emitter.assert_message(expected_message)
 
 
 def test_who_with_attenuations(emitter, fake_client):
@@ -228,7 +228,7 @@ def test_who_with_attenuations(emitter, fake_client):
         channels: edge, beta
         expires: 2023-04-22T21:48:57.000Z"""
     )
-    emitter.assert_recorded([expected_message])
+    emitter.assert_message(expected_message)
 
 
 ##################
@@ -242,4 +242,4 @@ def test_logout(emitter, fake_client):
     cmd.run(argparse.Namespace())
 
     assert fake_client.logout.mock_calls == [call()]
-    emitter.assert_recorded(["Credentials cleared"])
+    emitter.assert_message("Credentials cleared")
