@@ -338,12 +338,6 @@ class StoreClientCLI(storeapi.StoreClient):
     # TODO use an instance of this class directly from snapcraft_legacy.cli.store
 
     @_login_wrapper
-    def close_channels(
-        self, *, snap_id: str, channel_names: List[str]
-    ) -> Dict[str, Any]:
-        return super().close_channels(snap_id=snap_id, channel_names=channel_names)
-
-    @_login_wrapper
     def get_metrics(
         self, *, filters: List[MetricsFilter], snap_name: str
     ) -> MetricsResults:
@@ -384,22 +378,6 @@ class StoreClientCLI(storeapi.StoreClient):
         store_id: Optional[str] = None,
     ) -> None:
         super().register(snap_name=snap_name, is_private=is_private, store_id=store_id)
-
-    @_login_wrapper
-    def release(
-        self,
-        *,
-        snap_name: str,
-        revision: str,
-        channels: List[str],
-        progressive_percentage: Optional[int] = None,
-    ) -> Dict[str, Any]:
-        return super().release(
-            snap_name=snap_name,
-            revision=revision,
-            channels=channels,
-            progressive_percentage=progressive_percentage,
-        )
 
     @_login_wrapper
     @_register_wrapper

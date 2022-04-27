@@ -406,3 +406,68 @@ def test_get_account_info(fake_client):
         ),
         call().json(),
     ]
+
+
+###########
+# Release #
+###########
+
+
+@pytest.mark.parametrize("progressive_percentage", [None, 100])
+def test_release(fake_client, progressive_percentage):
+    client.StoreClientCLI().release(
+        snap_name="snap",
+        revision=10,
+        channels=["beta", "edge"],
+        progressive_percentage=progressive_percentage,
+    )
+
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/dev/api/snap-release/",
+            json={"name": "snap", "revision": "10", "channels": ["beta", "edge"]},
+        )
+    ]
+
+
+def test_release_progressive(fake_client):
+    client.StoreClientCLI().release(
+        snap_name="snap",
+        revision=10,
+        channels=["beta", "edge"],
+        progressive_percentage=88,
+    )
+
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/dev/api/snap-release/",
+            json={
+                "name": "snap",
+                "revision": "10",
+                "channels": ["beta", "edge"],
+                "progressive": {"percentage": 88, "paused": False},
+            },
+        )
+    ]
+
+
+#########
+# Close #
+#########
+
+
+def test_close(fake_client):
+    client.StoreClientCLI().close(
+        snap_id="12345",
+        channel="edge",
+    )
+
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/dev/api/snaps/12345/close",
+            json={"channels": ["edge"]},
+        )
+    ]

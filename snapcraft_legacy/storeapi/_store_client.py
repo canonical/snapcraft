@@ -248,9 +248,6 @@ class StoreClient:
     ) -> validation_sets.ValidationSets:
         return self.dashboard.get_validation_sets(name=name, sequence=sequence)
 
-    def close_channels(self, snap_id, channel_names):
-        return self.dashboard.close_channels(snap_id, channel_names)
-
     @classmethod
     def download(
         cls,
