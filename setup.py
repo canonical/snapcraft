@@ -59,7 +59,6 @@ else:
     scripts = []
 
 dev_requires = [
-    "mccabe<0.7.0",  # to resolve version conflict
     "black",
     "codespell",
     "coverage",
@@ -113,7 +112,7 @@ install_requires = [
     "pyelftools",
     "pymacaroons",
     "pyxdg",
-    "pyyaml==5.3",
+    "pyyaml",
     "raven",
     "requests-toolbelt",
     "requests-unixsocket",
