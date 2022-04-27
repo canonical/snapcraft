@@ -574,3 +574,50 @@ def test_extract_parse_info():
     parse_info = parts_lifecycle._extract_parse_info(yaml_data)
     assert yaml_data == {"name": "foo", "parts": {"p1": {"plugin": "nil"}, "p2": {}}}
     assert parse_info == {"p1": "foo/metadata.xml"}
+
+def test_get_snap_project_no_base(snapcraft_yaml):
+    project = Project.unmarshal(snapcraft_yaml(base=None))
+
+    assert parts_lifecycle._get_extra_build_snaps(project) is None
+
+def test_get_snap_project_with_base(snapcraft_yaml):
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+
+    assert parts_lifecycle._get_extra_build_snaps(project) == ["core22"]
+
+def test_get_snap_project_with_content_plugs(snapcraft_yaml):
+    yaml_data = {
+        "name": "mytest",
+        "version": "0.1",
+        "base": "core22",
+        "summary": "Just some test data",
+        "description": "This is just some test data.",
+        "grade": "stable",
+        "confinement": "strict",
+        "parts": {
+            "part1": {
+                "plugin": "nil"
+            }
+        },
+        "plugs": {
+            "test-plug-1": {
+                "content": "content-interface",
+                "interface": "content",
+                "target": "$SNAP/content",
+                "default-provider": "test-snap-1",
+            },
+            "test-plug-2": {
+                "content": "content-interface",
+                "interface": "content",
+                "target": "$SNAP/content",
+                "default-provider": "test-snap-2",
+            },
+        },
+    }
+
+    project = Project(**yaml_data)
+
+    assert (
+        parts_lifecycle._get_extra_build_snaps(project)
+        == ["test-snap-1", "test-snap-2", "core22"]
+    )

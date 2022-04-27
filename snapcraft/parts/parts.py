@@ -42,8 +42,8 @@ class PartsLifecycle:
     :param all_parts: A dictionary containing the parts defined in the project.
     :param work_dir: The working directory for parts processing.
     :param assets_dir: The directory containing project assets.
-    :param base: the base to build for.
     :param adopt_info: The name of the part containing metadata do adopt.
+    :param extra_build_snaps: A list of additional build snaps to install.
 
     :raises PartsLifecycleError: On error initializing the parts lifecycle.
     """
@@ -54,13 +54,13 @@ class PartsLifecycle:
         *,
         work_dir: pathlib.Path,
         assets_dir: pathlib.Path,
-        base: Optional[str],
         package_repositories: List[Dict[str, Any]],
         part_names: Optional[List[str]],
         adopt_info: Optional[str],
         parse_info: Dict[str, List[str]],
         project_name: str,
         project_vars: Dict[str, str],
+        extra_build_snaps: Optional[List[str]] = None,
     ):
         self._assets_dir = assets_dir
         self._package_repositories = package_repositories
@@ -78,9 +78,6 @@ class PartsLifecycle:
             # Install pre-requisite packages for apt-key, if not installed.
             # FIXME: package names should be plataform-specific
             extra_build_packages.extend(["gnupg", "dirmngr"])
-        extra_snap_packages = []
-        if base is not None:
-            extra_snap_packages.append(base)
 
         try:
             self._lcm = craft_parts.LifecycleManager(
@@ -90,7 +87,7 @@ class PartsLifecycle:
                 cache_dir=cache_dir,
                 ignore_local_sources=["*.snap"],
                 extra_build_packages=extra_build_packages,
-                extra_snap_packages=extra_snap_packages,
+                extra_build_snaps=extra_build_snaps,
                 project_name=project_name,
                 project_vars_part_name=adopt_info,
                 project_vars=project_vars,

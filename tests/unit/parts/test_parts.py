@@ -33,18 +33,19 @@ def parts_data():
 
 @pytest.mark.parametrize("step_name", ["pull", "overlay", "build", "stage", "prime"])
 def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
+    mocker.patch("craft_parts.executor.executor.Executor._install_build_snaps")
     lcm_spy = mocker.spy(craft_parts, "LifecycleManager")
     lifecycle = PartsLifecycle(
         parts_data,
         work_dir=new_dir,
         assets_dir=new_dir,
-        base="core22",
         part_names=[],
         package_repositories=[],
         adopt_info=None,
         project_name="test-project",
         parse_info={},
         project_vars={"version": "1", "grade": "stable"},
+        extra_build_snaps=["core22"],
     )
     lifecycle.run(step_name)
     assert lifecycle.prime_dir == Path(new_dir, "prime")
@@ -57,7 +58,7 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
             cache_dir=ANY,
             ignore_local_sources=["*.snap"],
             extra_build_packages=[],
-            extra_snap_packages=["core22"],
+            extra_build_snaps=["core22"],
             project_name="test-project",
             project_vars_part_name=None,
             project_vars={"version": "1", "grade": "stable"},
@@ -71,7 +72,6 @@ def test_parts_lifecycle_run_bad_step(parts_data, new_dir):
         parts_data,
         work_dir=new_dir,
         assets_dir=new_dir,
-        base="core22",
         part_names=[],
         package_repositories=[],
         adopt_info=None,
@@ -89,7 +89,6 @@ def test_parts_lifecycle_run_internal_error(parts_data, new_dir, mocker):
         parts_data,
         work_dir=new_dir,
         assets_dir=new_dir,
-        base="core22",
         part_names=[],
         package_repositories=[],
         adopt_info=None,
@@ -108,7 +107,6 @@ def test_parts_lifecycle_run_parts_error(new_dir):
         {"p1": {"plugin": "dump", "source": "foo"}},
         work_dir=new_dir,
         assets_dir=new_dir,
-        base="core22",
         part_names=[],
         package_repositories=[],
         adopt_info=None,
@@ -128,7 +126,6 @@ def test_parts_lifecycle_clean(parts_data, new_dir, emitter):
         parts_data,
         work_dir=new_dir,
         assets_dir=new_dir,
-        base="core22",
         part_names=[],
         package_repositories=[],
         adopt_info=None,
@@ -145,7 +142,6 @@ def test_parts_lifecycle_clean_parts(parts_data, new_dir, emitter):
         parts_data,
         work_dir=new_dir,
         assets_dir=new_dir,
-        base="core22",
         part_names=[],
         package_repositories=[],
         adopt_info=None,
@@ -155,40 +151,6 @@ def test_parts_lifecycle_clean_parts(parts_data, new_dir, emitter):
     )
     lifecycle.clean(part_names=["p1"])
     emitter.assert_message("Cleaning parts: p1", intermediate=True)
-
-
-def test_parts_lifecycle_initialize_with_no_base(
-    mocker,
-    parts_data,
-    new_dir,
-):
-    lcm_spy = mocker.spy(craft_parts, "LifecycleManager")
-    PartsLifecycle(
-        parts_data,
-        work_dir=new_dir,
-        assets_dir=new_dir,
-        base=None,
-        part_names=[],
-        package_repositories=[],
-        adopt_info=None,
-        project_name="test-project",
-        parse_info={},
-        project_vars={"version": "1", "grade": "stable"},
-    )
-    assert lcm_spy.mock_calls == [
-        call(
-            {"parts": {"p1": {"plugin": "nil"}}},
-            application_name="snapcraft",
-            work_dir=ANY,
-            cache_dir=ANY,
-            ignore_local_sources=["*.snap"],
-            extra_build_packages=[],
-            extra_snap_packages=[],
-            project_name="test-project",
-            project_vars_part_name=None,
-            project_vars={"version": "1", "grade": "stable"},
-        )
-    ]
 
 
 def test_parts_lifecycle_initialize_with_package_repositories(
@@ -201,7 +163,6 @@ def test_parts_lifecycle_initialize_with_package_repositories(
         parts_data,
         work_dir=new_dir,
         assets_dir=new_dir,
-        base="core22",
         part_names=[],
         package_repositories=[
             {
@@ -213,6 +174,7 @@ def test_parts_lifecycle_initialize_with_package_repositories(
         project_name="test-project",
         parse_info={},
         project_vars={"version": "1", "grade": "stable"},
+        extra_build_snaps=["core22"],
     )
     assert lcm_spy.mock_calls == [
         call(
@@ -222,7 +184,7 @@ def test_parts_lifecycle_initialize_with_package_repositories(
             cache_dir=ANY,
             ignore_local_sources=["*.snap"],
             extra_build_packages=["gnupg", "dirmngr"],
-            extra_snap_packages=["core22"],
+            extra_build_snaps=["core22"],
             project_name="test-project",
             project_vars_part_name=None,
             project_vars={"version": "1", "grade": "stable"},
