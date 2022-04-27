@@ -480,6 +480,19 @@ class TestProjectValidation:
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(project_yaml_data(plugs=content_plug))
 
+    def test_project_get_content_snaps(self, project_yaml_data):
+        content_plug_data = {
+            "content-interface": {
+                "interface": "content",
+                "target": "test-target",
+                "content": "test-content",
+                "default-provider": "test-provider",
+            }
+        }
+
+        project = Project.unmarshal(project_yaml_data(plugs=content_plug_data))
+        assert project.get_content_snaps() == ["test-provider"]
+
 
 class TestHookValidation:
     """Validate hooks."""

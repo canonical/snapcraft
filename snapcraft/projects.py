@@ -408,6 +408,24 @@ class Project(ProjectModel):
 
         return project
 
+    def _get_content_plugs(self) -> List[ContentPlug]:
+        """Get list of content plugs."""
+        if self.plugs is not None:
+            return [
+                plug for plug in self.plugs.values() if isinstance(plug, ContentPlug)
+            ]
+        return []
+
+    def get_content_snaps(self) -> Optional[List[str]]:
+        """Get list of snaps from ContentPlug `default-provider` fields."""
+        content_snaps = [
+            x.default_provider
+            for x in self._get_content_plugs()
+            if x.default_provider is not None
+        ]
+
+        return content_snaps if content_snaps else None
+
 
 class _GrammarAwareModel(pydantic.BaseModel):
     class Config:
