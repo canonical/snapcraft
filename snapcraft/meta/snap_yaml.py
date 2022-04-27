@@ -180,7 +180,11 @@ def write(project: Project, prime_dir: Path, *, arch: str):
 
     yaml.add_representer(str, _repr_str, Dumper=yaml.SafeDumper)
     yaml_data = snap_metadata.yaml(
-        by_alias=True, exclude_none=True, sort_keys=False, width=1000
+        by_alias=True,
+        exclude_none=True,
+        allow_unicode=True,
+        sort_keys=False,
+        width=1000,
     )
 
     snap_yaml = meta_dir / "snap.yaml"
