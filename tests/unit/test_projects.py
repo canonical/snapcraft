@@ -84,7 +84,7 @@ class TestProjectDefaults:
         assert project.issues is None
         assert project.source_code is None
         assert project.website is None
-        assert project.type == "app"
+        assert project.type is None
         assert project.icon is None
         assert project.layout is None
         assert project.license is None

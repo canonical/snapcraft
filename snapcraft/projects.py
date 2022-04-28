@@ -250,7 +250,7 @@ class Project(ProjectModel):
     website: Optional[str]
     summary: Optional[constr(max_length=78)]  # type: ignore
     description: Optional[str]
-    type: Literal["app", "base", "gadget", "kernel", "snapd"] = "app"
+    type: Optional[Literal["app", "base", "gadget", "kernel", "snapd"]]
     icon: Optional[str]
     confinement: Literal["classic", "devmode", "strict"]
     layout: Optional[Dict[str, Dict[str, Any]]]
