@@ -27,11 +27,10 @@ from craft_parts import infos
 
 from snapcraft import errors, extensions, pack, providers, utils
 from snapcraft.meta import snap_yaml
-from snapcraft.parts import PartsLifecycle
 from snapcraft.projects import GrammarAwareProject, Project
 from snapcraft.providers import capture_logs_from_instance
 
-from . import grammar, yaml_utils
+from . import PartsLifecycle, grammar, plugins, yaml_utils
 from .setup_assets import setup_assets
 from .update_metadata import update_project_metadata
 
@@ -136,6 +135,9 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     if parsed_args.provider:
         raise errors.SnapcraftError("Option --provider is not supported.")
 
+    # Register our own plugins
+    plugins.register()
+
     project = Project.unmarshal(yaml_data)
 
     _run_command(
@@ -197,7 +199,7 @@ def _run_command(
             "version": project.version or "",
             "grade": project.grade or "",
         },
-        extra_build_snaps=_get_extra_build_snaps(project)
+        extra_build_snaps=_get_extra_build_snaps(project),
     )
     if command_name == "clean":
         lifecycle.clean(part_names=part_names)
@@ -306,6 +308,7 @@ def _get_arch() -> str:
     machine = infos._get_host_architecture()  # pylint: disable=protected-access
     # FIXME Raise the potential KeyError.
     return infos._ARCH_TRANSLATIONS[machine]["deb"]  # pylint: disable=protected-access
+
 
 def _get_extra_build_snaps(project: Project) -> Optional[List[str]]:
     """Get list of extra snaps required to build."""
