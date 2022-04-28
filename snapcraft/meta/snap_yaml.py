@@ -99,7 +99,7 @@ class SnapMetadata(YamlModel):
     summary: str
     description: str
     license: Optional[str]
-    type: str
+    type: Optional[str]
     architectures: List[str]
     base: str
     assumes: Optional[List[str]]
@@ -168,9 +168,9 @@ def write(project: Project, prime_dir: Path, *, arch: str):
         type=project.type,
         architectures=[arch],
         base=cast(str, project.base),
-        assumes=["command-chain"],
+        assumes=["command-chain"] if snap_apps else None,
         epoch=project.epoch,
-        apps=snap_apps,
+        apps=snap_apps or None,
         confinement=project.confinement,
         grade=project.grade or "stable",
         environment=project.environment,

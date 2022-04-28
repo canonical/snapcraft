@@ -13,7 +13,6 @@ description: |-
 
 
   Test me please.
-type: app
 architectures:
 - amd64
 base: core22

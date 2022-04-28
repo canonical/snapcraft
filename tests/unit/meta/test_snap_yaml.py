@@ -73,7 +73,6 @@ def test_simple_snap_yaml(simple_project, new_dir):
           most important story about your snap. Keep it under 100 words though,
           we live in tweetspace and your description wants to look good in the snap
           store.
-        type: app
         architectures:
         - arch
         base: core22
@@ -97,6 +96,7 @@ def complex_project():
         name: mytest
         version: 1.29.3
         base: core22
+        type: app
         summary: Single-line elevator pitch for your amazing snap
         description: |
           This is my-snap's description. You have a paragraph or two to tell the

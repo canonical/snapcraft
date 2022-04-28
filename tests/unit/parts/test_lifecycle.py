@@ -72,7 +72,7 @@ def snapcraft_yaml(new_dir):
             "website": None,
             "summary": "Just some test data",
             "description": "This is just some test data.",
-            "type": "app",
+            "type": None,
             "confinement": "strict",
             "icon": None,
             "layout": None,
