@@ -211,8 +211,8 @@ class ExportLoginCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
 
     def test_failed_login_with_invalid_credentials(self):
-        self.fake_store_login.mock.side_effect = storeapi.http_clients.errors.InvalidCredentialsError(
-            "error"
+        self.fake_store_login.mock.side_effect = (
+            storeapi.http_clients.errors.InvalidCredentialsError("error")
         )
 
         with pytest.raises(

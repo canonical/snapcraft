@@ -100,7 +100,8 @@ def test_icon(tmp_work_path):
         )
 
     project = Project(
-        is_managed_host=False, snapcraft_yaml_file_path=snapcraft_yaml_path.as_posix(),
+        is_managed_host=False,
+        snapcraft_yaml_file_path=snapcraft_yaml_path.as_posix(),
     )
 
     # Test without icon raises error

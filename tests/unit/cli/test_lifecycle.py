@@ -30,7 +30,8 @@ from snapcraft.cli import lifecycle
     ],
 )
 @pytest.mark.parametrize(
-    "compression", ["xz", "lzo", None],
+    "compression",
+    ["xz", "lzo", None],
 )
 @mock.patch("snapcraft.file_utils.get_host_tool_path", return_value="/bin/snap")
 @mock.patch("snapcraft.cli.lifecycle._run_pack", return_value="ignore.snap")

@@ -516,13 +516,15 @@ class PackageForFileTest(unit.TestCase):
                 ).encode()
             elif "symlink" in args[0][2].as_posix():
                 raise CalledProcessError(
-                    1, f"dpkg-query: no path found matching pattern {args[0][2]}",
+                    1,
+                    f"dpkg-query: no path found matching pattern {args[0][2]}",
                 )
             elif "target" in args[0][2].as_posix():
                 return "coreutils: /usr/bin/dirname\n".encode()
             else:
                 raise CalledProcessError(
-                    1, f"dpkg-query: no path found matching pattern {args[0][2]}",
+                    1,
+                    f"dpkg-query: no path found matching pattern {args[0][2]}",
                 )
 
         self.useFixture(

@@ -110,7 +110,9 @@ class GrammarProcessor:
                     primitives.append(primitive)
             elif isinstance(section, dict):
                 statement, finalized_statement = self._parse_section_dictionary(
-                    call_stack=call_stack, section=section, statement=statement,
+                    call_stack=call_stack,
+                    section=section,
+                    statement=statement,
                 )
 
                 # Process any finalized statement (if any).
@@ -135,7 +137,9 @@ class GrammarProcessor:
 
         # Process the final statement (if any).
         self._process_statement(
-            statement=statement, statements=statements, primitives=primitives,
+            statement=statement,
+            statements=statements,
+            primitives=primitives,
         )
 
         return primitives

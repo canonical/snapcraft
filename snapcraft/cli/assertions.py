@@ -149,7 +149,8 @@ def list_validation_sets(name, sequence):
     """
     store_client = StoreClientCLI()
     asserted_validation_sets = store_client.get_validation_sets(
-        name=name, sequence=sequence,
+        name=name,
+        sequence=sequence,
     )
 
     if not asserted_validation_sets.assertions and (name or sequence):

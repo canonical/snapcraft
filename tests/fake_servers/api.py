@@ -144,18 +144,24 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         )
 
         configurator.add_route(
-            "post_validation_sets", "/api/v2/validation-sets", request_method="POST",
+            "post_validation_sets",
+            "/api/v2/validation-sets",
+            request_method="POST",
         )
         configurator.add_view(
-            self.post_validation_sets, route_name="post_validation_sets",
+            self.post_validation_sets,
+            route_name="post_validation_sets",
         )
 
         # GET
         configurator.add_route(
-            "get_validation_sets", "/api/v2/validation-sets", request_method="GET",
+            "get_validation_sets",
+            "/api/v2/validation-sets",
+            request_method="GET",
         )
         configurator.add_view(
-            self.get_validation_sets, route_name="get_validation_sets",
+            self.get_validation_sets,
+            route_name="get_validation_sets",
         )
 
         configurator.add_route(
@@ -164,7 +170,8 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             request_method="GET",
         )
         configurator.add_view(
-            self.get_validation_sets, route_name="get_validation_sets_name",
+            self.get_validation_sets,
+            route_name="get_validation_sets_name",
         )
 
         configurator.add_route(
@@ -203,7 +210,9 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         configurator.add_view(self.snap_releases, route_name="snap_releases")
 
         configurator.add_route(
-            "whoami", "/api/v2/tokens/whoami", request_method="GET",
+            "whoami",
+            "/api/v2/tokens/whoami",
+            request_method="GET",
         )
 
         configurator.add_view(self.whoami, route_name="whoami")

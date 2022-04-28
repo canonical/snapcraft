@@ -19,7 +19,7 @@ from snapcraft.internal.states._state import PartState
 
 
 class StageState(PartState):
-    yaml_tag = u"!StageState"
+    yaml_tag = "!StageState"
 
     def __init__(
         self,

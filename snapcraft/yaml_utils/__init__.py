@@ -166,7 +166,7 @@ def _str_presenter(dumper, data):
 class OctInt(SnapcraftYAMLObject):
     """An int represented in octal form."""
 
-    yaml_tag = u"!OctInt"
+    yaml_tag = "!OctInt"
 
     def __init__(self, value):
         super().__init__()

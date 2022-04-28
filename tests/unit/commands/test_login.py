@@ -137,8 +137,8 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
 
     def test_login_failed_with_invalid_credentials(self):
-        self.fake_store_login.mock.side_effect = storeapi.http_clients.errors.InvalidCredentialsError(
-            "error"
+        self.fake_store_login.mock.side_effect = (
+            storeapi.http_clients.errors.InvalidCredentialsError("error")
         )
 
         with pytest.raises(
@@ -152,8 +152,8 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
 
     def test_login_failed_with_store_authentication_error(self):
-        self.fake_store_login.mock.side_effect = storeapi.http_clients.errors.StoreAuthenticationError(
-            "error"
+        self.fake_store_login.mock.side_effect = (
+            storeapi.http_clients.errors.StoreAuthenticationError("error")
         )
 
         raised = self.assertRaises(
@@ -170,8 +170,8 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
         response.json.side_effect = JSONDecodeError("mock-fail", "doc", 1)
         response.status_code = 500
         response.reason = "Internal Server Error"
-        self.fake_store_login.mock.side_effect = storeapi.errors.StoreAccountInformationError(
-            response
+        self.fake_store_login.mock.side_effect = (
+            storeapi.errors.StoreAccountInformationError(response)
         )
 
         with pytest.raises(storeapi.errors.StoreAccountInformationError) as exc_info:
@@ -195,8 +195,8 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             ]
         }
         response.json.return_value = content
-        self.fake_store_account_info.mock.side_effect = storeapi.errors.StoreAccountInformationError(
-            response
+        self.fake_store_account_info.mock.side_effect = (
+            storeapi.errors.StoreAccountInformationError(response)
         )
 
         with pytest.raises(storeapi.errors.NeedTermsSignedError) as exc_info:
@@ -221,8 +221,8 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             ]
         }
         response.json.return_value = content
-        self.fake_store_account_info.mock.side_effect = storeapi.errors.StoreAccountInformationError(
-            response
+        self.fake_store_account_info.mock.side_effect = (
+            storeapi.errors.StoreAccountInformationError(response)
         )
 
         with pytest.raises(storeapi.errors.StoreAccountInformationError) as exc_info:
@@ -246,8 +246,8 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             ]
         }
         response.json.return_value = content
-        self.fake_store_account_info.mock.side_effect = storeapi.errors.StoreAccountInformationError(
-            response
+        self.fake_store_account_info.mock.side_effect = (
+            storeapi.errors.StoreAccountInformationError(response)
         )
 
         with pytest.raises(storeapi.errors.NeedTermsSignedError) as exc_info:
@@ -271,8 +271,8 @@ class LoginCommandTestCase(FakeStoreCommandsBaseTestCase):
             ]
         }
         response.json.return_value = content
-        self.fake_store_account_info.mock.side_effect = storeapi.errors.StoreAccountInformationError(
-            response
+        self.fake_store_account_info.mock.side_effect = (
+            storeapi.errors.StoreAccountInformationError(response)
         )
 
         with pytest.raises(storeapi.errors.NeedTermsSignedError) as exc_info:

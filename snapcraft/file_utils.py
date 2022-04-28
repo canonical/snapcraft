@@ -304,7 +304,7 @@ def requires_path_exists(path: str, error_fmt: str = None) -> Generator:
     yield
 
 
-def _file_reader_iter(path: str, block_size=2 ** 20):
+def _file_reader_iter(path: str, block_size=2**20):
     with open(path, "rb") as f:
         block = f.read(block_size)
         while len(block) > 0:

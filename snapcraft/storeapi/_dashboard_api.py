@@ -177,14 +177,18 @@ class DashboardAPI(Requests):
     def upload_metadata(self, snap_id, snap_name, metadata, force):
         """Upload the metadata to SCA."""
         metadata_handler = _metadata.StoreMetadataHandler(
-            request_method=self._request, snap_id=snap_id, snap_name=snap_name,
+            request_method=self._request,
+            snap_id=snap_id,
+            snap_name=snap_name,
         )
         metadata_handler.upload(metadata, force)
 
     def upload_binary_metadata(self, snap_id, snap_name, metadata, force):
         """Upload the binary metadata to SCA."""
         metadata_handler = _metadata.StoreMetadataHandler(
-            request_method=self._request, snap_id=snap_id, snap_name=snap_name,
+            request_method=self._request,
+            snap_id=snap_id,
+            snap_name=snap_name,
         )
         metadata_handler.upload_binary(metadata, force)
 

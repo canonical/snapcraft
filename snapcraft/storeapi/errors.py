@@ -720,7 +720,11 @@ class StoreMetricsError(SnapcraftException):
 
 class StoreMetricsUnmarshalError(SnapcraftReportableException):
     def __init__(
-        self, *, response, filters: List[metrics.MetricsFilter], snap_name: str,
+        self,
+        *,
+        response,
+        filters: List[metrics.MetricsFilter],
+        snap_name: str,
     ) -> None:
         self.snap_name = snap_name
         self.filters = filters
