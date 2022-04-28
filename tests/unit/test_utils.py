@@ -178,20 +178,25 @@ def test_get_os_platform_windows(mocker):
 
 
 @pytest.mark.parametrize(
-    "platform_arch,deb_arch",
+    "platform_machine,platform_architecture,deb_arch",
     [
-        ("AMD64", "amd64"),
-        ("aarch64", "arm64"),
-        ("armv7l", "armhf"),
-        ("ppc", "powerpc"),
-        ("ppc64le", "ppc64el"),
-        ("x86_64", "amd64"),
-        ("unknown-arch", "unknown-arch"),
+        ("AMD64", ("64bit", "ELF"), "amd64"),
+        ("aarch64", ("64bit", "ELF"), "arm64"),
+        ("aarch64", ("32bit", "ELF"), "armhf"),
+        ("armv7l", ("64bit", "ELF"), "armhf"),
+        ("ppc", ("64bit", "ELF"), "powerpc"),
+        ("ppc64le", ("64bit", "ELF"), "ppc64el"),
+        ("x86_64", ("64bit", "ELF"), "amd64"),
+        ("x86_64", ("32bit", "ELF"), "i386"),
+        ("unknown-arch", ("64bit", "ELF"), "unknown-arch"),
     ],
 )
-def test_get_host_architecture(platform_arch, mocker, deb_arch):
+def test_get_host_architecture(
+    platform_machine, platform_architecture, mocker, deb_arch
+):
     """Test all platform mappings in addition to unknown."""
-    mocker.patch("platform.machine", return_value=platform_arch)
+    mocker.patch("platform.machine", return_value=platform_machine)
+    mocker.patch("platform.architecture", return_value=platform_architecture)
 
     assert utils.get_host_architecture() == deb_arch
 
