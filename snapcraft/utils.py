@@ -54,6 +54,13 @@ ARCH_TRANSLATIONS = {
     "AMD64": "amd64",  # Windows support
 }
 
+_32BIT_USERSPACE_ARCHITECTURE = {
+    "aarch64": "armv7l",
+    "armv8l": "armv7l",
+    "ppc64le": "ppc",
+    "x86_64": "i686",
+}
+
 
 def get_os_platform(filepath=pathlib.Path("/etc/os-release")):
     """Determine a system/release combo for an OS using /etc/os-release if available."""
@@ -85,8 +92,14 @@ def get_os_platform(filepath=pathlib.Path("/etc/os-release")):
 
 def get_host_architecture():
     """Get host architecture in deb format suitable for base definition."""
-    os_platform = get_os_platform()
-    return ARCH_TRANSLATIONS.get(os_platform.machine, os_platform.machine)
+    os_platform_machine = get_os_platform().machine
+
+    if platform.architecture()[0] == "32bit":
+        userspace = _32BIT_USERSPACE_ARCHITECTURE.get(os_platform_machine)
+        if userspace:
+            os_platform_machine = userspace
+
+    return ARCH_TRANSLATIONS.get(os_platform_machine, os_platform_machine)
 
 
 def strtobool(value: str) -> bool:
