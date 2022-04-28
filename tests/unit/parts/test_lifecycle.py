@@ -36,7 +36,7 @@ _SNAPCRAFT_YAML_FILENAMES = [
 
 
 @pytest.fixture
-def snapcraft_yaml():
+def snapcraft_yaml(new_dir):
     def write_file(
         *, base: str, filename: str = "snap/snapcraft.yaml"
     ) -> Dict[str, Any]:
@@ -575,7 +575,7 @@ def test_extract_parse_info():
     assert yaml_data == {"name": "foo", "parts": {"p1": {"plugin": "nil"}, "p2": {}}}
     assert parse_info == {"p1": "foo/metadata.xml"}
 
-def test_get_snap_project_no_base(snapcraft_yaml):
+def test_get_snap_project_no_base(snapcraft_yaml, new_dir):
     project = Project.unmarshal(snapcraft_yaml(base=None))
 
     assert parts_lifecycle._get_extra_build_snaps(project) is None
@@ -585,7 +585,7 @@ def test_get_snap_project_with_base(snapcraft_yaml):
 
     assert parts_lifecycle._get_extra_build_snaps(project) == ["core22"]
 
-def test_get_snap_project_with_content_plugs(snapcraft_yaml):
+def test_get_snap_project_with_content_plugs(snapcraft_yaml, new_dir):
     yaml_data = {
         "name": "mytest",
         "version": "0.1",
