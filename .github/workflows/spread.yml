@@ -40,6 +40,7 @@ jobs:
         spread-jobs:
           - google:ubuntu-18.04-64
           - google:ubuntu-20.04-64
+          - google:ubuntu-22.04-64
 
     steps:
       - name: Checkout snapcraft
