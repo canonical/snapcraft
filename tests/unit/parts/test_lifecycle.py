@@ -36,6 +36,12 @@ _SNAPCRAFT_YAML_FILENAMES = [
 ]
 
 
+@pytest.fixture(autouse=True)
+def disable_install(mocker):
+    mocker.patch("craft_parts.packages.Repository.install_packages")
+    mocker.patch("craft_parts.packages.snaps.install_snaps")
+
+
 @pytest.fixture
 def snapcraft_yaml(new_dir):
     def write_file(
