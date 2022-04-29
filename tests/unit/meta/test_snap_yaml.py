@@ -55,7 +55,7 @@ def test_simple_snap_yaml(simple_project, new_dir):
     snap_yaml.write(
         simple_project(),
         prime_dir=Path(new_dir),
-        arch="amd64",
+        target_arch="amd64",
         arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
@@ -100,6 +100,8 @@ def complex_project():
 
         grade: devel
         confinement: strict
+        architectures:
+          - arch
 
         environment:
           GLOBAL_VARIABLE: test-global-variable
@@ -202,7 +204,7 @@ def test_complex_snap_yaml(complex_project, new_dir):
     snap_yaml.write(
         complex_project,
         prime_dir=Path(new_dir),
-        arch="amd64",
+        target_arch="amd64",
         arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
@@ -331,7 +333,7 @@ def test_hook_command_chain_assumes(simple_project, new_dir):
     snap_yaml.write(
         simple_project(hooks=hooks),
         prime_dir=Path(new_dir),
-        arch="amd64",
+        target_arch="amd64",
         arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
@@ -374,7 +376,7 @@ def test_project_environment_ld_library_path_and_path_defined(simple_project, ne
     snap_yaml.write(
         simple_project(environment=environment),
         prime_dir=Path(new_dir),
-        arch="amd64",
+        target_arch="amd64",
         arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
@@ -409,7 +411,7 @@ def test_project_environment_ld_library_path_defined(simple_project, new_dir):
     snap_yaml.write(
         simple_project(environment=environment),
         prime_dir=Path(new_dir),
-        arch="amd64",
+        target_arch="amd64",
         arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
@@ -443,7 +445,7 @@ def test_project_environment_path_defined(simple_project, new_dir):
     snap_yaml.write(
         simple_project(environment=environment),
         prime_dir=Path(new_dir),
-        arch="amd64",
+        target_arch="amd64",
         arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
@@ -477,7 +479,7 @@ def test_project_environment_ld_library_path_null(simple_project, new_dir):
     snap_yaml.write(
         simple_project(environment=environment),
         prime_dir=Path(new_dir),
-        arch="amd64",
+        target_arch="amd64",
         arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
@@ -514,7 +516,7 @@ def test_version_git(simple_project, new_dir, mocker):
     snap_yaml.write(
         simple_project(version="git"),
         prime_dir=Path(new_dir),
-        arch="amd64",
+        target_arch="amd64",
         arch_triplet="x86_64-linux-gnu",
     )
 

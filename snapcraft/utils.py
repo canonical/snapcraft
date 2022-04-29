@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Iterable, List, Optional
 
 from craft_cli import emit
+from craft_parts.sources.git_source import GitSource
 
 from snapcraft import errors
 
@@ -44,9 +45,8 @@ class OSPlatform:
         return f"{self.system}/{self.release} ({self.machine})"
 
 
-# translations from what the platform module informs to the term deb and
-# snaps actually use
-ARCH_TRANSLATIONS = {
+# architecture translations from the deb/snap syntax to the platform syntax
+ARCH_TRANSLATIONS_PLATFORM_TO_DEB = {
     "aarch64": "arm64",
     "armv7l": "armhf",
     "i686": "i386",
@@ -54,6 +54,16 @@ ARCH_TRANSLATIONS = {
     "ppc64le": "ppc64el",
     "x86_64": "amd64",
     "AMD64": "amd64",  # Windows support
+}
+
+# architecture translations from the platform syntax to the deb/snap syntax
+ARCH_TRANSLATIONS_DEB_TO_PLATFORM = {
+    "arm64": "aarch64",
+    "armhf": "armv7l",
+    "i386": "i686",
+    "powerpc": "ppc",
+    "ppc64el": "ppc64le",
+    "amd64": "x86_64",
 }
 
 _32BIT_USERSPACE_ARCHITECTURE = {
@@ -101,7 +111,9 @@ def get_host_architecture():
         if userspace:
             os_platform_machine = userspace
 
-    return ARCH_TRANSLATIONS.get(os_platform_machine, os_platform_machine)
+    return ARCH_TRANSLATIONS_PLATFORM_TO_DEB.get(
+        os_platform_machine, os_platform_machine
+    )
 
 
 def strtobool(value: str) -> bool:
@@ -300,3 +312,19 @@ def get_ld_library_paths(prime_dir: Path, arch_triplet: str) -> str:
     ld_library_path = ":".join(paths)
 
     return re.sub(str(prime_dir), "$SNAP", ld_library_path)
+
+
+def process_version(version: Optional[str]) -> str:
+    """Handle special version strings."""
+    if version is None:
+        raise ValueError("version cannot be None")
+
+    new_version = version
+    if version == "git":
+        emit.progress("Determining the version from the project repo (version: git).")
+        new_version = GitSource.generate_version()
+
+    if new_version != version:
+        emit.message(f"Version has been set to {new_version!r}", intermediate=True)
+
+    return new_version

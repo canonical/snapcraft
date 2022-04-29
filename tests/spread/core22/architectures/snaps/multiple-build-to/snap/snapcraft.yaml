@@ -1,0 +1,18 @@
+name: multiple-build-to
+version: "1.0"
+summary: test
+description: |
+  Building on amd64 should produce 2 snaps,
+  one snap for amd64 and one snap for arm64.
+grade: devel
+confinement: strict
+base: core22
+architectures:
+  - build-on: amd64
+    build-to: amd64
+  - build-on: [amd64, arm64]
+    build-to: arm64
+
+parts:
+  nil:
+    plugin: nil

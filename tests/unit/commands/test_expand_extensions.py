@@ -21,6 +21,7 @@ from textwrap import dedent
 import pytest
 
 from snapcraft.commands import ExpandExtensionsCommand
+from snapcraft.utils import get_host_architecture
 
 
 @pytest.mark.usefixtures("fake_extension")
@@ -34,10 +35,13 @@ def test_command(new_dir, emitter):
             summary: testing extensions
             description: expand a fake extension
             base: core22
+            confinement: strict
+            grade: stable
 
             apps:
                 app1:
                     command: app1
+                    command-chain: [fake-command]
                     extensions: [fake-extension]
 
             parts:
@@ -52,17 +56,32 @@ def test_command(new_dir, emitter):
     cmd.run(Namespace())
     emitter.assert_message(
         dedent(
-            """\
+            f"""\
         name: test-name
+        base: core22
+        build-base: core22
+        compression: xz
         version: '0.1'
         summary: testing extensions
         description: expand a fake extension
-        base: core22
+        confinement: strict
+        grade: stable
+        architectures:
+        -   build-on:
+            - {get_host_architecture()}
+            build-to:
+            - {get_host_architecture()}
+        assumes: []
+        package-repositories: []
         apps:
             app1:
                 command: app1
+                after: []
+                before: []
                 plugs:
                 - fake-plug
+                command-chain:
+                - fake-command
         parts:
             part1:
                 plugin: nil
@@ -70,7 +89,6 @@ def test_command(new_dir, emitter):
                 - fake-extension/fake-part
             fake-extension/fake-part:
                 plugin: nil
-        grade: fake-grade
         """
         )
     )

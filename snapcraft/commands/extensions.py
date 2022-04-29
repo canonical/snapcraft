@@ -27,7 +27,13 @@ from overrides import overrides
 from pydantic import BaseModel
 
 from snapcraft import extensions
-from snapcraft.parts.lifecycle import get_snap_project, process_yaml
+from snapcraft.parts.lifecycle import (
+    apply_yaml,
+    get_build_plan,
+    get_snap_project,
+    process_yaml,
+)
+from snapcraft.projects import Project
 from snapcraft_legacy.internal.project_loader import (
     find_extension,
     supported_extension_names,
@@ -113,5 +119,16 @@ class ExpandExtensionsCommand(BaseCommand, abc.ABC):
     def run(self, parsed_args):
         snap_project = get_snap_project()
         yaml_data = process_yaml(snap_project.project_file)
+        build_plan = get_build_plan(yaml_data)
 
-        emit.message(yaml.safe_dump(yaml_data, indent=4, sort_keys=False))
+        for build_on, build_to in build_plan:
+            emit.message(f"snapcraft.yaml for build on {build_on}, build to {build_to}")
+            yaml_data_for_arch = apply_yaml(yaml_data, build_on, build_to)
+            project = Project.unmarshal(yaml_data_for_arch)
+            emit.message(
+                yaml.safe_dump(
+                    project.dict(by_alias=True, exclude_none=True),
+                    indent=4,
+                    sort_keys=False,
+                )
+            )

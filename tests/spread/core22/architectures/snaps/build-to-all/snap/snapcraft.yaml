@@ -1,0 +1,15 @@
+name: build-to-all
+version: "1.0"
+summary: test
+description: |
+  Test building of `build-to: all`
+grade: devel
+confinement: strict
+base: core22
+architectures:
+  - build-on: amd64
+    build-to: all
+
+parts:
+  nil:
+    plugin: nil

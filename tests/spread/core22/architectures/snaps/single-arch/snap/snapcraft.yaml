@@ -1,0 +1,15 @@
+name: single-arch
+version: "1.0"
+summary: test
+description: |
+  A single architecture should create a single snap file.
+grade: devel
+confinement: strict
+base: core22
+architectures:
+  - build-on: amd64
+    build-to: amd64
+
+parts:
+  nil:
+    plugin: nil

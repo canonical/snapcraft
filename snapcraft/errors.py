@@ -73,5 +73,19 @@ class FilePermissionError(SnapcraftError):
         )
 
 
+class InvalidArchitecture(SnapcraftError):
+    """The machine architecture is not supported.
+
+    :param arch_name: The unsupported architecture name.
+    """
+
+    def __init__(self, arch_name: str):
+        self.arch_name = arch_name
+        super().__init__(
+            f"Architecture {arch_name!r} is not supported.",
+            resolution="Make sure the architecture name is correct.",
+        )
+
+
 class LegacyFallback(Exception):
     """Fall back to legacy snapcraft implementation."""

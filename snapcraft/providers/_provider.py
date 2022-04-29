@@ -36,7 +36,12 @@ class Provider(ABC):
 
     @abstractmethod
     def clean_project_environments(
-        self, *, project_name: str, project_path: pathlib.Path
+        self,
+        *,
+        project_name: str,
+        project_path: pathlib.Path,
+        build_on: str,
+        build_to: str,
     ) -> List[str]:
         """Clean up any environments created for project.
 
@@ -76,6 +81,8 @@ class Provider(ABC):
         *,
         project_name: str,
         project_path: pathlib.Path,
+        build_on: str,
+        build_to: str,
     ) -> str:
         """Formulate the name for an instance using each of the given parameters.
 
@@ -86,7 +93,17 @@ class Provider(ABC):
         :param project_name: Name of the project.
         :param project_path: Directory of the project.
         """
-        return "-".join(["snapcraft", project_name, str(project_path.stat().st_ino)])
+        return "-".join(
+            [
+                "snapcraft",
+                project_name,
+                "on",
+                build_on,
+                "to",
+                build_to,
+                str(project_path.stat().st_ino),
+            ]
+        )
 
     @classmethod
     def is_base_available(cls, base: str) -> Tuple[bool, Union[str, None]]:
@@ -122,6 +139,8 @@ class Provider(ABC):
         project_path: pathlib.Path,
         base: str,
         bind_ssh: bool,
+        build_on: str,
+        build_to: str,
     ) -> Generator[Executor, None, None]:
         """Launch environment for specified base.
 
