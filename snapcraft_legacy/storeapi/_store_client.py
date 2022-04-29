@@ -18,13 +18,12 @@ import logging
 import os
 import platform
 from time import sleep
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import craft_store
 import requests
 
 from snapcraft_legacy.internal.indicators import download_requests_stream
-
 from . import _upload, agent, constants, errors, metrics
 from ._dashboard_api import DashboardAPI
 from ._snap_api import SnapAPI

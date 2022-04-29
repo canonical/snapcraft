@@ -19,7 +19,7 @@ import operator
 import os
 from datetime import date, timedelta
 from textwrap import dedent
-from typing import Dict, List, Optional, Set, Union
+from typing import Dict, List, Set, Union
 
 import click
 from tabulate import tabulate
@@ -28,7 +28,6 @@ import snapcraft_legacy
 from snapcraft_legacy import formatting_utils, storeapi
 from snapcraft_legacy._store import StoreClientCLI
 from snapcraft_legacy.storeapi import metrics as metrics_module
-
 from . import echo
 from ._channel_map import get_tabulated_channel_map
 from ._metrics import convert_metrics_to_table

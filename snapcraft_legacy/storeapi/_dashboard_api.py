@@ -18,8 +18,8 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlencode, urljoin
-import craft_store
 
+import craft_store
 import requests
 from simplejson.scanner import JSONDecodeError
 

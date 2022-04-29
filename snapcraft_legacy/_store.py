@@ -26,7 +26,7 @@ import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import Popen
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, TYPE_CHECKING, Tuple
 from urllib.parse import urljoin
 
 import craft_store
@@ -34,7 +34,6 @@ import requests
 from tabulate import tabulate
 
 from snapcraft_legacy import storeapi, yaml_utils
-
 # Ideally we would move stuff into more logical components
 from snapcraft_legacy.cli import echo
 from snapcraft_legacy.file_utils import (

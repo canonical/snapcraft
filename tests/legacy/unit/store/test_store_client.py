@@ -20,7 +20,6 @@ import os
 import tempfile
 from textwrap import dedent
 from unittest import mock
-import craft_store
 
 import fixtures
 import pytest
