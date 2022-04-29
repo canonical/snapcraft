@@ -18,8 +18,8 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlencode, urljoin
-import craft_store
 
+import craft_store
 import requests
 from simplejson.scanner import JSONDecodeError
 
@@ -333,27 +333,6 @@ class DashboardAPI(Requests):
         response_json = response.json()
 
         return response_json
-
-    def close_channels(self, snap_id, channel_names):
-        url = "/dev/api/snaps/{}/close".format(snap_id)
-        data = {"channels": channel_names}
-        headers = {"Content-Type": "application/json", "Accept": "application/json"}
-
-        try:
-            response = self.post(url, json=data, headers=headers)
-        except craft_store.errors.StoreServerError as craft_error:
-            raise errors.StoreChannelClosingError(craft_error.response) from craft_error
-
-        try:
-            results = response.json()
-        except (JSONDecodeError, KeyError):
-            logger.debug(
-                "Invalid response from the server on channel closing:\n"
-                f"{response.status_code} {response.reason}\n{response.content}"
-            )
-            raise errors.StoreChannelClosingError(response)
-
-        return results["closed_channels"], results["channel_map_tree"]
 
     def sign_developer_agreement(self, latest_tos_accepted=False):
         data = {"latest_tos_accepted": latest_tos_accepted}

@@ -19,7 +19,7 @@ import operator
 import os
 from datetime import date, timedelta
 from textwrap import dedent
-from typing import Dict, List, Optional, Set, Union
+from typing import Dict, List, Set, Union
 
 import click
 from tabulate import tabulate
@@ -28,7 +28,6 @@ import snapcraft_legacy
 from snapcraft_legacy import formatting_utils, storeapi
 from snapcraft_legacy._store import StoreClientCLI
 from snapcraft_legacy.storeapi import metrics as metrics_module
-
 from . import echo
 from ._channel_map import get_tabulated_channel_map
 from ._metrics import convert_metrics_to_table
@@ -171,102 +170,6 @@ def upload_metadata(snap_file, force):
 
 @storecli.command()
 @click.argument("snap-name", metavar="<snap-name>")
-@click.argument("revision", metavar="<revision>")
-@click.argument("channels", metavar="<channels>")
-@click.option(
-    "--progressive",
-    type=click.IntRange(0, 100),
-    default=100,
-    metavar="<percentage>",
-    help="set a release progression to a certain percentage.",
-)
-@click.option(
-    "--experimental-progressive-releases",
-    is_flag=True,
-    help="*EXPERIMENTAL* Enables 'progressive releases'.",
-    envvar="SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES",
-)
-def release(
-    snap_name,
-    revision,
-    channels,
-    progressive: Optional[int],
-    experimental_progressive_releases: bool,
-) -> None:
-    """Release <snap-name> on <revision> to the selected store <channels>.
-    <channels> is a comma separated list of valid channels on the
-    store.
-
-    The <revision> must exist on the store, to see available revisions
-    run `snapcraft list-revisions <snap_name>`.
-
-    The channel map will be displayed after the operation takes place.
-    To see the status map at any other time run `snapcraft status <snap-name>`.
-
-    The format for channels is `[<track>/]<risk>[/<branch>]` where
-
-    \b
-        - <track> is used to have long term release channels. It is implicitly
-          set to `latest`. If this snap requires one, it can be created by
-          request by having a conversation on https://forum.snapcraft.io
-          under the *store* category.
-        - <risk> is mandatory and can be either `stable`, `candidate`, `beta`
-          or `edge`.
-        - <branch> is optional and dynamically creates a channel with a
-          specific expiration date.
-
-    \b
-    Examples:
-        snapcraft release my-snap 8 stable
-        snapcraft release my-snap 8 stable/my-branch
-        snapcraft release my-snap 9 beta,edge
-        snapcraft release my-snap 9 lts-channel/stable
-        snapcraft release my-snap 9 lts-channel/stable/my-branch
-    """
-    # If progressive is set to 100, treat it as None.
-    if progressive == 100:
-        progressive = None
-
-    if progressive is not None and not experimental_progressive_releases:
-        raise click.UsageError(
-            "--progressive requires --experimental-progressive-releases."
-        )
-    elif progressive:
-        os.environ["SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES"] = "Y"
-        echo.warning("*EXPERIMENTAL* progressive releases in use.")
-
-    store_client_cli = StoreClientCLI()
-    release_data = store_client_cli.release(
-        snap_name=snap_name,
-        revision=revision,
-        channels=channels.split(","),
-        progressive_percentage=progressive,
-    )
-    snap_channel_map = store_client_cli.get_snap_channel_map(snap_name=snap_name)
-    architectures_for_revision = snap_channel_map.get_revision(
-        int(revision)
-    ).architectures
-    tracks = [storeapi.channels.Channel(c).track for c in channels.split(",")]
-    click.echo(
-        get_tabulated_channel_map(
-            snap_channel_map, tracks=tracks, architectures=architectures_for_revision
-        )
-    )
-
-    opened_channels = release_data.get("opened_channels", [])
-    if len(opened_channels) == 1:
-        echo.info(f"The {opened_channels[0]!r} channel is now open.")
-    elif len(opened_channels) > 1:
-        channels = ("{!r}".format(channel) for channel in opened_channels[:-1])
-        echo.info(
-            "The {} and {!r} channels are now open.".format(
-                ", ".join(channels), opened_channels[-1]
-            )
-        )
-
-
-@storecli.command()
-@click.argument("snap-name", metavar="<snap-name>")
 @click.option(
     "--from-channel",
     metavar="<from-channel>",
@@ -366,60 +269,6 @@ def promote(snap_name, from_channel, to_channel, yes):
         )
     else:
         echo.wrapped("Channel promotion cancelled")
-
-
-@storecli.command()
-@click.argument("snap-name", metavar="<snap-name>")
-@click.argument("channels", metavar="<channel>...", nargs=-1)
-def close(snap_name, channels):
-    """Close <channel> for <snap-name>.
-    Closing a channel allows the <channel> that is closed to track the channel
-    that follows it in the channel release chain. As such closing the
-    'candidate' channel would make it track the 'stable' channel.
-
-    The channel map will be displayed after the operation takes place.
-
-    \b
-    Examples:
-        snapcraft close my-snap beta
-        snapcraft close my-snap beta edge
-    """
-    store = storeapi.StoreClient()
-    account_info = store.get_account_information()
-
-    try:
-        snap_id = account_info["snaps"][storeapi.constants.DEFAULT_SERIES][snap_name][
-            "snap-id"
-        ]
-    except KeyError:
-        raise storeapi.errors.StoreChannelClosingPermissionError(
-            snap_name, storeapi.constants.DEFAULT_SERIES
-        )
-
-    # Returned closed_channels cannot be trusted as it returns risks.
-    store.close_channels(snap_id=snap_id, channel_names=channels)
-    if len(channels) == 1:
-        msg = "The {} channel is now closed.".format(channels[0])
-    else:
-        msg = "The {} and {} channels are now closed.".format(
-            ", ".join(channels[:-1]), channels[-1]
-        )
-
-    snap_channel_map = store.get_snap_channel_map(snap_name=snap_name)
-    if snap_channel_map.channel_map:
-        closed_tracks = {storeapi.channels.Channel(c).track for c in channels}
-        existing_architectures = snap_channel_map.get_existing_architectures()
-
-        click.echo(
-            get_tabulated_channel_map(
-                snap_channel_map,
-                architectures=existing_architectures,
-                tracks=closed_tracks,
-            )
-        )
-        click.echo()
-
-    echo.info(msg)
 
 
 @storecli.command()

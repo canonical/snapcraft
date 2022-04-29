@@ -26,7 +26,7 @@ import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import Popen
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, TYPE_CHECKING, Tuple
 from urllib.parse import urljoin
 
 import craft_store
@@ -34,7 +34,6 @@ import requests
 from tabulate import tabulate
 
 from snapcraft_legacy import storeapi, yaml_utils
-
 # Ideally we would move stuff into more logical components
 from snapcraft_legacy.cli import echo
 from snapcraft_legacy.file_utils import (
@@ -336,12 +335,6 @@ class StoreClientCLI(storeapi.StoreClient):
     # TODO Move progressbar implementation out of snapcraft_legacy.storeapi used
     #      during upload into this class using click.
     # TODO use an instance of this class directly from snapcraft_legacy.cli.store
-
-    @_login_wrapper
-    def close_channels(
-        self, *, snap_id: str, channel_names: List[str]
-    ) -> Dict[str, Any]:
-        return super().close_channels(snap_id=snap_id, channel_names=channel_names)
 
     @_login_wrapper
     def get_metrics(

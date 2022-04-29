@@ -18,13 +18,12 @@ import logging
 import os
 import platform
 from time import sleep
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import craft_store
 import requests
 
 from snapcraft_legacy.internal.indicators import download_requests_stream
-
 from . import _upload, agent, constants, errors, metrics
 from ._dashboard_api import DashboardAPI
 from ._snap_api import SnapAPI
@@ -247,9 +246,6 @@ class StoreClient:
         self, *, name: Optional[str] = None, sequence: Optional[str] = None
     ) -> validation_sets.ValidationSets:
         return self.dashboard.get_validation_sets(name=name, sequence=sequence)
-
-    def close_channels(self, snap_id, channel_names):
-        return self.dashboard.close_channels(snap_id, channel_names)
 
     @classmethod
     def download(
