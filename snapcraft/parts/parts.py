@@ -17,6 +17,7 @@
 """Craft-parts lifecycle wrapper."""
 
 import pathlib
+import subprocess
 from typing import Any, Dict, List, Optional
 
 import craft_parts
@@ -113,7 +114,14 @@ class PartsLifecycle:
             "grade": self._lcm.project_info.get_project_var("grade"),
         }
 
-    def run(self, step_name: str) -> None:
+    def run(
+        self,
+        step_name: str,
+        *,
+        debug: bool = False,
+        shell: bool = False,
+        shell_after: bool = False,
+    ) -> None:
         """Run the parts lifecycle.
 
         :param target_step: The final step to execute.
@@ -125,19 +133,19 @@ class PartsLifecycle:
         if not target_step:
             raise RuntimeError(f"Invalid target step {step_name!r}")
 
+        if shell:
+            # convert shell to shell_after for the previous step
+            previous_steps = target_step.previous_steps()
+            target_step = previous_steps[-1] if previous_steps else None
+            shell_after = True
+
         try:
-            actions = self._lcm.plan(target_step, part_names=self._part_names)
+            if target_step:
+                actions = self._lcm.plan(target_step, part_names=self._part_names)
+            else:
+                actions = []
 
-            emit.progress("Installing package repositories...")
-
-            if self._package_repositories:
-                refresh_required = repo.install(
-                    self._package_repositories, key_assets=self._assets_dir / "keys"
-                )
-                if refresh_required:
-                    self._lcm.refresh_packages_list()
-
-            emit.message("Installed package repositories", intermediate=True)
+            self._install_package_repositories()
 
             emit.progress("Executing parts lifecycle...")
 
@@ -149,16 +157,33 @@ class PartsLifecycle:
                         aex.execute(action, stdout=stream, stderr=stream)
                     emit.message(f"Executed: {message}", intermediate=True)
 
+            if shell_after:
+                _launch_shell()
+
             emit.message("Executed parts lifecycle", intermediate=True)
         except RuntimeError as err:
             raise RuntimeError(f"Parts processing internal error: {err}") from err
         except OSError as err:
+            if debug:
+                _launch_shell()
             msg = err.strerror
             if err.filename:
                 msg = f"{err.filename}: {msg}"
             raise errors.PartsLifecycleError(msg) from err
         except Exception as err:
+            if debug:
+                _launch_shell()
             raise errors.PartsLifecycleError(str(err)) from err
+
+    def _install_package_repositories(self):
+        emit.progress("Installing package repositories...")
+        if self._package_repositories:
+            refresh_required = repo.install(
+                self._package_repositories, key_assets=self._assets_dir / "keys"
+            )
+            if refresh_required:
+                self._lcm.refresh_packages_list()
+        emit.message("Installed package repositories", intermediate=True)
 
     def clean(self, *, part_names: Optional[List[str]] = None) -> None:
         """Remove lifecycle artifacts.
@@ -202,6 +227,16 @@ class PartsLifecycle:
                     )
 
         return metadata_list
+
+
+def _launch_shell(*, cwd: Optional[pathlib.Path] = None) -> None:
+    """Launch a user shell for debugging environment.
+
+    :param cwd: Working directory to start user in.
+    """
+    emit.message("Launching shell on build environment...", intermediate=True)
+    with emit.pause():
+        subprocess.run(["bash"], check=False, cwd=cwd)
 
 
 def _action_message(action: craft_parts.Action) -> str:

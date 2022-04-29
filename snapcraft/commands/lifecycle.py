@@ -43,6 +43,12 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             action="store_true",
             help="Use LXD to build",
         )
+        parser.add_argument(
+            "--debug",
+            action="store_true",
+            help="Shell into the environment if the build fails",
+        )
+
         # --enable-experimental-extensions is only available in legacy
         parser.add_argument(
             "--enable-experimental-extensions",
@@ -88,6 +94,18 @@ class _LifecycleStepCommand(_LifecycleCommand):
             type=str,
             nargs="*",
             help="Optional list of parts to process",
+        )
+
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument(
+            "--shell",
+            action="store_true",
+            help="Shell into the environment in lieu of the step to run.",
+        )
+        group.add_argument(
+            "--shell-after",
+            action="store_true",
+            help="Shell into the environment after the step has run.",
         )
 
 

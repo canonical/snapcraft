@@ -205,7 +205,12 @@ def _run_command(
         lifecycle.clean(part_names=part_names)
         return
 
-    lifecycle.run(step_name)
+    lifecycle.run(
+        step_name,
+        debug=parsed_args.debug,
+        shell=getattr(parsed_args, "shell", False),
+        shell_after=getattr(parsed_args, "shell_after", False),
+    )
 
     # Extract metadata and generate snap.yaml
     project_vars = lifecycle.project_vars
@@ -283,6 +288,13 @@ def _run_in_provider(
         cmd.append("--quiet")
     elif emit.get_mode() == EmitterMode.TRACE:
         cmd.append("--trace")
+
+    if parsed_args.debug:
+        cmd.append("--debug")
+    if getattr(parsed_args, "shell", False):
+        cmd.append("--shell")
+    if getattr(parsed_args, "shell_after", False):
+        cmd.append("--shell-after")
 
     output_dir = utils.get_managed_environment_project_path()
 
