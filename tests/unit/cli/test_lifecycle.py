@@ -237,7 +237,6 @@ def test_lifecycle_command_arguments_shell(cmd, run_method, mocker):
             "cmd",
             cmd,
             "--shell",
-            "--shell-after",
         ],
     )
     mock_lifecycle_cmd = mocker.patch(run_method)
@@ -249,6 +248,46 @@ def test_lifecycle_command_arguments_shell(cmd, run_method, mocker):
                 debug=False,
                 destructive_mode=False,
                 shell=True,
+                shell_after=False,
+                use_lxd=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
+                provider=None,
+            )
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    "cmd,run_method",
+    [
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+    ],
+)
+def test_lifecycle_command_arguments_shell_after(cmd, run_method, mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "cmd",
+            cmd,
+            "--shell-after",
+        ],
+    )
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                parts=[],
+                debug=False,
+                destructive_mode=False,
+                shell=False,
                 shell_after=True,
                 use_lxd=False,
                 enable_experimental_extensions=False,

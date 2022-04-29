@@ -95,12 +95,14 @@ class _LifecycleStepCommand(_LifecycleCommand):
             nargs="*",
             help="Optional list of parts to process",
         )
-        parser.add_argument(
+
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument(
             "--shell",
             action="store_true",
             help="Shell into the environment in lieu of the step to run.",
         )
-        parser.add_argument(
+        group.add_argument(
             "--shell-after",
             action="store_true",
             help="Shell into the environment after the step has run.",
