@@ -29,7 +29,6 @@ from snapcraft_legacy import formatting_utils, storeapi
 from snapcraft_legacy._store import StoreClientCLI
 from snapcraft_legacy.storeapi import metrics as metrics_module
 from . import echo
-from ._channel_map import get_tabulated_channel_map
 from ._metrics import convert_metrics_to_table
 from ._review import review_snap
 
@@ -120,18 +119,6 @@ def upload(snap_file, release):
     snap_name, snap_revision = snapcraft_legacy.upload(snap_file, channel_list)
 
     echo.info("Revision {!r} of {!r} created.".format(snap_revision, snap_name))
-    if channel_list:
-        store_client_cli = StoreClientCLI()
-        snap_channel_map = store_client_cli.get_snap_channel_map(snap_name=snap_name)
-
-        click.echo(
-            get_tabulated_channel_map(
-                snap_channel_map,
-                architectures=snap_channel_map.get_revision(
-                    snap_revision
-                ).architectures,
-            )
-        )
 
 
 @storecli.command("upload-metadata")
@@ -258,14 +245,8 @@ def promote(snap_name, from_channel, to_channel, yes):
                 revision=str(c.revision),
                 channels=[str(parsed_to_channel)],
             )
-        snap_channel_map = store.get_snap_channel_map(snap_name=snap_name)
-        existing_architectures = snap_channel_map.get_existing_architectures()
-        click.echo(
-            get_tabulated_channel_map(
-                snap_channel_map,
-                tracks=[parsed_to_channel.track],
-                architectures=existing_architectures,
-            )
+        echo.wrapped(
+            f"Promotion from {parsed_from_channel} to {parsed_to_channel} complete"
         )
     else:
         echo.wrapped("Channel promotion cancelled")
@@ -442,71 +423,10 @@ def set_default_track(snap_name: str, track_name: str):
     """
     store_client_cli = StoreClientCLI()
 
-    # Client-side check to verify that the selected track exists.
-    snap_channel_map = store_client_cli.get_snap_channel_map(snap_name=snap_name)
-    active_tracks = [
-        track.name
-        for track in snap_channel_map.snap.tracks
-        if track.status in ("default", "active")
-    ]
-    if track_name not in active_tracks:
-        echo.exit_error(
-            brief=f"The specified track {track_name!r} does not exist for {snap_name!r}.",
-            resolution=f"Ensure the {track_name!r} track exists for the {snap_name!r} snap and try again.",
-            details="Valid tracks for {!r}: {}.".format(
-                snap_name, ", ".join([f"{t!r}" for t in active_tracks])
-            ),
-        )
-
     metadata = dict(default_track=track_name)
     store_client_cli.upload_metadata(snap_name=snap_name, metadata=metadata, force=True)
 
     echo.info(f"Default track for {snap_name!r} set to {track_name!r}.")
-
-
-@storecli.command()
-@click.argument("snap-name", metavar="<snap-name>")
-def list_tracks(snap_name: str) -> None:
-    """List channel tracks for <snap-name>.
-
-    This command has an alias of `tracks`.
-
-    Track status, creation dates and version patterns are returned alongside
-    the track names in a space formatted table.
-
-    Possible Status values are:
-
-    \b
-    - active, visible tracks available for installation
-    - default, the default track to install from when not explicit
-    - hidden, tracks available for installation but unlisted
-    - closed, tracks that are no longer available to install from
-
-    A version pattern is a regular expression that restricts a snap revision
-    from being released to a track if the version string set does not match.
-    """
-    store_client_cli = StoreClientCLI()
-    snap_channel_map = store_client_cli.get_snap_channel_map(snap_name=snap_name)
-
-    # Iterate over the entries, replace None with - for consistent presentation
-    track_table: List[List[str]] = [
-        [
-            track.name,
-            track.status,
-            track.creation_date if track.creation_date else "-",
-            track.version_pattern if track.version_pattern else "-",
-        ]
-        for track in snap_channel_map.snap.tracks
-    ]
-
-    click.echo(
-        tabulate(
-            # Sort by "creation-date".
-            sorted(track_table, key=operator.itemgetter(2)),
-            headers=["Name", "Status", "Creation-Date", "Version-Pattern"],
-            tablefmt="plain",
-        )
-    )
 
 
 _YESTERDAY = str(date.today() - timedelta(days=1))

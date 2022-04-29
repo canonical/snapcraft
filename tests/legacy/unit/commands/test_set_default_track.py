@@ -17,9 +17,7 @@
 import fixtures
 from testtools.matchers import Contains, Equals
 
-import snapcraft_legacy
 from snapcraft_legacy import storeapi
-
 from . import FAKE_UNAUTHORIZED_ERROR, FakeStoreCommandsBaseTestCase
 
 
@@ -58,22 +56,4 @@ class SetDefaultTrackCommandTestCase(FakeStoreCommandsBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.fake_metadata.mock.assert_called_once_with(
             snap_name="snap-test", metadata=dict(default_track="2.0"), force=True
-        )
-
-    def test_invalid_track_fails(self):
-        mock_wrap = self.useFixture(
-            fixtures.MockPatch(
-                "snapcraft_legacy.cli.echo.exit_error",
-                wraps=snapcraft_legacy.cli.echo.exit_error,
-            )
-        ).mock
-
-        result = self.run_command(["set-default-track", "snap-test", "3.0"])
-
-        self.assertThat(result.exit_code, Equals(2))
-        self.assertThat(result.output, Contains("'2.0', 'latest'"))
-        mock_wrap.assert_called_once_with(
-            brief="The specified track '3.0' does not exist for 'snap-test'.",
-            details="Valid tracks for 'snap-test': '2.0', 'latest'.",
-            resolution="Ensure the '3.0' track exists for the 'snap-test' snap and try again.",
         )

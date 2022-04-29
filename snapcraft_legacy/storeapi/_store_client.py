@@ -29,7 +29,7 @@ from ._dashboard_api import DashboardAPI
 from ._snap_api import SnapAPI
 from ._up_down_client import UpDownClient
 from .constants import DEFAULT_SERIES
-from .v2 import channel_map, releases, validation_sets, whoami
+from .v2 import releases, validation_sets, whoami
 
 logger = logging.getLogger(__name__)
 
@@ -217,9 +217,6 @@ class StoreClient:
             raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
 
         return response
-
-    def get_snap_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
-        return self.dashboard.get_snap_channel_map(snap_name=snap_name)
 
     def get_metrics(
         self,

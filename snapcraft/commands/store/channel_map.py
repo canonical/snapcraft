@@ -14,13 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, List, Optional, Set
+"""Channel Map API representation.
 
-import jsonschema
-
-from ._api_schema import CHANNEL_MAP_JSONSCHEMA
-
-"""
 This module holds representations for results for the v2 channel-map
 API endpoint provided by the Snap Store.
 
@@ -28,12 +23,17 @@ The full API is documented on
 https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map
 """
 
+from typing import Any, Dict, List, Optional, Set
+
+import jsonschema
+
 
 class Progressive:
     """Represent Progressive information for a MappedChannel."""
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "Progressive":
+        """Unmarshal payload into a Progressive."""
         jsonschema.validate(
             payload,
             CHANNEL_MAP_JSONSCHEMA["properties"]["channel-map"]["items"]["properties"][
@@ -47,6 +47,7 @@ class Progressive:
         )
 
     def marshal(self) -> Dict[str, Any]:
+        """Marshal this Progressive into a dict."""
         return {
             "paused": self.paused,
             "percentage": self.percentage,
@@ -54,6 +55,7 @@ class Progressive:
         }
 
     def __repr__(self) -> str:
+        """Repr for Progressive."""
         return f"<{self.__class__.__name__}: {self.current_percentage!r}=>{self.percentage!r}>"
 
     def __init__(
@@ -73,6 +75,7 @@ class MappedChannel:
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "MappedChannel":
+        """Unmarshal payload into a MappedChannel."""
         jsonschema.validate(
             payload, CHANNEL_MAP_JSONSCHEMA["properties"]["channel-map"]["items"]
         )
@@ -85,6 +88,7 @@ class MappedChannel:
         )
 
     def marshal(self) -> Dict[str, Any]:
+        """Marshal this MappedChannel into a dict."""
         return {
             "channel": self.channel,
             "revision": self.revision,
@@ -94,7 +98,12 @@ class MappedChannel:
         }
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}: {self.channel!r} for revision {self.revision!r} and architecture {self.architecture!r}>"
+        """Repr for MappedChannel."""
+        return (
+            f"<{self.__class__.__name__}: "
+            f"{self.channel!r} for revision {self.revision!r} and "
+            f"architecture {self.architecture!r}>"
+        )
 
     def __init__(
         self,
@@ -117,6 +126,7 @@ class Revision:
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "Revision":
+        """Unmarshal payload into a Revision."""
         jsonschema.validate(
             payload, CHANNEL_MAP_JSONSCHEMA["properties"]["revisions"]["items"]
         )
@@ -127,6 +137,7 @@ class Revision:
         )
 
     def marshal(self) -> Dict[str, Any]:
+        """Marshal this Revision into a dict."""
         return {
             "revision": self.revision,
             "version": self.version,
@@ -134,7 +145,11 @@ class Revision:
         }
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}: {self.revision!r} for version {self.version!r} and architectures {self.architectures!r}>"
+        """Repr for Revision."""
+        return (
+            f"<{self.__class__.__name__}: {self.revision!r} "
+            f"for version {self.version!r} and architectures {self.architectures!r}>"
+        )
 
     def __init__(
         self, *, revision: int, version: str, architectures: List[str]
@@ -149,6 +164,7 @@ class SnapChannel:
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "SnapChannel":
+        """Unmarshal payload into a SnapChannel."""
         jsonschema.validate(
             payload,
             CHANNEL_MAP_JSONSCHEMA["properties"]["snap"]["properties"]["channels"][
@@ -164,6 +180,7 @@ class SnapChannel:
         )
 
     def marshal(self) -> Dict[str, Any]:
+        """Marshal this SnapChannel into a dict."""
         return {
             "name": self.name,
             "track": self.track,
@@ -173,6 +190,7 @@ class SnapChannel:
         }
 
     def __repr__(self) -> str:
+        """Repr for SnapChannel."""
         return f"<{self.__class__.__name__}: {self.name!r}>"
 
     def __init__(
@@ -196,6 +214,7 @@ class SnapTrack:
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "SnapTrack":
+        """Unmarshal payload into a SnapTrack."""
         jsonschema.validate(
             payload,
             CHANNEL_MAP_JSONSCHEMA["properties"]["snap"]["properties"]["tracks"][
@@ -210,6 +229,7 @@ class SnapTrack:
         )
 
     def marshal(self) -> Dict[str, Any]:
+        """Marshal this SnapTrack into a dict."""
         return {
             "name": self.name,
             "status": self.status,
@@ -218,6 +238,7 @@ class SnapTrack:
         }
 
     def __repr__(self) -> str:
+        """Repr for SnapTrack."""
         return f"<{self.__class__.__name__}: {self.name!r}>"
 
     def __init__(
@@ -239,6 +260,7 @@ class Snap:
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "Snap":
+        """Unmarshal payload into a Snap."""
         jsonschema.validate(payload, CHANNEL_MAP_JSONSCHEMA["properties"]["snap"])
         return cls(
             name=payload["name"],
@@ -247,6 +269,7 @@ class Snap:
         )
 
     def marshal(self) -> Dict[str, Any]:
+        """Marshal this Snap into a dict."""
         return {
             "name": self.name,
             "channels": [sc.marshal() for sc in self.channels],
@@ -254,6 +277,7 @@ class Snap:
         }
 
     def __repr__(self) -> str:
+        """Repr for Snap."""
         return f"<{self.__class__.__name__}: {self.name!r}>"
 
     def __init__(
@@ -269,6 +293,7 @@ class ChannelMap:
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "ChannelMap":
+        """Unmarshal payload into a ChannelMap."""
         jsonschema.validate(payload, CHANNEL_MAP_JSONSCHEMA)
         return cls(
             channel_map=[MappedChannel.unmarshal(c) for c in payload["channel-map"]],
@@ -277,6 +302,7 @@ class ChannelMap:
         )
 
     def marshal(self) -> Dict[str, Any]:
+        """Marshal this ChannelMap into a dict."""
         return {
             "channel-map": [c.marshal() for c in self.channel_map],
             "revisions": [r.marshal() for r in self.revisions],
@@ -284,6 +310,7 @@ class ChannelMap:
         }
 
     def __repr__(self) -> str:
+        """Repr for ChannelMap."""
         return f"<{self.__class__.__name__}: {self.snap.name!r}>"
 
     def __init__(
@@ -296,6 +323,7 @@ class ChannelMap:
     def get_mapped_channel(
         self, *, channel_name: str, architecture: str, progressive: bool
     ) -> MappedChannel:
+        """Return the channel for the corresponding attributes."""
         channels_with_name = (
             cm for cm in self.channel_map if cm.channel == channel_name
         )
@@ -314,26 +342,208 @@ class ChannelMap:
 
         try:
             return channels[0]
-        except IndexError:
+        except IndexError as index_error:
             raise ValueError(
-                f"No channel mapped to {channel_name!r} for architecture {architecture!r} when progressive is {progressive!r}"
-            )
+                f"No channel mapped to {channel_name!r} for architecture {architecture!r} "
+                f"when progressive is {progressive!r}"
+            ) from index_error
 
     def get_channel_info(self, channel_name: str) -> SnapChannel:
+        """Return a SnapChannel for channel_name."""
         for snap_channel in self.snap.channels:
             if snap_channel.name == channel_name:
                 return snap_channel
         raise ValueError(f"No channel information for {channel_name!r}")
 
     def get_revision(self, revision_number: int) -> Revision:
+        """Return a Revision for revision_number."""
         for revision_item in self.revisions:
             if revision_item.revision == revision_number:
                 return revision_item
         raise ValueError(f"No revision information for {revision_number!r}")
 
     def get_existing_architectures(self) -> Set[str]:
-        architectures: List[str] = list()
+        """Return a list of the existing architectures for this map."""
+        architectures: List[str] = []
         for revision_item in self.revisions:
             architectures.extend(revision_item.architectures)
 
         return set(architectures)
+
+
+CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
+    "properties": {
+        "channel-map": {
+            "items": {
+                "properties": {
+                    "architecture": {"type": "string"},
+                    "channel": {
+                        "type": "string",
+                    },
+                    "expiration-date": {
+                        "format": "date-time",
+                        "type": ["string", "null"],
+                    },
+                    "progressive": {
+                        "properties": {
+                            "paused": {"type": ["boolean", "null"]},
+                            "percentage": {"type": ["number", "null"]},
+                            "current-percentage": {"type": ["number", "null"]},
+                        },
+                        "required": ["paused", "percentage", "current-percentage"],
+                        "type": "object",
+                    },
+                    "revision": {"type": "integer"},
+                    "when": {
+                        "format": "date-time",
+                        "type": "string",
+                    },
+                },
+                "required": [
+                    "architecture",
+                    "channel",
+                    "expiration-date",
+                    "progressive",
+                    "revision",
+                    # "when"
+                ],
+                "type": "object",
+            },
+            "minItems": 0,
+            "type": "array",
+        },
+        "revisions": {
+            "items": {
+                "properties": {
+                    "architectures": {
+                        "items": {"type": "string"},
+                        "minItems": 1,
+                        "type": "array",
+                    },
+                    "attributes": {"type": "object"},
+                    "base": {"type": ["string", "null"]},
+                    "build-url": {"type": ["string", "null"]},
+                    "confinement": {
+                        "enum": ["strict", "classic", "devmode"],
+                        "type": "string",
+                    },
+                    "created-at": {"format": "date-time", "type": "string"},
+                    "epoch": {
+                        "properties": {
+                            "read": {
+                                "items": {"type": "integer"},
+                                "minItems": 1,
+                                "type": ["array", "null"],
+                            },
+                            "write": {
+                                "items": {"type": "integer"},
+                                "minItems": 1,
+                                "type": ["array", "null"],
+                            },
+                        },
+                        "required": ["read", "write"],
+                        "type": "object",
+                    },
+                    "grade": {"enum": ["stable", "devel"], "type": "string"},
+                    "revision": {"type": "integer"},
+                    "sha3-384": {"type": "string"},
+                    "size": {"type": "integer"},
+                    "version": {"type": "string"},
+                },
+                "required": [
+                    "architectures",
+                    # "attributes",
+                    # "base",
+                    # "build-url",
+                    # "confinement",
+                    # "created-at",
+                    # "epoch",
+                    # "grade",
+                    "revision",
+                    # "sha3-384",
+                    # "size",
+                    # "status",
+                    "version",
+                ],
+                "type": "object",
+            },
+            "minItems": 0,
+            "type": "array",
+        },
+        "snap": {
+            "introduced_at": 6,
+            "properties": {
+                "channels": {
+                    "introduced_at": 9,
+                    "items": {
+                        "properties": {
+                            "branch": {
+                                "type": ["string", "null"],
+                            },
+                            "fallback": {
+                                "type": ["string", "null"],
+                            },
+                            "name": {
+                                "type": "string",
+                            },
+                            "risk": {
+                                "type": "string",
+                            },
+                            "track": {
+                                "type": "string",
+                            },
+                        },
+                        "required": ["name", "track", "risk", "branch", "fallback"],
+                        "type": "object",
+                    },
+                    "minItems": 1,
+                    "type": "array",
+                },
+                "default-track": {
+                    "type": ["string", "null"],
+                },
+                "id": {
+                    "type": "string",
+                },
+                "name": {"type": "string"},
+                "private": {
+                    "type": "boolean",
+                },
+                "tracks": {
+                    "introduced_at": 9,
+                    "items": {
+                        "properties": {
+                            "creation-date": {
+                                "format": "date-time",
+                                "type": ["string", "null"],
+                            },
+                            "name": {
+                                "type": "string",
+                            },
+                            "version-pattern": {
+                                "type": ["string", "null"],
+                            },
+                        },
+                        # pattern is documented as required but is not returned,
+                        # version-pattern is returned instead.
+                        "required": ["name", "creation-date", "version-pattern"],
+                        "type": "object",
+                    },
+                    "minItems": 1,
+                    "type": "array",
+                },
+            },
+            "required": [
+                # "id",
+                "channels",
+                # "default-track",
+                "name",
+                # "private",
+                # "tracks"
+            ],
+            "type": "object",
+        },
+    },
+    "required": ["channel-map", "revisions", "snap"],
+    "type": "object",
+}

@@ -56,7 +56,6 @@ from snapcraft_legacy.storeapi.metrics import MetricsFilter, MetricsResults
 
 if TYPE_CHECKING:
     from snapcraft_legacy.storeapi._status_tracker import StatusTracker
-    from snapcraft_legacy.storeapi.v2.channel_map import ChannelMap
     from snapcraft_legacy.storeapi.v2.releases import Releases
 
 
@@ -345,10 +344,6 @@ class StoreClientCLI(storeapi.StoreClient):
     @_login_wrapper
     def get_snap_releases(self, *, snap_name: str) -> "Releases":
         return super().get_snap_releases(snap_name=snap_name)
-
-    @_login_wrapper
-    def get_snap_channel_map(self, *, snap_name: str) -> "ChannelMap":
-        return super().get_snap_channel_map(snap_name=snap_name)
 
     @_login_wrapper
     def get_account_information(self) -> Dict[str, Any]:

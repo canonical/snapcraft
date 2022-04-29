@@ -27,7 +27,7 @@ from craft_cli import emit
 
 from snapcraft import __version__, errors, utils
 
-from . import constants
+from . import channel_map, constants
 
 _TESTING_ENV_PREFIXES = ["TRAVIS", "AUTOPKGTEST_TMP"]
 
@@ -242,6 +242,18 @@ class StoreClientCLI:
             self._base_url + "/dev/api/register-name/",
             json=data,
         )
+
+    def get_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
+        """Return the channel map for snap_name."""
+        response = self.request(
+            "GET",
+            self._base_url + f"/api/v2/snaps/{snap_name}/channel-map",
+            headers={
+                "Accept": "application/json",
+            },
+        )
+
+        return channel_map.ChannelMap.unmarshal(response.json())
 
     def get_account_info(
         self,

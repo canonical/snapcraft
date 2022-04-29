@@ -29,7 +29,6 @@ from click.testing import CliRunner
 from snapcraft_legacy import storeapi
 from snapcraft_legacy.cli._runner import run
 from snapcraft_legacy.storeapi import metrics
-from snapcraft_legacy.storeapi.v2.channel_map import ChannelMap
 from snapcraft_legacy.storeapi.v2.releases import Releases
 from tests.legacy import fixture_setup, unit
 
@@ -238,120 +237,6 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
             storeapi._dashboard_api.DashboardAPI, "register_key"
         )
         self.useFixture(self.fake_store_register_key)
-
-        # channel-map endpoint
-        self.channel_map = ChannelMap.unmarshal(
-            {
-                "channel-map": [
-                    {
-                        "architecture": "amd64",
-                        "channel": "2.1/beta",
-                        "expiration-date": None,
-                        "revision": 19,
-                        "progressive": {
-                            "paused": None,
-                            "percentage": None,
-                            "current-percentage": None,
-                        },
-                    },
-                    {
-                        "architecture": "amd64",
-                        "channel": "2.0/beta",
-                        "expiration-date": None,
-                        "revision": 18,
-                        "progressive": {
-                            "paused": None,
-                            "percentage": None,
-                            "current-percentage": None,
-                        },
-                    },
-                ],
-                "revisions": [
-                    {"architectures": ["amd64"], "revision": 19, "version": "10"},
-                    {"architectures": ["amd64"], "revision": 18, "version": "10"},
-                ],
-                "snap": {
-                    "name": "snap-test",
-                    "channels": [
-                        {
-                            "branch": None,
-                            "fallback": None,
-                            "name": "2.1/stable",
-                            "risk": "stable",
-                            "track": "2.1",
-                        },
-                        {
-                            "branch": None,
-                            "fallback": "2.1/stable",
-                            "name": "2.1/candidate",
-                            "risk": "candidate",
-                            "track": "2.1",
-                        },
-                        {
-                            "branch": None,
-                            "fallback": "2.1/candidate",
-                            "name": "2.1/beta",
-                            "risk": "beta",
-                            "track": "2.1",
-                        },
-                        {
-                            "branch": None,
-                            "fallback": "2.1/beta",
-                            "name": "2.1/edge",
-                            "risk": "edge",
-                            "track": "2.1",
-                        },
-                        {
-                            "branch": None,
-                            "fallback": None,
-                            "name": "2.0/stable",
-                            "risk": "stable",
-                            "track": "2.0",
-                        },
-                        {
-                            "branch": None,
-                            "fallback": "2.0/stable",
-                            "name": "2.0/candidate",
-                            "risk": "candidate",
-                            "track": "2.0",
-                        },
-                        {
-                            "branch": None,
-                            "fallback": "2.0/candidate",
-                            "name": "2.0/beta",
-                            "risk": "beta",
-                            "track": "2.0",
-                        },
-                        {
-                            "branch": None,
-                            "fallback": "2.0/beta",
-                            "name": "2.0/edge",
-                            "risk": "edge",
-                            "track": "2.0",
-                        },
-                    ],
-                    "default-track": "2.1",
-                    "tracks": [
-                        {
-                            "name": "2.0",
-                            "status": "default",
-                            "creation-date": "2019-10-17T14:11:59Z",
-                            "version-pattern": "2\\.*",
-                        },
-                        {
-                            "name": "latest",
-                            "status": "active",
-                            "creation-date": None,
-                            "version-pattern": None,
-                        },
-                    ],
-                },
-            }
-        )
-        self.fake_store_get_snap_channel_map = fixtures.MockPatchObject(
-            storeapi.StoreClient, "get_snap_channel_map", return_value=self.channel_map
-        )
-        self.useFixture(self.fake_store_get_snap_channel_map)
 
         self.metrics = metrics.MetricsResults(
             metrics=[
