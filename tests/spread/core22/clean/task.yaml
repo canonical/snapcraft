@@ -17,6 +17,9 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
   snapcraft pack
   snapcraft clean part1
   lxc --project=snapcraft list | grep snapcraft-clean
