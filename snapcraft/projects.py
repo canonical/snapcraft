@@ -23,7 +23,7 @@ import pydantic
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from pydantic import conlist, constr
 
-from snapcraft import repo
+from snapcraft import repo, utils
 from snapcraft.errors import ProjectValidationError
 from snapcraft.parts import validation as parts_validation
 
@@ -299,7 +299,8 @@ class Project(ProjectModel):
     @classmethod
     def _validate_mandatory_base(cls, values):
         snap_type = values.get("type")
-        if ("base" in values) ^ (snap_type not in ["base", "kernel", "snapd"]):
+        base = values.get("base")
+        if (base is not None) ^ (snap_type not in ["base", "kernel", "snapd"]):
             raise ValueError(
                 "Snap base must be declared when type is not base, kernel or snapd"
             )
@@ -425,6 +426,21 @@ class Project(ProjectModel):
         ]
 
         return content_snaps if content_snaps else None
+
+    def get_effective_base(self) -> str:
+        """Return the base to use to create the snap."""
+        base = utils.get_effective_base(
+            base=self.base,
+            build_base=self.build_base,
+            project_type=self.type,
+            name=self.name,
+        )
+
+        # will not happen after schema validation
+        if base is None:
+            raise RuntimeError("cannot determine build base")
+
+        return base
 
 
 class _GrammarAwareModel(pydantic.BaseModel):

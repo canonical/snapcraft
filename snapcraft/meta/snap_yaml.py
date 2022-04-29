@@ -101,7 +101,8 @@ class SnapMetadata(YamlModel):
     license: Optional[str]
     type: Optional[str]
     architectures: List[str]
-    base: str
+    base: Optional[str]
+    build_base: Optional[str]
     assumes: Optional[List[str]]
     epoch: Optional[str]
     apps: Optional[Dict[str, SnapApp]]

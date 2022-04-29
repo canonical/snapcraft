@@ -89,6 +89,25 @@ def test_strtobool_value_error(value: str):
 #####################
 
 
+@pytest.mark.parametrize(
+    "base,build_base,project_type,name,expected_base",
+    [
+        (None, "build_base", "base", "name", "build_base"),
+        ("base", "build_base", "base", "name", "build_base"),
+        (None, None, "base", "name", "name"),
+        ("base", None, "base", "name", "name"),
+        (None, None, "other", "name", None),
+        ("base", "build_base", "other", "name", "build_base"),
+        ("base", None, "other", "name", "base"),
+    ],
+)
+def test_get_effective_base(base, build_base, project_type, name, expected_base):
+    result = utils.get_effective_base(
+        base=base, build_base=build_base, project_type=project_type, name=name
+    )
+    assert result == expected_base
+
+
 def test_get_os_platform_linux(tmp_path, mocker):
     """Utilize an /etc/os-release file to determine platform."""
     # explicitly add commented and empty lines, for parser robustness

@@ -20,7 +20,7 @@ import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from craft_cli import EmitterMode, emit
 from craft_parts import infos
@@ -302,7 +302,7 @@ def _run_in_provider(
     with provider.launched_environment(
         project_name=project.name,
         project_path=Path().absolute(),
-        base=cast(str, project.base),
+        base=project.get_effective_base(),
     ) as instance:
         try:
             with emit.pause():

@@ -21,7 +21,7 @@ from typing import Any, Dict, TextIO
 import yaml
 import yaml.error
 
-from snapcraft import errors
+from snapcraft import errors, utils
 
 
 def _check_duplicate_keys(node):
@@ -78,14 +78,23 @@ def load(filestream: TextIO) -> Dict[str, Any]:
     :raises LegacyFallback: if the project's base is not core22.
     """
     try:
-        # TODO: support for build-base.
-        if yaml.safe_load(filestream)["base"] != "core22":
+        data = yaml.safe_load(filestream)
+        build_base = utils.get_effective_base(
+            base=data.get("base"),
+            build_base=data.get("build_base"),
+            project_type=data.get("type"),
+            name=data.get("name"),
+        )
+
+        if build_base is None:
+            raise errors.LegacyFallback("no base defined")
+        if build_base != "core22":
             raise errors.LegacyFallback("base is not core22")
-    except KeyError as key_error:
-        raise errors.LegacyFallback("no base defined") from key_error
     except yaml.error.YAMLError as err:
         raise errors.SnapcraftError(f"snapcraft.yaml parsing error: {err!s}") from err
+
     filestream.seek(0)
+
     try:
         return yaml.load(filestream, Loader=_SafeLoader)
     except yaml.error.YAMLError as err:
