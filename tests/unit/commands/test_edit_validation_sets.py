@@ -201,7 +201,8 @@ def test_edit_validation_sets_with_changes_to_existing_set(
         ).encode()
     )
     fake_snap_sign.assert_called_once_with(
-        validation_sets_payload.assertions[0].marshal(), key_name=key_name,
+        validation_sets_payload.assertions[0].marshal(),
+        key_name=key_name,
     )
     assert result.exit_code == 0
     assert result.output.strip() == ""

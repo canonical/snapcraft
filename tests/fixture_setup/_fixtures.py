@@ -245,7 +245,8 @@ class FakeStore(fixtures.Fixture):
         self.useFixture(self.fake_store_upload_server_fixture)
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "STORE_UPLOAD_URL", self.fake_store_upload_server_fixture.url,
+                "STORE_UPLOAD_URL",
+                self.fake_store_upload_server_fixture.url,
             )
         )
 
@@ -261,7 +262,8 @@ class FakeStore(fixtures.Fixture):
         self.useFixture(self.fake_store_search_server_fixture)
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "STORE_API_URL", self.fake_store_search_server_fixture.url,
+                "STORE_API_URL",
+                self.fake_store_search_server_fixture.url,
             )
         )
 
@@ -336,12 +338,14 @@ class StagingStore(fixtures.Fixture):
         super().setUp()
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "STORE_DASHBOARD_URL", "https://dashboard.staging.snapcraft.io/",
+                "STORE_DASHBOARD_URL",
+                "https://dashboard.staging.snapcraft.io/",
             )
         )
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "STORE_UPLOAD_URL", "https://upload.apps.staging.ubuntu.com/",
+                "STORE_UPLOAD_URL",
+                "https://upload.apps.staging.ubuntu.com/",
             )
         )
         self.useFixture(

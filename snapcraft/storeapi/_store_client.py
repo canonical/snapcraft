@@ -83,7 +83,10 @@ class StoreClient:
             ]
 
         macaroon = self.dashboard.get_macaroon(
-            acls=acls, packages=packages, channels=channels, expires=expires,
+            acls=acls,
+            packages=packages,
+            channels=channels,
+            expires=expires,
         )
         self.auth_client.login(macaroon=macaroon, **kwargs)
 
@@ -123,7 +126,10 @@ class StoreClient:
 
     def register(self, snap_name: str, is_private: bool = False, store_id: str = None):
         return self.dashboard.register(
-            snap_name, is_private=is_private, store_id=store_id, series=DEFAULT_SERIES,
+            snap_name,
+            is_private=is_private,
+            store_id=store_id,
+            series=DEFAULT_SERIES,
         )
 
     def upload_precheck(self, snap_name):
@@ -191,7 +197,10 @@ class StoreClient:
         return self.dashboard.get_snap_channel_map(snap_name=snap_name)
 
     def get_metrics(
-        self, *, filters: List[metrics.MetricsFilter], snap_name: str,
+        self,
+        *,
+        filters: List[metrics.MetricsFilter],
+        snap_name: str,
     ) -> metrics.MetricsResults:
         return self.dashboard.get_metrics(filters=filters, snap_name=snap_name)
 

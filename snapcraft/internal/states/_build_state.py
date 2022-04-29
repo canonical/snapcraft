@@ -30,7 +30,7 @@ def _schema_properties():
 
 
 class BuildState(PartState):
-    yaml_tag = u"!BuildState"
+    yaml_tag = "!BuildState"
 
     def __init__(
         self,

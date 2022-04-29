@@ -85,7 +85,9 @@ def apt_sources_mgr(tmp_path):
     sources_list_d = tmp_path / "sources.list.d"
     sources_list_d.mkdir(parents=True)
 
-    yield apt_sources_manager.AptSourcesManager(sources_list_d=sources_list_d,)
+    yield apt_sources_manager.AptSourcesManager(
+        sources_list_d=sources_list_d,
+    )
 
 
 @mock.patch("tempfile.NamedTemporaryFile")
@@ -199,7 +201,9 @@ def test_sudo_write_file_fails(mock_run):
         ),
         (
             PackageRepositoryApt(
-                key_id="A" * 40, name="IMPLIED-PATH", url="http://test.url/ubuntu",
+                key_id="A" * 40,
+                name="IMPLIED-PATH",
+                url="http://test.url/ubuntu",
             ),
             "snapcraft-IMPLIED-PATH.sources",
             dedent(
@@ -235,7 +239,12 @@ def test_install(package_repo, name, content, apt_sources_mgr, mock_sudo_write):
 
     assert changed is True
     assert sources_path.read_bytes() == content
-    assert mock_sudo_write.mock_calls == [call(content=content, dst_path=sources_path,)]
+    assert mock_sudo_write.mock_calls == [
+        call(
+            content=content,
+            dst_path=sources_path,
+        )
+    ]
 
     # Verify a second-run does not incur any changes.
     mock_sudo_write.reset_mock()

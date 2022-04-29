@@ -84,8 +84,8 @@ class RegisterKeyTestCase(FakeStoreCommandsBaseTestCase):
         )
 
     def test_register_key_login_failed(self):
-        self.fake_store_login.mock.side_effect = storeapi.http_clients.errors.InvalidCredentialsError(
-            "error"
+        self.fake_store_login.mock.side_effect = (
+            storeapi.http_clients.errors.InvalidCredentialsError("error")
         )
 
         raised = self.assertRaises(
@@ -104,8 +104,8 @@ class RegisterKeyTestCase(FakeStoreCommandsBaseTestCase):
         response.json.side_effect = JSONDecodeError("mock-fail", "doc", 1)
         response.status_code = 500
         response.reason = "Internal Server Error"
-        self.fake_store_account_info.mock.side_effect = storeapi.errors.StoreAccountInformationError(
-            response
+        self.fake_store_account_info.mock.side_effect = (
+            storeapi.errors.StoreAccountInformationError(response)
         )
 
         # Fake the login check
@@ -130,8 +130,8 @@ class RegisterKeyTestCase(FakeStoreCommandsBaseTestCase):
         response.json.side_effect = JSONDecodeError("mock-fail", "doc", 1)
         response.status_code = 500
         response.reason = "Internal Server Error"
-        self.fake_store_register_key.mock.side_effect = storeapi.errors.StoreKeyRegistrationError(
-            response
+        self.fake_store_register_key.mock.side_effect = (
+            storeapi.errors.StoreKeyRegistrationError(response)
         )
 
         raised = self.assertRaises(

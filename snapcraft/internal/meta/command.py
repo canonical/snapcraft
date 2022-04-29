@@ -299,7 +299,11 @@ class Command:
         )
 
     def prime_command(
-        self, *, can_use_wrapper: bool, massage_command: bool = True, prime_dir: str,
+        self,
+        *,
+        can_use_wrapper: bool,
+        massage_command: bool = True,
+        prime_dir: str,
     ) -> str:
         """Finalize and prime command, massaging as necessary.
 

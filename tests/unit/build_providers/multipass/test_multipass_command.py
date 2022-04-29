@@ -655,7 +655,8 @@ class MultipassCommandExistsTest(MultipassCommandPassthroughBaseTest):
         self.check_call_mock.assert_has_calls(
             [
                 mock.call(
-                    ["multipass", "info", self.instance_name], stdin=subprocess.DEVNULL,
+                    ["multipass", "info", self.instance_name],
+                    stdin=subprocess.DEVNULL,
                 )
             ]
         )
@@ -670,7 +671,8 @@ class MultipassCommandExistsTest(MultipassCommandPassthroughBaseTest):
         self.check_call_mock.assert_has_calls(
             [
                 mock.call(
-                    ["multipass", "info", self.instance_name], stdin=subprocess.DEVNULL,
+                    ["multipass", "info", self.instance_name],
+                    stdin=subprocess.DEVNULL,
                 )
             ]
         )

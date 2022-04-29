@@ -264,7 +264,8 @@ class AutotoolsPluginTestCase(PluginsV1BaseTestCase):
                 mock.call(["./configure", "--prefix="]),
                 mock.call(["make", "-j2"], env=None),
                 mock.call(
-                    ["make", "install", f"DESTDIR={plugin.installdir}"], env=None,
+                    ["make", "install", f"DESTDIR={plugin.installdir}"],
+                    env=None,
                 ),
             ]
         )

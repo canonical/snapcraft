@@ -1615,7 +1615,8 @@ class WhoAmITest(StoreTestCase):
     def test_whoami(self):
         self.client.login(email="dummy", password="test correct password")
         self.assertThat(
-            self.client.whoami(), IsInstance(whoami.WhoAmI),
+            self.client.whoami(),
+            IsInstance(whoami.WhoAmI),
         )
 
 

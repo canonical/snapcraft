@@ -963,8 +963,7 @@ _YESTERDAY = str(date.today() - timedelta(days=1))
     required=True,
 )
 def metrics(snap_name: str, name: str, start: str, end: str, format: str):
-    """Get metrics for <snap-name>.
-    """
+    """Get metrics for <snap-name>."""
     store = storeapi.StoreClient()
     account_info = store.get_account_information()
 

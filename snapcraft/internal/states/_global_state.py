@@ -34,7 +34,7 @@ StateDict = TypedDict(
 
 class GlobalState(State):
 
-    yaml_tag = u"!GlobalState"
+    yaml_tag = "!GlobalState"
 
     @classmethod
     def load(cls: Type["GlobalState"], *, filepath: str) -> "GlobalState":

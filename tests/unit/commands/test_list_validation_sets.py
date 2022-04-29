@@ -141,5 +141,6 @@ def test_list_validation_sets(click_run, fake_dashboard_get_validation_sets):
         """
     )
     fake_dashboard_get_validation_sets.assert_called_once_with(
-        name=None, sequence=None,
+        name=None,
+        sequence=None,
     )

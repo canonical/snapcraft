@@ -67,7 +67,11 @@ class TestProviderOptions:
             "host all",
             dict(
                 provider="host",
-                kwargs=dict(http_proxy="1.1.1.1", https_proxy="1.1.1.1", offline=True,),
+                kwargs=dict(
+                    http_proxy="1.1.1.1",
+                    https_proxy="1.1.1.1",
+                    offline=True,
+                ),
                 flags=dict(
                     http_proxy="1.1.1.1", https_proxy="1.1.1.1", SNAPCRAFT_OFFLINE=True
                 ),

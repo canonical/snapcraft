@@ -109,7 +109,9 @@ class AptSourcesManager:
 
     # pylint: disable=too-few-public-methods
     def __init__(
-        self, *, sources_list_d: pathlib.Path = pathlib.Path("/etc/apt/sources.list.d"),
+        self,
+        *,
+        sources_list_d: pathlib.Path = pathlib.Path("/etc/apt/sources.list.d"),
     ) -> None:
         self._sources_list_d = sources_list_d
 
@@ -226,7 +228,9 @@ class AptSourcesManager:
         )
 
     def install_package_repository_sources(
-        self, *, package_repo: package_repository.PackageRepository,
+        self,
+        *,
+        package_repo: package_repository.PackageRepository,
     ) -> bool:
         """Install configured package repositories.
 

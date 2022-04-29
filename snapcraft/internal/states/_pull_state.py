@@ -36,7 +36,7 @@ def _schema_properties():
 
 
 class PullState(PartState):
-    yaml_tag = u"!PullState"
+    yaml_tag = "!PullState"
 
     def __init__(
         self,

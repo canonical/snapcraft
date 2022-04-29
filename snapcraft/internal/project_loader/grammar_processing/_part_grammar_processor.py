@@ -118,7 +118,9 @@ class PartGrammarProcessor:
     def get_build_environment(self) -> List[Dict[str, str]]:
         if not self.__build_environment:
             processor = grammar.GrammarProcessor(
-                self._get_property("build-environment"), self._project, lambda x: True,
+                self._get_property("build-environment"),
+                self._project,
+                lambda x: True,
             )
             self.__build_environment = processor.process()
 
