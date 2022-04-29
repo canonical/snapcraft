@@ -63,7 +63,6 @@ def apply_extensions(
         )
         extension.validate(extension_name=extension_name)
         _apply_extension(yaml_data, declared_extensions[extension_name], extension)
-
     return yaml_data
 
 

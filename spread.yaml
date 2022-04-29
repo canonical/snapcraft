@@ -278,9 +278,30 @@ suites:
    systems:
      - ubuntu-22.04*
 
+ tests/spread/core22/architectures/:
+   summary: core22 architecture tests
+   systems:
+     - ubuntu-22.04
+     - ubuntu-22.04-64
+     - ubuntu-22.04-amd64
+
  # General, core suite
  tests/spread/general/:
    summary: tests of snapcraft core functionality
+
+ tests/spread/general/grammar/:
+   summary: grammar tests
+   # run grammar tests on amd64 platforms
+   systems:
+     - ubuntu-18.04
+     - ubuntu-18.04-64
+     - ubuntu-18.04-amd64
+     - ubuntu-20.04
+     - ubuntu-20.04-64
+     - ubuntu-20.04-amd64
+     - ubuntu-22.04
+     - ubuntu-22.04-64
+     - ubuntu-22.04-amd64
 
  # General, core suite
  tests/spread/cross-compile/:

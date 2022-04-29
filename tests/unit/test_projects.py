@@ -1574,3 +1574,23 @@ class TestArchitecture:
         assert "multiple items will build snaps that claim to run on amd64" in str(
             error.value
         )
+
+    def test_project_get_build_on(self, project_yaml_data):
+        """Test `get_build_on()` returns the build-on string."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["arm64"], "build-for": ["armhf"]},
+            ]
+        )
+        project = Project.unmarshal(data)
+        assert project.get_build_on() == "arm64"
+
+    def test_project_get_build_for(self, project_yaml_data):
+        """Test `get_build_for()`."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["arm64"], "build-for": ["armhf"]},
+            ]
+        )
+        project = Project.unmarshal(data)
+        assert project.get_build_for() == "armhf"

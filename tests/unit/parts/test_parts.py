@@ -48,6 +48,7 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
         parse_info={},
         project_vars={"version": "1", "grade": "stable"},
         extra_build_snaps=["core22"],
+        target_arch="amd64",
     )
     lifecycle.run(step_name)
     assert lifecycle.prime_dir == Path(new_dir, "prime")
@@ -58,6 +59,7 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
             application_name="snapcraft",
             work_dir=ANY,
             cache_dir=ANY,
+            arch="x86_64",
             base="core22",
             ignore_local_sources=["*.snap"],
             extra_build_snaps=["core22"],
@@ -83,6 +85,7 @@ def test_parts_lifecycle_run_bad_step(parts_data, new_dir):
         parse_info={},
         project_name="test-project",
         project_vars={"version": "1", "grade": "stable"},
+        target_arch="amd64",
     )
     with pytest.raises(RuntimeError) as raised:
         lifecycle.run("invalid")
@@ -102,6 +105,7 @@ def test_parts_lifecycle_run_internal_error(parts_data, new_dir, mocker):
         project_name="test-project",
         parse_info={},
         project_vars={"version": "1", "grade": "stable"},
+        target_arch="amd64",
     )
     mocker.patch("craft_parts.LifecycleManager.plan", side_effect=RuntimeError("crash"))
     with pytest.raises(RuntimeError) as raised:
@@ -122,6 +126,7 @@ def test_parts_lifecycle_run_parts_error(new_dir):
         project_name="test-project",
         parse_info={},
         project_vars={"version": "1", "grade": "stable"},
+        target_arch="amd64",
     )
     with pytest.raises(errors.PartsLifecycleError) as raised:
         lifecycle.run("prime")
@@ -143,6 +148,7 @@ def test_parts_lifecycle_clean(parts_data, new_dir, emitter):
         project_name="test-project",
         parse_info={},
         project_vars={"version": "1", "grade": "stable"},
+        target_arch="amd64",
     )
     lifecycle.clean(part_names=None)
     emitter.assert_progress("Cleaning all parts")
@@ -161,6 +167,7 @@ def test_parts_lifecycle_clean_parts(parts_data, new_dir, emitter):
         project_name="test-project",
         parse_info={},
         project_vars={"version": "1", "grade": "stable"},
+        target_arch="amd64",
     )
     lifecycle.clean(part_names=["p1"])
     emitter.assert_progress("Cleaning parts: p1")
@@ -204,6 +211,7 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_not_installed
         parse_info={},
         project_vars={"version": "1", "grade": "stable"},
         extra_build_snaps=["core22"],
+        target_arch="amd64",
     )
 
     parts_lifecycle._install_package_repositories()
@@ -251,8 +259,68 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_installed(
         parse_info={},
         project_vars={"version": "1", "grade": "stable"},
         extra_build_snaps=["core22"],
+        target_arch="amd64",
     )
 
     parts_lifecycle._install_package_repositories()
 
     assert install_packages_mock.mock_calls == []
+
+
+def test_parts_lifecycle_bad_architecture(parts_data, new_dir):
+    with pytest.raises(errors.InvalidArchitecture) as raised:
+        PartsLifecycle(
+            parts_data,
+            work_dir=new_dir,
+            assets_dir=new_dir,
+            base="core22",
+            parallel_build_count=8,
+            part_names=[],
+            package_repositories=[],
+            adopt_info=None,
+            parse_info={},
+            project_name="test-project",
+            project_vars={"version": "1", "grade": "stable"},
+            target_arch="bad-arch",
+        )
+
+    assert str(raised.value) == "Architecture 'bad-arch' is not supported."
+
+
+def test_parts_lifecycle_run_with_all_architecture(mocker, parts_data, new_dir):
+    """`target_arch=all` should use the host architecture."""
+
+    mocker.patch("craft_parts.executor.executor.Executor._install_build_snaps")
+    lcm_spy = mocker.spy(craft_parts, "LifecycleManager")
+    lifecycle = PartsLifecycle(
+        parts_data,
+        work_dir=new_dir,
+        assets_dir=new_dir,
+        base="core22",
+        parallel_build_count=8,
+        part_names=[],
+        package_repositories=[],
+        adopt_info=None,
+        parse_info={},
+        project_name="test-project",
+        project_vars={"version": "1", "grade": "stable"},
+        target_arch="amd64",
+    )
+    lifecycle.run("prime")
+
+    assert lcm_spy.mock_calls == [
+        call(
+            {"parts": {"p1": {"plugin": "nil"}}},
+            application_name="snapcraft",
+            work_dir=ANY,
+            cache_dir=ANY,
+            arch="x86_64",
+            base="core22",
+            ignore_local_sources=["*.snap"],
+            extra_build_snaps=None,
+            parallel_build_count=8,
+            project_name="test-project",
+            project_vars_part_name=None,
+            project_vars={"version": "1", "grade": "stable"},
+        )
+    ]
