@@ -62,10 +62,6 @@ class CatkinToolsPlugin(_ros.RosPlugin):
     def get_build_packages(self) -> Set[str]:
         return super().get_build_packages() | {
             "python3-catkin-tools",
-            # FIXME: Only needed because of a botched release:
-            # https://github.com/catkin/catkin_tools/issues/594#issuecomment-688149976
-            # Once fixed, remove this.
-            "python3-osrf-pycommon",
         }
 
     def _get_workspace_activation_commands(self) -> List[str]:
@@ -116,7 +112,7 @@ class CatkinToolsPlugin(_ros.RosPlugin):
             "default",
             "--install",
             "--source-space",
-            '"${SNAPCRAFT_PART_SRC}"',
+            '"${SNAPCRAFT_PART_SRC_WORK}"',
             "--build-space",
             '"${SNAPCRAFT_PART_BUILD}"',
             "--install-space",

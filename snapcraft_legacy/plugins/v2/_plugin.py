@@ -35,7 +35,7 @@ class PluginV2(abc.ABC):
     @abc.abstractmethod
     def get_build_snaps(self) -> Set[str]:
         """
-        Return a set of required packages to install in the build environment.
+        Return a set of required snaps to install in the build environment.
         """
 
     @abc.abstractmethod

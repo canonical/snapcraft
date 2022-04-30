@@ -1,0 +1,21 @@
+name: catkin-tools-noetic-subdir
+version: "1.0"
+summary: hello world
+description: |
+  A ROS 1 roscpp-based workspace.
+
+grade: stable
+confinement: strict
+base: core20
+
+apps:
+  catkin-tools-noetic-subdir:
+    command: opt/ros/noetic/lib/snapcraft_hello/snapcraft_hello
+    plugs: [network, network-bind]
+    extensions: [ros1-noetic]
+
+parts:
+  hello:
+    plugin: catkin-tools
+    source: .
+    build-packages: [g++, make]

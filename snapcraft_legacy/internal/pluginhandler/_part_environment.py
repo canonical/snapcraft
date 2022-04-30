@@ -63,6 +63,14 @@ def get_snapcraft_global_environment(
     else:
         grade = ""
 
+    content_dirs = project._get_provider_content_dirs()
+    if content_dirs:
+        content_dirs_envvar = formatting_utils.combine_paths(
+            content_dirs, prepend="", separator=":"
+        )
+    else:
+        content_dirs_envvar = ""
+
     return {
         "SNAPCRAFT_ARCH_TRIPLET": project.arch_triplet,
         "SNAPCRAFT_EXTENSIONS_DIR": common.get_extensionsdir(),
@@ -74,6 +82,7 @@ def get_snapcraft_global_environment(
         "SNAPCRAFT_PROJECT_GRADE": grade,
         "SNAPCRAFT_STAGE": project.stage_dir,
         "SNAPCRAFT_TARGET_ARCH": project.target_arch,
+        "SNAPCRAFT_CONTENT_DIRS": content_dirs_envvar,
     }
 
 

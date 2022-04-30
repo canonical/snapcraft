@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
 from unittest import mock
 
 import fixtures
@@ -37,7 +38,7 @@ class MissingDependencyTest(unit.TestCase):
             try:
                 return packages[file_path]
             except KeyError:
-                raise repo.errors.FileProviderNotFound(file_path=file_path)
+                raise repo.errors.FileProviderNotFound(file_path=Path(file_path))
 
         self.useFixture(
             fixtures.MockPatch(

@@ -24,6 +24,7 @@ def test_extension_core18():
 
     assert kde_neon_extension.root_snippet == {
         "assumes": ["snapd2.43"],
+        "compression": "lzo",
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
             "icon-themes": {
@@ -50,6 +51,7 @@ def test_extension_core18():
                 "command-chain": ["snap/command-chain/hooks-configure-desktop"],
             }
         },
+        "layout": {"/usr/share/X11": {"symlink": "$SNAP/kf5/usr/share/X11"}},
     }
     assert kde_neon_extension.app_snippet == {
         "command-chain": ["snap/command-chain/desktop-launch"],
@@ -75,6 +77,7 @@ def test_extension_core20():
 
     assert kde_neon_extension.root_snippet == {
         "assumes": ["snapd2.43"],
+        "compression": "lzo",
         "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
         "hooks": {
             "configure": {
@@ -82,6 +85,7 @@ def test_extension_core20():
                 "plugs": ["desktop"],
             }
         },
+        "layout": {"/usr/share/X11": {"symlink": "$SNAP/kf5/usr/share/X11"}},
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
             "icon-themes": {
@@ -89,9 +93,9 @@ def test_extension_core20():
                 "interface": "content",
                 "target": "$SNAP/data-dir/icons",
             },
-            "kde-frameworks-5-qt-5-15-3-core20": {
-                "content": "kde-frameworks-5-qt-5-15-3-core20-all",
-                "default-provider": "kde-frameworks-5-qt-5-15-3-core20",
+            "kde-frameworks-5-91-qt-5-15-3-core20": {
+                "content": "kde-frameworks-5-91-qt-5-15-3-core20-all",
+                "default-provider": "kde-frameworks-5-91-qt-5-15-3-core20",
                 "interface": "content",
                 "target": "$SNAP/kf5",
             },
@@ -109,15 +113,15 @@ def test_extension_core20():
     assert kde_neon_extension.part_snippet == {
         "build-environment": [
             {
-                "SNAPCRAFT_CMAKE_ARGS": "-DCMAKE_FIND_ROOT_PATH=/snap/kde-frameworks-5-qt-5-15-3-core20-sdk/current"
+                "SNAPCRAFT_CMAKE_ARGS": "-DCMAKE_FIND_ROOT_PATH=/snap/kde-frameworks-5-91-qt-5-15-3-core20-sdk/current"
             }
         ]
     }
     assert kde_neon_extension.parts == {
         "kde-neon-extension": {
             "build-packages": ["g++"],
-            "build-snaps": ["kde-frameworks-5-qt-5-15-3-core20-sdk/latest/candidate"],
-            "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-qt-5-15-3-core20"],
+            "build-snaps": ["kde-frameworks-5-91-qt-5-15-3-core20-sdk/latest/stable"],
+            "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-91-qt-5-15-3-core20"],
             "plugin": "make",
             "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
             "source-subdir": "kde-neon",
@@ -137,7 +141,7 @@ def test_experimental_core20():
     kde_neon_extension = ExtensionImpl(
         extension_name="kde-neon", yaml_data=dict(base="core20")
     )
-    assert kde_neon_extension.is_experimental(base="core20") is True
+    assert kde_neon_extension.is_experimental(base="core20") is False
 
 
 def test_experimental_core18():

@@ -110,7 +110,7 @@ class CatkinPlugin(_ros.RosPlugin):
             "--install",
             "--merge",
             "--source-space",
-            '"${SNAPCRAFT_PART_SRC}"',
+            '"${SNAPCRAFT_PART_SRC_WORK}"',
             "--build-space",
             '"${SNAPCRAFT_PART_BUILD}"',
             "--install-space",

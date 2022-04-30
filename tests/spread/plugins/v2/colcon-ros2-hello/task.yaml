@@ -6,6 +6,7 @@ kill-timeout: 180m
 
 environment:
   SNAP/colcon_ros2_foxy_rlcpp_hello: colcon-ros2-foxy-rlcpp-hello
+  SNAP/colcon_subdir: colcon-subdir
   SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
 systems:
@@ -24,7 +25,8 @@ restore: |
   snapcraft clean
   rm -f ./*.snap
 
-  git checkout src/hello.cpp
+  [ -f src/hello ] && git checkout src/hello.cpp
+  [ -f colcon-ros2-foxy-rlcpp-hello/hello.cpp ] && git checkout colcon-ros2-foxy-rlcpp-hello/hello.cpp
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
@@ -45,7 +47,14 @@ execute: |
   [ "$($SNAP)" = "hello world" ]
 
   # Make sure that what we built runs with the changes applied.
-  modified_file=src/hello.cpp
+  if [ -f src/hello.cpp ]; then
+    modified_file=src/hello.cpp
+  elif [ -f colcon-ros2-foxy-rlcpp-hello/hello.cpp ]; then
+    modified_file=colcon-ros2-foxy-rlcpp-hello/hello.cpp
+  else
+    FATAL "Cannot setup ${SNAP} for rebuilding"
+  fi
+
   sed -i "${modified_file}" -e 's/hello world/hello rebuilt world/'
 
   snapcraft

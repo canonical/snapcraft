@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
 from typing import List, Optional, Sequence
 
 from snapcraft_legacy import formatting_utils
@@ -60,7 +61,7 @@ class FileProviderNotFound(RepoError):
 
     fmt = "{file_path} is not provided by any package."
 
-    def __init__(self, *, file_path: str) -> None:
+    def __init__(self, *, file_path: Path) -> None:
         super().__init__(file_path=file_path)
 
 

@@ -91,7 +91,7 @@ class NpmPlugin(PluginV2):
         return dedent(
             f"""\
         if [ ! -f "${{SNAPCRAFT_PART_INSTALL}}/bin/node" ]; then
-            curl -s "{node_uri}" | tar xzf - -C "${{SNAPCRAFT_PART_INSTALL}}/" --strip-components=1
+            curl -s "{node_uri}" | tar xzf - -C "${{SNAPCRAFT_PART_INSTALL}}/" --no-same-owner --strip-components=1
         fi
         """
         )
@@ -102,5 +102,6 @@ class NpmPlugin(PluginV2):
     def get_build_commands(self) -> List[str]:
         return [
             self._get_node_command(),
+            "npm config set unsafe-perm true",
             'npm install -g --prefix "${SNAPCRAFT_PART_INSTALL}" $(npm pack . | tail -1)',
         ]
