@@ -24,10 +24,9 @@ import craft_store
 import requests
 
 from snapcraft_legacy.internal.indicators import download_requests_stream
-from . import _upload, agent, constants, errors, metrics
+from . import agent, constants, errors, metrics
 from ._dashboard_api import DashboardAPI
 from ._snap_api import SnapAPI
-from ._up_down_client import UpDownClient
 from .constants import DEFAULT_SERIES
 from .v2 import releases, validation_sets, whoami
 
@@ -77,7 +76,6 @@ class StoreClient:
 
         self.snap = SnapAPI(self.client)
         self.dashboard = DashboardAPI(self.auth_client)
-        self._updown = UpDownClient(self.client)
 
     @staticmethod
     def use_candid() -> bool:
@@ -162,30 +160,6 @@ class StoreClient:
 
     def push_snap_build(self, snap_id, snap_build):
         return self.dashboard.push_snap_build(snap_id, snap_build)
-
-    def upload(
-        self,
-        snap_name,
-        snap_filename,
-        delta_format=None,
-        source_hash=None,
-        target_hash=None,
-        delta_hash=None,
-        built_at=None,
-        channels: Optional[List[str]] = None,
-    ):
-        updown_data = _upload.upload_files(snap_filename, self._updown)
-
-        return self.dashboard.snap_upload_metadata(
-            snap_name,
-            updown_data,
-            delta_format=delta_format,
-            source_hash=source_hash,
-            target_hash=target_hash,
-            delta_hash=delta_hash,
-            built_at=built_at,
-            channels=channels,
-        )
 
     def release(
         self,

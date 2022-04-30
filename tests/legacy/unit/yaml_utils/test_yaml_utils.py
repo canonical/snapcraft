@@ -15,8 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import io
-import pytest
 
+import pytest
 
 from snapcraft_legacy import yaml_utils
 from snapcraft_legacy.yaml_utils import YamlValidationError

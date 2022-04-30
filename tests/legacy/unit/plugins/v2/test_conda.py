@@ -19,8 +19,8 @@ import platform
 import pytest
 
 from snapcraft_legacy.plugins.v2.conda import (
-    CondaPlugin,
     ArchitectureMissing,
+    CondaPlugin,
     _get_miniconda_source,
 )
 

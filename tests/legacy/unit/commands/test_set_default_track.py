@@ -18,6 +18,7 @@ import fixtures
 from testtools.matchers import Contains, Equals
 
 from snapcraft_legacy import storeapi
+
 from . import FAKE_UNAUTHORIZED_ERROR, FakeStoreCommandsBaseTestCase
 
 

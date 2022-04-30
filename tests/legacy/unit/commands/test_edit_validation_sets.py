@@ -15,13 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
-from typing import Dict, Any
+from typing import Any, Dict
 from unittest import mock
 
 import pytest
 
-from snapcraft_legacy.storeapi.v2 import validation_sets
 from snapcraft_legacy.storeapi import StoreClient
+from snapcraft_legacy.storeapi.v2 import validation_sets
 
 
 @pytest.fixture

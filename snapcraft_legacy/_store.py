@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import hashlib
 import json
 import logging
 import operator
@@ -34,35 +33,28 @@ import requests
 from tabulate import tabulate
 
 from snapcraft_legacy import storeapi, yaml_utils
+
 # Ideally we would move stuff into more logical components
 from snapcraft_legacy.cli import echo
 from snapcraft_legacy.file_utils import (
-    calculate_sha3_384,
     get_host_tool_path,
     get_snap_tool_path,
-)
-from snapcraft_legacy.internal import cache, deltas
-from snapcraft_legacy.internal.deltas.errors import (
-    DeltaGenerationError,
-    DeltaGenerationTooBigError,
 )
 from snapcraft_legacy.internal.errors import (
     SnapDataExtractionError,
     SnapcraftEnvironmentError,
-    ToolMissingError,
 )
 from snapcraft_legacy.storeapi.constants import DEFAULT_SERIES
 from snapcraft_legacy.storeapi.metrics import MetricsFilter, MetricsResults
 
 if TYPE_CHECKING:
-    from snapcraft_legacy.storeapi._status_tracker import StatusTracker
     from snapcraft_legacy.storeapi.v2.releases import Releases
 
 
 logger = logging.getLogger(__name__)
 
 
-def _get_data_from_snap_file(snap_path):
+def get_data_from_snap_file(snap_path):
     with tempfile.TemporaryDirectory() as temp_dir:
         unsquashfs_path = get_snap_tool_path("unsquashfs")
         try:
@@ -373,31 +365,6 @@ class StoreClientCLI(storeapi.StoreClient):
     ) -> None:
         super().register(snap_name=snap_name, is_private=is_private, store_id=store_id)
 
-    @_login_wrapper
-    @_register_wrapper
-    def upload(
-        self,
-        *,
-        snap_name: str,
-        snap_filename: str,
-        built_at: Optional[str] = None,
-        channels: Optional[List[str]] = None,
-        delta_format: Optional[str] = None,
-        source_hash: Optional[str] = None,
-        target_hash: Optional[str] = None,
-        delta_hash: Optional[str] = None,
-    ) -> "StatusTracker":
-        return super().upload(
-            snap_name=snap_name,
-            snap_filename=snap_filename,
-            built_at=built_at,
-            channels=channels,
-            delta_format=delta_format,
-            source_hash=source_hash,
-            target_hash=target_hash,
-            delta_hash=delta_hash,
-        )
-
 
 def list_registered():
     account_info = StoreClientCLI().get_account_information()
@@ -592,7 +559,7 @@ def sign_build(snap_filename, key_name=None, local=False):
     if not os.path.exists(snap_filename):
         raise FileNotFoundError("The file {!r} does not exist.".format(snap_filename))
 
-    snap_yaml = _get_data_from_snap_file(snap_filename)
+    snap_yaml = get_data_from_snap_file(snap_filename)
     snap_name = snap_yaml["name"]
     grade = snap_yaml.get("grade", "stable")
 
@@ -643,7 +610,7 @@ def upload_metadata(snap_filename, force):
     logger.debug("Uploading metadata to the Store (force=%s)", force)
 
     # get the metadata from the snap
-    snap_yaml = _get_data_from_snap_file(snap_filename)
+    snap_yaml = get_data_from_snap_file(snap_filename)
     metadata = {
         "summary": snap_yaml["summary"],
         "description": snap_yaml["description"],
@@ -668,160 +635,6 @@ def upload_metadata(snap_filename, force):
         store_client.upload_binary_metadata(snap_name, metadata, force)
 
     logger.info("The metadata has been uploaded")
-
-
-def upload(snap_filename, release_channels=None) -> Tuple[str, int]:
-    """Upload a snap_filename to the store.
-
-    If a cached snap is available, a delta will be generated from
-    the cached snap to the new target snap and uploaded instead. In the
-    case of a delta processing or upload failure, upload will fall back to
-    uploading the full snap.
-
-    If release_channels is defined it also releases it to those channels if the
-    store deems the uploaded snap as ready to release.
-    """
-    snap_yaml = _get_data_from_snap_file(snap_filename)
-    snap_name = snap_yaml["name"]
-    built_at = snap_yaml.get("snapcraft-started-at")
-
-    logger.debug(
-        "Run upload precheck and verify cached data for {!r}.".format(snap_filename)
-    )
-    store_client = StoreClientCLI()
-    store_client.upload_precheck(snap_name=snap_name)
-
-    snap_cache = cache.SnapCache(project_name=snap_name)
-
-    try:
-        deb_arch = snap_yaml["architectures"][0]
-    except KeyError:
-        deb_arch = "all"
-
-    source_snap = snap_cache.get(deb_arch=deb_arch)
-    sha3_384_available = hasattr(hashlib, "sha3_384")
-
-    result: Optional[Dict[str, Any]] = None
-    if sha3_384_available and source_snap:
-        try:
-            result = _upload_delta(
-                store_client,
-                snap_name=snap_name,
-                snap_filename=snap_filename,
-                source_snap=source_snap,
-                built_at=built_at,
-                channels=release_channels,
-            )
-        except storeapi.errors.StoreDeltaApplicationError as e:
-            logger.warning(
-                "Error generating delta: {}\n"
-                "Falling back to uploading full snap...".format(str(e))
-            )
-        except storeapi.errors.StoreUploadError as upload_error:
-            logger.warning(
-                "Unable to upload delta to store: {}\n"
-                "Falling back to uploading full snap...".format(upload_error.error_list)
-            )
-
-    if result is None:
-        result = _upload_snap(
-            store_client,
-            snap_name=snap_name,
-            snap_filename=snap_filename,
-            built_at=built_at,
-            channels=release_channels,
-        )
-
-    snap_cache.cache(snap_filename=snap_filename)
-    snap_cache.prune(deb_arch=deb_arch, keep_hash=calculate_sha3_384(snap_filename))
-
-    return snap_name, result["revision"]
-
-
-def _upload_snap(
-    store_client,
-    *,
-    snap_name: str,
-    snap_filename: str,
-    built_at: str,
-    channels: Optional[List[str]],
-) -> Dict[str, Any]:
-    tracker = store_client.upload(
-        snap_name=snap_name,
-        snap_filename=snap_filename,
-        built_at=built_at,
-        channels=channels,
-    )
-    result = tracker.track()
-    tracker.raise_for_code()
-    return result
-
-
-def _upload_delta(
-    store_client,
-    *,
-    snap_name: str,
-    snap_filename: str,
-    source_snap: str,
-    built_at: str,
-    channels: Optional[List[str]] = None,
-) -> Dict[str, Any]:
-    delta_format = "xdelta3"
-    logger.debug("Found cached source snap {}.".format(source_snap))
-    target_snap = os.path.join(os.getcwd(), snap_filename)
-
-    try:
-        xdelta_generator = deltas.XDelta3Generator(
-            source_path=source_snap, target_path=target_snap
-        )
-        delta_filename = xdelta_generator.make_delta()
-    except (DeltaGenerationError, DeltaGenerationTooBigError, ToolMissingError) as e:
-        raise storeapi.errors.StoreDeltaApplicationError(str(e))
-
-    snap_hashes = {
-        "source_hash": calculate_sha3_384(source_snap),
-        "target_hash": calculate_sha3_384(target_snap),
-        "delta_hash": calculate_sha3_384(delta_filename),
-    }
-
-    try:
-        logger.debug("Uploading delta {!r}.".format(delta_filename))
-        delta_tracker = store_client.upload(
-            snap_name=snap_name,
-            snap_filename=delta_filename,
-            built_at=built_at,
-            channels=channels,
-            delta_format=delta_format,
-            source_hash=snap_hashes["source_hash"],
-            target_hash=snap_hashes["target_hash"],
-            delta_hash=snap_hashes["delta_hash"],
-        )
-        result = delta_tracker.track()
-        delta_tracker.raise_for_code()
-    except storeapi.errors.StoreReviewError as e:
-        if e.code == "processing_upload_delta_error":
-            raise storeapi.errors.StoreDeltaApplicationError(str(e))
-        else:
-            raise
-    except craft_store.errors.StoreServerError as store_error:
-        raise storeapi.errors.StoreUploadError(snap_name, store_error.response)
-    finally:
-        if os.path.isfile(delta_filename):
-            try:
-                os.remove(delta_filename)
-            except OSError:
-                logger.warning("Unable to remove delta {}.".format(delta_filename))
-    return result
-
-
-def _get_text_for_opened_channels(opened_channels):
-    if len(opened_channels) == 1:
-        return "The {!r} channel is now open.".format(opened_channels[0])
-    else:
-        channels = ("{!r}".format(channel) for channel in opened_channels[:-1])
-        return "The {} and {!r} channels are now open.".format(
-            ", ".join(channels), opened_channels[-1]
-        )
 
 
 def _get_text_for_channel(channel):

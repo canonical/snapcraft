@@ -25,12 +25,11 @@ import click
 from tabulate import tabulate
 
 import snapcraft_legacy
-from snapcraft_legacy import formatting_utils, storeapi
+from snapcraft_legacy import storeapi
 from snapcraft_legacy._store import StoreClientCLI
 from snapcraft_legacy.storeapi import metrics as metrics_module
 from . import echo
 from ._metrics import convert_metrics_to_table
-from ._review import review_snap
 
 
 @click.group()
@@ -72,53 +71,6 @@ def _human_readable_acls(store_client: storeapi.StoreClient) -> str:
             **human_readable_acl
         )
     )
-
-
-@storecli.command()
-@click.option(
-    "--release",
-    metavar="<channels>",
-    help="Optional comma separated list of channels to release <snap-file>",
-)
-@click.argument(
-    "snap-file",
-    metavar="<snap-file>",
-    type=click.Path(exists=True, readable=True, resolve_path=True, dir_okay=False),
-)
-def upload(snap_file, release):
-    """Upload <snap-file> to the store.
-
-    By passing --release with a comma separated list of channels the snap would
-    be released to the selected channels if the store review passes for this
-    <snap-file>.
-
-    This operation will block until the store finishes processing this
-    <snap-file>.
-
-    If --release is used, the channel map will be displayed after the
-    operation takes place.
-
-    \b
-    Examples:
-        snapcraft upload my-snap_0.1_amd64.snap
-        snapcraft upload my-snap_0.2_amd64.snap --release edge
-        snapcraft upload my-snap_0.3_amd64.snap --release candidate,beta
-    """
-    click.echo("Preparing to upload {!r}.".format(os.path.basename(snap_file)))
-    if release:
-        channel_list = release.split(",")
-        click.echo(
-            "After uploading, the resulting snap revision will be released to "
-            "{} when it passes the Snap Store review."
-            "".format(formatting_utils.humanize_list(channel_list, "and"))
-        )
-    else:
-        channel_list = None
-
-    review_snap(snap_file=snap_file)
-    snap_name, snap_revision = snapcraft_legacy.upload(snap_file, channel_list)
-
-    echo.info("Revision {!r} of {!r} created.".format(snap_revision, snap_name))
 
 
 @storecli.command("upload-metadata")

@@ -335,25 +335,6 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
         )
         self.useFixture(self.fake_store_get_releases)
 
-        # Uploading
-        self.mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
-        self.mock_tracker.track.return_value = {
-            "code": "ready_to_release",
-            "processed": True,
-            "can_release": True,
-            "url": "/fake/url",
-            "revision": 19,
-        }
-        self.fake_store_upload_precheck = fixtures.MockPatchObject(
-            storeapi.StoreClient, "upload_precheck"
-        )
-        self.useFixture(self.fake_store_upload_precheck)
-
-        self.fake_store_upload = fixtures.MockPatchObject(
-            storeapi.StoreClient, "upload", return_value=self.mock_tracker
-        )
-        self.useFixture(self.fake_store_upload)
-
         # Mock the snap command, pass through a select few.
         self.fake_check_output = fixtures.MockPatch(
             "subprocess.check_output", side_effect=mock_check_output

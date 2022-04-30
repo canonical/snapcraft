@@ -23,9 +23,8 @@ import craft_store
 import requests
 from simplejson.scanner import JSONDecodeError
 
-from . import _metadata, constants, errors, metrics
+from . import _metadata, errors, metrics
 from ._requests import Requests
-from ._status_tracker import StatusTracker
 from .v2 import releases, validation_sets, whoami
 
 logger = logging.getLogger(__name__)
@@ -130,50 +129,6 @@ class DashboardAPI(Requests):
             raise errors.StoreUploadError(
                 snap_name, store_error.response
             ) from store_error
-
-    def snap_upload_metadata(
-        self,
-        snap_name,
-        updown_data,
-        delta_format=None,
-        delta_hash=None,
-        source_hash=None,
-        target_hash=None,
-        built_at=None,
-        channels: Optional[List[str]] = None,
-    ) -> StatusTracker:
-        data = {
-            "name": snap_name,
-            "series": constants.DEFAULT_SERIES,
-            "updown_id": updown_data["upload_id"],
-            "binary_filesize": updown_data["binary_filesize"],
-            "source_uploaded": updown_data["source_uploaded"],
-        }
-
-        if delta_format:
-            data["delta_format"] = delta_format
-            data["delta_hash"] = delta_hash
-            data["source_hash"] = source_hash
-            data["target_hash"] = target_hash
-        if built_at is not None:
-            data["built_at"] = built_at
-        if channels is not None:
-            data["channels"] = channels
-        try:
-            response = self.post(
-                "/dev/api/snap-push/",
-                json=data,
-                headers={
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
-            )
-        except craft_store.errors.StoreServerError as store_error:
-            raise errors.StoreUploadError(
-                data["name"], store_error.response
-            ) from store_error
-
-        return StatusTracker(response.json()["status_details_url"])
 
     def upload_metadata(self, snap_id, snap_name, metadata, force):
         """Upload the metadata to SCA."""

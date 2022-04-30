@@ -19,8 +19,8 @@ from unittest import mock
 
 import pytest
 
-from snapcraft_legacy.storeapi.v2 import validation_sets
 from snapcraft_legacy.storeapi import StoreClient
+from snapcraft_legacy.storeapi.v2 import validation_sets
 
 
 @pytest.fixture

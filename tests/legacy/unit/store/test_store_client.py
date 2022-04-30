@@ -19,7 +19,6 @@ import logging
 import os
 import tempfile
 from textwrap import dedent
-from unittest import mock
 
 import fixtures
 import pytest
@@ -33,7 +32,6 @@ from testtools.matchers import (
     Not,
 )
 
-import tests.legacy
 from snapcraft_legacy import storeapi
 from snapcraft_legacy.storeapi import errors, metrics
 from snapcraft_legacy.storeapi.v2 import releases, validation_sets, whoami
@@ -631,134 +629,6 @@ class ValidationsTestCase(StoreTestCase):
         self.assertIn("Invalid response from the server", self.fake_logger.output)
 
 
-class UploadTestCase(StoreTestCase):
-    def setUp(self):
-        super().setUp()
-        self.snap_path = os.path.join(
-            os.path.dirname(tests.legacy.__file__), "data", "test-snap.snap"
-        )
-        # These should eventually converge to the same module
-        pbars = (
-            "snapcraft_legacy.storeapi._upload.ProgressBar",
-            "snapcraft_legacy.storeapi._status_tracker.ProgressBar",
-        )
-        for pbar in pbars:
-            patcher = mock.patch(pbar, new=unit.SilentProgressBar)
-            patcher.start()
-            self.addCleanup(patcher.stop)
-
-    def test_upload_snap(self):
-        self.client.register("test-snap")
-        tracker = self.client.upload("test-snap", self.snap_path)
-        self.assertTrue(isinstance(tracker, storeapi._status_tracker.StatusTracker))
-        result = tracker.track()
-        expected_result = {
-            "code": "ready_to_release",
-            "revision": "1",
-            "url": "/dev/click-apps/5349/rev/1",
-            "can_release": True,
-            "processed": True,
-        }
-        self.assertThat(result, Equals(expected_result))
-
-        # This should not raise
-        tracker.raise_for_code()
-
-    def test_upload_snap_requires_review(self):
-        self.client.register("test-review-snap")
-        tracker = self.client.upload("test-review-snap", self.snap_path)
-        self.assertTrue(isinstance(tracker, storeapi._status_tracker.StatusTracker))
-        result = tracker.track()
-        expected_result = {
-            "code": "need_manual_review",
-            "revision": "1",
-            "url": "/dev/click-apps/5349/rev/1",
-            "can_release": False,
-            "processed": True,
-        }
-        self.assertThat(result, Equals(expected_result))
-
-        self.assertRaises(errors.StoreReviewError, tracker.raise_for_code)
-
-    def test_upload_duplicate_snap(self):
-        self.client.register("test-duplicate-snap")
-        tracker = self.client.upload("test-duplicate-snap", self.snap_path)
-        self.assertTrue(isinstance(tracker, storeapi._status_tracker.StatusTracker))
-        result = tracker.track()
-        expected_result = {
-            "code": "processing_error",
-            "revision": "1",
-            "url": "/dev/click-apps/5349/rev/1",
-            "can_release": False,
-            "processed": True,
-            "errors": [{"message": "Duplicate snap already uploaded"}],
-        }
-        self.assertThat(result, Equals(expected_result))
-
-        raised = self.assertRaises(errors.StoreReviewError, tracker.raise_for_code)
-
-        self.assertThat(
-            str(raised),
-            Equals(
-                "The store was unable to accept this snap.\n"
-                "  - Duplicate snap already uploaded"
-            ),
-        )
-
-    def test_braces_in_error_messages_are_literals(self):
-        self.client.register("test-scan-error-with-braces")
-        tracker = self.client.upload("test-scan-error-with-braces", self.snap_path)
-        self.assertTrue(isinstance(tracker, storeapi._status_tracker.StatusTracker))
-        result = tracker.track()
-        expected_result = {
-            "code": "processing_error",
-            "revision": "1",
-            "url": "/dev/click-apps/5349/rev/1",
-            "can_release": False,
-            "processed": True,
-            "errors": [{"message": "Error message with {braces}"}],
-        }
-        self.assertThat(result, Equals(expected_result))
-
-        raised = self.assertRaises(errors.StoreReviewError, tracker.raise_for_code)
-
-        self.assertThat(
-            str(raised),
-            Equals(
-                "The store was unable to accept this snap.\n"
-                "  - Error message with {braces}"
-            ),
-        )
-
-    def test_upload_unregistered_snap(self):
-        raised = self.assertRaises(
-            errors.StoreUploadError,
-            self.client.upload,
-            "test-snap-unregistered",
-            self.snap_path,
-        )
-        self.assertThat(
-            str(raised),
-            Equals("This snap is not registered. Register the snap and try again."),
-        )
-
-    def test_upload_forbidden_snap(self):
-        raised = self.assertRaises(
-            errors.StoreUploadError,
-            self.client.upload,
-            "test-snap-forbidden",
-            self.snap_path,
-        )
-        self.assertThat(
-            str(raised),
-            Equals(
-                "You are not the publisher or allowed to upload revisions for "
-                "this snap. Ensure you are logged in with the proper account "
-                "and try again."
-            ),
-        )
-
-
 class ReleaseTest(StoreTestCase):
     def test_release_snap(self):
         channel_map = self.client.release("test-snap", "19", ["beta"])
@@ -1066,11 +936,6 @@ class UploadMetadataTestCase(StoreTestCase):
         These are all the previous steps needed to upload metadata.
         """
         self.client.register("basic")
-        path = os.path.join(
-            os.path.dirname(tests.legacy.__file__), "data", "test-snap.snap"
-        )
-        tracker = self.client.upload("basic", path)
-        tracker.track()
 
     def test_invalid_data(self):
         self._setup_snap()
@@ -1170,11 +1035,6 @@ class UploadBinaryMetadataTestCase(StoreTestCase):
         These are all the previous steps needed to upload binary metadata.
         """
         self.client.register("basic")
-        path = os.path.join(
-            os.path.dirname(tests.legacy.__file__), "data", "test-snap.snap"
-        )
-        tracker = self.client.upload("basic", path)
-        tracker.track()
 
     def test_invalid_data(self):
         self._setup_snap()
@@ -1258,11 +1118,6 @@ class SnapNotFoundTestCase(StoreTestCase):
         These are all the previous steps needed to upload binary metadata.
         """
         self.client.register("basic")
-        path = os.path.join(
-            os.path.dirname(tests.legacy.__file__), "data", "test-snap.snap"
-        )
-        tracker = self.client.upload("basic", path)
-        tracker.track()
 
     def assert_raises(self, method):
         self._setup_snap()

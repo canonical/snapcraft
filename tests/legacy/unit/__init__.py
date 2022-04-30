@@ -28,8 +28,8 @@ import testscenarios
 import testtools
 
 from snapcraft_legacy.internal import common, steps
-from tests.legacy import fake_servers, fixture_setup
 from tests.file_utils import get_snapcraft_path
+from tests.legacy import fake_servers, fixture_setup
 from tests.legacy.unit.part_loader import load_part
 
 
