@@ -24,9 +24,96 @@ from craft_store import endpoints
 
 from snapcraft import errors
 from snapcraft.commands.store import client
+from snapcraft.commands.store.channel_map import ChannelMap
 from snapcraft.utils import OSPlatform
 
 from .utils import FakeResponse
+
+#############
+# Fixtures #
+
+
+@pytest.fixture
+def channel_map_payload():
+    return {
+        "channel-map": [
+            {
+                "architecture": "all",
+                "channel": "2.1/beta",
+                "expiration-date": None,
+                "revision": 1,
+                "progressive": {
+                    "paused": None,
+                    "percentage": None,
+                    "current-percentage": None,
+                },
+                "when": "2020-02-03T20:58:37Z",
+            }
+        ],
+        "revisions": [
+            {
+                "architectures": [
+                    "amd64",
+                    "arm64",
+                    "armhf",
+                    "i386",
+                    "s390x",
+                    "ppc64el",
+                ],
+                "revision": 1,
+                "version": "10",
+            }
+        ],
+        "snap": {
+            "name": "test-snap",
+            "channels": [
+                {
+                    "branch": None,
+                    "fallback": None,
+                    "name": "2.1/stable",
+                    "risk": "stable",
+                    "track": "2.1",
+                },
+                {
+                    "branch": None,
+                    "fallback": "2.1/stable",
+                    "name": "2.1/candidate",
+                    "risk": "candidate",
+                    "track": "2.1",
+                },
+                {
+                    "branch": None,
+                    "fallback": "2.1/candidate",
+                    "name": "2.1/beta",
+                    "risk": "beta",
+                    "track": "2.1",
+                },
+                {
+                    "branch": None,
+                    "fallback": "2.1/beta",
+                    "name": "2.1/edge",
+                    "risk": "edge",
+                    "track": "2.1",
+                },
+            ],
+            "tracks": [
+                {
+                    "name": "latest",
+                    "status": "active",
+                    "creation-date": None,
+                    "version-pattern": None,
+                },
+                {
+                    "name": "1.0",
+                    "status": "default",
+                    "creation-date": "2019-10-17T14:11:59Z",
+                    "version-pattern": "1.*",
+                },
+            ],
+            "default-track": "2.1",
+        },
+    }
+
 
 ####################
 # User Agent Tests #
@@ -469,5 +556,28 @@ def test_close(fake_client):
             "POST",
             "https://dashboard.snapcraft.io/dev/api/snaps/12345/close",
             json={"channels": ["edge"]},
+        )
+    ]
+
+
+###################
+# Get Channel Map #
+###################
+
+
+def test_get_channel_map(fake_client, channel_map_payload):
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(channel_map_payload)
+    )
+    channel_map = client.StoreClientCLI().get_channel_map(
+        snap_name="test-snap",
+    )
+    assert isinstance(channel_map, ChannelMap)
+
+    assert fake_client.request.mock_calls == [
+        call(
+            "GET",
+            "https://dashboard.snapcraft.io/api/v2/snaps/test-snap/channel-map",
+            headers={"Accept": "application/json"},
         )
     ]

@@ -63,7 +63,18 @@ COMMAND_GROUPS = [
     ),
     craft_cli.CommandGroup(
         "Store Snap Release Management",
-        [commands.StoreReleaseCommand, commands.StoreCloseCommand],
+        [
+            commands.StoreReleaseCommand,
+            commands.StoreCloseCommand,
+            commands.StoreStatusCommand,
+        ],
+    ),
+    craft_cli.CommandGroup(
+        "Store Snap Tracks",
+        [
+            commands.StoreListTracksCommand,
+            commands.StoreTracksCommand,  # hidden (alias to list-tracks)
+        ],
     ),
     craft_cli.CommandGroup(
         "Extensions",

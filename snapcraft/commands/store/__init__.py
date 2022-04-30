@@ -18,9 +18,11 @@
 
 
 from . import constants
+from .channel_map import ChannelMap
 from .client import StoreClientCLI
 
 __all__ = [
+    "ChannelMap",
     "StoreClientCLI",
     "constants",
 ]

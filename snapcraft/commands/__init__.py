@@ -43,6 +43,7 @@ from .names import (
     StoreNamesCommand,
     StoreRegisterCommand,
 )
+from .status import StoreListTracksCommand, StoreStatusCommand, StoreTracksCommand
 from .version import VersionCommand
 
 __all__ = [
@@ -58,11 +59,14 @@ __all__ = [
     "StoreLoginCommand",
     "StoreNamesCommand",
     "StoreExportLoginCommand",
+    "StoreListTracksCommand",
     "StoreLogoutCommand",
     "StoreRegisterCommand",
     "StoreLegacyListCommand",
     "StoreLegacyListRegisteredCommand",
     "StoreReleaseCommand",
+    "StoreStatusCommand",
+    "StoreTracksCommand",
     "StoreWhoAmICommand",
     "ExtensionsCommand",
     "ListExtensionsCommand",
