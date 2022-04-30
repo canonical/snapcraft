@@ -148,6 +148,25 @@ def get_managed_environment_snap_channel() -> Optional[str]:
     return os.getenv("SNAPCRAFT_INSTALL_SNAP_CHANNEL")
 
 
+def get_effective_base(
+    *,
+    base: Optional[str],
+    build_base: Optional[str],
+    project_type: Optional[str],
+    name: Optional[str],
+) -> Optional[str]:
+    """Return the base to use to create the snap.
+
+    Returns build-base if set, but if not, name is returned if the
+    snap is of type base. For all other snaps, the base is returned
+    as the build-base.
+    """
+    if build_base is not None:
+        return build_base
+
+    return name if project_type == "base" else base
+
+
 def confirm_with_user(prompt_text, default=False) -> bool:
     """Query user for yes/no answer.
 
