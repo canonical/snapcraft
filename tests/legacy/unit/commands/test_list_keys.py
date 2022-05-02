@@ -19,7 +19,6 @@ from textwrap import dedent
 import fixtures
 from testtools.matchers import Contains, Equals
 
-
 from . import FAKE_UNAUTHORIZED_ERROR, FakeStoreCommandsBaseTestCase, get_sample_key
 
 

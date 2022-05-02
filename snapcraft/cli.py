@@ -67,6 +67,7 @@ COMMAND_GROUPS = [
             commands.StoreReleaseCommand,
             commands.StoreCloseCommand,
             commands.StoreStatusCommand,
+            commands.StoreUploadCommand,
         ],
     ),
     craft_cli.CommandGroup(
@@ -104,7 +105,7 @@ def get_dispatcher() -> craft_cli.Dispatcher:
         legacy.legacy_run()
 
     # set lib loggers to debug level so that all messages are sent to Emitter
-    for lib_name in ("craft_parts", "craft_providers"):
+    for lib_name in ("craft_parts", "craft_providers", "craft_store"):
         logger = logging.getLogger(lib_name)
         logger.setLevel(logging.DEBUG)
 

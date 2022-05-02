@@ -362,7 +362,6 @@ from snapcraft_legacy._store import (  # noqa
     register_key,
     sign_build,
     status,
-    upload,
     upload_metadata,
     validate,
 )

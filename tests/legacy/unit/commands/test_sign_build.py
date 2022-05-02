@@ -23,7 +23,7 @@ from testtools.matchers import Contains, Equals, FileExists, Not
 import tests.legacy
 from snapcraft_legacy import internal, storeapi
 
-from . import FakeStoreCommandsBaseTestCase, get_sample_key, mock_check_output
+from . import FakeStoreCommandsBaseTestCase, mock_check_output
 
 
 class SnapTest(fixtures.TempDir):
@@ -76,7 +76,7 @@ class SignBuildTestCase(FakeStoreCommandsBaseTestCase):
 
         self.assertThat(str(raised), Contains("Cannot read data from snap"))
 
-    @mock.patch("snapcraft_legacy._store._get_data_from_snap_file")
+    @mock.patch("snapcraft_legacy._store.get_data_from_snap_file")
     def test_sign_build_missing_account_info(
         self,
         mock_get_snap_data,
@@ -99,7 +99,7 @@ class SignBuildTestCase(FakeStoreCommandsBaseTestCase):
             ),
         )
 
-    @mock.patch("snapcraft_legacy._store._get_data_from_snap_file")
+    @mock.patch("snapcraft_legacy._store.get_data_from_snap_file")
     def test_sign_build_no_usable_keys(
         self,
         mock_get_snap_data,
@@ -128,7 +128,7 @@ class SignBuildTestCase(FakeStoreCommandsBaseTestCase):
         self.assertThat(snap_build_path, Not(FileExists()))
 
     @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
-    @mock.patch("snapcraft_legacy._store._get_data_from_snap_file")
+    @mock.patch("snapcraft_legacy._store.get_data_from_snap_file")
     def test_sign_build_no_usable_named_key(
         self,
         mock_get_snap_data,
@@ -161,7 +161,7 @@ class SignBuildTestCase(FakeStoreCommandsBaseTestCase):
         self.assertThat(snap_build_path, Not(FileExists()))
 
     @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
-    @mock.patch("snapcraft_legacy._store._get_data_from_snap_file")
+    @mock.patch("snapcraft_legacy._store.get_data_from_snap_file")
     def test_sign_build_unregistered_key(
         self,
         mock_get_snap_data,
@@ -200,7 +200,7 @@ class SignBuildTestCase(FakeStoreCommandsBaseTestCase):
         self.assertThat(snap_build_path, Not(FileExists()))
 
     @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
-    @mock.patch("snapcraft_legacy._store._get_data_from_snap_file")
+    @mock.patch("snapcraft_legacy._store.get_data_from_snap_file")
     def test_sign_build_locally_successfully(
         self,
         mock_get_snap_data,
@@ -242,7 +242,7 @@ class SignBuildTestCase(FakeStoreCommandsBaseTestCase):
         )
 
     @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
-    @mock.patch("snapcraft_legacy._store._get_data_from_snap_file")
+    @mock.patch("snapcraft_legacy._store.get_data_from_snap_file")
     def test_sign_build_missing_grade(
         self,
         mock_get_snap_data,
@@ -285,7 +285,7 @@ class SignBuildTestCase(FakeStoreCommandsBaseTestCase):
 
     @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "push_snap_build")
     @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
-    @mock.patch("snapcraft_legacy._store._get_data_from_snap_file")
+    @mock.patch("snapcraft_legacy._store.get_data_from_snap_file")
     def test_sign_build_upload_successfully(
         self,
         mock_get_snap_data,
@@ -339,7 +339,7 @@ class SignBuildTestCase(FakeStoreCommandsBaseTestCase):
 
     @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "push_snap_build")
     @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
-    @mock.patch("snapcraft_legacy._store._get_data_from_snap_file")
+    @mock.patch("snapcraft_legacy._store.get_data_from_snap_file")
     def test_sign_build_upload_existing(
         self,
         mock_get_snap_data,

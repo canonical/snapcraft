@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+import textwrap
+import time
 from unittest.mock import call
 
 import craft_store
@@ -31,6 +33,12 @@ from .utils import FakeResponse
 
 #############
 # Fixtures #
+#############
+
+
+@pytest.fixture
+def no_wait(monkeypatch):
+    monkeypatch.setattr(time, "sleep", lambda x: None)
 
 
 @pytest.fixture
@@ -580,4 +588,207 @@ def test_get_channel_map(fake_client, channel_map_payload):
             "https://dashboard.snapcraft.io/api/v2/snaps/test-snap/channel-map",
             headers={"Accept": "application/json"},
         )
+    ]
+
+
+#################
+# Verify Upload #
+#################
+
+
+def test_verify_upload(fake_client):
+    client.StoreClientCLI().verify_upload(snap_name="foo")
+
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/dev/api/snap-push/",
+            json={"name": "foo", "dry_run": True},
+            headers={"Accept": "application/json"},
+        )
+    ]
+
+
+#################
+# Notify Upload #
+#################
+
+
+@pytest.mark.usefixtures("no_wait")
+def test_notify_upload(fake_client):
+    fake_client.request.side_effect = [
+        FakeResponse(
+            status_code=200, content=json.dumps({"status_details_url": "https://track"})
+        ),
+        FakeResponse(
+            status_code=200,
+            content=json.dumps({"code": "processing", "processed": False}),
+        ),
+        FakeResponse(
+            status_code=200,
+            content=json.dumps({"code": "done", "processed": True, "revision": 42}),
+        ),
+    ]
+
+    client.StoreClientCLI().notify_upload(
+        snap_name="foo",
+        upload_id="some-id",
+        channels=None,
+        built_at=None,
+        snap_file_size=999,
+    )
+
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/dev/api/snap-push/",
+            json={
+                "name": "foo",
+                "series": "16",
+                "updown_id": "some-id",
+                "binary_filesize": 999,
+                "source_uploaded": False,
+            },
+            headers={"Accept": "application/json"},
+        ),
+        call("GET", "https://track"),
+        call("GET", "https://track"),
+    ]
+
+
+@pytest.mark.usefixtures("no_wait")
+def test_notify_upload_built_at(fake_client):
+    fake_client.request.side_effect = [
+        FakeResponse(
+            status_code=200, content=json.dumps({"status_details_url": "https://track"})
+        ),
+        FakeResponse(
+            status_code=200,
+            content=json.dumps({"code": "processing", "processed": False}),
+        ),
+        FakeResponse(
+            status_code=200,
+            content=json.dumps({"code": "done", "processed": True, "revision": 42}),
+        ),
+    ]
+
+    client.StoreClientCLI().notify_upload(
+        snap_name="foo",
+        upload_id="some-id",
+        channels=None,
+        built_at="some-date",
+        snap_file_size=999,
+    )
+
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/dev/api/snap-push/",
+            json={
+                "name": "foo",
+                "series": "16",
+                "updown_id": "some-id",
+                "binary_filesize": 999,
+                "source_uploaded": False,
+                "built_at": "some-date",
+            },
+            headers={"Accept": "application/json"},
+        ),
+        call("GET", "https://track"),
+        call("GET", "https://track"),
+    ]
+
+
+@pytest.mark.usefixtures("no_wait")
+def test_notify_upload_channels(fake_client):
+    fake_client.request.side_effect = [
+        FakeResponse(
+            status_code=200, content=json.dumps({"status_details_url": "https://track"})
+        ),
+        FakeResponse(
+            status_code=200,
+            content=json.dumps({"code": "processing", "processed": False}),
+        ),
+        FakeResponse(
+            status_code=200,
+            content=json.dumps({"code": "done", "processed": True, "revision": 42}),
+        ),
+    ]
+
+    client.StoreClientCLI().notify_upload(
+        snap_name="foo",
+        upload_id="some-id",
+        channels=["stable"],
+        built_at=None,
+        snap_file_size=999,
+    )
+
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/dev/api/snap-push/",
+            json={
+                "name": "foo",
+                "series": "16",
+                "updown_id": "some-id",
+                "binary_filesize": 999,
+                "channels": ["stable"],
+                "source_uploaded": False,
+            },
+            headers={"Accept": "application/json"},
+        ),
+        call("GET", "https://track"),
+        call("GET", "https://track"),
+    ]
+
+
+@pytest.mark.usefixtures("no_wait")
+def test_notify_upload_error(fake_client):
+    fake_client.request.side_effect = [
+        FakeResponse(
+            status_code=200, content=json.dumps({"status_details_url": "https://track"})
+        ),
+        FakeResponse(
+            status_code=200,
+            content=json.dumps({"code": "processing", "processed": False}),
+        ),
+        FakeResponse(
+            status_code=200,
+            content=json.dumps(
+                {"code": "done", "processed": True, "errors": [{"message": "bad-snap"}]}
+            ),
+        ),
+    ]
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        client.StoreClientCLI().notify_upload(
+            snap_name="foo",
+            upload_id="some-id",
+            channels=["stable"],
+            built_at=None,
+            snap_file_size=999,
+        )
+
+    assert str(raised.value) == textwrap.dedent(
+        """\
+        Issues while processing snap:
+        - bad-snap"""
+    )
+
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/dev/api/snap-push/",
+            json={
+                "name": "foo",
+                "series": "16",
+                "updown_id": "some-id",
+                "binary_filesize": 999,
+                "channels": ["stable"],
+                "source_uploaded": False,
+            },
+            headers={"Accept": "application/json"},
+        ),
+        call("GET", "https://track"),
+        call("GET", "https://track"),
     ]

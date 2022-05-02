@@ -18,6 +18,7 @@
 
 import os
 import platform
+import time
 from datetime import timedelta
 from typing import Any, Dict, Optional, Sequence, Tuple
 
@@ -30,6 +31,15 @@ from snapcraft import __version__, errors, utils
 from . import channel_map, constants
 
 _TESTING_ENV_PREFIXES = ["TRAVIS", "AUTOPKGTEST_TMP"]
+
+_POLL_DELAY = 1
+_HUMAN_STATUS = {
+    "being_processed": "processing",
+    "ready_to_release": "ready to release!",
+    "need_manual_review": "will need manual review",
+    "processing_upload_delta_error": "error while processing delta",
+    "processing_error": "error while processing",
+}
 
 
 def build_user_agent(
@@ -307,3 +317,83 @@ class StoreClientCLI:
             self._base_url + f"/dev/api/snaps/{snap_id}/close",
             json={"channels": [channel]},
         )
+
+    def verify_upload(
+        self,
+        *,
+        snap_name: str,
+    ) -> None:
+        """Verify if this account can perform an upload for this snap_name."""
+        data = {
+            "name": snap_name,
+            "dry_run": True,
+        }
+        self.request(
+            "POST",
+            self._base_url + "/dev/api/snap-push/",
+            json=data,
+            headers={
+                "Accept": "application/json",
+            },
+        )
+
+    def notify_upload(
+        self,
+        *,
+        snap_name: str,
+        upload_id: str,
+        snap_file_size: int,
+        built_at: Optional[str],
+        channels: Optional[Sequence[str]],
+    ) -> int:
+        """Notify an upload to the Snap Store.
+
+        :param snap_name: name of the snap
+        :param upload_id: the upload_id to register with the Snap Store
+        :param snap_file_size: the file size of the uploaded snap
+        :param built_at: the build timestamp for this build
+        :param channels: the channels to release to after being accepted into the Snap Store
+        :returns: the snap's processed revision
+        """
+        data = {
+            "name": snap_name,
+            "series": constants.DEFAULT_SERIES,
+            "updown_id": upload_id,
+            "binary_filesize": snap_file_size,
+            "source_uploaded": False,
+        }
+        if built_at is not None:
+            data["built_at"] = built_at
+        if channels is not None:
+            data["channels"] = channels
+
+        response = self.request(
+            "POST",
+            self._base_url + "/dev/api/snap-push/",
+            json=data,
+            headers={
+                "Accept": "application/json",
+            },
+        )
+
+        status_url = response.json()["status_details_url"]
+        while True:
+            response = self.request("GET", status_url)
+            status = response.json()
+            human_status = _HUMAN_STATUS.get(status["code"], status["code"])
+            emit.progress(f"Status: {human_status}")
+
+            if status.get("processed", False):
+                if status.get("errors"):
+                    error_messages = [
+                        e["message"] for e in status["errors"] if "message" in e
+                    ]
+                    error_string = "\n".join([f"- {e}" for e in error_messages])
+                    raise errors.SnapcraftError(
+                        f"Issues while processing snap:\n{error_string}"
+                    )
+                break
+
+            time.sleep(_POLL_DELAY)
+
+        return status["revision"]
