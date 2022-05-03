@@ -493,6 +493,22 @@ class TestProjectValidation:
         project = Project.unmarshal(project_yaml_data(plugs=content_plug_data))
         assert project.get_content_snaps() == ["test-provider"]
 
+    @pytest.mark.parametrize("decl_type", ["symlink", "bind", "bind-file", "type"])
+    def test_project_layout(self, decl_type, project_yaml_data):
+        project = Project.unmarshal(
+            project_yaml_data(layout={"foo": {decl_type: "bar"}})
+        )
+        assert project.layout is not None
+        assert project.layout["foo"][decl_type] == "bar"
+
+    def test_project_layout_invalid(self, project_yaml_data):
+        error = (
+            "Bad snapcraft.yaml content:\n"
+            "- unexpected value; permitted: 'symlink', 'bind', 'bind-file', 'type'"
+        )
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(project_yaml_data(layout={"foo": {"invalid": "bar"}}))
+
 
 class TestHookValidation:
     """Validate hooks."""
@@ -504,7 +520,7 @@ class TestHookValidation:
             {
                 "configure": {
                     "command-chain": ["test-1", "test-2"],
-                    "build-environment": {
+                    "environment": {
                         "FIRST_VARIABLE": "test-3",
                         "SECOND_VARIABLE": "test-4",
                     },

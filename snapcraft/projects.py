@@ -35,7 +35,7 @@ class ProjectModel(pydantic.BaseModel):
         """Pydantic model configuration."""
 
         validate_assignment = True
-        extra = "allow"  # FIXME: change to 'forbid' after model complete
+        extra = "forbid"
         allow_mutation = True  # project is updated with adopted metadata
         allow_population_by_field_name = True
         alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
@@ -135,7 +135,7 @@ class App(ProjectModel):
     slots: Optional[UniqueStrList]
     plugs: Optional[UniqueStrList]
     aliases: Optional[UniqueStrList]
-    environment: Optional[Dict[str, Any]]
+    environment: Optional[Dict[str, str]]
     adapter: Optional[Literal["none", "full"]]
     command_chain: List[str] = []
     sockets: Optional[Dict[str, Socket]]
@@ -192,7 +192,7 @@ class Hook(ProjectModel):
     """Snapcraft project hook definition."""
 
     command_chain: Optional[List[str]]
-    environment: Optional[Dict[str, Any]]
+    environment: Optional[Dict[str, str]]
     plugs: Optional[UniqueStrList]
     passthrough: Optional[Dict[str, Any]]
 
@@ -253,7 +253,9 @@ class Project(ProjectModel):
     type: Optional[Literal["app", "base", "gadget", "kernel", "snapd"]]
     icon: Optional[str]
     confinement: Literal["classic", "devmode", "strict"]
-    layout: Optional[Dict[str, Dict[str, Any]]]
+    layout: Optional[
+        Dict[str, Dict[Literal["symlink", "bind", "bind-file", "type"], str]]
+    ]
     license: Optional[str]
     grade: Optional[Literal["stable", "devel"]]
     architectures: List[Architecture] = []
@@ -267,7 +269,7 @@ class Project(ProjectModel):
     parts: Dict[str, Any]  # parts are handled by craft-parts
     epoch: Optional[str]
     adopt_info: Optional[str]
-    environment: Optional[Dict[str, Any]]
+    environment: Optional[Dict[str, str]]
 
     @pydantic.validator("plugs")
     @classmethod
