@@ -31,8 +31,6 @@ from ._provider import Provider, ProviderError
 
 logger = logging.getLogger(__name__)
 
-_BASE_IMAGE = {"core22": "ubuntu:22.04"}
-
 
 class LXDProvider(Provider):
     """LXD build environment provider.
@@ -156,21 +154,16 @@ class LXDProvider(Provider):
             project_name=project_name,
             project_path=project_path,
         )
-
-        base_image = _BASE_IMAGE[base]
-        if ":" in base_image:
-            image_remote, image_name = base_image.split(":", 1)
-        else:
-            try:
-                image_remote = lxd.configure_buildd_image_remote()
-                image_name = base_image
-            except lxd.LXDError as error:
-                raise ProviderError(str(error)) from error
+        alias = BASE_TO_BUILDD_IMAGE_ALIAS[base]
+        try:
+            image_remote = lxd.configure_buildd_image_remote()
+        except lxd.LXDError as error:
+            raise ProviderError(str(error)) from error
 
         environment = self.get_command_environment()
 
         base_configuration = SnapcraftBuilddBaseConfiguration(
-            alias=alias,  # type: ignore
+            alias=alias,
             environment=environment,
             hostname=instance_name,
         )
@@ -179,7 +172,7 @@ class LXDProvider(Provider):
             instance = lxd.launch(
                 name=instance_name,
                 base_configuration=base_configuration,
-                image_name=image_name,
+                image_name=base,
                 image_remote=image_remote,
                 auto_clean=True,
                 auto_create_project=True,
