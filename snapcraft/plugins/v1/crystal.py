@@ -32,6 +32,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
       These options are passed to `shards build`.
 """
 
+import contextlib
 import os
 import shutil
 
@@ -91,6 +92,13 @@ class CrystalPlugin(PluginV1):
                 "libz-dev",
             ]
         )
+
+    def pull(self):
+        super().pull()
+
+        with contextlib.suppress(FileNotFoundError):
+            shutil.rmtree(os.path.join(self.sourcedir, "bin"))
+            shutil.rmtree(os.path.join(self.sourcedir, "lib"))
 
     def build(self):
         super().build()
