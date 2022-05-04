@@ -25,6 +25,7 @@ from overrides import overrides
 
 from snapcraft import utils
 
+# TODO fix this overengineered configuration
 BASE_TO_BUILDD_IMAGE_ALIAS = {
     "core22": bases.BuilddBaseAlias.JAMMY,
 }
@@ -61,6 +62,13 @@ class SnapcraftBuilddBaseConfiguration(bases.BuilddBase):
 
         :raises BaseConfigurationError: on error.
         """
+        # Requirement for apt gpg
+        executor.execute_run(
+            ["apt-get", "install", "-y", "dirmngr"],
+            capture_output=True,
+            check=True,
+        )
+
         snap_channel = utils.get_managed_environment_snap_channel()
         if snap_channel is None and sys.platform != "linux":
             snap_channel = "stable"
