@@ -50,7 +50,9 @@ class CommandWithoutWrapperAllowedTest(unit.TestCase):
         cmd = command.Command(app_name="foo", command_name="command", command="foo")
 
         cmd.prime_command(
-            can_use_wrapper=False, massage_command=True, prime_dir=self.path,
+            can_use_wrapper=False,
+            massage_command=True,
+            prime_dir=self.path,
         )
 
         self.assertThat(cmd.command, Equals("foo"))
@@ -61,7 +63,9 @@ class CommandWithoutWrapperAllowedTest(unit.TestCase):
             app_name="foo", command_name="command", command="foo bar -baz"
         )
         cmd.prime_command(
-            can_use_wrapper=False, massage_command=True, prime_dir=self.path,
+            can_use_wrapper=False,
+            massage_command=True,
+            prime_dir=self.path,
         )
 
         self.assertThat(cmd.command, Equals("foo bar -baz"))
@@ -75,7 +79,9 @@ def test_interpretered_command_from_host(monkeypatch, tmp_path):
         app_name="foo", command_name="command", command="foo bar -baz"
     )
     cmd.prime_command(
-        can_use_wrapper=True, massage_command=True, prime_dir=tmp_path.as_posix(),
+        can_use_wrapper=True,
+        massage_command=True,
+        prime_dir=tmp_path.as_posix(),
     )
 
     assert cmd.command == "command-foo.wrapper"
@@ -90,7 +96,9 @@ def test_interpretered_command_from_prime(tmp_path):
         app_name="foo", command_name="command", command="foo bar -baz"
     )
     cmd.prime_command(
-        can_use_wrapper=True, massage_command=True, prime_dir=tmp_path.as_posix(),
+        can_use_wrapper=True,
+        massage_command=True,
+        prime_dir=tmp_path.as_posix(),
     )
 
     assert cmd.command == "bin/python3 $SNAP/foo bar -baz"
@@ -103,7 +111,9 @@ def test_interpretered_command_from_root(tmp_path):
         app_name="foo", command_name="command", command="foo bar -baz"
     )
     cmd.prime_command(
-        can_use_wrapper=True, massage_command=True, prime_dir=tmp_path.as_posix(),
+        can_use_wrapper=True,
+        massage_command=True,
+        prime_dir=tmp_path.as_posix(),
     )
 
     assert cmd.command == "foo bar -baz"
@@ -198,7 +208,9 @@ class CommandWithWrapperTest(unit.TestCase):
         _create_file(os.path.join(self.path, "foo"))
         cmd = command.Command(app_name="foo", command_name="command", command="foo")
         cmd.prime_command(
-            can_use_wrapper=True, massage_command=True, prime_dir=self.path,
+            can_use_wrapper=True,
+            massage_command=True,
+            prime_dir=self.path,
         )
 
         self.assertThat(cmd.command, Equals("foo"))
@@ -210,7 +222,9 @@ class CommandWithWrapperTest(unit.TestCase):
             app_name="foo", command_name="command", command="$SNAP/foo !option"
         )
         cmd.prime_command(
-            can_use_wrapper=True, massage_command=True, prime_dir=self.path,
+            can_use_wrapper=True,
+            massage_command=True,
+            prime_dir=self.path,
         )
 
         self.assertThat(cmd.command, Equals("command-foo.wrapper"))
@@ -234,7 +248,9 @@ class CommandWithWrapperTest(unit.TestCase):
         )
 
         cmd.prime_command(
-            can_use_wrapper=True, massage_command=True, prime_dir=self.path,
+            can_use_wrapper=True,
+            massage_command=True,
+            prime_dir=self.path,
         )
         wrapper_path = cmd.write_wrapper(prime_dir=self.path)
 
@@ -249,7 +265,9 @@ class CommandWithWrapperTest(unit.TestCase):
         )
 
         cmd.prime_command(
-            can_use_wrapper=True, massage_command=True, prime_dir=self.path,
+            can_use_wrapper=True,
+            massage_command=True,
+            prime_dir=self.path,
         )
         wrapper_path = cmd.write_wrapper(prime_dir=self.path)
 
@@ -273,7 +291,9 @@ class CommandWithWrapperTest(unit.TestCase):
         cmd = command.Command(app_name="foo", command_name="command", command="/foo")
 
         cmd.prime_command(
-            can_use_wrapper=True, massage_command=True, prime_dir=self.path,
+            can_use_wrapper=True,
+            massage_command=True,
+            prime_dir=self.path,
         )
         wrapper_path = cmd.write_wrapper(prime_dir=self.path)
 
@@ -295,7 +315,9 @@ class CommandWithWrapperTest(unit.TestCase):
         cmd = command.Command(app_name="foo", command_name="command", command="sh")
 
         cmd.prime_command(
-            can_use_wrapper=True, massage_command=True, prime_dir=self.path,
+            can_use_wrapper=True,
+            massage_command=True,
+            prime_dir=self.path,
         )
         wrapper_path = cmd.write_wrapper(prime_dir=self.path)
 

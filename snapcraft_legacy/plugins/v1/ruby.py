@@ -85,8 +85,10 @@ class RubyPlugin(PluginV1):
         self._ruby_part_dir = os.path.join(self.partdir, "ruby")
         feature_pattern = re.compile(r"^(\d+\.\d+)\..*$")
         feature_version = feature_pattern.sub(r"\1", self._ruby_version)
-        self._ruby_download_url = "https://cache.ruby-lang.org/pub/ruby/{}/ruby-{}.tar.gz".format(
-            feature_version, self._ruby_version
+        self._ruby_download_url = (
+            "https://cache.ruby-lang.org/pub/ruby/{}/ruby-{}.tar.gz".format(
+                feature_version, self._ruby_version
+            )
         )
         self._ruby_tar = Tar(self._ruby_download_url, self._ruby_part_dir)
         self._gems = options.gems or []

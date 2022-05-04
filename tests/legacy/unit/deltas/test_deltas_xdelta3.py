@@ -52,8 +52,8 @@ class XDelta3TestCase(unit.TestCase):
         binary files. The files will be similar with roughly 0.1 variance along
         1KB block boundaries.
         """
-        mean_size = 2 ** 20
-        size_stddev = 2 ** 15
+        mean_size = 2**20
+        size_stddev = 2**15
         snap_size = int(random.normalvariate(mean_size, size_stddev))
 
         scratchdir = self.useFixture(fixtures.TempDir()).path

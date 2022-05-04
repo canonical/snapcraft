@@ -442,7 +442,8 @@ class LXD(Provider):
             path="/etc/hostname", content=self.instance_name, permissions="0644"
         )
         self._run(
-            ["hostname", "-F", "/etc/hostname"], hide_output=True,
+            ["hostname", "-F", "/etc/hostname"],
+            hide_output=True,
         )
 
         self._wait_for_systemd()

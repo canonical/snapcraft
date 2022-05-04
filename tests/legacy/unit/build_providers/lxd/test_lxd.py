@@ -313,8 +313,8 @@ class LXDInitTest(LXDBaseTest):
 
     def test_clean_when_missing(self):
         instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
-        self.fake_pylxd_client.containers.get_mock.side_effect = pylxd.exceptions.NotFound(
-            "not found"
+        self.fake_pylxd_client.containers.get_mock.side_effect = (
+            pylxd.exceptions.NotFound("not found")
         )
 
         instance.clean_project()
@@ -462,7 +462,9 @@ class LXDLaunchedTest(LXDBaseTest):
         self.instance._mount_prime_directory()
 
         assert self.fake_container.devices.get("snapcraft-project-prime") == dict(
-            path="/root/prime", source=os.path.join(self.path, "prime"), type="disk",
+            path="/root/prime",
+            source=os.path.join(self.path, "prime"),
+            type="disk",
         )
         self.assertThat(self.fake_container.sync_mock.call_count, Equals(1))
         self.fake_container.save_mock.assert_called_once_with(wait=True)

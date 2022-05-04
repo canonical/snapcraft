@@ -300,8 +300,8 @@ class ColconPluginTest(ColconPluginTestBase):
 
         self.dependencies_mock.return_value = {"apt": {"foo"}}
 
-        self.ubuntu_mock.fetch_stage_packages.side_effect = repo.errors.PackageNotFoundError(
-            "foo"
+        self.ubuntu_mock.fetch_stage_packages.side_effect = (
+            repo.errors.PackageNotFoundError("foo")
         )
 
         raised = self.assertRaises(colcon.ColconAptDependencyFetchError, plugin.pull)

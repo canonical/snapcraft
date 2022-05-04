@@ -44,7 +44,8 @@ def test_details_from_called_process_error():
 
 def test_details_from_command_error():
     details = errors.details_from_command_error(
-        returncode=-1, cmd=["test-command", "flags", "quote$me"],
+        returncode=-1,
+        cmd=["test-command", "flags", "quote$me"],
     )
 
     assert details == textwrap.dedent(

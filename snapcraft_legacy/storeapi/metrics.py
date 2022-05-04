@@ -92,7 +92,11 @@ class Series:
                 f"Invalid metric currently_released: {currently_released!r}"
             )
 
-        return cls(name=name, values=values, currently_released=currently_released,)
+        return cls(
+            name=name,
+            values=values,
+            currently_released=currently_released,
+        )
 
 
 @attr.s(auto_attribs=True)

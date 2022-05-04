@@ -53,7 +53,8 @@ def test_apt_valid_architectures(arch):
 def test_apt_invalid_url():
     with pytest.raises(errors.PackageRepositoryValidationError) as exc_info:
         PackageRepositoryApt(
-            key_id="A" * 40, url="",
+            key_id="A" * 40,
+            url="",
         )
 
     assert exc_info.value.brief == "Invalid URL ''."
@@ -67,7 +68,9 @@ def test_apt_invalid_url():
 def test_apt_invalid_path():
     with pytest.raises(errors.PackageRepositoryValidationError) as exc_info:
         PackageRepositoryApt(
-            key_id="A" * 40, path="", url="http://archive.ubuntu.com/ubuntu",
+            key_id="A" * 40,
+            path="",
+            url="http://archive.ubuntu.com/ubuntu",
         )
 
     assert exc_info.value.brief == "Invalid path ''."

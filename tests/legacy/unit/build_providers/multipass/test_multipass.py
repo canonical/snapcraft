@@ -238,7 +238,12 @@ class MultipassTest(BaseProviderBaseTest):
                 ],
             )
         )
-        self.useFixture(fixtures.MockPatchObject(instance, "_mount_project",))
+        self.useFixture(
+            fixtures.MockPatchObject(
+                instance,
+                "_mount_project",
+            )
+        )
 
         instance.create()
 

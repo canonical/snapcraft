@@ -318,7 +318,12 @@ class LaunchpadTestCase(unit.TestCase):
         self.assertThat(
             fake_snap.mock_calls,
             Equals(
-                [mock.call.requestBuilds(archive="main_archive", pocket="Updates",)]
+                [
+                    mock.call.requestBuilds(
+                        archive="main_archive",
+                        pocket="Updates",
+                    )
+                ]
             ),
         )
 

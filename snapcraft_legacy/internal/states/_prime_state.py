@@ -19,7 +19,7 @@ from snapcraft_legacy.internal.states._state import PartState
 
 
 class PrimeState(PartState):
-    yaml_tag = u"!PrimeState"
+    yaml_tag = "!PrimeState"
 
     def __init__(
         self,

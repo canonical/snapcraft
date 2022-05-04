@@ -55,7 +55,9 @@ class SetGradeCommandTestCase(CommandBaseTestCase):
 class SetGradeCommandWithoutFifoTestCase(CommandBaseNoFifoTestCase):
     def test_set_grade_without_fifo(self):
         raised = self.assertRaises(
-            errors.SnapcraftEnvironmentError, self.run_command, ["set-grade", "stable"],
+            errors.SnapcraftEnvironmentError,
+            self.run_command,
+            ["set-grade", "stable"],
         )
 
         self.assertThat(
