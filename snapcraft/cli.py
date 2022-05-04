@@ -41,6 +41,15 @@ COMMAND_GROUPS = [
             commands.PrimeCommand,
             commands.PackCommand,
             commands.SnapCommand,  # hidden (legacy compatibility)
+            commands.StoreLegacyRemoteBuildCommand,
+        ],
+    ),
+    craft_cli.CommandGroup(
+        "Extensions",
+        [
+            commands.ListExtensionsCommand,
+            commands.ExtensionsCommand,  # hidden (alias to list-extensions)
+            commands.ExpandExtensionsCommand,
         ],
     ),
     craft_cli.CommandGroup(
@@ -59,6 +68,8 @@ COMMAND_GROUPS = [
             commands.StoreNamesCommand,
             commands.StoreLegacyListRegisteredCommand,
             commands.StoreLegacyListCommand,
+            commands.StoreLegacyMetricsCommand,
+            commands.StoreLegacyUploadMetadataCommand,
         ],
     ),
     craft_cli.CommandGroup(
@@ -68,6 +79,8 @@ COMMAND_GROUPS = [
             commands.StoreCloseCommand,
             commands.StoreStatusCommand,
             commands.StoreUploadCommand,
+            commands.StoreLegacyPromoteCommand,
+            commands.StoreLegacyListRevisionsCommand,
         ],
     ),
     craft_cli.CommandGroup(
@@ -75,14 +88,20 @@ COMMAND_GROUPS = [
         [
             commands.StoreListTracksCommand,
             commands.StoreTracksCommand,  # hidden (alias to list-tracks)
+            commands.StoreLegacySetDefaultTrackCommand,
         ],
     ),
     craft_cli.CommandGroup(
-        "Extensions",
+        "Store Assertions",
         [
-            commands.ListExtensionsCommand,
-            commands.ExtensionsCommand,  # hidden (alias to list-extensions)
-            commands.ExpandExtensionsCommand,
+            commands.StoreLegacyCreateKeyCommand,
+            commands.StoreLegacyEditValidationSetsCommand,
+            commands.StoreLegacyGatedCommand,
+            commands.StoreLegacyListValidationSetsCommand,
+            commands.StoreLegacyRegisterKeyCommand,
+            commands.StoreLegacySignBuildCommand,
+            commands.StoreLegacyValidateCommand,
+            commands.StoreLegacyListKeysCommand,
         ],
     ),
     craft_cli.CommandGroup("Other", [commands.VersionCommand]),
@@ -105,7 +124,7 @@ def get_dispatcher() -> craft_cli.Dispatcher:
         legacy.legacy_run()
 
     # set lib loggers to debug level so that all messages are sent to Emitter
-    for lib_name in ("craft_parts", "craft_providers", "craft_store"):
+    for lib_name in ("craft_parts", "craft_providers"):
         logger = logging.getLogger(lib_name)
         logger.setLevel(logging.DEBUG)
 
