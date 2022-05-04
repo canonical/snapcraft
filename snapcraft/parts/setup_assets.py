@@ -169,7 +169,7 @@ def _write_snapcraft_runner(*, prime_dir: Path):
     content = textwrap.dedent(
         """#!/bin/sh
         export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
-        export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
         exec "$@"
         """
     )

@@ -111,6 +111,7 @@ class SnapMetadata(YamlModel):
     environment: Optional[Dict[str, Any]]
     plugs: Optional[Dict[str, Any]]
     hooks: Optional[Dict[str, Any]]
+    layout: Optional[Dict[str, Dict[str, str]]]
 
 
 def write(project: Project, prime_dir: Path, *, arch: str):
@@ -177,6 +178,7 @@ def write(project: Project, prime_dir: Path, *, arch: str):
         environment=project.environment,
         plugs=project.plugs,
         hooks=project.hooks,
+        layout=project.layout,
     )
 
     yaml.add_representer(str, _repr_str, Dumper=yaml.SafeDumper)
