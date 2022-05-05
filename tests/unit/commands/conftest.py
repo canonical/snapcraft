@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2021 Canonical Ltd
+# Copyright 2022 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,20 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List
 
 import pytest
-from click.testing import CliRunner
-
-from snapcraft.cli._runner import run
 
 
 @pytest.fixture
-def click_run():
-    """Run commands using Click's testing backend."""
-    cli = CliRunner()
+def fake_client(mocker):
+    """Forces get_client to return a fake craft_store.BaseClient"""
+    client = mocker.patch("craft_store.BaseClient", autospec=True)
+    mocker.patch("snapcraft.commands.store.client.get_client", return_value=client)
+    return client
 
-    def runner(args: List[str]):
-        return cli.invoke(run, args)
 
-    return runner
+@pytest.fixture
+def fake_confirmation_prompt(mocker):
+    """Fake the confirmation prompt."""
+    return mocker.patch(
+        "snapcraft.utils.confirm_with_user", return_value=False, autospec=True
+    )

@@ -38,6 +38,7 @@ backends:
       # -native is added for clarity and for ubuntu-20.04* to match.
       - ubuntu-18.04
       - ubuntu-20.04
+      - ubuntu-22.04
   google:
     key: '$(HOST: echo "$SPREAD_GOOGLE_KEY")'
     location: snapd-spread/us-east1-b
@@ -50,6 +51,9 @@ backends:
           workers: 6
           image: ubuntu-2004-64
           storage: 40G
+      - ubuntu-22.04-64:
+          workers: 6
+          image: ubuntu-2204-64
 
   multipass:
     type: adhoc
@@ -94,6 +98,10 @@ backends:
           username: root
           password: ubuntu
       - ubuntu-20.04-64:
+          workers: 1
+          username: root
+          password: ubuntu
+      - ubuntu-22.04-64:
           workers: 1
           username: root
           password: ubuntu
@@ -145,6 +153,22 @@ backends:
       - ubuntu-20.04-arm64:
           username: ubuntu
           password: ubuntu
+      # Jammy
+      - ubuntu-22.04-amd64:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-22.04-ppc64el:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-22.04-armhf:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-22.04-s390x:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-22.04-arm64:
+          username: ubuntu
+          password: ubuntu
 
 exclude: [snaps-cache/]
 
@@ -183,16 +207,21 @@ prepare: |
       # Remove lxd and lxd-client deb packages as our implementation (pylxd) does not
       # nicely handle the snap and deb being installed at the same time.
       apt-get remove --purge --yes lxd lxd-client
-      # Install and setup the lxd snap
-      snap install lxd
-      # Add the ubuntu user to the lxd group.
-      adduser ubuntu lxd
   fi
+  # Install and setup the lxd snap
+  snap install lxd
+  # Add the ubuntu user to the lxd group.
+  adduser ubuntu lxd
+  lxd init --auto
 
   # Hold snap refreshes for 24h.
   snap set system refresh.hold="$(date --date=tomorrow +%Y-%m-%dT%H:%M:%S%:z)"
-  snap watch --last=auto-refresh?
-  snap watch --last=install?
+  if ! snap watch --last=auto-refresh?; then
+      journalctl -xe
+  fi
+  if ! snap watch --last=install?; then
+      journalctl -xe
+  fi
 
   if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
       /snap/bin/lxd waitready --timeout=30
@@ -219,10 +248,24 @@ prepare: |
   git commit -m "Testing Commit"
   popd
 
+  # TODO remove once core22 is stable
+  snap install core22 --edge
+
 restore-each: |
   "$TOOLS_DIR"/restore.sh
 
 suites:
+ tests/spread/core22/:
+   summary: core22 specific tests
+   systems:
+     - ubuntu-22.04
+     - ubuntu-22.04-64
+     - ubuntu-22.04-amd64
+     - ubuntu-22.04-arm64
+     - ubuntu-22.04-armhf
+     - ubuntu-22.04-s390x
+     - ubuntu-22.04-ppc64el
+
  # General, core suite
  tests/spread/general/:
    summary: tests of snapcraft core functionality
@@ -383,6 +426,10 @@ suites:
    summary: tests of snapcraft's v2 plugins
    systems:
    - ubuntu-20.04*
+ tests/spread/plugins/craft-parts/:
+   summary: tests of snapcraft's craft-part's based plugins
+   systems:
+   - ubuntu-22.04*
 
 # Extensions tests
  tests/spread/extensions/:

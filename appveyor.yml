@@ -7,7 +7,7 @@ environment:
   TIMESTAMP_SERVICE: http://timestamp.digicert.com
 
   matrix:
-  - PYTHON: C:\Python37-x64
+  - PYTHON: C:\Python38-x64
 
 cache:
 - '%LOCALAPPDATA%\pip\Cache\http'
@@ -27,7 +27,7 @@ build_script:
 - cmd: |
     echo "Building snapcraft.exe..."
     venv\Scripts\activate.bat
-    pyinstaller.exe --onefile snapcraft.spec
+    pyinstaller.exe --copy-metadata lazr.restfulclient --onefile snapcraft.spec
     venv\Scripts\deactivate.bat
 
     echo "Test signing snapcraft.exe..."
@@ -58,7 +58,6 @@ build_script:
 test_script:
 - cmd: |
     echo "Smoke testing snapcraft.exe..."
-    dist\snapcraft.exe logout
     dist\snapcraft.exe version
     mkdir test
     cd test

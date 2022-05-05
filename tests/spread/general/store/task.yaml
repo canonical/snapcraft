@@ -4,14 +4,19 @@ manual: true
 
 environment:
   SNAP: dump-hello
-  SNAP_STORE_MACAROON/UBUNTU_ONE: "$(HOST: echo ${SNAP_STORE_MACAROON})"
-  SNAP_STORE_MACAROON/CANDID: "$(HOST: echo ${SNAP_STORE_CANDID_MACAROON})"
-  STORE_DASHBOARD_URL: https://dashboard.staging.snapcraft.io/
-  STORE_API_URL: https://api.staging.snapcraft.io/
-  STORE_UPLOAD_URL: https://upload.apps.staging.ubuntu.com/
-  UBUNTU_ONE_SSO_URL: https://login.staging.ubuntu.com/
+  SNAPCRAFT_STORE_CREDENTIALS/ubuntu_one: "$(HOST: echo ${SNAPCRAFT_STORE_CREDENTIALS_STAGING})"
+  SNAPCRAFT_STORE_CREDENTIALS/candid: "$(HOST: echo ${SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID})"
+  STORE_DASHBOARD_URL: https://dashboard.staging.snapcraft.io
+  STORE_API_URL: https://api.staging.snapcraft.io
+  STORE_UPLOAD_URL: https://storage.staging.snapcraftcontent.com
+  UBUNTU_ONE_SSO_URL: https://login.staging.ubuntu.com
 
 prepare: |
+  if [[ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]]; then
+    echo "No credentials set in env SNAPCRAFT_STORE_CREDENTIALS"
+    exit 1
+  fi
+
   # Install the review tools to make sure we do not break anything
   # assumed in there.
   # TODO: requires running inside $HOME.
@@ -47,15 +52,8 @@ execute: |
   snap_file=$(ls ./*.snap)
   snap_name=$(grep "name: " snap/snapcraft.yaml | sed -e "s/name: \(.*$\)/\1/")
 
-  # Login
-  set +x
-  echo "${SNAP_STORE_MACAROON}" > login
-  set -x
-  if [ "${SPREAD_VARIANT}" = "CANDID" ]; then
-    snapcraft login --experimental-login --with login
-  else
-    snapcraft login --with login
-  fi
+  # Login mechanism
+  export SNAPCRAFT_STORE_AUTH="${SPREAD_VARIANT}"
 
   # Who Am I?
   snapcraft whoami
@@ -76,7 +74,7 @@ execute: |
   snapcraft release "${snap_name}" 1 edge
 
   # Progressive Release
-  snapcraft release --experimental-progressive-releases --progressive 50 "${snap_name}" 1 candidate
+  snapcraft release --progressive 50 "${snap_name}" 1 candidate
 
   # Close channel
   snapcraft close "${snap_name}" candidate
@@ -87,6 +85,3 @@ execute: |
   # Show metrics for a snap that we have registered in the past (empty metrics as no users!).
   snapcraft metrics fun --format json --name installed_base_by_operating_system
   snapcraft metrics fun --format table --name installed_base_by_operating_system
-
-  # Logout
-  snapcraft logout

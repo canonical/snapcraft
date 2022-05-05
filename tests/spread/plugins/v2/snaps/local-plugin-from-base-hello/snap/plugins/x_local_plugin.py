@@ -16,7 +16,7 @@
 
 from typing import Any, Dict, List, Set
 
-from snapcraft.plugins.v2 import PluginV2
+from snapcraft_legacy.plugins.v2 import PluginV2
 
 
 class PluginImpl(PluginV2):

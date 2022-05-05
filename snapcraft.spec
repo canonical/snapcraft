@@ -1,5 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import collect_data_files
+from PyInstaller.utils.hooks import collect_data_files, copy_metadata
 
 block_cipher = None
 
@@ -12,9 +12,13 @@ data += collect_data_files("launchpadlib")
 data += collect_data_files("lazr.restfulclient")
 data += collect_data_files("lazr.uri")
 data += collect_data_files("wadllib")
+data += copy_metadata("launchpadlib")
+data += copy_metadata("lazr.restfulclient")
+data += copy_metadata("lazr.uri")
+data += copy_metadata("wadllib")
 
 a = Analysis(
-    ["snapcraft\\cli\\__main__.py"],
+    ["snapcraft_legacy\\cli\\__main__.py"],
     pathex=[],
     binaries=[],
     datas=data,

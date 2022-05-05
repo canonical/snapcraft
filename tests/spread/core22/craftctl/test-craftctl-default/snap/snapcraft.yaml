@@ -1,0 +1,28 @@
+name: craftctl-default
+version: '1.0'
+summary: test
+description: test
+grade: stable
+confinement: strict
+base: core22
+
+apps:
+  craftctl-default:
+    command: usr/bin/hello
+
+parts:
+  hello:
+    plugin: make
+    source: .
+    override-pull: |
+      echo "This is the pull step"
+      craftctl default
+    override-build: |
+      echo "This is the build step"
+      craftctl default
+    override-stage: |
+      echo "This is the stage step"
+      craftctl default
+    override-prime: |
+      echo "This is the prime step"
+      craftctl default

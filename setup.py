@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2021 Canonical Ltd
+# Copyright 2015-2022 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -46,7 +46,7 @@ classifiers = [
     "Natural Language :: English",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.8",
     "Topic :: Software Development :: Build Tools",
     "Topic :: System :: Software Distribution",
 ]
@@ -59,23 +59,33 @@ else:
     scripts = []
 
 dev_requires = [
+    "black",
     "codespell",
     "coverage",
-    "flake8==3.7.9",
-    "pyflakes==2.1.1",
+    "flake8",
+    "pyflakes",
     "fixtures",
     "isort",
     "mccabe",
-    "mypy==0.770",
+    "mypy",
     "testscenarios",
     "pexpect",
     "pip",
-    "pycodestyle==2.5.0",
+    "pycodestyle",
+    "pydocstyle",
     "pyftpdlib",
+    "pylint",
+    "pylint-fixme-info",
+    "pylint-pytest",
     "pyramid",
     "pytest",
     "pytest-cov",
+    "pytest-mock",
     "pytest-subprocess",
+    "types-PyYAML",
+    "types-requests",
+    "types-setuptools",
+    "types-tabulate",
 ]
 
 if sys.platform == "win32":
@@ -84,6 +94,11 @@ if sys.platform == "win32":
 install_requires = [
     "attrs",
     "click",
+    "craft-cli",
+    "craft-grammar",
+    "craft-parts",
+    "craft-providers",
+    "craft-store",
     "cryptography==3.4",
     "gnupg",
     "jsonschema==2.5.1",
@@ -92,17 +107,19 @@ install_requires = [
     "lxml",
     "macaroonbakery",
     "mypy-extensions",
+    "overrides",
     "progressbar",
     "pyelftools",
     "pymacaroons",
     "pyxdg",
-    "pyyaml==5.4",
+    "pyyaml",
     "raven",
     "requests-toolbelt",
     "requests-unixsocket",
     "requests",
     "simplejson",
     "tabulate",
+    "toml",
     "tinydb",
     "typing-extensions",
 ]
@@ -139,7 +156,12 @@ setup(
     license=license,
     classifiers=classifiers,
     scripts=scripts,
-    entry_points=dict(console_scripts=["snapcraft = snapcraft.cli.__main__:run"]),
+    entry_points=dict(
+        console_scripts=[
+            "snapcraft_legacy = snapcraft_legacy.cli.__main__:run",
+            "snapcraft = snapcraft.cli:run",
+        ]
+    ),
     data_files=(
         recursive_data_files("schema", "share/snapcraft")
         + recursive_data_files("keyrings", "share/snapcraft")
