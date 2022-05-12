@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
 import unittest.mock
 
 from testtools.matchers import Equals
@@ -65,6 +66,20 @@ class TestBasePlugin(unit.TestCase):
         plugin.run(["ls"], cwd=plugin.sourcedir)
 
         mock_run.assert_called_once_with(["ls"], cwd=plugin.sourcedir)
+
+    @unittest.mock.patch("snapcraft_legacy.internal.common.run")
+    def test_run_with_string(self, mock_run):
+        plugin = snapcraft_legacy.BasePlugin("test/part", options=None)
+        plugin.run(["ls", "/test"], cwd=plugin.sourcedir)
+
+        mock_run.assert_called_once_with(["ls", "/test"], cwd=plugin.sourcedir)
+
+    @unittest.mock.patch("snapcraft_legacy.internal.common.run")
+    def test_run_with_path(self, mock_run):
+        plugin = snapcraft_legacy.BasePlugin("test/part", options=None)
+        plugin.run(["ls", Path("/test")], cwd=plugin.sourcedir)
+
+        mock_run.assert_called_once_with(["ls", Path("/test")], cwd=plugin.sourcedir)
 
     @unittest.mock.patch("snapcraft_legacy.internal.common.run_output")
     def test_run_output_without_specifying_cwd(self, mock_run):
