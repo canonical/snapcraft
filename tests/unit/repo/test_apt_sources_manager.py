@@ -16,6 +16,7 @@
 
 
 from textwrap import dedent
+from unittest.mock import call
 
 import pytest
 
@@ -162,7 +163,8 @@ def apt_sources_mgr(tmp_path):
         ),
     ],
 )
-def test_install(package_repo, name, content, apt_sources_mgr):
+def test_install(package_repo, name, content, apt_sources_mgr, mocker):
+    run_mock = mocker.patch("subprocess.run")
     sources_path = apt_sources_mgr._sources_list_d / name
 
     changed = apt_sources_mgr.install_package_repository_sources(
@@ -172,6 +174,16 @@ def test_install(package_repo, name, content, apt_sources_mgr):
     assert changed is True
     assert sources_path.read_bytes() == content
 
+    if isinstance(package_repo, PackageRepositoryApt) and package_repo.architectures:
+        assert run_mock.mock_calls == [
+            call(["dpkg", "--add-architecture", "amd64"], check=True),
+            call(["dpkg", "--add-architecture", "arm64"], check=True),
+        ]
+    else:
+        assert run_mock.mock_calls == []
+
+    run_mock.reset_mock()
+
     # Verify a second-run does not incur any changes.
     changed = apt_sources_mgr.install_package_repository_sources(
         package_repo=package_repo
@@ -179,6 +191,7 @@ def test_install(package_repo, name, content, apt_sources_mgr):
 
     assert changed is False
     assert sources_path.read_bytes() == content
+    assert run_mock.mock_calls == []
 
 
 def test_install_ppa_invalid(apt_sources_mgr):

@@ -19,7 +19,8 @@
 import io
 import pathlib
 import re
-from typing import List, Optional
+import subprocess
+from typing import List, Optional, cast
 
 from craft_cli import emit
 
@@ -206,6 +207,19 @@ class AptSourcesManager:
             return self._install_sources_ppa(package_repo=package_repo)
 
         if isinstance(package_repo, package_repository.PackageRepositoryApt):
-            return self._install_sources_apt(package_repo=package_repo)
+            changed = self._install_sources_apt(package_repo=package_repo)
+            architectures = cast(
+                package_repository.PackageRepositoryApt, package_repo
+            ).architectures
+            if changed and architectures:
+                _add_architecture(architectures)
+            return changed
 
         raise RuntimeError(f"unhandled package repository: {package_repository!r}")
+
+
+def _add_architecture(architectures: List[str]):
+    """Add package repository architecture."""
+    for arch in architectures:
+        emit.message(f"Add repository architecture: {arch}", intermediate=True)
+        subprocess.run(["dpkg", "--add-architecture", arch], check=True)
