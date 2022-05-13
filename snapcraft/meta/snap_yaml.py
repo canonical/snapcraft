@@ -17,7 +17,7 @@
 """Create snap.yaml metadata file."""
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Set, Union, cast
 
 import yaml
 from pydantic_yaml import YamlModel
@@ -73,8 +73,7 @@ class SnapApp(YamlModel):
     plugs: Optional[List[str]]
     aliases: Optional[List[str]]
     environment: Optional[Dict[str, Any]]
-    adapter: Optional[str]
-    command_chain: List[str]
+    command_chain: Optional[List[str]]
     sockets: Optional[Dict[str, Socket]]
 
     class Config:  # pylint: disable=too-few-public-methods
@@ -126,6 +125,8 @@ def write(project: Project, prime_dir: Path, *, arch: str):
     meta_dir = prime_dir / "meta"
     meta_dir.mkdir(parents=True, exist_ok=True)
 
+    assumes: Set[str] = set()
+
     snap_apps: Dict[str, SnapApp] = {}
     if project.apps:
         for name, app in project.apps.items():
@@ -137,6 +138,9 @@ def write(project: Project, prime_dir: Path, *, arch: str):
                         listen_stream=socket.listen_stream,
                         socket_mode=socket.socket_mode,
                     )
+
+            if app.command_chain:
+                assumes.add("command-chain")
 
             snap_apps[name] = SnapApp(
                 command=app.command,
@@ -162,10 +166,12 @@ def write(project: Project, prime_dir: Path, *, arch: str):
                 plugs=app.plugs,
                 aliases=app.aliases,
                 environment=app.environment,
-                adapter=app.adapter,
-                command_chain=["snap/command-chain/snapcraft-runner"],
+                command_chain=app.command_chain if app.command_chain else None,
                 sockets=app_sockets if app_sockets else None,
             )
+
+    if project.hooks and any(h for h in project.hooks.values() if h.command_chain):
+        assumes.add("command-chain")
 
     snap_metadata = SnapMetadata(
         name=project.name,
@@ -177,7 +183,7 @@ def write(project: Project, prime_dir: Path, *, arch: str):
         type=project.type,
         architectures=[arch],
         base=cast(str, project.base),
-        assumes=["command-chain"] if snap_apps else None,
+        assumes=list(assumes) if assumes else None,
         epoch=project.epoch,
         apps=snap_apps or None,
         confinement=project.confinement,

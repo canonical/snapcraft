@@ -37,6 +37,7 @@ disable = "too-few-public-methods,fixme,use-implicit-booleaness-not-comparison,d
 [tool.pylint.format]
 max-attributes = 15
 max-args = 6
+max-locals = 20
 good-names = "id"
 
 [tool.pylint.MASTER]

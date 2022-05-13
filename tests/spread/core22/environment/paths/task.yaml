@@ -1,0 +1,31 @@
+summary: Build a snaps that test the PATH and LD_LIBRARY_PATH environmental variables.
+
+environment:
+  SNAP/paths_one_null: paths-one-null
+  SNAP/paths_all_null: paths-all-null
+  SNAP/paths_user_defined: paths-user-defined
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "../snaps/$SNAP/snap/snapcraft.yaml"
+  snap install core22 --edge
+
+restore: |
+  cd "../snaps/$SNAP"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "../snaps/$SNAP"
+
+  snapcraft prime --destructive-mode
+
+  if ! diff -U10 prime/meta/snap.yaml expected_snap.yaml; then
+      echo "The formatting for snap.yaml is incorrect"
+      exit 1
+  fi

@@ -20,7 +20,6 @@ import itertools
 import os
 import shutil
 import stat
-import textwrap
 import urllib.parse
 from pathlib import Path
 from typing import List, Optional
@@ -49,8 +48,13 @@ def setup_assets(
     gui_dir.mkdir(parents=True, exist_ok=True)
 
     _write_snap_directory(assets_dir=assets_dir, prime_dir=prime_dir, meta_dir=meta_dir)
-    _write_snapcraft_runner(prime_dir=prime_dir)
-    # TODO: write snapcraft
+
+    if project.hooks:
+        for hook_name, hook in project.hooks.items():
+            if hook.command_chain:
+                _validate_command_chain(
+                   hook.command_chain, name=f"hook {hook_name!r}", prime_dir=prime_dir
+                )
 
     if project.type == "gadget":
         gadget_yaml = project_dir / "gadget.yaml"
@@ -77,20 +81,18 @@ def setup_assets(
         relative_icon_path = str(icon_path)
 
     for app_name, app in project.apps.items():
-        if not app.desktop:
-            continue
-
-        desktop_file = DesktopFile(
-            snap_name=project.name,
-            app_name=app_name,
-            filename=app.desktop,
-            prime_dir=prime_dir,
-        )
-        desktop_file.write(gui_dir=gui_dir, icon_path=relative_icon_path)
-
         _validate_command_chain(
-            app.command_chain, app_name=app_name, prime_dir=prime_dir
+            app.command_chain, name=f"app {app_name!r}", prime_dir=prime_dir
         )
+
+        if app.desktop:
+            desktop_file = DesktopFile(
+                snap_name=project.name,
+                app_name=app_name,
+                filename=app.desktop,
+                prime_dir=prime_dir,
+            )
+            desktop_file.write(gui_dir=gui_dir, icon_path=relative_icon_path)
 
 
 def _finalize_icon(
@@ -152,7 +154,7 @@ def _find_icon_file(assets_dir: Path) -> Optional[Path]:
 
 
 def _validate_command_chain(
-    command_chain: List[str], *, app_name: str, prime_dir: Path
+    command_chain: List[str], *, name: str, prime_dir: Path
 ) -> None:
     """Verify if each item in the command chain is executble."""
     for item in command_chain:
@@ -163,7 +165,7 @@ def _validate_command_chain(
         if not _is_executable(executable_path):
             raise errors.SnapcraftError(
                 f"Failed to generate snap metadata: The command-chain item {item!r} "
-                f"defined in the app {app_name!r} does not exist or is not executable.",
+                f"defined in {name} does not exist or is not executable.",
                 resolution=f"Ensure that {item!r} is relative to the prime directory.",
             )
 
@@ -175,21 +177,6 @@ def _is_executable(path: Path) -> bool:
 
     mode = path.stat().st_mode
     return bool(mode & stat.S_IXUSR or mode & stat.S_IXGRP or mode & stat.S_IXOTH)
-
-
-def _write_snapcraft_runner(*, prime_dir: Path):
-    content = textwrap.dedent(
-        """#!/bin/sh
-        export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
-        export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
-        exec "$@"
-        """
-    )
-
-    runner_path = prime_dir / "snap/command-chain/snapcraft-runner"
-    runner_path.parent.mkdir(parents=True, exist_ok=True)
-    runner_path.write_text(content)
-    runner_path.chmod(0o755)
 
 
 def _write_snap_directory(*, assets_dir: Path, prime_dir: Path, meta_dir: Path) -> None:

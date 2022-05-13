@@ -266,6 +266,11 @@ suites:
      - ubuntu-22.04-s390x
      - ubuntu-22.04-ppc64el
 
+ tests/spread/core22/environment/:
+   summary: core22 environment tests
+   systems:
+     - ubuntu-22.04*
+
  # General, core suite
  tests/spread/general/:
    summary: tests of snapcraft core functionality
