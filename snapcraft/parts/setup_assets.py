@@ -34,11 +34,14 @@ from snapcraft.projects import Project
 from .desktop_file import DesktopFile
 
 
-def setup_assets(project: Project, *, assets_dir: Path, prime_dir: Path) -> None:
-    """Copy gui assets to the appropriate location in the snap filesystem.
+def setup_assets(
+    project: Project, *, assets_dir: Path, project_dir: Path, prime_dir: Path
+) -> None:
+    """Copy assets to the appropriate locations in the snap filesystem.
 
     :param project: The snap project file.
     :param assets_dir: The directory containing snap project assets.
+    :param project_dir: The project root directory.
     :param prime_dir: The directory containing the content to be snapped.
     """
     meta_dir = prime_dir / "meta"
@@ -48,6 +51,17 @@ def setup_assets(project: Project, *, assets_dir: Path, prime_dir: Path) -> None
     _write_snap_directory(assets_dir=assets_dir, prime_dir=prime_dir, meta_dir=meta_dir)
     _write_snapcraft_runner(prime_dir=prime_dir)
     # TODO: write snapcraft
+
+    if project.type == "gadget":
+        gadget_yaml = project_dir / "gadget.yaml"
+        if not gadget_yaml.exists():
+            raise errors.SnapcraftError("gadget.yaml is required for gadget snaps")
+        shutil.copy(gadget_yaml, meta_dir / "gadget.yaml")
+
+    if project.type == "kernel":
+        kernel_yaml = project_dir / "kernel.yaml"
+        if kernel_yaml.exists():
+            shutil.copy(kernel_yaml, meta_dir / "kernel.yaml")
 
     if not project.apps:
         return
@@ -77,8 +91,6 @@ def setup_assets(project: Project, *, assets_dir: Path, prime_dir: Path) -> None
         _validate_command_chain(
             app.command_chain, app_name=app_name, prime_dir=prime_dir
         )
-
-    # TODO: copy gadget and kernel assets
 
 
 def _finalize_icon(
