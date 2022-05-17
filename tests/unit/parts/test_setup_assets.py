@@ -57,6 +57,125 @@ def yaml_data():
     yield _yaml_data
 
 
+@pytest.fixture
+def gadget_yaml_file(new_dir):
+    Path("gadget.yaml").write_text(
+        textwrap.dedent(
+            """\
+            gadget-key: gadget-value
+            """
+        )
+    )
+
+
+@pytest.fixture
+def kernel_yaml_file(new_dir):
+    Path("kernel.yaml").write_text(
+        textwrap.dedent(
+            """\
+            kernel-key: kernel-value
+            """
+        )
+    )
+
+
+def test_gadget(yaml_data, gadget_yaml_file, new_dir):
+    project = Project.unmarshal(
+        yaml_data(
+            {
+                "type": "gadget",
+                "version": "1.0",
+                "summary": "summary",
+                "description": "description",
+            }
+        )
+    )
+
+    setup_assets(
+        project,
+        assets_dir=Path("snap"),
+        project_dir=Path.cwd(),
+        prime_dir=Path("prime"),
+    )
+
+    # gadget file should be in meta/
+    gadget_path = Path("prime/meta/gadget.yaml")
+    assert gadget_path.is_file()
+
+
+def test_gadget_missing(yaml_data, new_dir):
+    project = Project.unmarshal(
+        yaml_data(
+            {
+                "type": "gadget",
+                "version": "1.0",
+                "summary": "summary",
+                "description": "description",
+            }
+        )
+    )
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        setup_assets(
+            project,
+            assets_dir=Path("snap"),
+            project_dir=Path.cwd(),
+            prime_dir=Path("prime"),
+        )
+
+    assert str(raised.value) == "gadget.yaml is required for gadget snaps"
+
+
+def test_kernel(yaml_data, kernel_yaml_file, new_dir):
+    project = Project.unmarshal(
+        {
+            "name": "custom-kernel",
+            "type": "kernel",
+            "confinement": "strict",
+            "version": "1.0",
+            "summary": "summary",
+            "description": "description",
+            "parts": {},
+        }
+    )
+
+    setup_assets(
+        project,
+        assets_dir=Path("snap"),
+        project_dir=Path.cwd(),
+        prime_dir=Path("prime"),
+    )
+
+    # kernel file should be in meta/
+    kernel_path = Path("prime/meta/kernel.yaml")
+    assert kernel_path.is_file()
+
+
+def test_kernel_missing(yaml_data, new_dir):
+    project = Project.unmarshal(
+        {
+            "name": "custom-kernel",
+            "type": "kernel",
+            "confinement": "strict",
+            "version": "1.0",
+            "summary": "summary",
+            "description": "description",
+            "parts": {},
+        }
+    )
+
+    setup_assets(
+        project,
+        assets_dir=Path("snap"),
+        project_dir=Path.cwd(),
+        prime_dir=Path("prime"),
+    )
+
+    # kernel file should not be in meta/
+    kernel_path = Path("prime/meta/kernel.yaml")
+    assert not kernel_path.is_file()
+
+
 class TestSetupAssets:
     """Check copied assets and desktop entries."""
 
@@ -91,7 +210,12 @@ class TestSetupAssets:
             )
         )
 
-        setup_assets(project, assets_dir=Path("snap"), prime_dir=Path("prime"))
+        setup_assets(
+            project,
+            assets_dir=Path("snap"),
+            project_dir=Path.cwd(),
+            prime_dir=Path("prime"),
+        )
 
         # desktop file should be in meta/gui and named after app
         desktop_path = Path("prime/meta/gui/app1.desktop")
@@ -131,7 +255,12 @@ class TestSetupAssets:
             )
         )
 
-        setup_assets(project, assets_dir=Path("snap"), prime_dir=Path("prime"))
+        setup_assets(
+            project,
+            assets_dir=Path("snap"),
+            project_dir=Path.cwd(),
+            prime_dir=Path("prime"),
+        )
 
         # desktop file should be in meta/gui and named after app
         desktop_path = Path("prime/meta/gui/app1.desktop")
@@ -163,7 +292,12 @@ class TestSetupAssets:
         project = Project.unmarshal(yaml_data({"adopt-info": "part"}))
 
         # setting up assets does not crash
-        setup_assets(project, assets_dir=Path("snap"), prime_dir=Path("prime"))
+        setup_assets(
+            project,
+            assets_dir=Path("snap"),
+            project_dir=Path.cwd(),
+            prime_dir=Path("prime"),
+        )
 
         assert os.listdir("prime/meta/gui") == []
 
@@ -190,7 +324,12 @@ class TestSetupAssets:
         )
         # pylint: enable=line-too-long
 
-        setup_assets(project, assets_dir=Path("snap"), prime_dir=Path("prime"))
+        setup_assets(
+            project,
+            assets_dir=Path("snap"),
+            project_dir=Path.cwd(),
+            prime_dir=Path("prime"),
+        )
 
         # desktop file should be in meta/gui and named after app
         desktop_path = Path("prime/meta/gui/app1.desktop")

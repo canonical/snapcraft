@@ -181,8 +181,10 @@ def _run_command(
 
     if managed_mode:
         work_dir = utils.get_managed_environment_home_path()
+        project_dir = utils.get_managed_environment_project_path()
     else:
         work_dir = Path.cwd()
+        project_dir = Path.cwd()
 
     step_name = "prime" if command_name in ("pack", "snap") else command_name
 
@@ -229,6 +231,7 @@ def _run_command(
         setup_assets(
             project,
             assets_dir=assets_dir,
+            project_dir=project_dir,
             prime_dir=lifecycle.prime_dir,
         )
 
