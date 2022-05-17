@@ -25,15 +25,35 @@ from craft_cli import emit
 from snapcraft import errors
 
 
+def _verify_snap(directory: Path) -> None:
+    emit.trace("pack_snap: check skeleton")
+    try:
+        subprocess.run(
+            ["snap", "pack", "--check-skeleton", directory],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        )
+    except subprocess.CalledProcessError as err:
+        msg = f"Cannot pack snap file: {err!s}"
+        if err.stderr:
+            msg += f" ({err.stderr.strip()!s})"
+        raise errors.SnapcraftError(msg)
+
+
 def pack_snap(
     directory: Path, *, output: Optional[str], compression: Optional[str] = None
 ) -> None:
     """Pack snap contents.
 
+    :param directory: Directory to pack.
     :param output: Snap file name or directory.
     :param compression: Compression type to use, None for defaults.
     """
     emit.trace(f"pack_snap: output={output!r}, compression={compression!r}")
+
+    # TODO remove workaround once LP: #1950465 is fixed
+    _verify_snap(directory)
 
     output_file = None
     output_dir = None

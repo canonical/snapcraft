@@ -27,11 +27,17 @@ def test_pack_snap(mocker, new_dir):
     pack.pack_snap(new_dir, output=None)
     assert mock_run.mock_calls == [
         call(
+            ["snap", "pack", "--check-skeleton", new_dir],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        ),
+        call(
             ["snap", "pack", new_dir],
             capture_output=True,
             check=True,
             universal_newlines=True,
-        )
+        ),
     ]
 
 
@@ -40,11 +46,17 @@ def test_pack_snap_compression_none(mocker, new_dir):
     pack.pack_snap(new_dir, output=None, compression=None)
     assert mock_run.mock_calls == [
         call(
+            ["snap", "pack", "--check-skeleton", new_dir],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        ),
+        call(
             ["snap", "pack", new_dir],
             capture_output=True,
             check=True,
             universal_newlines=True,
-        )
+        ),
     ]
 
 
@@ -53,11 +65,17 @@ def test_pack_snap_compression(mocker, new_dir):
     pack.pack_snap(new_dir, output=None, compression="zz")
     assert mock_run.mock_calls == [
         call(
+            ["snap", "pack", "--check-skeleton", new_dir],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        ),
+        call(
             ["snap", "pack", "--compression", "zz", new_dir],
             capture_output=True,
             check=True,
             universal_newlines=True,
-        )
+        ),
     ]
 
 
@@ -66,11 +84,17 @@ def test_pack_snap_output_file(mocker, new_dir):
     pack.pack_snap(new_dir, output="/tmp/foo")
     assert mock_run.mock_calls == [
         call(
+            ["snap", "pack", "--check-skeleton", new_dir],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        ),
+        call(
             ["snap", "pack", "--filename", "foo", new_dir, "/tmp"],
             capture_output=True,
             check=True,
             universal_newlines=True,
-        )
+        ),
     ]
 
 
@@ -79,11 +103,17 @@ def test_pack_snap_output_dir(mocker, new_dir):
     pack.pack_snap(new_dir, output=str(new_dir))
     assert mock_run.mock_calls == [
         call(
+            ["snap", "pack", "--check-skeleton", new_dir],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        ),
+        call(
             ["snap", "pack", new_dir, str(new_dir)],
             capture_output=True,
             check=True,
             universal_newlines=True,
-        )
+        ),
     ]
 
 
