@@ -18,9 +18,11 @@
 
 import craft_parts
 
+from .colcon import ColconPlugin
 from .conda_plugin import CondaPlugin
 
 
 def register() -> None:
     """Register Snapcraft plugins."""
+    craft_parts.plugins.register({"colcon": ColconPlugin})
     craft_parts.plugins.register({"conda": CondaPlugin})

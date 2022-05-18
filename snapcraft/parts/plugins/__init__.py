@@ -17,7 +17,8 @@
 """Snapcraft specific plugins."""
 
 
+from .colcon import ColconPlugin
 from .conda_plugin import CondaPlugin
 from .register import register
 
-__all__ = ["CondaPlugin", "register"]
+__all__ = ["ColconPlugin", "CondaPlugin", "register"]

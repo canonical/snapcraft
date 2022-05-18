@@ -912,7 +912,8 @@
                                     "gnome-3-38",
                                     "kde-neon",
                                     "ros1-noetic",
-                                    "ros2-foxy"
+                                    "ros2-foxy",
+                                    "ros2-humble"
                                 ]
                             }
                         }
