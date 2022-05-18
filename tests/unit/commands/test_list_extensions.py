@@ -42,7 +42,8 @@ def test_command(emitter, command):
         gnome-3-38        core20
         kde-neon          core18, core20
         ros1-noetic       core20
-        ros2-foxy         core20"""
+        ros2-foxy         core20
+        ros2-humble       core22"""
         )
     )
 
@@ -66,6 +67,7 @@ def test_command_extension_dups(emitter, command):
         gnome-3-38        core20
         kde-neon          core18, core20
         ros1-noetic       core20
-        ros2-foxy         core20, core22"""
+        ros2-foxy         core20
+        ros2-humble       core22"""
         )
     )
