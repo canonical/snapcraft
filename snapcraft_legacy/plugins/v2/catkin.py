@@ -89,7 +89,7 @@ class CatkinPlugin(_ros.RosPlugin):
         # There are a number of unbound vars, disable flag
         # after saving current state to restore after.
         return [
-            'state="$(set +o)"',
+            'state="$(set +o); set -$-"',
             "set +u",
             'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
             "set -- --local",
