@@ -509,6 +509,23 @@ class TestProjectValidation:
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(project_yaml_data(layout={"foo": {"invalid": "bar"}}))
 
+    @pytest.mark.parametrize(
+        "slots",
+        [
+            {"test-slot": {"interface": "some-value"}},
+            {
+                "db-socket": {
+                    "interface": "content",
+                    "content": "db-socket",
+                    "write": ["$SNAP_COMMON/postgres/sockets"],
+                },
+            },
+        ],
+    )
+    def test_slot_valid(self, slots, project_yaml_data):
+        project = Project.unmarshal(project_yaml_data(slots=slots))
+        assert project.slots == slots
+
 
 class TestHookValidation:
     """Validate hooks."""
