@@ -166,7 +166,8 @@ def run():
         with contextlib.suppress(KeyError, IndexError):
             if (
                 err.__context__ is not None
-                and err.__context__.args[0] not in dispatcher.commands
+                and err.__context__.args[0]  # pylint: disable=no-member
+                not in dispatcher.commands
             ):
                 emit.trace(f"run legacy implementation: {err!s}")
                 emit.ended_ok()
