@@ -21,7 +21,7 @@ from typing import Any, Dict
 from unittest.mock import PropertyMock, call
 
 import pytest
-from craft_parts import Action, Step
+from craft_parts import Action, Step, callbacks
 
 from snapcraft import errors
 from snapcraft.parts import lifecycle as parts_lifecycle
@@ -40,6 +40,11 @@ _SNAPCRAFT_YAML_FILENAMES = [
 def disable_install(mocker):
     mocker.patch("craft_parts.packages.Repository.install_packages")
     mocker.patch("craft_parts.packages.snaps.install_snaps")
+
+
+@pytest.fixture(autouse=True)
+def unregister_callbacks(mocker):
+    callbacks.unregister_all()
 
 
 @pytest.fixture
@@ -777,3 +782,136 @@ def test_get_snap_project_with_content_plugs(snapcraft_yaml, new_dir):
         "test-snap-2",
         "core22",
     ]
+
+
+def test_expand_environment(new_dir, mocker):
+    mocker.patch("platform.machine", return_value="aarch64")
+
+    yaml_data = {
+        "name": "test-env",
+        "version": "1.2.3",
+        "grade": "stable",
+        "field0": "$CRAFT_PROJECT_NAME",
+        "field1": "$SNAPCRAFT_PROJECT_NAME",
+        "field2": "$SNAPCRAFT_PROJECT_VERSION",
+        "field3": "$SNAPCRAFT_PROJECT_GRADE",
+        "field4": "$CRAFT_ARCH_TRIPLET",
+        "field5": "$SNAPCRAFT_ARCH_TRIPLET",
+        "field6": "$CRAFT_TARGET_ARCH",
+        "field8": "$SNAPCRAFT_TARGET_ARCH",
+        "dirs": {
+            "field9": ["$CRAFT_STAGE", "$SNAPCRAFT_STAGE"],
+            "field10": ["${CRAFT_PRIME}", "${SNAPCRAFT_PRIME}"],
+            "field11": ["$CRAFT_PROJECT_DIR", "$SNAPCRAFT_PROJECT_DIR"],
+        },
+        "field12": ["$CRAFT_PARALLEL_BUILD_COUNT", "$SNAPCRAFT_PARALLEL_BUILD_COUNT"],
+    }
+    parts_lifecycle._expand_environment(yaml_data)
+
+    assert yaml_data == {
+        "name": "test-env",
+        "version": "1.2.3",
+        "grade": "stable",
+        "field0": "test-env",
+        "field1": "test-env",
+        "field2": "1.2.3",
+        "field3": "stable",
+        "field4": "aarch64-linux-gnu",
+        "field5": "aarch64-linux-gnu",
+        "field6": "arm64",
+        "field8": "arm64",
+        "dirs": {
+            "field9": [f"{new_dir}/stage", f"{new_dir}/stage"],
+            "field10": [f"{new_dir}/prime", f"{new_dir}/prime"],
+            "field11": [f"{new_dir}", f"{new_dir}"],
+        },
+        "field12": ["1", "1"],
+    }
+
+
+def test_lifecycle_run_expand_snapcraft_vars(new_dir, mocker):
+    mocker.patch("platform.machine", return_value="aarch64")
+
+    content = textwrap.dedent(
+        """\
+        name: mytest
+        version: "0.1"
+        base: core22
+        summary: Environment expansion test
+        description: Environment expansion test
+        grade: stable
+        confinement: strict
+
+        apps:
+          app:
+            command: usr/$SNAPCRAFT_ARCH_TRIPLET/foo
+
+        parts:
+          part1:
+            plugin: nil
+            override-build: |
+              touch $SNAPCRAFT_PART_INSTALL/foo
+              chmod +x $SNAPCRAFT_PART_INSTALL/foo
+            organize:
+              foo: usr/$SNAPCRAFT_ARCH_TRIPLET/foo
+        """
+    )
+
+    yaml_path = Path("snapcraft.yaml")
+    yaml_path.write_text(content)
+
+    parts_lifecycle.run(
+        "prime",
+        argparse.Namespace(
+            parts=[], destructive_mode=True, use_lxd=False, provider=None, debug=False
+        ),
+    )
+
+    assert Path(new_dir / "prime/usr/aarch64-linux-gnu/foo").is_file()
+
+    meta_yaml = Path(new_dir / "prime/meta/snap.yaml").read_text()
+    assert "command: usr/aarch64-linux-gnu/foo" in meta_yaml
+
+
+def test_lifecycle_run_expand_craft_vars(new_dir, mocker):
+    mocker.patch("platform.machine", return_value="aarch64")
+
+    content = textwrap.dedent(
+        """\
+        name: mytest
+        version: "0.1"
+        base: core22
+        summary: Environment expansion test
+        description: Environment expansion test
+        grade: stable
+        confinement: strict
+
+        apps:
+          app:
+            command: usr/$CRAFT_ARCH_TRIPLET/foo
+
+        parts:
+          part1:
+            plugin: nil
+            override-build: |
+              touch $CRAFT_PART_INSTALL/foo
+              chmod +x $CRAFT_PART_INSTALL/foo
+            organize:
+              foo: usr/$CRAFT_ARCH_TRIPLET/foo
+        """
+    )
+
+    yaml_path = Path("snapcraft.yaml")
+    yaml_path.write_text(content)
+
+    parts_lifecycle.run(
+        "prime",
+        argparse.Namespace(
+            parts=[], destructive_mode=True, use_lxd=False, provider=None, debug=False
+        ),
+    )
+
+    assert Path(new_dir / "prime/usr/aarch64-linux-gnu/foo").is_file()
+
+    meta_yaml = Path(new_dir / "prime/meta/snap.yaml").read_text()
+    assert "command: usr/aarch64-linux-gnu/foo" in meta_yaml
