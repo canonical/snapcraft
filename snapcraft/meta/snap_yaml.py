@@ -112,6 +112,13 @@ class SnapMetadata(YamlModel):
     plugs: Optional[Dict[str, Any]]
     hooks: Optional[Dict[str, Any]]
     layout: Optional[Dict[str, Dict[str, str]]]
+    system_usernames: Optional[Dict[str, Any]]
+
+    class Config:  # pylint: disable=too-few-public-methods
+        """Pydantic model configuration."""
+
+        allow_population_by_field_name = True
+        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
 
 
 def write(project: Project, prime_dir: Path, *, arch: str):
@@ -179,6 +186,7 @@ def write(project: Project, prime_dir: Path, *, arch: str):
         plugs=project.plugs,
         hooks=project.hooks,
         layout=project.layout,
+        system_usernames=project.system_usernames,
     )
 
     yaml.add_representer(str, _repr_str, Dumper=yaml.SafeDumper)

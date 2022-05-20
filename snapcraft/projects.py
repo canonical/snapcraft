@@ -269,6 +269,7 @@ class Project(ProjectModel):
     parts: Dict[str, Any]  # parts are handled by craft-parts
     epoch: Optional[str]
     adopt_info: Optional[str]
+    system_usernames: Optional[Dict[str, Any]]
     environment: Optional[Dict[str, str]]
 
     @pydantic.validator("plugs")

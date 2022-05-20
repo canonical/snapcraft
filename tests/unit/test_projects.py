@@ -1134,3 +1134,28 @@ class TestGrammarValidation:
         error = r".*- syntax error in 'on' selector"
         with pytest.raises(errors.ProjectValidationError, match=error):
             GrammarAwareProject.validate_grammar(data)
+
+    @pytest.mark.parametrize(
+        "system_username",
+        [
+            {"snap_daemon": {"scope": "shared"}},
+            {"snap_microk8s": {"scope": "shared"}},
+            {"snap_daemon": "shared"},
+            {"snap_microk8s": "shared"},
+        ],
+    )
+    def test_project_system_usernames_valid(self, system_username, project_yaml_data):
+        project = Project.unmarshal(project_yaml_data(system_usernames=system_username))
+        assert project.system_usernames == system_username
+
+    @pytest.mark.parametrize(
+        "system_username",
+        [
+            0,
+            "string",
+        ],
+    )
+    def test_project_system_usernames_invalid(self, system_username, project_yaml_data):
+        error = "- value is not a valid dict"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(project_yaml_data(system_usernames=system_username))
