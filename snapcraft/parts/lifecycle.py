@@ -22,15 +22,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
+import craft_parts
 from craft_cli import EmitterMode, emit
-from craft_parts import infos
+from craft_parts import ProjectInfo, StepInfo, callbacks, infos
 
 from snapcraft import errors, extensions, pack, providers, utils
 from snapcraft.meta import snap_yaml
 from snapcraft.projects import GrammarAwareProject, Project
 from snapcraft.providers import capture_logs_from_instance
 
-from . import PartsLifecycle, grammar, plugins, yaml_utils
+from . import grammar, plugins, yaml_utils
+from .parts import PartsLifecycle
 from .setup_assets import setup_assets
 from .update_metadata import update_project_metadata
 
@@ -135,8 +137,12 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     if parsed_args.provider:
         raise errors.SnapcraftError("Option --provider is not supported.")
 
-    # Register our own plugins
+    # Register our own plugins and callbacks
     plugins.register()
+    callbacks.register_prologue(_set_global_environment)
+    callbacks.register_pre_step(_set_step_environment)
+
+    _expand_environment(yaml_data)
 
     project = Project.unmarshal(yaml_data)
 
@@ -203,6 +209,7 @@ def _run_command(
         },
         extra_build_snaps=_get_extra_build_snaps(project),
     )
+
     if command_name == "clean":
         lifecycle.clean(part_names=part_names)
         return
@@ -334,3 +341,64 @@ def _get_extra_build_snaps(project: Project) -> Optional[List[str]]:
         else:
             extra_build_snaps.append(project.base)
     return extra_build_snaps
+
+
+def _set_global_environment(info: ProjectInfo) -> None:
+    """Set global environment variables."""
+    info.global_environment.update(
+        {
+            "SNAPCRAFT_ARCH_TRIPLET": info.arch_triplet,
+            "SNAPCRAFT_TARGET_ARCH": info.target_arch,
+            "SNAPCRAFT_PARALLEL_BUILD_COUNT": str(info.parallel_build_count),
+            "SNAPCRAFT_PROJECT_VERSION": info.get_project_var("version", raw_read=True),
+            "SNAPCRAFT_PROJECT_GRADE": info.get_project_var("grade", raw_read=True),
+            "SNAPCRAFT_PROJECT_DIR": str(info.project_dir),
+            "SNAPCRAFT_PROJECT_NAME": str(info.project_name),
+            "SNAPCRAFT_STAGE": str(info.stage_dir),
+            "SNAPCRAFT_PRIME": str(info.prime_dir),
+        }
+    )
+
+
+def _set_step_environment(step_info: StepInfo) -> bool:
+    """Set the step environment before executing each lifecycle step."""
+    step_info.step_environment.update(
+        {
+            "SNAPCRAFT_PART_SRC": str(step_info.part_src_dir),
+            "SNAPCRAFT_PART_SRC_WORK": str(step_info.part_src_subdir),
+            "SNAPCRAFT_PART_BUILD": str(step_info.part_build_dir),
+            "SNAPCRAFT_PART_BUILD_WORK": str(step_info.part_build_subdir),
+            "SNAPCRAFT_PART_INSTALL": str(step_info.part_install_dir),
+        }
+    )
+    return True
+
+
+def _expand_environment(snapcraft_yaml: Dict[str, Any], *, parallel_build_count: int = 1) -> None:
+    """Expand global variables in the provided dictionary values.
+
+    :param snapcraft_yaml: A dictionary containing the contents of the
+        snapcraft.yaml project file.
+    """
+    if utils.is_managed_mode():
+        work_dir = utils.get_managed_environment_home_path()
+    else:
+        work_dir = Path.cwd()
+
+    project_vars = {
+        "version": snapcraft_yaml.get("version", ""),
+        "grade": snapcraft_yaml.get("grade", ""),
+    }
+
+    dirs = craft_parts.ProjectDirs(work_dir=work_dir)
+    info = craft_parts.ProjectInfo(
+        application_name="snapcraft",  # not used in environment expansion
+        cache_dir=Path(),  # not used in environment expansion
+        parallel_build_count=parallel_build_count,
+        project_name=snapcraft_yaml.get("name", ""),
+        project_dirs=dirs,
+        project_vars=project_vars,
+    )
+    _set_global_environment(info)
+
+    craft_parts.expand_environment(snapcraft_yaml, info=info, skip=["name", "version"])
