@@ -175,6 +175,11 @@ def complex_project():
             environment:
               environment-var-1: "test"
 
+        system-usernames:
+          snap_daemon:
+            scope: shared
+          snap_microk8s: shared
+
         layout:
           /usr/share/libdrm:
             bind: $SNAP/gnome-platform/usr/share/libdrm
@@ -290,5 +295,9 @@ def test_complex_snap_yaml(complex_project, new_dir):
             bind: $SNAP/gnome-platform/usr/lib/x86_64-linux-gnu/webkit2gtk-4.0
           /usr/share/xml/iso-codes:
             bind: $SNAP/gnome-platform/usr/share/xml/iso-codes
+        system-usernames:
+          snap_daemon:
+            scope: shared
+          snap_microk8s: shared
         """
     )
