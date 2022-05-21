@@ -265,7 +265,7 @@ class Project(ProjectModel):
     passthrough: Optional[Dict[str, Any]]
     apps: Optional[Dict[str, App]]
     plugs: Optional[Dict[str, Union[ContentPlug, Any]]]
-    slots: Optional[Dict[str, Dict[str, str]]]  # TODO: add slot name validation
+    slots: Optional[Dict[str, Dict[str, Any]]]  # TODO: add slot name validation
     parts: Dict[str, Any]  # parts are handled by craft-parts
     epoch: Optional[str]
     adopt_info: Optional[str]
