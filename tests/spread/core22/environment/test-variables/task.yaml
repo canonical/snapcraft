@@ -23,36 +23,35 @@ execute: |
 
   check_vars() {
     file="$1"
+    root="/snapcraft/tests/spread/core22/environment/test-variables"
     echo "==== $file ===="
     cat "$file"
     for exp in \
       "^CRAFT_ARCH_TRIPLET=x86_64-linux-gnu$" \
       "^CRAFT_TARGET_ARCH=amd64$" \
       "^CRAFT_PARALLEL_BUILD_COUNT=[0-9]\+$" \
-      "^CRAFT_PROJECT_DIR=/root/project$" \
+      "^CRAFT_PROJECT_DIR=${root}$" \
       "^CRAFT_PART_NAME=hello$" \
-      "^CRAFT_PART_SRC=/root/parts/hello/src$" \
-      "^CRAFT_PART_SRC_WORK=/root/parts/hello/src$" \
-      "^CRAFT_PART_BUILD=/root/parts/hello/build$" \
-      "^CRAFT_PART_BUILD_WORK=/root/parts/hello/build$" \
-      "^CRAFT_PART_INSTALL=/root/parts/hello/install$" \
-      "^CRAFT_OVERLAY=/root/overlay/overlay$" \
-      "^CRAFT_STAGE=/root/stage$" \
-      "^CRAFT_PRIME=/root/prime$"; do
+      "^CRAFT_PART_SRC=${root}/parts/hello/src$" \
+      "^CRAFT_PART_SRC_WORK=${root}/parts/hello/src$" \
+      "^CRAFT_PART_BUILD=${root}/parts/hello/build$" \
+      "^CRAFT_PART_BUILD_WORK=${root}/parts/hello/build$" \
+      "^CRAFT_PART_INSTALL=${root}/parts/hello/install$" \
+      "^CRAFT_OVERLAY=${root}/overlay/overlay$" \
+      "^CRAFT_STAGE=${root}/stage$" \
+      "^CRAFT_PRIME=${root}/prime$"; do
       grep -q "$exp" < "$file"
     done
   }
 
-  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
-    snapcraft pull
-    check_vars pull.txt
+  snapcraft pull
+  check_vars pull.txt
 
-    snapcraft build
-    check_vars build.txt
+  snapcraft build
+  check_vars build.txt
 
-    snapcraft stage
-    check_vars stage.txt
+  snapcraft stage
+  check_vars stage.txt
 
-    snapcraft prime
-    check_vars prime.txt
-  fi
+  snapcraft prime
+  check_vars prime.txt

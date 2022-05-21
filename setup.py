@@ -54,7 +54,7 @@ classifiers = [
 # snapcraftctl is not in console_scripts because we need a clean environment.
 # Only include it for Linux.
 if sys.platform == "linux":
-    scripts = ["bin/snapcraftctl"]
+    scripts = ["bin/snapcraftctl", "bin/snapcraftctl-compat"]
 else:
     scripts = []
 
