@@ -3,6 +3,7 @@ summary: Test craftctl commands on core22
 environment:
   SNAP/test_craftctl_default: test-craftctl-default
   SNAP/test_craftctl_get_set: test-craftctl-get-set
+  SNAP/test_snapcraftctl_compat: test-craftctl-snapcraftctl-compat
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -21,10 +22,7 @@ restore: |
 
 execute: |
   cd "$SNAP"
-
-  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
-      snapcraft --verbose --destructive-mode
-      TESTBIN="${SNAP##*test-}"
-      snap install craftctl-*.snap --dangerous
-      $TESTBIN | grep hello
-  fi
+  snapcraft --verbose --destructive-mode
+  TESTBIN="${SNAP##*test-}"
+  snap install craftctl-*.snap --dangerous
+  $TESTBIN | grep hello

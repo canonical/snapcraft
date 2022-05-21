@@ -121,6 +121,8 @@ parts:
         # Put snapcraftctl into its own directory that can be included in the PATH
         # without including other binaries.
         bin/snapcraftctl: bin/scriptlet-bin/snapcraftctl
+        # Also install the compatibility wrapper for core22+
+        bin/snapcraftctl-compat: libexec/snapcraft/snapcraftctl
     build-environment:
         - "CRYPTOGRAPHY_DONT_BUILD_RUST": "1"
         - "SODIUM_INSTALL": "system"

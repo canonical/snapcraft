@@ -16,20 +16,10 @@ restore: |
 execute: |
   cd "$SNAP"
 
-  # No jammy for this ppa yet
-  if [ "$(basename "$SNAP")" != "test-apt-ppa" ]; then
-      # Build what we have.
-      snapcraft --verbose --use-lxd
+  # Build what we have.
+  snapcraft --verbose --use-lxd
 
-      # And verify the snap runs as expected.
-      snap install "${SNAP}"_1.0_*.snap --dangerous
-      snap_executable="${SNAP}.test-ppa"
-      [ "$("${snap_executable}")" = "hello!" ]
-  fi
-
-  # Do it again in destructive mode
-  snap remove "${SNAP}"
-  snapcraft --verbose --destructive-mode
+  # And verify the snap runs as expected.
   snap install "${SNAP}"_1.0_*.snap --dangerous
   snap_executable="${SNAP}.test-ppa"
   [ "$("${snap_executable}")" = "hello!" ]
