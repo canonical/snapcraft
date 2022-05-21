@@ -10,6 +10,10 @@ prepare: |
 
   base=$(get_base)
   sed -e "s/base: {{BASE}}/base: ${base}/g" expected_snap_tmpl.yaml > expected_snap.yaml
+  if [[ "$base" =~ "core22" ]]; then
+    # shellcheck disable=SC2016
+    echo -e 'environment:\n  LD_LIBRARY_PATH: $SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n  PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH' >> expected_snap.yaml
+  fi
 
 restore: |
   snapcraft clean

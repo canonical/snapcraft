@@ -97,7 +97,10 @@ class TestProjectDefaults:
         assert project.plugs is None
         assert project.slots is None
         assert project.epoch is None
-        assert project.environment is None
+        assert project.environment == {
+            "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH",
+            "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        }
         assert project.adopt_info is None
 
     def test_app_defaults(self, project_yaml_data):
@@ -412,7 +415,8 @@ class TestProjectValidation:
     )
     def test_project_environment_valid(self, environment, project_yaml_data):
         project = Project.unmarshal(project_yaml_data(environment=environment))
-        assert project.environment == environment
+        for variable in environment:
+            assert variable in project.environment
 
     @pytest.mark.parametrize(
         "environment",
@@ -426,6 +430,60 @@ class TestProjectValidation:
         error = ".*value is not a valid dict"
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(project_yaml_data(environment=environment))
+
+    def test_project_environment_ld_library_path_and_path_defined(
+        self, project_yaml_data
+    ):
+        """Test behavior of defining LD_LIBRARY_PATH and PATH variables."""
+        environment = {
+            "LD_LIBRARY_PATH": "test-1",
+            "PATH": "test-2",
+        }
+        data = project_yaml_data(environment=environment)
+        project = Project.unmarshal(data)
+
+        assert project.environment is not None
+        assert project.environment == environment
+
+    def test_project_environment_ld_library_path_defined(self, project_yaml_data):
+        """LD_LIBRARY_PATH can be overridden without affecting PATH."""
+        environment = {"LD_LIBRARY_PATH": "test-1"}
+        data = project_yaml_data(environment=environment)
+        project = Project.unmarshal(data)
+
+        assert project.environment is not None
+        assert project.environment["LD_LIBRARY_PATH"] == "test-1"
+        assert (
+            project.environment["PATH"]
+            == "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
+        )
+
+    def test_project_environment_path_defined(self, project_yaml_data):
+        """PATH can be overridden without affecting LD_LIBRARY_PATH."""
+        environment = {"PATH": "test-2"}
+        data = project_yaml_data(environment=environment)
+        project = Project.unmarshal(data)
+
+        assert project.environment is not None
+        assert project.environment is not None
+        assert (
+            project.environment["LD_LIBRARY_PATH"]
+            == "$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
+        )
+        assert project.environment["PATH"] == "test-2"
+
+    def test_project_environment_ld_library_path_null(self, project_yaml_data):
+        """LD_LIBRARY_PATH can be overridden without affecting PATH."""
+        environment = {"LD_LIBRARY_PATH": None}
+        data = project_yaml_data(environment=environment)
+        project = Project.unmarshal(data)
+
+        assert project.environment is not None
+        assert project.environment.get("LD_LIBRARY_PATH") is None
+        assert (
+            project.environment["PATH"]
+            == "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
+        )
 
     @pytest.mark.parametrize(
         "plugs",
@@ -929,7 +987,8 @@ class TestAppValidation:
         data = app_yaml_data(environment=environment)
         project = Project.unmarshal(data)
         assert project.apps is not None
-        assert project.apps["app1"].environment == environment
+        for variable in environment:
+            assert variable in project.apps["app1"].environment
 
     @pytest.mark.parametrize(
         "environment",
@@ -945,19 +1004,6 @@ class TestAppValidation:
         error = ".*value is not a valid dict"
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(data)
-
-    @pytest.mark.parametrize("adapter", ["none", "full", "_invalid"])
-    def test_app_adapter(self, adapter, app_yaml_data):
-        data = app_yaml_data(adapter=adapter)
-
-        if adapter != "_invalid":
-            project = Project.unmarshal(data)
-            assert project.apps is not None
-            assert project.apps["app1"].adapter == adapter
-        else:
-            error = ".*unexpected value; permitted: 'none', 'full'"
-            with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
 
     @pytest.mark.parametrize(
         "command_chain",

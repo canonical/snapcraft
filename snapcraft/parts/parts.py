@@ -77,7 +77,7 @@ class PartsLifecycle:
         extra_build_packages = []
         if self._package_repositories:
             # Install pre-requisite packages for apt-key, if not installed.
-            # FIXME: package names should be plataform-specific
+            # FIXME: package names should be platform-specific
             extra_build_packages.extend(["gnupg", "dirmngr"])
 
         try:

@@ -357,16 +357,65 @@ class TestSetupAssets:
 class TestCommandChain:
     """Command chain items are valid."""
 
+    def test_setup_assets_app_command_chain_error(self, yaml_data, new_dir):
+        project = Project.unmarshal(
+            yaml_data(
+                {
+                    "adopt-info": "part1",
+                    "apps": {
+                        "app1": {
+                            "command": "test.sh",
+                            "command-chain": ["does-not-exist"]
+                        },
+                    },
+                },
+            )
+        )
+
+        with pytest.raises(errors.SnapcraftError) as raised:
+            setup_assets(project, assets_dir=Path("snap"),
+                         project_dir=Path.cwd(), prime_dir=new_dir)
+
+        assert str(raised.value) == (
+           "Failed to generate snap metadata: The command-chain item 'does-not-exist' "
+           "defined in app 'app1' does not exist or is not executable."
+        )
+
+    def test_setup_assets_hook_command_chain_error(self, yaml_data, new_dir):
+        # define project
+        project = Project.unmarshal(
+            yaml_data(
+                {
+                    "adopt-info": "part1",
+                    "hooks": {
+                        "hook1": {
+                            "command-chain": ["does-not-exist"]
+                        },
+                    },
+                },
+            )
+        )
+
+        with pytest.raises(errors.SnapcraftError) as raised:
+            setup_assets(project, assets_dir=Path("snap"),
+                         project_dir=Path.cwd(), prime_dir=new_dir)
+
+        assert str(raised.value) == (
+           "Failed to generate snap metadata: The command-chain item 'does-not-exist' "
+           "defined in hook 'hook1' does not exist or is not executable."
+        )
+
+
     def test_command_chain_path_not_found(self, new_dir):
 
         with pytest.raises(errors.SnapcraftError) as raised:
             _validate_command_chain(
-                ["file-not-found"], app_name="foo", prime_dir=new_dir
+                ["file-not-found"], name="foo", prime_dir=new_dir
             )
 
         assert str(raised.value) == (
             "Failed to generate snap metadata: The command-chain item 'file-not-found' "
-            "defined in the app 'foo' does not exist or is not executable."
+            "defined in foo does not exist or is not executable."
         )
 
     def test_command_chain_path_not_executable(self, new_dir):
@@ -377,12 +426,10 @@ class TestCommandChain:
 
         with pytest.raises(errors.SnapcraftError) as raised:
             _validate_command_chain(
-                ["file-executable", "file-not-executable"],
-                app_name="foo",
-                prime_dir=new_dir,
+                ["file-executable", "file-not-executable"], name="foo", prime_dir=new_dir,
             )
 
         assert str(raised.value) == (
             "Failed to generate snap metadata: The command-chain item 'file-not-executable' "
-            "defined in the app 'foo' does not exist or is not executable."
+            "defined in foo does not exist or is not executable."
         )

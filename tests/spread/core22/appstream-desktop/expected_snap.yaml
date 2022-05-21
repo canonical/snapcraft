@@ -16,13 +16,12 @@ description: |-
 architectures:
 - amd64
 base: core22
-assumes:
-- command-chain
 apps:
   appstream-desktop:
     command: usr/bin/appstream-desktop
     common-id: io.snapcraft.appstream
-    command-chain:
-    - snap/command-chain/snapcraft-runner
 confinement: strict
 grade: devel
+environment:
+  LD_LIBRARY_PATH: $SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
+  PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH

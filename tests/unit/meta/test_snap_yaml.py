@@ -76,15 +76,14 @@ def test_simple_snap_yaml(simple_project, new_dir):
         architectures:
         - arch
         base: core22
-        assumes:
-        - command-chain
         apps:
           app1:
             command: bin/mytest
-            command-chain:
-            - snap/command-chain/snapcraft-runner
         confinement: strict
         grade: stable
+        environment:
+          LD_LIBRARY_PATH: $SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
         """
     )
 
@@ -139,9 +138,9 @@ def complex_project():
             aliases: [test-alias-1, test-alias-2]
             environment:
               APP_VARIABLE: test-app-variable
-            adapter: none
             command-chain:
-            - snap/command-chain/snapcraft-runner
+            - cc-test1
+            - cc-test2
             sockets:
               test-socket-1:
                 listen-stream: /tmp/test-socket.sock
@@ -250,9 +249,9 @@ def test_complex_snap_yaml(complex_project, new_dir):
             - test-alias-2
             environment:
               APP_VARIABLE: test-app-variable
-            adapter: none
             command-chain:
-            - snap/command-chain/snapcraft-runner
+            - cc-test1
+            - cc-test2
             sockets:
               test-socket-1:
                 listen-stream: /tmp/test-socket.sock
@@ -264,6 +263,8 @@ def test_complex_snap_yaml(complex_project, new_dir):
         grade: devel
         environment:
           GLOBAL_VARIABLE: test-global-variable
+          LD_LIBRARY_PATH: $SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
         plugs:
           empty-plug: null
           string-plug: home
@@ -299,5 +300,58 @@ def test_complex_snap_yaml(complex_project, new_dir):
           snap_daemon:
             scope: shared
           snap_microk8s: shared
+        """
+    )
+
+
+def test_hook_command_chain_assumes(new_dir):
+    snapcraft_yaml = textwrap.dedent(
+        """\
+        name: mytest
+        version: "1"
+        base: core22
+        summary: Summary
+        description: Description
+        confinement: strict
+
+        parts:
+          part1:
+            plugin: nil
+
+        hooks:
+          hook:
+            command-chain: ["c1"]
+        """
+    )
+    project = Project.unmarshal(yaml.safe_load(snapcraft_yaml))
+
+    snap_yaml.write(
+        project,
+        prime_dir=Path(new_dir),
+        arch="arch",
+    )
+
+    yaml_file = Path("meta/snap.yaml")
+    content = yaml_file.read_text()
+    assert content == textwrap.dedent(
+        """\
+        name: mytest
+        version: '1'
+        summary: Summary
+        description: Description
+        architectures:
+        - arch
+        base: core22
+        assumes:
+        - command-chain
+        confinement: strict
+        grade: stable
+        environment:
+          LD_LIBRARY_PATH: $SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+        hooks:
+          hook:
+            command-chain:
+            - c1
         """
     )
