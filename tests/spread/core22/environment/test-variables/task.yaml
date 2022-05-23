@@ -23,7 +23,7 @@ execute: |
 
   check_vars() {
     file="$1"
-    root="/snapcraft/tests/spread/core22/environment/test-variables"
+    root="/snapcraft/tests/spread/core22/environment/snaps/test-variables"
     echo "==== $file ===="
     cat "$file"
     for exp in \
