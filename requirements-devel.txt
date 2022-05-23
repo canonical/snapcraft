@@ -8,11 +8,11 @@ chardet==4.0.0
 charset-normalizer==2.0.12
 click==8.1.3
 codespell==2.1.0
-coverage==6.3.3
+coverage==6.4
 craft-cli==0.6.0
 craft-grammar==1.1.1
-craft-parts==1.7.0
-craft-providers==1.2.0
+craft-parts==1.7.1
+craft-providers==1.3.0
 craft-store==2.1.1
 cryptography==3.4
 Deprecated==1.2.13
@@ -26,12 +26,12 @@ gnupg==2.3.1
 httplib2==0.20.4
 hupper==1.10.3
 idna==3.3
-importlib-metadata==4.11.3
+importlib-metadata==4.11.4
 iniconfig==1.1.1
 isort==5.10.1
 jeepney==0.8.0
 jsonschema==2.5.1
-keyring==23.5.0
+keyring==23.5.1
 launchpadlib==1.10.16
 lazr.restfulclient==0.14.4
 lazr.uri==1.0.6
@@ -54,7 +54,7 @@ platformdirs==2.5.2
 pluggy==1.0.0
 progressbar==2.5
 protobuf==3.20.1
-psutil==5.9.0
+psutil==5.9.1
 ptyprocess==0.7.0
 py==1.11.0
 pycodestyle==2.8.0
@@ -102,7 +102,7 @@ translationstring==1.4
 types-Deprecated==1.2.8
 types-PyYAML==6.0.7
 types-requests==2.27.27
-types-setuptools==57.4.14
+types-setuptools==57.4.15
 types-tabulate==0.8.9
 types-urllib3==1.26.14
 typing-utils==0.1.0
