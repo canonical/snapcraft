@@ -9,7 +9,6 @@ prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   # set_base "$SNAP/snap/snapcraft.yaml"
-  snap install core22 --edge
 
 restore: |
   cd "$SNAP"

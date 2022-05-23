@@ -248,9 +248,6 @@ prepare: |
   git commit -m "Testing Commit"
   popd
 
-  # TODO remove once core22 is stable
-  snap install core22 --edge
-
 restore-each: |
   "$TOOLS_DIR"/restore.sh
 
