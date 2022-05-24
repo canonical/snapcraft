@@ -47,7 +47,6 @@ class SnapApp(YamlModel):
     TODO: implement desktop (CRAFT-804)
     TODO: implement extensions (CRAFT-805)
     TODO: implement passthrough (CRAFT-854)
-    TODO: implement slots (CRAFT-816)
     """
 
     command: str
@@ -109,6 +108,7 @@ class SnapMetadata(YamlModel):
     grade: str
     environment: Optional[Dict[str, Any]]
     plugs: Optional[Dict[str, Any]]
+    slots: Optional[Dict[str, Any]]
     hooks: Optional[Dict[str, Any]]
     layout: Optional[Dict[str, Dict[str, str]]]
     system_usernames: Optional[Dict[str, Any]]
@@ -190,6 +190,7 @@ def write(project: Project, prime_dir: Path, *, arch: str):
         grade=project.grade or "stable",
         environment=project.environment,
         plugs=project.plugs,
+        slots=project.slots,
         hooks=project.hooks,
         layout=project.layout,
         system_usernames=project.system_usernames,
