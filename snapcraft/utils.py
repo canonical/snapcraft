@@ -16,6 +16,7 @@
 
 """Utilities for snapcraft."""
 
+import multiprocessing
 import os
 import pathlib
 import platform
@@ -165,6 +166,41 @@ def get_effective_base(
         return build_base
 
     return name if project_type == "base" else base
+
+
+def get_parallel_build_count() -> int:
+    """Obtain the number of concurrent jobs to execute.
+
+    Try different strategies to obtain the number of parallel jobs
+    to execute. If they fail, assume the safe default of 1. The
+    number of concurrent build jobs can be limited by setting the
+    environment variable ``SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT``.
+
+    :return: The number of parallel jobs for the current host.
+    """
+    try:
+        build_count = len(os.sched_getaffinity(0))
+        emit.trace(f"CPU count (from process affinity): {build_count}")
+    except AttributeError:
+        # Fall back to multiprocessing.cpu_count()...
+        try:
+            build_count = multiprocessing.cpu_count()
+            emit.trace(f"CPU count (from multiprocessing): {build_count}")
+        except NotImplementedError:
+            emit.message(
+                "Unable to determine CPU count; disabling parallel builds",
+                intermediate=True,
+            )
+            build_count = 1
+
+    try:
+        max_count = int(os.environ.get("SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT", ""))
+        if max_count > 0:
+            build_count = min(build_count, max_count)
+    except ValueError:
+        emit.trace("Invalid SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT value")
+
+    return build_count
 
 
 def confirm_with_user(prompt_text, default=False) -> bool:
