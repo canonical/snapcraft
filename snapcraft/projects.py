@@ -388,42 +388,6 @@ class Project(ProjectModel):
 
         return epoch
 
-    @pydantic.validator("environment", always=True)
-    @classmethod
-    def _validate_environment(cls, environment):
-        """Validate app environmental variables.
-
-        Three cases for LD_LIBRARY_PATH and PATH variables:
-          - If LD_LIBRARY_PATH or PATH are defined, keep user-defined values.
-          - If LD_LIBRARY_PATH or PATH are not defined, set to default values.
-          - If LD_LIBRARY_PATH or PATH are null, do not use default values.
-        """
-        if environment is None:
-            return {
-                "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH",
-                "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
-            }
-
-        try:
-            if not environment["LD_LIBRARY_PATH"]:
-                environment.pop("LD_LIBRARY_PATH")
-        except KeyError:
-            environment["LD_LIBRARY_PATH"] = "$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
-
-        try:
-            if not environment["PATH"]:
-                environment.pop("PATH")
-        except KeyError:
-            environment[
-                "PATH"
-            ] = "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
-
-        if len(environment):
-            return environment
-
-        # if the environment only contained a null LD_LIBRARY_PATH and a null PATH, return None
-        return None
-
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "Project":
         """Create and populate a new ``Project`` object from dictionary data.

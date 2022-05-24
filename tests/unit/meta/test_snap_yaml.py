@@ -26,38 +26,36 @@ from snapcraft.projects import Project
 
 @pytest.fixture
 def simple_project():
-    snapcraft_yaml = textwrap.dedent(
-        """\
-        name: mytest
-        version: 1.29.3
-        base: core22
-        summary: Single-line elevator pitch for your amazing snap
-        description: |
-          This is my-snap's description. You have a paragraph or two to tell the
-          most important story about your snap. Keep it under 100 words though,
-          we live in tweetspace and your description wants to look good in the snap
-          store.
+    def _simple_project(**kwargs):
+        snapcraft_config = {
+            "name": "mytest",
+            "version": "1.29.3",
+            "base": "core22",
+            "summary": "Single-line elevator pitch for your amazing snap",
+            "description": "test-description",
+            "confinement": "strict",
+            "parts": {
+                "part1": {
+                    "plugin": "nil",
+                },
+            },
+            "apps": {
+                "app1": {
+                    "command": "bin/mytest",
+                },
+            },
+            **kwargs,
+        }
+        return Project.unmarshal(snapcraft_config)
 
-        confinement: strict
-
-        parts:
-          part1:
-            plugin: nil
-
-        apps:
-          app1:
-            command: bin/mytest
-        """
-    )
-    data = yaml.safe_load(snapcraft_yaml)
-    yield Project.unmarshal(data)
+    yield _simple_project
 
 
 def test_simple_snap_yaml(simple_project, new_dir):
     snap_yaml.write(
-        simple_project,
+        simple_project(),
         prime_dir=Path(new_dir),
-        arch="arch",
+        arch="amd64",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -68,13 +66,9 @@ def test_simple_snap_yaml(simple_project, new_dir):
         name: mytest
         version: 1.29.3
         summary: Single-line elevator pitch for your amazing snap
-        description: |
-          This is my-snap's description. You have a paragraph or two to tell the
-          most important story about your snap. Keep it under 100 words though,
-          we live in tweetspace and your description wants to look good in the snap
-          store.
+        description: test-description
         architectures:
-        - arch
+        - amd64
         base: core22
         apps:
           app1:
@@ -82,7 +76,7 @@ def test_simple_snap_yaml(simple_project, new_dir):
         confinement: strict
         grade: stable
         environment:
-          LD_LIBRARY_PATH: $SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
         """
     )
@@ -207,7 +201,7 @@ def test_complex_snap_yaml(complex_project, new_dir):
     snap_yaml.write(
         complex_project,
         prime_dir=Path(new_dir),
-        arch="arch",
+        arch="amd64",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -225,7 +219,7 @@ def test_complex_snap_yaml(complex_project, new_dir):
           store.
         type: app
         architectures:
-        - arch
+        - amd64
         base: core22
         assumes:
         - command-chain
@@ -274,7 +268,7 @@ def test_complex_snap_yaml(complex_project, new_dir):
         grade: devel
         environment:
           GLOBAL_VARIABLE: test-global-variable
-          LD_LIBRARY_PATH: $SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
         plugs:
           empty-plug: null
@@ -325,54 +319,179 @@ def test_complex_snap_yaml(complex_project, new_dir):
     )
 
 
-def test_hook_command_chain_assumes(new_dir):
-    snapcraft_yaml = textwrap.dedent(
-        """\
-        name: mytest
-        version: "1"
-        base: core22
-        summary: Summary
-        description: Description
-        confinement: strict
-
-        parts:
-          part1:
-            plugin: nil
-
-        hooks:
-          hook:
-            command-chain: ["c1"]
-        """
-    )
-    project = Project.unmarshal(yaml.safe_load(snapcraft_yaml))
+def test_hook_command_chain_assumes(simple_project, new_dir):
+    hooks = {
+        "hook": {
+            "command-chain": ["c1"],
+        },
+    }
 
     snap_yaml.write(
-        project,
+        simple_project(hooks=hooks),
         prime_dir=Path(new_dir),
-        arch="arch",
+        arch="amd64",
     )
-
     yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
     content = yaml_file.read_text()
     assert content == textwrap.dedent(
         """\
         name: mytest
-        version: '1'
-        summary: Summary
-        description: Description
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
         architectures:
-        - arch
+        - amd64
         base: core22
         assumes:
         - command-chain
+        apps:
+          app1:
+            command: bin/mytest
         confinement: strict
         grade: stable
         environment:
-          LD_LIBRARY_PATH: $SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
         hooks:
           hook:
             command-chain:
             - c1
+        """
+    )
+
+
+def test_project_environment_ld_library_path_and_path_defined(simple_project, new_dir):
+    """Test behavior of defining LD_LIBRARY_PATH and PATH variables."""
+    environment = {
+        "LD_LIBRARY_PATH": "test-1",
+        "PATH": "test-2",
+    }
+    snap_yaml.write(
+        simple_project(environment=environment),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    content = yaml_file.read_text()
+    assert content == textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        base: core22
+        apps:
+          app1:
+            command: bin/mytest
+        confinement: strict
+        grade: stable
+        environment:
+          LD_LIBRARY_PATH: test-1
+          PATH: test-2
+        """
+    )
+
+
+def test_project_environment_ld_library_path_defined(simple_project, new_dir):
+    """LD_LIBRARY_PATH can be overridden without affecting PATH."""
+    environment = {"LD_LIBRARY_PATH": "test-1"}
+
+    snap_yaml.write(
+        simple_project(environment=environment),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    content = yaml_file.read_text()
+    assert content == textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        base: core22
+        apps:
+          app1:
+            command: bin/mytest
+        confinement: strict
+        grade: stable
+        environment:
+          LD_LIBRARY_PATH: test-1
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+        """
+    )
+
+
+def test_project_environment_path_defined(simple_project, new_dir):
+    """PATH can be overridden without affecting LD_LIBRARY_PATH."""
+    environment = {"PATH": "test-2"}
+    snap_yaml.write(
+        simple_project(environment=environment),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    content = yaml_file.read_text()
+    assert content == textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        base: core22
+        apps:
+          app1:
+            command: bin/mytest
+        confinement: strict
+        grade: stable
+        environment:
+          PATH: test-2
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+        """
+    )
+
+
+def test_project_environment_ld_library_path_null(simple_project, new_dir):
+    """LD_LIBRARY_PATH can be overridden without affecting PATH."""
+    environment = {"LD_LIBRARY_PATH": None}
+    snap_yaml.write(
+        simple_project(environment=environment),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    content = yaml_file.read_text()
+    assert content == textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        base: core22
+        apps:
+          app1:
+            command: bin/mytest
+        confinement: strict
+        grade: stable
+        environment:
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
         """
     )
