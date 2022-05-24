@@ -142,7 +142,8 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     callbacks.register_prologue(_set_global_environment)
     callbacks.register_pre_step(_set_step_environment)
 
-    _expand_environment(yaml_data)
+    build_count = utils.get_parallel_build_count()
+    _expand_environment(yaml_data, parallel_build_count=build_count)
 
     project = Project.unmarshal(yaml_data)
 
@@ -150,6 +151,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
         command_name,
         project=project,
         parse_info=parse_info,
+        parallel_build_count=build_count,
         assets_dir=snap_project.assets_dir,
         parsed_args=parsed_args,
     )
@@ -161,6 +163,7 @@ def _run_command(
     project: Project,
     parse_info: Dict[str, List[str]],
     assets_dir: Path,
+    parallel_build_count: int,
     parsed_args: "argparse.Namespace",
 ) -> None:
     managed_mode = utils.is_managed_mode()
@@ -199,6 +202,7 @@ def _run_command(
         work_dir=work_dir,
         assets_dir=assets_dir,
         package_repositories=project.package_repositories,
+        parallel_build_count=parallel_build_count,
         part_names=part_names,
         adopt_info=project.adopt_info,
         project_name=project.name,
@@ -374,7 +378,7 @@ def _set_step_environment(step_info: StepInfo) -> bool:
     return True
 
 
-def _expand_environment(snapcraft_yaml: Dict[str, Any], *, parallel_build_count: int = 1) -> None:
+def _expand_environment(snapcraft_yaml: Dict[str, Any], *, parallel_build_count: int) -> None:
     """Expand global variables in the provided dictionary values.
 
     :param snapcraft_yaml: A dictionary containing the contents of the

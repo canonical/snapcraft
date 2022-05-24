@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 from textwrap import dedent
 
 import pytest
@@ -218,6 +219,38 @@ def test_get_host_architecture(
     mocker.patch("platform.architecture", return_value=platform_architecture)
 
     assert utils.get_host_architecture() == deb_arch
+
+
+########################
+# Parallel build count #
+########################
+
+
+def test_get_parallel_build_count(mocker):
+    mocker.patch("os.sched_getaffinity", return_value=[1] * 13)
+    assert utils.get_parallel_build_count() == 13
+
+
+def test_get_parallel_build_count_no_affinity(mocker):
+    mocker.patch("os.sched_getaffinity", side_effect=AttributeError)
+    mocker.patch("multiprocessing.cpu_count", return_value=17)
+    assert utils.get_parallel_build_count() == 17
+
+
+def test_get_parallel_build_count_disable(mocker):
+    mocker.patch("os.sched_getaffinity", side_effect=AttributeError)
+    mocker.patch("multiprocessing.cpu_count", side_effect=NotImplementedError)
+    assert utils.get_parallel_build_count() == 1
+
+
+@pytest.mark.parametrize(
+    "max_count,count",
+    [("", 13), ("xx", 13), ("0", 13), ("1", 1), ("8", 8), ("13", 13), ("14", 13)],
+)
+def test_get_parallel_build_count_limited(mocker, max_count, count):
+    mocker.patch("os.sched_getaffinity", return_value=[1] * 13)
+    mocker.patch.dict(os.environ, {"SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT": max_count})
+    assert utils.get_parallel_build_count() == count
 
 
 #################

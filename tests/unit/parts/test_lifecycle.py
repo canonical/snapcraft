@@ -131,6 +131,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
     """Snapcraft.yaml should be parsed as a valid yaml file."""
     yaml_data = snapcraft_yaml(base="core22", filename=filename)
     run_command_mock = mocker.patch("snapcraft.parts.lifecycle._run_command")
+    mocker.patch("snapcraft.utils.get_parallel_build_count", return_value=5)
 
     parts_lifecycle.run(
         "pull",
@@ -152,6 +153,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
             project=project,
             parse_info={},
             assets_dir=assets_dir,
+            parallel_build_count=5,
             parsed_args=argparse.Namespace(
                 parts=["part1"], destructive_mode=True, use_lxd=False, provider=None
             ),
@@ -232,7 +234,12 @@ def test_lifecycle_run_command_step(
         setattr(parsed_args, debug_shell, True)
 
     parts_lifecycle._run_command(
-        cmd, project=project, parse_info={}, assets_dir=Path(), parsed_args=parsed_args
+        cmd,
+        project=project,
+        parse_info={},
+        assets_dir=Path(),
+        parallel_build_count=8,
+        parsed_args=parsed_args,
     )
 
     call_args = {"debug": False, "shell": False, "shell_after": False}
@@ -255,6 +262,7 @@ def test_lifecycle_run_command_pack(cmd, snapcraft_yaml, project_vars, new_dir, 
         project=project,
         parse_info={},
         assets_dir=Path(),
+        parallel_build_count=8,
         parsed_args=argparse.Namespace(
             directory=None,
             output=None,
@@ -295,6 +303,7 @@ def test_lifecycle_pack_destructive_mode(
         project=project,
         parse_info={},
         assets_dir=Path(),
+        parallel_build_count=8,
         parsed_args=argparse.Namespace(
             directory=None,
             output=None,
@@ -334,6 +343,7 @@ def test_lifecycle_pack_managed(cmd, snapcraft_yaml, project_vars, new_dir, mock
         project=project,
         parse_info={},
         assets_dir=Path(),
+        parallel_build_count=8,
         parsed_args=argparse.Namespace(
             directory=None,
             output=None,
@@ -367,6 +377,7 @@ def test_lifecycle_pack_not_managed(cmd, snapcraft_yaml, new_dir, mocker):
         project=project,
         parse_info={},
         assets_dir=Path(),
+        parallel_build_count=8,
         parsed_args=argparse.Namespace(
             directory=None,
             output=None,
@@ -415,6 +426,7 @@ def test_lifecycle_pack_metadata_error(cmd, snapcraft_yaml, new_dir, mocker):
             project=project,
             assets_dir=Path(),
             parse_info={},
+            parallel_build_count=8,
             parsed_args=argparse.Namespace(
                 directory=None,
                 output=None,
@@ -469,6 +481,7 @@ def test_lifecycle_run_command_clean(snapcraft_yaml, project_vars, new_dir, mock
         project=project,
         parse_info={},
         assets_dir=Path(),
+        parallel_build_count=8,
         parsed_args=argparse.Namespace(
             directory=None,
             output=None,
@@ -493,6 +506,7 @@ def test_lifecycle_clean_destructive_mode(
         project=project,
         parse_info={},
         assets_dir=Path(),
+        parallel_build_count=8,
         parsed_args=argparse.Namespace(
             directory=None,
             output=None,
@@ -515,6 +529,7 @@ def test_lifecycle_clean_part_names(snapcraft_yaml, project_vars, new_dir, mocke
         project=project,
         parse_info={},
         assets_dir=Path(),
+        parallel_build_count=8,
         parsed_args=argparse.Namespace(
             directory=None,
             output=None,
@@ -551,6 +566,7 @@ def test_lifecycle_clean_part_names_destructive_mode(
         project=project,
         parse_info={},
         assets_dir=Path(),
+        parallel_build_count=8,
         parsed_args=argparse.Namespace(
             directory=None,
             output=None,
@@ -578,6 +594,7 @@ def test_lifecycle_clean_managed(snapcraft_yaml, project_vars, new_dir, mocker):
         project=project,
         parse_info={},
         assets_dir=Path(),
+        parallel_build_count=8,
         parsed_args=argparse.Namespace(
             directory=None,
             output=None,
@@ -604,6 +621,7 @@ def test_lifecycle_debug_shell(snapcraft_yaml, cmd, new_dir, mocker):
             project=project,
             parse_info={},
             assets_dir=Path(),
+            parallel_build_count=8,
             parsed_args=argparse.Namespace(
                 directory=None,
                 output=None,
@@ -637,6 +655,7 @@ def test_lifecycle_shell(snapcraft_yaml, cmd, new_dir, mocker):
         project=project,
         parse_info={},
         assets_dir=Path(),
+        parallel_build_count=8,
         parsed_args=argparse.Namespace(
             directory=None,
             output=None,
@@ -679,6 +698,7 @@ def test_lifecycle_shell_after(snapcraft_yaml, cmd, new_dir, mocker):
         project=project,
         parse_info={},
         assets_dir=Path(),
+        parallel_build_count=8,
         parsed_args=argparse.Namespace(
             directory=None,
             output=None,
@@ -806,7 +826,7 @@ def test_expand_environment(new_dir, mocker):
         },
         "field12": ["$CRAFT_PARALLEL_BUILD_COUNT", "$SNAPCRAFT_PARALLEL_BUILD_COUNT"],
     }
-    parts_lifecycle._expand_environment(yaml_data)
+    parts_lifecycle._expand_environment(yaml_data, parallel_build_count=8)
 
     assert yaml_data == {
         "name": "test-env",
@@ -825,7 +845,7 @@ def test_expand_environment(new_dir, mocker):
             "field10": [f"{new_dir}/prime", f"{new_dir}/prime"],
             "field11": [f"{new_dir}", f"{new_dir}"],
         },
-        "field12": ["1", "1"],
+        "field12": ["8", "8"],
     }
 
 
