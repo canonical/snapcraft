@@ -132,12 +132,13 @@ class GNOME(Extension):
 
         return {
             "build-environment": [
-                {"PATH": f"/snap/{sdk_snap}/current/usr/bin:$PATH"},
+                {"PATH": f"$PATH:/snap/{sdk_snap}/current/usr/bin"},
                 {
-                    "XDG_DATA_DIRS": f"$SNAPCRAFT_STAGE/usr/share:/snap/{sdk_snap}/current/usr/share:/usr/share:$XDG_DATA_DIRS"
+                    "XDG_DATA_DIRS": f"$XDG_DATA_DIRS:$SNAPCRAFT_STAGE/usr/share:/snap/{sdk_snap}/current/usr/share:/usr/share"
                 },
                 {
-                    "LD_LIBRARY_PATH": ":".join(
+                    "LD_LIBRARY_PATH": "${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}"
+                    + ":".join(
                         [
                             f"/snap/{sdk_snap}/current/lib/$SNAPCRAFT_ARCH_TRIPLET",
                             f"/snap/{sdk_snap}/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET",
@@ -146,28 +147,27 @@ class GNOME(Extension):
                             f"/snap/{sdk_snap}/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pulseaudio",
                         ]
                     )
-                    + "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
                 },
                 {
-                    "PKG_CONFIG_PATH": f"/snap/{sdk_snap}/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pkgconfig:/snap/{sdk_snap}/current/usr/lib/pkgconfig:/snap/{sdk_snap}/current/usr/share/pkgconfig:$PKG_CONFIG_PATH"
+                    "PKG_CONFIG_PATH": f"$PKG_CONFIG_PATH:/snap/{sdk_snap}/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pkgconfig:/snap/{sdk_snap}/current/usr/lib/pkgconfig:/snap/{sdk_snap}/current/usr/share/pkgconfig"
                 },
                 {
-                    "GETTEXTDATADIRS": f"/snap/{sdk_snap}/current/usr/share/gettext-current:$GETTEXTDATADIRS"
+                    "GETTEXTDATADIRS": f"$GETTEXTDATADIRS:/snap/{sdk_snap}/current/usr/share/gettext-current"
                 },
                 {
                     "GDK_PIXBUF_MODULE_FILE": f"/snap/{sdk_snap}/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gdk-pixbuf-current/loaders.cache"
                 },
                 {
-                    "ACLOCAL_PATH": f"/snap/{sdk_snap}/current/usr/share/aclocal${{ACLOCAL_PATH:+:$ACLOCAL_PATH}}"
+                    "ACLOCAL_PATH": f"${{ACLOCAL_PATH:+$ACLOCAL_PATH:}}/snap/{sdk_snap}/current/usr/share/aclocal"
                 },
                 {
-                    "PYTHONPATH": ":".join(
+                    "PYTHONPATH": "${PYTHONPATH:+$PYTHONPATH:}"
+                    + ":".join(
                         [
                             f"/snap/{sdk_snap}/current/usr/lib/python3.10",
                             f"/snap/{sdk_snap}/current/usr/lib/python3/dist-packages",
                         ]
                     )
-                    + "${PYTHONPATH:+:$PYTHONPATH}"
                 },
             ]
         }
