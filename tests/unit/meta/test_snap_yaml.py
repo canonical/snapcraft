@@ -161,6 +161,17 @@ def complex_project():
             content: test-content
             default-provider: test-provider
 
+        slots:
+          empty-slot:
+          string-slot: slot
+          dict-slot:
+            string-parameter: foo
+            bool-parameter: True
+          content-interface:
+            interface: content
+            read:
+              - /
+
         hooks:
           configure:
             command-chain: ["test"]
@@ -276,6 +287,16 @@ def test_complex_snap_yaml(complex_project, new_dir):
             interface: content
             target: test-target
             default-provider: test-provider
+        slots:
+          empty-slot: null
+          string-slot: slot
+          dict-slot:
+            string-parameter: foo
+            bool-parameter: true
+          content-interface:
+            interface: content
+            read:
+            - /
         hooks:
           configure:
             command-chain:
