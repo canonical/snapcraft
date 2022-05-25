@@ -251,6 +251,7 @@ def _run_command(
             project,
             lifecycle.prime_dir,
             arch=lifecycle.target_arch,
+            arch_triplet=lifecycle.target_arch_triplet,
         )
         emit.message("Generated snap metadata", intermediate=True)
 
@@ -378,7 +379,9 @@ def _set_step_environment(step_info: StepInfo) -> bool:
     return True
 
 
-def _expand_environment(snapcraft_yaml: Dict[str, Any], *, parallel_build_count: int) -> None:
+def _expand_environment(
+    snapcraft_yaml: Dict[str, Any], *, parallel_build_count: int
+) -> None:
     """Expand global variables in the provided dictionary values.
 
     :param snapcraft_yaml: A dictionary containing the contents of the

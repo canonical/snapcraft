@@ -23,6 +23,7 @@ import yaml
 from pydantic_yaml import YamlModel
 
 from snapcraft.projects import Project
+from snapcraft.utils import get_ld_library_paths
 
 
 class Socket(YamlModel):
@@ -120,7 +121,7 @@ class SnapMetadata(YamlModel):
         alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
 
 
-def write(project: Project, prime_dir: Path, *, arch: str):
+def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
     """Create a snap.yaml file."""
     meta_dir = prime_dir / "meta"
     meta_dir.mkdir(parents=True, exist_ok=True)
@@ -173,6 +174,8 @@ def write(project: Project, prime_dir: Path, *, arch: str):
     if project.hooks and any(h for h in project.hooks.values() if h.command_chain):
         assumes.add("command-chain")
 
+    environment = _populate_environment(project.environment, prime_dir, arch_triplet)
+
     snap_metadata = SnapMetadata(
         name=project.name,
         title=project.title,
@@ -188,7 +191,7 @@ def write(project: Project, prime_dir: Path, *, arch: str):
         apps=snap_apps or None,
         confinement=project.confinement,
         grade=project.grade or "stable",
-        environment=project.environment,
+        environment=environment,
         plugs=project.plugs,
         slots=project.slots,
         hooks=project.hooks,
@@ -214,3 +217,38 @@ def _repr_str(dumper, data):
     if "\n" in data:
         return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
     return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+
+def _populate_environment(
+    environment: Optional[Dict[str, Optional[str]]], prime_dir: Path, arch_triplet: str
+):
+    """Populate default app environmental variables.
+
+    Three cases for LD_LIBRARY_PATH and PATH variables:
+        - If LD_LIBRARY_PATH or PATH are defined, keep user-defined values.
+        - If LD_LIBRARY_PATH or PATH are not defined, set to default values.
+        - If LD_LIBRARY_PATH or PATH are null, do not use default values.
+    """
+    if environment is None:
+        return {
+            "LD_LIBRARY_PATH": get_ld_library_paths(prime_dir, arch_triplet),
+            "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        }
+
+    try:
+        if not environment["LD_LIBRARY_PATH"]:
+            environment.pop("LD_LIBRARY_PATH")
+    except KeyError:
+        environment["LD_LIBRARY_PATH"] = get_ld_library_paths(prime_dir, arch_triplet)
+
+    try:
+        if not environment["PATH"]:
+            environment.pop("PATH")
+    except KeyError:
+        environment["PATH"] = "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
+
+    if len(environment):
+        return environment
+
+    # if the environment only contained a null LD_LIBRARY_PATH and a null PATH, return None
+    return None
