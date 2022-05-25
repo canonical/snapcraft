@@ -28,7 +28,7 @@ from snapcraft import errors
 
 
 def get_extensions_data_dir() -> Path:
-    """Return the path to the extensions data directory"""
+    """Return the path to the extensions data directory."""
     return Path(sys.prefix) / "share" / "snapcraft" / "extensions"
 
 

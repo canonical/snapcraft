@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Extension file for Gnome 42 using Core 22."""
+
 from typing import Any, Dict, Optional, Tuple
 
 from .extension import Extension, get_extensions_data_dir
@@ -23,7 +25,7 @@ _SDK_SNAP = dict(core22="gnome-42-2204-sdk")
 
 
 class GNOME(Extension):
-    """This extension eases creation of snaps that integrate with GNOME.
+    r"""An extension that eases the creation of snaps that integrate with GNOME.
 
     When used with core22 GNOME 42 will be used.
 
@@ -53,17 +55,21 @@ class GNOME(Extension):
 
     @staticmethod
     def get_supported_bases() -> Tuple[str, ...]:
+        """Override method from @extension.Extension."""
         return ("core22",)
 
     @staticmethod
     def get_supported_confinement() -> Tuple[str, ...]:
+        """Override method from extension.Extension."""
         return ("strict", "devmode")
 
     @staticmethod
     def is_experimental(base: Optional[str]) -> bool:
+        """Override method from extension.Extension."""
         return False
 
     def get_app_snippet(self):
+        """Override method from extension.Extension."""
         return {
             # TODO: command-chain to check connection.
             "command-chain": ["$SNAP/gnome-platform/desktop-launch"],
@@ -78,6 +84,7 @@ class GNOME(Extension):
         }
 
     def get_root_snippet(self) -> Dict[str, Any]:
+        """Override method from extension.Extension."""
         base = self.yaml_data["base"]
         platform_snap = _PLATFORM_SNAP[base]
 
@@ -127,6 +134,7 @@ class GNOME(Extension):
         }
 
     def get_part_snippet(self) -> Dict[str, Any]:
+        """Override method from extension.Extension."""
         base = self.yaml_data["base"]
         sdk_snap = _SDK_SNAP[base]
 
@@ -173,6 +181,7 @@ class GNOME(Extension):
         }
 
     def get_parts_snippet(self) -> Dict[str, Any]:
+        """Override method from extension.Extension."""
         source = get_extensions_data_dir() / "fonts"
         return {
             "gnome/hook-configure-fonts": {
