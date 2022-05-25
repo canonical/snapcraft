@@ -56,6 +56,7 @@ def test_simple_snap_yaml(simple_project, new_dir):
         simple_project(),
         prime_dir=Path(new_dir),
         arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -202,6 +203,7 @@ def test_complex_snap_yaml(complex_project, new_dir):
         complex_project,
         prime_dir=Path(new_dir),
         arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -330,6 +332,7 @@ def test_hook_command_chain_assumes(simple_project, new_dir):
         simple_project(hooks=hooks),
         prime_dir=Path(new_dir),
         arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -372,6 +375,7 @@ def test_project_environment_ld_library_path_and_path_defined(simple_project, ne
         simple_project(environment=environment),
         prime_dir=Path(new_dir),
         arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -406,6 +410,7 @@ def test_project_environment_ld_library_path_defined(simple_project, new_dir):
         simple_project(environment=environment),
         prime_dir=Path(new_dir),
         arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -439,6 +444,7 @@ def test_project_environment_path_defined(simple_project, new_dir):
         simple_project(environment=environment),
         prime_dir=Path(new_dir),
         arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -472,6 +478,7 @@ def test_project_environment_ld_library_path_null(simple_project, new_dir):
         simple_project(environment=environment),
         prime_dir=Path(new_dir),
         arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()

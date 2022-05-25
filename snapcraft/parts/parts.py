@@ -109,6 +109,11 @@ class PartsLifecycle:
         return self._lcm.project_info.target_arch
 
     @property
+    def target_arch_triplet(self) -> str:
+        """Return the parts project target architecture."""
+        return self._lcm.project_info.arch_triplet
+
+    @property
     def project_vars(self) -> Dict[str, str]:
         """Return the value of project variable ``version``."""
         return {
