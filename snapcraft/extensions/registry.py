@@ -16,7 +16,7 @@
 
 """Extension registry."""
 
-from typing import Dict, List, Type, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Type
 
 from snapcraft import errors
 
@@ -24,6 +24,7 @@ from .gnome import GNOME
 
 if TYPE_CHECKING:
     from .extension import Extension
+
     ExtensionType = Type[Extension]
 
 

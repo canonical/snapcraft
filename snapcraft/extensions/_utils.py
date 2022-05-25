@@ -19,10 +19,9 @@
 import collections
 import contextlib
 import copy
-from typing import Any, Dict, List, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Set
 
 from .registry import get_extension_class
-
 
 if TYPE_CHECKING:
     from .extension import Extension
