@@ -62,12 +62,14 @@ def pack_snap(
         output_path = Path(output)
         output_parent = output_path.parent
         if output_path.is_dir():
+            # do not define a snap name if the output is a directory
             output_dir = str(output_path)
-        elif output_parent and output_parent != Path("."):
+        elif output_parent and output_parent.resolve() != Path(".").resolve():
             output_dir = str(output_parent)
             output_file = output_path.name
         else:
-            output_file = output
+            # do not define a directory if the output parent directory is the cwd
+            output_file = output_path.name
 
     command: List[Union[str, Path]] = ["snap", "pack"]
     if output_file is not None:
