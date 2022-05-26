@@ -282,35 +282,6 @@ def test_humanize_list(items, conjunction, expected):
 #################
 
 
-@pytest.fixture
-def library_config_file(tmp_path):
-    config_file = tmp_path / "usr/lib/i286-other-other/mesa/ld.so.conf"
-    config_file.parent.mkdir(parents=True)
-    config_file.write_text(
-        dedent(
-            """\
-        # This is a comment
-        /foo/bar
-        /colon:/separated,/comma\t/tab /space # This is another comment
-        /baz"""
-        )
-    )
-
-    return config_file
-
-
-def test_extract_ld_library_paths(tmp_path, library_config_file):
-    assert utils._extract_ld_library_paths(library_config_file) == [
-        "/foo/bar",
-        "/colon",
-        "/separated",
-        "/comma",
-        "/tab",
-        "/space",
-        "/baz",
-    ]
-
-
 @pytest.mark.parametrize(
     "lib_dirs,expected_env",
     [
@@ -328,29 +299,5 @@ def test_get_ld_library_paths(tmp_path, lib_dirs, expected_env):
 
     expected_env = (
         f"${{SNAP_LIBRARY_PATH}}${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}:{expected_env}"
-    )
-    assert utils.get_ld_library_paths(tmp_path, "i286-none-none") == expected_env
-
-
-@pytest.mark.parametrize(
-    "lib_dirs,expected_env",
-    [
-        (["lib", "usr/lib"], "$SNAP/lib:$SNAP/usr/lib"),
-        (
-            ["lib/i286-none-none", "usr/lib/i286-none-none"],
-            "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/i286-none-none:$SNAP/usr/lib/i286-none-none",
-        ),
-    ],
-)
-def test_get_ld_library_paths_with_conf(
-    tmp_path, lib_dirs, expected_env, library_config_file
-):
-    for d in lib_dirs:
-        (tmp_path / d).mkdir(parents=True, exist_ok=True)
-
-    expected_env = (
-        "${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:"
-        f"{expected_env}:"
-        "$SNAP/foo/bar:$SNAP/colon:$SNAP/separated:$SNAP/comma:$SNAP/tab:$SNAP/space:$SNAP/baz"
     )
     assert utils.get_ld_library_paths(tmp_path, "i286-none-none") == expected_env

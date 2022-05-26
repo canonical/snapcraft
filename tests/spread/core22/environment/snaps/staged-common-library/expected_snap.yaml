@@ -1,0 +1,17 @@
+name: staged-common-library
+version: '1'
+summary: test
+description: |
+  Staging a standard library causes common library paths
+  to be included in the LD_LIBRARY_PATH environmental variable.
+architectures:
+- amd64
+base: core22
+apps:
+  staged-common-library:
+    command: test-cmd
+confinement: strict
+grade: devel
+environment:
+  LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu
+  PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH

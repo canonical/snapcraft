@@ -4,6 +4,7 @@ environment:
   SNAP/paths_one_null: paths-one-null
   SNAP/paths_all_null: paths-all-null
   SNAP/paths_user_defined: paths-user-defined
+  SNAP/staged_common_library: staged-common-library
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
