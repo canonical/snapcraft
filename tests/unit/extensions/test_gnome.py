@@ -102,15 +102,16 @@ def test_get_root_snippet(gnome_extension):
 def test_get_part_snippet(gnome_extension):
     assert gnome_extension.get_part_snippet() == {
         "build-environment": [
-            {"PATH": "/snap/gnome-42-2204-sdk/current/usr/bin:$PATH"},
+            {"PATH": "$PATH:/snap/gnome-42-2204-sdk/current/usr/bin"},
             {
                 "XDG_DATA_DIRS": (
-                    "$SNAPCRAFT_STAGE/usr/share:/snap/gnome-42-2204-sdk"
-                    "/current/usr/share:/usr/share:$XDG_DATA_DIRS"
+                    "$XDG_DATA_DIRS:$SNAPCRAFT_STAGE/usr/share:/snap/gnome-42-2204-sdk"
+                    "/current/usr/share:/usr/share"
                 )
             },
             {
-                "LD_LIBRARY_PATH": ":".join(
+                "LD_LIBRARY_PATH": "${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}"
+                + ":".join(
                     [
                         "/snap/gnome-42-2204-sdk/current/lib/$CRAFT_ARCH_TRIPLET",
                         "/snap/gnome-42-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET",
@@ -119,19 +120,19 @@ def test_get_part_snippet(gnome_extension):
                         "/snap/gnome-42-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
                     ]
                 )
-                + "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
             },
             {
                 "PKG_CONFIG_PATH": (
+                    "$PKG_CONFIG_PATH:"
                     "/snap/gnome-42-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig:"
                     "/snap/gnome-42-2204-sdk/current/usr/lib/pkgconfig:"
-                    "/snap/gnome-42-2204-sdk/current/usr/share/pkgconfig:$PKG_CONFIG_PATH"
+                    "/snap/gnome-42-2204-sdk/current/usr/share/pkgconfig"
                 )
             },
             {
                 "GETTEXTDATADIRS": (
-                    "/snap/gnome-42-2204-sdk/current/usr/share/gettext-current:"
-                    "$GETTEXTDATADIRS"
+                    "$GETTEXTDATADIRS:"
+                    "/snap/gnome-42-2204-sdk/current/usr/share/gettext-current"
                 )
             },
             {
@@ -142,18 +143,18 @@ def test_get_part_snippet(gnome_extension):
             },
             {
                 "ACLOCAL_PATH": (
+                    "${ACLOCAL_PATH:+$ACLOCAL_PATH:}"
                     "/snap/gnome-42-2204-sdk/current/usr/share/aclocal"
-                    "${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
                 )
             },
             {
-                "PYTHONPATH": ":".join(
+                "PYTHONPATH": "${PYTHONPATH:+$PYTHONPATH:}"
+                + ":".join(
                     [
                         "/snap/gnome-42-2204-sdk/current/usr/lib/python3.10",
                         "/snap/gnome-42-2204-sdk/current/usr/lib/python3/dist-packages",
                     ]
                 )
-                + "${PYTHONPATH:+:$PYTHONPATH}"
             },
         ]
     }
