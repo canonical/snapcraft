@@ -1,6 +1,6 @@
 name: CI
 
-on: 
+on:
   pull_request:
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
 
 
       - if: steps.decisions.outputs.PUBLISH == 'true'
-        name: Checkout Snapcraft        
+        name: Checkout Snapcraft
         uses: actions/checkout@v2
         with:
           # Fetch all of history so Snapcraft can determine its own version from git.
@@ -53,7 +53,7 @@ jobs:
 
       - if: steps.decisions.outputs.PUBLISH == 'env' && steps.decisions.outputs.PUBLISH_BRANCH != null
         # Use this until snapcore/action-publish#27 it is merged.
-        uses: sergiusens/action-publish
+        uses: sergiusens/action-publish@v1.1.0
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         with:
