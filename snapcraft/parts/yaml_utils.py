@@ -30,7 +30,7 @@ def _check_duplicate_keys(node):
     for key_node, _ in node.value:
         try:
             if key_node.value in mappings:
-                raise yaml.constructor.ConstructorError(
+                raise yaml.constructor.ConstructorError( # type: ignore
                     "while constructing a mapping",
                     node.start_mark,
                     f"found duplicate key {key_node.value!r}",
@@ -52,7 +52,7 @@ def _dict_constructor(loader, node):
     try:
         return dict(value)
     except TypeError as type_error:
-        raise yaml.constructor.ConstructorError(
+        raise yaml.constructor.ConstructorError( # type: ignore
             "while constructing a mapping",
             node.start_mark,
             "found unhashable key",
