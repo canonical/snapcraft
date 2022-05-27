@@ -18,6 +18,7 @@
 import pytest
 
 from snapcraft import errors, extensions
+from snapcraft.extensions import extension
 
 
 @pytest.mark.usefixtures("fake_extension")
@@ -222,4 +223,36 @@ def test_apply_extension_experimental_with_environment(emitter, monkeypatch):
     emitter.assert_message(
         "*EXPERIMENTAL* extension 'fake-extension-experimental' enabled",
         intermediate=True,
+    )
+
+
+def test_prepend_path():
+    assert (
+        extension.prepend_to_env("TEST_ENV", ["/usr/bin", "/usr/local/bin"])
+        == "/usr/bin:/usr/local/bin${TEST_ENV:+:$TEST_ENV}"
+    )
+
+
+def test_append_path():
+    assert (
+        extension.append_to_env("TEST_ENV", ["/usr/bin", "/usr/local/bin"])
+        == "${TEST_ENV:+$TEST_ENV:}/usr/bin:/usr/local/bin"
+    )
+
+
+def test_prepend_path_with_separator():
+    assert (
+        extension.prepend_to_env(
+            "TEST_ENV", ["/usr/bin", "/usr/local/bin"], separator=";"
+        )
+        == "/usr/bin;/usr/local/bin${TEST_ENV:+;$TEST_ENV}"
+    )
+
+
+def test_append_path_with_separator():
+    assert (
+        extension.append_to_env(
+            "TEST_ENV", ["/usr/bin", "/usr/local/bin"], separator=";"
+        )
+        == "${TEST_ENV:+$TEST_ENV;}/usr/bin;/usr/local/bin"
     )
