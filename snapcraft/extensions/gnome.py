@@ -21,7 +21,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from overrides import overrides
 
-from .extension import Extension, get_extensions_data_dir
+from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
 _PLATFORM_SNAP = dict(core22="gnome-42-2204")
 _SDK_SNAP = dict(core22="gnome-42-2204-sdk")
@@ -140,60 +140,74 @@ class GNOME(Extension):
 
         return {
             "build-environment": [
-                {"PATH": f"/snap/{sdk_snap}/current/usr/bin:$PATH"},
                 {
-                    "XDG_DATA_DIRS": (
-                        f"$SNAPCRAFT_STAGE/usr/share:/snap/{sdk_snap}"
-                        "/current/usr/share:/usr/share:$XDG_DATA_DIRS"
-                    )
+                    "PATH": prepend_to_env(
+                        "PATH", [f"/snap/{sdk_snap}/current/usr/bin"]
+                    ),
                 },
                 {
-                    "LD_LIBRARY_PATH": ":".join(
+                    "XDG_DATA_DIRS": prepend_to_env(
+                        "XDG_DATA_DIRS",
+                        [
+                            f"$SNAPCRAFT_STAGE/usr/share:/snap/{sdk_snap}/current/usr/share",
+                            "/usr/share",
+                        ],
+                    ),
+                },
+                {
+                    "LD_LIBRARY_PATH": prepend_to_env(
+                        "LD_LIBRARY_PATH",
                         [
                             f"/snap/{sdk_snap}/current/lib/$CRAFT_ARCH_TRIPLET",
                             f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET",
                             f"/snap/{sdk_snap}/current/usr/lib",
                             f"/snap/{sdk_snap}/current/usr/lib/vala-current",
                             f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
-                        ]
-                    )
-                    + "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+                        ],
+                    ),
                 },
                 {
-                    "PKG_CONFIG_PATH": (
-                        f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig:"
-                        f"/snap/{sdk_snap}/current/usr/lib/pkgconfig:"
-                        f"/snap/{sdk_snap}/current/usr/share/pkgconfig:$PKG_CONFIG_PATH"
-                    )
+                    "PKG_CONFIG_PATH": prepend_to_env(
+                        "PKG_CONFIG_PATH",
+                        [
+                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig",
+                            f"/snap/{sdk_snap}/current/usr/lib/pkgconfig",
+                            f"/snap/{sdk_snap}/current/usr/share/pkgconfig",
+                        ],
+                    ),
                 },
                 {
-                    "GETTEXTDATADIRS": (
-                        f"/snap/{sdk_snap}/current/usr/share/gettext-current:"
-                        "$GETTEXTDATADIRS"
-                    )
+                    "GETTEXTDATADIRS": prepend_to_env(
+                        "GETTEXTDATADIRS",
+                        [
+                            f"/snap/{sdk_snap}/current/usr/share/gettext-current",
+                        ],
+                    ),
                 },
                 {
                     "GDK_PIXBUF_MODULE_FILE": (
                         f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET"
                         "/gdk-pixbuf-current/loaders.cache"
-                    )
+                    ),
                 },
                 {
-                    "ACLOCAL_PATH": (
-                        f"/snap/{sdk_snap}/current/usr/share/aclocal"
-                        "${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
-                    )
+                    "ACLOCAL_PATH": prepend_to_env(
+                        "ACLOCAL_PATH",
+                        [
+                            f"/snap/{sdk_snap}/current/usr/share/aclocal",
+                        ],
+                    ),
                 },
                 {
-                    "PYTHONPATH": ":".join(
+                    "PYTHONPATH": prepend_to_env(
+                        "PYTHONPATH",
                         [
                             f"/snap/{sdk_snap}/current/usr/lib/python3.10",
                             f"/snap/{sdk_snap}/current/usr/lib/python3/dist-packages",
-                        ]
-                    )
-                    + "${PYTHONPATH:+:$PYTHONPATH}"
+                        ],
+                    ),
                 },
-            ]
+            ],
         }
 
     @overrides

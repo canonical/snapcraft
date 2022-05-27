@@ -103,11 +103,11 @@ def test_get_root_snippet(gnome_extension):
 def test_get_part_snippet(gnome_extension):
     assert gnome_extension.get_part_snippet() == {
         "build-environment": [
-            {"PATH": "/snap/gnome-42-2204-sdk/current/usr/bin:$PATH"},
+            {"PATH": "/snap/gnome-42-2204-sdk/current/usr/bin${PATH:+:$PATH}"},
             {
                 "XDG_DATA_DIRS": (
                     "$SNAPCRAFT_STAGE/usr/share:/snap/gnome-42-2204-sdk"
-                    "/current/usr/share:/usr/share:$XDG_DATA_DIRS"
+                    "/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
                 )
             },
             {
@@ -126,13 +126,14 @@ def test_get_part_snippet(gnome_extension):
                 "PKG_CONFIG_PATH": (
                     "/snap/gnome-42-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig:"
                     "/snap/gnome-42-2204-sdk/current/usr/lib/pkgconfig:"
-                    "/snap/gnome-42-2204-sdk/current/usr/share/pkgconfig:$PKG_CONFIG_PATH"
+                    "/snap/gnome-42-2204-sdk/current/usr/share/pkgconfig"
+                    "${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
                 )
             },
             {
                 "GETTEXTDATADIRS": (
-                    "/snap/gnome-42-2204-sdk/current/usr/share/gettext-current:"
-                    "$GETTEXTDATADIRS"
+                    "/snap/gnome-42-2204-sdk/current/usr/share/gettext-current"
+                    "${GETTEXTDATADIRS:+:$GETTEXTDATADIRS}"
                 )
             },
             {
