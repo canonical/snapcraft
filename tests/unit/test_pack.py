@@ -79,9 +79,10 @@ def test_pack_snap_compression(mocker, new_dir):
     ]
 
 
-def test_pack_snap_output_file(mocker, new_dir):
+def test_pack_snap_output_file_output_directory_cwd(mocker, new_dir):
+    """Test `snap pack` when it outputs to the current working directory."""
     mock_run = mocker.patch("subprocess.run")
-    pack.pack_snap(new_dir, output="/tmp/foo")
+    pack.pack_snap(new_dir, output=f"{new_dir}/test.snap")
     assert mock_run.mock_calls == [
         call(
             ["snap", "pack", "--check-skeleton", new_dir],
@@ -90,7 +91,7 @@ def test_pack_snap_output_file(mocker, new_dir):
             universal_newlines=True,
         ),
         call(
-            ["snap", "pack", "--filename", "foo", new_dir, "/tmp"],
+            ["snap", "pack", "--filename", "test.snap", new_dir],
             capture_output=True,
             check=True,
             universal_newlines=True,
@@ -98,7 +99,64 @@ def test_pack_snap_output_file(mocker, new_dir):
     ]
 
 
-def test_pack_snap_output_dir(mocker, new_dir):
+def test_pack_snap_output_file_output_directory_existing(mocker, new_dir):
+    """Test `snap pack` when it outputs to an existing directory."""
+    mock_run = mocker.patch("subprocess.run")
+    output_directory = new_dir / "output"
+    output_directory.mkdir()
+    assert output_directory.is_dir()
+
+    pack.pack_snap(new_dir, output=output_directory / "test.snap")
+
+    assert mock_run.mock_calls == [
+        call(
+            ["snap", "pack", "--check-skeleton", new_dir],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        ),
+        call(
+            ["snap", "pack", "--filename", "test.snap", new_dir, str(output_directory)],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        ),
+    ]
+
+
+def test_pack_snap_output_file_output_directory_non_existant(mocker, new_dir):
+    """Test `snap pack` when it outputs to a non-existent directory."""
+    mock_run = mocker.patch("subprocess.run")
+    output_directory = new_dir / "output"
+    assert not output_directory.exists()
+
+    pack.pack_snap(new_dir, output=output_directory / "test.snap")
+
+    assert mock_run.mock_calls == [
+        call(
+            ["snap", "pack", "--check-skeleton", new_dir],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        ),
+        call(
+            [
+                "snap",
+                "pack",
+                "--filename",
+                "test.snap",
+                new_dir,
+                str(new_dir / "output"),
+            ],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        ),
+    ]
+
+
+def test_pack_snap_output_directory_not_specified(mocker, new_dir):
+    """Test `snap pack` executes when no output directory is specified."""
     mock_run = mocker.patch("subprocess.run")
     pack.pack_snap(new_dir, output=str(new_dir))
     assert mock_run.mock_calls == [
@@ -110,6 +168,32 @@ def test_pack_snap_output_dir(mocker, new_dir):
         ),
         call(
             ["snap", "pack", new_dir, str(new_dir)],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        ),
+    ]
+
+
+def test_pack_snap_output_file_output_directory_existing_no_file_name(mocker, new_dir):
+    """Test `snap pack` when it outputs to an existing directory but no file
+    name is specified."""
+    mock_run = mocker.patch("subprocess.run")
+    output_directory = new_dir / "output"
+    output_directory.mkdir()
+    assert output_directory.is_dir()
+
+    pack.pack_snap(new_dir, output=output_directory)
+
+    assert mock_run.mock_calls == [
+        call(
+            ["snap", "pack", "--check-skeleton", new_dir],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        ),
+        call(
+            ["snap", "pack", new_dir, str(output_directory)],
             capture_output=True,
             check=True,
             universal_newlines=True,
