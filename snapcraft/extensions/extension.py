@@ -20,7 +20,7 @@ import abc
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, final
+from typing import Any, Dict, Optional, Sequence, Tuple, final
 
 from craft_cli import emit
 
@@ -30,6 +30,36 @@ from snapcraft import errors
 def get_extensions_data_dir() -> Path:
     """Return the path to the extension data directory."""
     return Path(sys.prefix) / "share" / "snapcraft" / "extensions"
+
+
+def append_to_env(env_variable: str, paths: Sequence[str], separator: str = ":") -> str:
+    """Return a string for env_variable with one of more paths appended.
+
+    :param env_variable: the variable to operate on.
+    :param paths: one or more paths to append.
+    :param separator: the separator to use.
+    :returns: a shell string where one or more paths are appended
+                  to env_variable. The code takes into account the case
+                  where the environment variable is empty, to avoid putting
+                  a separator token at the start.
+    """
+    return f"${{{env_variable}:+${env_variable}{separator}}}" + separator.join(paths)
+
+
+def prepend_to_env(
+    env_variable: str, paths: Sequence[str], separator: str = ":"
+) -> str:
+    """Return a string for env_variable with one of more paths prepended.
+
+    :param env_variable: the variable to operate on.
+    :param paths: one or more paths to append.
+    :param separator: the separator to use.
+    :returns: a shell string where one or more paths are prepended
+                  before env_variable. The code takes into account the case
+                  where the environment variable is empty, to avoid putting
+                  a separator token at the end.
+    """
+    return separator.join(paths) + f"${{{env_variable}:+{separator}${env_variable}}}"
 
 
 class Extension(abc.ABC):
