@@ -18,10 +18,12 @@ import os
 import textwrap
 from pathlib import Path
 from typing import Any, Dict
+from unittest.mock import call
 
 import pytest
 
 from snapcraft import errors
+from snapcraft.parts import setup_assets as parts_setup_assets
 from snapcraft.parts.setup_assets import _validate_command_chain, setup_assets
 from snapcraft.projects import Project
 
@@ -174,6 +176,23 @@ def test_kernel_missing(yaml_data, new_dir):
     # kernel file should not be in meta/
     kernel_path = Path("prime/meta/kernel.yaml")
     assert not kernel_path.is_file()
+
+
+@pytest.mark.parametrize(
+    "source,destination,copied",
+    [
+        (Path("foo"), Path("bar"), True),
+        (Path("foo"), Path("foo"), False),
+    ],
+)
+def test_copy_files(source, destination, copied, new_dir, mocker):
+    copy_mock = mocker.patch("shutil.copy")
+    Path("foo").touch()
+    parts_setup_assets._copy_file(source, destination)
+    if copied:
+        assert copy_mock.mock_calls == [call(source, destination)]
+    else:
+        assert copy_mock.mock_calls == []
 
 
 class TestSetupAssets:
@@ -365,7 +384,7 @@ class TestCommandChain:
                     "apps": {
                         "app1": {
                             "command": "test.sh",
-                            "command-chain": ["does-not-exist"]
+                            "command-chain": ["does-not-exist"],
                         },
                     },
                 },
@@ -373,12 +392,16 @@ class TestCommandChain:
         )
 
         with pytest.raises(errors.SnapcraftError) as raised:
-            setup_assets(project, assets_dir=Path("snap"),
-                         project_dir=Path.cwd(), prime_dir=new_dir)
+            setup_assets(
+                project,
+                assets_dir=Path("snap"),
+                project_dir=Path.cwd(),
+                prime_dir=new_dir,
+            )
 
         assert str(raised.value) == (
-           "Failed to generate snap metadata: The command-chain item 'does-not-exist' "
-           "defined in app 'app1' does not exist or is not executable."
+            "Failed to generate snap metadata: The command-chain item 'does-not-exist' "
+            "defined in app 'app1' does not exist or is not executable."
         )
 
     def test_setup_assets_hook_command_chain_error(self, yaml_data, new_dir):
@@ -388,30 +411,29 @@ class TestCommandChain:
                 {
                     "adopt-info": "part1",
                     "hooks": {
-                        "hook1": {
-                            "command-chain": ["does-not-exist"]
-                        },
+                        "hook1": {"command-chain": ["does-not-exist"]},
                     },
                 },
             )
         )
 
         with pytest.raises(errors.SnapcraftError) as raised:
-            setup_assets(project, assets_dir=Path("snap"),
-                         project_dir=Path.cwd(), prime_dir=new_dir)
+            setup_assets(
+                project,
+                assets_dir=Path("snap"),
+                project_dir=Path.cwd(),
+                prime_dir=new_dir,
+            )
 
         assert str(raised.value) == (
-           "Failed to generate snap metadata: The command-chain item 'does-not-exist' "
-           "defined in hook 'hook1' does not exist or is not executable."
+            "Failed to generate snap metadata: The command-chain item 'does-not-exist' "
+            "defined in hook 'hook1' does not exist or is not executable."
         )
-
 
     def test_command_chain_path_not_found(self, new_dir):
 
         with pytest.raises(errors.SnapcraftError) as raised:
-            _validate_command_chain(
-                ["file-not-found"], name="foo", prime_dir=new_dir
-            )
+            _validate_command_chain(["file-not-found"], name="foo", prime_dir=new_dir)
 
         assert str(raised.value) == (
             "Failed to generate snap metadata: The command-chain item 'file-not-found' "
@@ -426,7 +448,9 @@ class TestCommandChain:
 
         with pytest.raises(errors.SnapcraftError) as raised:
             _validate_command_chain(
-                ["file-executable", "file-not-executable"], name="foo", prime_dir=new_dir,
+                ["file-executable", "file-not-executable"],
+                name="foo",
+                prime_dir=new_dir,
             )
 
         assert str(raised.value) == (

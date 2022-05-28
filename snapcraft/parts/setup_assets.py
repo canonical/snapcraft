@@ -60,12 +60,12 @@ def setup_assets(
         gadget_yaml = project_dir / "gadget.yaml"
         if not gadget_yaml.exists():
             raise errors.SnapcraftError("gadget.yaml is required for gadget snaps")
-        shutil.copy(gadget_yaml, meta_dir / "gadget.yaml")
+        _copy_file(gadget_yaml, meta_dir / "gadget.yaml")
 
     if project.type == "kernel":
         kernel_yaml = project_dir / "kernel.yaml"
         if kernel_yaml.exists():
-            shutil.copy(kernel_yaml, meta_dir / "kernel.yaml")
+            _copy_file(kernel_yaml, meta_dir / "kernel.yaml")
 
     if not project.apps:
         return
@@ -133,10 +133,10 @@ def _finalize_icon(
         )
         if source_path.exists():
             # Local with path relative to prime.
-            shutil.copy(source_path, target_icon_path)
+            _copy_file(source_path, target_icon_path)
         elif parsed_path.exists():
             # Local with path relative to project.
-            shutil.copy(parsed_path, target_icon_path)
+            _copy_file(parsed_path, target_icon_path)
         else:
             # No icon found, fall back to searching for existing icon.
             return _find_icon_file(assets_dir)
@@ -203,7 +203,7 @@ def _write_snap_directory(*, assets_dir: Path, prime_dir: Path, meta_dir: Path) 
 
                 destination.unlink(missing_ok=True)
 
-                shutil.copy(source, destination, follow_symlinks=True)
+                _copy_file(source, destination, follow_symlinks=True)
 
                 # Ensure that the hook is executable in meta/hooks, this is a moot
                 # point considering the prior link_or_copy call, but is technically
@@ -212,3 +212,11 @@ def _write_snap_directory(*, assets_dir: Path, prime_dir: Path, meta_dir: Path) 
                     destination.chmod(0o755)
 
     # TODO: record manifest and source snapcraft.yaml
+
+
+def _copy_file(source: Path, destination: Path, **kwargs) -> None:
+    """Copy file if source and destination are not the same file."""
+    if destination.exists() and source.samefile(destination):
+        emit.trace(f"skip copying {str(source)!r}: source and destination are the same file")
+    else:
+        shutil.copy(source, destination, **kwargs)
