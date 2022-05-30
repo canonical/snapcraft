@@ -1,0 +1,17 @@
+name: package-cutoff
+base: core22
+version: '1.0'
+summary: 'test'
+description: test
+grade: devel
+confinement: devmode
+
+parts:
+  part-1:
+    source: .
+    plugin: nil
+    stage-packages:
+      - libpng16-16
+  part-2:
+    source: .
+    plugin: python

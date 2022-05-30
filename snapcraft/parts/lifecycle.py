@@ -201,6 +201,7 @@ def _run_command(
         project.parts,
         work_dir=work_dir,
         assets_dir=assets_dir,
+        base=project.get_effective_base(),
         package_repositories=project.package_repositories,
         parallel_build_count=parallel_build_count,
         part_names=part_names,
