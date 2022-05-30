@@ -166,7 +166,7 @@ def test_get_parts_snippet(gnome_extension):
             "plugin": "nil",
             "override-build": (
                 "install -D -m 0755 hooks-configure-fonts "
-                "${SNAPCRAFT_PART_INSTALL}/snap/command-chain/"
+                "${SNAPCRAFT_PART_INSTALL}/snap/command-chain/hooks-configure-fonts"
             ),
         }
     }
