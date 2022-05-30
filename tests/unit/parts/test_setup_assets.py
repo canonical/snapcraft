@@ -183,11 +183,15 @@ def test_kernel_missing(yaml_data, new_dir):
     [
         (Path("foo"), Path("bar"), True),
         (Path("foo"), Path("foo"), False),
+        (Path("foo"), Path("dest/foo"), True),
     ],
 )
 def test_copy_files(source, destination, copied, new_dir, mocker):
     copy_mock = mocker.patch("shutil.copy")
     Path("foo").touch()
+    Path("dest").mkdir()
+    Path("dest/foo").write_text("dest")
+
     parts_setup_assets._copy_file(source, destination)
     if copied:
         assert copy_mock.mock_calls == [call(source, destination)]
