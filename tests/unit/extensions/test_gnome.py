@@ -58,6 +58,7 @@ def test_get_root_snippet(gnome_extension):
         "environment": {
             "GTK_USE_PORTAL": "1",
             "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+            "LD_LIBRARY_PATH": "/snap/gnome-42-2204/current/lib/$CRAFT_ARCH_TRIPLET:/snap/gnome-42-2204/current/usr/lib/$CRAFT_ARCH_TRIPLET:/snap/gnome-42-2204/current/usr/lib:/snap/gnome-42-2204/current/usr/lib/vala-current:/snap/gnome-42-2204/current/usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}",
         },
         "hooks": {
             "configure": {
