@@ -40,6 +40,14 @@ EOF
 
 export FONTCONFIG_FILE="${SNAP_COMMON}/fontconfig/fonts.conf"
 
-"${SNAP_DESKTOP_RUNTIME}/usr/bin/fc-cache" --force --system-only --verbose || echo "configure hook: font generation failed"
+if [ -f "${SNAP_DESKTOP_RUNTIME}/usr/bin/fc-cache" ]; then
+  "${SNAP_DESKTOP_RUNTIME}/usr/bin/fc-cache" --force --system-only --verbose || echo "configure hook: font generation failed"
+else
+  echo "Couldn't generate fonts because fc-cache is not available"
+fi
 
-exec "$@"
+if [ -f $1 ]; then
+  exec "$@"
+else
+  echo "Can't execute command $1 in hooks-configure-fonts"
+fi
