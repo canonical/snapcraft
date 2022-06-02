@@ -26,7 +26,8 @@ import craft_parts
 from craft_cli import EmitterMode, emit
 from craft_parts import ProjectInfo, StepInfo, callbacks, infos
 
-from snapcraft import errors, extensions, pack, providers, utils
+from snapcraft import errors, pack, providers, utils
+from snapcraft.extensions import apply_extensions, extension
 from snapcraft.meta import snap_yaml
 from snapcraft.projects import GrammarAwareProject, Project
 from snapcraft.providers import capture_logs_from_instance
@@ -95,7 +96,7 @@ def process_yaml(project_file: Path) -> Dict[str, Any]:
 
     # TODO: support for target_arch
     arch = _get_arch()
-    yaml_data = extensions.apply_extensions(yaml_data, arch=arch, target_arch=arch)
+    yaml_data = apply_extensions(yaml_data, arch=arch, target_arch=arch)
 
     if "parts" in yaml_data:
         yaml_data["parts"] = grammar.process_parts(
@@ -178,7 +179,8 @@ def _run_command(
 
         if command_name == "snap":
             emit.message(
-                "The 'snap' command is deprecated, use 'pack' instead.", intermediate=True
+                "The 'snap' command is deprecated, use 'pack' instead.",
+                intermediate=True,
             )
 
     if parsed_args.use_lxd and providers.get_platform_default_provider() == "lxd":
@@ -347,12 +349,19 @@ def _get_arch() -> str:
 
 def _get_extra_build_snaps(project: Project) -> Optional[List[str]]:
     """Get list of extra snaps required to build."""
-    extra_build_snaps = project.get_content_snaps()
+    # Build snaps defined by the user with channel stripped
+    part_build_snaps = {
+        p.split("/")[0]
+        for p in extension.get_build_snaps(parts_yaml_data=project.parts)
+    }
+    content_snaps = set(project.get_content_snaps())
+
+    # Do not add the content snaps if provided by the user
+    extra_build_snaps = list(content_snaps - part_build_snaps)
+
     if project.base is not None:
-        if extra_build_snaps is None:
-            extra_build_snaps = [project.base]
-        else:
-            extra_build_snaps.append(project.base)
+        extra_build_snaps.append(project.base)
+    extra_build_snaps.sort()
     return extra_build_snaps
 
 

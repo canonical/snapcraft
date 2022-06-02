@@ -419,15 +419,13 @@ class Project(ProjectModel):
             ]
         return []
 
-    def get_content_snaps(self) -> Optional[List[str]]:
+    def get_content_snaps(self) -> List[str]:
         """Get list of snaps from ContentPlug `default-provider` fields."""
-        content_snaps = [
+        return [
             x.default_provider
             for x in self._get_content_plugs()
             if x.default_provider is not None
         ]
-
-        return content_snaps if content_snaps else None
 
     def get_effective_base(self) -> str:
         """Return the base to use to create the snap."""
