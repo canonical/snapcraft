@@ -60,7 +60,12 @@ class Provider(ABC):
         env["SNAPCRAFT_MANAGED_MODE"] = "1"
 
         # Pass-through host environment that target may need.
-        for env_key in ["http_proxy", "https_proxy", "no_proxy"]:
+        for env_key in [
+            "http_proxy",
+            "https_proxy",
+            "no_proxy",
+            "SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS",
+        ]:
             if env_key in os.environ:
                 env[env_key] = os.environ[env_key]
 
