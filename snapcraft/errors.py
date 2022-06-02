@@ -56,5 +56,18 @@ class DesktopFileError(SnapcraftError):
         super().__init__(f"Failed to generate desktop file {filename!r}: {message}")
 
 
+class FilePermissionError(SnapcraftError):
+    """Insufficient permissions to access a file."""
+
+    def __init__(self, filename: str, *, reason: str) -> None:
+        super().__init__(
+            f"{reason} in file {filename}",
+            resolution=(
+                "Make sure the file is part of the current project and its permissions "
+                "and ownership are correct."
+            ),
+        )
+
+
 class LegacyFallback(Exception):
     """Fall back to legacy snapcraft implementation."""

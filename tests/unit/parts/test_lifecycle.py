@@ -935,3 +935,43 @@ def test_lifecycle_run_expand_craft_vars(new_dir, mocker):
 
     meta_yaml = Path(new_dir / "prime/meta/snap.yaml").read_text()
     assert "command: usr/aarch64-linux-gnu/foo" in meta_yaml
+
+
+def test_lifecycle_run_permission_denied(new_dir):
+    content = textwrap.dedent(
+        """\
+        name: mytest
+        version: "0.1"
+        base: core22
+        summary: Permission error test
+        description: Permission error test
+        grade: stable
+        confinement: strict
+
+        parts:
+          part1:
+            plugin: nil
+        """
+    )
+
+    yaml_path = Path("snapcraft.yaml")
+    yaml_path.write_text(content)
+
+    Path("prime/meta/").mkdir(parents=True)
+    Path("prime/meta/snap.yaml").touch()
+    Path("prime/meta/snap.yaml").chmod(0o000)
+
+    with pytest.raises(errors.FilePermissionError) as raised:
+        parts_lifecycle.run(
+            "prime",
+            argparse.Namespace(
+                parts=[], destructive_mode=True, use_lxd=False, provider=None, debug=False
+            ),
+        )
+
+    error = raised.value
+    assert str(error) == f"Permission denied in file {new_dir!s}/prime/meta/snap.yaml"
+    assert error.resolution == (
+        "Make sure the file is part of the current project "
+        "and its permissions and ownership are correct."
+    )

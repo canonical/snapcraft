@@ -148,14 +148,17 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
 
     project = Project.unmarshal(yaml_data)
 
-    _run_command(
-        command_name,
-        project=project,
-        parse_info=parse_info,
-        parallel_build_count=build_count,
-        assets_dir=snap_project.assets_dir,
-        parsed_args=parsed_args,
-    )
+    try:
+        _run_command(
+            command_name,
+            project=project,
+            parse_info=parse_info,
+            parallel_build_count=build_count,
+            assets_dir=snap_project.assets_dir,
+            parsed_args=parsed_args,
+        )
+    except PermissionError as err:
+        raise errors.FilePermissionError(err.filename, reason=err.strerror)
 
 
 def _run_command(
