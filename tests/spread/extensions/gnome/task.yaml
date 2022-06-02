@@ -18,6 +18,9 @@ prepare: |
   sed -i 's/gnome-3-28/gnome/' "$SNAP_DIR/snap/snapcraft.yaml"
   sed -i 's/bin\/gtk3-hello/usr\/local\/bin\/gtk3-hello/' "$SNAP_DIR/snap/snapcraft.yaml"
 
+  # Temporarily use snaps from edge
+  echo '    build-snaps: [gnome-42-2204-sdk/latest/edge, gnome-42-2204/latest/edge]' >> "$SNAP_DIR/snap/snapcraft.yaml"
+
 restore: |
   cd "$SNAP_DIR"
   snapcraft clean
