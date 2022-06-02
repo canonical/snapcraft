@@ -203,7 +203,7 @@ def _extract_icon(dom, workdir: str, desktop_file_paths: List[str]) -> Optional[
     if icon_node_type == "remote":
         return icon
 
-    if icon_node_type == "stock":
+    if icon_node_type == "stock" and icon is not None:
         return _get_icon_from_theme(workdir, "hicolor", icon)
 
     # If an icon path is specified and the icon file exists, we'll use that, otherwise
