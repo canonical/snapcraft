@@ -1126,7 +1126,7 @@ class WriteSnapDirectoryTestCase(CreateBaseTestCase):
         # The hook should be empty, because the one in snap/hooks is empty, and
         # no wrapper is generated (i.e. that hook is copied to both locations).
         self.assertThat(
-            os.path.join(self.hooks_dir, "configure"), FileContains("#!/bin/sh\n")
+            os.path.join(self.hooks_dir, "configure"), FileContains("#!/bin/true\n")
         )
 
     def test_snap_hooks_stubs_not_created_stubs_from_command_chain(self):
