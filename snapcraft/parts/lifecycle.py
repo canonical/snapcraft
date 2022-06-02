@@ -33,6 +33,7 @@ from snapcraft.providers import capture_logs_from_instance
 
 from . import grammar, plugins, yaml_utils
 from .parts import PartsLifecycle
+from .project_check import run_project_checks
 from .setup_assets import setup_assets
 from .update_metadata import update_project_metadata
 
@@ -169,10 +170,13 @@ def _run_command(
     managed_mode = utils.is_managed_mode()
     part_names = getattr(parsed_args, "parts", None)
 
-    if not managed_mode and command_name == "snap":
-        emit.message(
-            "The 'snap' command is deprecated, use 'pack' instead.", intermediate=True
-        )
+    if not managed_mode:
+        run_project_checks(project, assets_dir=assets_dir)
+
+        if command_name == "snap":
+            emit.message(
+                "The 'snap' command is deprecated, use 'pack' instead.", intermediate=True
+            )
 
     if parsed_args.use_lxd and providers.get_platform_default_provider() == "lxd":
         emit.message("LXD is used by default on this platform.", intermediate=True)
