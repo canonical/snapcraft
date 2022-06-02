@@ -24,7 +24,11 @@ import pytest
 
 from snapcraft import errors
 from snapcraft.parts import setup_assets as parts_setup_assets
-from snapcraft.parts.setup_assets import _validate_command_chain, setup_assets
+from snapcraft.parts.setup_assets import (
+    _validate_command_chain,
+    ensure_hook,
+    setup_assets,
+)
 from snapcraft.projects import Project
 
 
@@ -461,3 +465,24 @@ class TestCommandChain:
             "Failed to generate snap metadata: The command-chain item 'file-not-executable' "
             "defined in foo does not exist or is not executable."
         )
+
+
+def test_ensure_hook(new_dir):
+    hook_path: Path = new_dir / "configure"
+    ensure_hook(hook_path)
+
+    assert hook_path.exists()
+    assert hook_path.read_text() == "#!/bin/true\n"
+    assert oct(hook_path.stat().st_mode)[-3:] == "755"
+
+
+def test_ensure_hook_does_not_overwrite(new_dir):
+    hook_path: Path = new_dir / "configure"
+    hook_path.write_text("#!/bin/python3\n")
+    hook_path.chmod(0o700)
+
+    ensure_hook(hook_path)
+
+    assert hook_path.exists()
+    assert hook_path.read_text() == "#!/bin/python3\n"
+    assert oct(hook_path.stat().st_mode)[-3:] == "700"

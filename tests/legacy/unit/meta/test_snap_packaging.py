@@ -188,7 +188,7 @@ class SnapPackagingRunnerTests(unit.TestCase):
 
         hook = Path(sp._prime_dir, "meta", "hooks", "configure")
         assert hook.exists()
-        assert hook.read_text() == "#!/bin/sh\n"
+        assert hook.read_text() == "#!/bin/true\n"
         assert hook.stat().st_mode & 0xFFF == 0o755
 
     def test_no_stub_for_preconfigured_hook(self):

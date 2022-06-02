@@ -53,8 +53,9 @@ def setup_assets(
         for hook_name, hook in project.hooks.items():
             if hook.command_chain:
                 _validate_command_chain(
-                   hook.command_chain, name=f"hook {hook_name!r}", prime_dir=prime_dir
+                    hook.command_chain, name=f"hook {hook_name!r}", prime_dir=prime_dir
                 )
+            ensure_hook(meta_dir / "hooks" / hook_name)
 
     if project.type == "gadget":
         gadget_yaml = project_dir / "gadget.yaml"
@@ -214,9 +215,29 @@ def _write_snap_directory(*, assets_dir: Path, prime_dir: Path, meta_dir: Path) 
     # TODO: record manifest and source snapcraft.yaml
 
 
+def ensure_hook(hook_path: Path) -> None:
+    """Create a stub for hook_path if it does not exist.
+
+    A stub for hook_name is generated if a command-chain entry is defined
+    to ensure the command-chain for a defined hook runs.
+
+    A command-chain with no hook can occur when using extensions.
+    """
+    # The hook can exist if it was copied over from snap/hooks from the
+    # project root or from prime_dir/snap/hooks (provided by a part).
+    if hook_path.exists():
+        return
+
+    hook_path.parent.mkdir(parents=True, exist_ok=True)
+    hook_path.write_text("#!/bin/true\n")
+    hook_path.chmod(0o755)
+
+
 def _copy_file(source: Path, destination: Path, **kwargs) -> None:
     """Copy file if source and destination are not the same file."""
     if destination.exists() and source.samefile(destination):
-        emit.trace(f"skip copying {str(source)!r}: source and destination are the same file")
+        emit.trace(
+            f"skip copying {str(source)!r}: source and destination are the same file"
+        )
     else:
         shutil.copy(source, destination, **kwargs)

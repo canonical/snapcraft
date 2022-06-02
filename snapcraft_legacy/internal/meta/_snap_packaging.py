@@ -705,7 +705,7 @@ class _SnapPackaging:
         for hook in hooks_with_command_chain:
             hook_path = pathlib.Path(hooks_dir) / hook.hook_name
             if not hook_path.exists():
-                hook_path.write_text("#!/bin/sh\n")
+                hook_path.write_text("#!/bin/true\n")
                 hook_path.chmod(0o755)
 
         # Write wrapper hooks as necessary.
