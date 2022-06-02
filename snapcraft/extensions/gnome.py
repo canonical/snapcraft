@@ -15,16 +15,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Generic GNOME extension to support core22 and onwards."""
-
-
-from typing import Any, Dict, Optional, Tuple
+import dataclasses
+import functools
+import re
+from typing import Any, Dict, List, Optional, Tuple
 
 from overrides import overrides
 
 from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
-_PLATFORM_SNAP = dict(core22="gnome-42-2204")
-_SDK_SNAP = dict(core22="gnome-42-2204-sdk")
+_SDK_SNAP = {"core22": "gnome-42-2204-sdk"}
+_PLATFORM_TRANSLATION = {"core22": "2204"}
+
+
+@dataclasses.dataclass
+class GNOMESnaps:
+    """A structure of GNOME related snaps."""
+
+    sdk: str
+    content: str
+    builtin: bool = True
 
 
 class GNOME(Extension):
@@ -83,10 +93,31 @@ class GNOME(Extension):
             ],
         }
 
+    @functools.cached_property
+    def gnome_snaps(self) -> GNOMESnaps:
+        """Return the GNOME related snaps to use to construct the environment."""
+        base = self.yaml_data["base"]
+        sdk_snap = _SDK_SNAP[base]
+
+        build_snaps: List[str] = []
+        for part in self.yaml_data["parts"].values():
+            build_snaps.extend(part.get("build-snaps", []))
+
+        matcher = re.compile(r"gnome-\d+-" + _PLATFORM_TRANSLATION[base] + r"-sdk.*")
+        sdk_snap_candidates = [s for s in build_snaps if matcher.match(s)]
+        if sdk_snap_candidates:
+            sdk_snap = sdk_snap_candidates[0].split("/")[0]
+            builtin = False
+        else:
+            builtin = True
+        # The same except the trailing -sdk
+        content = sdk_snap[:-4]
+
+        return GNOMESnaps(sdk=sdk_snap, content=content, builtin=builtin)
+
     @overrides
     def get_root_snippet(self) -> Dict[str, Any]:
-        base = self.yaml_data["base"]
-        platform_snap = _PLATFORM_SNAP[base]
+        platform_snap = self.gnome_snaps.content
 
         return {
             "assumes": ["snapd2.43"],  # for 'snapctl is-connected'
@@ -135,8 +166,7 @@ class GNOME(Extension):
 
     @overrides
     def get_part_snippet(self) -> Dict[str, Any]:
-        base = self.yaml_data["base"]
-        sdk_snap = _SDK_SNAP[base]
+        sdk_snap = self.gnome_snaps.sdk
 
         return {
             "build-environment": [
@@ -213,13 +243,21 @@ class GNOME(Extension):
     @overrides
     def get_parts_snippet(self) -> Dict[str, Any]:
         source = get_extensions_data_dir() / "desktop" / "command-chain"
-        base = self.yaml_data["base"]
-        sdk_snap = _SDK_SNAP[base]
+
+        if self.gnome_snaps.builtin:
+            base = self.yaml_data["base"]
+            sdk_snap = _SDK_SNAP[base]
+            return {
+                "gnome/sdk": {
+                    "source": str(source),
+                    "plugin": "make",
+                    "build-snaps": [sdk_snap],
+                }
+            }
 
         return {
             "gnome/sdk": {
                 "source": str(source),
                 "plugin": "make",
-                "build-snaps": [sdk_snap],
             }
         }
