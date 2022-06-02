@@ -20,7 +20,7 @@ import abc
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Tuple, final
+from typing import Any, Dict, List, Optional, Sequence, Tuple, final
 
 from craft_cli import emit
 
@@ -60,6 +60,18 @@ def prepend_to_env(
                   a separator token at the end.
     """
     return separator.join(paths) + f"${{{env_variable}:+{separator}${env_variable}}}"
+
+
+def get_build_snaps(parts_yaml_data: Optional[Dict[str, Any]]) -> List[str]:
+    """Return build-snaps from yaml_data."""
+    if parts_yaml_data is None:
+        return []
+
+    build_snaps: List[str] = []
+    for part in parts_yaml_data.values():
+        build_snaps.extend(part.get("build-snaps", []))
+
+    return build_snaps
 
 
 class Extension(abc.ABC):
