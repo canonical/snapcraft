@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional
 
 import craft_parts
 from craft_cli import emit
-from craft_parts import ActionType, Part, Step
+from craft_parts import ActionType, Part, ProjectDirs, Step
 from xdg import BaseDirectory  # type: ignore
 
 from snapcraft import errors, repo
@@ -65,6 +65,7 @@ class PartsLifecycle:
         project_vars: Dict[str, str],
         extra_build_snaps: Optional[List[str]] = None,
     ):
+        self._work_dir = work_dir
         self._assets_dir = assets_dir
         self._package_repositories = package_repositories
         self._part_names = part_names
@@ -213,7 +214,8 @@ class PartsLifecycle:
         if self._adopt_info is None or self._adopt_info not in self._parse_info:
             return []
 
-        part = Part(self._adopt_info, {})
+        dirs = ProjectDirs(work_dir=self._work_dir)
+        part = Part(self._adopt_info, {}, project_dirs=dirs)
         locations = (
             part.part_src_dir,
             part.part_build_dir,
