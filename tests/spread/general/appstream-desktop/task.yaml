@@ -1,14 +1,20 @@
 summary: Build a snap that tests appstream settings
 
-# This test snap uses core18, and is limited to amd64 arch due to
-# architectures specified in expected_snap.yaml.
+# This test snap is limited to amd64 arch due to architectures specified
+# in expected_snap.yaml.
 systems:
   - ubuntu-18.04-64
   - ubuntu-18.04-amd64
-  - ubuntu-18.04
+  - ubuntu-22.04-64
+  - ubuntu-22.04-amd64
 
 environment:
   SNAP_DIR: ../snaps/appstream-desktop
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
 restore: |
   cd "$SNAP_DIR"
@@ -16,10 +22,22 @@ restore: |
   rm -f ./*.snap
 
 execute: |
-  cd "$SNAP_DIR"
-  snapcraft prime
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
 
-  expected_snap_yaml="$PWD/../../appstream-desktop/expected_snap.yaml"
+  cd "$SNAP_DIR"
+
+  # make sure we can create the snap using a build provider...
+  snapcraft --use-lxd
+
+  # and also in destructive mode
+  snapcraft --destructive-mode
+
+  if [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
+      expected_snap_yaml="$PWD/../../appstream-desktop/expected_snap_core22.yaml"
+  else
+      expected_snap_yaml="$PWD/../../appstream-desktop/expected_snap.yaml"
+  fi
 
   if ! diff -U10 prime/meta/snap.yaml "$expected_snap_yaml"; then
       echo "The formatting for snap.yaml is incorrect"
