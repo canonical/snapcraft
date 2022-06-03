@@ -33,6 +33,7 @@ from snapcraft.providers import capture_logs_from_instance
 
 from . import grammar, plugins, yaml_utils
 from .parts import PartsLifecycle
+from .project_check import run_project_checks
 from .setup_assets import setup_assets
 from .update_metadata import update_project_metadata
 
@@ -147,14 +148,17 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
 
     project = Project.unmarshal(yaml_data)
 
-    _run_command(
-        command_name,
-        project=project,
-        parse_info=parse_info,
-        parallel_build_count=build_count,
-        assets_dir=snap_project.assets_dir,
-        parsed_args=parsed_args,
-    )
+    try:
+        _run_command(
+            command_name,
+            project=project,
+            parse_info=parse_info,
+            parallel_build_count=build_count,
+            assets_dir=snap_project.assets_dir,
+            parsed_args=parsed_args,
+        )
+    except PermissionError as err:
+        raise errors.FilePermissionError(err.filename, reason=err.strerror)
 
 
 def _run_command(
@@ -169,10 +173,13 @@ def _run_command(
     managed_mode = utils.is_managed_mode()
     part_names = getattr(parsed_args, "parts", None)
 
-    if not managed_mode and command_name == "snap":
-        emit.message(
-            "The 'snap' command is deprecated, use 'pack' instead.", intermediate=True
-        )
+    if not managed_mode:
+        run_project_checks(project, assets_dir=assets_dir)
+
+        if command_name == "snap":
+            emit.message(
+                "The 'snap' command is deprecated, use 'pack' instead.", intermediate=True
+            )
 
     if parsed_args.use_lxd and providers.get_platform_default_provider() == "lxd":
         emit.message("LXD is used by default on this platform.", intermediate=True)
