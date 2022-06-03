@@ -84,7 +84,7 @@ def test_get_build_commands(monkeypatch):
     monkeypatch.setattr(os, "environ", dict())
 
     assert plugin.get_build_commands() == [
-        'state="$(set +o)"',
+        'state="$(set +o); set -$-"',
         "set +u",
         'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
         "set -- --local",
@@ -137,7 +137,7 @@ def test_get_build_commands_with_all_properties(monkeypatch):
     )
 
     assert plugin.get_build_commands() == [
-        'state="$(set +o)"',
+        'state="$(set +o); set -$-"',
         "set +u",
         'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
         "set -- --local",
