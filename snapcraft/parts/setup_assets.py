@@ -81,6 +81,8 @@ def setup_assets(
             icon_path = icon_path.relative_to(prime_dir)
         relative_icon_path = str(icon_path)
 
+    emit.trace(f"relative icon path: {relative_icon_path!r}")
+
     for app_name, app in project.apps.items():
         _validate_command_chain(
             app.command_chain, name=f"app {app_name!r}", prime_dir=prime_dir
@@ -104,6 +106,8 @@ def _finalize_icon(
     Fetch from a remote URL, if required, and place in the meta/gui
     directory.
     """
+    emit.trace(f"finalize icon: {icon!r}")
+
     # Nothing to do if no icon is configured, search for existing icon.
     if icon is None:
         return _find_icon_file(assets_dir)

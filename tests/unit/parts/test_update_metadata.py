@@ -278,7 +278,13 @@ def test_update_project_metadata_multiple(
             False,
             "metadata_icon.png",
         ),
-        ({}, False, False, None),  # only use metadata icon if file exists
+        (
+            # use metadata icon even if not downloaded yet
+            {},
+            False,
+            False,
+            "metadata_icon.png",
+        ),
         ({}, True, True, None),  # don't use metadata if asset icon already exists
     ],
 )
