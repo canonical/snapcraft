@@ -66,10 +66,11 @@ def update_project_metadata(
         if metadata.grade and not project.grade:
             project.grade = metadata.grade  # type: ignore
 
+        emit.trace(f"project icon: {project.icon!r}")
+        emit.trace(f"metadata icon: {metadata.icon!r}")
+
         if not project.icon:
-            _update_project_icon(
-                project, metadata=metadata, assets_dir=assets_dir, prime_dir=prime_dir
-            )
+            _update_project_icon(project, metadata=metadata, assets_dir=assets_dir)
 
         _update_project_app_desktop_file(
             project, metadata=metadata, assets_dir=assets_dir, prime_dir=prime_dir
@@ -96,7 +97,7 @@ def _update_project_variables(project: Project, project_vars: Dict[str, str]):
 
 
 def _update_project_icon(
-    project: Project, *, metadata: ExtractedMetadata, assets_dir: Path, prime_dir: Path
+    project: Project, *, metadata: ExtractedMetadata, assets_dir: Path,
 ) -> None:
     """Look for icons files and update project.
 
@@ -108,8 +109,10 @@ def _update_project_icon(
         if Path(icon_file).is_file():
             break
     else:
-        if metadata.icon and Path(prime_dir, metadata.icon.lstrip("/")).is_file():
+        if metadata.icon:
             project.icon = metadata.icon
+
+    emit.trace(f"updated project icon: {project.icon}")
 
 
 def _update_project_app_desktop_file(

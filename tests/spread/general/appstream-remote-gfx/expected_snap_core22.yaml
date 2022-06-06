@@ -1,0 +1,27 @@
+name: appstream-desktop
+title: Appstream Desktop
+version: 1.0.0
+summary: Appstream Desktop test
+description: |-
+  Some description.
+
+
+  Some list:
+
+  - First item
+  - Second item
+
+
+  Test me please.
+architectures:
+- amd64
+base: core22
+apps:
+  appstream-desktop:
+    command: usr/bin/appstream-desktop
+    common-id: io.snapcraft.appstream
+confinement: strict
+grade: devel
+environment:
+  LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+  PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
