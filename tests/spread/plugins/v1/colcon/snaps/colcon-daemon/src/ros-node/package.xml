@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>colcon-daemon</name>
+  <version>1.0.0</version>
+  <description>Simple colcon-daemon</description>
+  <maintainer email="me@example.com">me</maintainer>
+  <license>GPLv3</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <build_depend condition="$ROS_VERSION == 2">rclcpp</build_depend>
+
+  <exec_depend condition="$ROS_VERSION == 2">rclcpp</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
