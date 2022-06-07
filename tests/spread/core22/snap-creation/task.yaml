@@ -1,4 +1,4 @@
-summary: Test base package cutoff
+summary: Test snap file creation
 
 environment:
   SNAP/package_cutoff: package-cutoff
@@ -19,4 +19,5 @@ restore: |
 
 execute: |
   cd "$SNAP"
-  snapcraft --verbose
+  snapcraft 2>&1 | tee progress.txt
+  grep "Created snap package ${SNAP}_1.0_amd64.snap" progress.txt
