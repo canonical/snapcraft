@@ -81,6 +81,12 @@ def test_get_root_snippet(gnome_extension):
     assert gnome_extension.get_root_snippet() == {
         "assumes": ["snapd2.43"],
         "environment": {
+            "LD_LIBRARY_PATH": "${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}"
+            "/snap/gnome-42-2204/current/lib/$CRAFT_ARCH_TRIPLET:"
+            "/snap/gnome-42-2204/current/usr/lib/$CRAFT_ARCH_TRIPLET:"
+            "/snap/gnome-42-2204/current/usr/lib:"
+            "/snap/gnome-42-2204/current/usr/lib/vala-current:"
+            "/snap/gnome-42-2204/current/usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
             "GTK_USE_PORTAL": "1",
             "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
         },
@@ -128,6 +134,12 @@ def test_get_root_snippet_with_external_sdk(gnome_extension_with_build_snap):
     assert gnome_extension_with_build_snap.get_root_snippet() == {
         "assumes": ["snapd2.43"],
         "environment": {
+            "LD_LIBRARY_PATH": "${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}"
+            "/snap/gnome-44-2204/current/lib/$CRAFT_ARCH_TRIPLET:"
+            "/snap/gnome-44-2204/current/usr/lib/$CRAFT_ARCH_TRIPLET:"
+            "/snap/gnome-44-2204/current/usr/lib:"
+            "/snap/gnome-44-2204/current/usr/lib/vala-current:"
+            "/snap/gnome-44-2204/current/usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
             "GTK_USE_PORTAL": "1",
             "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
         },

@@ -24,6 +24,7 @@ from overrides import overrides
 
 from .extension import (
     Extension,
+    append_to_env,
     get_build_snaps,
     get_extensions_data_dir,
     prepend_to_env,
@@ -148,6 +149,16 @@ class GNOME(Extension):
             "environment": {
                 "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
                 "GTK_USE_PORTAL": "1",
+                "LD_LIBRARY_PATH": append_to_env(
+                    "LD_LIBRARY_PATH",
+                    [
+                        f"/snap/{platform_snap}/current/lib/$CRAFT_ARCH_TRIPLET",
+                        f"/snap/{platform_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET",
+                        f"/snap/{platform_snap}/current/usr/lib",
+                        f"/snap/{platform_snap}/current/usr/lib/vala-current",
+                        f"/snap/{platform_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
+                    ],
+                ),
             },
             "hooks": {
                 "configure": {
