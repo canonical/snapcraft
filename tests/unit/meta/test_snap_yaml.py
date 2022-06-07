@@ -502,3 +502,24 @@ def test_project_environment_ld_library_path_null(simple_project, new_dir):
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
         """
     )
+
+
+def test_version_git(simple_project, new_dir, mocker):
+    """Version in projects with ``version:git`` must be correctly handled."""
+    mocker.patch(
+        "craft_parts.sources.git_source.GitSource.generate_version",
+        return_value="1.2.3",
+    )
+
+    snap_yaml.write(
+        simple_project(version="git"),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
+    )
+
+    yaml_file = Path("meta/snap.yaml")
+    content = yaml_file.read_text()
+
+    data = yaml.safe_load(content)
+    assert data["version"] == "1.2.3"
