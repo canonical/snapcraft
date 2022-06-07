@@ -20,6 +20,7 @@ import contextlib
 import logging
 import os
 import sys
+from typing import Dict
 
 import craft_cli
 import craft_store
@@ -113,6 +114,9 @@ GLOBAL_ARGS = [
     )
 ]
 
+_LIB_NAMES = ("craft_parts", "craft_providers", "craft_store")
+_ORIGINAL_LIB_NAME_LOG_LEVEL: Dict[str, int] = {}
+
 
 def get_dispatcher() -> craft_cli.Dispatcher:
     """Return an instance of Dispatcher.
@@ -124,8 +128,9 @@ def get_dispatcher() -> craft_cli.Dispatcher:
         legacy.legacy_run()
 
     # set lib loggers to debug level so that all messages are sent to Emitter
-    for lib_name in ("craft_parts", "craft_providers", "craft_store"):
+    for lib_name in _LIB_NAMES:
         logger = logging.getLogger(lib_name)
+        _ORIGINAL_LIB_NAME_LOG_LEVEL[lib_name] = logger.level
         logger.setLevel(logging.DEBUG)
 
     if utils.is_managed_mode():
@@ -149,6 +154,19 @@ def get_dispatcher() -> craft_cli.Dispatcher:
     )
 
 
+def _run_legacy(err):
+    # Reset the libraries to their original log level
+    for lib_name in _LIB_NAMES:
+        logger = logging.getLogger(lib_name)
+        logger.setLevel(_ORIGINAL_LIB_NAME_LOG_LEVEL[lib_name])
+
+    # Legacy does not use craft-cli
+    emit.trace(f"run legacy implementation: {err!s}")
+    emit.ended_ok()
+
+    legacy.legacy_run()
+
+
 def run():
     """Run the CLI."""
     dispatcher = get_dispatcher()
@@ -169,9 +187,7 @@ def run():
                 and err.__context__.args[0]  # pylint: disable=no-member
                 not in dispatcher.commands
             ):
-                emit.trace(f"run legacy implementation: {err!s}")
-                emit.ended_ok()
-                legacy.legacy_run()
+                _run_legacy(err)
         print(err, file=sys.stderr)  # to stderr, as argparse normally does
         emit.ended_ok()
         retcode = 1
@@ -180,9 +196,7 @@ def run():
         emit.ended_ok()
         retcode = 0
     except errors.LegacyFallback as err:
-        emit.trace(f"run legacy implementation: {err!s}")
-        emit.ended_ok()
-        legacy.legacy_run()
+        _run_legacy(err)
     except craft_store.errors.CraftStoreError as err:
         emit.error(craft_cli.errors.CraftError(f"craft-store error: {err}"))
         retcode = 1
