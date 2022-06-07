@@ -81,6 +81,9 @@ def test_get_root_snippet(gnome_extension):
     assert gnome_extension.get_root_snippet() == {
         "assumes": ["snapd2.43"],
         "environment": {
+            "GTK_PATH": "${GTK_PATH:+$GTK_PATH:}"
+            "/snap/gnome-42-2204/current/usr/lib/gtk-3.0:"
+            "/snap/gnome-42-2204/current/usr/lib/$CRAFT_ARCH_TRIPLET/gtk-3.0",
             "GTK_USE_PORTAL": "1",
             "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
         },
@@ -128,6 +131,9 @@ def test_get_root_snippet_with_external_sdk(gnome_extension_with_build_snap):
     assert gnome_extension_with_build_snap.get_root_snippet() == {
         "assumes": ["snapd2.43"],
         "environment": {
+            "GTK_PATH": "${GTK_PATH:+$GTK_PATH:}"
+            "/snap/gnome-44-2204/current/usr/lib/gtk-3.0:"
+            "/snap/gnome-44-2204/current/usr/lib/$CRAFT_ARCH_TRIPLET/gtk-3.0",
             "GTK_USE_PORTAL": "1",
             "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
         },
