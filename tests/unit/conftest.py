@@ -18,14 +18,14 @@ from typing import Any, Dict, Optional, Tuple
 
 import pytest
 
-from snapcraft import extensions
+from snapcraft.extensions import extension, register, unregister
 
 
 @pytest.fixture
 def fake_extension():
     """Basic extension."""
 
-    class ExtensionImpl(extensions.Extension):
+    class ExtensionImpl(extension.Extension):
         """The test extension implementation."""
 
         @staticmethod
@@ -52,16 +52,16 @@ def fake_extension():
         def get_parts_snippet(self) -> Dict[str, Any]:
             return {"fake-extension/fake-part": {"plugin": "nil"}}
 
-    extensions.register("fake-extension", ExtensionImpl)
+    register("fake-extension", ExtensionImpl)
     yield ExtensionImpl
-    extensions.unregister("fake-extension")
+    unregister("fake-extension")
 
 
 @pytest.fixture
 def fake_extension_extra():
     """A variation of fake_extension with some conflicts and new code."""
 
-    class ExtensionImpl(extensions.Extension):
+    class ExtensionImpl(extension.Extension):
         """The test extension implementation."""
 
         @staticmethod
@@ -88,14 +88,14 @@ def fake_extension_extra():
         def get_parts_snippet(self) -> Dict[str, Any]:
             return {"fake-extension-extra/fake-part": {"plugin": "nil"}}
 
-    extensions.register("fake-extension-extra", ExtensionImpl)
+    register("fake-extension-extra", ExtensionImpl)
     yield ExtensionImpl
-    extensions.unregister("fake-extension-extra")
+    unregister("fake-extension-extra")
 
 
 @pytest.fixture
 def fake_extension_invalid_parts():
-    class ExtensionImpl(extensions.Extension):
+    class ExtensionImpl(extension.Extension):
         """The test extension implementation."""
 
         @staticmethod
@@ -122,16 +122,16 @@ def fake_extension_invalid_parts():
         def get_parts_snippet(self) -> Dict[str, Any]:
             return {"fake-part": {"plugin": "nil"}, "fake-part-2": {"plugin": "nil"}}
 
-    extensions.register("fake-extension-invalid-parts", ExtensionImpl)
+    register("fake-extension-invalid-parts", ExtensionImpl)
     yield ExtensionImpl
-    extensions.unregister("fake-extension-invalid-parts")
+    unregister("fake-extension-invalid-parts")
 
 
 @pytest.fixture
 def fake_extension_experimental():
     """Basic extension."""
 
-    class ExtensionImpl(extensions.Extension):
+    class ExtensionImpl(extension.Extension):
         """The test extension implementation."""
 
         @staticmethod
@@ -158,16 +158,16 @@ def fake_extension_experimental():
         def get_parts_snippet(self) -> Dict[str, Any]:
             return {}
 
-    extensions.register("fake-extension-experimental", ExtensionImpl)
+    register("fake-extension-experimental", ExtensionImpl)
     yield ExtensionImpl
-    extensions.unregister("fake-extension-experimental")
+    unregister("fake-extension-experimental")
 
 
 @pytest.fixture
 def fake_extension_name_from_legacy():
     """A fake_extension variant with a name collision with legacy."""
 
-    class ExtensionImpl(extensions.Extension):
+    class ExtensionImpl(extension.Extension):
         """The test extension implementation."""
 
         @staticmethod
@@ -194,6 +194,6 @@ def fake_extension_name_from_legacy():
         def get_parts_snippet(self) -> Dict[str, Any]:
             return {"fake-extension-extra/fake-part": {"plugin": "nil"}}
 
-    extensions.register("ros2-foxy", ExtensionImpl)
+    register("ros2-foxy", ExtensionImpl)
     yield ExtensionImpl
-    extensions.unregister("ros2-foxy")
+    unregister("ros2-foxy")
