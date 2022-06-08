@@ -1,0 +1,40 @@
+summary: Use version git
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+
+  mkdir test-snap
+  cd test-snap
+  snapcraft init
+
+  sed -i -e 's/version:.*/version: git/' snap/snapcraft.yaml
+  set_base snap/snapcraft.yaml
+
+  # create an annotated tag
+  git init-db
+  git add .
+  git commit -m msg
+  git tag -a 5.5 -m msg
+  echo >> snap/snapcraft.yaml
+
+restore: |
+  rm -rf test-snap
+  rm -rf ./*.snap
+
+execute: |
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  cd test-snap
+
+  # First with lxd
+  snapcraft --use-lxd
+  ls -l
+  test -f my-snap-name_5.5-dirty_amd64.snap
+  rm ./*.snap
+
+  # Then on host.
+  snapcraft --destructive-mode
+  ls -l
+  test -f my-snap-name_5.5-dirty_amd64.snap
