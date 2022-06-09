@@ -25,7 +25,7 @@ from snapcraft import errors, pack
 def test_pack_snap(mocker, new_dir):
     mock_run = mocker.patch("subprocess.run")
     pack.pack_snap(new_dir, output=None)
-    assert mock_run.mock_calls == [
+    assert mock_run.mock_calls[:2] == [
         call(
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
@@ -44,7 +44,7 @@ def test_pack_snap(mocker, new_dir):
 def test_pack_snap_compression_none(mocker, new_dir):
     mock_run = mocker.patch("subprocess.run")
     pack.pack_snap(new_dir, output=None, compression=None)
-    assert mock_run.mock_calls == [
+    assert mock_run.mock_calls[:2] == [
         call(
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
@@ -63,7 +63,7 @@ def test_pack_snap_compression_none(mocker, new_dir):
 def test_pack_snap_compression(mocker, new_dir):
     mock_run = mocker.patch("subprocess.run")
     pack.pack_snap(new_dir, output=None, compression="zz")
-    assert mock_run.mock_calls == [
+    assert mock_run.mock_calls[:2] == [
         call(
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
@@ -83,7 +83,7 @@ def test_pack_snap_output_file_output_directory_cwd(mocker, new_dir):
     """Test `snap pack` when it outputs to the current working directory."""
     mock_run = mocker.patch("subprocess.run")
     pack.pack_snap(new_dir, output=f"{new_dir}/test.snap")
-    assert mock_run.mock_calls == [
+    assert mock_run.mock_calls[:2] == [
         call(
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
@@ -108,7 +108,7 @@ def test_pack_snap_output_file_output_directory_existing(mocker, new_dir):
 
     pack.pack_snap(new_dir, output=output_directory / "test.snap")
 
-    assert mock_run.mock_calls == [
+    assert mock_run.mock_calls[:2] == [
         call(
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
@@ -132,7 +132,7 @@ def test_pack_snap_output_file_output_directory_non_existant(mocker, new_dir):
 
     pack.pack_snap(new_dir, output=output_directory / "test.snap")
 
-    assert mock_run.mock_calls == [
+    assert mock_run.mock_calls[:2] == [
         call(
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
@@ -159,7 +159,7 @@ def test_pack_snap_output_directory_not_specified(mocker, new_dir):
     """Test `snap pack` executes when no output directory is specified."""
     mock_run = mocker.patch("subprocess.run")
     pack.pack_snap(new_dir, output=str(new_dir))
-    assert mock_run.mock_calls == [
+    assert mock_run.mock_calls[:2] == [
         call(
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
@@ -185,7 +185,7 @@ def test_pack_snap_output_file_output_directory_existing_no_file_name(mocker, ne
 
     pack.pack_snap(new_dir, output=output_directory)
 
-    assert mock_run.mock_calls == [
+    assert mock_run.mock_calls[:2] == [
         call(
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
