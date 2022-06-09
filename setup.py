@@ -97,7 +97,7 @@ install_requires = [
     "craft-cli",
     "craft-grammar",
     "craft-parts",
-    "craft-providers",
+    "craft-providers @ git+https://github.com/mr-cal/craft-providers.git@lxc-stdin",
     "craft-store",
     "cryptography==3.4",
     "gnupg",
