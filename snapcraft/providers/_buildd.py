@@ -62,9 +62,9 @@ class SnapcraftBuilddBaseConfiguration(bases.BuilddBase):
 
         :raises BaseConfigurationError: on error.
         """
-        # Requirement for apt gpg
+        # Requirement for apt gpg and version:git
         executor.execute_run(
-            ["apt-get", "install", "-y", "dirmngr"],
+            ["apt-get", "install", "-y", "dirmngr", "git"],
             capture_output=True,
             check=True,
         )

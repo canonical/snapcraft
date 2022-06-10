@@ -87,13 +87,14 @@ def pack_snap(
     emit.progress("Creating snap package...")
     emit.trace(f"Pack command: {command}")
     try:
-        subprocess.run(
+        proc = subprocess.run(
             command, capture_output=True, check=True, universal_newlines=True
-        )  # type: ignore
+        )
     except subprocess.CalledProcessError as err:
         msg = f"Cannot pack snap file: {err!s}"
         if err.stderr:
             msg += f" ({err.stderr.strip()!s})"
         raise errors.SnapcraftError(msg)
 
-    emit.message("Created snap package", intermediate=True)
+    snap_filename = str(proc.stdout).partition(":")[2].strip()
+    emit.message(f"Created snap package {snap_filename}", intermediate=True)

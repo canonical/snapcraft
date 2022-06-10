@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Utilities for snapcraft."""
-import glob
 import multiprocessing
 import os
 import pathlib
@@ -280,47 +279,6 @@ def humanize_list(
     return f"{humanized} {conjunction} {quoted_items[-1]}"
 
 
-def _extract_ld_library_paths(ld_conf_file: str) -> List[str]:
-    # From the ldconfig manpage, paths can be colon-, space-, tab-, newline-,
-    # or comma-separated.
-    path_delimiters = re.compile(r"[:\s,]")
-    comments = re.compile(r"#.*$")
-
-    paths = []
-    with open(ld_conf_file, "r", encoding="utf-8") as ld_config:
-        for line in ld_config:
-            # Remove comments from line
-            line = comments.sub("", line).strip()
-
-            if line:
-                paths.extend(path_delimiters.split(line))
-
-    return paths
-
-
-def _get_configured_ld_library_paths(prime_dir: Path) -> List[str]:
-    """Determine additional library paths needed for the linker loader.
-
-    This is a workaround until full library searching is implemented which
-    works by searching for ld.so.conf in specific hard coded locations
-    within root.
-
-    :param prime_dir str: the directory to search for specific ld.so.conf
-                          entries.
-    :returns: a list of strings of library paths where relevant libraries
-              can be found within prime_dir.
-    """
-    # If more ld.so.conf files need to be supported, add them here.
-    ld_config_globs = {f"{str(prime_dir)}/usr/lib/*/mesa*/ld.so.conf"}
-
-    ld_library_paths = []
-    for this_glob in ld_config_globs:
-        for ld_conf_file in glob.glob(this_glob):
-            ld_library_paths.extend(_extract_ld_library_paths(ld_conf_file))
-
-    return [str(prime_dir / path.lstrip("/")) for path in ld_library_paths]
-
-
 def _get_common_ld_library_paths(prime_dir: Path, arch_triplet: str) -> List[str]:
     """Return common existing PATH entries for a snap."""
     paths = [
@@ -338,8 +296,6 @@ def get_ld_library_paths(prime_dir: Path, arch_triplet: str) -> str:
     paths = ["${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"]
     # Add the default LD_LIBRARY_PATH
     paths += _get_common_ld_library_paths(prime_dir, arch_triplet)
-    # Add more specific LD_LIBRARY_PATH from staged packages if necessary
-    paths += _get_configured_ld_library_paths(prime_dir)
 
     ld_library_path = ":".join(paths)
 

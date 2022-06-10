@@ -13,18 +13,10 @@ jobs:
           # Secrets cannot be used in conditionals, so this is our dance:
           # https://github.com/actions/runner/issues/520
           if [[ -n "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}" ]]; then
-            echo "::set-output name=PUBLISH::env"
-          elif [[ -n "${{ secrets.STORE_LOGIN }}" ]]; then
-            echo "::set-output name=PUBLISH::legacy"
+            echo "::set-output name=PUBLISH::true"
           else
             echo "::set-output name=PUBLISH::"
-
-          if [[ ${{ github.event_name }} == 'pull_request' ]]; then
-            echo "::set-output name=PUBLISH_BRANCH::edge/pr-${{ github.event.number }}"
-          else
-            echo "::set-output name=PUBLISH_BRANCH::"
           fi
-
 
       - if: steps.decisions.outputs.PUBLISH == 'true'
         name: Checkout Snapcraft        
@@ -34,28 +26,23 @@ jobs:
           fetch-depth: 0
 
       - if: steps.decisions.outputs.PUBLISH == 'true'
-        name: Build Snapcraft Snap
-        id: build-snapcraft
         uses: snapcore/action-build@v1.0.9
+        name: Build Snapcraft Snap
+        id: build
+        with:
+          snapcraft-channel: latest/candidate
 
       - if: steps.decisions.outputs.PUBLISH == 'true'
         name: Verify Snapcraft Snap
         run: |
           # Make sure it is installable.
-          sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
+          sudo snap install --dangerous --classic ${{ steps.build.outputs.snap }}
 
-      - if: steps.decisions.outputs.PUBLISH == 'legacy' && steps.decisions.outputs.PUBLISH_BRANCH != null
-        uses: snapcore/action-publish@v1
-        with:
-          store_login: ${{ secrets.STORE_LOGIN }}
-          snap: ${{ steps.build-snapcraft.outputs.snap }}
-          release: ${{ steps.decisions.outputs.PUBLISH_BRANCH }}
-
-      - if: steps.decisions.outputs.PUBLISH == 'env' && steps.decisions.outputs.PUBLISH_BRANCH != null
+      - if: steps.decisions.outputs.PUBLISH == 'true' && github.event_name == 'pull_request'
         # Use this until snapcore/action-publish#27 it is merged.
-        uses: sergiusens/action-publish
+        uses: sergiusens/action-publish@master
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         with:
-          snap: ${{ steps.build-snapcraft.outputs.snap }}
-          release: ${{ steps.decisions.outputs.PUBLISH_BRANCH }}
+          snap: ${{ steps.build.outputs.snap }}
+          release: edge/pr-${{ github.event.number }}
