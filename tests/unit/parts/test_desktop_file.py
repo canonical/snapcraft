@@ -34,23 +34,18 @@ class TestDesktopExec:
             ("foo", "--arg", "foo --arg"),
             ("foo", "--arg %U", "foo --arg %U"),
             ("foo", "%U", "foo %U"),
-
             # snap name != app name
             ("bar", "", "foo.bar"),
             ("bar", "--arg", "foo.bar --arg"),
-        ]
+        ],
     )
-    def test_generate_desktop_file(
-        self, new_dir, app_name, app_args, expected_exec
-    ):
+    def test_generate_desktop_file(self, new_dir, app_name, app_args, expected_exec):
         snap_name = "foo"
 
         desktop_file_path = new_dir / "app.desktop"
         with desktop_file_path.open("w") as desktop_file:
             print("[Desktop Entry]", file=desktop_file)
-            print(
-                f"Exec={' '.join(['in-snap-exe', app_args])}", file=desktop_file
-            )
+            print(f"Exec={' '.join(['in-snap-exe', app_args])}", file=desktop_file)
 
         d = DesktopFile(
             snap_name=snap_name,
@@ -80,16 +75,13 @@ class TestDesktopIcon:
         [
             # icon_path preferred
             ("other.png", "foo.png", "${SNAP}/foo.png"),
-
             # icon_path with / preferred
             ("/foo.png", "foo.png", "${SNAP}/foo.png"),
-
             # icon path with ${SNAP}
             ("${SNAP}/foo.png", None, "${SNAP}/foo.png"),
-
             # icon name
             ("foo", None, "foo"),
-        ]
+        ],
     )
     def test_generate_desktop_file(self, new_dir, icon, icon_path, expected_icon):
         snap_name = app_name = "foo"
@@ -136,16 +128,13 @@ class TestDesktopIcon:
         [
             # icon_path preferred
             ("other.png", "foo.png", "${SNAP}/foo.png"),
-
             # icon_path with / preferred
             ("/foo.png", "foo.png", "${SNAP}/foo.png"),
-
             # icon path with ${SNAP}
             ("${SNAP}/foo.png", None, "${SNAP}/foo.png"),
-
             # icon name
             ("foo", None, "foo"),
-        ]
+        ],
     )
     def test_generate_desktop_file_multisection(
         self, new_dir, icon, icon_path, expected_icon
