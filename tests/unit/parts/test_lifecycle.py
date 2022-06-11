@@ -965,7 +965,11 @@ def test_lifecycle_run_permission_denied(new_dir):
         parts_lifecycle.run(
             "prime",
             argparse.Namespace(
-                parts=[], destructive_mode=True, use_lxd=False, provider=None, debug=False
+                parts=[],
+                destructive_mode=True,
+                use_lxd=False,
+                provider=None,
+                debug=False,
             ),
         )
 

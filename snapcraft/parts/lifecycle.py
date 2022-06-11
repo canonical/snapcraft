@@ -178,7 +178,8 @@ def _run_command(
 
         if command_name == "snap":
             emit.message(
-                "The 'snap' command is deprecated, use 'pack' instead.", intermediate=True
+                "The 'snap' command is deprecated, use 'pack' instead.",
+                intermediate=True,
             )
 
     if parsed_args.use_lxd and providers.get_platform_default_provider() == "lxd":

@@ -97,7 +97,10 @@ def _update_project_variables(project: Project, project_vars: Dict[str, str]):
 
 
 def _update_project_icon(
-    project: Project, *, metadata: ExtractedMetadata, assets_dir: Path,
+    project: Project,
+    *,
+    metadata: ExtractedMetadata,
+    assets_dir: Path,
 ) -> None:
     """Look for icons files and update project.
 
