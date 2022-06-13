@@ -81,7 +81,7 @@ def load(filestream: TextIO) -> Dict[str, Any]:
         data = yaml.safe_load(filestream)
         build_base = utils.get_effective_base(
             base=data.get("base"),
-            build_base=data.get("build_base"),
+            build_base=data.get("build-base"),
             project_type=data.get("type"),
             name=data.get("name"),
         )

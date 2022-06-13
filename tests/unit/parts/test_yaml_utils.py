@@ -94,6 +94,25 @@ def test_yaml_load_unhashable_errors():
     )
 
 
+def test_yaml_load_build_base():
+    assert (
+        yaml_utils.load(
+            io.StringIO(
+                dedent(
+                    """\
+        base: foo
+        build-base: core22
+    """
+                )
+            )
+        )
+        == {
+            "base": "foo",
+            "build-base": "core22",
+        }
+    )
+
+
 def test_yaml_load_not_core22_base():
     with pytest.raises(errors.LegacyFallback) as raised:
         yaml_utils.load(
