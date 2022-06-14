@@ -57,6 +57,9 @@ _SNAP_PROJECT_FILES = [
     _SnapProject(project_file=Path(".snapcraft.yaml")),
 ]
 
+_CORE_PART_KEYS = ["build-packages", "build-snaps"]
+_CORE_PART_NAME = "snapcraft/core"
+
 
 def get_snap_project() -> _SnapProject:
     """Find the snapcraft.yaml to load.
@@ -74,24 +77,16 @@ def get_snap_project() -> _SnapProject:
     )
 
 
-def process_yaml(project_file: Path) -> Dict[str, Any]:
-    """Process the yaml from project file.
-
-    :raises SnapcraftError: if the project yaml file cannot be loaded.
-    """
-    yaml_data = {}
-
-    try:
-        with open(project_file, encoding="utf-8") as yaml_file:
-            yaml_data = yaml_utils.load(yaml_file)
-    except OSError as err:
-        msg = err.strerror
-        if err.filename:
-            msg = f"{msg}: {err.filename!r}."
-        raise errors.SnapcraftError(msg) from err
-
+def apply_yaml(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Apply Snapcraft logic to yaml_data."""
     # validate project grammar
     GrammarAwareProject.validate_grammar(yaml_data)
+
+    # Special Snapcraft Part
+    core_part = {k: yaml_data.pop(k) for k in _CORE_PART_KEYS if k in yaml_data}
+    if core_part:
+        core_part["plugin"] = "nil"
+        yaml_data["parts"][_CORE_PART_NAME] = core_part
 
     # TODO: support for target_arch
     arch = _get_arch()
@@ -103,6 +98,23 @@ def process_yaml(project_file: Path) -> Dict[str, Any]:
         )
 
     return yaml_data
+
+
+def process_yaml(project_file: Path) -> Dict[str, Any]:
+    """Process the yaml from project file.
+
+    :raises SnapcraftError: if the project yaml file cannot be loaded.
+    """
+    try:
+        with open(project_file, encoding="utf-8") as yaml_file:
+            yaml_data = yaml_utils.load(yaml_file)
+    except OSError as err:
+        msg = err.strerror
+        if err.filename:
+            msg = f"{msg}: {err.filename!r}."
+        raise errors.SnapcraftError(msg) from err
+
+    return apply_yaml(yaml_data)
 
 
 def _extract_parse_info(yaml_data: Dict[str, Any]) -> Dict[str, List[str]]:

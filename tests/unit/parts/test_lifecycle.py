@@ -28,6 +28,8 @@ from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts.update_metadata import update_project_metadata
 from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Project
 
+# pylint: disable=too-many-lines
+
 _SNAPCRAFT_YAML_FILENAMES = [
     "snap/snapcraft.yaml",
     "build-aux/snap/snapcraft.yaml",
@@ -979,3 +981,34 @@ def test_lifecycle_run_permission_denied(new_dir):
         "Make sure the file is part of the current project "
         "and its permissions and ownership are correct."
     )
+
+
+@pytest.fixture
+def minimal_yaml_data():
+    return {
+        "name": "name",
+        "base": "core22",
+        "confinement": "strict",
+        "grade": "devel",
+        "version": "1.0",
+        "summary": "summary",
+        "description": "description",
+        "parts": {"nil": {}},
+    }
+
+
+@pytest.mark.parametrize("key", ("build-packages", "build-snaps"))
+@pytest.mark.parametrize("value", (["foo"], [{"on amd64": ["foo"]}]))
+def test_root_packages(minimal_yaml_data, key, value):
+    minimal_yaml_data[key] = value
+
+    assert parts_lifecycle.apply_yaml(minimal_yaml_data) == {
+        "name": "name",
+        "base": "core22",
+        "confinement": "strict",
+        "grade": "devel",
+        "version": "1.0",
+        "summary": "summary",
+        "description": "description",
+        "parts": {"nil": {}, "snapcraft/core": {"plugin": "nil", key: ["foo"]}},
+    }
