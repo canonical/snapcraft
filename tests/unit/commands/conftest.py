@@ -32,3 +32,14 @@ def fake_confirmation_prompt(mocker):
     return mocker.patch(
         "snapcraft.utils.confirm_with_user", return_value=False, autospec=True
     )
+
+
+@pytest.fixture
+def legacy_config_path(monkeypatch, new_dir):
+    config_file = new_dir / "ci.cfg"
+    monkeypatch.setattr(
+        "snapcraft.commands.store._legacy_account.LegacyUbuntuOne._CONFIG_PATH",
+        config_file,
+    )
+
+    return config_file
