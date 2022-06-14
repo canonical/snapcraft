@@ -57,15 +57,23 @@ def test_login(emitter, fake_store_login):
     emitter.assert_message("Login successful")
 
 
-def test_login_with_file_fails():
+def test_login_with_file(emitter, mocker, legacy_config_path):
+    store_credentials_mock = mocker.patch(
+        "snapcraft.commands.store._legacy_account.LegacyUbuntuOne.store_credentials"
+    )
+    legacy_config_path.write_text("secretb64")
+
     cmd = commands.StoreLoginCommand(None)
 
-    with pytest.raises(craft_cli.errors.ArgumentParsingError) as raised:
-        cmd.run(argparse.Namespace(login_with="fake-file", experimental_login=False))
+    cmd.run(
+        argparse.Namespace(login_with=str(legacy_config_path), experimental_login=False)
+    )
 
-    assert str(raised.value) == (
+    store_credentials_mock.assert_called_once_with("secretb64")
+    emitter.assert_message(
         "--with is no longer supported, export the auth to the environment "
-        "variable 'SNAPCRAFT_STORE_CREDENTIALS' instead"
+        "variable 'SNAPCRAFT_STORE_CREDENTIALS' instead",
+        intermediate=True,
     )
 
 

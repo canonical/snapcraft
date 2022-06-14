@@ -29,6 +29,7 @@ from craft_cli import emit
 from snapcraft import __version__, errors, utils
 
 from . import channel_map, constants
+from ._legacy_account import LegacyUbuntuOne
 
 _TESTING_ENV_PREFIXES = ["TRAVIS", "AUTOPKGTEST_TMP"]
 
@@ -106,8 +107,20 @@ def get_client(ephemeral: bool) -> craft_store.BaseClient:
     store_upload_url = get_store_upload_url()
     user_agent = build_user_agent()
 
-    if use_candid() is True:
-        client: craft_store.BaseClient = craft_store.StoreClient(
+    if LegacyUbuntuOne.has_legacy_credentials():
+        emit.message("This login method is not longer supported", intermediate=True)
+        client: craft_store.BaseClient = LegacyUbuntuOne(
+            base_url=store_url,
+            storage_base_url=store_upload_url,
+            auth_url=get_store_login_url(),
+            application_name="snapcraft",
+            user_agent=user_agent,
+            endpoints=craft_store.endpoints.U1_SNAP_STORE,
+            environment_auth=constants.ENVIRONMENT_STORE_CREDENTIALS,
+            ephemeral=ephemeral,
+        )
+    elif use_candid() is True:
+        client = craft_store.StoreClient(
             base_url=store_url,
             storage_base_url=store_upload_url,
             application_name="snapcraft",

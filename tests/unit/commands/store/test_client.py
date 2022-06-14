@@ -25,7 +25,7 @@ import requests
 from craft_store import endpoints
 
 from snapcraft import errors
-from snapcraft.commands.store import client
+from snapcraft.commands.store import LegacyUbuntuOne, client
 from snapcraft.commands.store.channel_map import ChannelMap
 from snapcraft.utils import OSPlatform
 
@@ -223,6 +223,7 @@ def test_get_hostname():
 #######################
 
 
+@pytest.mark.usefixtures("legacy_config_path")
 @pytest.mark.parametrize("ephemeral", (True, False))
 def test_get_store_client(monkeypatch, ephemeral):
     monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "candid")
@@ -232,11 +233,21 @@ def test_get_store_client(monkeypatch, ephemeral):
     assert isinstance(store_client, craft_store.StoreClient)
 
 
+@pytest.mark.usefixtures("legacy_config_path")
 @pytest.mark.parametrize("ephemeral", (True, False))
 def test_get_ubuntu_client(ephemeral):
     store_client = client.get_client(ephemeral)
 
     assert isinstance(store_client, craft_store.UbuntuOneStoreClient)
+
+
+@pytest.mark.parametrize("ephemeral", (True, False))
+def test_get_legacy_ubuntu_client(new_dir, legacy_config_path, ephemeral):
+    legacy_config_path.touch()
+
+    store_client = client.get_client(ephemeral)
+
+    assert isinstance(store_client, LegacyUbuntuOne)
 
 
 ##################
