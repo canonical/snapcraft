@@ -138,5 +138,5 @@ parts:
         ln -sf ../usr/bin/python3.8 $SNAPCRAFT_PART_INSTALL/bin/python3
         mkdir -p $SNAPCRAFT_PART_INSTALL/libexec/snapcraft
         mv $SNAPCRAFT_PART_INSTALL/bin/craftctl $SNAPCRAFT_PART_INSTALL/libexec/snapcraft/
-        sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python|' $SNAPCRAFT_PART_INSTALL/libexec/snapcraft/craftctl
+        sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python -E|' $SNAPCRAFT_PART_INSTALL/libexec/snapcraft/craftctl
     after: [snapcraft-libs]
