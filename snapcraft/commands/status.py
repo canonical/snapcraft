@@ -353,7 +353,7 @@ def get_tabulated_channel_map(  # pylint: disable=too-many-branches, too-many-lo
     if any(line[expires_column] != "" for line in channel_lines):
         headers.append("Expires at")
         for index, _ in enumerate(channel_lines):
-            if not channel_lines[index][expires_column]:
+            if not channel_lines[index][expires_column]:  # pylint: disable=R1736
                 channel_lines[index][expires_column] = "-"
     else:
         headers.append("")
