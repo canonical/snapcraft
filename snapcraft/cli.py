@@ -30,6 +30,7 @@ from snapcraft import __version__, errors, utils
 from snapcraft_legacy.cli import legacy
 
 from . import commands
+from .commands import store
 
 COMMAND_GROUPS = [
     craft_cli.CommandGroup(
@@ -198,6 +199,19 @@ def run():
         retcode = 0
     except errors.LegacyFallback as err:
         _run_legacy(err)
+    except craft_store.errors.NoKeyringError as err:
+        emit.error(
+            craft_cli.errors.CraftError(
+                f"craft-store error: {err}",
+                resolution=(
+                    "Ensure the keyring is working or "
+                    f"{store.constants.ENVIRONMENT_STORE_CREDENTIALS} "
+                    "is correctly exported into the environment"
+                ),
+                docs_url="https://snapcraft.io/docs/snapcraft-authentication",
+            )
+        )
+        retcode = 1
     except craft_store.errors.CraftStoreError as err:
         emit.error(craft_cli.errors.CraftError(f"craft-store error: {err}"))
         retcode = 1
