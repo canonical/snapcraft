@@ -223,19 +223,20 @@ def test_get_hostname():
 #######################
 
 
-@pytest.mark.usefixtures("legacy_config_path")
 @pytest.mark.parametrize("ephemeral", (True, False))
-def test_get_store_client(monkeypatch, ephemeral):
+def test_get_store_client(monkeypatch, ephemeral, legacy_config_path):
     monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "candid")
+    legacy_config_path.unlink()
 
     store_client = client.get_client(ephemeral)
 
     assert isinstance(store_client, craft_store.StoreClient)
 
 
-@pytest.mark.usefixtures("legacy_config_path")
 @pytest.mark.parametrize("ephemeral", (True, False))
-def test_get_ubuntu_client(ephemeral):
+def test_get_ubuntu_client(ephemeral, legacy_config_path):
+    legacy_config_path.unlink()
+
     store_client = client.get_client(ephemeral)
 
     assert isinstance(store_client, craft_store.UbuntuOneStoreClient)
