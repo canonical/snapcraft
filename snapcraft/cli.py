@@ -80,6 +80,7 @@ COMMAND_GROUPS = [
             commands.StoreCloseCommand,
             commands.StoreStatusCommand,
             commands.StoreUploadCommand,
+            commands.StoreLegacyPushCommand,  # hidden (legacy for upload)
             commands.StoreLegacyPromoteCommand,
             commands.StoreLegacyListRevisionsCommand,
         ],
