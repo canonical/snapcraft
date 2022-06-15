@@ -63,10 +63,17 @@ def snap_file():
 
 
 @pytest.mark.usefixtures("memory_keyring")
+@pytest.mark.parametrize(
+    "command_class", (commands.StoreUploadCommand, commands.StoreLegacyPushCommand)
+)
 def test_default(
-    emitter, fake_store_notify_upload, fake_store_verify_upload, snap_file
+    emitter,
+    fake_store_notify_upload,
+    fake_store_verify_upload,
+    snap_file,
+    command_class,
 ):
-    cmd = commands.StoreUploadCommand(None)
+    cmd = command_class(None)
 
     cmd.run(
         argparse.Namespace(

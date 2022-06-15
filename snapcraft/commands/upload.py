@@ -57,13 +57,13 @@ class StoreUploadCommand(BaseCommand):
     def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
         parser.add_argument(
             "snap_file",
-            metavar="<snap-file>",
+            metavar="snap-file",
             type=str,
             help="Snap to upload",
         )
         parser.add_argument(
             "--release",
-            metavar="<channels>",
+            metavar="channels",
             dest="channels",
             type=str,
             default=None,
@@ -114,3 +114,10 @@ def create_callback(encoder: MultipartEncoder):
             progress.advance(monitor.bytes_read)
 
         return progress_callback
+
+
+class StoreLegacyPushCommand(StoreUploadCommand):
+    """Legacy command to upload a snap to the Snap Store."""
+
+    name = "push"
+    hidden = True
