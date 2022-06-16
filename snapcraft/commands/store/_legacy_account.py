@@ -18,9 +18,10 @@
 
 import base64
 import configparser
+import json
 import os
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Dict, Optional, Sequence
 
 import craft_store
 import pymacaroons
@@ -66,40 +67,33 @@ def _deserialize_macaroon(value) -> pymacaroons.Macaroon:
         )
 
 
-def _macaroon_auth(conf) -> str:
+def _get_macaroons_from_conf(conf) -> Dict[str, str]:
     """Format a macaroon and its associated discharge.
 
     :return: A string suitable to use in an Authorization header.
     """
     host = parse_url(constants.UBUNTU_ONE_SSO_URL).host
-    root_macaroon_raw = conf.get(host, "macaroon")
-    if root_macaroon_raw is None:
-        raise errors.SnapcraftError("Root macaroon not in the config file")
-    unbound_raw = conf.get(host, "unbound_discharge")
-    if unbound_raw is None:
-        raise errors.SnapcraftError("Unbound discharge not in the config file")
+    try:
+        root_macaroon_raw = conf.get(host, "macaroon")
+        unbound_raw = conf.get(host, "unbound_discharge")
+    except configparser.NoOptionError as conf_error:
+        raise errors.SnapcraftError(str(conf_error)) from conf_error
 
-    root_macaroon = _deserialize_macaroon(root_macaroon_raw)
-    unbound = _deserialize_macaroon(unbound_raw)
-    bound = root_macaroon.prepare_for_request(unbound)
-    discharge_macaroon_raw = bound.serialize()
-    auth = f"Macaroon root={root_macaroon_raw}, discharge={discharge_macaroon_raw}"
-
-    return base64.b64encode(auth.encode()).decode()
+    return {"r": root_macaroon_raw, "d": unbound_raw}
 
 
 def get_auth(config_content: str) -> str:
     """Return a legacy authorization header."""
     conf = _load_potentially_base64_config(config_content)
-    auth = _macaroon_auth(conf)
+    auth = _get_macaroons_from_conf(conf)
 
-    return auth
+    return base64.b64encode(json.dumps(auth).encode()).decode()
 
 
 class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
     """Legacy client to easily transition existing CI users."""
 
-    _CONFIG_PATH = Path(xdg.BaseDirectory.xdg_config_home) / "snapcraft/legacy_auth.cfg"
+    _CONFIG_PATH = Path(xdg.BaseDirectory.xdg_config_home) / "snapcraft/snapcraft.cfg"
 
     @classmethod
     def has_legacy_credentials(cls) -> bool:
@@ -109,13 +103,8 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
     @classmethod
     def store_credentials(cls, config_content) -> None:
         """Store legacy credentials."""
-        auth = get_auth(config_content=config_content)
         cls._CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
-        cls._CONFIG_PATH.write_text(auth)
-
-    @overrides
-    def _get_authorization_header(self) -> str:
-        return self._auth.get_credentials()
+        cls._CONFIG_PATH.write_text(config_content)
 
     @overrides
     def __init__(
@@ -131,7 +120,8 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
         ephemeral: bool = False,
     ) -> None:
         if self.has_legacy_credentials():
-            auth = self._CONFIG_PATH.read_text()
+            config_content = self._CONFIG_PATH.read_text()
+            auth = get_auth(config_content=config_content)
             os.environ[constants.ENVIRONMENT_STORE_CREDENTIALS] = auth
 
         super().__init__(

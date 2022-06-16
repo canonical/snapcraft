@@ -13,9 +13,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import textwrap
 
 import pytest
+from pymacaroons import Caveat, Macaroon
 
 
 @pytest.fixture
@@ -35,11 +36,44 @@ def fake_confirmation_prompt(mocker):
 
 
 @pytest.fixture
-def legacy_config_path(monkeypatch, new_dir):
-    config_file = new_dir / "ci.cfg"
+def root_macaroon():
+    return Macaroon(
+        location="fake-server.com",
+        signature="d9533461d7835e4851c7e3b639144406cf768597dea6e133232fbd2385a5c050",
+        caveats=[
+            Caveat(
+                caveat_id="1234567890",
+                location="fake-sso.com",
+                verification_key_id="1234567890",
+            )
+        ],
+    ).serialize()
+
+
+@pytest.fixture
+def discharged_macaroon():
+    return Macaroon(
+        location="fake-server.com",
+        signature="d9533461d7835e4851c7e3b639122406cf768597dea6e133232fbd2385a5c050",
+    ).serialize()
+
+
+@pytest.fixture
+def legacy_config_path(monkeypatch, new_dir, root_macaroon, discharged_macaroon):
+    config_file = new_dir / "snapcraft.cfg"
     monkeypatch.setattr(
         "snapcraft.commands.store._legacy_account.LegacyUbuntuOne._CONFIG_PATH",
         config_file,
+    )
+
+    config_file.write_text(
+        textwrap.dedent(
+            f"""\
+            [login.ubuntu.com]
+            macaroon={root_macaroon}
+            unbound_discharge={discharged_macaroon}
+            """
+        )
     )
 
     return config_file

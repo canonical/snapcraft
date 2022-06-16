@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import base64
+import json
 from textwrap import dedent
 
 import craft_store.endpoints
-import pymacaroons
 import pytest
 
 from snapcraft import errors
@@ -29,10 +29,17 @@ from snapcraft.commands.store._legacy_account import LegacyUbuntuOne, get_auth
 
 
 @pytest.fixture
-def fake_auth(monkeypatch):
+def fake_auth(root_macaroon, discharged_macaroon):
+    return base64.b64encode(
+        json.dumps({"r": root_macaroon, "d": discharged_macaroon}).encode()
+    ).decode()
+
+
+@pytest.fixture
+def fake_get_auth(monkeypatch, fake_auth):
     monkeypatch.setattr(
         "snapcraft.commands.store._legacy_account.get_auth",
-        lambda config_content: base64.b64encode(b"Macaroon root=secret").decode(),
+        lambda config_content: fake_auth,
     )
 
 
@@ -41,12 +48,26 @@ def fake_auth(monkeypatch):
 #############
 
 
-def test_invalid_macaroon_root_raises_exception(new_dir):
+def test_get_auth(new_dir, root_macaroon, discharged_macaroon):
     config_content = dedent(
-        """\
+        f"""\
         [login.ubuntu.com]
-        macaroon=inval'id
-        unbound_discharge=ssssssssssssssssssssssss
+        macaroon={root_macaroon}
+        unbound_discharge={discharged_macaroon}
+        """
+    )
+
+    auth = json.loads(base64.b64decode(get_auth(config_content).encode()))
+
+    assert auth["r"] == root_macaroon
+    assert auth["d"] == discharged_macaroon
+
+
+def test_get_auth_missing_macaroon(new_dir, discharged_macaroon):
+    config_content = dedent(
+        f"""\
+        [login.ubuntu.com]
+        unbound_discharge={discharged_macaroon}
         """
     )
 
@@ -54,12 +75,11 @@ def test_invalid_macaroon_root_raises_exception(new_dir):
         get_auth(config_content)
 
 
-def test_invalid_discharge_raises_exception():
+def test_get_auth_missing_discharge(new_dir, root_macaroon):
     config_content = dedent(
         f"""\
         [login.ubuntu.com]
-        macaroon={pymacaroons.Macaroon().serialize()}
-        unbound_discharge=inval'id
+        root={root_macaroon}
         """
     )
 
@@ -72,15 +92,13 @@ def test_invalid_discharge_raises_exception():
 ########################
 
 
-def test_store_credentials(legacy_config_path, fake_auth):
-    LegacyUbuntuOne.store_credentials("secret")
+def test_store_credentials(legacy_config_path):
+    LegacyUbuntuOne.store_credentials("secret-config")
 
-    assert legacy_config_path.read_text() == "TWFjYXJvb24gcm9vdD1zZWNyZXQ="
+    assert legacy_config_path.read_text() == "secret-config"
 
 
-@pytest.mark.usefixtures("fake_auth")
 def test_logout(legacy_config_path):
-    LegacyUbuntuOne.store_credentials("secret")
     assert LegacyUbuntuOne.has_legacy_credentials() is True
 
     client = LegacyUbuntuOne(
@@ -139,12 +157,12 @@ def test_login(legacy_config_path, fake_auth):
         )
 
 
-def test_request(mocker, legacy_config_path, fake_auth):
+def test_request(mocker, legacy_config_path, fake_get_auth, fake_auth):
     request_mock = mocker.patch(
         "craft_store.base_client.HTTPClient.request",
         autospec=True,
     )
-    LegacyUbuntuOne.store_credentials("secret")
+    LegacyUbuntuOne.store_credentials(fake_auth)
     assert LegacyUbuntuOne.has_legacy_credentials() is True
 
     client = LegacyUbuntuOne(
@@ -156,10 +174,22 @@ def test_request(mocker, legacy_config_path, fake_auth):
         user_agent="",
     )
     client.request("GET", "https://foo.com")
+
     request_mock.assert_called_once_with(
         client.http_client,
         "GET",
         "https://foo.com",
-        headers={"Authorization": "Macaroon root=secret"},
+        headers={
+            "Authorization": (
+                "Macaroon "
+                "root=MDAxZGxvY2F0aW9uIGZha2Utc2VydmVyLmNvbQowMDEwaWRlbnRpZml"
+                "lciAKMDAxM2NpZCAxMjM0NTY3ODkwCjAwMTN2aWQgMTIzNDU2Nzg5MAowMDE"
+                "0Y2wgZmFrZS1zc28uY29tCjAwMmZzaWduYXR1cmUg2VM0YdeDXkhRx-O2ORR"
+                "EBs92hZfepuEzIy-9I4WlwFAK, "
+                "discharge=MDAxZGxvY2F0aW9uIGZha2Utc2VydmVyLmNvbQowMDEwaWRlbn"
+                "RpZmllciAKMDAyZnNpZ25hdHVyZSB6hf06Su8kgum0keaUXy6VxGUHlN9bFL"
+                "2A0EKNptFZMwo"
+            )
+        },
         params=None,
     )
