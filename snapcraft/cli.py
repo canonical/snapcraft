@@ -26,6 +26,8 @@ import craft_cli
 import craft_store
 from craft_cli import ArgumentParsingError, EmitterMode, ProvideHelpException, emit
 
+import snapcraft
+import snapcraft_legacy
 from snapcraft import __version__, errors, utils
 from snapcraft_legacy.cli import legacy
 
@@ -127,6 +129,8 @@ def get_dispatcher() -> craft_cli.Dispatcher:
     """
     # Run the legacy implementation if inside a legacy managed environment.
     if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
+        snapcraft.BasePlugin = snapcraft_legacy.BasePlugin  # type: ignore
+        snapcraft.ProjectOptions = snapcraft_legacy.ProjectOptions  # type: ignore
         legacy.legacy_run()
 
     # set lib loggers to debug level so that all messages are sent to Emitter
@@ -161,6 +165,9 @@ def _run_legacy(err):
     for lib_name in _LIB_NAMES:
         logger = logging.getLogger(lib_name)
         logger.setLevel(_ORIGINAL_LIB_NAME_LOG_LEVEL[lib_name])
+
+    snapcraft.BasePlugin = snapcraft_legacy.BasePlugin  # type: ignore
+    snapcraft.ProjectOptions = snapcraft_legacy.ProjectOptions  # type: ignore
 
     # Legacy does not use craft-cli
     emit.trace(f"run legacy implementation: {err!s}")
