@@ -339,6 +339,7 @@ def _run_in_provider(
         project_name=project.name,
         project_path=Path().absolute(),
         base=project.get_effective_base(),
+        bind_ssh=parsed_args.bind_ssh,
     ) as instance:
         try:
             with emit.pause():
