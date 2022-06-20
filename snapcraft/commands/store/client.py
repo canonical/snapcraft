@@ -107,7 +107,7 @@ def get_client(ephemeral: bool) -> craft_store.BaseClient:
     store_upload_url = get_store_upload_url()
     user_agent = build_user_agent()
 
-    if LegacyUbuntuOne.has_legacy_credentials():
+    if not ephemeral and LegacyUbuntuOne.has_legacy_credentials():
         emit.message("This login method is not longer supported", intermediate=True)
         client: craft_store.BaseClient = LegacyUbuntuOne(
             base_url=store_url,
