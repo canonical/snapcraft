@@ -172,7 +172,9 @@ def test_parts_lifecycle_initialize_with_package_repositories(
     parts_data,
     new_dir,
 ):
+    install_packages_mock = mocker.patch("craft_parts.packages.Repository.install_packages")
     lcm_spy = mocker.spy(craft_parts, "LifecycleManager")
+
     PartsLifecycle(
         parts_data,
         work_dir=new_dir,
@@ -192,6 +194,11 @@ def test_parts_lifecycle_initialize_with_package_repositories(
         project_vars={"version": "1", "grade": "stable"},
         extra_build_snaps=["core22"],
     )
+
+    assert install_packages_mock.mock_calls == [
+        call(["gnupg", "dirmngr"])
+    ]
+
     assert lcm_spy.mock_calls == [
         call(
             {"parts": {"p1": {"plugin": "nil"}}},
@@ -200,7 +207,7 @@ def test_parts_lifecycle_initialize_with_package_repositories(
             cache_dir=ANY,
             base="core22",
             ignore_local_sources=["*.snap"],
-            extra_build_packages=["gnupg", "dirmngr"],
+            extra_build_packages=[],
             extra_build_snaps=["core22"],
             parallel_build_count=8,
             project_name="test-project",

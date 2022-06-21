@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional
 
 import craft_parts
 from craft_cli import emit
-from craft_parts import ActionType, Part, ProjectDirs, Step
+from craft_parts import ActionType, Part, ProjectDirs, Step, packages
 from xdg import BaseDirectory  # type: ignore
 
 from snapcraft import errors, repo
@@ -77,11 +77,10 @@ class PartsLifecycle:
         # set the cache dir for parts package management
         cache_dir = BaseDirectory.save_cache_path("snapcraft")
 
-        extra_build_packages = []
         if self._package_repositories:
             # Install pre-requisite packages for apt-key, if not installed.
             # FIXME: package names should be platform-specific
-            extra_build_packages.extend(["gnupg", "dirmngr"])
+            packages.Repository.install_packages(["gnupg", "dirmngr"])
 
         try:
             self._lcm = craft_parts.LifecycleManager(
@@ -91,7 +90,7 @@ class PartsLifecycle:
                 cache_dir=cache_dir,
                 base=base,
                 ignore_local_sources=["*.snap"],
-                extra_build_packages=extra_build_packages,
+                extra_build_packages=[],
                 extra_build_snaps=extra_build_snaps,
                 parallel_build_count=parallel_build_count,
                 project_name=project_name,
