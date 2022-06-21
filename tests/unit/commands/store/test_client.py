@@ -248,7 +248,10 @@ def test_get_legacy_ubuntu_client(new_dir, legacy_config_path, ephemeral):
 
     store_client = client.get_client(ephemeral)
 
-    assert isinstance(store_client, LegacyUbuntuOne)
+    if ephemeral:
+        assert isinstance(store_client, craft_store.UbuntuOneStoreClient)
+    else:
+        assert isinstance(store_client, LegacyUbuntuOne)
 
 
 ##################
