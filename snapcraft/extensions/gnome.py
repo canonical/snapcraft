@@ -24,9 +24,9 @@ from overrides import overrides
 
 from .extension import (
     Extension,
+    append_to_env,
     get_build_snaps,
     get_extensions_data_dir,
-    prepend_to_env,
 )
 
 _SDK_SNAP = {"core22": "gnome-42-2204-sdk"}
@@ -172,12 +172,12 @@ class GNOME(Extension):
         return {
             "build-environment": [
                 {
-                    "PATH": prepend_to_env(
+                    "PATH": append_to_env(
                         "PATH", [f"/snap/{sdk_snap}/current/usr/bin"]
                     ),
                 },
                 {
-                    "XDG_DATA_DIRS": prepend_to_env(
+                    "XDG_DATA_DIRS": append_to_env(
                         "XDG_DATA_DIRS",
                         [
                             f"$SNAPCRAFT_STAGE/usr/share:/snap/{sdk_snap}/current/usr/share",
@@ -186,7 +186,7 @@ class GNOME(Extension):
                     ),
                 },
                 {
-                    "LD_LIBRARY_PATH": prepend_to_env(
+                    "LD_LIBRARY_PATH": append_to_env(
                         "LD_LIBRARY_PATH",
                         [
                             f"/snap/{sdk_snap}/current/lib/$CRAFT_ARCH_TRIPLET",
@@ -198,7 +198,7 @@ class GNOME(Extension):
                     ),
                 },
                 {
-                    "PKG_CONFIG_PATH": prepend_to_env(
+                    "PKG_CONFIG_PATH": append_to_env(
                         "PKG_CONFIG_PATH",
                         [
                             f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig",
@@ -208,7 +208,7 @@ class GNOME(Extension):
                     ),
                 },
                 {
-                    "GETTEXTDATADIRS": prepend_to_env(
+                    "GETTEXTDATADIRS": append_to_env(
                         "GETTEXTDATADIRS",
                         [
                             f"/snap/{sdk_snap}/current/usr/share/gettext-current",
@@ -222,7 +222,7 @@ class GNOME(Extension):
                     ),
                 },
                 {
-                    "ACLOCAL_PATH": prepend_to_env(
+                    "ACLOCAL_PATH": append_to_env(
                         "ACLOCAL_PATH",
                         [
                             f"/snap/{sdk_snap}/current/usr/share/aclocal",
@@ -230,7 +230,7 @@ class GNOME(Extension):
                     ),
                 },
                 {
-                    "PYTHONPATH": prepend_to_env(
+                    "PYTHONPATH": append_to_env(
                         "PYTHONPATH",
                         [
                             f"/snap/{sdk_snap}/current/usr/lib/python3.10",
