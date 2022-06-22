@@ -25,11 +25,10 @@ from snapcraft.parts import yaml_utils
 
 
 def test_yaml_load():
-    assert (
-        yaml_utils.load(
-            io.StringIO(
-                dedent(
-                    """\
+    assert yaml_utils.load(
+        io.StringIO(
+            dedent(
+                """\
         base: core22
         entry:
             sub-entry:
@@ -37,17 +36,15 @@ def test_yaml_load():
               - list2
         scalar: scalar-value
     """
-                )
             )
         )
-        == {
-            "base": "core22",
-            "entry": {
-                "sub-entry": ["list1", "list2"],
-            },
-            "scalar": "scalar-value",
-        }
-    )
+    ) == {
+        "base": "core22",
+        "entry": {
+            "sub-entry": ["list1", "list2"],
+        },
+        "scalar": "scalar-value",
+    }
 
 
 def test_yaml_load_duplicates_errors():
@@ -95,22 +92,19 @@ def test_yaml_load_unhashable_errors():
 
 
 def test_yaml_load_build_base():
-    assert (
-        yaml_utils.load(
-            io.StringIO(
-                dedent(
-                    """\
+    assert yaml_utils.load(
+        io.StringIO(
+            dedent(
+                """\
         base: foo
         build-base: core22
     """
-                )
             )
         )
-        == {
-            "base": "foo",
-            "build-base": "core22",
-        }
-    )
+    ) == {
+        "base": "foo",
+        "build-base": "core22",
+    }
 
 
 def test_yaml_load_not_core22_base():
