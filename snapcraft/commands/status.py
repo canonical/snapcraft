@@ -114,7 +114,7 @@ class StoreStatusCommand(BaseCommand):
         emit.message(
             get_tabulated_channel_map(
                 snap_channel_map,
-                architectures=architectures,
+                architectures=list(architectures),
                 tracks=tracks,
             )
         )
