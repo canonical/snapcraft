@@ -60,7 +60,6 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
             cache_dir=ANY,
             base="core22",
             ignore_local_sources=["*.snap"],
-            extra_build_packages=[],
             extra_build_snaps=["core22"],
             parallel_build_count=8,
             project_name="test-project",
@@ -167,13 +166,27 @@ def test_parts_lifecycle_clean_parts(parts_data, new_dir, emitter):
     emitter.assert_message("Cleaning parts: p1", intermediate=True)
 
 
-def test_parts_lifecycle_initialize_with_package_repositories(
+def test_parts_lifecycle_initialize_with_package_repositories_deps_not_installed(
     mocker,
     parts_data,
     new_dir,
 ):
-    lcm_spy = mocker.spy(craft_parts, "LifecycleManager")
-    PartsLifecycle(
+    mocker.patch(
+        "craft_parts.packages.Repository.is_package_installed", return_value=False
+    )
+    install_packages_mock = mocker.patch(
+        "craft_parts.packages.Repository.install_packages"
+    )
+    mocker.patch(
+        "snapcraft.repo.apt_key_manager.AptKeyManager.install_package_repository_key",
+        return_value=True,
+    )
+    mocker.patch(
+        "snapcraft.repo.apt_sources_manager.AptSourcesManager.install_package_repository_sources"
+    )
+    mocker.patch("craft_parts.packages.Repository.refresh_packages_list")
+
+    parts_lifecycle = PartsLifecycle(
         parts_data,
         work_dir=new_dir,
         assets_dir=new_dir,
@@ -192,19 +205,54 @@ def test_parts_lifecycle_initialize_with_package_repositories(
         project_vars={"version": "1", "grade": "stable"},
         extra_build_snaps=["core22"],
     )
-    assert lcm_spy.mock_calls == [
-        call(
-            {"parts": {"p1": {"plugin": "nil"}}},
-            application_name="snapcraft",
-            work_dir=ANY,
-            cache_dir=ANY,
-            base="core22",
-            ignore_local_sources=["*.snap"],
-            extra_build_packages=["gnupg", "dirmngr"],
-            extra_build_snaps=["core22"],
-            parallel_build_count=8,
-            project_name="test-project",
-            project_vars_part_name=None,
-            project_vars={"version": "1", "grade": "stable"},
-        )
+
+    parts_lifecycle._install_package_repositories()
+
+    assert install_packages_mock.mock_calls == [
+        call(["gnupg", "dirmngr"], refresh_package_cache=True)
     ]
+
+
+def test_parts_lifecycle_initialize_with_package_repositories_deps_installed(
+    mocker,
+    parts_data,
+    new_dir,
+):
+    mocker.patch(
+        "craft_parts.packages.Repository.is_package_installed", return_value=True
+    )
+    install_packages_mock = mocker.patch(
+        "craft_parts.packages.Repository.install_packages"
+    )
+    mocker.patch(
+        "snapcraft.repo.apt_key_manager.AptKeyManager.install_package_repository_key",
+        return_value=True,
+    )
+    mocker.patch(
+        "snapcraft.repo.apt_sources_manager.AptSourcesManager.install_package_repository_sources"
+    )
+    mocker.patch("craft_parts.packages.Repository.refresh_packages_list")
+
+    parts_lifecycle = PartsLifecycle(
+        parts_data,
+        work_dir=new_dir,
+        assets_dir=new_dir,
+        base="core22",
+        parallel_build_count=8,
+        part_names=[],
+        package_repositories=[
+            {
+                "type": "apt",
+                "ppa": "test/somerepo",
+            },
+        ],
+        adopt_info=None,
+        project_name="test-project",
+        parse_info={},
+        project_vars={"version": "1", "grade": "stable"},
+        extra_build_snaps=["core22"],
+    )
+
+    parts_lifecycle._install_package_repositories()
+
+    assert install_packages_mock.mock_calls == []
