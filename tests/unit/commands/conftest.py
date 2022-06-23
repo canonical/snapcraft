@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import base64
 import textwrap
 
 import pytest
@@ -58,22 +59,35 @@ def discharged_macaroon():
     ).serialize()
 
 
+@pytest.fixture(params=["encode", "no-encode"])
+def legacy_config_credentials(request):
+    config = textwrap.dedent(
+        f"""\
+        [login.ubuntu.com]
+        macaroon={root_macaroon}
+        unbound_discharge={discharged_macaroon}
+        """
+    )
+
+    if request.param == "encode":
+        return base64.b64encode(config.encode()).decode()
+
+    if request.param == "no-encode":
+        return config
+
+    raise RuntimeError("unhandled param")
+
+
 @pytest.fixture
-def legacy_config_path(monkeypatch, new_dir, root_macaroon, discharged_macaroon):
+def legacy_config_path(
+    monkeypatch, new_dir, root_macaroon, discharged_macaroon, legacy_config_credentials
+):
     config_file = new_dir / "snapcraft.cfg"
     monkeypatch.setattr(
-        "snapcraft.commands.store._legacy_account.LegacyUbuntuOne._CONFIG_PATH",
+        "snapcraft.commands.store._legacy_account.LegacyUbuntuOne.CONFIG_PATH",
         config_file,
     )
 
-    config_file.write_text(
-        textwrap.dedent(
-            f"""\
-            [login.ubuntu.com]
-            macaroon={root_macaroon}
-            unbound_discharge={discharged_macaroon}
-            """
-        )
-    )
+    config_file.write_text(legacy_config_credentials)
 
     return config_file

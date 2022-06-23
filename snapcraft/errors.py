@@ -35,11 +35,15 @@ class PartsLifecycleError(SnapcraftError):
 
 
 class ProjectValidationError(SnapcraftError):
-    """Error validatiing snapcraft.yaml."""
+    """Error validating snapcraft.yaml."""
 
 
 class ExtensionError(SnapcraftError):
     """Error during parts processing."""
+
+
+class LegacyCredentialsParseError(SnapcraftError):
+    """Error produced when parsing the legacy Store credentials."""
 
 
 class MetadataExtractionError(SnapcraftError):

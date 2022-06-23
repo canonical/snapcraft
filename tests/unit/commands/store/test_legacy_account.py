@@ -98,6 +98,18 @@ def test_store_credentials(legacy_config_path):
     assert legacy_config_path.read_text() == "secret-config"
 
 
+def test_legacy_credentials_in_env(monkeypatch, legacy_config_credentials):
+    monkeypatch.setenv("SNAPCRAFT_STORE_CREDENTIALS", legacy_config_credentials)
+
+    assert LegacyUbuntuOne.env_has_legacy_credentials() is True
+
+
+def test_legacy_credentials_in_env_false_when_no_env(monkeypatch):
+    monkeypatch.delenv("SNAPCRAFT_STORE_CREDENTIALS", raising=False)
+
+    assert LegacyUbuntuOne.env_has_legacy_credentials() is False
+
+
 def test_logout(legacy_config_path):
     assert LegacyUbuntuOne.has_legacy_credentials() is True
 
@@ -128,7 +140,7 @@ def test_logout_file_missing(legacy_config_path):
     assert legacy_config_path.exists() is False
 
 
-def test_login(legacy_config_path, fake_auth):
+def test_login():
     client = LegacyUbuntuOne(
         base_url="",
         storage_base_url="",
@@ -137,7 +149,7 @@ def test_login(legacy_config_path, fake_auth):
         application_name="snapcraft",
         user_agent="",
     )
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(errors.SnapcraftError):
         client.login(
             ttl=31536000,
             permissions=[
@@ -157,13 +169,55 @@ def test_login(legacy_config_path, fake_auth):
         )
 
 
-def test_request(mocker, legacy_config_path, fake_get_auth, fake_auth):
+def test_request(mocker, legacy_config_path, fake_get_auth):
     request_mock = mocker.patch(
         "craft_store.base_client.HTTPClient.request",
         autospec=True,
     )
-    LegacyUbuntuOne.store_credentials(fake_auth)
     assert LegacyUbuntuOne.has_legacy_credentials() is True
+    assert LegacyUbuntuOne.env_has_legacy_credentials() is False
+
+    client = LegacyUbuntuOne(
+        base_url="",
+        storage_base_url="",
+        auth_url="",
+        endpoints=craft_store.endpoints.U1_SNAP_STORE,
+        application_name="snapcraft",
+        user_agent="",
+    )
+    client.request("GET", "https://foo.com")
+
+    request_mock.assert_called_once_with(
+        client.http_client,
+        "GET",
+        "https://foo.com",
+        headers={
+            "Authorization": (
+                "Macaroon "
+                "root=MDAxZGxvY2F0aW9uIGZha2Utc2VydmVyLmNvbQowMDEwaWRlbnRpZml"
+                "lciAKMDAxM2NpZCAxMjM0NTY3ODkwCjAwMTN2aWQgMTIzNDU2Nzg5MAowMDE"
+                "0Y2wgZmFrZS1zc28uY29tCjAwMmZzaWduYXR1cmUg2VM0YdeDXkhRx-O2ORR"
+                "EBs92hZfepuEzIy-9I4WlwFAK, "
+                "discharge=MDAxZGxvY2F0aW9uIGZha2Utc2VydmVyLmNvbQowMDEwaWRlbn"
+                "RpZmllciAKMDAyZnNpZ25hdHVyZSB6hf06Su8kgum0keaUXy6VxGUHlN9bFL"
+                "2A0EKNptFZMwo"
+            )
+        },
+        params=None,
+    )
+
+
+def test_request_with_env(
+    monkeypatch, mocker, legacy_config_path, legacy_config_credentials, fake_get_auth
+):
+    request_mock = mocker.patch(
+        "craft_store.base_client.HTTPClient.request",
+        autospec=True,
+    )
+    legacy_config_path.unlink()
+    assert LegacyUbuntuOne.has_legacy_credentials() is False
+    monkeypatch.setenv("SNAPCRAFT_STORE_CREDENTIALS", legacy_config_credentials)
+    assert LegacyUbuntuOne.env_has_legacy_credentials() is True
 
     client = LegacyUbuntuOne(
         base_url="",
