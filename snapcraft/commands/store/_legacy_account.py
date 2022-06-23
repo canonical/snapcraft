@@ -196,4 +196,5 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
     @overrides
     def logout(self) -> None:
         """Logout by removing legacy credentials."""
+        emit.trace(f"Clearing legacy credentials from {self.CONFIG_PATH!r}")
         self.CONFIG_PATH.unlink(missing_ok=True)
