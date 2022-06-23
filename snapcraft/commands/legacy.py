@@ -106,6 +106,10 @@ class StoreLegacyPromoteCommand(LegacyBaseCommand):
     @overrides
     def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
         parser.add_argument(
+            "snap_name",
+            metavar="snap-name",
+        )
+        parser.add_argument(
             "--from-channel",
             metavar="from-channel",
             help="the channel to promote from",
