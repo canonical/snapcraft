@@ -91,10 +91,33 @@ def get_auth(config_content: str) -> str:
     return base64.b64encode(json.dumps(auth).encode()).decode()
 
 
+def set_legacy_env() -> None:
+    """Set constants.ENVIRONMENT_STORE_CREDENTIALS to a valid value.
+
+    Transform the configparser based environment into a value useful
+    for craft-store.
+    """
+    if LegacyUbuntuOne.env_has_legacy_credentials():
+        emit.trace(
+            f"Found legacy credentials exported on {constants.ENVIRONMENT_STORE_CREDENTIALS!r}"
+        )
+        auth = get_auth(
+            config_content=os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS)  # type: ignore
+        )
+        os.environ[constants.ENVIRONMENT_STORE_CREDENTIALS] = auth
+    elif LegacyUbuntuOne.has_legacy_credentials():
+        emit.trace(
+            f"Found legacy credentials stored in {LegacyUbuntuOne.CONFIG_PATH!r}"
+        )
+        config_content = LegacyUbuntuOne.CONFIG_PATH.read_text()
+        auth = get_auth(config_content=config_content)
+        os.environ[constants.ENVIRONMENT_STORE_CREDENTIALS] = auth
+
+
 class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
     """Legacy client to easily transition existing CI users."""
 
-    _CONFIG_PATH = Path(xdg.BaseDirectory.xdg_config_home) / "snapcraft/snapcraft.cfg"
+    CONFIG_PATH = Path(xdg.BaseDirectory.xdg_config_home) / "snapcraft/snapcraft.cfg"
 
     @classmethod
     def env_has_legacy_credentials(cls) -> bool:
@@ -116,8 +139,8 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
     @classmethod
     def has_legacy_credentials(cls) -> bool:
         """Return True if legacy credentials are stored."""
-        if cls._CONFIG_PATH.exists():
-            emit.trace(f"Found legacy credentials stored in {cls._CONFIG_PATH}")
+        if cls.CONFIG_PATH.exists():
+            emit.trace(f"Found legacy credentials stored in {cls.CONFIG_PATH}")
             return True
 
         return False
@@ -125,8 +148,8 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
     @classmethod
     def store_credentials(cls, config_content) -> None:
         """Store legacy credentials."""
-        cls._CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
-        cls._CONFIG_PATH.write_text(config_content)
+        cls.CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        cls.CONFIG_PATH.write_text(config_content)
 
     @overrides
     def __init__(
@@ -141,19 +164,7 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
         environment_auth: Optional[str] = None,
         ephemeral: bool = False,
     ) -> None:
-        if self.env_has_legacy_credentials():
-            auth = get_auth(
-                config_content=os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS)  # type: ignore
-            )
-            os.environ[constants.ENVIRONMENT_STORE_CREDENTIALS] = auth
-            emit.progress(
-                f"Found legacy credentials in {constants.ENVIRONMENT_STORE_CREDENTIALS}"
-            )
-        elif self.has_legacy_credentials():
-            emit.progress(f"Found legacy credentials in {self._CONFIG_PATH}")
-            config_content = self._CONFIG_PATH.read_text()
-            auth = get_auth(config_content=config_content)
-            os.environ[constants.ENVIRONMENT_STORE_CREDENTIALS] = auth
+        set_legacy_env()
 
         super().__init__(
             base_url=base_url,
@@ -185,4 +196,4 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
     @overrides
     def logout(self) -> None:
         """Logout by removing legacy credentials."""
-        self._CONFIG_PATH.unlink(missing_ok=True)
+        self.CONFIG_PATH.unlink(missing_ok=True)

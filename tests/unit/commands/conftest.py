@@ -84,7 +84,7 @@ def legacy_config_path(
 ):
     config_file = new_dir / "snapcraft.cfg"
     monkeypatch.setattr(
-        "snapcraft.commands.store._legacy_account.LegacyUbuntuOne._CONFIG_PATH",
+        "snapcraft.commands.store._legacy_account.LegacyUbuntuOne.CONFIG_PATH",
         config_file,
     )
 
