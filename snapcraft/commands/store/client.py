@@ -168,6 +168,12 @@ class StoreClientCLI:
         channels: Optional[Sequence[str]] = None,
     ) -> str:
         """Login to the Snap Store and prompt if required."""
+        if os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS):
+            raise errors.SnapcraftError(
+                f"Cannot login with {constants.ENVIRONMENT_STORE_CREDENTIALS!r} set.",
+                resolution=f"Unset {constants.ENVIRONMENT_STORE_CREDENTIALS!r} and try again.",
+            )
+
         kwargs: Dict[str, Any] = {}
         if use_candid() is False:
             kwargs["email"], kwargs["password"] = _prompt_login()
@@ -230,8 +236,8 @@ class StoreClientCLI:
             ):
                 if os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS):
                     raise errors.SnapcraftError(
-                        "Provided credentials are no longer valid for the Snap Store. "
-                        "Regenerate them and try again."
+                        "Provided credentials are no longer valid for the Snap Store.",
+                        resolution="Regenerate them and try again.",
                     ) from store_error
 
                 emit.message(

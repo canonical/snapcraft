@@ -392,6 +392,24 @@ def test_login_with_params(fake_client):
     ]
 
 
+@pytest.mark.usefixtures("fake_client")
+def test_login_with_env(monkeypatch):
+    monkeypatch.setenv("SNAPCRAFT_STORE_CREDENTIALS", "secret")
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        client.StoreClientCLI().login(
+            ttl=20,
+            acls=["package_access", "package_push"],
+            packages=["fake-snap", "fake-other-snap"],
+            channels=["stable/fake", "edge/fake"],
+        )
+
+    assert str(raised.value) == "Cannot login with 'SNAPCRAFT_STORE_CREDENTIALS' set."
+    assert raised.value.resolution == (
+        "Unset 'SNAPCRAFT_STORE_CREDENTIALS' and try again."
+    )
+
+
 ###########
 # Request #
 ###########
@@ -469,9 +487,9 @@ def test_login_from_401_request_with_env_credentials(monkeypatch, fake_client):
         client.StoreClientCLI().request("GET", "http://url.com/path")
 
     assert str(raised.value) == (
-        "Provided credentials are no longer valid for the Snap Store. "
-        "Regenerate them and try again."
+        "Provided credentials are no longer valid for the Snap Store."
     )
+    assert raised.value.resolution == "Regenerate them and try again."
 
 
 ############
