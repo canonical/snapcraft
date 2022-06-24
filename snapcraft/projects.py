@@ -270,6 +270,8 @@ class Project(ProjectModel):
     adopt_info: Optional[str]
     system_usernames: Optional[Dict[str, Any]]
     environment: Optional[Dict[str, Optional[str]]]
+    build_packages: Optional[GrammarStrList]
+    build_snaps: Optional[GrammarStrList]
 
     @pydantic.validator("plugs")
     @classmethod
