@@ -18,6 +18,7 @@
 import pytest
 
 from snapcraft import errors, extensions
+from snapcraft.extensions.extension import get_extensions_data_dir
 
 
 @pytest.mark.usefixtures("fake_extension")
@@ -223,3 +224,9 @@ def test_apply_extension_experimental_with_environment(emitter, monkeypatch):
         "*EXPERIMENTAL* extension 'fake-extension-experimental' enabled",
         intermediate=True,
     )
+
+
+def test_get_extensions_data_dir():
+    assert (get_extensions_data_dir() / "desktop").is_dir()
+    assert (get_extensions_data_dir() / "ros1").is_dir()
+    assert (get_extensions_data_dir() / "ros2").is_dir()

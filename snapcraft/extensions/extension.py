@@ -18,6 +18,8 @@
 
 import abc
 import os
+import sys
+from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, final
 
 from craft_cli import emit
@@ -122,3 +124,8 @@ class Extension(abc.ABC):
                 f"Extension has invalid part names: {invalid_parts!r}. "
                 "Format is <extension-name>/<part-name>"
             )
+
+
+def get_extensions_data_dir() -> Path:
+    """Return the path to the extension data directory."""
+    return Path(sys.prefix) / "share" / "snapcraft" / "extensions"
