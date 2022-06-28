@@ -17,7 +17,6 @@
 import argparse
 import textwrap
 from pathlib import Path
-from typing import Any, Dict
 from unittest.mock import PropertyMock, call
 
 import pytest
@@ -47,64 +46,6 @@ def disable_install(mocker):
 @pytest.fixture(autouse=True)
 def unregister_callbacks(mocker):
     callbacks.unregister_all()
-
-
-@pytest.fixture
-def snapcraft_yaml(new_dir):
-    def write_file(
-        *, base: str, filename: str = "snap/snapcraft.yaml"
-    ) -> Dict[str, Any]:
-        content = textwrap.dedent(
-            f"""
-            name: mytest
-            version: '0.1'
-            base: {base}
-            summary: Just some test data
-            description: This is just some test data.
-            grade: stable
-            confinement: strict
-
-            parts:
-              part1:
-                plugin: nil
-            """
-        )
-        yaml_path = Path(filename)
-        yaml_path.parent.mkdir(parents=True, exist_ok=True)
-        yaml_path.write_text(content)
-
-        return {
-            "name": "mytest",
-            "title": None,
-            "base": base,
-            "compression": "xz",
-            "version": "0.1",
-            "contact": None,
-            "donation": None,
-            "issues": None,
-            "source-code": None,
-            "website": None,
-            "summary": "Just some test data",
-            "description": "This is just some test data.",
-            "type": None,
-            "confinement": "strict",
-            "icon": None,
-            "layout": None,
-            "license": None,
-            "grade": "stable",
-            "architectures": [],
-            "package-repositories": [],
-            "assumes": [],
-            "hooks": None,
-            "passthrough": None,
-            "apps": None,
-            "plugs": None,
-            "slots": None,
-            "parts": {"part1": {"plugin": "nil"}},
-            "epoch": None,
-        }
-
-    yield write_file
 
 
 @pytest.fixture
@@ -771,47 +712,6 @@ def test_get_snap_project_no_base(snapcraft_yaml, new_dir):
         "Bad snapcraft.yaml content:\n"
         "- Snap base must be declared when type is not base, kernel or snapd"
     )
-
-
-def test_get_snap_project_with_base(snapcraft_yaml):
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
-
-    assert parts_lifecycle._get_extra_build_snaps(project) == ["core22"]
-
-
-def test_get_snap_project_with_content_plugs(snapcraft_yaml, new_dir):
-    yaml_data = {
-        "name": "mytest",
-        "version": "0.1",
-        "base": "core22",
-        "summary": "Just some test data",
-        "description": "This is just some test data.",
-        "grade": "stable",
-        "confinement": "strict",
-        "parts": {"part1": {"plugin": "nil"}},
-        "plugs": {
-            "test-plug-1": {
-                "content": "content-interface",
-                "interface": "content",
-                "target": "$SNAP/content",
-                "default-provider": "test-snap-1",
-            },
-            "test-plug-2": {
-                "content": "content-interface",
-                "interface": "content",
-                "target": "$SNAP/content",
-                "default-provider": "test-snap-2",
-            },
-        },
-    }
-
-    project = Project(**yaml_data)
-
-    assert parts_lifecycle._get_extra_build_snaps(project) == [
-        "test-snap-1",
-        "test-snap-2",
-        "core22",
-    ]
 
 
 def test_expand_environment(new_dir, mocker):
