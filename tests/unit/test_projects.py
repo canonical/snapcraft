@@ -22,11 +22,13 @@ import pytest
 from snapcraft import errors
 from snapcraft.projects import (
     MANDATORY_ADOPTABLE_FIELDS,
+    Architecture,
     ContentPlug,
     GrammarAwareProject,
     Hook,
     Project,
 )
+from snapcraft.utils import get_host_architecture
 
 
 @pytest.fixture
@@ -86,7 +88,6 @@ class TestProjectDefaults:
         assert project.icon is None
         assert project.layout is None
         assert project.license is None
-        assert project.architectures == []
         assert project.package_repositories == []
         assert project.assumes == []
         assert project.hooks is None
@@ -97,6 +98,11 @@ class TestProjectDefaults:
         assert project.epoch is None
         assert project.environment is None
         assert project.adopt_info is None
+        assert project.architectures == [
+            Architecture(
+                build_on=[get_host_architecture()], build_for=[get_host_architecture()]
+            )
+        ]
 
     def test_app_defaults(self, project_yaml_data):
         data = project_yaml_data(apps={"app1": {"command": "/bin/true"}})
@@ -1244,3 +1250,327 @@ def test_get_snap_project_with_content_plugs_does_not_add_extension(
         "core22",
         "test-snap-1",
     ]
+
+
+class TestArchitecture:
+    """Validate architectures."""
+
+    def test_architecture_valid_list_of_strings(self, project_yaml_data):
+        """Architectures can be defined as a list of strings (shorthand notation)."""
+        data = project_yaml_data(architectures=["amd64", "armhf"])
+        architectures = Project.unmarshal(data).architectures
+
+        assert isinstance(architectures[0], Architecture)
+        assert isinstance(architectures[1], Architecture)
+        assert architectures[0].build_on == ["amd64"]
+        assert architectures[0].build_for == ["amd64"]
+        assert architectures[1].build_on == ["armhf"]
+        assert architectures[1].build_for == ["armhf"]
+
+    def test_architecture_valid_dictionary_of_strings(self, project_yaml_data):
+        """`build-on` and `build-for` fields can be strings."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": "amd64", "build-for": "amd64"},
+                {"build-on": "armhf", "build-for": "armhf"},
+            ]
+        )
+        architectures = Project.unmarshal(data).architectures
+
+        assert isinstance(architectures[0], Architecture)
+        assert isinstance(architectures[1], Architecture)
+        assert architectures[0].build_on == ["amd64"]
+        assert architectures[0].build_for == ["amd64"]
+        assert architectures[1].build_on == ["armhf"]
+        assert architectures[1].build_for == ["armhf"]
+
+    def test_architecture_valid_dictionary_of_lists(self, project_yaml_data):
+        """`build-on` and `build-for` fields can be lists."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["amd64"], "build-for": ["amd64"]},
+                {"build-on": ["armhf"], "build-for": ["armhf"]},
+            ]
+        )
+        architectures = Project.unmarshal(data).architectures
+
+        assert isinstance(architectures[0], Architecture)
+        assert isinstance(architectures[1], Architecture)
+        assert architectures[0].build_on == ["amd64"]
+        assert architectures[0].build_for == ["amd64"]
+        assert architectures[1].build_on == ["armhf"]
+        assert architectures[1].build_for == ["armhf"]
+
+    def test_architecture_invalid_string(self, project_yaml_data):
+        """A single string is not valid."""
+        data = project_yaml_data(architectures="amd64")
+
+        with pytest.raises(errors.ProjectValidationError) as error:
+            Project.unmarshal(data)
+
+        assert "value is not a valid list" in str(error.value)
+
+    def test_architecture_multiple_build_on(self, project_yaml_data):
+        """Multiple architectures can be defined in a single `build-on`."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["amd64", "armhf"], "build-for": ["amd64"]},
+            ]
+        )
+        architectures = Project.unmarshal(data).architectures
+
+        assert isinstance(architectures[0], Architecture)
+        assert architectures[0].build_on == ["amd64", "armhf"]
+        assert architectures[0].build_for == ["amd64"]
+
+    def test_architecture_implicit_build_for(self, project_yaml_data):
+        """`build-for` is implicitly defined as the same as `build-for`."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["arm64"]},
+            ]
+        )
+        architectures = Project.unmarshal(data).architectures
+
+        assert isinstance(architectures[0], Architecture)
+        assert architectures[0].build_on == ["arm64"]
+        assert architectures[0].build_for == ["arm64"]
+
+    def test_architecture_unknown_property(self, project_yaml_data):
+        """Additional fields in the architectures node is invalid."""
+        data = project_yaml_data(
+            architectures=[
+                {
+                    "bad-property": ["amd64"],
+                    "build-on": ["amd64"],
+                    "build-for": ["amd64"],
+                }
+            ]
+        )
+
+        with pytest.raises(errors.ProjectValidationError) as error:
+            Project.unmarshal(data)
+
+        assert "extra field 'bad-property' not permitted" in str(error.value)
+
+    def test_architecture_missing_build_on(self, project_yaml_data):
+        """`build-on` is a required field."""
+        data = project_yaml_data(architectures=[{"build-for": ["amd64"]}])
+
+        with pytest.raises(errors.ProjectValidationError) as error:
+            Project.unmarshal(data)
+
+        assert "field 'build-on' required" in str(error.value)
+
+    def test_architecture_build_on_all_and_others(self, project_yaml_data):
+        """
+        `all` cannot be used in the `build-on` field if another
+            architecture in `build-on` is defined.
+        """
+        data = project_yaml_data(
+            architectures=[{"build-on": ["all", "amd64"], "build-for": ["amd64"]}]
+        )
+
+        with pytest.raises(errors.ProjectValidationError) as error:
+            Project.unmarshal(data)
+
+        assert "'all' cannot be used for 'build-on'" in str(error.value)
+
+    def test_architecture_invalid_multiple_build_for(self, project_yaml_data):
+        """Only a single item can be defined for `build-for`."""
+        data = project_yaml_data(
+            architectures=[{"build-on": ["amd64"], "build-for": ["all", "amd64"]}]
+        )
+
+        with pytest.raises(errors.ProjectValidationError) as error:
+            Project.unmarshal(data)
+
+        assert "multiple architectures are defined for one 'build-for'" in str(
+            error.value
+        )
+
+    def test_architecture_invalid_multiple_implicit_build_for(self, project_yaml_data):
+        """Only a single item can be defined for `build-for`."""
+        data = project_yaml_data(architectures=[{"build-on": ["amd64", "armhf"]}])
+
+        with pytest.raises(errors.ProjectValidationError) as error:
+            Project.unmarshal(data)
+
+        assert "multiple architectures are defined for one 'build-for'" in str(
+            error.value
+        )
+
+    def test_architecture_invalid_build_on_all_build_for_all(self, project_yaml_data):
+        """`build-on: all` and `build-for: all` is invalid."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["all"], "build-for": ["all"]},
+            ]
+        )
+
+        with pytest.raises(errors.ProjectValidationError) as error:
+            Project.unmarshal(data)
+
+        assert "'all' cannot be used for 'build-on'" in str(error.value)
+
+    def test_architecture_invalid_build_on_all_implicit(self, project_yaml_data):
+        """`build-on: all` is invalid, even when build-for is missing."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["all"]},
+            ]
+        )
+
+        with pytest.raises(errors.ProjectValidationError) as error:
+            Project.unmarshal(data)
+
+        assert "'all' cannot be used for 'build-on'" in str(error.value)
+
+    def test_architecture_invalid_build_on_all_build_for_architecture(
+        self, project_yaml_data
+    ):
+        """`build-on: all` is invalid, even when build-for is valid."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["all"], "build-for": ["amd64"]},
+            ]
+        )
+
+        with pytest.raises(errors.ProjectValidationError) as error:
+            Project.unmarshal(data)
+
+        assert "'all' cannot be used for 'build-on'" in str(error.value)
+
+    def test_architecture_build_on_architecture_build_for_all(self, project_yaml_data):
+        """`build-on: arch` and `build-for: all` is valid."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["amd64"], "build-for": ["all"]},
+            ]
+        )
+        architectures = Project.unmarshal(data).architectures
+
+        assert isinstance(architectures[0], Architecture)
+        assert architectures[0].build_on == ["amd64"]
+        assert architectures[0].build_for == ["all"]
+
+    def test_architecture_build_on_all_and_other_architectures(self, project_yaml_data):
+        """`all` cannot be used for `build-on`, even when another `build-on` is defined."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["all"], "build-for": ["amd64"]},
+                {"build-on": ["armhf"], "build-for": ["armhf"]},
+            ]
+        )
+
+        with pytest.raises(errors.ProjectValidationError) as error:
+            Project.unmarshal(data)
+
+        assert "'all' cannot be used for 'build-on'" in str(error.value)
+
+    def test_architecture_build_for_all_and_other_architectures(
+        self, project_yaml_data
+    ):
+        """`all` cannot be used for `build-for` when another `build-for` is defined."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["amd64"], "build-for": ["all"]},
+                {"build-on": ["armhf"], "build-for": ["amd64"]},
+            ]
+        )
+
+        with pytest.raises(errors.ProjectValidationError) as error:
+            Project.unmarshal(data)
+
+        assert (
+            "one of the items has 'all' in 'build-for', but there are"
+            " 2 items: upon release they will conflict."
+            "'all' should only be used if there is a single item" in str(error.value)
+        )
+
+    def test_architecture_multiple_build_on_all(self, project_yaml_data):
+        """`all` cannot be used for multiple `build-on` fields."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["all"], "build-for": ["amd64"]},
+                {"build-on": ["all"], "build-for": ["armhf"]},
+            ]
+        )
+
+        with pytest.raises(errors.ProjectValidationError) as error:
+            Project.unmarshal(data)
+
+        assert "'all' cannot be used for 'build-on'" in str(error.value)
+
+    def test_architecture_multiple_build_for_all(self, project_yaml_data):
+        """`all` cannot be used for multiple `build-for` fields."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["amd64"], "build-for": ["all"]},
+                {"build-on": ["armhf"], "build-for": ["all"]},
+            ]
+        )
+
+        with pytest.raises(errors.ProjectValidationError) as error:
+            Project.unmarshal(data)
+
+        assert (
+            "one of the items has 'all' in 'build-for', but there are"
+            " 2 items: upon release they will conflict."
+            "'all' should only be used if there is a single item" in str(error.value)
+        )
+
+    def test_architecture_multiple_build_on_same_architecture(self, project_yaml_data):
+        """The same architecture can be defined in multiple `build-on` fields."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["amd64"], "build-for": ["amd64"]},
+                {"build-on": ["amd64", "arm64"], "build-for": ["arm64"]},
+            ]
+        )
+
+        architectures = Project.unmarshal(data).architectures
+
+        assert isinstance(architectures[0], Architecture)
+        assert architectures[0].build_on == ["amd64"]
+        assert architectures[0].build_for == ["amd64"]
+        assert isinstance(architectures[1], Architecture)
+        assert architectures[1].build_on == ["amd64", "arm64"]
+        assert architectures[1].build_for == ["arm64"]
+
+    def test_architecture_multiple_build_for_same_architecture(self, project_yaml_data):
+        """The same architecture cannot be defined in multiple `build-for` fields."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["amd64"], "build-for": ["amd64"]},
+                {"build-on": ["armhf"], "build-for": ["amd64"]},
+            ]
+        )
+
+        with pytest.raises(errors.ProjectValidationError) as error:
+            Project.unmarshal(data)
+
+        assert "multiple items will build snaps that claim to run on amd64" in str(
+            error.value
+        )
+
+    def test_architecture_multiple_build_for_same_architecture_implicit(
+        self, project_yaml_data
+    ):
+        """
+        The same architecture cannot be defined in multiple `build-for` fields,
+        even if implicit values are used to define `build-for`.
+        """
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["amd64"]},
+                {"build-on": ["armhf"], "build-for": ["amd64"]},
+            ]
+        )
+
+        with pytest.raises(errors.ProjectValidationError) as error:
+            Project.unmarshal(data)
+
+        assert "multiple items will build snaps that claim to run on amd64" in str(
+            error.value
+        )
