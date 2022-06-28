@@ -28,8 +28,6 @@ from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts.update_metadata import update_project_metadata
 from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Project
 
-# pylint: disable=too-many-lines
-
 _SNAPCRAFT_YAML_FILENAMES = [
     "snap/snapcraft.yaml",
     "build-aux/snap/snapcraft.yaml",
