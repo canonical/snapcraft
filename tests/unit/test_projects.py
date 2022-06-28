@@ -28,8 +28,6 @@ from snapcraft.projects import (
     Project,
 )
 
-# pylint: disable=too-many-lines
-
 
 @pytest.fixture
 def project_yaml_data():
