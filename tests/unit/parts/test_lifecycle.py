@@ -138,7 +138,11 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
     parts_lifecycle.run(
         "pull",
         argparse.Namespace(
-            parts=["part1"], destructive_mode=True, use_lxd=False, provider=None
+            parts=["part1"],
+            destructive_mode=True,
+            use_lxd=False,
+            provider=None,
+            bind_ssh=False,
         ),
     )
 
@@ -157,7 +161,11 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
             assets_dir=assets_dir,
             parallel_build_count=5,
             parsed_args=argparse.Namespace(
-                parts=["part1"], destructive_mode=True, use_lxd=False, provider=None
+                parts=["part1"],
+                destructive_mode=True,
+                use_lxd=False,
+                provider=None,
+                bind_ssh=False,
             ),
         ),
     ]
@@ -885,7 +893,12 @@ def test_lifecycle_run_expand_snapcraft_vars(new_dir, mocker):
     parts_lifecycle.run(
         "prime",
         argparse.Namespace(
-            parts=[], destructive_mode=True, use_lxd=False, provider=None, debug=False
+            parts=[],
+            destructive_mode=True,
+            use_lxd=False,
+            provider=None,
+            bind_ssh=False,
+            debug=False,
         ),
     )
 
@@ -929,7 +942,12 @@ def test_lifecycle_run_expand_craft_vars(new_dir, mocker):
     parts_lifecycle.run(
         "prime",
         argparse.Namespace(
-            parts=[], destructive_mode=True, use_lxd=False, provider=None, debug=False
+            parts=[],
+            destructive_mode=True,
+            use_lxd=False,
+            provider=None,
+            bind_ssh=False,
+            debug=False,
         ),
     )
 
@@ -971,6 +989,7 @@ def test_lifecycle_run_permission_denied(new_dir):
                 destructive_mode=True,
                 use_lxd=False,
                 provider=None,
+                bind_ssh=False,
                 debug=False,
             ),
         )
