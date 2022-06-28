@@ -301,3 +301,29 @@ def test_get_ld_library_paths(tmp_path, lib_dirs, expected_env):
         f"${{SNAP_LIBRARY_PATH}}${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}:{expected_env}"
     )
     assert utils.get_ld_library_paths(tmp_path, "i286-none-none") == expected_env
+
+
+###################
+# Process Version #
+###################
+
+
+def test_process_version_empty(mocker):
+    """``version:None`` raises an error."""
+    with pytest.raises(ValueError):
+        utils.process_version(None)
+
+
+def test_process_version_dirty(mocker):
+    """A version string should be returned unmodified."""
+    assert utils.process_version("1.2.3") == "1.2.3"
+
+
+def test_process_version_git(mocker):
+    """``version:git`` must be correctly handled."""
+    mocker.patch(
+        "craft_parts.sources.git_source.GitSource.generate_version",
+        return_value="1.2.3-dirty",
+    )
+
+    assert utils.process_version("git") == "1.2.3-dirty"
