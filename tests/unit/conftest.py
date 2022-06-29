@@ -14,11 +14,73 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import textwrap
+from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 import pytest
 
 from snapcraft.extensions import extension, register, unregister
+
+
+@pytest.fixture
+def snapcraft_yaml(new_dir):
+    """Return a fixture that can write a snapcraft.yaml."""
+
+    def write_file(
+        *, base: str, filename: str = "snap/snapcraft.yaml"
+    ) -> Dict[str, Any]:
+        content = textwrap.dedent(
+            f"""
+            name: mytest
+            version: '0.1'
+            base: {base}
+            summary: Just some test data
+            description: This is just some test data.
+            grade: stable
+            confinement: strict
+
+            parts:
+              part1:
+                plugin: nil
+            """
+        )
+        yaml_path = Path(filename)
+        yaml_path.parent.mkdir(parents=True, exist_ok=True)
+        yaml_path.write_text(content)
+
+        return {
+            "name": "mytest",
+            "title": None,
+            "base": base,
+            "compression": "xz",
+            "version": "0.1",
+            "contact": None,
+            "donation": None,
+            "issues": None,
+            "source-code": None,
+            "website": None,
+            "summary": "Just some test data",
+            "description": "This is just some test data.",
+            "type": None,
+            "confinement": "strict",
+            "icon": None,
+            "layout": None,
+            "license": None,
+            "grade": "stable",
+            "architectures": [],
+            "package-repositories": [],
+            "assumes": [],
+            "hooks": None,
+            "passthrough": None,
+            "apps": None,
+            "plugs": None,
+            "slots": None,
+            "parts": {"part1": {"plugin": "nil"}},
+            "epoch": None,
+        }
+
+    yield write_file
 
 
 @pytest.fixture
