@@ -26,6 +26,7 @@ from snapcraft import errors
 from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts.update_metadata import update_project_metadata
 from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Project
+from snapcraft.utils import get_host_architecture
 
 _SNAPCRAFT_YAML_FILENAMES = [
     "snap/snapcraft.yaml",
@@ -440,7 +441,14 @@ def test_lifecycle_run_command_clean(snapcraft_yaml, project_vars, new_dir, mock
         ),
     )
 
-    assert clean_mock.mock_calls == [call(project_name="mytest", project_path=new_dir)]
+    assert clean_mock.mock_calls == [
+        call(
+            project_name="mytest",
+            project_path=new_dir,
+            build_on=get_host_architecture(),
+            build_for=get_host_architecture(),
+        )
+    ]
 
 
 def test_lifecycle_clean_destructive_mode(
