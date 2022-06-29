@@ -1,7 +1,6 @@
 summary: Build and run a basic colcon snap
 warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
 priority: 100  # Run this test early so we're not waiting for it
-manual: true
 
 environment:
   SNAP_DIR: ../snaps/colcon-talker-listener
