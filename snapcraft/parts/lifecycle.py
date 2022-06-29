@@ -20,7 +20,7 @@ import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List
 
 import craft_parts
 from craft_cli import EmitterMode, emit
@@ -232,7 +232,7 @@ def _run_command(
             "version": project.version or "",
             "grade": project.grade or "",
         },
-        extra_build_snaps=_get_extra_build_snaps(project),
+        extra_build_snaps=project.get_extra_build_snaps(),
     )
 
     if command_name == "clean":
@@ -357,17 +357,6 @@ def _get_arch() -> str:
     machine = infos._get_host_architecture()  # pylint: disable=protected-access
     # FIXME Raise the potential KeyError.
     return infos._ARCH_TRANSLATIONS[machine]["deb"]  # pylint: disable=protected-access
-
-
-def _get_extra_build_snaps(project: Project) -> Optional[List[str]]:
-    """Get list of extra snaps required to build."""
-    extra_build_snaps = project.get_content_snaps()
-    if project.base is not None:
-        if extra_build_snaps is None:
-            extra_build_snaps = [project.base]
-        else:
-            extra_build_snaps.append(project.base)
-    return extra_build_snaps
 
 
 def _set_global_environment(info: ProjectInfo) -> None:
