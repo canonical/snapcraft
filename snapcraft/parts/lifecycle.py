@@ -30,7 +30,7 @@ from snapcraft import errors, extensions, pack, providers, utils
 from snapcraft.meta import snap_yaml
 from snapcraft.projects import GrammarAwareProject, Project
 from snapcraft.providers import capture_logs_from_instance
-from snapcraft.utils import get_host_architecture
+from snapcraft.utils import get_host_architecture, process_version
 
 from . import grammar, plugins, yaml_utils
 from .parts import PartsLifecycle
@@ -282,6 +282,9 @@ def _run_command(
             lifecycle.prime_dir,
             output=parsed_args.output,
             compression=project.compression,
+            name=project.name,
+            version=process_version(project.version),
+            target_arch=lifecycle.target_arch,
         )
 
 
