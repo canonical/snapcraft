@@ -64,7 +64,7 @@ class SnapcraftBuilddBaseConfiguration(bases.BuilddBase):
         """
         # Requirement for apt gpg and version:git
         executor.execute_run(
-            ["apt-get", "install", "-y", "dirmngr", "git"],
+            ["apt-get", "install", "-y", "gnupg", "dirmngr", "git"],
             capture_output=True,
             check=True,
         )

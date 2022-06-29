@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Iterable, List, Optional
 
 from craft_cli import emit
+from craft_parts.sources.git_source import GitSource
 
 from snapcraft import errors
 
@@ -300,3 +301,19 @@ def get_ld_library_paths(prime_dir: Path, arch_triplet: str) -> str:
     ld_library_path = ":".join(paths)
 
     return re.sub(str(prime_dir), "$SNAP", ld_library_path)
+
+
+def process_version(version: Optional[str]) -> str:
+    """Handle special version strings."""
+    if version is None:
+        raise ValueError("version cannot be None")
+
+    new_version = version
+    if version == "git":
+        emit.progress("Determining the version from the project repo (version: git).")
+        new_version = GitSource.generate_version()
+
+    if new_version != version:
+        emit.message(f"Version has been set to {new_version!r}", intermediate=True)
+
+    return new_version

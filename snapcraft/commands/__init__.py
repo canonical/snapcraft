@@ -60,7 +60,7 @@ from .names import (
     StoreRegisterCommand,
 )
 from .status import StoreListTracksCommand, StoreStatusCommand, StoreTracksCommand
-from .upload import StoreUploadCommand
+from .upload import StoreLegacyPushCommand, StoreUploadCommand
 from .version import VersionCommand
 
 __all__ = [
@@ -85,6 +85,7 @@ __all__ = [
     "StoreLegacyListValidationSetsCommand",
     "StoreLegacyMetricsCommand",
     "StoreLegacyPromoteCommand",
+    "StoreLegacyPushCommand",
     "StoreLegacyRegisterKeyCommand",
     "StoreLegacyRemoteBuildCommand",
     "StoreLegacySetDefaultTrackCommand",

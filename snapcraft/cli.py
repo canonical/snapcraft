@@ -20,16 +20,19 @@ import contextlib
 import logging
 import os
 import sys
-from typing import Dict
 
 import craft_cli
 import craft_store
 from craft_cli import ArgumentParsingError, EmitterMode, ProvideHelpException, emit
 
+import snapcraft
+import snapcraft_legacy
 from snapcraft import __version__, errors, utils
 from snapcraft_legacy.cli import legacy
 
 from . import commands
+from .commands import store
+from .legacy_cli import _LIB_NAMES, _ORIGINAL_LIB_NAME_LOG_LEVEL, run_legacy
 
 COMMAND_GROUPS = [
     craft_cli.CommandGroup(
@@ -80,6 +83,7 @@ COMMAND_GROUPS = [
             commands.StoreCloseCommand,
             commands.StoreStatusCommand,
             commands.StoreUploadCommand,
+            commands.StoreLegacyPushCommand,  # hidden (legacy for upload)
             commands.StoreLegacyPromoteCommand,
             commands.StoreLegacyListRevisionsCommand,
         ],
@@ -114,9 +118,6 @@ GLOBAL_ARGS = [
     )
 ]
 
-_LIB_NAMES = ("craft_parts", "craft_providers", "craft_store")
-_ORIGINAL_LIB_NAME_LOG_LEVEL: Dict[str, int] = {}
-
 
 def get_dispatcher() -> craft_cli.Dispatcher:
     """Return an instance of Dispatcher.
@@ -125,6 +126,8 @@ def get_dispatcher() -> craft_cli.Dispatcher:
     """
     # Run the legacy implementation if inside a legacy managed environment.
     if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
+        snapcraft.BasePlugin = snapcraft_legacy.BasePlugin  # type: ignore
+        snapcraft.ProjectOptions = snapcraft_legacy.ProjectOptions  # type: ignore
         legacy.legacy_run()
 
     # set lib loggers to debug level so that all messages are sent to Emitter
@@ -154,19 +157,6 @@ def get_dispatcher() -> craft_cli.Dispatcher:
     )
 
 
-def _run_legacy(err):
-    # Reset the libraries to their original log level
-    for lib_name in _LIB_NAMES:
-        logger = logging.getLogger(lib_name)
-        logger.setLevel(_ORIGINAL_LIB_NAME_LOG_LEVEL[lib_name])
-
-    # Legacy does not use craft-cli
-    emit.trace(f"run legacy implementation: {err!s}")
-    emit.ended_ok()
-
-    legacy.legacy_run()
-
-
 def run():
     """Run the CLI."""
     dispatcher = get_dispatcher()
@@ -187,7 +177,7 @@ def run():
                 and err.__context__.args[0]  # pylint: disable=no-member
                 not in dispatcher.commands
             ):
-                _run_legacy(err)
+                run_legacy(err)
         print(err, file=sys.stderr)  # to stderr, as argparse normally does
         emit.ended_ok()
         retcode = 1
@@ -196,7 +186,20 @@ def run():
         emit.ended_ok()
         retcode = 0
     except errors.LegacyFallback as err:
-        _run_legacy(err)
+        run_legacy(err)
+    except craft_store.errors.NoKeyringError as err:
+        emit.error(
+            craft_cli.errors.CraftError(
+                f"craft-store error: {err}",
+                resolution=(
+                    "Ensure the keyring is working or "
+                    f"{store.constants.ENVIRONMENT_STORE_CREDENTIALS} "
+                    "is correctly exported into the environment"
+                ),
+                docs_url="https://snapcraft.io/docs/snapcraft-authentication",
+            )
+        )
+        retcode = 1
     except craft_store.errors.CraftStoreError as err:
         emit.error(craft_cli.errors.CraftError(f"craft-store error: {err}"))
         retcode = 1

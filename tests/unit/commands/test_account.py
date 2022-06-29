@@ -57,15 +57,23 @@ def test_login(emitter, fake_store_login):
     emitter.assert_message("Login successful")
 
 
-def test_login_with_file_fails():
+def test_login_with_file(emitter, mocker, legacy_config_path):
+    store_credentials_mock = mocker.patch(
+        "snapcraft.commands.store._legacy_account.LegacyUbuntuOne.store_credentials"
+    )
+    legacy_config_path.write_text("secretb64")
+
     cmd = commands.StoreLoginCommand(None)
 
-    with pytest.raises(craft_cli.errors.ArgumentParsingError) as raised:
-        cmd.run(argparse.Namespace(login_with="fake-file", experimental_login=False))
+    cmd.run(
+        argparse.Namespace(login_with=str(legacy_config_path), experimental_login=False)
+    )
 
-    assert str(raised.value) == (
+    store_credentials_mock.assert_called_once_with("secretb64")
+    emitter.assert_message(
         "--with is no longer supported, export the auth to the environment "
-        "variable 'SNAPCRAFT_STORE_CREDENTIALS' instead"
+        "variable 'SNAPCRAFT_STORE_CREDENTIALS' instead",
+        intermediate=True,
     )
 
 
@@ -104,7 +112,10 @@ def test_export_login(emitter, fake_store_login):
             ANY,
         )
     ]
-    emitter.assert_message("Exported login credentials:\nsecret")
+    emitter.assert_message(
+        "Exported login credentials:\nsecret"
+        "\n\nThese credentials must be used on Snapcraft 7.0 or greater."
+    )
 
 
 def test_export_login_file(new_dir, emitter, fake_store_login):
@@ -126,7 +137,10 @@ def test_export_login_file(new_dir, emitter, fake_store_login):
             ANY,
         )
     ]
-    emitter.assert_message("Exported login credentials to 'target_file'")
+    emitter.assert_message(
+        "Exported login credentials to 'target_file'"
+        "\n\nThese credentials must be used on Snapcraft 7.0 or greater."
+    )
     login_file = new_dir / "target_file"
     assert login_file.exists()
     assert login_file.read_text() == "secret"
@@ -155,7 +169,42 @@ def test_export_login_with_params(emitter, fake_store_login):
             ttl=ANY,
         )
     ]
-    emitter.assert_message("Exported login credentials:\nsecret")
+    emitter.assert_message(
+        "Exported login credentials:\nsecret"
+        "\n\nThese credentials must be used on Snapcraft 7.0 or greater."
+    )
+
+
+def test_export_login_with_candid(emitter, fake_store_login, monkeypatch):
+    monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "candid")
+
+    cmd = commands.StoreExportLoginCommand(None)
+
+    cmd.run(
+        argparse.Namespace(
+            login_file="-",
+            snaps="fake-snap,fake-other-snap",
+            channels="stable,edge",
+            acls="package_manage,package_push",
+            expires="2030-12-12",
+            experimental_login=False,
+        )
+    )
+
+    assert fake_store_login.mock_calls == [
+        call(
+            ANY,
+            packages=["fake-snap", "fake-other-snap"],
+            channels=["stable", "edge"],
+            acls=["package_manage", "package_push"],
+            ttl=ANY,
+        )
+    ]
+    emitter.assert_message(
+        "Exported login credentials:\nsecret"
+        "\n\nThese credentials must be used on Snapcraft 7.0 or greater."
+        "\nSet 'SNAPCRAFT_STORE_AUTH=candid' for these credentials to work."
+    )
 
 
 def test_export_login_with_experimental_fails():

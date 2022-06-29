@@ -19,6 +19,7 @@
 import contextlib
 import functools
 import os
+import pathlib
 import stat
 import textwrap
 from datetime import datetime
@@ -40,6 +41,18 @@ _VALID_DATE_FORMATS = [
     "%Y-%m-%d",
     "%Y-%m-%dT%H:%M:%SZ",
 ]
+
+
+def _read_config(config_path) -> str:
+    if config_path == "-":
+        config_path = "/dev/stdin"
+
+    config_file = pathlib.Path(config_path)
+
+    if not config_file.exists():
+        raise ArgumentParsingError(f"<login-file> {config_path!r} does not exist")
+
+    return config_file.read_text(encoding="utf-8")
 
 
 class StoreLoginCommand(BaseCommand):
@@ -69,7 +82,6 @@ class StoreLoginCommand(BaseCommand):
             metavar="<login-file>",
             dest="login_with",
             type=str,
-            nargs=1,
             default=None,
             help="File to use for imported credentials",
         )
@@ -92,12 +104,16 @@ class StoreLoginCommand(BaseCommand):
             )
 
         if parsed_args.login_with:
-            raise ArgumentParsingError(
+            config_content = _read_config(parsed_args.login_with)
+            emit.message(
                 "--with is no longer supported, export the auth to the environment "
                 f"variable {store.constants.ENVIRONMENT_STORE_CREDENTIALS!r} instead",
+                intermediate=True,
             )
+            store.LegacyUbuntuOne.store_credentials(config_content)
+        else:
+            store.StoreClientCLI().login()
 
-        store.StoreClientCLI().login()
         emit.message("Login successful")
 
 
@@ -218,6 +234,12 @@ class StoreExportLoginCommand(BaseCommand):
 
             message = f"Exported login credentials to {parsed_args.login_file!r}"
 
+        message += "\n\nThese credentials must be used on Snapcraft 7.0 or greater."
+        if os.getenv(store.constants.ENVIRONMENT_STORE_AUTH) == "candid":
+            message += (
+                f"\nSet '{store.constants.ENVIRONMENT_STORE_AUTH}=candid' for "
+                "these credentials to work."
+            )
         emit.message(message)
 
 

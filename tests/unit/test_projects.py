@@ -28,8 +28,6 @@ from snapcraft.projects import (
     Project,
 )
 
-# pylint: disable=too-many-lines
-
 
 @pytest.fixture
 def project_yaml_data():
@@ -1167,3 +1165,82 @@ class TestGrammarValidation:
         error = "- value is not a valid dict"
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(project_yaml_data(system_usernames=system_username))
+
+
+def test_get_snap_project_with_base(snapcraft_yaml):
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+
+    assert project.get_extra_build_snaps() == ["core22"]
+
+
+def test_get_snap_project_with_content_plugs(snapcraft_yaml, new_dir):
+    yaml_data = {
+        "name": "mytest",
+        "version": "0.1",
+        "base": "core22",
+        "summary": "Just some test data",
+        "description": "This is just some test data.",
+        "grade": "stable",
+        "confinement": "strict",
+        "parts": {"part1": {"plugin": "nil"}},
+        "plugs": {
+            "test-plug-1": {
+                "content": "content-interface",
+                "interface": "content",
+                "target": "$SNAP/content",
+                "default-provider": "test-snap-1",
+            },
+            "test-plug-2": {
+                "content": "content-interface",
+                "interface": "content",
+                "target": "$SNAP/content",
+                "default-provider": "test-snap-2",
+            },
+        },
+    }
+
+    project = Project(**yaml_data)
+
+    assert project.get_extra_build_snaps() == [
+        "core22",
+        "test-snap-1",
+        "test-snap-2",
+    ]
+
+
+def test_get_snap_project_with_content_plugs_does_not_add_extension(
+    snapcraft_yaml, new_dir
+):
+    yaml_data = {
+        "name": "mytest",
+        "version": "0.1",
+        "base": "core22",
+        "summary": "Just some test data",
+        "description": "This is just some test data.",
+        "grade": "stable",
+        "confinement": "strict",
+        "plugs": {
+            "test-plug-1": {
+                "content": "content-interface",
+                "interface": "content",
+                "target": "$SNAP/content",
+                "default-provider": "test-snap-1",
+            },
+            "test-plug-2": {
+                "content": "content-interface",
+                "interface": "content",
+                "target": "$SNAP/content",
+                "default-provider": "test-snap-2",
+            },
+        },
+        "parts": {
+            "part1": {"plugin": "nil", "build-snaps": ["test-snap-2", "test-snap-3"]}
+        },
+    }
+
+    project = Project(**yaml_data)
+
+    assert project.get_extra_build_snaps() == [
+        "core22",
+        "test-snap-1",
+    ]

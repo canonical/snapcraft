@@ -272,6 +272,8 @@ class Project(ProjectModel):
     adopt_info: Optional[str]
     system_usernames: Optional[Dict[str, Any]]
     environment: Optional[Dict[str, Optional[str]]]
+    build_packages: Optional[GrammarStrList]
+    build_snaps: Optional[GrammarStrList]
 
     @pydantic.validator("plugs")
     @classmethod
@@ -421,15 +423,34 @@ class Project(ProjectModel):
             ]
         return []
 
-    def get_content_snaps(self) -> Optional[List[str]]:
+    def get_content_snaps(self) -> List[str]:
         """Get list of snaps from ContentPlug `default-provider` fields."""
-        content_snaps = [
+        return [
             x.default_provider
             for x in self._get_content_plugs()
             if x.default_provider is not None
         ]
 
-        return content_snaps if content_snaps else None
+    def get_extra_build_snaps(self) -> List[str]:
+        """Get list of extra snaps required to build."""
+        # Build snaps defined by the user with channel stripped
+        build_snaps: List[str] = []
+        for part in self.parts.values():
+            build_snaps.extend(part.get("build-snaps", []))
+        part_build_snaps = {p.split("/")[0] for p in build_snaps}
+
+        # Content snaps the project uses
+        content_snaps = set(self.get_content_snaps())
+
+        # Do not add the content snaps if provided by the user
+        extra_build_snaps = list(content_snaps - part_build_snaps)
+
+        # Always add the base as an extra build snap
+        if self.base is not None:
+            extra_build_snaps.append(self.base)
+        extra_build_snaps.sort()
+
+        return extra_build_snaps
 
     def get_effective_base(self) -> str:
         """Return the base to use to create the snap."""

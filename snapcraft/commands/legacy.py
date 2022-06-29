@@ -22,7 +22,8 @@ from typing import TYPE_CHECKING
 from craft_cli import BaseCommand
 from overrides import overrides
 
-from snapcraft_legacy.cli import legacy
+from snapcraft.commands.store._legacy_account import set_legacy_env
+from snapcraft.legacy_cli import run_legacy
 
 if TYPE_CHECKING:
     import argparse
@@ -33,7 +34,10 @@ class LegacyBaseCommand(BaseCommand):
 
     @overrides
     def run(self, parsed_args):
-        legacy.legacy_run()
+        # Setup env var for legacy credentials.
+        set_legacy_env()
+
+        run_legacy()
 
 
 #########
@@ -101,6 +105,10 @@ class StoreLegacyPromoteCommand(LegacyBaseCommand):
 
     @overrides
     def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+        parser.add_argument(
+            "snap_name",
+            metavar="snap-name",
+        )
         parser.add_argument(
             "--from-channel",
             metavar="from-channel",

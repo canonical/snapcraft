@@ -74,7 +74,7 @@ def _check_snap_dir(snap_dir_path: Path) -> None:
                 snap_dir_local=str(snap_dir_relpath / "local"),
                 unexpected_files="\n- ".join(sorted(unexpected_paths)),
             ),
-            intermediate=True
+            intermediate=True,
         )
 
 

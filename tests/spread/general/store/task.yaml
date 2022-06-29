@@ -5,6 +5,7 @@ manual: true
 environment:
   SNAP: dump-hello
   SNAPCRAFT_STORE_CREDENTIALS/ubuntu_one: "$(HOST: echo ${SNAPCRAFT_STORE_CREDENTIALS_STAGING})"
+  SNAPCRAFT_STORE_CREDENTIALS/legacy: "$(HOST: echo ${SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY})"
   SNAPCRAFT_STORE_CREDENTIALS/candid: "$(HOST: echo ${SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID})"
   STORE_DASHBOARD_URL: https://dashboard.staging.snapcraft.io
   STORE_API_URL: https://api.staging.snapcraft.io

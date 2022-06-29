@@ -13,9 +13,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import base64
+import textwrap
 
 import pytest
+from pymacaroons import Caveat, Macaroon
 
 
 @pytest.fixture
@@ -32,3 +34,60 @@ def fake_confirmation_prompt(mocker):
     return mocker.patch(
         "snapcraft.utils.confirm_with_user", return_value=False, autospec=True
     )
+
+
+@pytest.fixture
+def root_macaroon():
+    return Macaroon(
+        location="fake-server.com",
+        signature="d9533461d7835e4851c7e3b639144406cf768597dea6e133232fbd2385a5c050",
+        caveats=[
+            Caveat(
+                caveat_id="1234567890",
+                location="fake-sso.com",
+                verification_key_id="1234567890",
+            )
+        ],
+    ).serialize()
+
+
+@pytest.fixture
+def discharged_macaroon():
+    return Macaroon(
+        location="fake-server.com",
+        signature="d9533461d7835e4851c7e3b639122406cf768597dea6e133232fbd2385a5c050",
+    ).serialize()
+
+
+@pytest.fixture(params=["encode", "no-encode"])
+def legacy_config_credentials(request):
+    config = textwrap.dedent(
+        f"""\
+        [login.ubuntu.com]
+        macaroon={root_macaroon}
+        unbound_discharge={discharged_macaroon}
+        """
+    )
+
+    if request.param == "encode":
+        return base64.b64encode(config.encode()).decode()
+
+    if request.param == "no-encode":
+        return config
+
+    raise RuntimeError("unhandled param")
+
+
+@pytest.fixture
+def legacy_config_path(
+    monkeypatch, new_dir, root_macaroon, discharged_macaroon, legacy_config_credentials
+):
+    config_file = new_dir / "snapcraft.cfg"
+    monkeypatch.setattr(
+        "snapcraft.commands.store._legacy_account.LegacyUbuntuOne.CONFIG_PATH",
+        config_file,
+    )
+
+    config_file.write_text(legacy_config_credentials)
+
+    return config_file
