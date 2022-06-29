@@ -190,7 +190,7 @@ class RosPlugin(plugins.Plugin):
 
 @click.group()
 def plugin_cli():
-    """Lala."""
+    """Define the plugin_cli Click group."""
 
 
 @plugin_cli.command()
