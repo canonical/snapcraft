@@ -166,8 +166,7 @@ class RosPlugin(plugins.Plugin):
                     "--stage-cache-dir",
                     str(self._part_info.cache_dir.resolve()),
                     "--base",
-                    "core22",
-                    # f"{self._part_info.base}",
+                    f"{self._part_info.base}",
                 ]
             )
         ]
