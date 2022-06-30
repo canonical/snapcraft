@@ -530,6 +530,8 @@ _STOP_MODES = [
     "sigusr1-all",
     "sigusr2",
     "sigusr2-all",
+    "sigint",
+    "sigint-all",
 ]
 
 
