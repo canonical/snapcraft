@@ -229,7 +229,14 @@ def test_lifecycle_run_command_pack(cmd, snapcraft_yaml, project_vars, new_dir, 
         call("prime", debug=False, shell=False, shell_after=False)
     ]
     assert pack_mock.mock_calls == [
-        call(new_dir / "prime", output=None, compression="xz")
+        call(
+            new_dir / "prime",
+            output=None,
+            compression="xz",
+            name="mytest",
+            version="0.1",
+            target_arch=get_host_architecture(),
+        )
     ]
 
 
@@ -271,7 +278,14 @@ def test_lifecycle_pack_destructive_mode(
         call("prime", debug=False, shell=False, shell_after=False)
     ]
     assert pack_mock.mock_calls == [
-        call(new_dir / "home/prime", output=None, compression="xz")
+        call(
+            new_dir / "home/prime",
+            output=None,
+            compression="xz",
+            name="mytest",
+            version="0.1",
+            target_arch=get_host_architecture(),
+        )
     ]
 
 
@@ -311,7 +325,14 @@ def test_lifecycle_pack_managed(cmd, snapcraft_yaml, project_vars, new_dir, mock
         call("prime", debug=False, shell=False, shell_after=False)
     ]
     assert pack_mock.mock_calls == [
-        call(new_dir / "home/prime", output=None, compression="xz")
+        call(
+            new_dir / "home/prime",
+            output=None,
+            compression="xz",
+            name="mytest",
+            version="0.1",
+            target_arch=get_host_architecture(),
+        )
     ]
 
 
