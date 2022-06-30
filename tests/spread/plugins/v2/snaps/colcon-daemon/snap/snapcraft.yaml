@@ -1,0 +1,24 @@
+name: colcon-daemon
+version: "1.0"
+summary: Colcon ROS2 daemon
+description: |
+  A ROS2 workspace containing a daemon.
+
+grade: stable
+base: core20
+confinement: strict
+
+apps:
+  colcon-daemon:
+    daemon: simple
+    stop-mode: sigint-all
+    command: opt/ros/foxy/bin/ros2 run colcon-daemon colcon-daemon
+    plugs: [network, network-bind]
+    extensions: [ros2-foxy]
+
+parts:
+  colcon-part:
+    plugin: colcon
+    source: .
+    build-packages: [make, gcc, g++]
+    stage-packages: [ros-foxy-ros2run]
