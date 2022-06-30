@@ -81,7 +81,7 @@ def _get_filename(
         if not output_path.is_dir():
             return output_path.name
 
-    if name is not None and version is not None and target_arch is not None:
+    if all(i is not None for i in [name, version, target_arch]):
         return f"{name}_{version}_{target_arch}.snap"
 
     return None
