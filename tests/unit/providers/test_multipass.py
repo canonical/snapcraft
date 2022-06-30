@@ -41,7 +41,12 @@ class TestMultipassLaunchedEnvironment:
         prov = providers.MultipassProvider()
 
         with prov.launched_environment(
-            project_name="test", project_path=new_dir, base="core22", bind_ssh=False
+            project_name="test",
+            project_path=new_dir,
+            base="core22",
+            bind_ssh=False,
+            build_on="test",
+            build_for="test",
         ):
             assert multipass_instance_mock.mount.mock_calls == [
                 call(host_source=new_dir, target=Path("/root/project")),
@@ -56,7 +61,12 @@ class TestMultipassLaunchedEnvironment:
         prov = providers.MultipassProvider()
 
         with prov.launched_environment(
-            project_name="test", project_path=new_dir, base="core22", bind_ssh=True
+            project_name="test",
+            project_path=new_dir,
+            base="core22",
+            bind_ssh=True,
+            build_on="test",
+            build_for="test",
         ):
             assert multipass_instance_mock.mount.mock_calls == [
                 call(host_source=new_dir, target=Path("/root/project")),
