@@ -21,8 +21,8 @@ import pytest
 
 import snapcraft.extensions.registry as reg
 from snapcraft import errors
+from snapcraft.extensions.extension import get_extensions_data_dir
 from snapcraft.extensions.ros2_humble import ROS2HumbleExtension
-from snapcraft_legacy.internal import common
 
 _EXTENSION_NAME = "ros2-humble"
 
@@ -110,7 +110,7 @@ class TestExtensionROS2HumbleExtension:
         extension = setup_method_fixture()
         assert extension.get_parts_snippet() == {
             "ros2-humble/ros2-launch": {
-                "source": common.get_extensionsdir() + "/ros2",
+                "source": f"{get_extensions_data_dir()}/ros2",
                 "plugin": "nil",
                 "override-build": "install -D -m 0755 launch ${CRAFT_PART_INSTALL}/snap/command-chain/ros2-launch",
                 "build-packages": [

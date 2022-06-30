@@ -23,9 +23,7 @@ from typing import Any, Dict, Optional, Tuple
 from overrides import overrides
 from typing_extensions import Final
 
-from snapcraft_legacy.internal import common
-
-from .extension import Extension
+from .extension import Extension, get_extensions_data_dir
 
 
 class ROS2HumbleExtension(Extension):
@@ -95,13 +93,9 @@ class ROS2HumbleExtension(Extension):
 
     @overrides
     def get_parts_snippet(self) -> Dict[str, Any]:
-        source = common.get_extensionsdir()
         return {
             f"ros2-{self.ROS_DISTRO}/ros2-launch": {
-                # @(todo): replace with extension.get_extensions_data_dir()
-                # once it is on the main branch
-                # see https://github.com/snapcore/snapcraft/blob/e45916506a5662620823a51355d9b77b53c9d446/snapcraft/extensions/extension.py#L30 # pylint: disable=C0301
-                "source": f"{source}/ros2",
+                "source": f"{get_extensions_data_dir()}/ros2",
                 "plugin": "nil",
                 # pylint: disable=line-too-long
                 "override-build": "install -D -m 0755 launch ${CRAFT_PART_INSTALL}/snap/command-chain/ros2-launch",
