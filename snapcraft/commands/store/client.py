@@ -107,8 +107,16 @@ def get_client(ephemeral: bool) -> craft_store.BaseClient:
     store_upload_url = get_store_upload_url()
     user_agent = build_user_agent()
 
-    if LegacyUbuntuOne.has_legacy_credentials():
-        emit.message("This login method is not longer supported", intermediate=True)
+    # Legacy will be used when:
+    # 1. the current environment was set to use the legacy credentials
+    # 2. login --with or existing legacy credentials are found
+    # And will not be used if ephemeral is set (export-login)
+    use_legacy = not ephemeral and (
+        LegacyUbuntuOne.has_legacy_credentials()
+        or LegacyUbuntuOne.env_has_legacy_credentials()
+    )
+
+    if use_legacy:
         client: craft_store.BaseClient = LegacyUbuntuOne(
             base_url=store_url,
             storage_base_url=store_upload_url,
@@ -160,6 +168,12 @@ class StoreClientCLI:
         channels: Optional[Sequence[str]] = None,
     ) -> str:
         """Login to the Snap Store and prompt if required."""
+        if os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS):
+            raise errors.SnapcraftError(
+                f"Cannot login with {constants.ENVIRONMENT_STORE_CREDENTIALS!r} set.",
+                resolution=f"Unset {constants.ENVIRONMENT_STORE_CREDENTIALS!r} and try again.",
+            )
+
         kwargs: Dict[str, Any] = {}
         if use_candid() is False:
             kwargs["email"], kwargs["password"] = _prompt_login()
@@ -222,8 +236,8 @@ class StoreClientCLI:
             ):
                 if os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS):
                     raise errors.SnapcraftError(
-                        "Provided credentials are no longer valid for the Snap Store. "
-                        "Regenerate them and try again."
+                        "Provided credentials are no longer valid for the Snap Store.",
+                        resolution="Regenerate them and try again.",
                     ) from store_error
 
                 emit.message(

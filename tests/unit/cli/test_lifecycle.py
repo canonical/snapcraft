@@ -45,6 +45,7 @@ def test_lifecycle_command(cmd, run_method, mocker):
                 shell=False,
                 shell_after=False,
                 use_lxd=False,
+                bind_ssh=False,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -86,6 +87,7 @@ def test_lifecycle_command_arguments(cmd, run_method, mocker):
                 shell=False,
                 shell_after=False,
                 use_lxd=False,
+                bind_ssh=False,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -128,6 +130,7 @@ def test_lifecycle_command_arguments_destructive_mode(cmd, run_method, mocker):
                 shell=False,
                 shell_after=False,
                 use_lxd=False,
+                bind_ssh=False,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -170,6 +173,48 @@ def test_lifecycle_command_arguments_use_lxd(cmd, run_method, mocker):
                 shell=False,
                 shell_after=False,
                 use_lxd=True,
+                bind_ssh=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
+                provider=None,
+            )
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    "cmd,run_method",
+    [
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+    ],
+)
+def test_lifecycle_command_arguments_bind_ssh(cmd, run_method, mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "cmd",
+            cmd,
+            "--bind-ssh",
+        ],
+    )
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                parts=[],
+                debug=False,
+                destructive_mode=False,
+                shell=False,
+                shell_after=False,
+                use_lxd=False,
+                bind_ssh=True,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -210,6 +255,7 @@ def test_lifecycle_command_arguments_debug(cmd, run_method, mocker):
                 shell=False,
                 shell_after=False,
                 use_lxd=False,
+                bind_ssh=False,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -250,6 +296,7 @@ def test_lifecycle_command_arguments_shell(cmd, run_method, mocker):
                 shell=True,
                 shell_after=False,
                 use_lxd=False,
+                bind_ssh=False,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -290,6 +337,7 @@ def test_lifecycle_command_arguments_shell_after(cmd, run_method, mocker):
                 shell=False,
                 shell_after=True,
                 use_lxd=False,
+                bind_ssh=False,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -316,6 +364,7 @@ def test_lifecycle_command_pack(mocker):
                 debug=False,
                 destructive_mode=False,
                 use_lxd=False,
+                bind_ssh=False,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -342,6 +391,7 @@ def test_lifecycle_command_pack_destructive_mode(mocker):
                 debug=False,
                 destructive_mode=True,
                 use_lxd=False,
+                bind_ssh=False,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -368,6 +418,34 @@ def test_lifecycle_command_pack_use_lxd(mocker):
                 debug=False,
                 destructive_mode=False,
                 use_lxd=True,
+                bind_ssh=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
+                provider=None,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_bind_ssh(mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack", "--bind-ssh"],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                debug=False,
+                destructive_mode=False,
+                use_lxd=False,
+                bind_ssh=True,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -394,6 +472,7 @@ def test_lifecycle_command_pack_debug(mocker):
                 debug=True,
                 destructive_mode=False,
                 use_lxd=False,
+                bind_ssh=False,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -417,6 +496,7 @@ def test_lifecycle_command_pack_output(mocker, option):
                 debug=False,
                 destructive_mode=False,
                 use_lxd=False,
+                bind_ssh=False,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -439,6 +519,7 @@ def test_lifecycle_command_pack_directory(mocker):
                 directory="name",
                 output=None,
                 use_lxd=False,
+                bind_ssh=False,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,

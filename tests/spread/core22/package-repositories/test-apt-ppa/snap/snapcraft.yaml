@@ -9,6 +9,8 @@ base: core22
 parts:
   test-ppa:
     plugin: nil
+    build-packages:
+      - test-ppa
     stage-packages:
       - test-ppa
 

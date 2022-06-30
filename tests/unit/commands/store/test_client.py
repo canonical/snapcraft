@@ -223,19 +223,20 @@ def test_get_hostname():
 #######################
 
 
-@pytest.mark.usefixtures("legacy_config_path")
 @pytest.mark.parametrize("ephemeral", (True, False))
-def test_get_store_client(monkeypatch, ephemeral):
+def test_get_store_client(monkeypatch, ephemeral, legacy_config_path):
     monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "candid")
+    legacy_config_path.unlink()
 
     store_client = client.get_client(ephemeral)
 
     assert isinstance(store_client, craft_store.StoreClient)
 
 
-@pytest.mark.usefixtures("legacy_config_path")
 @pytest.mark.parametrize("ephemeral", (True, False))
-def test_get_ubuntu_client(ephemeral):
+def test_get_ubuntu_client(ephemeral, legacy_config_path):
+    legacy_config_path.unlink()
+
     store_client = client.get_client(ephemeral)
 
     assert isinstance(store_client, craft_store.UbuntuOneStoreClient)
@@ -247,7 +248,10 @@ def test_get_legacy_ubuntu_client(new_dir, legacy_config_path, ephemeral):
 
     store_client = client.get_client(ephemeral)
 
-    assert isinstance(store_client, LegacyUbuntuOne)
+    if ephemeral:
+        assert isinstance(store_client, craft_store.UbuntuOneStoreClient)
+    else:
+        assert isinstance(store_client, LegacyUbuntuOne)
 
 
 ##################
@@ -388,6 +392,24 @@ def test_login_with_params(fake_client):
     ]
 
 
+@pytest.mark.usefixtures("fake_client")
+def test_login_with_env(monkeypatch):
+    monkeypatch.setenv("SNAPCRAFT_STORE_CREDENTIALS", "secret")
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        client.StoreClientCLI().login(
+            ttl=20,
+            acls=["package_access", "package_push"],
+            packages=["fake-snap", "fake-other-snap"],
+            channels=["stable/fake", "edge/fake"],
+        )
+
+    assert str(raised.value) == "Cannot login with 'SNAPCRAFT_STORE_CREDENTIALS' set."
+    assert raised.value.resolution == (
+        "Unset 'SNAPCRAFT_STORE_CREDENTIALS' and try again."
+    )
+
+
 ###########
 # Request #
 ###########
@@ -465,9 +487,9 @@ def test_login_from_401_request_with_env_credentials(monkeypatch, fake_client):
         client.StoreClientCLI().request("GET", "http://url.com/path")
 
     assert str(raised.value) == (
-        "Provided credentials are no longer valid for the Snap Store. "
-        "Regenerate them and try again."
+        "Provided credentials are no longer valid for the Snap Store."
     )
+    assert raised.value.resolution == "Regenerate them and try again."
 
 
 ############

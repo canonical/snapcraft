@@ -234,6 +234,12 @@ class StoreExportLoginCommand(BaseCommand):
 
             message = f"Exported login credentials to {parsed_args.login_file!r}"
 
+        message += "\n\nThese credentials must be used on Snapcraft 7.0 or greater."
+        if os.getenv(store.constants.ENVIRONMENT_STORE_AUTH) == "candid":
+            message += (
+                f"\nSet '{store.constants.ENVIRONMENT_STORE_AUTH}=candid' for "
+                "these credentials to work."
+            )
         emit.message(message)
 
 

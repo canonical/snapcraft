@@ -63,7 +63,7 @@ class LegacyPluginLoader(importlib.abc.Loader):
     def exec_module(cls, module):
         # Rewrite the module __name__ to have that of the legacy import path.
         plugin_name = module.__name__.split(".")[-1]
-        module.__name__ = f"snapcraft_legacy.plugins.{plugin_name}"
+        module.__name__ = f"snapcraft.plugins.{plugin_name}"
         return module
 
 
@@ -72,7 +72,7 @@ class LegacyPluginPathFinder(importlib.machinery.PathFinder):
     def find_spec(cls, fullname, path=None, target=None):
         # Ensure plugins using their original import paths can be found and
         # warn about their new import path.
-        if fullname in [f"snapcraft_legacy.plugins.{p}" for p in _VALID_V1_PLUGINS]:
+        if fullname in [f"snapcraft.plugins.{p}" for p in _VALID_V1_PLUGINS]:
             warnings.warn(
                 "Plugin import path has changed to 'snapcraft_legacy.plugins.v1'"
             )

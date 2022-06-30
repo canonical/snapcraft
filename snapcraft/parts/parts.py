@@ -23,6 +23,7 @@ from typing import Any, Dict, List, Optional
 import craft_parts
 from craft_cli import emit
 from craft_parts import ActionType, Part, ProjectDirs, Step
+from craft_parts.packages import Repository, deb
 from xdg import BaseDirectory  # type: ignore
 
 from snapcraft import errors, repo
@@ -77,12 +78,6 @@ class PartsLifecycle:
         # set the cache dir for parts package management
         cache_dir = BaseDirectory.save_cache_path("snapcraft")
 
-        extra_build_packages = []
-        if self._package_repositories:
-            # Install pre-requisite packages for apt-key, if not installed.
-            # FIXME: package names should be platform-specific
-            extra_build_packages.extend(["gnupg", "dirmngr"])
-
         try:
             self._lcm = craft_parts.LifecycleManager(
                 {"parts": all_parts},
@@ -91,7 +86,6 @@ class PartsLifecycle:
                 cache_dir=cache_dir,
                 base=base,
                 ignore_local_sources=["*.snap"],
-                extra_build_packages=extra_build_packages,
                 extra_build_snaps=extra_build_snaps,
                 parallel_build_count=parallel_build_count,
                 project_name=project_name,
@@ -185,14 +179,24 @@ class PartsLifecycle:
                 _launch_shell()
             raise errors.PartsLifecycleError(str(err)) from err
 
-    def _install_package_repositories(self):
+    def _install_package_repositories(self) -> None:
+        if not self._package_repositories:
+            return
+
+        # Install pre-requisite packages for apt-key, if not installed.
+        required_packages = ["gnupg", "dirmngr"]
+        if any(p for p in required_packages if not Repository.is_package_installed(p)):
+            Repository.install_packages(required_packages, refresh_package_cache=True)
+
         emit.progress("Installing package repositories...")
-        if self._package_repositories:
-            refresh_required = repo.install(
-                self._package_repositories, key_assets=self._assets_dir / "keys"
-            )
-            if refresh_required:
-                self._lcm.refresh_packages_list()
+        refresh_required = repo.install(
+            self._package_repositories, key_assets=self._assets_dir / "keys"
+        )
+        if refresh_required:
+            emit.progress("Refreshing package repositories...")
+            # TODO: craft-parts API for: force_refresh=refresh_required
+            deb.Ubuntu.refresh_packages_list.cache_clear()
+            self._lcm.refresh_packages_list()
         emit.message("Installed package repositories", intermediate=True)
 
     def clean(self, *, part_names: Optional[List[str]] = None) -> None:

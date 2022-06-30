@@ -18,11 +18,16 @@
 
 import sys
 
+from ._errors import exception_handler
 from ._runner import run  # noqa: F401
 
 
 def legacy_run():
-    run()
+    try:
+        run()
+    # Workaround to catch errors.
+    except Exception as err:
+        exception_handler(type(err), err, err.__traceback__)
 
     # ensure this call never returns
     sys.exit()

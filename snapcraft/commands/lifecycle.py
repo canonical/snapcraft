@@ -48,6 +48,11 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             action="store_true",
             help="Shell into the environment if the build fails",
         )
+        parser.add_argument(
+            "--bind-ssh",
+            action="store_true",
+            help="Bind ~/.ssh directory to local build instances",
+        )
 
         # --enable-experimental-extensions is only available in legacy
         parser.add_argument(

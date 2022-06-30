@@ -508,6 +508,23 @@ def _maybe_prompt_for_key(name):
     return _select_key(keys)
 
 
+def save_key(func):
+    def wrapped_env(*args, **kwargs):
+        credentials = os.getenv(storeapi.constants.ENVIRONMENT_STORE_CREDENTIALS)
+        if credentials:
+            del os.environ[storeapi.constants.ENVIRONMENT_STORE_CREDENTIALS]
+        try:
+            return func(*args, **kwargs)
+        finally:
+            if credentials:
+                os.environ[
+                    storeapi.constants.ENVIRONMENT_STORE_CREDENTIALS
+                ] = credentials
+
+    return wrapped_env
+
+
+@save_key
 def register_key(name) -> None:
     key = _maybe_prompt_for_key(name)
 
