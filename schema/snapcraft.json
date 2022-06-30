@@ -789,7 +789,9 @@
                                 "sigusr1",
                                 "sigusr1-all",
                                 "sigusr2",
-                                "sigusr2-all"
+                                "sigusr2-all",
+                                "sigint",
+                                "sigint-all"
                             ]
                         },
                         "restart-condition": {

@@ -1,0 +1,30 @@
+summary: Build and run a basic daemon colcon snap
+warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
+priority: 100  # Run this test early so we're not waiting for it
+
+environment:
+  SNAP_DIR: ../snaps/colcon-daemon
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install colcon-daemon_*.snap --dangerous
+  sleep 10
+  snap stop colcon-daemon
+  sleep 1
+
+  journalctl -n 5 -u snap.colcon-daemon.colcon-daemon.service | MATCH "Good bye!"

@@ -1,0 +1,24 @@
+name: colcon-daemon
+version: "1.0"
+summary: Colcon ROS2 daemon
+description: |
+  A ROS2 workspace containing a daemon.
+
+grade: stable
+base: core18
+confinement: strict
+
+apps:
+  colcon-daemon:
+    daemon: simple
+    stop-mode: sigint-all
+    command: opt/ros/dashing/bin/ros2 run colcon-daemon colcon-daemon
+    plugs: [network, network-bind]
+
+parts:
+  colcon-part:
+    plugin: colcon
+    colcon-rosdistro: dashing
+    source: .
+    build-packages: [make, gcc, g++]
+    stage-packages: [ros-dashing-ros2pkg, ros-dashing-ros2run, ros-dashing-ros2launch]

@@ -118,6 +118,8 @@ class App(ProjectModel):
             "sigusr1-all",
             "sigusr2",
             "sigusr2-all",
+            "sigint",
+            "sigint-all",
         ]
     ]
     restart_condition: Optional[
