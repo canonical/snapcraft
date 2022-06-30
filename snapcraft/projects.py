@@ -70,9 +70,9 @@ def _validate_architectures(architectures):
 
     Validation includes:
         - The list cannot be a combination of strings and Architecture objects.
-        - The same architecture cannot be defined in multiple `build_for` fields,
-          even if the implicit values are used to define `build_for`.
-        - Only one architecture can be defined in the `build_for` list.
+        - The same architecture cannot be defined in multiple `build-for` fields,
+          even if the implicit values are used to define `build-for`.
+        - Only one architecture can be defined in the `build-for` list.
         - The `all` keyword is properly used. (see `_validate_architectures_all_keyword()`)
 
     :raise ValueError: If architecture data is invalid.
@@ -83,14 +83,14 @@ def _validate_architectures(architectures):
         or all(isinstance(architecture, Architecture) for architecture in architectures)
     ):
         raise ValueError(
-            f"Every item must either be a string or an object for {architectures!r}"
+            f"every item must either be a string or an object for {architectures!r}"
         )
 
     _expand_architectures(architectures)
 
     # validate `build_for` after expanding data
     if any(len(architecture.build_for) > 1 for architecture in architectures):
-        raise ValueError("multiple architectures are defined for one 'build_for'")
+        raise ValueError("only one architecture can be defined for 'build-for'")
 
     _validate_architectures_all_keyword(architectures)
 
@@ -113,8 +113,8 @@ def _expand_architectures(architectures):
 
     Expansion to fully-defined Architecture objects includes the following:
         - strings (shortform notation) are converted to Architecture objects
-        - `build-on` and `build_for` strings are converted to single item lists
-        - Empty `build_for` fields are implicitly set to the same architecture used in `build-on`
+        - `build-on` and `build-for` strings are converted to single item lists
+        - Empty `build-for` fields are implicitly set to the same architecture used in `build-on`
     """
     for index, architecture in enumerate(architectures):
         # convert strings into Architecture objects
@@ -128,7 +128,7 @@ def _expand_architectures(architectures):
                 architectures[index].build_on = [architecture.build_on]
             if isinstance(architecture.build_for, str):
                 architectures[index].build_for = [architecture.build_for]
-            # implicitly set build_for to build_on
+            # implicitly set build_for from build_on
             elif architecture.build_for is None:
                 architectures[index].build_for = architectures[index].build_on
 
@@ -138,8 +138,8 @@ def _validate_architectures_all_keyword(architectures):
 
     Validation rules:
     - `all` cannot be used to `build-on`
-    - If `all` is used for `build_for`, no other architectures can be defined
-      for `build_for`.
+    - If `all` is used for `build-for`, no other architectures can be defined
+      for `build-for`.
 
     :raise ValueError: if `all` keyword isn't properly used.
     """
@@ -152,7 +152,7 @@ def _validate_architectures_all_keyword(architectures):
     if len(architectures) > 1:
         if any("all" in architecture.build_for for architecture in architectures):
             raise ValueError(
-                "one of the items has 'all' in 'build_for', but there are"
+                "one of the items has 'all' in 'build-for', but there are"
                 f" {len(architectures)} items: upon release they will conflict."
                 "'all' should only be used if there is a single item"
             )
