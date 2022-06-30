@@ -23,9 +23,10 @@ import pydantic
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from pydantic import conlist, constr
 
-from snapcraft import repo, utils
+from snapcraft import repo
 from snapcraft.errors import ProjectValidationError
 from snapcraft.parts import validation as parts_validation
+from snapcraft.utils import get_effective_base, get_host_architecture
 
 
 class ProjectModel(pydantic.BaseModel):
@@ -62,6 +63,99 @@ def _validate_command_chain(command_chains: Optional[List[str]]) -> Optional[Lis
                     "special characters: / . _ # : $ -"
                 )
     return command_chains
+
+
+def _validate_architectures(architectures):
+    """Expand and validate architecture data.
+
+    Validation includes:
+        - The list cannot be a combination of strings and Architecture objects.
+        - The same architecture cannot be defined in multiple `build-for` fields,
+          even if the implicit values are used to define `build-for`.
+        - Only one architecture can be defined in the `build-for` list.
+        - The `all` keyword is properly used. (see `_validate_architectures_all_keyword()`)
+
+    :raise ValueError: If architecture data is invalid.
+    """
+    # validate strings and Architecture objects are not mixed
+    if not (
+        all(isinstance(architecture, str) for architecture in architectures)
+        or all(isinstance(architecture, Architecture) for architecture in architectures)
+    ):
+        raise ValueError(
+            f"every item must either be a string or an object for {architectures!r}"
+        )
+
+    _expand_architectures(architectures)
+
+    # validate `build_for` after expanding data
+    if any(len(architecture.build_for) > 1 for architecture in architectures):
+        raise ValueError("only one architecture can be defined for 'build-for'")
+
+    _validate_architectures_all_keyword(architectures)
+
+    if len(architectures) > 1:
+        # validate multiple uses of the same architecture
+        unique_build_fors = set()
+        for element in architectures:
+            for architecture in element.build_for:
+                if architecture in unique_build_fors:
+                    raise ValueError(
+                        f"multiple items will build snaps that claim to run on {architecture}"
+                    )
+                unique_build_fors.add(architecture)
+
+    return architectures
+
+
+def _expand_architectures(architectures):
+    """Expand architecture data.
+
+    Expansion to fully-defined Architecture objects includes the following:
+        - strings (shortform notation) are converted to Architecture objects
+        - `build-on` and `build-for` strings are converted to single item lists
+        - Empty `build-for` fields are implicitly set to the same architecture used in `build-on`
+    """
+    for index, architecture in enumerate(architectures):
+        # convert strings into Architecture objects
+        if isinstance(architecture, str):
+            architectures[index] = Architecture(
+                build_on=[architecture], build_for=[architecture]
+            )
+        elif isinstance(architecture, Architecture):
+            # convert strings to lists
+            if isinstance(architecture.build_on, str):
+                architectures[index].build_on = [architecture.build_on]
+            if isinstance(architecture.build_for, str):
+                architectures[index].build_for = [architecture.build_for]
+            # implicitly set build_for from build_on
+            elif architecture.build_for is None:
+                architectures[index].build_for = architectures[index].build_on
+
+
+def _validate_architectures_all_keyword(architectures):
+    """Validate `all` keyword is properly used.
+
+    Validation rules:
+    - `all` cannot be used to `build-on`
+    - If `all` is used for `build-for`, no other architectures can be defined
+      for `build-for`.
+
+    :raise ValueError: if `all` keyword isn't properly used.
+    """
+    # validate use of `all` inside each build-on list
+    for architecture in architectures:
+        if "all" in architecture.build_on:
+            raise ValueError("'all' cannot be used for 'build-on'")
+
+    # validate use of `all` across all items in architecture list
+    if len(architectures) > 1:
+        if any("all" in architecture.build_for for architecture in architectures):
+            raise ValueError(
+                "one of the items has 'all' in 'build-for', but there are"
+                f" {len(architectures)} items: upon release they will conflict."
+                "'all' should only be used if there is a single item"
+            )
 
 
 class Socket(ProjectModel):
@@ -210,11 +304,11 @@ class Hook(ProjectModel):
         return plugs
 
 
-class Architecture(ProjectModel):
+class Architecture(ProjectModel, extra=pydantic.Extra.forbid):
     """Snapcraft project architecture definition."""
 
     build_on: Union[str, UniqueStrList]
-    build_to: Optional[Union[str, UniqueStrList]]
+    build_for: Optional[Union[str, UniqueStrList]] = None
 
 
 class ContentPlug(ProjectModel):
@@ -259,7 +353,7 @@ class Project(ProjectModel):
     ]
     license: Optional[str]
     grade: Optional[Literal["stable", "devel"]]
-    architectures: List[Architecture] = []
+    architectures: List[Union[str, Architecture]] = [get_host_architecture()]
     assumes: UniqueStrList = []
     package_repositories: List[Dict[str, Any]] = []  # handled by repo
     hooks: Optional[Dict[str, Hook]]
@@ -392,6 +486,12 @@ class Project(ProjectModel):
 
         return epoch
 
+    @pydantic.validator("architectures", always=True)
+    @classmethod
+    def _validate_architecture_data(cls, architectures):
+        """Validate architecture data."""
+        return _validate_architectures(architectures)
+
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "Project":
         """Create and populate a new ``Project`` object from dictionary data.
@@ -454,7 +554,7 @@ class Project(ProjectModel):
 
     def get_effective_base(self) -> str:
         """Return the base to use to create the snap."""
-        base = utils.get_effective_base(
+        base = get_effective_base(
             base=self.base,
             build_base=self.build_base,
             project_type=self.type,
