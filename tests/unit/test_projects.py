@@ -1385,7 +1385,7 @@ class TestArchitecture:
         with pytest.raises(errors.ProjectValidationError) as error:
             Project.unmarshal(data)
 
-        assert "multiple architectures are defined for one 'build-for'" in str(
+        assert "only one architecture can be defined for 'build-for'" in str(
             error.value
         )
 
@@ -1396,7 +1396,7 @@ class TestArchitecture:
         with pytest.raises(errors.ProjectValidationError) as error:
             Project.unmarshal(data)
 
-        assert "multiple architectures are defined for one 'build-for'" in str(
+        assert "only one architecture can be defined for 'build-for'" in str(
             error.value
         )
 
