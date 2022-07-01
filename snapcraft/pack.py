@@ -140,5 +140,6 @@ def pack_snap(
             msg += f" ({err.stderr.strip()!s})"
         raise errors.SnapcraftError(msg)
 
-    snap_filename = str(proc.stdout).partition(":")[2].strip()
+    snap_filename = Path(str(proc.stdout).partition(":")[2].strip()).name
+    # TODO: intermediate? if not, move to the relevant cli module
     emit.message(f"Created snap package {snap_filename}", intermediate=True)
