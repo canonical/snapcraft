@@ -26,7 +26,7 @@ import craft_parts
 from craft_cli import EmitterMode, emit
 from craft_parts import ProjectInfo, StepInfo, callbacks, infos
 
-from snapcraft import errors, extensions, pack, providers, utils
+from snapcraft import errors, extensions, pack, preprocessors, providers, utils
 from snapcraft.meta import snap_yaml
 from snapcraft.projects import GrammarAwareProject, Project
 from snapcraft.providers import capture_logs_from_instance
@@ -108,7 +108,7 @@ def process_yaml(project_file: Path) -> Dict[str, Any]:
     """
     try:
         with open(project_file, encoding="utf-8") as yaml_file:
-            yaml_data = yaml_utils.load(yaml_file)
+            yaml_data = preprocessors.preprocessor(yaml_utils.load(yaml_file))
     except OSError as err:
         msg = err.strerror
         if err.filename:
