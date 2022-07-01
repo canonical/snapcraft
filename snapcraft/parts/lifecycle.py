@@ -30,6 +30,7 @@ from snapcraft import errors, extensions, pack, providers, utils
 from snapcraft.meta import snap_yaml
 from snapcraft.projects import GrammarAwareProject, Project
 from snapcraft.providers import capture_logs_from_instance
+from snapcraft.utils import get_host_architecture, process_version
 
 from . import grammar, plugins, yaml_utils
 from .parts import PartsLifecycle
@@ -281,6 +282,9 @@ def _run_command(
             lifecycle.prime_dir,
             output=parsed_args.output,
             compression=project.compression,
+            name=project.name,
+            version=process_version(project.version),
+            target_arch=lifecycle.target_arch,
         )
 
 
@@ -293,7 +297,10 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
     provider_name = "lxd" if parsed_args.use_lxd else None
     provider = providers.get_provider(provider_name)
     instance_names = provider.clean_project_environments(
-        project_name=project.name, project_path=Path().absolute()
+        project_name=project.name,
+        project_path=Path().absolute(),
+        build_on=get_host_architecture(),
+        build_for=get_host_architecture(),
     )
     if instance_names:
         emit.message(f"Removed instance: {', '.join(instance_names)}")
@@ -340,6 +347,8 @@ def _run_in_provider(
         project_path=Path().absolute(),
         base=project.get_effective_base(),
         bind_ssh=parsed_args.bind_ssh,
+        build_on=get_host_architecture(),
+        build_for=get_host_architecture(),
     ) as instance:
         try:
             with emit.pause():

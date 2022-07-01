@@ -52,7 +52,12 @@ class LXDProvider(Provider):
         self.lxd_remote = lxd_remote
 
     def clean_project_environments(
-        self, *, project_name: str, project_path: pathlib.Path
+        self,
+        *,
+        project_name: str,
+        project_path: pathlib.Path,
+        build_on: str,
+        build_for: str,
     ) -> List[str]:
         """Clean up any build environments created for project.
 
@@ -69,6 +74,8 @@ class LXDProvider(Provider):
         instance_name = self.get_instance_name(
             project_name=project_name,
             project_path=project_path,
+            build_on=build_on,
+            build_for=build_for,
         )
 
         try:
@@ -142,6 +149,8 @@ class LXDProvider(Provider):
         project_path: pathlib.Path,
         base: str,
         bind_ssh: bool,
+        build_on: str,
+        build_for: str,
     ) -> Generator[Executor, None, None]:
         """Launch environment for specified base.
 
@@ -154,6 +163,8 @@ class LXDProvider(Provider):
         instance_name = self.get_instance_name(
             project_name=project_name,
             project_path=project_path,
+            build_on=build_on,
+            build_for=build_for,
         )
         alias = BASE_TO_BUILDD_IMAGE_ALIAS[base]
         try:
