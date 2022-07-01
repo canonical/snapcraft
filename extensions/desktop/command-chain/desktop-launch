@@ -1,0 +1,3 @@
+#!/bin/sh
+
+exec "${SNAP}/snap/command-chain/run" "${SNAP}/gnome-platform/command-chain/desktop-launch" "$@"
