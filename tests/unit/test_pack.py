@@ -33,7 +33,7 @@ def test_pack_snap(mocker, new_dir):
             universal_newlines=True,
         ),
         call(
-            ["snap", "pack", new_dir],
+            ["snap", "pack", new_dir, new_dir],
             capture_output=True,
             check=True,
             universal_newlines=True,
@@ -42,6 +42,7 @@ def test_pack_snap(mocker, new_dir):
 
 
 def test_pack_snap_compression_none(mocker, new_dir):
+    """No compression uses snap default."""
     mock_run = mocker.patch("subprocess.run")
     pack.pack_snap(new_dir, output=None, compression=None)
     assert mock_run.mock_calls[:2] == [
@@ -52,7 +53,7 @@ def test_pack_snap_compression_none(mocker, new_dir):
             universal_newlines=True,
         ),
         call(
-            ["snap", "pack", new_dir],
+            ["snap", "pack", new_dir, new_dir],
             capture_output=True,
             check=True,
             universal_newlines=True,
@@ -61,6 +62,7 @@ def test_pack_snap_compression_none(mocker, new_dir):
 
 
 def test_pack_snap_compression(mocker, new_dir):
+    """Compression should be passed to snap pack."""
     mock_run = mocker.patch("subprocess.run")
     pack.pack_snap(new_dir, output=None, compression="zz")
     assert mock_run.mock_calls[:2] == [
@@ -71,7 +73,7 @@ def test_pack_snap_compression(mocker, new_dir):
             universal_newlines=True,
         ),
         call(
-            ["snap", "pack", "--compression", "zz", new_dir],
+            ["snap", "pack", "--compression", "zz", new_dir, new_dir],
             capture_output=True,
             check=True,
             universal_newlines=True,
@@ -80,7 +82,7 @@ def test_pack_snap_compression(mocker, new_dir):
 
 
 def test_pack_snap_output_file_output_directory_cwd(mocker, new_dir):
-    """Test `snap pack` when it outputs to the current working directory."""
+    """Output to a filename in the current working directory."""
     mock_run = mocker.patch("subprocess.run")
     pack.pack_snap(new_dir, output=f"{new_dir}/test.snap")
     assert mock_run.mock_calls[:2] == [
@@ -91,7 +93,7 @@ def test_pack_snap_output_file_output_directory_cwd(mocker, new_dir):
             universal_newlines=True,
         ),
         call(
-            ["snap", "pack", "--filename", "test.snap", new_dir],
+            ["snap", "pack", "--filename", "test.snap", new_dir, new_dir],
             capture_output=True,
             check=True,
             universal_newlines=True,
@@ -100,7 +102,7 @@ def test_pack_snap_output_file_output_directory_cwd(mocker, new_dir):
 
 
 def test_pack_snap_output_file_output_directory_existing(mocker, new_dir):
-    """Test `snap pack` when it outputs to an existing directory."""
+    """Output to an existing directory."""
     mock_run = mocker.patch("subprocess.run")
     output_directory = new_dir / "output"
     output_directory.mkdir()
@@ -116,7 +118,7 @@ def test_pack_snap_output_file_output_directory_existing(mocker, new_dir):
             universal_newlines=True,
         ),
         call(
-            ["snap", "pack", "--filename", "test.snap", new_dir, str(output_directory)],
+            ["snap", "pack", "--filename", "test.snap", new_dir, output_directory],
             capture_output=True,
             check=True,
             universal_newlines=True,
@@ -125,7 +127,7 @@ def test_pack_snap_output_file_output_directory_existing(mocker, new_dir):
 
 
 def test_pack_snap_output_file_output_directory_non_existant(mocker, new_dir):
-    """Test `snap pack` when it outputs to a non-existent directory."""
+    """Output to a non-existent directory."""
     mock_run = mocker.patch("subprocess.run")
     output_directory = new_dir / "output"
     assert not output_directory.exists()
@@ -146,7 +148,7 @@ def test_pack_snap_output_file_output_directory_non_existant(mocker, new_dir):
                 "--filename",
                 "test.snap",
                 new_dir,
-                str(new_dir / "output"),
+                (new_dir / "output"),
             ],
             capture_output=True,
             check=True,
@@ -155,8 +157,8 @@ def test_pack_snap_output_file_output_directory_non_existant(mocker, new_dir):
     ]
 
 
-def test_pack_snap_output_directory_not_specified(mocker, new_dir):
-    """Test `snap pack` executes when no output directory is specified."""
+def test_pack_snap_output_directory_cwd_no_filename(mocker, new_dir):
+    """Output to the current working directory when no filename is specified."""
     mock_run = mocker.patch("subprocess.run")
     pack.pack_snap(new_dir, output=str(new_dir))
     assert mock_run.mock_calls[:2] == [
@@ -167,7 +169,7 @@ def test_pack_snap_output_directory_not_specified(mocker, new_dir):
             universal_newlines=True,
         ),
         call(
-            ["snap", "pack", new_dir, str(new_dir)],
+            ["snap", "pack", new_dir, new_dir],
             capture_output=True,
             check=True,
             universal_newlines=True,
@@ -175,9 +177,8 @@ def test_pack_snap_output_directory_not_specified(mocker, new_dir):
     ]
 
 
-def test_pack_snap_output_file_output_directory_existing_no_file_name(mocker, new_dir):
-    """Test `snap pack` when it outputs to an existing directory but no file
-    name is specified."""
+def test_pack_snap_output_file_output_directory_existing_no_filename(mocker, new_dir):
+    """Outputs to an existing directory when no filename is specified."""
     mock_run = mocker.patch("subprocess.run")
     output_directory = new_dir / "output"
     output_directory.mkdir()
@@ -193,7 +194,88 @@ def test_pack_snap_output_file_output_directory_existing_no_file_name(mocker, ne
             universal_newlines=True,
         ),
         call(
-            ["snap", "pack", new_dir, str(output_directory)],
+            ["snap", "pack", new_dir, output_directory],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        ),
+    ]
+
+
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        {"name": "hello", "version": "1.0"},
+        {"name": "hello", "target_arch": "armhf"},
+        {"version": "1.0", "target_arch": "armhf"},
+    ],
+)
+def test_pack_snap_file_name_missing_parameters(mocker, new_dir, parameters):
+    """If name, version, and target architecture are not all specified, then use
+    snap's default naming convention."""
+    mock_run = mocker.patch("subprocess.run")
+    pack.pack_snap(new_dir, output=None, **parameters)
+    assert mock_run.mock_calls[:2] == [
+        call(
+            ["snap", "pack", "--check-skeleton", new_dir],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        ),
+        call(
+            ["snap", "pack", new_dir, new_dir],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        ),
+    ]
+
+
+def test_pack_snap_file_name_valid(mocker, new_dir):
+    """Passing name, version, and target_arch should produce a valid file name."""
+    mock_run = mocker.patch("subprocess.run")
+    pack.pack_snap(
+        new_dir,
+        output=None,
+        name="hello",
+        version="1.0",
+        target_arch="armhf",
+    )
+    assert mock_run.mock_calls[:2] == [
+        call(
+            ["snap", "pack", "--check-skeleton", new_dir],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        ),
+        call(
+            ["snap", "pack", "--filename", "hello_1.0_armhf.snap", new_dir, new_dir],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        ),
+    ]
+
+
+def test_pack_snap_use_output_name_over_name_version_arch(mocker, new_dir):
+    """Output filename takes priority over name, version, and target_arch parameters."""
+    mock_run = mocker.patch("subprocess.run")
+    pack.pack_snap(
+        new_dir,
+        output="test.snap",
+        name="hello",
+        version="1.0",
+        target_arch="armhf",
+    )
+    assert mock_run.mock_calls[:2] == [
+        call(
+            ["snap", "pack", "--check-skeleton", new_dir],
+            capture_output=True,
+            check=True,
+            universal_newlines=True,
+        ),
+        call(
+            ["snap", "pack", "--filename", "test.snap", new_dir, new_dir],
             capture_output=True,
             check=True,
             universal_newlines=True,
