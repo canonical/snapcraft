@@ -5,6 +5,7 @@ on:
       - "main"
       - "snapcraft/7.0"
       - "release/*"
+      - "hotfix/*"
   pull_request:
 
 jobs:
