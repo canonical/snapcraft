@@ -177,7 +177,7 @@ def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
         assumes.add("command-chain")
 
     environment = _populate_environment(project.environment, prime_dir, arch_triplet)
-    version = _process_version(project.version)
+    version = process_version(project.version)
 
     snap_metadata = SnapMetadata(
         name=project.name,
@@ -257,7 +257,7 @@ def _populate_environment(
     return None
 
 
-def _process_version(version: Optional[str]) -> str:
+def process_version(version: Optional[str]) -> str:
     """Handle special version strings."""
     if version is None:
         raise ValueError("version cannot be None")

@@ -18,7 +18,7 @@
 
 import pathlib
 import subprocess
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 import craft_parts
 from craft_cli import emit
@@ -72,6 +72,7 @@ class PartsLifecycle:
         self._part_names = part_names
         self._adopt_info = adopt_info
         self._parse_info = parse_info
+        self._all_part_names = [*all_parts]
 
         emit.progress("Initializing parts lifecycle")
 
@@ -242,6 +243,21 @@ class PartsLifecycle:
                     )
 
         return metadata_list
+
+    def get_primed_stage_packages(self) -> List[str]:
+        """Obtain the list of primed stage packages from all parts."""
+        primed_stage_packages: Set[str] = set()
+        for name in self._all_part_names:
+            stage_packages = self._lcm.get_primed_stage_packages(part_name=name)
+            if stage_packages:
+                primed_stage_packages |= set(stage_packages)
+        package_list = list(primed_stage_packages)
+        package_list.sort()
+        return package_list
+
+    def get_part_pull_assets(self, *, part_name: str) -> Optional[Dict[str, Any]]:
+        """Obtain the pull state assets."""
+        return self._lcm.get_pull_assets(part_name=part_name)
 
 
 def _launch_shell(*, cwd: Optional[pathlib.Path] = None) -> None:

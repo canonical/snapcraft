@@ -18,12 +18,13 @@
 
 import abc
 import argparse
+import os
 import textwrap
 
 from craft_cli import BaseCommand, emit
 from overrides import overrides
 
-from snapcraft import pack
+from snapcraft import pack, utils
 from snapcraft.parts import lifecycle as parts_lifecycle
 
 
@@ -47,6 +48,19 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             "--debug",
             action="store_true",
             help="Shell into the environment if the build fails",
+        )
+        parser.add_argument(
+            "--enable-manifest",
+            action="store_true",
+            default=utils.strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n")),
+            help="Generate snap manifest",
+        )
+        parser.add_argument(
+            "--manifest-image-information",
+            type=str,
+            metavar="image-info",
+            default=os.getenv("SNAPCRAFT_IMAGE_INFO"),
+            help="Set snap manifest image-info",
         )
 
         # --enable-experimental-extensions is only available in legacy
