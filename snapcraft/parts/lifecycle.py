@@ -145,7 +145,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
         yaml file cannot be loaded.
     :raises LegacyFallback: if the project's base is not core22.
     """
-    emit.trace(f"command: {command_name}, arguments: {parsed_args}")
+    emit.debug(f"command: {command_name}, arguments: {parsed_args}")
 
     snap_project = get_snap_project()
     yaml_data = process_yaml(snap_project.project_file)
@@ -196,13 +196,13 @@ def _run_command(
         run_project_checks(project, assets_dir=assets_dir)
 
         if command_name == "snap":
-            emit.message(
+            emit.progress(
                 "The 'snap' command is deprecated, use 'pack' instead.",
-                intermediate=True,
+                permanent=True,
             )
 
     if parsed_args.use_lxd and providers.get_platform_default_provider() == "lxd":
-        emit.message("LXD is used by default on this platform.", intermediate=True)
+        emit.progress("LXD is used by default on this platform.", permanent=True)
 
     if (
         not managed_mode
@@ -281,7 +281,7 @@ def _run_command(
             arch=lifecycle.target_arch,
             arch_triplet=lifecycle.target_arch_triplet,
         )
-        emit.message("Generated snap metadata", intermediate=True)
+        emit.progress("Generated snap metadata", permanent=True)
 
         if parsed_args.enable_manifest:
             _generate_manifest(
@@ -292,7 +292,7 @@ def _run_command(
             )
 
     if command_name in ("pack", "snap"):
-        pack.pack_snap(
+        snap_filename = pack.pack_snap(
             lifecycle.prime_dir,
             output=parsed_args.output,
             compression=project.compression,
@@ -300,6 +300,7 @@ def _run_command(
             version=process_version(project.version),
             target_arch=lifecycle.target_arch,
         )
+        emit.message(f"Created snap package {snap_filename}")
 
 
 def _generate_manifest(
@@ -330,7 +331,7 @@ def _generate_manifest(
         image_information=image_information,
         primed_stage_packages=lifecycle.get_primed_stage_packages(),
     )
-    emit.message("Generated snap manifest", intermediate=True)
+    emit.progress("Generated snap manifest", permanent=True)
 
     # Also copy the original snapcraft.yaml
     snap_project = get_snap_project()
@@ -342,7 +343,7 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
 
     :param project: The project to clean.
     """
-    emit.trace("Clean build provider")
+    emit.debug("Clean build provider")
     provider_name = "lxd" if parsed_args.use_lxd else None
     provider = providers.get_provider(provider_name)
     instance_names = provider.clean_project_environments(
@@ -361,7 +362,7 @@ def _run_in_provider(
     project: Project, command_name: str, parsed_args: "argparse.Namespace"
 ) -> None:
     """Pack image in provider instance."""
-    emit.trace("Checking build provider availability")
+    emit.debug("Checking build provider availability")
     provider_name = "lxd" if parsed_args.use_lxd else None
     provider = providers.get_provider(provider_name)
     provider.ensure_provider_is_available()
@@ -378,8 +379,10 @@ def _run_in_provider(
         cmd.append("--verbose")
     elif emit.get_mode() == EmitterMode.QUIET:
         cmd.append("--quiet")
+    elif emit.get_mode() == EmitterMode.DEBUG:
+        cmd.append("--verbosity=debug")
     elif emit.get_mode() == EmitterMode.TRACE:
-        cmd.append("--trace")
+        cmd.append("--verbosity=trace")
 
     if parsed_args.debug:
         cmd.append("--debug")

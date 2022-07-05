@@ -97,9 +97,7 @@ class AptKeyManager:
         except subprocess.CalledProcessError as error:
             # Export shouldn't exit with failure based on testing,
             # but assume the key is not installed and log a warning.
-            emit.message(
-                f"Unexpected apt-key failure: {error.output}", intermediate=True
-            )
+            emit.progress(f"Unexpected apt-key failure: {error.output}", permanent=True)
             return False
 
         apt_key_output = proc.stdout.decode()
@@ -113,7 +111,7 @@ class AptKeyManager:
         # The two strings above have worked in testing, but if neither is
         # present for whatever reason, assume the key is not installed
         # and log a warning.
-        emit.message(f"Unexpected apt-key output: {apt_key_output}", intermediate=True)
+        emit.progress(f"Unexpected apt-key output: {apt_key_output}", permanent=True)
         return False
 
     def install_key(self, *, key: str) -> None:
@@ -132,7 +130,7 @@ class AptKeyManager:
         ]
 
         try:
-            emit.trace(f"Executing: {cmd!r}")
+            emit.debug(f"Executing: {cmd!r}")
             env = {}
             env["LANG"] = "C.UTF-8"
             subprocess.run(
@@ -146,7 +144,7 @@ class AptKeyManager:
         except subprocess.CalledProcessError as error:
             raise errors.AptGPGKeyInstallError(error.output.decode(), key=key)
 
-        emit.trace(f"Installed apt repository key:\n{key}")
+        emit.debug(f"Installed apt repository key:\n{key}")
 
     def install_key_from_keyserver(
         self, *, key_id: str, key_server: str = "keyserver.ubuntu.com"
@@ -173,7 +171,7 @@ class AptKeyManager:
         ]
 
         try:
-            emit.trace(f"Executing: {cmd!r}")
+            emit.debug(f"Executing: {cmd!r}")
             subprocess.run(
                 cmd,
                 stdout=subprocess.PIPE,

@@ -96,9 +96,9 @@ class Extension(abc.ABC):
             )
 
         if self.is_experimental(base):
-            emit.message(
+            emit.progress(
                 f"*EXPERIMENTAL* extension {extension_name!r} enabled",
-                intermediate=True,
+                permanent=True,
             )
 
         if base not in self.get_supported_bases():

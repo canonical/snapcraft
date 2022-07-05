@@ -145,7 +145,7 @@ def test_parts_lifecycle_clean(parts_data, new_dir, emitter):
         project_vars={"version": "1", "grade": "stable"},
     )
     lifecycle.clean(part_names=None)
-    emitter.assert_message("Cleaning all parts", intermediate=True)
+    emitter.assert_progress("Cleaning all parts")
 
 
 def test_parts_lifecycle_clean_parts(parts_data, new_dir, emitter):
@@ -163,7 +163,7 @@ def test_parts_lifecycle_clean_parts(parts_data, new_dir, emitter):
         project_vars={"version": "1", "grade": "stable"},
     )
     lifecycle.clean(part_names=["p1"])
-    emitter.assert_message("Cleaning parts: p1", intermediate=True)
+    emitter.assert_progress("Cleaning parts: p1")
 
 
 def test_parts_lifecycle_initialize_with_package_repositories_deps_not_installed(

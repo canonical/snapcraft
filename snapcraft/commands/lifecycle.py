@@ -97,7 +97,7 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
         if not self.name:
             raise RuntimeError("command name not specified")
 
-        emit.trace(f"lifecycle command: {self.name!r}, arguments: {parsed_args!r}")
+        emit.debug(f"lifecycle command: {self.name!r}, arguments: {parsed_args!r}")
         parts_lifecycle.run(self.name, parsed_args)
 
 
@@ -220,7 +220,10 @@ class PackCommand(_LifecycleCommand):
     def run(self, parsed_args):
         """Run the command."""
         if parsed_args.directory:
-            pack.pack_snap(parsed_args.directory, output=parsed_args.output)
+            snap_filename = pack.pack_snap(
+                parsed_args.directory, output=parsed_args.output
+            )
+            emit.message(f"Created snap package {snap_filename}")
         else:
             super().run(parsed_args)
 

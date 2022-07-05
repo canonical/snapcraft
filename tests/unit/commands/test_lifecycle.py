@@ -94,4 +94,4 @@ def test_pack_command_with_directory(mocker):
     cmd = PackCommand(None)
     cmd.run(argparse.Namespace(directory=".", output=None, compression=None))
     assert lifecycle_run_mock.mock_calls == []
-    assert pack_mock.mock_calls == [call(".", output=None)]
+    assert pack_mock.mock_calls[0] == call(".", output=None)

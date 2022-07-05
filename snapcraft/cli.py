@@ -142,7 +142,7 @@ def get_dispatcher() -> craft_cli.Dispatcher:
         log_filepath = None
 
     emit.init(
-        mode=EmitterMode.NORMAL,
+        mode=EmitterMode.BRIEF,
         appname="snapcraft",
         greeting=f"Starting Snapcraft {__version__}",
         log_filepath=log_filepath,

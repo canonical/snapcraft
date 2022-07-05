@@ -160,12 +160,12 @@ class PartsLifecycle:
                     emit.progress(f"Executing parts lifecycle: {message}")
                     with emit.open_stream("Executing action") as stream:
                         aex.execute(action, stdout=stream, stderr=stream)
-                    emit.message(f"Executed: {message}", intermediate=True)
+                    emit.progress(f"Executed: {message}", permanent=True)
 
             if shell_after:
                 _launch_shell()
 
-            emit.message("Executed parts lifecycle", intermediate=True)
+            emit.progress("Executed parts lifecycle", permanent=True)
         except RuntimeError as err:
             raise RuntimeError(f"Parts processing internal error: {err}") from err
         except OSError as err:
@@ -198,7 +198,7 @@ class PartsLifecycle:
             # TODO: craft-parts API for: force_refresh=refresh_required
             deb.Ubuntu.refresh_packages_list.cache_clear()
             self._lcm.refresh_packages_list()
-        emit.message("Installed package repositories", intermediate=True)
+        emit.progress("Installed package repositories", permanent=True)
 
     def clean(self, *, part_names: Optional[List[str]] = None) -> None:
         """Remove lifecycle artifacts.
@@ -211,7 +211,7 @@ class PartsLifecycle:
         else:
             message = "Cleaning all parts"
 
-        emit.message(message, intermediate=True)
+        emit.progress(message)
         self._lcm.clean(part_names=part_names)
 
     def extract_metadata(self) -> List[ExtractedMetadata]:
@@ -238,8 +238,8 @@ class PartsLifecycle:
                         metadata_list.append(metadata)
                         break
 
-                    emit.message(
-                        f"No metadata extracted from {metadata_file}", intermediate=True
+                    emit.progress(
+                        f"No metadata extracted from {metadata_file}", permanent=True
                     )
 
         return metadata_list
@@ -265,7 +265,7 @@ def _launch_shell(*, cwd: Optional[pathlib.Path] = None) -> None:
 
     :param cwd: Working directory to start user in.
     """
-    emit.message("Launching shell on build environment...", intermediate=True)
+    emit.progress("Launching shell on build environment...", permanent=True)
     with emit.pause():
         subprocess.run(["bash"], check=False, cwd=cwd)
 

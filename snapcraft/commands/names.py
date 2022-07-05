@@ -104,9 +104,9 @@ class StoreRegisterCommand(BaseCommand):
         snap_name = getattr(parsed_args, "snap-name")
 
         if parsed_args.private:
-            emit.message(
+            emit.progress(
                 _MESSAGE_REGISTER_PRIVATE.format(snap_name),
-                intermediate=True,
+                permanent=True,
             )
         if parsed_args.yes or utils.confirm_with_user(
             _MESSAGE_REGISTER_CONFIRM.format(snap_name)
