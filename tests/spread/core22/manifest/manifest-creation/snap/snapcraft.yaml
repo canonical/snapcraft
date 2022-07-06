@@ -16,3 +16,5 @@ parts:
     plugin: nil
     stage-packages:
       - hello
+  other-part:
+    plugin: nil
