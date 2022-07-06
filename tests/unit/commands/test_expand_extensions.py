@@ -34,10 +34,13 @@ def test_command(new_dir, emitter):
             summary: testing extensions
             description: expand a fake extension
             base: core22
+            confinement: strict
+            grade: stable
 
             apps:
                 app1:
                     command: app1
+                    command-chain: [fake-command]
                     extensions: [fake-extension]
 
             parts:
@@ -58,9 +61,13 @@ def test_command(new_dir, emitter):
         summary: testing extensions
         description: expand a fake extension
         base: core22
+        confinement: strict
+        grade: stable
         apps:
             app1:
                 command: app1
+                command-chain:
+                - fake-command
                 plugs:
                 - fake-plug
         parts:
@@ -70,7 +77,6 @@ def test_command(new_dir, emitter):
                 - fake-extension/fake-part
             fake-extension/fake-part:
                 plugin: nil
-        grade: fake-grade
         """
         )
     )

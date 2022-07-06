@@ -62,6 +62,11 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             default=os.getenv("SNAPCRAFT_IMAGE_INFO"),
             help="Set snap manifest image-info",
         )
+        parser.add_argument(
+            "--bind-ssh",
+            action="store_true",
+            help="Bind ~/.ssh directory to local build instances",
+        )
 
         # --enable-experimental-extensions is only available in legacy
         parser.add_argument(

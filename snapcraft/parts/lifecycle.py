@@ -23,7 +23,7 @@ import subprocess
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List
 
 import craft_parts
 from craft_cli import EmitterMode, emit
@@ -33,6 +33,7 @@ from snapcraft import errors, extensions, pack, providers, utils
 from snapcraft.meta import manifest, snap_yaml
 from snapcraft.projects import GrammarAwareProject, Project
 from snapcraft.providers import capture_logs_from_instance
+from snapcraft.utils import get_host_architecture, process_version
 
 from . import grammar, plugins, yaml_utils
 from .parts import PartsLifecycle
@@ -60,6 +61,9 @@ _SNAP_PROJECT_FILES = [
     _SnapProject(project_file=Path(".snapcraft.yaml")),
 ]
 
+_CORE_PART_KEYS = ["build-packages", "build-snaps"]
+_CORE_PART_NAME = "snapcraft/core"
+
 
 def get_snap_project() -> _SnapProject:
     """Find the snapcraft.yaml to load.
@@ -77,24 +81,16 @@ def get_snap_project() -> _SnapProject:
     )
 
 
-def process_yaml(project_file: Path) -> Dict[str, Any]:
-    """Process the yaml from project file.
-
-    :raises SnapcraftError: if the project yaml file cannot be loaded.
-    """
-    yaml_data = {}
-
-    try:
-        with open(project_file, encoding="utf-8") as yaml_file:
-            yaml_data = yaml_utils.load(yaml_file)
-    except OSError as err:
-        msg = err.strerror
-        if err.filename:
-            msg = f"{msg}: {err.filename!r}."
-        raise errors.SnapcraftError(msg) from err
-
+def apply_yaml(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Apply Snapcraft logic to yaml_data."""
     # validate project grammar
     GrammarAwareProject.validate_grammar(yaml_data)
+
+    # Special Snapcraft Part
+    core_part = {k: yaml_data.pop(k) for k in _CORE_PART_KEYS if k in yaml_data}
+    if core_part:
+        core_part["plugin"] = "nil"
+        yaml_data["parts"][_CORE_PART_NAME] = core_part
 
     # TODO: support for target_arch
     arch = _get_arch()
@@ -106,6 +102,23 @@ def process_yaml(project_file: Path) -> Dict[str, Any]:
         )
 
     return yaml_data
+
+
+def process_yaml(project_file: Path) -> Dict[str, Any]:
+    """Process the yaml from project file.
+
+    :raises SnapcraftError: if the project yaml file cannot be loaded.
+    """
+    try:
+        with open(project_file, encoding="utf-8") as yaml_file:
+            yaml_data = yaml_utils.load(yaml_file)
+    except OSError as err:
+        msg = err.strerror
+        if err.filename:
+            msg = f"{msg}: {err.filename!r}."
+        raise errors.SnapcraftError(msg) from err
+
+    return apply_yaml(yaml_data)
 
 
 def _extract_parse_info(yaml_data: Dict[str, Any]) -> Dict[str, List[str]]:
@@ -226,7 +239,7 @@ def _run_command(
             "version": project.version or "",
             "grade": project.grade or "",
         },
-        extra_build_snaps=_get_extra_build_snaps(project),
+        extra_build_snaps=project.get_extra_build_snaps(),
     )
 
     if command_name == "clean":
@@ -283,6 +296,9 @@ def _run_command(
             lifecycle.prime_dir,
             output=parsed_args.output,
             compression=project.compression,
+            name=project.name,
+            version=process_version(project.version),
+            target_arch=lifecycle.target_arch,
         )
 
 
@@ -330,7 +346,10 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
     provider_name = "lxd" if parsed_args.use_lxd else None
     provider = providers.get_provider(provider_name)
     instance_names = provider.clean_project_environments(
-        project_name=project.name, project_path=Path().absolute()
+        project_name=project.name,
+        project_path=Path().absolute(),
+        build_on=get_host_architecture(),
+        build_for=get_host_architecture(),
     )
     if instance_names:
         emit.message(f"Removed instance: {', '.join(instance_names)}")
@@ -383,6 +402,9 @@ def _run_in_provider(
         project_name=project.name,
         project_path=Path().absolute(),
         base=project.get_effective_base(),
+        bind_ssh=parsed_args.bind_ssh,
+        build_on=get_host_architecture(),
+        build_for=get_host_architecture(),
     ) as instance:
         try:
             with emit.pause():
@@ -400,17 +422,6 @@ def _get_arch() -> str:
     machine = infos._get_host_architecture()  # pylint: disable=protected-access
     # FIXME Raise the potential KeyError.
     return infos._ARCH_TRANSLATIONS[machine]["deb"]  # pylint: disable=protected-access
-
-
-def _get_extra_build_snaps(project: Project) -> Optional[List[str]]:
-    """Get list of extra snaps required to build."""
-    extra_build_snaps = project.get_content_snaps()
-    if project.base is not None:
-        if extra_build_snaps is None:
-            extra_build_snaps = [project.base]
-        else:
-            extra_build_snaps.append(project.base)
-    return extra_build_snaps
 
 
 def _set_global_environment(info: ProjectInfo) -> None:

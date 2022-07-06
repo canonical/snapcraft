@@ -23,10 +23,8 @@ from typing import Any, Dict, List, Optional, cast
 
 from pydantic_yaml import YamlModel
 
-from snapcraft import __version__, errors, os_release
+from snapcraft import __version__, errors, os_release, utils
 from snapcraft.projects import Project
-
-from .snap_yaml import process_version
 
 
 class Manifest(YamlModel):
@@ -84,7 +82,7 @@ def write(
     snap_dir.mkdir(parents=True, exist_ok=True)
 
     osrel = os_release.OsRelease()
-    version = process_version(project.version)
+    version = utils.process_version(project.version)
 
     try:
         image_info = json.loads(image_information)

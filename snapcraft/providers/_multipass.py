@@ -25,7 +25,7 @@ from craft_cli import emit
 from craft_providers import Executor, bases, multipass
 from craft_providers.multipass.errors import MultipassError
 
-from snapcraft.utils import confirm_with_user, get_managed_environment_project_path
+from snapcraft import utils
 
 from ._buildd import BASE_TO_BUILDD_IMAGE_ALIAS, SnapcraftBuilddBaseConfiguration
 from ._provider import Provider, ProviderError
@@ -46,7 +46,12 @@ class MultipassProvider(Provider):
         self.multipass = instance
 
     def clean_project_environments(
-        self, *, project_name: str, project_path: pathlib.Path
+        self,
+        *,
+        project_name: str,
+        project_path: pathlib.Path,
+        build_on: str,
+        build_for: str,
     ) -> List[str]:
         """Clean up any build environments created for project.
 
@@ -93,7 +98,7 @@ class MultipassProvider(Provider):
         """
         if not multipass.is_installed():
             with emit.pause():
-                confirmation = confirm_with_user(
+                confirmation = utils.confirm_with_user(
                     "Multipass is required, but not installed. Do you wish to install Multipass "
                     "and configure it with the defaults?",
                     default=False,
@@ -132,6 +137,9 @@ class MultipassProvider(Provider):
         project_name: str,
         project_path: pathlib.Path,
         base: str,
+        bind_ssh: bool,
+        build_on: str,
+        build_for: str,
     ) -> Generator[Executor, None, None]:
         """Launch environment for specified base.
 
@@ -144,6 +152,8 @@ class MultipassProvider(Provider):
         instance_name = self.get_instance_name(
             project_name=project_name,
             project_path=project_path,
+            build_on=build_on,
+            build_for=build_for,
         )
 
         environment = self.get_command_environment()
@@ -169,8 +179,17 @@ class MultipassProvider(Provider):
         try:
             # Mount project.
             instance.mount(
-                host_source=project_path, target=get_managed_environment_project_path()
+                host_source=project_path,
+                target=utils.get_managed_environment_project_path(),
             )
+
+            # Mount ssh directory.
+            if bind_ssh:
+                instance.mount(
+                    host_source=pathlib.Path.home() / ".ssh",
+                    target=utils.get_managed_environment_home_path() / ".ssh",
+                )
+
         except MultipassError as error:
             raise ProviderError(str(error)) from error
 

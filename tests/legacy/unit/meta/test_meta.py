@@ -389,6 +389,8 @@ class StopModeTestCase(CreateBaseTestCase):
         "sigusr1-all",
         "sigusr2",
         "sigusr2-all",
+        "sigint",
+        "sigint-all",
     ]
 
     def test_valid(self):
