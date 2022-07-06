@@ -16,9 +16,12 @@
 
 """Parts lifecycle preparation and execution."""
 
+import copy
 import os
+import shutil
 import subprocess
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List
 
@@ -27,7 +30,7 @@ from craft_cli import EmitterMode, emit
 from craft_parts import ProjectInfo, StepInfo, callbacks, infos
 
 from snapcraft import errors, extensions, pack, providers, utils
-from snapcraft.meta import snap_yaml
+from snapcraft.meta import manifest, snap_yaml
 from snapcraft.projects import GrammarAwareProject, Project
 from snapcraft.providers import capture_logs_from_instance
 from snapcraft.utils import get_host_architecture, process_version
@@ -147,6 +150,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     snap_project = get_snap_project()
     yaml_data = process_yaml(snap_project.project_file)
     parse_info = _extract_parse_info(yaml_data)
+    start_time = datetime.now()
 
     if parsed_args.provider:
         raise errors.SnapcraftError("Option --provider is not supported.")
@@ -168,6 +172,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
             parse_info=parse_info,
             parallel_build_count=build_count,
             assets_dir=snap_project.assets_dir,
+            start_time=start_time,
             parsed_args=parsed_args,
         )
     except PermissionError as err:
@@ -180,6 +185,7 @@ def _run_command(
     project: Project,
     parse_info: Dict[str, List[str]],
     assets_dir: Path,
+    start_time: datetime,
     parallel_build_count: int,
     parsed_args: "argparse.Namespace",
 ) -> None:
@@ -277,6 +283,14 @@ def _run_command(
         )
         emit.message("Generated snap metadata", intermediate=True)
 
+        if parsed_args.enable_manifest:
+            _generate_manifest(
+                project,
+                lifecycle=lifecycle,
+                start_time=start_time,
+                parsed_args=parsed_args,
+            )
+
     if command_name in ("pack", "snap"):
         pack.pack_snap(
             lifecycle.prime_dir,
@@ -286,6 +300,41 @@ def _run_command(
             version=process_version(project.version),
             target_arch=lifecycle.target_arch,
         )
+
+
+def _generate_manifest(
+    project: Project,
+    *,
+    lifecycle: PartsLifecycle,
+    start_time: datetime,
+    parsed_args: "argparse.Namespace",
+) -> None:
+    """Create and populate the manifest file."""
+    emit.progress("Generating snap manifest...")
+    image_information = parsed_args.manifest_image_information or "{}"
+
+    parts = copy.deepcopy(project.parts)
+    for name, part in parts.items():
+        assets = lifecycle.get_part_pull_assets(part_name=name)
+        if assets:
+            part["stage-packages"] = assets.get("stage-packages", [])
+        for key in ("stage", "prime", "stage-packages", "build-packages"):
+            part.setdefault(key, [])
+
+    manifest.write(
+        project,
+        lifecycle.prime_dir,
+        arch=lifecycle.target_arch,
+        parts=parts,
+        start_time=start_time,
+        image_information=image_information,
+        primed_stage_packages=lifecycle.get_primed_stage_packages(),
+    )
+    emit.message("Generated snap manifest", intermediate=True)
+
+    # Also copy the original snapcraft.yaml
+    snap_project = get_snap_project()
+    shutil.copy(snap_project.project_file, lifecycle.prime_dir / "snap")
 
 
 def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None:
@@ -338,6 +387,13 @@ def _run_in_provider(
         cmd.append("--shell")
     if getattr(parsed_args, "shell_after", False):
         cmd.append("--shell-after")
+
+    if getattr(parsed_args, "enable_manifest", False):
+        cmd.append("--enable-manifest")
+    build_information = getattr(parsed_args, "manifest_build_information", None)
+    if build_information:
+        cmd.append("--manifest-build-information")
+        cmd.append(build_information)
 
     output_dir = utils.get_managed_environment_project_path()
 

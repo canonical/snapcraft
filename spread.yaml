@@ -273,6 +273,11 @@ suites:
    systems:
      - ubuntu-22.04*
 
+ tests/spread/core22/manifest/:
+   summary: core22 manifest tests
+   systems:
+     - ubuntu-22.04*
+
  # General, core suite
  tests/spread/general/:
    summary: tests of snapcraft core functionality
