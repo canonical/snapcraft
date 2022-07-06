@@ -301,7 +301,7 @@ def _generate_manifest(
     for name, part in parts.items():
         assets = lifecycle.get_part_pull_assets(part_name=name)
         if assets:
-            part["stage-packages"] = assets.get("stage-packages", [])
+            part["stage-packages"] = assets.get("stage-packages", []) or []
         for key in ("stage", "prime", "stage-packages", "build-packages"):
             part.setdefault(key, [])
 
