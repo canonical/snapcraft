@@ -28,6 +28,7 @@ from pydantic import BaseModel
 
 from snapcraft import extensions
 from snapcraft.parts.lifecycle import get_snap_project, process_yaml
+from snapcraft.projects import Project
 from snapcraft_legacy.internal.project_loader import (
     find_extension,
     supported_extension_names,
@@ -113,5 +114,5 @@ class ExpandExtensionsCommand(BaseCommand, abc.ABC):
     def run(self, parsed_args):
         snap_project = get_snap_project()
         yaml_data = process_yaml(snap_project.project_file)
-
+        Project.unmarshal(yaml_data)
         emit.message(yaml.safe_dump(yaml_data, indent=4, sort_keys=False))

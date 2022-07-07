@@ -20,12 +20,15 @@ from typing import TYPE_CHECKING, Dict, List, Type
 
 from snapcraft import errors
 
+from .gnome import GNOME
+
 if TYPE_CHECKING:
     from .extension import Extension
 
     ExtensionType = Type[Extension]
 
-_EXTENSIONS: Dict[str, "ExtensionType"] = {}
+
+_EXTENSIONS: Dict[str, "ExtensionType"] = {"gnome": GNOME}
 
 
 def get_extension_names() -> List[str]:
