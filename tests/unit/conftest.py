@@ -227,6 +227,4 @@ def fake_extension_name_from_legacy():
         def get_parts_snippet(self) -> Dict[str, Any]:
             return {"fake-extension-extra/fake-part": {"plugin": "nil"}}
 
-    register("ros2-foxy", ExtensionImpl)
     yield ExtensionImpl
-    unregister("ros2-foxy")
