@@ -25,7 +25,7 @@ restore: |
   snapcraft clean
   rm -f ./*.snap
 
-  [ -f src/hello ] && git checkout src/hello.cpp
+  [ -f src/hello.cpp ] && git checkout src/hello.cpp
   [ -f colcon-ros2-foxy-rlcpp-hello/hello.cpp ] && git checkout colcon-ros2-foxy-rlcpp-hello/hello.cpp
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh

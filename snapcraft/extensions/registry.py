@@ -21,14 +21,17 @@ from typing import TYPE_CHECKING, Dict, List, Type
 from snapcraft import errors
 
 from .gnome import GNOME
+from .ros2_humble import ROS2HumbleExtension
 
 if TYPE_CHECKING:
     from .extension import Extension
 
     ExtensionType = Type[Extension]
 
-
-_EXTENSIONS: Dict[str, "ExtensionType"] = {"gnome": GNOME}
+_EXTENSIONS: Dict[str, "ExtensionType"] = {
+    "gnome": GNOME,
+    "ros2-humble": ROS2HumbleExtension,
+}
 
 
 def get_extension_names() -> List[str]:

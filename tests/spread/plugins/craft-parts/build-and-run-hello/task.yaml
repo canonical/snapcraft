@@ -4,6 +4,8 @@ summary: >-
 
 environment:
   SNAP/conda: conda-hello
+  SNAP/colcon_ros2_humble: colcon-ros2-humble-hello
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh

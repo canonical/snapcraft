@@ -70,6 +70,8 @@ class Provider(ABC):
             "https_proxy",
             "no_proxy",
             "SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS",
+            "SNAPCRAFT_BUILD_INFO",
+            "SNAPCRAFT_IMAGE_INFO",
         ]:
             if env_key in os.environ:
                 env[env_key] = os.environ[env_key]

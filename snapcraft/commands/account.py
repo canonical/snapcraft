@@ -105,10 +105,10 @@ class StoreLoginCommand(BaseCommand):
 
         if parsed_args.login_with:
             config_content = _read_config(parsed_args.login_with)
-            emit.message(
+            emit.progress(
                 "--with is no longer supported, export the auth to the environment "
                 f"variable {store.constants.ENVIRONMENT_STORE_CREDENTIALS!r} instead",
-                intermediate=True,
+                permanent=True,
             )
             store.LegacyUbuntuOne.store_credentials(config_content)
         else:

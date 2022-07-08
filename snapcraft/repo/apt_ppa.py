@@ -39,12 +39,12 @@ def get_launchpad_ppa_key_id(*, ppa: str) -> str:
     launchpad = Launchpad.login_anonymously("snapcraft", "production")
     launchpad_url = f"~{owner}/+archive/{name}"
 
-    emit.trace(f"Loading launchpad url: {launchpad_url}")
+    emit.debug(f"Loading launchpad url: {launchpad_url}")
     try:
         key_id = launchpad.load(launchpad_url).signing_key_fingerprint
     except lazr.restfulclient.errors.NotFound as error:
         raise errors.AptPPAInstallError(ppa, "not found on launchpad") from error
 
-    emit.trace(f"Retrieved launchpad PPA key ID: {key_id}")
+    emit.debug(f"Retrieved launchpad PPA key ID: {key_id}")
 
     return key_id

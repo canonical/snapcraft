@@ -25,6 +25,7 @@ from snapcraft import errors, extensions
 def test_get_extension_names():
     assert extensions.get_extension_names() == [
         "gnome",
+        "ros2-humble",
         "fake-extension-experimental",
         "fake-extension-extra",
         "fake-extension",
