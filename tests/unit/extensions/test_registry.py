@@ -24,6 +24,7 @@ from snapcraft import errors, extensions
 @pytest.mark.usefixtures("fake_extension_experimental")
 def test_get_extension_names():
     assert extensions.get_extension_names() == [
+        "gnome",
         "fake-extension-experimental",
         "fake-extension-extra",
         "fake-extension",

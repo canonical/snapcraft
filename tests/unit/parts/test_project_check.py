@@ -137,7 +137,7 @@ def test_unexpected_things(new_dir, emitter, snapcraft_yaml):
         asset_path.touch()
 
     run_project_checks(project, assets_dir=Path("snap"))
-    assert emitter.assert_message(
+    assert emitter.assert_progress(
         "The 'snap' directory is meant specifically for snapcraft, but it contains\n"
         "the following non-snapcraft-related paths:\n"
         "- dir1\n"
@@ -162,5 +162,5 @@ def test_unexpected_things(new_dir, emitter, snapcraft_yaml):
         "This is unsupported and may cause unexpected behavior. If you must store\n"
         "these files within the 'snap' directory, move them to 'snap/local'\n"
         "which is ignored by snapcraft.",
-        intermediate=True,
+        permanent=True,
     )

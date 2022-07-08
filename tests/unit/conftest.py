@@ -14,11 +14,44 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 import pytest
+import yaml
 
 from snapcraft.extensions import extension, register, unregister
+
+
+@pytest.fixture
+def snapcraft_yaml(new_dir):
+    """Return a fixture that can write a snapcraft.yaml."""
+
+    def write_file(
+        *, filename: str = "snap/snapcraft.yaml", **kwargs
+    ) -> Dict[str, Any]:
+        content = {
+            "name": "mytest",
+            "version": "0.1",
+            "summary": "Just some test data",
+            "description": "This is just some test data.",
+            "grade": "stable",
+            "confinement": "strict",
+            "parts": {
+                "part1": {
+                    "plugin": "nil",
+                }
+            },
+            **kwargs,
+        }
+        yaml_path = Path(filename)
+        yaml_path.parent.mkdir(parents=True, exist_ok=True)
+        yaml_path.write_text(
+            yaml.safe_dump(content, indent=2, sort_keys=False), encoding="utf-8"
+        )
+        return content
+
+    yield write_file
 
 
 @pytest.fixture

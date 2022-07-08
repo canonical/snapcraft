@@ -63,7 +63,7 @@ def _check_snap_dir(snap_dir_path: Path) -> None:
 
     if unexpected_paths:
         snap_dir_relpath = snap_dir_path.relative_to(Path())
-        emit.message(
+        emit.progress(
             "The {snap_dir!r} directory is meant specifically for snapcraft, but it contains\n"
             "the following non-snapcraft-related paths:"
             "\n- {unexpected_files}\n\n"
@@ -74,7 +74,7 @@ def _check_snap_dir(snap_dir_path: Path) -> None:
                 snap_dir_local=str(snap_dir_relpath / "local"),
                 unexpected_files="\n- ".join(sorted(unexpected_paths)),
             ),
-            intermediate=True,
+            permanent=True,
         )
 
 

@@ -1,0 +1,13 @@
+summary: Execute empty scriptlets
+
+restore: |
+  snapcraft clean --destructive-mode
+
+execute: |
+  snapcraft prime --destructive-mode
+  test -d prime
+
+  if [ -f prime/foo.bar ]; then
+      echo "prime directory should be empty"
+      false
+  fi

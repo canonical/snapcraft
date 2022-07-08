@@ -81,7 +81,7 @@ def setup_assets(
             icon_path = icon_path.relative_to(prime_dir)
         relative_icon_path = str(icon_path)
 
-    emit.trace(f"relative icon path: {relative_icon_path!r}")
+    emit.debug(f"relative icon path: {relative_icon_path!r}")
 
     for app_name, app in project.apps.items():
         _validate_command_chain(
@@ -106,7 +106,7 @@ def _finalize_icon(
     Fetch from a remote URL, if required, and place in the meta/gui
     directory.
     """
-    emit.trace(f"finalize icon: {icon!r}")
+    emit.debug(f"finalize icon: {icon!r}")
 
     # Nothing to do if no icon is configured, search for existing icon.
     if icon is None:
@@ -240,7 +240,7 @@ def ensure_hook(hook_path: Path) -> None:
 def _copy_file(source: Path, destination: Path, **kwargs) -> None:
     """Copy file if source and destination are not the same file."""
     if destination.exists() and source.samefile(destination):
-        emit.trace(
+        emit.debug(
             f"skip copying {str(source)!r}: source and destination are the same file"
         )
     else:

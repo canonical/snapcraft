@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Iterable, List, Optional
 
 from craft_cli import emit
+from craft_parts.sources.git_source import GitSource
 
 from snapcraft import errors
 
@@ -75,7 +76,7 @@ def get_os_platform(filepath=pathlib.Path("/etc/os-release")):
             with filepath.open("rt", encoding="utf-8") as release_file:
                 lines = release_file.readlines()
         except FileNotFoundError:
-            emit.trace("Unable to locate 'os-release' file, using default values")
+            emit.debug("Unable to locate 'os-release' file, using default values")
         else:
             os_release = {}
             for line in lines:
@@ -181,16 +182,16 @@ def get_parallel_build_count() -> int:
     """
     try:
         build_count = len(os.sched_getaffinity(0))
-        emit.trace(f"CPU count (from process affinity): {build_count}")
+        emit.debug(f"CPU count (from process affinity): {build_count}")
     except AttributeError:
         # Fall back to multiprocessing.cpu_count()...
         try:
             build_count = multiprocessing.cpu_count()
-            emit.trace(f"CPU count (from multiprocessing): {build_count}")
+            emit.debug(f"CPU count (from multiprocessing): {build_count}")
         except NotImplementedError:
-            emit.message(
+            emit.progress(
                 "Unable to determine CPU count; disabling parallel builds",
-                intermediate=True,
+                permanent=True,
             )
             build_count = 1
 
@@ -199,7 +200,7 @@ def get_parallel_build_count() -> int:
         if max_count > 0:
             build_count = min(build_count, max_count)
     except ValueError:
-        emit.trace("Invalid SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT value")
+        emit.debug("Invalid SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT value")
 
     return build_count
 
@@ -300,3 +301,19 @@ def get_ld_library_paths(prime_dir: Path, arch_triplet: str) -> str:
     ld_library_path = ":".join(paths)
 
     return re.sub(str(prime_dir), "$SNAP", ld_library_path)
+
+
+def process_version(version: Optional[str]) -> str:
+    """Handle special version strings."""
+    if version is None:
+        raise ValueError("version cannot be None")
+
+    new_version = version
+    if version == "git":
+        emit.progress("Determining the version from the project repo (version: git).")
+        new_version = GitSource.generate_version()
+
+    if new_version != version:
+        emit.progress(f"Version has been set to {new_version!r}", permanent=True)
+
+    return new_version

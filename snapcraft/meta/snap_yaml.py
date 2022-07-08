@@ -20,12 +20,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union, cast
 
 import yaml
-from craft_cli import emit
-from craft_parts.sources.git_source import GitSource
 from pydantic_yaml import YamlModel
 
 from snapcraft.projects import Project
-from snapcraft.utils import get_ld_library_paths
+from snapcraft.utils import get_ld_library_paths, process_version
 
 
 class Socket(YamlModel):
@@ -124,7 +122,13 @@ class SnapMetadata(YamlModel):
 
 
 def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
-    """Create a snap.yaml file."""
+    """Create a snap.yaml file.
+
+    :param project: Snapcraft project.
+    :param prime_dir: The directory containing the content to be snapped.
+    :param arch: Target architecture the snap project is built to.
+    :param arch_triplet: Architecture triplet of the platform.
+    """
     meta_dir = prime_dir / "meta"
     meta_dir.mkdir(parents=True, exist_ok=True)
 
@@ -255,19 +259,3 @@ def _populate_environment(
 
     # if the environment only contained a null LD_LIBRARY_PATH and a null PATH, return None
     return None
-
-
-def process_version(version: Optional[str]) -> str:
-    """Handle special version strings."""
-    if version is None:
-        raise ValueError("version cannot be None")
-
-    new_version = version
-    if version == "git":
-        emit.progress("Determining the version from the project repo (version: git).")
-        new_version = GitSource.generate_version()
-
-    if new_version != version:
-        emit.message(f"Version has been set to {new_version!r}", intermediate=True)
-
-    return new_version

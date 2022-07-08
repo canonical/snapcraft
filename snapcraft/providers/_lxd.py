@@ -24,7 +24,7 @@ from typing import Generator, List
 
 from craft_providers import Executor, bases, lxd
 
-from snapcraft.utils import confirm_with_user, get_managed_environment_project_path
+from snapcraft import utils
 
 from ._buildd import BASE_TO_BUILDD_IMAGE_ALIAS, SnapcraftBuilddBaseConfiguration
 from ._provider import Provider, ProviderError
@@ -52,7 +52,12 @@ class LXDProvider(Provider):
         self.lxd_remote = lxd_remote
 
     def clean_project_environments(
-        self, *, project_name: str, project_path: pathlib.Path
+        self,
+        *,
+        project_name: str,
+        project_path: pathlib.Path,
+        build_on: str,
+        build_for: str,
     ) -> List[str]:
         """Clean up any build environments created for project.
 
@@ -69,6 +74,8 @@ class LXDProvider(Provider):
         instance_name = self.get_instance_name(
             project_name=project_name,
             project_path=project_path,
+            build_on=build_on,
+            build_for=build_for,
         )
 
         try:
@@ -103,7 +110,7 @@ class LXDProvider(Provider):
         :raises ProviderError: if provider is not available.
         """
         if not lxd.is_installed():
-            if confirm_with_user(
+            if utils.confirm_with_user(
                 "LXD is required, but not installed. Do you wish to install LXD "
                 "and configure it with the defaults?",
                 default=False,
@@ -141,6 +148,9 @@ class LXDProvider(Provider):
         project_name: str,
         project_path: pathlib.Path,
         base: str,
+        bind_ssh: bool,
+        build_on: str,
+        build_for: str,
     ) -> Generator[Executor, None, None]:
         """Launch environment for specified base.
 
@@ -153,6 +163,8 @@ class LXDProvider(Provider):
         instance_name = self.get_instance_name(
             project_name=project_name,
             project_path=project_path,
+            build_on=build_on,
+            build_for=build_for,
         )
         alias = BASE_TO_BUILDD_IMAGE_ALIAS[base]
         try:
@@ -167,7 +179,6 @@ class LXDProvider(Provider):
             environment=environment,
             hostname=instance_name,
         )
-
         try:
             instance = lxd.launch(
                 name=instance_name,
@@ -187,8 +198,16 @@ class LXDProvider(Provider):
 
         # Mount project.
         instance.mount(
-            host_source=project_path, target=get_managed_environment_project_path()
+            host_source=project_path,
+            target=utils.get_managed_environment_project_path(),
         )
+
+        # Mount ssh directory.
+        if bind_ssh:
+            instance.mount(
+                host_source=pathlib.Path.home() / ".ssh",
+                target=utils.get_managed_environment_home_path() / ".ssh",
+            )
 
         try:
             yield instance

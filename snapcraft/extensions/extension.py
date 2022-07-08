@@ -18,7 +18,9 @@
 
 import abc
 import os
-from typing import Any, Dict, Optional, Tuple, final
+import sys
+from pathlib import Path
+from typing import Any, Dict, Optional, Sequence, Tuple, final
 
 from craft_cli import emit
 
@@ -94,9 +96,9 @@ class Extension(abc.ABC):
             )
 
         if self.is_experimental(base):
-            emit.message(
+            emit.progress(
                 f"*EXPERIMENTAL* extension {extension_name!r} enabled",
-                intermediate=True,
+                permanent=True,
             )
 
         if base not in self.get_supported_bases():
@@ -122,3 +124,38 @@ class Extension(abc.ABC):
                 f"Extension has invalid part names: {invalid_parts!r}. "
                 "Format is <extension-name>/<part-name>"
             )
+
+
+def get_extensions_data_dir() -> Path:
+    """Return the path to the extension data directory."""
+    return Path(sys.prefix) / "share" / "snapcraft" / "extensions"
+
+
+def append_to_env(env_variable: str, paths: Sequence[str], separator: str = ":") -> str:
+    """Return a string for env_variable with one of more paths appended.
+
+    :param env_variable: the variable to operate on.
+    :param paths: one or more paths to append.
+    :param separator: the separator to use.
+    :returns: a shell string where one or more paths are appended
+                  to env_variable. The code takes into account the case
+                  where the environment variable is empty, to avoid putting
+                  a separator token at the start.
+    """
+    return f"${{{env_variable}:+${env_variable}{separator}}}" + separator.join(paths)
+
+
+def prepend_to_env(
+    env_variable: str, paths: Sequence[str], separator: str = ":"
+) -> str:
+    """Return a string for env_variable with one of more paths prepended.
+
+    :param env_variable: the variable to operate on.
+    :param paths: one or more paths to append.
+    :param separator: the separator to use.
+    :returns: a shell string where one or more paths are prepended
+                  before env_variable. The code takes into account the case
+                  where the environment variable is empty, to avoid putting
+                  a separator token at the end.
+    """
+    return separator.join(paths) + f"${{{env_variable}:+{separator}${env_variable}}}"

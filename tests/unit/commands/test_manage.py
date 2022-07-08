@@ -172,7 +172,7 @@ def test_close_no_snap_id(emitter):
         "'test-unknown-snap' not found or not owned by this account"
     )
 
-    emitter.assert_trace(
+    emitter.assert_debug(
         "KeyError('test-unknown-snap') no found in "
         "{'snaps': {'16': {'test-snap': {'snap-id': '12345678'}}}}"
     )

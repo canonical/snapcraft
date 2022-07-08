@@ -18,6 +18,11 @@
 import pytest
 
 from snapcraft import errors, extensions
+from snapcraft.extensions.extension import (
+    append_to_env,
+    get_extensions_data_dir,
+    prepend_to_env,
+)
 
 
 @pytest.mark.usefixtures("fake_extension")
@@ -219,7 +224,41 @@ def test_apply_extension_experimental_with_environment(emitter, monkeypatch):
     # Should not raise.
     extensions.apply_extensions(yaml_data, arch="amd64", target_arch="amd64")
 
-    emitter.assert_message(
+    emitter.assert_progress(
         "*EXPERIMENTAL* extension 'fake-extension-experimental' enabled",
-        intermediate=True,
+        permanent=True,
+    )
+
+
+def test_get_extensions_data_dir():
+    assert (get_extensions_data_dir() / "desktop").is_dir()
+    assert (get_extensions_data_dir() / "ros1").is_dir()
+    assert (get_extensions_data_dir() / "ros2").is_dir()
+
+
+def test_prepend_path():
+    assert (
+        prepend_to_env("TEST_ENV", ["/usr/bin", "/usr/local/bin"])
+        == "/usr/bin:/usr/local/bin${TEST_ENV:+:$TEST_ENV}"
+    )
+
+
+def test_append_path():
+    assert (
+        append_to_env("TEST_ENV", ["/usr/bin", "/usr/local/bin"])
+        == "${TEST_ENV:+$TEST_ENV:}/usr/bin:/usr/local/bin"
+    )
+
+
+def test_prepend_path_with_separator():
+    assert (
+        prepend_to_env("TEST_ENV", ["/usr/bin", "/usr/local/bin"], separator=";")
+        == "/usr/bin;/usr/local/bin${TEST_ENV:+;$TEST_ENV}"
+    )
+
+
+def test_append_path_with_separator():
+    assert (
+        append_to_env("TEST_ENV", ["/usr/bin", "/usr/local/bin"], separator=";")
+        == "${TEST_ENV:+$TEST_ENV;}/usr/bin;/usr/local/bin"
     )

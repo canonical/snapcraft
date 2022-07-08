@@ -18,7 +18,6 @@ import argparse
 import textwrap
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
 from unittest.mock import PropertyMock, call
 
 import pytest
@@ -28,6 +27,7 @@ from snapcraft import errors
 from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts.update_metadata import update_project_metadata
 from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Project
+from snapcraft.utils import get_host_architecture
 
 _SNAPCRAFT_YAML_FILENAMES = [
     "snap/snapcraft.yaml",
@@ -51,64 +51,6 @@ def unregister_callbacks(mocker):
 @pytest.fixture(autouse=True)
 def disable_getxattrs(mocker):
     mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
-
-
-@pytest.fixture
-def snapcraft_yaml(new_dir):
-    def write_file(
-        *, base: str, filename: str = "snap/snapcraft.yaml"
-    ) -> Dict[str, Any]:
-        content = textwrap.dedent(
-            f"""
-            name: mytest
-            version: '0.1'
-            base: {base}
-            summary: Just some test data
-            description: This is just some test data.
-            grade: stable
-            confinement: strict
-
-            parts:
-              part1:
-                plugin: nil
-            """
-        )
-        yaml_path = Path(filename)
-        yaml_path.parent.mkdir(parents=True, exist_ok=True)
-        yaml_path.write_text(content)
-
-        return {
-            "name": "mytest",
-            "title": None,
-            "base": base,
-            "compression": "xz",
-            "version": "0.1",
-            "contact": None,
-            "donation": None,
-            "issues": None,
-            "source-code": None,
-            "website": None,
-            "summary": "Just some test data",
-            "description": "This is just some test data.",
-            "type": None,
-            "confinement": "strict",
-            "icon": None,
-            "layout": None,
-            "license": None,
-            "grade": "stable",
-            "architectures": [],
-            "package-repositories": [],
-            "assumes": [],
-            "hooks": None,
-            "passthrough": None,
-            "apps": None,
-            "plugs": None,
-            "slots": None,
-            "parts": {"part1": {"plugin": "nil"}},
-            "epoch": None,
-        }
-
-    yield write_file
 
 
 @pytest.fixture
@@ -148,6 +90,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
             provider=None,
             enable_manifest=False,
             manifest_image_information=None,
+            bind_ssh=False,
         ),
     )
 
@@ -173,6 +116,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
                 provider=None,
                 enable_manifest=False,
                 manifest_image_information=None,
+                bind_ssh=False,
             ),
         ),
     ]
@@ -299,8 +243,15 @@ def test_lifecycle_run_command_pack(cmd, snapcraft_yaml, project_vars, new_dir, 
     assert run_mock.mock_calls == [
         call("prime", debug=False, shell=False, shell_after=False)
     ]
-    assert pack_mock.mock_calls == [
-        call(new_dir / "prime", output=None, compression="xz")
+    assert pack_mock.mock_calls[:1] == [
+        call(
+            new_dir / "prime",
+            output=None,
+            compression="xz",
+            name="mytest",
+            version="0.1",
+            target_arch=get_host_architecture(),
+        )
     ]
 
 
@@ -343,8 +294,15 @@ def test_lifecycle_pack_destructive_mode(
     assert run_mock.mock_calls == [
         call("prime", debug=False, shell=False, shell_after=False)
     ]
-    assert pack_mock.mock_calls == [
-        call(new_dir / "home/prime", output=None, compression="xz")
+    assert pack_mock.mock_calls[:1] == [
+        call(
+            new_dir / "home/prime",
+            output=None,
+            compression="xz",
+            name="mytest",
+            version="0.1",
+            target_arch=get_host_architecture(),
+        )
     ]
 
 
@@ -387,8 +345,15 @@ def test_lifecycle_pack_managed(cmd, snapcraft_yaml, project_vars, new_dir, mock
     assert run_mock.mock_calls == [
         call("prime", debug=False, shell=False, shell_after=False)
     ]
-    assert pack_mock.mock_calls == [
-        call(new_dir / "home/prime", output=None, compression="xz")
+    assert pack_mock.mock_calls[:1] == [
+        call(
+            new_dir / "home/prime",
+            output=None,
+            compression="xz",
+            name="mytest",
+            version="0.1",
+            target_arch=get_host_architecture(),
+        )
     ]
 
 
@@ -521,7 +486,14 @@ def test_lifecycle_run_command_clean(snapcraft_yaml, project_vars, new_dir, mock
         ),
     )
 
-    assert clean_mock.mock_calls == [call(project_name="mytest", project_path=new_dir)]
+    assert clean_mock.mock_calls == [
+        call(
+            project_name="mytest",
+            project_path=new_dir,
+            build_on=get_host_architecture(),
+            build_for=get_host_architecture(),
+        )
+    ]
 
 
 def test_lifecycle_clean_destructive_mode(
@@ -800,47 +772,6 @@ def test_get_snap_project_no_base(snapcraft_yaml, new_dir):
     )
 
 
-def test_get_snap_project_with_base(snapcraft_yaml):
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
-
-    assert parts_lifecycle._get_extra_build_snaps(project) == ["core22"]
-
-
-def test_get_snap_project_with_content_plugs(snapcraft_yaml, new_dir):
-    yaml_data = {
-        "name": "mytest",
-        "version": "0.1",
-        "base": "core22",
-        "summary": "Just some test data",
-        "description": "This is just some test data.",
-        "grade": "stable",
-        "confinement": "strict",
-        "parts": {"part1": {"plugin": "nil"}},
-        "plugs": {
-            "test-plug-1": {
-                "content": "content-interface",
-                "interface": "content",
-                "target": "$SNAP/content",
-                "default-provider": "test-snap-1",
-            },
-            "test-plug-2": {
-                "content": "content-interface",
-                "interface": "content",
-                "target": "$SNAP/content",
-                "default-provider": "test-snap-2",
-            },
-        },
-    }
-
-    project = Project(**yaml_data)
-
-    assert parts_lifecycle._get_extra_build_snaps(project) == [
-        "test-snap-1",
-        "test-snap-2",
-        "core22",
-    ]
-
-
 def test_expand_environment(new_dir, mocker):
     mocker.patch("platform.machine", return_value="aarch64")
 
@@ -926,6 +857,7 @@ def test_lifecycle_run_expand_snapcraft_vars(new_dir, mocker):
             provider=None,
             enable_manifest=False,
             manifest_image_information=None,
+            bind_ssh=False,
             debug=False,
         ),
     )
@@ -976,6 +908,7 @@ def test_lifecycle_run_expand_craft_vars(new_dir, mocker):
             provider=None,
             enable_manifest=False,
             manifest_image_information=None,
+            bind_ssh=False,
             debug=False,
         ),
     )
@@ -1020,6 +953,7 @@ def test_lifecycle_run_permission_denied(new_dir):
                 provider=None,
                 enable_manifest=False,
                 manifest_image_information=None,
+                bind_ssh=False,
                 debug=False,
             ),
         )
@@ -1030,3 +964,34 @@ def test_lifecycle_run_permission_denied(new_dir):
         "Make sure the file is part of the current project "
         "and its permissions and ownership are correct."
     )
+
+
+@pytest.fixture
+def minimal_yaml_data():
+    return {
+        "name": "name",
+        "base": "core22",
+        "confinement": "strict",
+        "grade": "devel",
+        "version": "1.0",
+        "summary": "summary",
+        "description": "description",
+        "parts": {"nil": {}},
+    }
+
+
+@pytest.mark.parametrize("key", ("build-packages", "build-snaps"))
+@pytest.mark.parametrize("value", (["foo"], [{"on amd64": ["foo"]}]))
+def test_root_packages(minimal_yaml_data, key, value):
+    minimal_yaml_data[key] = value
+
+    assert parts_lifecycle.apply_yaml(minimal_yaml_data) == {
+        "name": "name",
+        "base": "core22",
+        "confinement": "strict",
+        "grade": "devel",
+        "version": "1.0",
+        "summary": "summary",
+        "description": "description",
+        "parts": {"nil": {}, "snapcraft/core": {"plugin": "nil", key: ["foo"]}},
+    }
