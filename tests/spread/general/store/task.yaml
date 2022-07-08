@@ -74,6 +74,10 @@ execute: |
   # Release
   snapcraft release "${snap_name}" 1 edge
 
+  # Status
+  snapcraft status "${snap_name}"
+  snapcraft status "${snap_name}" --track latest --arch amd64
+  
   # Progressive Release
   snapcraft release --progressive 50 "${snap_name}" 1 candidate
 
