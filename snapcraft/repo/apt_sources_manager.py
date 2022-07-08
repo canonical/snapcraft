@@ -110,11 +110,11 @@ class AptSourcesManager:
         config_path = self._sources_list_d / f"{name}.sources"
         if config_path.exists() and config_path.read_text() == config:
             # Already installed and matches, nothing to do.
-            emit.trace(f"Ignoring unchanged sources: {config_path!s}")
+            emit.debug(f"Ignoring unchanged sources: {config_path!s}")
             return False
 
         config_path.write_text(config)
-        emit.trace(f"Installed sources: {config_path!s}")
+        emit.debug(f"Installed sources: {config_path!s}")
         return True
 
     def _install_sources_apt(
@@ -202,7 +202,7 @@ class AptSourcesManager:
 
         :returns: True if source configuration was changed.
         """
-        emit.trace(f"Processing repo: {package_repo!r}")
+        emit.debug(f"Processing repo: {package_repo!r}")
         if isinstance(package_repo, package_repository.PackageRepositoryAptPPA):
             return self._install_sources_ppa(package_repo=package_repo)
 
@@ -221,5 +221,5 @@ class AptSourcesManager:
 def _add_architecture(architectures: List[str]):
     """Add package repository architecture."""
     for arch in architectures:
-        emit.message(f"Add repository architecture: {arch}", intermediate=True)
+        emit.progress(f"Add repository architecture: {arch}", permanent=True)
         subprocess.run(["dpkg", "--add-architecture", arch], check=True)

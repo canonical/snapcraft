@@ -26,7 +26,7 @@ from snapcraft import errors
 
 
 def _verify_snap(directory: Path) -> None:
-    emit.trace("pack_snap: check skeleton")
+    emit.debug("pack_snap: check skeleton")
     try:
         subprocess.run(
             ["snap", "pack", "--check-skeleton", directory],
@@ -95,7 +95,7 @@ def pack_snap(
     name: Optional[str] = None,
     version: Optional[str] = None,
     target_arch: Optional[str] = None,
-) -> None:
+) -> str:
     """Pack snap contents with `snap pack`.
 
     `output` may either be a directory, a file path, or just a file name.
@@ -113,7 +113,7 @@ def pack_snap(
     :param version: Version of snap project.
     :param target_arch: Target architecture the snap project is built to.
     """
-    emit.trace(f"pack_snap: output={output!r}, compression={compression!r}")
+    emit.debug(f"pack_snap: output={output!r}, compression={compression!r}")
 
     # TODO remove workaround once LP: #1950465 is fixed
     _verify_snap(directory)
@@ -129,7 +129,7 @@ def pack_snap(
     command.append(_get_directory(output))
 
     emit.progress("Creating snap package...")
-    emit.trace(f"Pack command: {command}")
+    emit.debug(f"Pack command: {command}")
     try:
         proc = subprocess.run(
             command, capture_output=True, check=True, universal_newlines=True
@@ -141,5 +141,4 @@ def pack_snap(
         raise errors.SnapcraftError(msg)
 
     snap_filename = Path(str(proc.stdout).partition(":")[2].strip()).name
-    # TODO: intermediate? if not, move to the relevant cli module
-    emit.message(f"Created snap package {snap_filename}", intermediate=True)
+    return snap_filename

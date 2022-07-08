@@ -80,13 +80,10 @@ def get_store_login_url() -> str:
 
 
 def _prompt_login() -> Tuple[str, str]:
-    emit.message(
-        "Enter your Ubuntu One e-mail address and password.", intermediate=True
-    )
+    emit.message("Enter your Ubuntu One e-mail address and password.")
     emit.message(
         "If you do not have an Ubuntu One account, you can create one "
         "at https://snapcraft.io/account",
-        intermediate=True,
     )
     email = utils.prompt("Email: ")
     password = utils.prompt("Password: ", hide=True)
@@ -240,17 +237,12 @@ class StoreClientCLI:
                         resolution="Regenerate them and try again.",
                     ) from store_error
 
-                emit.message(
-                    "You are required to re-login before continuing",
-                    intermediate=True,
-                )
+                emit.message("You are required to re-login before continuing")
                 self.store_client.logout()
             else:
                 raise
         except craft_store.errors.CredentialsUnavailable:
-            emit.message(
-                "You are required to login before continuing", intermediate=True
-            )
+            emit.message("You are required to login before continuing")
 
         self.login()
         return self.store_client.request(*args, **kwargs)

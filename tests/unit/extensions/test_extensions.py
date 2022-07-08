@@ -224,9 +224,9 @@ def test_apply_extension_experimental_with_environment(emitter, monkeypatch):
     # Should not raise.
     extensions.apply_extensions(yaml_data, arch="amd64", target_arch="amd64")
 
-    emitter.assert_message(
+    emitter.assert_progress(
         "*EXPERIMENTAL* extension 'fake-extension-experimental' enabled",
-        intermediate=True,
+        permanent=True,
     )
 
 

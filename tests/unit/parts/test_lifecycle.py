@@ -243,7 +243,7 @@ def test_lifecycle_run_command_pack(cmd, snapcraft_yaml, project_vars, new_dir, 
     assert run_mock.mock_calls == [
         call("prime", debug=False, shell=False, shell_after=False)
     ]
-    assert pack_mock.mock_calls == [
+    assert pack_mock.mock_calls[:1] == [
         call(
             new_dir / "prime",
             output=None,
@@ -294,7 +294,7 @@ def test_lifecycle_pack_destructive_mode(
     assert run_mock.mock_calls == [
         call("prime", debug=False, shell=False, shell_after=False)
     ]
-    assert pack_mock.mock_calls == [
+    assert pack_mock.mock_calls[:1] == [
         call(
             new_dir / "home/prime",
             output=None,
@@ -345,7 +345,7 @@ def test_lifecycle_pack_managed(cmd, snapcraft_yaml, project_vars, new_dir, mock
     assert run_mock.mock_calls == [
         call("prime", debug=False, shell=False, shell_after=False)
     ]
-    assert pack_mock.mock_calls == [
+    assert pack_mock.mock_calls[:1] == [
         call(
             new_dir / "home/prime",
             output=None,
