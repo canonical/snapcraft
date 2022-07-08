@@ -234,6 +234,7 @@ class GNOME(Extension):
                         [
                             f"/snap/{sdk_snap}/current/usr/lib/python3.10",
                             f"/snap/{sdk_snap}/current/usr/lib/python3/dist-packages",
+                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET/gobject-introspection",
                         ],
                     ),
                 },
