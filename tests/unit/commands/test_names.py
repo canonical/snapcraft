@@ -170,7 +170,7 @@ def test_register_private(emitter, fake_store_register):
     )
 
     assert fake_store_register.mock_calls == []
-    emitter.assert_message(
+    emitter.assert_progress(
         dedent(
             """\
             Even though this is private snap, you should think carefully about
@@ -179,7 +179,7 @@ def test_register_private(emitter, fake_store_register):
             then we suggest you prefix the name with your developer identity,
             As '$username-yoyodyne-www-site-content'."""
         ),
-        intermediate=True,
+        permanent=True,
     )
     emitter.assert_message(
         "Snap name 'test-snap' not registered",

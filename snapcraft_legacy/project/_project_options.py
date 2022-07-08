@@ -205,6 +205,10 @@ class ProjectOptions:
         return self.__machine_info["kernel"]
 
     @property
+    def host_deb_arch(self):
+        return self.__host_info["deb"]
+
+    @property
     def parts_dir(self) -> str:
         return self._parts_dir
 
@@ -359,6 +363,7 @@ class ProjectOptions:
             logger.info("Setting target machine to {!r}".format(target_deb_arch))
 
         self.__machine_info = _ARCH_TRANSLATIONS[self.__target_machine]
+        self.__host_info = _ARCH_TRANSLATIONS[self.__platform_arch]
 
         # Set target arch to match the host if unspecified.
         if target_deb_arch is None:

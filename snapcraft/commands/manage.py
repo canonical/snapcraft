@@ -150,7 +150,7 @@ class StoreCloseCommand(BaseCommand):
                 parsed_args.name
             ]["snap-id"]
         except KeyError as key_error:
-            emit.trace(f"{key_error!r} no found in {account_info!r}")
+            emit.debug(f"{key_error!r} no found in {account_info!r}")
             raise errors.SnapcraftError(
                 f"{parsed_args.name!r} not found or not owned by this account"
             ) from key_error

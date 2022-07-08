@@ -66,8 +66,8 @@ def update_project_metadata(
         if metadata.grade and not project.grade:
             project.grade = metadata.grade  # type: ignore
 
-        emit.trace(f"project icon: {project.icon!r}")
-        emit.trace(f"metadata icon: {metadata.icon!r}")
+        emit.debug(f"project icon: {project.icon!r}")
+        emit.debug(f"metadata icon: {metadata.icon!r}")
 
         if not project.icon:
             _update_project_icon(project, metadata=metadata, assets_dir=assets_dir)
@@ -115,7 +115,7 @@ def _update_project_icon(
         if metadata.icon:
             project.icon = metadata.icon
 
-    emit.trace(f"updated project icon: {project.icon}")
+    emit.debug(f"updated project icon: {project.icon}")
 
 
 def _update_project_app_desktop_file(
@@ -133,27 +133,27 @@ def _update_project_app_desktop_file(
                 break
 
         if not app_name:
-            emit.trace(f"no app declares id {metadata.common_id!r}")
+            emit.debug(f"no app declares id {metadata.common_id!r}")
             return
 
         if project.apps[app_name].desktop:
-            emit.trace("app {app_name!r} already declares a desktop file")
+            emit.debug("app {app_name!r} already declares a desktop file")
             return
 
-        emit.trace(
+        emit.debug(
             f"look for desktop file with id {metadata.common_id!r} in app {app_name!r}"
         )
 
         desktop_file = f"{assets_dir}/gui/{app_name}.desktop"
         if Path(desktop_file).is_file():
-            emit.trace(f"use already existing desktop file {desktop_file!r}")
+            emit.debug(f"use already existing desktop file {desktop_file!r}")
             return
 
         if metadata.desktop_file_paths:
             for filename in metadata.desktop_file_paths:
                 if Path(prime_dir, filename.lstrip("/")).is_file():
                     project.apps[app_name].desktop = filename
-                    emit.trace(f"use desktop file {filename!r}")
+                    emit.debug(f"use desktop file {filename!r}")
                     break
 
 

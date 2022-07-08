@@ -18,12 +18,13 @@
 
 import abc
 import argparse
+import os
 import textwrap
 
 from craft_cli import BaseCommand, emit
 from overrides import overrides
 
-from snapcraft import pack
+from snapcraft import pack, utils
 from snapcraft.parts import lifecycle as parts_lifecycle
 
 
@@ -47,6 +48,19 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             "--debug",
             action="store_true",
             help="Shell into the environment if the build fails",
+        )
+        parser.add_argument(
+            "--enable-manifest",
+            action="store_true",
+            default=utils.strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n")),
+            help="Generate snap manifest",
+        )
+        parser.add_argument(
+            "--manifest-image-information",
+            type=str,
+            metavar="image-info",
+            default=os.getenv("SNAPCRAFT_IMAGE_INFO"),
+            help="Set snap manifest image-info",
         )
         parser.add_argument(
             "--bind-ssh",
@@ -83,7 +97,7 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
         if not self.name:
             raise RuntimeError("command name not specified")
 
-        emit.trace(f"lifecycle command: {self.name!r}, arguments: {parsed_args!r}")
+        emit.debug(f"lifecycle command: {self.name!r}, arguments: {parsed_args!r}")
         parts_lifecycle.run(self.name, parsed_args)
 
 
@@ -206,7 +220,10 @@ class PackCommand(_LifecycleCommand):
     def run(self, parsed_args):
         """Run the command."""
         if parsed_args.directory:
-            pack.pack_snap(parsed_args.directory, output=parsed_args.output)
+            snap_filename = pack.pack_snap(
+                parsed_args.directory, output=parsed_args.output
+            )
+            emit.message(f"Created snap package {snap_filename}")
         else:
             super().run(parsed_args)
 

@@ -41,11 +41,11 @@ def capture_logs_from_instance(instance: Executor) -> None:
     try:
         instance.pull_file(source=instance_log_path, destination=local_log_path)
     except FileNotFoundError:
-        emit.trace("No logs found in instance.")
+        emit.debug("No logs found in instance.")
         return
 
-    emit.trace("Logs captured from managed instance:")
+    emit.debug("Logs captured from managed instance:")
     with local_log_path.open("rt", encoding="utf8") as logfile:
         for line in logfile:
-            emit.trace(":: " + line.rstrip())
+            emit.debug(":: " + line.rstrip())
     local_log_path.unlink()

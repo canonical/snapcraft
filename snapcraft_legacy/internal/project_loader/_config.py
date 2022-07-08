@@ -213,7 +213,7 @@ class Config:
         self._ensure_no_duplicate_app_aliases()
 
         self._global_grammar_processor = grammar_processing.GlobalGrammarProcessor(
-            properties=self.data, arch=project.deb_arch, target_arch=project.target_arch
+            properties=self.data, arch=project.host_deb_arch, target_arch=project.target_arch,
         )
 
         # XXX: Resetting snap_meta due to above mangling of data.

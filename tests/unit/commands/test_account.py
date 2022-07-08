@@ -70,10 +70,10 @@ def test_login_with_file(emitter, mocker, legacy_config_path):
     )
 
     store_credentials_mock.assert_called_once_with("secretb64")
-    emitter.assert_message(
+    emitter.assert_progress(
         "--with is no longer supported, export the auth to the environment "
         "variable 'SNAPCRAFT_STORE_CREDENTIALS' instead",
-        intermediate=True,
+        permanent=True,
     )
 
 

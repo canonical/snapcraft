@@ -59,15 +59,17 @@ class StoreStatusCommand(BaseCommand):
         )
         parser.add_argument(
             "--arch",
-            metavar="<arch>",
+            metavar="arch",
             type=str,
+            action="append",
             nargs="?",
             help="Limit the status report to the requested architectures",
         )
         parser.add_argument(
             "--track",
-            metavar="<track>",
+            metavar="track",
             type=str,
+            action="append",
             nargs="?",
             help="Limit the status report to the requested tracks",
         )
