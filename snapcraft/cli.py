@@ -16,6 +16,7 @@
 
 """Command-line application entry point."""
 
+import argparse
 import contextlib
 import logging
 import os
@@ -115,7 +116,8 @@ COMMAND_GROUPS = [
 GLOBAL_ARGS = [
     craft_cli.GlobalArgument(
         "version", "flag", "-V", "--version", "Show the application version and exit"
-    )
+    ),
+    craft_cli.GlobalArgument("trace", "flag", "-t", "--trace", argparse.SUPPRESS),
 ]
 
 
@@ -157,17 +159,27 @@ def get_dispatcher() -> craft_cli.Dispatcher:
     )
 
 
+def _run_dispatcher(dispatcher: craft_cli.Dispatcher) -> None:
+    global_args = dispatcher.pre_parse_args(sys.argv[1:])
+    if global_args.get("version"):
+        emit.message(f"snapcraft {__version__}")
+    else:
+        if global_args.get("trace"):
+            emit.message(
+                "Options -t and --trace are deprecated, use --verbosity=debug instead."
+            )
+            emit.set_mode(EmitterMode.DEBUG)
+
+        dispatcher.load_command(None)
+        dispatcher.run()
+    emit.ended_ok()
+
+
 def run():
     """Run the CLI."""
     dispatcher = get_dispatcher()
     try:
-        global_args = dispatcher.pre_parse_args(sys.argv[1:])
-        if global_args.get("version"):
-            emit.message(f"snapcraft {__version__}")
-        else:
-            dispatcher.load_command(None)
-            dispatcher.run()
-        emit.ended_ok()
+        _run_dispatcher(dispatcher)
         retcode = 0
     except ArgumentParsingError as err:
         # TODO https://github.com/canonical/craft-cli/issues/78
