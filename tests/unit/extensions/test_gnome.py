@@ -303,7 +303,7 @@ def test_get_part_snippet_with_external_sdk(gnome_extension_with_build_snap):
                     [
                         "/snap/gnome-44-2204-sdk/current/usr/lib/python3.10",
                         "/snap/gnome-44-2204-sdk/current/usr/lib/python3/dist-packages",
-                        "/snap/gnome-42-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET/gobject-introspection",
+                        "/snap/gnome-44-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET/gobject-introspection",
                     ]
                 )
                 + "${PYTHONPATH:+:$PYTHONPATH}"
