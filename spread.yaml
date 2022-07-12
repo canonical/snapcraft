@@ -303,6 +303,9 @@ suites:
      - ubuntu-22.04-64
      - ubuntu-22.04-amd64
 
+ tests/spread/general/hooks/:
+   summary: tests of snapcraft hook functionality
+
  # General, core suite
  tests/spread/cross-compile/:
    summary: tests of supported cross-compile functionality

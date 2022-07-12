@@ -1,0 +1,17 @@
+name: hooks-generated
+base: core22
+version: '1.0'
+summary: Test generated hooks.
+description: Code generated hooks should be built and executed via a hook wrapper.
+grade: stable
+confinement: strict
+
+parts:
+  hooks:
+    source: src/
+    plugin: make
+    build-snaps: [go/1.17/stable]
+    override-build: |
+      cd $SNAPCRAFT_PART_SRC
+      make build
+      install -DT configure $SNAPCRAFT_PART_INSTALL/snap/hooks/configure

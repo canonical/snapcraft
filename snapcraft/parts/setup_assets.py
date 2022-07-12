@@ -49,13 +49,16 @@ def setup_assets(
 
     _write_snap_directory(assets_dir=assets_dir, prime_dir=prime_dir, meta_dir=meta_dir)
 
+    # create wrappers for hooks in the snap/hooks directory
+    _create_hook_wrappers(prime_dir)
+
     if project.hooks:
         for hook_name, hook in project.hooks.items():
             if hook.command_chain:
                 _validate_command_chain(
                     hook.command_chain, name=f"hook {hook_name!r}", prime_dir=prime_dir
                 )
-            ensure_hook(meta_dir / "hooks" / hook_name)
+            _ensure_hook(meta_dir / "hooks" / hook_name)
 
     if project.type == "gadget":
         gadget_yaml = project_dir / "gadget.yaml"
@@ -214,12 +217,12 @@ def _write_snap_directory(*, assets_dir: Path, prime_dir: Path, meta_dir: Path) 
                 # point considering the prior link_or_copy call, but is technically
                 # correct and allows for this operation to take place only once.
                 if origin[0] == meta_dir and origin[1] == "hooks":
-                    destination.chmod(0o755)
+                    _ensure_hook_executable(destination)
 
     # TODO: record manifest and source snapcraft.yaml
 
 
-def ensure_hook(hook_path: Path) -> None:
+def _ensure_hook(hook_path: Path) -> None:
     """Create a stub for hook_path if it does not exist.
 
     A stub for hook_name is generated if a command-chain entry is defined
@@ -234,7 +237,64 @@ def ensure_hook(hook_path: Path) -> None:
 
     hook_path.parent.mkdir(parents=True, exist_ok=True)
     hook_path.write_text("#!/bin/true\n")
-    hook_path.chmod(0o755)
+    _ensure_hook_executable(hook_path)
+
+
+def _ensure_hook_executable(hook_path: Path) -> None:
+    """Ensure hook is executable.
+
+    :param hook_path: file path of the hook
+    """
+    if not hook_path.stat().st_mode & stat.S_IEXEC:
+        hook_path.chmod(0o755)
+
+
+def _create_hook_wrappers(prime_dir: Path) -> None:
+    """Create wrappers for hooks.
+
+    Hooks in the snap/hooks/ directory are typically built by parts.
+    When the snap is packed, these hooks stay in the snap/hooks/ directory.
+    A hook wrapper (minimal shell script) in meta/hooks/ will
+    execute the hook in $SNAP/snap/hooks/.
+
+    :param prime_dir: The directory containing the content to be snapped.
+    """
+    # collect hooks in snap/hooks directory
+    hooks_snap_dir = Path(prime_dir, "snap", "hooks")
+    hooks_in_snap_dir = hooks_snap_dir.iterdir() if hooks_snap_dir.is_dir() else []
+
+    # return if there are no hooks to process
+    if not hooks_in_snap_dir:
+        return
+
+    # create directory to hold hook wrappers
+    hooks_meta_dir = Path(prime_dir, "meta", "hooks")
+    hooks_meta_dir.mkdir(parents=True, exist_ok=True)
+
+    # create a wrapper for each hook
+    for hook in hooks_in_snap_dir:
+        _ensure_hook_executable(hook)
+        _write_hook_wrapper(hook.name, hooks_meta_dir / hook.name)
+
+
+def _write_hook_wrapper(hook_name: str, wrapper_path: Path) -> None:
+    """Write hook wrapper file.
+
+    The wrapper is a minimal shell script that calls a hook in $SNAP/snap/hooks/
+
+    :param hook_name: name of the hook
+    :param wrapper_path: file path of hook wrapper
+    """
+    wrapper_path.unlink(missing_ok=True)
+
+    with open(wrapper_path, "w+", encoding="utf-8") as wrapper_file:
+        print("#!/bin/sh", file=wrapper_file)
+        print(
+            f'exec "{Path("$SNAP", "snap", "hooks", hook_name)}" "$@"',
+            file=wrapper_file,
+        )
+
+    _ensure_hook_executable(wrapper_path)
 
 
 def _copy_file(source: Path, destination: Path, **kwargs) -> None:
