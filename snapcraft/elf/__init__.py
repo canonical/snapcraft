@@ -14,6 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pathlib
+"""ELF file handling."""
 
-TESTS_DIR = pathlib.Path(__file__).parent
+from ._elf_file import ElfFile, SonameCache
+
+__all__ = [
+    "ElfFile",
+    "SonameCache",
+]
