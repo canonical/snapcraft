@@ -15,7 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from pathlib import Path
 from textwrap import dedent
+from typing import List
 
 import pytest
 
@@ -301,6 +303,100 @@ def test_get_ld_library_paths(tmp_path, lib_dirs, expected_env):
         f"${{SNAP_LIBRARY_PATH}}${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}:{expected_env}"
     )
     assert utils.get_ld_library_paths(tmp_path, "i286-none-none") == expected_env
+
+
+#################
+# Get host tool #
+#################
+
+
+def test_get_host_tool_finds_command(mocker):
+    mocker.patch("shutil.which", return_value="/usr/bin/foo")
+
+    assert utils.get_host_tool(command_name="foo") == "/usr/bin/foo"
+
+
+def test_get_host_tool_failure(mocker):
+    mocker.patch("shutil.which", return_value=None)
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        utils.get_host_tool(command_name="foo")
+
+    assert str(raised.value) == "A tool snapcraft depends on could not be found: 'foo'"
+
+
+#################
+# Get snap tool #
+#################
+
+
+@pytest.fixture()
+def fake_exists(mocker):
+    """Fakely return True when checking for preconfigured paths."""
+
+    class _FileCheck:
+        def __init__(self) -> None:
+            self._original_exists = os.path.exists
+            self.paths: List[str] = []
+
+        def exists(self, path: str) -> bool:
+            if Path(path) in self.paths:
+                return True
+            return self._original_exists(path)
+
+    file_checker = _FileCheck()
+    mocker.patch("os.path.exists", new=file_checker.exists)
+
+    yield file_checker
+
+
+@pytest.fixture()
+def in_snap(mocker):
+    """Simulate being run from within the context of the Snapcraft snap."""
+    mocker.patch.dict(
+        os.environ,
+        {
+            "SNAP": "/snap/snapcraft/current",
+            "SNAP_NAME": "snapcraft",
+            "SNAP_VERSION": "7.0",
+        },
+    )
+
+
+_BIN_PATHS = [
+    "usr/local/sbin",
+    "usr/local/bin",
+    "usr/sbin",
+    "usr/bin",
+    "sbin",
+    "bin",
+]
+
+
+@pytest.mark.parametrize("bin_path", _BIN_PATHS)
+def test_get_snap_tool_from_host_path(mocker, bin_path, fake_exists):
+    abs_tool_path = Path("/") / bin_path / "tool-command"
+    fake_exists.paths = [abs_tool_path]
+    mocker.patch("shutil.which", return_value=abs_tool_path.as_posix())
+
+    assert utils.get_snap_tool("tool-command") == abs_tool_path.as_posix()
+
+
+@pytest.mark.parametrize("bin_path", _BIN_PATHS)
+def test_get_snap_tool_from_snapcraft_snap_path(bin_path, in_snap, fake_exists):
+    abs_tool_path = Path("/snap/snapcraft/current") / bin_path / "tool-command"
+    fake_exists.paths = [abs_tool_path]
+
+    assert utils.get_snap_tool("tool-command") == abs_tool_path.as_posix()
+
+
+def test_get_snap_tool_path_fails():
+    with pytest.raises(errors.SnapcraftError) as raised:
+        utils.get_snap_tool("non-existent-tool-command")
+
+    assert str(raised.value) == (
+        "A tool snapcraft depends on could not be found: 'non-existent-tool-command'"
+    )
 
 
 ###################

@@ -20,6 +20,7 @@ import os
 import pathlib
 import platform
 import re
+import shutil
 import sys
 from dataclasses import dataclass
 from getpass import getpass
@@ -307,7 +308,7 @@ def humanize_list(
     return f"{humanized} {conjunction} {quoted_items[-1]}"
 
 
-def _get_common_ld_library_paths(prime_dir: Path, arch_triplet: str) -> List[str]:
+def get_common_ld_library_paths(prime_dir: Path, arch_triplet: str) -> List[str]:
     """Return common existing PATH entries for a snap."""
     paths = [
         prime_dir / "lib",
@@ -323,11 +324,75 @@ def get_ld_library_paths(prime_dir: Path, arch_triplet: str) -> str:
     """Return a usable in-snap LD_LIBRARY_PATH variable."""
     paths = ["${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"]
     # Add the default LD_LIBRARY_PATH
-    paths += _get_common_ld_library_paths(prime_dir, arch_triplet)
+    paths += get_common_ld_library_paths(prime_dir, arch_triplet)
 
     ld_library_path = ":".join(paths)
 
     return re.sub(str(prime_dir), "$SNAP", ld_library_path)
+
+
+def get_host_tool(command_name: str) -> str:
+    """Return the full path of the given host tool.
+
+    :param command_name: the name of the command to resolve a path for.
+    :return: Path to command
+
+    :raises SnapcraftError: if command_name was not found.
+    """
+    tool = shutil.which(command_name)
+    if not tool:
+        raise errors.SnapcraftError(
+            f"A tool snapcraft depends on could not be found: {command_name!r}",
+            resolution="Ensure the tool is installed and available, and try again.",
+        )
+    return tool
+
+
+def get_snap_tool(command_name: str) -> str:
+    """Return the path of a command found in the snap.
+
+    If snapcraft is not running as a snap, shutil.which() is used
+    to resolve the command using PATH.
+
+    :param command_name: the name of the command to resolve a path for.
+    :return: Path to command
+
+    :raises SnapcraftError: if command_name was not found.
+    """
+    if os.environ.get("SNAP_NAME") != "snapcraft":
+        return get_host_tool(command_name)
+
+    snap_path = os.getenv("SNAP")
+    if snap_path is None:
+        raise RuntimeError(
+            "The SNAP environment variable is not defined, but SNAP_NAME is?"
+        )
+
+    command_path = _find_command_path_in_root(snap_path, command_name)
+
+    if command_path is None:
+        raise errors.SnapcraftError(
+            f"Cannot find snap tool {command_name!r}",
+            resolution="Please report this error to the Snapcraft maintainers.",
+        )
+
+    return command_path
+
+
+def _find_command_path_in_root(root: str, command_name: str) -> Optional[str]:
+    for bin_directory in (
+        "usr/local/sbin",
+        "usr/local/bin",
+        "usr/sbin",
+        "usr/bin",
+        "sbin",
+        "bin",
+    ):
+        path = os.path.join(root, bin_directory, command_name)
+        if os.path.exists(path):
+            return path
+
+    return None
 
 
 def process_version(version: Optional[str]) -> str:
