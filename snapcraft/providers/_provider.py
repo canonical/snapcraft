@@ -70,6 +70,7 @@ class Provider(ABC):
             "https_proxy",
             "no_proxy",
             "SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS",
+            "SNAPCRAFT_BUILD_FOR",
             "SNAPCRAFT_BUILD_INFO",
             "SNAPCRAFT_IMAGE_INFO",
         ]:

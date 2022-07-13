@@ -308,7 +308,7 @@ class Architecture(ProjectModel, extra=pydantic.Extra.forbid):
     """Snapcraft project architecture definition."""
 
     build_on: Union[str, UniqueStrList]
-    build_for: Optional[Union[str, UniqueStrList]] = None
+    build_for: Optional[Union[str, UniqueStrList]]
 
 
 class ContentPlug(ProjectModel):
@@ -567,6 +567,26 @@ class Project(ProjectModel):
 
         return base
 
+    def get_build_on(self) -> str:
+        """Get the first build_on architecture from the project."""
+        if isinstance(self.architectures[0], Architecture) and isinstance(
+            self.architectures[0].build_on, List
+        ):
+            return self.architectures[0].build_on[0]
+
+        # will not happen after schema validation
+        raise RuntimeError("cannot determine build-on architecture")
+
+    def get_build_for(self) -> str:
+        """Get the first build_for architecture from the project."""
+        if isinstance(self.architectures[0], Architecture) and isinstance(
+            self.architectures[0].build_for, List
+        ):
+            return self.architectures[0].build_for[0]
+
+        # will not happen after schema validation
+        raise RuntimeError("cannot determine build-for architecture")
+
 
 class _GrammarAwareModel(pydantic.BaseModel):
     class Config:
@@ -600,6 +620,41 @@ class GrammarAwareProject(_GrammarAwareModel):
             cls(**data)
         except pydantic.ValidationError as err:
             raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
+
+
+class ArchitectureProject(ProjectModel, extra=pydantic.Extra.ignore):
+    """Project definition containing only architecture data."""
+
+    architectures: List[Union[str, Architecture]] = [get_host_architecture()]
+
+    @pydantic.validator("architectures", always=True)
+    @classmethod
+    def _validate_architecture_data(cls, architectures):
+        """Validate architecture data."""
+        return _validate_architectures(architectures)
+
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]) -> "ArchitectureProject":
+        """Create and populate a new ``Project`` object from dictionary data.
+
+        The unmarshal method validates entries in the input dictionary, populating
+        the corresponding fields in the data object.
+
+        :param data: The dictionary data to unmarshal.
+
+        :return: The newly created object.
+
+        :raise TypeError: If data is not a dictionary.
+        """
+        if not isinstance(data, dict):
+            raise TypeError("Project data is not a dictionary")
+
+        try:
+            architectures = ArchitectureProject(**data)
+        except pydantic.ValidationError as err:
+            raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
+
+        return architectures
 
 
 def _format_pydantic_errors(errors, *, file_name: str = "snapcraft.yaml"):

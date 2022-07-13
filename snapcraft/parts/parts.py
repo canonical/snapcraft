@@ -28,6 +28,7 @@ from xdg import BaseDirectory  # type: ignore
 
 from snapcraft import errors, repo
 from snapcraft.meta import ExtractedMetadata, extract_metadata
+from snapcraft.utils import convert_architecture_deb_to_platform, get_host_architecture
 
 _LIFECYCLE_STEPS = {
     "pull": Step.PULL,
@@ -65,6 +66,7 @@ class PartsLifecycle:
         project_name: str,
         project_vars: Dict[str, str],
         extra_build_snaps: Optional[List[str]] = None,
+        target_arch: str,
     ):
         self._work_dir = work_dir
         self._assets_dir = assets_dir
@@ -79,12 +81,18 @@ class PartsLifecycle:
         # set the cache dir for parts package management
         cache_dir = BaseDirectory.save_cache_path("snapcraft")
 
+        if target_arch == "all":
+            target_arch = get_host_architecture()
+
+        platform_arch = convert_architecture_deb_to_platform(target_arch)
+
         try:
             self._lcm = craft_parts.LifecycleManager(
                 {"parts": all_parts},
                 application_name="snapcraft",
                 work_dir=work_dir,
                 cache_dir=cache_dir,
+                arch=platform_arch,
                 base=base,
                 ignore_local_sources=["*.snap"],
                 extra_build_snaps=extra_build_snaps,
