@@ -26,7 +26,7 @@ from craft_parts import Action, Step, callbacks
 from snapcraft import errors
 from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts.update_metadata import update_project_metadata
-from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Project
+from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Architecture, Project
 from snapcraft.utils import get_host_architecture
 
 _SNAPCRAFT_YAML_FILENAMES = [
@@ -74,6 +74,19 @@ def test_config_not_found(new_dir):
     assert raised.value.resolution == "To start a new project, use `snapcraft init`"
 
 
+def test_config_loading_error(new_dir, mocker, snapcraft_yaml):
+    """Catch OSErrors when loading snapcraft.yaml"""
+    mocker.patch(
+        "builtins.open",
+        side_effect=OSError(2, "test-message", "test-filename"),
+    )
+    snapcraft_yaml(base="core22")
+    with pytest.raises(errors.SnapcraftError) as raised:
+        parts_lifecycle.run("pull", argparse.Namespace())
+
+    assert str(raised.value) == ("test-message: 'test-filename'.")
+
+
 @pytest.mark.parametrize("filename", _SNAPCRAFT_YAML_FILENAMES)
 def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
     """Snapcraft.yaml should be parsed as a valid yaml file."""
@@ -91,6 +104,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
             enable_manifest=False,
             manifest_image_information=None,
             bind_ssh=False,
+            build_for=None,
         ),
     )
 
@@ -117,6 +131,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                build_for=None,
             ),
         ),
     ]
@@ -129,6 +144,9 @@ def test_lifecycle_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
     """Option --provider is not supported in core22."""
     snapcraft_yaml(base="core22")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch(
+        "snapcraft.providers.Provider.is_base_available", return_value=(True, None)
+    )
 
     with pytest.raises(errors.SnapcraftError) as raised:
         parts_lifecycle.run(
@@ -137,6 +155,7 @@ def test_lifecycle_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
                 destructive_mode=False,
                 use_lxd=False,
                 provider="some",
+                build_for=get_host_architecture(),
             ),
         )
 
@@ -331,6 +350,7 @@ def test_lifecycle_pack_managed(cmd, snapcraft_yaml, project_vars, new_dir, mock
             output=None,
             debug=False,
             bind_ssh=False,
+            build_for=None,
             enable_manifest=False,
             manifest_image_information=None,
             destructive_mode=False,
@@ -794,7 +814,9 @@ def test_expand_environment(new_dir, mocker):
         },
         "field12": ["$CRAFT_PARALLEL_BUILD_COUNT", "$SNAPCRAFT_PARALLEL_BUILD_COUNT"],
     }
-    parts_lifecycle._expand_environment(yaml_data, parallel_build_count=8)
+    parts_lifecycle._expand_environment(
+        yaml_data, parallel_build_count=8, target_arch="arm64"
+    )
 
     assert yaml_data == {
         "name": "test-env",
@@ -819,6 +841,10 @@ def test_expand_environment(new_dir, mocker):
 
 def test_lifecycle_run_expand_snapcraft_vars(new_dir, mocker):
     mocker.patch("platform.machine", return_value="aarch64")
+    mocker.patch(
+        "snapcraft.parts.lifecycle.get_build_plan",
+        return_value=[("arm64", "arm64")],
+    )
 
     content = textwrap.dedent(
         """\
@@ -858,6 +884,7 @@ def test_lifecycle_run_expand_snapcraft_vars(new_dir, mocker):
             enable_manifest=False,
             manifest_image_information=None,
             bind_ssh=False,
+            build_for=None,
             debug=False,
         ),
     )
@@ -870,6 +897,10 @@ def test_lifecycle_run_expand_snapcraft_vars(new_dir, mocker):
 
 def test_lifecycle_run_expand_craft_vars(new_dir, mocker):
     mocker.patch("platform.machine", return_value="aarch64")
+    mocker.patch(
+        "snapcraft.parts.lifecycle.get_build_plan",
+        return_value=[("arm64", "arm64")],
+    )
 
     content = textwrap.dedent(
         """\
@@ -909,6 +940,7 @@ def test_lifecycle_run_expand_craft_vars(new_dir, mocker):
             enable_manifest=False,
             manifest_image_information=None,
             bind_ssh=False,
+            build_for=None,
             debug=False,
         ),
     )
@@ -954,6 +986,7 @@ def test_lifecycle_run_permission_denied(new_dir):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                build_for=None,
                 debug=False,
             ),
         )
@@ -984,8 +1017,11 @@ def minimal_yaml_data():
 @pytest.mark.parametrize("value", (["foo"], [{"on amd64": ["foo"]}]))
 def test_root_packages(minimal_yaml_data, key, value):
     minimal_yaml_data[key] = value
+    arch = get_host_architecture()
 
-    assert parts_lifecycle.apply_yaml(minimal_yaml_data) == {
+    assert parts_lifecycle.apply_yaml(
+        minimal_yaml_data, build_on=arch, build_for=arch
+    ) == {
         "name": "name",
         "base": "core22",
         "confinement": "strict",
@@ -993,5 +1029,136 @@ def test_root_packages(minimal_yaml_data, key, value):
         "version": "1.0",
         "summary": "summary",
         "description": "description",
+        "architectures": [Architecture(build_on=arch, build_for=arch)],
         "parts": {"nil": {}, "snapcraft/core": {"plugin": "nil", key: ["foo"]}},
     }
+
+
+def test_get_build_plan_single_element_matching(snapcraft_yaml, mocker, new_dir):
+    """Test get_build_plan with a single matching element."""
+    mocker.patch(
+        "snapcraft.parts.lifecycle.get_host_architecture", return_value="aarch64"
+    )
+    yaml_data = {
+        "base": "core22",
+        "architectures": [{"build-on": "aarch64", "build-for": "aarch64"}],
+    }
+
+    snapcraft_yaml_data = snapcraft_yaml(**yaml_data)
+
+    assert parts_lifecycle.get_build_plan(
+        snapcraft_yaml_data, parsed_args=argparse.Namespace(build_for=None)
+    ) == [("aarch64", "aarch64")]
+
+
+def test_get_build_plan_build_for_all(snapcraft_yaml, mocker, new_dir):
+    """Test get_build_plan with `build-for: all`."""
+    mocker.patch(
+        "snapcraft.parts.lifecycle.get_host_architecture", return_value="aarch64"
+    )
+    yaml_data = {
+        "base": "core22",
+        "architectures": [{"build-on": "aarch64", "build-for": "all"}],
+    }
+
+    snapcraft_yaml_data = snapcraft_yaml(**yaml_data)
+
+    assert parts_lifecycle.get_build_plan(
+        snapcraft_yaml_data, parsed_args=argparse.Namespace(build_for=None)
+    ) == [("aarch64", "all")]
+
+
+def test_get_build_plan_with_matching_elements(snapcraft_yaml, mocker, new_dir):
+    """The build plan should only contain builds where `build-on` matches
+    the host architecture.
+    """
+    mocker.patch(
+        "snapcraft.parts.lifecycle.get_host_architecture", return_value="aarch64"
+    )
+    yaml_data = {
+        "base": "core22",
+        "architectures": [
+            {"build-on": "aarch64", "build-for": "aarch64"},
+            {"build-on": "aarch64", "build-for": "arm64"},
+            {"build-on": "armhf", "build-for": "armhf"},
+        ],
+    }
+
+    snapcraft_yaml_data = snapcraft_yaml(**yaml_data)
+
+    assert parts_lifecycle.get_build_plan(
+        snapcraft_yaml_data, parsed_args=argparse.Namespace(build_for=None)
+    ) == [
+        ("aarch64", "aarch64"),
+        ("aarch64", "arm64"),
+    ]
+
+
+def test_get_build_plan_list_without_matching_element(snapcraft_yaml, mocker, new_dir):
+    """The build plan should be empty when no build has a `build-on` that matches
+    the host architecture.
+    """
+    mocker.patch(
+        "snapcraft.parts.lifecycle.get_host_architecture", return_value="aarch64"
+    )
+    yaml_data = {
+        "base": "core22",
+        "architectures": ["powerpc", "armhf"],
+    }
+
+    snapcraft_yaml_data = snapcraft_yaml(**yaml_data)
+
+    assert (
+        parts_lifecycle.get_build_plan(
+            snapcraft_yaml_data, parsed_args=argparse.Namespace(build_for=None)
+        )
+        == []
+    )
+
+
+def test_get_build_plan_list_with_matching_element_and_env_var(
+    snapcraft_yaml, mocker, monkeypatch, new_dir
+):
+    """The build plan should be filtered down when `SNAPCRAFT_BUILD_FOR` is defined."""
+    mocker.patch(
+        "snapcraft.parts.lifecycle.get_host_architecture", return_value="aarch64"
+    )
+    yaml_data = {
+        "base": "core22",
+        "architectures": [
+            {"build-on": "aarch64", "build-for": "aarch64"},
+            {"build-on": "aarch64", "build-for": "armhf"},
+        ],
+    }
+
+    snapcraft_yaml_data = snapcraft_yaml(**yaml_data)
+
+    assert parts_lifecycle.get_build_plan(
+        snapcraft_yaml_data, parsed_args=argparse.Namespace(build_for="aarch64")
+    ) == [("aarch64", "aarch64")]
+
+
+def test_get_build_plan_list_without_matching_element_and_build_for_arg(
+    snapcraft_yaml, mocker, monkeypatch, new_dir
+):
+    """The build plan should be empty when no plan has a matching `build_for`
+    matching `SNAPCRAFT_BUILD_FOR.`"""
+    mocker.patch(
+        "snapcraft.parts.lifecycle.get_host_architecture", return_value="aarch64"
+    )
+    yaml_data = {
+        "base": "core22",
+        "architectures": [
+            {"build-on": "aarch64", "build-for": "aarch64"},
+            {"build-on": "aarch64", "build-for": "armhf"},
+        ],
+    }
+
+    snapcraft_yaml_data = snapcraft_yaml(**yaml_data)
+
+    assert (
+        parts_lifecycle.get_build_plan(
+            snapcraft_yaml_data, parsed_args=argparse.Namespace(build_for="arm64")
+        )
+        == []
+    )

@@ -67,6 +67,13 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             action="store_true",
             help="Bind ~/.ssh directory to local build instances",
         )
+        parser.add_argument(
+            "--build-for",
+            type=str,
+            metavar="architecture",
+            default=os.getenv("SNAPCRAFT_BUILD_FOR"),
+            help="Set target architecture to build for",
+        )
 
         # --enable-experimental-extensions is only available in legacy
         parser.add_argument(

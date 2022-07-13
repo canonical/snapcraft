@@ -49,6 +49,7 @@ def test_lifecycle_command(cmd, run_method, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -93,6 +94,7 @@ def test_lifecycle_command_arguments(cmd, run_method, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -138,6 +140,7 @@ def test_lifecycle_command_arguments_destructive_mode(cmd, run_method, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -183,6 +186,7 @@ def test_lifecycle_command_arguments_use_lxd(cmd, run_method, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -226,6 +230,7 @@ def test_lifecycle_command_arguments_bind_ssh(cmd, run_method, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=True,
+                build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -269,6 +274,7 @@ def test_lifecycle_command_arguments_debug(cmd, run_method, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -312,6 +318,7 @@ def test_lifecycle_command_arguments_shell(cmd, run_method, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -355,6 +362,7 @@ def test_lifecycle_command_arguments_shell_after(cmd, run_method, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -384,6 +392,7 @@ def test_lifecycle_command_pack(mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -413,6 +422,7 @@ def test_lifecycle_command_pack_destructive_mode(mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -442,6 +452,7 @@ def test_lifecycle_command_pack_use_lxd(mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -472,6 +483,7 @@ def test_lifecycle_command_pack_enable_manifest(mocker):
                 manifest_image_information=None,
                 enable_experimental_extensions=False,
                 bind_ssh=False,
+                build_for=None,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
                 target_arch=None,
@@ -501,6 +513,7 @@ def test_lifecycle_command_pack_env_enable_manifest(mocker):
                 enable_manifest=True,
                 manifest_image_information=None,
                 bind_ssh=False,
+                build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -530,6 +543,7 @@ def test_lifecycle_command_pack_manifest_image_information(mocker):
                 enable_manifest=False,
                 manifest_image_information="{'some-info': true}",
                 bind_ssh=False,
+                build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -560,6 +574,7 @@ def test_lifecycle_command_pack_env_manifest_image_information(mocker):
                 enable_manifest=False,
                 manifest_image_information="{'some-info': true}",
                 bind_ssh=False,
+                build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -591,6 +606,68 @@ def test_lifecycle_command_pack_bind_ssh(mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=True,
+                build_for=None,
+                enable_experimental_target_arch=False,
+                target_arch=None,
+                provider=None,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_build_for(mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack", "--build-for", "armhf"],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                debug=False,
+                destructive_mode=False,
+                use_lxd=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                build_for="armhf",
+                enable_experimental_target_arch=False,
+                target_arch=None,
+                provider=None,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_env_build_for(mocker):
+    mocker.patch.dict(os.environ, {"SNAPCRAFT_BUILD_FOR": "armhf"})
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack"],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                debug=False,
+                destructive_mode=False,
+                use_lxd=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                build_for="armhf",
                 enable_experimental_target_arch=False,
                 target_arch=None,
                 provider=None,
@@ -618,6 +695,7 @@ def test_lifecycle_command_pack_debug(mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -644,6 +722,7 @@ def test_lifecycle_command_pack_output(mocker, option):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
@@ -669,6 +748,7 @@ def test_lifecycle_command_pack_directory(mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,

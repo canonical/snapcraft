@@ -45,9 +45,10 @@ class OSPlatform:
         return f"{self.system}/{self.release} ({self.machine})"
 
 
-# translations from what the platform module informs to the term deb and
-# snaps actually use
-ARCH_TRANSLATIONS = {
+# architecture translations from the platform syntax to the deb/snap syntax
+# These two architecture mappings are almost inverses of each other, except one map is
+# not reversible (same value for different keys)
+_ARCH_TRANSLATIONS_PLATFORM_TO_DEB = {
     "aarch64": "arm64",
     "armv7l": "armhf",
     "i686": "i386",
@@ -55,6 +56,16 @@ ARCH_TRANSLATIONS = {
     "ppc64le": "ppc64el",
     "x86_64": "amd64",
     "AMD64": "amd64",  # Windows support
+}
+
+# architecture translations from the deb/snap syntax to the platform syntax
+_ARCH_TRANSLATIONS_DEB_TO_PLATFORM = {
+    "arm64": "aarch64",
+    "armhf": "armv7l",
+    "i386": "i686",
+    "powerpc": "ppc",
+    "ppc64el": "ppc64le",
+    "amd64": "x86_64",
 }
 
 _32BIT_USERSPACE_ARCHITECTURE = {
@@ -102,7 +113,23 @@ def get_host_architecture():
         if userspace:
             os_platform_machine = userspace
 
-    return ARCH_TRANSLATIONS.get(os_platform_machine, os_platform_machine)
+    return _ARCH_TRANSLATIONS_PLATFORM_TO_DEB.get(
+        os_platform_machine, os_platform_machine
+    )
+
+
+def convert_architecture_deb_to_platform(architecture: str) -> str:
+    """Convert an architecture from deb/snap syntax to platform syntax.
+
+    :param architecture: architecture string in debian/snap syntax
+    :return: architecture in platform syntax
+    :raises InvalidArchitecture: if architecture is not valid
+    """
+    platform_arch = _ARCH_TRANSLATIONS_DEB_TO_PLATFORM.get(architecture)
+    if not platform_arch:
+        raise errors.InvalidArchitecture(architecture)
+
+    return platform_arch
 
 
 def strtobool(value: str) -> bool:

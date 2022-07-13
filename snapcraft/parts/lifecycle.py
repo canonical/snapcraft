@@ -23,17 +23,26 @@ import subprocess
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 import craft_parts
 from craft_cli import EmitterMode, emit
-from craft_parts import ProjectInfo, StepInfo, callbacks, infos
+from craft_parts import ProjectInfo, StepInfo, callbacks
 
 from snapcraft import errors, extensions, pack, providers, utils
 from snapcraft.meta import manifest, snap_yaml
-from snapcraft.projects import GrammarAwareProject, Project
+from snapcraft.projects import (
+    Architecture,
+    ArchitectureProject,
+    GrammarAwareProject,
+    Project,
+)
 from snapcraft.providers import capture_logs_from_instance
-from snapcraft.utils import get_host_architecture, process_version
+from snapcraft.utils import (
+    convert_architecture_deb_to_platform,
+    get_host_architecture,
+    process_version,
+)
 
 from . import grammar, plugins, yaml_utils
 from .parts import PartsLifecycle
@@ -81,8 +90,17 @@ def get_snap_project() -> _SnapProject:
     )
 
 
-def apply_yaml(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Apply Snapcraft logic to yaml_data."""
+def apply_yaml(
+    yaml_data: Dict[str, Any], build_on: str, build_for: str
+) -> Dict[str, Any]:
+    """Apply Snapcraft logic to yaml_data.
+
+    Extensions are applied and advanced grammar is processed.
+    The architectures data is reduced to architectures in the current build plan.
+
+    :param yaml_data: The project YAML data.
+    :param build_for: Target architecture the snap project will be built to.
+    """
     # validate project grammar
     GrammarAwareProject.validate_grammar(yaml_data)
 
@@ -92,22 +110,29 @@ def apply_yaml(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
         core_part["plugin"] = "nil"
         yaml_data["parts"][_CORE_PART_NAME] = core_part
 
-    # TODO: support for target_arch
-    arch = _get_arch()
-    yaml_data = extensions.apply_extensions(yaml_data, arch=arch, target_arch=arch)
+    yaml_data = extensions.apply_extensions(
+        yaml_data, arch=build_on, target_arch=build_for
+    )
 
     if "parts" in yaml_data:
         yaml_data["parts"] = grammar.process_parts(
-            parts_yaml_data=yaml_data["parts"], arch=arch, target_arch=arch
+            parts_yaml_data=yaml_data["parts"], arch=build_on, target_arch=build_for
         )
+
+    # replace all architectures with the architectures in the current build plan
+    yaml_data["architectures"] = [Architecture(build_on=build_on, build_for=build_for)]
 
     return yaml_data
 
 
 def process_yaml(project_file: Path) -> Dict[str, Any]:
-    """Process the yaml from project file.
+    """Process yaml data from file into a dictionary.
+
+    :param project_file: Path to project.
 
     :raises SnapcraftError: if the project yaml file cannot be loaded.
+
+    :return: The processed YAML data.
     """
     try:
         with open(project_file, encoding="utf-8") as yaml_file:
@@ -118,7 +143,7 @@ def process_yaml(project_file: Path) -> Dict[str, Any]:
             msg = f"{msg}: {err.filename!r}."
         raise errors.SnapcraftError(msg) from err
 
-    return apply_yaml(yaml_data)
+    return yaml_data
 
 
 def _extract_parse_info(yaml_data: Dict[str, Any]) -> Dict[str, List[str]]:
@@ -149,8 +174,8 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
 
     snap_project = get_snap_project()
     yaml_data = process_yaml(snap_project.project_file)
-    parse_info = _extract_parse_info(yaml_data)
     start_time = datetime.now()
+    build_plan = get_build_plan(yaml_data, parsed_args)
 
     if parsed_args.provider:
         raise errors.SnapcraftError("Option --provider is not supported.")
@@ -161,22 +186,30 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     callbacks.register_pre_step(_set_step_environment)
 
     build_count = utils.get_parallel_build_count()
-    _expand_environment(yaml_data, parallel_build_count=build_count)
 
-    project = Project.unmarshal(yaml_data)
-
-    try:
-        _run_command(
-            command_name,
-            project=project,
-            parse_info=parse_info,
+    for build_on, build_for in build_plan:
+        emit.verbose(f"Running on {build_on} for {build_for}")
+        yaml_data_for_arch = apply_yaml(yaml_data, build_on, build_for)
+        parse_info = _extract_parse_info(yaml_data_for_arch)
+        _expand_environment(
+            yaml_data_for_arch,
             parallel_build_count=build_count,
-            assets_dir=snap_project.assets_dir,
-            start_time=start_time,
-            parsed_args=parsed_args,
+            target_arch=build_for,
         )
-    except PermissionError as err:
-        raise errors.FilePermissionError(err.filename, reason=err.strerror)
+        project = Project.unmarshal(yaml_data_for_arch)
+
+        try:
+            _run_command(
+                command_name,
+                project=project,
+                parse_info=parse_info,
+                parallel_build_count=build_count,
+                assets_dir=snap_project.assets_dir,
+                start_time=start_time,
+                parsed_args=parsed_args,
+            )
+        except PermissionError as err:
+            raise errors.FilePermissionError(err.filename, reason=err.strerror)
 
 
 def _run_command(
@@ -240,6 +273,7 @@ def _run_command(
             "grade": project.grade or "",
         },
         extra_build_snaps=project.get_extra_build_snaps(),
+        target_arch=project.get_build_for(),
     )
 
     if command_name == "clean":
@@ -298,7 +332,7 @@ def _run_command(
             compression=project.compression,
             name=project.name,
             version=process_version(project.version),
-            target_arch=lifecycle.target_arch,
+            target_arch=project.get_build_for(),
         )
         emit.message(f"Created snap package {snap_filename}")
 
@@ -346,11 +380,12 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
     emit.debug("Clean build provider")
     provider_name = "lxd" if parsed_args.use_lxd else None
     provider = providers.get_provider(provider_name)
+
     instance_names = provider.clean_project_environments(
         project_name=project.name,
         project_path=Path().absolute(),
-        build_on=get_host_architecture(),
-        build_for=get_host_architecture(),
+        build_on=project.get_build_on(),
+        build_for=project.get_build_for(),
     )
     if instance_names:
         emit.message(f"Removed instance: {', '.join(instance_names)}")
@@ -398,6 +433,9 @@ def _run_in_provider(
         cmd.append("--manifest-build-information")
         cmd.append(build_information)
 
+    cmd.append("--build-for")
+    cmd.append(project.get_build_for())
+
     output_dir = utils.get_managed_environment_project_path()
 
     emit.progress("Launching instance...")
@@ -406,8 +444,8 @@ def _run_in_provider(
         project_path=Path().absolute(),
         base=project.get_effective_base(),
         bind_ssh=parsed_args.bind_ssh,
-        build_on=get_host_architecture(),
-        build_for=get_host_architecture(),
+        build_on=project.get_build_on(),
+        build_for=project.get_build_for(),
     ) as instance:
         try:
             with emit.pause():
@@ -418,13 +456,6 @@ def _run_in_provider(
             raise providers.ProviderError(
                 f"Failed to execute {command_name} in instance."
             ) from err
-
-
-# TODO Needs exposure from craft-parts.
-def _get_arch() -> str:
-    machine = infos._get_host_architecture()  # pylint: disable=protected-access
-    # FIXME Raise the potential KeyError.
-    return infos._ARCH_TRANSLATIONS[machine]["deb"]  # pylint: disable=protected-access
 
 
 def _set_global_environment(info: ProjectInfo) -> None:
@@ -459,7 +490,7 @@ def _set_step_environment(step_info: StepInfo) -> bool:
 
 
 def _expand_environment(
-    snapcraft_yaml: Dict[str, Any], *, parallel_build_count: int
+    snapcraft_yaml: Dict[str, Any], *, parallel_build_count: int, target_arch: str
 ) -> None:
     """Expand global variables in the provided dictionary values.
 
@@ -476,10 +507,14 @@ def _expand_environment(
         "grade": snapcraft_yaml.get("grade", ""),
     }
 
+    if target_arch == "all":
+        target_arch = get_host_architecture()
+
     dirs = craft_parts.ProjectDirs(work_dir=work_dir)
     info = craft_parts.ProjectInfo(
         application_name="snapcraft",  # not used in environment expansion
         cache_dir=Path(),  # not used in environment expansion
+        arch=convert_architecture_deb_to_platform(target_arch),
         parallel_build_count=parallel_build_count,
         project_name=snapcraft_yaml.get("name", ""),
         project_dirs=dirs,
@@ -488,3 +523,54 @@ def _expand_environment(
     _set_global_environment(info)
 
     craft_parts.expand_environment(snapcraft_yaml, info=info, skip=["name", "version"])
+
+
+def get_build_plan(
+    yaml_data: Dict[str, Any], parsed_args: "argparse.Namespace"
+) -> List[Tuple[str, str]]:
+    """Get a list of all build_on->build_for architectures from the project file.
+
+    Additionally, check for the command line argument `--build-for <architecture>`
+    When defined, the build plan will only contain builds where `build-for`
+    matches `SNAPCRAFT_BUILD_FOR`.
+    Note: `--build-for` defaults to the environmental variable `SNAPCRAFT_BUILD_FOR`.
+
+    :param yaml_data: The project YAML data.
+    :param parsed_args: snapcraft's argument namespace
+
+    :return: List of tuples of every valid build-on->build-for combination.
+    """
+    archs = ArchitectureProject.unmarshal(yaml_data).architectures
+
+    host_arch = get_host_architecture()
+    build_plan: List[Tuple[str, str]] = []
+
+    # `isinstance()` calls are for mypy type checking and should not change logic
+    for arch in [arch for arch in archs if isinstance(arch, Architecture)]:
+        for build_on in arch.build_on:
+            if build_on in host_arch and isinstance(arch.build_for, list):
+                build_plan.append((host_arch, arch.build_for[0]))
+            else:
+                emit.verbose(
+                    f"Skipping build-on: {build_on} build-for: {arch.build_for}"
+                    f" because build-on doesn't match host arch: {host_arch}"
+                )
+
+    # filter out builds not matching argument `--build_for` or env `SNAPCRAFT_BUILD_FOR`
+    build_for_arg = parsed_args.build_for
+    if build_for_arg is not None:
+        build_plan = [build for build in build_plan if build[1] == build_for_arg]
+
+    if len(build_plan) == 0:
+        emit.message(
+            "Could not make build plan:"
+            " build-on architectures in snapcraft.yaml"
+            f" does not match host architecture ({host_arch})."
+        )
+    else:
+        log_output = "Created build plan:"
+        for build in build_plan:
+            log_output += f"\n  build-on: {build[0]} build-for: {build[1]}"
+        emit.trace(log_output)
+
+    return build_plan
