@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 
 from snapcraft import elf
-from snapcraft.elf import errors
+from snapcraft.elf import elf_utils, errors
 from snapcraft.elf._elf_file import _Library
 
 
@@ -69,11 +69,10 @@ class TestElfFileSmoketest:
         # Ensure type is detered as executable.
         assert elf_file.elf_type == "ET_DYN"
 
-    # XXX: uncomment after adding elf_utils
-    # def test_invalid_elf_file(self, new_dir):
-    #    Path("invalid-elf").write_bytes(b"\x7fELF\x00")
-    #    elf_files = elf_utils.get_elf_files(new_dir, {"invalid-elf"})
-    #    assert elf_files == set()
+    def test_invalid_elf_file(self, new_dir):
+        Path("invalid-elf").write_bytes(b"\x7fELF\x00")
+        elf_files = elf_utils.get_elf_files(new_dir, {"invalid-elf"})
+        assert elf_files == set()
 
 
 class TestGetLibraries:
