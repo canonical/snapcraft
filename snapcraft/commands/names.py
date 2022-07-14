@@ -24,9 +24,7 @@ from craft_cli import BaseCommand, emit
 from overrides import overrides
 from tabulate import tabulate
 
-from snapcraft import utils
-
-from . import store
+from snapcraft import store, utils
 
 if TYPE_CHECKING:
     import argparse

@@ -25,8 +25,8 @@ import requests
 from craft_store import endpoints
 
 from snapcraft import errors
-from snapcraft.commands.store import LegacyUbuntuOne, client
-from snapcraft.commands.store.channel_map import ChannelMap
+from snapcraft.store import LegacyUbuntuOne, client, constants
+from snapcraft.store.channel_map import ChannelMap
 from snapcraft.utils import OSPlatform
 
 from .utils import FakeResponse
@@ -464,7 +464,7 @@ def test_login_from_401_request(fake_client):
 
 
 def test_login_from_401_request_with_env_credentials(monkeypatch, fake_client):
-    monkeypatch.setenv(client.constants.ENVIRONMENT_STORE_CREDENTIALS, "foo")
+    monkeypatch.setenv(constants.ENVIRONMENT_STORE_CREDENTIALS, "foo")
     fake_client.request.side_effect = [
         craft_store.errors.StoreServerError(
             FakeResponse(

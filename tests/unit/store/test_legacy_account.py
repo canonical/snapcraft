@@ -21,7 +21,7 @@ import craft_store.endpoints
 import pytest
 
 from snapcraft import errors
-from snapcraft.commands.store._legacy_account import LegacyUbuntuOne, get_auth
+from snapcraft.store._legacy_account import LegacyUbuntuOne, get_auth
 
 ############
 # Fixtures #
@@ -38,7 +38,7 @@ def fake_auth(root_macaroon, discharged_macaroon):
 @pytest.fixture
 def fake_get_auth(monkeypatch, fake_auth):
     monkeypatch.setattr(
-        "snapcraft.commands.store._legacy_account.get_auth",
+        "snapcraft.store._legacy_account.get_auth",
         lambda config_content: fake_auth,
     )
 
