@@ -141,6 +141,9 @@ class StoreCloseCommand(BaseCommand):
     def run(self, parsed_args):
         client = store.StoreClientCLI()
 
+        if isinstance(client, store.OnPremClient):
+            raise errors.CraftError("close not supported for the on prem store.")
+
         # Account info request to retrieve the snap-id
         account_info = client.get_account_info()
         try:

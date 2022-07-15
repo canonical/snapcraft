@@ -17,12 +17,13 @@
 import json
 import textwrap
 import time
-from unittest.mock import call
+from unittest.mock import ANY, call
 
 import craft_store
 import pytest
 import requests
 from craft_store import endpoints
+from craft_store.models import RevisionsResponseModel
 
 from snapcraft import errors
 from snapcraft.store import LegacyUbuntuOne, client, constants
@@ -234,6 +235,16 @@ def test_get_store_client(monkeypatch, ephemeral, legacy_config_path):
 
 
 @pytest.mark.parametrize("ephemeral", (True, False))
+def test_get_store_client_onprem(monkeypatch, ephemeral, legacy_config_path):
+    monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "onprem")
+    legacy_config_path.unlink()
+
+    store_client = client.get_client(ephemeral)
+
+    assert isinstance(store_client, client.OnPremClient)
+
+
+@pytest.mark.parametrize("ephemeral", (True, False))
 def test_get_ubuntu_client(ephemeral, legacy_config_path):
     legacy_config_path.unlink()
 
@@ -254,9 +265,9 @@ def test_get_legacy_ubuntu_client(new_dir, legacy_config_path, ephemeral):
         assert isinstance(store_client, LegacyUbuntuOne)
 
 
-##################
-# StoreClientCLI #
-##################
+########################
+# LegacyStoreClientCLI #
+########################
 
 
 @pytest.fixture
@@ -864,3 +875,142 @@ def test_notify_upload_error(fake_client):
         call("GET", "https://track"),
         call("GET", "https://track"),
     ]
+
+
+########################
+# OnPremStoreClientCLI #
+########################
+
+
+@pytest.fixture
+def fake_client_request(mocker):
+    return mocker.patch("snapcraft.store.client.OnPremClient.request", autospec=True)
+
+
+@pytest.fixture
+def fake_client_notify_revision(mocker):
+    return mocker.patch(
+        "snapcraft.store.client.OnPremClient.notify_revision",
+        autospec=True,
+        return_value=RevisionsResponseModel.unmarshal(
+            {"status-url": "https://status.com/fake"}
+        ),
+    )
+
+
+@pytest.fixture
+def on_prem_client(monkeypatch):
+    monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "onprem")
+    # Remove any sleep calls from the client.
+    monkeypatch.setattr("time.sleep", lambda x: x)
+    return client.StoreClientCLI()
+
+
+def test_onprem_request(on_prem_client, fake_client_request):
+    on_prem_client.request("GET", "https://foo.bar")
+
+    assert fake_client_request.mock_calls == [call(ANY, "GET", "https://foo.bar")]
+
+
+def test_on_prem_verify_upload(on_prem_client, emitter):
+    on_prem_client.verify_upload(snap_name="fake-snap")
+
+    emitter.assert_debug("Skipping verification for 'fake-snap'")
+
+
+def test_on_prem_notify_revision_release_unsupported(on_prem_client):
+    with pytest.raises(errors.SnapcraftError):
+        on_prem_client.notify_upload(
+            snap_name="fake-snap",
+            upload_id="fake-id",
+            snap_file_size=10,
+            built_at=None,
+            channels=["stable"],
+        )
+
+
+@pytest.mark.usefixtures("fake_client_notify_revision")
+def test_on_prem_notify_revision_approved(on_prem_client, fake_client_request, emitter):
+    fake_client_request.side_effect = [
+        FakeResponse(
+            content=json.dumps({"revisions": [{"status": "progress"}]}), status_code=200
+        ),
+        FakeResponse(
+            content=json.dumps({"revisions": [{"status": "approved", "revision": 2}]}),
+            status_code=200,
+        ),
+    ]
+
+    assert (
+        on_prem_client.notify_upload(
+            snap_name="fake-snap",
+            upload_id="fake-id",
+            snap_file_size=10,
+            built_at=None,
+            channels=None,
+        )
+        == 2
+    )
+
+    emitter.assert_debug("Ignoring snap_file_size of 10 and built_at None")
+
+
+@pytest.mark.usefixtures("fake_client_notify_revision")
+def test_on_prem_notify_revision_rejected(on_prem_client, fake_client_request):
+    fake_client_request.side_effect = [
+        FakeResponse(
+            content=json.dumps({"revisions": [{"status": "progress"}]}), status_code=200
+        ),
+        FakeResponse(
+            content=json.dumps(
+                {
+                    "revisions": [
+                        {
+                            "status": "rejected",
+                            "errors": [
+                                {"code": "bad-snap-code", "message": "bad snap"}
+                            ],
+                        }
+                    ]
+                }
+            ),
+            status_code=200,
+        ),
+    ]
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        on_prem_client.notify_upload(
+            snap_name="fake-snap",
+            upload_id="fake-id",
+            snap_file_size=10,
+            built_at=None,
+            channels=None,
+        )
+
+    assert str(raised.value) == "Error uploading snap: bad-snap-code"
+
+
+def test_on_prem_release(on_prem_client, fake_client_request):
+    on_prem_client.release("fake-snap", revision=1, channels=["stable", "edge"])
+
+    assert fake_client_request.mock_calls == [
+        call(
+            ANY,
+            "POST",
+            "https://dashboard.snapcraft.io/v1/snap/fake-snap/releases",
+            json=[
+                {"revision": 1, "channel": "stable"},
+                {"revision": 1, "channel": "edge"},
+            ],
+        )
+    ]
+
+
+def test_on_prem_release_progressive_percentage_unsupported(on_prem_client):
+    with pytest.raises(errors.SnapcraftError):
+        on_prem_client.release(
+            "fake-snap",
+            revision=1,
+            channels=["stable", "edge"],
+            progressive_percentage=10,
+        )
