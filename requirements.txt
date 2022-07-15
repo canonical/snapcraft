@@ -9,7 +9,7 @@ craft-cli==1.1.0
 craft-grammar==1.1.1
 craft-parts==1.11.0
 craft-providers==1.3.1
-craft-store==2.2.0
+craft-store==2.2.1
 cryptography==3.4
 Deprecated==1.2.13
 distro==1.7.0
