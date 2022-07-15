@@ -59,22 +59,26 @@ class Patcher:
         :raises PatcherError: if the ELF file cannot be patched.
         """
         patchelf_args = []
-        if elf_file.interp:
+        if elf_file.interp and elf_file.interp != self._dynamic_linker:
             patchelf_args.extend(["--set-interpreter", self._dynamic_linker])
+
         if elf_file.dependencies:
-            rpath = self._get_rpath(elf_file)
-            # Due to https://github.com/NixOS/patchelf/issues/94 we need
-            # to first clear the current rpath
-            self._run_patchelf(
-                patchelf_args=["--remove-rpath"], elf_file_path=elf_file.path
-            )
+            current_rpath = self._get_current_rpath(elf_file)
+            proposed_rpath = self._get_proposed_rpath(elf_file)
+
+            # Removing the current rpath should not be necessary after patchelf 0.11,
+            # see https://github.com/NixOS/patchelf/issues/94
+
             # Parameters:
             # --force-rpath: use RPATH instead of RUNPATH.
-            # --shrink-rpath: will remove unneeded entries, with the
-            #                 side effect of preferring host libraries
-            #                 so we simply do not use it.
+            # --shrink-rpath: will remove unneeded entries, with the side effect of
+            #                 preferring host libraries so we simply do not use it.
             # --set-rpath: set the RPATH to the colon separated argument.
-            patchelf_args.extend(["--force-rpath", "--set-rpath", rpath])
+
+            # Don't need to patch the binary if all proposed paths are already in rpath
+            if not set(proposed_rpath).issubset(set(current_rpath)):
+                formatted_rpath = ":".join(proposed_rpath)
+                patchelf_args.extend(["--force-rpath", "--set-rpath", formatted_rpath])
 
         # no patchelf_args means there is nothing to do.
         if not patchelf_args:
@@ -106,22 +110,22 @@ class Patcher:
             os.unlink(elf_file_path)
             shutil.copy2(temp_file.name, elf_file_path)
 
-    def _get_existing_rpath(self, elf_file_path):
+    def _get_current_rpath(self, elf_file: ElfFile) -> List[str]:
         output = subprocess.check_output(
-            [self._patchelf_cmd, "--print-rpath", elf_file_path]
+            [self._patchelf_cmd, "--print-rpath", str(elf_file.path)]
         )
-        return output.decode().strip().split(":")
+        return [x for x in output.decode().strip().split(":") if x]
 
-    def _get_rpath(self, elf_file) -> str:
+    def _get_proposed_rpath(self, elf_file: ElfFile) -> List[str]:
         origin_rpaths: List[str] = []
         base_rpaths: Set[str] = set()
-        existing_rpaths = self._get_existing_rpath(elf_file.path)
+        existing_rpaths = self._get_current_rpath(elf_file)
 
         for dependency in elf_file.dependencies:
             if dependency.path:
                 if dependency.in_base_snap:
                     base_rpaths.add(os.path.dirname(dependency.path))
-                elif dependency.path.startswith(self._root_path):
+                elif self._root_path in dependency.path.parents:
                     rel_library_path = os.path.relpath(dependency.path, elf_file.path)
                     rel_library_path_dir = os.path.dirname(rel_library_path)
                     # return the dirname, with the first .. replace
@@ -131,20 +135,19 @@ class Patcher:
                         origin_rpaths.append(origin_rpath)
 
         if existing_rpaths:
-            # Only keep those that mention origin and are not already in our
-            # bundle.
+            # Only keep those that mention origin and are not already in our bundle.
             existing_rpaths = [
                 r for r in existing_rpaths if "$ORIGIN" in r and r not in origin_rpaths
             ]
             origin_rpaths = existing_rpaths + origin_rpaths
 
-        formatted_origin_paths = ":".join((r for r in origin_rpaths if r))
-        formatted_base_rpaths = ":".join(sorted(base_rpaths))
+        origin_rpath_list = [r for r in origin_rpaths if r]
+        base_rpath_list = sorted(base_rpaths)
 
-        if formatted_origin_paths and formatted_base_rpaths:
-            return f"{formatted_origin_paths}:{formatted_base_rpaths}"
+        if origin_rpath_list and base_rpath_list:
+            return origin_rpath_list + base_rpath_list
 
-        if formatted_origin_paths and not formatted_base_rpaths:
-            return formatted_origin_paths
+        if origin_rpath_list and not base_rpath_list:
+            return origin_rpath_list
 
-        return formatted_base_rpaths
+        return base_rpath_list
