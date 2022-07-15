@@ -25,8 +25,11 @@ import pytest
 from snapcraft import errors
 from snapcraft.parts import setup_assets as parts_setup_assets
 from snapcraft.parts.setup_assets import (
+    _create_hook_wrappers,
+    _ensure_hook,
+    _ensure_hook_executable,
     _validate_command_chain,
-    ensure_hook,
+    _write_hook_wrapper,
     setup_assets,
 )
 from snapcraft.projects import Project
@@ -468,8 +471,9 @@ class TestCommandChain:
 
 
 def test_ensure_hook(new_dir):
+    """Verify creation of executable placeholder hooks."""
     hook_path: Path = new_dir / "configure"
-    ensure_hook(hook_path)
+    _ensure_hook(hook_path)
 
     assert hook_path.exists()
     assert hook_path.read_text() == "#!/bin/true\n"
@@ -477,12 +481,82 @@ def test_ensure_hook(new_dir):
 
 
 def test_ensure_hook_does_not_overwrite(new_dir):
+    """Verify existing hooks are not overwritten with placeholder hooks."""
     hook_path: Path = new_dir / "configure"
     hook_path.write_text("#!/bin/python3\n")
     hook_path.chmod(0o700)
 
-    ensure_hook(hook_path)
+    _ensure_hook(hook_path)
 
     assert hook_path.exists()
     assert hook_path.read_text() == "#!/bin/python3\n"
     assert oct(hook_path.stat().st_mode)[-3:] == "700"
+
+
+def test_ensure_hook_executable(new_dir):
+    """Verify _ensure_hook_executable makes a file executable."""
+    # create a non-executable file
+    hook_path: Path = new_dir / "configure"
+    hook_path.write_text("#!/bin/true\n")
+    hook_path.chmod(0o644)
+
+    _ensure_hook_executable(hook_path)
+
+    assert hook_path.exists()
+    assert oct(hook_path.stat().st_mode)[-3:] == "755"
+
+
+def test_create_hook_wrappers(new_dir):
+    """Verify hook wrappers are created for generated hooks."""
+    # create a directory for the hooks
+    hooks_snap_dir: Path = new_dir / "snap" / "hooks"
+    hooks_snap_dir.mkdir(parents=True)
+
+    # create 2 generated hooks
+    for hook_name in ["configure", "install"]:
+        hook: Path = hooks_snap_dir / hook_name
+        hook.write_text("#!/bin/true\n")
+        hook.chmod(0o644)
+
+    _create_hook_wrappers(new_dir)
+
+    # verify prime/meta/hooks directory was created
+    hooks_meta_dir = new_dir / "meta" / "hooks"
+    assert hooks_meta_dir.exists()
+
+    # verify wrappers were generated for each hook
+    for hook_name in ["configure", "install"]:
+        hook_wrapper = hooks_meta_dir / hook_name
+        assert hook_wrapper.exists()
+        assert oct(hook_wrapper.stat().st_mode)[-3:] == "755"
+
+        # verify generated hook was made executable
+        assert oct((hooks_snap_dir / hook_name).stat().st_mode)[-3:] == "755"
+
+
+def test_write_hook_wrapper(new_dir):
+    """Verify hook wrappers are written correctly."""
+    # create a directory for the hooks
+    hooks_dir: Path = new_dir / "hooks"
+    hooks_dir.mkdir()
+
+    # create a generated hook
+    hook_name = "configure"
+    hook: Path = hooks_dir / hook_name
+    hook.write_text("#!/bin/true\n")
+    hook.chmod(0o644)
+
+    # create a directory for the hook wrappers
+    hook_wrapper_dir = new_dir / "hook-wrappers"
+    hook_wrapper_dir.mkdir()
+    hook_wrapper = hook_wrapper_dir / hook_name
+
+    _write_hook_wrapper(hook_name, hook_wrapper)
+
+    # verify content of hook wrapper
+    assert hook_wrapper.exists()
+    assert (
+        hook_wrapper.read_text()
+        == f'#!/bin/sh\nexec "$SNAP/snap/hooks/{hook_name}" "$@"\n'
+    )
+    assert oct(hook_wrapper.stat().st_mode)[-3:] == "755"

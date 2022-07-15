@@ -1,0 +1,35 @@
+summary: Project hooks should be copied from $PROJECT/snap/hooks/ to $PRIME/meta/hooks/.
+
+environment:
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "./snap/snapcraft.yaml"
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  snapcraft --destructive-mode
+
+  # verify hooks were staged
+  if [[ ! -f prime/meta/hooks/configure ]] && [[ ! -f prime/meta/hooks/install ]]; then
+      echo "no hook found in prime/meta/hooks/"
+      exit 1
+  fi
+
+  # verify hooks can execute
+  if ! prime/snap/hooks/install | grep "I am a project install hook" && \
+     ! prime/snap/hooks/configure | grep "I am a project configure hook"; then
+    echo "Unexpected content in hook"
+    exit 1
+  fi
+
+  # verify snap is installable
+  snap install project-hooks_1.0_*.snap --dangerous
