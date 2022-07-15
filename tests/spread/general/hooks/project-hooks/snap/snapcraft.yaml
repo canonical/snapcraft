@@ -1,4 +1,4 @@
-name: hooks-generated
+name: project-hooks
 base: core22
 version: '1.0'
 summary: Test project hooks.

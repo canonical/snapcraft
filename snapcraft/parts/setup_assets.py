@@ -52,6 +52,7 @@ def setup_assets(
     # create wrappers for hooks in the snap/hooks directory
     _create_hook_wrappers(prime_dir)
 
+    # hooks with command chains will execute the command chain instead of the hook wrapper
     if project.hooks:
         for hook_name, hook in project.hooks.items():
             if hook.command_chain:

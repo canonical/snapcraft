@@ -32,4 +32,4 @@ execute: |
   fi
 
   # verify snap is installable
-  snap install hooks-generated_1.0_*.snap --dangerous
+  snap install generated-and-project-hooks_1.0_*.snap --dangerous

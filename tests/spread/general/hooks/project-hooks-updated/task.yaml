@@ -32,7 +32,7 @@ execute: |
   fi
 
   # verify snap is installable
-  snap install hooks-generated_1.0_*.snap --dangerous
+  snap install project-hooks-updated_1.0_*.snap --dangerous
 
   # update the hooks
   sed -i 's/I am a/I am an updated/g' snap/hooks/*
@@ -54,4 +54,4 @@ execute: |
   fi
 
   # verify snap is still installable
-  snap install hooks-generated_1.0_*.snap --dangerous
+  snap install project-hooks-updated_1.0_*.snap --dangerous

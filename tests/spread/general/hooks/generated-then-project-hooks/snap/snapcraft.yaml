@@ -1,7 +1,7 @@
-name: hooks-generated
+name: generated-then-project-hooks
 base: core22
 version: '1.0'
-summary: Test generated hooks.
+summary: Test generated and project hooks.
 description: Execute snapcraft with a code generated hook, then add a conflicting project hook and re-execute snapcraft.
 grade: stable
 confinement: strict

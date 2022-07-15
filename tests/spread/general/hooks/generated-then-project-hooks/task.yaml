@@ -32,7 +32,7 @@ execute: |
   fi
 
   # verify snap is installable
-  snap install hooks-generated_1.0_*.snap --dangerous
+  snap install generated-then-project-hooks_1.0_*.snap --dangerous
 
   # create conflicting project hooks
   mkdir -p snap/hooks/
@@ -57,4 +57,4 @@ execute: |
   fi
 
   # verify snap is still installable
-  snap install hooks-generated_1.0_*.snap --dangerous
+  snap install generated-then-project-hooks_1.0_*.snap --dangerous
