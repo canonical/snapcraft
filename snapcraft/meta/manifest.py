@@ -19,7 +19,7 @@
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 from pydantic_yaml import YamlModel
 
@@ -41,7 +41,7 @@ class Manifest(YamlModel):
     version: str
     summary: str
     description: str
-    base: str
+    base: Optional[str]
     grade: str
     confinement: str
     apps: Optional[Dict[str, Any]]
@@ -103,7 +103,7 @@ def write(
         version=version,
         summary=project.summary,  # type: ignore
         description=project.description,  # type: ignore
-        base=cast(str, project.base),
+        base=project.base,
         grade=project.grade or "stable",
         confinement=project.confinement,
         apps=project.apps,
