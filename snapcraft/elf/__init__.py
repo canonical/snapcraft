@@ -17,8 +17,10 @@
 """ELF file handling."""
 
 from ._elf_file import ElfFile, SonameCache
+from ._patcher import Patcher
 
 __all__ = [
     "ElfFile",
     "SonameCache",
+    "Patcher",
 ]

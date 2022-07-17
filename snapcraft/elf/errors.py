@@ -17,8 +17,23 @@
 """Helpers to parse and handle ELF binary files."""
 
 from pathlib import Path
+from typing import List
 
 from snapcraft import errors
+
+
+class PatcherError(errors.SnapcraftError):
+    """Failed to patch an ELF file."""
+
+    def __init__(self, path: Path, *, cmd: List[str], code: int) -> None:
+        self.path = path
+        self.cmd = cmd
+        self.code = code
+
+        super().__init__(
+            f"{str(path)!r} cannot be patched to function properly in a classic"
+            f"confined snap: {cmd} failed with exit code {code}"
+        )
 
 
 class CorruptedElfFile(errors.SnapcraftError):
