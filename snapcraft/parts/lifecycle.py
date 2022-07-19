@@ -29,7 +29,8 @@ import craft_parts
 from craft_cli import EmitterMode, emit
 from craft_parts import ProjectInfo, StepInfo, callbacks
 
-from snapcraft import errors, extensions, pack, providers, utils
+from snapcraft import errors, extensions, linters, pack, providers, utils
+from snapcraft.linters import LinterStatus
 from snapcraft.meta import manifest, snap_yaml
 from snapcraft.projects import (
     Architecture,
@@ -252,8 +253,7 @@ def _run_command(
         work_dir = utils.get_managed_environment_home_path()
         project_dir = utils.get_managed_environment_project_path()
     else:
-        work_dir = Path.cwd()
-        project_dir = Path.cwd()
+        work_dir = project_dir = Path.cwd()
 
     step_name = "prime" if command_name in ("pack", "snap") else command_name
 
@@ -288,44 +288,24 @@ def _run_command(
     )
 
     # Extract metadata and generate snap.yaml
-    project_vars = lifecycle.project_vars
     if step_name == "prime" and not part_names:
-        emit.progress("Extracting and updating metadata...")
-        metadata_list = lifecycle.extract_metadata()
-        update_project_metadata(
-            project,
-            project_vars=project_vars,
-            metadata_list=metadata_list,
-            assets_dir=assets_dir,
-            prime_dir=lifecycle.prime_dir,
-        )
-
-        emit.progress("Copying snap assets...")
-        setup_assets(
-            project,
-            assets_dir=assets_dir,
+        _generate_metadata(
+            project=project,
+            lifecycle=lifecycle,
             project_dir=project_dir,
-            prime_dir=lifecycle.prime_dir,
+            assets_dir=assets_dir,
+            start_time=start_time,
+            parsed_args=parsed_args,
         )
-
-        emit.progress("Generating snap metadata...")
-        snap_yaml.write(
-            project,
-            lifecycle.prime_dir,
-            arch=lifecycle.target_arch,
-            arch_triplet=lifecycle.target_arch_triplet,
-        )
-        emit.progress("Generated snap metadata", permanent=True)
-
-        if parsed_args.enable_manifest:
-            _generate_manifest(
-                project,
-                lifecycle=lifecycle,
-                start_time=start_time,
-                parsed_args=parsed_args,
-            )
 
     if command_name in ("pack", "snap"):
+        issues = linters.run_linters(lifecycle.prime_dir, lint=project.lint)
+        status = linters.report(issues, intermediate=True)
+
+        # In case of linter errors, stop execution and return the error code.
+        if status in (LinterStatus.ERRORS, LinterStatus.FATAL):
+            raise errors.LinterError("Linter errors found", exit_code=status)
+
         snap_filename = pack.pack_snap(
             lifecycle.prime_dir,
             output=parsed_args.output,
@@ -335,6 +315,53 @@ def _run_command(
             target_arch=project.get_build_for(),
         )
         emit.message(f"Created snap package {snap_filename}")
+
+
+def _generate_metadata(
+    *,
+    project: Project,
+    lifecycle: PartsLifecycle,
+    project_dir: Path,
+    assets_dir: Path,
+    start_time: datetime,
+    parsed_args: "argparse.Namespace",
+):
+    project_vars = lifecycle.project_vars
+
+    emit.progress("Extracting and updating metadata...")
+    metadata_list = lifecycle.extract_metadata()
+    update_project_metadata(
+        project,
+        project_vars=project_vars,
+        metadata_list=metadata_list,
+        assets_dir=assets_dir,
+        prime_dir=lifecycle.prime_dir,
+    )
+
+    emit.progress("Copying snap assets...")
+    setup_assets(
+        project,
+        assets_dir=assets_dir,
+        project_dir=project_dir,
+        prime_dir=lifecycle.prime_dir,
+    )
+
+    emit.progress("Generating snap metadata...")
+    snap_yaml.write(
+        project,
+        lifecycle.prime_dir,
+        arch=lifecycle.target_arch,
+        arch_triplet=lifecycle.target_arch_triplet,
+    )
+    emit.progress("Generated snap metadata", permanent=True)
+
+    if parsed_args.enable_manifest:
+        _generate_manifest(
+            project,
+            lifecycle=lifecycle,
+            start_time=start_time,
+            parsed_args=parsed_args,
+        )
 
 
 def _generate_manifest(

@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Optional, Set, Union, cast
 import yaml
 from pydantic_yaml import YamlModel
 
+from snapcraft import errors
 from snapcraft.projects import Project
 from snapcraft.utils import get_ld_library_paths, process_version
 
@@ -119,6 +120,40 @@ class SnapMetadata(YamlModel):
 
         allow_population_by_field_name = True
         alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]) -> "SnapMetadata":
+        """Create and populate a new ``SnapMetadata`` object from dictionary data.
+
+        The unmarshal method validates entries in the input dictionary, populating
+        the corresponding fields in the data object.
+
+        :param data: The dictionary data to unmarshal.
+
+        :return: The newly created object.
+
+        :raise TypeError: If data is not a dictionary.
+        """
+        if not isinstance(data, dict):
+            raise TypeError("data is not a dictionary")
+
+        return cls(**data)
+
+
+def read(prime_dir: Path) -> SnapMetadata:
+    """Read snap metadata file.
+
+    :param prime_dir: The directory containing the snap payload.
+    :return: The populated snap metadata.
+    """
+    snap_yaml = prime_dir / "meta" / "snap.yaml"
+    try:
+        with snap_yaml.open(encoding="utf-8") as file:
+            data = yaml.safe_load(file)
+    except OSError as error:
+        raise errors.SnapcraftError(f"Cannot read snap metadata: {error}") from error
+
+    return SnapMetadata.unmarshal(data)
 
 
 def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
