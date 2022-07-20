@@ -23,7 +23,7 @@ from typing import Any, Dict, List, Optional, Set
 import craft_parts
 from craft_cli import emit
 from craft_parts import ActionType, Part, ProjectDirs, Step
-from craft_parts.packages import Repository, deb
+from craft_parts.packages import Repository
 from xdg import BaseDirectory  # type: ignore
 
 from snapcraft import errors, repo
@@ -204,6 +204,9 @@ class PartsLifecycle:
         if refresh_required:
             emit.progress("Refreshing package repositories...")
             # TODO: craft-parts API for: force_refresh=refresh_required
+            # pylint: disable=C0415
+            from craft_parts.packages import deb
+
             deb.Ubuntu.refresh_packages_list.cache_clear()
             self._lcm.refresh_packages_list()
         emit.progress("Installed package repositories", permanent=True)
