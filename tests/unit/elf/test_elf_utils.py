@@ -23,60 +23,77 @@ from snapcraft.elf import elf_utils
 from snapcraft.errors import SnapcraftError
 
 
+@pytest.fixture(autouse=True, scope="function")
+def _setup_method():
+    elf_utils.get_elf_files.cache_clear()
+
+
 class TestGetElfFiles:
     """get_elf_files functionality."""
 
     def test_get_elf_files(self, new_dir, fake_elf):
         fake_elf("fake_elf-2.23")
-        elf_files = elf_utils.get_elf_files(new_dir, {"fake_elf-2.23"})
+        fake_elf("object_file.o")
+        fake_elf("fake_elf-static")
+        elf_files = elf_utils.get_elf_files(new_dir)
         assert len(elf_files) == 1
 
-        elf_file = set(elf_files).pop()
+        elf_file = elf_files.pop()
+        assert elf_file.interp == "/lib64/ld-linux-x86-64.so.2"
+
+    def test_get_elf_files_from_list_from_list(self, new_dir, fake_elf):
+        fake_elf("fake_elf-2.23")
+        elf_files = elf_utils.get_elf_files_from_list(new_dir, ["fake_elf-2.23"])
+        assert len(elf_files) == 1
+
+        elf_file = elf_files.pop()
         assert elf_file.interp == "/lib64/ld-linux-x86-64.so.2"
 
     def test_skip_object_files(self, new_dir, fake_elf):
         fake_elf("object_file.o")
-        elf_files = elf_utils.get_elf_files(new_dir, {"object_file.o"})
-        assert elf_files == set()
+        elf_files = elf_utils.get_elf_files_from_list(new_dir, ["object_file.o"])
+        assert elf_files == []
 
     def test_no_find_dependencies_statically_linked(self, new_dir, fake_elf):
         fake_elf("fake_elf-static")
-        elf_files = elf_utils.get_elf_files(new_dir, {"fake_elf-static"})
-        assert elf_files == set()
+        elf_files = elf_utils.get_elf_files_from_list(new_dir, ["fake_elf-static"])
+        assert elf_files == []
 
     def test_elf_with_execstack(self, new_dir, fake_elf):
         fake_elf("fake_elf-with-execstack")
-        elf_files = elf_utils.get_elf_files(new_dir, {"fake_elf-with-execstack"})
-        elf_file = set(elf_files).pop()
+        elf_files = elf_utils.get_elf_files_from_list(
+            new_dir, {"fake_elf-with-execstack"}
+        )
+        elf_file = elf_files.pop()
         assert elf_file.execstack_set is True
 
     def test_elf_without_execstack(self, new_dir, fake_elf):
         fake_elf("fake_elf-2.23")
-        elf_files = elf_utils.get_elf_files(new_dir, {"fake_elf-2.23"})
-        elf_file = set(elf_files).pop()
+        elf_files = elf_utils.get_elf_files_from_list(new_dir, {"fake_elf-2.23"})
+        elf_file = elf_files.pop()
         assert elf_file.execstack_set is False
 
     def test_non_elf_files(self, new_dir):
         # A bz2 header
         Path("non-elf").write_bytes(b"\x42\x5a\x68")
-        elf_files = elf_utils.get_elf_files(new_dir, {"non-elf"})
-        assert elf_files == set()
+        elf_files = elf_utils.get_elf_files_from_list(new_dir, {"non-elf"})
+        assert elf_files == []
 
     def test_symlinks(self, new_dir):
         symlinked_path = Path(new_dir, "symlinked")
         symlinked_path.symlink_to("/bin/dash")
-        elf_files = elf_utils.get_elf_files(new_dir, {"symlinked"})
-        assert elf_files == set()
+        elf_files = elf_utils.get_elf_files_from_list(new_dir, {"symlinked"})
+        assert elf_files == []
 
     def test_device_files(self):
-        elf_files = elf_utils.get_elf_files("/dev", {"null"})
-        assert elf_files == set()
+        elf_files = elf_utils.get_elf_files_from_list(Path("/dev"), {"null"})
+        assert elf_files == []
 
     def test_fifo(self, new_dir):
         fifo_path = os.path.join(new_dir, "fifo")
         os.mkfifo(fifo_path)
-        elf_files = elf_utils.get_elf_files(new_dir, {"fifo"})
-        assert elf_files == set()
+        elf_files = elf_utils.get_elf_files_from_list(new_dir, {"fifo"})
+        assert elf_files == []
 
 
 class TestGetDynamicLinker:

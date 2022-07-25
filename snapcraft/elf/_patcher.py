@@ -16,6 +16,7 @@
 
 """Use patchelf to patch ELF files."""
 
+import functools
 import os
 import shutil
 import subprocess
@@ -35,12 +36,12 @@ class Patcher:
     """Hold the necessary logic to patch elf files."""
 
     def __init__(
-        self, *, dynamic_linker: str, root_path: str, preferred_patchelf=None
+        self, *, dynamic_linker: str, root_path: Path, preferred_patchelf=None
     ) -> None:
         """Create a Patcher instance.
 
         :param dynamic_linker: The path to the dynamic linker to set the ELF file to.
-        :param root_path: The base path for the snap being processed.
+        :param snap_path: The base path for the snap being processed.
         :param preferred_patchelf: patch the necessary elf_files with this patchelf.
         """
         self._dynamic_linker = dynamic_linker
@@ -63,8 +64,8 @@ class Patcher:
             patchelf_args.extend(["--set-interpreter", self._dynamic_linker])
 
         if elf_file.dependencies:
-            current_rpath = self._get_current_rpath(elf_file)
-            proposed_rpath = self._get_proposed_rpath(elf_file)
+            current_rpath = self.get_current_rpath(elf_file)
+            proposed_rpath = self.get_proposed_rpath(elf_file)
 
             # Removing the current rpath should not be necessary after patchelf 0.11,
             # see https://github.com/NixOS/patchelf/issues/94
@@ -110,16 +111,20 @@ class Patcher:
             os.unlink(elf_file_path)
             shutil.copy2(temp_file.name, elf_file_path)
 
-    def _get_current_rpath(self, elf_file: ElfFile) -> List[str]:
+    @functools.lru_cache(maxsize=1024)
+    def get_current_rpath(self, elf_file: ElfFile) -> List[str]:
+        """Obtain the current rpath from the ELF file dynamic section."""
         output = subprocess.check_output(
             [self._patchelf_cmd, "--print-rpath", str(elf_file.path)]
         )
         return [x for x in output.decode().strip().split(":") if x]
 
-    def _get_proposed_rpath(self, elf_file: ElfFile) -> List[str]:
+    @functools.lru_cache(maxsize=1024)
+    def get_proposed_rpath(self, elf_file: ElfFile) -> List[str]:
+        """Obtain the proposed rpath pointing to the base or application snaps."""
         origin_rpaths: List[str] = []
         base_rpaths: Set[str] = set()
-        existing_rpaths = self._get_current_rpath(elf_file)
+        existing_rpaths = self.get_current_rpath(elf_file)
 
         for dependency in elf_file.dependencies:
             if dependency.path:
@@ -144,10 +149,4 @@ class Patcher:
         origin_rpath_list = [r for r in origin_rpaths if r]
         base_rpath_list = sorted(base_rpaths)
 
-        if origin_rpath_list and base_rpath_list:
-            return origin_rpath_list + base_rpath_list
-
-        if origin_rpath_list and not base_rpath_list:
-            return origin_rpath_list
-
-        return base_rpath_list
+        return origin_rpath_list + base_rpath_list

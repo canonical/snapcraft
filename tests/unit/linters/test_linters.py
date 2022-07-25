@@ -176,6 +176,32 @@ class TestLinterRun:
             )
         ]
 
+    def test_run_linters_ignore(self, mocker, new_dir, linter_issue):
+        mocker.patch(
+            "snapcraft.linters.linters._LINTERS", {"test": TestLinterRun._TestLinter}
+        )
+        yaml_data = {
+            "name": "mytest",
+            "version": "1.29.3",
+            "base": "core22",
+            "summary": "Single-line elevator pitch for your amazing snap",
+            "description": "test-description",
+            "confinement": "strict",
+            "parts": {},
+        }
+
+        project = projects.Project.unmarshal(yaml_data)
+        snap_yaml.write(
+            project,
+            prime_dir=Path(new_dir),
+            arch="amd64",
+            arch_triplet="x86_64-linux-gnu",
+        )
+
+        lint = projects.Lint(ignore=projects.LintIgnore(linters=["test"]))
+        issues = linters.run_linters(new_dir, lint=lint)
+        assert issues == []
+
     def test_ignore_matching_filenames(self, linter_issue):
         lint = projects.Lint(ignore=projects.LintIgnore(files=["foo*", "some/dir/*"]))
         issues = [
