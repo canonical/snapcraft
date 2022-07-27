@@ -69,7 +69,7 @@ class LinterIssue(pydantic.BaseModel):
 
         return msg
 
-    class Config:  # pylint: disable=too-few-public-methods
+    class Config:
         """Pydantic model configuration."""
 
         validate_assignment = True
