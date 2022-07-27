@@ -181,6 +181,19 @@ class Socket(ProjectModel):
         return listen_stream
 
 
+class LintIgnore(ProjectModel):
+    """Lists of specific linters or globbed filenames to ignore."""
+
+    linters: List[str] = []
+    files: List[str] = []
+
+
+class Lint(ProjectModel):
+    """Linter configuration."""
+
+    ignore: LintIgnore
+
+
 class App(ProjectModel):
     """Snapcraft project app definition."""
 
@@ -361,6 +374,7 @@ class Project(ProjectModel):
     apps: Optional[Dict[str, App]]
     plugs: Optional[Dict[str, Union[ContentPlug, Any]]]
     slots: Optional[Dict[str, Any]]
+    lint: Optional[Lint]
     parts: Dict[str, Any]  # parts are handled by craft-parts
     epoch: Optional[str]
     adopt_info: Optional[str]
