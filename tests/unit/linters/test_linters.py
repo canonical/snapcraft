@@ -42,9 +42,9 @@ class TestLinterReport:
         assert emitter.interactions == [
             call("message", "Lint OK:"),
             call("message", "- test: foo.txt: With filename (https://some/url)"),
-            call("message", "Lint Warnings:"),
+            call("message", "Lint warnings:"),
             call("message", "- test: Without filename (https://some/url)"),
-            call("message", "Lint Errors:"),
+            call("message", "Lint errors:"),
             call("message", "- test: bar.txt: Some error (https://some/url)"),
         ]
 
@@ -64,13 +64,13 @@ class TestLinterReport:
                 "- test: foo.txt: With filename (https://some/url)",
                 permanent=True,
             ),
-            call("progress", "Lint Warnings:", permanent=True),
+            call("progress", "Lint warnings:", permanent=True),
             call(
                 "progress",
                 "- test: Without filename (https://some/url)",
                 permanent=True,
             ),
-            call("progress", "Lint Errors:", permanent=True),
+            call("progress", "Lint errors:", permanent=True),
             call(
                 "progress",
                 "- test: bar.txt: Some error (https://some/url)",

@@ -53,8 +53,8 @@ class LinterStatus(enum.IntEnum):
 
 _lint_reports: Dict[LinterResult, str] = {
     LinterResult.OK: "Lint OK",
-    LinterResult.WARNING: "Lint Warnings",
-    LinterResult.ERROR: "Lint Errors",
+    LinterResult.WARNING: "Lint warnings",
+    LinterResult.ERROR: "Lint errors",
 }
 
 

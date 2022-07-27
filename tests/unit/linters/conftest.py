@@ -27,14 +27,15 @@ def linter_issue():
         *,
         result: LinterResult = LinterResult.OK,
         filename: Optional[str] = None,
-        text: str = "Linter message text"
+        text: str = "Linter message text",
+        url: Optional[str] = "https://some/url",
     ):
         return LinterIssue(
             name="test",
             result=result,
             filename=filename,
             text=text,
-            url="https://some/url",
+            url=url,
         )
 
     yield _create_issue

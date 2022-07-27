@@ -51,7 +51,7 @@ class LinterIssue(pydantic.BaseModel):
     result: LinterResult
     filename: Optional[str]
     text: str
-    url: str
+    url: Optional[str]
     suggested_changes: Optional[str]  # XXX: pending definition
 
     def __init__(self, **kwargs):
@@ -59,10 +59,15 @@ class LinterIssue(pydantic.BaseModel):
 
     def __str__(self):
         """Use short formatted issue as the string representation."""
-        if not self.filename:
-            return f"{self.name!s}: {self.text} ({self.url})"
+        if self.filename:
+            msg = f"{self.name!s}: {self.filename}: {self.text}"
+        else:
+            msg = f"{self.name!s}: {self.text}"
 
-        return f"{self.name!s}: {self.filename}: {self.text} ({self.url})"
+        if self.url:
+            msg += f" ({self.url})"
+
+        return msg
 
     class Config:  # pylint: disable=too-few-public-methods
         """Pydantic model configuration."""
@@ -79,7 +84,10 @@ class Linter(abc.ABC):
     """
 
     def __init__(
-        self, name: str, snap_metadata: "SnapMetadata", lint: Optional[projects.Lint]
+        self,
+        name: str,
+        snap_metadata: "SnapMetadata",
+        lint: Optional[projects.Lint],
     ):
         self._name = name
         self._snap_metadata = snap_metadata

@@ -49,3 +49,11 @@ class TestLinterIssue:
     def test_linter_issue_string_filename(self, linter_issue):
         issue = linter_issue(filename="foo.txt")
         assert f"{issue}" == "test: foo.txt: Linter message text (https://some/url)"
+
+    def test_linter_issue_string_no_url(self, linter_issue):
+        issue = linter_issue(url=None)
+        assert f"{issue}" == "test: Linter message text"
+
+    def test_linter_issue_string_filename_no_url(self, linter_issue):
+        issue = linter_issue(filename="foo.txt", url=None)
+        assert f"{issue}" == "test: foo.txt: Linter message text"
