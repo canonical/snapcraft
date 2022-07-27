@@ -268,7 +268,7 @@ class StoreLegacyListKeysCommand(LegacyBaseCommand):
     help_msg = "List the keys available to sign assertions"
     overview = textwrap.dedent(
         """
-        List the available keys to sign assertions together with they
+        List the available keys to sign assertions together with their
         local availability."""
     )
 
