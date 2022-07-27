@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2021 Canonical Ltd
+# Copyright 2016-2022 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -34,7 +34,7 @@ class DashboardAPI(Requests):
     """The Dashboard API is used to publish and manage snaps.
 
     This is an interface to query that API which is documented
-    at https://dashboard.snapcraft.io/docs/.
+    at https://dashboard.snapcraft.io/docs/index.html.
     """
 
     def __init__(self, auth_client: craft_store.BaseClient) -> None:
