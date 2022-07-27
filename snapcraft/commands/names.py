@@ -123,7 +123,7 @@ class StoreNamesCommand(BaseCommand):
     """Command to list the snap names registered with the current account."""
 
     name = "names"
-    help_msg = "List the names registered to the logged it account"
+    help_msg = "List the names registered to the logged in account"
     overview = textwrap.dedent(
         """
         Return the list of snap names together with the registration date,
