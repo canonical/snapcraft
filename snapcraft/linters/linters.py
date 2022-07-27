@@ -119,7 +119,9 @@ def lint_command(parsed_args: "argparse.Namespace") -> None:
 def run_linters(location: Path, *, lint: Optional[projects.Lint]) -> List[LinterIssue]:
     """Run all the defined linters.
 
-    :param snap_file: The path to the snap file or payload directory to lint.
+    :param location: The root of the snap payload subtree to run linters on.
+    :param lint: The linter configuration defined for this project.
+    :return: A list of linter issues.
     """
     all_issues: List[LinterIssue] = []
     previous_dir = os.getcwd()
