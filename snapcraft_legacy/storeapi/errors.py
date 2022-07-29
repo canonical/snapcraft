@@ -147,12 +147,12 @@ class SnapNotFoundError(SnapcraftException):
 
         if self._channel and self._arch:
             resolution += (
-                f"\nAlso ensure the correct channel and architecture was used."
+                "\nAlso ensure the correct channel and architecture was used."
             )
         elif self._channel:
-            resolution += f"\nAlso ensure the correct channel was used."
+            resolution += "\nAlso ensure the correct channel was used."
         elif self._arch:
-            resolution += f"\nAlso ensure the correct architecture was used."
+            resolution += "\nAlso ensure the correct architecture was used."
 
         return resolution
 
@@ -671,7 +671,7 @@ def _format_error_list_details(error_list: List[Dict[str, Any]]) -> str:
         message = error.get("message")
         extra = error.get("extra")
 
-        lines.append(f"Errors:")
+        lines.append("Errors:")
         if code:
             lines.append(f"- Code: {code}")
 

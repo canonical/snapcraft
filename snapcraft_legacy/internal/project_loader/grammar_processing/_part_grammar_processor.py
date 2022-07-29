@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Set
 
 from craft_grammar import Grammar, GrammarProcessor
 
-from snapcraft_legacy import BasePlugin, project
+from snapcraft_legacy import BasePlugin
 from snapcraft_legacy.internal import repo
 
 from ._package_transformer import package_transformer
