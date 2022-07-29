@@ -25,7 +25,7 @@ import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import Popen
-from typing import Any, Dict, List, Optional, Sequence, TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 from urllib.parse import urljoin
 
 import craft_store
@@ -36,13 +36,10 @@ from snapcraft_legacy import storeapi, yaml_utils
 
 # Ideally we would move stuff into more logical components
 from snapcraft_legacy.cli import echo
-from snapcraft_legacy.file_utils import (
-    get_host_tool_path,
-    get_snap_tool_path,
-)
+from snapcraft_legacy.file_utils import get_host_tool_path, get_snap_tool_path
 from snapcraft_legacy.internal.errors import (
-    SnapDataExtractionError,
     SnapcraftEnvironmentError,
+    SnapDataExtractionError,
 )
 from snapcraft_legacy.storeapi.constants import DEFAULT_SERIES
 from snapcraft_legacy.storeapi.metrics import MetricsFilter, MetricsResults

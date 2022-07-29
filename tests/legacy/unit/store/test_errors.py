@@ -17,6 +17,8 @@
 from textwrap import dedent
 
 from snapcraft_legacy.storeapi import errors
+from snapcraft_legacy.storeapi.channels import Channel
+from snapcraft_legacy.storeapi.status import SnapStatusChannelDetails
 
 
 class TestSnapcraftException:
