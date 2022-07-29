@@ -57,6 +57,7 @@ _ARCH_TRANSLATIONS_PLATFORM_TO_DEB = {
     "ppc64le": "ppc64el",
     "x86_64": "amd64",
     "AMD64": "amd64",  # Windows support
+    "s390x": "s390x",
 }
 
 # architecture translations from the deb/snap syntax to the platform syntax
@@ -67,6 +68,7 @@ _ARCH_TRANSLATIONS_DEB_TO_PLATFORM = {
     "powerpc": "ppc",
     "ppc64el": "ppc64le",
     "amd64": "x86_64",
+    "s390x": "s390x",
 }
 
 _32BIT_USERSPACE_ARCHITECTURE = {
