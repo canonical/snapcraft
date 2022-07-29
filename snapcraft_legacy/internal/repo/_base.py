@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
+# Copyright (C) 2017-2022 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -331,23 +331,51 @@ class DummyRepo(BaseRepo):
 
 
 def fix_pkg_config(
-    root: str, pkg_config_file: str, prefix_trim: Optional[str] = None
+    prefix_prepend: str, pkg_config_file: str, prefix_trim: Optional[str] = None
 ) -> None:
-    """Opens a pkg_config_file and prefixes the prefix with root."""
-    pattern_trim = None
+    """Fix the prefix parameter in pkg-config files.
+
+    This function does 3 things:
+    1. Remove `prefix_trim` from the prefix.
+    2. Remove directories commonly added by staged snaps from the prefix.
+    3. Prepend `prefix_prepend` to the prefix.
+
+    The prepended stage directory depends on the source of the pkg-config file:
+    - From snaps built via launchpad: `/build/<snap-name>/stage`
+    - From snaps built via a provider: `/root/stage`
+    - From snaps built locally: `<local-path-to-project>/stage`
+    - Built during the build stage: the install directory
+
+    :param pkg_config_file: pkg-config (.pc) file to modify
+    :param prefix_prepend: directory to prepend to the prefix
+    :param prefix_trim: directory to remove from prefix
+    """
+    # build patterns
+    prefixes_to_trim = [r"/build/[\w\-. ]+/stage", "/root/stage"]
     if prefix_trim:
-        pattern_trim = re.compile("^prefix={}(?P<prefix>.*)".format(prefix_trim))
+        prefixes_to_trim.append(prefix_trim)
+    pattern_trim = re.compile(f"^prefix=(?P<trim>{'|'.join(prefixes_to_trim)})(?P<prefix>.*)")
     pattern = re.compile("^prefix=(?P<prefix>.*)")
 
+    # process .pc file
     with fileinput.input(pkg_config_file, inplace=True) as input_file:
         for line in input_file:
             match = pattern.search(line)
-            if prefix_trim is not None and pattern_trim is not None:
-                match_trim = pattern_trim.search(line)
-            if prefix_trim is not None and match_trim is not None:
-                print("prefix={}{}".format(root, match_trim.group("prefix")))
+            match_trim = pattern_trim.search(line)
+
+            if match_trim is not None:
+                # trim prefix and prepend new data
+                new_prefix = f"prefix={prefix_prepend}{match_trim.group('prefix')}"
             elif match:
-                print("prefix={}{}".format(root, match.group("prefix")))
+                # nothing to trim, so only prepend new data
+                new_prefix = f"prefix={prefix_prepend}{match.group('prefix')}"
+
+            if match_trim is not None or match:
+                print(new_prefix)
+                logger.debug(
+                    f"For pkg-config file {pkg_config_file}, prefix was changed from"
+                    f" {line} to {new_prefix}"
+                )
             else:
                 print(line, end="")
 

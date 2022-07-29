@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
+# Copyright (C) 2017-2022 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,14 +16,80 @@
 
 import os
 import stat
+from pathlib import Path
 from textwrap import dedent
 
+import pytest
 from testtools.matchers import Equals, FileContains, FileExists, Not
 
-from snapcraft_legacy.internal.repo._base import BaseRepo, get_pkg_name_parts
+from snapcraft_legacy.internal.repo._base import (
+    BaseRepo,
+    fix_pkg_config,
+    get_pkg_name_parts,
+)
 from tests.legacy import unit
 
 from . import RepoBaseTestCase
+
+
+@pytest.fixture()
+def pkg_config_file():
+    """Fixture for writing a pkg-config (.pc) files."""
+
+    def _pkg_config_file(filename: Path, prefix: str) -> None:
+        """Writes a pkg-config file.
+
+        :param filename: filename of pkg-config file
+        :param prefix: value of prefix parameter
+        """
+        with open(filename, "w", encoding="utf-8") as file:
+            file.write(
+                dedent(
+                    f"""\
+                    prefix={prefix}
+                    exec_prefix=${{prefix}}
+                    libdir=${{prefix}}/lib
+                    includedir=${{prefix}}/include
+
+                    Name: granite
+                    Description: elementary\'s Application Framework
+                    Version: 0.4
+                    Libs: -L${{libdir}} -lgranite
+                    Cflags: -I${{includedir}}/granite
+                    Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
+                    """
+                )
+            )
+
+    yield _pkg_config_file
+
+
+@pytest.fixture()
+def expected_pkg_config_content():
+    """Returns a string containing the expected content of the pkg-config fixture."""
+
+    def _expected_pkg_config_content(prefix: str) -> str:
+        """Returns the expected contents of a pkg-config file.
+
+        :param prefix: value of the prefix parameter
+        """
+        return dedent(
+            f"""\
+            prefix={prefix}
+            exec_prefix=${{prefix}}
+            libdir=${{prefix}}/lib
+            includedir=${{prefix}}/include
+
+            Name: granite
+            Description: elementary's Application Framework
+            Version: 0.4
+            Libs: -L${{libdir}} -lgranite
+            Cflags: -I${{includedir}}/granite
+            Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
+            """
+        )
+
+    yield _expected_pkg_config_content
 
 
 class FixXmlToolsTestCase(RepoBaseTestCase):
@@ -213,59 +279,114 @@ class RemoveUselessFilesTestCase(RepoBaseTestCase):
         self.assertThat(path, FileExists())
 
 
-class FixPkgConfigTestCase(RepoBaseTestCase):
-    def test_fix_pkg_config(self):
-        pc_file = os.path.join(self.tempdir, "granite.pc")
+@pytest.mark.parametrize(
+    "prefix,fixed_prefix",
+    [
+        # possible prefixes from snaps built via launchpad
+        ("/build/mir-core20/stage", ""),
+        ("/build/mir-core20/stage/usr", "/usr"),
+        ("/build/stage/stage", ""),
+        ("/build/stage/stage/usr/stage", "/usr/stage"),
+        ("/build/my-stage-snap/stage", ""),
+        ("/build/my-stage-snap/stage/usr/stage", "/usr/stage"),
+        # possible prefixes from snaps built via a provider
+        ("/root/stage", ""),
+        ("/root/stage/usr", "/usr"),
+        ("/root/stage/usr/stage", "/usr/stage"),
+    ],
+)
+def test_fix_pkg_config_trim_prefix_from_snap(
+    tmpdir,
+    prefix,
+    fixed_prefix,
+    pkg_config_file,
+    expected_pkg_config_content,
+):
+    """Verify prefixes from snaps are trimmed."""
+    pc_file = tmpdir / "my-file.pc"
+    pkg_config_file(pc_file, prefix)
 
-        with open(pc_file, "w") as f:
-            f.write(
-                dedent(
-                    """\
-                prefix=/usr
-                exec_prefix=${prefix}
-                libdir=${prefix}/lib
-                includedir=${prefix}/include
+    fix_pkg_config(tmpdir, pc_file)
 
-                Name: granite
-                Description: elementary\'s Application Framework
-                Version: 0.4
-                Libs: -L${libdir} -lgranite
-                Cflags: -I${includedir}/granite
-                Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
-            """
-                )
-            )
+    assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
+        f"{tmpdir}{fixed_prefix}"
+    )
 
-        BaseRepo.normalize(self.tempdir)
 
-        expected_pc_file_content = dedent(
-            """\
-            prefix={}/usr
-            exec_prefix=${{prefix}}
-            libdir=${{prefix}}/lib
-            includedir=${{prefix}}/include
+@pytest.mark.parametrize(
+    "prefix",
+    [
+        "",
+        "/",
+        "/usr",
+        "/build/test/test/stage",
+        "/root/test/stage",
+        "/test/path/stage",
+        "/test/path/stage/usr",
+        "/test/path/stage/usr/stage",
+    ],
+)
+def test_fix_pkg_config_no_trim(
+    tmpdir,
+    prefix,
+    pkg_config_file,
+    expected_pkg_config_content,
+):
+    """Verify valid prefixes are not trimmed."""
+    pc_file = tmpdir / "my-file.pc"
+    pkg_config_file(pc_file, prefix)
 
-            Name: granite
-            Description: elementary's Application Framework
-            Version: 0.4
-            Libs: -L${{libdir}} -lgranite
-            Cflags: -I${{includedir}}/granite
-            Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
-            """.format(
-                self.tempdir
-            )
-        )
+    fix_pkg_config(tmpdir, pc_file)
 
-        self.assertThat(pc_file, FileContains(expected_pc_file_content))
+    assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
+        f"{tmpdir}{prefix}"
+    )
 
-    def test_skip_directories_matching_pc(self):
-        snap_pc_dir = os.path.join(self.tempdir, "snap.pc")
 
-        os.mkdir(snap_pc_dir)
+@pytest.mark.parametrize(
+    "prefix,prefix_trim,fixed_prefix",
+    [
+        ("/test/build/dir/stage", "/test/build/dir/stage", ""),
+        ("/test/build/dir/stage/usr", "/test/build/dir/stage", "/usr"),
+        ("/fake/dir/1", "/fake/dir/2", "/fake/dir/1"),
+    ],
+)
+def test_fix_pkg_config_trim_prefix(
+    tmpdir,
+    prefix,
+    prefix_trim,
+    fixed_prefix,
+    pkg_config_file,
+    expected_pkg_config_content,
+):
+    """Verify prefixes from the `prefix_trim` argument are trimmed."""
+    pc_file = tmpdir / "my-file.pc"
+    pkg_config_file(pc_file, prefix)
 
-        # Verify the directory is not passed to fileinput, which would
-        # try to file copy snap.pc to snap.pc.bak for the inplace replace.
-        BaseRepo.normalize(self.tempdir)
+    fix_pkg_config(tmpdir, pc_file, prefix_trim)
+
+    assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
+        f"{tmpdir}{fixed_prefix}"
+    )
+
+
+def test_normalize_fix_pkg_config(tmpdir, pkg_config_file, expected_pkg_config_content):
+    """Verify normalization fixes pkg-config files."""
+    pc_file = tmpdir / "my-file.pc"
+    pkg_config_file(pc_file, "/root/stage/usr")
+    BaseRepo.normalize(tmpdir)
+
+    assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
+        f"{tmpdir}/usr"
+    )
+
+
+def test_fix_pkg_config_is_dir(tmpdir):
+    """Verify directories ending in .pc do not raise an error."""
+    pc_file = tmpdir / "granite.pc"
+    pc_file.mkdir()
+
+    BaseRepo.normalize(tmpdir)
 
 
 class TestFixSymlinks(RepoBaseTestCase):

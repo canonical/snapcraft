@@ -94,8 +94,8 @@ class RosPlugin(plugins.Plugin):
     def get_build_environment(self) -> Dict[str, str]:
         return {"ROS_PYTHON_VERSION": "3"}
 
-    @property
-    def out_of_source_build(self):
+    @classmethod
+    def get_out_of_source_build(cls) -> bool:
         """Return whether the plugin performs out-of-source-tree builds."""
         return True
 
