@@ -95,8 +95,11 @@ append_dir LIBVA_DRIVERS_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/dri"
 export VDPAU_DRIVER_PATH="/usr/lib/$ARCH/vdpau/"
 if [ -e "/var/lib/snapd/lib/gl/vdpau/libvdpau_nvidia.so" ]; then
   export VDPAU_DRIVER_PATH="/var/lib/snapd/lib/gl/vdpau"
-  # Prevent picking VA-API (Intel/AMD) over NVIDIA VDPAU; on PRIME systems for example
-  unset LIBVA_DRIVERS_PATH
+  if [ "$__NV_PRIME_RENDER_OFFLOAD" = 1 ]; then
+    # Prevent picking VA-API (Intel/AMD) over NVIDIA VDPAU
+    # https://download.nvidia.com/XFree86/Linux-x86_64/510.54/README/primerenderoffload.html#configureapplications
+    unset LIBVA_DRIVERS_PATH
+  fi
 fi
 
 # Workaround in snapd for proprietary nVidia drivers mounts the drivers in
