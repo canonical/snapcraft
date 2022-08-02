@@ -19,7 +19,7 @@ test-codespell:
 
 .PHONY: test-flake8
 test-flake8:
-	python3 -m flake8 $(SOURCES)
+	python3 -m flake8 $(SOURCES) $(SOURCES_LEGACY)
 
 .PHONY: test-isort
 test-isort:

@@ -254,7 +254,7 @@ class PackageRepositoryApt(PackageRepository):
         if self.suites and not self.components:
             raise errors.PackageRepositoryValidationError(
                 url=self.url,
-                brief=f"No components specified.",
+                brief="No components specified.",
                 details="Components are required when using suites.",
                 resolution="Verify the repository configuration and ensure that 'components' is correctly specified.",
             )
@@ -262,7 +262,7 @@ class PackageRepositoryApt(PackageRepository):
         if self.components and not self.suites:
             raise errors.PackageRepositoryValidationError(
                 url=self.url,
-                brief=f"No suites specified.",
+                brief="No suites specified.",
                 details="Suites are required when using components.",
                 resolution="Verify the repository configuration and ensure that 'suites' is correctly specified.",
             )

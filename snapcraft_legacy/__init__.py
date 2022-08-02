@@ -341,8 +341,8 @@ __version__ = _get_version()
 from snapcraft_legacy.internal import repo  # noqa isort:skip
 
 # For backwards compatibility with external plugins.
-import snapcraft_legacy._legacy_loader  # noqa: F401 isort:skip
-from snapcraft_legacy.plugins.v1 import PluginV1 as BasePlugin  # noqa: F401 isort:skip
+import snapcraft_legacy._legacy_loader  # noqa isort:skip
+from snapcraft_legacy.plugins.v1 import PluginV1 as BasePlugin  # noqa isort:skip
 from snapcraft_legacy import common  # noqa
 from snapcraft_legacy import extractors  # noqa
 from snapcraft_legacy import file_utils  # noqa
