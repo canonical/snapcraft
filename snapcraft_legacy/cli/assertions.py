@@ -13,9 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import os
 import json
-from snapcraft_legacy.internal.errors import details_from_command_error
+import os
 import subprocess
 import tempfile
 from datetime import datetime
@@ -26,10 +25,11 @@ import click
 from tabulate import tabulate
 
 import snapcraft_legacy
-from snapcraft_legacy._store import StoreClientCLI
 from snapcraft_legacy import storeapi, yaml_utils
-from . import echo
+from snapcraft_legacy._store import StoreClientCLI
+from snapcraft_legacy.internal.errors import details_from_command_error
 
+from . import echo
 
 _VALIDATIONS_SETS_SNAPS_TEMPLATE = dedent(
     """\

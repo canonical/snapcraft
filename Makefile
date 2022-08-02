@@ -1,4 +1,5 @@
 SOURCES=setup.py snapcraft tests/*.py tests/unit
+SOURCES_LEGACY=snapcraft_legacy tests/legacy
 
 .PHONY: autoformat-black
 autoformat-black:
@@ -22,7 +23,7 @@ test-flake8:
 
 .PHONY: test-isort
 test-isort:
-	isort --check $(SOURCES)
+	isort --check $(SOURCES) $(SOURCES_LEGACY)
 
 .PHONY: test-mypy
 test-mypy:

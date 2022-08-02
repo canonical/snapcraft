@@ -24,8 +24,8 @@ from . import status  # isort:skip
 logger = logging.getLogger(__name__)
 
 
-from ._store_client import StoreClient
 from ._snap_api import SnapAPI
+from ._store_client import StoreClient
 
 __all__ = [
     "errors",

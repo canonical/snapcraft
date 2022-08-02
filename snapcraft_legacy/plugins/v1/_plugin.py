@@ -21,9 +21,9 @@ import shlex
 from subprocess import CalledProcessError
 from typing import List
 
-from snapcraft_legacy.project import Project
 from snapcraft_legacy.internal import common, errors
 from snapcraft_legacy.internal.meta.package_repository import PackageRepository
+from snapcraft_legacy.project import Project
 
 logger = logging.getLogger(__name__)
 
