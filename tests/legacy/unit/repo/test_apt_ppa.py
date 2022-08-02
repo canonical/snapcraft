@@ -50,7 +50,9 @@ def test_split_ppa_parts_invalid():
     assert exc_info.value._ppa == "ppa-missing-slash"
 
 
-def test_get_launchpad_ppa_key_id(mock_launchpad,):
+def test_get_launchpad_ppa_key_id(
+    mock_launchpad,
+):
     key_id = apt_ppa.get_launchpad_ppa_key_id(ppa="ppa-owner/ppa-name")
 
     assert key_id == "FAKE-PPA-SIGNING-KEY"

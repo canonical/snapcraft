@@ -3,7 +3,7 @@ SOURCES_LEGACY=snapcraft_legacy tests/legacy
 
 .PHONY: autoformat-black
 autoformat-black:
-	black $(SOURCES)
+	black $(SOURCES) $(SOURCES_LEGACY)
 
 .PHONY: freeze-requirements
 freeze-requirements:
