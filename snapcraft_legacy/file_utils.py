@@ -29,7 +29,6 @@ from typing import Callable, Generator, List, Optional, Pattern, Set
 
 from snapcraft_legacy.internal import common, errors
 
-
 logger = logging.getLogger(__name__)
 
 

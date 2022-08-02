@@ -23,7 +23,7 @@ test-flake8:
 
 .PHONY: test-isort
 test-isort:
-	isort --check $(SOURCES)
+	isort --check $(SOURCES) $(SOURCES_LEGACY)
 
 .PHONY: test-mypy
 test-mypy:

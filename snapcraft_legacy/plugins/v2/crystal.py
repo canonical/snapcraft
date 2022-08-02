@@ -41,7 +41,6 @@ import click
 
 from snapcraft_legacy import file_utils
 from snapcraft_legacy.internal import common, elf, errors
-
 from snapcraft_legacy.plugins.v2 import PluginV2
 
 _CRYSTAL_CHANNEL = "latest/stable"

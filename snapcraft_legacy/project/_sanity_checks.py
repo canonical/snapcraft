@@ -21,7 +21,6 @@ import re
 from snapcraft_legacy.internal.errors import SnapcraftEnvironmentError
 from snapcraft_legacy.project import Project, errors
 
-
 logger = logging.getLogger(__name__)
 
 
