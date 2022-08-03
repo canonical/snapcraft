@@ -1,0 +1,18 @@
+name: hello-world
+version: "1.0"
+summary: Test staging packages during cross-compilation.
+description: test
+grade: stable
+confinement: strict
+
+base: core22
+architectures:
+  - build-on: amd64
+    build-for: arm64
+
+parts:
+  hello-world:
+    plugin: nil
+    source: .
+    stage-packages:
+      - grep
