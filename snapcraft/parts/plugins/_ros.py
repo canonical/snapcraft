@@ -265,7 +265,7 @@ def stage_runtime_dependencies(
         fetched_stage_packages = Repo.fetch_stage_packages(
             cache_dir=Path(stage_cache_dir),
             package_names=package_names,
-            target_arch=target_arch,
+            arch=target_arch,
             base=base,
             stage_packages_path=stage_packages_path,
         )
