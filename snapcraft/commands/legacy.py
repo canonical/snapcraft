@@ -384,7 +384,8 @@ class StoreLegacyListValidationSetsCommand(LegacyBaseCommand):
 
     @overrides
     def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
-        parser.add_argument("snap_name", metavar="snap-name")
+        parser.add_argument("--name", help="limit results to <name>")
+        parser.add_argument("--sequence", help="limit results to <sequence>")
 
 
 class StoreLegacyEditValidationSetsCommand(LegacyBaseCommand):
