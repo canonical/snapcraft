@@ -89,7 +89,7 @@ class ClassicLinter(Linter):
             arch_triplet = elf_utils.get_arch_triplet()
 
             elf_file.load_dependencies(
-                root_path=current_path,
+                root_path=current_path.absolute(),
                 base_path=installed_base_path,
                 content_dirs=set(),  # FIXME: obtain content dirs
                 arch_triplet=arch_triplet,
