@@ -99,6 +99,7 @@ def test_get_root_snippet(gnome_extension):
             "/usr/share/xml/iso-codes": {
                 "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
             },
+            "/usr/share/libdrm": {"bind": "$SNAP/gnome-platform/usr/share/libdrm"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -146,6 +147,7 @@ def test_get_root_snippet_with_external_sdk(gnome_extension_with_build_snap):
             "/usr/share/xml/iso-codes": {
                 "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
             },
+            "/usr/share/libdrm": {"bind": "$SNAP/gnome-platform/usr/share/libdrm"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
