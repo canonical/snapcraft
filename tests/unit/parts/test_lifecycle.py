@@ -236,7 +236,6 @@ def test_lifecycle_run_command_step(
 def test_lifecycle_run_command_pack(cmd, snapcraft_yaml, project_vars, new_dir, mocker):
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
-    mocker.patch("snapcraft.meta.snap_yaml.write")
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
 
     parts_lifecycle._run_command(
@@ -282,7 +281,6 @@ def test_lifecycle_pack_destructive_mode(
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
-    mocker.patch("snapcraft.meta.snap_yaml.write")
     mocker.patch("snapcraft.utils.is_managed_mode", return_value=True)
     mocker.patch(
         "snapcraft.utils.get_managed_environment_home_path",
@@ -331,7 +329,6 @@ def test_lifecycle_pack_managed(cmd, snapcraft_yaml, project_vars, new_dir, mock
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
-    mocker.patch("snapcraft.meta.snap_yaml.write")
     mocker.patch("snapcraft.utils.is_managed_mode", return_value=True)
     mocker.patch(
         "snapcraft.utils.get_managed_environment_home_path",

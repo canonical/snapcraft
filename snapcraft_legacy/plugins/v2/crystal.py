@@ -41,7 +41,6 @@ import click
 
 from snapcraft_legacy import file_utils
 from snapcraft_legacy.internal import common, elf, errors
-
 from snapcraft_legacy.plugins.v2 import PluginV2
 
 _CRYSTAL_CHANNEL = "latest/stable"
@@ -164,7 +163,8 @@ def stage_runtime_dependencies(
 
     for elf_file in elf_files:
         shutil.copy2(
-            elf_file.path, os.path.join(install_path, os.path.basename(elf_file.path)),
+            elf_file.path,
+            os.path.join(install_path, os.path.basename(elf_file.path)),
         )
 
         elf_dependencies_path = elf_file.load_dependencies(

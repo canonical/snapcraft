@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import doctest
-import platform
 from unittest import mock
 
 from testscenarios import multiply_scenarios

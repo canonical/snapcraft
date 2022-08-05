@@ -79,7 +79,7 @@ def echo_with_pager_if_needed(msg: str) -> None:
     # Account for final newline when checking row counts.
     output_lines = len(split_output) + 1
     if output_lines > term_size.lines or any(
-        len(l) > term_size.columns for l in split_output
+        len(line) > term_size.columns for line in split_output
     ):
         click.echo_via_pager(msg)
     else:

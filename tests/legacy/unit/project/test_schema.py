@@ -1505,11 +1505,16 @@ def test_valid_metadata_links(data, contact, donation, issues, source_code, webs
 
 
 @pytest.mark.parametrize(
-    "contact", (1, {"mailto:project@acme.com", "team@acme.com"}, None),
+    "contact",
+    (1, {"mailto:project@acme.com", "team@acme.com"}, None),
 )
 @pytest.mark.parametrize(
     "donation",
-    (1, {"https://paypal.com", "https://cafecito.app", "https://ko-fi.com"}, None,),
+    (
+        1,
+        {"https://paypal.com", "https://cafecito.app", "https://ko-fi.com"},
+        None,
+    ),
 )
 @pytest.mark.parametrize(
     "issues",

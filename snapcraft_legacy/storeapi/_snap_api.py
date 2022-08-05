@@ -26,7 +26,6 @@ from . import agent, constants, errors
 from ._requests import Requests
 from .info import SnapInfo
 
-
 logger = logging.getLogger(__name__)
 
 

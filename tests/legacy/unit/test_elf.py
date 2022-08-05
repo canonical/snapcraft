@@ -16,7 +16,6 @@
 
 import logging
 import os
-import sys
 import tempfile
 from unittest import mock
 
@@ -517,7 +516,7 @@ _LIBC6_LIBRARIES = [
 class HandleGlibcTestCase(unit.TestCase):
     def _setup_libc6(self):
         lib_path = os.path.join(self.path, "lib")
-        libraries = {os.path.join(lib_path, l) for l in _LIBC6_LIBRARIES}
+        libraries = {os.path.join(lib_path, library) for library in _LIBC6_LIBRARIES}
 
         os.mkdir(lib_path)
         for library in libraries:

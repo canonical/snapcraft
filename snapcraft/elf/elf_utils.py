@@ -16,26 +16,47 @@
 
 """Helpers to handle ELF files."""
 
+import functools
 import os
 import platform
+from dataclasses import dataclass
 from pathlib import Path
-from typing import FrozenSet, Set
+from typing import Iterable, List, Set
 
 import elftools.common.exceptions
 import elftools.elf.elffile
 from craft_cli import emit
 
-from snapcraft.errors import SnapcraftError
-
 from . import ElfFile, errors
 
 
-def get_elf_files(root: str, file_list: Set[str]) -> FrozenSet[ElfFile]:
-    """Return a frozenset of ELF files from file_list prepended with root.
+@functools.lru_cache(maxsize=1)
+def get_elf_files(root_path: Path) -> List[ElfFile]:
+    """Obtain a set of all ELF files in a subtree.
+
+    :param root_path: The root of the subtree to list ELF files from.
+    :return: A set of ELF files found in the given subtree.
+    """
+    file_list: List[str] = []
+    for root, _, files in os.walk(str(root_path)):
+        for file_name in files:
+            # Filter out object files
+            if file_name.endswith(".o"):
+                continue
+
+            file_path = os.path.join(root, file_name)
+            if not os.path.islink(file_path):
+                file_list.append(file_path)
+
+    return get_elf_files_from_list(root_path, file_list)
+
+
+def get_elf_files_from_list(root: Path, file_list: Iterable[str]) -> List[ElfFile]:
+    """Return a list of ELF files from file_list prepended with root.
 
     :param str root: the root directory from where the file_list is generated.
     :param file_list: a list of file in root.
-    :returns: a frozentset of ElfFile objects.
+    :returns: a list of ElfFile objects.
     """
     elf_files: Set[ElfFile] = set()
 
@@ -68,16 +89,22 @@ def get_elf_files(root: str, file_list: Set[str]) -> FrozenSet[ElfFile]:
         if elf_file.needed:
             elf_files.add(elf_file)
 
-    return frozenset(elf_files)
+    return sorted(elf_files, key=lambda x: x.path)
 
 
-_PLATFORM_DYNAMIC_LINKER = {
-    "aarch64": "lib/ld-linux-aarch64.so.1",
-    "armv7l": "lib/ld-linux-armhf.so.3",
-    "ppc64le": "lib64/ld64.so.2",
-    "riscv64": "lib/ld-linux-riscv64-lp64d.so.1",
-    "s390x": "lib/ld64.so.1",
-    "x86_64": "lib64/ld-linux-x86-64.so.2",
+@dataclass(frozen=True)
+class _ArchConfig:
+    arch_triplet: str
+    dynamic_linker: str
+
+
+_ARCH_CONFIG = {
+    "aarch64": _ArchConfig("aarch64-linux-gnu", "lib/ld-linux-aarch64.so.1"),
+    "armv7l": _ArchConfig("arm-linux-gnueabihf", "lib/ld-linux-armhf.so.3"),
+    "ppc64le": _ArchConfig("powerpc64le-linux-gnu", "lib64/ld64.so.2"),
+    "riscv64": _ArchConfig("riscv64-linux-gnu", "lib/ld-linux-riscv64-lp64d.so.1"),
+    "s390x": _ArchConfig("s390x-linux-gnu", "lib/ld64.so.1"),
+    "x86_64": _ArchConfig("x86_64-linux-gnu", "lib64/ld-linux-x86-64.so.2"),
 }
 
 
@@ -90,12 +117,22 @@ def get_dynamic_linker(*, root_path: Path, snap_path: Path) -> str:
     :return: The path to the dynamic linker to use.
     """
     arch = platform.machine()
-    linker = _PLATFORM_DYNAMIC_LINKER.get(arch)
-    if not linker:
+    arch_config = _ARCH_CONFIG.get(arch)
+    if not arch_config:
         raise RuntimeError(f"Dynamic linker not defined for arch {arch!r}")
 
-    linker_path = root_path / linker
+    linker_path = root_path / arch_config.dynamic_linker
     if not linker_path.exists():
-        raise SnapcraftError(f"Dynamic linker {str(linker_path)!r} not found.")
+        raise errors.DynamicLinkerNotFound(linker_path)
 
-    return str(snap_path / linker)
+    return str(snap_path / arch_config.dynamic_linker)
+
+
+def get_arch_triplet() -> str:
+    """Inform the arch triplet string for the current architecture."""
+    arch = platform.machine()
+    arch_config = _ARCH_CONFIG.get(arch)
+    if not arch_config:
+        raise RuntimeError(f"Arch triplet not defined for arch {arch!r}")
+
+    return arch_config.arch_triplet

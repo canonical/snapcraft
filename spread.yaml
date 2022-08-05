@@ -285,6 +285,11 @@ suites:
      - ubuntu-22.04-64
      - ubuntu-22.04-amd64
 
+ tests/spread/core22/linters/:
+   summary: core22 linter tests
+   systems:
+     - ubuntu-22.04*
+
  # General, core suite
  tests/spread/general/:
    summary: tests of snapcraft core functionality

@@ -43,7 +43,6 @@ from typing import Any, Dict, List, Set
 from snapcraft_legacy.internal.errors import SnapcraftException
 from snapcraft_legacy.plugins.v2 import PluginV2
 
-
 _MINICONDA_ARCH_FROM_SNAP_ARCH = {
     "i386": "x86",
     "amd64": "x86_64",

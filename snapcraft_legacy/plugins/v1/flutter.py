@@ -34,8 +34,8 @@ This plugin works best with the flutter related extensions.
 """
 
 import logging
-from pathlib import Path
 import subprocess
+from pathlib import Path
 from typing import Any, Dict, List
 
 from snapcraft_legacy import file_utils

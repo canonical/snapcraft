@@ -838,4 +838,4 @@ class BuildAttributePatchelfConflictError(SnapcraftException):
         return f"part {self._part_name} has both 'no-patchelf' and 'enable-patchelf' build-attributes, which are mutually exclusive and cannot be used together."
 
     def get_resolution(self) -> str:
-        return f"Use either 'no-patchelf' or 'enable-patchelf', not both."
+        return "Use either 'no-patchelf' or 'enable-patchelf', not both."

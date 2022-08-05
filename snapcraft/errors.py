@@ -87,5 +87,20 @@ class InvalidArchitecture(SnapcraftError):
         )
 
 
+class LinterError(SnapcraftError):
+    """Snap linting returned an error.
+
+    :param message: The error description.
+    :exit_code: The shell return code to use.
+    """
+
+    def __init__(self, message: str, *, exit_code: int):
+        self.exit_code = exit_code
+        super().__init__(
+            message,
+            resolution="Make sure the issues are addressed or ignore the isses in snapcraft.yaml.",
+        )
+
+
 class LegacyFallback(Exception):
     """Fall back to legacy snapcraft implementation."""

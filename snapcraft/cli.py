@@ -219,6 +219,9 @@ def run():
     except craft_store.errors.CraftStoreError as err:
         emit.error(craft_cli.errors.CraftError(f"craft-store error: {err}"))
         retcode = 1
+    except errors.LinterError as err:
+        emit.error(craft_cli.errors.CraftError(f"linter error: {err}"))
+        retcode = err.exit_code
     except errors.SnapcraftError as err:
         emit.error(err)
         retcode = 1
