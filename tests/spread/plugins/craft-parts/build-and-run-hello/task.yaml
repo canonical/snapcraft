@@ -34,6 +34,9 @@ restore: |
 execute: |
   cd "${SNAP}"
 
+  # Make sure expand-extensions works
+  snapcraft expand-extensions
+
   # Build what we have and verify the snap runs as expected.
   snapcraft
   snap install "${SNAP}"_1.0_*.snap --dangerous

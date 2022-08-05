@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2020 Canonical Ltd
+# Copyright 2016-2022 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -432,6 +432,7 @@ def _export_key(name, account_id):
 
 
 def list_keys():
+    """Lists keys available to sign assertions."""
     keys = list(_get_usable_keys())
     account_info = StoreClientCLI().get_account_information()
     enabled_keys = {
@@ -476,7 +477,7 @@ def create_key(name):
         # `snap create-key` would eventually fail, but we can save the user
         # some time in this obvious error case by not bothering to talk to
         # the store first.
-        raise storeapi.errors.KeyAlreadyRegisteredError(name)
+        raise storeapi.errors.KeyAlreadyExistsError(name)
     try:
         account_info = StoreClientCLI().get_account_information()
         enabled_names = {

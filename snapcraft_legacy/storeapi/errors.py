@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2020 Canonical Ltd
+# Copyright 2016-2022 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -792,6 +792,14 @@ class StoreBuildAssertionPermissionError(StoreError):
 class StoreAssertionError(StoreError):
 
     fmt = "Error signing {endpoint} assertion for {snap_name}: {error!s}"
+
+
+class KeyAlreadyExistsError(StoreError):
+
+    fmt = "The key {key_name!r} already exists"
+
+    def __init__(self, key_name):
+        super().__init__(key_name=key_name)
 
 
 class KeyAlreadyRegisteredError(StoreError):

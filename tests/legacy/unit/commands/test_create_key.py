@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2019 Canonical Ltd
+# Copyright (C) 2016-2022 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -31,11 +31,11 @@ class CreateKeyTestCase(FakeStoreCommandsBaseTestCase):
 
     def test_create_key_already_exists(self):
         raised = self.assertRaises(
-            storeapi.errors.KeyAlreadyRegisteredError, self.run_command, ["create-key"]
+            storeapi.errors.KeyAlreadyExistsError, self.run_command, ["create-key"]
         )
 
         self.assertThat(
-            str(raised), Equals("You have already registered a key named 'default'")
+            str(raised), Equals("The key 'default' already exists")
         )
 
     def test_create_key_already_registered(self):

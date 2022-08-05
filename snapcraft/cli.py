@@ -29,6 +29,7 @@ from craft_cli import ArgumentParsingError, EmitterMode, ProvideHelpException, e
 import snapcraft
 import snapcraft_legacy
 from snapcraft import __version__, errors, utils
+from snapcraft.parts import plugins
 from snapcraft_legacy.cli import legacy
 
 from . import commands
@@ -177,6 +178,9 @@ def _run_dispatcher(dispatcher: craft_cli.Dispatcher) -> None:
 
 def run():
     """Run the CLI."""
+    # Register our own plugins
+    plugins.register()
+
     dispatcher = get_dispatcher()
     try:
         _run_dispatcher(dispatcher)

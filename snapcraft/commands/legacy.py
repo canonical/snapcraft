@@ -268,7 +268,7 @@ class StoreLegacyListKeysCommand(LegacyBaseCommand):
     help_msg = "List the keys available to sign assertions"
     overview = textwrap.dedent(
         """
-        List the available keys to sign assertions together with they
+        List the available keys to sign assertions together with their
         local availability."""
     )
 
@@ -384,7 +384,8 @@ class StoreLegacyListValidationSetsCommand(LegacyBaseCommand):
 
     @overrides
     def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
-        parser.add_argument("snap_name", metavar="snap-name")
+        parser.add_argument("--name", help="limit results to <name>")
+        parser.add_argument("--sequence", help="limit results to <sequence>")
 
 
 class StoreLegacyEditValidationSetsCommand(LegacyBaseCommand):

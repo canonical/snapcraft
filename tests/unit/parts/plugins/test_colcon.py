@@ -116,7 +116,7 @@ class TestPluginColconPlugin:
         }
 
     def test_out_of_source_build_property(self):
-        assert colcon.ColconPlugin.out_of_source_build
+        assert colcon.ColconPlugin.get_out_of_source_build
 
     def test_get_build_commands(self, setup_method_fixture, new_dir, monkeypatch):
         plugin = setup_method_fixture(new_dir)
