@@ -267,6 +267,13 @@ class StoreWhoAmICommand(BaseCommand):
             channels = "no restrictions"
 
         account = whoami["account"]
+
+        # onprem store does not have expires
+        try:
+            expires = f"{whoami['expires']}Z"
+        except KeyError:
+            expires = "N/A"
+
         message = textwrap.dedent(
             f"""\
             email: {account["email"]}
@@ -274,7 +281,7 @@ class StoreWhoAmICommand(BaseCommand):
             id: {account["id"]}
             permissions: {permissions}
             channels: {channels}
-            expires: {whoami["expires"]}Z"""
+            expires: {expires}"""
         )
 
         emit.message(message)
