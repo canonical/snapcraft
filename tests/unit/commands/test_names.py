@@ -30,7 +30,7 @@ from snapcraft import commands
 @pytest.fixture
 def fake_store_register(mocker):
     fake_client = mocker.patch(
-        "snapcraft.commands.store.StoreClientCLI.register",
+        "snapcraft.store.StoreClientCLI.register",
         autospec=True,
     )
     return fake_client
@@ -61,7 +61,7 @@ def fake_store_get_account_info(mocker):
         }
     }
     fake_client = mocker.patch(
-        "snapcraft.commands.store.StoreClientCLI.get_account_info",
+        "snapcraft.store.StoreClientCLI.get_account_info",
         autospec=True,
         return_value=data,
     )

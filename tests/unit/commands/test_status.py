@@ -3,7 +3,7 @@ import argparse
 import pytest
 
 from snapcraft import commands
-from snapcraft.commands.store import channel_map
+from snapcraft.store import channel_map
 
 ############
 # Fixtures #
@@ -125,7 +125,7 @@ def channel_map_result():
 @pytest.fixture
 def fake_store_get_status_map(mocker, channel_map_result):
     fake_client = mocker.patch(
-        "snapcraft.commands.store.StoreClientCLI.get_channel_map",
+        "snapcraft.store.StoreClientCLI.get_channel_map",
         autospec=True,
         return_value=channel_map_result,
     )

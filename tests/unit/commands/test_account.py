@@ -31,7 +31,7 @@ from snapcraft import commands
 @pytest.fixture
 def fake_store_login(mocker):
     fake_client = mocker.patch(
-        "snapcraft.commands.store.StoreClientCLI.login",
+        "snapcraft.store.StoreClientCLI.login",
         autospec=True,
         return_value="secret",
     )
@@ -59,7 +59,7 @@ def test_login(emitter, fake_store_login):
 
 def test_login_with_file(emitter, mocker, legacy_config_path):
     store_credentials_mock = mocker.patch(
-        "snapcraft.commands.store._legacy_account.LegacyUbuntuOne.store_credentials"
+        "snapcraft.store._legacy_account.LegacyUbuntuOne.store_credentials"
     )
     legacy_config_path.write_text("secretb64")
 

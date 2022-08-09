@@ -16,7 +16,7 @@
 
 import pytest
 
-from snapcraft.commands.store import channel_map
+from snapcraft.store import channel_map
 
 ############
 # Fixtures #

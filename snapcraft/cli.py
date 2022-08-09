@@ -28,12 +28,11 @@ from craft_cli import ArgumentParsingError, EmitterMode, ProvideHelpException, e
 
 import snapcraft
 import snapcraft_legacy
-from snapcraft import __version__, errors, utils
+from snapcraft import __version__, errors, store, utils
 from snapcraft.parts import plugins
 from snapcraft_legacy.cli import legacy
 
 from . import commands
-from .commands import store
 from .legacy_cli import _LIB_NAMES, _ORIGINAL_LIB_NAME_LOG_LEVEL, run_legacy
 
 COMMAND_GROUPS = [
