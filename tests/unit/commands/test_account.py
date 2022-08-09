@@ -280,6 +280,28 @@ def test_who_with_attenuations(emitter, fake_client):
     emitter.assert_message(expected_message)
 
 
+def test_who_no_expires(emitter, fake_client):
+    fake_client.whoami.return_value = {
+        "account": {"email": "user@acme.org", "id": "id", "username": "user"},
+    }
+
+    cmd = commands.StoreWhoAmICommand(None)
+
+    cmd.run(argparse.Namespace())
+
+    assert fake_client.whoami.mock_calls == [call()]
+    expected_message = dedent(
+        """\
+        email: user@acme.org
+        username: user
+        id: id
+        permissions: no restrictions
+        channels: no restrictions
+        expires: N/A"""
+    )
+    emitter.assert_message(expected_message)
+
+
 ##################
 # Logout Command #
 ##################
