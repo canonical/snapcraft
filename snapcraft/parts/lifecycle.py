@@ -426,7 +426,8 @@ def _run_in_provider(
     emit.debug("Checking build provider availability")
     provider_name = "lxd" if parsed_args.use_lxd else None
     provider = providers.get_provider(provider_name)
-    provider.ensure_provider_is_available()
+    with emit.pause():
+        provider.ensure_provider_is_available()
 
     cmd = ["snapcraft", command_name]
 
