@@ -20,7 +20,7 @@ import os
 import platform
 import time
 from datetime import timedelta
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import craft_store
 import requests
@@ -293,6 +293,26 @@ class StoreClientCLI:
             self._base_url + "/dev/api/account",
             headers={"Accept": "application/json"},
         ).json()
+
+    def get_names(self) -> List[Tuple[str, str, str, str]]:
+        """Return a table with the registered names and status."""
+        account_info = self.get_account_info()
+
+        snaps: List[Tuple[str, str, str, str]] = [
+            (
+                name,
+                info["since"],
+                "private" if info["private"] else "public",
+                "-",
+            )
+            for name, info in account_info["snaps"]
+            .get(constants.DEFAULT_SERIES, {})
+            .items()
+            # Presenting only approved snap registrations, which means name
+            # disputes will be displayed/sorted some other way.
+            if info["status"] == "Approved"
+        ]
+        return snaps
 
     def release(
         self,

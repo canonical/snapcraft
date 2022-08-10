@@ -536,6 +536,45 @@ def test_get_account_info(fake_client):
     ]
 
 
+#########
+# Names #
+#########
+
+
+def test_get_names(fake_client):
+    fake_client.request.return_value = FakeResponse(
+        status_code=200,
+        content=json.dumps(
+            {
+                "snaps": {
+                    "16": {
+                        "test-snap-public": {
+                            "private": False,
+                            "since": "2016-07-26T20:18:32Z",
+                            "status": "Approved",
+                        },
+                        "test-snap-private": {
+                            "private": True,
+                            "since": "2016-07-26T20:18:32Z",
+                            "status": "Approved",
+                        },
+                        "test-snap-not-approved": {
+                            "private": False,
+                            "since": "2016-07-26T20:18:32Z",
+                            "status": "Dispute",
+                        },
+                    }
+                }
+            },
+        ),
+    )
+
+    assert client.StoreClientCLI().get_names() == [
+        ("test-snap-public", "2016-07-26T20:18:32Z", "public", "-"),
+        ("test-snap-private", "2016-07-26T20:18:32Z", "private", "-"),
+    ]
+
+
 ###########
 # Release #
 ###########
