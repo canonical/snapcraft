@@ -11,6 +11,11 @@ description: |
 grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: classic
 
+lint:
+  ignore:
+    linters:
+      - library
+
 parts:
   my-part:
     plugin: nil

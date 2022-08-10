@@ -31,6 +31,7 @@ from snapcraft.meta import snap_yaml
 
 from .base import Linter, LinterIssue, LinterResult
 from .classic_linter import ClassicLinter
+from .library_linter import LibraryLinter
 
 if TYPE_CHECKING:
     import argparse
@@ -39,7 +40,10 @@ if TYPE_CHECKING:
 LinterType = Type[Linter]
 
 
-_LINTERS: Dict[str, LinterType] = {"classic": ClassicLinter}
+_LINTERS: Dict[str, LinterType] = {
+    "classic": ClassicLinter,
+    "library": LibraryLinter,
+}
 
 
 @enum.unique

@@ -85,19 +85,20 @@ class ClassicLinter(Linter):
                         f"ClassicLinter: skip file {str(elf_file.path)!r} "
                         f"(matches {pattern!r})"
                     )
+                    break
+            else:
+                arch_triplet = elf_utils.get_arch_triplet()
 
-            arch_triplet = elf_utils.get_arch_triplet()
+                elf_file.load_dependencies(
+                    root_path=current_path.absolute(),
+                    base_path=installed_base_path,
+                    content_dirs=self._snap_metadata.get_provider_content_directories(),
+                    arch_triplet=arch_triplet,
+                    soname_cache=soname_cache,
+                )
 
-            elf_file.load_dependencies(
-                root_path=current_path.absolute(),
-                base_path=installed_base_path,
-                content_dirs=self._snap_metadata.get_provider_content_directories(),
-                arch_triplet=arch_triplet,
-                soname_cache=soname_cache,
-            )
-
-            self._check_elf_interpreter(elf_file, linker=linker, issues=issues)
-            self._check_elf_rpath(elf_file, patcher=patcher, issues=issues)
+                self._check_elf_interpreter(elf_file, linker=linker, issues=issues)
+                self._check_elf_rpath(elf_file, patcher=patcher, issues=issues)
 
         return issues
 
