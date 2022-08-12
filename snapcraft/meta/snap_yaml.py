@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Set, Union, cast
 
 import yaml
+from craft_cli import emit
 from pydantic import ValidationError, validator
 from pydantic_yaml import YamlModel
 
@@ -116,6 +117,7 @@ class ContentPlug(_SnapMetadataModel):
         if self.default_provider is None:
             return None
 
+        # ignore :<slot> if present
         if ":" in self.default_provider:
             return self.default_provider.split(":")[0]
 
@@ -218,12 +220,15 @@ class SnapMetadata(_SnapMetadataModel):
             provider_path = Path("/snap", plug.provider, "current")
             provider_yaml_path = provider_path / "meta" / "snap.yaml"
 
+            emit.debug(f"check metadata for provider snap {str(provider_path)!r}")
             if not provider_yaml_path.exists():
                 continue
 
             provider_metadata = read(provider_path)
             for slot in provider_metadata.get_content_slots():
-                provider_dirs |= slot.get_content_dirs(installed_path=provider_path)
+                content_dirs = slot.get_content_dirs(installed_path=provider_path)
+                emit.debug(f"content dirs: {content_dirs}")
+                provider_dirs |= content_dirs
 
         return sorted(provider_dirs)
 

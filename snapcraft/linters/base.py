@@ -18,11 +18,14 @@
 
 import abc
 import enum
+import fnmatch
 from typing import TYPE_CHECKING, List, Literal, Optional
 
 import pydantic
+from craft_cli import emit
 
 from snapcraft import projects
+from snapcraft.elf import ElfFile
 
 if TYPE_CHECKING:
     from snapcraft.meta.snap_yaml import SnapMetadata
@@ -99,3 +102,15 @@ class Linter(abc.ABC):
 
         :return: A list of linter issues flagged by this linter.
         """
+
+    def _is_file_ignored(self, elf_file: ElfFile) -> bool:
+        """Check if the file name matches an ignored file pattern."""
+        for pattern in self._lint.ignore.files:
+            if fnmatch.fnmatch(str(elf_file.path), pattern):
+                emit.debug(
+                    f"{self._name} linter: skip file {str(elf_file.path)!r} "
+                    f"(matches {pattern!r})"
+                )
+                return True
+
+        return False
