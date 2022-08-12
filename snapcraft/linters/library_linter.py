@@ -16,11 +16,9 @@
 
 """Library linter implementation."""
 
-import fnmatch
 from pathlib import Path, PurePath
 from typing import List
 
-from craft_cli import emit
 from overrides import overrides
 
 from snapcraft.elf import ElfFile, SonameCache, elf_utils
@@ -48,35 +46,30 @@ class LibraryLinter(Linter):
 
         for elf_file in elf_files:
             # Skip linting files listed in the ignore list.
-            for pattern in self._lint.ignore.files:
-                if fnmatch.fnmatch(str(elf_file.path), pattern):
-                    emit.debug(
-                        f"LibraryLinter: skip file {str(elf_file.path)!r} "
-                        f"(matches {pattern!r})"
-                    )
-                    break
-            else:
-                arch_triplet = elf_utils.get_arch_triplet()
-                content_dirs = self._snap_metadata.get_provider_content_directories()
+            if self._is_file_ignored(elf_file):
+                continue
 
-                dependencies = elf_file.load_dependencies(
-                    root_path=current_path.absolute(),
-                    base_path=installed_base_path,
-                    content_dirs=content_dirs,
-                    arch_triplet=arch_triplet,
-                    soname_cache=soname_cache,
-                )
+            arch_triplet = elf_utils.get_arch_triplet()
+            content_dirs = self._snap_metadata.get_provider_content_directories()
 
-                search_paths = [current_path.absolute(), *content_dirs]
-                if installed_base_path:
-                    search_paths.append(installed_base_path)
+            dependencies = elf_file.load_dependencies(
+                root_path=current_path.absolute(),
+                base_path=installed_base_path,
+                content_dirs=content_dirs,
+                arch_triplet=arch_triplet,
+                soname_cache=soname_cache,
+            )
 
-                self._check_dependencies_satisfied(
-                    elf_file,
-                    search_paths=search_paths,
-                    dependencies=sorted(dependencies),
-                    issues=issues,
-                )
+            search_paths = [current_path.absolute(), *content_dirs]
+            if installed_base_path:
+                search_paths.append(installed_base_path)
+
+            self._check_dependencies_satisfied(
+                elf_file,
+                search_paths=search_paths,
+                dependencies=sorted(dependencies),
+                issues=issues,
+            )
 
         return issues
 
