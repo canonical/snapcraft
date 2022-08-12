@@ -84,11 +84,7 @@ def get_snap_project() -> _SnapProject:
         if snap_project.project_file.exists():
             return snap_project
 
-    raise errors.SnapcraftError(
-        "Could not find snap/snapcraft.yaml. Are you sure you are in the "
-        "right directory?",
-        resolution="To start a new project, use `snapcraft init`",
-    )
+    raise errors.ProjectMissing()
 
 
 def apply_yaml(

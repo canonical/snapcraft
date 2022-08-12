@@ -47,6 +47,8 @@ COMMAND_GROUPS = [
             commands.PackCommand,
             commands.SnapCommand,  # hidden (legacy compatibility)
             commands.StoreLegacyRemoteBuildCommand,
+            commands.PluginsCommand,
+            commands.ListPluginsCommand,
         ],
     ),
     craft_cli.CommandGroup(
