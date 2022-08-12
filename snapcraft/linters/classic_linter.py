@@ -91,7 +91,7 @@ class ClassicLinter(Linter):
             elf_file.load_dependencies(
                 root_path=current_path.absolute(),
                 base_path=installed_base_path,
-                content_dirs=set(),  # FIXME: obtain content dirs
+                content_dirs=self._snap_metadata.get_provider_content_directories(),
                 arch_triplet=arch_triplet,
                 soname_cache=soname_cache,
             )
