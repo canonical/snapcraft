@@ -22,6 +22,7 @@ from .account import (
     StoreLogoutCommand,
     StoreWhoAmICommand,
 )
+from .discovery import ListPluginsCommand, PluginsCommand
 from .extensions import (
     ExpandExtensionsCommand,
     ExtensionsCommand,
@@ -69,7 +70,9 @@ __all__ = [
     "ExpandExtensionsCommand",
     "ExtensionsCommand",
     "ListExtensionsCommand",
+    "ListPluginsCommand",
     "PackCommand",
+    "PluginsCommand",
     "PrimeCommand",
     "PullCommand",
     "SnapCommand",
