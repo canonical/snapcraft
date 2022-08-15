@@ -65,7 +65,7 @@ def elf_file(new_dir):
     elf_file.load_dependencies(
         root_path=Path("/snap/foo/current"),
         base_path=Path("/"),
-        content_dirs=set(),
+        content_dirs=[],
         arch_triplet="x86_64-linux-gnu",
     )
     yield elf_file

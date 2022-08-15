@@ -16,10 +16,13 @@
 
 """Create snap.yaml metadata file."""
 
+import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union, cast
+from typing import Any, Dict, List, Literal, Optional, Set, Union, cast
 
 import yaml
+from craft_cli import emit
+from pydantic import ValidationError, validator
 from pydantic_yaml import YamlModel
 
 from snapcraft import errors
@@ -27,12 +30,7 @@ from snapcraft.projects import Project
 from snapcraft.utils import get_ld_library_paths, process_version
 
 
-class Socket(YamlModel):
-    """snap.yaml app socket entry."""
-
-    listen_stream: Union[int, str]
-    socket_mode: Optional[int]
-
+class _SnapMetadataModel(YamlModel):
     class Config:  # pylint: disable=too-few-public-methods
         """Pydantic model configuration."""
 
@@ -40,7 +38,14 @@ class Socket(YamlModel):
         alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
 
 
-class SnapApp(YamlModel):
+class Socket(_SnapMetadataModel):
+    """snap.yaml app socket entry."""
+
+    listen_stream: Union[int, str]
+    socket_mode: Optional[int]
+
+
+class SnapApp(_SnapMetadataModel):
     """Snap.yaml app entry.
 
     This is currently a partial implementation, see
@@ -77,14 +82,84 @@ class SnapApp(YamlModel):
     command_chain: Optional[List[str]]
     sockets: Optional[Dict[str, Socket]]
 
-    class Config:  # pylint: disable=too-few-public-methods
-        """Pydantic model configuration."""
 
-        allow_population_by_field_name = True
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+class ContentPlug(_SnapMetadataModel):
+    """Content plug definition in the snap metadata."""
+
+    interface: Literal["content"]
+    target: str
+    content: Optional[str]
+    default_provider: Optional[str]
+
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]) -> "ContentPlug":
+        """Create and populate a new ``ContentPlug`` object from dictionary data.
+
+        :param data: The dictionary data to unmarshal.
+        :return: The newly created object.
+        :raise TypeError: If data is not a dictionary.
+        """
+        if not isinstance(data, dict):
+            raise TypeError("data is not a dictionary")
+
+        return cls(**data)
+
+    @validator("target")
+    @classmethod
+    def _validate_target_not_empty(cls, val):
+        if val == "":
+            raise ValueError("value cannot be empty")
+        return val
+
+    @property
+    def provider(self) -> Optional[str]:
+        """Return the default content provider name."""
+        if self.default_provider is None:
+            return None
+
+        # ignore :<slot> if present
+        if ":" in self.default_provider:
+            return self.default_provider.split(":")[0]
+
+        return self.default_provider
 
 
-class SnapMetadata(YamlModel):
+class ContentSlot(_SnapMetadataModel):
+    """Content slot definition in the snap metadata."""
+
+    interface: Literal["content"]
+    content: Optional[str]
+    read: List[str] = []
+    write: List[str] = []
+
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]) -> "ContentSlot":
+        """Create and populate a new ``ContentSlot`` object from dictionary data.
+
+        :param data: The dictionary data to unmarshal.
+        :return: The newly created object.
+        :raise TypeError: If data is not a dictionary.
+        """
+        if not isinstance(data, dict):
+            raise TypeError("data is not a dictionary")
+
+        return cls(**data)
+
+    def get_content_dirs(self, installed_path: Path) -> Set[Path]:
+        """Obtain the slot's content directories."""
+        content_dirs: Set[Path] = set()
+
+        for path in self.read + self.write:
+            # Strip leading "$SNAP" and "/".
+            path = re.sub(r"^\$SNAP", "", path)
+            path = re.sub(r"^/", "", path)
+            path = re.sub(r"^./", "", path)
+            content_dirs.add(installed_path / path)
+
+        return content_dirs
+
+
+class SnapMetadata(_SnapMetadataModel):
     """The snap.yaml model.
 
     This is currently a partial implementation, see
@@ -115,12 +190,6 @@ class SnapMetadata(YamlModel):
     layout: Optional[Dict[str, Dict[str, str]]]
     system_usernames: Optional[Dict[str, Any]]
 
-    class Config:  # pylint: disable=too-few-public-methods
-        """Pydantic model configuration."""
-
-        allow_population_by_field_name = True
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
-
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "SnapMetadata":
         """Create and populate a new ``SnapMetadata`` object from dictionary data.
@@ -138,6 +207,62 @@ class SnapMetadata(YamlModel):
             raise TypeError("data is not a dictionary")
 
         return cls(**data)
+
+    def get_provider_content_directories(self) -> List[Path]:
+        """Get provider content directories from installed snaps."""
+        provider_dirs: Set[Path] = set()
+
+        for plug in self.get_content_plugs():
+            # Get matching slot provider for plug
+            if not plug.provider:
+                continue
+
+            provider_path = Path("/snap", plug.provider, "current")
+            provider_yaml_path = provider_path / "meta" / "snap.yaml"
+
+            emit.debug(f"check metadata for provider snap {str(provider_path)!r}")
+            if not provider_yaml_path.exists():
+                continue
+
+            provider_metadata = read(provider_path)
+            for slot in provider_metadata.get_content_slots():
+                content_dirs = slot.get_content_dirs(installed_path=provider_path)
+                emit.debug(f"content dirs: {content_dirs}")
+                provider_dirs |= content_dirs
+
+        return sorted(provider_dirs)
+
+    def get_content_plugs(self) -> List[ContentPlug]:
+        """Return a list of content plugs from the snap metadata plugs."""
+        if not self.plugs:
+            return []
+
+        content_plugs: List[ContentPlug] = []
+        for name, data in self.plugs.items():
+            try:
+                plug = ContentPlug.unmarshal(data)
+                if not plug.content:
+                    plug.content = name
+                content_plugs.append(plug)
+            except ValidationError:
+                continue
+        return content_plugs
+
+    def get_content_slots(self) -> List[ContentSlot]:
+        """Return a list of content slots from the snap metadata slots."""
+        if not self.slots:
+            return []
+
+        content_slots: List[ContentSlot] = []
+        for name, slot_data in self.slots.items():
+            try:
+                slot = ContentSlot.unmarshal(slot_data)
+                if not slot.content:
+                    slot.content = name
+                content_slots.append(slot)
+            except ValidationError:
+                continue
+        return content_slots
 
 
 def read(prime_dir: Path) -> SnapMetadata:

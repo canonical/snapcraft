@@ -16,11 +16,9 @@
 
 """Classic linter implementation."""
 
-import fnmatch
 from pathlib import Path
 from typing import List
 
-from craft_cli import emit
 from overrides import overrides
 
 from snapcraft.elf import ElfFile, Patcher, SonameCache, elf_utils, errors
@@ -79,19 +77,15 @@ class ClassicLinter(Linter):
 
         for elf_file in elf_files:
             # Skip linting files listed in the ignore list.
-            for pattern in self._lint.ignore.files:
-                if fnmatch.fnmatch(str(elf_file.path), pattern):
-                    emit.debug(
-                        f"ClassicLinter: skip file {str(elf_file.path)!r} "
-                        f"(matches {pattern!r})"
-                    )
+            if self._is_file_ignored(elf_file):
+                continue
 
             arch_triplet = elf_utils.get_arch_triplet()
 
             elf_file.load_dependencies(
                 root_path=current_path.absolute(),
                 base_path=installed_base_path,
-                content_dirs=set(),  # FIXME: obtain content dirs
+                content_dirs=self._snap_metadata.get_provider_content_directories(),
                 arch_triplet=arch_triplet,
                 soname_cache=soname_cache,
             )

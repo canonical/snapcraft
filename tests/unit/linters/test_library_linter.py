@@ -17,34 +17,21 @@
 import shutil
 from pathlib import Path
 
-import pytest
-
 from snapcraft import linters, projects
 from snapcraft.linters.base import LinterIssue, LinterResult
-from snapcraft.linters.classic_linter import ClassicLinter
+from snapcraft.linters.library_linter import LibraryLinter
 from snapcraft.meta import snap_yaml
 
 
-@pytest.mark.parametrize(
-    "confinement,stage_libc,text",
-    [
-        ("classic", False, "Snap confinement is set to classic."),
-        ("strict", True, "Snap contains staged libc."),
-        ("strict", False, None),
-    ],
-)
-def test_classic_linter(mocker, new_dir, confinement, stage_libc, text):
+def test_library_linter(mocker, new_dir):
     shutil.copy("/bin/true", "elf.bin")
 
-    if stage_libc:
-        Path("lib64").mkdir()
-        Path("lib64/ld-linux-x86-64.so.2").touch()
-
-    mocker.patch("snapcraft.linters.linters._LINTERS", {"classic": ClassicLinter})
+    mocker.patch("snapcraft.linters.linters._LINTERS", {"library": LibraryLinter})
     mocker.patch(
         "snapcraft.elf._elf_file._determine_libraries",
         return_value={
-            "libc.so.6": "/snap/core22/current/lib/x86_64-linux-gnu/libc.so.6"
+            "libfoo.so.1": "/prime/lib/x86_64-linux-gnu/libfoo.so.1",
+            "libbar.so.5": "/prime/lib/x86_64-linux-gnu/libbar.so.5",
         },
     )
     yaml_data = {
@@ -53,7 +40,7 @@ def test_classic_linter(mocker, new_dir, confinement, stage_libc, text):
         "base": "core22",
         "summary": "Single-line elevator pitch for your amazing snap",
         "description": "test-description",
-        "confinement": confinement,
+        "confinement": "strict",
         "parts": {},
     }
 
@@ -66,43 +53,31 @@ def test_classic_linter(mocker, new_dir, confinement, stage_libc, text):
     )
 
     issues = linters.run_linters(new_dir, lint=None)
-
-    if confinement == "classic" or stage_libc:
-        snap_name = "mytest" if stage_libc else "core22"
-        assert issues == [
-            LinterIssue(
-                name="classic",
-                result=LinterResult.OK,
-                text=text,
-            ),
-            LinterIssue(
-                name="classic",
-                result=LinterResult.WARNING,
-                filename="elf.bin",
-                text=(
-                    f"ELF interpreter should be set to "
-                    f"'/snap/{snap_name}/current/lib64/ld-linux-x86-64.so.2'."
-                ),
-            ),
-            LinterIssue(
-                name="classic",
-                result=LinterResult.WARNING,
-                filename="elf.bin",
-                text="ELF rpath should be set to '/snap/core22/current/lib/x86_64-linux-gnu'.",
-            ),
-        ]
-    else:
-        assert issues == []
+    assert issues == [
+        LinterIssue(
+            name="library",
+            result=LinterResult.WARNING,
+            filename="elf.bin",
+            text="missing dependency 'libbar.so.5'.",
+        ),
+        LinterIssue(
+            name="library",
+            result=LinterResult.WARNING,
+            filename="elf.bin",
+            text="missing dependency 'libfoo.so.1'.",
+        ),
+    ]
 
 
-def test_classic_linter_filter(mocker, new_dir):
+def test_library_linter_filter(mocker, new_dir):
     shutil.copy("/bin/true", "elf.bin")
 
-    mocker.patch("snapcraft.linters.linters._LINTERS", {"classic": ClassicLinter})
+    mocker.patch("snapcraft.linters.linters._LINTERS", {"library": LibraryLinter})
     mocker.patch(
         "snapcraft.elf._elf_file._determine_libraries",
         return_value={
-            "libc.so.6": "/snap/core22/current/lib/x86_64-linux-gnu/libc.so.6"
+            "libfoo.so.1": "/prime/lib/x86_64-linux-gnu/libfoo.so.1",
+            "libbar.so.5": "/prime/lib/x86_64-linux-gnu/libbar.so.5",
         },
     )
     yaml_data = {
@@ -111,7 +86,7 @@ def test_classic_linter_filter(mocker, new_dir):
         "base": "core22",
         "summary": "Single-line elevator pitch for your amazing snap",
         "description": "test-description",
-        "confinement": "classic",
+        "confinement": "strict",
         "parts": {},
     }
 
@@ -126,10 +101,4 @@ def test_classic_linter_filter(mocker, new_dir):
     issues = linters.run_linters(
         new_dir, lint=projects.Lint(ignore=projects.LintIgnore(files=["elf.*"]))
     )
-    assert issues == [
-        LinterIssue(
-            name="classic",
-            result=LinterResult.OK,
-            text="Snap confinement is set to classic.",
-        ),
-    ]
+    assert issues == []
