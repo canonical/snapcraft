@@ -11,7 +11,7 @@ freeze-requirements:
 
 .PHONY: test-black
 test-black:
-	black --check --diff $(SOURCES)
+	black --check --diff $(SOURCES) $(SOURCES_LEGACY)
 
 .PHONY: test-codespell
 test-codespell:

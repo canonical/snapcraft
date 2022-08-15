@@ -146,9 +146,7 @@ class SnapNotFoundError(SnapcraftException):
         resolution = f"Ensure you have proper access rights for {snap_identifier!r}."
 
         if self._channel and self._arch:
-            resolution += (
-                "\nAlso ensure the correct channel and architecture was used."
-            )
+            resolution += "\nAlso ensure the correct channel and architecture was used."
         elif self._channel:
             resolution += "\nAlso ensure the correct channel was used."
         elif self._arch:
