@@ -17,24 +17,20 @@
 """Build environment provider support for snapcraft."""
 
 import contextlib
+import logging
 import os
 import pathlib
 from abc import ABC, abstractmethod
-from typing import Dict, Generator, List, Optional, Tuple, Union
+from typing import Dict, Generator, Optional, Tuple, Union
 
 from craft_providers import Executor, bases
 
-from snapcraft.errors import SnapcraftError
-
-
-class ProviderError(SnapcraftError):
-    """Error in provider operation."""
+logger = logging.getLogger(__name__)
 
 
 class Provider(ABC):
     """Snapcraft's build environment provider."""
 
-    @abstractmethod
     def clean_project_environments(
         self,
         *,
@@ -42,13 +38,32 @@ class Provider(ABC):
         project_path: pathlib.Path,
         build_on: str,
         build_for: str,
-    ) -> List[str]:
-        """Clean up any environments created for project.
+    ) -> None:
+        """Clean up a build environment created for project.
 
-        :param project_name: Name of project.
-
-        :returns: List of containers deleted.
+        :param project_name: Name of the project.
+        :param project_path: Directory of the project.
+        :param build_on: Host architecture.
+        :param build_for: Target architecture.
         """
+        # Nothing to do if provider is not installed.
+        if not self.is_provider_available():
+            logger.debug(
+                "Not cleaning environment because the provider is not installed."
+            )
+            return
+
+        instance_name = self.get_instance_name(
+            project_name=project_name,
+            project_path=project_path,
+            build_on=build_on,
+            build_for=build_for,
+        )
+
+        logger.debug("Cleaning environment %r", instance_name)
+        environment = self.environment(instance_name=instance_name)
+        if environment.exists():
+            environment.delete()
 
     @classmethod
     @abstractmethod
@@ -134,6 +149,15 @@ class Provider(ABC):
         """
 
     @abstractmethod
+    def environment(self, *, instance_name: str) -> Executor:
+        """Create a bare environment for specified base.
+
+        No initializing, launching, or cleaning up of the environment occurs.
+
+        :param name: Name of the instance.
+        """
+
+    @abstractmethod
     @contextlib.contextmanager
     def launched_environment(
         self,
@@ -147,7 +171,13 @@ class Provider(ABC):
     ) -> Generator[Executor, None, None]:
         """Launch environment for specified base.
 
+        The environment is launched and configured using the base configuration.
+        Upon exit, drives are unmounted and the environment is stopped.
+
         :param project_name: Name of the project.
         :param project_path: Path to the project.
         :param base: Base to create.
+        :param bind_ssh: If true, mount the host's ssh directory in the environment.
+        :param build_on: host architecture
+        :param build_for: target architecture
         """

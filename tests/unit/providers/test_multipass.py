@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
-from unittest.mock import call
+from unittest.mock import call, patch
 
 import pytest
 
@@ -27,6 +27,28 @@ def multipass_instance_mock(mocker):
     yield mocker.patch(
         "craft_providers.multipass._launch.MultipassInstance", autospec=True
     )
+
+
+@pytest.fixture()
+def mock_multipass_is_installed():
+    with patch(
+        "craft_providers.multipass.is_installed", return_value=True
+    ) as mock_is_installed:
+        yield mock_is_installed
+
+
+@pytest.fixture()
+def mock_multipass_delete():
+    with patch("craft_providers.multipass.MultipassInstance.delete") as mock_delete:
+        yield mock_delete
+
+
+@pytest.fixture()
+def mock_multipass_exists():
+    with patch(
+        "craft_providers.multipass.MultipassInstance.exists", return_value=True
+    ) as mock_exists:
+        yield mock_exists
 
 
 class TestMultipassLaunchedEnvironment:

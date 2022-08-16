@@ -19,16 +19,16 @@
 import contextlib
 import logging
 import pathlib
-from typing import Generator, List
+from typing import Generator
 
 from craft_cli import emit
-from craft_providers import Executor, bases, multipass
+from craft_providers import Executor, ProviderError, bases, multipass
 from craft_providers.multipass.errors import MultipassError
 
 from snapcraft import utils
 
 from ._buildd import BASE_TO_BUILDD_IMAGE_ALIAS, SnapcraftBuilddBaseConfiguration
-from ._provider import Provider, ProviderError
+from ._provider import Provider
 
 logger = logging.getLogger(__name__)
 
@@ -44,51 +44,6 @@ class MultipassProvider(Provider):
         instance: multipass.Multipass = multipass.Multipass(),
     ) -> None:
         self.multipass = instance
-
-    def clean_project_environments(
-        self,
-        *,
-        project_name: str,
-        project_path: pathlib.Path,
-        build_on: str,
-        build_for: str,
-    ) -> List[str]:
-        """Clean up any build environments created for project.
-
-        :param project_name: Name of the project.
-        :param project_path: Directory of the project.
-
-        :returns: List of containers deleted.
-        """
-        deleted: List[str] = []
-
-        # Nothing to do if provider is not installed.
-        if not self.is_provider_available():
-            return deleted
-
-        inode = project_path.stat().st_ino
-
-        try:
-            names = self.multipass.list()
-        except multipass.MultipassError as error:
-            raise ProviderError(str(error)) from error
-
-        for name in names:
-            if name == f"snapcraft-{project_name}-{inode}":
-                logger.debug("Deleting Multipass VM %r.", name)
-                try:
-                    self.multipass.delete(
-                        instance_name=name,
-                        purge=True,
-                    )
-                except multipass.MultipassError as error:
-                    raise ProviderError(str(error)) from error
-
-                deleted.append(name)
-            else:
-                logger.debug("Not deleting Multipass VM %r.", name)
-
-        return deleted
 
     @classmethod
     def ensure_provider_is_available(cls) -> None:
@@ -130,6 +85,15 @@ class MultipassProvider(Provider):
         """
         return multipass.is_installed()
 
+    def environment(self, *, instance_name: str) -> Executor:
+        """Create a bare environment for specified base.
+
+        No initializing, launching, or cleaning up of the environment occurs.
+
+        :param name: Name of the instance.
+        """
+        return multipass.MultipassInstance(name=instance_name)
+
     @contextlib.contextmanager
     def launched_environment(
         self,
@@ -143,9 +107,15 @@ class MultipassProvider(Provider):
     ) -> Generator[Executor, None, None]:
         """Launch environment for specified base.
 
+        The environment is launched and configured using the base configuration.
+        Upon exit, drives are unmounted and the environment is stopped.
+
         :param project_name: Name of the project.
         :param project_path: Path to project.
         :param base: Base to create.
+        :param bind_ssh: If true, mount the host's ssh directory in the environment.
+        :param build_on: host architecture
+        :param build_for: target architecture
         """
         alias = BASE_TO_BUILDD_IMAGE_ALIAS[base]
 

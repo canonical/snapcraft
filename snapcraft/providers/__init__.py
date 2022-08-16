@@ -22,4 +22,3 @@ from ._logs import capture_logs_from_instance  # noqa: F401
 from ._lxd import LXDProvider  # noqa: F401
 from ._multipass import MultipassProvider  # noqa: F401
 from ._provider import Provider  # noqa: F401
-from ._provider import ProviderError  # noqa: F401

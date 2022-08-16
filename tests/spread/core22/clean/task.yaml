@@ -1,6 +1,8 @@
-summary: Test craftctl commands on core22
+summary: Test clean commands on core22
 
 environment:
+  SNAP/clean: clean
+  SNAP/clean_with_long_name: clean-with-long-name
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -8,6 +10,7 @@ prepare: |
   # set_base "$SNAP/snap/snapcraft.yaml"
 
 restore: |
+  cd "./snaps/$SNAP"
   rm -f ./*.snap
   rm -Rf work
 
@@ -16,6 +19,8 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
+  cd "./snaps/$SNAP"
+
   # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
   unset SNAPCRAFT_BUILD_ENVIRONMENT
 

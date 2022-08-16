@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 import craft_parts
 from craft_cli import EmitterMode, emit
 from craft_parts import ProjectInfo, StepInfo, callbacks
+from craft_providers import ProviderError
 
 from snapcraft import errors, extensions, pack, providers, utils
 from snapcraft.meta import manifest, snap_yaml
@@ -379,17 +380,12 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
     emit.debug("Clean build provider")
     provider_name = "lxd" if parsed_args.use_lxd else None
     provider = providers.get_provider(provider_name)
-
-    instance_names = provider.clean_project_environments(
+    provider.clean_project_environments(
         project_name=project.name,
         project_path=Path().absolute(),
         build_on=project.get_build_on(),
         build_for=project.get_build_for(),
     )
-    if instance_names:
-        emit.message(f"Removed instance: {', '.join(instance_names)}")
-    else:
-        emit.message("No instances to remove")
 
 
 def _run_in_provider(
@@ -452,7 +448,7 @@ def _run_in_provider(
             capture_logs_from_instance(instance)
         except subprocess.CalledProcessError as err:
             capture_logs_from_instance(instance)
-            raise providers.ProviderError(
+            raise ProviderError(
                 f"Failed to execute {command_name} in instance."
             ) from err
 

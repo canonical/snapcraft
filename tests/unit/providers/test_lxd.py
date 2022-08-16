@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
-from unittest.mock import call
+from unittest.mock import call, patch
 
 import pytest
 
@@ -31,6 +31,28 @@ def lxd_instance_mock(mocker):
     instance_mock.return_value.project = "test-project"
     instance_mock.return_value.remote = "test-remote"
     yield instance_mock
+
+
+@pytest.fixture()
+def mock_lxd_is_installed():
+    with patch(
+        "craft_providers.lxd.is_installed", return_value=True
+    ) as mock_is_installed:
+        yield mock_is_installed
+
+
+@pytest.fixture()
+def mock_lxd_delete():
+    with patch("craft_providers.lxd.LXDInstance.delete") as mock_delete:
+        yield mock_delete
+
+
+@pytest.fixture()
+def mock_lxd_exists():
+    with patch(
+        "craft_providers.lxd.LXDInstance.exists", return_value=True
+    ) as mock_exists:
+        yield mock_exists
 
 
 class TestLxdLaunchedEnvironment:
