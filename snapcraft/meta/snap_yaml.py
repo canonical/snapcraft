@@ -244,7 +244,7 @@ class SnapMetadata(_SnapMetadataModel):
                 if not plug.content:
                     plug.content = name
                 content_plugs.append(plug)
-            except ValidationError:
+            except (TypeError, ValidationError):
                 continue
         return content_plugs
 
@@ -260,7 +260,7 @@ class SnapMetadata(_SnapMetadataModel):
                 if not slot.content:
                     slot.content = name
                 content_slots.append(slot)
-            except ValidationError:
+            except (TypeError, ValidationError):
                 continue
         return content_slots
 
