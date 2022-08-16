@@ -641,6 +641,7 @@ def test_get_content_plugs():
           plug3:
             interface: content
             target: target3
+          plug4:
         """
     )
 
@@ -717,6 +718,7 @@ def test_get_content_slots():
             read:
               - read1
               - read2
+          slot4:
         """
     )
 
