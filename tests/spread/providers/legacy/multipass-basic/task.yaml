@@ -2,7 +2,7 @@ summary: Build a basic snap using multipass and ensure that it runs
 manual: true
 
 environment:
-  SNAP_DIR: ../snaps/make-hello
+  SNAP_DIR: ../../snaps/make-hello
 
 prepare: |
   snap list multipass || snap install --classic multipass

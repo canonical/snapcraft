@@ -315,7 +315,16 @@ suites:
    - ubuntu-20.04-amd64
 
  # Use of multipass and lxd build providers
- tests/spread/build-providers/:
+ tests/spread/providers/:
+   summary: tests of snapcraft using build providers
+   systems:
+   - ubuntu-18.04-64
+   - ubuntu-20.04-64
+   - ubuntu-22.04-64
+   kill-timeout: 180m
+   warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
+   priority: 90  # Run this test relatively early since fetching images can take time
+ tests/spread/providers/legacy/:
    summary: tests of snapcraft using build providers
    systems:
    - ubuntu-18.04-64
