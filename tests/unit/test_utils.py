@@ -210,6 +210,8 @@ def test_get_os_platform_windows(mocker):
         ("ppc64le", ("64bit", "ELF"), "ppc64el"),
         ("x86_64", ("64bit", "ELF"), "amd64"),
         ("x86_64", ("32bit", "ELF"), "i386"),
+        ("s390x", ("64bit", "ELF"), "s390x"),
+        ("riscv64", ("64bit", "ELF"), "riscv64"),
         ("unknown-arch", ("64bit", "ELF"), "unknown-arch"),
     ],
 )
@@ -439,6 +441,8 @@ def test_process_version_git(mocker):
         ("powerpc", "ppc"),
         ("ppc64el", "ppc64le"),
         ("amd64", "x86_64"),
+        ("s390x", "s390x"),
+        ("riscv64", "riscv64"),
     ],
 )
 def test_convert_architectures_valid(deb_arch, platform_arch):

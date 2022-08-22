@@ -44,7 +44,7 @@ from snapcraft.utils import (
     process_version,
 )
 
-from . import grammar, plugins, yaml_utils
+from . import grammar, yaml_utils
 from .parts import PartsLifecycle
 from .project_check import run_project_checks
 from .setup_assets import setup_assets
@@ -180,8 +180,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     if parsed_args.provider:
         raise errors.SnapcraftError("Option --provider is not supported.")
 
-    # Register our own plugins and callbacks
-    plugins.register()
+    # Register our own callbacks
     callbacks.register_prologue(_set_global_environment)
     callbacks.register_pre_step(_set_step_environment)
 

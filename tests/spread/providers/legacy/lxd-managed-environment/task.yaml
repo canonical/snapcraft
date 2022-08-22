@@ -1,7 +1,7 @@
 summary: Verify the runtime environment for the managed instance.
 
 environment:
-  SNAP_DIR: ../snaps/managed-environment
+  SNAP_DIR: ../../snaps/managed-environment
   SNAPCRAFT_BUILD_ENVIRONMENT: "lxd"
 
 prepare: |

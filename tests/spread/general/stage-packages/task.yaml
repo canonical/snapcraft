@@ -1,0 +1,30 @@
+summary: verify that stage-packages are pulled without errors
+
+environment:
+  SNAP/stage_packages: stage-packages
+  SNAP/stage_packages_with_arch: stage-packages-with-arch
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "./snaps/$SNAP/snap/snapcraft.yaml"
+
+  base=$(get_base)
+  if [[ "$base" =~ "core18" ]] || [[ "$base" =~ "core20" ]]; then
+    # shellcheck disable=SC2016
+    sed -i "s/build-for/run-on/" "./snaps/$SNAP/snap/snapcraft.yaml"
+  fi
+
+restore: |
+  cd "./snaps/$SNAP"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "./snaps/$SNAP"
+
+  snapcraft --destructive-mode

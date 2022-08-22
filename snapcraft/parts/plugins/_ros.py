@@ -94,8 +94,8 @@ class RosPlugin(plugins.Plugin):
     def get_build_environment(self) -> Dict[str, str]:
         return {"ROS_PYTHON_VERSION": "3"}
 
-    @property
-    def out_of_source_build(self):
+    @classmethod
+    def get_out_of_source_build(cls) -> bool:
         """Return whether the plugin performs out-of-source-tree builds."""
         return True
 
@@ -265,7 +265,7 @@ def stage_runtime_dependencies(
         fetched_stage_packages = Repo.fetch_stage_packages(
             cache_dir=Path(stage_cache_dir),
             package_names=package_names,
-            target_arch=target_arch,
+            arch=target_arch,
             base=base,
             stage_packages_path=stage_packages_path,
         )

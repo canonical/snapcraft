@@ -1,7 +1,7 @@
 summary: Verify environment passthrough flags are configured for host
 
 environment:
-  SNAP_DIR: ../snaps/env-passthrough
+  SNAP_DIR: ../../snaps/env-passthrough
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh

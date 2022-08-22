@@ -1,7 +1,7 @@
 summary: Try a basic snap using LXD and ensure that it runs
 
 environment:
-  SNAP_DIR: ../snaps/make-hello
+  SNAP_DIR: ../../snaps/make-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh

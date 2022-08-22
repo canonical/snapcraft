@@ -79,3 +79,32 @@ def test_promote_command_yes(mocker, legacy_run):
             )
         )
     ]
+
+
+def test_list_validation_sets(mocker, legacy_run):
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "cmd",
+            "list-validation-sets",
+        ],
+    )
+
+    cli.run()
+
+    assert legacy_run.mock_calls == [call(argparse.Namespace(name=None, sequence=None))]
+
+
+def test_list_validation_sets_with_options(mocker, legacy_run):
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "list-validation-sets", "--name", "set-name", "--sequence", "all"],
+    )
+
+    cli.run()
+
+    assert legacy_run.mock_calls == [
+        call(argparse.Namespace(name="set-name", sequence="all"))
+    ]
