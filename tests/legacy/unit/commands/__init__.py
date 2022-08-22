@@ -375,5 +375,7 @@ class FakeResponse(requests.Response):
 
 
 FAKE_UNAUTHORIZED_ERROR = craft_store.errors.StoreServerError(
-    FakeResponse(status_code=requests.codes.unauthorized, content="error")
+    FakeResponse(
+        status_code=requests.codes.unauthorized, content=json.dumps({"error": "error"})
+    )
 )
