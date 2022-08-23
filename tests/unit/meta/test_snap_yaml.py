@@ -26,6 +26,17 @@ from snapcraft.meta.snap_yaml import ContentPlug, ContentSlot, SnapMetadata
 from snapcraft.projects import Project
 
 
+def _override_data(to_dict, from_dict):
+    for key, value in from_dict.items():
+        if key in to_dict:
+            if isinstance(to_dict[key], dict) and isinstance(value, dict):
+                _override_data(to_dict[key], value)
+            else:
+                to_dict[key] = value
+        else:
+            to_dict[key] = value
+
+
 @pytest.fixture
 def simple_project():
     def _simple_project(**kwargs):
@@ -46,8 +57,8 @@ def simple_project():
                     "command": "bin/mytest",
                 },
             },
-            **kwargs,
         }
+        _override_data(snapcraft_config, kwargs)
         return Project.unmarshal(snapcraft_config)
 
     yield _simple_project
@@ -739,3 +750,91 @@ def test_get_content_slots():
             write=[],
         ),
     ]
+
+
+def test_project_passthrough_snap_yaml(simple_project, new_dir):
+    snap_yaml.write(
+        simple_project(
+            passthrough={
+                "somefield": [
+                    "some",
+                    "value",
+                ],
+            },
+        ),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    content = yaml_file.read_text()
+    assert content == textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        base: core22
+        apps:
+          app1:
+            command: bin/mytest
+        confinement: strict
+        grade: stable
+        environment:
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+        somefield:
+        - some
+        - value
+        """
+    )
+
+
+def test_app_passthrough_snap_yaml(simple_project, new_dir):
+    snap_yaml.write(
+        simple_project(
+            apps={
+                "app1": {
+                    "passthrough": {
+                        "somefield": [
+                            "some",
+                            "value",
+                        ],
+                    },
+                },
+            },
+        ),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    content = yaml_file.read_text()
+    assert content == textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        base: core22
+        apps:
+          app1:
+            command: bin/mytest
+            somefield:
+            - some
+            - value
+        confinement: strict
+        grade: stable
+        environment:
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+        """
+    )

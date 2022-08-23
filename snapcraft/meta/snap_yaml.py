@@ -22,11 +22,11 @@ from typing import Any, Dict, List, Literal, Optional, Set, Union, cast
 
 import yaml
 from craft_cli import emit
-from pydantic import ValidationError, validator
+from pydantic import Extra, ValidationError, validator
 from pydantic_yaml import YamlModel
 
 from snapcraft import errors
-from snapcraft.projects import Project
+from snapcraft.projects import App, Project
 from snapcraft.utils import get_ld_library_paths, process_version
 
 
@@ -53,8 +53,12 @@ class SnapApp(_SnapMetadataModel):
 
     TODO: implement desktop (CRAFT-804)
     TODO: implement extensions (CRAFT-805)
-    TODO: implement passthrough (CRAFT-854)
     """
+
+    class Config:
+        """Pydantic model configuration."""
+
+        extra = Extra.allow
 
     command: str
     autostart: Optional[str]
@@ -170,6 +174,11 @@ class SnapMetadata(_SnapMetadataModel):
     TODO: implement adopt-info (CRAFT-803)
     """
 
+    class Config:
+        """Pydantic model configuration."""
+
+        extra = Extra.allow
+
     name: str
     title: Optional[str]
     version: str
@@ -283,6 +292,55 @@ def read(prime_dir: Path) -> SnapMetadata:
     return SnapMetadata.unmarshal(data)
 
 
+def _create_snap_app(app: App, assumes: Set[str]) -> SnapApp:
+    app_sockets: Dict[str, Socket] = {}
+    if app.sockets:
+        for socket_name, socket in app.sockets.items():
+            app_sockets[socket_name] = Socket(
+                listen_stream=socket.listen_stream,
+                socket_mode=socket.socket_mode,
+            )
+
+    if app.command_chain:
+        assumes.add("command-chain")
+
+    snap_app = SnapApp(
+        command=app.command,
+        autostart=app.autostart,
+        common_id=app.common_id,
+        bus_name=app.bus_name,
+        completer=app.completer,
+        stop_command=app.stop_command,
+        post_stop_command=app.post_stop_command,
+        start_timeout=app.start_timeout,
+        stop_timeout=app.stop_timeout,
+        watchdog_timeout=app.watchdog_timeout,
+        reload_command=app.reload_command,
+        restart_delay=app.restart_delay,
+        timer=app.timer,
+        daemon=app.daemon,
+        after=app.after or None,
+        before=app.before or None,
+        refresh_mode=app.refresh_mode,
+        stop_mode=app.stop_mode,
+        restart_condition=app.restart_condition,
+        install_mode=app.install_mode,
+        plugs=app.plugs,
+        aliases=app.aliases,
+        environment=app.environment,
+        command_chain=app.command_chain or None,
+        sockets=app_sockets or None,
+        daemon_scope=app.daemon_scope or None,
+        activates_on=app.activates_on or None,
+    )
+
+    if app.passthrough:
+        for name, value in app.passthrough.items():
+            setattr(snap_app, name, value)
+
+    return snap_app
+
+
 def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
     """Create a snap.yaml file.
 
@@ -299,47 +357,7 @@ def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
     snap_apps: Dict[str, SnapApp] = {}
     if project.apps:
         for name, app in project.apps.items():
-
-            app_sockets: Dict[str, Socket] = {}
-            if app.sockets:
-                for socket_name, socket in app.sockets.items():
-                    app_sockets[socket_name] = Socket(
-                        listen_stream=socket.listen_stream,
-                        socket_mode=socket.socket_mode,
-                    )
-
-            if app.command_chain:
-                assumes.add("command-chain")
-
-            snap_apps[name] = SnapApp(
-                command=app.command,
-                autostart=app.autostart,
-                common_id=app.common_id,
-                bus_name=app.bus_name,
-                completer=app.completer,
-                stop_command=app.stop_command,
-                post_stop_command=app.post_stop_command,
-                start_timeout=app.start_timeout,
-                stop_timeout=app.stop_timeout,
-                watchdog_timeout=app.watchdog_timeout,
-                reload_command=app.reload_command,
-                restart_delay=app.restart_delay,
-                timer=app.timer,
-                daemon=app.daemon,
-                after=app.after if app.after else None,
-                before=app.before if app.before else None,
-                refresh_mode=app.refresh_mode,
-                stop_mode=app.stop_mode,
-                restart_condition=app.restart_condition,
-                install_mode=app.install_mode,
-                plugs=app.plugs,
-                aliases=app.aliases,
-                environment=app.environment,
-                command_chain=app.command_chain if app.command_chain else None,
-                sockets=app_sockets if app_sockets else None,
-                daemon_scope=app.daemon_scope if app.daemon_scope else None,
-                activates_on=app.activates_on if app.activates_on else None,
-            )
+            snap_apps[name] = _create_snap_app(app, assumes)
 
     if project.hooks and any(h for h in project.hooks.values() if h.command_chain):
         assumes.add("command-chain")
@@ -369,6 +387,9 @@ def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
         layout=project.layout,
         system_usernames=project.system_usernames,
     )
+    if project.passthrough:
+        for name, value in project.passthrough.items():
+            setattr(snap_metadata, name, value)
 
     yaml.add_representer(str, _repr_str, Dumper=yaml.SafeDumper)
     yaml_data = snap_metadata.yaml(

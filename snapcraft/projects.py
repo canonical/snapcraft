@@ -249,7 +249,7 @@ class App(ProjectModel):
     sockets: Optional[Dict[str, Socket]]
     daemon_scope: Optional[Literal["system", "user"]]
     activates_on: Optional[UniqueStrList]
-    # TODO: implement passthrough (CRAFT-854)
+    passthrough: Optional[Dict[str, Any]]
 
     @pydantic.validator("autostart")
     @classmethod
