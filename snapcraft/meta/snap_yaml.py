@@ -81,6 +81,8 @@ class SnapApp(_SnapMetadataModel):
     environment: Optional[Dict[str, Any]]
     command_chain: Optional[List[str]]
     sockets: Optional[Dict[str, Socket]]
+    daemon_scope: Optional[str]
+    activates_on: Optional[List[str]]
 
 
 class ContentPlug(_SnapMetadataModel):
@@ -335,6 +337,8 @@ def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
                 environment=app.environment,
                 command_chain=app.command_chain if app.command_chain else None,
                 sockets=app_sockets if app_sockets else None,
+                daemon_scope=app.daemon_scope if app.daemon_scope else None,
+                activates_on=app.activates_on if app.activates_on else None,
             )
 
     if project.hooks and any(h for h in project.hooks.values() if h.command_chain):
