@@ -104,6 +104,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
             enable_manifest=False,
             manifest_image_information=None,
             bind_ssh=False,
+            ua_token=None,
             build_for=None,
         ),
     )
@@ -131,6 +132,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
             ),
         ),
@@ -208,6 +210,7 @@ def test_lifecycle_run_command_step(
         shell=False,
         shell_after=False,
         use_lxd=False,
+        ua_token=None,
         parts=[],
     )
 
@@ -254,6 +257,7 @@ def test_lifecycle_run_command_pack(cmd, snapcraft_yaml, project_vars, new_dir, 
             shell=False,
             shell_after=False,
             use_lxd=False,
+            ua_token=None,
             parts=[],
         ),
     )
@@ -303,6 +307,7 @@ def test_lifecycle_pack_destructive_mode(
             shell=False,
             shell_after=False,
             use_lxd=False,
+            ua_token=None,
             parts=[],
         ),
     )
@@ -354,6 +359,7 @@ def test_lifecycle_pack_managed(cmd, snapcraft_yaml, project_vars, new_dir, mock
             shell=False,
             shell_after=False,
             use_lxd=False,
+            ua_token=None,
             parts=[],
         ),
     )
@@ -446,6 +452,7 @@ def test_lifecycle_pack_metadata_error(cmd, snapcraft_yaml, new_dir, mocker):
                 shell=False,
                 shell_after=False,
                 use_lxd=False,
+                ua_token=None,
                 parts=[],
             ),
         )
@@ -654,6 +661,7 @@ def test_lifecycle_debug_shell(snapcraft_yaml, cmd, new_dir, mocker):
                 shell=False,
                 shell_after=False,
                 use_lxd=False,
+                ua_token=None,
                 parts=["part1"],
             ),
         )
@@ -689,6 +697,7 @@ def test_lifecycle_shell(snapcraft_yaml, cmd, new_dir, mocker):
             shell=True,
             shell_after=False,
             use_lxd=False,
+            ua_token=None,
             parts=["part1"],
         ),
     )
@@ -733,6 +742,7 @@ def test_lifecycle_shell_after(snapcraft_yaml, cmd, new_dir, mocker):
             shell=False,
             shell_after=True,
             use_lxd=False,
+            ua_token=None,
             parts=["part1"],
         ),
     )
@@ -881,6 +891,7 @@ def test_lifecycle_run_expand_snapcraft_vars(new_dir, mocker):
             enable_manifest=False,
             manifest_image_information=None,
             bind_ssh=False,
+            ua_token=None,
             build_for=None,
             debug=False,
         ),
@@ -937,6 +948,7 @@ def test_lifecycle_run_expand_craft_vars(new_dir, mocker):
             enable_manifest=False,
             manifest_image_information=None,
             bind_ssh=False,
+            ua_token=None,
             build_for=None,
             debug=False,
         ),
@@ -983,6 +995,7 @@ def test_lifecycle_run_permission_denied(new_dir):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
                 debug=False,
             ),
