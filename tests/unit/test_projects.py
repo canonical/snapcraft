@@ -103,6 +103,7 @@ class TestProjectDefaults:
                 build_on=[get_host_architecture()], build_for=[get_host_architecture()]
             )
         ]
+        assert project.ua_services is None
 
     def test_app_defaults(self, project_yaml_data):
         data = project_yaml_data(apps={"app1": {"command": "/bin/true"}})

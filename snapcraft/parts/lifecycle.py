@@ -172,10 +172,14 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     snap_project = get_snap_project()
     yaml_data = process_yaml(snap_project.project_file)
     start_time = datetime.now()
-    build_plan = get_build_plan(yaml_data, parsed_args)
 
     if parsed_args.provider:
         raise errors.SnapcraftError("Option --provider is not supported.")
+
+    if yaml_data.get("ua-services") and not parsed_args.ua_token:
+        raise errors.SnapcraftError("UA services require a UA token to be specified.")
+
+    build_plan = get_build_plan(yaml_data, parsed_args)
 
     # Register our own callbacks
     callbacks.register_prologue(_set_global_environment)
@@ -275,7 +279,7 @@ def _run_command(
         lifecycle.clean(part_names=part_names)
         return
 
-    with ua_manager.ua_manager(parsed_args.ua_token):
+    with ua_manager.ua_manager(parsed_args.ua_token, services=project.ua_services):
         lifecycle.run(
             step_name,
             debug=parsed_args.debug,

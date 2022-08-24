@@ -186,6 +186,33 @@ def test_lifecycle_legacy_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
 
 
 @pytest.mark.parametrize(
+    "cmd", ["pull", "build", "stage", "prime", "pack", "snap", "clean"]
+)
+def test_lifecycle_run_ua_services_without_token(cmd, snapcraft_yaml, new_dir, mocker):
+    """UA services require --ua-token."""
+    snapcraft_yaml(base="core22", **{"ua-services": ["svc1", "svc2"]})
+    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch(
+        "snapcraft.providers.Provider.is_base_available", return_value=(True, None)
+    )
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        parts_lifecycle.run(
+            cmd,
+            parsed_args=argparse.Namespace(
+                destructive_mode=False,
+                use_lxd=False,
+                provider=None,
+                ua_token=None,
+                build_for=get_host_architecture(),
+            ),
+        )
+
+    assert run_mock.mock_calls == []
+    assert str(raised.value) == "UA services require a UA token to be specified."
+
+
+@pytest.mark.parametrize(
     "cmd,step",
     [
         ("pull", "pull"),

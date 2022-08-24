@@ -382,6 +382,7 @@ class Project(ProjectModel):
     environment: Optional[Dict[str, Optional[str]]]
     build_packages: Optional[GrammarStrList]
     build_snaps: Optional[GrammarStrList]
+    ua_services: Optional[UniqueStrList]
 
     @pydantic.validator("plugs")
     @classmethod
