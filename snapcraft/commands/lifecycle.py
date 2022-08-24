@@ -74,6 +74,18 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             default=os.getenv("SNAPCRAFT_BUILD_FOR"),
             help="Set target architecture to build for",
         )
+        parser.add_argument(
+            "--http-proxy",
+            type=str,
+            default=os.getenv("http_proxy"),
+            help="Set http proxy",
+        )
+        parser.add_argument(
+            "--https-proxy",
+            type=str,
+            default=os.getenv("https_proxy"),
+            help="Set https proxy",
+        )
 
         # --enable-experimental-extensions is only available in legacy
         parser.add_argument(

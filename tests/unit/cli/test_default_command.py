@@ -44,6 +44,8 @@ def test_default_command(mocker):
                 enable_experimental_target_arch=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -70,6 +72,8 @@ def test_default_command_destructive_mode(mocker):
                 enable_experimental_target_arch=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -96,6 +100,8 @@ def test_default_command_use_lxd(mocker):
                 enable_experimental_target_arch=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -123,6 +129,64 @@ def test_default_command_output(mocker, option):
                 enable_experimental_target_arch=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
+
+
+def test_default_command_http_proxy(mocker):
+    mocker.patch.object(sys, "argv", ["cmd", "--http-proxy", "test-http"])
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                debug=False,
+                destructive_mode=False,
+                use_lxd=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                build_for=None,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
+                provider=None,
+                http_proxy="test-http",
+                https_proxy=None,
+            )
+        )
+    ]
+
+
+def test_default_command_https_proxy(mocker):
+    mocker.patch.object(sys, "argv", ["cmd", "--https-proxy", "test-https"])
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                debug=False,
+                destructive_mode=False,
+                use_lxd=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                build_for=None,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy="test-https",
             )
         )
     ]
