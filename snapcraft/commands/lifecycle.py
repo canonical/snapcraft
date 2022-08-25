@@ -74,6 +74,13 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             default=os.getenv("SNAPCRAFT_BUILD_FOR"),
             help="Set target architecture to build for",
         )
+        parser.add_argument(
+            "--ua-token",
+            type=str,
+            metavar="ua-token",
+            default=os.getenv("SNAPCRAFT_UA_TOKEN"),
+            help="Configure build environment with ESM using specified UA token",
+        )
 
         # --enable-experimental-extensions is only available in legacy
         parser.add_argument(

@@ -29,7 +29,7 @@ import craft_parts
 from craft_cli import EmitterMode, emit
 from craft_parts import ProjectInfo, StepInfo, callbacks
 
-from snapcraft import errors, extensions, linters, pack, providers, utils
+from snapcraft import errors, extensions, linters, pack, providers, ua_manager, utils
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import manifest, snap_yaml
 from snapcraft.projects import (
@@ -275,12 +275,13 @@ def _run_command(
         lifecycle.clean(part_names=part_names)
         return
 
-    lifecycle.run(
-        step_name,
-        debug=parsed_args.debug,
-        shell=getattr(parsed_args, "shell", False),
-        shell_after=getattr(parsed_args, "shell_after", False),
-    )
+    with ua_manager.ua_manager(parsed_args.ua_token):
+        lifecycle.run(
+            step_name,
+            debug=parsed_args.debug,
+            shell=getattr(parsed_args, "shell", False),
+            shell_after=getattr(parsed_args, "shell_after", False),
+        )
 
     # Extract metadata and generate snap.yaml
     if step_name == "prime" and not part_names:
@@ -415,6 +416,9 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
         emit.message("No instances to remove")
 
 
+# pylint: disable=too-many-branches
+
+
 def _run_in_provider(
     project: Project, command_name: str, parsed_args: "argparse.Namespace"
 ) -> None:
@@ -458,6 +462,10 @@ def _run_in_provider(
     cmd.append("--build-for")
     cmd.append(project.get_build_for())
 
+    ua_token = getattr(parsed_args, "ua_token", "")
+    if ua_token:
+        cmd.extend(["--ua-token", ua_token])
+
     output_dir = utils.get_managed_environment_project_path()
 
     emit.progress("Launching instance...")
@@ -478,6 +486,9 @@ def _run_in_provider(
             raise providers.ProviderError(
                 f"Failed to execute {command_name} in instance."
             ) from err
+
+
+# pylint: enable=too-many-branches
 
 
 def _set_global_environment(info: ProjectInfo) -> None:
