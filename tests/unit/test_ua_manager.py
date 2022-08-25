@@ -86,7 +86,9 @@ def test_ua_manager_enable_services(fake_process):
         stdout='{"attached": false, "_doc": "Content..."}',
     )
     fake_process.register_subprocess(["ua", "attach", "test-ua-token"])
-    fake_process.register_subprocess(["ua", "enable", "svc1", "svc2", "--beta"])
+    fake_process.register_subprocess(
+        ["ua", "enable", "svc1", "svc2", "--beta", "--assume-yes"]
+    )
     fake_process.register_subprocess(["ua", "detach", "--assume-yes"])
 
     with ua_manager.ua_manager(ua_token, services=["svc1", "svc2"]):
@@ -95,7 +97,7 @@ def test_ua_manager_enable_services(fake_process):
     assert list(fake_process.calls) == [
         ["ua", "status", "--format", "json"],
         ["ua", "attach", "test-ua-token"],
-        ["ua", "enable", "svc1", "svc2", "--beta"],
+        ["ua", "enable", "svc1", "svc2", "--beta", "--assume-yes"],
         ["ua", "detach", "--assume-yes"],
     ]
 
@@ -109,7 +111,7 @@ def test_ua_manager_enable_services_error(fake_process):
     )
     fake_process.register_subprocess(["ua", "attach", "test-ua-token"])
     fake_process.register_subprocess(
-        ["ua", "enable", "svc1", "svc2", "--beta"], returncode=1
+        ["ua", "enable", "svc1", "svc2", "--beta", "--assume-yes"], returncode=1
     )
     fake_process.register_subprocess(["ua", "detach", "--assume-yes"])
 
@@ -120,7 +122,7 @@ def test_ua_manager_enable_services_error(fake_process):
     assert list(fake_process.calls) == [
         ["ua", "status", "--format", "json"],
         ["ua", "attach", "test-ua-token"],
-        ["ua", "enable", "svc1", "svc2", "--beta"],
+        ["ua", "enable", "svc1", "svc2", "--beta", "--assume-yes"],
         ["ua", "detach", "--assume-yes"],
     ]
     assert str(raised.value) == "Error enabling UA services."

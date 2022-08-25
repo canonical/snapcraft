@@ -200,6 +200,13 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         envvar="SNAPCRAFT_UA_TOKEN",
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
+    dict(
+        param_decls="--enable-experimental-ua-services",
+        is_flag=True,
+        help="Allow selection of UA services to enable.",
+        envvar="SNAPCRAFT_ENABLE_EXPERIMENTAL_UA_SERVICES",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+    ),
 ]
 
 

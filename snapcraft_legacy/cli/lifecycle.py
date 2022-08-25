@@ -37,6 +37,7 @@ from snapcraft_legacy.internal import (
     project_loader,
     steps,
 )
+from snapcraft_legacy.internal.errors import SnapcraftEnvironmentError
 from snapcraft_legacy.internal.repo import ua_manager
 from snapcraft_legacy.project._sanity_checks import conduct_project_sanity_check
 
@@ -67,6 +68,7 @@ def _execute(  # noqa: C901
     shell_after: bool = False,
     setup_prime_try: bool = False,
     ua_token: Optional[str] = None,
+    enable_experimental_ua_services: bool = False,
     **kwargs,
 ) -> "Project":
     # Cleanup any previous errors.
@@ -74,7 +76,10 @@ def _execute(  # noqa: C901
 
     build_provider = get_build_provider(**kwargs)
     build_provider_flags = get_build_provider_flags(
-        build_provider, ua_token=ua_token, **kwargs
+        build_provider,
+        ua_token=ua_token,
+        enable_experimental_ua_services=enable_experimental_ua_services,
+        **kwargs,
     )
     apply_host_provider_flags(build_provider_flags)
 
@@ -97,8 +102,22 @@ def _execute(  # noqa: C901
         )
 
     if build_provider in ["host", "managed-host"]:
-        with ua_manager.ua_manager(ua_token):
-            project_config = project_loader.load_config(project)
+        project_config = project_loader.load_config(project)
+        ua_services = project_config.data.get("ua-services")
+
+        if ua_services:
+            if not ua_token:
+                raise SnapcraftEnvironmentError(
+                    "UA services require a UA token to be specified."
+                )
+
+            if not enable_experimental_ua_services:
+                raise SnapcraftEnvironmentError(
+                    "*EXPERIMENTAL* 'ua-services' configured, but not enabled. "
+                    "Enable with '--enable-experimental-ua-services' flag."
+                )
+
+        with ua_manager.ua_manager(ua_token, services=ua_services):
             lifecycle.execute(step, project_config, parts)
             if pack_project:
                 _pack(
