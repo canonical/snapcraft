@@ -377,7 +377,7 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
 
     :param project: The project to clean.
     """
-    emit.debug("Clean build provider")
+    emit.progress("Cleaning build provider")
     provider_name = "lxd" if parsed_args.use_lxd else None
     provider = providers.get_provider(provider_name)
     provider.clean_project_environments(
@@ -386,6 +386,7 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
         build_on=project.get_build_on(),
         build_for=project.get_build_for(),
     )
+    emit.progress("Cleaned build provider", permanent=True)
 
 
 def _run_in_provider(
