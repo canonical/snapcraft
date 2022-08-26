@@ -19,7 +19,7 @@
 import contextlib
 import json
 import subprocess
-from typing import Any, Dict, Iterator, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 from craft_cli import emit
 from craft_parts.packages import Repository
@@ -44,6 +44,16 @@ class UATokenDetachError(errors.SnapcraftError):
         super().__init__("Error detaching UA token.")
 
 
+class UAEnableServicesError(errors.SnapcraftError):
+    """Failure attaching UA token."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Error enabling UA services.",
+            resolution=("Make sure the requested services are valid and available."),
+        )
+
+
 def _install_ua_tools() -> None:
     """Ensure UA tools are installed."""
     if not Repository.is_package_installed("ubuntu-advantage-tools"):
@@ -61,6 +71,17 @@ def _attach(ua_token: str) -> None:
             )
     except subprocess.CalledProcessError as error:
         raise UATokenAttachError from error
+
+
+def _enable_services(services: List[str]) -> None:
+    """Enable the specified UA services."""
+    try:
+        with emit.open_stream("Enable UA services") as stream:
+            subprocess.check_call(
+                ["ua", "enable", *services, "--beta"], stdout=stream, stderr=stream
+            )
+    except subprocess.CalledProcessError as error:
+        raise UAEnableServicesError from error
 
 
 def _detach() -> None:
@@ -84,7 +105,9 @@ def _status() -> Dict[str, Any]:
 
 
 @contextlib.contextmanager
-def ua_manager(ua_token: Optional[str]) -> Iterator[None]:
+def ua_manager(
+    ua_token: Optional[str], *, services: Optional[List[str]]
+) -> Iterator[None]:
     """Attach and detach UA token as required.
 
     Uses try/finally to ensure that token is detached on error.
@@ -97,6 +120,7 @@ def ua_manager(ua_token: Optional[str]) -> Iterator[None]:
     normally.
 
     :param ua_token: Optional ua_token.
+    :param services: Optional ua services to enable.
     """
     ua_needs_detach = False
 
@@ -116,6 +140,11 @@ def ua_manager(ua_token: Optional[str]) -> Iterator[None]:
             emit.progress("Attached specified UA token", permanent=True)
 
     try:
+        if services:
+            emit.progress("Enabling UA services...")
+            _enable_services(services)
+            emit.progress(f"Enabled UA services: {' '.join(services)}")
+
         yield
     finally:
         if ua_needs_detach:

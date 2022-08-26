@@ -172,10 +172,22 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     snap_project = get_snap_project()
     yaml_data = process_yaml(snap_project.project_file)
     start_time = datetime.now()
-    build_plan = get_build_plan(yaml_data, parsed_args)
 
     if parsed_args.provider:
         raise errors.SnapcraftError("Option --provider is not supported.")
+
+    if yaml_data.get("ua-services"):
+        if not parsed_args.ua_token:
+            raise errors.SnapcraftError(
+                "UA services require a UA token to be specified."
+            )
+
+        if not parsed_args.enable_experimental_ua_services:
+            raise errors.SnapcraftError(
+                "Using UA services requires --enable-experimental-ua-services."
+            )
+
+    build_plan = get_build_plan(yaml_data, parsed_args)
 
     # Register our own callbacks
     callbacks.register_prologue(_set_global_environment)
@@ -275,7 +287,7 @@ def _run_command(
         lifecycle.clean(part_names=part_names)
         return
 
-    with ua_manager.ua_manager(parsed_args.ua_token):
+    with ua_manager.ua_manager(parsed_args.ua_token, services=project.ua_services):
         lifecycle.run(
             step_name,
             debug=parsed_args.debug,
@@ -465,6 +477,9 @@ def _run_in_provider(
     ua_token = getattr(parsed_args, "ua_token", "")
     if ua_token:
         cmd.extend(["--ua-token", ua_token])
+
+    if getattr(parsed_args, "enable_experimental_ua_services", False):
+        cmd.append("--enable-experimental-ua-services")
 
     output_dir = utils.get_managed_environment_project_path()
 
