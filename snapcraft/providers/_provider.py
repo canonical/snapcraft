@@ -61,7 +61,7 @@ class Provider(ABC):
         )
 
         logger.debug("Cleaning environment %r", instance_name)
-        environment = self.environment(instance_name=instance_name)
+        environment = self.create_environment(instance_name=instance_name)
         if environment.exists():
             environment.delete()
 
@@ -149,7 +149,7 @@ class Provider(ABC):
         """
 
     @abstractmethod
-    def environment(self, *, instance_name: str) -> Executor:
+    def create_environment(self, *, instance_name: str) -> Executor:
         """Create a bare environment for specified base.
 
         No initializing, launching, or cleaning up of the environment occurs.

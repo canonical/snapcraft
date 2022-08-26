@@ -89,7 +89,7 @@ class LXDProvider(Provider):
         """
         return lxd.is_installed()
 
-    def environment(self, *, instance_name: str) -> Executor:
+    def create_environment(self, *, instance_name: str) -> Executor:
         """Create a bare environment for specified base.
 
         No initializing, launching, or cleaning up of the environment occurs.
