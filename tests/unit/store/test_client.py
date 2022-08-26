@@ -1014,3 +1014,38 @@ def test_on_prem_release_progressive_percentage_unsupported(on_prem_client):
             channels=["stable", "edge"],
             progressive_percentage=10,
         )
+
+
+def test_on_prem_get_channel_map(
+    on_prem_client, fake_client_request, channel_map_payload
+):
+    extra_revision_data = {
+        "confinement": "strict",
+        "created-at": "2020-02-03T20:58:37Z",
+        "created-by": "QQPbzX6aaSF7ckKU5tGWnwfai1C4tiJu",
+        "grade": "stable",
+        "revision": 1,
+        "sha3-384": "short-sha3-384",
+        "size": 20480,
+        "status": "released",
+        "type": "app",
+        "version": "6.4",
+    }
+    channel_map_payload["revisions"][0].update(extra_revision_data)
+    channel_map_payload["package"] = channel_map_payload.pop("snap")
+
+    fake_client_request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(channel_map_payload)
+    )
+    channel_map = on_prem_client.get_channel_map(
+        snap_name="test-snap",
+    )
+    assert isinstance(channel_map, ChannelMap)
+
+    assert fake_client_request.mock_calls == [
+        call(
+            ANY,
+            "GET",
+            "https://dashboard.snapcraft.io/v1/snap/test-snap/releases",
+        )
+    ]
