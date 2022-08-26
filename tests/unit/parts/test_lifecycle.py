@@ -486,8 +486,7 @@ def test_lifecycle_run_command_clean(snapcraft_yaml, project_vars, new_dir, mock
     """Clean provider project when called without parts."""
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     clean_mock = mocker.patch(
-        "snapcraft.providers.LXDProvider.clean_project_environments",
-        return_value=["instance-name"],
+        "snapcraft.providers.LXDProvider.clean_project_environments"
     )
 
     parts_lifecycle._run_command(

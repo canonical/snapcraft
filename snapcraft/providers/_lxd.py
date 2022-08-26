@@ -20,14 +20,14 @@ import contextlib
 import logging
 import os
 import pathlib
-from typing import Generator, List
+from typing import Generator
 
-from craft_providers import Executor, bases, lxd
+from craft_providers import Executor, ProviderError, bases, lxd
 
 from snapcraft import utils
 
 from ._buildd import BASE_TO_BUILDD_IMAGE_ALIAS, SnapcraftBuilddBaseConfiguration
-from ._provider import Provider, ProviderError
+from ._provider import Provider
 
 logger = logging.getLogger(__name__)
 
@@ -50,58 +50,6 @@ class LXDProvider(Provider):
         self.lxc = lxc
         self.lxd_project = lxd_project
         self.lxd_remote = lxd_remote
-
-    def clean_project_environments(
-        self,
-        *,
-        project_name: str,
-        project_path: pathlib.Path,
-        build_on: str,
-        build_for: str,
-    ) -> List[str]:
-        """Clean up any build environments created for project.
-
-        :param project_name: Name of project.
-
-        :returns: List of containers deleted.
-        """
-        deleted: List[str] = []
-
-        # Nothing to do if provider is not installed.
-        if not self.is_provider_available():
-            return deleted
-
-        instance_name = self.get_instance_name(
-            project_name=project_name,
-            project_path=project_path,
-            build_on=build_on,
-            build_for=build_for,
-        )
-
-        try:
-            names = self.lxc.list_names(
-                project=self.lxd_project, remote=self.lxd_remote
-            )
-        except lxd.LXDError as error:
-            raise ProviderError(str(error)) from error
-
-        for name in names:
-            if name == instance_name:
-                logger.debug("Deleting container %r.", name)
-                try:
-                    self.lxc.delete(
-                        instance_name=name,
-                        force=True,
-                        project=self.lxd_project,
-                        remote=self.lxd_remote,
-                    )
-                except lxd.LXDError as error:
-                    raise ProviderError(str(error)) from error
-                deleted.append(name)
-            else:
-                logger.debug("Not deleting container %r.", name)
-
-        return deleted
 
     @classmethod
     def ensure_provider_is_available(cls) -> None:
@@ -141,6 +89,20 @@ class LXDProvider(Provider):
         """
         return lxd.is_installed()
 
+    def create_environment(self, *, instance_name: str) -> Executor:
+        """Create a bare environment for specified base.
+
+        No initializing, launching, or cleaning up of the environment occurs.
+
+        :param instance_name: Name of the instance.
+        """
+        return lxd.LXDInstance(
+            name=instance_name,
+            default_command_environment=self.get_command_environment(),
+            project=self.lxd_project,
+            remote=self.lxd_remote,
+        )
+
     @contextlib.contextmanager
     def launched_environment(
         self,
@@ -154,9 +116,15 @@ class LXDProvider(Provider):
     ) -> Generator[Executor, None, None]:
         """Launch environment for specified base.
 
+        The environment is launched and configured using the base configuration.
+        Upon exit, drives are unmounted and the environment is stopped.
+
         :param project_name: Name of project.
         :param project_path: Path to project.
         :param base: Base to create.
+        :param bind_ssh: If true, mount the host's ssh directory in the environment.
+        :param build_on: host architecture
+        :param build_for: target architecture
         """
         alias = BASE_TO_BUILDD_IMAGE_ALIAS[base]
 
