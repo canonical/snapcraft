@@ -176,8 +176,16 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     if parsed_args.provider:
         raise errors.SnapcraftError("Option --provider is not supported.")
 
-    if yaml_data.get("ua-services") and not parsed_args.ua_token:
-        raise errors.SnapcraftError("UA services require a UA token to be specified.")
+    if yaml_data.get("ua-services"):
+        if not parsed_args.ua_token:
+            raise errors.SnapcraftError(
+                "UA services require a UA token to be specified."
+            )
+
+        if not parsed_args.enable_experimental_ua_services:
+            raise errors.SnapcraftError(
+                "Using UA services requires --enable-experimental-ua-services."
+            )
 
     build_plan = get_build_plan(yaml_data, parsed_args)
 
@@ -469,6 +477,9 @@ def _run_in_provider(
     ua_token = getattr(parsed_args, "ua_token", "")
     if ua_token:
         cmd.extend(["--ua-token", ua_token])
+
+    if getattr(parsed_args, "enable_experimental_ua_services", False):
+        cmd.append("--enable-experimental-ua-services")
 
     output_dir = utils.get_managed_environment_project_path()
 

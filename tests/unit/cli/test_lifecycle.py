@@ -54,6 +54,7 @@ def test_lifecycle_command(cmd, run_method, mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -100,6 +101,7 @@ def test_lifecycle_command_arguments(cmd, run_method, mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -147,6 +149,7 @@ def test_lifecycle_command_arguments_destructive_mode(cmd, run_method, mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -194,6 +197,7 @@ def test_lifecycle_command_arguments_use_lxd(cmd, run_method, mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -239,6 +243,7 @@ def test_lifecycle_command_arguments_bind_ssh(cmd, run_method, mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -264,6 +269,7 @@ def test_lifecycle_command_arguments_ua_token(cmd, run_method, mocker):
             cmd,
             "--ua-token",
             "my-ua-token",
+            "--enable-experimental-ua-services",
         ],
     )
     mock_lifecycle_cmd = mocker.patch(run_method)
@@ -285,6 +291,7 @@ def test_lifecycle_command_arguments_ua_token(cmd, run_method, mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=True,
                 target_arch=None,
                 provider=None,
             )
@@ -330,6 +337,7 @@ def test_lifecycle_command_arguments_debug(cmd, run_method, mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -375,6 +383,7 @@ def test_lifecycle_command_arguments_shell(cmd, run_method, mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -420,6 +429,7 @@ def test_lifecycle_command_arguments_shell_after(cmd, run_method, mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -451,6 +461,7 @@ def test_lifecycle_command_pack(mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -482,6 +493,7 @@ def test_lifecycle_command_pack_destructive_mode(mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -513,6 +525,7 @@ def test_lifecycle_command_pack_use_lxd(mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -544,6 +557,7 @@ def test_lifecycle_command_pack_enable_manifest(mocker):
                 build_for=None,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -576,6 +590,7 @@ def test_lifecycle_command_pack_env_enable_manifest(mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -607,6 +622,7 @@ def test_lifecycle_command_pack_manifest_image_information(mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -639,6 +655,7 @@ def test_lifecycle_command_pack_env_manifest_image_information(mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -670,6 +687,7 @@ def test_lifecycle_command_pack_bind_ssh(mocker):
                 ua_token=None,
                 build_for=None,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -681,7 +699,13 @@ def test_lifecycle_command_pack_ua_token(mocker):
     mocker.patch.object(
         sys,
         "argv",
-        ["cmd", "pack", "--ua-token", "my-ua-token"],
+        [
+            "cmd",
+            "pack",
+            "--ua-token",
+            "my-ua-token",
+            "--enable-experimental-ua-services",
+        ],
     )
     mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
     cli.run()
@@ -701,6 +725,7 @@ def test_lifecycle_command_pack_ua_token(mocker):
                 ua_token="my-ua-token",
                 build_for=None,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=True,
                 target_arch=None,
                 provider=None,
             )
@@ -733,6 +758,7 @@ def test_lifecycle_command_pack_env_ua_token(mocker):
                 ua_token="my-ua-token",
                 build_for=None,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -764,6 +790,7 @@ def test_lifecycle_command_pack_build_for(mocker):
                 ua_token=None,
                 build_for="armhf",
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -796,6 +823,7 @@ def test_lifecycle_command_pack_env_build_for(mocker):
                 ua_token=None,
                 build_for="armhf",
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -827,6 +855,7 @@ def test_lifecycle_command_pack_debug(mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -855,6 +884,7 @@ def test_lifecycle_command_pack_output(mocker, option):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -882,6 +912,7 @@ def test_lifecycle_command_pack_directory(mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )

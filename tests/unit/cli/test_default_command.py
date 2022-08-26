@@ -43,6 +43,7 @@ def test_default_command(mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -70,6 +71,7 @@ def test_default_command_destructive_mode(mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -97,6 +99,7 @@ def test_default_command_use_lxd(mocker):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
@@ -125,6 +128,7 @@ def test_default_command_output(mocker, option):
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
             )
