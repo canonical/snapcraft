@@ -25,6 +25,7 @@ from snapcraft import cli
 
 def test_no_keyring_error(capsys, mocker):
     mocker.patch.object(sys, "argv", ["cmd", "whoami"])
+    mocker.patch.object(sys.stdin, "isatty", return_value=True)
     mock_version_cmd = mocker.patch(
         "snapcraft.commands.account.StoreWhoAmICommand.run",
         side_effect=craft_store.errors.NoKeyringError,
