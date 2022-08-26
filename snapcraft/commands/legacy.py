@@ -22,8 +22,8 @@ from typing import TYPE_CHECKING
 from craft_cli import BaseCommand
 from overrides import overrides
 
-from snapcraft.commands.store._legacy_account import set_legacy_env
 from snapcraft.legacy_cli import run_legacy
+from snapcraft.store._legacy_account import set_legacy_env
 
 if TYPE_CHECKING:
     import argparse

@@ -22,9 +22,7 @@ from typing import TYPE_CHECKING
 from craft_cli import BaseCommand, emit
 from overrides import overrides
 
-from snapcraft import errors, utils
-
-from . import store
+from snapcraft import errors, store, utils
 
 if TYPE_CHECKING:
     import argparse
@@ -142,6 +140,9 @@ class StoreCloseCommand(BaseCommand):
     @overrides
     def run(self, parsed_args):
         client = store.StoreClientCLI()
+
+        if isinstance(client, store.OnPremClient):
+            raise errors.CraftError("close not supported for the on prem store.")
 
         # Account info request to retrieve the snap-id
         account_info = client.get_account_info()

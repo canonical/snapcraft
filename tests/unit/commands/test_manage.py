@@ -29,7 +29,7 @@ from snapcraft import commands, errors
 @pytest.fixture
 def fake_store_release(mocker):
     fake_client = mocker.patch(
-        "snapcraft.commands.store.StoreClientCLI.release",
+        "snapcraft.store.StoreClientCLI.release",
         autospec=True,
     )
     return fake_client
@@ -38,7 +38,7 @@ def fake_store_release(mocker):
 @pytest.fixture
 def fake_store_close(mocker):
     fake_client = mocker.patch(
-        "snapcraft.commands.store.StoreClientCLI.close",
+        "snapcraft.store.StoreClientCLI.close",
         autospec=True,
     )
     return fake_client
@@ -57,7 +57,7 @@ def fake_store_get_account_info(mocker):
         }
     }
     fake_client = mocker.patch(
-        "snapcraft.commands.store.StoreClientCLI.get_account_info",
+        "snapcraft.store.StoreClientCLI.get_account_info",
         autospec=True,
         return_value=data,
     )

@@ -25,10 +25,8 @@ from craft_cli.errors import ArgumentParsingError
 from overrides import overrides
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
-from snapcraft import utils
+from snapcraft import store, utils
 from snapcraft_legacy._store import get_data_from_snap_file
-
-from . import store
 
 if TYPE_CHECKING:
     import argparse

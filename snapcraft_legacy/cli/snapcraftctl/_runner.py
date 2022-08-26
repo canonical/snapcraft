@@ -69,7 +69,7 @@ def prime():
 
 def validate_version(ctx, param, value):
     if not value:
-        raise click.BadParameter(f"Version must be a non-empty string.")
+        raise click.BadParameter("Version must be a non-empty string.")
     return value
 
 
@@ -82,7 +82,7 @@ def set_version(version):
 
 def validate_grade(ctx, param, value):
     if value not in ["stable", "devel"]:
-        raise click.BadParameter(f"Grade must be 'stable' or 'devel'.")
+        raise click.BadParameter("Grade must be 'stable' or 'devel'.")
     return value
 
 

@@ -22,11 +22,16 @@ ENVIRONMENT_STORE_CREDENTIALS: Final[str] = "SNAPCRAFT_STORE_CREDENTIALS"
 """Environment variable where credentials can be picked up from."""
 
 ENVIRONMENT_STORE_AUTH: Final[str] = "SNAPCRAFT_STORE_AUTH"
-"""Environment variable used to set an alterntive login method.
+"""Environment variable used to set an alternative login method.
 
 The only setting that changes the behavior is `candid`, every
 other value uses Ubuntu SSO.
 """
+
+ENVIRONMENT_ADMIN_MACAROON: Final[str] = "SNAPCRAFT_ADMIN_MACAROON"
+"""Environment variable used for onprem to login.
+
+This value holds a valid path to a file with the macaroon contents."""
 
 STORE_URL: Final[str] = "https://dashboard.snapcraft.io"
 """Default store backend URL."""

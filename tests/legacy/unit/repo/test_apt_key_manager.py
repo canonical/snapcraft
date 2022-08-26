@@ -76,12 +76,14 @@ def gpg_keyring(tmp_path):
 @pytest.fixture
 def apt_gpg(key_assets, gpg_keyring):
     yield AptKeyManager(
-        gpg_keyring=gpg_keyring, key_assets=key_assets,
+        gpg_keyring=gpg_keyring,
+        key_assets=key_assets,
     )
 
 
 def test_find_asset(
-    apt_gpg, key_assets,
+    apt_gpg,
+    key_assets,
 ):
     key_id = "8" * 40
     expected_key_path = key_assets / ("8" * 8 + ".asc")
@@ -92,14 +94,17 @@ def test_find_asset(
     assert key_path == expected_key_path
 
 
-def test_find_asset_none(apt_gpg,):
+def test_find_asset_none(
+    apt_gpg,
+):
     key_path = apt_gpg.find_asset_with_key_id(key_id="foo")
 
     assert key_path is None
 
 
 def test_get_key_fingerprints(
-    apt_gpg, mock_gnupg,
+    apt_gpg,
+    mock_gnupg,
 ):
     with mock.patch("tempfile.NamedTemporaryFile") as m:
         m.return_value.__enter__.return_value.name = "/tmp/foo"
@@ -121,7 +126,10 @@ def test_get_key_fingerprints(
     ],
 )
 def test_is_key_installed(
-    stdout, expected, apt_gpg, mock_run,
+    stdout,
+    expected,
+    apt_gpg,
+    mock_run,
 ):
     mock_run.return_value.stdout = stdout
 
@@ -139,7 +147,8 @@ def test_is_key_installed(
 
 
 def test_is_key_installed_with_apt_key_failure(
-    apt_gpg, mock_run,
+    apt_gpg,
+    mock_run,
 ):
     mock_run.side_effect = subprocess.CalledProcessError(
         cmd=["apt-key"], returncode=1, output=b"some error"
@@ -151,7 +160,9 @@ def test_is_key_installed_with_apt_key_failure(
 
 
 def test_install_key(
-    apt_gpg, gpg_keyring, mock_run,
+    apt_gpg,
+    gpg_keyring,
+    mock_run,
 ):
     key = "some-fake-key"
     apt_gpg.install_key(key=key)
@@ -224,10 +235,13 @@ def test_install_key_from_keyserver_with_apt_key_failure(
     "snapcraft_legacy.internal.repo.apt_key_manager.AptKeyManager.is_key_installed"
 )
 @pytest.mark.parametrize(
-    "is_installed", [True, False],
+    "is_installed",
+    [True, False],
 )
 def test_install_package_repository_key_already_installed(
-    mock_is_key_installed, is_installed, apt_gpg,
+    mock_is_key_installed,
+    is_installed,
+    apt_gpg,
 ):
     mock_is_key_installed.return_value = is_installed
     package_repo = PackageRepositoryApt(
@@ -249,7 +263,10 @@ def test_install_package_repository_key_already_installed(
 )
 @mock.patch("snapcraft_legacy.internal.repo.apt_key_manager.AptKeyManager.install_key")
 def test_install_package_repository_key_from_asset(
-    mock_install_key, mock_is_key_installed, apt_gpg, key_assets,
+    mock_install_key,
+    mock_is_key_installed,
+    apt_gpg,
+    key_assets,
 ):
     key_id = "123456789012345678901234567890123456AABB"
     expected_key_path = key_assets / "3456AABB.asc"
@@ -276,7 +293,9 @@ def test_install_package_repository_key_from_asset(
     "snapcraft_legacy.internal.repo.apt_key_manager.AptKeyManager.install_key_from_keyserver"
 )
 def test_install_package_repository_key_apt_from_keyserver(
-    mock_install_key_from_keyserver, mock_is_key_installed, apt_gpg,
+    mock_install_key_from_keyserver,
+    mock_is_key_installed,
+    apt_gpg,
 ):
     key_id = "8" * 40
 
@@ -304,9 +323,13 @@ def test_install_package_repository_key_apt_from_keyserver(
     "snapcraft_legacy.internal.repo.apt_key_manager.AptKeyManager.install_key_from_keyserver"
 )
 def test_install_package_repository_key_ppa_from_keyserver(
-    mock_install_key_from_keyserver, mock_is_key_installed, apt_gpg,
+    mock_install_key_from_keyserver,
+    mock_is_key_installed,
+    apt_gpg,
 ):
-    package_repo = PackageRepositoryAptPpa(ppa="test/ppa",)
+    package_repo = PackageRepositoryAptPpa(
+        ppa="test/ppa",
+    )
 
     updated = apt_gpg.install_package_repository_key(package_repo=package_repo)
 

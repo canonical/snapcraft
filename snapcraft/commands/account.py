@@ -29,9 +29,7 @@ from craft_cli import BaseCommand, emit
 from craft_cli.errors import ArgumentParsingError
 from overrides import overrides
 
-from snapcraft import utils
-
-from . import store
+from snapcraft import store, utils
 
 if TYPE_CHECKING:
     import argparse
@@ -269,6 +267,13 @@ class StoreWhoAmICommand(BaseCommand):
             channels = "no restrictions"
 
         account = whoami["account"]
+
+        # onprem store does not have expires
+        try:
+            expires = f"{whoami['expires']}Z"
+        except KeyError:
+            expires = "N/A"
+
         message = textwrap.dedent(
             f"""\
             email: {account["email"]}
@@ -276,7 +281,7 @@ class StoreWhoAmICommand(BaseCommand):
             id: {account["id"]}
             permissions: {permissions}
             channels: {channels}
-            expires: {whoami["expires"]}Z"""
+            expires: {expires}"""
         )
 
         emit.message(message)

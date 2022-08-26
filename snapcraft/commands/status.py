@@ -26,13 +26,8 @@ from overrides import overrides
 from tabulate import tabulate
 from typing_extensions import Final
 
-from snapcraft.commands import store
-from snapcraft.commands.store.channel_map import (
-    ChannelMap,
-    MappedChannel,
-    Revision,
-    SnapChannel,
-)
+from snapcraft import store
+from snapcraft.store.channel_map import ChannelMap, MappedChannel, Revision, SnapChannel
 
 if TYPE_CHECKING:
     import argparse
