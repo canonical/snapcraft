@@ -538,6 +538,23 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
             json=payload,
         )
 
+    @overrides
+    def get_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
+        response = self.request(
+            "GET",
+            self._base_url
+            + self.store_client._endpoints.get_releases_endpoint(  # pylint: disable=protected-access
+                snap_name
+            ),
+        )
+
+        return channel_map.ChannelMap.from_list_releases(
+            cast(
+                craft_store.models.SnapListReleasesModel,
+                craft_store.models.SnapListReleasesModel.unmarshal(response.json()),
+            )
+        )
+
 
 # We have two stores with a rather different implementation.
 # Define the correct client to use on module load in order

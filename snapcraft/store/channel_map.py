@@ -26,6 +26,7 @@ https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map
 from typing import Any, Dict, List, Optional, Set
 
 import jsonschema
+from craft_store.models import SnapListReleasesModel
 
 
 class Progressive:
@@ -43,7 +44,7 @@ class Progressive:
         return cls(
             paused=payload["paused"],
             percentage=payload["percentage"],
-            current_percentage=payload["current-percentage"],
+            current_percentage=payload.get("current-percentage"),
         )
 
     def marshal(self) -> Dict[str, Any]:
@@ -263,9 +264,9 @@ class Snap:
         """Unmarshal payload into a Snap."""
         jsonschema.validate(payload, CHANNEL_MAP_JSONSCHEMA["properties"]["snap"])
         return cls(
-            name=payload["name"],
+            name=payload.get("name"),
             channels=[SnapChannel.unmarshal(sc) for sc in payload["channels"]],
-            tracks=[SnapTrack.unmarshal(st) for st in payload["tracks"]],
+            tracks=[SnapTrack.unmarshal(st) for st in payload.get("tracks", [])],
         )
 
     def marshal(self) -> Dict[str, Any]:
@@ -281,7 +282,11 @@ class Snap:
         return f"<{self.__class__.__name__}: {self.name!r}>"
 
     def __init__(
-        self, *, name: str, channels: List[SnapChannel], tracks: List[SnapTrack]
+        self,
+        *,
+        name: Optional[str],
+        channels: List[SnapChannel],
+        tracks: List[SnapTrack],
     ) -> None:
         self.name = name
         self.channels = channels
@@ -290,6 +295,19 @@ class Snap:
 
 class ChannelMap:
     """Represent the data returned from the channel-map Snap Store endpoint."""
+
+    @classmethod
+    def from_list_releases(cls, release_model: SnapListReleasesModel) -> "ChannelMap":
+        """Return a ChannelMap from a SnapListReleasesModel."""
+        return cls(
+            channel_map=[
+                MappedChannel.unmarshal(c.marshal()) for c in release_model.channel_map
+            ],
+            revisions=[
+                Revision.unmarshal(r.marshal()) for r in release_model.revisions
+            ],
+            snap=Snap.unmarshal(release_model.package.marshal()),
+        )
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "ChannelMap":
@@ -390,13 +408,14 @@ CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
                             "percentage": {"type": ["number", "null"]},
                             "current-percentage": {"type": ["number", "null"]},
                         },
-                        "required": ["paused", "percentage", "current-percentage"],
+                        "required": ["paused", "percentage"],
                         "type": "object",
                     },
                     "revision": {"type": "integer"},
                     "when": {
                         "format": "date-time",
-                        "type": "string",
+                        # TODO: support SnapListReleasesModel's datetime object
+                        # "type": ["string"],
                     },
                 },
                 "required": [
@@ -405,6 +424,7 @@ CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
                     "expiration-date",
                     "progressive",
                     "revision",
+                    # Not part of SnapListReleasesModel
                     # "when"
                 ],
                 "type": "object",
@@ -427,7 +447,7 @@ CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
                         "enum": ["strict", "classic", "devmode"],
                         "type": "string",
                     },
-                    "created-at": {"format": "date-time", "type": "string"},
+                    "created-at": {"format": "date-time"},
                     "epoch": {
                         "properties": {
                             "read": {
@@ -537,7 +557,8 @@ CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
                 # "id",
                 "channels",
                 # "default-track",
-                "name",
+                # name is not part of SnapListReleasesModel
+                # "name",
                 # "private",
                 # "tracks"
             ],
