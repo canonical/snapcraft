@@ -2,7 +2,7 @@ summary: A faulty snap to test error handling
 manual: true
 
 environment:
-  SNAP_DIR: ../snaps/exit1
+  SNAP_DIR: ../../snaps/exit1
 
 prepare: |
   snap list multipass || snap install --classic multipass
