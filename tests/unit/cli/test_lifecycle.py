@@ -755,10 +755,6 @@ def test_lifecycle_command_pack_build_for(mocker):
     ]
 
 
-def test_lifecycle_command_http_proxy(mocker):
-    pass
-
-
 def test_lifecycle_command_pack_env_build_for(mocker):
     mocker.patch.dict(os.environ, {"SNAPCRAFT_BUILD_FOR": "armhf"})
     mocker.patch.object(
