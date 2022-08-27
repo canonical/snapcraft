@@ -78,7 +78,9 @@ def _enable_services(services: List[str]) -> None:
     try:
         with emit.open_stream("Enable UA services") as stream:
             subprocess.check_call(
-                ["ua", "enable", *services, "--beta"], stdout=stream, stderr=stream
+                ["ua", "enable", *services, "--beta", "--assume-yes"],
+                stdout=stream,
+                stderr=stream,
             )
     except subprocess.CalledProcessError as error:
         raise UAEnableServicesError from error
