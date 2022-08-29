@@ -362,12 +362,24 @@ class LegacyStoreClientCLI:
             json=data,
         )
 
-    def close(self, snap_id: str, channel: str) -> None:
+    def close(self, snap_name: str, channel: str) -> None:
         """Close channel for snap_id.
 
         :param snap_id: the id for the snap to close
         :param channel: the channel to close
         """
+        # Account info request to retrieve the snap-id
+        account_info = self.get_account_info()
+        try:
+            snap_id = account_info["snaps"][constants.DEFAULT_SERIES][snap_name][
+                "snap-id"
+            ]
+        except KeyError as key_error:
+            emit.debug(f"{key_error!r} no found in {account_info!r}")
+            raise errors.SnapcraftError(
+                f"{snap_name!r} not found or not owned by this account"
+            ) from key_error
+
         self.request(
             "POST",
             self._base_url + f"/dev/api/snaps/{snap_id}/close",
@@ -521,7 +533,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         self,
         snap_name: str,
         *,
-        revision: int,
+        revision: Optional[int],
         channels: Sequence[str],
         progressive_percentage: Optional[int] = None,
     ) -> None:
@@ -537,6 +549,10 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
             ),
             json=payload,
         )
+
+    @overrides
+    def close(self, snap_name: str, channel) -> None:
+        self.release(snap_name=snap_name, revision=None, channels=[channel])
 
     @overrides
     def get_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
