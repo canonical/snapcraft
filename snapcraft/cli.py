@@ -198,6 +198,15 @@ def _run_dispatcher(dispatcher: craft_cli.Dispatcher) -> None:
     emit.ended_ok()
 
 
+def _emit_error(error):
+    """Emit the error in a centralized way so we can alter it consistently."""
+    # Do not report the internal logpath if running inside instance
+    if utils.is_managed_mode():
+        error.logpath_report = False
+
+    emit.error(error)
+
+
 def run():
     """Run the CLI."""
     # Register our own plugins
@@ -226,7 +235,7 @@ def run():
     except errors.LegacyFallback as err:
         run_legacy(err)
     except craft_store.errors.NoKeyringError as err:
-        emit.error(
+        _emit_error(
             craft_cli.errors.CraftError(
                 f"craft-store error: {err}",
                 resolution=(
@@ -239,10 +248,10 @@ def run():
         )
         retcode = 1
     except craft_store.errors.CraftStoreError as err:
-        emit.error(craft_cli.errors.CraftError(f"craft-store error: {err}"))
+        _emit_error(craft_cli.errors.CraftError(f"craft-store error: {err}"))
         retcode = 1
     except errors.SnapcraftError as err:
-        emit.error(err)
+        _emit_error(err)
         retcode = 1
 
     return retcode

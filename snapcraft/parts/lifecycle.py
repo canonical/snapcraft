@@ -28,7 +28,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 import craft_parts
 from craft_cli import EmitterMode, emit
 from craft_parts import ProjectInfo, StepInfo, callbacks
-from craft_providers import ProviderError
 
 from snapcraft import errors, extensions, pack, providers, utils
 from snapcraft.meta import manifest, snap_yaml
@@ -449,7 +448,7 @@ def _run_in_provider(
             capture_logs_from_instance(instance)
         except subprocess.CalledProcessError as err:
             capture_logs_from_instance(instance)
-            raise ProviderError(
+            raise errors.SnapcraftError(
                 f"Failed to execute {command_name} in instance."
             ) from err
 
