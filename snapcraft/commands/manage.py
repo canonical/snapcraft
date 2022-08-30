@@ -22,9 +22,7 @@ from typing import TYPE_CHECKING
 from craft_cli import BaseCommand, emit
 from overrides import overrides
 
-from snapcraft import errors, utils
-
-from . import store
+from snapcraft import store, utils
 
 if TYPE_CHECKING:
     import argparse
@@ -143,20 +141,8 @@ class StoreCloseCommand(BaseCommand):
     def run(self, parsed_args):
         client = store.StoreClientCLI()
 
-        # Account info request to retrieve the snap-id
-        account_info = client.get_account_info()
-        try:
-            snap_id = account_info["snaps"][store.constants.DEFAULT_SERIES][
-                parsed_args.name
-            ]["snap-id"]
-        except KeyError as key_error:
-            emit.debug(f"{key_error!r} no found in {account_info!r}")
-            raise errors.SnapcraftError(
-                f"{parsed_args.name!r} not found or not owned by this account"
-            ) from key_error
-
         client.close(
-            snap_id=snap_id,
+            snap_name=parsed_args.name,
             channel=parsed_args.channel,
         )
 

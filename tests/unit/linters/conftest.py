@@ -14,17 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Snapcraft CLI interface for the Snap Store."""
+from typing import Optional
+
+import pytest
+
+from snapcraft.linters.base import LinterIssue, LinterResult
 
 
-from . import constants
-from ._legacy_account import LegacyUbuntuOne
-from .channel_map import ChannelMap
-from .client import StoreClientCLI
+@pytest.fixture
+def linter_issue():
+    def _create_issue(
+        *,
+        result: LinterResult = LinterResult.OK,
+        filename: Optional[str] = None,
+        text: str = "Linter message text",
+        url: Optional[str] = "https://some/url",
+    ):
+        return LinterIssue(
+            name="test",
+            result=result,
+            filename=filename,
+            text=text,
+            url=url,
+        )
 
-__all__ = [
-    "ChannelMap",
-    "StoreClientCLI",
-    "LegacyUbuntuOne",
-    "constants",
-]
+    yield _create_issue

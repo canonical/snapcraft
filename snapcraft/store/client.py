@@ -20,16 +20,18 @@ import os
 import platform
 import time
 from datetime import timedelta
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
 import craft_store
 import requests
 from craft_cli import emit
+from overrides import overrides
 
 from snapcraft import __version__, errors, utils
 
 from . import channel_map, constants
 from ._legacy_account import LegacyUbuntuOne
+from .onprem_client import ON_PREM_ENDPOINTS, OnPremClient
 
 _TESTING_ENV_PREFIXES = ["TRAVIS", "AUTOPKGTEST_TMP"]
 
@@ -59,6 +61,11 @@ def build_user_agent(
 def use_candid() -> bool:
     """Return True if using candid as the auth backend."""
     return os.getenv(constants.ENVIRONMENT_STORE_AUTH) == "candid"
+
+
+def is_onprem() -> bool:
+    """Return True if using onprem as the auth backend."""
+    return os.getenv(constants.ENVIRONMENT_STORE_AUTH) == "onprem"
 
 
 def get_store_url() -> str:
@@ -113,8 +120,18 @@ def get_client(ephemeral: bool) -> craft_store.BaseClient:
         or LegacyUbuntuOne.env_has_legacy_credentials()
     )
 
-    if use_legacy:
-        client: craft_store.BaseClient = LegacyUbuntuOne(
+    if is_onprem():
+        client: craft_store.BaseClient = OnPremClient(
+            base_url=store_url,
+            storage_base_url=store_upload_url,
+            application_name="snapcraft",
+            user_agent=user_agent,
+            endpoints=ON_PREM_ENDPOINTS,
+            environment_auth=constants.ENVIRONMENT_STORE_CREDENTIALS,
+            ephemeral=ephemeral,
+        )
+    elif use_legacy:
+        client = LegacyUbuntuOne(
             base_url=store_url,
             storage_base_url=store_upload_url,
             auth_url=get_store_login_url(),
@@ -149,7 +166,7 @@ def get_client(ephemeral: bool) -> craft_store.BaseClient:
     return client
 
 
-class StoreClientCLI:
+class LegacyStoreClientCLI:
     """A BaseClient implementation considering command line prompts."""
 
     def __init__(self, ephemeral=False):
@@ -163,6 +180,7 @@ class StoreClientCLI:
         acls: Optional[Sequence[str]] = None,
         packages: Optional[Sequence[str]] = None,
         channels: Optional[Sequence[str]] = None,
+        **kwargs,
     ) -> str:
         """Login to the Snap Store and prompt if required."""
         if os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS):
@@ -171,8 +189,7 @@ class StoreClientCLI:
                 resolution=f"Unset {constants.ENVIRONMENT_STORE_CREDENTIALS!r} and try again.",
             )
 
-        kwargs: Dict[str, Any] = {}
-        if use_candid() is False:
+        if not is_onprem() and use_candid() is False:
             kwargs["email"], kwargs["password"] = _prompt_login()
 
         if packages is None:
@@ -294,6 +311,26 @@ class StoreClientCLI:
             headers={"Accept": "application/json"},
         ).json()
 
+    def get_names(self) -> List[Tuple[str, str, str, str]]:
+        """Return a table with the registered names and status."""
+        account_info = self.get_account_info()
+
+        snaps: List[Tuple[str, str, str, str]] = [
+            (
+                name,
+                info["since"],
+                "private" if info["private"] else "public",
+                "-",
+            )
+            for name, info in account_info["snaps"]
+            .get(constants.DEFAULT_SERIES, {})
+            .items()
+            # Presenting only approved snap registrations, which means name
+            # disputes will be displayed/sorted some other way.
+            if info["status"] == "Approved"
+        ]
+        return snaps
+
     def release(
         self,
         snap_name: str,
@@ -325,12 +362,24 @@ class StoreClientCLI:
             json=data,
         )
 
-    def close(self, snap_id: str, channel: str) -> None:
+    def close(self, snap_name: str, channel: str) -> None:
         """Close channel for snap_id.
 
         :param snap_id: the id for the snap to close
         :param channel: the channel to close
         """
+        # Account info request to retrieve the snap-id
+        account_info = self.get_account_info()
+        try:
+            snap_id = account_info["snaps"][constants.DEFAULT_SERIES][snap_name][
+                "snap-id"
+            ]
+        except KeyError as key_error:
+            emit.debug(f"{key_error!r} no found in {account_info!r}")
+            raise errors.SnapcraftError(
+                f"{snap_name!r} not found or not owned by this account"
+            ) from key_error
+
         self.request(
             "POST",
             self._base_url + f"/dev/api/snaps/{snap_id}/close",
@@ -416,3 +465,121 @@ class StoreClientCLI:
             time.sleep(_POLL_DELAY)
 
         return status["revision"]
+
+
+class OnPremStoreClientCLI(LegacyStoreClientCLI):
+    """On Premises Store Client command line interface."""
+
+    @overrides
+    def request(self, *args, **kwargs) -> requests.Response:
+        return self.store_client.request(*args, **kwargs)
+
+    @overrides
+    def verify_upload(
+        self,
+        *,
+        snap_name: str,
+    ) -> None:
+        emit.debug(f"Skipping verification for {snap_name!r}")
+
+    @overrides
+    def notify_upload(
+        self,
+        *,
+        snap_name: str,
+        upload_id: str,
+        snap_file_size: int,
+        built_at: Optional[str],
+        channels: Optional[Sequence[str]],
+    ) -> int:
+        if channels:
+            raise errors.SnapcraftError("Releasing during currently unsupported")
+        emit.debug(
+            f"Ignoring snap_file_size of {snap_file_size!r} and "
+            f"built_at {built_at!r}"
+        )
+
+        revision_request = cast(
+            craft_store.models.RevisionsRequestModel,
+            craft_store.models.RevisionsRequestModel.unmarshal(
+                {"upload-id": upload_id}
+            ),
+        )
+        revision_response = self.store_client.notify_revision(
+            name=snap_name, revision_request=revision_request
+        )
+
+        status_url = self._base_url + revision_response.status_url
+        while True:
+            response = self.request("GET", status_url)
+            # human_status = _HUMAN_STATUS.get(status["code"], status["code"])
+            emit.progress(f"Status checked: {response}")
+
+            (revision,) = response.json()["revisions"]
+            status = revision["status"]
+
+            if status == "approved":
+                return revision["revision"]
+            if status == "rejected":
+                # TODO: grab more that the first error
+                error = revision["errors"][0]
+                raise errors.SnapcraftError(
+                    f"Error uploading snap: {error['code']}", details=error["message"]
+                )
+            time.sleep(_POLL_DELAY)
+
+    @overrides
+    def release(
+        self,
+        snap_name: str,
+        *,
+        revision: Optional[int],
+        channels: Sequence[str],
+        progressive_percentage: Optional[int] = None,
+    ) -> None:
+        if progressive_percentage is not None:
+            raise errors.SnapcraftError("Progressive percentage currently unsupported")
+
+        payload = [{"revision": revision, "channel": channel} for channel in channels]
+        self.request(
+            "POST",
+            self._base_url
+            + self.store_client._endpoints.get_releases_endpoint(  # pylint: disable=protected-access
+                snap_name
+            ),
+            json=payload,
+        )
+
+    @overrides
+    def close(self, snap_name: str, channel) -> None:
+        self.release(snap_name=snap_name, revision=None, channels=[channel])
+
+    @overrides
+    def get_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
+        response = self.request(
+            "GET",
+            self._base_url
+            + self.store_client._endpoints.get_releases_endpoint(  # pylint: disable=protected-access
+                snap_name
+            ),
+        )
+
+        return channel_map.ChannelMap.from_list_releases(
+            cast(
+                craft_store.models.SnapListReleasesModel,
+                craft_store.models.SnapListReleasesModel.unmarshal(response.json()),
+            )
+        )
+
+
+# We have two stores with a rather different implementation.
+# Define the correct client to use on module load in order
+# to not change the entire code base all at once.
+class StoreClientCLI(LegacyStoreClientCLI):
+    """StoreClientCLI factory."""
+
+    def __new__(cls, ephemeral: bool = False):
+        """Return a new instance depending on the store implementation."""
+        if is_onprem():
+            return OnPremStoreClientCLI(ephemeral)
+        return super().__new__(cls)

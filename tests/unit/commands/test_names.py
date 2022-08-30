@@ -30,38 +30,21 @@ from snapcraft import commands
 @pytest.fixture
 def fake_store_register(mocker):
     fake_client = mocker.patch(
-        "snapcraft.commands.store.StoreClientCLI.register",
+        "snapcraft.store.StoreClientCLI.register",
         autospec=True,
     )
     return fake_client
 
 
 @pytest.fixture
-def fake_store_get_account_info(mocker):
-    # reduced payload
-    data = {
-        "snaps": {
-            "16": {
-                "test-snap-public": {
-                    "private": False,
-                    "since": "2016-07-26T20:18:32Z",
-                    "status": "Approved",
-                },
-                "test-snap-private": {
-                    "private": True,
-                    "since": "2016-07-26T20:18:32Z",
-                    "status": "Approved",
-                },
-                "test-snap-not-approved": {
-                    "private": False,
-                    "since": "2016-07-26T20:18:32Z",
-                    "status": "Dispute",
-                },
-            }
-        }
-    }
+def fake_store_get_names(mocker):
+    data = [
+        ("test-snap-public", "2016-07-26T20:18:32Z", "public", "-"),
+        ("test-snap-private", "2016-07-26T20:18:32Z", "private", "-"),
+    ]
+
     fake_client = mocker.patch(
-        "snapcraft.commands.store.StoreClientCLI.get_account_info",
+        "snapcraft.store.StoreClientCLI.get_names",
         autospec=True,
         return_value=data,
     )
@@ -216,7 +199,7 @@ def test_register_store_id(emitter, fake_store_register):
     ],
 )
 @pytest.mark.usefixtures("memory_keyring")
-def test_names(emitter, fake_store_get_account_info, command_class):
+def test_names(emitter, fake_store_get_names, command_class):
     cmd = command_class(None)
 
     cmd.run(
@@ -225,7 +208,6 @@ def test_names(emitter, fake_store_get_account_info, command_class):
         )
     )
 
-    assert fake_store_get_account_info.mock_calls == [call(ANY)]
     if command_class.hidden:
         emitter.assert_progress("This command is deprecated: use 'names' instead")
     emitter.assert_message(

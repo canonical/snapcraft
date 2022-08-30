@@ -18,7 +18,7 @@ import contextlib
 import json
 import logging
 import subprocess
-from typing import Any, Dict, Iterator, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 from snapcraft_legacy.internal import repo
 
@@ -33,6 +33,11 @@ def _install_ua_tools() -> None:
 def _attach(ua_token: str) -> None:
     """Attach UA token (ua will update package lists)."""
     subprocess.check_call(["sudo", "ua", "attach", ua_token])
+
+
+def _enable_services(services: List[str]) -> None:
+    """Enable the specified UA services."""
+    subprocess.check_call(["sudo", "ua", "enable", *services, "--beta", "--assume-yes"])
 
 
 def _detach() -> None:
@@ -50,7 +55,9 @@ def _status() -> Dict[str, Any]:
 
 
 @contextlib.contextmanager
-def ua_manager(ua_token: Optional[str]) -> Iterator[None]:
+def ua_manager(
+    ua_token: Optional[str], *, services: Optional[List[str]]
+) -> Iterator[None]:
     """Attach and detach UA token as required.
 
     Uses try/finally to ensure that token is detached on error.
@@ -63,6 +70,7 @@ def ua_manager(ua_token: Optional[str]) -> Iterator[None]:
     normally.
 
     :param ua_token: Optional ua_token.
+    :param services: Optional ua services to enable.
     """
     ua_needs_detach = False
 
@@ -80,6 +88,10 @@ def ua_manager(ua_token: Optional[str]) -> Iterator[None]:
             _attach(ua_token)
 
     try:
+        if services:
+            logger.info("Enabling specified UA services...")
+            _enable_services(services)
+
         yield
     finally:
         if ua_needs_detach:

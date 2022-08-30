@@ -29,7 +29,7 @@ from snapcraft import commands, errors
 @pytest.fixture
 def fake_store_release(mocker):
     fake_client = mocker.patch(
-        "snapcraft.commands.store.StoreClientCLI.release",
+        "snapcraft.store.StoreClientCLI.release",
         autospec=True,
     )
     return fake_client
@@ -38,7 +38,7 @@ def fake_store_release(mocker):
 @pytest.fixture
 def fake_store_close(mocker):
     fake_client = mocker.patch(
-        "snapcraft.commands.store.StoreClientCLI.close",
+        "snapcraft.store.StoreClientCLI.close",
         autospec=True,
     )
     return fake_client
@@ -57,7 +57,7 @@ def fake_store_get_account_info(mocker):
         }
     }
     fake_client = mocker.patch(
-        "snapcraft.commands.store.StoreClientCLI.get_account_info",
+        "snapcraft.store.StoreClientCLI.get_account_info",
         autospec=True,
         return_value=data,
     )
@@ -145,7 +145,7 @@ def test_release_progressive(emitter, fake_store_release):
 #################
 
 
-@pytest.mark.usefixtures("memory_keyring", "fake_store_get_account_info")
+@pytest.mark.usefixtures("memory_keyring")
 def test_close(emitter, fake_store_close):
     cmd = commands.StoreCloseCommand(None)
 
@@ -154,7 +154,7 @@ def test_close(emitter, fake_store_close):
     assert fake_store_close.mock_calls == [
         call(
             ANY,
-            snap_id="12345678",
+            snap_name="test-snap",
             channel="edge",
         )
     ]

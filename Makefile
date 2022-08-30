@@ -1,8 +1,9 @@
 SOURCES=setup.py snapcraft tests/*.py tests/unit
+SOURCES_LEGACY=snapcraft_legacy tests/legacy
 
 .PHONY: autoformat-black
 autoformat-black:
-	black $(SOURCES)
+	black $(SOURCES) $(SOURCES_LEGACY)
 
 .PHONY: freeze-requirements
 freeze-requirements:
@@ -10,7 +11,7 @@ freeze-requirements:
 
 .PHONY: test-black
 test-black:
-	black --check --diff $(SOURCES)
+	black --check --diff $(SOURCES) $(SOURCES_LEGACY)
 
 .PHONY: test-codespell
 test-codespell:
@@ -18,11 +19,11 @@ test-codespell:
 
 .PHONY: test-flake8
 test-flake8:
-	python3 -m flake8 $(SOURCES)
+	python3 -m flake8 $(SOURCES) $(SOURCES_LEGACY)
 
 .PHONY: test-isort
 test-isort:
-	isort --check $(SOURCES)
+	isort --check $(SOURCES) $(SOURCES_LEGACY)
 
 .PHONY: test-mypy
 test-mypy:

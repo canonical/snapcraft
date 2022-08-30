@@ -181,6 +181,19 @@ class Socket(ProjectModel):
         return listen_stream
 
 
+class LintIgnore(ProjectModel):
+    """Lists of specific linters or globbed filenames to ignore."""
+
+    linters: List[str] = []
+    files: List[str] = []
+
+
+class Lint(ProjectModel):
+    """Linter configuration."""
+
+    ignore: LintIgnore
+
+
 class App(ProjectModel):
     """Snapcraft project app definition."""
 
@@ -234,7 +247,9 @@ class App(ProjectModel):
     environment: Optional[Dict[str, str]]
     command_chain: List[str] = []
     sockets: Optional[Dict[str, Socket]]
-    # TODO: implement passthrough (CRAFT-854)
+    daemon_scope: Optional[Literal["system", "user"]]
+    activates_on: Optional[UniqueStrList]
+    passthrough: Optional[Dict[str, Any]]
 
     @pydantic.validator("autostart")
     @classmethod
@@ -361,6 +376,7 @@ class Project(ProjectModel):
     apps: Optional[Dict[str, App]]
     plugs: Optional[Dict[str, Union[ContentPlug, Any]]]
     slots: Optional[Dict[str, Any]]
+    lint: Optional[Lint]
     parts: Dict[str, Any]  # parts are handled by craft-parts
     epoch: Optional[str]
     adopt_info: Optional[str]
@@ -368,6 +384,7 @@ class Project(ProjectModel):
     environment: Optional[Dict[str, Optional[str]]]
     build_packages: Optional[GrammarStrList]
     build_snaps: Optional[GrammarStrList]
+    ua_services: Optional[UniqueStrList]
 
     @pydantic.validator("plugs")
     @classmethod

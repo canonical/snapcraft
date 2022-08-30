@@ -28,12 +28,11 @@ from craft_cli import ArgumentParsingError, EmitterMode, ProvideHelpException, e
 
 import snapcraft
 import snapcraft_legacy
-from snapcraft import __version__, errors, utils
+from snapcraft import __version__, errors, store, utils
 from snapcraft.parts import plugins
 from snapcraft_legacy.cli import legacy
 
 from . import commands
-from .commands import store
 from .legacy_cli import _LIB_NAMES, _ORIGINAL_LIB_NAME_LOG_LEVEL, run_legacy
 
 COMMAND_GROUPS = [
@@ -48,6 +47,8 @@ COMMAND_GROUPS = [
             commands.PackCommand,
             commands.SnapCommand,  # hidden (legacy compatibility)
             commands.StoreLegacyRemoteBuildCommand,
+            commands.PluginsCommand,
+            commands.ListPluginsCommand,
         ],
     ),
     craft_cli.CommandGroup(
@@ -241,6 +242,9 @@ def run():
     except craft_store.errors.CraftStoreError as err:
         emit.error(craft_cli.errors.CraftError(f"craft-store error: {err}"))
         retcode = 1
+    except errors.LinterError as err:
+        emit.error(craft_cli.errors.CraftError(f"linter error: {err}"))
+        retcode = err.exit_code
     except errors.SnapcraftError as err:
         emit.error(err)
         retcode = 1

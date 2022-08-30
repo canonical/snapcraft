@@ -97,7 +97,8 @@ class PullStateTestCase(PullStateBaseTestCase):
         self.assertThat(properties["source-branch"], Equals("test-source-branch"))
         self.assertThat(properties["source-subdir"], Equals("test-source-subdir"))
         self.assertThat(
-            properties["source-submodules"], Equals("test-source-submodules"),
+            properties["source-submodules"],
+            Equals("test-source-submodules"),
         )
 
     def test_project_options_of_interest(self):

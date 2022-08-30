@@ -17,11 +17,24 @@
 import textwrap
 from pathlib import Path
 
+import pydantic
 import pytest
 import yaml
 
 from snapcraft.meta import snap_yaml
+from snapcraft.meta.snap_yaml import ContentPlug, ContentSlot, SnapMetadata
 from snapcraft.projects import Project
+
+
+def _override_data(to_dict, from_dict):
+    for key, value in from_dict.items():
+        if key in to_dict:
+            if isinstance(to_dict[key], dict) and isinstance(value, dict):
+                _override_data(to_dict[key], value)
+            else:
+                to_dict[key] = value
+        else:
+            to_dict[key] = value
 
 
 @pytest.fixture
@@ -44,8 +57,8 @@ def simple_project():
                     "command": "bin/mytest",
                 },
             },
-            **kwargs,
         }
+        _override_data(snapcraft_config, kwargs)
         return Project.unmarshal(snapcraft_config)
 
     yield _simple_project
@@ -523,3 +536,305 @@ def test_version_git(simple_project, new_dir, mocker):
 
     data = yaml.safe_load(content)
     assert data["version"] == "1.2.3"
+
+
+def test_get_provider_content_directories(new_dir, mocker):
+    mocker.patch(
+        "snapcraft.meta.snap_yaml.read",
+        return_value=SnapMetadata.unmarshal(
+            {
+                "name": "provider-snap",
+                "version": "1",
+                "summary": "summary",
+                "description": "description",
+                "confinement": "strict",
+                "grade": "stable",
+                "architectures": ["amd64"],
+                "slots": {
+                    "slot1": {
+                        "interface": "content",
+                        "content": "content-text",
+                        "read": ["read"],
+                        "write": ["write"],
+                    }
+                },
+            }
+        ),
+    )
+    mocker.patch("pathlib.Path.exists", return_value=True)
+
+    yaml_data = textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        confinement: strict
+        grade: stable
+        plugs:
+          test-plug:
+            interface: content
+            content: content-test
+            target: target
+            default_provider: my-test-provider
+        """
+    )
+
+    metadata = SnapMetadata.unmarshal(yaml.safe_load(yaml_data))
+    content_dirs = metadata.get_provider_content_directories()
+
+    assert content_dirs == [
+        Path("/snap/my-test-provider/current/read"),
+        Path("/snap/my-test-provider/current/write"),
+    ]
+
+
+#####################
+# Test content plug #
+#####################
+
+
+def test_content_plug_unmarshal():
+    plug_dict = {"interface": "content", "content": "foo", "target": "target"}
+    plug = ContentPlug.unmarshal(plug_dict)
+
+    assert plug.interface == "content"
+    assert plug.content == "foo"
+    assert plug.target == "target"
+    assert plug.provider is None
+
+
+def test_content_plug_invalid_target():
+    with pytest.raises(pydantic.ValidationError) as raised:
+        ContentPlug.unmarshal({"interface": "content", "target": ""})
+
+    err = raised.value.errors()
+    assert len(err) == 1
+    assert err[0]["loc"] == ("target",)
+    assert err[0]["type"] == "value_error"
+    assert err[0]["msg"] == "value cannot be empty"
+
+
+def test_content_plug_provider():
+    plug_dict = {
+        "interface": "content",
+        "content": "foo",
+        "target": "target",
+        "default-provider": "gtk-common-themes:gtk-3-themes",
+    }
+    plug = ContentPlug.unmarshal(plug_dict)
+
+    assert plug.provider == "gtk-common-themes"
+
+
+def test_get_content_plugs():
+    yaml_data = textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        confinement: strict
+        grade: stable
+        plugs:
+          plug1:
+            interface: foo
+          plug2:
+            interface: content
+            content: test
+            target: target2
+            default_provider: gtk-common-themes
+            extra-stuff: anything
+          plug3:
+            interface: content
+            target: target3
+          plug4:
+        """
+    )
+
+    metadata = SnapMetadata.unmarshal(yaml.safe_load(yaml_data))
+    content_plugs = metadata.get_content_plugs()
+
+    assert content_plugs == [
+        ContentPlug(
+            interface="content",
+            target="target2",
+            content="test",
+            default_provider="gtk-common-themes",
+        ),
+        ContentPlug(
+            interface="content",
+            target="target3",
+            content="plug3",
+            default_provider=None,
+        ),
+    ]
+
+
+#####################
+# Test content slot #
+#####################
+
+
+def test_content_slot_empty():
+    slot = ContentSlot.unmarshal({"interface": "content"})
+
+    assert slot.interface == "content"
+    assert slot.read == []
+    assert slot.write == []
+
+
+def test_content_slot_explicit_content():
+    slot_dict = {
+        "interface": "content",
+        "content": "content-test",
+        "read": ["read1", "read2"],
+        "write": ["write1", "write2"],
+    }
+    slot = ContentSlot.unmarshal(slot_dict)
+
+    assert slot.interface == "content"
+    assert slot.content == "content-test"
+    assert slot.read == ["read1", "read2"]
+    assert slot.write == ["write1", "write2"]
+
+
+def test_get_content_slots():
+    yaml_data = textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        confinement: strict
+        grade: stable
+        slots:
+          slot1:
+            interface: foo
+          slot2:
+            interface: content
+            content: test
+            read:
+              - read1
+            write:
+              - write1
+          slot3:
+            interface: content
+            read:
+              - read1
+              - read2
+          slot4:
+        """
+    )
+
+    metadata = SnapMetadata.unmarshal(yaml.safe_load(yaml_data))
+    content_slots = metadata.get_content_slots()
+
+    assert content_slots == [
+        ContentSlot(
+            interface="content",
+            content="test",
+            read=["read1"],
+            write=["write1"],
+        ),
+        ContentSlot(
+            interface="content",
+            content="slot3",
+            read=["read1", "read2"],
+            write=[],
+        ),
+    ]
+
+
+def test_project_passthrough_snap_yaml(simple_project, new_dir):
+    snap_yaml.write(
+        simple_project(
+            passthrough={
+                "somefield": [
+                    "some",
+                    "value",
+                ],
+            },
+        ),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    content = yaml_file.read_text()
+    assert content == textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        base: core22
+        apps:
+          app1:
+            command: bin/mytest
+        confinement: strict
+        grade: stable
+        environment:
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+        somefield:
+        - some
+        - value
+        """
+    )
+
+
+def test_app_passthrough_snap_yaml(simple_project, new_dir):
+    snap_yaml.write(
+        simple_project(
+            apps={
+                "app1": {
+                    "passthrough": {
+                        "somefield": [
+                            "some",
+                            "value",
+                        ],
+                    },
+                },
+            },
+        ),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    content = yaml_file.read_text()
+    assert content == textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        base: core22
+        apps:
+          app1:
+            command: bin/mytest
+            somefield:
+            - some
+            - value
+        confinement: strict
+        grade: stable
+        environment:
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+        """
+    )

@@ -776,7 +776,7 @@ def find_linker(*, root_path: str, snap_base_path: str) -> str:
     # libraries but expect them to be consciously brought in by stage-packages
     # instead.
     libc6_libraries_paths = [
-        os.path.join(root_path, l[1:]) for l in libc6_libraries_list
+        os.path.join(root_path, library[1:]) for library in libc6_libraries_list
     ]
 
     dynamic_linker = _get_dynamic_linker(libc6_libraries_paths)

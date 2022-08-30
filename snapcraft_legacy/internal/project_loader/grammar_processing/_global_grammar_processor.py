@@ -18,7 +18,6 @@ from typing import Any, Dict, Set
 
 from craft_grammar import GrammarProcessor
 
-from snapcraft_legacy import project
 from snapcraft_legacy.internal import repo
 
 

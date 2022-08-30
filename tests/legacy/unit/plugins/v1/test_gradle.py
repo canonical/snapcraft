@@ -141,7 +141,7 @@ def test_build_gradlew(mock_run, gradle_plugin_with_assets):
     plugin = gradle_plugin_with_assets
     (pathlib.Path(plugin.sourcedir) / "gradlew").touch()
 
-    def fake_run(l, **kwargs):
+    def fake_run(cmd, **kwargs):
         os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
         open(os.path.join(plugin.builddir, "build", "libs", "dummy.jar"), "w").close()
 
@@ -157,7 +157,7 @@ def test_build_gradlew(mock_run, gradle_plugin_with_assets):
 def test_build_gradle(mock_run, gradle_plugin_with_assets):
     plugin = gradle_plugin_with_assets
 
-    def fake_run(l, **kwargs):
+    def fake_run(cmd, **kwargs):
         os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
         open(os.path.join(plugin.builddir, "build", "libs", "dummy.jar"), "w").close()
 
@@ -173,7 +173,7 @@ def test_build_gradle(mock_run, gradle_plugin_with_assets):
 def test_build_war_gradle(mock_run, gradle_plugin_with_assets):
     plugin = gradle_plugin_with_assets
 
-    def fake_run(l, **kwargs):
+    def fake_run(cmd, **kwargs):
         os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
         open(os.path.join(plugin.builddir, "build", "libs", "dummy.war"), "w").close()
 
@@ -190,7 +190,7 @@ def test_build_war_gradlew(mock_run, gradle_plugin_with_assets):
     plugin = gradle_plugin_with_assets
     (pathlib.Path(plugin.sourcedir) / "gradlew").touch()
 
-    def fake_run(l, **kwargs):
+    def fake_run(cmd, **kwargs):
         os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
         open(os.path.join(plugin.builddir, "build", "libs", "dummy.war"), "w").close()
 
@@ -271,7 +271,7 @@ class TestGradleProxies:
         plugin = gradle_plugin_with_assets
         (pathlib.Path(plugin.sourcedir) / "gradlew").touch()
 
-        def fake_run(l, **kwargs):
+        def fake_run(cmd, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
             open(
                 os.path.join(plugin.builddir, "build", "libs", "dummy.jar"), "w"
@@ -292,7 +292,7 @@ class TestGradleProxies:
 
         plugin = gradle_plugin_with_assets
 
-        def fake_run(l, **kwargs):
+        def fake_run(cmd, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
             open(
                 os.path.join(plugin.builddir, "build", "libs", "dummy.jar"), "w"

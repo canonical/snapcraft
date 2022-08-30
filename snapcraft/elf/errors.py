@@ -43,3 +43,10 @@ class CorruptedElfFile(errors.SnapcraftError):
         self.path = path
 
         super().__init__(f"Error parsing ELF file {str(path)!r}: {str(error)}")
+
+
+class DynamicLinkerNotFound(errors.SnapcraftError):
+    """Failed to find the dynamic linker for this platform."""
+
+    def __init__(self, path: Path) -> None:
+        super().__init__(f"Dynamic linker {str(path)!r} not found.")

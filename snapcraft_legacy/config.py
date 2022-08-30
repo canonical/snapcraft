@@ -24,7 +24,6 @@ from xdg import BaseDirectory
 
 from snapcraft_legacy.internal.errors import SnapcraftInvalidCLIConfigError
 
-
 logger = logging.getLogger(__name__)
 
 
