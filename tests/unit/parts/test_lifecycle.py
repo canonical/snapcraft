@@ -192,14 +192,14 @@ def test_lifecycle_legacy_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
         ("prime", "prime"),
     ],
 )
-@pytest.mark.parametrize("debug_shell", [None, "debug", "shell", "shell_after"])
+@pytest.mark.parametrize("debug_shell", [None, "shell", "shell_after"])
 def test_lifecycle_run_command_step(
     cmd, step, debug_shell, snapcraft_yaml, project_vars, new_dir, mocker
 ):
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     mocker.patch("snapcraft.meta.snap_yaml.write")
-    pack_mock = mocker.patch("snapcraft.pack.pack_snap")
+    mocker.patch("snapcraft.pack.pack_snap")
 
     parsed_args = argparse.Namespace(
         debug=False,
@@ -224,12 +224,11 @@ def test_lifecycle_run_command_step(
         parsed_args=parsed_args,
     )
 
-    call_args = {"debug": False, "shell": False, "shell_after": False}
+    call_args = {"shell": False, "shell_after": False}
     if debug_shell:
         call_args[debug_shell] = True
 
     assert run_mock.mock_calls == [call(step, **call_args)]
-    assert pack_mock.mock_calls == []
 
 
 @pytest.mark.parametrize("cmd", ["pack", "snap"])
@@ -259,9 +258,7 @@ def test_lifecycle_run_command_pack(cmd, snapcraft_yaml, project_vars, new_dir, 
         ),
     )
 
-    assert run_mock.mock_calls == [
-        call("prime", debug=False, shell=False, shell_after=False)
-    ]
+    assert run_mock.mock_calls == [call("prime", shell=False, shell_after=False)]
     assert pack_mock.mock_calls[:1] == [
         call(
             new_dir / "prime",
@@ -310,9 +307,7 @@ def test_lifecycle_pack_destructive_mode(
     )
 
     assert run_in_provider_mock.mock_calls == []
-    assert run_mock.mock_calls == [
-        call("prime", debug=False, shell=False, shell_after=False)
-    ]
+    assert run_mock.mock_calls == [call("prime", shell=False, shell_after=False)]
     assert pack_mock.mock_calls[:1] == [
         call(
             new_dir / "home/prime",
@@ -362,9 +357,7 @@ def test_lifecycle_pack_managed(cmd, snapcraft_yaml, project_vars, new_dir, mock
     )
 
     assert run_in_provider_mock.mock_calls == []
-    assert run_mock.mock_calls == [
-        call("prime", debug=False, shell=False, shell_after=False)
-    ]
+    assert run_mock.mock_calls == [call("prime", shell=False, shell_after=False)]
     assert pack_mock.mock_calls[:1] == [
         call(
             new_dir / "home/prime",
@@ -456,9 +449,7 @@ def test_lifecycle_pack_metadata_error(cmd, snapcraft_yaml, new_dir, mocker):
     assert str(raised.value) == (
         "error setting grade: unexpected value; permitted: 'stable', 'devel'"
     )
-    assert run_mock.mock_calls == [
-        call("prime", debug=False, shell=False, shell_after=False)
-    ]
+    assert run_mock.mock_calls == [call("prime", shell=False, shell_after=False)]
     assert pack_mock.mock_calls == []
 
 
@@ -637,10 +628,10 @@ def test_lifecycle_clean_managed(snapcraft_yaml, project_vars, new_dir, mocker):
 def test_lifecycle_debug_shell(snapcraft_yaml, cmd, new_dir, mocker):
     """Adoptable fields shouldn't be empty after adoption."""
     mocker.patch("craft_parts.executor.Executor.execute", side_effect=Exception)
-    mock_shell = mocker.patch("subprocess.run")
+    mock_shell = mocker.patch("snapcraft.parts.lifecycle.launch_shell")
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
 
-    with pytest.raises(errors.PartsLifecycleError):
+    with pytest.raises(errors.SnapcraftError):
         parts_lifecycle._run_command(
             cmd,
             project=project,
@@ -656,11 +647,43 @@ def test_lifecycle_debug_shell(snapcraft_yaml, cmd, new_dir, mocker):
                 shell=False,
                 shell_after=False,
                 use_lxd=False,
+                enable_manifest=False,
                 parts=["part1"],
             ),
         )
 
-    assert mock_shell.mock_calls == [call(["bash"], check=False, cwd=None)]
+    assert mock_shell.mock_calls == [call()]
+
+
+def test_lifecycle_post_lifecycle_debug_shell(snapcraft_yaml, new_dir, mocker):
+    """Adoptable fields shouldn't be empty after adoption."""
+    mocker.patch("snapcraft.pack.pack_snap", side_effect=Exception)
+    mocker.patch("snapcraft.meta.snap_yaml.write")
+    mock_shell = mocker.patch("snapcraft.parts.lifecycle.launch_shell")
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+
+    with pytest.raises(errors.SnapcraftError):
+        parts_lifecycle._run_command(
+            "pack",
+            project=project,
+            parse_info={},
+            assets_dir=Path(),
+            start_time=datetime.now(),
+            parallel_build_count=8,
+            parsed_args=argparse.Namespace(
+                directory=None,
+                output=None,
+                debug=True,
+                destructive_mode=True,
+                shell=False,
+                shell_after=False,
+                use_lxd=False,
+                enable_manifest=False,
+                parts=["part1"],
+            ),
+        )
+
+    assert mock_shell.mock_calls == [()]
 
 
 @pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime"])
@@ -691,6 +714,7 @@ def test_lifecycle_shell(snapcraft_yaml, cmd, new_dir, mocker):
             shell=True,
             shell_after=False,
             use_lxd=False,
+            enable_manifest=False,
             parts=["part1"],
         ),
     )
@@ -735,6 +759,7 @@ def test_lifecycle_shell_after(snapcraft_yaml, cmd, new_dir, mocker):
             shell=False,
             shell_after=True,
             use_lxd=False,
+            enable_manifest=False,
             parts=["part1"],
         ),
     )
