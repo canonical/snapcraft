@@ -1,0 +1,52 @@
+summary: Verify snap configuration and configure hook functionality
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snap/snapcraft.yaml"
+
+restore: |
+  snapcraft clean
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  snap_config_file="/var/snap/snapcraft/current/snap-config.yaml"
+
+  # configure default provider
+  snap set snapcraft provider=lxd
+
+  # verify config file exists
+  if ! [[ -e $snap_config_file ]]; then
+    echo "Could not find config file $snap_config_file"
+    exit 1
+  fi
+
+  # verify contents of config file
+  if ! diff $snap_config_file expected-snap-config-set.yaml; then
+      echo "The formatting for snap-config.yaml is incorrect"
+      exit 1
+  fi
+
+  # verify snapcraft executes
+  snapcraft
+
+  # unset the value
+  snap unset snapcraft provider
+
+  # verify config file exists
+  if ! [[ -e $snap_config_file ]]; then
+    echo "Could not find config file $snap_config_file"
+    exit 1
+  fi
+
+  # verify variable was unset in the config
+  if ! diff $snap_config_file expected-snap-config-unset.yaml; then
+      echo "The formatting for snap-config.yaml is incorrect"
+      exit 1
+  fi
+
+  # again, verify snapcraft executes
+  snapcraft
