@@ -636,9 +636,17 @@ def test_release_progressive(fake_client):
 #########
 
 
-def test_close(fake_client):
+def test_close(fake_client, monkeypatch):
+    monkeypatch.setattr(
+        client.StoreClientCLI,
+        "get_account_info",
+        lambda self: {
+            "snaps": {constants.DEFAULT_SERIES: {"test-snap": {"snap-id": "12345"}}}
+        },
+    )
+
     client.StoreClientCLI().close(
-        snap_id="12345",
+        snap_name="test-snap",
         channel="edge",
     )
 
@@ -1014,6 +1022,21 @@ def test_on_prem_release_progressive_percentage_unsupported(on_prem_client):
             channels=["stable", "edge"],
             progressive_percentage=10,
         )
+
+
+def test_on_prem_close(on_prem_client, fake_client_request):
+    on_prem_client.close("fake-snap", channel="stable")
+
+    assert fake_client_request.mock_calls == [
+        call(
+            ANY,
+            "POST",
+            "https://dashboard.snapcraft.io/v1/snap/fake-snap/releases",
+            json=[
+                {"revision": None, "channel": "stable"},
+            ],
+        )
+    ]
 
 
 def test_on_prem_get_channel_map(
