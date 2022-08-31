@@ -198,8 +198,12 @@ def _run_dispatcher(dispatcher: craft_cli.Dispatcher) -> None:
     emit.ended_ok()
 
 
-def _emit_error(error):
+def _emit_error(error, cause=None):
     """Emit the error in a centralized way so we can alter it consistently."""
+    # set the cause, if any
+    if cause is not None:
+        error.__cause__ = cause
+
     # Do not report the internal logpath if running inside instance
     if utils.is_managed_mode():
         error.logpath_report = False
@@ -234,6 +238,9 @@ def run():
         retcode = 0
     except errors.LegacyFallback as err:
         run_legacy(err)
+    except KeyboardInterrupt as err:
+        _emit_error(craft_cli.errors.CraftError("Interrupted."), cause=err)
+        retcode = 1
     except craft_store.errors.NoKeyringError as err:
         _emit_error(
             craft_cli.errors.CraftError(
