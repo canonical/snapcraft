@@ -20,6 +20,10 @@ import os
 import sys
 from typing import Optional
 
+from craft_cli import emit
+
+from snapcraft.snap_config import get_snap_config
+
 from ._lxd import LXDProvider
 from ._multipass import MultipassProvider
 from ._provider import Provider
@@ -28,40 +32,57 @@ from ._provider import Provider
 def get_provider(provider: Optional[str] = None) -> Provider:
     """Get the configured or appropriate provider for the host OS.
 
-    If platform is not Linux, use Multipass.
-
-    If platform is Linux:
+    To determine the appropriate provider,
     (1) use provider specified in the function argument,
-    (2) use provider specified with snap configuration if running
-        as snap,
-    (3) get the provider from the environment if valid,
-    (4) default to platform default (LXD on Linux).
+    (2) get the provider from the environment if valid,
+    (3) use provider specified with snap configuration,
+    (4) default to platform default (LXD on Linux, otherwise Multipass).
 
     :return: Provider instance.
     """
+    chosen_provider = ""
     env_provider = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT")
-    env_provider_is_valid = env_provider in ("lxd", "multipass")
 
-    if provider is None and env_provider_is_valid:
-        provider = env_provider
-    elif provider is None:
-        provider = get_platform_default_provider()
+    # load snap config file
+    snap_config = get_snap_config()
+    if snap_config:
+        snap_provider = snap_config.provider
+    else:
+        snap_provider = None
 
-    if provider == "lxd":
+    # (1) use provider specified in the function argument
+    if provider:
+        emit.debug(f"Using provider {provider!r} passed as an argument.")
+        chosen_provider = provider
+
+    # (2) get the provider from the environment if valid
+    elif env_provider:
+        emit.debug(
+            f"Using provider {env_provider!r} from environmental "
+            "variable 'SNAPCRAFT_BUILD_ENVIRONMENT'."
+        )
+        chosen_provider = env_provider
+
+    # (3) use provider specified with snap configuration
+    elif snap_provider:
+        emit.debug(f"Using provider {snap_provider!r} from snap config.")
+        chosen_provider = snap_provider
+
+    # (4) default to platform default (LXD on Linux, otherwise Multipass)
+    elif sys.platform == "linux":
+        emit.debug("Using default provider 'lxd' on linux system.")
+        chosen_provider = "lxd"
+    else:
+        emit.debug("Using default provider 'multipass' on non-linux system.")
+        chosen_provider = "multipass"
+
+    # ignore case
+    chosen_provider = chosen_provider.lower()
+
+    if chosen_provider not in ("lxd", "multipass"):
+        raise RuntimeError(f"unsupported provider specified: {chosen_provider!r}")
+
+    # return the chosen provider
+    if chosen_provider == "lxd":
         return LXDProvider()
-
-    if provider == "multipass":
-        return MultipassProvider()
-
-    raise RuntimeError(f"Unsupported provider specified: {provider!r}.")
-
-
-def get_platform_default_provider() -> str:
-    """Obtain the default provider for the host platform.
-
-    :return: Default provider name.
-    """
-    if sys.platform == "linux":
-        return "lxd"
-
-    return "multipass"
+    return MultipassProvider()

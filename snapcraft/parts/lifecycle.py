@@ -239,9 +239,6 @@ def _run_command(
                 permanent=True,
             )
 
-    if parsed_args.use_lxd and providers.get_platform_default_provider() == "lxd":
-        emit.progress("LXD is used by default on this platform.", permanent=True)
-
     if (
         not managed_mode
         and not parsed_args.destructive_mode
