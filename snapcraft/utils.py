@@ -413,3 +413,8 @@ def process_version(version: Optional[str]) -> str:
         emit.progress(f"Version has been set to {new_version!r}", permanent=True)
 
     return new_version
+
+
+def is_snapcraft_running_from_snap() -> bool:
+    """Check if snapcraft is running from the snap."""
+    return os.getenv("SNAP_NAME") == "snapcraft" and os.getenv("SNAP") is not None

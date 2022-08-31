@@ -1,0 +1,48 @@
+summary: Verify snap configuration and configure hook functionality
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snap/snapcraft.yaml"
+
+restore: |
+  snapcraft clean
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  # configure default provider
+  snap set snapcraft provider=lxd
+
+  # verify the value was set
+  if ! [[ $(snap get snapcraft provider) == "lxd" ]]; then
+      echo "configure hook did not run as expected"
+      exit 1
+  fi
+
+  # verify snapcraft executes
+  snapcraft
+
+  # unset the value
+  snap unset snapcraft provider
+
+  # 'snap get' should now return an error
+  output="$(snap get snapcraft 2>&1 || true)"
+
+  if ! [[ $output == 'error: snap "snapcraft" has no configuration' ]]; then
+      echo "configure hook did not run as expected"
+      exit 1
+  fi
+
+  # again, verify snapcraft executes
+  snapcraft
+
+  # finally, set an invalid value and verify the configure hook exits with an error
+  output="$(sudo snap set snapcraft provider=invalid-value 2>&1 || true)"
+
+  if ! [[ $output =~ "unexpected value; permitted: 'lxd', 'multipass'" ]]; then
+      echo "configure hook did not exit with the expected error message"
+      exit 1
+  fi

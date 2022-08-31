@@ -140,3 +140,9 @@ parts:
         mv $SNAPCRAFT_PART_INSTALL/bin/craftctl $SNAPCRAFT_PART_INSTALL/libexec/snapcraft/
         sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python -E|' $SNAPCRAFT_PART_INSTALL/libexec/snapcraft/craftctl
     after: [snapcraft-libs]
+
+hooks:
+  configure:
+    passthrough:
+      environment:
+        PATH: "$SNAP/bin"
