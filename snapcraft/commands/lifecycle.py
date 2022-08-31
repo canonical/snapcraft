@@ -75,6 +75,18 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             help="Set target architecture to build for",
         )
         parser.add_argument(
+            "--http-proxy",
+            type=str,
+            default=os.getenv("http_proxy"),
+            help="Set http proxy",
+        )
+        parser.add_argument(
+            "--https-proxy",
+            type=str,
+            default=os.getenv("https_proxy"),
+            help="Set https proxy",
+        )
+        parser.add_argument(
             "--ua-token",
             type=str,
             metavar="ua-token",

@@ -123,6 +123,28 @@ GLOBAL_ARGS = [
 ]
 
 
+def get_verbosity() -> EmitterMode:
+    """Return the verbosity level to use.
+
+    if SNAPCRAFT_ENABLE_DEVELOPER_DEBUG is set, the
+    default verbosity will be set to EmitterMode.DEBUG.
+
+    If stdin is closed, the default verbosity will be
+    set to EmitterMode.VERBOSE.
+    """
+    verbosity = EmitterMode.BRIEF
+
+    if not sys.stdin.isatty():
+        verbosity = EmitterMode.VERBOSE
+
+    with contextlib.suppress(ValueError):
+        # Parse environment variable for backwards compatibility with launchpad
+        if utils.strtobool(os.getenv("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "n").strip()):
+            verbosity = EmitterMode.DEBUG
+
+    return verbosity
+
+
 def get_dispatcher() -> craft_cli.Dispatcher:
     """Return an instance of Dispatcher.
 
@@ -146,7 +168,7 @@ def get_dispatcher() -> craft_cli.Dispatcher:
         log_filepath = None
 
     emit.init(
-        mode=EmitterMode.BRIEF,
+        mode=get_verbosity(),
         appname="snapcraft",
         greeting=f"Starting Snapcraft {__version__}",
         log_filepath=log_filepath,

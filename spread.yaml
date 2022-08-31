@@ -287,6 +287,9 @@ suites:
 
  tests/spread/core22/linters/:
    summary: core22 linter tests
+   environment:
+     SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: "n"
+
    systems:
      - ubuntu-22.04*
 
