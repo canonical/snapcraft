@@ -490,9 +490,11 @@ def _run_in_provider(
         except subprocess.CalledProcessError as err:
             capture_logs_from_instance(instance)
             raise errors.SnapcraftError(
-                f"Failed to execute {command_name} in instance. "
-                "Run the same command again with --debug to shell into "
-                "the environment if you wish to introspect this failure."
+                f"Failed to execute {command_name} in instance.",
+                details=(
+                    "Run the same command again with --debug to shell into "
+                    "the environment if you wish to introspect this failure."
+                ),
             ) from err
 
 
