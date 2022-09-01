@@ -28,6 +28,7 @@ import snapcraft_legacy
 from snapcraft_legacy import storeapi
 from snapcraft_legacy._store import StoreClientCLI
 from snapcraft_legacy.storeapi import metrics as metrics_module
+
 from . import echo
 from ._metrics import convert_metrics_to_table
 

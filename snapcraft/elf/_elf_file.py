@@ -353,7 +353,7 @@ class ElfFile:
         self,
         root_path: Path,
         base_path: Optional[Path],
-        content_dirs: Set[Path],
+        content_dirs: List[Path],
         arch_triplet: str,
         soname_cache: Optional[SonameCache] = None,
     ) -> Set[str]:

@@ -1,3 +1,5 @@
-#!/bin/sh
+#!/bin/bash
 
-exec "${SNAP}/snap/command-chain/run" "${SNAP}/gnome-platform/command-chain/desktop-launch" "$@"
+set -- "${SNAP}/gnome-platform/command-chain/desktop-launch" "$@"
+# shellcheck source=/dev/null
+source "${SNAP}/snap/command-chain/run"

@@ -285,6 +285,14 @@ suites:
      - ubuntu-22.04-64
      - ubuntu-22.04-amd64
 
+ tests/spread/core22/linters/:
+   summary: core22 linter tests
+   environment:
+     SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: "n"
+
+   systems:
+     - ubuntu-22.04*
+
  # General, core suite
  tests/spread/general/:
    summary: tests of snapcraft core functionality

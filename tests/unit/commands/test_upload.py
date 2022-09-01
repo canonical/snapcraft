@@ -26,7 +26,7 @@ def fake_store_client_upload_file(mocker):
 @pytest.fixture
 def fake_store_notify_upload(mocker):
     fake_client = mocker.patch(
-        "snapcraft.commands.store.StoreClientCLI.notify_upload",
+        "snapcraft.store.StoreClientCLI.notify_upload",
         autospec=True,
         return_value=10,
     )
@@ -36,7 +36,7 @@ def fake_store_notify_upload(mocker):
 @pytest.fixture
 def fake_store_verify_upload(mocker):
     fake_client = mocker.patch(
-        "snapcraft.commands.store.StoreClientCLI.verify_upload",
+        "snapcraft.store.StoreClientCLI.verify_upload",
         autospec=True,
         return_value=None,
     )

@@ -29,7 +29,8 @@ import craft_parts
 from craft_cli import EmitterMode, emit
 from craft_parts import ProjectInfo, StepInfo, callbacks
 
-from snapcraft import errors, extensions, pack, providers, utils
+from snapcraft import errors, extensions, linters, pack, providers, ua_manager, utils
+from snapcraft.linters import LinterStatus
 from snapcraft.meta import manifest, snap_yaml
 from snapcraft.projects import (
     Architecture,
@@ -83,11 +84,7 @@ def get_snap_project() -> _SnapProject:
         if snap_project.project_file.exists():
             return snap_project
 
-    raise errors.SnapcraftError(
-        "Could not find snap/snapcraft.yaml. Are you sure you are in the "
-        "right directory?",
-        resolution="To start a new project, use `snapcraft init`",
-    )
+    raise errors.ProjectMissing()
 
 
 def apply_yaml(
@@ -175,10 +172,22 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     snap_project = get_snap_project()
     yaml_data = process_yaml(snap_project.project_file)
     start_time = datetime.now()
-    build_plan = get_build_plan(yaml_data, parsed_args)
 
     if parsed_args.provider:
         raise errors.SnapcraftError("Option --provider is not supported.")
+
+    if yaml_data.get("ua-services"):
+        if not parsed_args.ua_token:
+            raise errors.SnapcraftError(
+                "UA services require a UA token to be specified."
+            )
+
+        if not parsed_args.enable_experimental_ua_services:
+            raise errors.SnapcraftError(
+                "Using UA services requires --enable-experimental-ua-services."
+            )
+
+    build_plan = get_build_plan(yaml_data, parsed_args)
 
     # Register our own callbacks
     callbacks.register_prologue(_set_global_environment)
@@ -248,8 +257,7 @@ def _run_command(
         work_dir = utils.get_managed_environment_home_path()
         project_dir = utils.get_managed_environment_project_path()
     else:
-        work_dir = Path.cwd()
-        project_dir = Path.cwd()
+        work_dir = project_dir = Path.cwd()
 
     step_name = "prime" if command_name in ("pack", "snap") else command_name
 
@@ -319,53 +327,34 @@ def _run_lifecycle_and_pack(
     parsed_args: "argparse.Namespace",
 ) -> None:
     """Execute the parts lifecycle, generate metadata, and create the snap."""
-    lifecycle.run(
-        step_name,
-        shell=getattr(parsed_args, "shell", False),
-        shell_after=getattr(parsed_args, "shell_after", False),
-    )
+    with ua_manager.ua_manager(parsed_args.ua_token, services=project.ua_services):
+        lifecycle.run(
+            step_name,
+            shell=getattr(parsed_args, "shell", False),
+            shell_after=getattr(parsed_args, "shell_after", False),
+        )
 
     # Extract metadata and generate snap.yaml
-    project_vars = lifecycle.project_vars
     part_names = getattr(parsed_args, "part_names", None)
 
     if step_name == "prime" and not part_names:
-        emit.progress("Extracting and updating metadata...")
-        metadata_list = lifecycle.extract_metadata()
-        update_project_metadata(
-            project,
-            project_vars=project_vars,
-            metadata_list=metadata_list,
-            assets_dir=assets_dir,
-            prime_dir=lifecycle.prime_dir,
-        )
-
-        emit.progress("Copying snap assets...")
-        setup_assets(
-            project,
-            assets_dir=assets_dir,
+        _generate_metadata(
+            project=project,
+            lifecycle=lifecycle,
             project_dir=project_dir,
-            prime_dir=lifecycle.prime_dir,
+            assets_dir=assets_dir,
+            start_time=start_time,
+            parsed_args=parsed_args,
         )
-
-        emit.progress("Generating snap metadata...")
-        snap_yaml.write(
-            project,
-            lifecycle.prime_dir,
-            arch=lifecycle.target_arch,
-            arch_triplet=lifecycle.target_arch_triplet,
-        )
-        emit.progress("Generated snap metadata", permanent=True)
-
-        if parsed_args.enable_manifest:
-            _generate_manifest(
-                project,
-                lifecycle=lifecycle,
-                start_time=start_time,
-                parsed_args=parsed_args,
-            )
 
     if command_name in ("pack", "snap"):
+        issues = linters.run_linters(lifecycle.prime_dir, lint=project.lint)
+        status = linters.report(issues, intermediate=True)
+
+        # In case of linter errors, stop execution and return the error code.
+        if status in (LinterStatus.ERRORS, LinterStatus.FATAL):
+            raise errors.LinterError("Linter errors found", exit_code=status)
+
         snap_filename = pack.pack_snap(
             lifecycle.prime_dir,
             output=parsed_args.output,
@@ -375,6 +364,53 @@ def _run_lifecycle_and_pack(
             target_arch=project.get_build_for(),
         )
         emit.message(f"Created snap package {snap_filename}")
+
+
+def _generate_metadata(
+    *,
+    project: Project,
+    lifecycle: PartsLifecycle,
+    project_dir: Path,
+    assets_dir: Path,
+    start_time: datetime,
+    parsed_args: "argparse.Namespace",
+):
+    project_vars = lifecycle.project_vars
+
+    emit.progress("Extracting and updating metadata...")
+    metadata_list = lifecycle.extract_metadata()
+    update_project_metadata(
+        project,
+        project_vars=project_vars,
+        metadata_list=metadata_list,
+        assets_dir=assets_dir,
+        prime_dir=lifecycle.prime_dir,
+    )
+
+    emit.progress("Copying snap assets...")
+    setup_assets(
+        project,
+        assets_dir=assets_dir,
+        project_dir=project_dir,
+        prime_dir=lifecycle.prime_dir,
+    )
+
+    emit.progress("Generating snap metadata...")
+    snap_yaml.write(
+        project,
+        lifecycle.prime_dir,
+        arch=lifecycle.target_arch,
+        arch_triplet=lifecycle.target_arch_triplet,
+    )
+    emit.progress("Generated snap metadata", permanent=True)
+
+    if parsed_args.enable_manifest:
+        _generate_manifest(
+            project,
+            lifecycle=lifecycle,
+            start_time=start_time,
+            parsed_args=parsed_args,
+        )
 
 
 def _generate_manifest(
@@ -429,6 +465,9 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
     emit.progress("Cleaned build provider", permanent=True)
 
 
+# pylint: disable=too-many-branches
+
+
 def _run_in_provider(
     project: Project, command_name: str, parsed_args: "argparse.Namespace"
 ) -> None:
@@ -472,6 +511,13 @@ def _run_in_provider(
     cmd.append("--build-for")
     cmd.append(project.get_build_for())
 
+    ua_token = getattr(parsed_args, "ua_token", "")
+    if ua_token:
+        cmd.extend(["--ua-token", ua_token])
+
+    if getattr(parsed_args, "enable_experimental_ua_services", False):
+        cmd.append("--enable-experimental-ua-services")
+
     output_dir = utils.get_managed_environment_project_path()
 
     emit.progress("Launching instance...")
@@ -496,6 +542,9 @@ def _run_in_provider(
                     "the environment if you wish to introspect this failure."
                 ),
             ) from err
+
+
+# pylint: enable=too-many-branches
 
 
 def _set_global_environment(info: ProjectInfo) -> None:

@@ -71,8 +71,8 @@ class TestElfFileSmoketest:
 
     def test_invalid_elf_file(self, new_dir):
         Path("invalid-elf").write_bytes(b"\x7fELF\x00")
-        elf_files = elf_utils.get_elf_files(new_dir, {"invalid-elf"})
-        assert elf_files == set()
+        elf_files = elf_utils.get_elf_files_from_list(new_dir, ["invalid-elf"])
+        assert elf_files == []
 
 
 class TestGetLibraries:

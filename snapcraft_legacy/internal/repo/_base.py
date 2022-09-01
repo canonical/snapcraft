@@ -354,7 +354,9 @@ def fix_pkg_config(
     prefixes_to_trim = [r"/build/[\w\-. ]+/stage", "/root/stage"]
     if prefix_trim:
         prefixes_to_trim.append(prefix_trim)
-    pattern_trim = re.compile(f"^prefix=(?P<trim>{'|'.join(prefixes_to_trim)})(?P<prefix>.*)")
+    pattern_trim = re.compile(
+        f"^prefix=(?P<trim>{'|'.join(prefixes_to_trim)})(?P<prefix>.*)"
+    )
     pattern = re.compile("^prefix=(?P<prefix>.*)")
 
     # process .pc file

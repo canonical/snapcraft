@@ -1159,6 +1159,17 @@
         },
         "slots": {
             "type": "object"
+        },
+        "ua-services": {
+            "type": "array",
+            "description": "UA services to enable.",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": [
+                {
+                    "type": "string"
+                }
+            ]
         }
     },
     "allOf": [

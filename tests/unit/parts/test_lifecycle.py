@@ -104,6 +104,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
             enable_manifest=False,
             manifest_image_information=None,
             bind_ssh=False,
+            ua_token=None,
             build_for=None,
         ),
     )
@@ -131,6 +132,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
             ),
         ),
@@ -184,6 +186,65 @@ def test_lifecycle_legacy_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
 
 
 @pytest.mark.parametrize(
+    "cmd", ["pull", "build", "stage", "prime", "pack", "snap", "clean"]
+)
+def test_lifecycle_run_ua_services_without_token(cmd, snapcraft_yaml, new_dir, mocker):
+    """UA services require --ua-token."""
+    snapcraft_yaml(base="core22", **{"ua-services": ["svc1", "svc2"]})
+    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch(
+        "snapcraft.providers.Provider.is_base_available", return_value=(True, None)
+    )
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        parts_lifecycle.run(
+            cmd,
+            parsed_args=argparse.Namespace(
+                destructive_mode=False,
+                use_lxd=False,
+                provider=None,
+                ua_token=None,
+                build_for=get_host_architecture(),
+            ),
+        )
+
+    assert run_mock.mock_calls == []
+    assert str(raised.value) == "UA services require a UA token to be specified."
+
+
+@pytest.mark.parametrize(
+    "cmd", ["pull", "build", "stage", "prime", "pack", "snap", "clean"]
+)
+def test_lifecycle_run_ua_services_without_experimental_flag(
+    cmd, snapcraft_yaml, new_dir, mocker
+):
+    """UA services require --ua-token."""
+    snapcraft_yaml(base="core22", **{"ua-services": ["svc1", "svc2"]})
+    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch(
+        "snapcraft.providers.Provider.is_base_available", return_value=(True, None)
+    )
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        parts_lifecycle.run(
+            cmd,
+            parsed_args=argparse.Namespace(
+                destructive_mode=False,
+                use_lxd=False,
+                provider=None,
+                ua_token="my-token",
+                build_for=get_host_architecture(),
+                enable_experimental_ua_services=False,
+            ),
+        )
+
+    assert run_mock.mock_calls == []
+    assert str(raised.value) == (
+        "Using UA services requires --enable-experimental-ua-services."
+    )
+
+
+@pytest.mark.parametrize(
     "cmd,step",
     [
         ("pull", "pull"),
@@ -208,6 +269,7 @@ def test_lifecycle_run_command_step(
         shell=False,
         shell_after=False,
         use_lxd=False,
+        ua_token=None,
         parts=[],
     )
 
@@ -235,7 +297,6 @@ def test_lifecycle_run_command_step(
 def test_lifecycle_run_command_pack(cmd, snapcraft_yaml, project_vars, new_dir, mocker):
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
-    mocker.patch("snapcraft.meta.snap_yaml.write")
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
 
     parts_lifecycle._run_command(
@@ -254,6 +315,7 @@ def test_lifecycle_run_command_pack(cmd, snapcraft_yaml, project_vars, new_dir, 
             shell=False,
             shell_after=False,
             use_lxd=False,
+            ua_token=None,
             parts=[],
         ),
     )
@@ -279,7 +341,6 @@ def test_lifecycle_pack_destructive_mode(
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
-    mocker.patch("snapcraft.meta.snap_yaml.write")
     mocker.patch("snapcraft.utils.is_managed_mode", return_value=True)
     mocker.patch(
         "snapcraft.utils.get_managed_environment_home_path",
@@ -302,6 +363,7 @@ def test_lifecycle_pack_destructive_mode(
             shell=False,
             shell_after=False,
             use_lxd=False,
+            ua_token=None,
             parts=[],
         ),
     )
@@ -326,7 +388,6 @@ def test_lifecycle_pack_managed(cmd, snapcraft_yaml, project_vars, new_dir, mock
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
-    mocker.patch("snapcraft.meta.snap_yaml.write")
     mocker.patch("snapcraft.utils.is_managed_mode", return_value=True)
     mocker.patch(
         "snapcraft.utils.get_managed_environment_home_path",
@@ -352,6 +413,7 @@ def test_lifecycle_pack_managed(cmd, snapcraft_yaml, project_vars, new_dir, mock
             shell=False,
             shell_after=False,
             use_lxd=False,
+            ua_token=None,
             parts=[],
         ),
     )
@@ -442,6 +504,7 @@ def test_lifecycle_pack_metadata_error(cmd, snapcraft_yaml, new_dir, mocker):
                 shell=False,
                 shell_after=False,
                 use_lxd=False,
+                ua_token=None,
                 parts=[],
             ),
         )
@@ -648,6 +711,7 @@ def test_lifecycle_debug_shell(snapcraft_yaml, cmd, new_dir, mocker):
                 shell_after=False,
                 use_lxd=False,
                 enable_manifest=False,
+                ua_token=None,
                 parts=["part1"],
             ),
         )
@@ -715,6 +779,7 @@ def test_lifecycle_shell(snapcraft_yaml, cmd, new_dir, mocker):
             shell_after=False,
             use_lxd=False,
             enable_manifest=False,
+            ua_token=None,
             parts=["part1"],
         ),
     )
@@ -760,6 +825,7 @@ def test_lifecycle_shell_after(snapcraft_yaml, cmd, new_dir, mocker):
             shell_after=True,
             use_lxd=False,
             enable_manifest=False,
+            ua_token=None,
             parts=["part1"],
         ),
     )
@@ -908,6 +974,7 @@ def test_lifecycle_run_expand_snapcraft_vars(new_dir, mocker):
             enable_manifest=False,
             manifest_image_information=None,
             bind_ssh=False,
+            ua_token=None,
             build_for=None,
             debug=False,
         ),
@@ -964,6 +1031,7 @@ def test_lifecycle_run_expand_craft_vars(new_dir, mocker):
             enable_manifest=False,
             manifest_image_information=None,
             bind_ssh=False,
+            ua_token=None,
             build_for=None,
             debug=False,
         ),
@@ -1010,6 +1078,7 @@ def test_lifecycle_run_permission_denied(new_dir):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
                 debug=False,
             ),

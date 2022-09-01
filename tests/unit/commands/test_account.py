@@ -31,7 +31,7 @@ from snapcraft import commands
 @pytest.fixture
 def fake_store_login(mocker):
     fake_client = mocker.patch(
-        "snapcraft.commands.store.StoreClientCLI.login",
+        "snapcraft.store.StoreClientCLI.login",
         autospec=True,
         return_value="secret",
     )
@@ -59,7 +59,7 @@ def test_login(emitter, fake_store_login):
 
 def test_login_with_file(emitter, mocker, legacy_config_path):
     store_credentials_mock = mocker.patch(
-        "snapcraft.commands.store._legacy_account.LegacyUbuntuOne.store_credentials"
+        "snapcraft.store._legacy_account.LegacyUbuntuOne.store_credentials"
     )
     legacy_config_path.write_text("secretb64")
 
@@ -276,6 +276,28 @@ def test_who_with_attenuations(emitter, fake_client):
         permissions: package_manage, package_access
         channels: edge, beta
         expires: 2023-04-22T21:48:57.000Z"""
+    )
+    emitter.assert_message(expected_message)
+
+
+def test_who_no_expires(emitter, fake_client):
+    fake_client.whoami.return_value = {
+        "account": {"email": "user@acme.org", "id": "id", "username": "user"},
+    }
+
+    cmd = commands.StoreWhoAmICommand(None)
+
+    cmd.run(argparse.Namespace())
+
+    assert fake_client.whoami.mock_calls == [call()]
+    expected_message = dedent(
+        """\
+        email: user@acme.org
+        username: user
+        id: id
+        permissions: no restrictions
+        channels: no restrictions
+        expires: N/A"""
     )
     emitter.assert_message(expected_message)
 

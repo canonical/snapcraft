@@ -255,7 +255,7 @@ class AntPluginSnapTest(PluginsV1BaseTestCase):
 
         self.create_assets(plugin)
 
-        def side(l, **kwargs):
+        def side(cmd, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "target"))
             open(os.path.join(plugin.builddir, "target", "dummy.jar"), "w").close()
 
@@ -275,7 +275,7 @@ class AntPluginSnapTest(PluginsV1BaseTestCase):
 
         self.create_assets(plugin)
 
-        def side(l, **kwargs):
+        def side(cmd, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "target"))
             open(os.path.join(plugin.builddir, "target", "dummy.jar"), "w").close()
 

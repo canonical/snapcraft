@@ -24,6 +24,7 @@ import craft_store
 import requests
 
 from snapcraft_legacy.internal.indicators import download_requests_stream
+
 from . import agent, constants, errors, metrics
 from ._dashboard_api import DashboardAPI
 from ._snap_api import SnapAPI
