@@ -143,6 +143,5 @@ parts:
 
 hooks:
   configure:
-    passthrough:
-      environment:
-        PATH: "$SNAP/bin"
+    environment:
+      PATH: "$SNAP/bin"
