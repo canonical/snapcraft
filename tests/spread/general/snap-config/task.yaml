@@ -23,7 +23,7 @@ execute: |
   fi
 
   # verify snapcraft executes
-  snapcraft
+  snapcraft pull
 
   # unset the value
   snap unset snapcraft provider
@@ -37,7 +37,7 @@ execute: |
   fi
 
   # again, verify snapcraft executes
-  snapcraft
+  snapcraft pull
 
   # finally, set an invalid value and verify the configure hook exits with an error
   output="$(sudo snap set snapcraft provider=invalid-value 2>&1 || true)"
