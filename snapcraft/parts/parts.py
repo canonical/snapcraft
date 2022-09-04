@@ -131,7 +131,6 @@ class PartsLifecycle:
         self,
         step_name: str,
         *,
-        debug: bool = False,
         shell: bool = False,
         shell_after: bool = False,
     ) -> None:
@@ -171,21 +170,17 @@ class PartsLifecycle:
                     emit.progress(f"Executed: {message}", permanent=True)
 
             if shell_after:
-                _launch_shell()
+                launch_shell()
 
             emit.progress("Executed parts lifecycle", permanent=True)
         except RuntimeError as err:
             raise RuntimeError(f"Parts processing internal error: {err}") from err
         except OSError as err:
-            if debug:
-                _launch_shell()
             msg = err.strerror
             if err.filename:
                 msg = f"{err.filename}: {msg}"
             raise errors.PartsLifecycleError(msg) from err
         except Exception as err:
-            if debug:
-                _launch_shell()
             raise errors.PartsLifecycleError(str(err)) from err
 
     def _install_package_repositories(self) -> None:
@@ -271,7 +266,7 @@ class PartsLifecycle:
         return self._lcm.get_pull_assets(part_name=part_name)
 
 
-def _launch_shell(*, cwd: Optional[pathlib.Path] = None) -> None:
+def launch_shell(*, cwd: Optional[pathlib.Path] = None) -> None:
     """Launch a user shell for debugging environment.
 
     :param cwd: Working directory to start user in.

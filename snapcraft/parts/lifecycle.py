@@ -28,7 +28,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 import craft_parts
 from craft_cli import EmitterMode, emit
 from craft_parts import ProjectInfo, StepInfo, callbacks
-from craft_providers import ProviderError
 
 from snapcraft import errors, extensions, linters, pack, providers, ua_manager, utils
 from snapcraft.linters import LinterStatus
@@ -47,7 +46,7 @@ from snapcraft.utils import (
 )
 
 from . import grammar, yaml_utils
-from .parts import PartsLifecycle
+from .parts import PartsLifecycle, launch_shell
 from .project_check import run_project_checks
 from .setup_assets import setup_assets
 from .update_metadata import update_project_metadata
@@ -207,18 +206,15 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
         )
         project = Project.unmarshal(yaml_data_for_arch)
 
-        try:
-            _run_command(
-                command_name,
-                project=project,
-                parse_info=parse_info,
-                parallel_build_count=build_count,
-                assets_dir=snap_project.assets_dir,
-                start_time=start_time,
-                parsed_args=parsed_args,
-            )
-        except PermissionError as err:
-            raise errors.FilePermissionError(err.filename, reason=err.strerror)
+        _run_command(
+            command_name,
+            project=project,
+            parse_info=parse_info,
+            parallel_build_count=build_count,
+            assets_dir=snap_project.assets_dir,
+            start_time=start_time,
+            parsed_args=parsed_args,
+        )
 
 
 def _run_command(
@@ -288,15 +284,59 @@ def _run_command(
         lifecycle.clean(part_names=part_names)
         return
 
+    try:
+        _run_lifecycle_and_pack(
+            lifecycle,
+            command_name=command_name,
+            step_name=step_name,
+            project=project,
+            project_dir=project_dir,
+            assets_dir=assets_dir,
+            start_time=start_time,
+            parsed_args=parsed_args,
+        )
+    except PermissionError as err:
+        if parsed_args.debug:
+            emit.progress(str(err), permanent=True)
+            launch_shell()
+        raise errors.FilePermissionError(err.filename, reason=err.strerror)
+    except OSError as err:
+        msg = err.strerror
+        if err.filename:
+            msg = f"{err.filename}: {msg}"
+        if parsed_args.debug:
+            emit.progress(msg, permanent=True)
+            launch_shell()
+        raise errors.SnapcraftError(msg) from err
+    except Exception as err:
+        if parsed_args.debug:
+            emit.progress(str(err), permanent=True)
+            launch_shell()
+        raise errors.SnapcraftError(str(err)) from err
+
+
+def _run_lifecycle_and_pack(
+    lifecycle: PartsLifecycle,
+    *,
+    command_name: str,
+    step_name: str,
+    project: Project,
+    project_dir: Path,
+    assets_dir: Path,
+    start_time: datetime,
+    parsed_args: "argparse.Namespace",
+) -> None:
+    """Execute the parts lifecycle, generate metadata, and create the snap."""
     with ua_manager.ua_manager(parsed_args.ua_token, services=project.ua_services):
         lifecycle.run(
             step_name,
-            debug=parsed_args.debug,
             shell=getattr(parsed_args, "shell", False),
             shell_after=getattr(parsed_args, "shell_after", False),
         )
 
     # Extract metadata and generate snap.yaml
+    part_names = getattr(parsed_args, "part_names", None)
+
     if step_name == "prime" and not part_names:
         _generate_metadata(
             project=project,
@@ -495,8 +535,12 @@ def _run_in_provider(
             capture_logs_from_instance(instance)
         except subprocess.CalledProcessError as err:
             capture_logs_from_instance(instance)
-            raise ProviderError(
-                f"Failed to execute {command_name} in instance."
+            raise errors.SnapcraftError(
+                f"Failed to execute {command_name} in instance.",
+                details=(
+                    "Run the same command again with --debug to shell into "
+                    "the environment if you wish to introspect this failure."
+                ),
             ) from err
 
 
