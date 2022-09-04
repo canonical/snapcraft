@@ -54,6 +54,7 @@ semantic-version==2.10.0
 semver==2.13.0
 simplejson==3.17.6
 six==1.16.0
+snap-helpers==0.2.0
 tabulate==0.8.10
 tinydb==4.7.0
 toml==0.10.2

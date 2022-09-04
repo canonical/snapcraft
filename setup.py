@@ -118,6 +118,7 @@ install_requires = [
     "requests-unixsocket",
     "requests",
     "simplejson",
+    "snap-helpers",
     "tabulate",
     "toml",
     "tinydb",
