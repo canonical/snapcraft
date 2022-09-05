@@ -87,12 +87,20 @@ RELEASES_JSONSCHEMA: Dict[str, Any] = {
                     "attributes": {"introduced_at": 2, "type": "object"},
                     "base": {"introduced_at": 1, "type": ["string", "null"]},
                     "build_url": {"introduced_at": 1, "type": ["string", "null"]},
+                    # new store
+                    "build-url": {"introduced_at": 1, "type": ["string", "null"]},
                     "confinement": {
                         "enum": ["strict", "classic", "devmode"],
                         "introduced_at": 1,
                         "type": "string",
                     },
                     "created_at": {
+                        "format": "date-time",
+                        "introduced_at": 1,
+                        "type": "string",
+                    },
+                    # new store
+                    "created-at": {
                         "format": "date-time",
                         "introduced_at": 1,
                         "type": "string",
@@ -116,6 +124,10 @@ RELEASES_JSONSCHEMA: Dict[str, Any] = {
                             "Rejected",
                             "ReviewInProgress",
                             "ReviewQueued",
+                            # new store
+                            "released",
+                            "approved",
+                            "rejected",
                         ],
                         "introduced_at": 1,
                         "type": "string",
@@ -124,9 +136,7 @@ RELEASES_JSONSCHEMA: Dict[str, Any] = {
                 },
                 "required": [
                     "architectures",
-                    "build_url",
                     "confinement",
-                    "created_at",
                     "grade",
                     "revision",
                     "sha3-384",
@@ -140,7 +150,7 @@ RELEASES_JSONSCHEMA: Dict[str, Any] = {
             "type": "array",
         },
     },
-    "required": ["releases", "revisions"],
+    "required": ["revisions"],
     "type": "object",
 }
 

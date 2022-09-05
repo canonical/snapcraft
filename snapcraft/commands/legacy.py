@@ -126,33 +126,6 @@ class StoreLegacyPromoteCommand(LegacyBaseCommand):
         )
 
 
-class StoreLegacyListRevisionsCommand(LegacyBaseCommand):
-    """Command passthrough for the list-revisions command."""
-
-    name = "list-revisions"
-    help_msg = "List published revisions for <snap-name>"
-    overview = textwrap.dedent(
-        """
-        Examples:
-            snapcraft list-revisions my-snap
-            snapcraft list-revisions my-snap --arch armhf
-            snapcraft revisions my-snap
-        """
-    )
-
-    @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
-        parser.add_argument(
-            "snap_name",
-            metavar="snap-name",
-        )
-        parser.add_argument(
-            "--arch",
-            metavar="arch",
-            help="architecture filter",
-        )
-
-
 class StoreLegacySetDefaultTrackCommand(LegacyBaseCommand):
     """Command passthrough for the set-default-track command."""
 

@@ -33,7 +33,6 @@ from .legacy import (
     StoreLegacyEditValidationSetsCommand,
     StoreLegacyGatedCommand,
     StoreLegacyListKeysCommand,
-    StoreLegacyListRevisionsCommand,
     StoreLegacyListValidationSetsCommand,
     StoreLegacyMetricsCommand,
     StoreLegacyPromoteCommand,
@@ -60,7 +59,13 @@ from .names import (
     StoreNamesCommand,
     StoreRegisterCommand,
 )
-from .status import StoreListTracksCommand, StoreStatusCommand, StoreTracksCommand
+from .status import (
+    StoreListRevisionsCommand,
+    StoreListTracksCommand,
+    StoreRevisionsCommand,
+    StoreStatusCommand,
+    StoreTracksCommand,
+)
 from .upload import StoreLegacyPushCommand, StoreUploadCommand
 from .version import VersionCommand
 
@@ -84,7 +89,6 @@ __all__ = [
     "StoreLegacyGatedCommand",
     "StoreLegacyListCommand",
     "StoreLegacyListRegisteredCommand",
-    "StoreLegacyListRevisionsCommand",
     "StoreLegacyListValidationSetsCommand",
     "StoreLegacyMetricsCommand",
     "StoreLegacyPromoteCommand",
@@ -97,11 +101,13 @@ __all__ = [
     "StoreLegacyValidateCommand",
     "StoreLegacyListKeysCommand",
     "StoreListTracksCommand",
+    "StoreListRevisionsCommand",
     "StoreLoginCommand",
     "StoreLogoutCommand",
     "StoreNamesCommand",
     "StoreRegisterCommand",
     "StoreReleaseCommand",
+    "StoreRevisionsCommand",
     "StoreStatusCommand",
     "StoreTracksCommand",
     "StoreUploadCommand",

@@ -330,11 +330,6 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
                 ],
             }
         )
-        self.fake_store_get_releases = fixtures.MockPatchObject(
-            storeapi.StoreClient, "get_snap_releases", return_value=self.releases
-        )
-        self.useFixture(self.fake_store_get_releases)
-
         # Mock the snap command, pass through a select few.
         self.fake_check_output = fixtures.MockPatch(
             "subprocess.check_output", side_effect=mock_check_output

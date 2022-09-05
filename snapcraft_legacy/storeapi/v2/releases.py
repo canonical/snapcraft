@@ -95,12 +95,23 @@ class Revision:
             payload,
             RELEASES_JSONSCHEMA["properties"]["revisions"]["items"]["properties"],
         )
+
+        if "created-at" in payload:
+            created_at = payload["created-at"]
+        else:
+            created_at = payload["created_at"]
+
+        if "build-url" in payload:
+            build_url = payload["build-url"]
+        else:
+            build_url = payload["build_url"]
+
         return cls(
             architectures=payload["architectures"],
             base=payload.get("base"),
-            build_url=payload["build_url"],
+            build_url=build_url,
             confinement=payload["confinement"],
-            created_at=payload["created_at"],
+            created_at=created_at,
             grade=payload["grade"],
             revision=payload["revision"],
             sha3_384=payload["sha3-384"],
@@ -166,7 +177,7 @@ class Releases:
     def unmarshal(cls, payload: Dict[str, Any]) -> "Releases":
         jsonschema.validate(payload, RELEASES_JSONSCHEMA)
         return cls(
-            releases=[Release.unmarshal(r) for r in payload["releases"]],
+            releases=[Release.unmarshal(r) for r in payload.get("releases", [])],
             revisions=[Revision.unmarshal(r) for r in payload["revisions"]],
         )
 

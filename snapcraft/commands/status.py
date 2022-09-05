@@ -19,7 +19,7 @@ import itertools
 import operator
 import textwrap
 from collections import OrderedDict
-from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, cast
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Set, Tuple, cast
 
 from craft_cli import BaseCommand, emit
 from overrides import overrides
@@ -418,4 +418,121 @@ class StoreTracksCommand(StoreListTracksCommand):
     """Command alias to list the tracks from a snap on the Snap Store."""
 
     name = "tracks"
+    hidden = True
+
+
+class StoreListRevisionsCommand(BaseCommand):
+    """Command to list-revisions."""
+
+    name = "list-revisions"
+    help_msg = "List published revisions for <snap-name>"
+    overview = textwrap.dedent(
+        """
+        Examples:
+            snapcraft list-revisions my-snap
+            snapcraft list-revisions my-snap --arch armhf
+            snapcraft revisions my-snap
+        """
+    )
+
+    @overrides
+    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+        parser.add_argument(
+            "snap_name",
+            metavar="snap-name",
+        )
+        parser.add_argument(
+            "--arch",
+            metavar="arch",
+            help="architecture filter",
+        )
+
+    @overrides
+    def run(self, parsed_args):
+        releases = store.StoreClientCLI().list_revisions(
+            snap_name=parsed_args.snap_name
+        )
+
+        parsed_revisions = []
+        for rev in releases.revisions:
+            if parsed_args.arch and parsed_args.arch not in rev.architectures:
+                continue
+            if releases.releases:
+                channels_for_revision = self._get_channels_for_revision(
+                    releases, rev.revision
+                )
+                if channels_for_revision:
+                    channels = ",".join(channels_for_revision)
+                else:
+                    channels = "-"
+                parsed_revisions.append(
+                    (
+                        str(rev.revision),
+                        rev.created_at,
+                        ",".join(rev.architectures),
+                        rev.version,
+                        channels,
+                    )
+                )
+            else:
+                parsed_revisions.append(
+                    (
+                        str(rev.revision),
+                        rev.created_at,
+                        ",".join(rev.architectures),
+                        rev.version,
+                    )
+                )
+
+        if releases.releases:
+            headers = ["Rev.", "Uploaded", "Arches", "Version", "Channels"]
+        else:
+            headers = ["Rev.", "Uploaded", "Arches", "Version"]
+
+        tabulated_revisions = tabulate(
+            parsed_revisions,
+            numalign="left",
+            headers=headers,
+            tablefmt="plain",
+        )
+
+        emit.message(tabulated_revisions)
+
+    def _get_channels_for_revision(self, releases, revision: int) -> List[str]:
+        # channels: the set of channels revision was released to, active or not.
+        channels: Set[str] = set()
+        # seen_channel: applies to channels regardless of revision.
+        # The first channel that shows up for each architecture is to
+        # be marked as the active channel, all others are historic.
+        seen_channel: Dict[str, Set[str]] = {}
+
+        for release in releases.releases:
+            if release.architecture not in seen_channel:
+                seen_channel[release.architecture] = set()
+
+            # If the revision is in this release entry and was not seen
+            # before it means that this channel is active and needs to
+            # be represented with a *.
+            if (
+                release.revision == revision
+                and release.channel not in seen_channel[release.architecture]
+            ):
+                channels.add(f"{release.channel}*")
+            # All other releases found for a revision are inactive.
+            elif (
+                release.revision == revision
+                and release.channel not in channels
+                and f"{release.channel}*" not in channels
+            ):
+                channels.add(release.channel)
+
+            seen_channel[release.architecture].add(release.channel)
+
+        return sorted(list(channels))
+
+
+class StoreRevisionsCommand(StoreListRevisionsCommand):
+    """Command alias to list-revisions."""
+
+    name = "revisions"
     hidden = True

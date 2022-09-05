@@ -29,7 +29,7 @@ from . import agent, constants, errors, metrics
 from ._dashboard_api import DashboardAPI
 from ._snap_api import SnapAPI
 from .constants import DEFAULT_SERIES
-from .v2 import releases, validation_sets, whoami
+from .v2 import validation_sets, whoami
 
 logger = logging.getLogger(__name__)
 
@@ -200,9 +200,6 @@ class StoreClient:
         snap_name: str,
     ) -> metrics.MetricsResults:
         return self.dashboard.get_metrics(filters=filters, snap_name=snap_name)
-
-    def get_snap_releases(self, *, snap_name: str) -> releases.Releases:
-        return self.dashboard.get_snap_releases(snap_name=snap_name)
 
     def post_validation_sets_build_assertion(
         self, *, validation_sets: Dict[str, Any]
