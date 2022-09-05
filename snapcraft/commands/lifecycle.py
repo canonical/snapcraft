@@ -29,7 +29,7 @@ from snapcraft.parts import lifecycle as parts_lifecycle
 
 
 class _LifecycleCommand(BaseCommand, abc.ABC):
-    """Run lifecycle-related commands."""
+    """Lifecycle-related commands."""
 
     @overrides
     def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
@@ -133,7 +133,7 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
 
 
 class _LifecycleStepCommand(_LifecycleCommand):
-    """Run lifecycle step commands."""
+    """Lifecycle step commands."""
 
     @overrides
     def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
@@ -160,7 +160,7 @@ class _LifecycleStepCommand(_LifecycleCommand):
 
 
 class PullCommand(_LifecycleStepCommand):
-    """Run the lifecycle up to the pull step."""
+    """Command to pull parts."""
 
     name = "pull"
     help_msg = "Download or retrieve artifacts defined for a part"
@@ -174,7 +174,7 @@ class PullCommand(_LifecycleStepCommand):
 
 
 class BuildCommand(_LifecycleStepCommand):
-    """Run the lifecycle up to the build step."""
+    """Command to build parts."""
 
     name = "build"
     help_msg = "Build artifacts defined for a part"
@@ -187,7 +187,7 @@ class BuildCommand(_LifecycleStepCommand):
 
 
 class StageCommand(_LifecycleStepCommand):
-    """Run the lifecycle up to the stage step."""
+    """Command to stage parts."""
 
     name = "stage"
     help_msg = "Stage built artifacts into a common staging area"
@@ -201,7 +201,7 @@ class StageCommand(_LifecycleStepCommand):
 
 
 class PrimeCommand(_LifecycleStepCommand):
-    """Prepare the final payload for packing."""
+    """Command to prime parts."""
 
     name = "prime"
     help_msg = "Prime artifacts defined for a part"
@@ -215,7 +215,7 @@ class PrimeCommand(_LifecycleStepCommand):
 
 
 class PackCommand(_LifecycleCommand):
-    """Pack the final snap payload."""
+    """Command to pack the final snap payload."""
 
     name = "pack"
     help_msg = "Create the snap package"
@@ -260,7 +260,7 @@ class PackCommand(_LifecycleCommand):
 
 
 class SnapCommand(_LifecycleCommand):
-    """Pack the final snap payload. This is a legacy compatibility command."""
+    """Legacy command to pack the final snap payload."""
 
     name = "snap"
     help_msg = "Create a snap"
@@ -286,7 +286,7 @@ class SnapCommand(_LifecycleCommand):
 
 
 class CleanCommand(_LifecycleStepCommand):
-    """Remove a part's assets."""
+    """Command to remove part assets."""
 
     name = "clean"
     help_msg = "Remove a part's assets"
