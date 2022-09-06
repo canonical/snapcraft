@@ -285,20 +285,49 @@ def _sanity_check_build_provider_flags(build_provider: str, **kwargs) -> None:
 
 
 def get_build_provider(**kwargs) -> str:
-    """Get build provider and determine if running as managed instance."""
+    """Get the appropriate provider and determine if running as a managed instance.
 
+    To determine the appropriate provider:
+    (1) use provider specified by `--provider=<provider>`
+    (2) use provider from the environment variable `SNAPCRAFT_BUILD_ENVIRONMENT`
+        (`click` loads this env var into `--provider=<provider>`)
+    (3) use provider 'lxd' if `--use-lxd` was passed
+    (4) use provider 'host' if `--destructive-mode` was passed
+    (5) use provider 'host' if snapcraft is running as a process container
+    (6) use provider specified by snap config
+    (7) else default to multipass
+
+    :return: provider name
+    :raises ValueError: if provider is not supported
+    """
+    # load provider from snap config
+    snap_config = common.get_snap_config()
+    snap_provider = snap_config.get("provider") if snap_config else None
+
+    # (1) use provider specified by `--provider=<provider>`
+    # (2) use provider from the environment variable `SNAPCRAFT_BUILD_ENVIRONMENT`
     provider = kwargs.get("provider")
 
     if not provider:
+        # (3) use provider 'lxd' if `--use-lxd` was passed
         if kwargs.get("use_lxd"):
             provider = "lxd"
+        # (4) use provider 'host' if `--destructive-mode` was passed
         elif kwargs.get("destructive_mode"):
             provider = "host"
+        # (5) use provider 'host' if snapcraft is running as a process container
         elif common.is_process_container():
             provider = "host"
+        # (6) use provider specified by snap config
+        elif snap_provider:
+            # ignore case
+            provider = snap_provider.lower()
+        # (7) else default to multipass
         else:
-            # Default is multipass.
             provider = "multipass"
+
+    if provider not in _ALL_PROVIDERS:
+        raise ValueError(f"unsupported provider specified: {provider!r}")
 
     _sanity_check_build_provider_flags(provider, **kwargs)
 
