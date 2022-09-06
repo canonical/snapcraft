@@ -28,6 +28,7 @@ from craft_cli import emit
 from overrides import overrides
 
 from snapcraft import __version__, errors, utils
+from snapcraft_legacy.storeapi.v2.releases import Releases as Revisions
 
 from . import channel_map, constants
 from ._legacy_account import LegacyUbuntuOne
@@ -466,6 +467,22 @@ class LegacyStoreClientCLI:
 
         return status["revision"]
 
+    def list_revisions(self, snap_name: str) -> Revisions:
+        """Return a list of available revisions for snap_name.
+
+        :param snap_name: the name of the snap to query.
+        """
+        response = self.request(
+            "GET",
+            f"{self._base_url}/api/v2/snaps/{snap_name}/releases",
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+
+        return Revisions.unmarshal(response.json())
+
 
 class OnPremStoreClientCLI(LegacyStoreClientCLI):
     """On Premises Store Client command line interface."""
@@ -570,6 +587,19 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
                 craft_store.models.SnapListReleasesModel.unmarshal(response.json()),
             )
         )
+
+    @overrides
+    def list_revisions(self, snap_name: str) -> Revisions:
+        response = self.request(
+            "GET",
+            f"{self._base_url}/v1/snap/{snap_name}/revisions",
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+
+        return Revisions.unmarshal(response.json())
 
 
 # We have two stores with a rather different implementation.

@@ -34,7 +34,7 @@ from testtools.matchers import (
 
 from snapcraft_legacy import storeapi
 from snapcraft_legacy.storeapi import errors, metrics
-from snapcraft_legacy.storeapi.v2 import releases, validation_sets, whoami
+from snapcraft_legacy.storeapi.v2 import validation_sets, whoami
 from tests.legacy import fixture_setup, unit
 
 
@@ -809,14 +809,6 @@ class GetSnapStatusTestCase(StoreTestCase):
             storeapi.errors.NoSnapIdError, self.client.get_snap_status, "no-id"
         )
         self.assertThat(e.snap_name, Equals("no-id"))
-
-
-class SnapReleasesTest(StoreTestCase):
-    def test_get_snap_releases(self):
-        self.assertThat(
-            self.client.get_snap_releases(snap_name="basic"),
-            IsInstance(releases.Releases),
-        )
 
 
 class SnapsMetricsTest(StoreTestCase):

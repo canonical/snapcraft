@@ -88,7 +88,8 @@ COMMAND_GROUPS = [
             commands.StoreUploadCommand,
             commands.StoreLegacyPushCommand,  # hidden (legacy for upload)
             commands.StoreLegacyPromoteCommand,
-            commands.StoreLegacyListRevisionsCommand,
+            commands.StoreListRevisionsCommand,
+            commands.StoreRevisionsCommand,  # hidden (alias to list-revisions)
         ],
     ),
     craft_cli.CommandGroup(
