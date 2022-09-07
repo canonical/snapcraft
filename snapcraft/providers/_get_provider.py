@@ -34,7 +34,7 @@ def get_provider(provider: Optional[str] = None) -> Provider:
 
     To determine the appropriate provider,
     (1) use provider specified in the function argument,
-    (2) get the provider from the environment if valid,
+    (2) get the provider from the environment,
     (3) use provider specified with snap configuration,
     (4) default to platform default (LXD on Linux, otherwise Multipass).
 
@@ -45,17 +45,14 @@ def get_provider(provider: Optional[str] = None) -> Provider:
 
     # load snap config file
     snap_config = get_snap_config()
-    if snap_config:
-        snap_provider = snap_config.provider
-    else:
-        snap_provider = None
+    snap_provider = snap_config.provider if snap_config else None
 
     # (1) use provider specified in the function argument
     if provider:
         emit.debug(f"Using provider {provider!r} passed as an argument.")
         chosen_provider = provider
 
-    # (2) get the provider from the environment if valid
+    # (2) get the provider from the environment
     elif env_provider:
         emit.debug(
             f"Using provider {env_provider!r} from environmental "
@@ -79,10 +76,10 @@ def get_provider(provider: Optional[str] = None) -> Provider:
     # ignore case
     chosen_provider = chosen_provider.lower()
 
-    if chosen_provider not in ("lxd", "multipass"):
-        raise RuntimeError(f"unsupported provider specified: {chosen_provider!r}")
-
     # return the chosen provider
     if chosen_provider == "lxd":
         return LXDProvider()
-    return MultipassProvider()
+    if chosen_provider == "multipass":
+        return MultipassProvider()
+
+    raise ValueError(f"unsupported provider specified: {chosen_provider!r}")

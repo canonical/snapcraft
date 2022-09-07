@@ -40,7 +40,7 @@ def test_get_provider_passed_argument(provider, expected_provider):
 
 def test_get_provider_passed_argument_invalid():
     """Verify an invalid provider raises an error."""
-    with pytest.raises(RuntimeError) as raised:
+    with pytest.raises(ValueError) as raised:
         get_provider("invalid-provider")
 
     assert str(raised.value) == "unsupported provider specified: 'invalid-provider'"
@@ -95,7 +95,7 @@ def test_get_provider_env_var(monkeypatch, provider, expected_provider):
 def test_get_provider_env_var_invalid(monkeypatch):
     """Verify an invalid environmental variable raises an error."""
     monkeypatch.setenv("SNAPCRAFT_BUILD_ENVIRONMENT", "invalid-provider")
-    with pytest.raises(RuntimeError) as raised:
+    with pytest.raises(ValueError) as raised:
         get_provider()
 
     assert str(raised.value) == "unsupported provider specified: 'invalid-provider'"
@@ -158,7 +158,7 @@ def test_get_provider_snap_config_invalid(mocker):
         "snapcraft.providers._get_provider.get_snap_config", return_value=snap_config
     )
 
-    with pytest.raises(RuntimeError) as raised:
+    with pytest.raises(ValueError) as raised:
         get_provider()
 
     assert str(raised.value) == "unsupported provider specified: 'invalid-provider'"
