@@ -19,7 +19,7 @@
 import contextlib
 import logging
 import pathlib
-from typing import Generator
+from typing import Generator, Optional
 
 from craft_cli import emit
 from craft_providers import Executor, ProviderError, bases, multipass
@@ -104,6 +104,8 @@ class MultipassProvider(Provider):
         bind_ssh: bool,
         build_on: str,
         build_for: str,
+        http_proxy: Optional[str] = None,
+        https_proxy: Optional[str] = None,
     ) -> Generator[Executor, None, None]:
         """Launch environment for specified base.
 
@@ -126,7 +128,9 @@ class MultipassProvider(Provider):
             build_for=build_for,
         )
 
-        environment = self.get_command_environment()
+        environment = self.get_command_environment(
+            http_proxy=http_proxy, https_proxy=https_proxy
+        )
         base_configuration = SnapcraftBuilddBaseConfiguration(
             alias=alias,  # type: ignore
             environment=environment,

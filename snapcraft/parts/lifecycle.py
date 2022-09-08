@@ -525,6 +525,8 @@ def _run_in_provider(
         bind_ssh=parsed_args.bind_ssh,
         build_on=project.get_build_on(),
         build_for=project.get_build_for(),
+        http_proxy=getattr(parsed_args, "http_proxy", None),
+        https_proxy=getattr(parsed_args, "https_proxy", None),
     ) as instance:
         try:
             with emit.pause():

@@ -96,3 +96,28 @@ class TestLxdLaunchedEnvironment:
                 call(host_source=new_dir, target=Path("/root/project")),
                 call(host_source=Path.home() / ".ssh", target=Path("/root/.ssh")),
             ]
+
+    def test_command_environment(self, mocker, new_dir, lxd_instance_mock):
+        """Verify launched_environment calls get_command_environment."""
+        mocker.patch(
+            "snapcraft.providers._lxd.lxd.launch", return_value=lxd_instance_mock
+        )
+        mock_base_config = mocker.patch(
+            "snapcraft.providers._lxd.LXDProvider.get_command_environment",
+        )
+
+        prov = providers.LXDProvider()
+
+        with prov.launched_environment(
+            project_name="test",
+            project_path=new_dir,
+            base="core22",
+            bind_ssh=True,
+            build_on="test",
+            build_for="test",
+            http_proxy="test-http",
+            https_proxy="test-https",
+        ):
+            assert mock_base_config.mock_calls == [
+                call(http_proxy="test-http", https_proxy="test-https")
+            ]
