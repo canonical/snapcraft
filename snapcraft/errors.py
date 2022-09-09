@@ -115,3 +115,14 @@ class ProjectMissing(SnapcraftError):
 
 class LegacyFallback(Exception):
     """Fall back to legacy snapcraft implementation."""
+
+
+class StoreCredentialsUnauthorizedError(SnapcraftError):
+    """Error raised for 401 responses from the Snap Store."""
+
+    def __init__(self, message: str, *, resolution: str) -> None:
+        super().__init__(
+            message,
+            resolution=resolution,
+            docs_url="https://snapcraft.io/docs/snapcraft-authentication",
+        )

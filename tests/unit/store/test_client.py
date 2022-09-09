@@ -545,9 +545,45 @@ def test_login_from_401_request_with_env_credentials(monkeypatch, fake_client):
         client.StoreClientCLI().request("GET", "http://url.com/path")
 
     assert str(raised.value) == (
-        "Provided credentials are no longer valid for the Snap Store."
+        "Exported credentials are no longer valid for the Snap Store."
     )
-    assert raised.value.resolution == "Regenerate them and try again."
+    assert (
+        raised.value.resolution
+        == "Run export-login and update SNAPCRAFT_STORE_CREDENTIALS."
+    )
+
+
+def test_login_from_401_request_with_legacy_credentials(mocker, legacy_config_path):
+    legacy_config_path.touch()
+    mocker.patch(
+        "snapcraft.store.client.LegacyUbuntuOne.request",
+        side_effect=[
+            craft_store.errors.StoreServerError(
+                FakeResponse(
+                    status_code=401,
+                    content=json.dumps(
+                        {
+                            "error_list": [
+                                {
+                                    "code": "macaroon-needs-refresh",
+                                    "message": "Expired macaroon (age: 1234567 seconds)",
+                                }
+                            ]
+                        }
+                    ),
+                )
+            ),
+        ],
+    )
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        client.StoreClientCLI().request("GET", "http://url.com/path")
+
+    assert str(raised.value) == ("Credentials are no longer valid for the Snap Store.")
+    assert (
+        raised.value.resolution
+        == "Run snapcraft login or export-login to obtain new credentials."
+    )
 
 
 ############
