@@ -28,7 +28,9 @@ import tempfile
 import urllib
 from contextlib import suppress
 from pathlib import Path
-from typing import Callable, List, Union
+from typing import Callable, Dict, List, Optional, Union
+
+from snaphelpers import SnapConfigOptions
 
 from snapcraft_legacy.internal import errors
 
@@ -369,3 +371,21 @@ def get_pkg_config_paths(root, arch_triplet):
     ]
 
     return [p for p in paths if os.path.exists(p)]
+
+
+def get_snap_config() -> Optional[Dict[str, str]]:
+    """Get snap configuration data as a dictionary.
+
+    :return: snap config dictionary. If not running as a snap, return None.
+    """
+    if not is_snap():
+        logger.debug(
+            "Not loading snap config because snapcraft is not running as a snap."
+        )
+        return None
+
+    snap_config = SnapConfigOptions(keys=["provider"])
+    snap_config.fetch()
+
+    logger.debug("Retrieved snap config: %s", snap_config.as_dict())
+    return snap_config.as_dict()

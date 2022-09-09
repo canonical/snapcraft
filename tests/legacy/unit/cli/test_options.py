@@ -18,6 +18,7 @@ from unittest import mock
 
 import click
 import fixtures
+import pytest
 from testtools.matchers import Equals
 
 import snapcraft_legacy.cli._options as options
@@ -330,3 +331,158 @@ class TestSudo(unit.TestCase):
         warning_mock.assert_called_once_with(
             "Running with 'sudo' may cause permission errors and is discouraged. Use 'sudo' when cleaning."
         )
+
+
+@pytest.mark.parametrize("provider_name", ["host", "lxd", "multipass", "managed-host"])
+def test_get_build_provider_passed_argument(mocker, provider_name):
+    """Verify the provider specified by --provider=<provider>.
+
+    This takes priority over:
+    - `-use-lxd`
+    - `--destructive-mode`
+    - `is_process_container()`
+    - snap config
+    - default
+    """
+    # set snap config provider to 'multipass' to verify it is not chosen
+    mocker.patch(
+        "snapcraft_legacy.cli._options.common.get_snap_config",
+        return_value={"provider": "multipass"},
+    )
+    # return True from `is_process_container()` to verify 'host' is not chosen
+    mocker.patch(
+        "snapcraft_legacy.cli._options.common.is_process_container", return_value=True
+    )
+    # set destructive_mode to True to verify 'host' is not chosen
+    kwargs = dict(provider=provider_name, destructive_mode=True)
+    actual_provider_name = options.get_build_provider(**kwargs)
+
+    assert actual_provider_name == provider_name
+
+
+def test_get_build_provider_passed_argument_invalid(mocker):
+    """Verify an invalid provider raises an error."""
+    with pytest.raises(ValueError) as raised:
+        options.get_build_provider(provider="invalid-provider")
+
+    assert str(raised.value) == "unsupported provider specified: 'invalid-provider'"
+
+
+def test_get_build_provider_use_lxd(mocker):
+    """Verify 'lxd' is chosen when `--use-lxd` is passed.
+
+    This takes priority over:
+    - `--destructive-mode`
+    - `is_process_container()`
+    - snap config
+    - default
+    """
+    # set snap config provider to 'multipass' to verify it is not chosen
+    mocker.patch(
+        "snapcraft_legacy.cli._options.common.get_snap_config",
+        return_value={"provider": "multipass"},
+    )
+    # `is_process_container()` returns True to verify 'host' is not chosen
+    mocker.patch(
+        "snapcraft_legacy.cli._options.common.is_process_container", return_value=True
+    )
+    # set destructive_mode to True to verify 'host' is not chosen
+    kwargs = dict(use_lxd=True, destructive_mode=True)
+    provider_name = options.get_build_provider(**kwargs)
+
+    assert provider_name == "lxd"
+
+
+def test_get_build_provider_destructive_mode(mocker, monkeypatch):
+    """Verify 'host' is chosen when `--destructive-mode` is passed.
+
+    This takes priority over:
+    - `is_process_container()`
+    - snap config
+    - default
+    """
+    # set snap config provider to 'multipass' to verify it is not chosen
+    mocker.patch(
+        "snapcraft_legacy.cli._options.common.get_snap_config",
+        return_value={"provider": "multipass"},
+    )
+
+    kwargs = dict(destructive_mode=True)
+    provider_name = options.get_build_provider(**kwargs)
+
+    assert provider_name == "host"
+
+
+def test_get_build_provider_is_process_container(mocker):
+    """Verify 'host' is chosen when snapcraft is running as a process container.
+
+    This takes priority over:
+    - snap config
+    - default
+    """
+    # set snap config provider to 'multipass' to verify it is not chosen
+    mocker.patch(
+        "snapcraft_legacy.cli._options.common.get_snap_config",
+        return_value={"provider": "multipass"},
+    )
+    # is_process_container returns True
+    mocker.patch(
+        "snapcraft_legacy.cli._options.common.is_process_container", return_value=True
+    )
+    provider_name = options.get_build_provider()
+
+    assert provider_name == "host"
+
+
+@pytest.mark.parametrize(
+    "provider_name, expected_provider_name",
+    [
+        ("lxd", "lxd"),
+        ("Lxd", "lxd"),
+        ("LXD", "lxd"),
+        ("multipass", "multipass"),
+        ("Multipass", "multipass"),
+        ("MULTIPASS", "multipass"),
+    ],
+)
+def test_get_build_provider_snap_config(mocker, provider_name, expected_provider_name):
+    """Verify the provider specified by the snap config is chosen.
+
+    Additionally verify that the value parsed from the snap config is converted to lowercase.
+
+    This takes priority over:
+    - default
+    """
+    mocker.patch(
+        "snapcraft_legacy.cli._options.common.get_snap_config",
+        return_value={"provider": provider_name},
+    )
+    actual_provider_name = options.get_build_provider()
+
+    assert actual_provider_name == expected_provider_name
+
+
+def test_get_build_provider_snap_config_invalid(mocker):
+    """Verify an invalid provider from the snap config raises an error."""
+    mocker.patch(
+        "snapcraft_legacy.cli._options.common.get_snap_config",
+        return_value={"provider": "invalid-provider"},
+    )
+
+    with pytest.raises(ValueError) as raised:
+        options.get_build_provider()
+
+    assert str(raised.value) == "unsupported provider specified: 'invalid-provider'"
+
+
+def test_get_build_provider_default(mocker):
+    """Verify the default provider 'multipass' is chosen."""
+    mocker.patch(
+        "snapcraft_legacy.cli._options.common.get_snap_config", return_value=None
+    )
+    mocker.patch(
+        "snapcraft_legacy.cli._options.common.is_process_container", return_value=False
+    )
+    provider_name = options.get_build_provider()
+
+    assert provider_name == "multipass"
