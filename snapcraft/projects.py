@@ -23,9 +23,8 @@ import pydantic
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from pydantic import conlist, constr
 
-from snapcraft import repo
+from snapcraft import parts, repo
 from snapcraft.errors import ProjectValidationError
-from snapcraft.parts import validation as parts_validation
 from snapcraft.utils import get_effective_base, get_host_architecture
 
 
@@ -489,7 +488,7 @@ class Project(ProjectModel):
     @classmethod
     def _validate_parts(cls, item):
         """Verify each part (craft-parts will re-validate this)."""
-        parts_validation.validate_part(item)
+        parts.validate_part(item)
         return item
 
     @pydantic.validator("epoch")
