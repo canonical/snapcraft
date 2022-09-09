@@ -18,7 +18,7 @@ import argparse
 import textwrap
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import PropertyMock, call
+from unittest.mock import ANY, PropertyMock, call, patch
 
 import pytest
 from craft_parts import Action, Step, callbacks
@@ -60,6 +60,12 @@ def project_vars(mocker):
         new_callable=PropertyMock,
         return_value={"version": "0.1", "grade": "stable"},
     )
+
+
+@pytest.fixture
+def mock_provider():
+    with patch("snapcraft.providers.Provider", autospec=True) as _mock_provider:
+        yield _mock_provider
 
 
 def test_config_not_found(new_dir):
@@ -1089,6 +1095,46 @@ def test_lifecycle_run_permission_denied(new_dir):
     assert error.resolution == (
         "Make sure the file is part of the current project "
         "and its permissions and ownership are correct."
+    )
+
+
+@pytest.mark.parametrize("http_proxy", (None, "1.2.3.4"))
+@pytest.mark.parametrize("https_proxy", (None, "1.2.3.4"))
+def test_lifecycle_run_in_provider_http_https_proxy(
+    http_proxy, https_proxy, mock_provider, mocker, snapcraft_yaml
+):
+    """Verify _run_in_provider passes http[s] proxy to the instance."""
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    mocker.patch("snapcraft.providers.get_provider", return_value=mock_provider)
+
+    parts_lifecycle._run_in_provider(
+        project=project,
+        command_name="test",
+        parsed_args=argparse.Namespace(
+            parts=[],
+            destructive_mode=False,
+            use_lxd=False,
+            provider=None,
+            enable_manifest=False,
+            manifest_image_information=None,
+            bind_ssh=False,
+            ua_token=None,
+            build_for=None,
+            debug=False,
+            http_proxy=http_proxy,
+            https_proxy=https_proxy,
+        ),
+    )
+
+    mock_provider.launched_environment.assert_called_with(
+        project_name="mytest",
+        project_path=ANY,
+        base="core22",
+        bind_ssh=False,
+        build_on=get_host_architecture(),
+        build_for=get_host_architecture(),
+        http_proxy=http_proxy,
+        https_proxy=https_proxy,
     )
 
 

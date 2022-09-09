@@ -94,3 +94,29 @@ class TestMultipassLaunchedEnvironment:
                 call(host_source=new_dir, target=Path("/root/project")),
                 call(host_source=Path.home() / ".ssh", target=Path("/root/.ssh")),
             ]
+
+    def test_command_environment(self, mocker, new_dir, multipass_instance_mock):
+        """Verify launched_environment calls get_command_environment."""
+        mocker.patch(
+            "snapcraft.providers._multipass.multipass.launch",
+            return_value=multipass_instance_mock,
+        )
+        mock_base_config = mocker.patch(
+            "snapcraft.providers._multipass.MultipassProvider.get_command_environment",
+        )
+
+        prov = providers.MultipassProvider()
+
+        with prov.launched_environment(
+            project_name="test",
+            project_path=new_dir,
+            base="core22",
+            bind_ssh=True,
+            build_on="test",
+            build_for="test",
+            http_proxy="test-http",
+            https_proxy="test-https",
+        ):
+            assert mock_base_config.mock_calls == [
+                call(http_proxy="test-http", https_proxy="test-https")
+            ]

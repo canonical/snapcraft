@@ -20,7 +20,7 @@ import contextlib
 import logging
 import os
 import pathlib
-from typing import Generator
+from typing import Generator, Optional
 
 from craft_providers import Executor, ProviderError, bases, lxd
 
@@ -113,6 +113,8 @@ class LXDProvider(Provider):
         bind_ssh: bool,
         build_on: str,
         build_for: str,
+        http_proxy: Optional[str] = None,
+        https_proxy: Optional[str] = None,
     ) -> Generator[Executor, None, None]:
         """Launch environment for specified base.
 
@@ -140,7 +142,9 @@ class LXDProvider(Provider):
         except lxd.LXDError as error:
             raise ProviderError(str(error)) from error
 
-        environment = self.get_command_environment()
+        environment = self.get_command_environment(
+            http_proxy=http_proxy, https_proxy=https_proxy
+        )
 
         base_configuration = SnapcraftBuilddBaseConfiguration(
             alias=alias,

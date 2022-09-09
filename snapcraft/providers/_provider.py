@@ -74,8 +74,17 @@ class Provider(ABC):
         """
 
     @staticmethod
-    def get_command_environment() -> Dict[str, Optional[str]]:
-        """Construct the required environment."""
+    def get_command_environment(
+        http_proxy: Optional[str] = None,
+        https_proxy: Optional[str] = None,
+    ) -> Dict[str, Optional[str]]:
+        """Construct an environment needed to execute a command.
+
+        :param http_proxy: http proxy to add to environment
+        :param https_proxy: https proxy to add to environment
+
+        :return: Dictionary of environmental variables.
+        """
         env = bases.buildd.default_command_environment()
         env["SNAPCRAFT_MANAGED_MODE"] = "1"
 
@@ -91,6 +100,13 @@ class Provider(ABC):
         ]:
             if env_key in os.environ:
                 env[env_key] = os.environ[env_key]
+
+        # if http[s]_proxy was specified as an argument, then prioritize this proxy
+        # over the proxy from the host's environment.
+        if http_proxy:
+            env["http_proxy"] = http_proxy
+        if https_proxy:
+            env["https_proxy"] = https_proxy
 
         return env
 
@@ -168,6 +184,8 @@ class Provider(ABC):
         bind_ssh: bool,
         build_on: str,
         build_for: str,
+        http_proxy: Optional[str] = None,
+        https_proxy: Optional[str] = None,
     ) -> Generator[Executor, None, None]:
         """Launch environment for specified base.
 
