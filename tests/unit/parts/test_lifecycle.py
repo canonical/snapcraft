@@ -756,9 +756,17 @@ def test_lifecycle_post_lifecycle_debug_shell(snapcraft_yaml, new_dir, mocker):
     assert mock_shell.mock_calls == [()]
 
 
-@pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime"])
-def test_lifecycle_shell(snapcraft_yaml, cmd, new_dir, mocker):
-    """Adoptable fields shouldn't be empty after adoption."""
+@pytest.mark.parametrize(
+    "cmd,expected_last_step",
+    [
+        ("pull", None),
+        ("build", Step.OVERLAY),
+        ("stage", Step.BUILD),
+        ("prime", Step.STAGE),
+    ],
+)
+def test_lifecycle_shell(snapcraft_yaml, cmd, expected_last_step, new_dir, mocker):
+    """Check if the last step executed before shell is the previous step."""
     last_step = None
 
     def _fake_execute(_, action: Action, **kwargs):  # pylint: disable=unused-argument
@@ -790,21 +798,23 @@ def test_lifecycle_shell(snapcraft_yaml, cmd, new_dir, mocker):
         ),
     )
 
-    expected_last_step = None
-    if cmd == "build":
-        expected_last_step = Step.OVERLAY
-    if cmd == "stage":
-        expected_last_step = Step.BUILD
-    if cmd == "prime":
-        expected_last_step = Step.STAGE
-
     assert last_step == expected_last_step
     assert mock_shell.mock_calls == [call(["bash"], check=False, cwd=None)]
 
 
-@pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime"])
-def test_lifecycle_shell_after(snapcraft_yaml, cmd, new_dir, mocker):
-    """Adoptable fields shouldn't be empty after adoption."""
+@pytest.mark.parametrize(
+    "cmd,expected_last_step",
+    [
+        ("pull", Step.PULL),
+        ("build", Step.BUILD),
+        ("stage", Step.STAGE),
+        ("prime", Step.PRIME),
+    ],
+)
+def test_lifecycle_shell_after(
+    snapcraft_yaml, cmd, expected_last_step, new_dir, mocker
+):
+    """Check if the last step executed before shell is the current step."""
     last_step = None
 
     def _fake_execute(_, action: Action, **kwargs):  # pylint: disable=unused-argument
@@ -835,14 +845,6 @@ def test_lifecycle_shell_after(snapcraft_yaml, cmd, new_dir, mocker):
             parts=["part1"],
         ),
     )
-
-    expected_last_step = Step.PULL
-    if cmd == "build":
-        expected_last_step = Step.BUILD
-    if cmd == "stage":
-        expected_last_step = Step.STAGE
-    if cmd == "prime":
-        expected_last_step = Step.PRIME
 
     assert last_step == expected_last_step
     assert mock_shell.mock_calls == [call(["bash"], check=False, cwd=None)]
