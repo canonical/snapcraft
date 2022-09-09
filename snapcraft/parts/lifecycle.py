@@ -531,9 +531,7 @@ def _run_in_provider(
         try:
             with emit.pause():
                 instance.execute_run(cmd, check=True, cwd=output_dir)
-            capture_logs_from_instance(instance)
         except subprocess.CalledProcessError as err:
-            capture_logs_from_instance(instance)
             raise errors.SnapcraftError(
                 f"Failed to execute {command_name} in instance.",
                 details=(
@@ -541,6 +539,8 @@ def _run_in_provider(
                     "the environment if you wish to introspect this failure."
                 ),
             ) from err
+        finally:
+            capture_logs_from_instance(instance)
 
 
 # pylint: enable=too-many-branches
