@@ -29,6 +29,7 @@ from snapcraft import errors
 from snapcraft.store import LegacyUbuntuOne, client, constants
 from snapcraft.store.channel_map import ChannelMap
 from snapcraft.utils import OSPlatform
+from snapcraft_legacy.storeapi.v2.releases import Releases
 
 from .utils import FakeResponse
 
@@ -121,6 +122,52 @@ def channel_map_payload():
             ],
             "default-track": "2.1",
         },
+    }
+
+
+@pytest.fixture
+def list_revisions_payload():
+    return {
+        "revisions": [
+            {
+                "architectures": ["i386"],
+                "base": "core20",
+                "build-url": None,
+                "confinement": "strict",
+                "created-at": " 2016-09-27T19:23:40Z",
+                "grade": "stable",
+                "revision": 2,
+                "sha3-384": "fake-a9060ef4872ccacbfa44",
+                "size": 20,
+                "status": "Published",
+                "version": "2.0.1",
+            },
+            {
+                "architectures": ["amd64"],
+                "base": "core20",
+                "build-url": None,
+                "confinement": "strict",
+                "created-at": "2016-09-27T18:38:43Z",
+                "grade": "stable",
+                "revision": 1,
+                "sha3-384": "fake-a9060ef4872ccacbfa44",
+                "size": 20,
+                "status": "Published",
+                "version": "2.0.2",
+            },
+        ],
+        "releases": [
+            {
+                "architecture": "amd64",
+                "branch": None,
+                "channel": "latest/stable",
+                "expiration-date": None,
+                "revision": 1,
+                "risk": "stable",
+                "track": "latest",
+                "when": "2020-02-12T17:51:40.891996Z",
+            },
+        ],
     }
 
 
@@ -885,6 +932,29 @@ def test_notify_upload_error(fake_client):
     ]
 
 
+##################
+# List Revisions #
+##################
+
+
+def test_list_revisions(fake_client, list_revisions_payload):
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(list_revisions_payload)
+    )
+    channel_map = client.StoreClientCLI().list_revisions(
+        snap_name="test-snap",
+    )
+    assert isinstance(channel_map, Releases)
+
+    assert fake_client.request.mock_calls == [
+        call(
+            "GET",
+            "https://dashboard.snapcraft.io/api/v2/snaps/test-snap/releases",
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+        )
+    ]
+
+
 ########################
 # OnPremStoreClientCLI #
 ########################
@@ -1070,5 +1140,26 @@ def test_on_prem_get_channel_map(
             ANY,
             "GET",
             "https://dashboard.snapcraft.io/v1/snap/test-snap/releases",
+        )
+    ]
+
+
+def test_on_prem_list_revisions(
+    on_prem_client, fake_client_request, list_revisions_payload
+):
+    fake_client_request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(list_revisions_payload)
+    )
+    channel_map = client.StoreClientCLI().list_revisions(
+        snap_name="test-snap",
+    )
+    assert isinstance(channel_map, Releases)
+
+    assert fake_client_request.mock_calls == [
+        call(
+            ANY,
+            "GET",
+            "https://dashboard.snapcraft.io/v1/snap/test-snap/revisions",
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
         )
     ]
