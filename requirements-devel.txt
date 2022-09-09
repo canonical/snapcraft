@@ -12,7 +12,7 @@ coverage==6.4.2
 craft-cli==1.1.0
 craft-grammar==1.1.1
 craft-parts==1.12.1
-craft-providers==1.4.1
+craft-providers==1.4.2
 craft-store==2.2.1
 cryptography==3.4
 Deprecated==1.2.13
