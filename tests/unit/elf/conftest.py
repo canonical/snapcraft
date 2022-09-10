@@ -61,7 +61,7 @@ def fake_libs(new_dir):
 
 
 @pytest.fixture
-def fake_tools(new_dir, mocker):
+def fake_tools(new_dir, monkeypatch):
     bin_skel_path = TESTS_DIR / "bin" / "elf"
     bin_path = new_dir / "bin"
     bin_path.mkdir(exist_ok=True)
@@ -90,10 +90,7 @@ def fake_tools(new_dir, mocker):
             wf.write(line.replace("{VERSION}", "0.14.3"))
     dest_patchelf_path.chmod(0o755)
 
-    current_path = os.getenv("PATH")
-    mocker.patch.dict(os.environ, {"PATH": f"{str(bin_path)}:{current_path}"})
-
-    yield
+    monkeypatch.setenv("PATH", f"{bin_path!s}:{os.getenv('PATH')}")
 
 
 def _fake_elffile_extract_attributes(self):  # pylint: disable=too-many-statements
