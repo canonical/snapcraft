@@ -16,6 +16,8 @@
 
 """Parts lifecycle processing."""
 
+from craft_parts import validate_part
+
 from .parts import PartsLifecycle
 
-__all__ = ["PartsLifecycle"]
+__all__ = ["PartsLifecycle", "validate_part"]

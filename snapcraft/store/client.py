@@ -249,14 +249,29 @@ class LegacyStoreClientCLI:
                 store_error.response.status_code
                 == requests.codes.unauthorized  # pylint: disable=no-member
             ):
-                if os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS):
-                    raise errors.SnapcraftError(
-                        "Provided credentials are no longer valid for the Snap Store.",
-                        resolution="Regenerate them and try again.",
+                if os.getenv(
+                    constants.ENVIRONMENT_STORE_CREDENTIALS
+                ) and not isinstance(self.store_client, LegacyUbuntuOne):
+                    raise errors.StoreCredentialsUnauthorizedError(
+                        "Exported credentials are no longer valid for the Snap Store.",
+                        resolution=(
+                            "Run export-login and update "
+                            f"{constants.ENVIRONMENT_STORE_CREDENTIALS}."
+                        ),
                     ) from store_error
 
                 emit.message("You are required to re-login before continuing")
                 self.store_client.logout()
+                # Make it a manual process to login again as these older credentials
+                # might be part of some CI/CD workflow.
+                if isinstance(self.store_client, LegacyUbuntuOne):
+                    raise errors.StoreCredentialsUnauthorizedError(
+                        "Credentials are no longer valid for the Snap Store.",
+                        resolution=(
+                            "Run snapcraft login or export-login to obtain "
+                            "new credentials."
+                        ),
+                    ) from store_error
             else:
                 raise
         except craft_store.errors.CredentialsUnavailable:
