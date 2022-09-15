@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 
 class ListPluginsCommand(BaseCommand, abc.ABC):
-    """A command to list the available extensions."""
+    """A command to list the available plugins."""
 
     name = "list-plugins"
     help_msg = "List the available plugins that handle different types of part"
