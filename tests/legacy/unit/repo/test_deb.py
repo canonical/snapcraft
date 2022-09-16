@@ -38,6 +38,28 @@ def mock_env_copy():
         yield m
 
 
+@pytest.fixture
+def fake_all_packages_installed(mocker):
+    mocker.patch(
+        "snapcraft_legacy.internal.repo._deb.Ubuntu._check_if_all_packages_installed",
+        return_value=False,
+    )
+
+
+def _fake_get_installed_version(package_name, resolve_virtual_packages=False):
+    if "installed" in package_name:
+        return "1.0"
+    if "new-version" in package_name:
+        return "3.0"
+    if "resolved-virtual-package" in package_name:
+        return "1.0"
+    if package_name == "versioned-package":
+        return "2.0"
+    if package_name.endswith("package"):
+        return "1.0"
+    return None
+
+
 class TestPackages(unit.TestCase):
     def setUp(self):
         super().setUp()
@@ -217,6 +239,10 @@ class BuildPackagesTestCase(unit.TestCase):
             fixtures.MockPatch("snapcraft_legacy.internal.repo._deb.AptCache")
         ).mock
 
+        self.fake_apt_cache.return_value.__enter__.return_value.get_installed_version = (
+            _fake_get_installed_version
+        )
+
         self.fake_run = self.useFixture(
             fixtures.MockPatch("subprocess.check_call")
         ).mock
@@ -234,7 +260,8 @@ class BuildPackagesTestCase(unit.TestCase):
             )
         ).mock
 
-    def test_install_build_package(self):
+    @pytest.mark.usefixtures("fake_all_packages_installed")
+    def test_install_build_packages(self):
         self.fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package", "1.0"),
             ("package-installed", "1.0"),
@@ -271,26 +298,9 @@ class BuildPackagesTestCase(unit.TestCase):
                             "-y",
                             "--allow-downgrades",
                             "install",
-                            "dependency-package=1.0",
-                            "package=1.0",
-                            "package-installed=1.0",
-                            "versioned-package=2.0",
-                        ],
-                        env={
-                            "DEBIAN_FRONTEND": "noninteractive",
-                            "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                            "DEBIAN_PRIORITY": "critical",
-                        },
-                    ),
-                    call(
-                        [
-                            "sudo",
-                            "apt-mark",
-                            "auto",
-                            "dependency-package",
                             "package",
                             "package-installed",
-                            "versioned-package",
+                            "versioned-package=2.0",
                         ],
                         env={
                             "DEBIAN_FRONTEND": "noninteractive",
@@ -322,14 +332,15 @@ class BuildPackagesTestCase(unit.TestCase):
         self.assertThat(build_packages, Equals(["package-installed=1.0"]))
         self.assertThat(self.fake_run.mock_calls, Equals([]))
 
+    @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_already_installed_with_different_version(self):
         self.fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
-            ("package-installed", "3.0")
+            ("new-version", "3.0")
         ]
 
-        build_packages = repo.Ubuntu.install_build_packages(["package-installed=3.0"])
+        build_packages = repo.Ubuntu.install_build_packages(["new-version=3.0"])
 
-        self.assertThat(build_packages, Equals(["package-installed=3.0"]))
+        self.assertThat(build_packages, Equals(["new-version=3.0"]))
         self.assertThat(
             self.fake_run.mock_calls,
             Equals(
@@ -344,16 +355,8 @@ class BuildPackagesTestCase(unit.TestCase):
                             "-y",
                             "--allow-downgrades",
                             "install",
-                            "package-installed=3.0",
+                            "new-version=3.0",
                         ],
-                        env={
-                            "DEBIAN_FRONTEND": "noninteractive",
-                            "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                            "DEBIAN_PRIORITY": "critical",
-                        },
-                    ),
-                    call(
-                        ["sudo", "apt-mark", "auto", "package-installed"],
                         env={
                             "DEBIAN_FRONTEND": "noninteractive",
                             "DEBCONF_NONINTERACTIVE_SEEN": "true",
@@ -364,14 +367,15 @@ class BuildPackagesTestCase(unit.TestCase):
             ),
         )
 
+    @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_install_virtual_build_package(self):
         self.fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
-            ("package", "1.0")
+            ("resolved-virtual-package", "1.0")
         ]
 
         build_packages = repo.Ubuntu.install_build_packages(["virtual-package"])
 
-        self.assertThat(build_packages, Equals(["package=1.0"]))
+        self.assertThat(build_packages, Equals(["resolved-virtual-package=1.0"]))
         self.assertThat(
             self.fake_run.mock_calls,
             Equals(
@@ -386,16 +390,8 @@ class BuildPackagesTestCase(unit.TestCase):
                             "-y",
                             "--allow-downgrades",
                             "install",
-                            "package=1.0",
+                            "virtual-package",
                         ],
-                        env={
-                            "DEBIAN_FRONTEND": "noninteractive",
-                            "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                            "DEBIAN_PRIORITY": "critical",
-                        },
-                    ),
-                    call(
-                        ["sudo", "apt-mark", "auto", "package"],
                         env={
                             "DEBIAN_FRONTEND": "noninteractive",
                             "DEBCONF_NONINTERACTIVE_SEEN": "true",
@@ -406,6 +402,7 @@ class BuildPackagesTestCase(unit.TestCase):
             ),
         )
 
+    @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_smart_terminal(self):
         self.fake_is_dumb_terminal.return_value = False
         self.fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
@@ -430,16 +427,8 @@ class BuildPackagesTestCase(unit.TestCase):
                             "-o",
                             "Dpkg::Progress-Fancy=1",
                             "install",
-                            "package=1.0",
+                            "package",
                         ],
-                        env={
-                            "DEBIAN_FRONTEND": "noninteractive",
-                            "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                            "DEBIAN_PRIORITY": "critical",
-                        },
-                    ),
-                    call(
-                        ["sudo", "apt-mark", "auto", "package"],
                         env={
                             "DEBIAN_FRONTEND": "noninteractive",
                             "DEBCONF_NONINTERACTIVE_SEEN": "true",
@@ -450,6 +439,7 @@ class BuildPackagesTestCase(unit.TestCase):
             ),
         )
 
+    @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_invalid_package_requested(self):
         self.fake_apt_cache.return_value.__enter__.return_value.mark_packages.side_effect = errors.PackageNotFoundError(
             "package-invalid"
@@ -461,6 +451,7 @@ class BuildPackagesTestCase(unit.TestCase):
             ["package-invalid"],
         )
 
+    @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_broken_package_apt_install(self):
         self.fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package", "1.0")
@@ -479,7 +470,7 @@ class BuildPackagesTestCase(unit.TestCase):
         )
         self.assertThat(raised.packages, Equals("package=1.0"))
 
-    def test_refresh_buid_packages(self):
+    def test_refresh_build_packages(self):
         repo.Ubuntu.refresh_build_packages()
 
         self.fake_run.assert_called_once_with(
