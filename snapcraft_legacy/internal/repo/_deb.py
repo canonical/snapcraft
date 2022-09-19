@@ -458,6 +458,16 @@ class Ubuntu(BaseRepo):
         except subprocess.CalledProcessError:
             raise errors.BuildPackagesNotInstalledError(packages=package_names)
 
+        versionless_names = [get_pkg_name_parts(p)[0] for p in package_names]
+        try:
+            subprocess.check_call(
+                ["sudo", "apt-mark", "auto"] + versionless_names, env=env
+            )
+        except subprocess.CalledProcessError as e:
+            logger.warning(
+                "Impossible to mark packages as auto-installed: {}".format(e)
+            )
+
     @classmethod
     def fetch_stage_packages(
         cls,

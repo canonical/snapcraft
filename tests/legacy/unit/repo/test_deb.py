@@ -308,6 +308,21 @@ class BuildPackagesTestCase(unit.TestCase):
                             "DEBIAN_PRIORITY": "critical",
                         },
                     ),
+                    call(
+                        [
+                            "sudo",
+                            "apt-mark",
+                            "auto",
+                            "package",
+                            "package-installed",
+                            "versioned-package",
+                        ],
+                        env={
+                            "DEBIAN_FRONTEND": "noninteractive",
+                            "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                            "DEBIAN_PRIORITY": "critical",
+                        },
+                    ),
                 ]
             ),
         )
@@ -363,6 +378,14 @@ class BuildPackagesTestCase(unit.TestCase):
                             "DEBIAN_PRIORITY": "critical",
                         },
                     ),
+                    call(
+                        ["sudo", "apt-mark", "auto", "new-version"],
+                        env={
+                            "DEBIAN_FRONTEND": "noninteractive",
+                            "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                            "DEBIAN_PRIORITY": "critical",
+                        },
+                    ),
                 ]
             ),
         )
@@ -392,6 +415,14 @@ class BuildPackagesTestCase(unit.TestCase):
                             "install",
                             "virtual-package",
                         ],
+                        env={
+                            "DEBIAN_FRONTEND": "noninteractive",
+                            "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                            "DEBIAN_PRIORITY": "critical",
+                        },
+                    ),
+                    call(
+                        ["sudo", "apt-mark", "auto", "virtual-package"],
                         env={
                             "DEBIAN_FRONTEND": "noninteractive",
                             "DEBCONF_NONINTERACTIVE_SEEN": "true",
@@ -429,6 +460,14 @@ class BuildPackagesTestCase(unit.TestCase):
                             "install",
                             "package",
                         ],
+                        env={
+                            "DEBIAN_FRONTEND": "noninteractive",
+                            "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                            "DEBIAN_PRIORITY": "critical",
+                        },
+                    ),
+                    call(
+                        ["sudo", "apt-mark", "auto", "package"],
                         env={
                             "DEBIAN_FRONTEND": "noninteractive",
                             "DEBCONF_NONINTERACTIVE_SEEN": "true",
