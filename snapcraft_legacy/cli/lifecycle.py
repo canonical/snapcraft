@@ -296,9 +296,17 @@ def lifecyclecli(ctx, **kwargs):
 
 
 @lifecyclecli.command()
-def init():
+@click.option(
+    "--no-vcs",
+    "vcs",
+    flag_value="none",
+    default=True,
+    help="Initialize a project without VCS.",
+)
+@click.option("--git", "vcs", flag_value="git", help="Initialize git repository.")
+def init(vcs):
     """Initialize a snapcraft project."""
-    snapcraft_yaml_path = lifecycle.init()
+    snapcraft_yaml_path = lifecycle.init(vcs)
     echo.info("Created {}.".format(snapcraft_yaml_path))
     echo.wrapped(
         "Go to https://docs.snapcraft.io/the-snapcraft-format/8337 for more "

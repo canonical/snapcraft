@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import contextlib
 import os
+import subprocess
 from textwrap import dedent
 
 from snapcraft_legacy.internal import errors
@@ -42,7 +43,34 @@ _TEMPLATE_YAML = dedent(
 )  # noqa, lines too long.
 
 
-def init():
+def init_git():
+    """Initialize a github repository."""
+    gitignore_path = ".gitignore"
+    _GITIGNORE = dedent(
+        """\
+        *.snap
+        parts/
+        stage/
+        prime/
+        """
+    )
+
+    try:
+        command = ["git", "init"]
+        subprocess.check_output(command)
+    except subprocess.CalledProcessError as e:
+        raise errors.GitCommandError(
+            command=command,
+            exit_code=e.returncode,
+            output=e.output.decode(),
+        )
+
+    if not os.path.exists(gitignore_path):
+        with open(gitignore_path, mode="w") as f:
+            f.write(_GITIGNORE)
+
+
+def init(vcs):
     """Initialize a snapcraft project."""
     snapcraft_yaml_path = os.path.join("snap", "snapcraft.yaml")
 
@@ -59,5 +87,8 @@ def init():
         os.mkdir(os.path.dirname(snapcraft_yaml_path))
     with open(snapcraft_yaml_path, mode="w") as f:
         f.write(text)
+
+    if vcs == "git":
+        init_git()
 
     return snapcraft_yaml_path
