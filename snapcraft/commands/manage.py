@@ -32,17 +32,17 @@ class StoreReleaseCommand(BaseCommand):
     """Command to release a snap on the Snap Store."""
 
     name = "release"
-    help_msg = "Release <snap-name> to the store"
+    help_msg = "Release <name> to the store"
     overview = textwrap.dedent(
         """
-        Release <snap-name> on <revision> to the selected store <channels>.
+        Release <name> on <revision> to the selected store <channels>.
         <channels> is a comma separated list of valid channels on the store.
 
         The <revision> must exist on the store, to see available revisions run
-        `snapcraft list-revisions <snap_name>`.
+        `snapcraft list-revisions <name>`.
 
         The channel map will be displayed after the operation takes place. To see
-        the status map at any other time run `snapcraft status <snap-name>`.
+        the status map at any other time run `snapcraft status <name>`.
 
         The format for channels is `[<track>/]<risk>[/<branch>]` where
 
