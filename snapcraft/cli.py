@@ -45,8 +45,8 @@ COMMAND_GROUPS = [
             commands.StageCommand,
             commands.PrimeCommand,
             commands.PackCommand,
+            commands.RemoteBuildCommand,
             commands.SnapCommand,  # hidden (legacy compatibility)
-            commands.StoreLegacyRemoteBuildCommand,
             commands.PluginsCommand,
             commands.ListPluginsCommand,
         ],
