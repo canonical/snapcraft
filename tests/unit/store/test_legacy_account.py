@@ -92,10 +92,17 @@ def test_get_auth_missing_discharge(new_dir, root_macaroon):
 ########################
 
 
-def test_store_credentials(legacy_config_path):
-    LegacyUbuntuOne.store_credentials("secret-config")
+def test_store_credentials(legacy_config_path, legacy_config_credentials):
+    LegacyUbuntuOne.store_credentials(legacy_config_credentials)
 
-    assert legacy_config_path.read_text() == "secret-config"
+    assert legacy_config_path.read_text() == legacy_config_credentials
+
+
+def test_store_credentials_not_configparser_based_fails(
+    legacy_config_path, legacy_config_credentials
+):
+    with pytest.raises(errors.LegacyCredentialsParseError):
+        LegacyUbuntuOne.store_credentials("not config parser")
 
 
 def test_legacy_credentials_in_env(monkeypatch, legacy_config_credentials):
