@@ -188,6 +188,7 @@ _compressor_options = {"gz": "-7", "lz4": "-l -9", "xz": "-7", "zstd": "-1 -T0"}
 _SNAPD_SNAP_NAME = "snapd"
 _SNAPD_SNAP_FILE = "{snap_name}_{architecture}.snap"
 _ZFS_URL = "https://github.com/openzfs/zfs"
+_SNAPPY_DEV_KEY_FINGERPRINT = "F1831DDAFC42E99D"
 
 default_kernel_image_target = {
     "amd64": "bzImage",
@@ -363,13 +364,19 @@ class KernelPlugin(PluginV2):
             },
         }
 
-    def _init_build_env(self) -> None:
-        # first get all the architectures, new v2 plugin is making life difficult
-        logger.info("Initializing build env...")
-        self._check_build_env()
+    def __init__(self, *, part_name: str, options) -> None:
+        super().__init__(str, options)
         self._get_target_architecture()
         self._get_deb_architecture()
         self._get_kernel_architecture()
+        # check if we are cross building
+        host_arch = os.getenv("SNAP_ARCH")
+        if host_arch != self.target_arch:
+            self._cross_building = True
+
+    def _init_build_env(self) -> None:
+        # first get all the architectures, new v2 plugin is making life difficult
+        logger.info("Initializing build env...")
 
         self.make_cmd = ["make", "-j$(nproc)"]
         # we are building out of tree, configure paths
@@ -380,8 +387,6 @@ class KernelPlugin(PluginV2):
         self._check_cross_compilation()
         self._set_kernel_targets()
 
-        self.u_series = "focal"
-
         # determine type of initrd
         snapd_snap_file_name = _SNAPD_SNAP_FILE.format(
             snap_name=_SNAPD_SNAP_NAME,
@@ -389,19 +394,6 @@ class KernelPlugin(PluginV2):
         )
 
         self.snapd_snap = os.path.join("${SNAPCRAFT_PART_BUILD}", snapd_snap_file_name)
-
-    def _check_build_env(self) -> None:
-        """Ensure the environment has set snappy ppa to build kernel snap."""
-        result = subprocess.run(
-            ["apt-cache", "search", "ubuntu-core-initramfs"],
-            check=True,
-            capture_output=True,
-            universal_newlines=True,
-        )
-        if result.stdout.find("ubuntu-core-initramfs") == -1:
-            raise logger.error(
-                "Likely missing ppa definition in the snapcraft.yaml.\nPlease ensure following ppa definition is present:\npackage-repositories:\n  - type: apt\n    ppa: snappy-dev/image\n\n ",
-            )
 
     def _get_target_architecture(self) -> None:
         # TODO: there is bug in snapcraft and target arch is not
@@ -447,9 +439,7 @@ class KernelPlugin(PluginV2):
             logger.error("Unknown deb architecture!!!")
 
     def _check_cross_compilation(self) -> None:
-        host_arch = os.getenv("SNAP_ARCH")
-        if host_arch != self.target_arch:
-            logger.info(f"Configuring cross build to {self.kernel_arch}")
+        if self._cross_building:
             self.make_cmd.append(f"ARCH={self.kernel_arch}")
             self.make_cmd.append("CROSS_COMPILE=${SNAPCRAFT_ARCH_TRIPLET}-")
 
@@ -570,37 +560,24 @@ class KernelPlugin(PluginV2):
     def _download_core_initrd_fnc_cmd(self) -> List[str]:
         return [
             "# Helper to download code initrd dep package",
-            "# 1: tmp dir, 2: arch, 3: release, 4: output dir",
+            "# 1: arch, 2: output dir",
             "download_core_initrd() {",
-            "\tlocal tmp_dir=${1}",
-            "\tlocal dpkg_arch=${2}",
-            "\tlocal release=${3}",
-            "\tlocal output_dir=${4}",
-            "\tlocal apt_dir=${tmp_dir}/apt",
-            "\tlocal sources_p=${apt_dir}/ppa.list",
-            "\tlocal stage_dir=${apt_dir}/stage",
-            "\tlocal status_p=${stage_dir}/status",
-            '\tmkdir -p "${stage_dir}"',
-            '\ttouch "${status_p}"',
-            '\tcat > "${sources_p}" <<EOF',
-            "deb https://ppa.launchpadcontent.net/snappy-dev/image/ubuntu ${release} main",
-            "EOF",
-            "\tlocal apt_options=(",
-            '\t\t"-o" "APT::Architecture=$dpkg_arch"',
-            '\t\t"-o" "APT::Get::AllowUnauthenticated=true"',
-            '\t\t"-o" "Acquire::AllowInsecureRepositories=true"',
-            '\t"-o" "Dir::Etc=${apt_dir}"',
-            '\t"-o" "Dir::Etc::sourcelist=$sources_p"',
-            '\t\t"-o" "Dir::Cache=$${stage_dir}/var/cache/apt"',
-            '\t\t"-o" "Dir::State=${stage_dir}"',
-            '\t"-o" "Dir::State::status=$status_p"',
-            '\t\t"-o" "pkgCacheGen::Essential=none")',
-            "\tmkdir -p ${apt_dir}/preferences.d",
-            '\tapt update "${apt_options[@]}"',
-            '\tapt download "${apt_options[@]}" ubuntu-core-initramfs',
+            "# check if we have defined ppa, to have consistent error message for fail",
+            'if [ -z "$(apt-cache search ubuntu-core-initramfs)" ]; then',
+            '\techo "Missing package-repositories declaration in snapcracft.yaml, add following definition:"',
+            '\techo -e "package-repositories:\n    - type: apt\n    ppa: snappy-dev/image"',
+            "\texit 1",
+            "fi",
             "",
+            " ".join(
+                [
+                    "\tapt-get",
+                    "download",
+                    "ubuntu-core-initramfs:${1}",
+                ]
+            ),
             "# unpack dep to the target dir",
-            "\tdpkg -x ubuntu-core-initramfs_*.deb ${output_dir}",
+            "\tdpkg -x ubuntu-core-initramfs_*.deb ${2}",
             "}",
         ]
 
@@ -612,9 +589,7 @@ class KernelPlugin(PluginV2):
             " ".join(
                 [
                     "\tdownload_core_initrd",
-                    "${UC_INITRD_TMP_DIR}",
                     self.target_arch,
-                    self.u_series,
                     "${UC_INITRD_DEB}",
                 ]
             ),
@@ -1346,6 +1321,68 @@ class KernelPlugin(PluginV2):
     def get_build_snaps(self) -> Set[str]:
         return set()
 
+    def _add_snappy_ppa(self) -> None:
+        """TODO: remove once snapcraft allows to the plugins to add ppa
+        dracut-core package has to come from ppa:snappy-dev/image
+        since plugin has no way to add ppa in API way, add ppa manually
+        not to run it every time, check if ppa file exists in /etc/apt
+        """
+        proc = subprocess.run(
+            ["grep", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/*"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+        )
+
+        if not proc.stdout or proc.stdout.find("snappy-dev/image/ubuntu") == -1:
+            # check if we need to import key
+            try:
+                proc = subprocess.run(
+                    ["apt-key", "export", _SNAPPY_DEV_KEY_FINGERPRINT],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    check=True,
+                )
+            except subprocess.CalledProcessError as error:
+                # Export shouldn't exit with failure based on testing
+                raise logger.error(
+                    f"error to check for key={_SNAPPY_DEV_KEY_FINGERPRINT}: {error.output.decode()}"
+                )
+
+            apt_key_output = proc.stdout.decode()
+            if "BEGIN PGP PUBLIC KEY BLOCK" in apt_key_output:
+                logger.info("key for ppa:snappy-dev/image already imported")
+
+            if "nothing exported" in apt_key_output:
+                logger.info("importing key for ppa:snappy-dev/image")
+                # first import key for the ppa
+                try:
+                    subprocess.run(
+                        [
+                            "apt-key",
+                            "adv",
+                            "--keyserver",
+                            "keyserver.ubuntu.com",
+                            "--recv-keys",
+                            _SNAPPY_DEV_KEY_FINGERPRINT,
+                        ],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        check=True,
+                    )
+                except subprocess.CalledProcessError as error:
+                    raise errors.AptGPGKeyInstallError(
+                        error.output.decode(), key=_SNAPPY_DEV_KEY_FINGERPRINT
+                    )
+
+            # add ppa itself
+            logger.warning("adding ppa:snappy-dev/image to handle initrd builds")
+            subprocess.run(
+                ["add-apt-repository", "-y", "ppa:snappy-dev/image"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=True,
+            )
+
     def get_build_packages(self) -> Set[str]:
         build_packages = {
             "bc",
@@ -1375,6 +1412,14 @@ class KernelPlugin(PluginV2):
                 "libtool",
                 "python3",
             }
+
+        # for cross build of zfs we also need libc6-dev:<target arch>
+        if self.options.kernel_enable_zfs_support and self._cross_building:
+            build_packages |= {f"libc6-dev:{self.target_arch}"}
+
+        # add snappy ppa to get correct initrd tools
+        self._add_snappy_ppa()
+
         return build_packages
 
     def get_build_environment(self) -> Dict[str, str]:
@@ -1385,10 +1430,9 @@ class KernelPlugin(PluginV2):
             "CROSS_COMPILE": "${SNAPCRAFT_ARCH_TRIPLET}-",
             "ARCH": self.kernel_arch,
             "DEB_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
-            "UC_INITRD_TMP_DIR": "${SNAPCRAFT_PART_BUILD}/ubuntu-core-initramfs-tmp",
             "UC_INITRD_DEB": "${SNAPCRAFT_PART_BUILD}/ubuntu-core-initramfs",
             "SNAPD_UNPACKED_SNAP": "${SNAPCRAFT_PART_BUILD}/unpacked_snapd_snap",
-            "KERNEL_BUILD_ARCH_DIR": "${SNAPCRAFT_PART_BUILD}/arch/${ARCH}/boot",
+            "KERNEL_BUILD_ARCH_DIR": f"${{SNAPCRAFT_PART_BUILD}}/arch/${self.kernel_arch}/boot",
             "KERNEL_IMAGE_TARGET": self.kernel_image_target,
         }
 
