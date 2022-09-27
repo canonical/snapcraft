@@ -25,7 +25,8 @@ from typing import Any, Dict, List, Optional, Set, cast
 from pydantic import root_validator
 
 from craft_parts import errors, infos
-from craft_parts.plugins.base import Plugin, PluginModel, extract_plugin_properties
+from craft_parts.plugins.base import (Plugin, PluginModel,
+                                      extract_plugin_properties)
 from craft_parts.plugins.properties import PluginProperties
 
 logger = logging.getLogger(__name__)

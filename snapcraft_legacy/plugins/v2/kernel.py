@@ -178,9 +178,9 @@ import subprocess
 import sys
 from typing import Any, Dict, List, Set
 
+from snapcraft_legacy.internal.repo import errors
 from snapcraft_legacy.plugins.v2 import PluginV2
 from snapcraft_legacy.project._project_options import ProjectOptions
-from snapcraft_legacy.internal.repo import errors
 
 logger = logging.getLogger(__name__)
 
