@@ -180,6 +180,7 @@ from typing import Any, Dict, List, Set
 
 from snapcraft_legacy.plugins.v2 import PluginV2
 from snapcraft_legacy.project._project_options import ProjectOptions
+from snapcraft_legacy.internal.repo import errors
 
 logger = logging.getLogger(__name__)
 
@@ -365,7 +366,9 @@ class KernelPlugin(PluginV2):
         }
 
     def __init__(self, *, part_name: str, options) -> None:
-        super().__init__(str, options)
+        super().__init__(part_name=str, options=options)
+        self.name = part_name
+        self.options = options
         self._get_target_architecture()
         self._get_deb_architecture()
         self._get_kernel_architecture()
@@ -1377,7 +1380,7 @@ class KernelPlugin(PluginV2):
             # add ppa itself
             logger.warning("adding ppa:snappy-dev/image to handle initrd builds")
             subprocess.run(
-                ["add-apt-repository", "-y", "ppa:snappy-dev/image"],
+                ["sudo", "add-apt-repository", "-y", "ppa:snappy-dev/image"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 check=True,
@@ -1432,7 +1435,7 @@ class KernelPlugin(PluginV2):
             "DEB_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
             "UC_INITRD_DEB": "${SNAPCRAFT_PART_BUILD}/ubuntu-core-initramfs",
             "SNAPD_UNPACKED_SNAP": "${SNAPCRAFT_PART_BUILD}/unpacked_snapd_snap",
-            "KERNEL_BUILD_ARCH_DIR": f"${{SNAPCRAFT_PART_BUILD}}/arch/${self.kernel_arch}/boot",
+            "KERNEL_BUILD_ARCH_DIR": f"${{SNAPCRAFT_PART_BUILD}}/arch/{self.kernel_arch}/boot",
             "KERNEL_IMAGE_TARGET": self.kernel_image_target,
         }
 
