@@ -330,6 +330,7 @@ class KernelPlugin(Plugin):
         self._get_deb_architecture()
         self._get_kernel_architecture()
         # check if we are cross building
+        self._cross_building = False
         if (
             self._part_info.project_info.host_arch
             != self._part_info.project_info.target_arch

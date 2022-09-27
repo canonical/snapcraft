@@ -374,6 +374,7 @@ class KernelPlugin(PluginV2):
         self._get_kernel_architecture()
         # check if we are cross building
         host_arch = os.getenv("SNAP_ARCH")
+        self._cross_building = False
         if host_arch != self.target_arch:
             self._cross_building = True
 
