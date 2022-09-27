@@ -19,6 +19,7 @@
 
 from .colcon import ColconPlugin
 from .conda_plugin import CondaPlugin
+from .kernel import KernelPlugin
 from .register import register
 
-__all__ = ["ColconPlugin", "CondaPlugin", "register"]
+__all__ = ["ColconPlugin", "CondaPlugin", "KernelPlugin", "register"]
