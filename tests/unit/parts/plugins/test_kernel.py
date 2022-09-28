@@ -33,8 +33,10 @@ class TestPluginKernel:
             {
                 "source": ".",
                 "kernel-initrd-compression": "lz4",
-                "kernel-enable-zfs-support": "False",
+                "kernel-enable-zfs-support": False,
                 "kernel-image-target": "bzImage",
+                # Ensure that the PPA is not added so we don't cause side-effects
+                "kernel-add-ppa": False,
             }
         )
         part = Part("foo", {})
@@ -86,3 +88,4 @@ class TestPluginKernel:
         assert opt.kernel_initrd_addons is None
         assert not opt.kernel_enable_zfs_support
         assert not opt.kernel_enable_perf
+        assert not opt.kernel_add_ppa
