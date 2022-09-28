@@ -169,6 +169,10 @@ The following kernel-specific options are provided by this plugin:
     - kernel-enable-perf
        (boolean; default: False)
        use this flag to build the perf binary
+
+    - kernel-add-ppa
+       (boolean; default: True)
+       controls if the snappy-dev PPA should be added to the system
 """
 
 import logging
@@ -361,6 +365,10 @@ class KernelPlugin(PluginV2):
                 "kernel-enable-perf": {
                     "type": "boolean",
                     "default": False,
+                },
+                "kernel-add-ppa": {
+                    "type": "boolean",
+                    "default": True,
                 },
             },
         }
@@ -1422,7 +1430,8 @@ class KernelPlugin(PluginV2):
             build_packages |= {f"libc6-dev:{self.target_arch}"}
 
         # add snappy ppa to get correct initrd tools
-        self._add_snappy_ppa()
+        if self.options.kernel_add_ppa:
+            self._add_snappy_ppa()
 
         return build_packages
 
