@@ -1349,8 +1349,8 @@ class KernelPlugin(Plugin):
                         check=True,
                     )
                 except subprocess.CalledProcessError as error:
-                    raise errors.AptGPGKeyInstallError(
-                        error.output.decode(), key=_SNAPPY_DEV_KEY_FINGERPRINT
+                    raise ValueError(
+                        f"Failed to add ppa key: {_SNAPPY_DEV_KEY_FINGERPRINT}: {error.output.decode()}"
                     )
 
             # add ppa itself
