@@ -21,6 +21,7 @@ from snapcraft.parts.plugins.kernel import KernelPlugin
 
 # pylint: disable=attribute-defined-outside-init
 
+
 class TestPluginKernel:
     """
     Kernel plugin tests.
@@ -28,12 +29,14 @@ class TestPluginKernel:
 
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir):
-        properties = KernelPlugin.properties_class.unmarshal({
-            "source": ".",
-            "kernel-initrd-compression": "lz4",
-            "kernel-enable-zfs-support": "False",
-            "kernel-image-target": "bzImage",
-        })
+        properties = KernelPlugin.properties_class.unmarshal(
+            {
+                "source": ".",
+                "kernel-initrd-compression": "lz4",
+                "kernel-enable-zfs-support": "False",
+                "kernel-image-target": "bzImage",
+            }
+        )
         part = Part("foo", {})
 
         project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
