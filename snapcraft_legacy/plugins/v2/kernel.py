@@ -1310,7 +1310,6 @@ class KernelPlugin(PluginV2):
             for opt in self.options.kernel_compiler_parameters:
                 self.make_cmd.append(str(opt))
 
-    @overrides
     def get_build_snaps(self) -> Set[str]:
         return set()
 
@@ -1379,7 +1378,6 @@ class KernelPlugin(PluginV2):
                 check=True,
             )
 
-    @overrides
     def get_build_packages(self) -> Set[str]:
         build_packages = {
             "bc",
@@ -1420,7 +1418,6 @@ class KernelPlugin(PluginV2):
 
         return build_packages
 
-    @overrides
     def get_build_environment(self) -> Dict[str, str]:
         logger.info("Getting build env...")
         self._init_build_env()
@@ -1580,7 +1577,6 @@ class KernelPlugin(PluginV2):
             'echo "Not building perf binary"',
         ]
 
-    @overrides
     def get_build_commands(self) -> List[str]:
         logger.info("Getting build commands...")
         self._configure_compiler()
