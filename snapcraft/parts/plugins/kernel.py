@@ -238,6 +238,10 @@ class KernelPluginProperties(PluginProperties, PluginModel):
         During build it will be expanded to
         ${CRAFT_STAGE}/{initrd-addon}
         Default: none
+
+        - kernel-add-ppa
+        (boolean; default: True)
+        controls if the snappy-dev PPA should be added to the system
     """
 
     kernel_kdefconfig: List[str] = ["defconfig"]
@@ -261,6 +265,7 @@ class KernelPluginProperties(PluginProperties, PluginModel):
     kernel_initrd_addons: Optional[List[str]]
     kernel_enable_zfs_support: bool = False
     kernel_enable_perf: bool = False
+    kernel_add_ppa: bool = True
 
     # part properties required by the plugin
     @root_validator
@@ -1400,7 +1405,8 @@ class KernelPlugin(Plugin):
             build_packages |= {f"libc6-dev:{self._part_info.project_info.target_arch}"}
 
         # add snappy ppa to get correct initrd tools
-        self._add_snappy_ppa()
+        if self.options.kernel_add_ppa:
+            self._add_snappy_ppa()
 
         return build_packages
 
