@@ -1356,7 +1356,7 @@ class KernelPlugin(PluginV2):
                 )
             except subprocess.CalledProcessError as error:
                 # Export shouldn't exit with failure based on testing
-                raise logger.error(
+                raise ValueError(
                     f"error to check for key={_SNAPPY_DEV_KEY_FINGERPRINT}: {error.output.decode()}"
                 )
 
