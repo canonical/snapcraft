@@ -22,11 +22,14 @@ import subprocess
 import sys
 from typing import Any, Dict, List, Optional, Set, cast
 
+from craft_parts import infos
+from craft_parts.plugins import (
+    Plugin,
+    PluginModel,
+    PluginProperties,
+    extract_plugin_properties,
+)
 from pydantic import root_validator
-
-from craft_parts import errors, infos
-from craft_parts.plugins.base import Plugin, PluginModel, extract_plugin_properties
-from craft_parts.plugins.properties import PluginProperties
 
 logger = logging.getLogger(__name__)
 
