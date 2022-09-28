@@ -211,11 +211,6 @@ class KernelPluginProperties(PluginProperties, PluginModel):
             xz:  -7
             zstd: -1 -T0
 
-        - kernel-initrd-channel
-        Optional channel for snapd snap to pick snap-bootstrap from.
-        Channel can contain also branch definition.
-        Default: stable
-
         - kernel-initrd-overlay
         Optional overlay to be applied to built initrd.
         This option is designed to provide easy way to apply initrd overlay for
@@ -260,7 +255,6 @@ class KernelPluginProperties(PluginProperties, PluginModel):
     kernel_initrd_firmware: Optional[List[str]]
     kernel_initrd_compression: str = "lz4"
     kernel_initrd_compression_options: Optional[List[str]]
-    kernel_initrd_channel: str = "stable"
     kernel_initrd_overlay: Optional[List[str]]
     kernel_initrd_addons: Optional[List[str]]
     kernel_enable_zfs_support: bool = False
@@ -511,16 +505,9 @@ class KernelPlugin(Plugin):
 
     def _download_core_initrd_fnc_cmd(self) -> List[str]:
         return [
-            "# Helper to download code initrd dep package",
+            "# Helper to download code initrd deb package",
             "# 1: arch, 2: output dir",
             "download_core_initrd() {",
-            "# check if we have defined ppa, to have consistent error message for fail",
-            'if [ -z "$(apt-cache search ubuntu-core-initramfs)" ]; then',
-            '\techo "Missing package-repositories declaration in snapcracft.yaml, add following definition:"',
-            '\techo -e "package-repositories:\n    - type: apt\n    ppa: snappy-dev/image"',
-            "\texit 1",
-            "fi",
-            "",
             " ".join(
                 [
                     "\tapt-get",
@@ -528,7 +515,7 @@ class KernelPlugin(Plugin):
                     "ubuntu-core-initramfs:${1}",
                 ]
             ),
-            "# unpack dep to the target dir",
+            "\t# unpack dep to the target dir",
             "\tdpkg -x ubuntu-core-initramfs_*.deb ${2}",
             "}",
         ]
@@ -548,40 +535,36 @@ class KernelPlugin(Plugin):
             "fi",
         ]
 
-    def _download_snapd_snap_cmd(self) -> List[str]:
-        cmd_download_snapd_snap = [
-            '\techo "Downloading snapd from snap store"',
+    def _download_snap_bootstrap_fnc_cmd(self) -> List[str]:
+        return [
+            "# Helper to download snap-bootstrap from snapd deb package",
+            "# 1: arch, 2: output dir",
+            "download_snap_bootstrap() {",
             " ".join(
                 [
-                    f"\tUBUNTU_STORE_ARCH={self._part_info.project_info.target_arch}",
-                    "snap",
+                    "\tapt-get",
                     "download",
-                    _SNAPD_SNAP_NAME,
-                    "--channel",
-                    f"latest/{self.options.kernel_initrd_channel}",
-                    "--basename",
-                    f"$(basename {self.snapd_snap} | cut -f1 -d'.')",
+                    "snapd:${1}",
                 ]
             ),
-            " ".join(
-                [
-                    "\tunsquashfs",
-                    "-d",
-                    "${SNAPD_UNPACKED_SNAP}",
-                    self.snapd_snap,
-                    "usr/lib/snapd/snap-bootstrap",
-                    "usr/lib/snapd/info",
-                    "meta",
-                ]
-            ),
+            "\t# unpack dep to the target dir",
+            "\tdpkg -x snapd_*.deb ${2}",
+            "}",
         ]
 
+    def _download_snap_bootstrap_cmd(self) -> List[str]:
         return [
-            'echo "Getting snapd snap for snap bootstrap..."',
+            'echo "Getting snapd deb for snap bootstrap..."',
             # only download again if files does not exist, otherwise
             # assume we are re-running build
-            f"if [ ! -e {self.snapd_snap} ]; then",
-            *cmd_download_snapd_snap,
+            "if [ ! -e ${SNAPD_UNPACKED_SNAP} ]; then",
+            " ".join(
+                [
+                    "\tdownload_snap_bootstrap",
+                    self._part_info.project_info.target_arch,
+                    "${SNAPD_UNPACKED_SNAP}",
+                ]
+            ),
             "fi",
         ]
 
@@ -1342,6 +1325,7 @@ class KernelPlugin(Plugin):
 
             if "nothing exported" in apt_key_output:
                 logger.info("importing key for ppa:snappy-dev/image")
+                # first import key for the ppa
                 try:
                     subprocess.run(
                         [
@@ -1419,7 +1403,7 @@ class KernelPlugin(Plugin):
             "ARCH": self.kernel_arch,
             "DEB_ARCH": "${CRAFT_TARGET_ARCH}",
             "UC_INITRD_DEB": "${CRAFT_PART_BUILD}/ubuntu-core-initramfs",
-            "SNAPD_UNPACKED_SNAP": "${CRAFT_PART_BUILD}/unpacked_snapd_snap",
+            "SNAPD_UNPACKED_SNAP": "${CRAFT_PART_BUILD}/unpacked_snapd",
             "KERNEL_BUILD_ARCH_DIR": f"${{CRAFT_PART_BUILD}}/arch/{self.kernel_arch}/boot",
             "KERNEL_IMAGE_TARGET": self.kernel_image_target,
         }
@@ -1587,7 +1571,9 @@ class KernelPlugin(Plugin):
             "",
             *self._download_generic_initrd_cmd(),
             "",
-            *self._download_snapd_snap_cmd(),
+            *self._download_snap_bootstrap_fnc_cmd(),
+            "",
+            *self._download_snap_bootstrap_cmd(),
             "",
             *self._clone_zfs_cmd(),
             "",
