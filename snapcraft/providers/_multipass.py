@@ -29,6 +29,7 @@ from snapcraft import utils
 
 from ._buildd import BASE_TO_BUILDD_IMAGE_ALIAS, SnapcraftBuilddBaseConfiguration
 from ._provider import Provider
+from .providers import get_instance_name
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +122,7 @@ class MultipassProvider(Provider):
         """
         alias = BASE_TO_BUILDD_IMAGE_ALIAS[base]
 
-        instance_name = self.get_instance_name(
+        instance_name = get_instance_name(
             project_name=project_name,
             project_path=project_path,
             build_on=build_on,
