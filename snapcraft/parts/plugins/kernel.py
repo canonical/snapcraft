@@ -29,6 +29,7 @@ from craft_parts.plugins import (
     PluginProperties,
     extract_plugin_properties,
 )
+from overrides import overrides
 from pydantic import root_validator
 
 logger = logging.getLogger(__name__)
