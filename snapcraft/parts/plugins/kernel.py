@@ -3,6 +3,7 @@
 #
 # Copyright 2020 Canonical Ltd.
 #
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License version 3 as published by the Free Software Foundation.
@@ -32,7 +33,9 @@ from craft_parts.plugins import (
 from overrides import overrides
 from pydantic import root_validator
 
+"""Logger."""
 logger = logging.getLogger(__name__)
+"""Logger."""
 
 _compression_command = {"gz": "gzip", "lz4": "lz4", "xz": "xz", "zstd": "zstd"}
 _compressor_options = {"gz": "-7", "lz4": "-l -9", "xz": "-7", "zstd": "-1 -T0"}
@@ -41,7 +44,7 @@ _SNAPD_SNAP_FILE = "{snap_name}_{architecture}.snap"
 _ZFS_URL = "https://github.com/openzfs/zfs"
 _SNAPPY_DEV_KEY_FINGERPRINT = "F1831DDAFC42E99D"
 
-default_kernel_image_target = {
+_default_kernel_image_target = {
     "amd64": "bzImage",
     "i386": "bzImage",
     "armhf": "zImage",
@@ -52,7 +55,7 @@ default_kernel_image_target = {
     "riscv64": "Image",
 }
 
-required_generic = [
+_required_generic = [
     "DEVTMPFS",
     "DEVTMPFS_MOUNT",
     "TMPFS_POSIX_ACL",
@@ -64,7 +67,7 @@ required_generic = [
     "NLS_ISO8859_1",
 ]
 
-required_security = [
+_required_security = [
     "SECURITY",
     "SECURITY_APPARMOR",
     "SYN_COOKIES",
@@ -74,7 +77,7 @@ required_security = [
     "SECCOMP_FILTER",
 ]
 
-required_snappy = [
+_required_snappy = [
     "RD_LZMA",
     "KEYS",
     "ENCRYPTED_KEYS",
@@ -83,7 +86,7 @@ required_snappy = [
     "SQUASHFS_XZ",
 ]
 
-required_systemd = [
+_required_systemd = [
     "DEVTMPFS",
     "CGROUPS",
     "INOTIFY_USER",
@@ -103,7 +106,7 @@ required_systemd = [
     "SECCOMP",
 ]
 
-required_boot = ["squashfs"]
+_required_boot = ["squashfs"]
 
 
 class KernelPluginProperties(PluginProperties, PluginModel):
@@ -291,37 +294,7 @@ class KernelPluginProperties(PluginProperties, PluginModel):
 
 
 class KernelPlugin(Plugin):
-    """This kernel plugin allows building kernel snaps
-    with all the bells and whistles in one shot...
-
-    The general purpose of a Craft plugin is to customize the following
-    properties as defined in the craft source file
-    https://github.com/canonical/craft-parts/blob/main/craft_parts/plugins/base.py
-
-
-    class Plugin(abc.ABC):
-        properties_class: Type[PluginProperties]
-        validator_class = PluginEnvironmentValidator
-
-        def __init__(
-            self, *, properties: PluginProperties, part_info: "infos.PartInfo"
-        ) -> None:
-
-        @abc.abstractmethod
-        def get_build_snaps(self) -> Set[str]:
-
-        @abc.abstractmethod
-        def get_build_packages(self) -> Set[str]:
-
-        @abc.abstractmethod
-        def get_build_environment(self) -> Dict[str, str]:
-
-        @classmethod
-        def get_out_of_source_build(cls) -> bool:
-
-        @abc.abstractmethod
-        def get_build_commands(self) -> List[str]:
-    """
+    """Plugin for the kernel snap build."""
 
     properties_class = KernelPluginProperties
 
@@ -392,7 +365,7 @@ class KernelPlugin(Plugin):
 
     def _set_kernel_targets(self) -> None:
         if not self.options.kernel_image_target:
-            self.kernel_image_target = default_kernel_image_target[self.deb_arch]
+            self.kernel_image_target = _default_kernel_image_target[self.deb_arch]
         elif isinstance(self.options.kernel_image_target, str):
             self.kernel_image_target = self.options.kernel_image_target
         elif self.deb_arch in self.options.kernel_image_target:
@@ -1292,11 +1265,15 @@ class KernelPlugin(Plugin):
         return set()
 
     def _add_snappy_ppa(self) -> None:
-        """TODO: remove once snapcraft allows to the plugins to add ppa
-        dracut-core package has to come from ppa:snappy-dev/image
-        since plugin has no way to add ppa in API way, add ppa manually
-        not to run it every time, check if ppa file exists in /etc/apt
-        """
+        """Add ppa necessary to build initrd."""
+        """TODO: reimplement once snapcraft allows to the plugins
+        to add custom ppa.
+        For the moment we need to handle this as part of the
+        get_build_packages() call and add ppa manually.
+
+        Building of the initrd requires custom tools available in
+        ppa:snappy-dev/image."""
+
         proc = subprocess.run(
             ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
             stdout=subprocess.PIPE,
@@ -1601,11 +1578,12 @@ class KernelPlugin(Plugin):
 
     @classmethod
     def get_out_of_source_build(cls) -> bool:
-        # user src dir without need to link it to build dir, which takes ages
+        """Return whether the plugin performs out-of-source-tree builds."""
         return True
 
 
 def check_new_config(config_path: str, initrd_modules: List[str]):
+    """Check passed kernel config and initrd modules for required dependencies."""
     print("Checking created config...")
     builtin, modules = _do_parse_config(config_path)
     _do_check_config(builtin, modules)
@@ -1640,7 +1618,7 @@ def _do_check_config(builtin: List[str], modules: List[str]):
         "we suggest you take a look at these:\n"
     )
     required_opts = (
-        required_generic + required_security + required_snappy + required_systemd
+        _required_generic + _required_security + _required_snappy + _required_systemd
     )
     missing = []
 
@@ -1672,7 +1650,7 @@ def _do_check_initrd(builtin: List[str], modules: List[str], initrd_modules: Lis
     )
     missing = []
 
-    for code in required_boot:
+    for code in _required_boot:
         opt = f"CONFIG_{code.upper()}"
         if opt in builtin:
             continue
@@ -1687,6 +1665,13 @@ def _do_check_initrd(builtin: List[str], modules: List[str], initrd_modules: Lis
         logger.warning(warn)
 
 
-# allow callback for config check
+"""
+Allow callback calls for config validation.
+
+Before kernel build starts, kernel config should be checked,
+this enables callback from build environment back to the plugin
+to run config validation.
+"""
+
 if __name__ == "__main__":
     globals()[sys.argv[1]](sys.argv[2], sys.argv[3:])
