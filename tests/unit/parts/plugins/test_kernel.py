@@ -32,7 +32,7 @@ class TestPluginKernel:
         properties = KernelPlugin.properties_class.unmarshal(
             {
                 "source": ".",
-                "kernel-initrd-compression": "lz4",
+                "kernel-initrd-compression": "zstd",
                 "kernel-enable-zfs-support": False,
                 "kernel-image-target": "bzImage",
                 # Ensure that the PPA is not added so we don't cause side-effects
@@ -57,7 +57,7 @@ class TestPluginKernel:
             "dracut-core",
             "kmod",
             "kpartx",
-            "lz4",
+            "zstd",
             "systemd",
         }
 
@@ -81,9 +81,8 @@ class TestPluginKernel:
         assert opt.kernel_initrd_modules is None
         assert opt.kernel_initrd_configured_modules is None
         assert opt.kernel_initrd_firmware is None
-        assert opt.kernel_initrd_compression == "lz4"
+        assert opt.kernel_initrd_compression == "zstd"
         assert opt.kernel_initrd_compression_options is None
-        assert opt.kernel_initrd_channel == "stable"
         assert opt.kernel_initrd_overlay is None
         assert opt.kernel_initrd_addons is None
         assert not opt.kernel_enable_zfs_support

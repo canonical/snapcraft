@@ -16,6 +16,143 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""The kernel plugin for builging kernel snaps.
+
+The following kernel-specific options are provided by this plugin:
+
+    - kernel-kdefconfig:
+      (list of kdefconfigs)
+      defconfig target to use as the base configuration. default: "defconfig"
+
+    - kernel-kconfigfile:
+      (filepath)
+      path to file to use as base configuration. If provided this option wins
+      over everything else. default: None
+
+    - kernel-kconfigflavour:
+      (string)
+      Ubuntu config flavour to use as base configuration. If provided this
+      option wins over kernel-kdefconfig. default: None
+
+    - kernel-kconfigs:
+      (list of strings)
+      explicit list of configs to force; this will override the configs that
+      were set as base through kernel-kdefconfig and kernel-kconfigfile and dependent configs
+      will be fixed using the defaults encoded in the kbuild config
+      definitions.  If you don't want default for one or more implicit configs
+      coming out of these, just add them to this list as well.
+
+    - kernel-image-target:
+      (yaml object, string or null for default target)
+      the default target is bzImage and can be set to any specific
+      target.
+      For more complex cases where one would want to use
+      the same snapcraft.yaml to target multiple architectures a
+      yaml object can be used. This yaml object would be a map of
+      debian architecture and kernel image build targets.
+
+    - kernel-with-firmware:
+      (boolean; default: True)
+      use this flag to disable shipping binary firmwares.
+
+    - kernel-device-trees:
+      (array of string)
+      list of device trees to build, the format is <device-tree-name>.dts.
+
+    - kernel-build-efi-image
+      Optional, true if we want to create an EFI image, false otherwise (false
+      by default).
+
+    - kernel-compiler
+      (string; default:)
+      Optional, define compiler to use, by default gcc compiler is used.
+      Other permitted compilers: clang
+
+    - kernel-compiler-paths
+      (array of strings)
+      Optional, define the compiler path to be added to the PATH.
+      Path is relative to the stage directory.
+      Default value is empty.
+
+    - kernel-compiler-parameters
+      (array of string)
+      Optional, define extra compiler parameters to be passed to the compiler.
+      Default value is empty.
+
+    - kernel-enable-zfs-support
+      (boolean; default: False)
+      use this flag to build in zfs support through extra ko modules
+
+    - kernel-enable-perf
+      (boolean; default: False)
+      use this flag to build the perf binary
+
+    - kernel-initrd-modules:
+      (array of string)
+      list of modules to include in initrd; note that kernel snaps do not
+      provide the core boot logic which comes from snappy Ubuntu Core
+      OS snap. Include all modules you need for mounting rootfs here.
+
+    - kernel-initrd-configured-modules:
+      (array of string)
+      list of modules to be added to the initrd
+      /lib/modules-load.d/ubuntu-core-initramfs.conf config
+      to be automatically loaded.
+      Configured modules are automatically added to kernel-initrd-modules.
+      If module in question is not supported by the kernel, it's automatically
+      removed.
+
+    - kernel-initrd-firmware:
+      (array of string)
+      list of firmware files to be included in the initrd; these need to be
+      relative paths to stage directory.
+      <stage/part install dir>/firmware/* -> initrd:/lib/firmware/*
+
+    - kernel-initrd-compression:
+      (string; default: as defined in ubuntu-core-initrd(zstd)
+      initrd compression to use; the only supported values now are
+      'lz4', 'xz', 'gz', 'zstd'.
+
+    - kernel-initrd-compression-options:
+      Optional list of parameters to be passed to compressor used for initrd
+      (array of string): defaults are
+        gz:  -7
+        lz4: -9 -l
+        xz:  -7
+        zstd: -1 -T0
+
+    - kernel-initrd-overlay
+      Optional overlay to be applied to built initrd.
+      This option is designed to provide easy way to apply initrd overlay for
+      cases modifies initrd scripts for pre uc20 initrds.
+      Value is relative path, in stage directory. and related part needs to be
+      built before initrd part. During build it will be expanded to
+      ${CRAFT_STAGE}/{initrd-overlay}
+      Default: none
+
+    - kernel-initrd-addons
+      (array of string)
+      Optional list of files to be added to the initrd.
+      Function is similar to kernel-initrd-overlay, only it works on per file
+      selection without a need to have overlay in dedicated directory.
+      This option is designed to provide easy way to add additional content
+      to initrd for cases like full disk encryption support, when device
+      specific hook needs to be added to the initrd.
+      Values are relative path from stage directory, so related part(s)
+      need to be built before kernel part.
+      During build it will be expanded to
+      ${CRAFT_STAGE}/{initrd-addon}
+      Default: none
+
+    - kernel-add-ppa
+      (boolean; default: True)
+      controls if the snappy-dev PPA should be added to the system
+
+This plugin support cross compilation, for which plugin expects
+the build-environment is comfigured accordingly and has foreign architectures
+setup accordingly.
+"""
+
 import logging
 import os
 import re
@@ -23,19 +160,11 @@ import subprocess
 import sys
 from typing import Any, Dict, List, Optional, Set, cast
 
-from craft_parts import infos
-from craft_parts.plugins import (
-    Plugin,
-    PluginModel,
-    PluginProperties,
-    extract_plugin_properties,
-)
+from craft_parts import infos, plugins
 from overrides import overrides
 from pydantic import root_validator
 
-"""Logger."""
 logger = logging.getLogger(__name__)
-"""Logger."""
 
 _compression_command = {"gz": "gzip", "lz4": "lz4", "xz": "xz", "zstd": "zstd"}
 _compressor_options = {"gz": "-7", "lz4": "-l -9", "xz": "-7", "zstd": "-1 -T0"}
@@ -109,139 +238,8 @@ _required_systemd = [
 _required_boot = ["squashfs"]
 
 
-class KernelPluginProperties(PluginProperties, PluginModel):
-    """The part properties used by the kernel plugin."""
-
-    """The following kernel-specific options are provided by this plugin:
-
-        - kernel-kdefconfig:
-        (list of kdefconfigs)
-        defconfig target to use as the base configuration. default: "defconfig"
-
-        - kernel-kconfigfile:
-        (filepath)
-        path to file to use as base configuration. If provided this option wins
-        over everything else. default: None
-
-        - kernel-kconfigflavour:
-        (string)
-        Ubuntu config flavour to use as base configuration. If provided this
-        option wins over kernel-kdefconfig. default: None
-
-        - kernel-kconfigs:
-        (list of strings)
-        explicit list of configs to force; this will override the configs that
-        were set as base through kernel-kdefconfig and kernel-kconfigfile and dependent configs
-        will be fixed using the defaults encoded in the kbuild config
-        definitions.  If you don't want default for one or more implicit configs
-        coming out of these, just add them to this list as well.
-
-        - kernel-image-target:
-        (yaml object, string or null for default target)
-        the default target is bzImage and can be set to any specific
-        target.
-        For more complex cases where one would want to use
-        the same snapcraft.yaml to target multiple architectures a
-        yaml object can be used. This yaml object would be a map of
-        debian architecture and kernel image build targets.
-
-        - kernel-with-firmware:
-        (boolean; default: True)
-        use this flag to disable shipping binary firmwares.
-
-        - kernel-device-trees:
-        (array of string)
-        list of device trees to build, the format is <device-tree-name>.dts.
-
-        - kernel-build-efi-image
-        Optional, true if we want to create an EFI image, false otherwise (false
-        by default).
-
-        - kernel-compiler
-        (string; default:)
-        Optional, define compiler to use, by default gcc compiler is used.
-        Other permitted compilers: clang
-
-        - kernel-compiler-paths
-        (array of strings)
-        Optional, define the compiler path to be added to the PATH.
-        Path is relative to the stage directory.
-        Default value is empty.
-
-        - kernel-compiler-parameters
-        (array of string)
-        Optional, define extra compiler parameters to be passed to the compiler.
-        Default value is empty.
-
-        - kernel-enable-zfs-support
-        (boolean; default: False)
-        use this flag to build in zfs support through extra ko modules
-
-        - kernel-enable-perf
-        (boolean; default: False)
-        use this flag to build the perf binary
-
-        - kernel-initrd-modules:
-        (array of string)
-        list of modules to include in initrd; note that kernel snaps do not
-        provide the core boot logic which comes from snappy Ubuntu Core
-        OS snap. Include all modules you need for mounting rootfs here.
-
-        - kernel-initrd-configured-modules:
-        (array of string)
-        list of modules to be added to the initrd
-        /lib/modules-load.d/ubuntu-core-initramfs.conf config
-        to be automatically loaded.
-        Configured modules are automatically added to kernel-initrd-modules.
-        If module in question is not supported by the kernel, it's automatically
-        removed.
-
-        - kernel-initrd-firmware:
-        (array of string)
-        list of firmware files to be included in the initrd; these need to be
-        relative paths to stage directory.
-        <stage/part install dir>/firmware/* -> initrd:/lib/firmware/*
-
-        - kernel-initrd-compression:
-        (string; default: as defined in ubuntu-core-initrd(lz4)
-        initrd compression to use; the only supported values now are
-        'lz4', 'xz', 'gz', 'zstd'.
-
-        - kernel-initrd-compression-options:
-        Optional list of parameters to be passed to compressor used for initrd
-        (array of string): defaults are
-            gz:  -7
-            lz4: -9 -l
-            xz:  -7
-            zstd: -1 -T0
-
-        - kernel-initrd-overlay
-        Optional overlay to be applied to built initrd.
-        This option is designed to provide easy way to apply initrd overlay for
-        cases modifies initrd scripts for pre uc20 initrds.
-        Value is relative path, in stage directory. and related part needs to be
-        built before initrd part. During build it will be expanded to
-        ${CRAFT_STAGE}/{initrd-overlay}
-        Default: none
-
-        - kernel-initrd-addons
-        (array of string)
-        Optional list of files to be added to the initrd.
-        Function is similar to kernel-initrd-overlay, only it works on per file
-        selection without a need to have overlay in dedicated directory.
-        This option is designed to provide easy way to add additional content
-        to initrd for cases like full disk encryption support, when device
-        specific hook needs to be added to the initrd.
-        Values are relative path from stage directory, so related part(s)
-        need to be built before kernel part.
-        During build it will be expanded to
-        ${CRAFT_STAGE}/{initrd-addon}
-        Default: none
-
-        - kernel-add-ppa
-        (boolean; default: True)
-        controls if the snappy-dev PPA should be added to the system
-    """
+class KernelPluginProperties(plugins.PluginProperties, plugins.PluginModel):
+    """The part properties used by the Kernel plugin."""
 
     kernel_kdefconfig: List[str] = ["defconfig"]
     kernel_kconfigfile: Optional[str]
@@ -257,7 +255,7 @@ class KernelPluginProperties(PluginProperties, PluginModel):
     kernel_initrd_modules: Optional[List[str]]
     kernel_initrd_configured_modules: Optional[List[str]]
     kernel_initrd_firmware: Optional[List[str]]
-    kernel_initrd_compression: str = "lz4"
+    kernel_initrd_compression: str = "zstd"
     kernel_initrd_compression_options: Optional[List[str]]
     kernel_initrd_overlay: Optional[List[str]]
     kernel_initrd_addons: Optional[List[str]]
@@ -289,17 +287,19 @@ class KernelPluginProperties(PluginProperties, PluginModel):
 
         :raise pydantic.ValidationError: If validation fails.
         """
-        plugin_data = extract_plugin_properties(data, plugin_name="kernel", required=[])
+        plugin_data = plugins.extract_plugin_properties(
+            data, plugin_name="kernel", required=[]
+        )
         return cls(**plugin_data)
 
 
-class KernelPlugin(Plugin):
+class KernelPlugin(plugins.Plugin):
     """Plugin for the kernel snap build."""
 
     properties_class = KernelPluginProperties
 
     def __init__(
-        self, *, properties: PluginProperties, part_info: "infos.PartInfo"
+        self, *, properties: plugins.PluginProperties, part_info: infos.PartInfo
     ) -> None:
         super().__init__(properties=properties, part_info=part_info)
         self.options = cast(KernelPluginProperties, self._options)
@@ -913,7 +913,7 @@ class KernelPlugin(Plugin):
             options = _compressor_options[self.options.kernel_initrd_compression]
 
         cmd = f"{compressor} {options}"
-        logger.warning(f"WARNING: Using custom initrd compressions command: {cmd!r}")
+        logger.warning("WARNING: Using custom initrd compressions command: %s", cmd)
         return cmd
 
     def _parse_kernel_release_cmd(self) -> List[str]:
@@ -1005,7 +1005,7 @@ class KernelPlugin(Plugin):
 
     def _assemble_ubuntu_config_cmd(self) -> List[str]:
         flavour = self.options.kernel_kconfigflavour
-        logger.info(f"Using ubuntu config flavour {flavour}")
+        logger.info("Using ubuntu config flavour %s", flavour)
         cmd = [
             '\techo "Assembling Ubuntu config..."',
             "\tbranch=$(cut -d'.' -f 2- < ${KERNEL_SRC}/debian/debian.env)",
@@ -1265,19 +1265,20 @@ class KernelPlugin(Plugin):
         return set()
 
     def _add_snappy_ppa(self) -> None:
-        """Add ppa necessary to build initrd."""
-        """TODO: reimplement once snapcraft allows to the plugins
-        to add custom ppa.
-        For the moment we need to handle this as part of the
-        get_build_packages() call and add ppa manually.
+        # Add ppa necessary to build initrd.
+        # TODO: reimplement once snapcraft allows to the plugins
+        # to add custom ppa.
+        # For the moment we need to handle this as part of the
+        # get_build_packages() call and add ppa manually.
 
-        Building of the initrd requires custom tools available in
-        ppa:snappy-dev/image."""
+        # Building of the initrd requires custom tools available in
+        # ppa:snappy-dev/image.
 
         proc = subprocess.run(
             ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
+            check=True,
         )
 
         if (
@@ -1296,7 +1297,7 @@ class KernelPlugin(Plugin):
                 # Export shouldn't exit with failure based on testing
                 raise ValueError(
                     f"error to check for key={_SNAPPY_DEV_KEY_FINGERPRINT}: {error.output.decode()}"
-                )
+                ) from error
 
             apt_key_output = proc.stdout.decode()
             if "BEGIN PGP PUBLIC KEY BLOCK" in apt_key_output:
@@ -1322,7 +1323,7 @@ class KernelPlugin(Plugin):
                 except subprocess.CalledProcessError as error:
                     raise ValueError(
                         f"Failed to add ppa key: {_SNAPPY_DEV_KEY_FINGERPRINT}: {error.output.decode()}"
-                    )
+                    ) from error
 
             # add ppa itself
             logger.warning("adding ppa:snappy-dev/image to handle initrd builds")
@@ -1664,14 +1665,6 @@ def _do_check_initrd(builtin: List[str], modules: List[str], initrd_modules: Lis
             warn += f"{opt}\n"
         logger.warning(warn)
 
-
-"""
-Allow callback calls for config validation.
-
-Before kernel build starts, kernel config should be checked,
-this enables callback from build environment back to the plugin
-to run config validation.
-"""
 
 if __name__ == "__main__":
     globals()[sys.argv[1]](sys.argv[2], sys.argv[3:])
