@@ -65,19 +65,6 @@ def mock_default_command_environment():
         yield mock_environment
 
 
-def test_get_instance_name(new_dir):
-    """Test formatting of instance name."""
-    inode_number = str(new_dir.stat().st_ino)
-    expected_name = f"snapcraft-hello-world-on-arm64-for-armhf-{inode_number}"
-    actual_name = providers.Provider.get_instance_name(
-        project_name="hello-world",
-        project_path=new_dir,
-        build_on="arm64",
-        build_for="armhf",
-    )
-    assert expected_name == actual_name
-
-
 def test_clean_project_environment_exists(
     mock_lxd_exists,
     mock_lxd_delete,

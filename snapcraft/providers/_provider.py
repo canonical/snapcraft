@@ -25,6 +25,8 @@ from typing import Dict, Generator, Optional, Tuple, Union
 
 from craft_providers import Executor, bases
 
+from .providers import get_instance_name
+
 logger = logging.getLogger(__name__)
 
 
@@ -53,7 +55,7 @@ class Provider(ABC):
             )
             return
 
-        instance_name = self.get_instance_name(
+        instance_name = get_instance_name(
             project_name=project_name,
             project_path=project_path,
             build_on=build_on,
@@ -109,35 +111,6 @@ class Provider(ABC):
             env["https_proxy"] = https_proxy
 
         return env
-
-    @staticmethod
-    def get_instance_name(
-        *,
-        project_name: str,
-        project_path: pathlib.Path,
-        build_on: str,
-        build_for: str,
-    ) -> str:
-        """Formulate the name for an instance using each of the given parameters.
-
-        Incorporate each of the parameters into the name to come up with a
-        predictable naming schema that avoids name collisions across multiple
-        projects.
-
-        :param project_name: Name of the project.
-        :param project_path: Directory of the project.
-        """
-        return "-".join(
-            [
-                "snapcraft",
-                project_name,
-                "on",
-                build_on,
-                "for",
-                build_for,
-                str(project_path.stat().st_ino),
-            ]
-        )
 
     @classmethod
     def is_base_available(cls, base: str) -> Tuple[bool, Union[str, None]]:
