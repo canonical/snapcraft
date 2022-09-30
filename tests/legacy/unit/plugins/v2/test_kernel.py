@@ -40,7 +40,6 @@ class TestPluginKernel(TestCase):
             kernel_initrd_firmware = []
             kernel_initrd_compression = "lz4"
             kernel_initrd_compression_options = []
-            kernel_initrd_channel = "stable"
             kernel_initrd_overlay = ""
             kernel_initrd_addons = []
             kernel_compiler = "gcc"
@@ -123,10 +122,6 @@ class TestPluginKernel(TestCase):
                         "uniqueItems": True,
                         "items": {"type": "string"},
                         "default": [],
-                    },
-                    "kernel-initrd-channel": {
-                        "type": "string",
-                        "default": "stable",
                     },
                     "kernel-initrd-overlay": {
                         "type": "string",
@@ -211,7 +206,6 @@ class TestPluginKernel(TestCase):
         self.assertEqual(opt.kernel_initrd_firmware, [])
         self.assertEqual(opt.kernel_initrd_compression, "lz4")
         self.assertEqual(opt.kernel_initrd_compression_options, [])
-        self.assertEqual(opt.kernel_initrd_channel, "stable")
         self.assertEqual(opt.kernel_initrd_overlay, "")
         self.assertEqual(opt.kernel_initrd_addons, [])
         self.assertFalse(opt.kernel_enable_zfs_support)

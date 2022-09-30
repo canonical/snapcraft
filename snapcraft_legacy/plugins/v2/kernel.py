@@ -3,6 +3,7 @@
 #
 # Copyright 2020 Canonical Ltd.
 #
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License version 3 as published by the Free Software Foundation.
@@ -15,33 +16,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""This kernel plugin allows building kernel snaps
-with all the bells and whistles in one shot...
-
-The general purpose of a Snapcraft plugin is to customize the following
-properties as defined in the snapcraft source file
-https://github.com/snapcore/snapcraft/blob/main/snapcraft_legacy/plugins/v2/_plugin.py
-
-
-class PluginV2(abc.ABC):
-    def get_schema(cls) -> Dict[str, Any]:
-
-    @abc.abstractmethod
-    def get_build_snaps(self) -> Set[str]:
-
-    @abc.abstractmethod
-    def get_build_packages(self) -> Set[str]:
-
-    @abc.abstractmethod
-    def get_build_environment(self) -> Dict[str, str]:
-
-    @abc.abstractmethod
-    def get_build_commands(self) -> List[str]:
-
-    @property
-    def out_of_source_build(self):
-        return True/False
-
+"""The kernel plugin for builging kernel snaps.
 
 The following kernel-specific options are provided by this plugin:
 
@@ -105,8 +80,8 @@ The following kernel-specific options are provided by this plugin:
       use this flag to build in zfs support through extra ko modules
 
     - kernel-enable-perf
-       (boolean; default: False)
-       use this flag to build the perf binary
+      (boolean; default: False)
+      use this flag to build the perf binary
 
     - kernel-initrd-modules:
       (array of string)
@@ -166,8 +141,12 @@ The following kernel-specific options are provided by this plugin:
       Default: none
 
     - kernel-add-ppa
-       (boolean; default: True)
-       controls if the snappy-dev PPA should be added to the system
+      (boolean; default: True)
+      controls if the snappy-dev PPA should be added to the system
+
+This plugin support cross compilation, for which plugin expects
+the build-environment is comfigured accordingly and has foreign architectures
+setup accordingly.
 """
 
 import logging
@@ -176,6 +155,8 @@ import re
 import subprocess
 import sys
 from typing import Any, Dict, List, Set
+
+from overrides import overrides
 
 from snapcraft_legacy.internal.repo import errors
 from snapcraft_legacy.plugins.v2 import PluginV2
@@ -190,7 +171,7 @@ _SNAPD_SNAP_FILE = "{snap_name}_{architecture}.snap"
 _ZFS_URL = "https://github.com/openzfs/zfs"
 _SNAPPY_DEV_KEY_FINGERPRINT = "F1831DDAFC42E99D"
 
-default_kernel_image_target = {
+_default_kernel_image_target = {
     "amd64": "bzImage",
     "i386": "bzImage",
     "armhf": "zImage",
@@ -201,7 +182,7 @@ default_kernel_image_target = {
     "riscv64": "Image",
 }
 
-required_generic = [
+_required_generic = [
     "DEVTMPFS",
     "DEVTMPFS_MOUNT",
     "TMPFS_POSIX_ACL",
@@ -213,7 +194,7 @@ required_generic = [
     "NLS_ISO8859_1",
 ]
 
-required_security = [
+_required_security = [
     "SECURITY",
     "SECURITY_APPARMOR",
     "SYN_COOKIES",
@@ -223,7 +204,7 @@ required_security = [
     "SECCOMP_FILTER",
 ]
 
-required_snappy = [
+_required_snappy = [
     "RD_LZMA",
     "KEYS",
     "ENCRYPTED_KEYS",
@@ -232,7 +213,7 @@ required_snappy = [
     "SQUASHFS_XZ",
 ]
 
-required_systemd = [
+_required_systemd = [
     "DEVTMPFS",
     "CGROUPS",
     "INOTIFY_USER",
@@ -252,7 +233,7 @@ required_systemd = [
     "SECCOMP",
 ]
 
-required_boot = ["squashfs"]
+_required_boot = ["squashfs"]
 
 
 class KernelPlugin(PluginV2):
@@ -448,7 +429,7 @@ class KernelPlugin(PluginV2):
 
     def _set_kernel_targets(self) -> None:
         if not self.options.kernel_image_target:
-            self.kernel_image_target = default_kernel_image_target[self.deb_arch]
+            self.kernel_image_target = _default_kernel_image_target[self.deb_arch]
         elif isinstance(self.options.kernel_image_target, str):
             self.kernel_image_target = self.options.kernel_image_target
         elif self.deb_arch in self.options.kernel_image_target:
@@ -963,7 +944,7 @@ class KernelPlugin(PluginV2):
             options = _compressor_options[self.options.kernel_initrd_compression]
 
         cmd = f"{compressor} {options}"
-        logger.warning(f"WARNING: Using custom initrd compressions command: {cmd!r}")
+        logger.warning("WARNING: Using custom initrd compressions command: %s", cmd)
         return cmd
 
     def _parse_kernel_release_cmd(self) -> List[str]:
@@ -1055,7 +1036,7 @@ class KernelPlugin(PluginV2):
 
     def _assemble_ubuntu_config_cmd(self) -> List[str]:
         flavour = self.options.kernel_kconfigflavour
-        logger.info(f"Using ubuntu config flavour {flavour}")
+        logger.info("Using ubuntu config flavour %s", flavour)
         cmd = [
             '\techo "Assembling Ubuntu config..."',
             "\tbranch=$(cut -d'.' -f 2- < ${KERNEL_SRC}/debian/debian.env)",
@@ -1310,19 +1291,25 @@ class KernelPlugin(PluginV2):
             for opt in self.options.kernel_compiler_parameters:
                 self.make_cmd.append(str(opt))
 
+    @overrides
     def get_build_snaps(self) -> Set[str]:
         return set()
 
     def _add_snappy_ppa(self) -> None:
-        """TODO: remove once snapcraft allows to the plugins to add ppa
-        dracut-core package has to come from ppa:snappy-dev/image
-        since plugin has no way to add ppa in API way, add ppa manually
-        not to run it every time, check if ppa file exists in /etc/apt
-        """
+        # Add ppa necessary to build initrd.
+        # TODO: reimplement once snapcraft allows to the plugins
+        # to add custom ppa.
+        # For the moment we need to handle this as part of the
+        # get_build_packages() call and add ppa manually.
+
+        # Building of the initrd requires custom tools available in
+        # ppa:snappy-dev/image.
+
         proc = subprocess.run(
             ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
+            check=True,
         )
 
         if (
@@ -1378,6 +1365,7 @@ class KernelPlugin(PluginV2):
                 check=True,
             )
 
+    @overrides
     def get_build_packages(self) -> Set[str]:
         build_packages = {
             "bc",
@@ -1418,6 +1406,7 @@ class KernelPlugin(PluginV2):
 
         return build_packages
 
+    @overrides
     def get_build_environment(self) -> Dict[str, str]:
         logger.info("Getting build env...")
         self._init_build_env()
@@ -1427,7 +1416,7 @@ class KernelPlugin(PluginV2):
             "ARCH": self.kernel_arch,
             "DEB_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
             "UC_INITRD_DEB": "${SNAPCRAFT_PART_BUILD}/ubuntu-core-initramfs",
-            "SNAPD_UNPACKED_SNAP": "${SNAPCRAFT_PART_BUILD}/unpacked_snapd_snap",
+            "SNAPD_UNPACKED_SNAP": "${SNAPCRAFT_PART_BUILD}/unpacked_snapd",
             "KERNEL_BUILD_ARCH_DIR": f"${{SNAPCRAFT_PART_BUILD}}/arch/{self.kernel_arch}/boot",
             "KERNEL_IMAGE_TARGET": self.kernel_image_target,
         }
@@ -1577,6 +1566,7 @@ class KernelPlugin(PluginV2):
             'echo "Not building perf binary"',
         ]
 
+    @overrides
     def get_build_commands(self) -> List[str]:
         logger.info("Getting build commands...")
         self._configure_compiler()
@@ -1620,11 +1610,12 @@ class KernelPlugin(PluginV2):
 
     @property
     def out_of_source_build(self):
-        # user src dir without need to link it to build dir, which takes ages
+        """Return whether the plugin performs out-of-source-tree builds."""
         return True
 
 
 def check_new_config(config_path: str, initrd_modules: List[str]):
+    """Check passed kernel config and initrd modules for required dependencies."""
     print("Checking created config...")
     builtin, modules = _do_parse_config(config_path)
     _do_check_config(builtin, modules)
@@ -1659,7 +1650,7 @@ def _do_check_config(builtin: List[str], modules: List[str]):
         "we suggest you take a look at these:\n"
     )
     required_opts = (
-        required_generic + required_security + required_snappy + required_systemd
+        _required_generic + _required_security + _required_snappy + _required_systemd
     )
     missing = []
 
@@ -1691,7 +1682,7 @@ def _do_check_initrd(builtin: List[str], modules: List[str], initrd_modules: Lis
     )
     missing = []
 
-    for code in required_boot:
+    for code in _required_boot:
         opt = f"CONFIG_{code.upper()}"
         if opt in builtin:
             continue
@@ -1706,6 +1697,5 @@ def _do_check_initrd(builtin: List[str], modules: List[str], initrd_modules: Lis
         logger.warning(warn)
 
 
-# allow callback for config check
 if __name__ == "__main__":
     globals()[sys.argv[1]](sys.argv[2], sys.argv[3:])
