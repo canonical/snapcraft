@@ -52,7 +52,7 @@ plaster-pastedeploy==0.7
 platformdirs==2.5.2
 pluggy==1.0.0
 progressbar==2.5
-protobuf==3.20.1
+protobuf==3.20.2
 psutil==5.9.1
 ptyprocess==0.7.0
 py==1.11.0
