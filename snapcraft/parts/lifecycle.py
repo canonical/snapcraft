@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 import craft_parts
-from craft_cli import EmitterMode, emit
+from craft_cli import emit
 from craft_parts import ProjectInfo, StepInfo, callbacks
 
 from snapcraft import errors, extensions, linters, pack, providers, ua_manager, utils
@@ -462,9 +462,7 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
     emit.progress("Cleaned build provider", permanent=True)
 
 
-# pylint: disable=too-many-branches
-
-
+# pylint: disable-next=too-many-branches
 def _run_in_provider(
     project: Project, command_name: str, parsed_args: "argparse.Namespace"
 ) -> None:
@@ -482,14 +480,8 @@ def _run_in_provider(
     if getattr(parsed_args, "output", None):
         cmd.extend(["--output", parsed_args.output])
 
-    if emit.get_mode() == EmitterMode.VERBOSE:
-        cmd.append("--verbose")
-    elif emit.get_mode() == EmitterMode.QUIET:
-        cmd.append("--quiet")
-    elif emit.get_mode() == EmitterMode.DEBUG:
-        cmd.append("--verbosity=debug")
-    elif emit.get_mode() == EmitterMode.TRACE:
-        cmd.append("--verbosity=trace")
+    mode = emit.get_mode().name.lower()
+    cmd.append(f"--verbosity={mode}")
 
     if parsed_args.debug:
         cmd.append("--debug")
@@ -502,8 +494,7 @@ def _run_in_provider(
         cmd.append("--enable-manifest")
     build_information = getattr(parsed_args, "manifest_build_information", None)
     if build_information:
-        cmd.append("--manifest-build-information")
-        cmd.append(build_information)
+        cmd.extend(["--manifest-build-information", build_information])
 
     cmd.append("--build-for")
     cmd.append(project.get_build_for())
@@ -541,9 +532,6 @@ def _run_in_provider(
             ) from err
         finally:
             capture_logs_from_instance(instance)
-
-
-# pylint: enable=too-many-branches
 
 
 def _set_global_environment(info: ProjectInfo) -> None:
