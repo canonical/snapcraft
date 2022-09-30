@@ -37,7 +37,6 @@ from .legacy import (
     StoreLegacyMetricsCommand,
     StoreLegacyPromoteCommand,
     StoreLegacyRegisterKeyCommand,
-    StoreLegacyRemoteBuildCommand,
     StoreLegacySetDefaultTrackCommand,
     StoreLegacySignBuildCommand,
     StoreLegacyUploadMetadataCommand,
@@ -59,6 +58,7 @@ from .names import (
     StoreNamesCommand,
     StoreRegisterCommand,
 )
+from .remote import RemoteBuildCommand
 from .status import (
     StoreListRevisionsCommand,
     StoreListTracksCommand,
@@ -80,6 +80,7 @@ __all__ = [
     "PluginsCommand",
     "PrimeCommand",
     "PullCommand",
+    "RemoteBuildCommand",
     "SnapCommand",
     "StageCommand",
     "StoreCloseCommand",
@@ -94,7 +95,6 @@ __all__ = [
     "StoreLegacyPromoteCommand",
     "StoreLegacyPushCommand",
     "StoreLegacyRegisterKeyCommand",
-    "StoreLegacyRemoteBuildCommand",
     "StoreLegacySetDefaultTrackCommand",
     "StoreLegacySignBuildCommand",
     "StoreLegacyUploadMetadataCommand",

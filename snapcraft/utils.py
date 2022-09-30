@@ -256,7 +256,9 @@ def confirm_with_user(prompt_text, default=False) -> bool:
 
     choices = " [Y/n]: " if default else " [y/N]: "
 
-    reply = str(input(prompt_text + choices)).lower().strip()
+    with emit.pause():
+        reply = str(input(prompt_text + choices)).lower().strip()
+
     if reply and reply[0] == "y":
         return True
 
