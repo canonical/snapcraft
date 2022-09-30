@@ -29,7 +29,7 @@ from snapcraft import utils
 
 from ._buildd import BASE_TO_BUILDD_IMAGE_ALIAS, SnapcraftBuilddBaseConfiguration
 from ._provider import Provider
-from .providers import get_instance_name
+from .providers import get_command_environment, get_instance_name
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +129,7 @@ class MultipassProvider(Provider):
             build_for=build_for,
         )
 
-        environment = self.get_command_environment(
+        environment = get_command_environment(
             http_proxy=http_proxy, https_proxy=https_proxy
         )
         base_configuration = SnapcraftBuilddBaseConfiguration(

@@ -14,8 +14,93 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from unittest.mock import patch
+
+import pytest
 
 from snapcraft.providers import providers
+
+
+@pytest.fixture()
+def mock_default_command_environment():
+    with patch(
+        "craft_providers.bases.buildd.default_command_environment",
+        return_value=dict(PATH="test-path"),
+    ) as mock_environment:
+        yield mock_environment
+
+
+def test_get_command_environment(mocker, mock_default_command_environment):
+    """Verify command environment is properly constructed."""
+    command_environment = providers.get_command_environment()
+
+    assert command_environment == {"PATH": "test-path", "SNAPCRAFT_MANAGED_MODE": "1"}
+
+
+def test_get_command_environment_passthrough(
+    mocker, mock_default_command_environment, monkeypatch
+):
+    """Verify variables from the environment are passed to the command environment."""
+    monkeypatch.setenv("http_proxy", "test-http")
+    monkeypatch.setenv("https_proxy", "test-https")
+    monkeypatch.setenv("no_proxy", "test-no-proxy")
+    monkeypatch.setenv("SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS", "test-extensions")
+    monkeypatch.setenv("SNAPCRAFT_BUILD_FOR", "test-build-for")
+    monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "test-build-info")
+    monkeypatch.setenv("SNAPCRAFT_IMAGE_INFO", "test-image-info")
+
+    # ensure other variables are not being passed
+    monkeypatch.setenv("other_var", "test-other-var")
+
+    command_environment = providers.get_command_environment()
+
+    assert command_environment == {
+        "PATH": "test-path",
+        "SNAPCRAFT_MANAGED_MODE": "1",
+        "http_proxy": "test-http",
+        "https_proxy": "test-https",
+        "no_proxy": "test-no-proxy",
+        "SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS": "test-extensions",
+        "SNAPCRAFT_BUILD_FOR": "test-build-for",
+        "SNAPCRAFT_BUILD_INFO": "test-build-info",
+        "SNAPCRAFT_IMAGE_INFO": "test-image-info",
+    }
+
+
+def test_get_command_environment_http_https_proxy(
+    mocker, mock_default_command_environment
+):
+    """Verify http and https proxies are added to the environment."""
+    command_environment = providers.get_command_environment(
+        http_proxy="test-http", https_proxy="test-https"
+    )
+
+    assert command_environment == {
+        "PATH": "test-path",
+        "SNAPCRAFT_MANAGED_MODE": "1",
+        "http_proxy": "test-http",
+        "https_proxy": "test-https",
+    }
+
+
+def test_get_command_environment_http_https_priority(
+    mocker, mock_default_command_environment, monkeypatch
+):
+    """Verify http and https proxies from the function argument take priority over the
+    proxies defined in the environment."""
+    monkeypatch.setenv("http_proxy", "test-http-from-env")
+    monkeypatch.setenv("https_proxy", "test-https-from-env")
+
+    command_environment = providers.get_command_environment(
+        http_proxy="test-http-from-arg", https_proxy="test-https-from-arg"
+    )
+
+    assert command_environment == {
+        "PATH": "test-path",
+        "SNAPCRAFT_MANAGED_MODE": "1",
+        "http_proxy": "test-http-from-arg",
+        "https_proxy": "test-https-from-arg",
+    }
 
 
 def test_get_instance_name(new_dir):

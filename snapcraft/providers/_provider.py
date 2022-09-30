@@ -18,12 +18,11 @@
 
 import contextlib
 import logging
-import os
 import pathlib
 from abc import ABC, abstractmethod
-from typing import Dict, Generator, Optional, Tuple, Union
+from typing import Generator, Optional, Tuple, Union
 
-from craft_providers import Executor, bases
+from craft_providers import Executor
 
 from .providers import get_instance_name
 
@@ -74,43 +73,6 @@ class Provider(ABC):
 
         :raises ProviderError: if provider is not available.
         """
-
-    @staticmethod
-    def get_command_environment(
-        http_proxy: Optional[str] = None,
-        https_proxy: Optional[str] = None,
-    ) -> Dict[str, Optional[str]]:
-        """Construct an environment needed to execute a command.
-
-        :param http_proxy: http proxy to add to environment
-        :param https_proxy: https proxy to add to environment
-
-        :return: Dictionary of environmental variables.
-        """
-        env = bases.buildd.default_command_environment()
-        env["SNAPCRAFT_MANAGED_MODE"] = "1"
-
-        # Pass-through host environment that target may need.
-        for env_key in [
-            "http_proxy",
-            "https_proxy",
-            "no_proxy",
-            "SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS",
-            "SNAPCRAFT_BUILD_FOR",
-            "SNAPCRAFT_BUILD_INFO",
-            "SNAPCRAFT_IMAGE_INFO",
-        ]:
-            if env_key in os.environ:
-                env[env_key] = os.environ[env_key]
-
-        # if http[s]_proxy was specified as an argument, then prioritize this proxy
-        # over the proxy from the host's environment.
-        if http_proxy:
-            env["http_proxy"] = http_proxy
-        if https_proxy:
-            env["https_proxy"] = https_proxy
-
-        return env
 
     @classmethod
     def is_base_available(cls, base: str) -> Tuple[bool, Union[str, None]]:
