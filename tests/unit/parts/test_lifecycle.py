@@ -550,6 +550,9 @@ def test_lifecycle_run_command_clean(snapcraft_yaml, project_vars, new_dir, mock
     clean_mock = mocker.patch(
         "snapcraft.providers.LXDProvider.clean_project_environments"
     )
+    mocker.patch(
+        "snapcraft.parts.lifecycle.get_instance_name", return_value="test-instance-name"
+    )
 
     parts_lifecycle._run_command(
         "clean",
@@ -567,14 +570,7 @@ def test_lifecycle_run_command_clean(snapcraft_yaml, project_vars, new_dir, mock
         ),
     )
 
-    assert clean_mock.mock_calls == [
-        call(
-            project_name="mytest",
-            project_path=new_dir,
-            build_on=get_host_architecture(),
-            build_for=get_host_architecture(),
-        )
-    ]
+    assert clean_mock.mock_calls == [call(instance_name="test-instance-name")]
 
 
 def test_lifecycle_clean_destructive_mode(

@@ -323,14 +323,7 @@ def fake_provider(mock_instance):
     class FakeProvider(Provider):
         """Fake provider."""
 
-        def clean_project_environments(
-            self,
-            *,
-            project_name: str,
-            project_path: Path,
-            build_on: str,
-            build_for: str,
-        ):
+        def clean_project_environments(self, *, instance_name: str):
             pass
 
         @classmethod
@@ -338,7 +331,7 @@ def fake_provider(mock_instance):
             pass
 
         @classmethod
-        def is_provider_available(cls) -> bool:
+        def is_provider_installed(cls) -> bool:
             return True
 
         def create_environment(self, *, instance_name: str):

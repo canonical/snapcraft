@@ -64,12 +64,7 @@ def test_clean_project_environment_exists(
 ):
     """Assert instance is deleted if it exists."""
     provider = providers.LXDProvider()
-    provider.clean_project_environments(
-        project_name="test",
-        project_path=new_dir,
-        build_on="test",
-        build_for="test",
-    )
+    provider.clean_project_environments(instance_name="test-instance-name")
 
     assert mock_lxd_delete.mock_calls == [call()]
 
@@ -84,12 +79,7 @@ def test_clean_project_environment_does_not_exist(
     mock_lxd_exists.return_value = False
 
     provider = providers.LXDProvider()
-    provider.clean_project_environments(
-        project_name="test",
-        project_path=new_dir,
-        build_on="test",
-        build_for="test",
-    )
+    provider.clean_project_environments(instance_name="test-instance-name")
 
     assert mock_lxd_delete.mock_calls == []
 
@@ -103,12 +93,7 @@ def test_clean_project_environment_lxd_not_installed(
     mock_lxd_is_installed.return_value = False
 
     provider = providers.LXDProvider()
-    provider.clean_project_environments(
-        project_name="test",
-        project_path=new_dir,
-        build_on="test",
-        build_for="test",
-    )
+    provider.clean_project_environments(instance_name="test-instance-name")
 
     assert mock_lxd_delete.mock_calls == []
 
@@ -122,12 +107,7 @@ def test_clean_project_environment_exists_error(
     provider = providers.LXDProvider()
 
     with pytest.raises(ProviderError) as raised:
-        provider.clean_project_environments(
-            project_name="test",
-            project_path=new_dir,
-            build_on="test",
-            build_for="test",
-        )
+        provider.clean_project_environments(instance_name="test-instance-name")
 
     assert str(raised.value) == "fail"
 
@@ -141,11 +121,6 @@ def test_clean_project_environment_delete_error(
     provider = providers.LXDProvider()
 
     with pytest.raises(ProviderError) as raised:
-        provider.clean_project_environments(
-            project_name="test",
-            project_path=new_dir,
-            build_on="test",
-            build_for="test",
-        )
+        provider.clean_project_environments(instance_name="test-instance-name")
 
     assert str(raised.value) == "fail"

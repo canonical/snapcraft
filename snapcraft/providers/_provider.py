@@ -24,44 +24,24 @@ from typing import Generator, Optional, Tuple, Union
 
 from craft_providers import Executor
 
-from .providers import get_instance_name
-
 logger = logging.getLogger(__name__)
 
 
 class Provider(ABC):
     """Snapcraft's build environment provider."""
 
-    def clean_project_environments(
-        self,
-        *,
-        project_name: str,
-        project_path: pathlib.Path,
-        build_on: str,
-        build_for: str,
-    ) -> None:
-        """Clean up a build environment created for project.
+    def clean_project_environments(self, *, instance_name: str) -> None:
+        """Clean the provider environment.
 
-        :param project_name: Name of the project.
-        :param project_path: Directory of the project.
-        :param build_on: Host architecture.
-        :param build_for: Target architecture.
+        :param instance_name: name of the instance to clean
         """
         # Nothing to do if provider is not installed.
-        if not self.is_provider_available():
+        if not self.is_provider_installed():
             logger.debug(
                 "Not cleaning environment because the provider is not installed."
             )
             return
 
-        instance_name = get_instance_name(
-            project_name=project_name,
-            project_path=project_path,
-            build_on=build_on,
-            build_for=build_for,
-        )
-
-        logger.debug("Cleaning environment %r", instance_name)
         environment = self.create_environment(instance_name=instance_name)
         if environment.exists():
             environment.delete()
@@ -93,8 +73,8 @@ class Provider(ABC):
 
     @classmethod
     @abstractmethod
-    def is_provider_available(cls) -> bool:
-        """Check if provider is installed and available for use.
+    def is_provider_installed(cls) -> bool:
+        """Check if provider is installed.
 
         :returns: True if installed.
         """
