@@ -18,9 +18,10 @@ import argparse
 import textwrap
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import ANY, PropertyMock, call, patch
+from unittest.mock import ANY, Mock, PropertyMock, call
 
 import pytest
+from craft_cli import EmitterMode, emit
 from craft_parts import Action, Step, callbacks
 
 from snapcraft import errors
@@ -62,10 +63,11 @@ def project_vars(mocker):
     )
 
 
-@pytest.fixture
-def mock_provider():
-    with patch("snapcraft.providers.Provider", autospec=True) as _mock_provider:
-        yield _mock_provider
+@pytest.fixture()
+def mock_provider(mocker, mock_instance, fake_provider):
+    _mock_provider = Mock(wraps=fake_provider)
+    mocker.patch("snapcraft.providers.get_provider", return_value=_mock_provider)
+    yield _mock_provider
 
 
 def test_config_not_found(new_dir):
@@ -1100,31 +1102,32 @@ def test_lifecycle_run_permission_denied(new_dir):
     )
 
 
-@pytest.mark.parametrize("http_proxy", (None, "1.2.3.4"))
-@pytest.mark.parametrize("https_proxy", (None, "1.2.3.4"))
-def test_lifecycle_run_in_provider_http_https_proxy(
-    http_proxy, https_proxy, mock_provider, mocker, snapcraft_yaml
+def test_lifecycle_run_in_provider_default(
+    mock_instance, mock_provider, mocker, snapcraft_yaml
 ):
-    """Verify _run_in_provider passes http[s] proxy to the instance."""
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
-    mocker.patch("snapcraft.providers.get_provider", return_value=mock_provider)
+    """Verify default calls made in `run_in_provider()`"""
+    mock_capture_logs_from_instance = mocker.patch(
+        "snapcraft.parts.lifecycle.capture_logs_from_instance"
+    )
 
+    expected_command = [
+        "snapcraft",
+        "test",
+        "--verbosity=quiet",
+        "--build-for",
+        get_host_architecture(),
+    ]
+
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
     parts_lifecycle._run_in_provider(
         project=project,
         command_name="test",
         parsed_args=argparse.Namespace(
-            parts=[],
-            destructive_mode=False,
             use_lxd=False,
-            provider=None,
-            enable_manifest=False,
-            manifest_image_information=None,
-            bind_ssh=False,
-            ua_token=None,
-            build_for=None,
             debug=False,
-            http_proxy=http_proxy,
-            https_proxy=https_proxy,
+            bind_ssh=False,
+            http_proxy=None,
+            https_proxy=None,
         ),
     )
 
@@ -1135,9 +1138,113 @@ def test_lifecycle_run_in_provider_http_https_proxy(
         bind_ssh=False,
         build_on=get_host_architecture(),
         build_for=get_host_architecture(),
+        http_proxy=None,
+        https_proxy=None,
+    )
+
+    mock_provider.ensure_provider_is_available.assert_called_once()
+    mock_instance.execute_run.assert_called_once_with(
+        expected_command, check=True, cwd=Path("/root/project")
+    )
+    mock_capture_logs_from_instance.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "emit_mode,verbosity",
+    [
+        (EmitterMode.VERBOSE, "--verbosity=verbose"),
+        (EmitterMode.QUIET, "--verbosity=quiet"),
+        (EmitterMode.BRIEF, "--verbosity=brief"),
+        (EmitterMode.DEBUG, "--verbosity=debug"),
+        (EmitterMode.TRACE, "--verbosity=trace"),
+    ],
+)
+def test_lifecycle_run_in_provider_all_options(
+    mock_instance,
+    mock_provider,
+    mocker,
+    snapcraft_yaml,
+    emit_mode,
+    verbosity,
+):
+    """Verify all project options are parsed in `run_in_provider()`."""
+    mock_capture_logs_from_instance = mocker.patch(
+        "snapcraft.parts.lifecycle.capture_logs_from_instance"
+    )
+    mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-1")
+    mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-2")
+
+    # build the expected command to be executed in the provider
+    parts = ["test-part-1", "test-part-2"]
+    output = "test-output"
+    manifest_build_information = "test-build-info"
+    ua_token = "test-ua-token"
+    http_proxy = "1.2.3.4"
+    https_proxy = "1.2.3.4"
+    expected_command = (
+        ["snapcraft", "test"]
+        + parts
+        + [
+            "--output",
+            output,
+            verbosity,
+            "--debug",
+            "--shell",
+            "--shell-after",
+            "--enable-manifest",
+            "--manifest-build-information",
+            manifest_build_information,
+            "--build-for",
+            "test-arch-1",
+            "--ua-token",
+            ua_token,
+            "--enable-experimental-ua-services",
+        ]
+    )
+
+    # set emitter mode
+    emit.set_mode(emit_mode)
+
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    parts_lifecycle._run_in_provider(
+        project=project,
+        command_name="test",
+        parsed_args=argparse.Namespace(
+            parts=parts,
+            output=output,
+            destructive_mode=False,
+            use_lxd=False,
+            provider=None,
+            enable_manifest=True,
+            manifest_build_information=manifest_build_information,
+            bind_ssh=True,
+            ua_token=ua_token,
+            enable_experimental_ua_services=True,
+            build_for=None,
+            debug=True,
+            shell=True,
+            shell_after=True,
+            http_proxy=http_proxy,
+            https_proxy=https_proxy,
+        ),
+    )
+
+    mock_provider.launched_environment.assert_called_with(
+        project_name="mytest",
+        project_path=ANY,
+        base="core22",
+        bind_ssh=True,
+        build_on="test-arch-2",
+        build_for="test-arch-1",
         http_proxy=http_proxy,
         https_proxy=https_proxy,
     )
+
+    mock_provider.ensure_provider_is_available.assert_called_once()
+    mock_instance.execute_run.assert_called_once_with(
+        expected_command, check=True, cwd=Path("/root/project")
+    )
+    mock_capture_logs_from_instance.assert_called_once()
 
 
 @pytest.fixture
