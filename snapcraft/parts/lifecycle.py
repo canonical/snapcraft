@@ -39,7 +39,11 @@ from snapcraft.projects import (
     Project,
 )
 from snapcraft.providers import capture_logs_from_instance
-from snapcraft.providers.providers import get_instance_name
+from snapcraft.providers.providers import (
+    SNAPCRAFT_BASE_TO_PROVIDER_BASE,
+    get_base_configuration,
+    get_instance_name,
+)
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_host_architecture,
@@ -512,15 +516,29 @@ def _run_in_provider(
     project_path = Path().absolute()
     output_dir = utils.get_managed_environment_project_path()
 
+    instance_name = get_instance_name(
+        project_name=project.name,
+        project_path=project_path,
+        build_on=project.get_build_on(),
+        build_for=project.get_build_for(),
+    )
+
+    build_base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[project.get_effective_base()]
+
+    base_configuration = get_base_configuration(
+        alias=build_base,
+        instance_name=instance_name,
+        http_proxy=parsed_args.http_proxy,
+        https_proxy=parsed_args.https_proxy,
+    )
+
     emit.progress("Launching instance...")
     with provider.launched_environment(
         project_name=project.name,
         project_path=project_path,
-        base=project.get_effective_base(),
-        build_on=project.get_build_on(),
-        build_for=project.get_build_for(),
-        http_proxy=parsed_args.http_proxy,
-        https_proxy=parsed_args.https_proxy,
+        base_configuration=base_configuration,
+        build_base=build_base.value,
+        instance_name=instance_name,
     ) as instance:
         # mount project
         instance.mount(
