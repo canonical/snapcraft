@@ -1099,19 +1099,21 @@ def test_lifecycle_run_permission_denied(new_dir):
 
 
 def test_lifecycle_run_in_provider_default(
-    mock_instance, mock_provider, mocker, snapcraft_yaml
+    mock_instance, mock_provider, mocker, snapcraft_yaml, tmp_path
 ):
     """Verify default calls made in `run_in_provider()`"""
     mock_capture_logs_from_instance = mocker.patch(
         "snapcraft.parts.lifecycle.capture_logs_from_instance"
     )
+    mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
+    mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
 
     expected_command = [
         "snapcraft",
         "test",
         "--verbosity=quiet",
         "--build-for",
-        get_host_architecture(),
+        "test-arch-2",
     ]
 
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
@@ -1127,18 +1129,19 @@ def test_lifecycle_run_in_provider_default(
         ),
     )
 
+    mock_provider.ensure_provider_is_available.assert_called_once()
     mock_provider.launched_environment.assert_called_with(
         project_name="mytest",
         project_path=ANY,
         base="core22",
-        bind_ssh=False,
-        build_on=get_host_architecture(),
-        build_for=get_host_architecture(),
+        build_on="test-arch-1",
+        build_for="test-arch-2",
         http_proxy=None,
         https_proxy=None,
     )
-
-    mock_provider.ensure_provider_is_available.assert_called_once()
+    mock_instance.mount.assert_called_with(
+        host_source=tmp_path, target=Path("/root/project")
+    )
     mock_instance.execute_run.assert_called_once_with(
         expected_command, check=True, cwd=Path("/root/project")
     )
@@ -1160,6 +1163,7 @@ def test_lifecycle_run_in_provider_all_options(
     mock_provider,
     mocker,
     snapcraft_yaml,
+    tmp_path,
     emit_mode,
     verbosity,
 ):
@@ -1229,7 +1233,6 @@ def test_lifecycle_run_in_provider_all_options(
         project_name="mytest",
         project_path=ANY,
         base="core22",
-        bind_ssh=True,
         build_on="test-arch-2",
         build_for="test-arch-1",
         http_proxy=http_proxy,
@@ -1237,6 +1240,12 @@ def test_lifecycle_run_in_provider_all_options(
     )
 
     mock_provider.ensure_provider_is_available.assert_called_once()
+    mock_instance.mount.assert_has_calls(
+        [
+            call(host_source=tmp_path, target=Path("/root/project")),
+            call(host_source=Path().home() / ".ssh", target=Path("/root/.ssh")),
+        ]
+    )
     mock_instance.execute_run.assert_called_once_with(
         expected_command, check=True, cwd=Path("/root/project")
     )

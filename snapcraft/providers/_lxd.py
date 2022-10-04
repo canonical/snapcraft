@@ -111,7 +111,6 @@ class LXDProvider(Provider):
         project_name: str,
         project_path: pathlib.Path,
         base: str,
-        bind_ssh: bool,
         build_on: str,
         build_for: str,
         http_proxy: Optional[str] = None,
@@ -168,19 +167,6 @@ class LXDProvider(Provider):
             )
         except (bases.BaseConfigurationError, lxd.LXDError) as error:
             raise ProviderError(str(error)) from error
-
-        # Mount project.
-        instance.mount(
-            host_source=project_path,
-            target=utils.get_managed_environment_project_path(),
-        )
-
-        # Mount ssh directory.
-        if bind_ssh:
-            instance.mount(
-                host_source=pathlib.Path.home() / ".ssh",
-                target=utils.get_managed_environment_home_path() / ".ssh",
-            )
 
         try:
             yield instance

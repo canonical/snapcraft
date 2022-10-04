@@ -344,7 +344,6 @@ def fake_provider(mock_instance):
             project_name: str,
             project_path: Path,
             base: str,
-            bind_ssh: bool,
             build_on: str,
             build_for: str,
             http_proxy: Optional[str] = None,
