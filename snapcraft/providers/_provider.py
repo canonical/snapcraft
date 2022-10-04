@@ -116,7 +116,6 @@ class Provider(ABC):
         project_name: str,
         project_path: pathlib.Path,
         base: str,
-        bind_ssh: bool,
         build_on: str,
         build_for: str,
         http_proxy: Optional[str] = None,
