@@ -1278,7 +1278,7 @@ class KernelPlugin(plugins.Plugin):
             ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            check=True,
+            check=False,
         )
 
         if (
