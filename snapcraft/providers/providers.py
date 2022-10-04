@@ -46,13 +46,24 @@ def get_base_configuration(
     )
 
     # injecting a snap on a non-linux system is not supported, so default to
-    # install rockcraft from the store's stable channel
+    # install snapcraft from the store's stable channel
     snap_channel = get_managed_environment_snap_channel()
     if sys.platform != "linux" and not snap_channel:
         snap_channel = "stable"
 
     return SnapcraftBuilddBaseConfiguration(
-        alias=alias, environment=environment, hostname=instance_name
+        alias=alias,
+        environment=environment,
+        hostname=instance_name,
+        snaps=[
+            bases.buildd.Snap(
+                name="snapcraft",
+                channel=snap_channel,
+                classic=True,
+            )
+        ],
+        # Requirement for apt gpg and version:git
+        packages=["gnupg", "dirmngr", "git"],
     )
 
 
