@@ -519,21 +519,20 @@ def _run_in_provider(
         http_proxy=parsed_args.http_proxy,
         https_proxy=parsed_args.https_proxy,
     ) as instance:
+        # mount project
+        instance.mount(
+            host_source=project_path,
+            target=utils.get_managed_environment_project_path(),
+        )
+
+        # mount ssh directory
+        if parsed_args.bind_ssh:
+            instance.mount(
+                host_source=Path.home() / ".ssh",
+                target=utils.get_managed_environment_home_path() / ".ssh",
+            )
         try:
             with emit.pause():
-                # mount project
-                instance.mount(
-                    host_source=project_path,
-                    target=utils.get_managed_environment_project_path(),
-                )
-
-                # mount ssh directory
-                if parsed_args.bind_ssh:
-                    instance.mount(
-                        host_source=Path.home() / ".ssh",
-                        target=utils.get_managed_environment_home_path() / ".ssh",
-                    )
-
                 # run snapcraft inside the instance
                 instance.execute_run(cmd, check=True, cwd=output_dir)
         except subprocess.CalledProcessError as err:
