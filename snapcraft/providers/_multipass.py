@@ -29,6 +29,7 @@ from snapcraft import utils
 
 from ._buildd import BASE_TO_BUILDD_IMAGE_ALIAS, SnapcraftBuilddBaseConfiguration
 from ._provider import Provider
+from .providers import get_command_environment, get_instance_name
 
 logger = logging.getLogger(__name__)
 
@@ -78,8 +79,8 @@ class MultipassProvider(Provider):
             raise ProviderError(str(error)) from error
 
     @classmethod
-    def is_provider_available(cls) -> bool:
-        """Check if provider is installed and available for use.
+    def is_provider_installed(cls) -> bool:
+        """Check if provider is installed.
 
         :returns: True if installed.
         """
@@ -101,7 +102,6 @@ class MultipassProvider(Provider):
         project_name: str,
         project_path: pathlib.Path,
         base: str,
-        bind_ssh: bool,
         build_on: str,
         build_for: str,
         http_proxy: Optional[str] = None,
@@ -121,14 +121,14 @@ class MultipassProvider(Provider):
         """
         alias = BASE_TO_BUILDD_IMAGE_ALIAS[base]
 
-        instance_name = self.get_instance_name(
+        instance_name = get_instance_name(
             project_name=project_name,
             project_path=project_path,
             build_on=build_on,
             build_for=build_for,
         )
 
-        environment = self.get_command_environment(
+        environment = get_command_environment(
             http_proxy=http_proxy, https_proxy=https_proxy
         )
         base_configuration = SnapcraftBuilddBaseConfiguration(
@@ -148,23 +148,6 @@ class MultipassProvider(Provider):
                 auto_clean=True,
             )
         except (bases.BaseConfigurationError, MultipassError) as error:
-            raise ProviderError(str(error)) from error
-
-        try:
-            # Mount project.
-            instance.mount(
-                host_source=project_path,
-                target=utils.get_managed_environment_project_path(),
-            )
-
-            # Mount ssh directory.
-            if bind_ssh:
-                instance.mount(
-                    host_source=pathlib.Path.home() / ".ssh",
-                    target=utils.get_managed_environment_home_path() / ".ssh",
-                )
-
-        except MultipassError as error:
             raise ProviderError(str(error)) from error
 
         try:

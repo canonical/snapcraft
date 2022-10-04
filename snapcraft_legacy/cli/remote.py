@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import time
 from typing import List
 
@@ -46,6 +45,14 @@ def remotecli():
     nargs=1,
     required=False,
     help="Set architectures to build on.",
+)
+@click.option(
+    "--build-for",
+    metavar="<arch-list>",
+    type=str,
+    nargs=1,
+    required=False,
+    help="Set architectures to build for.",
 )
 @click.option(
     "--build-id",
@@ -82,11 +89,11 @@ def remote_build(
     recover: bool,
     status: bool,
     build_on: str,
+    build_for: str,
     build_id: str,
     launchpad_accept_public_upload: bool,
     launchpad_timeout: int,
     package_all_sources: bool,
-    echoer=echo,
 ) -> None:
     """Dispatch a snap for remote build.
 
@@ -112,16 +119,10 @@ def remote_build(
         snapcraft remote-build --status
         snapcraft remote-build --status --build-id snapcraft-my-snap-b98a6bd3
     """
-    if os.getenv("SUDO_USER") and os.geteuid() == 0:
-        echo.warning(
-            "Running with 'sudo' may cause permission errors and is discouraged."
-        )
-
-    echo.warning(
-        "snapcraft remote-build is experimental and is subject to change - use with caution."
-    )
-
     project = get_project()
+
+    if build_for:
+        build_on = build_for
 
     try:
         project._get_build_base()
@@ -172,8 +173,6 @@ def remote_build(
         # Otherwise clean running build before we start a new one.
         _clean_build(lp)
 
-    _check_launchpad_acceptance(launchpad_accept_public_upload)
-
     _start_build(
         lp=lp,
         project=project,
@@ -182,17 +181,6 @@ def remote_build(
     )
 
     _monitor_build(lp)
-
-
-def _check_launchpad_acceptance(launchpad_accept_public_upload):
-    if not (
-        launchpad_accept_public_upload
-        or echo.confirm(
-            "All data sent to remote builders will be publicly available. Are you sure you want to continue?",
-            default=True,
-        )
-    ):
-        raise errors.AcceptPublicUploadError()
 
 
 def _clean_build(lp: LaunchpadClient):

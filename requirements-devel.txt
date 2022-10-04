@@ -11,8 +11,8 @@ codespell==2.1.0
 coverage==6.4.2
 craft-cli==1.1.0
 craft-grammar==1.1.1
-craft-parts==1.14.0
-craft-providers==1.4.2
+craft-parts==1.14.2
+craft-providers==1.5.1
 craft-store==2.2.1
 cryptography==3.4
 Deprecated==1.2.13
@@ -52,7 +52,7 @@ plaster-pastedeploy==0.7
 platformdirs==2.5.2
 pluggy==1.0.0
 progressbar==2.5
-protobuf==3.20.1
+protobuf==3.20.2
 psutil==5.9.1
 ptyprocess==0.7.0
 py==1.11.0

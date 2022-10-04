@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pathlib import Path
 from unittest.mock import call, patch
 
 import pytest
@@ -58,52 +57,13 @@ def mock_lxd_exists():
 class TestLxdLaunchedEnvironment:
     """LXD provider instance setup and launching."""
 
-    def test_mount_project(self, mocker, new_dir, lxd_instance_mock):
-        mocker.patch(
-            "snapcraft.providers._lxd.lxd.launch", return_value=lxd_instance_mock
-        )
-
-        prov = providers.LXDProvider()
-
-        with prov.launched_environment(
-            project_name="test",
-            project_path=new_dir,
-            base="core22",
-            bind_ssh=False,
-            build_on="test",
-            build_for="test",
-        ):
-            assert lxd_instance_mock.mount.mock_calls == [
-                call(host_source=new_dir, target=Path("/root/project")),
-            ]
-
-    def test_bind_ssh(self, mocker, new_dir, lxd_instance_mock):
-        mocker.patch(
-            "snapcraft.providers._lxd.lxd.launch", return_value=lxd_instance_mock
-        )
-
-        prov = providers.LXDProvider()
-
-        with prov.launched_environment(
-            project_name="test",
-            project_path=new_dir,
-            base="core22",
-            bind_ssh=True,
-            build_on="test",
-            build_for="test",
-        ):
-            assert lxd_instance_mock.mount.mock_calls == [
-                call(host_source=new_dir, target=Path("/root/project")),
-                call(host_source=Path.home() / ".ssh", target=Path("/root/.ssh")),
-            ]
-
-    def test_command_environment(self, mocker, new_dir, lxd_instance_mock):
+    def test_get_command_environment(self, mocker, new_dir, lxd_instance_mock):
         """Verify launched_environment calls get_command_environment."""
         mocker.patch(
             "snapcraft.providers._lxd.lxd.launch", return_value=lxd_instance_mock
         )
-        mock_base_config = mocker.patch(
-            "snapcraft.providers._lxd.LXDProvider.get_command_environment",
+        mock_get_command_environment = mocker.patch(
+            "snapcraft.providers._lxd.get_command_environment",
         )
 
         prov = providers.LXDProvider()
@@ -112,12 +72,11 @@ class TestLxdLaunchedEnvironment:
             project_name="test",
             project_path=new_dir,
             base="core22",
-            bind_ssh=True,
             build_on="test",
             build_for="test",
             http_proxy="test-http",
             https_proxy="test-https",
         ):
-            assert mock_base_config.mock_calls == [
+            assert mock_get_command_environment.mock_calls == [
                 call(http_proxy="test-http", https_proxy="test-https")
             ]

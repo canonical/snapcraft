@@ -46,7 +46,7 @@ class PipRunBaseTestCase(PythonBaseTestCase):
             '{"name": "setuptools", "version": "1.0"}]'
         )
 
-    def _assert_expected_enviroment(self, expected_python, headers_path):
+    def _assert_expected_environment(self, expected_python, headers_path):
         _pip.Pip(
             python_major_version="test",
             part_dir="part_dir",
@@ -107,14 +107,14 @@ class PipRunBaseTestCase(PythonBaseTestCase):
 class PipRunTestCase(PipRunBaseTestCase):
     def test_environment_part_python_without_headers(self):
         expected_python = self._create_python_binary("install_dir")
-        self._assert_expected_enviroment(expected_python, None)
+        self._assert_expected_environment(expected_python, None)
 
     def test_environment_part_python_with_staged_headers(self):
         expected_python = self._create_python_binary("install_dir")
         # First, create staged headers
         staged_headers = os.path.join("stage_dir", "usr", "include", "pythontest")
         os.makedirs(staged_headers)
-        self._assert_expected_enviroment(expected_python, staged_headers)
+        self._assert_expected_environment(expected_python, staged_headers)
 
     @mock.patch("glob.glob")
     def test_environment_part_python_with_host_headers(self, mock_glob):
@@ -129,11 +129,11 @@ class PipRunTestCase(PipRunBaseTestCase):
         mock_glob.side_effect = _fake_glob
 
         expected_python = self._create_python_binary("install_dir")
-        self._assert_expected_enviroment(expected_python, host_headers)
+        self._assert_expected_environment(expected_python, host_headers)
 
     def test_environment_staged_python_without_headers(self):
         expected_python = self._create_python_binary("stage_dir")
-        self._assert_expected_enviroment(expected_python, None)
+        self._assert_expected_environment(expected_python, None)
 
     def test_environment_staged_python_with_staged_headers(self):
         # First, create staged headers
@@ -143,7 +143,7 @@ class PipRunTestCase(PipRunBaseTestCase):
         # Also create staged python
         expected_python = self._create_python_binary("stage_dir")
 
-        self._assert_expected_enviroment(expected_python, staged_headers)
+        self._assert_expected_environment(expected_python, staged_headers)
 
     @mock.patch("glob.glob")
     def test_environment_staged_python_with_host_headers(self, mock_glob):
@@ -158,7 +158,7 @@ class PipRunTestCase(PipRunBaseTestCase):
         mock_glob.side_effect = _fake_glob
 
         expected_python = self._create_python_binary("stage_dir")
-        self._assert_expected_enviroment(expected_python, host_headers)
+        self._assert_expected_environment(expected_python, host_headers)
 
     def test_with_extra_cppflags(self):
         """Verify that existing CPPFLAGS are preserved"""
