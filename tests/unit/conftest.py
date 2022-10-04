@@ -24,6 +24,7 @@ from unittest.mock import Mock
 import pytest
 import yaml
 from craft_providers import Executor
+from craft_providers.base import Base
 from pymacaroons import Caveat, Macaroon
 
 from snapcraft.extensions import extension, register, unregister
@@ -343,11 +344,9 @@ def fake_provider(mock_instance):
             *,
             project_name: str,
             project_path: Path,
-            base: str,
-            build_on: str,
-            build_for: str,
-            http_proxy: Optional[str] = None,
-            https_proxy: Optional[str] = None,
+            base_configuration: Base,
+            build_base: str,
+            instance_name: str,
         ):
             yield mock_instance
 

@@ -25,11 +25,6 @@ from overrides import overrides
 
 from snapcraft import utils
 
-# TODO fix this overengineered configuration
-BASE_TO_BUILDD_IMAGE_ALIAS = {
-    "core22": bases.BuilddBaseAlias.JAMMY,
-}
-
 
 class SnapcraftBuilddBaseConfiguration(bases.BuilddBase):
     """Base configuration for Snapcraft.

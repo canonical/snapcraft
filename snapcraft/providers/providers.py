@@ -17,10 +17,43 @@
 """Snapcraft-specific code to interface with craft-providers."""
 
 import os
+import sys
 from pathlib import Path
 from typing import Dict, Optional
 
 from craft_providers import bases
+
+from snapcraft.providers import SnapcraftBuilddBaseConfiguration
+from snapcraft.utils import get_managed_environment_snap_channel
+
+SNAPCRAFT_BASE_TO_PROVIDER_BASE = {
+    "core18": bases.BuilddBaseAlias.BIONIC,
+    "core20": bases.BuilddBaseAlias.FOCAL,
+    "core22": bases.BuilddBaseAlias.JAMMY,
+}
+
+
+def get_base_configuration(
+    *,
+    alias: bases.BuilddBaseAlias,
+    instance_name: str,
+    http_proxy: Optional[str] = None,
+    https_proxy: Optional[str] = None,
+) -> bases.BuilddBase:
+    """Create a BuilddBase configuration for rockcraft."""
+    environment = get_command_environment(
+        http_proxy=http_proxy, https_proxy=https_proxy
+    )
+
+    # injecting a snap on a non-linux system is not supported, so default to
+    # install rockcraft from the store's stable channel
+    snap_channel = get_managed_environment_snap_channel()
+    if sys.platform != "linux" and not snap_channel:
+        snap_channel = "stable"
+
+    return SnapcraftBuilddBaseConfiguration(
+        alias=alias, environment=environment, hostname=instance_name
+    )
 
 
 def get_command_environment(
