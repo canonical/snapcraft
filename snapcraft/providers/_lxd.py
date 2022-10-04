@@ -83,8 +83,8 @@ class LXDProvider(Provider):
             raise ProviderError(str(error)) from error
 
     @classmethod
-    def is_provider_available(cls) -> bool:
-        """Check if provider is installed and available for use.
+    def is_provider_installed(cls) -> bool:
+        """Check if provider is installed.
 
         :returns: True if installed.
         """

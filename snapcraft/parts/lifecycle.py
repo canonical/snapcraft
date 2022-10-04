@@ -39,6 +39,7 @@ from snapcraft.projects import (
     Project,
 )
 from snapcraft.providers import capture_logs_from_instance
+from snapcraft.providers.providers import get_instance_name
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_host_architecture,
@@ -453,12 +454,14 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
     emit.progress("Cleaning build provider")
     provider_name = "lxd" if parsed_args.use_lxd else None
     provider = providers.get_provider(provider_name)
-    provider.clean_project_environments(
+    instance_name = get_instance_name(
         project_name=project.name,
         project_path=Path().absolute(),
         build_on=project.get_build_on(),
         build_for=project.get_build_for(),
     )
+    emit.debug(f"Cleaning instance {instance_name}")
+    provider.clean_project_environments(instance_name=instance_name)
     emit.progress("Cleaned build provider", permanent=True)
 
 
