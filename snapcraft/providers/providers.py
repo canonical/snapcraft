@@ -21,15 +21,39 @@ import sys
 from pathlib import Path
 from typing import Dict, Optional
 
-from craft_providers import bases
+from craft_cli import emit
+from craft_providers import bases, executor
 
-from snapcraft.utils import get_managed_environment_snap_channel
+from snapcraft.utils import (
+    get_managed_environment_log_path,
+    get_managed_environment_snap_channel,
+)
 
 SNAPCRAFT_BASE_TO_PROVIDER_BASE = {
     "core18": bases.BuilddBaseAlias.BIONIC,
     "core20": bases.BuilddBaseAlias.FOCAL,
     "core22": bases.BuilddBaseAlias.JAMMY,
 }
+
+
+def capture_logs_from_instance(instance: executor.Executor) -> None:
+    """Capture and emit snapcraft logs from an instance.
+
+    :param instance: instance to retrieve logs from
+    """
+    source_log_path = get_managed_environment_log_path()
+    with instance.temporarily_pull_file(
+        source=source_log_path, missing_ok=True
+    ) as log_path:
+        if log_path:
+            emit.trace("Logs retrieved from managed instance:")
+            with open(log_path, "r", encoding="utf8") as log_file:
+                for line in log_file:
+                    emit.trace(":: " + line.rstrip())
+        else:
+            emit.trace(
+                f"Could not find log file {source_log_path.as_posix()} in instance."
+            )
 
 
 def get_base_configuration(

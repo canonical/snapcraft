@@ -38,9 +38,9 @@ from snapcraft.projects import (
     GrammarAwareProject,
     Project,
 )
-from snapcraft.providers import capture_logs_from_instance
 from snapcraft.providers.providers import (
     SNAPCRAFT_BASE_TO_PROVIDER_BASE,
+    capture_logs_from_instance,
     get_base_configuration,
     get_instance_name,
 )
