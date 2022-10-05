@@ -23,7 +23,6 @@ from typing import Dict, Optional
 
 from craft_providers import bases
 
-from snapcraft.providers import SnapcraftBuilddBaseConfiguration
 from snapcraft.utils import get_managed_environment_snap_channel
 
 SNAPCRAFT_BASE_TO_PROVIDER_BASE = {
@@ -51,8 +50,9 @@ def get_base_configuration(
     if sys.platform != "linux" and not snap_channel:
         snap_channel = "stable"
 
-    return SnapcraftBuilddBaseConfiguration(
+    return bases.BuilddBase(
         alias=alias,
+        compatibility_tag=f"snapcraft-{bases.BuilddBase.compatibility_tag}.0",
         environment=environment,
         hostname=instance_name,
         snaps=[

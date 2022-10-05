@@ -71,9 +71,8 @@ def test_get_base_configuration(
         "snapcraft.providers.providers.get_instance_name",
         return_value="test-instance-name",
     )
-    mock_buildd_base = mocker.patch(
-        "snapcraft.providers.providers.SnapcraftBuilddBaseConfiguration"
-    )
+    mock_buildd_base = mocker.patch("snapcraft.providers.providers.bases.BuilddBase")
+    mock_buildd_base.compatibility_tag = "buildd-base-v0"
 
     providers.get_base_configuration(
         alias=alias,
@@ -82,6 +81,7 @@ def test_get_base_configuration(
 
     mock_buildd_base.assert_called_with(
         alias=alias,
+        compatibility_tag="snapcraft-buildd-base-v0.0",
         environment="test-env",
         hostname="test-instance-name",
         snaps=[
