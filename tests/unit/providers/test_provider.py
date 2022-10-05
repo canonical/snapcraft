@@ -56,28 +56,6 @@ def mock_lxd_exists():
         yield mock_exists
 
 
-@pytest.fixture()
-def mock_default_command_environment():
-    with patch(
-        "craft_providers.bases.buildd.default_command_environment",
-        return_value=dict(PATH="test-path"),
-    ) as mock_environment:
-        yield mock_environment
-
-
-def test_get_instance_name(new_dir):
-    """Test formatting of instance name."""
-    inode_number = str(new_dir.stat().st_ino)
-    expected_name = f"snapcraft-hello-world-on-arm64-for-armhf-{inode_number}"
-    actual_name = providers.Provider.get_instance_name(
-        project_name="hello-world",
-        project_path=new_dir,
-        build_on="arm64",
-        build_for="armhf",
-    )
-    assert expected_name == actual_name
-
-
 def test_clean_project_environment_exists(
     mock_lxd_exists,
     mock_lxd_delete,
@@ -86,12 +64,7 @@ def test_clean_project_environment_exists(
 ):
     """Assert instance is deleted if it exists."""
     provider = providers.LXDProvider()
-    provider.clean_project_environments(
-        project_name="test",
-        project_path=new_dir,
-        build_on="test",
-        build_for="test",
-    )
+    provider.clean_project_environments(instance_name="test-instance-name")
 
     assert mock_lxd_delete.mock_calls == [call()]
 
@@ -106,12 +79,7 @@ def test_clean_project_environment_does_not_exist(
     mock_lxd_exists.return_value = False
 
     provider = providers.LXDProvider()
-    provider.clean_project_environments(
-        project_name="test",
-        project_path=new_dir,
-        build_on="test",
-        build_for="test",
-    )
+    provider.clean_project_environments(instance_name="test-instance-name")
 
     assert mock_lxd_delete.mock_calls == []
 
@@ -125,12 +93,7 @@ def test_clean_project_environment_lxd_not_installed(
     mock_lxd_is_installed.return_value = False
 
     provider = providers.LXDProvider()
-    provider.clean_project_environments(
-        project_name="test",
-        project_path=new_dir,
-        build_on="test",
-        build_for="test",
-    )
+    provider.clean_project_environments(instance_name="test-instance-name")
 
     assert mock_lxd_delete.mock_calls == []
 
@@ -144,12 +107,7 @@ def test_clean_project_environment_exists_error(
     provider = providers.LXDProvider()
 
     with pytest.raises(ProviderError) as raised:
-        provider.clean_project_environments(
-            project_name="test",
-            project_path=new_dir,
-            build_on="test",
-            build_for="test",
-        )
+        provider.clean_project_environments(instance_name="test-instance-name")
 
     assert str(raised.value) == "fail"
 
@@ -163,88 +121,6 @@ def test_clean_project_environment_delete_error(
     provider = providers.LXDProvider()
 
     with pytest.raises(ProviderError) as raised:
-        provider.clean_project_environments(
-            project_name="test",
-            project_path=new_dir,
-            build_on="test",
-            build_for="test",
-        )
+        provider.clean_project_environments(instance_name="test-instance-name")
 
     assert str(raised.value) == "fail"
-
-
-def test_get_command_environment(mocker, mock_default_command_environment):
-    """Verify command environment is properly constructed."""
-    provider = providers.LXDProvider()
-    command_environment = provider.get_command_environment()
-
-    assert command_environment == {"PATH": "test-path", "SNAPCRAFT_MANAGED_MODE": "1"}
-
-
-def test_get_command_environment_http_https_proxy(
-    mocker, mock_default_command_environment
-):
-    """Verify http and https proxies are added to the environment."""
-    provider = providers.LXDProvider()
-    command_environment = provider.get_command_environment(
-        http_proxy="test-http", https_proxy="test-https"
-    )
-
-    assert command_environment == {
-        "PATH": "test-path",
-        "SNAPCRAFT_MANAGED_MODE": "1",
-        "http_proxy": "test-http",
-        "https_proxy": "test-https",
-    }
-
-
-def test_get_command_environment_passthrough(
-    mocker, mock_default_command_environment, monkeypatch
-):
-    """Verify variables from the environment are passed to the command environment."""
-    monkeypatch.setenv("http_proxy", "test-http")
-    monkeypatch.setenv("https_proxy", "test-https")
-    monkeypatch.setenv("no_proxy", "test-no-proxy")
-    monkeypatch.setenv("SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS", "test-extensions")
-    monkeypatch.setenv("SNAPCRAFT_BUILD_FOR", "test-build-for")
-    monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "test-build-info")
-    monkeypatch.setenv("SNAPCRAFT_IMAGE_INFO", "test-image-info")
-
-    # ensure other variables are not being passed
-    monkeypatch.setenv("other_var", "test-other-var")
-
-    provider = providers.LXDProvider()
-    command_environment = provider.get_command_environment()
-
-    assert command_environment == {
-        "PATH": "test-path",
-        "SNAPCRAFT_MANAGED_MODE": "1",
-        "http_proxy": "test-http",
-        "https_proxy": "test-https",
-        "no_proxy": "test-no-proxy",
-        "SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS": "test-extensions",
-        "SNAPCRAFT_BUILD_FOR": "test-build-for",
-        "SNAPCRAFT_BUILD_INFO": "test-build-info",
-        "SNAPCRAFT_IMAGE_INFO": "test-image-info",
-    }
-
-
-def test_get_command_environment_http_https_priority(
-    mocker, mock_default_command_environment, monkeypatch
-):
-    """Verify http and https proxies from the function argument take priority over the
-    proxies defined in the environment."""
-    monkeypatch.setenv("http_proxy", "test-http-from-env")
-    monkeypatch.setenv("https_proxy", "test-https-from-env")
-
-    provider = providers.LXDProvider()
-    command_environment = provider.get_command_environment(
-        http_proxy="test-http-from-arg", https_proxy="test-https-from-arg"
-    )
-
-    assert command_environment == {
-        "PATH": "test-path",
-        "SNAPCRAFT_MANAGED_MODE": "1",
-        "http_proxy": "test-http-from-arg",
-        "https_proxy": "test-https-from-arg",
-    }

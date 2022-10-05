@@ -19,18 +19,24 @@
 import contextlib
 import logging
 import pathlib
-from typing import Generator, Optional
+from typing import Generator
 
 from craft_cli import emit
-from craft_providers import Executor, ProviderError, bases, multipass
+from craft_providers import Executor, ProviderError, base, bases, multipass
 from craft_providers.multipass.errors import MultipassError
 
 from snapcraft import utils
 
-from ._buildd import BASE_TO_BUILDD_IMAGE_ALIAS, SnapcraftBuilddBaseConfiguration
 from ._provider import Provider
 
 logger = logging.getLogger(__name__)
+
+
+PROVIDER_BASE_TO_MULTIPASS_BASE = {
+    bases.BuilddBaseAlias.BIONIC.value: "snapcraft:18.04",
+    bases.BuilddBaseAlias.FOCAL.value: "snapcraft:20.04",
+    bases.BuilddBaseAlias.JAMMY.value: "snapcraft:22.04",
+}
 
 
 class MultipassProvider(Provider):
@@ -78,8 +84,8 @@ class MultipassProvider(Provider):
             raise ProviderError(str(error)) from error
 
     @classmethod
-    def is_provider_available(cls) -> bool:
-        """Check if provider is installed and available for use.
+    def is_provider_installed(cls) -> bool:
+        """Check if provider is installed.
 
         :returns: True if installed.
         """
@@ -100,71 +106,33 @@ class MultipassProvider(Provider):
         *,
         project_name: str,
         project_path: pathlib.Path,
-        base: str,
-        bind_ssh: bool,
-        build_on: str,
-        build_for: str,
-        http_proxy: Optional[str] = None,
-        https_proxy: Optional[str] = None,
+        base_configuration: base.Base,
+        build_base: str,
+        instance_name: str,
     ) -> Generator[Executor, None, None]:
-        """Launch environment for specified base.
+        """Configure and launch environment for specified base.
 
-        The environment is launched and configured using the base configuration.
-        Upon exit, drives are unmounted and the environment is stopped.
+        When this method loses context, all directories are unmounted and the
+        environment is stopped. For more control of environment setup and teardown,
+        use `create_environment()` instead.
 
-        :param project_name: Name of the project.
+        :param project_name: Name of project.
         :param project_path: Path to project.
-        :param base: Base to create.
-        :param bind_ssh: If true, mount the host's ssh directory in the environment.
-        :param build_on: host architecture
-        :param build_for: target architecture
+        :param base_configuration: Base configuration to apply to instance.
+        :param build_base: Base to build from.
+        :param instance_name: Name of the instance to launch.
         """
-        alias = BASE_TO_BUILDD_IMAGE_ALIAS[base]
-
-        instance_name = self.get_instance_name(
-            project_name=project_name,
-            project_path=project_path,
-            build_on=build_on,
-            build_for=build_for,
-        )
-
-        environment = self.get_command_environment(
-            http_proxy=http_proxy, https_proxy=https_proxy
-        )
-        base_configuration = SnapcraftBuilddBaseConfiguration(
-            alias=alias,  # type: ignore
-            environment=environment,
-            hostname=instance_name,
-        )
-
         try:
             instance = multipass.launch(
                 name=instance_name,
                 base_configuration=base_configuration,
-                image_name=f"snapcraft:{base}",
+                image_name=PROVIDER_BASE_TO_MULTIPASS_BASE[build_base],
                 cpus=2,
                 disk_gb=64,
                 mem_gb=2,
                 auto_clean=True,
             )
         except (bases.BaseConfigurationError, MultipassError) as error:
-            raise ProviderError(str(error)) from error
-
-        try:
-            # Mount project.
-            instance.mount(
-                host_source=project_path,
-                target=utils.get_managed_environment_project_path(),
-            )
-
-            # Mount ssh directory.
-            if bind_ssh:
-                instance.mount(
-                    host_source=pathlib.Path.home() / ".ssh",
-                    target=utils.get_managed_environment_home_path() / ".ssh",
-                )
-
-        except MultipassError as error:
             raise ProviderError(str(error)) from error
 
         try:
