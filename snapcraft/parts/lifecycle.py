@@ -29,7 +29,7 @@ import craft_parts
 from craft_cli import emit
 from craft_parts import ProjectInfo, StepInfo, callbacks
 
-from snapcraft import errors, extensions, linters, pack, providers, ua_manager, utils
+from snapcraft import errors, extensions, linters, pack, ua_manager, utils
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import manifest, snap_yaml
 from snapcraft.projects import (
@@ -44,6 +44,7 @@ from snapcraft.providers.providers import (
     ensure_provider_is_available,
     get_base_configuration,
     get_instance_name,
+    get_provider,
 )
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
@@ -458,7 +459,7 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
     """
     emit.progress("Cleaning build provider")
     provider_name = "lxd" if parsed_args.use_lxd else None
-    provider = providers.get_provider(provider_name)
+    provider = get_provider(provider_name)
     instance_name = get_instance_name(
         project_name=project.name,
         project_path=Path().absolute(),
@@ -477,7 +478,7 @@ def _run_in_provider(
     """Pack image in provider instance."""
     emit.debug("Checking build provider availability")
     provider_name = "lxd" if parsed_args.use_lxd else None
-    provider = providers.get_provider(provider_name)
+    provider = get_provider(provider_name)
     ensure_provider_is_available(provider)
 
     cmd = ["snapcraft", command_name]
