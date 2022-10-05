@@ -26,7 +26,7 @@ from snapcraft.meta import snap_yaml
 def test_library_linter(mocker, new_dir):
     shutil.copy("/bin/true", "elf.bin")
 
-    mocker.patch("snapcraft.linters.linters._LINTERS", {"library": LibraryLinter})
+    mocker.patch("snapcraft.linters.linters.LINTERS", {"library": LibraryLinter})
     mocker.patch(
         "snapcraft.elf._elf_file._determine_libraries",
         return_value={
@@ -72,7 +72,7 @@ def test_library_linter(mocker, new_dir):
 def test_library_linter_filter(mocker, new_dir):
     shutil.copy("/bin/true", "elf.bin")
 
-    mocker.patch("snapcraft.linters.linters._LINTERS", {"library": LibraryLinter})
+    mocker.patch("snapcraft.linters.linters.LINTERS", {"library": LibraryLinter})
     mocker.patch(
         "snapcraft.elf._elf_file._determine_libraries",
         return_value={
@@ -99,6 +99,6 @@ def test_library_linter_filter(mocker, new_dir):
     )
 
     issues = linters.run_linters(
-        new_dir, lint=projects.Lint(ignore=projects.LintIgnore(files=["elf.*"]))
+        new_dir, lint=projects.Lint(ignore=[{"library": ["elf.*"]}])
     )
     assert issues == []

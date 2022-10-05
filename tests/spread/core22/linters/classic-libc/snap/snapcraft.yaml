@@ -13,8 +13,7 @@ confinement: strict
 
 lint:
   ignore:
-    linters:
-      - library
+    - library
 
 parts:
   my-part:
