@@ -41,6 +41,7 @@ from snapcraft.projects import (
 from snapcraft.providers.providers import (
     SNAPCRAFT_BASE_TO_PROVIDER_BASE,
     capture_logs_from_instance,
+    ensure_provider_is_available,
     get_base_configuration,
     get_instance_name,
 )
@@ -477,7 +478,7 @@ def _run_in_provider(
     emit.debug("Checking build provider availability")
     provider_name = "lxd" if parsed_args.use_lxd else None
     provider = providers.get_provider(provider_name)
-    provider.ensure_provider_is_available()
+    ensure_provider_is_available(provider)
 
     cmd = ["snapcraft", command_name]
 

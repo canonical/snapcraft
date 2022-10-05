@@ -21,11 +21,8 @@ import logging
 import pathlib
 from typing import Generator
 
-from craft_cli import emit
 from craft_providers import Executor, ProviderError, base, bases, multipass
 from craft_providers.multipass.errors import MultipassError
-
-from snapcraft import utils
 
 from ._provider import Provider
 
@@ -58,25 +55,13 @@ class MultipassProvider(Provider):
         :raises ProviderError: if provider is not available.
         """
         if not multipass.is_installed():
-            with emit.pause():
-                confirmation = utils.confirm_with_user(
-                    "Multipass is required, but not installed. Do you wish to install Multipass "
-                    "and configure it with the defaults?",
-                    default=False,
-                )
-            if confirmation:
-                try:
-                    multipass.install()
-                except multipass.MultipassInstallationError as error:
-                    raise ProviderError(
-                        "Failed to install Multipass. Visit https://multipass.run/ for "
-                        "instructions on installing Multipass for your operating system.",
-                    ) from error
-            else:
+            try:
+                multipass.install()
+            except multipass.MultipassInstallationError as error:
                 raise ProviderError(
-                    "Multipass is required, but not installed. Visit https://multipass.run/ for "
+                    "Failed to install Multipass. Visit https://multipass.run/ for "
                     "instructions on installing Multipass for your operating system.",
-                )
+                ) from error
 
         try:
             multipass.ensure_multipass_is_ready()

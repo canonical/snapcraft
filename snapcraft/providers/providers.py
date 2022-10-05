@@ -22,12 +22,17 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from craft_cli import emit
-from craft_providers import bases, executor
+from craft_providers import ProviderError, bases, executor
 
 from snapcraft.utils import (
+    confirm_with_user,
     get_managed_environment_log_path,
     get_managed_environment_snap_channel,
 )
+
+from ._lxd import LXDProvider
+from ._multipass import MultipassProvider
+from ._provider import Provider
 
 SNAPCRAFT_BASE_TO_PROVIDER_BASE = {
     "core18": bases.BuilddBaseAlias.BIONIC,
@@ -54,6 +59,42 @@ def capture_logs_from_instance(instance: executor.Executor) -> None:
             emit.trace(
                 f"Could not find log file {source_log_path.as_posix()} in instance."
             )
+
+
+def ensure_provider_is_available(provider: Provider) -> None:
+    """Ensure provider is installed, running, and properly configured.
+
+    If the provider is not installed, the user is prompted to install it.
+
+    :param instance: the provider to ensure is available
+
+    :raises ProviderError: if provider is unknown, not available, or if the user
+    chooses not to install the provider.
+    """
+    if isinstance(provider, LXDProvider):
+        if not LXDProvider.is_provider_installed() and not confirm_with_user(
+            "LXD is required but not installed. Do you wish to install LXD and configure "
+            "it with the defaults?",
+            default=False,
+        ):
+            raise ProviderError(
+                "LXD is required, but not installed. Visit https://snapcraft.io/lxd "
+                "for instructions on how to install the LXD snap for your distribution",
+            )
+        LXDProvider.ensure_provider_is_available()
+    elif isinstance(provider, MultipassProvider):
+        if not MultipassProvider.is_provider_installed() and not confirm_with_user(
+            "Multipass is required but not installed. Do you wish to install Multipass"
+            " and configure it with the defaults?",
+            default=False,
+        ):
+            raise ProviderError(
+                "Multipass is required, but not installed. Visit https://multipass.run/"
+                "for instructions on installing Multipass for your operating system."
+            )
+        MultipassProvider.ensure_provider_is_available()
+    else:
+        raise ProviderError("cannot install unknown provider")
 
 
 def get_base_configuration(

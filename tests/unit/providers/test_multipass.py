@@ -60,13 +60,6 @@ def mock_multipass_launch(mocker):
     yield mocker.patch("craft_providers.multipass.launch", autospec=True)
 
 
-@pytest.fixture
-def mock_confirm_with_user(mocker):
-    yield mocker.patch(
-        "snapcraft.providers._multipass.utils.confirm_with_user", return_value=True
-    )
-
-
 def test_ensure_provider_is_available_ok_when_installed(mock_multipass_is_installed):
     mock_multipass_is_installed.return_value = True
     provider = providers.MultipassProvider()
@@ -74,25 +67,8 @@ def test_ensure_provider_is_available_ok_when_installed(mock_multipass_is_instal
     provider.ensure_provider_is_available()
 
 
-def test_ensure_provider_is_available_errors_when_user_says_no(
-    mock_multipass_is_installed, mock_multipass_install, mock_confirm_with_user
-):
-    mock_confirm_with_user.return_value = False
-    mock_multipass_is_installed.return_value = False
-    provider = providers.MultipassProvider()
-
-    with pytest.raises(
-        ProviderError,
-        match=re.escape(
-            "Multipass is required, but not installed. Visit https://multipass.run/ "
-            "for instructions on installing Multipass for your operating system."
-        ),
-    ):
-        provider.ensure_provider_is_available()
-
-
 def test_ensure_provider_is_available_errors_when_multipass_install_fails(
-    mock_multipass_is_installed, mock_multipass_install, mock_confirm_with_user
+    mock_multipass_is_installed, mock_multipass_install
 ):
     error = MultipassInstallationError("foo")
     mock_multipass_is_installed.return_value = False
@@ -113,7 +89,6 @@ def test_ensure_provider_is_available_errors_when_multipass_not_ready(
     mock_multipass_is_installed,
     mock_multipass_install,
     mock_multipass_ensure_multipass_is_ready,
-    mock_confirm_with_user,
 ):
     error = MultipassError(
         brief="some error", details="some details", resolution="some resolution"

@@ -1114,6 +1114,9 @@ def test_lifecycle_run_in_provider_default(
     mock_capture_logs_from_instance = mocker.patch(
         "snapcraft.parts.lifecycle.capture_logs_from_instance"
     )
+    mock_ensure_provider_is_available = mocker.patch(
+        "snapcraft.parts.lifecycle.ensure_provider_is_available"
+    )
     mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
     mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
 
@@ -1138,7 +1141,7 @@ def test_lifecycle_run_in_provider_default(
         ),
     )
 
-    mock_provider.ensure_provider_is_available.assert_called_once()
+    mock_ensure_provider_is_available.assert_called_once_with(mock_provider)
     mock_get_instance_name.assert_called_once_with(
         project_name="mytest",
         project_path=tmp_path,
@@ -1198,6 +1201,9 @@ def test_lifecycle_run_in_provider_all_options(
     mock_capture_logs_from_instance = mocker.patch(
         "snapcraft.parts.lifecycle.capture_logs_from_instance"
     )
+    mock_ensure_provider_is_available = mocker.patch(
+        "snapcraft.parts.lifecycle.ensure_provider_is_available"
+    )
     mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
     mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
 
@@ -1256,7 +1262,7 @@ def test_lifecycle_run_in_provider_all_options(
         ),
     )
 
-    mock_provider.ensure_provider_is_available.assert_called_once()
+    mock_ensure_provider_is_available.assert_called_once_with(mock_provider)
     mock_get_instance_name.assert_called_once_with(
         project_name="mytest",
         project_path=tmp_path,
@@ -1276,8 +1282,6 @@ def test_lifecycle_run_in_provider_all_options(
         build_base="22.04",
         instance_name="test-instance-name",
     )
-
-    mock_provider.ensure_provider_is_available.assert_called_once()
     mock_instance.mount.assert_has_calls(
         [
             call(host_source=tmp_path, target=Path("/root/project")),
