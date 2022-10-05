@@ -16,14 +16,7 @@
 
 """Buildd-related helpers for Snapcraft."""
 
-import sys
-from typing import Optional
-
-from craft_providers import Executor, bases
-from craft_providers.actions import snap_installer
-from overrides import overrides
-
-from snapcraft import utils
+from craft_providers import bases
 
 
 class SnapcraftBuilddBaseConfiguration(bases.BuilddBase):
@@ -38,101 +31,3 @@ class SnapcraftBuilddBaseConfiguration(bases.BuilddBase):
     """
 
     compatibility_tag: str = f"snapcraft-{bases.BuilddBase.compatibility_tag}.0"
-
-    @staticmethod
-    def _setup_snapcraft(*, executor: Executor) -> None:
-        """Install Snapcraft in target environment.
-
-        On Linux, the default behavior is to inject the host snap into the target
-        environment.
-
-        On other platforms, the Snapcraft snap is installed from the Snap Store.
-
-        When installing the snap from the Store, we check if the user specifies a
-        channel, using SNAPCRAFT_INSTALL_SNAP_CHANNEL=<channel>.  If unspecified,
-        we use the "stable" channel on the default track.
-
-        On Linux, the user may specify this environment variable to force Snapcraft
-        to install the snap from the Store rather than inject the host snap.
-
-        :raises BaseConfigurationError: on error.
-        """
-        # Requirement for apt gpg and version:git
-        executor.execute_run(
-            ["apt-get", "install", "-y", "gnupg", "dirmngr", "git"],
-            capture_output=True,
-            check=True,
-        )
-
-        snap_channel = utils.get_managed_environment_snap_channel()
-        if snap_channel is None and sys.platform != "linux":
-            snap_channel = "stable"
-
-        # Snaps that are already installed won't be reinstalled.
-        # See https://github.com/canonical/craft-providers/issues/91
-
-        if snap_channel:
-            try:
-                snap_installer.install_from_store(
-                    executor=executor,
-                    snap_name="snapcraft",
-                    channel=snap_channel,
-                    classic=True,
-                )
-            except snap_installer.SnapInstallationError as error:
-                raise bases.BaseConfigurationError(
-                    "Failed to install snapcraft snap from store channel "
-                    f"{snap_channel!r} into target environment."
-                ) from error
-        else:
-            try:
-                snap_installer.inject_from_host(
-                    executor=executor, snap_name="snapcraft", classic=True
-                )
-            except snap_installer.SnapInstallationError as error:
-                raise bases.BaseConfigurationError(
-                    "Failed to inject host snapcraft snap into target environment."
-                ) from error
-
-    @overrides
-    def setup(
-        self,
-        *,
-        executor: Executor,
-        retry_wait: float = 0.25,
-        timeout: Optional[float] = None,
-    ) -> None:
-        """Prepare base instance for use by the application.
-
-        :param executor: Executor for target container.
-        :param retry_wait: Duration to sleep() between status checks (if required).
-        :param timeout: Timeout in seconds.
-
-        :raises BaseCompatibilityError: if instance is incompatible.
-        :raises BaseConfigurationError: on other unexpected error.
-        """
-        super().setup(executor=executor, retry_wait=retry_wait, timeout=timeout)
-        self._setup_snapcraft(executor=executor)
-
-    @overrides
-    def warmup(
-        self,
-        *,
-        executor: Executor,
-        retry_wait: float = 0.25,
-        timeout: Optional[float] = None,
-    ) -> None:
-        """Prepare a previously created and setup instance for use by the application.
-
-        In addition to the guarantees provided by buildd:
-            - snapcraft installed
-
-        :param executor: Executor for target container.
-        :param retry_wait: Duration to sleep() between status checks (if required).
-        :param timeout: Timeout in seconds.
-
-        :raises BaseCompatibilityError: if instance is incompatible.
-        :raises BaseConfigurationError: on other unexpected error.
-        """
-        super().warmup(executor=executor, retry_wait=retry_wait, timeout=timeout)
-        self._setup_snapcraft(executor=executor)

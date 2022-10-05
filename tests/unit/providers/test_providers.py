@@ -17,6 +17,7 @@
 from unittest.mock import patch
 
 import pytest
+from craft_providers import bases
 
 from snapcraft.providers import providers
 
@@ -28,6 +29,68 @@ def mock_default_command_environment():
         return_value=dict(PATH="test-path"),
     ) as mock_environment:
         yield mock_environment
+
+
+@pytest.mark.parametrize(
+    "platform, snap_channel, expected_snap_channel",
+    [
+        ("linux", None, None),
+        ("linux", "edge", "edge"),
+        ("darwin", "edge", "edge"),
+        # default to stable on non-linux system
+        ("darwin", None, "stable"),
+    ],
+)
+@pytest.mark.parametrize(
+    "alias",
+    [
+        bases.BuilddBaseAlias.BIONIC,
+        bases.BuilddBaseAlias.FOCAL,
+        bases.BuilddBaseAlias.JAMMY,
+    ],
+)
+def test_get_base_configuration(
+    platform,
+    snap_channel,
+    expected_snap_channel,
+    alias,
+    tmp_path,
+    mocker,
+):
+    """Verify the snapcraft snap is installed from the correct channel."""
+    mocker.patch("sys.platform", platform)
+    mocker.patch(
+        "snapcraft.providers.providers.get_managed_environment_snap_channel",
+        return_value=snap_channel,
+    )
+    mocker.patch(
+        "snapcraft.providers.providers.get_command_environment",
+        return_value="test-env",
+    )
+    mocker.patch(
+        "snapcraft.providers.providers.get_instance_name",
+        return_value="test-instance-name",
+    )
+    mock_buildd_base = mocker.patch(
+        "snapcraft.providers.providers.SnapcraftBuilddBaseConfiguration"
+    )
+
+    providers.get_base_configuration(
+        alias=alias,
+        instance_name="test-instance-name",
+    )
+
+    mock_buildd_base.assert_called_with(
+        alias=alias,
+        environment="test-env",
+        hostname="test-instance-name",
+        snaps=[
+            bases.buildd.Snap(
+                name="snapcraft", channel=expected_snap_channel, classic=True
+            )
+        ],
+        packages=["gnupg", "dirmngr", "git"],
+    )
 
 
 def test_get_command_environment(mocker, mock_default_command_environment):
