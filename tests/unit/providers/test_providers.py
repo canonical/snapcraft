@@ -14,7 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from unittest.mock import patch
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
 from craft_providers import bases
@@ -29,6 +30,45 @@ def mock_default_command_environment():
         return_value=dict(PATH="test-path"),
     ) as mock_environment:
         yield mock_environment
+
+
+def test_capture_logs_from_instance(mocker, emitter, mock_instance, new_dir):
+    """Verify logs from an instance are retrieved and emitted."""
+    fake_log = Path(new_dir / "fake.file")
+    fake_log_data = "some\nlog data\nhere"
+    fake_log.write_text(fake_log_data, encoding="utf-8")
+
+    mock_instance.temporarily_pull_file = MagicMock()
+    mock_instance.temporarily_pull_file.return_value = fake_log
+
+    providers.capture_logs_from_instance(mock_instance)
+
+    assert mock_instance.mock_calls == [
+        call.temporarily_pull_file(source=Path("/tmp/snapcraft.log"), missing_ok=True)
+    ]
+    expected = [
+        call("trace", "Logs retrieved from managed instance:"),
+        call("trace", ":: some"),
+        call("trace", ":: log data"),
+        call("trace", ":: here"),
+    ]
+    emitter.assert_interactions(expected)
+
+
+def test_capture_log_from_instance_not_found(mocker, emitter, mock_instance, new_dir):
+    """Verify a missing log file is handled properly."""
+    mock_instance.temporarily_pull_file = MagicMock(return_value=None)
+    mock_instance.temporarily_pull_file.return_value = (
+        mock_instance.temporarily_pull_file
+    )
+    mock_instance.temporarily_pull_file.__enter__ = Mock(return_value=None)
+
+    providers.capture_logs_from_instance(mock_instance)
+
+    emitter.assert_trace("Could not find log file /tmp/snapcraft.log in instance.")
+    mock_instance.temporarily_pull_file.assert_called_with(
+        source=Path("/tmp/snapcraft.log"), missing_ok=True
+    )
 
 
 @pytest.mark.parametrize(
