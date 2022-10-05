@@ -30,3 +30,4 @@ target
 tests/unit/snap/
 tests/unit/stage/
 .vscode
+venv
