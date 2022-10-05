@@ -101,16 +101,21 @@ COMMAND_GROUPS = [
         ],
     ),
     craft_cli.CommandGroup(
-        "Store Assertions",
+        "Store Key Management",
         [
             commands.StoreLegacyCreateKeyCommand,
-            commands.StoreLegacyEditValidationSetsCommand,
-            commands.StoreLegacyGatedCommand,
-            commands.StoreLegacyListValidationSetsCommand,
             commands.StoreLegacyRegisterKeyCommand,
             commands.StoreLegacySignBuildCommand,
-            commands.StoreLegacyValidateCommand,
             commands.StoreLegacyListKeysCommand,
+        ],
+    ),
+    craft_cli.CommandGroup(
+        "Store Validation Sets",
+        [
+            commands.StoreEditValidationSetsCommand,
+            commands.StoreLegacyListValidationSetsCommand,
+            commands.StoreLegacyValidateCommand,
+            commands.StoreLegacyGatedCommand,
         ],
     ),
     craft_cli.CommandGroup("Other", [commands.VersionCommand]),
