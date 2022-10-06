@@ -19,8 +19,10 @@ from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
 from craft_providers import ProviderError, bases
+from craft_providers.lxd import LXDProvider
+from craft_providers.multipass import MultipassProvider
 
-from snapcraft.providers import LXDProvider, MultipassProvider, providers
+from snapcraft import providers
 from snapcraft.snap_config import SnapConfig
 
 
@@ -83,15 +85,15 @@ def test_ensure_provider_is_available_lxd(
     to install LXD."""
     mock_lxd_provider = Mock(spec=LXDProvider)
     mocker.patch(
-        "snapcraft.providers.providers.LXDProvider.is_provider_installed",
+        "snapcraft.providers.LXDProvider.is_provider_installed",
         return_value=is_provider_installed,
     )
     mocker.patch(
-        "snapcraft.providers.providers.confirm_with_user",
+        "snapcraft.providers.confirm_with_user",
         return_value=confirm_with_user,
     )
     mock_ensure_provider_is_available = mocker.patch(
-        "snapcraft.providers.providers.ensure_provider_is_available"
+        "snapcraft.providers.ensure_provider_is_available"
     )
 
     providers.ensure_provider_is_available(mock_lxd_provider)
@@ -103,10 +105,10 @@ def test_ensure_provider_is_available_lxd_error(mocker):
     """Raise an error if the user does not choose to install LXD."""
     mock_lxd_provider = Mock(spec=LXDProvider)
     mocker.patch(
-        "snapcraft.providers.providers.LXDProvider.is_provider_installed",
+        "snapcraft.providers.LXDProvider.is_provider_installed",
         return_value=False,
     )
-    mocker.patch("snapcraft.providers.providers.confirm_with_user", return_value=False)
+    mocker.patch("snapcraft.providers.confirm_with_user", return_value=False)
 
     with pytest.raises(ProviderError) as error:
         providers.ensure_provider_is_available(mock_lxd_provider)
@@ -128,15 +130,15 @@ def test_ensure_provider_is_available_multipass(
     user chooses to install Multipass."""
     mock_multipass_provider = Mock(spec=MultipassProvider)
     mocker.patch(
-        "snapcraft.providers.providers.MultipassProvider.is_provider_installed",
+        "snapcraft.providers.MultipassProvider.is_provider_installed",
         return_value=is_provider_installed,
     )
     mocker.patch(
-        "snapcraft.providers.providers.confirm_with_user",
+        "snapcraft.providers.confirm_with_user",
         return_value=confirm_with_user,
     )
     mock_ensure_provider_is_available = mocker.patch(
-        "snapcraft.providers.providers.ensure_provider_is_available"
+        "snapcraft.providers.ensure_provider_is_available"
     )
 
     providers.ensure_provider_is_available(mock_multipass_provider)
@@ -148,10 +150,10 @@ def test_ensure_provider_is_available_multipass_error(mocker):
     """Raise an error if the user does not choose to install Multipass."""
     mock_multipass_provider = Mock(spec=MultipassProvider)
     mocker.patch(
-        "snapcraft.providers.providers.MultipassProvider.is_provider_installed",
+        "snapcraft.providers.MultipassProvider.is_provider_installed",
         return_value=False,
     )
-    mocker.patch("snapcraft.providers.providers.confirm_with_user", return_value=False)
+    mocker.patch("snapcraft.providers.confirm_with_user", return_value=False)
 
     with pytest.raises(ProviderError) as error:
         providers.ensure_provider_is_available(mock_multipass_provider)
@@ -201,18 +203,18 @@ def test_get_base_configuration(
     """Verify the snapcraft snap is installed from the correct channel."""
     mocker.patch("sys.platform", platform)
     mocker.patch(
-        "snapcraft.providers.providers.get_managed_environment_snap_channel",
+        "snapcraft.providers.get_managed_environment_snap_channel",
         return_value=snap_channel,
     )
     mocker.patch(
-        "snapcraft.providers.providers.get_command_environment",
+        "snapcraft.providers.get_command_environment",
         return_value="test-env",
     )
     mocker.patch(
-        "snapcraft.providers.providers.get_instance_name",
+        "snapcraft.providers.get_instance_name",
         return_value="test-instance-name",
     )
-    mock_buildd_base = mocker.patch("snapcraft.providers.providers.bases.BuilddBase")
+    mock_buildd_base = mocker.patch("snapcraft.providers.bases.BuilddBase")
     mock_buildd_base.compatibility_tag = "buildd-base-v0"
 
     providers.get_base_configuration(
@@ -359,7 +361,7 @@ def test_get_provider_passed_argument_priority(mocker, monkeypatch):
 
     # set snap config provider to 'lxd' to verify it is not chosen
     mocker.patch(
-        "snapcraft.providers.providers.get_snap_config",
+        "snapcraft.providers.get_snap_config",
         return_value=SnapConfig(provider="lxd"),
     )
 
@@ -413,7 +415,7 @@ def test_get_provider_env_var_priority(mocker, monkeypatch):
 
     # set snap config provider to 'lxd' to verify it is not chosen
     mocker.patch(
-        "snapcraft.providers.providers.get_snap_config",
+        "snapcraft.providers.get_snap_config",
         return_value=SnapConfig(provider="lxd"),
     )
 
@@ -442,7 +444,7 @@ def test_get_provider_snap_config(mocker, provider, expected_provider):
 
     # set snap config
     mocker.patch(
-        "snapcraft.providers.providers.get_snap_config",
+        "snapcraft.providers.get_snap_config",
         return_value=SnapConfig(provider=provider),
     )
     actual_provider = providers.get_provider()
@@ -454,9 +456,7 @@ def test_get_provider_snap_config_invalid(mocker):
     """Verify an invalid environmental variable raises an error."""
     snap_config = SnapConfig()
     snap_config.provider = "invalid-provider"  # type: ignore
-    mocker.patch(
-        "snapcraft.providers.providers.get_snap_config", return_value=snap_config
-    )
+    mocker.patch("snapcraft.providers.get_snap_config", return_value=snap_config)
 
     with pytest.raises(ValueError) as raised:
         providers.get_provider()
@@ -474,7 +474,7 @@ def test_get_provider_snap_config_priority(mocker):
 
     # set snap config to multipass
     mocker.patch(
-        "snapcraft.providers.providers.get_snap_config",
+        "snapcraft.providers.get_snap_config",
         return_value=SnapConfig(provider="multipass"),
     )
 
