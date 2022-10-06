@@ -20,10 +20,13 @@ from typing import Any, Dict
 from unittest.mock import call
 
 import pytest
+import requests
 
-from snapcraft import commands
+from snapcraft import commands, errors
 from snapcraft.commands.validation_sets import StoreClientCLI
+from snapcraft_legacy.storeapi.errors import StoreValidationSetsError
 from snapcraft_legacy.storeapi.v2 import validation_sets
+from tests.unit.store.utils import FakeResponse
 
 ############
 # Fixtures #
@@ -229,3 +232,177 @@ def test_edit_validation_sets_with_changes_to_existing_set(
             key_name=key_name,
         )
     ]
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_edit_validation_sets_with_errors_to_amend(
+    validation_sets_payload,
+    fake_dashboard_get_validation_sets,
+    fake_dashboard_post_validation_sets_build_assertion,
+    fake_dashboard_post_validation_sets,
+    fake_snap_sign,
+    fake_edit_validation_sets,
+    monkeypatch,
+):
+    fake_edit_validation_sets.return_value = {
+        "account-id": "AccountIDXXXOfTheRequestingUserX",
+        "name": "certification-x1",
+        "sequence": "9",
+        "snaps": [
+            {
+                "name": "snap-name-1",
+                "id": "XXSnapIDForXSnapName1XXXXXXXXXXX",
+                "presence": "required",
+            },
+            {"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"},
+        ],
+    }
+    fake_dashboard_post_validation_sets_build_assertion.side_effect = [
+        StoreValidationSetsError(
+            FakeResponse(
+                status_code=requests.codes.bad_request,  # pylint: disable=no-member
+                content=json.dumps(
+                    {"error_list": [{"message": "bad assertion", "code": "no snap"}]}
+                ),
+            )
+        ),
+        validation_sets_payload.assertions[0],
+    ]
+    monkeypatch.setattr("snapcraft.utils.prompt", lambda p: True)
+
+    cmd = commands.StoreEditValidationSetsCommand(None)
+
+    cmd.run(
+        argparse.Namespace(
+            account_id="AccountIDXXXOfTheRequestingUserX",
+            set_name="certification-x1",
+            sequence="9",
+            key_name=None,
+        )
+    )
+
+    assert fake_dashboard_get_validation_sets.mock_calls == [
+        call(name="certification-x1", sequence="9")
+    ]
+    assert fake_dashboard_post_validation_sets_build_assertion.mock_calls == [
+        call(
+            validation_sets={
+                "account-id": "AccountIDXXXOfTheRequestingUserX",
+                "name": "certification-x1",
+                "sequence": "9",
+                "snaps": [
+                    {
+                        "name": "snap-name-1",
+                        "id": "XXSnapIDForXSnapName1XXXXXXXXXXX",
+                        "presence": "required",
+                    },
+                    {"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"},
+                ],
+            }
+        ),
+        call(
+            validation_sets={
+                "account-id": "AccountIDXXXOfTheRequestingUserX",
+                "name": "certification-x1",
+                "sequence": "9",
+                "snaps": [
+                    {
+                        "name": "snap-name-1",
+                        "id": "XXSnapIDForXSnapName1XXXXXXXXXXX",
+                        "presence": "required",
+                    },
+                    {"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"},
+                ],
+            }
+        ),
+    ]
+    assert fake_dashboard_post_validation_sets.mock_calls == [
+        call(
+            signed_validation_sets=(
+                '{"account-id": "AccountIDXXXOfTheRequestingUserX", "authority-id": '
+                '"AccountIDXXXOfTheRequestingUserX", "name": "certification-x1", '
+                '"revision": "222", "sequence": "9", "snaps": [{"name": "snap-name-1", '
+                '"id": "XXSnapIDForXSnapName1XXXXXXXXXXX", "presence": "optional"}, '
+                '{"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"}], '
+                '"timestamp": "2020-10-29T16:36:56Z", "type": "validation-set", '
+                '"series": "16"}}\n\nSIGNEDNone'
+            ).encode()
+        )
+    ]
+    assert fake_snap_sign.mock_calls == [
+        call(
+            validation_sets_payload.assertions[0].marshal(),
+            key_name=None,
+        )
+    ]
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_edit_validation_sets_with_errors_not_amended(
+    validation_sets_payload,
+    fake_dashboard_get_validation_sets,
+    fake_dashboard_post_validation_sets_build_assertion,
+    fake_dashboard_post_validation_sets,
+    fake_snap_sign,
+    fake_edit_validation_sets,
+    monkeypatch,
+):
+    fake_edit_validation_sets.return_value = {
+        "account-id": "AccountIDXXXOfTheRequestingUserX",
+        "name": "certification-x1",
+        "sequence": "9",
+        "snaps": [
+            {
+                "name": "snap-name-1",
+                "id": "XXSnapIDForXSnapName1XXXXXXXXXXX",
+                "presence": "required",
+            },
+            {"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"},
+        ],
+    }
+    fake_dashboard_post_validation_sets_build_assertion.side_effect = (
+        StoreValidationSetsError(
+            FakeResponse(
+                status_code=requests.codes.bad_request,  # pylint: disable=no-member
+                content=json.dumps(
+                    {"error_list": [{"message": "bad assertion", "code": "no snap"}]}
+                ),
+            )
+        )
+    )
+    monkeypatch.setattr("snapcraft.utils.prompt", lambda p: False)
+
+    cmd = commands.StoreEditValidationSetsCommand(None)
+
+    with pytest.raises(errors.SnapcraftError):
+        cmd.run(
+            argparse.Namespace(
+                account_id="AccountIDXXXOfTheRequestingUserX",
+                set_name="certification-x1",
+                sequence="9",
+                key_name=None,
+            )
+        )
+
+    assert fake_dashboard_get_validation_sets.mock_calls == [
+        call(name="certification-x1", sequence="9")
+    ]
+    assert fake_dashboard_post_validation_sets_build_assertion.mock_calls == [
+        call(
+            validation_sets={
+                "account-id": "AccountIDXXXOfTheRequestingUserX",
+                "name": "certification-x1",
+                "sequence": "9",
+                "snaps": [
+                    {
+                        "name": "snap-name-1",
+                        "id": "XXSnapIDForXSnapName1XXXXXXXXXXX",
+                        "presence": "required",
+                    },
+                    {"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"},
+                ],
+            }
+        ),
+    ]
+    assert fake_dashboard_post_validation_sets.mock_calls == []
+    assert fake_snap_sign.mock_calls == []
