@@ -1376,11 +1376,14 @@ class KernelPlugin(PluginV2):
             "dracut-core",
             "kmod",
             "kpartx",
-            "lz4",
             "systemd",
         }
+
         # install correct initramfs compression tool
-        if self.options.kernel_initrd_compression == "lz4":
+        if (
+            not self.options.kernel_initrd_compression
+            or self.options.kernel_initrd_compression == "lz4"
+        ):
             build_packages |= {"lz4"}
         elif self.options.kernel_initrd_compression == "xz":
             build_packages |= {"xz-utils"}
@@ -1428,7 +1431,7 @@ class KernelPlugin(PluginV2):
                 for f in self.options.kernel_compiler_paths
             ]
             path = custom_paths + [
-                env["PATH"],
+                "${PATH}",
             ]
             env["PATH"] = ":".join(path)
 
