@@ -605,11 +605,13 @@ class TestPluginKernel(TestCase):
         assert _check_config in build_commands
         if platform.machine() == "x86_64":
             assert _is_sub_array(build_commands, _build_kernel_clang_image_x86_cmd)
-            assert _is_sub_array(build_commands, _install_kernel_no_firmware_clang_x86_cmd)
+            assert _is_sub_array(
+                build_commands, _install_kernel_no_firmware_clang_x86_cmd
+            )
         else:
             assert _is_sub_array(build_commands, _build_kernel_clang_image_cmd)
             assert _is_sub_array(build_commands, _install_kernel_no_firmware_clang_cmd)
-        
+
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
         assert _is_sub_array(build_commands, _install_initrd_modules_cmd)
         assert _is_sub_array(build_commands, _configure_initrd_modules_cmd)
