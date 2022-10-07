@@ -28,9 +28,9 @@ import yaml
 from craft_cli import BaseCommand, emit
 from overrides import overrides
 
-import snapcraft_legacy.storeapi.errors
 from snapcraft import errors, utils
 from snapcraft_legacy._store import StoreClientCLI
+from snapcraft_legacy.storeapi.errors import StoreValidationSetsError
 
 if TYPE_CHECKING:
     import argparse
@@ -88,34 +88,41 @@ class StoreEditValidationSetsCommand(BaseCommand):
             name=parsed_args.set_name, sequence=str(parsed_args.sequence)
         )
 
-        unverified_validation_sets = _generate_template(
+        validation_sets_template = _generate_template(
             asserted_validation_sets,
             account_id=parsed_args.account_id,
             set_name=parsed_args.set_name,
             sequence=parsed_args.sequence,
         )
 
-        edited_validation_sets = _edit_validation_sets(unverified_validation_sets)
+        with tempfile.NamedTemporaryFile() as temp_file:
+            validation_sets_path = Path(temp_file.name)
 
-        if edited_validation_sets == yaml.safe_load(unverified_validation_sets):
+        validation_sets_path.write_text(validation_sets_template, encoding="utf-8")
+        edited_validation_sets = edit_validation_sets(validation_sets_path)
+
+        if edited_validation_sets == yaml.safe_load(validation_sets_template):
             emit.message("No changes made")
             return
 
-        while True:
-            try:
-                _submit_validation_set(
-                    edited_validation_sets, parsed_args.key_name, store_client
-                )
-                break
-            except snapcraft_legacy.storeapi.errors.StoreValidationSetsError as validation_error:
-                emit.message(str(validation_error))
-                if not utils.prompt("Do you with to amend the validation set? "):
-                    raise errors.SnapcraftError(
-                        str(validation_error)
-                    ) from validation_error
-                edited_validation_sets = _edit_validation_sets(
-                    unverified_validation_sets
-                )
+        try:
+            while True:
+                try:
+                    _submit_validation_set(
+                        edited_validation_sets, parsed_args.key_name, store_client
+                    )
+                    break
+                except StoreValidationSetsError as validation_error:
+                    emit.message(str(validation_error))
+                    if not utils.confirm_with_user(
+                        "Do you wish to amend the validation set?"
+                    ):
+                        raise errors.SnapcraftError(
+                            "Operation aborted"
+                        ) from validation_error
+                    edited_validation_sets = edit_validation_sets(validation_sets_path)
+        finally:
+            validation_sets_path.unlink()
 
 
 def _submit_validation_set(
@@ -162,27 +169,26 @@ def _generate_template(
         revision=revision,
         snaps=snaps,
     )
+
     return unverified_validation_sets
 
 
-def _edit_validation_sets(validation_sets: str) -> Dict[str, Any]:
+def edit_validation_sets(validation_sets_path: Path) -> Dict[str, Any]:
     """Spawn an editor to modify the validation-sets."""
     editor_cmd = os.getenv("EDITOR", "vi")
 
-    with tempfile.NamedTemporaryFile() as temp_file:
-        file_template_path = Path(temp_file.name)
-
-    try:
-        file_template_path.write_text(validation_sets, encoding="utf-8")
+    while True:
         with emit.pause():
-            subprocess.run([editor_cmd, file_template_path], check=True)
-        edited_validation_sets = yaml.safe_load(
-            file_template_path.read_text(encoding="utf-8")
-        )
-    finally:
-        file_template_path.unlink()
-
-    return edited_validation_sets
+            subprocess.run([editor_cmd, validation_sets_path], check=True)
+        try:
+            edited_validation_sets = yaml.safe_load(
+                validation_sets_path.read_text(encoding="utf-8")
+            )
+            return edited_validation_sets
+        except yaml.YAMLError as yaml_error:
+            emit.message(f"A YAML parsing error occurred {yaml_error!s}")
+            if not utils.confirm_with_user("Do you wish to amend the validation set?"):
+                raise errors.SnapcraftError("Operation aborted") from yaml_error
 
 
 def _sign_assertion(assertion: Dict[str, Any], *, key_name: Optional[str]) -> bytes:

@@ -23,7 +23,7 @@ import pytest
 import requests
 
 from snapcraft import commands, errors
-from snapcraft.commands.validation_sets import StoreClientCLI
+from snapcraft.commands.validation_sets import StoreClientCLI, edit_validation_sets
 from snapcraft_legacy.storeapi.errors import StoreValidationSetsError
 from snapcraft_legacy.storeapi.v2 import validation_sets
 from tests.unit.store.utils import FakeResponse
@@ -103,24 +103,61 @@ def fake_snap_sign(mocker):
 
 
 @pytest.fixture
-def fake_edit_validation_sets(mocker):
+def edit_return_value():
+    return {
+        "account-id": "AccountIDXXXOfTheRequestingUserX",
+        "name": "certification-x1",
+        "sequence": "9",
+        "snaps": [
+            {
+                "id": "XXSnapIDForXSnapName1XXXXXXXXXXX",
+                "name": "snap-name-1",
+                "presence": "required",
+            },
+            {"id": "XXSnapIDForXSnapName2XXXXXXXXXXX", "name": "snap-name-2"},
+        ],
+    }
+
+
+@pytest.fixture
+def fake_edit_validation_sets(mocker, edit_return_value):
     """A fake for editing validation sets that returns no changes by default."""
     return mocker.patch(
-        "snapcraft.commands.validation_sets._edit_validation_sets",
-        return_value={
-            "account-id": "AccountIDXXXOfTheRequestingUserX",
-            "name": "certification-x1",
-            "sequence": 9,
-            "snaps": [
-                {
-                    "id": "XXSnapIDForXSnapName1XXXXXXXXXXX",
-                    "name": "snap-name-1",
-                    "presence": "optional",
-                },
-                {"id": "XXSnapIDForXSnapName2XXXXXXXXXXX", "name": "snap-name-2"},
-            ],
-        },
+        "snapcraft.commands.validation_sets.edit_validation_sets",
+        return_value=edit_return_value,
     )
+
+
+##################
+# Expected Calls #
+##################
+
+EXPECTED_GET_VALIDATION_SETS_CALL = call(name="certification-x1", sequence="9")
+EXPECTED_BUILD_ASSERTION_CALL = call(
+    validation_sets={
+        "account-id": "AccountIDXXXOfTheRequestingUserX",
+        "name": "certification-x1",
+        "sequence": "9",
+        "snaps": [
+            {
+                "name": "snap-name-1",
+                "id": "XXSnapIDForXSnapName1XXXXXXXXXXX",
+                "presence": "required",
+            },
+            {"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"},
+        ],
+    }
+)
+
+EXPECTED_SIGNED_VALIDATION_SETS = (
+    '{{"account-id": "AccountIDXXXOfTheRequestingUserX", "authority-id": '
+    '"AccountIDXXXOfTheRequestingUserX", "name": "certification-x1", '
+    '"revision": "222", "sequence": "9", "snaps": [{{"name": "snap-name-1", '
+    '"id": "XXSnapIDForXSnapName1XXXXXXXXXXX", "presence": "optional"}}, '
+    '{{"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"}}], '
+    '"timestamp": "2020-10-29T16:36:56Z", "type": "validation-set", '
+    '"series": "16"}}\n\nSIGNED{key_name}'
+)
 
 
 ################################
@@ -129,14 +166,20 @@ def fake_edit_validation_sets(mocker):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-@pytest.mark.usefixtures("fake_edit_validation_sets")
 def test_edit_validation_sets_with_no_changes_to_existing_set(
     fake_dashboard_get_validation_sets,
     fake_dashboard_post_validation_sets_build_assertion,
     fake_dashboard_post_validation_sets,
     fake_snap_sign,
+    edit_return_value,
+    fake_edit_validation_sets,
     emitter,
 ):
+    # Make it look like there were no edits.
+    edit_return_value["sequence"] = 9
+    edit_return_value["snaps"][0]["presence"] = "optional"
+    fake_edit_validation_sets.return_value = edit_return_value
+
     cmd = commands.StoreEditValidationSetsCommand(None)
 
     cmd.run(
@@ -150,14 +193,14 @@ def test_edit_validation_sets_with_no_changes_to_existing_set(
 
     emitter.assert_message("No changes made")
     assert fake_dashboard_get_validation_sets.mock_calls == [
-        call(name="certification-x1", sequence="9")
+        EXPECTED_GET_VALIDATION_SETS_CALL
     ]
     assert fake_dashboard_post_validation_sets_build_assertion.mock_calls == []
     assert fake_snap_sign.mock_calls == []
     assert fake_dashboard_post_validation_sets.mock_calls == []
 
 
-@pytest.mark.usefixtures("memory_keyring")
+@pytest.mark.usefixtures("memory_keyring", "fake_edit_validation_sets")
 @pytest.mark.parametrize("key_name", [None, "general", "main"])
 def test_edit_validation_sets_with_changes_to_existing_set(
     validation_sets_payload,
@@ -165,23 +208,8 @@ def test_edit_validation_sets_with_changes_to_existing_set(
     fake_dashboard_post_validation_sets_build_assertion,
     fake_dashboard_post_validation_sets,
     fake_snap_sign,
-    fake_edit_validation_sets,
     key_name,
 ):
-    fake_edit_validation_sets.return_value = {
-        "account-id": "AccountIDXXXOfTheRequestingUserX",
-        "name": "certification-x1",
-        "sequence": "9",
-        "snaps": [
-            {
-                "name": "snap-name-1",
-                "id": "XXSnapIDForXSnapName1XXXXXXXXXXX",
-                "presence": "required",
-            },
-            {"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"},
-        ],
-    }
-
     cmd = commands.StoreEditValidationSetsCommand(None)
 
     cmd.run(
@@ -194,35 +222,15 @@ def test_edit_validation_sets_with_changes_to_existing_set(
     )
 
     assert fake_dashboard_get_validation_sets.mock_calls == [
-        call(name="certification-x1", sequence="9")
+        EXPECTED_GET_VALIDATION_SETS_CALL
     ]
     assert fake_dashboard_post_validation_sets_build_assertion.mock_calls == [
-        call(
-            validation_sets={
-                "account-id": "AccountIDXXXOfTheRequestingUserX",
-                "name": "certification-x1",
-                "sequence": "9",
-                "snaps": [
-                    {
-                        "name": "snap-name-1",
-                        "id": "XXSnapIDForXSnapName1XXXXXXXXXXX",
-                        "presence": "required",
-                    },
-                    {"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"},
-                ],
-            }
-        )
+        EXPECTED_BUILD_ASSERTION_CALL
     ]
     assert fake_dashboard_post_validation_sets.mock_calls == [
         call(
-            signed_validation_sets=(
-                '{"account-id": "AccountIDXXXOfTheRequestingUserX", "authority-id": '
-                '"AccountIDXXXOfTheRequestingUserX", "name": "certification-x1", '
-                '"revision": "222", "sequence": "9", "snaps": [{"name": "snap-name-1", '
-                '"id": "XXSnapIDForXSnapName1XXXXXXXXXXX", "presence": "optional"}, '
-                '{"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"}], '
-                '"timestamp": "2020-10-29T16:36:56Z", "type": "validation-set", '
-                f'"series": "16"}}\n\nSIGNED{key_name}'
+            signed_validation_sets=EXPECTED_SIGNED_VALIDATION_SETS.format(
+                key_name=key_name
             ).encode()
         )
     ]
@@ -234,29 +242,15 @@ def test_edit_validation_sets_with_changes_to_existing_set(
     ]
 
 
-@pytest.mark.usefixtures("memory_keyring")
+@pytest.mark.usefixtures("memory_keyring", "fake_edit_validation_sets")
 def test_edit_validation_sets_with_errors_to_amend(
     validation_sets_payload,
     fake_dashboard_get_validation_sets,
     fake_dashboard_post_validation_sets_build_assertion,
     fake_dashboard_post_validation_sets,
     fake_snap_sign,
-    fake_edit_validation_sets,
-    monkeypatch,
+    mocker,
 ):
-    fake_edit_validation_sets.return_value = {
-        "account-id": "AccountIDXXXOfTheRequestingUserX",
-        "name": "certification-x1",
-        "sequence": "9",
-        "snaps": [
-            {
-                "name": "snap-name-1",
-                "id": "XXSnapIDForXSnapName1XXXXXXXXXXX",
-                "presence": "required",
-            },
-            {"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"},
-        ],
-    }
     fake_dashboard_post_validation_sets_build_assertion.side_effect = [
         StoreValidationSetsError(
             FakeResponse(
@@ -268,7 +262,7 @@ def test_edit_validation_sets_with_errors_to_amend(
         ),
         validation_sets_payload.assertions[0],
     ]
-    monkeypatch.setattr("snapcraft.utils.prompt", lambda p: True)
+    confirm_mock = mocker.patch("snapcraft.utils.confirm_with_user", return_value=True)
 
     cmd = commands.StoreEditValidationSetsCommand(None)
 
@@ -282,50 +276,16 @@ def test_edit_validation_sets_with_errors_to_amend(
     )
 
     assert fake_dashboard_get_validation_sets.mock_calls == [
-        call(name="certification-x1", sequence="9")
+        EXPECTED_GET_VALIDATION_SETS_CALL
     ]
     assert fake_dashboard_post_validation_sets_build_assertion.mock_calls == [
-        call(
-            validation_sets={
-                "account-id": "AccountIDXXXOfTheRequestingUserX",
-                "name": "certification-x1",
-                "sequence": "9",
-                "snaps": [
-                    {
-                        "name": "snap-name-1",
-                        "id": "XXSnapIDForXSnapName1XXXXXXXXXXX",
-                        "presence": "required",
-                    },
-                    {"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"},
-                ],
-            }
-        ),
-        call(
-            validation_sets={
-                "account-id": "AccountIDXXXOfTheRequestingUserX",
-                "name": "certification-x1",
-                "sequence": "9",
-                "snaps": [
-                    {
-                        "name": "snap-name-1",
-                        "id": "XXSnapIDForXSnapName1XXXXXXXXXXX",
-                        "presence": "required",
-                    },
-                    {"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"},
-                ],
-            }
-        ),
+        EXPECTED_BUILD_ASSERTION_CALL,
+        EXPECTED_BUILD_ASSERTION_CALL,
     ]
     assert fake_dashboard_post_validation_sets.mock_calls == [
         call(
-            signed_validation_sets=(
-                '{"account-id": "AccountIDXXXOfTheRequestingUserX", "authority-id": '
-                '"AccountIDXXXOfTheRequestingUserX", "name": "certification-x1", '
-                '"revision": "222", "sequence": "9", "snaps": [{"name": "snap-name-1", '
-                '"id": "XXSnapIDForXSnapName1XXXXXXXXXXX", "presence": "optional"}, '
-                '{"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"}], '
-                '"timestamp": "2020-10-29T16:36:56Z", "type": "validation-set", '
-                '"series": "16"}}\n\nSIGNEDNone'
+            signed_validation_sets=EXPECTED_SIGNED_VALIDATION_SETS.format(
+                key_name=None
             ).encode()
         )
     ]
@@ -335,31 +295,18 @@ def test_edit_validation_sets_with_errors_to_amend(
             key_name=None,
         )
     ]
+    assert confirm_mock.mock_calls == [call("Do you wish to amend the validation set?")]
 
 
-@pytest.mark.usefixtures("memory_keyring")
+@pytest.mark.usefixtures("memory_keyring", "fake_edit_validation_sets")
 def test_edit_validation_sets_with_errors_not_amended(
     validation_sets_payload,
     fake_dashboard_get_validation_sets,
     fake_dashboard_post_validation_sets_build_assertion,
     fake_dashboard_post_validation_sets,
     fake_snap_sign,
-    fake_edit_validation_sets,
-    monkeypatch,
+    mocker,
 ):
-    fake_edit_validation_sets.return_value = {
-        "account-id": "AccountIDXXXOfTheRequestingUserX",
-        "name": "certification-x1",
-        "sequence": "9",
-        "snaps": [
-            {
-                "name": "snap-name-1",
-                "id": "XXSnapIDForXSnapName1XXXXXXXXXXX",
-                "presence": "required",
-            },
-            {"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"},
-        ],
-    }
     fake_dashboard_post_validation_sets_build_assertion.side_effect = (
         StoreValidationSetsError(
             FakeResponse(
@@ -370,7 +317,7 @@ def test_edit_validation_sets_with_errors_not_amended(
             )
         )
     )
-    monkeypatch.setattr("snapcraft.utils.prompt", lambda p: False)
+    confirm_mock = mocker.patch("snapcraft.utils.confirm_with_user", return_value=False)
 
     cmd = commands.StoreEditValidationSetsCommand(None)
 
@@ -385,24 +332,45 @@ def test_edit_validation_sets_with_errors_not_amended(
         )
 
     assert fake_dashboard_get_validation_sets.mock_calls == [
-        call(name="certification-x1", sequence="9")
+        EXPECTED_GET_VALIDATION_SETS_CALL
     ]
     assert fake_dashboard_post_validation_sets_build_assertion.mock_calls == [
-        call(
-            validation_sets={
-                "account-id": "AccountIDXXXOfTheRequestingUserX",
-                "name": "certification-x1",
-                "sequence": "9",
-                "snaps": [
-                    {
-                        "name": "snap-name-1",
-                        "id": "XXSnapIDForXSnapName1XXXXXXXXXXX",
-                        "presence": "required",
-                    },
-                    {"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"},
-                ],
-            }
-        ),
+        EXPECTED_BUILD_ASSERTION_CALL
     ]
     assert fake_dashboard_post_validation_sets.mock_calls == []
     assert fake_snap_sign.mock_calls == []
+    assert confirm_mock.mock_calls == [call("Do you wish to amend the validation set?")]
+
+
+def test_edit_yaml_error_retry(mocker, tmp_path):
+    tmp_file = tmp_path / "validation_sets_template"
+    confirm_mock = mocker.patch("snapcraft.utils.confirm_with_user", return_value=True)
+    data_write = [
+        "{good: yaml}",
+        "{{bad yaml {{",
+    ]
+
+    def side_effect(*args, **kwargs):  # pylint: disable=unused-argument
+        tmp_file.write_text(data_write.pop(), encoding="utf-8")
+
+    subprocess_mock = mocker.patch("subprocess.run", side_effect=side_effect)
+
+    assert edit_validation_sets(tmp_file) == {"good": "yaml"}
+    assert confirm_mock.mock_calls == [call("Do you wish to amend the validation set?")]
+    assert subprocess_mock.mock_calls == [call(["vi", tmp_file], check=True)] * 2
+
+
+def test_edit_yaml_error_no_retry(mocker, tmp_path):
+    tmp_file = tmp_path / "validation_sets_template"
+    confirm_mock = mocker.patch("snapcraft.utils.confirm_with_user", return_value=False)
+
+    def side_effect(*args, **kwargs):  # pylint: disable=unused-argument
+        tmp_file.write_text("{{bad yaml {{", encoding="utf-8")
+
+    subprocess_mock = mocker.patch("subprocess.run", side_effect=side_effect)
+
+    with pytest.raises(errors.SnapcraftError):
+        edit_validation_sets(tmp_file)
+
+    assert confirm_mock.mock_calls == [call("Do you wish to amend the validation set?")]
+    assert subprocess_mock.mock_calls == [call(["vi", tmp_file], check=True)]
