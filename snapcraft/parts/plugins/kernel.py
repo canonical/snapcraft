@@ -255,9 +255,9 @@ class KernelPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     kernel_initrd_modules: Optional[List[str]]
     kernel_initrd_configured_modules: Optional[List[str]]
     kernel_initrd_firmware: Optional[List[str]]
-    kernel_initrd_compression: str = "zstd"
+    kernel_initrd_compression: Optional[str]
     kernel_initrd_compression_options: Optional[List[str]]
-    kernel_initrd_overlay: Optional[List[str]]
+    kernel_initrd_overlay: Optional[str]
     kernel_initrd_addons: Optional[List[str]]
     kernel_enable_zfs_support: bool = False
     kernel_enable_perf: bool = False
@@ -275,6 +275,12 @@ class KernelPluginProperties(plugins.PluginProperties, plugins.PluginModel):
                         f'kernel-image-target is in invalid format(type{type(values.get("kernel_image_target"))}). It should be either string or dictionary.'
                     )
 
+        if values.get("kernel_initrd_compression_options") and not values.get(
+            "kernel_initrd_compression"
+        ):
+            raise ValueError(
+                "kernel-initrd-compression-options requires also kernel-initrd-compression to be defined."
+            )
         return values
 
     @classmethod
@@ -789,7 +795,7 @@ class KernelPlugin(plugins.Plugin):
                         [
                             "sed",
                             "-i",
-                            f"'s/lz4 -9 -l/{comp_command}/g'",
+                            f"'s/zstd -1 -T0/{comp_command}/g'",
                             "${ubuntu_core_initramfs}",
                         ],
                     ),
@@ -872,13 +878,14 @@ class KernelPlugin(plugins.Plugin):
                             "${ubuntu_core_initramfs}",
                             "create-efi",
                             "--kernelver=${KERNEL_RELEASE}",
-                            "--root",
-                            "${UC_INITRD_DEB}",
                             "--stub",
-                            "usr/lib/ubuntu-core-initramfs/efi/${stub_p}",
-                            "",
+                            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/efi/${stub_p}",
                             "--sbat",
-                            "usr/lib/ubuntu-core-initramfs/efi/sbat.txt",
+                            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/efi/sbat.txt",
+                            "--key",
+                            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
+                            "--cert",
+                            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
                             "--initrd",
                             "${CRAFT_PART_INSTALL}/initrd.img",
                             "--kernel",
@@ -886,6 +893,13 @@ class KernelPlugin(plugins.Plugin):
                             "--output",
                             "${CRAFT_PART_INSTALL}/kernel.efi",
                         ],
+                    ),
+                    " ".join(
+                        [
+                            "ln",
+                            "$(ls ${CRAFT_PART_INSTALL}/kernel.efi*)",
+                            "${CRAFT_PART_INSTALL}/kernel.efi",
+                        ]
                     ),
                 ],
             )
@@ -1345,7 +1359,6 @@ class KernelPlugin(plugins.Plugin):
             "dracut-core",
             "kmod",
             "kpartx",
-            "lz4",
             "systemd",
         }
         # install correct initramfs compression tool
@@ -1353,7 +1366,10 @@ class KernelPlugin(plugins.Plugin):
             build_packages |= {"lz4"}
         elif self.options.kernel_initrd_compression == "xz":
             build_packages |= {"xz-utils"}
-        elif self.options.kernel_initrd_compression == "zstd":
+        elif (
+            not self.options.kernel_initrd_compression
+            or self.options.kernel_initrd_compression == "zstd"
+        ):
             build_packages |= {"zstd"}
 
         if self.options.kernel_enable_zfs_support:
@@ -1368,6 +1384,9 @@ class KernelPlugin(plugins.Plugin):
         # for cross build of zfs we also need libc6-dev:<target arch>
         if self.options.kernel_enable_zfs_support and self._cross_building:
             build_packages |= {f"libc6-dev:{self._part_info.project_info.target_arch}"}
+
+        if self.options.kernel_build_efi_image:
+            build_packages |= {"llvm"}
 
         # add snappy ppa to get correct initrd tools
         if self.options.kernel_add_ppa:
@@ -1397,7 +1416,7 @@ class KernelPlugin(plugins.Plugin):
                 for f in self.options.kernel_compiler_paths
             ]
             path = custom_paths + [
-                env["PATH"],
+                "${PATH}",
             ]
             env["PATH"] = ":".join(path)
 
