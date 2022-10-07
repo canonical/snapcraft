@@ -30,7 +30,6 @@ from .extensions import (
 )
 from .legacy import (
     StoreLegacyCreateKeyCommand,
-    StoreLegacyEditValidationSetsCommand,
     StoreLegacyGatedCommand,
     StoreLegacyListKeysCommand,
     StoreLegacyListValidationSetsCommand,
@@ -67,6 +66,7 @@ from .status import (
     StoreTracksCommand,
 )
 from .upload import StoreLegacyPushCommand, StoreUploadCommand
+from .validation_sets import StoreEditValidationSetsCommand
 from .version import VersionCommand
 
 __all__ = [
@@ -84,9 +84,9 @@ __all__ = [
     "SnapCommand",
     "StageCommand",
     "StoreCloseCommand",
+    "StoreEditValidationSetsCommand",
     "StoreExportLoginCommand",
     "StoreLegacyCreateKeyCommand",
-    "StoreLegacyEditValidationSetsCommand",
     "StoreLegacyGatedCommand",
     "StoreLegacyListCommand",
     "StoreLegacyListRegisteredCommand",

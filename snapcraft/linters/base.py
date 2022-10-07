@@ -94,7 +94,7 @@ class Linter(abc.ABC):
     ):
         self._name = name
         self._snap_metadata = snap_metadata
-        self._lint = lint or projects.Lint(ignore=projects.LintIgnore())
+        self._lint = lint or projects.Lint(ignore=[])
 
     @abc.abstractmethod
     def run(self) -> List[LinterIssue]:
@@ -105,7 +105,7 @@ class Linter(abc.ABC):
 
     def _is_file_ignored(self, elf_file: ElfFile) -> bool:
         """Check if the file name matches an ignored file pattern."""
-        for pattern in self._lint.ignore.files:
+        for pattern in self._lint.ignored_files(self._name):
             if fnmatch.fnmatch(str(elf_file.path), pattern):
                 emit.debug(
                     f"{self._name} linter: skip file {str(elf_file.path)!r} "

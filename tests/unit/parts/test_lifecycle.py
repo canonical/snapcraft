@@ -23,6 +23,7 @@ from unittest.mock import ANY, Mock, PropertyMock, call
 import pytest
 from craft_cli import EmitterMode, emit
 from craft_parts import Action, Step, callbacks
+from craft_providers.bases.buildd import BuilddBaseAlias
 
 from snapcraft import errors
 from snapcraft.parts import lifecycle as parts_lifecycle
@@ -66,7 +67,7 @@ def project_vars(mocker):
 @pytest.fixture()
 def mock_provider(mocker, mock_instance, fake_provider):
     _mock_provider = Mock(wraps=fake_provider)
-    mocker.patch("snapcraft.providers.get_provider", return_value=_mock_provider)
+    mocker.patch("snapcraft.parts.lifecycle.get_provider", return_value=_mock_provider)
     yield _mock_provider
 
 
@@ -1102,8 +1103,19 @@ def test_lifecycle_run_in_provider_default(
     mock_instance, mock_provider, mocker, snapcraft_yaml, tmp_path
 ):
     """Verify default calls made in `run_in_provider()`"""
+    mock_base_configuration = Mock()
+    mock_get_base_configuration = mocker.patch(
+        "snapcraft.parts.lifecycle.get_base_configuration",
+        return_value=mock_base_configuration,
+    )
+    mock_get_instance_name = mocker.patch(
+        "snapcraft.parts.lifecycle.get_instance_name", return_value="test-instance-name"
+    )
     mock_capture_logs_from_instance = mocker.patch(
         "snapcraft.parts.lifecycle.capture_logs_from_instance"
+    )
+    mock_ensure_provider_is_available = mocker.patch(
+        "snapcraft.parts.lifecycle.ensure_provider_is_available"
     )
     mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
     mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
@@ -1129,15 +1141,25 @@ def test_lifecycle_run_in_provider_default(
         ),
     )
 
-    mock_provider.ensure_provider_is_available.assert_called_once()
+    mock_ensure_provider_is_available.assert_called_once_with(mock_provider)
+    mock_get_instance_name.assert_called_once_with(
+        project_name="mytest",
+        project_path=tmp_path,
+        build_on="test-arch-1",
+        build_for="test-arch-2",
+    )
+    mock_get_base_configuration.assert_called_once_with(
+        alias=BuilddBaseAlias.JAMMY,
+        instance_name="test-instance-name",
+        http_proxy=None,
+        https_proxy=None,
+    )
     mock_provider.launched_environment.assert_called_with(
         project_name="mytest",
         project_path=ANY,
-        base="core22",
-        build_on="test-arch-1",
-        build_for="test-arch-2",
-        http_proxy=None,
-        https_proxy=None,
+        base_configuration=mock_base_configuration,
+        build_base="22.04",
+        instance_name="test-instance-name",
     )
     mock_instance.mount.assert_called_with(
         host_source=tmp_path, target=Path("/root/project")
@@ -1168,11 +1190,22 @@ def test_lifecycle_run_in_provider_all_options(
     verbosity,
 ):
     """Verify all project options are parsed in `run_in_provider()`."""
+    mock_base_configuration = Mock()
+    mock_get_base_configuration = mocker.patch(
+        "snapcraft.parts.lifecycle.get_base_configuration",
+        return_value=mock_base_configuration,
+    )
+    mock_get_instance_name = mocker.patch(
+        "snapcraft.parts.lifecycle.get_instance_name", return_value="test-instance-name"
+    )
     mock_capture_logs_from_instance = mocker.patch(
         "snapcraft.parts.lifecycle.capture_logs_from_instance"
     )
-    mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-1")
-    mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-2")
+    mock_ensure_provider_is_available = mocker.patch(
+        "snapcraft.parts.lifecycle.ensure_provider_is_available"
+    )
+    mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
+    mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
 
     # build the expected command to be executed in the provider
     parts = ["test-part-1", "test-part-2"]
@@ -1180,7 +1213,7 @@ def test_lifecycle_run_in_provider_all_options(
     manifest_build_information = "test-build-info"
     ua_token = "test-ua-token"
     http_proxy = "1.2.3.4"
-    https_proxy = "1.2.3.4"
+    https_proxy = "5.6.7.8"
     expected_command = (
         ["snapcraft", "test"]
         + parts
@@ -1195,7 +1228,7 @@ def test_lifecycle_run_in_provider_all_options(
             "--manifest-build-information",
             manifest_build_information,
             "--build-for",
-            "test-arch-1",
+            "test-arch-2",
             "--ua-token",
             ua_token,
             "--enable-experimental-ua-services",
@@ -1229,17 +1262,26 @@ def test_lifecycle_run_in_provider_all_options(
         ),
     )
 
+    mock_ensure_provider_is_available.assert_called_once_with(mock_provider)
+    mock_get_instance_name.assert_called_once_with(
+        project_name="mytest",
+        project_path=tmp_path,
+        build_on="test-arch-1",
+        build_for="test-arch-2",
+    )
+    mock_get_base_configuration.assert_called_once_with(
+        alias=BuilddBaseAlias.JAMMY,
+        instance_name="test-instance-name",
+        http_proxy="1.2.3.4",
+        https_proxy="5.6.7.8",
+    )
     mock_provider.launched_environment.assert_called_with(
         project_name="mytest",
         project_path=ANY,
-        base="core22",
-        build_on="test-arch-2",
-        build_for="test-arch-1",
-        http_proxy=http_proxy,
-        https_proxy=https_proxy,
+        base_configuration=mock_base_configuration,
+        build_base="22.04",
+        instance_name="test-instance-name",
     )
-
-    mock_provider.ensure_provider_is_available.assert_called_once()
     mock_instance.mount.assert_has_calls(
         [
             call(host_source=tmp_path, target=Path("/root/project")),

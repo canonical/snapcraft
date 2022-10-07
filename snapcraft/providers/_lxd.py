@@ -20,17 +20,20 @@ import contextlib
 import logging
 import os
 import pathlib
-from typing import Generator, Optional
+from typing import Generator
 
-from craft_providers import Executor, ProviderError, bases, lxd
+from craft_providers import Executor, ProviderError, base, bases, lxd
 
-from snapcraft import utils
-
-from ._buildd import BASE_TO_BUILDD_IMAGE_ALIAS, SnapcraftBuilddBaseConfiguration
 from ._provider import Provider
-from .providers import get_command_environment, get_instance_name
 
 logger = logging.getLogger(__name__)
+
+
+PROVIDER_BASE_TO_LXD_BASE = {
+    bases.BuilddBaseAlias.BIONIC.value: "core18",
+    bases.BuilddBaseAlias.FOCAL.value: "core20",
+    bases.BuilddBaseAlias.JAMMY.value: "core22",
+}
 
 
 class LXDProvider(Provider):
@@ -54,28 +57,18 @@ class LXDProvider(Provider):
 
     @classmethod
     def ensure_provider_is_available(cls) -> None:
-        """Ensure provider is available, prompting the user to install it if required.
+        """Ensure provider is available and ready, installing if required.
 
         :raises ProviderError: if provider is not available.
         """
         if not lxd.is_installed():
-            if utils.confirm_with_user(
-                "LXD is required, but not installed. Do you wish to install LXD "
-                "and configure it with the defaults?",
-                default=False,
-            ):
-                try:
-                    lxd.install()
-                except lxd.LXDInstallationError as error:
-                    raise ProviderError(
-                        "Failed to install LXD. Visit https://snapcraft.io/lxd for "
-                        "instructions on how to install the LXD snap for your distribution",
-                    ) from error
-            else:
+            try:
+                lxd.install()
+            except lxd.LXDInstallationError as error:
                 raise ProviderError(
-                    "LXD is required, but not installed. Visit https://snapcraft.io/lxd "
-                    "for instructions on how to install the LXD snap for your distribution",
-                )
+                    "Failed to install LXD. Visit https://snapcraft.io/lxd for "
+                    "instructions on how to install the LXD snap for your distribution",
+                ) from error
 
         try:
             lxd.ensure_lxd_is_ready()
@@ -99,7 +92,6 @@ class LXDProvider(Provider):
         """
         return lxd.LXDInstance(
             name=instance_name,
-            default_command_environment=get_command_environment(),
             project=self.lxd_project,
             remote=self.lxd_remote,
         )
@@ -110,52 +102,32 @@ class LXDProvider(Provider):
         *,
         project_name: str,
         project_path: pathlib.Path,
-        base: str,
-        build_on: str,
-        build_for: str,
-        http_proxy: Optional[str] = None,
-        https_proxy: Optional[str] = None,
+        base_configuration: base.Base,
+        build_base: str,
+        instance_name: str,
     ) -> Generator[Executor, None, None]:
-        """Launch environment for specified base.
+        """Configure and launch environment for specified base.
 
-        The environment is launched and configured using the base configuration.
-        Upon exit, drives are unmounted and the environment is stopped.
+        When this method loses context, all directories are unmounted and the
+        environment is stopped. For more control of environment setup and teardown,
+        use `create_environment()` instead.
 
         :param project_name: Name of project.
         :param project_path: Path to project.
-        :param base: Base to create.
-        :param bind_ssh: If true, mount the host's ssh directory in the environment.
-        :param build_on: host architecture
-        :param build_for: target architecture
+        :param base_configuration: Base configuration to apply to instance.
+        :param build_base: Base to build from.
+        :param instance_name: Name of the instance to launch.
         """
-        alias = BASE_TO_BUILDD_IMAGE_ALIAS[base]
-
-        instance_name = get_instance_name(
-            project_name=project_name,
-            project_path=project_path,
-            build_on=build_on,
-            build_for=build_for,
-        )
-        alias = BASE_TO_BUILDD_IMAGE_ALIAS[base]
         try:
             image_remote = lxd.configure_buildd_image_remote()
         except lxd.LXDError as error:
             raise ProviderError(str(error)) from error
 
-        environment = get_command_environment(
-            http_proxy=http_proxy, https_proxy=https_proxy
-        )
-
-        base_configuration = SnapcraftBuilddBaseConfiguration(
-            alias=alias,
-            environment=environment,
-            hostname=instance_name,
-        )
         try:
             instance = lxd.launch(
                 name=instance_name,
                 base_configuration=base_configuration,
-                image_name=base,
+                image_name=PROVIDER_BASE_TO_LXD_BASE[build_base],
                 image_remote=image_remote,
                 auto_clean=True,
                 auto_create_project=True,

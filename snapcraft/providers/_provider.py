@@ -20,9 +20,10 @@ import contextlib
 import logging
 import pathlib
 from abc import ABC, abstractmethod
-from typing import Generator, Optional, Tuple, Union
+from typing import Generator, Tuple, Union
 
 from craft_providers import Executor
+from craft_providers.base import Base
 
 logger = logging.getLogger(__name__)
 
@@ -95,21 +96,19 @@ class Provider(ABC):
         *,
         project_name: str,
         project_path: pathlib.Path,
-        base: str,
-        build_on: str,
-        build_for: str,
-        http_proxy: Optional[str] = None,
-        https_proxy: Optional[str] = None,
+        base_configuration: Base,
+        build_base: str,
+        instance_name: str,
     ) -> Generator[Executor, None, None]:
-        """Launch environment for specified base.
+        """Configure and launch environment for specified base.
 
-        The environment is launched and configured using the base configuration.
-        Upon exit, drives are unmounted and the environment is stopped.
+        When this method loses context, all directories are unmounted and the
+        environment is stopped. For more control of environment setup and teardown,
+        use `create_environment()` instead.
 
-        :param project_name: Name of the project.
-        :param project_path: Path to the project.
-        :param base: Base to create.
-        :param bind_ssh: If true, mount the host's ssh directory in the environment.
-        :param build_on: host architecture
-        :param build_for: target architecture
+        :param project_name: Name of project.
+        :param project_path: Path to project.
+        :param base_configuration: Base configuration to apply to instance.
+        :param build_base: Base to build from.
+        :param instance_name: Name of the instance to launch.
         """
