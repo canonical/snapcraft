@@ -22,14 +22,15 @@ import subprocess
 import tempfile
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import yaml
 from craft_cli import BaseCommand, emit
 from overrides import overrides
 
-from snapcraft import errors
+from snapcraft import errors, utils
 from snapcraft_legacy._store import StoreClientCLI
+from snapcraft_legacy.storeapi.errors import StoreValidationSetsError
 
 if TYPE_CHECKING:
     import argparse
@@ -87,72 +88,110 @@ class StoreEditValidationSetsCommand(BaseCommand):
             name=parsed_args.set_name, sequence=str(parsed_args.sequence)
         )
 
-        try:
-            # assertions should only have one item since a specific
-            # sequence was requested.
-            revision = asserted_validation_sets.assertions[0].revision
-
-            snaps = yaml.dump(
-                {
-                    "snaps": [
-                        s.marshal()
-                        for s in asserted_validation_sets.assertions[0].snaps
-                    ]
-                },
-                default_flow_style=False,
-                allow_unicode=True,
-            )
-        except IndexError:
-            # If there is no assertion for a given sequence, the store API
-            # will return an empty list.
-            revision = "0"
-            snaps = _VALIDATIONS_SETS_SNAPS_TEMPLATE
-
-        unverified_validation_sets = _VALIDATION_SETS_TEMPLATE.format(
+        validation_sets_template = _generate_template(
+            asserted_validation_sets,
             account_id=parsed_args.account_id,
             set_name=parsed_args.set_name,
             sequence=parsed_args.sequence,
-            revision=revision,
-            snaps=snaps,
         )
 
-        with emit.pause():
-            edited_validation_sets = _edit_validation_sets(unverified_validation_sets)
+        with tempfile.NamedTemporaryFile() as temp_file:
+            validation_sets_path = Path(temp_file.name)
 
-        if edited_validation_sets == yaml.safe_load(unverified_validation_sets):
+        validation_sets_path.write_text(validation_sets_template, encoding="utf-8")
+        edited_validation_sets = edit_validation_sets(validation_sets_path)
+
+        if edited_validation_sets == yaml.safe_load(validation_sets_template):
             emit.message("No changes made")
-        else:
-            build_assertion = store_client.post_validation_sets_build_assertion(
-                validation_sets=edited_validation_sets
-            )
-            signed_validation_sets = _sign_assertion(
-                build_assertion.marshal(), key_name=parsed_args.key_name
-            )
-            store_client.post_validation_sets(
-                signed_validation_sets=signed_validation_sets
-            )
+            return
+
+        try:
+            while True:
+                try:
+                    _submit_validation_set(
+                        edited_validation_sets, parsed_args.key_name, store_client
+                    )
+                    break
+                except StoreValidationSetsError as validation_error:
+                    emit.message(str(validation_error))
+                    if not utils.confirm_with_user(
+                        "Do you wish to amend the validation set?"
+                    ):
+                        raise errors.SnapcraftError(
+                            "Operation aborted"
+                        ) from validation_error
+                    edited_validation_sets = edit_validation_sets(validation_sets_path)
+        finally:
+            validation_sets_path.unlink()
 
 
-def _edit_validation_sets(validation_sets: str) -> Dict[str, Any]:
+def _submit_validation_set(
+    edited_validation_sets: Dict[str, Any],
+    key_name: Optional[str],
+    store_client: StoreClientCLI,
+) -> None:
+    build_assertion = store_client.post_validation_sets_build_assertion(
+        validation_sets=edited_validation_sets
+    )
+    signed_validation_sets = _sign_assertion(
+        build_assertion.marshal(), key_name=key_name
+    )
+    store_client.post_validation_sets(signed_validation_sets=signed_validation_sets)
+
+
+def _generate_template(
+    asserted_validation_sets, *, account_id: str, set_name: str, sequence: str
+) -> str:
+    """Generate a template to edit asserted_validation_sets."""
+    try:
+        # assertions should only have one item since a specific
+        # sequence was requested.
+        revision = asserted_validation_sets.assertions[0].revision
+
+        snaps = yaml.dump(
+            {
+                "snaps": [
+                    s.marshal() for s in asserted_validation_sets.assertions[0].snaps
+                ]
+            },
+            default_flow_style=False,
+            allow_unicode=True,
+        )
+    except IndexError:
+        # If there is no assertion for a given sequence, the store API
+        # will return an empty list.
+        revision = "0"
+        snaps = _VALIDATIONS_SETS_SNAPS_TEMPLATE
+    unverified_validation_sets = _VALIDATION_SETS_TEMPLATE.format(
+        account_id=account_id,
+        set_name=set_name,
+        sequence=sequence,
+        revision=revision,
+        snaps=snaps,
+    )
+
+    return unverified_validation_sets
+
+
+def edit_validation_sets(validation_sets_path: Path) -> Dict[str, Any]:
     """Spawn an editor to modify the validation-sets."""
     editor_cmd = os.getenv("EDITOR", "vi")
 
-    with tempfile.NamedTemporaryFile() as temp_file:
-        file_template_path = Path(temp_file.name)
+    while True:
+        with emit.pause():
+            subprocess.run([editor_cmd, validation_sets_path], check=True)
+        try:
+            edited_validation_sets = yaml.safe_load(
+                validation_sets_path.read_text(encoding="utf-8")
+            )
+            return edited_validation_sets
+        except yaml.YAMLError as yaml_error:
+            emit.message(f"A YAML parsing error occurred {yaml_error!s}")
+            if not utils.confirm_with_user("Do you wish to amend the validation set?"):
+                raise errors.SnapcraftError("Operation aborted") from yaml_error
 
-    try:
-        file_template_path.write_text(validation_sets, encoding="utf-8")
-        subprocess.run([editor_cmd, file_template_path], check=True)
-        edited_validation_sets = yaml.safe_load(
-            file_template_path.read_text(encoding="utf-8")
-        )
-    finally:
-        file_template_path.unlink()
 
-    return edited_validation_sets
-
-
-def _sign_assertion(assertion: Dict[str, Any], *, key_name: str) -> bytes:
+def _sign_assertion(assertion: Dict[str, Any], *, key_name: Optional[str]) -> bytes:
     cmdline = ["snap", "sign"]
     if key_name:
         cmdline += ["-k", key_name]
