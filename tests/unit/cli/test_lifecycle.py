@@ -49,12 +49,16 @@ def test_lifecycle_command(cmd, run_method, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -94,12 +98,16 @@ def test_lifecycle_command_arguments(cmd, run_method, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -140,12 +148,16 @@ def test_lifecycle_command_arguments_destructive_mode(cmd, run_method, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -186,12 +198,16 @@ def test_lifecycle_command_arguments_use_lxd(cmd, run_method, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -221,6 +237,56 @@ def test_lifecycle_command_arguments_bind_ssh(cmd, run_method, mocker):
     assert mock_lifecycle_cmd.mock_calls == [
         call(
             argparse.Namespace(
+                destructive_mode=False,
+                use_lxd=False,
+                debug=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=True,
+                build_for=None,
+                http_proxy=None,
+                https_proxy=None,
+                ua_token=None,
+                enable_experimental_ua_services=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
+                provider=None,
+                parts=[],
+                shell=False,
+                shell_after=False,
+            )
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    "cmd,run_method",
+    [
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+    ],
+)
+def test_lifecycle_command_arguments_ua_token(cmd, run_method, mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "cmd",
+            cmd,
+            "--ua-token",
+            "my-ua-token",
+            "--enable-experimental-ua-services",
+        ],
+    )
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
                 parts=[],
                 debug=False,
                 destructive_mode=False,
@@ -229,13 +295,17 @@ def test_lifecycle_command_arguments_bind_ssh(cmd, run_method, mocker):
                 use_lxd=False,
                 enable_manifest=False,
                 manifest_image_information=None,
-                bind_ssh=True,
+                bind_ssh=False,
+                ua_token="my-ua-token",
                 build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=True,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -274,12 +344,16 @@ def test_lifecycle_command_arguments_debug(cmd, run_method, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -318,12 +392,16 @@ def test_lifecycle_command_arguments_shell(cmd, run_method, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -362,12 +440,96 @@ def test_lifecycle_command_arguments_shell_after(cmd, run_method, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    "cmd,run_method",
+    [
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+    ],
+)
+def test_lifecycle_command_arguments_http_proxy(cmd, run_method, mocker):
+    mocker.patch.object(sys, "argv", ["cmd", cmd, "--http-proxy", "test-http"])
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                bind_ssh=False,
+                build_for=None,
+                debug=False,
+                destructive_mode=False,
+                enable_developer_debug=False,
+                enable_experimental_extensions=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                enable_manifest=False,
+                http_proxy="test-http",
+                https_proxy=None,
+                manifest_image_information=None,
+                parts=[],
+                provider=None,
+                shell=False,
+                shell_after=False,
+                target_arch=None,
+                ua_token=None,
+                use_lxd=False,
+            )
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    "cmd,run_method",
+    [
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+    ],
+)
+def test_lifecycle_command_arguments_https_proxy(cmd, run_method, mocker):
+    mocker.patch.object(sys, "argv", ["cmd", cmd, "--https-proxy", "test-https"])
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                bind_ssh=False,
+                build_for=None,
+                debug=False,
+                enable_developer_debug=False,
+                enable_experimental_extensions=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                enable_manifest=False,
+                http_proxy=None,
+                https_proxy="test-https",
+                manifest_image_information=None,
+                parts=[],
+                provider=None,
+                shell=False,
+                shell_after=False,
+                target_arch=None,
+                ua_token=None,
+                use_lxd=False,
+                destructive_mode=False,
             )
         )
     ]
@@ -392,12 +554,16 @@ def test_lifecycle_command_pack(mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -422,12 +588,16 @@ def test_lifecycle_command_pack_destructive_mode(mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -452,12 +622,16 @@ def test_lifecycle_command_pack_use_lxd(mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -483,11 +657,15 @@ def test_lifecycle_command_pack_enable_manifest(mocker):
                 manifest_image_information=None,
                 enable_experimental_extensions=False,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -513,12 +691,16 @@ def test_lifecycle_command_pack_env_enable_manifest(mocker):
                 enable_manifest=True,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -543,12 +725,16 @@ def test_lifecycle_command_pack_manifest_image_information(mocker):
                 enable_manifest=False,
                 manifest_image_information="{'some-info': true}",
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -566,20 +752,24 @@ def test_lifecycle_command_pack_env_manifest_image_information(mocker):
     assert mock_pack_cmd.mock_calls == [
         call(
             argparse.Namespace(
-                directory=None,
-                output=None,
-                debug=False,
-                destructive_mode=False,
-                use_lxd=False,
-                enable_manifest=False,
-                manifest_image_information="{'some-info': true}",
                 bind_ssh=False,
                 build_for=None,
-                enable_experimental_extensions=False,
+                debug=False,
+                directory=None,
                 enable_developer_debug=False,
+                enable_experimental_extensions=False,
                 enable_experimental_target_arch=False,
-                target_arch=None,
+                enable_experimental_ua_services=False,
+                enable_manifest=False,
+                http_proxy=None,
+                https_proxy=None,
+                manifest_image_information="{'some-info': true}",
+                output=None,
                 provider=None,
+                target_arch=None,
+                ua_token=None,
+                use_lxd=False,
+                destructive_mode=False,
             )
         )
     ]
@@ -596,20 +786,99 @@ def test_lifecycle_command_pack_bind_ssh(mocker):
     assert mock_pack_cmd.mock_calls == [
         call(
             argparse.Namespace(
-                directory=None,
-                output=None,
-                debug=False,
-                destructive_mode=False,
-                use_lxd=False,
-                enable_experimental_extensions=False,
-                enable_developer_debug=False,
-                enable_manifest=False,
-                manifest_image_information=None,
                 bind_ssh=True,
                 build_for=None,
+                debug=False,
+                directory=None,
+                enable_developer_debug=False,
+                enable_experimental_extensions=False,
                 enable_experimental_target_arch=False,
-                target_arch=None,
+                enable_experimental_ua_services=False,
+                enable_manifest=False,
+                http_proxy=None,
+                https_proxy=None,
+                manifest_image_information=None,
+                output=None,
                 provider=None,
+                target_arch=None,
+                ua_token=None,
+                use_lxd=False,
+                destructive_mode=False,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_ua_token(mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "cmd",
+            "pack",
+            "--ua-token",
+            "my-ua-token",
+            "--enable-experimental-ua-services",
+        ],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                bind_ssh=False,
+                build_for=None,
+                debug=False,
+                destructive_mode=False,
+                directory=None,
+                enable_developer_debug=False,
+                enable_experimental_extensions=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=True,
+                enable_manifest=False,
+                http_proxy=None,
+                https_proxy=None,
+                manifest_image_information=None,
+                output=None,
+                provider=None,
+                target_arch=None,
+                ua_token="my-ua-token",
+                use_lxd=False,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_env_ua_token(mocker):
+    mocker.patch.dict(os.environ, {"SNAPCRAFT_UA_TOKEN": "my-ua-token"})
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack"],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                bind_ssh=False,
+                build_for=None,
+                debug=False,
+                destructive_mode=False,
+                directory=None,
+                enable_developer_debug=False,
+                enable_experimental_extensions=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                enable_manifest=False,
+                http_proxy=None,
+                https_proxy=None,
+                manifest_image_information=None,
+                output=None,
+                provider=None,
+                target_arch=None,
+                ua_token="my-ua-token",
+                use_lxd=False,
             )
         )
     ]
@@ -636,10 +905,14 @@ def test_lifecycle_command_pack_build_for(mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for="armhf",
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -667,10 +940,14 @@ def test_lifecycle_command_pack_env_build_for(mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for="armhf",
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -695,12 +972,16 @@ def test_lifecycle_command_pack_debug(mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
                 enable_experimental_extensions=False,
                 enable_developer_debug=False,
                 enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 target_arch=None,
                 provider=None,
+                http_proxy=None,
+                https_proxy=None,
             )
         )
     ]
@@ -714,20 +995,24 @@ def test_lifecycle_command_pack_output(mocker, option):
     assert mock_pack_cmd.mock_calls == [
         call(
             argparse.Namespace(
-                directory=None,
-                output="name",
-                debug=False,
-                destructive_mode=False,
-                use_lxd=False,
-                enable_manifest=False,
-                manifest_image_information=None,
                 bind_ssh=False,
                 build_for=None,
-                enable_experimental_extensions=False,
+                debug=False,
+                destructive_mode=False,
+                directory=None,
                 enable_developer_debug=False,
+                enable_experimental_extensions=False,
                 enable_experimental_target_arch=False,
-                target_arch=None,
+                enable_experimental_ua_services=False,
+                enable_manifest=False,
+                http_proxy=None,
+                https_proxy=None,
+                manifest_image_information=None,
+                output="name",
                 provider=None,
+                target_arch=None,
+                ua_token=None,
+                use_lxd=False,
             )
         )
     ]
@@ -740,20 +1025,84 @@ def test_lifecycle_command_pack_directory(mocker):
     assert mock_pack_cmd.mock_calls == [
         call(
             argparse.Namespace(
+                bind_ssh=False,
+                build_for=None,
                 debug=False,
                 destructive_mode=False,
                 directory="name",
-                output=None,
-                use_lxd=False,
+                enable_developer_debug=False,
+                enable_experimental_extensions=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
                 enable_manifest=False,
+                http_proxy=None,
+                https_proxy=None,
                 manifest_image_information=None,
+                output=None,
+                provider=None,
+                target_arch=None,
+                ua_token=None,
+                use_lxd=False,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_http_proxy(mocker):
+    mocker.patch.object(sys, "argv", ["cmd", "pack", "--http-proxy", "test-http"])
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
                 bind_ssh=False,
                 build_for=None,
-                enable_experimental_extensions=False,
+                debug=False,
+                destructive_mode=False,
+                directory=None,
                 enable_developer_debug=False,
+                enable_experimental_extensions=False,
                 enable_experimental_target_arch=False,
-                target_arch=None,
+                enable_experimental_ua_services=False,
+                enable_manifest=False,
+                http_proxy="test-http",
+                https_proxy=None,
+                manifest_image_information=None,
+                output=None,
                 provider=None,
+                target_arch=None,
+                ua_token=None,
+                use_lxd=False,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_https_proxy(mocker):
+    mocker.patch.object(sys, "argv", ["cmd", "pack", "--https-proxy", "test-https"])
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                bind_ssh=False,
+                build_for=None,
+                debug=False,
+                destructive_mode=False,
+                directory=None,
+                enable_developer_debug=False,
+                enable_experimental_extensions=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                enable_manifest=False,
+                http_proxy=None,
+                https_proxy="test-https",
+                manifest_image_information=None,
+                output=None,
+                provider=None,
+                target_arch=None,
+                ua_token=None,
+                use_lxd=False,
             )
         )
     ]

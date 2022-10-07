@@ -16,7 +16,7 @@ apps:
 parts:
   ipython:
     plugin: conda
-    conda-miniconda-version: 4.6.14
+    conda-miniconda-version: "py39_4.12.0"
     conda-packages:
     - ipython
     conda-python-version: "3.9"

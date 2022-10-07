@@ -19,12 +19,15 @@ import sys
 from unittest.mock import call
 
 import craft_store.errors
+import pytest
+from craft_cli import CraftError
 
 from snapcraft import cli
 
 
 def test_no_keyring_error(capsys, mocker):
     mocker.patch.object(sys, "argv", ["cmd", "whoami"])
+    mocker.patch.object(sys.stdin, "isatty", return_value=True)
     mock_version_cmd = mocker.patch(
         "snapcraft.commands.account.StoreWhoAmICommand.run",
         side_effect=craft_store.errors.NoKeyringError,
@@ -45,3 +48,14 @@ def test_no_keyring_error(capsys, mocker):
     assert stderr[2].startswith(
         "For more information, check out: https://snapcraft.io/docs/snapcraft-authentication"
     )
+
+
+@pytest.mark.parametrize("is_managed,report_errors", [(True, False), (False, True)])
+def test_emit_error(emitter, mocker, is_managed, report_errors):
+    mocker.patch("snapcraft.utils.is_managed_mode", return_value=is_managed)
+    mocker.patch("craft_cli.messages.Emitter.error")
+
+    my_error = CraftError("Something wrong happened.")
+    cli._emit_error(my_error)
+
+    assert my_error.logpath_report == report_errors

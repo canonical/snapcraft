@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING
 from craft_cli import BaseCommand, emit
 from overrides import overrides
 
-from snapcraft import errors, store, utils
+from snapcraft import store, utils
 
 if TYPE_CHECKING:
     import argparse
@@ -32,17 +32,17 @@ class StoreReleaseCommand(BaseCommand):
     """Command to release a snap on the Snap Store."""
 
     name = "release"
-    help_msg = "Release <snap-name> to the store"
+    help_msg = "Release <name> to the store"
     overview = textwrap.dedent(
         """
-        Release <snap-name> on <revision> to the selected store <channels>.
+        Release <name> on <revision> to the selected store <channels>.
         <channels> is a comma separated list of valid channels on the store.
 
         The <revision> must exist on the store, to see available revisions run
-        `snapcraft list-revisions <snap_name>`.
+        `snapcraft list-revisions <name>`.
 
         The channel map will be displayed after the operation takes place. To see
-        the status map at any other time run `snapcraft status <snap-name>`.
+        the status map at any other time run `snapcraft status <name>`.
 
         The format for channels is `[<track>/]<risk>[/<branch>]` where
 
@@ -141,20 +141,8 @@ class StoreCloseCommand(BaseCommand):
     def run(self, parsed_args):
         client = store.StoreClientCLI()
 
-        # Account info request to retrieve the snap-id
-        account_info = client.get_account_info()
-        try:
-            snap_id = account_info["snaps"][store.constants.DEFAULT_SERIES][
-                parsed_args.name
-            ]["snap-id"]
-        except KeyError as key_error:
-            emit.debug(f"{key_error!r} no found in {account_info!r}")
-            raise errors.SnapcraftError(
-                f"{parsed_args.name!r} not found or not owned by this account"
-            ) from key_error
-
         client.close(
-            snap_id=snap_id,
+            snap_name=parsed_args.name,
             channel=parsed_args.channel,
         )
 

@@ -22,6 +22,7 @@ from .account import (
     StoreLogoutCommand,
     StoreWhoAmICommand,
 )
+from .discovery import ListPluginsCommand, PluginsCommand
 from .extensions import (
     ExpandExtensionsCommand,
     ExtensionsCommand,
@@ -29,15 +30,12 @@ from .extensions import (
 )
 from .legacy import (
     StoreLegacyCreateKeyCommand,
-    StoreLegacyEditValidationSetsCommand,
     StoreLegacyGatedCommand,
     StoreLegacyListKeysCommand,
-    StoreLegacyListRevisionsCommand,
     StoreLegacyListValidationSetsCommand,
     StoreLegacyMetricsCommand,
     StoreLegacyPromoteCommand,
     StoreLegacyRegisterKeyCommand,
-    StoreLegacyRemoteBuildCommand,
     StoreLegacySetDefaultTrackCommand,
     StoreLegacySignBuildCommand,
     StoreLegacyUploadMetadataCommand,
@@ -59,8 +57,16 @@ from .names import (
     StoreNamesCommand,
     StoreRegisterCommand,
 )
-from .status import StoreListTracksCommand, StoreStatusCommand, StoreTracksCommand
+from .remote import RemoteBuildCommand
+from .status import (
+    StoreListRevisionsCommand,
+    StoreListTracksCommand,
+    StoreRevisionsCommand,
+    StoreStatusCommand,
+    StoreTracksCommand,
+)
 from .upload import StoreLegacyPushCommand, StoreUploadCommand
+from .validation_sets import StoreEditValidationSetsCommand
 from .version import VersionCommand
 
 __all__ = [
@@ -69,36 +75,39 @@ __all__ = [
     "ExpandExtensionsCommand",
     "ExtensionsCommand",
     "ListExtensionsCommand",
+    "ListPluginsCommand",
     "PackCommand",
+    "PluginsCommand",
     "PrimeCommand",
     "PullCommand",
+    "RemoteBuildCommand",
     "SnapCommand",
     "StageCommand",
     "StoreCloseCommand",
+    "StoreEditValidationSetsCommand",
     "StoreExportLoginCommand",
     "StoreLegacyCreateKeyCommand",
-    "StoreLegacyEditValidationSetsCommand",
     "StoreLegacyGatedCommand",
     "StoreLegacyListCommand",
     "StoreLegacyListRegisteredCommand",
-    "StoreLegacyListRevisionsCommand",
     "StoreLegacyListValidationSetsCommand",
     "StoreLegacyMetricsCommand",
     "StoreLegacyPromoteCommand",
     "StoreLegacyPushCommand",
     "StoreLegacyRegisterKeyCommand",
-    "StoreLegacyRemoteBuildCommand",
     "StoreLegacySetDefaultTrackCommand",
     "StoreLegacySignBuildCommand",
     "StoreLegacyUploadMetadataCommand",
     "StoreLegacyValidateCommand",
     "StoreLegacyListKeysCommand",
     "StoreListTracksCommand",
+    "StoreListRevisionsCommand",
     "StoreLoginCommand",
     "StoreLogoutCommand",
     "StoreNamesCommand",
     "StoreRegisterCommand",
     "StoreReleaseCommand",
+    "StoreRevisionsCommand",
     "StoreStatusCommand",
     "StoreTracksCommand",
     "StoreUploadCommand",

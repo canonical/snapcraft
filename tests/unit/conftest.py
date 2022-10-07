@@ -15,12 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import base64
+import contextlib
 import textwrap
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
+from unittest.mock import Mock
 
 import pytest
 import yaml
+from craft_providers import Executor, Provider
+from craft_providers.base import Base
 from pymacaroons import Caveat, Macaroon
 
 from snapcraft.extensions import extension, register, unregister
@@ -304,3 +308,45 @@ def legacy_config_path(
     config_file.write_text(legacy_config_credentials)
 
     return config_file
+
+
+@pytest.fixture
+def mock_instance():
+    """Provide a mock instance (Executor)."""
+    yield Mock(spec=Executor)
+
+
+@pytest.fixture(autouse=True)
+def fake_provider(mock_instance):
+    """Fixture to provide a minimal fake provider."""
+
+    class FakeProvider(Provider):
+        """Fake provider."""
+
+        def clean_project_environments(self, *, instance_name: str):
+            pass
+
+        @classmethod
+        def ensure_provider_is_available(cls) -> None:
+            pass
+
+        @classmethod
+        def is_provider_installed(cls) -> bool:
+            return True
+
+        def create_environment(self, *, instance_name: str):
+            yield mock_instance
+
+        @contextlib.contextmanager
+        def launched_environment(
+            self,
+            *,
+            project_name: str,
+            project_path: Path,
+            base_configuration: Base,
+            build_base: str,
+            instance_name: str,
+        ):
+            yield mock_instance
+
+    return FakeProvider()

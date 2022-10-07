@@ -25,7 +25,7 @@ from simplejson.scanner import JSONDecodeError
 
 from . import _metadata, errors, metrics
 from ._requests import Requests
-from .v2 import releases, validation_sets, whoami
+from .v2 import validation_sets, whoami
 
 logger = logging.getLogger(__name__)
 
@@ -329,20 +329,6 @@ class DashboardAPI(Requests):
             raise errors.StoreMetricsUnmarshalError(
                 filters=filters, snap_name=snap_name, response=response
             ) from error
-
-    def get_snap_releases(self, *, snap_name: str) -> releases.Releases:
-        try:
-            response = self.get(
-                f"/api/v2/snaps/{snap_name}/releases",
-                headers={
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
-            )
-        except craft_store.errors.StoreServerError as store_error:
-            raise errors.StoreSnapChannelMapError(snap_name=snap_name) from store_error
-
-        return releases.Releases.unmarshal(response.json())
 
     def whoami(self) -> whoami.WhoAmI:
         try:

@@ -145,7 +145,7 @@ def test_release_progressive(emitter, fake_store_release):
 #################
 
 
-@pytest.mark.usefixtures("memory_keyring", "fake_store_get_account_info")
+@pytest.mark.usefixtures("memory_keyring")
 def test_close(emitter, fake_store_close):
     cmd = commands.StoreCloseCommand(None)
 
@@ -154,7 +154,7 @@ def test_close(emitter, fake_store_close):
     assert fake_store_close.mock_calls == [
         call(
             ANY,
-            snap_id="12345678",
+            snap_name="test-snap",
             channel="edge",
         )
     ]

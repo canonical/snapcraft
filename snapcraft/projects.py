@@ -21,11 +21,10 @@ from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Uni
 
 import pydantic
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
-from pydantic import conlist, constr
+from pydantic import PrivateAttr, conlist, constr
 
-from snapcraft import repo
+from snapcraft import parts, repo
 from snapcraft.errors import ProjectValidationError
-from snapcraft.parts import validation as parts_validation
 from snapcraft.utils import get_effective_base, get_host_architecture
 
 
@@ -181,17 +180,56 @@ class Socket(ProjectModel):
         return listen_stream
 
 
-class LintIgnore(ProjectModel):
-    """Lists of specific linters or globbed filenames to ignore."""
-
-    linters: List[str] = []
-    files: List[str] = []
-
-
 class Lint(ProjectModel):
-    """Linter configuration."""
+    """Linter configuration.
 
-    ignore: LintIgnore
+    :ivar ignore: A list describing which files should have issues ignored for given linters.
+        The items in the list can be either:
+        - a string, which must be the name of one of the known linters (see below). All issues
+          from this linter will be ignored.
+        - a dict containing exactly one key, which must be the name of one of the known linters.
+            The value is then a list of strings corresponding to the filenames/patterns that
+            should be ignored for that linter.
+        The "known" linter names are the keys in :ref:`LINTERS`
+    """
+
+    ignore: List[Union[str, Dict[str, List[str]]]]
+
+    # A private field to simplify lookup.
+    _lint_ignores: Dict[str, List[str]] = PrivateAttr(default_factory=dict)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        for item in self.ignore:
+            if isinstance(item, str):
+                self._lint_ignores[item] = []
+            else:
+                assert len(item) == 1, "Expected exactly one key in lint ignore entry."
+                name, files = list(item.items())[0]
+                self._lint_ignores[name] = files
+
+    def all_ignored(self, linter_name: str) -> bool:
+        """Whether all issues for linter `lint_name` should be ignored."""
+        return (
+            linter_name in self._lint_ignores
+            and len(self._lint_ignores[linter_name]) == 0
+        )
+
+    def ignored_files(self, linter_name: str) -> List[str]:
+        """Get a list of filenames/patterns to ignore for `lint_name`.
+
+        Since the main usecase for this method is a for-loop with `fnmatch()`, it will
+        return `['*']` when *all* files should be ignored for `linter_name`, and `[]`
+        when *no* files should be ignored.
+        """
+        if linter_name not in self._lint_ignores:
+            return []
+
+        if self.all_ignored(linter_name):
+            return ["*"]
+
+        return self._lint_ignores[linter_name]
 
 
 class App(ProjectModel):
@@ -247,7 +285,9 @@ class App(ProjectModel):
     environment: Optional[Dict[str, str]]
     command_chain: List[str] = []
     sockets: Optional[Dict[str, Socket]]
-    # TODO: implement passthrough (CRAFT-854)
+    daemon_scope: Optional[Literal["system", "user"]]
+    activates_on: Optional[UniqueStrList]
+    passthrough: Optional[Dict[str, Any]]
 
     @pydantic.validator("autostart")
     @classmethod
@@ -382,6 +422,7 @@ class Project(ProjectModel):
     environment: Optional[Dict[str, Optional[str]]]
     build_packages: Optional[GrammarStrList]
     build_snaps: Optional[GrammarStrList]
+    ua_services: Optional[UniqueStrList]
 
     @pydantic.validator("plugs")
     @classmethod
@@ -486,7 +527,7 @@ class Project(ProjectModel):
     @classmethod
     def _validate_parts(cls, item):
         """Verify each part (craft-parts will re-validate this)."""
-        parts_validation.validate_part(item)
+        parts.validate_part(item)
         return item
 
     @pydantic.validator("epoch")

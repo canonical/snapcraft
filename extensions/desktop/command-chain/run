@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ -z "$1" ]; then
   echo "run <command>"
@@ -16,4 +16,10 @@ if [ ! -f "$1" ]; then
   exit
 fi
 
-exec "$@"
+# emulate "exec $@" using "source"
+# have to disable "unused variables" because checkshell doesn't know that $BASH_ARGV0 is $0
+# shellcheck disable=SC2034  # Unused variables left for readability
+BASH_ARGV0=$1
+shift
+# shellcheck source=/dev/null
+source "$0"

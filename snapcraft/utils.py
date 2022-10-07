@@ -58,6 +58,7 @@ _ARCH_TRANSLATIONS_PLATFORM_TO_DEB = {
     "x86_64": "amd64",
     "AMD64": "amd64",  # Windows support
     "s390x": "s390x",
+    "riscv64": "riscv64",
 }
 
 # architecture translations from the deb/snap syntax to the platform syntax
@@ -69,6 +70,7 @@ _ARCH_TRANSLATIONS_DEB_TO_PLATFORM = {
     "ppc64el": "ppc64le",
     "amd64": "x86_64",
     "s390x": "s390x",
+    "riscv64": "riscv64",
 }
 
 _32BIT_USERSPACE_ARCHITECTURE = {
@@ -254,7 +256,9 @@ def confirm_with_user(prompt_text, default=False) -> bool:
 
     choices = " [Y/n]: " if default else " [y/N]: "
 
-    reply = str(input(prompt_text + choices)).lower().strip()
+    with emit.pause():
+        reply = str(input(prompt_text + choices)).lower().strip()
+
     if reply and reply[0] == "y":
         return True
 
@@ -411,3 +415,8 @@ def process_version(version: Optional[str]) -> str:
         emit.progress(f"Version has been set to {new_version!r}", permanent=True)
 
     return new_version
+
+
+def is_snapcraft_running_from_snap() -> bool:
+    """Check if snapcraft is running from the snap."""
+    return os.getenv("SNAP_NAME") == "snapcraft" and os.getenv("SNAP") is not None

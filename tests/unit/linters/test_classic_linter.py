@@ -40,7 +40,7 @@ def test_classic_linter(mocker, new_dir, confinement, stage_libc, text):
         Path("lib64").mkdir()
         Path("lib64/ld-linux-x86-64.so.2").touch()
 
-    mocker.patch("snapcraft.linters.linters._LINTERS", {"classic": ClassicLinter})
+    mocker.patch("snapcraft.linters.linters.LINTERS", {"classic": ClassicLinter})
     mocker.patch(
         "snapcraft.elf._elf_file._determine_libraries",
         return_value={
@@ -93,3 +93,43 @@ def test_classic_linter(mocker, new_dir, confinement, stage_libc, text):
         ]
     else:
         assert issues == []
+
+
+def test_classic_linter_filter(mocker, new_dir):
+    shutil.copy("/bin/true", "elf.bin")
+
+    mocker.patch("snapcraft.linters.linters.LINTERS", {"classic": ClassicLinter})
+    mocker.patch(
+        "snapcraft.elf._elf_file._determine_libraries",
+        return_value={
+            "libc.so.6": "/snap/core22/current/lib/x86_64-linux-gnu/libc.so.6"
+        },
+    )
+    yaml_data = {
+        "name": "mytest",
+        "version": "1.29.3",
+        "base": "core22",
+        "summary": "Single-line elevator pitch for your amazing snap",
+        "description": "test-description",
+        "confinement": "classic",
+        "parts": {},
+    }
+
+    project = projects.Project.unmarshal(yaml_data)
+    snap_yaml.write(
+        project,
+        prime_dir=Path(new_dir),
+        arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
+    )
+
+    issues = linters.run_linters(
+        new_dir, lint=projects.Lint(ignore=[{"classic": ["elf.*"]}])
+    )
+    assert issues == [
+        LinterIssue(
+            name="classic",
+            result=LinterResult.OK,
+            text="Snap confinement is set to classic.",
+        ),
+    ]

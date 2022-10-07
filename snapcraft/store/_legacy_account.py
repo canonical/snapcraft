@@ -148,6 +148,8 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
     @classmethod
     def store_credentials(cls, config_content) -> None:
         """Store legacy credentials."""
+        # Check to see if the content is valid.
+        get_auth(config_content)
         cls.CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
         cls.CONFIG_PATH.write_text(config_content)
 
@@ -164,7 +166,12 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
         environment_auth: Optional[str] = None,
         ephemeral: bool = False,
     ) -> None:
-        set_legacy_env()
+        # Adapt to the JSON format if the environment has configparser based credentials.
+        if self.env_has_legacy_credentials():
+            auth = get_auth(
+                config_content=os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS)  # type: ignore
+            )
+            os.environ[constants.ENVIRONMENT_STORE_CREDENTIALS] = auth
 
         super().__init__(
             base_url=base_url,
@@ -176,6 +183,15 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
             environment_auth=constants.ENVIRONMENT_STORE_CREDENTIALS,
             ephemeral=True,
         )
+
+        # Now that an Auth instance exists, if configparser based credentials
+        # exist load them and set them.
+        if self.has_legacy_credentials():
+            config_content = LegacyUbuntuOne.CONFIG_PATH.read_text()
+            auth = self._auth.decode_credentials(
+                get_auth(config_content=config_content)
+            )
+            self._auth.set_credentials(auth)
 
     @overrides
     def login(

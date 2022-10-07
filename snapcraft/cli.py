@@ -45,8 +45,10 @@ COMMAND_GROUPS = [
             commands.StageCommand,
             commands.PrimeCommand,
             commands.PackCommand,
+            commands.RemoteBuildCommand,
             commands.SnapCommand,  # hidden (legacy compatibility)
-            commands.StoreLegacyRemoteBuildCommand,
+            commands.PluginsCommand,
+            commands.ListPluginsCommand,
         ],
     ),
     craft_cli.CommandGroup(
@@ -86,7 +88,8 @@ COMMAND_GROUPS = [
             commands.StoreUploadCommand,
             commands.StoreLegacyPushCommand,  # hidden (legacy for upload)
             commands.StoreLegacyPromoteCommand,
-            commands.StoreLegacyListRevisionsCommand,
+            commands.StoreListRevisionsCommand,
+            commands.StoreRevisionsCommand,  # hidden (alias to list-revisions)
         ],
     ),
     craft_cli.CommandGroup(
@@ -98,16 +101,21 @@ COMMAND_GROUPS = [
         ],
     ),
     craft_cli.CommandGroup(
-        "Store Assertions",
+        "Store Key Management",
         [
             commands.StoreLegacyCreateKeyCommand,
-            commands.StoreLegacyEditValidationSetsCommand,
-            commands.StoreLegacyGatedCommand,
-            commands.StoreLegacyListValidationSetsCommand,
             commands.StoreLegacyRegisterKeyCommand,
             commands.StoreLegacySignBuildCommand,
-            commands.StoreLegacyValidateCommand,
             commands.StoreLegacyListKeysCommand,
+        ],
+    ),
+    craft_cli.CommandGroup(
+        "Store Validation Sets",
+        [
+            commands.StoreEditValidationSetsCommand,
+            commands.StoreLegacyListValidationSetsCommand,
+            commands.StoreLegacyValidateCommand,
+            commands.StoreLegacyGatedCommand,
         ],
     ),
     craft_cli.CommandGroup("Other", [commands.VersionCommand]),
@@ -119,6 +127,28 @@ GLOBAL_ARGS = [
     ),
     craft_cli.GlobalArgument("trace", "flag", "-t", "--trace", argparse.SUPPRESS),
 ]
+
+
+def get_verbosity() -> EmitterMode:
+    """Return the verbosity level to use.
+
+    if SNAPCRAFT_ENABLE_DEVELOPER_DEBUG is set, the
+    default verbosity will be set to EmitterMode.DEBUG.
+
+    If stdin is closed, the default verbosity will be
+    set to EmitterMode.VERBOSE.
+    """
+    verbosity = EmitterMode.BRIEF
+
+    if not sys.stdin.isatty():
+        verbosity = EmitterMode.VERBOSE
+
+    with contextlib.suppress(ValueError):
+        # Parse environment variable for backwards compatibility with launchpad
+        if utils.strtobool(os.getenv("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "n").strip()):
+            verbosity = EmitterMode.DEBUG
+
+    return verbosity
 
 
 def get_dispatcher() -> craft_cli.Dispatcher:
@@ -144,7 +174,7 @@ def get_dispatcher() -> craft_cli.Dispatcher:
         log_filepath = None
 
     emit.init(
-        mode=EmitterMode.BRIEF,
+        mode=get_verbosity(),
         appname="snapcraft",
         greeting=f"Starting Snapcraft {__version__}",
         log_filepath=log_filepath,
@@ -175,7 +205,20 @@ def _run_dispatcher(dispatcher: craft_cli.Dispatcher) -> None:
     emit.ended_ok()
 
 
-def run():
+def _emit_error(error, cause=None):
+    """Emit the error in a centralized way so we can alter it consistently."""
+    # set the cause, if any
+    if cause is not None:
+        error.__cause__ = cause
+
+    # Do not report the internal logpath if running inside instance
+    if utils.is_managed_mode():
+        error.logpath_report = False
+
+    emit.error(error)
+
+
+def run():  # noqa: C901
     """Run the CLI."""
     # Register our own plugins
     plugins.register()
@@ -202,8 +245,11 @@ def run():
         retcode = 0
     except errors.LegacyFallback as err:
         run_legacy(err)
+    except KeyboardInterrupt as err:
+        _emit_error(craft_cli.errors.CraftError("Interrupted."), cause=err)
+        retcode = 1
     except craft_store.errors.NoKeyringError as err:
-        emit.error(
+        _emit_error(
             craft_cli.errors.CraftError(
                 f"craft-store error: {err}",
                 resolution=(
@@ -216,13 +262,13 @@ def run():
         )
         retcode = 1
     except craft_store.errors.CraftStoreError as err:
-        emit.error(craft_cli.errors.CraftError(f"craft-store error: {err}"))
+        _emit_error(craft_cli.errors.CraftError(f"craft-store error: {err}"))
         retcode = 1
     except errors.LinterError as err:
         emit.error(craft_cli.errors.CraftError(f"linter error: {err}"))
         retcode = err.exit_code
     except errors.SnapcraftError as err:
-        emit.error(err)
+        _emit_error(err)
         retcode = 1
 
     return retcode

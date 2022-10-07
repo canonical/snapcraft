@@ -26,10 +26,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 import craft_parts
-from craft_cli import EmitterMode, emit
+from craft_cli import emit
 from craft_parts import ProjectInfo, StepInfo, callbacks
 
-from snapcraft import errors, extensions, linters, pack, providers, utils
+from snapcraft import errors, extensions, linters, pack, providers, ua_manager, utils
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import manifest, snap_yaml
 from snapcraft.projects import (
@@ -38,7 +38,6 @@ from snapcraft.projects import (
     GrammarAwareProject,
     Project,
 )
-from snapcraft.providers import capture_logs_from_instance
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_host_architecture,
@@ -46,7 +45,7 @@ from snapcraft.utils import (
 )
 
 from . import grammar, yaml_utils
-from .parts import PartsLifecycle
+from .parts import PartsLifecycle, launch_shell
 from .project_check import run_project_checks
 from .setup_assets import setup_assets
 from .update_metadata import update_project_metadata
@@ -84,11 +83,7 @@ def get_snap_project() -> _SnapProject:
         if snap_project.project_file.exists():
             return snap_project
 
-    raise errors.SnapcraftError(
-        "Could not find snap/snapcraft.yaml. Are you sure you are in the "
-        "right directory?",
-        resolution="To start a new project, use `snapcraft init`",
-    )
+    raise errors.ProjectMissing()
 
 
 def apply_yaml(
@@ -176,10 +171,22 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     snap_project = get_snap_project()
     yaml_data = process_yaml(snap_project.project_file)
     start_time = datetime.now()
-    build_plan = get_build_plan(yaml_data, parsed_args)
 
     if parsed_args.provider:
         raise errors.SnapcraftError("Option --provider is not supported.")
+
+    if yaml_data.get("ua-services"):
+        if not parsed_args.ua_token:
+            raise errors.SnapcraftError(
+                "UA services require a UA token to be specified."
+            )
+
+        if not parsed_args.enable_experimental_ua_services:
+            raise errors.SnapcraftError(
+                "Using UA services requires --enable-experimental-ua-services."
+            )
+
+    build_plan = get_build_plan(yaml_data, parsed_args)
 
     # Register our own callbacks
     callbacks.register_prologue(_set_global_environment)
@@ -198,18 +205,15 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
         )
         project = Project.unmarshal(yaml_data_for_arch)
 
-        try:
-            _run_command(
-                command_name,
-                project=project,
-                parse_info=parse_info,
-                parallel_build_count=build_count,
-                assets_dir=snap_project.assets_dir,
-                start_time=start_time,
-                parsed_args=parsed_args,
-            )
-        except PermissionError as err:
-            raise errors.FilePermissionError(err.filename, reason=err.strerror)
+        _run_command(
+            command_name,
+            project=project,
+            parse_info=parse_info,
+            parallel_build_count=build_count,
+            assets_dir=snap_project.assets_dir,
+            start_time=start_time,
+            parsed_args=parsed_args,
+        )
 
 
 def _run_command(
@@ -233,9 +237,6 @@ def _run_command(
                 "The 'snap' command is deprecated, use 'pack' instead.",
                 permanent=True,
             )
-
-    if parsed_args.use_lxd and providers.get_platform_default_provider() == "lxd":
-        emit.progress("LXD is used by default on this platform.", permanent=True)
 
     if (
         not managed_mode
@@ -279,14 +280,59 @@ def _run_command(
         lifecycle.clean(part_names=part_names)
         return
 
-    lifecycle.run(
-        step_name,
-        debug=parsed_args.debug,
-        shell=getattr(parsed_args, "shell", False),
-        shell_after=getattr(parsed_args, "shell_after", False),
-    )
+    try:
+        _run_lifecycle_and_pack(
+            lifecycle,
+            command_name=command_name,
+            step_name=step_name,
+            project=project,
+            project_dir=project_dir,
+            assets_dir=assets_dir,
+            start_time=start_time,
+            parsed_args=parsed_args,
+        )
+    except PermissionError as err:
+        if parsed_args.debug:
+            emit.progress(str(err), permanent=True)
+            launch_shell()
+        raise errors.FilePermissionError(err.filename, reason=err.strerror)
+    except OSError as err:
+        msg = err.strerror
+        if err.filename:
+            msg = f"{err.filename}: {msg}"
+        if parsed_args.debug:
+            emit.progress(msg, permanent=True)
+            launch_shell()
+        raise errors.SnapcraftError(msg) from err
+    except Exception as err:
+        if parsed_args.debug:
+            emit.progress(str(err), permanent=True)
+            launch_shell()
+        raise errors.SnapcraftError(str(err)) from err
+
+
+def _run_lifecycle_and_pack(
+    lifecycle: PartsLifecycle,
+    *,
+    command_name: str,
+    step_name: str,
+    project: Project,
+    project_dir: Path,
+    assets_dir: Path,
+    start_time: datetime,
+    parsed_args: "argparse.Namespace",
+) -> None:
+    """Execute the parts lifecycle, generate metadata, and create the snap."""
+    with ua_manager.ua_manager(parsed_args.ua_token, services=project.ua_services):
+        lifecycle.run(
+            step_name,
+            shell=getattr(parsed_args, "shell", False),
+            shell_after=getattr(parsed_args, "shell_after", False),
+        )
 
     # Extract metadata and generate snap.yaml
+    part_names = getattr(parsed_args, "part_names", None)
+
     if step_name == "prime" and not part_names:
         _generate_metadata(
             project=project,
@@ -403,22 +449,21 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
 
     :param project: The project to clean.
     """
-    emit.debug("Clean build provider")
+    emit.progress("Cleaning build provider")
     provider_name = "lxd" if parsed_args.use_lxd else None
     provider = providers.get_provider(provider_name)
-
-    instance_names = provider.clean_project_environments(
+    instance_name = providers.get_instance_name(
         project_name=project.name,
         project_path=Path().absolute(),
         build_on=project.get_build_on(),
         build_for=project.get_build_for(),
     )
-    if instance_names:
-        emit.message(f"Removed instance: {', '.join(instance_names)}")
-    else:
-        emit.message("No instances to remove")
+    emit.debug(f"Cleaning instance {instance_name}")
+    provider.clean_project_environments(instance_name=instance_name)
+    emit.progress("Cleaned build provider", permanent=True)
 
 
+# pylint: disable-next=too-many-branches
 def _run_in_provider(
     project: Project, command_name: str, parsed_args: "argparse.Namespace"
 ) -> None:
@@ -427,7 +472,7 @@ def _run_in_provider(
     provider_name = "lxd" if parsed_args.use_lxd else None
     provider = providers.get_provider(provider_name)
     with emit.pause():
-        provider.ensure_provider_is_available()
+        providers.ensure_provider_is_available(provider)
 
     cmd = ["snapcraft", command_name]
 
@@ -437,14 +482,8 @@ def _run_in_provider(
     if getattr(parsed_args, "output", None):
         cmd.extend(["--output", parsed_args.output])
 
-    if emit.get_mode() == EmitterMode.VERBOSE:
-        cmd.append("--verbose")
-    elif emit.get_mode() == EmitterMode.QUIET:
-        cmd.append("--quiet")
-    elif emit.get_mode() == EmitterMode.DEBUG:
-        cmd.append("--verbosity=debug")
-    elif emit.get_mode() == EmitterMode.TRACE:
-        cmd.append("--verbosity=trace")
+    mode = emit.get_mode().name.lower()
+    cmd.append(f"--verbosity={mode}")
 
     if parsed_args.debug:
         cmd.append("--debug")
@@ -457,32 +496,71 @@ def _run_in_provider(
         cmd.append("--enable-manifest")
     build_information = getattr(parsed_args, "manifest_build_information", None)
     if build_information:
-        cmd.append("--manifest-build-information")
-        cmd.append(build_information)
+        cmd.extend(["--manifest-build-information", build_information])
 
     cmd.append("--build-for")
     cmd.append(project.get_build_for())
 
+    ua_token = getattr(parsed_args, "ua_token", "")
+    if ua_token:
+        cmd.extend(["--ua-token", ua_token])
+
+    if getattr(parsed_args, "enable_experimental_ua_services", False):
+        cmd.append("--enable-experimental-ua-services")
+
+    project_path = Path().absolute()
     output_dir = utils.get_managed_environment_project_path()
+
+    instance_name = providers.get_instance_name(
+        project_name=project.name,
+        project_path=project_path,
+        build_on=project.get_build_on(),
+        build_for=project.get_build_for(),
+    )
+
+    build_base = providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE[project.get_effective_base()]
+
+    base_configuration = providers.get_base_configuration(
+        alias=build_base,
+        instance_name=instance_name,
+        http_proxy=parsed_args.http_proxy,
+        https_proxy=parsed_args.https_proxy,
+    )
 
     emit.progress("Launching instance...")
     with provider.launched_environment(
         project_name=project.name,
-        project_path=Path().absolute(),
-        base=project.get_effective_base(),
-        bind_ssh=parsed_args.bind_ssh,
-        build_on=project.get_build_on(),
-        build_for=project.get_build_for(),
+        project_path=project_path,
+        base_configuration=base_configuration,
+        build_base=build_base.value,
+        instance_name=instance_name,
     ) as instance:
+        # mount project
+        instance.mount(
+            host_source=project_path,
+            target=utils.get_managed_environment_project_path(),
+        )
+
+        # mount ssh directory
+        if parsed_args.bind_ssh:
+            instance.mount(
+                host_source=Path.home() / ".ssh",
+                target=utils.get_managed_environment_home_path() / ".ssh",
+            )
         try:
             with emit.pause():
+                # run snapcraft inside the instance
                 instance.execute_run(cmd, check=True, cwd=output_dir)
-            capture_logs_from_instance(instance)
         except subprocess.CalledProcessError as err:
-            capture_logs_from_instance(instance)
-            raise providers.ProviderError(
-                f"Failed to execute {command_name} in instance."
+            raise errors.SnapcraftError(
+                f"Failed to execute {command_name} in instance.",
+                details=(
+                    "Run the same command again with --debug to shell into "
+                    "the environment if you wish to introspect this failure."
+                ),
             ) from err
+        finally:
+            providers.capture_logs_from_instance(instance)
 
 
 def _set_global_environment(info: ProjectInfo) -> None:

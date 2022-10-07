@@ -1,9 +1,11 @@
 import argparse
+from textwrap import dedent
 
 import pytest
 
 from snapcraft import commands
 from snapcraft.store import channel_map
+from snapcraft_legacy.storeapi.v2.releases import Releases
 
 ############
 # Fixtures #
@@ -129,6 +131,85 @@ def fake_store_get_status_map(mocker, channel_map_result):
         autospec=True,
         return_value=channel_map_result,
     )
+    return fake_client
+
+
+@pytest.fixture
+def list_revisions_result():
+    return Releases.unmarshal(
+        {
+            "revisions": [
+                {
+                    "architectures": ["i386"],
+                    "base": "core20",
+                    "build_url": None,
+                    "confinement": "strict",
+                    "created_at": " 2016-09-27T19:23:40Z",
+                    "grade": "stable",
+                    "revision": 2,
+                    "sha3-384": "fake-a9060ef4872ccacbfa440617",
+                    "size": 20,
+                    "status": "Published",
+                    "version": "2.0.1",
+                },
+                {
+                    "architectures": ["amd64"],
+                    "base": "core20",
+                    "build_url": None,
+                    "confinement": "strict",
+                    "created_at": "2016-09-27T18:38:43Z",
+                    "grade": "stable",
+                    "revision": 1,
+                    "sha3-384": "fake-a9060ef4872ccacbfa440617",
+                    "size": 20,
+                    "status": "Published",
+                    "version": "2.0.2",
+                },
+            ],
+            "releases": [
+                {
+                    "architecture": "amd64",
+                    "branch": None,
+                    "channel": "latest/stable",
+                    "expiration-date": None,
+                    "revision": 1,
+                    "risk": "stable",
+                    "track": "latest",
+                    "when": "2020-02-12T17:51:40.891996Z",
+                },
+                {
+                    "architecture": "i386",
+                    "branch": None,
+                    "channel": "latest/stable",
+                    "expiration-date": None,
+                    "revision": None,
+                    "risk": "stable",
+                    "track": "latest",
+                    "when": "2020-02-11T17:51:40.891996Z",
+                },
+                {
+                    "architecture": "amd64",
+                    "branch": None,
+                    "channel": "latest/edge",
+                    "expiration-date": None,
+                    "revision": 1,
+                    "risk": "stable",
+                    "track": "latest",
+                    "when": "2020-01-12T17:51:40.891996Z",
+                },
+            ],
+        }
+    )
+
+
+@pytest.fixture
+def fake_store_list_revisions(mocker, list_revisions_result):
+    fake_client = mocker.patch(
+        "snapcraft.store.StoreClientCLI.list_revisions",
+        autospec=True,
+        return_value=list_revisions_result,
+    )
+
     return fake_client
 
 
@@ -602,4 +683,58 @@ def test_list_tracks(emitter, command_class):
         "Name    Status    Creation-Date         Version-Pattern\n"
         "latest  active    -                     -\n"
         "2.0     default   2019-10-17T14:11:59Z  2\\.*"
+    )
+
+
+##########################
+# List Revisions Command #
+##########################
+
+
+@pytest.mark.usefixtures("fake_store_list_revisions")
+def test_list_revisions(emitter):
+    cmd = commands.StoreListRevisionsCommand(None)
+
+    cmd.run(argparse.Namespace(snap_name="test-snap", arch=None))
+
+    emitter.assert_message(
+        dedent(
+            """\
+            Rev.    Uploaded              Arches    Version    Channels
+            2       2016-09-27T19:23:40Z  i386      2.0.1      -
+            1       2016-09-27T18:38:43Z  amd64     2.0.2      latest/edge*,latest/stable*"""
+        )
+    )
+
+
+@pytest.mark.usefixtures("fake_store_list_revisions")
+def test_list_revisions_arch(emitter):
+    cmd = commands.StoreListRevisionsCommand(None)
+
+    cmd.run(argparse.Namespace(snap_name="test-snap", arch="amd64"))
+
+    emitter.assert_message(
+        dedent(
+            """\
+            Rev.    Uploaded              Arches    Version    Channels
+            1       2016-09-27T18:38:43Z  amd64     2.0.2      latest/edge*,latest/stable*"""
+        )
+    )
+
+
+@pytest.mark.usefixtures("fake_store_list_revisions")
+def test_list_revisions_no_release_information(emitter, list_revisions_result):
+    list_revisions_result.releases = []
+
+    cmd = commands.StoreListRevisionsCommand(None)
+
+    cmd.run(argparse.Namespace(snap_name="test-snap", arch=None))
+
+    emitter.assert_message(
+        dedent(
+            """\
+            Rev.    Uploaded              Arches    Version
+            2       2016-09-27T19:23:40Z  i386      2.0.1
+            1       2016-09-27T18:38:43Z  amd64     2.0.2"""
+        )
     )

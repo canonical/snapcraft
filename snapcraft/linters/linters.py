@@ -31,6 +31,7 @@ from snapcraft.meta import snap_yaml
 
 from .base import Linter, LinterIssue, LinterResult
 from .classic_linter import ClassicLinter
+from .library_linter import LibraryLinter
 
 if TYPE_CHECKING:
     import argparse
@@ -39,7 +40,10 @@ if TYPE_CHECKING:
 LinterType = Type[Linter]
 
 
-_LINTERS: Dict[str, LinterType] = {"classic": ClassicLinter}
+LINTERS: Dict[str, LinterType] = {
+    "classic": ClassicLinter,
+    "library": LibraryLinter,
+}
 
 
 @enum.unique
@@ -133,8 +137,8 @@ def run_linters(location: Path, *, lint: Optional[projects.Lint]) -> List[Linter
         snap_metadata = snap_yaml.read(Path())
 
         emit.progress("Running linters...")
-        for name, linter_class in _LINTERS.items():
-            if lint and name in lint.ignore.linters:
+        for name, linter_class in LINTERS.items():
+            if lint and lint.all_ignored(name):
                 continue
 
             linter = linter_class(name=name, lint=lint, snap_metadata=snap_metadata)
@@ -153,17 +157,21 @@ def _ignore_matching_filenames(
     issues: List[LinterIssue], *, lint: Optional[projects.Lint]
 ) -> None:
     """Mark any remaining filename match as ignored."""
-    if lint and lint.ignore.files:
-        for issue in issues:
-            for pattern in lint.ignore.files:
-                if (
-                    issue.filename
-                    and issue.result != LinterResult.IGNORED
-                    and fnmatch.fnmatch(issue.filename, pattern)
-                ):
-                    emit.verbose(
-                        f"Ignore {issue.name!r} linter issue ({issue.filename!r} "
-                        f"matches {pattern!r})"
-                    )
-                    issue.result = LinterResult.IGNORED
-                    break
+    if lint is None:
+        return
+
+    for issue in issues:
+
+        files = lint.ignored_files(issue.name)
+        for pattern in files:
+            if (
+                issue.filename
+                and issue.result != LinterResult.IGNORED
+                and fnmatch.fnmatch(issue.filename, pattern)
+            ):
+                emit.verbose(
+                    f"Ignore {issue.name!r} linter issue ({issue.filename!r} "
+                    f"matches {pattern!r})"
+                )
+                issue.result = LinterResult.IGNORED
+                break

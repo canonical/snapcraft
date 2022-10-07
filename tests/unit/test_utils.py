@@ -211,6 +211,7 @@ def test_get_os_platform_windows(mocker):
         ("x86_64", ("64bit", "ELF"), "amd64"),
         ("x86_64", ("32bit", "ELF"), "i386"),
         ("s390x", ("64bit", "ELF"), "s390x"),
+        ("riscv64", ("64bit", "ELF"), "riscv64"),
         ("unknown-arch", ("64bit", "ELF"), "unknown-arch"),
     ],
 )
@@ -441,6 +442,7 @@ def test_process_version_git(mocker):
         ("ppc64el", "ppc64le"),
         ("amd64", "x86_64"),
         ("s390x", "s390x"),
+        ("riscv64", "riscv64"),
     ],
 )
 def test_convert_architectures_valid(deb_arch, platform_arch):
@@ -456,3 +458,31 @@ def test_convert_architectures_invalid():
         utils.convert_architecture_deb_to_platform("unknown")
 
     assert str(raised.value) == "Architecture 'unknown' is not supported."
+
+
+########################
+# Is running from snap #
+########################
+
+
+@pytest.mark.parametrize(
+    "snap_name,snap,result",
+    [
+        (None, None, False),
+        (None, "/snap/snapcraft/x1", False),
+        ("snapcraft", None, False),
+        ("snapcraft", "/snap/snapcraft/x1", True),
+    ],
+)
+def test_is_snapcraft_running_from_snap(monkeypatch, snap_name, snap, result):
+    if snap_name is None:
+        monkeypatch.delenv("SNAP_NAME", raising=False)
+    else:
+        monkeypatch.setenv("SNAP_NAME", snap_name)
+
+    if snap is None:
+        monkeypatch.delenv("SNAP", raising=False)
+    else:
+        monkeypatch.setenv("SNAP", snap)
+
+    assert utils.is_snapcraft_running_from_snap() == result

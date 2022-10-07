@@ -13,9 +13,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import textwrap
 
 import pytest
+import yaml
 
+from snapcraft import projects
 from snapcraft.linters.base import LinterResult
 
 
@@ -57,3 +60,39 @@ class TestLinterIssue:
     def test_linter_issue_string_filename_no_url(self, linter_issue):
         issue = linter_issue(filename="foo.txt", url=None)
         assert f"{issue}" == "test: foo.txt: Linter message text"
+
+
+@pytest.fixture
+def lint_ignore_data():
+    """Yaml-loaded test data for specification of ignoring linter issues.
+
+    The data specifies that all issues for linter "linter1" should be ignored, and that the
+    issues for "linter2" should be ignored if they refer to files matching "file1" and/or
+    "/lib/file2*".
+    """
+    yaml_data = textwrap.dedent(
+        """
+        ignore:
+          - linter1           # ignore all issues for "linter1"
+          - linter2:          # ignore issues on "file1" and "/lib/file2*" for "linter2"
+            - "file1"
+            - "/lib/file2*"
+        """
+    )
+    return yaml.safe_load(yaml_data)
+
+
+def test_lint_all_ignored(lint_ignore_data):
+    lint = projects.Lint(**lint_ignore_data)
+
+    assert lint.all_ignored("linter1")
+    assert not lint.all_ignored("linter2")
+    assert not lint.all_ignored("linter3")
+
+
+def test_lint_ignored_files(lint_ignore_data):
+    lint = projects.Lint(**lint_ignore_data)
+
+    assert lint.ignored_files("linter1") == ["*"]
+    assert lint.ignored_files("linter2") == ["file1", "/lib/file2*"]
+    assert lint.ignored_files("linter3") == []

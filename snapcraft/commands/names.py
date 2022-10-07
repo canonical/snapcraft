@@ -130,22 +130,9 @@ class StoreNamesCommand(BaseCommand):
 
     @overrides
     def run(self, parsed_args):
-        account_info = store.StoreClientCLI().get_account_info()
+        store_client = store.StoreClientCLI()
+        snaps = store_client.get_names()
 
-        snaps = [
-            (
-                name,
-                info["since"],
-                "private" if info["private"] else "public",
-                "-",
-            )
-            for name, info in account_info["snaps"]
-            .get(store.constants.DEFAULT_SERIES, {})
-            .items()
-            # Presenting only approved snap registrations, which means name
-            # disputes will be displayed/sorted some other way.
-            if info["status"] == "Approved"
-        ]
         if not snaps:
             emit.message("No registered snaps")
         else:

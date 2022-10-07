@@ -18,10 +18,12 @@ import argparse
 import textwrap
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import PropertyMock, call
+from unittest.mock import ANY, Mock, PropertyMock, call
 
 import pytest
+from craft_cli import EmitterMode, emit
 from craft_parts import Action, Step, callbacks
+from craft_providers.bases.buildd import BuilddBaseAlias
 
 from snapcraft import errors
 from snapcraft.parts import lifecycle as parts_lifecycle
@@ -59,6 +61,23 @@ def project_vars(mocker):
         "snapcraft.parts.PartsLifecycle.project_vars",
         new_callable=PropertyMock,
         return_value={"version": "0.1", "grade": "stable"},
+    )
+
+
+@pytest.fixture()
+def mock_provider(mocker, mock_instance, fake_provider):
+    _mock_provider = Mock(wraps=fake_provider)
+    mocker.patch(
+        "snapcraft.parts.lifecycle.providers.get_provider", return_value=_mock_provider
+    )
+    yield _mock_provider
+
+
+@pytest.fixture()
+def mock_get_instance_name(mocker):
+    yield mocker.patch(
+        "snapcraft.parts.lifecycle.providers.get_instance_name",
+        return_value="test-instance-name",
     )
 
 
@@ -104,6 +123,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
             enable_manifest=False,
             manifest_image_information=None,
             bind_ssh=False,
+            ua_token=None,
             build_for=None,
         ),
     )
@@ -131,6 +151,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
             ),
         ),
@@ -144,9 +165,6 @@ def test_lifecycle_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
     """Option --provider is not supported in core22."""
     snapcraft_yaml(base="core22")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
-    mocker.patch(
-        "snapcraft.providers.Provider.is_base_available", return_value=(True, None)
-    )
 
     with pytest.raises(errors.SnapcraftError) as raised:
         parts_lifecycle.run(
@@ -184,6 +202,59 @@ def test_lifecycle_legacy_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
 
 
 @pytest.mark.parametrize(
+    "cmd", ["pull", "build", "stage", "prime", "pack", "snap", "clean"]
+)
+def test_lifecycle_run_ua_services_without_token(cmd, snapcraft_yaml, new_dir, mocker):
+    """UA services require --ua-token."""
+    snapcraft_yaml(base="core22", **{"ua-services": ["svc1", "svc2"]})
+    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        parts_lifecycle.run(
+            cmd,
+            parsed_args=argparse.Namespace(
+                destructive_mode=False,
+                use_lxd=False,
+                provider=None,
+                ua_token=None,
+                build_for=get_host_architecture(),
+            ),
+        )
+
+    assert run_mock.mock_calls == []
+    assert str(raised.value) == "UA services require a UA token to be specified."
+
+
+@pytest.mark.parametrize(
+    "cmd", ["pull", "build", "stage", "prime", "pack", "snap", "clean"]
+)
+def test_lifecycle_run_ua_services_without_experimental_flag(
+    cmd, snapcraft_yaml, new_dir, mocker
+):
+    """UA services require --ua-token."""
+    snapcraft_yaml(base="core22", **{"ua-services": ["svc1", "svc2"]})
+    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        parts_lifecycle.run(
+            cmd,
+            parsed_args=argparse.Namespace(
+                destructive_mode=False,
+                use_lxd=False,
+                provider=None,
+                ua_token="my-token",
+                build_for=get_host_architecture(),
+                enable_experimental_ua_services=False,
+            ),
+        )
+
+    assert run_mock.mock_calls == []
+    assert str(raised.value) == (
+        "Using UA services requires --enable-experimental-ua-services."
+    )
+
+
+@pytest.mark.parametrize(
     "cmd,step",
     [
         ("pull", "pull"),
@@ -192,14 +263,14 @@ def test_lifecycle_legacy_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
         ("prime", "prime"),
     ],
 )
-@pytest.mark.parametrize("debug_shell", [None, "debug", "shell", "shell_after"])
+@pytest.mark.parametrize("debug_shell", [None, "shell", "shell_after"])
 def test_lifecycle_run_command_step(
     cmd, step, debug_shell, snapcraft_yaml, project_vars, new_dir, mocker
 ):
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     mocker.patch("snapcraft.meta.snap_yaml.write")
-    pack_mock = mocker.patch("snapcraft.pack.pack_snap")
+    mocker.patch("snapcraft.pack.pack_snap")
 
     parsed_args = argparse.Namespace(
         debug=False,
@@ -208,6 +279,7 @@ def test_lifecycle_run_command_step(
         shell=False,
         shell_after=False,
         use_lxd=False,
+        ua_token=None,
         parts=[],
     )
 
@@ -224,12 +296,11 @@ def test_lifecycle_run_command_step(
         parsed_args=parsed_args,
     )
 
-    call_args = {"debug": False, "shell": False, "shell_after": False}
+    call_args = {"shell": False, "shell_after": False}
     if debug_shell:
         call_args[debug_shell] = True
 
     assert run_mock.mock_calls == [call(step, **call_args)]
-    assert pack_mock.mock_calls == []
 
 
 @pytest.mark.parametrize("cmd", ["pack", "snap"])
@@ -254,13 +325,12 @@ def test_lifecycle_run_command_pack(cmd, snapcraft_yaml, project_vars, new_dir, 
             shell=False,
             shell_after=False,
             use_lxd=False,
+            ua_token=None,
             parts=[],
         ),
     )
 
-    assert run_mock.mock_calls == [
-        call("prime", debug=False, shell=False, shell_after=False)
-    ]
+    assert run_mock.mock_calls == [call("prime", shell=False, shell_after=False)]
     assert pack_mock.mock_calls[:1] == [
         call(
             new_dir / "prime",
@@ -303,14 +373,13 @@ def test_lifecycle_pack_destructive_mode(
             shell=False,
             shell_after=False,
             use_lxd=False,
+            ua_token=None,
             parts=[],
         ),
     )
 
     assert run_in_provider_mock.mock_calls == []
-    assert run_mock.mock_calls == [
-        call("prime", debug=False, shell=False, shell_after=False)
-    ]
+    assert run_mock.mock_calls == [call("prime", shell=False, shell_after=False)]
     assert pack_mock.mock_calls[:1] == [
         call(
             new_dir / "home/prime",
@@ -354,14 +423,13 @@ def test_lifecycle_pack_managed(cmd, snapcraft_yaml, project_vars, new_dir, mock
             shell=False,
             shell_after=False,
             use_lxd=False,
+            ua_token=None,
             parts=[],
         ),
     )
 
     assert run_in_provider_mock.mock_calls == []
-    assert run_mock.mock_calls == [
-        call("prime", debug=False, shell=False, shell_after=False)
-    ]
+    assert run_mock.mock_calls == [call("prime", shell=False, shell_after=False)]
     assert pack_mock.mock_calls[:1] == [
         call(
             new_dir / "home/prime",
@@ -446,6 +514,7 @@ def test_lifecycle_pack_metadata_error(cmd, snapcraft_yaml, new_dir, mocker):
                 shell=False,
                 shell_after=False,
                 use_lxd=False,
+                ua_token=None,
                 parts=[],
             ),
         )
@@ -453,9 +522,7 @@ def test_lifecycle_pack_metadata_error(cmd, snapcraft_yaml, new_dir, mocker):
     assert str(raised.value) == (
         "error setting grade: unexpected value; permitted: 'stable', 'devel'"
     )
-    assert run_mock.mock_calls == [
-        call("prime", debug=False, shell=False, shell_after=False)
-    ]
+    assert run_mock.mock_calls == [call("prime", shell=False, shell_after=False)]
     assert pack_mock.mock_calls == []
 
 
@@ -479,12 +546,13 @@ def test_lifecycle_metadata_empty(field, snapcraft_yaml, new_dir):
     assert str(raised.value) == f"Field {field!r} was not adopted from metadata"
 
 
-def test_lifecycle_run_command_clean(snapcraft_yaml, project_vars, new_dir, mocker):
+def test_lifecycle_run_command_clean(
+    snapcraft_yaml, project_vars, new_dir, mocker, mock_get_instance_name
+):
     """Clean provider project when called without parts."""
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     clean_mock = mocker.patch(
-        "snapcraft.providers.LXDProvider.clean_project_environments",
-        return_value=["instance-name"],
+        "snapcraft.providers.LXDProvider.clean_project_environments"
     )
 
     parts_lifecycle._run_command(
@@ -503,14 +571,7 @@ def test_lifecycle_run_command_clean(snapcraft_yaml, project_vars, new_dir, mock
         ),
     )
 
-    assert clean_mock.mock_calls == [
-        call(
-            project_name="mytest",
-            project_path=new_dir,
-            build_on=get_host_architecture(),
-            build_for=get_host_architecture(),
-        )
-    ]
+    assert clean_mock.mock_calls == [call(instance_name="test-instance-name")]
 
 
 def test_lifecycle_clean_destructive_mode(
@@ -635,10 +696,10 @@ def test_lifecycle_clean_managed(snapcraft_yaml, project_vars, new_dir, mocker):
 def test_lifecycle_debug_shell(snapcraft_yaml, cmd, new_dir, mocker):
     """Adoptable fields shouldn't be empty after adoption."""
     mocker.patch("craft_parts.executor.Executor.execute", side_effect=Exception)
-    mock_shell = mocker.patch("subprocess.run")
+    mock_shell = mocker.patch("snapcraft.parts.lifecycle.launch_shell")
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
 
-    with pytest.raises(errors.PartsLifecycleError):
+    with pytest.raises(errors.SnapcraftError):
         parts_lifecycle._run_command(
             cmd,
             project=project,
@@ -654,16 +715,57 @@ def test_lifecycle_debug_shell(snapcraft_yaml, cmd, new_dir, mocker):
                 shell=False,
                 shell_after=False,
                 use_lxd=False,
+                enable_manifest=False,
+                ua_token=None,
                 parts=["part1"],
             ),
         )
 
-    assert mock_shell.mock_calls == [call(["bash"], check=False, cwd=None)]
+    assert mock_shell.mock_calls == [call()]
 
 
-@pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime"])
-def test_lifecycle_shell(snapcraft_yaml, cmd, new_dir, mocker):
+def test_lifecycle_post_lifecycle_debug_shell(snapcraft_yaml, new_dir, mocker):
     """Adoptable fields shouldn't be empty after adoption."""
+    mocker.patch("snapcraft.pack.pack_snap", side_effect=Exception)
+    mocker.patch("snapcraft.meta.snap_yaml.write")
+    mock_shell = mocker.patch("snapcraft.parts.lifecycle.launch_shell")
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+
+    with pytest.raises(errors.SnapcraftError):
+        parts_lifecycle._run_command(
+            "pack",
+            project=project,
+            parse_info={},
+            assets_dir=Path(),
+            start_time=datetime.now(),
+            parallel_build_count=8,
+            parsed_args=argparse.Namespace(
+                directory=None,
+                output=None,
+                debug=True,
+                destructive_mode=True,
+                shell=False,
+                shell_after=False,
+                use_lxd=False,
+                enable_manifest=False,
+                parts=["part1"],
+            ),
+        )
+
+    assert mock_shell.mock_calls == [()]
+
+
+@pytest.mark.parametrize(
+    "cmd,expected_last_step",
+    [
+        ("pull", None),
+        ("build", Step.OVERLAY),
+        ("stage", Step.BUILD),
+        ("prime", Step.STAGE),
+    ],
+)
+def test_lifecycle_shell(snapcraft_yaml, cmd, expected_last_step, new_dir, mocker):
+    """Check if the last step executed before shell is the previous step."""
     last_step = None
 
     def _fake_execute(_, action: Action, **kwargs):  # pylint: disable=unused-argument
@@ -689,25 +791,29 @@ def test_lifecycle_shell(snapcraft_yaml, cmd, new_dir, mocker):
             shell=True,
             shell_after=False,
             use_lxd=False,
+            enable_manifest=False,
+            ua_token=None,
             parts=["part1"],
         ),
     )
-
-    expected_last_step = None
-    if cmd == "build":
-        expected_last_step = Step.OVERLAY
-    if cmd == "stage":
-        expected_last_step = Step.BUILD
-    if cmd == "prime":
-        expected_last_step = Step.STAGE
 
     assert last_step == expected_last_step
     assert mock_shell.mock_calls == [call(["bash"], check=False, cwd=None)]
 
 
-@pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime"])
-def test_lifecycle_shell_after(snapcraft_yaml, cmd, new_dir, mocker):
-    """Adoptable fields shouldn't be empty after adoption."""
+@pytest.mark.parametrize(
+    "cmd,expected_last_step",
+    [
+        ("pull", Step.PULL),
+        ("build", Step.BUILD),
+        ("stage", Step.STAGE),
+        ("prime", Step.PRIME),
+    ],
+)
+def test_lifecycle_shell_after(
+    snapcraft_yaml, cmd, expected_last_step, new_dir, mocker
+):
+    """Check if the last step executed before shell is the current step."""
     last_step = None
 
     def _fake_execute(_, action: Action, **kwargs):  # pylint: disable=unused-argument
@@ -733,17 +839,11 @@ def test_lifecycle_shell_after(snapcraft_yaml, cmd, new_dir, mocker):
             shell=False,
             shell_after=True,
             use_lxd=False,
+            enable_manifest=False,
+            ua_token=None,
             parts=["part1"],
         ),
     )
-
-    expected_last_step = Step.PULL
-    if cmd == "build":
-        expected_last_step = Step.BUILD
-    if cmd == "stage":
-        expected_last_step = Step.STAGE
-    if cmd == "prime":
-        expected_last_step = Step.PRIME
 
     assert last_step == expected_last_step
     assert mock_shell.mock_calls == [call(["bash"], check=False, cwd=None)]
@@ -881,6 +981,7 @@ def test_lifecycle_run_expand_snapcraft_vars(new_dir, mocker):
             enable_manifest=False,
             manifest_image_information=None,
             bind_ssh=False,
+            ua_token=None,
             build_for=None,
             debug=False,
         ),
@@ -937,6 +1038,7 @@ def test_lifecycle_run_expand_craft_vars(new_dir, mocker):
             enable_manifest=False,
             manifest_image_information=None,
             bind_ssh=False,
+            ua_token=None,
             build_for=None,
             debug=False,
         ),
@@ -983,6 +1085,7 @@ def test_lifecycle_run_permission_denied(new_dir):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
+                ua_token=None,
                 build_for=None,
                 debug=False,
             ),
@@ -994,6 +1097,201 @@ def test_lifecycle_run_permission_denied(new_dir):
         "Make sure the file is part of the current project "
         "and its permissions and ownership are correct."
     )
+
+
+def test_lifecycle_run_in_provider_default(
+    mock_get_instance_name,
+    mock_instance,
+    mock_provider,
+    mocker,
+    snapcraft_yaml,
+    tmp_path,
+):
+    """Verify default calls made in `run_in_provider()`"""
+    mock_base_configuration = Mock()
+    mock_get_base_configuration = mocker.patch(
+        "snapcraft.parts.lifecycle.providers.get_base_configuration",
+        return_value=mock_base_configuration,
+    )
+    mock_capture_logs_from_instance = mocker.patch(
+        "snapcraft.parts.lifecycle.providers.capture_logs_from_instance"
+    )
+    mock_ensure_provider_is_available = mocker.patch(
+        "snapcraft.parts.lifecycle.providers.ensure_provider_is_available"
+    )
+    mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
+    mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
+
+    expected_command = [
+        "snapcraft",
+        "test",
+        "--verbosity=quiet",
+        "--build-for",
+        "test-arch-2",
+    ]
+
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    parts_lifecycle._run_in_provider(
+        project=project,
+        command_name="test",
+        parsed_args=argparse.Namespace(
+            use_lxd=False,
+            debug=False,
+            bind_ssh=False,
+            http_proxy=None,
+            https_proxy=None,
+        ),
+    )
+
+    mock_ensure_provider_is_available.assert_called_once_with(mock_provider)
+    mock_get_instance_name.assert_called_once_with(
+        project_name="mytest",
+        project_path=tmp_path,
+        build_on="test-arch-1",
+        build_for="test-arch-2",
+    )
+    mock_get_base_configuration.assert_called_once_with(
+        alias=BuilddBaseAlias.JAMMY,
+        instance_name="test-instance-name",
+        http_proxy=None,
+        https_proxy=None,
+    )
+    mock_provider.launched_environment.assert_called_with(
+        project_name="mytest",
+        project_path=ANY,
+        base_configuration=mock_base_configuration,
+        build_base="22.04",
+        instance_name="test-instance-name",
+    )
+    mock_instance.mount.assert_called_with(
+        host_source=tmp_path, target=Path("/root/project")
+    )
+    mock_instance.execute_run.assert_called_once_with(
+        expected_command, check=True, cwd=Path("/root/project")
+    )
+    mock_capture_logs_from_instance.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "emit_mode,verbosity",
+    [
+        (EmitterMode.VERBOSE, "--verbosity=verbose"),
+        (EmitterMode.QUIET, "--verbosity=quiet"),
+        (EmitterMode.BRIEF, "--verbosity=brief"),
+        (EmitterMode.DEBUG, "--verbosity=debug"),
+        (EmitterMode.TRACE, "--verbosity=trace"),
+    ],
+)
+def test_lifecycle_run_in_provider_all_options(
+    mock_get_instance_name,
+    mock_instance,
+    mock_provider,
+    mocker,
+    snapcraft_yaml,
+    tmp_path,
+    emit_mode,
+    verbosity,
+):
+    """Verify all project options are parsed in `run_in_provider()`."""
+    mock_base_configuration = Mock()
+    mock_get_base_configuration = mocker.patch(
+        "snapcraft.parts.lifecycle.providers.get_base_configuration",
+        return_value=mock_base_configuration,
+    )
+    mock_capture_logs_from_instance = mocker.patch(
+        "snapcraft.parts.lifecycle.providers.capture_logs_from_instance"
+    )
+    mock_ensure_provider_is_available = mocker.patch(
+        "snapcraft.parts.lifecycle.providers.ensure_provider_is_available"
+    )
+    mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
+    mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
+
+    # build the expected command to be executed in the provider
+    parts = ["test-part-1", "test-part-2"]
+    output = "test-output"
+    manifest_build_information = "test-build-info"
+    ua_token = "test-ua-token"
+    http_proxy = "1.2.3.4"
+    https_proxy = "5.6.7.8"
+    expected_command = (
+        ["snapcraft", "test"]
+        + parts
+        + [
+            "--output",
+            output,
+            verbosity,
+            "--debug",
+            "--shell",
+            "--shell-after",
+            "--enable-manifest",
+            "--manifest-build-information",
+            manifest_build_information,
+            "--build-for",
+            "test-arch-2",
+            "--ua-token",
+            ua_token,
+            "--enable-experimental-ua-services",
+        ]
+    )
+
+    # set emitter mode
+    emit.set_mode(emit_mode)
+
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    parts_lifecycle._run_in_provider(
+        project=project,
+        command_name="test",
+        parsed_args=argparse.Namespace(
+            parts=parts,
+            output=output,
+            destructive_mode=False,
+            use_lxd=False,
+            provider=None,
+            enable_manifest=True,
+            manifest_build_information=manifest_build_information,
+            bind_ssh=True,
+            ua_token=ua_token,
+            enable_experimental_ua_services=True,
+            build_for=None,
+            debug=True,
+            shell=True,
+            shell_after=True,
+            http_proxy=http_proxy,
+            https_proxy=https_proxy,
+        ),
+    )
+
+    mock_ensure_provider_is_available.assert_called_once_with(mock_provider)
+    mock_get_instance_name.assert_called_once_with(
+        project_name="mytest",
+        project_path=tmp_path,
+        build_on="test-arch-1",
+        build_for="test-arch-2",
+    )
+    mock_get_base_configuration.assert_called_once_with(
+        alias=BuilddBaseAlias.JAMMY,
+        instance_name="test-instance-name",
+        http_proxy="1.2.3.4",
+        https_proxy="5.6.7.8",
+    )
+    mock_provider.launched_environment.assert_called_with(
+        project_name="mytest",
+        project_path=ANY,
+        base_configuration=mock_base_configuration,
+        build_base="22.04",
+        instance_name="test-instance-name",
+    )
+    mock_instance.mount.assert_has_calls(
+        [
+            call(host_source=tmp_path, target=Path("/root/project")),
+            call(host_source=Path().home() / ".ssh", target=Path("/root/.ssh")),
+        ]
+    )
+    mock_instance.execute_run.assert_called_once_with(
+        expected_command, check=True, cwd=Path("/root/project")
+    )
+    mock_capture_logs_from_instance.assert_called_once()
 
 
 @pytest.fixture

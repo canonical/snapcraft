@@ -14,7 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import cast
+
 import pytest
+from craft_store.models import SnapListReleasesModel
 
 from snapcraft.store import channel_map
 
@@ -384,3 +387,103 @@ def test_channel_map():
 
     # Test the get_existing_architectures method.
     assert cm.get_existing_architectures() == set(["arm64", "amd64", "i386"])
+
+
+def test_channel_map_from_list_releases_model():
+
+    list_releases = SnapListReleasesModel.unmarshal(
+        {
+            "channel-map": [
+                {
+                    "architecture": "amd64",
+                    "channel": "latest/stable",
+                    "expiration-date": None,
+                    "progressive": {"paused": None, "percentage": None},
+                    "revision": 20,
+                    "when": "2019-10-17T14:11:59Z",
+                }
+            ],
+            "package": {
+                "channels": [
+                    {
+                        "branch": None,
+                        "fallback": None,
+                        "name": "latest/stable",
+                        "risk": "stable",
+                        "track": "latest",
+                    },
+                    {
+                        "branch": None,
+                        "fallback": "latest/stable",
+                        "name": "latest/candidate",
+                        "risk": "candidate",
+                        "track": "latest",
+                    },
+                    {
+                        "branch": None,
+                        "fallback": "latest/candidate",
+                        "name": "latest/beta",
+                        "risk": "beta",
+                        "track": "latest",
+                    },
+                    {
+                        "branch": None,
+                        "fallback": "latest/beta",
+                        "name": "latest/edge",
+                        "risk": "edge",
+                        "track": "latest",
+                    },
+                ]
+            },
+            "revisions": [
+                {
+                    "architectures": ["amd64"],
+                    "base": "core22",
+                    "build-url": None,
+                    "confinement": "devmode",
+                    "created-at": "2019-10-17T14:11:59Z",
+                    "created-by": "QQPbzX6aaSF7ckKU5tGWnwfai1C4tiJu",
+                    "grade": "devel",
+                    "revision": 20,
+                    "sha3-384": "short-sha3-384",
+                    "size": 4096,
+                    "status": "released",
+                    "type": "app",
+                    "version": "35",
+                }
+            ],
+        }
+    )
+
+    cm = channel_map.ChannelMap.from_list_releases(
+        cast(SnapListReleasesModel, list_releases)
+    )
+
+    # Check "channel-map".
+    assert len(cm.channel_map) == 1
+    assert isinstance(cm.channel_map[0], channel_map.MappedChannel)
+
+    # Check "revisions".
+    assert len(cm.revisions) == 1
+    assert isinstance(cm.revisions[0], channel_map.Revision)
+
+    # Check "snap".
+    assert isinstance(cm.snap, channel_map.Snap)
+
+    # Test the get_mapped_channel method.
+    assert (
+        cm.get_mapped_channel(
+            channel_name="latest/stable", architecture="amd64", progressive=False
+        )
+    ) == cm.channel_map[0]
+
+    # Test the get_channel_info method.
+    assert cm.get_channel_info("latest/stable") == cm.snap.channels[0]
+    with pytest.raises(ValueError):
+        cm.get_channel_info("other-track/stable")
+
+    # Test the get_revision method.
+    assert cm.get_revision(20) == cm.revisions[0]
+
+    # Test the get_existing_architectures method.
+    assert cm.get_existing_architectures() == set(["amd64"])

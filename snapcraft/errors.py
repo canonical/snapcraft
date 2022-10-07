@@ -102,5 +102,27 @@ class LinterError(SnapcraftError):
         )
 
 
+class ProjectMissing(SnapcraftError):
+    """No snapcraft.yaml project found."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Could not find snap/snapcraft.yaml. Are you sure you are in the "
+            "right directory?",
+            resolution="To start a new project, use `snapcraft init`",
+        )
+
+
 class LegacyFallback(Exception):
     """Fall back to legacy snapcraft implementation."""
+
+
+class StoreCredentialsUnauthorizedError(SnapcraftError):
+    """Error raised for 401 responses from the Snap Store."""
+
+    def __init__(self, message: str, *, resolution: str) -> None:
+        super().__init__(
+            message,
+            resolution=resolution,
+            docs_url="https://snapcraft.io/docs/snapcraft-authentication",
+        )

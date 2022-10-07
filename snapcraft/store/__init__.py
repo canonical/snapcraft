@@ -21,10 +21,12 @@ from . import constants
 from ._legacy_account import LegacyUbuntuOne
 from .channel_map import ChannelMap
 from .client import StoreClientCLI
+from .onprem_client import OnPremClient
 
 __all__ = [
     "ChannelMap",
     "StoreClientCLI",
     "LegacyUbuntuOne",
+    "OnPremClient",
     "constants",
 ]
