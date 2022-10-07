@@ -1134,13 +1134,13 @@ _create_efi_image_cmd = [
             "--sbat",
             "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/efi/sbat.txt",
             "--key",
-            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
+            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key",
             "--cert",
-            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
+            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem",
             "--initrd",
             "${CRAFT_PART_INSTALL}/initrd.img",
             "--kernel",
-            "${CRAFT_PART_INSTALL}/${KERNEL_IMAGE_TARGET}-${KERNEL_RELEASE}",
+            "${CRAFT_PART_INSTALL}/${KERNEL_IMAGE_TARGET}",
             "--output",
             "${CRAFT_PART_INSTALL}/kernel.efi",
         ],
