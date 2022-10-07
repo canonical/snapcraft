@@ -405,8 +405,13 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _prepare_config_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_cmd)
         assert _check_config in build_commands
-        assert _is_sub_array(build_commands, _build_kernel_cmd)
-        assert _is_sub_array(build_commands, _install_kernel_cmd)
+        if platform.machine() == "x86_64":
+            assert _is_sub_array(build_commands, _build_kernel_x86_cmd)
+            assert _is_sub_array(build_commands, _install_kernel_x86_cmd)
+        else:
+            assert _is_sub_array(build_commands, _build_kernel_cmd)
+            assert _is_sub_array(build_commands, _install_kernel_cmd)
+
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
         assert _is_sub_array(build_commands, _install_initrd_modules_cmd)
         assert _is_sub_array(build_commands, _configure_initrd_modules_cmd)
@@ -465,8 +470,13 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _prepare_config_extra_config_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_clang_cmd)
         assert _check_config in build_commands
-        assert _is_sub_array(build_commands, _build_kernel_clang_image_cmd)
-        assert _is_sub_array(build_commands, _install_kernel_no_firmware_clang_cmd)
+        if platform.machine() == "x86_64":
+            assert _is_sub_array(build_commands, _build_kernel_clang_image_x86_cmd)
+            assert _is_sub_array(build_commands, _install_kernel_no_firmware_clang_x86_cmd)
+        else:
+            assert _is_sub_array(build_commands, _build_kernel_clang_image_cmd)
+            assert _is_sub_array(build_commands, _install_kernel_no_firmware_clang_cmd)
+
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
         assert _is_sub_array(build_commands, _install_initrd_modules_cmd)
         assert _is_sub_array(build_commands, _configure_initrd_modules_cmd)
@@ -494,6 +504,7 @@ class TestPluginKernel:
                 "kernel-kconfigflavour": "raspi",
                 "kernel-kconfigs": ["CONFIG_DEBUG_INFO=n", "CONFIG_DM_CRYPT=y"],
                 "kernel-device-trees": ["pi3", "pi3b", "pi4", "cmd4"],
+                "kernel-with-firmware": False,
                 "kernel-enable-zfs-support": True,
                 "kernel-enable-perf": True,
                 "kernel-initrd-modules": ["dm-crypt", "slimbus"],
@@ -520,8 +531,12 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _prepare_config_extra_config_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_cmd)
         assert _check_config in build_commands
-        assert _is_sub_array(build_commands, _build_kernel_dtbs_cmd)
-        assert _is_sub_array(build_commands, _install_kernel_dtbs_cmd)
+        if platform.machine() == "x86_64":
+            assert _is_sub_array(build_commands, _build_kernel_dtbs_x86_cmd)
+        else:
+            assert _is_sub_array(build_commands, _build_kernel_dtbs_cmd)
+
+        assert _is_sub_array(build_commands, _install_kernel_no_dtbs_no_firmware_cmd)
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
         assert _is_sub_array(build_commands, _install_dtbs_cmd)
         assert _is_sub_array(build_commands, _install_initrd_modules_cmd)
@@ -836,6 +851,10 @@ _build_kernel_cmd = [
     "make -j$(nproc) -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} Image.gz modules dtbs",
 ]
 
+_build_kernel_x86_cmd = [
+    "make -j$(nproc) -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} bzImage modules",
+]
+
 _build_kernel_clang_image_cmd = [
     " ".join(
         [
@@ -845,6 +864,19 @@ _build_kernel_clang_image_cmd = [
             'CC="clang"',
             "-arch arm64",
             "Image modules dtbs",
+        ],
+    ),
+]
+
+_build_kernel_clang_image_x86_cmd = [
+    " ".join(
+        [
+            "make -j$(nproc)",
+            "-C ${KERNEL_SRC}",
+            "O=${CRAFT_PART_BUILD}",
+            'CC="clang"',
+            "-arch arm64",
+            "Image modules",
         ],
     ),
 ]
@@ -873,6 +905,17 @@ _build_kernel_dtbs_cmd = [
     ),
 ]
 
+_build_kernel_dtbs_x86_cmd = [
+    " ".join(
+        [
+            "make -j$(nproc)",
+            "-C ${KERNEL_SRC}",
+            "O=${CRAFT_PART_BUILD}",
+            "bzImage modules pi3.dtb pi3b.dtb pi4.dtb cmd4.dtb",
+        ],
+    ),
+]
+
 _install_kernel_cmd = [
     " ".join(
         [
@@ -886,7 +929,7 @@ _install_kernel_cmd = [
     ),
 ]
 
-_install_kernel_dtbs_cmd = [
+_install_kernel_x86_cmd = [
     " ".join(
         [
             "make -j$(nproc) -C ${KERNEL_SRC}",
@@ -894,6 +937,17 @@ _install_kernel_dtbs_cmd = [
             "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
             "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
             "firmware_install INSTALL_FW_PATH=${CRAFT_PART_INSTALL}/lib/firmware",
+        ],
+    ),
+]
+
+_install_kernel_no_dtbs_no_firmware_cmd = [
+    " ".join(
+        [
+            "make -j$(nproc) -C ${KERNEL_SRC}",
+            "O=${CRAFT_PART_BUILD}",
+            "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
+            "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
         ],
     ),
 ]
@@ -922,6 +976,21 @@ _install_kernel_no_firmware_clang_cmd = [
             "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
             "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
             "dtbs_install INSTALL_DTBS_PATH=${CRAFT_PART_INSTALL}/dtbs",
+        ],
+    ),
+]
+
+_install_kernel_no_firmware_clang_x86_cmd = [
+    " ".join(
+        [
+            "make",
+            "-j$(nproc)",
+            "-C ${KERNEL_SRC}",
+            "O=${CRAFT_PART_BUILD}",
+            'CC="clang"',
+            "-arch arm64",
+            "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
+            "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
         ],
     ),
 ]
