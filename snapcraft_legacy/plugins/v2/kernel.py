@@ -151,7 +151,6 @@ setup accordingly.
 
 import logging
 import os
-import re
 import subprocess
 import sys
 from typing import Any, Dict, List, Set
@@ -1434,10 +1433,6 @@ class KernelPlugin(PluginV2):
                 "${PATH}",
             ]
             env["PATH"] = ":".join(path)
-
-        if "MAKEFLAGS" in os.environ:
-            makeflags = re.sub(r"-I[\S]*", "", os.environ["MAKEFLAGS"])
-            env["MAKEFLAGS"] = makeflags
 
         return env
 
