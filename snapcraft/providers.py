@@ -241,7 +241,7 @@ def get_provider(provider: Optional[str] = None) -> Provider:
 
     # return the chosen provider
     if chosen_provider == "lxd":
-        return LXDProvider()
+        return LXDProvider(lxd_project="snapcraft")
     if chosen_provider == "multipass":
         return MultipassProvider()
 
