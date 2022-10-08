@@ -8,7 +8,7 @@ click==8.1.3
 craft-cli==1.1.0
 craft-grammar==1.1.1
 craft-parts==1.14.2
-craft-providers==1.5.1
+craft-providers==1.6.0
 craft-store==2.2.1
 cryptography==3.4
 Deprecated==1.2.13

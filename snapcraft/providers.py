@@ -22,7 +22,9 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from craft_cli import emit
-from craft_providers import ProviderError, bases, executor
+from craft_providers import Provider, ProviderError, bases, executor
+from craft_providers.lxd import LXDProvider
+from craft_providers.multipass import MultipassProvider
 
 from snapcraft.snap_config import get_snap_config
 from snapcraft.utils import (
@@ -30,10 +32,6 @@ from snapcraft.utils import (
     get_managed_environment_log_path,
     get_managed_environment_snap_channel,
 )
-
-from ._lxd import LXDProvider
-from ._multipass import MultipassProvider
-from ._provider import Provider
 
 SNAPCRAFT_BASE_TO_PROVIDER_BASE = {
     "core18": bases.BuilddBaseAlias.BIONIC,
@@ -243,7 +241,7 @@ def get_provider(provider: Optional[str] = None) -> Provider:
 
     # return the chosen provider
     if chosen_provider == "lxd":
-        return LXDProvider()
+        return LXDProvider(lxd_project="snapcraft")
     if chosen_provider == "multipass":
         return MultipassProvider()
 

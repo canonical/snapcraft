@@ -29,7 +29,7 @@ import craft_parts
 from craft_cli import emit
 from craft_parts import ProjectInfo, StepInfo, callbacks
 
-from snapcraft import errors, extensions, linters, pack, ua_manager, utils
+from snapcraft import errors, extensions, linters, pack, providers, ua_manager, utils
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import manifest, snap_yaml
 from snapcraft.projects import (
@@ -37,14 +37,6 @@ from snapcraft.projects import (
     ArchitectureProject,
     GrammarAwareProject,
     Project,
-)
-from snapcraft.providers.providers import (
-    SNAPCRAFT_BASE_TO_PROVIDER_BASE,
-    capture_logs_from_instance,
-    ensure_provider_is_available,
-    get_base_configuration,
-    get_instance_name,
-    get_provider,
 )
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
@@ -459,8 +451,8 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
     """
     emit.progress("Cleaning build provider")
     provider_name = "lxd" if parsed_args.use_lxd else None
-    provider = get_provider(provider_name)
-    instance_name = get_instance_name(
+    provider = providers.get_provider(provider_name)
+    instance_name = providers.get_instance_name(
         project_name=project.name,
         project_path=Path().absolute(),
         build_on=project.get_build_on(),
@@ -478,8 +470,8 @@ def _run_in_provider(
     """Pack image in provider instance."""
     emit.debug("Checking build provider availability")
     provider_name = "lxd" if parsed_args.use_lxd else None
-    provider = get_provider(provider_name)
-    ensure_provider_is_available(provider)
+    provider = providers.get_provider(provider_name)
+    providers.ensure_provider_is_available(provider)
 
     cmd = ["snapcraft", command_name]
 
@@ -518,16 +510,16 @@ def _run_in_provider(
     project_path = Path().absolute()
     output_dir = utils.get_managed_environment_project_path()
 
-    instance_name = get_instance_name(
+    instance_name = providers.get_instance_name(
         project_name=project.name,
         project_path=project_path,
         build_on=project.get_build_on(),
         build_for=project.get_build_for(),
     )
 
-    build_base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[project.get_effective_base()]
+    build_base = providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE[project.get_effective_base()]
 
-    base_configuration = get_base_configuration(
+    base_configuration = providers.get_base_configuration(
         alias=build_base,
         instance_name=instance_name,
         http_proxy=parsed_args.http_proxy,
@@ -567,7 +559,7 @@ def _run_in_provider(
                 ),
             ) from err
         finally:
-            capture_logs_from_instance(instance)
+            providers.capture_logs_from_instance(instance)
 
 
 def _set_global_environment(info: ProjectInfo) -> None:
