@@ -210,6 +210,7 @@ _required_snappy = [
     "SQUASHFS",
     "SQUASHFS_XATTR",
     "SQUASHFS_XZ",
+    "SQUASHFS_LZO",
 ]
 
 _required_systemd = [
@@ -1662,10 +1663,8 @@ def _do_check_config(builtin: List[str], modules: List[str]):
         warn = f"\n{msg}\n"
         for opt in missing:
             note = ""
-            if opt == "CONFIG_CC_STACKPROTECTOR":
-                note = "(4.0 – 4.15 versions only)"
-            elif opt == "CONFIG_CC_STACKPROTECTOR_STRONG":
-                note = "(4.0 – 4.17 versions only)"
+            if opt == "CONFIG_SQUASHFS_LZO":
+                note = "(used by desktop snaps for accelerated loading)"
             warn += f"{opt} {note}\n"
         logger.warning(warn)
 
