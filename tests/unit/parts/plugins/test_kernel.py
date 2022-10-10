@@ -15,14 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import inspect
+import logging
 import platform
 import sys
+import tempfile
 
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
 from pydantic import ValidationError
 
-from snapcraft.parts.plugins.kernel import KernelPlugin
+from snapcraft.parts.plugins.kernel import KernelPlugin, check_new_config
 
 
 @pytest.fixture
@@ -586,8 +588,6 @@ class TestPluginKernel:
         assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workroud_cmd)
         assert _is_sub_array(build_commands, _create_inird_cmd)
-        print(_create_efi_image_cmd)
-        print(build_commands)
         assert _is_sub_array(build_commands, _create_efi_image_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert _is_sub_array(build_commands, _build_zfs_cmd)
@@ -706,6 +706,145 @@ class TestPluginKernel:
         plugin = setup_method_fixture(new_dir, arch=arch)
         assert not hasattr(plugin, "kernel_arch")
         assert not hasattr(plugin, "deb_arch")
+
+    def test_check_new_config_good(self, setup_method_fixture, new_dir, caplog):
+        # create test config
+        with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8") as config_file:
+            config_file.write(
+                "".join(
+                    [
+                        x + "\n"
+                        for x in _BUUILT_IN_BASE
+                        + _SECCOMP_BUILD_IN
+                        + _SQUASHFS_BUUILT_IN
+                        + _SQUASHFS_LZO_BUILT_IN
+                    ]
+                )
+            )
+            config_file.flush()
+            with caplog.at_level(logging.WARNING):
+                check_new_config(config_path=config_file.name, initrd_modules=[])
+            assert caplog.text == ""
+
+    def test_check_new_config_missing(self, setup_method_fixture, new_dir, caplog):
+        # create test config
+        with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8") as config_file:
+            config_file.write(
+                "".join(
+                    [
+                        x + "\n"
+                        for x in _BUUILT_IN_BASE
+                        + _SECCOMP_NOT_SET
+                        + _SQUASHFS_NOT_SET
+                        + _SQUASHFS_LZO_NOT_SET
+                    ]
+                )
+            )
+            config_file.flush()
+            with caplog.at_level(logging.WARNING):
+                check_new_config(config_path=config_file.name, initrd_modules=[])
+            logs = list(
+                filter(
+                    None,
+                    caplog.text.split(
+                        "WARNING  snapcraft.parts.plugins.kernel:kernel.py"
+                    ),
+                )
+            )
+            # there should be 2 warning logs, one for missing configs, one for kernel module
+            assert len(logs) == 2
+            print(f"log1:{logs[0]}")
+            assert "**** WARNING **** WARNING **** WARNING **** WARNING ****" in logs[0]
+            assert "CONFIG_SECCOMP" in logs[0]
+            assert "CONFIG_SQUASHFS" in logs[0]
+            assert (
+                "CONFIG_SQUASHFS_LZO (used by desktop snaps for accelerated loading)"
+                in logs[0]
+            )
+            assert "**** WARNING **** WARNING **** WARNING **** WARNING ****" in logs[1]
+            assert "adding\nthe corresponding module to initrd:" in logs[1]
+            assert "CONFIG_SQUASHFS" in logs[1]
+
+    def test_check_new_config_squash_module_missing(
+        self, setup_method_fixture, new_dir, caplog
+    ):
+        # create test config
+        with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8") as config_file:
+            config_file.write(
+                "".join(
+                    [
+                        x + "\n"
+                        for x in _BUUILT_IN_BASE
+                        + _SECCOMP_BUILD_IN
+                        + _SQUASHFS_AS_MODULE
+                        + _SQUASHFS_LZO_BUILT_IN
+                    ]
+                )
+            )
+            config_file.flush()
+            with caplog.at_level(logging.WARNING):
+                check_new_config(config_path=config_file.name, initrd_modules=[])
+            # there should be 1 warning log for missing module in initrd
+            logs = list(
+                filter(
+                    None,
+                    caplog.text.split(
+                        "WARNING  snapcraft.parts.plugins.kernel:kernel.py"
+                    ),
+                )
+            )
+            assert len(logs) == 1
+            assert "**** WARNING **** WARNING **** WARNING **** WARNING ****" in logs[0]
+            assert "adding\nthe corresponding module to initrd:" in logs[0]
+            assert "CONFIG_SQUASHFS" in logs[0]
+
+    def test_check_new_config_squash_module(
+        self, setup_method_fixture, new_dir, caplog
+    ):
+        # create test config
+        with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8") as config_file:
+            config_file.write(
+                "".join(
+                    [
+                        x + "\n"
+                        for x in _BUUILT_IN_BASE
+                        + _SECCOMP_BUILD_IN
+                        + _SQUASHFS_AS_MODULE
+                        + _SQUASHFS_LZO_BUILT_IN
+                    ]
+                )
+            )
+            config_file.flush()
+            with caplog.at_level(logging.WARNING):
+                check_new_config(
+                    config_path=config_file.name, initrd_modules=["suashfs"]
+                )
+
+            logs = list(
+                filter(
+                    None,
+                    caplog.text.split(
+                        "WARNING  snapcraft.parts.plugins.kernel:kernel.py"
+                    ),
+                )
+            )
+            # there should be 1 warning log to consider module as built in
+            assert len(logs) == 1
+            assert "**** WARNING **** WARNING **** WARNING **** WARNING ****" in logs[0]
+            assert (
+                "The following features are deemed boot essential for\nubuntu core"
+                in logs[0]
+            )
+            assert "CONFIG_SQUASHFS" in logs[0]
+
+    def test_check_new_config_squash_missing_file(self, setup_method_fixture, new_dir):
+        # run with invalid file
+        e = ""
+        try:
+            check_new_config(config_path="wrong/file", initrd_modules=["suashfs"])
+        except FileNotFoundError as err:
+            e = err.strerror
+        assert e == "No such file or directory"
 
 
 def _is_sub_array(array, sub_array):
@@ -1397,3 +1536,57 @@ _build_perf_armhf_cmd = [
     ),
     'install -Dm0755 "${CRAFT_PART_BUILD}/tools/perf/perf" "${CRAFT_PART_INSTALL}/bin/perf"',
 ]
+
+
+_BUUILT_IN_BASE = [
+    "CONFIG_DEVTMPFS=y",
+    "CONFIG_DEVTMPFS_MOUNT=y",
+    "CONFIG_TMPFS_POSIX_ACL=y",
+    "CONFIG_IPV6=y",
+    "CONFIG_SYSVIPC=y",
+    "CONFIG_SYSVIPC_SYSCTL=y",
+    "CONFIG_VFAT_FS=y",
+    "CONFIG_NLS_CODEPAGE_437=y",
+    "CONFIG_NLS_ISO8859_1=y",
+    "CONFIG_SECURITY=y",
+    "CONFIG_SECURITY_APPARMOR=y",
+    "CONFIG_SYN_COOKIES=y",
+    "CONFIG_STRICT_DEVMEM=y",
+    "CONFIG_DEFAULT_SECURITY_APPARMOR=y",
+    "CONFIG_SECCOMP_FILTER=y",
+    "CONFIG_RD_LZMA=y",
+    "CONFIG_KEYS=y",
+    "CONFIG_ENCRYPTED_KEYS=y",
+    "CONFIG_DEVTMPFS=y",
+    "CONFIG_CGROUPS=y",
+    "CONFIG_INOTIFY_USER=y",
+    "CONFIG_SIGNALFD=y",
+    "CONFIG_TIMERFD=y",
+    "CONFIG_EPOLL=y",
+    "CONFIG_NET=y",
+    "CONFIG_SYSFS=y",
+    "CONFIG_PROC_FS=y",
+    "CONFIG_FHANDLE=y",
+    "CONFIG_BLK_DEV_BSG=y",
+    "CONFIG_NET_NS=y",
+    "CONFIG_IPV6=y",
+    "CONFIG_AUTOFS4_FS=y",
+    "CONFIG_TMPFS_POSIX_ACL=y",
+    "CONFIG_TMPFS_XATTR=y",
+    "CONFIG_SQUASHFS_XATTR=y",
+    "CONFIG_SQUASHFS_XZ=y",
+]
+
+_SQUASHFS_LZO_NOT_SET = ["# CONFIG_SQUASHFS_LZO is not set"]
+
+_SQUASHFS_LZO_BUILT_IN = ["CONFIG_SQUASHFS_LZO=y"]
+
+_SECCOMP_NOT_SET = ["# CONFIG_SECCOMP is not set"]
+
+_SECCOMP_BUILD_IN = ["CONFIG_SECCOMP=y"]
+
+_SQUASHFS_NOT_SET = ["# CONFIG_SQUASHFS is not set"]
+
+_SQUASHFS_BUUILT_IN = ["CONFIG_SQUASHFS=y"]
+
+_SQUASHFS_AS_MODULE = ["CONFIG_SQUASHFS=m"]
