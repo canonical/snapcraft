@@ -23,14 +23,6 @@ from testtools import TestCase
 
 from snapcraft_legacy.plugins.v2.kernel import KernelPlugin
 
-_DEB_ARCH_TRANSLATIONS = {"aarch64": "arm64", "x86_64": "amd64", "armv7l": "armhf"}
-
-_KERNEL_ARCH_TRANSLATIONS = {
-    "aarch64": "arm64",
-    "x86_64": "x86",
-    "armv7l": "arm",
-}
-
 
 class Kernelv2PluginProperties:
     kernel_kdefconfig: [str] = ["defconfig"]
@@ -732,6 +724,78 @@ class TestPluginKernel(TestCase):
         assert _is_sub_array(build_commands, _build_perf_armhf_cmd)
         assert _is_sub_array(build_commands, _finalize_install_cmd)
 
+    def test_check_arch_aarch64(self):
+        arch = "aarch64"
+        cross_building = False
+        if platform.machine() != arch:
+            cross_building = True
+        plugin = self._setup_test(arch=arch)
+        plugin.target_arch = _DEB_ARCH_TRANSLATIONS[arch]
+        plugin.kernel_arch = None
+        plugin.deb_arch = None
+        plugin._get_deb_architecture()
+        plugin._get_kernel_architecture()
+        assert plugin.kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
+        assert plugin.deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        assert plugin._cross_building == cross_building
+
+    def test_check_arch_armhf(self):
+        arch = "armv7l"
+        cross_building = False
+        if platform.machine() != arch:
+            cross_building = True
+        plugin = self._setup_test(arch=arch)
+        plugin.target_arch = _DEB_ARCH_TRANSLATIONS[arch]
+        plugin.kernel_arch = None
+        plugin.deb_arch = None
+        plugin._get_deb_architecture()
+        plugin._get_kernel_architecture()
+        assert plugin.kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
+        assert plugin.deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        assert plugin._cross_building == cross_building
+
+    def test_check_arch_riscv64(self):
+        arch = "riscv64"
+        cross_building = False
+        if platform.machine() != arch:
+            cross_building = True
+        plugin = self._setup_test(arch=arch)
+        plugin.target_arch = _DEB_ARCH_TRANSLATIONS[arch]
+        plugin.kernel_arch = None
+        plugin.deb_arch = None
+        plugin._get_deb_architecture()
+        plugin._get_kernel_architecture()
+        assert plugin.kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
+        assert plugin.deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        assert plugin._cross_building == cross_building
+
+    def test_check_arch_x86_64(self):
+        arch = "x86_64"
+        cross_building = False
+        if platform.machine() != arch:
+            cross_building = True
+        plugin = self._setup_test(arch=arch)
+        plugin.target_arch = _DEB_ARCH_TRANSLATIONS[arch]
+        plugin.kernel_arch = None
+        plugin.deb_arch = None
+        plugin._get_deb_architecture()
+        plugin._get_kernel_architecture()
+        assert plugin.kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
+        assert plugin.deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        assert plugin._cross_building == cross_building
+
+    def test_check_arch_i686(self):
+        # we do not support i686 so use this arch to test unknnown arch by plugin
+        arch = "i686"
+        plugin = self._setup_test(arch=arch)
+        plugin.target_arch = _DEB_ARCH_TRANSLATIONS[arch]
+        plugin.kernel_arch = None
+        plugin.deb_arch = None
+        plugin._get_deb_architecture()
+        plugin._get_kernel_architecture()
+        assert plugin.kernel_arch is None
+        assert plugin.deb_arch is None
+
 
 def _is_sub_array(array, sub_array):
 
@@ -763,7 +827,21 @@ def _is_sub_array(array, sub_array):
     return False
 
 
-_DEB_ARCH_TRANSLATIONS = {"aarch64": "arm64", "x86_64": "amd64", "armv7l": "armhf"}
+_DEB_ARCH_TRANSLATIONS = {
+    "aarch64": "arm64",
+    "armv7l": "armhf",
+    "i686": "i386",
+    "riscv64": "riscv64",
+    "x86_64": "amd64",
+}
+
+_KERNEL_ARCH_TRANSLATIONS = {
+    "aarch64": "arm64",
+    "armv7l": "arm",
+    "i686": "x86",
+    "riscv64": "riscv",
+    "x86_64": "x86",
+}
 
 _determine_kernel_src = [
     " ".join(

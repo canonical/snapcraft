@@ -20,6 +20,7 @@ import sys
 
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
+from pydantic import ValidationError
 
 from snapcraft.parts.plugins.kernel import KernelPlugin
 
@@ -38,7 +39,7 @@ def setup_method_fixture():
             project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         else:
             project_info = ProjectInfo(
-                application_name="test", cache_dir=new_dir, arch="armv7l"
+                application_name="test", cache_dir=new_dir, arch=arch
             )
 
         part_info = PartInfo(project_info=project_info, part=part)
@@ -323,6 +324,38 @@ class TestPluginKernel:
         assert not opt.kernel_enable_perf
         assert not opt.kernel_add_ppa
 
+    def test_check_configuration_image_wrong_image_target(
+        self, setup_method_fixture, new_dir
+    ):
+        try:
+            setup_method_fixture(
+                new_dir,
+                properties={
+                    "kernel-image-target": {"arm64", "Image", "armhf", "Image.gz"},
+                },
+            )
+        except ValidationError as err:
+            error_list = err.errors()
+            assert len(error_list) == 1
+            error = error_list[0]
+            assert "kernel-image-target is in invalid format" in error.get("msg")
+
+    def test_check_configuration_image_missing_initrd_compression(
+        self, setup_method_fixture, new_dir
+    ):
+        try:
+            setup_method_fixture(
+                new_dir,
+                properties={
+                    "kernel-initrd-compression-options": {"-9", "-l"},
+                },
+            )
+        except ValidationError as err:
+            error_list = err.errors()
+            assert len(error_list) == 1
+            error = error_list[0]
+            assert "kernel-initrd-compression-options requires" in error.get("msg")
+
     def test_check_out_of_source_build(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(new_dir)
         assert plugin.get_out_of_source_build() is True
@@ -574,7 +607,7 @@ class TestPluginKernel:
                 "kernel-initrd-configured-modules": ["libarc4"],
                 "kernel-initrd-overlay": "my-overlay",
             },
-            arch="armv7",
+            arch="armv7l",
         )
 
         # we need to get build environment
@@ -615,6 +648,65 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _build_perf_armhf_cmd)
         assert _is_sub_array(build_commands, _finalize_install_cmd)
 
+    def test_check_arch_aarch64(self, setup_method_fixture, new_dir):
+        arch = "aarch64"
+        cross_building = False
+        if platform.machine() != arch:
+            cross_building = True
+        plugin = setup_method_fixture(new_dir, arch=arch)
+        assert plugin.kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
+        assert plugin.deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        assert (
+            plugin._part_info.project_info.target_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        )
+        assert plugin._cross_building == cross_building
+
+    def test_check_arch_armhf(self, setup_method_fixture, new_dir):
+        arch = "armv7l"
+        cross_building = False
+        if platform.machine() != arch:
+            cross_building = True
+        plugin = setup_method_fixture(new_dir, arch=arch)
+        assert plugin.kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
+        assert plugin.deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        assert (
+            plugin._part_info.project_info.target_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        )
+        assert plugin._cross_building == cross_building
+
+    def test_check_arch_riscv64(self, setup_method_fixture, new_dir):
+        arch = "riscv64"
+        cross_building = False
+        if platform.machine() != arch:
+            cross_building = True
+        plugin = setup_method_fixture(new_dir, arch=arch)
+        assert plugin.kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
+        assert plugin.deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        assert (
+            plugin._part_info.project_info.target_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        )
+        assert plugin._cross_building == cross_building
+
+    def test_check_arch_x86_64(self, setup_method_fixture, new_dir):
+        arch = "x86_64"
+        cross_building = False
+        if platform.machine() != arch:
+            cross_building = True
+        plugin = setup_method_fixture(new_dir, arch=arch)
+        assert plugin.kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
+        assert plugin.deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        assert (
+            plugin._part_info.project_info.target_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        )
+        assert plugin._cross_building == cross_building
+
+    def test_check_arch_i686(self, setup_method_fixture, new_dir):
+        # we do not support i686 so use this arch to test unknnown arch by plugin
+        arch = "i686"
+        plugin = setup_method_fixture(new_dir, arch=arch)
+        assert not hasattr(plugin, "kernel_arch")
+        assert not hasattr(plugin, "deb_arch")
+
 
 def _is_sub_array(array, sub_array):
 
@@ -646,7 +738,19 @@ def _is_sub_array(array, sub_array):
     return False
 
 
-_DEB_ARCH_TRANSLATIONS = {"aarch64": "arm64", "x86_64": "amd64", "armv7l": "armhf"}
+_DEB_ARCH_TRANSLATIONS = {
+    "aarch64": "arm64",
+    "armv7l": "armhf",
+    "riscv64": "riscv64",
+    "x86_64": "amd64",
+}
+
+_KERNEL_ARCH_TRANSLATIONS = {
+    "aarch64": "arm64",
+    "armv7l": "arm",
+    "riscv64": "riscv",
+    "x86_64": "x86",
+}
 
 _determine_kernel_src = [
     " ".join(
