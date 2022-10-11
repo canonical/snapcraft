@@ -1248,7 +1248,7 @@ _build_kernel_custom_cc_cmd = [
 ]
 
 _build_kernel_x86_custom_cc_cmd = [
-    'make -j$(nproc) -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} CC="my-gcc" bzImage modules',
+    'make -j$(nproc) -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} CC="my-gcc" Image.gz modules',
 ]
 
 _build_kernel_clang_image_cmd = [
