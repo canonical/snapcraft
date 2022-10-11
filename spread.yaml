@@ -209,7 +209,9 @@ prepare: |
       apt-get remove --purge --yes lxd lxd-client
   fi
   # Install and setup the lxd snap
-  snap install lxd
+  if ! snap install lxd; then
+    journalctl -xe
+  fi
   # Add the ubuntu user to the lxd group.
   adduser ubuntu lxd
   lxd init --auto
