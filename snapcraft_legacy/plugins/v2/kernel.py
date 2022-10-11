@@ -1327,7 +1327,7 @@ class KernelPlugin(PluginV2):
             except subprocess.CalledProcessError as error:
                 # Export shouldn't exit with failure based on testing
                 raise ValueError(
-                    f"error to check for key={_SNAPPY_DEV_KEY_FINGERPRINT}: {error.output.decode()}"
+                    f"error to check for key={_SNAPPY_DEV_KEY_FINGERPRINT}: {error.output}"
                 )
 
             apt_key_output = proc.stdout.decode()
@@ -1354,7 +1354,7 @@ class KernelPlugin(PluginV2):
                     )
                 except subprocess.CalledProcessError as error:
                     raise errors.AptGPGKeyInstallError(
-                        output=error.output.decode(), key=_SNAPPY_DEV_KEY_FINGERPRINT
+                        output=error.output, key=_SNAPPY_DEV_KEY_FINGERPRINT
                     )
 
             # add ppa itself
