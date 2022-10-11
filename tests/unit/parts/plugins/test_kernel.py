@@ -17,6 +17,7 @@
 import inspect
 import logging
 import platform
+import subprocess
 import sys
 import tempfile
 
@@ -753,7 +754,6 @@ class TestPluginKernel:
             )
             # there should be 2 warning logs, one for missing configs, one for kernel module
             assert len(logs) == 2
-            print(f"log1:{logs[0]}")
             assert "**** WARNING **** WARNING **** WARNING **** WARNING ****" in logs[0]
             assert "CONFIG_SECCOMP" in logs[0]
             assert "CONFIG_SQUASHFS" in logs[0]
@@ -846,6 +846,197 @@ class TestPluginKernel:
             e = err.strerror
         assert e == "No such file or directory"
 
+    def test_add_ppa_key_exists(self, setup_method_fixture, new_dir, fp):
+        # we need to  mock subprocess.run first
+        fp.register(
+            ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
+            stdout=[
+                "/etc/apt/sources.list.d/snappy-dev-ubuntu-image-focal.list:deb http://ppa.launchpad.net/snappy-dev/image/ubuntu",
+                "focal",
+                "main",
+            ],
+        )
+        plugin = setup_method_fixture(new_dir)
+        plugin._add_snappy_ppa()
+        assert (
+            fp.call_count(
+                ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"]
+            )
+            == 1
+        )
+
+    def test_add_ppa_key_exists_happy(self, setup_method_fixture, new_dir, caplog, fp):
+        # we need to  mock subprocess.run first
+        fp.register(
+            ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
+            stdout=[""],
+        )
+        fp.register(
+            ["apt-key", "export", _SNAPPY_DEV_KEY_FINGERPRINT],
+            stdout=[
+                "----BEGIN PGP PUBLIC KEY BLOCK-----",
+                "",
+                "mQINBFRt70cBEADH/8JgKzFnwQQqtllZ3nqxYQ1cZguLCbyu9s1AwRDNu0P2oWOR",
+                "UN9YoUS15kuWtTuneVlLbdbda3N/S/HApvOWu7Q1oIrRRkpO4Jv4xN+1KaSpaTy1",
+            ],
+        )
+        fp.register(["add-apt-repository", "-y", "ppa:snappy-dev/image"], stdout=[""])
+
+        plugin = setup_method_fixture(new_dir)
+        with caplog.at_level(logging.INFO):
+            plugin._add_snappy_ppa()
+        assert (
+            fp.call_count(
+                ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"]
+            )
+            == 1
+        )
+        assert fp.call_count(["apt-key", "export", _SNAPPY_DEV_KEY_FINGERPRINT]) == 1
+        assert "key for ppa:snappy-dev/image already imported" in caplog.text
+        assert "adding ppa:snappy-dev/image to handle initrd builds" in caplog.text
+        assert fp.call_count(["add-apt-repository", "-y", "ppa:snappy-dev/image"]) == 1
+
+    def test_add_ppa_no_key_happy(self, setup_method_fixture, new_dir, caplog, fp):
+        # we need to  mock subprocess.run first
+        fp.register(
+            ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
+            stdout=[""],
+        )
+        fp.register(
+            ["apt-key", "export", _SNAPPY_DEV_KEY_FINGERPRINT],
+            stdout=["gpg: WARNING: nothing exported"],
+        )
+        fp.register(
+            [
+                "apt-key",
+                "adv",
+                "--keyserver",
+                "keyserver.ubuntu.com",
+                "--recv-keys",
+                _SNAPPY_DEV_KEY_FINGERPRINT,
+            ],
+            stdout=[""],
+        )
+        fp.register(["add-apt-repository", "-y", "ppa:snappy-dev/image"], stdout=[""])
+
+        plugin = setup_method_fixture(new_dir)
+        with caplog.at_level(logging.INFO):
+            plugin._add_snappy_ppa()
+        assert (
+            fp.call_count(
+                ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"]
+            )
+            == 1
+        )
+        assert fp.call_count(["apt-key", "export", _SNAPPY_DEV_KEY_FINGERPRINT]) == 1
+        assert "importing key for ppa:snappy-dev/image" in caplog.text
+        assert (
+            fp.call_count(
+                [
+                    "apt-key",
+                    "adv",
+                    "--keyserver",
+                    "keyserver.ubuntu.com",
+                    "--recv-keys",
+                    _SNAPPY_DEV_KEY_FINGERPRINT,
+                ],
+            )
+            == 1
+        )
+        assert "adding ppa:snappy-dev/image to handle initrd builds" in caplog.text
+        assert fp.call_count(["add-apt-repository", "-y", "ppa:snappy-dev/image"]) == 1
+
+    def test_add_ppa_key_check_unhappy(self, setup_method_fixture, new_dir, caplog, fp):
+        # we need to  mock subprocess.run first
+        fp.register(
+            ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
+            stdout=[""],
+        )
+        fp.register(
+            ["apt-key", "export", _SNAPPY_DEV_KEY_FINGERPRINT],
+            callback=subprocess_callback_function,
+        )
+        fp.register(["add-apt-repository", "-y", "ppa:snappy-dev/image"], stdout=[""])
+
+        plugin = setup_method_fixture(new_dir)
+        with caplog.at_level(logging.INFO):
+            try:
+                plugin._add_snappy_ppa()
+            except ValueError as e:
+                assert "error to check for key=F1831DDAFC42E99D: command failed" == str(
+                    e
+                )
+
+        assert (
+            fp.call_count(
+                ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"]
+            )
+            == 1
+        )
+        assert fp.call_count(["apt-key", "export", _SNAPPY_DEV_KEY_FINGERPRINT]) == 1
+        assert fp.call_count(["add-apt-repository", "-y", "ppa:snappy-dev/image"]) == 0
+
+    def test_add_ppa_key_add_unhappy(self, setup_method_fixture, new_dir, caplog, fp):
+        # we need to  mock subprocess.run first
+        fp.register(
+            ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
+            stdout=[""],
+        )
+        fp.register(
+            ["apt-key", "export", _SNAPPY_DEV_KEY_FINGERPRINT],
+            stdout=["gpg: WARNING: nothing exported"],
+        )
+        fp.register(
+            [
+                "apt-key",
+                "adv",
+                "--keyserver",
+                "keyserver.ubuntu.com",
+                "--recv-keys",
+                _SNAPPY_DEV_KEY_FINGERPRINT,
+            ],
+            callback=subprocess_callback_function,
+        )
+        fp.register(["add-apt-repository", "-y", "ppa:snappy-dev/image"], stdout=[""])
+
+        plugin = setup_method_fixture(new_dir)
+        with caplog.at_level(logging.INFO):
+            try:
+                plugin._add_snappy_ppa()
+            except ValueError as e:
+                assert "Failed to add ppa key: F1831DDAFC42E99D: command failed" == str(
+                    e
+                )
+
+        assert (
+            fp.call_count(
+                ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"]
+            )
+            == 1
+        )
+        assert fp.call_count(["apt-key", "export", _SNAPPY_DEV_KEY_FINGERPRINT]) == 1
+        assert (
+            fp.call_count(
+                [
+                    "apt-key",
+                    "adv",
+                    "--keyserver",
+                    "keyserver.ubuntu.com",
+                    "--recv-keys",
+                    _SNAPPY_DEV_KEY_FINGERPRINT,
+                ]
+            )
+            == 1
+        )
+        assert fp.call_count(["add-apt-repository", "-y", "ppa:snappy-dev/image"]) == 0
+
+
+def subprocess_callback_function(process):
+    process.returncode = 1
+    raise subprocess.CalledProcessError(
+        1, cmd="apt", output="command failed", stderr="command failed"
+    )
+
 
 def _is_sub_array(array, sub_array):
 
@@ -890,6 +1081,8 @@ _KERNEL_ARCH_TRANSLATIONS = {
     "riscv64": "riscv",
     "x86_64": "x86",
 }
+
+_SNAPPY_DEV_KEY_FINGERPRINT = "F1831DDAFC42E99D"
 
 _determine_kernel_src = [
     " ".join(
