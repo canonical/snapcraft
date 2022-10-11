@@ -30,11 +30,13 @@ from snapcraft.parts.plugins.kernel import KernelPlugin, check_new_config
 
 @pytest.fixture
 def setup_method_fixture():
-    def _setup_method_fixture(new_dir, properties=None, arch=None):
+    def _setup_method_fixture(
+        new_dir, properties=None, arch=None, kernel_add_ppa=False
+    ):
         if properties is None:
             properties = {}
         # Ensure that the PPA is not added so we don't cause side-effects
-        properties["kernel-add-ppa"] = False
+        properties["kernel-add-ppa"] = kernel_add_ppa
 
         part = Part("kernel", {})
 
@@ -533,6 +535,61 @@ class TestPluginKernel:
         assert not _is_sub_array(build_commands, _build_perf_cmd)
         assert _is_sub_array(build_commands, _finalize_install_cmd)
 
+    def test_check_get_build_command_unknown_compiler(
+        self, setup_method_fixture, new_dir, caplog
+    ):
+        plugin = setup_method_fixture(
+            new_dir,
+            properties={
+                "kernel-compiler": "my-gcc",
+            },
+        )
+
+        # we need to get build environment
+        plugin.get_build_environment()
+        with caplog.at_level(logging.INFO):
+            build_commands = plugin.get_build_commands()
+
+        assert "Only other 'supported' compiler is clang" in caplog.text
+        assert "hopefully you know what you are doing" in caplog.text
+        assert _is_sub_array(build_commands, _determine_kernel_src)
+        assert _is_sub_array(build_commands, _initrd_modules_empty_cmd)
+        assert _is_sub_array(build_commands, _initrd_configured_modules_empty_cmd)
+        assert _is_sub_array(build_commands, _link_files_fnc)
+        assert _is_sub_array(build_commands, _donwload_initrd_fnc)
+        assert _is_sub_array(build_commands, _get_initrd_cmd)
+        assert _is_sub_array(build_commands, _download_snapd_fnc)
+        assert _is_sub_array(build_commands, _get_snapd_cmd)
+        assert not _is_sub_array(build_commands, _clone_zfs_cmd)
+        assert _is_sub_array(build_commands, _clean_old_build_cmd)
+        assert _is_sub_array(build_commands, _prepare_config_custom_cc_cmd)
+        assert _is_sub_array(build_commands, _remake_old_config_custom_cc_cmd)
+        assert _check_config in build_commands
+        if platform.machine() == "x86_64":
+            assert _is_sub_array(build_commands, _build_kernel_x86_custom_cc_cmd)
+            assert _is_sub_array(build_commands, _install_kernel_x86_custom_cc_cmd)
+        else:
+            assert _is_sub_array(build_commands, _build_kernel_custom_cc_cmd)
+            assert _is_sub_array(build_commands, _install_kernel_custom_cc_cmd)
+
+        assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
+        assert _is_sub_array(build_commands, _install_initrd_modules_cmd)
+        assert _is_sub_array(build_commands, _configure_initrd_modules_cmd)
+        assert _is_sub_array(build_commands, _initrd_overlay_features_cmd)
+        assert not _is_sub_array(build_commands, _install_initrd_firmware_cmd)
+        assert not _is_sub_array(build_commands, _install_initrd_addons_cmd)
+        assert not _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
+        assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
+        assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_cmd)
+        assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_workroud_cmd)
+        assert _is_sub_array(build_commands, _create_inird_cmd)
+        assert _is_sub_array(build_commands, _install_config_cmd)
+        assert not _is_sub_array(build_commands, _build_zfs_cmd)
+        assert not _is_sub_array(build_commands, _build_perf_cmd)
+        assert _is_sub_array(build_commands, _finalize_install_cmd)
+
     def test_check_get_build_command_config_flavour_configs(
         self, setup_method_fixture, new_dir
     ):
@@ -541,7 +598,7 @@ class TestPluginKernel:
             properties={
                 "kernel-kconfigflavour": "raspi",
                 "kernel-kconfigs": ["CONFIG_DEBUG_INFO=n", "CONFIG_DM_CRYPT=y"],
-                "kernel-device-trees": ["pi3", "pi3b", "pi4", "cmd4"],
+                "kernel-device-trees": ["pi3", "pi3b", "pi4", "pi/cm3", "pi/cm4"],
                 "kernel-with-firmware": False,
                 "kernel-enable-zfs-support": True,
                 "kernel-enable-perf": True,
@@ -851,13 +908,14 @@ class TestPluginKernel:
         fp.register(
             ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
             stdout=[
-                "/etc/apt/sources.list.d/snappy-dev-ubuntu-image-focal.list:deb http://ppa.launchpad.net/snappy-dev/image/ubuntu",
+                "/etc/apt/sources.list.d/snappy-dev-ubuntu-image-focal.list:deb"
+                "http://ppa.launchpad.net/snappy-dev/image/ubuntu",
                 "focal",
                 "main",
             ],
         )
-        plugin = setup_method_fixture(new_dir)
-        plugin._add_snappy_ppa()
+        plugin = setup_method_fixture(new_dir, kernel_add_ppa=True)
+        plugin.get_build_packages()
         assert (
             fp.call_count(
                 ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"]
@@ -882,9 +940,9 @@ class TestPluginKernel:
         )
         fp.register(["add-apt-repository", "-y", "ppa:snappy-dev/image"], stdout=[""])
 
-        plugin = setup_method_fixture(new_dir)
+        plugin = setup_method_fixture(new_dir, kernel_add_ppa=True)
         with caplog.at_level(logging.INFO):
-            plugin._add_snappy_ppa()
+            plugin.get_build_packages()
         assert (
             fp.call_count(
                 ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"]
@@ -919,9 +977,9 @@ class TestPluginKernel:
         )
         fp.register(["add-apt-repository", "-y", "ppa:snappy-dev/image"], stdout=[""])
 
-        plugin = setup_method_fixture(new_dir)
+        plugin = setup_method_fixture(new_dir, kernel_add_ppa=True)
         with caplog.at_level(logging.INFO):
-            plugin._add_snappy_ppa()
+            plugin.get_build_packages()
         assert (
             fp.call_count(
                 ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"]
@@ -958,10 +1016,10 @@ class TestPluginKernel:
         )
         fp.register(["add-apt-repository", "-y", "ppa:snappy-dev/image"], stdout=[""])
 
-        plugin = setup_method_fixture(new_dir)
+        plugin = setup_method_fixture(new_dir, kernel_add_ppa=True)
         with caplog.at_level(logging.INFO):
             try:
-                plugin._add_snappy_ppa()
+                plugin.get_build_packages()
             except ValueError as e:
                 assert "error to check for key=F1831DDAFC42E99D: command failed" == str(
                     e
@@ -999,10 +1057,10 @@ class TestPluginKernel:
         )
         fp.register(["add-apt-repository", "-y", "ppa:snappy-dev/image"], stdout=[""])
 
-        plugin = setup_method_fixture(new_dir)
+        plugin = setup_method_fixture(new_dir, kernel_add_ppa=True)
         with caplog.at_level(logging.INFO):
             try:
-                plugin._add_snappy_ppa()
+                plugin.get_build_packages()
             except ValueError as e:
                 assert "Failed to add ppa key: F1831DDAFC42E99D: command failed" == str(
                     e
@@ -1207,6 +1265,13 @@ _prepare_config_cmd = [
     "fi",
 ]
 
+_prepare_config_custom_cc_cmd = [
+    'echo "Preparing config..."',
+    "if [ ! -e ${CRAFT_PART_BUILD}/.config ]; then",
+    '\t make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} CC="my-gcc" defconfig',
+    "fi",
+]
+
 _prepare_config_defconfig_cmd = [
     'echo "Preparing config..."',
     "if [ ! -e ${CRAFT_PART_BUILD}/.config ]; then",
@@ -1242,9 +1307,16 @@ _prepare_config_extra_config_cmd = [
     "echo 'CONFIG_DEBUG_INFO=n\nCONFIG_DM_CRYPT=y' >> ${CRAFT_PART_BUILD}/.config_snap",
     "mv ${CRAFT_PART_BUILD}/.config_snap ${CRAFT_PART_BUILD}/.config",
 ]
+
 _remake_old_config_cmd = [
     'echo "Remaking oldconfig...."',
     "bash -c ' yes \"\" || true' | make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} oldconfig",
+]
+
+_remake_old_config_custom_cc_cmd = [
+    'echo "Remaking oldconfig...."',
+    "bash -c ' yes \"\" || true'"
+    ' | make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} CC="my-gcc" oldconfig',
 ]
 
 _remake_old_config_clang_cmd = [
@@ -1293,6 +1365,14 @@ _build_kernel_x86_cmd = [
     "make -j$(nproc) -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} bzImage modules",
 ]
 
+_build_kernel_custom_cc_cmd = [
+    'make -j$(nproc) -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} CC="my-gcc" Image.gz modules dtbs',
+]
+
+_build_kernel_x86_custom_cc_cmd = [
+    'make -j$(nproc) -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} CC="my-gcc" bzImage modules',
+]
+
 _build_kernel_clang_image_cmd = [
     " ".join(
         [
@@ -1338,7 +1418,7 @@ _build_kernel_dtbs_cmd = [
             "make -j$(nproc)",
             "-C ${KERNEL_SRC}",
             "O=${CRAFT_PART_BUILD}",
-            "Image.gz modules pi3.dtb pi3b.dtb pi4.dtb cmd4.dtb",
+            "Image.gz modules pi3.dtb pi3b.dtb pi4.dtb pi/cm3.dtb pi/cm4.dtb",
         ],
     ),
 ]
@@ -1349,7 +1429,7 @@ _build_kernel_dtbs_x86_cmd = [
             "make -j$(nproc)",
             "-C ${KERNEL_SRC}",
             "O=${CRAFT_PART_BUILD}",
-            "bzImage modules pi3.dtb pi3b.dtb pi4.dtb cmd4.dtb",
+            "bzImage modules pi3.dtb pi3b.dtb pi4.dtb pi/cm3.dtb pi/cm4.dtb",
         ],
     ),
 ]
@@ -1372,6 +1452,33 @@ _install_kernel_x86_cmd = [
         [
             "make -j$(nproc) -C ${KERNEL_SRC}",
             "O=${CRAFT_PART_BUILD}",
+            "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
+            "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
+            "firmware_install INSTALL_FW_PATH=${CRAFT_PART_INSTALL}/lib/firmware",
+        ],
+    ),
+]
+
+_install_kernel_custom_cc_cmd = [
+    " ".join(
+        [
+            "make -j$(nproc) -C ${KERNEL_SRC}",
+            "O=${CRAFT_PART_BUILD}",
+            'CC="my-gcc"',
+            "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
+            "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
+            "dtbs_install INSTALL_DTBS_PATH=${CRAFT_PART_INSTALL}/dtbs",
+            "firmware_install INSTALL_FW_PATH=${CRAFT_PART_INSTALL}/lib/firmware",
+        ],
+    ),
+]
+
+_install_kernel_x86_custom_cc_cmd = [
+    " ".join(
+        [
+            "make -j$(nproc) -C ${KERNEL_SRC}",
+            "O=${CRAFT_PART_BUILD}",
+            'CC="my-gcc"',
             "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
             "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
             "firmware_install INSTALL_FW_PATH=${CRAFT_PART_INSTALL}/lib/firmware",
@@ -1464,7 +1571,8 @@ _install_dtbs_cmd = [
     "ln -f ${KERNEL_BUILD_ARCH_DIR}/dts/pi3.dtb ${CRAFT_PART_INSTALL}/dtbs/pi3.dtb",
     "ln -f ${KERNEL_BUILD_ARCH_DIR}/dts/pi3b.dtb ${CRAFT_PART_INSTALL}/dtbs/pi3b.dtb",
     "ln -f ${KERNEL_BUILD_ARCH_DIR}/dts/pi4.dtb ${CRAFT_PART_INSTALL}/dtbs/pi4.dtb",
-    "ln -f ${KERNEL_BUILD_ARCH_DIR}/dts/cmd4.dtb ${CRAFT_PART_INSTALL}/dtbs/cmd4.dtb",
+    "ln -f ${KERNEL_BUILD_ARCH_DIR}/dts/pi/cm3.dtb ${CRAFT_PART_INSTALL}/dtbs/cm3.dtb",
+    "ln -f ${KERNEL_BUILD_ARCH_DIR}/dts/pi/cm4.dtb ${CRAFT_PART_INSTALL}/dtbs/cm4.dtb",
 ]
 
 _install_initrd_modules_cmd = [
