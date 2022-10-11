@@ -1340,6 +1340,7 @@ class KernelPlugin(PluginV2):
                 try:
                     subprocess.run(
                         [
+                            "sudo",
                             "apt-key",
                             "adv",
                             "--keyserver",
