@@ -144,7 +144,7 @@ class PluginV1:
         During the stripping phase and in order to have a clean snap, the
         plugin can provide additional logic for stripping build components
         from the final snap and alleviate the part author from doing so for
-        repetetive filesets.
+        repetitive filesets.
 
         These are the rules to honor when creating such list:
 
