@@ -98,7 +98,7 @@ class LinterError(SnapcraftError):
         self.exit_code = exit_code
         super().__init__(
             message,
-            resolution="Make sure the issues are addressed or ignore the isses in snapcraft.yaml.",
+            resolution="Make sure the issues are addressed or ignore the issues in snapcraft.yaml.",
         )
 
 
