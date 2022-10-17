@@ -50,10 +50,10 @@ def test_capture_logs_from_instance(mocker, emitter, mock_instance, new_dir):
         call.temporarily_pull_file(source=Path("/tmp/snapcraft.log"), missing_ok=True)
     ]
     expected = [
-        call("trace", "Logs retrieved from managed instance:"),
-        call("trace", ":: some"),
-        call("trace", ":: log data"),
-        call("trace", ":: here"),
+        call("debug", "Logs retrieved from managed instance:"),
+        call("debug", ":: some"),
+        call("debug", ":: log data"),
+        call("debug", ":: here"),
     ]
     emitter.assert_interactions(expected)
 
@@ -68,7 +68,7 @@ def test_capture_log_from_instance_not_found(mocker, emitter, mock_instance, new
 
     providers.capture_logs_from_instance(mock_instance)
 
-    emitter.assert_trace("Could not find log file /tmp/snapcraft.log in instance.")
+    emitter.assert_debug("Could not find log file /tmp/snapcraft.log in instance.")
     mock_instance.temporarily_pull_file.assert_called_with(
         source=Path("/tmp/snapcraft.log"), missing_ok=True
     )
