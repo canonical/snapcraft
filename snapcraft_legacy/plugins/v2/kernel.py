@@ -150,6 +150,7 @@ setup accordingly.
 
 import logging
 import os
+import re
 import subprocess
 import sys
 from typing import Any, Dict, List, Set
@@ -1282,7 +1283,8 @@ class KernelPlugin(PluginV2):
         # check if we are using gcc or another compiler
         if self.options.kernel_compiler:
             # at the moment only clang is supported as alternative, warn otherwise
-            if self.options.kernel_compiler != "clang":
+            kernel_compiler = re.match(r"^clang(-\d+)?$", self.options.kernel_compiler)
+            if kernel_compiler is None:
                 logger.warning("Only other 'supported' compiler is clang")
                 logger.info("hopefully you know what you are doing")
             self.make_cmd.append(f'CC="{self.options.kernel_compiler}"')
