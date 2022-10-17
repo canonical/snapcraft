@@ -143,6 +143,11 @@ The following kernel-specific options are provided by this plugin:
       (boolean; default: True)
       controls if the snappy-dev PPA should be added to the system
 
+    - kernel-use-llvm
+      (boolean or string to specify version suffix; default: False)
+      Use the LLVM substitutes for the GNU binutils utilities. Set this to a
+      string (e.g. "-12") to use a specific version of the LLVM utilities.
+
 This plugin support cross compilation, for which plugin expects
 the build-environment is comfigured accordingly and has foreign architectures
 setup accordingly.
@@ -153,7 +158,7 @@ import os
 import re
 import subprocess
 import sys
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 from overrides import overrides
 
@@ -342,6 +347,10 @@ class KernelPlugin(PluginV2):
                     "type": "boolean",
                     "default": True,
                 },
+                "kernel-use-llvm": {
+                    "oneOf": [{"type": "boolean"}, {"type": "string"}],
+                    "default": False,
+                },
             },
         }
 
@@ -357,6 +366,23 @@ class KernelPlugin(PluginV2):
         self._cross_building = False
         if host_arch != self.target_arch:
             self._cross_building = True
+        self._llvm_version = self._determine_llvm_version()
+
+    def _determine_llvm_version(self) -> Optional[str]:
+        if (
+            isinstance(self.options.kernel_use_llvm, bool)
+            and self.options.kernel_use_llvm
+        ):
+            return "1"
+        if isinstance(self.options.kernel_use_llvm, str):
+            suffix = re.match(r"^-\d+$", self.options.kernel_use_llvm)
+            if suffix is None:
+                raise ValueError(
+                    f'kernel-use-llvm must match the format "-<version>" (e.g. "-12"), not "{self.options.kernel_use_llvm}"'
+                )
+            return self.options.kernel_use_llvm
+        # Not use LLVM utilities
+        return None
 
     def _init_build_env(self) -> None:
         # first get all the architectures, new v2 plugin is making life difficult
@@ -370,6 +396,7 @@ class KernelPlugin(PluginV2):
 
         self._check_cross_compilation()
         self._set_kernel_targets()
+        self._set_llvm()
 
         # determine type of initrd
         snapd_snap_file_name = _SNAPD_SNAP_FILE.format(
@@ -451,6 +478,10 @@ class KernelPlugin(PluginV2):
                 ["dtbs_install", "INSTALL_DTBS_PATH=${SNAPCRAFT_PART_INSTALL}/dtbs"]
             )
         self.make_install_targets.extend(self._get_fw_install_targets())
+
+    def _set_llvm(self) -> None:
+        if self._llvm_version is not None:
+            self.make_cmd.append(f'LLVM="{self._llvm_version}"')
 
     def _get_fw_install_targets(self) -> List[str]:
         if not self.options.kernel_with_firmware:
@@ -1408,6 +1439,16 @@ class KernelPlugin(PluginV2):
         # add snappy ppa to get correct initrd tools
         if self.options.kernel_add_ppa:
             self._add_snappy_ppa()
+
+        if self._llvm_version is not None:
+            # Use the specified version suffix for the packages if it has been
+            # set by the user
+            suffix = self._llvm_version if self._llvm_version != "1" else ""
+            llvm_packages = [
+                "llvm",
+                "lld",
+            ]
+            build_packages |= set(f"{f}{suffix}" for f in llvm_packages)
 
         return build_packages
 

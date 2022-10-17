@@ -20,6 +20,7 @@ import platform
 import sys
 import tempfile
 from dataclasses import dataclass
+from typing import Union
 
 from testtools import TestCase
 
@@ -47,6 +48,7 @@ class Kernelv2PluginProperties:
     kernel_enable_zfs_support: bool = False
     kernel_enable_perf: bool = False
     kernel_add_ppa: bool = False
+    kernel_use_llvm: bool = False
 
 
 class TestPluginKernel(TestCase):
@@ -78,6 +80,7 @@ class TestPluginKernel(TestCase):
         kernelcompilerparameters=None,
         kernelenablezfssupport=False,
         kernelenableperf=False,
+        kernelusellvm: Union[bool, str] = False,
         arch=platform.machine(),
     ):
         @dataclass
@@ -101,6 +104,7 @@ class TestPluginKernel(TestCase):
             kernel_compiler_parameters = kernelcompilerparameters
             kernel_enable_zfs_support = kernelenablezfssupport
             kernel_enable_perf = kernelenableperf
+            kernel_use_llvm = kernelusellvm
             # Ensure that the PPA is not added so we don't cause side-effects
             kernel_add_ppa = False
 
@@ -229,6 +233,10 @@ class TestPluginKernel(TestCase):
                     "kernel-add-ppa": {
                         "type": "boolean",
                         "default": True,
+                    },
+                    "kernel-use-llvm": {
+                        "oneOf": [{"type": "boolean"}, {"type": "string"}],
+                        "default": False,
                     },
                 },
             },
@@ -364,6 +372,7 @@ class TestPluginKernel(TestCase):
         self.assertFalse(opt.kernel_enable_zfs_support)
         self.assertFalse(opt.kernel_enable_perf)
         self.assertFalse(opt.kernel_add_ppa)
+        self.assertFalse(opt.kernel_use_llvm)
 
     def test_check_configuration_kde_config(self):
         plugin = self._setup_test(
@@ -393,6 +402,7 @@ class TestPluginKernel(TestCase):
         self.assertFalse(opt.kernel_enable_zfs_support)
         self.assertFalse(opt.kernel_enable_perf)
         self.assertFalse(opt.kernel_add_ppa)
+        self.assertFalse(opt.kernel_use_llvm)
 
     def test_check_configuration_image_target(self):
         plugin = self._setup_test(
@@ -425,6 +435,7 @@ class TestPluginKernel(TestCase):
         self.assertFalse(opt.kernel_enable_zfs_support)
         self.assertFalse(opt.kernel_enable_perf)
         self.assertFalse(opt.kernel_add_ppa)
+        self.assertFalse(opt.kernel_use_llvm)
 
     def test_check_configuration_konfig_file(self):
         plugin = self._setup_test(
@@ -458,6 +469,7 @@ class TestPluginKernel(TestCase):
         self.assertFalse(opt.kernel_enable_zfs_support)
         self.assertFalse(opt.kernel_enable_perf)
         self.assertFalse(opt.kernel_add_ppa)
+        self.assertFalse(opt.kernel_use_llvm)
 
     def test_check_get_build_environment(self):
         plugin = self._setup_test()
@@ -979,6 +991,70 @@ class TestPluginKernel(TestCase):
         except FileNotFoundError as err:
             e = err.strerror
         assert e == "No such file or directory"
+
+    def test_use_llvm(self):
+        plugin = self._setup_test(kernelusellvm=True)
+        self.assertEqual("1", plugin._llvm_version)
+        self.assertEqual(
+            plugin.get_build_packages(),
+            {
+                "bc",
+                "binutils",
+                "gcc",
+                "cmake",
+                "cryptsetup",
+                "dracut-core",
+                "kmod",
+                "kpartx",
+                "lld",
+                "llvm",
+                "lz4",
+                "systemd",
+            },
+        )
+        plugin.get_build_environment()
+        cmd = plugin.get_build_commands()
+        targets = f"{plugin.kernel_image_target} modules"
+        if plugin.kernel_arch in ("arm", "arm64", "riscv64"):
+            targets += " dtbs"
+        self.assertIn(
+            f'make -j$(nproc) -C ${{KERNEL_SRC}} O=${{SNAPCRAFT_PART_BUILD}} LLVM="1" {targets}',
+            cmd,
+        )
+
+    def test_use_llvm_specific_version(self):
+        version = "-10"
+        plugin = self._setup_test(kernelusellvm=version)
+        self.assertEqual(version, plugin._llvm_version)
+        self.assertEqual(
+            plugin.get_build_packages(),
+            {
+                "bc",
+                "binutils",
+                "gcc",
+                "cmake",
+                "cryptsetup",
+                "dracut-core",
+                "kmod",
+                "kpartx",
+                f"lld{version}",
+                f"llvm{version}",
+                "lz4",
+                "systemd",
+            },
+        )
+        plugin.get_build_environment()
+        cmd = plugin.get_build_commands()
+        targets = f"{plugin.kernel_image_target} modules"
+        if plugin.kernel_arch in ("arm", "arm64", "riscv64"):
+            targets += " dtbs"
+        self.assertIn(
+            f'make -j$(nproc) -C ${{KERNEL_SRC}} O=${{SNAPCRAFT_PART_BUILD}} LLVM="{version}" {targets}',
+            cmd,
+        )
+
+    def test_bad_llvm_version(self):
+        self.assertRaises(ValueError, self._setup_test, kernelusellvm="-badsuffix")
 
 
 def _is_sub_array(array, sub_array):
