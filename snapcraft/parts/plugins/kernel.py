@@ -1,22 +1,21 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
-# pylint: disable=line-too-long,missing-function-docstring,import-error,too-many-lines,missing-class-docstring,attribute-defined-outside-init,too-many-instance-attributes
+# pylint: disable=line-too-long,too-many-lines,attribute-defined-outside-init
 #
-# Copyright 2020 Canonical Ltd.
+# Copyright 2020-2022 Canonical Ltd.
 #
-# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License version 3 as published by the Free Software Foundation.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-# You should have received a copy of the GNU Lesser General Public License
+# You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The kernel plugin for builging kernel snaps.
+"""The kernel plugin for building kernel snaps.
 
 The following kernel-specific options are provided by this plugin:
 
@@ -416,9 +415,9 @@ class KernelPlugin(plugins.Plugin):
                 f"{' '.join(self.options.kernel_initrd_configured_modules)}"
             )
         return [
-            "# listf of kernel modules to be installed in initrd",
+            "# list of kernel modules to be installed in initrd",
             f'initrd_installed_kernel_modules="{initrd_installed_kernel_modules}"',
-            "# listf of kernel modules in initrd to be auto loaded by",
+            "# list of kernel modules in initrd to be auto loaded by",
             "# any module in this list implies to be added to initrd",
             f'initrd_configured_kernel_modules="{initrd_configured_kernel_modules}"',
         ]
@@ -428,28 +427,28 @@ class KernelPlugin(plugins.Plugin):
             "# link files, accept wild cards",
             "# 1: reference dir, 2: file(s) including wild cards, 3: dst dir",
             "link_files() {",
-            '\tif [ "${2}" = "*" ]; then',
-            "\t\tfor f in $(ls ${1})",
-            "\t\tdo",
-            "\t\t\tlink_files ${1} ${f} ${3}",
-            "\t\tdone",
-            "\t\treturn 0",
-            "\tfi",
-            "\tif [ -d ${1}/${2} ]; then",
-            "\t\tfor f in $(ls ${1}/${2})",
-            "\t\tdo",
-            "\t\t\tlink_files ${1} ${2}/${f} ${3}",
-            "\t\tdone",
-            "\t\treturn 0",
-            "\tfi",
+            "\t" 'if [ "${2}" = "*" ]; then',
+            "\t\t" "for f in $(ls ${1})",
+            "\t\t" "do",
+            "\t\t\t" "link_files ${1} ${f} ${3}",
+            "\t\t" "done",
+            "\t\t" "return 0",
+            "\t" "fi",
+            "\t" "if [ -d ${1}/${2} ]; then",
+            "\t\t" "for f in $(ls ${1}/${2})",
+            "\t\t" "do",
+            "\t\t\t" "link_files ${1} ${2}/${f} ${3}",
+            "\t\t" "done",
+            "\t\t" "return 0",
+            "\t" "fi",
             "",
-            '\tlocal found=""',
-            "\tfor f in $(ls ${1}/${2})",
-            "\tdo",
-            '\t\tif [[ -L "${f}" ]]; then',
+            "\t" 'local found=""',
+            "\t" "for f in $(ls ${1}/${2})",
+            "\t" "do",
+            "\t\t" 'if [[ -L "${f}" ]]; then',
             " ".join(
                 [
-                    "\t\t\tlocal rel_path=$(",
+                    "\t\t\t" "local rel_path=$(",
                     "realpath",
                     "--no-symlinks",
                     "--relative-to=${1}",
@@ -457,10 +456,10 @@ class KernelPlugin(plugins.Plugin):
                     ")",
                 ]
             ),
-            "\t\telse",
+            "\t\t" "else",
             " ".join(
                 [
-                    "\t\t\tlocal rel_path=$(",
+                    "\t\t\t" "local rel_path=$(",
                     "realpath",
                     "-se",
                     "--relative-to=${1}",
@@ -468,18 +467,18 @@ class KernelPlugin(plugins.Plugin):
                     ")",
                 ]
             ),
-            "\t\tfi",
-            "\t\tlocal dir_path=$(dirname ${rel_path})",
-            "\t\tmkdir -p ${3}/${dir_path}",
-            '\t\techo "installing ${f} to ${3}/${dir_path}"',
-            "\t\tln -f ${f} ${3}/${dir_path}",
-            '\t\tfound="yes"',
-            "\tdone",
-            '\tif [ "yes" = "${found}" ]; then',
-            "\t\treturn 0",
-            "\telse",
-            "\t\treturn 1",
-            "\tfi",
+            "\t\t" "fi",
+            "\t\t" "local dir_path=$(dirname ${rel_path})",
+            "\t\t" "mkdir -p ${3}/${dir_path}",
+            "\t\t" 'echo "installing ${f} to ${3}/${dir_path}"',
+            "\t\t" "ln -f ${f} ${3}/${dir_path}",
+            "\t\t" 'found="yes"',
+            "\t" "done",
+            "\t" 'if [ "yes" = "${found}" ]; then',
+            "\t\t" "return 0",
+            "\t" "else",
+            "\t\t" "return 1",
+            "\t" "fi",
             "}",
         ]
 
