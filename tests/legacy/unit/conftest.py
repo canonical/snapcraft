@@ -82,7 +82,7 @@ def xdg_dirs(tmp_path, monkeypatch):
 
 @pytest.fixture()
 def in_snap(monkeypatch):
-    """Simualte being run from within the context of the Snapcraft snap."""
+    """Simulate being run from within the context of the Snapcraft snap."""
     monkeypatch.setenv("SNAP", "/snap/snapcraft/current")
     monkeypatch.setenv("SNAP_NAME", "snapcraft")
     monkeypatch.setenv("SNAP_VERSION", "4.0")

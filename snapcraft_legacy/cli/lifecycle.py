@@ -221,7 +221,7 @@ def _run_pack(snap_command: List[Union[str, pathlib.Path]]) -> str:
     try:
         snap_filename = stdout.split(":")[1].strip()
     except IndexError:
-        logger.debug("Failed to parse snap pack outpout: {stdout}")
+        logger.debug("Failed to parse snap pack output: {stdout}")
         snap_filename = stdout
 
     return snap_filename

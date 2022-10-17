@@ -133,7 +133,7 @@ def _finalize_icon(
     if parsed_url.scheme in ["http", "https"]:
         # Remote - fetch URL and write to target.
         emit.progress(f"Fetching icon from {icon!r}")
-        icon_data = requests.get(icon).content
+        icon_data = requests.get(icon, timeout=120).content
         target_icon_path.write_bytes(icon_data)
     elif parsed_url.scheme == "":
         source_path = Path(
