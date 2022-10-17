@@ -1088,6 +1088,80 @@ class TestPluginKernel:
         )
         assert fp.call_count(["add-apt-repository", "-y", "ppa:snappy-dev/image"]) == 0
 
+    def test_use_llvm(self, setup_method_fixture, new_dir):
+        plugin = setup_method_fixture(
+            new_dir,
+            properties={
+                "kernel-use-llvm": True,
+            },
+        )
+        assert plugin._llvm_version == "1"
+        assert plugin.get_build_packages() == {
+            "bc",
+            "binutils",
+            "gcc",
+            "cmake",
+            "cryptsetup",
+            "dracut-core",
+            "kmod",
+            "kpartx",
+            "lld",
+            "llvm",
+            "systemd",
+            "zstd",
+        }
+        plugin.get_build_environment()
+        cmd = plugin.get_build_commands()
+        targets = f"{plugin.kernel_image_target} modules"
+        if plugin.kernel_arch in ("arm", "arm64", "riscv64"):
+            targets += " dtbs"
+        assert (
+            f'make -j$(nproc) -C ${{KERNEL_SRC}} O=${{CRAFT_PART_BUILD}} LLVM="1" {targets}'
+            in cmd
+        )
+
+    def test_use_llvm_specific_version(self, setup_method_fixture, new_dir):
+        version = "-10"
+        plugin = setup_method_fixture(
+            new_dir,
+            properties={
+                "kernel-use-llvm": version,
+            },
+        )
+        assert plugin._llvm_version == version
+        assert plugin.get_build_packages() == {
+            "bc",
+            "binutils",
+            "gcc",
+            "cmake",
+            "cryptsetup",
+            "dracut-core",
+            "kmod",
+            "kpartx",
+            f"lld{version}",
+            f"llvm{version}",
+            "systemd",
+            "zstd",
+        }
+        plugin.get_build_environment()
+        cmd = plugin.get_build_commands()
+        targets = f"{plugin.kernel_image_target} modules"
+        if plugin.kernel_arch in ("arm", "arm64", "riscv64"):
+            targets += " dtbs"
+        assert (
+            f'make -j$(nproc) -C ${{KERNEL_SRC}} O=${{CRAFT_PART_BUILD}} LLVM="{version}" {targets}'
+            in cmd
+        )
+
+    def test_bad_llvm_version(self, setup_method_fixture, new_dir):
+        with pytest.raises(ValueError):
+            setup_method_fixture(
+                new_dir,
+                properties={
+                    "kernel-use-llvm": "-badsuffix",
+                },
+            )
+
 
 def subprocess_callback_function(process):
     process.returncode = 1
