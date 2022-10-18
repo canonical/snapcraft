@@ -50,12 +50,12 @@ def capture_logs_from_instance(instance: executor.Executor) -> None:
         source=source_log_path, missing_ok=True
     ) as log_path:
         if log_path:
-            emit.trace("Logs retrieved from managed instance:")
+            emit.debug("Logs retrieved from managed instance:")
             with open(log_path, "r", encoding="utf8") as log_file:
                 for line in log_file:
-                    emit.trace(":: " + line.rstrip())
+                    emit.debug(":: " + line.rstrip())
         else:
-            emit.trace(
+            emit.debug(
                 f"Could not find log file {source_log_path.as_posix()} in instance."
             )
 
