@@ -310,25 +310,3 @@ class StoreLegacyListValidationSetsCommand(LegacyBaseCommand):
     def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
         parser.add_argument("--name", help="limit results to <name>")
         parser.add_argument("--sequence", help="limit results to <sequence>")
-
-
-class StoreLegacyEditValidationSetsCommand(LegacyBaseCommand):
-    """Command passthrough for the edit-validation-sets command."""
-
-    name = "edit-validation-sets"
-    help_msg = "Edit the list of validations for <name>"
-    overview = textwrap.dedent(
-        """
-        Refer to https://snapcraft.io/docs/validation-sets for further information
-        on Validation Sets.
-        """
-    )
-
-    @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
-        parser.add_argument(
-            "--key-name", metavar="key-name", help="Key used to sign the assertion"
-        )
-        parser.add_argument("account_id", metavar="account-id")
-        parser.add_argument("set_name", metavar="set-name")
-        parser.add_argument("sequence", metavar="sequence")

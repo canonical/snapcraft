@@ -67,8 +67,18 @@ def project_vars(mocker):
 @pytest.fixture()
 def mock_provider(mocker, mock_instance, fake_provider):
     _mock_provider = Mock(wraps=fake_provider)
-    mocker.patch("snapcraft.providers.get_provider", return_value=_mock_provider)
+    mocker.patch(
+        "snapcraft.parts.lifecycle.providers.get_provider", return_value=_mock_provider
+    )
     yield _mock_provider
+
+
+@pytest.fixture()
+def mock_get_instance_name(mocker):
+    yield mocker.patch(
+        "snapcraft.parts.lifecycle.providers.get_instance_name",
+        return_value="test-instance-name",
+    )
 
 
 def test_config_not_found(new_dir):
@@ -155,9 +165,6 @@ def test_lifecycle_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
     """Option --provider is not supported in core22."""
     snapcraft_yaml(base="core22")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
-    mocker.patch(
-        "snapcraft.providers.Provider.is_base_available", return_value=(True, None)
-    )
 
     with pytest.raises(errors.SnapcraftError) as raised:
         parts_lifecycle.run(
@@ -201,9 +208,6 @@ def test_lifecycle_run_ua_services_without_token(cmd, snapcraft_yaml, new_dir, m
     """UA services require --ua-token."""
     snapcraft_yaml(base="core22", **{"ua-services": ["svc1", "svc2"]})
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
-    mocker.patch(
-        "snapcraft.providers.Provider.is_base_available", return_value=(True, None)
-    )
 
     with pytest.raises(errors.SnapcraftError) as raised:
         parts_lifecycle.run(
@@ -230,9 +234,6 @@ def test_lifecycle_run_ua_services_without_experimental_flag(
     """UA services require --ua-token."""
     snapcraft_yaml(base="core22", **{"ua-services": ["svc1", "svc2"]})
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
-    mocker.patch(
-        "snapcraft.providers.Provider.is_base_available", return_value=(True, None)
-    )
 
     with pytest.raises(errors.SnapcraftError) as raised:
         parts_lifecycle.run(
@@ -545,14 +546,13 @@ def test_lifecycle_metadata_empty(field, snapcraft_yaml, new_dir):
     assert str(raised.value) == f"Field {field!r} was not adopted from metadata"
 
 
-def test_lifecycle_run_command_clean(snapcraft_yaml, project_vars, new_dir, mocker):
+def test_lifecycle_run_command_clean(
+    snapcraft_yaml, project_vars, new_dir, mocker, mock_get_instance_name
+):
     """Clean provider project when called without parts."""
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     clean_mock = mocker.patch(
         "snapcraft.providers.LXDProvider.clean_project_environments"
-    )
-    mocker.patch(
-        "snapcraft.parts.lifecycle.get_instance_name", return_value="test-instance-name"
     )
 
     parts_lifecycle._run_command(
@@ -1100,19 +1100,24 @@ def test_lifecycle_run_permission_denied(new_dir):
 
 
 def test_lifecycle_run_in_provider_default(
-    mock_instance, mock_provider, mocker, snapcraft_yaml, tmp_path
+    mock_get_instance_name,
+    mock_instance,
+    mock_provider,
+    mocker,
+    snapcraft_yaml,
+    tmp_path,
 ):
     """Verify default calls made in `run_in_provider()`"""
     mock_base_configuration = Mock()
     mock_get_base_configuration = mocker.patch(
-        "snapcraft.parts.lifecycle.get_base_configuration",
+        "snapcraft.parts.lifecycle.providers.get_base_configuration",
         return_value=mock_base_configuration,
     )
-    mock_get_instance_name = mocker.patch(
-        "snapcraft.parts.lifecycle.get_instance_name", return_value="test-instance-name"
-    )
     mock_capture_logs_from_instance = mocker.patch(
-        "snapcraft.parts.lifecycle.capture_logs_from_instance"
+        "snapcraft.parts.lifecycle.providers.capture_logs_from_instance"
+    )
+    mock_ensure_provider_is_available = mocker.patch(
+        "snapcraft.parts.lifecycle.providers.ensure_provider_is_available"
     )
     mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
     mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
@@ -1138,7 +1143,7 @@ def test_lifecycle_run_in_provider_default(
         ),
     )
 
-    mock_provider.ensure_provider_is_available.assert_called_once()
+    mock_ensure_provider_is_available.assert_called_once_with(mock_provider)
     mock_get_instance_name.assert_called_once_with(
         project_name="mytest",
         project_path=tmp_path,
@@ -1178,6 +1183,7 @@ def test_lifecycle_run_in_provider_default(
     ],
 )
 def test_lifecycle_run_in_provider_all_options(
+    mock_get_instance_name,
     mock_instance,
     mock_provider,
     mocker,
@@ -1189,14 +1195,14 @@ def test_lifecycle_run_in_provider_all_options(
     """Verify all project options are parsed in `run_in_provider()`."""
     mock_base_configuration = Mock()
     mock_get_base_configuration = mocker.patch(
-        "snapcraft.parts.lifecycle.get_base_configuration",
+        "snapcraft.parts.lifecycle.providers.get_base_configuration",
         return_value=mock_base_configuration,
     )
-    mock_get_instance_name = mocker.patch(
-        "snapcraft.parts.lifecycle.get_instance_name", return_value="test-instance-name"
-    )
     mock_capture_logs_from_instance = mocker.patch(
-        "snapcraft.parts.lifecycle.capture_logs_from_instance"
+        "snapcraft.parts.lifecycle.providers.capture_logs_from_instance"
+    )
+    mock_ensure_provider_is_available = mocker.patch(
+        "snapcraft.parts.lifecycle.providers.ensure_provider_is_available"
     )
     mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
     mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
@@ -1256,7 +1262,7 @@ def test_lifecycle_run_in_provider_all_options(
         ),
     )
 
-    mock_provider.ensure_provider_is_available.assert_called_once()
+    mock_ensure_provider_is_available.assert_called_once_with(mock_provider)
     mock_get_instance_name.assert_called_once_with(
         project_name="mytest",
         project_path=tmp_path,
@@ -1276,8 +1282,6 @@ def test_lifecycle_run_in_provider_all_options(
         build_base="22.04",
         instance_name="test-instance-name",
     )
-
-    mock_provider.ensure_provider_is_available.assert_called_once()
     mock_instance.mount.assert_has_calls(
         [
             call(host_source=tmp_path, target=Path("/root/project")),

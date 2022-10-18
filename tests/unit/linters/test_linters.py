@@ -146,7 +146,7 @@ class TestLinterRun:
 
     def test_run_linters(self, mocker, new_dir, linter_issue):
         mocker.patch(
-            "snapcraft.linters.linters._LINTERS", {"test": TestLinterRun._TestLinter}
+            "snapcraft.linters.linters.LINTERS", {"test": TestLinterRun._TestLinter}
         )
         yaml_data = {
             "name": "mytest",
@@ -178,7 +178,7 @@ class TestLinterRun:
 
     def test_run_linters_ignore(self, mocker, new_dir, linter_issue):
         mocker.patch(
-            "snapcraft.linters.linters._LINTERS", {"test": TestLinterRun._TestLinter}
+            "snapcraft.linters.linters.LINTERS", {"test": TestLinterRun._TestLinter}
         )
         yaml_data = {
             "name": "mytest",
@@ -198,12 +198,12 @@ class TestLinterRun:
             arch_triplet="x86_64-linux-gnu",
         )
 
-        lint = projects.Lint(ignore=projects.LintIgnore(linters=["test"]))
+        lint = projects.Lint(ignore=["test"])
         issues = linters.run_linters(new_dir, lint=lint)
         assert issues == []
 
     def test_ignore_matching_filenames(self, linter_issue):
-        lint = projects.Lint(ignore=projects.LintIgnore(files=["foo*", "some/dir/*"]))
+        lint = projects.Lint(ignore=[{"test": ["foo*", "some/dir/*"]}])
         issues = [
             linter_issue(filename="foo.txt", result=LinterResult.WARNING),
             linter_issue(filename="bar.txt", result=LinterResult.WARNING),

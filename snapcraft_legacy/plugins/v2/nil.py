@@ -14,10 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The nil plugin is useful for parts with no source.
+"""A plugin that defines no build commands.
 
-Using this, parts can be defined purely by utilizing properties automatically
-included by Snapcraft, e.g. stage-packages.
+The nil plugin is useful in two contexts:
+
+First, it can be used for parts that identify no source, and can
+be defined purely by using built-in part properties such as
+``stage-packages``.
+
+The second use is for parts that do define a source (which will be
+fetched), but for which the build step then needs to be explicitly
+defined using ``override-build``; otherwise, even though the source
+is fetched, nothing will end up in that part's install directory. In
+short, for the case of a part that uses the nil plugin and defines a
+source, it is up to the developer to then define the ``override-build``
+step that, in some way, populates the ``$SNAPCRAFT_PART_INSTALL``
+directory.
 """
 
 from typing import Any, Dict, List, Set

@@ -22,9 +22,13 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from craft_cli import emit
-from craft_providers import bases, executor
+from craft_providers import Provider, ProviderError, bases, executor
+from craft_providers.lxd import LXDProvider
+from craft_providers.multipass import MultipassProvider
 
+from snapcraft.snap_config import get_snap_config
 from snapcraft.utils import (
+    confirm_with_user,
     get_managed_environment_log_path,
     get_managed_environment_snap_channel,
 )
@@ -54,6 +58,42 @@ def capture_logs_from_instance(instance: executor.Executor) -> None:
             emit.trace(
                 f"Could not find log file {source_log_path.as_posix()} in instance."
             )
+
+
+def ensure_provider_is_available(provider: Provider) -> None:
+    """Ensure provider is installed, running, and properly configured.
+
+    If the provider is not installed, the user is prompted to install it.
+
+    :param instance: the provider to ensure is available
+
+    :raises ProviderError: if provider is unknown, not available, or if the user
+    chooses not to install the provider.
+    """
+    if isinstance(provider, LXDProvider):
+        if not LXDProvider.is_provider_installed() and not confirm_with_user(
+            "LXD is required but not installed. Do you wish to install LXD and configure "
+            "it with the defaults?",
+            default=False,
+        ):
+            raise ProviderError(
+                "LXD is required, but not installed. Visit https://snapcraft.io/lxd "
+                "for instructions on how to install the LXD snap for your distribution",
+            )
+        LXDProvider.ensure_provider_is_available()
+    elif isinstance(provider, MultipassProvider):
+        if not MultipassProvider.is_provider_installed() and not confirm_with_user(
+            "Multipass is required but not installed. Do you wish to install Multipass"
+            " and configure it with the defaults?",
+            default=False,
+        ):
+            raise ProviderError(
+                "Multipass is required, but not installed. Visit https://multipass.run/"
+                "for instructions on installing Multipass for your operating system."
+            )
+        MultipassProvider.ensure_provider_is_available()
+    else:
+        raise ProviderError("cannot install unknown provider")
 
 
 def get_base_configuration(
@@ -150,3 +190,59 @@ def get_instance_name(
             str(project_path.stat().st_ino),
         ]
     )
+
+
+def get_provider(provider: Optional[str] = None) -> Provider:
+    """Get the configured or appropriate provider for the host OS.
+
+    To determine the appropriate provider,
+    (1) use provider specified in the function argument,
+    (2) get the provider from the environment,
+    (3) use provider specified with snap configuration,
+    (4) default to platform default (LXD on Linux, otherwise Multipass).
+
+    :return: Provider instance.
+    """
+    chosen_provider = ""
+    env_provider = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT")
+
+    # load snap config file
+    snap_config = get_snap_config()
+    snap_provider = snap_config.provider if snap_config else None
+
+    # (1) use provider specified in the function argument
+    if provider:
+        emit.debug(f"Using provider {provider!r} passed as an argument.")
+        chosen_provider = provider
+
+    # (2) get the provider from the environment
+    elif env_provider:
+        emit.debug(
+            f"Using provider {env_provider!r} from environmental "
+            "variable 'SNAPCRAFT_BUILD_ENVIRONMENT'."
+        )
+        chosen_provider = env_provider
+
+    # (3) use provider specified with snap configuration
+    elif snap_provider:
+        emit.debug(f"Using provider {snap_provider!r} from snap config.")
+        chosen_provider = snap_provider
+
+    # (4) default to platform default (LXD on Linux, otherwise Multipass)
+    elif sys.platform == "linux":
+        emit.debug("Using default provider 'lxd' on linux system.")
+        chosen_provider = "lxd"
+    else:
+        emit.debug("Using default provider 'multipass' on non-linux system.")
+        chosen_provider = "multipass"
+
+    # ignore case
+    chosen_provider = chosen_provider.lower()
+
+    # return the chosen provider
+    if chosen_provider == "lxd":
+        return LXDProvider(lxd_project="snapcraft")
+    if chosen_provider == "multipass":
+        return MultipassProvider()
+
+    raise ValueError(f"unsupported provider specified: {chosen_provider!r}")

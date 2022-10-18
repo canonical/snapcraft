@@ -23,12 +23,11 @@ from unittest.mock import Mock
 
 import pytest
 import yaml
-from craft_providers import Executor
+from craft_providers import Executor, Provider
 from craft_providers.base import Base
 from pymacaroons import Caveat, Macaroon
 
 from snapcraft.extensions import extension, register, unregister
-from snapcraft.providers import Provider
 
 
 @pytest.fixture
