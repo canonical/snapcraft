@@ -535,19 +535,12 @@ def _run_in_provider(
         build_base=build_base.value,
         instance_name=instance_name,
     ) as instance:
-        # mount project
-        instance.mount(
-            host_source=project_path,
-            target=utils.get_managed_environment_project_path(),
-        )
-
-        # mount ssh directory
-        if parsed_args.bind_ssh:
-            instance.mount(
-                host_source=Path.home() / ".ssh",
-                target=utils.get_managed_environment_home_path() / ".ssh",
-            )
         try:
+            providers.prepare_instance(
+                instance=instance,
+                host_project_path=project_path,
+                bind_ssh=parsed_args.bind_ssh,
+            )
             with emit.pause():
                 # run snapcraft inside the instance
                 instance.execute_run(cmd, check=True, cwd=output_dir)
