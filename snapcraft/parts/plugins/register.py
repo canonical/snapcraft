@@ -20,9 +20,11 @@ import craft_parts
 
 from .colcon import ColconPlugin
 from .conda_plugin import CondaPlugin
+from .flutter_plugin import FlutterPlugin
 
 
 def register() -> None:
     """Register Snapcraft plugins."""
     craft_parts.plugins.register({"colcon": ColconPlugin})
     craft_parts.plugins.register({"conda": CondaPlugin})
+    craft_parts.plugins.register({"flutter": FlutterPlugin})

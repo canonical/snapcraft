@@ -19,6 +19,7 @@
 
 from .colcon import ColconPlugin
 from .conda_plugin import CondaPlugin
+from .flutter_plugin import FlutterPlugin
 from .register import register
 
-__all__ = ["ColconPlugin", "CondaPlugin", "register"]
+__all__ = ["ColconPlugin", "CondaPlugin", "FlutterPlugin", "register"]
