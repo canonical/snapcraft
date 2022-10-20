@@ -721,7 +721,7 @@ class TestGitConflicts(GitBaseTestCase):
         call(["git", "init", "--bare"])
 
         self.clone_repo(repo, working_tree)
-        call(["git", "submodule", "add", sub_repo])
+        call(["git", "-c", "protocol.file.allow=always", "submodule", "add", sub_repo])
         call(["git", "commit", "-am", "added submodule"])
         call(["git", "push", repo])
 
