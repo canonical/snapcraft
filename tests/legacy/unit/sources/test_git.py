@@ -750,9 +750,9 @@ class TestGitConflicts(GitBaseTestCase):
         call(
             [
                 "git",
-                "submodule",
                 "-c",
                 "protocol.file.allow=always",
+                "submodule",
                 "update",
                 "--init",
                 "--recursive",
