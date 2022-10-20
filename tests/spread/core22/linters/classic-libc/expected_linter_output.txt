@@ -3,45 +3,45 @@ Running linter: classic
 Lint OK:
 - classic: Snap contains staged libc.
 Lint warnings:
-- classic: lib/x86_64-linux-gnu/libBrokenLocale.so.1: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libBrokenLocale.so.1: ELF rpath should be set to '$ORIGIN'.
-- classic: lib/x86_64-linux-gnu/libanl.so.1: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libanl.so.1: ELF rpath should be set to '$ORIGIN'.
-- classic: lib/x86_64-linux-gnu/libc.so.6: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libc_malloc_debug.so.0: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libc_malloc_debug.so.0: ELF rpath should be set to '$ORIGIN'.
-- classic: lib/x86_64-linux-gnu/libdl.so.2: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libdl.so.2: ELF rpath should be set to '$ORIGIN'.
-- classic: lib/x86_64-linux-gnu/libm.so.6: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libm.so.6: ELF rpath should be set to '$ORIGIN'.
-- classic: lib/x86_64-linux-gnu/libmemusage.so: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libmemusage.so: ELF rpath should be set to '$ORIGIN'.
-- classic: lib/x86_64-linux-gnu/libmvec.so.1: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libmvec.so.1: ELF rpath should be set to '$ORIGIN'.
-- classic: lib/x86_64-linux-gnu/libnsl.so.1: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libnsl.so.1: ELF rpath should be set to '$ORIGIN'.
-- classic: lib/x86_64-linux-gnu/libnss_compat.so.2: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libnss_compat.so.2: ELF rpath should be set to '$ORIGIN'.
-- classic: lib/x86_64-linux-gnu/libnss_dns.so.2: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libnss_dns.so.2: ELF rpath should be set to '$ORIGIN'.
-- classic: lib/x86_64-linux-gnu/libnss_files.so.2: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libnss_files.so.2: ELF rpath should be set to '$ORIGIN'.
-- classic: lib/x86_64-linux-gnu/libnss_hesiod.so.2: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libnss_hesiod.so.2: ELF rpath should be set to '$ORIGIN'.
-- classic: lib/x86_64-linux-gnu/libpcprofile.so: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libpcprofile.so: ELF rpath should be set to '$ORIGIN'.
-- classic: lib/x86_64-linux-gnu/libpthread.so.0: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libpthread.so.0: ELF rpath should be set to '$ORIGIN'.
-- classic: lib/x86_64-linux-gnu/libresolv.so.2: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libresolv.so.2: ELF rpath should be set to '$ORIGIN'.
-- classic: lib/x86_64-linux-gnu/librt.so.1: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/librt.so.1: ELF rpath should be set to '$ORIGIN'.
-- classic: lib/x86_64-linux-gnu/libthread_db.so.1: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libthread_db.so.1: ELF rpath should be set to '$ORIGIN'.
-- classic: lib/x86_64-linux-gnu/libutil.so.1: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: lib/x86_64-linux-gnu/libutil.so.1: ELF rpath should be set to '$ORIGIN'.
-- classic: usr/bin/hello: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: usr/bin/hello: ELF rpath should be set to '$ORIGIN/../../lib/x86_64-linux-gnu'.
-- classic: usr/lib/x86_64-linux-gnu/audit/sotruss-lib.so: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'.
-- classic: usr/lib/x86_64-linux-gnu/audit/sotruss-lib.so: ELF rpath should be set to '$ORIGIN/../../../../lib/x86_64-linux-gnu'.
+- classic: lib/x86_64-linux-gnu/libBrokenLocale.so.1: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libBrokenLocale.so.1: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libanl.so.1: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libanl.so.1: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libc.so.6: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libc_malloc_debug.so.0: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libc_malloc_debug.so.0: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libdl.so.2: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libdl.so.2: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libm.so.6: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libm.so.6: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libmemusage.so: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libmemusage.so: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libmvec.so.1: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libmvec.so.1: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libnsl.so.1: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libnsl.so.1: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libnss_compat.so.2: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libnss_compat.so.2: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libnss_dns.so.2: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libnss_dns.so.2: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libnss_files.so.2: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libnss_files.so.2: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libnss_hesiod.so.2: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libnss_hesiod.so.2: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libpcprofile.so: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libpcprofile.so: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libpthread.so.0: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libpthread.so.0: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libresolv.so.2: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libresolv.so.2: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/librt.so.1: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/librt.so.1: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libthread_db.so.1: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libthread_db.so.1: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libutil.so.1: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: lib/x86_64-linux-gnu/libutil.so.1: ELF rpath should be set to '$ORIGIN'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: usr/bin/hello: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: usr/bin/hello: ELF rpath should be set to '$ORIGIN/../../lib/x86_64-linux-gnu'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: usr/lib/x86_64-linux-gnu/audit/sotruss-lib.so: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://forum.snapcraft.io/t/classic-linter/32228)
+- classic: usr/lib/x86_64-linux-gnu/audit/sotruss-lib.so: ELF rpath should be set to '$ORIGIN/../../../../lib/x86_64-linux-gnu'. (https://forum.snapcraft.io/t/classic-linter/32228)
 Creating snap package...
