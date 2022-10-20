@@ -11,8 +11,7 @@ codespell==2.2.1
 coverage==6.5.0
 craft-cli==1.2.0
 craft-grammar==1.1.1
-#craft-parts==1.15.0
-git+https://github.com/canonical/craft-parts@main#egg=craft-parts
+craft-parts==1.16.0
 craft-providers==1.6.0
 craft-store==2.3.0
 cryptography==3.4
