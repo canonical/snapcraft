@@ -1119,6 +1119,9 @@ def test_lifecycle_run_in_provider_default(
     mock_ensure_provider_is_available = mocker.patch(
         "snapcraft.parts.lifecycle.providers.ensure_provider_is_available"
     )
+    mock_prepare_instance = mocker.patch(
+        "snapcraft.parts.lifecycle.providers.prepare_instance"
+    )
     mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
     mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
 
@@ -1163,8 +1166,8 @@ def test_lifecycle_run_in_provider_default(
         build_base="22.04",
         instance_name="test-instance-name",
     )
-    mock_instance.mount.assert_called_with(
-        host_source=tmp_path, target=Path("/root/project")
+    mock_prepare_instance.assert_called_with(
+        instance=mock_instance, host_project_path=tmp_path, bind_ssh=False
     )
     mock_instance.execute_run.assert_called_once_with(
         expected_command, check=True, cwd=Path("/root/project")
@@ -1182,6 +1185,7 @@ def test_lifecycle_run_in_provider_default(
         (EmitterMode.TRACE, "--verbosity=trace"),
     ],
 )
+# pylint: disable-next=too-many-locals
 def test_lifecycle_run_in_provider_all_options(
     mock_get_instance_name,
     mock_instance,
@@ -1203,6 +1207,9 @@ def test_lifecycle_run_in_provider_all_options(
     )
     mock_ensure_provider_is_available = mocker.patch(
         "snapcraft.parts.lifecycle.providers.ensure_provider_is_available"
+    )
+    mock_prepare_instance = mocker.patch(
+        "snapcraft.parts.lifecycle.providers.prepare_instance"
     )
     mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
     mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
@@ -1282,11 +1289,8 @@ def test_lifecycle_run_in_provider_all_options(
         build_base="22.04",
         instance_name="test-instance-name",
     )
-    mock_instance.mount.assert_has_calls(
-        [
-            call(host_source=tmp_path, target=Path("/root/project")),
-            call(host_source=Path().home() / ".ssh", target=Path("/root/.ssh")),
-        ]
+    mock_prepare_instance.assert_called_with(
+        instance=mock_instance, host_project_path=tmp_path, bind_ssh=True
     )
     mock_instance.execute_run.assert_called_once_with(
         expected_command, check=True, cwd=Path("/root/project")
