@@ -19,6 +19,7 @@
 import os
 from typing import Any, Dict, Final
 
+import craft_store.creds
 from craft_store import BaseClient, endpoints, models
 from overrides import overrides
 
@@ -56,9 +57,11 @@ class OnPremClient(BaseClient):
             json={"macaroon": root_macaroon},
         )
 
-        return response.json()["macaroon"]
+        return craft_store.creds.marshal_candid_credentials(response.json()["macaroon"])
 
     @overrides
     def _get_authorization_header(self) -> str:
-        auth = self._auth.get_credentials()
+        auth = craft_store.creds.unmarshal_candid_credentials(
+            self._auth.get_credentials()
+        )
         return f"macaroon {auth}"
