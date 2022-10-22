@@ -16,6 +16,7 @@
 
 import inspect
 import logging
+import os
 import platform
 import subprocess
 import sys
@@ -461,7 +462,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
-        assert _is_sub_array(build_commands, _initrd_tool_workroud_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
         assert _is_sub_array(build_commands, _create_inird_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert not _is_sub_array(build_commands, _build_zfs_cmd)
@@ -529,7 +530,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert _is_sub_array(build_commands, _update_initrd_compression_cmd)
-        assert _is_sub_array(build_commands, _initrd_tool_workroud_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
         assert _is_sub_array(build_commands, _create_inird_stage_firmware_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert not _is_sub_array(build_commands, _build_zfs_cmd)
@@ -584,7 +585,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
-        assert _is_sub_array(build_commands, _initrd_tool_workroud_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
         assert _is_sub_array(build_commands, _create_inird_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert not _is_sub_array(build_commands, _build_zfs_cmd)
@@ -606,6 +607,7 @@ class TestPluginKernel:
                 "kernel-initrd-modules": ["dm-crypt", "slimbus"],
                 "kernel-initrd-configured-modules": ["libarc4"],
                 "kernel-initrd-overlay": "my-overlay",
+                "kernel-initrd-compression": "gz",
                 "kernel-build-efi-image": "true",
             },
         )
@@ -644,8 +646,8 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
-        assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
-        assert _is_sub_array(build_commands, _initrd_tool_workroud_cmd)
+        assert _is_sub_array(build_commands, _update_initrd_compression_gz_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
         assert _is_sub_array(build_commands, _create_inird_cmd)
         assert _is_sub_array(build_commands, _create_efi_image_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
@@ -700,7 +702,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
-        assert _is_sub_array(build_commands, _initrd_tool_workroud_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
         assert _is_sub_array(build_commands, _create_inird_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert _is_sub_array(build_commands, _build_zfs_cmd)
@@ -875,25 +877,44 @@ class TestPluginKernel:
             config_file.flush()
             with caplog.at_level(logging.WARNING):
                 check_new_config(
-                    config_path=config_file.name, initrd_modules=["suashfs"]
+                    config_path=config_file.name, initrd_modules=["squashfs"]
                 )
 
-            logs = list(
-                filter(
-                    None,
-                    caplog.text.split(
-                        "WARNING  snapcraft.parts.plugins.kernel:kernel.py"
-                    ),
+            # there should be no warnings
+            assert caplog.text is ""
+
+    def test_external_check_new_config(self, setup_method_fixture):
+        # create test config
+        with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8") as config_file:
+            config_file.write(
+                "".join(
+                    [
+                        x + "\n"
+                        for x in _BUUILT_IN_BASE
+                        + _SECCOMP_BUILD_IN
+                        + _SQUASHFS_AS_MODULE
+                        + _SQUASHFS_LZO_BUILT_IN
+                    ]
                 )
             )
-            # there should be 1 warning log to consider module as built in
-            assert len(logs) == 1
-            assert "**** WARNING **** WARNING **** WARNING **** WARNING ****" in logs[0]
-            assert (
-                "The following features are deemed boot essential for\nubuntu core"
-                in logs[0]
+            config_file.flush()
+            plugin_path = os.path.abspath(check_new_config.__globals__["__file__"])
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "-I",
+                    plugin_path,
+                    "check_new_config",
+                    config_file.name,
+                    "squashfs",
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
             )
-            assert "CONFIG_SQUASHFS" in logs[0]
+
+            out = proc.stdout.decode()
+            assert out == "Checking created config...\n"
 
     def test_check_new_config_squash_missing_file(self, setup_method_fixture, new_dir):
         # run with invalid file
@@ -1758,7 +1779,12 @@ _update_initrd_compression_cmd = [
     "sed -i 's/zstd -1 -T0/lz4 -9 -l/g' ${ubuntu_core_initramfs}",
 ]
 
-_initrd_tool_workroud_cmd = [
+_update_initrd_compression_gz_cmd = [
+    'echo "Updating compression command to be used for initrd"',
+    "sed -i 's/zstd -1 -T0/gzip -7/g' ${ubuntu_core_initramfs}",
+]
+
+_initrd_tool_workaroud_cmd = [
     "for feature in kernel-modules snap-bootstrap uc-firmware uc-overlay",
     "do",
     " ".join(

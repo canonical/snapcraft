@@ -573,7 +573,7 @@ class TestPluginKernel(TestCase):
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
-        assert _is_sub_array(build_commands, _initrd_tool_workroud_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
         assert _is_sub_array(build_commands, _create_inird_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert not _is_sub_array(build_commands, _build_zfs_cmd)
@@ -636,7 +636,7 @@ class TestPluginKernel(TestCase):
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert _is_sub_array(build_commands, _update_initrd_compression_cmd)
-        assert _is_sub_array(build_commands, _initrd_tool_workroud_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
         assert _is_sub_array(build_commands, _create_inird_stage_firmware_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert not _is_sub_array(build_commands, _build_zfs_cmd)
@@ -688,7 +688,7 @@ class TestPluginKernel(TestCase):
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
-        assert _is_sub_array(build_commands, _initrd_tool_workroud_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
         assert _is_sub_array(build_commands, _create_inird_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert not _is_sub_array(build_commands, _build_zfs_cmd)
@@ -706,6 +706,7 @@ class TestPluginKernel(TestCase):
             kernelinitrdmodules=["dm-crypt", "slimbus"],
             kernelinitrdconfiguredmodules=["libarc4"],
             kernelinitrdoverlay="my-overlay",
+            kernelinitrdcompression="gz",
         )
 
         # we need to get build environment
@@ -738,8 +739,8 @@ class TestPluginKernel(TestCase):
         assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
-        assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
-        assert _is_sub_array(build_commands, _initrd_tool_workroud_cmd)
+        assert _is_sub_array(build_commands, _update_initrd_compression_gz_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
         assert _is_sub_array(build_commands, _create_inird_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert _is_sub_array(build_commands, _build_zfs_cmd)
@@ -790,7 +791,7 @@ class TestPluginKernel(TestCase):
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
-        assert _is_sub_array(build_commands, _initrd_tool_workroud_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
         assert _is_sub_array(build_commands, _create_inird_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert _is_sub_array(build_commands, _build_zfs_cmd)
@@ -975,20 +976,13 @@ class TestPluginKernel(TestCase):
             )
             config_file.flush()
             with self.assertLogs(level=logging.WARNING) as cm:
+                # assert log does not support no log case, we log and check that
+                # if the only log
+                logging.getLogger("kernel.py").warning("ONLY WARNING")
                 check_new_config(
-                    config_path=config_file.name, initrd_modules=["suashfs"]
+                    config_path=config_file.name, initrd_modules=["squashfs"]
                 )
-            # there should be 1 warning log to consider module as built in
-            assert len(cm.output) == 1
-            assert (
-                "**** WARNING **** WARNING **** WARNING **** WARNING ****"
-                in cm.output[0]
-            )
-            assert (
-                "The following features are deemed boot essential for\nubuntu core"
-                in cm.output[0]
-            )
-            assert "CONFIG_SQUASHFS" in cm.output[0]
+            self.assertEqual(cm.output, ["WARNING:kernel.py:ONLY WARNING"])
 
     def test_check_new_config_squash_missing_file(self):
         # run with invalid file
@@ -1631,7 +1625,12 @@ _update_initrd_compression_cmd = [
     "sed -i 's/lz4 -9 -l/lz4 -9 -l/g' ${ubuntu_core_initramfs}",
 ]
 
-_initrd_tool_workroud_cmd = [
+_update_initrd_compression_gz_cmd = [
+    'echo "Updating compression command to be used for initrd"',
+    "sed -i 's/lz4 -9 -l/gzip -7/g' ${ubuntu_core_initramfs}",
+]
+
+_initrd_tool_workaroud_cmd = [
     "for feature in kernel-modules snap-bootstrap uc-firmware uc-overlay",
     "do",
     " ".join(
