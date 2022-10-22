@@ -97,6 +97,13 @@ The following kernel-specific options are provided by this plugin:
       If module in question is not supported by the kernel, it's automatically
       removed.
 
+    - kernel-initrd-stage-firmware:
+      (boolean; default: False)
+      When building initrd, required firmware is automatically added based
+      on the included kernel modules. By default required firmware is searched
+      in the install directory of the current part. This flag allows used of firmware
+      from stage directory instead.
+
     - kernel-initrd-firmware:
       (array of string)
       list of firmware files to be included in the initrd; these need to be
@@ -287,6 +294,10 @@ class KernelPlugin(PluginV2):
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],
+                },
+                "kernel-initrd-stage-firmware": {
+                    "type": "boolean",
+                    "default": False,
                 },
                 "kernel-initrd-firmware": {
                     "type": "array",
@@ -917,6 +928,9 @@ class KernelPlugin(PluginV2):
                 "",
             ],
         )
+        firmware_dir = "${SNAPCRAFT_PART_INSTALL}/lib/firmware"
+        if self.options.kernel_initrd_stage_firmware:
+            firmware_dir = "${SNAPCRAFT_STAGE}/firmware"
         cmd_create_initrd.extend(
             [
                 "",
@@ -930,7 +944,7 @@ class KernelPlugin(PluginV2):
                         "--kerneldir",
                         "${SNAPCRAFT_PART_INSTALL}/lib/modules/${KERNEL_RELEASE}",
                         "--firmwaredir",
-                        "${SNAPCRAFT_STAGE}/firmware",
+                        firmware_dir,
                         "--skeleton",
                         "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs",
                         # "--feature",

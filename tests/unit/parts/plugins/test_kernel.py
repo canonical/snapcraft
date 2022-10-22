@@ -483,6 +483,7 @@ class TestPluginKernel:
                 "kernel-initrd-compression": "lz4",
                 "kernel-initrd-compression-options": ["-9", "-l"],
                 "kernel-initrd-modules": ["dm-crypt", "slimbus"],
+                "kernel-initrd-stage-firmware": True,
                 "kernel-initrd-firmware": ["firmware/for/wifi", "firmware/for/webcam"],
                 "kernel-initrd-addons": [
                     "usr/bin/cryptsetup",
@@ -529,7 +530,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert _is_sub_array(build_commands, _update_initrd_compression_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workroud_cmd)
-        assert _is_sub_array(build_commands, _create_inird_cmd)
+        assert _is_sub_array(build_commands, _create_inird_stage_firmware_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert not _is_sub_array(build_commands, _build_zfs_cmd)
         assert not _is_sub_array(build_commands, _build_perf_cmd)
@@ -1778,6 +1779,21 @@ _initrd_tool_workroud_cmd = [
 ]
 
 _create_inird_cmd = [
+    " ".join(
+        [
+            "${ubuntu_core_initramfs}",
+            "create-initrd",
+            "--kernelver=${KERNEL_RELEASE}",
+            "--kerneldir ${CRAFT_PART_INSTALL}/lib/modules/${KERNEL_RELEASE}",
+            "--firmwaredir ${CRAFT_PART_INSTALL}/lib/firmware",
+            "--skeleton ${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs",
+            "--output ${CRAFT_PART_INSTALL}/initrd.img",
+        ],
+    ),
+    "ln $(ls ${CRAFT_PART_INSTALL}/initrd.img*) ${CRAFT_PART_INSTALL}/initrd.img",
+]
+
+_create_inird_stage_firmware_cmd = [
     " ".join(
         [
             "${ubuntu_core_initramfs}",

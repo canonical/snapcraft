@@ -70,6 +70,7 @@ class TestPluginKernel(TestCase):
         kerneldevicetrees=None,
         kernelinitrdmodules=None,
         kernelinitrdconfiguredmodules=None,
+        kernelinitrdstagefirmware=False,
         kernelinitrdfirmware=None,
         kernelinitrdcompression=None,
         kernelinitrdcompressionoptions=None,
@@ -94,6 +95,7 @@ class TestPluginKernel(TestCase):
             kernel_device_trees = kerneldevicetrees
             kernel_initrd_modules = kernelinitrdmodules
             kernel_initrd_configured_modules = kernelinitrdconfiguredmodules
+            kernel_initrd_stage_firmware = kernelinitrdstagefirmware
             kernel_initrd_firmware = kernelinitrdfirmware
             kernel_initrd_compression = kernelinitrdcompression
             kernel_initrd_compression_options = kernelinitrdcompressionoptions
@@ -174,6 +176,10 @@ class TestPluginKernel(TestCase):
                         "uniqueItems": True,
                         "items": {"type": "string"},
                         "default": [],
+                    },
+                    "kernel-initrd-stage-firmware": {
+                        "type": "boolean",
+                        "default": False,
                     },
                     "kernel-initrd-firmware": {
                         "type": "array",
@@ -585,6 +591,7 @@ class TestPluginKernel(TestCase):
             kernelinitrdcompression="lz4",
             kernelinitrdcompressionoptions=["-9", "-l"],
             kernelinitrdmodules=["dm-crypt", "slimbus"],
+            kernelinitrdstagefirmware=True,
             kernelinitrdfirmware=["firmware/for/wifi", "firmware/for/webcam"],
             kernelinitrdaddons=[
                 "usr/bin/cryptsetup",
@@ -630,7 +637,7 @@ class TestPluginKernel(TestCase):
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert _is_sub_array(build_commands, _update_initrd_compression_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workroud_cmd)
-        assert _is_sub_array(build_commands, _create_inird_cmd)
+        assert _is_sub_array(build_commands, _create_inird_stage_firmware_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert not _is_sub_array(build_commands, _build_zfs_cmd)
         assert not _is_sub_array(build_commands, _build_perf_cmd)
@@ -1638,6 +1645,22 @@ _initrd_tool_workroud_cmd = [
 ]
 
 _create_inird_cmd = [
+    " ".join(
+        [
+            "${ubuntu_core_initramfs}",
+            "create-initrd",
+            "--root ${UC_INITRD_DEB}",
+            "--kernelver=${KERNEL_RELEASE}",
+            "--kerneldir ${SNAPCRAFT_PART_INSTALL}/lib/modules/${KERNEL_RELEASE}",
+            "--firmwaredir ${SNAPCRAFT_PART_INSTALL}/lib/firmware",
+            "--skeleton ${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs",
+            "--output ${SNAPCRAFT_PART_INSTALL}/initrd.img",
+        ],
+    ),
+    "ln $(ls ${SNAPCRAFT_PART_INSTALL}/initrd.img*) ${SNAPCRAFT_PART_INSTALL}/initrd.img",
+]
+
+_create_inird_stage_firmware_cmd = [
     " ".join(
         [
             "${ubuntu_core_initramfs}",

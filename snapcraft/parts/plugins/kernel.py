@@ -101,6 +101,13 @@ The following kernel-specific options are provided by this plugin:
       If module in question is not supported by the kernel, it's automatically
       removed.
 
+    - kernel-initrd-stage-firmware:
+      (boolean; default: False)
+      When building initrd, required firmware is automatically added based
+      on the included kernel modules. By default required firmware is searched
+      in the install directory of the current part. This flag allows used of firmware
+      from stage directory instead.
+
     - kernel-initrd-firmware:
       (array of string)
       list of firmware files to be included in the initrd; these need to be
@@ -259,6 +266,7 @@ class KernelPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     kernel_compiler_parameters: Optional[List[str]]
     kernel_initrd_modules: Optional[List[str]]
     kernel_initrd_configured_modules: Optional[List[str]]
+    kernel_initrd_stage_firmware: bool = False
     kernel_initrd_firmware: Optional[List[str]]
     kernel_initrd_compression: Optional[str]
     kernel_initrd_compression_options: Optional[List[str]]
@@ -863,6 +871,9 @@ class KernelPlugin(plugins.Plugin):
                 "",
             ],
         )
+        firmware_dir = "${CRAFT_PART_INSTALL}/lib/firmware"
+        if self.options.kernel_initrd_stage_firmware:
+            firmware_dir = "${CRAFT_STAGE}/firmware"
         cmd_create_initrd.extend(
             [
                 "",
@@ -874,7 +885,7 @@ class KernelPlugin(plugins.Plugin):
                         "--kerneldir",
                         "${CRAFT_PART_INSTALL}/lib/modules/${KERNEL_RELEASE}",
                         "--firmwaredir",
-                        "${CRAFT_STAGE}/firmware",
+                        firmware_dir,
                         "--skeleton",
                         "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs",
                         # "--feature",
