@@ -18,7 +18,9 @@
 
 import os
 import sys
+import tempfile
 from pathlib import Path
+from textwrap import dedent
 from typing import Dict, Optional
 
 from craft_cli import emit
@@ -29,7 +31,9 @@ from craft_providers.multipass import MultipassProvider
 from snapcraft.snap_config import get_snap_config
 from snapcraft.utils import (
     confirm_with_user,
+    get_managed_environment_home_path,
     get_managed_environment_log_path,
+    get_managed_environment_project_path,
     get_managed_environment_snap_channel,
 )
 
@@ -50,12 +54,12 @@ def capture_logs_from_instance(instance: executor.Executor) -> None:
         source=source_log_path, missing_ok=True
     ) as log_path:
         if log_path:
-            emit.trace("Logs retrieved from managed instance:")
+            emit.debug("Logs retrieved from managed instance:")
             with open(log_path, "r", encoding="utf8") as log_file:
                 for line in log_file:
-                    emit.trace(":: " + line.rstrip())
+                    emit.debug(":: " + line.rstrip())
         else:
-            emit.trace(
+            emit.debug(
                 f"Could not find log file {source_log_path.as_posix()} in instance."
             )
 
@@ -246,3 +250,82 @@ def get_provider(provider: Optional[str] = None) -> Provider:
         return MultipassProvider()
 
     raise ValueError(f"unsupported provider specified: {chosen_provider!r}")
+
+
+def prepare_instance(
+    instance: executor.Executor, host_project_path: Path, bind_ssh: bool
+) -> None:
+    """Prepare an instance to run snapcraft.
+
+    The preparation includes:
+    - mounting the project directory
+    - mounting the `.ssh` directory, if specified
+    - setting up `.bashrc` and the command line prompt
+    """
+    # mount project
+    instance.mount(
+        host_source=host_project_path,
+        target=get_managed_environment_project_path(),
+    )
+
+    # mount ssh directory
+    if bind_ssh:
+        instance.mount(
+            host_source=Path.home() / ".ssh",
+            target=get_managed_environment_home_path() / ".ssh",
+        )
+
+    # set up .bashrc
+    with tempfile.NamedTemporaryFile(mode="w+t") as bashrc:
+        bashrc.write(
+            dedent(
+                """\
+                #!/bin/bash
+
+                # save default environment on first login
+                if [[ ! -e ~/environment.sh ]]; then
+                    env > ~/environment.sh
+                    sed -i 's/^/export /' ~/environment.sh
+                    sed -i '1i#! /bin/bash\\n' ~/environment.sh
+                fi
+
+                previous_pwd=$PWD
+
+                function set_environment {
+                    # only update the environment when the directory changes
+                    if [[ ! $PWD = $previous_pwd ]]; then
+                        # set part's environment when inside a part's build directory
+                        if [[ "$PWD" =~ $HOME/parts/.*/build ]]; then
+                            source ${PWD/build*/run/environment.sh}
+
+                        # else clear and set the default environment
+                        else
+                            unset $(/usr/bin/env | /usr/bin/cut -d= -f1)
+                            source ~/environment.sh
+                            export PWD=$(pwd)
+                        fi
+                    fi
+                    previous_pwd=$PWD
+                }
+
+                function set_prompt {
+                    # do not show path in HOME directory
+                    if [[ "$PWD" = "$HOME" ]]; then
+                        export PS1="\\h # "
+
+                    # show relative path inside a subdirectory of HOME
+                    elif [[ "$PWD" =~ ^$HOME/* ]]; then
+                        export PS1="\\h ..${PWD/$HOME/}# "
+
+                    # show full path outside the home directory
+                    else
+                        export PS1="\\h $PWD# "
+                    fi
+                }
+
+                PROMPT_COMMAND="set_environment; set_prompt"
+                """
+            )
+        )
+        bashrc.flush()
+        instance.push_file(source=Path(bashrc.name), destination=Path("/root/.bashrc"))
