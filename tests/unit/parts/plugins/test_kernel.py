@@ -881,7 +881,7 @@ class TestPluginKernel:
                 )
 
             # there should be no warnings
-            assert caplog.text is ""
+            assert caplog.text == ""
 
     def test_external_check_new_config(self, setup_method_fixture):
         # create test config
