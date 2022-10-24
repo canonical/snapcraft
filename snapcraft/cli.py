@@ -148,6 +148,23 @@ def get_verbosity() -> EmitterMode:
         if utils.strtobool(os.getenv("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "n").strip()):
             verbosity = EmitterMode.DEBUG
 
+    # XXX: Something is amiss. Try running:
+    #      `SNAPCRAFT_VERBOSITY_LEVEL=trace snapcraft pull --verbosity=quiet`
+    #      The trouble is that emit.init and dispatcher.pre_parse_args both run
+    #      `set_mode()`, which logs the greeting twice.
+
+    # if defined, use environmental variable SNAPCRAFT_VERBOSITY_LEVEL
+    verbosity_env = os.getenv("SNAPCRAFT_VERBOSITY_LEVEL")
+    if verbosity_env:
+        try:
+            verbosity = EmitterMode[verbosity_env.strip().upper()]
+        except KeyError:
+            raise ArgumentParsingError(
+                f"cannot parse verbosity level {verbosity_env!r} from environmental "
+                "variable SNAPCRAFT_VERBOSITY_LEVEL (valid values are 'quiet', "
+                "'brief', 'verbose', 'debug' and 'trace')"
+            ) from KeyError
+
     return verbosity
 
 
@@ -190,6 +207,7 @@ def get_dispatcher() -> craft_cli.Dispatcher:
 
 
 def _run_dispatcher(dispatcher: craft_cli.Dispatcher) -> None:
+    # XXX: how to pass SNAPCRAFT_VERBOSITY_LEVEL to dispatcher.pre_parse_args?
     global_args = dispatcher.pre_parse_args(sys.argv[1:])
     if global_args.get("version"):
         emit.message(f"snapcraft {__version__}")
