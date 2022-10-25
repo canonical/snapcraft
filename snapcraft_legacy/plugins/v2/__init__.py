@@ -29,6 +29,7 @@ if sys.platform == "linux":
     from .crystal import CrystalPlugin  # noqa: F401
     from .dump import DumpPlugin  # noqa: F401
     from .go import GoPlugin  # noqa: F401
+    from .kernel import KernelPlugin  # noqa: F401
     from .make import MakePlugin  # noqa: F401
     from .meson import MesonPlugin  # noqa: F401
     from .nil import NilPlugin  # noqa: F401
