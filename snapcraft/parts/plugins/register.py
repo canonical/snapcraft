@@ -21,6 +21,7 @@ import craft_parts
 from .colcon import ColconPlugin
 from .conda_plugin import CondaPlugin
 from .flutter_plugin import FlutterPlugin
+from .kernel import KernelPlugin
 
 
 def register() -> None:
@@ -28,3 +29,4 @@ def register() -> None:
     craft_parts.plugins.register({"colcon": ColconPlugin})
     craft_parts.plugins.register({"conda": CondaPlugin})
     craft_parts.plugins.register({"flutter": FlutterPlugin})
+    craft_parts.plugins.register({"kernel": KernelPlugin})
