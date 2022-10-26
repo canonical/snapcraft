@@ -423,6 +423,7 @@ class Project(ProjectModel):
     build_packages: Optional[GrammarStrList]
     build_snaps: Optional[GrammarStrList]
     ua_services: Optional[UniqueStrList]
+    provenance: Optional[str]
 
     @pydantic.validator("plugs")
     @classmethod
@@ -546,6 +547,16 @@ class Project(ProjectModel):
     def _validate_architecture_data(cls, architectures):
         """Validate architecture data."""
         return _validate_architectures(architectures)
+
+    @pydantic.validator("provenance")
+    @classmethod
+    def _validate_provenance(cls, provenance):
+        if provenance and not re.match(r"^[a-zA-Z0-9-]+$", provenance):
+            raise ValueError(
+                "provenance must consist of alphanumeric characters and hyphens."
+            )
+
+        return provenance
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "Project":

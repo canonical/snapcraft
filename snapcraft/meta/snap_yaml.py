@@ -200,6 +200,7 @@ class SnapMetadata(_SnapMetadataModel):
     hooks: Optional[Dict[str, Any]]
     layout: Optional[Dict[str, Dict[str, str]]]
     system_usernames: Optional[Dict[str, Any]]
+    provenance: Optional[str]
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "SnapMetadata":
@@ -386,6 +387,7 @@ def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
         hooks=project.hooks,
         layout=project.layout,
         system_usernames=project.system_usernames,
+        provenance=project.provenance,
     )
     if project.passthrough:
         for name, value in project.passthrough.items():
