@@ -92,7 +92,7 @@ def test_env_var_invalid(monkeypatch):
         cli.get_verbosity()
 
     assert str(raised.value) == (
-        "cannot parse verbosity level 'invalid' from environmental "
+        "cannot parse verbosity level 'invalid' from environment "
         "variable SNAPCRAFT_VERBOSITY_LEVEL (valid values are 'quiet', 'brief', "
-        "'verbose', 'debug' and 'trace')"
+        "'verbose', 'debug', and 'trace')"
     )
