@@ -87,16 +87,12 @@ def _is_service_enabled(service_name: str, service_data: List[Dict[str, str]]) -
     :return: True if the service is enabled. False is the service is disabled or not
     listed in the list of service data.
     """
-    service = next(
-        (service for service in service_data if service.get("name") == service_name),
-        None,
-    )
+    for service in service_data:
+        if service.get("name") == service_name:
+            # possible statuses are 'enabled', 'disabled', and 'n/a'
+            return service.get("status") == "enabled"
 
-    if service:
-        # possible statuses are 'enabled', 'disabled', and 'n/a'
-        return service.get("status") == "enabled"
-
-    logger.debug(f"Could not find service {service_name!r}.")
+    logger.debug("Could not find service %r.", service_name)
     return False
 
 
