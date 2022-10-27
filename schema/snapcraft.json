@@ -523,7 +523,7 @@
             "additionalProperties": false,
             "validation-failure": "{!r} is not a valid system-username.",
             "patternProperties": {
-                "^snap_(daemon|microk8s)$": {
+                "^snap_(daemon|microk8s|aziotedge|aziotdu)$": {
                     "oneOf": [
                         {
                             "$ref": "#/definitions/system-username-scope"

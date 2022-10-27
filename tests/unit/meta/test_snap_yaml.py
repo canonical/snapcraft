@@ -197,6 +197,9 @@ def complex_project():
           snap_daemon:
             scope: shared
           snap_microk8s: shared
+          snap_aziotedge: shared
+          snap_aziotdu:
+            scope: shared
 
         layout:
           /usr/share/libdrm:
@@ -330,6 +333,9 @@ def test_complex_snap_yaml(complex_project, new_dir):
           snap_daemon:
             scope: shared
           snap_microk8s: shared
+          snap_aziotedge: shared
+          snap_aziotdu:
+            scope: shared
         """
     )
 
