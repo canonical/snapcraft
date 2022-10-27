@@ -1053,7 +1053,7 @@ class TestAppValidation:
     @pytest.mark.parametrize("provenance", ["invalid$", "invalid_invalid"])
     def test_project_provenance_invalid(self, provenance, project_yaml_data):
         """Verify invalid provenance values raises an error."""
-        error = "provenance must consist of alphanumeric characters and hyphens."
+        error = "provenance must consist of alphanumeric characters and/or hyphens."
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(project_yaml_data(provenance=provenance))
 

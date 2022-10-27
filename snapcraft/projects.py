@@ -553,7 +553,7 @@ class Project(ProjectModel):
     def _validate_provenance(cls, provenance):
         if provenance and not re.match(r"^[a-zA-Z0-9-]+$", provenance):
             raise ValueError(
-                "provenance must consist of alphanumeric characters and hyphens."
+                "provenance must consist of alphanumeric characters and/or hyphens."
             )
 
         return provenance
