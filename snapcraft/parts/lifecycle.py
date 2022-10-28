@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 import craft_parts
-from craft_cli import EmitterMode, emit
+from craft_cli import emit
 from craft_parts import ProjectInfo, StepInfo, callbacks
 
 from snapcraft import errors, extensions, linters, pack, providers, ua_manager, utils
@@ -38,7 +38,6 @@ from snapcraft.projects import (
     GrammarAwareProject,
     Project,
 )
-from snapcraft.providers import capture_logs_from_instance
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_host_architecture,
@@ -453,18 +452,18 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
     emit.progress("Cleaning build provider")
     provider_name = "lxd" if parsed_args.use_lxd else None
     provider = providers.get_provider(provider_name)
-    provider.clean_project_environments(
+    instance_name = providers.get_instance_name(
         project_name=project.name,
         project_path=Path().absolute(),
         build_on=project.get_build_on(),
         build_for=project.get_build_for(),
     )
+    emit.debug(f"Cleaning instance {instance_name}")
+    provider.clean_project_environments(instance_name=instance_name)
     emit.progress("Cleaned build provider", permanent=True)
 
 
-# pylint: disable=too-many-branches
-
-
+# pylint: disable-next=too-many-branches
 def _run_in_provider(
     project: Project, command_name: str, parsed_args: "argparse.Namespace"
 ) -> None:
@@ -472,7 +471,8 @@ def _run_in_provider(
     emit.debug("Checking build provider availability")
     provider_name = "lxd" if parsed_args.use_lxd else None
     provider = providers.get_provider(provider_name)
-    provider.ensure_provider_is_available()
+    with emit.pause():
+        providers.ensure_provider_is_available(provider)
 
     cmd = ["snapcraft", command_name]
 
@@ -482,14 +482,8 @@ def _run_in_provider(
     if getattr(parsed_args, "output", None):
         cmd.extend(["--output", parsed_args.output])
 
-    if emit.get_mode() == EmitterMode.VERBOSE:
-        cmd.append("--verbose")
-    elif emit.get_mode() == EmitterMode.QUIET:
-        cmd.append("--quiet")
-    elif emit.get_mode() == EmitterMode.DEBUG:
-        cmd.append("--verbosity=debug")
-    elif emit.get_mode() == EmitterMode.TRACE:
-        cmd.append("--verbosity=trace")
+    mode = emit.get_mode().name.lower()
+    cmd.append(f"--verbosity={mode}")
 
     if parsed_args.debug:
         cmd.append("--debug")
@@ -502,8 +496,7 @@ def _run_in_provider(
         cmd.append("--enable-manifest")
     build_information = getattr(parsed_args, "manifest_build_information", None)
     if build_information:
-        cmd.append("--manifest-build-information")
-        cmd.append(build_information)
+        cmd.extend(["--manifest-build-information", build_information])
 
     cmd.append("--build-for")
     cmd.append(project.get_build_for())
@@ -515,21 +508,41 @@ def _run_in_provider(
     if getattr(parsed_args, "enable_experimental_ua_services", False):
         cmd.append("--enable-experimental-ua-services")
 
+    project_path = Path().absolute()
     output_dir = utils.get_managed_environment_project_path()
+
+    instance_name = providers.get_instance_name(
+        project_name=project.name,
+        project_path=project_path,
+        build_on=project.get_build_on(),
+        build_for=project.get_build_for(),
+    )
+
+    build_base = providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE[project.get_effective_base()]
+
+    base_configuration = providers.get_base_configuration(
+        alias=build_base,
+        instance_name=instance_name,
+        http_proxy=parsed_args.http_proxy,
+        https_proxy=parsed_args.https_proxy,
+    )
 
     emit.progress("Launching instance...")
     with provider.launched_environment(
         project_name=project.name,
-        project_path=Path().absolute(),
-        base=project.get_effective_base(),
-        bind_ssh=parsed_args.bind_ssh,
-        build_on=project.get_build_on(),
-        build_for=project.get_build_for(),
-        http_proxy=parsed_args.http_proxy,
-        https_proxy=parsed_args.https_proxy,
+        project_path=project_path,
+        base_configuration=base_configuration,
+        build_base=build_base.value,
+        instance_name=instance_name,
     ) as instance:
         try:
+            providers.prepare_instance(
+                instance=instance,
+                host_project_path=project_path,
+                bind_ssh=parsed_args.bind_ssh,
+            )
             with emit.pause():
+                # run snapcraft inside the instance
                 instance.execute_run(cmd, check=True, cwd=output_dir)
         except subprocess.CalledProcessError as err:
             raise errors.SnapcraftError(
@@ -540,10 +553,7 @@ def _run_in_provider(
                 ),
             ) from err
         finally:
-            capture_logs_from_instance(instance)
-
-
-# pylint: enable=too-many-branches
+            providers.capture_logs_from_instance(instance)
 
 
 def _set_global_environment(info: ProjectInfo) -> None:

@@ -113,7 +113,7 @@ def execute(
     :param project_config: Fully loaded project (old logic moving either to
                            Project or the PluginHandler).
     :param list part_names: A list of parts to execute the lifecycle on.
-    :raises RuntimeError: If a prerequesite of the part needs to be staged
+    :raises RuntimeError: If a prerequisite of the part needs to be staged
                           and such part is not in the list of parts to iterate
                           over.
     :returns: A dict with the snap name, version, type and architectures.

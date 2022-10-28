@@ -180,55 +180,6 @@ class StoreLegacyMetricsCommand(LegacyBaseCommand):
         )
 
 
-#########
-# Build #
-#########
-
-
-class StoreLegacyRemoteBuildCommand(LegacyBaseCommand):
-    """Command passthrough for the remote-build command."""
-
-    name = "remote-build"
-    help_msg = "Dispatch a snap for remote build"
-    overview = textwrap.dedent(
-        """
-        Command remote-build sends the current project to be built remotely. After the build
-        is complete, packages for each architecture are retrieved and will be available in
-        the local filesystem.
-
-        If not specified in the snapcraft.yaml file, the list of architectures to build
-        can be set using the --build-on option. If both are specified, an error will occur.
-
-        Interrupted remote builds can be resumed using the --recover option, followed by
-        the build number informed when the remote build was originally dispatched. The
-        current state of the remote build for each architecture can be checked using the
-        --status option."""
-    )
-
-    @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
-        parser.add_argument(
-            "--recover", action="store_true", help="recover an interrupted build"
-        )
-        parser.add_argument(
-            "--status", action="store_true", help="display remote build status"
-        )
-        parser.add_argument(
-            "--build-on",
-            metavar="arch",
-            nargs="+",
-            help="architecture to build on",
-        )
-        parser.add_argument(
-            "--build-id", metavar="build-id", help="specific build id to retrieve"
-        )
-        parser.add_argument(
-            "--launchpad-accept-public-upload",
-            action="store_true",
-            help="acknowledge that uploaded code will be publicly available.",
-        )
-
-
 ##############
 # Assertions #
 ##############
@@ -359,25 +310,3 @@ class StoreLegacyListValidationSetsCommand(LegacyBaseCommand):
     def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
         parser.add_argument("--name", help="limit results to <name>")
         parser.add_argument("--sequence", help="limit results to <sequence>")
-
-
-class StoreLegacyEditValidationSetsCommand(LegacyBaseCommand):
-    """Command passthrough for the edit-validation-sets command."""
-
-    name = "edit-validation-sets"
-    help_msg = "Edit the list of validations for <name>"
-    overview = textwrap.dedent(
-        """
-        Refer to https://snapcraft.io/docs/validation-sets for further information
-        on Validation Sets.
-        """
-    )
-
-    @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
-        parser.add_argument(
-            "--key-name", metavar="key-name", help="Key used to sign the assertion"
-        )
-        parser.add_argument("account_id", metavar="account-id")
-        parser.add_argument("set_name", metavar="set-name")
-        parser.add_argument("sequence", metavar="sequence")

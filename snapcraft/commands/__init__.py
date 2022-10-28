@@ -30,14 +30,12 @@ from .extensions import (
 )
 from .legacy import (
     StoreLegacyCreateKeyCommand,
-    StoreLegacyEditValidationSetsCommand,
     StoreLegacyGatedCommand,
     StoreLegacyListKeysCommand,
     StoreLegacyListValidationSetsCommand,
     StoreLegacyMetricsCommand,
     StoreLegacyPromoteCommand,
     StoreLegacyRegisterKeyCommand,
-    StoreLegacyRemoteBuildCommand,
     StoreLegacySetDefaultTrackCommand,
     StoreLegacySignBuildCommand,
     StoreLegacyUploadMetadataCommand,
@@ -59,6 +57,7 @@ from .names import (
     StoreNamesCommand,
     StoreRegisterCommand,
 )
+from .remote import RemoteBuildCommand
 from .status import (
     StoreListRevisionsCommand,
     StoreListTracksCommand,
@@ -67,6 +66,7 @@ from .status import (
     StoreTracksCommand,
 )
 from .upload import StoreLegacyPushCommand, StoreUploadCommand
+from .validation_sets import StoreEditValidationSetsCommand
 from .version import VersionCommand
 
 __all__ = [
@@ -80,12 +80,13 @@ __all__ = [
     "PluginsCommand",
     "PrimeCommand",
     "PullCommand",
+    "RemoteBuildCommand",
     "SnapCommand",
     "StageCommand",
     "StoreCloseCommand",
+    "StoreEditValidationSetsCommand",
     "StoreExportLoginCommand",
     "StoreLegacyCreateKeyCommand",
-    "StoreLegacyEditValidationSetsCommand",
     "StoreLegacyGatedCommand",
     "StoreLegacyListCommand",
     "StoreLegacyListRegisteredCommand",
@@ -94,7 +95,6 @@ __all__ = [
     "StoreLegacyPromoteCommand",
     "StoreLegacyPushCommand",
     "StoreLegacyRegisterKeyCommand",
-    "StoreLegacyRemoteBuildCommand",
     "StoreLegacySetDefaultTrackCommand",
     "StoreLegacySignBuildCommand",
     "StoreLegacyUploadMetadataCommand",

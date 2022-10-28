@@ -230,7 +230,7 @@ class MultipassCommand:
     ) -> Optional[bytes]:
         """Passthrough for running multipass exec.
 
-        :param list command: the command to exectute on the instance.
+        :param list command: the command to execute on the instance.
         :param str instance_name: the name of the instance to execute command.
         """
         cmd = [self.provider_cmd, "exec", instance_name, "--"] + list(command)

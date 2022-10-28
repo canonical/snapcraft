@@ -54,25 +54,6 @@ class RemoteBuildTests(CommandBaseTestCase):
         )
 
     @mock.patch("snapcraft_legacy.cli.remote.echo.confirm")
-    def test_remote_build_prompts(self, mock_confirm):
-        result = self.run_command(["remote-build"])
-
-        self.mock_lc_init.assert_called_once_with(
-            project=mock.ANY,
-            architectures=mock.ANY,
-            deadline=mock.ANY,
-            build_id="snapcraft-test-snap-fakehash123",
-        )
-        self.mock_lc.start_build.assert_called_once()
-        self.mock_lc.cleanup.assert_called_once()
-        self.assertThat(result.output, Contains("Building snap package for i386."))
-        self.assertThat(result.exit_code, Equals(0))
-        mock_confirm.assert_called_once_with(
-            "All data sent to remote builders will be publicly available. Are you sure you want to continue?",
-            default=True,
-        )
-
-    @mock.patch("snapcraft_legacy.cli.remote.echo.confirm")
     def test_remote_build_with_accept_option_doesnt_prompt(self, mock_confirm):
         result = self.run_command(["remote-build", "--launchpad-accept-public-upload"])
 
@@ -81,13 +62,6 @@ class RemoteBuildTests(CommandBaseTestCase):
         self.assertThat(result.output, Contains("Building snap package for i386."))
         self.assertThat(result.exit_code, Equals(0))
         mock_confirm.assert_not_called()
-
-    @mock.patch("snapcraft_legacy.cli.remote.echo.confirm")
-    def test_remote_build_without_acceptance_raises(self, mock_confirm):
-        mock_confirm.return_value = False
-        self.assertRaises(
-            errors.AcceptPublicUploadError, self.run_command, ["remote-build"]
-        )
 
     def test_remote_build_with_build_id(self):
         result = self.run_command(
@@ -138,20 +112,6 @@ class RemoteBuildTests(CommandBaseTestCase):
 
         self.mock_lc.start_build.assert_not_called()
         self.mock_lc.cleanup.assert_not_called()
-
-    @mock.patch("snapcraft_legacy.cli.remote.echo")
-    def test_remote_build_sudo_errors(self, mock_echo):
-        self.useFixture(fixtures.EnvironmentVariable("SUDO_USER", "testuser"))
-        self.useFixture(fixtures.MockPatch("os.geteuid", return_value=0))
-
-        self.run_command(["remote-build", "--launchpad-accept-public-upload"])
-        mock_echo.assert_has_calls(
-            [
-                mock.call.warning(
-                    "Running with 'sudo' may cause permission errors and is discouraged."
-                )
-            ]
-        )
 
     @mock.patch("snapcraft_legacy.cli.remote.echo")
     def test_remote_build_recover_doesnt_prompt(self, mock_echo):

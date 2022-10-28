@@ -40,7 +40,7 @@ def test_classic_linter(mocker, new_dir, confinement, stage_libc, text):
         Path("lib64").mkdir()
         Path("lib64/ld-linux-x86-64.so.2").touch()
 
-    mocker.patch("snapcraft.linters.linters._LINTERS", {"classic": ClassicLinter})
+    mocker.patch("snapcraft.linters.linters.LINTERS", {"classic": ClassicLinter})
     mocker.patch(
         "snapcraft.elf._elf_file._determine_libraries",
         return_value={
@@ -83,12 +83,14 @@ def test_classic_linter(mocker, new_dir, confinement, stage_libc, text):
                     f"ELF interpreter should be set to "
                     f"'/snap/{snap_name}/current/lib64/ld-linux-x86-64.so.2'."
                 ),
+                url="https://snapcraft.io/docs/linters-classic",
             ),
             LinterIssue(
                 name="classic",
                 result=LinterResult.WARNING,
                 filename="elf.bin",
                 text="ELF rpath should be set to '/snap/core22/current/lib/x86_64-linux-gnu'.",
+                url="https://snapcraft.io/docs/linters-classic",
             ),
         ]
     else:
@@ -98,7 +100,7 @@ def test_classic_linter(mocker, new_dir, confinement, stage_libc, text):
 def test_classic_linter_filter(mocker, new_dir):
     shutil.copy("/bin/true", "elf.bin")
 
-    mocker.patch("snapcraft.linters.linters._LINTERS", {"classic": ClassicLinter})
+    mocker.patch("snapcraft.linters.linters.LINTERS", {"classic": ClassicLinter})
     mocker.patch(
         "snapcraft.elf._elf_file._determine_libraries",
         return_value={
@@ -124,7 +126,7 @@ def test_classic_linter_filter(mocker, new_dir):
     )
 
     issues = linters.run_linters(
-        new_dir, lint=projects.Lint(ignore=projects.LintIgnore(files=["elf.*"]))
+        new_dir, lint=projects.Lint(ignore=[{"classic": ["elf.*"]}])
     )
     assert issues == [
         LinterIssue(
