@@ -26,7 +26,7 @@ from typing import Dict, Optional
 from craft_cli import emit
 from craft_providers import Provider, ProviderError, bases, executor
 from craft_providers.lxd import LXDProvider
-from craft_providers.multipass import MultipassProvider
+from craft_providers.multipass import MultipassInstance, MultipassProvider
 
 from snapcraft.snap_config import get_snap_config
 from snapcraft.utils import (
@@ -276,56 +276,61 @@ def prepare_instance(
         )
 
     # set up .bashrc
-    with tempfile.NamedTemporaryFile(mode="w+t") as bashrc:
-        bashrc.write(
-            dedent(
-                """\
-                #!/bin/bash
+    # do not push .bashrc to Multipass instances due to craft-providers limitation
+    # (see https://github.com/canonical/craft-providers/issues/169)
+    if not isinstance(instance, MultipassInstance):
+        with tempfile.NamedTemporaryFile(mode="w+t") as bashrc:
+            bashrc.write(
+                dedent(
+                    """\
+                    #!/bin/bash
 
-                # save default environment on first login
-                if [[ ! -e ~/environment.sh ]]; then
-                    env > ~/environment.sh
-                    sed -i 's/^/export /' ~/environment.sh
-                    sed -i '1i#! /bin/bash\\n' ~/environment.sh
-                fi
-
-                previous_pwd=$PWD
-
-                function set_environment {
-                    # only update the environment when the directory changes
-                    if [[ ! $PWD = $previous_pwd ]]; then
-                        # set part's environment when inside a part's build directory
-                        if [[ "$PWD" =~ $HOME/parts/.*/build ]]; then
-                            source ${PWD/build*/run/environment.sh}
-
-                        # else clear and set the default environment
-                        else
-                            unset $(/usr/bin/env | /usr/bin/cut -d= -f1)
-                            source ~/environment.sh
-                            export PWD=$(pwd)
-                        fi
+                    # save default environment on first login
+                    if [[ ! -e ~/environment.sh ]]; then
+                        env > ~/environment.sh
+                        sed -i 's/^/export /' ~/environment.sh
+                        sed -i '1i#! /bin/bash\\n' ~/environment.sh
                     fi
+
                     previous_pwd=$PWD
-                }
 
-                function set_prompt {
-                    # do not show path in HOME directory
-                    if [[ "$PWD" = "$HOME" ]]; then
-                        export PS1="\\h # "
+                    function set_environment {
+                        # only update the environment when the directory changes
+                        if [[ ! $PWD = $previous_pwd ]]; then
+                            # set part's environment when inside a part's build directory
+                            if [[ "$PWD" =~ $HOME/parts/.*/build ]]; then
+                                source ${PWD/build*/run/environment.sh}
 
-                    # show relative path inside a subdirectory of HOME
-                    elif [[ "$PWD" =~ ^$HOME/* ]]; then
-                        export PS1="\\h ..${PWD/$HOME/}# "
+                            # else clear and set the default environment
+                            else
+                                unset $(/usr/bin/env | /usr/bin/cut -d= -f1)
+                                source ~/environment.sh
+                                export PWD=$(pwd)
+                            fi
+                        fi
+                        previous_pwd=$PWD
+                    }
 
-                    # show full path outside the home directory
-                    else
-                        export PS1="\\h $PWD# "
-                    fi
-                }
+                    function set_prompt {
+                        # do not show path in HOME directory
+                        if [[ "$PWD" = "$HOME" ]]; then
+                            export PS1="\\h # "
 
-                PROMPT_COMMAND="set_environment; set_prompt"
-                """
+                        # show relative path inside a subdirectory of HOME
+                        elif [[ "$PWD" =~ ^$HOME/* ]]; then
+                            export PS1="\\h ..${PWD/$HOME/}# "
+
+                        # show full path outside the home directory
+                        else
+                            export PS1="\\h $PWD# "
+                        fi
+                    }
+
+                    PROMPT_COMMAND="set_environment; set_prompt"
+                    """
+                )
             )
-        )
-        bashrc.flush()
-        instance.push_file(source=Path(bashrc.name), destination=Path("/root/.bashrc"))
+            bashrc.flush()
+            instance.push_file(
+                source=Path(bashrc.name), destination=Path("/root/.bashrc")
+            )
