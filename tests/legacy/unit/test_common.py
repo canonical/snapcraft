@@ -15,12 +15,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from unittest.mock import MagicMock, patch
 
 import pytest
+from snaphelpers import SnapCtlError
 from testtools.matchers import Equals
 
 from snapcraft_legacy.internal import common, errors
 from tests.legacy import unit
+
+
+@pytest.fixture
+def mock_config():
+    with patch(
+        "snapcraft_legacy.internal.common.SnapConfigOptions", autospec=True
+    ) as mock_snap_config:
+        yield mock_snap_config
+
+
+@pytest.fixture()
+def mock_is_snap(mocker):
+    yield mocker.patch("snapcraft_legacy.internal.common.is_snap", return_value=True)
 
 
 class CommonTestCase(unit.TestCase):
@@ -198,3 +213,41 @@ def test_version_missing_and_not_allowed_is_error():
     # fact that version is not allowed.
     with pytest.raises(KeyError):
         common.format_snap_name(dict(name="name"))
+
+
+@pytest.mark.parametrize("provider", ["lxd", "multipass"])
+def test_get_snap_config(mock_config, mock_is_snap, provider):
+    """Verify getting a valid snap config."""
+
+    def fake_as_dict():
+        return {"provider": provider}
+
+    mock_config.return_value.as_dict.side_effect = fake_as_dict
+
+    assert common.get_snap_config() == {"provider": provider}
+
+
+def test_get_snap_config_empty(mock_config, mock_is_snap):
+    """Verify getting an empty config returns a default SnapConfig."""
+
+    def fake_as_dict():
+        return {}
+
+    mock_config.return_value.as_dict.side_effect = fake_as_dict
+
+    assert common.get_snap_config() == {}
+
+
+def test_get_snap_config_not_from_snap(mock_is_snap, mocker):
+    """Verify None is returned when snapcraft is not running from a snap."""
+    mock_is_snap.return_value = False
+
+    assert common.get_snap_config() is None
+
+
+@pytest.mark.parametrize("error", [AttributeError, SnapCtlError(process=MagicMock())])
+def test_get_snap_config_handle_error(error, mock_config, mock_is_snap, mocker):
+    """An error when retrieving the snap config should return None."""
+    mock_config.side_effect = error
+
+    assert common.get_snap_config() is None

@@ -19,7 +19,7 @@ from typing import Any, Dict, Literal, Optional
 
 import pydantic
 from craft_cli import emit
-from snaphelpers import SnapConfigOptions
+from snaphelpers import SnapConfigOptions, SnapCtlError
 
 from snapcraft.utils import is_snapcraft_running_from_snap
 
@@ -75,7 +75,16 @@ def get_snap_config() -> Optional[SnapConfig]:
         )
         return None
 
-    snap_config = SnapConfigOptions(keys=["provider"])
+    try:
+        snap_config = SnapConfigOptions(keys=["provider"])
+    except (AttributeError, SnapCtlError) as error:
+        # snaphelpers raises an error (either AttributeError or SnapCtlError) when
+        # it fails to get the snap config. this can occur when running inside a
+        # docker or podman container where snapd is not available
+        emit.debug("Could not retrieve the snap config. Is snapd running?")
+        emit.trace(f"snaphelpers error: {error!r}")
+        return None
+
     snap_config.fetch()
 
     emit.debug(f"Retrieved snap config: {snap_config.as_dict()}")
