@@ -81,6 +81,7 @@ class SnapApp(_SnapMetadataModel):
     restart_condition: Optional[str]
     install_mode: Optional[str]
     plugs: Optional[List[str]]
+    slots: Optional[List[str]]
     aliases: Optional[List[str]]
     environment: Optional[Dict[str, Any]]
     command_chain: Optional[List[str]]
@@ -326,6 +327,7 @@ def _create_snap_app(app: App, assumes: Set[str]) -> SnapApp:
         restart_condition=app.restart_condition,
         install_mode=app.install_mode,
         plugs=app.plugs,
+        slots=app.slots,
         aliases=app.aliases,
         environment=app.environment,
         command_chain=app.command_chain or None,
