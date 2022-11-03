@@ -26,7 +26,7 @@ from typing import Dict, Optional
 from craft_cli import emit
 from craft_providers import Provider, ProviderError, bases, executor
 from craft_providers.lxd import LXDProvider
-from craft_providers.multipass import MultipassProvider
+from craft_providers.multipass import MultipassInstance, MultipassProvider
 
 from snapcraft.snap_config import get_snap_config
 from snapcraft.utils import (
@@ -276,6 +276,11 @@ def prepare_instance(
         )
 
     # set up .bashrc
+    # do not push .bashrc to Multipass instances due to craft-providers limitation
+    # (see https://github.com/canonical/craft-providers/issues/169)
+    if isinstance(instance, MultipassInstance):
+        return
+
     with tempfile.NamedTemporaryFile(mode="w+t") as bashrc:
         bashrc.write(
             dedent(
