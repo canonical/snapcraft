@@ -207,6 +207,8 @@ def complex_project():
             bind: $SNAP/gnome-platform/usr/lib/x86_64-linux-gnu/webkit2gtk-4.0
           /usr/share/xml/iso-codes:
             bind: $SNAP/gnome-platform/usr/share/xml/iso-codes
+
+        provenance: test-provenance-1
         """
     )
     data = yaml.safe_load(snapcraft_yaml)
@@ -338,6 +340,7 @@ def test_complex_snap_yaml(complex_project, new_dir):
           snap_daemon:
             scope: shared
           snap_microk8s: shared
+        provenance: test-provenance-1
         """
     )
 
