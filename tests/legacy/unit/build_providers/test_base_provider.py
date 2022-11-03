@@ -189,6 +189,9 @@ class BaseProviderTest(BaseProviderBaseTest):
                     call(["apt-get", "update"]),
                     call(["apt-get", "dist-upgrade", "--yes"]),
                     call(["apt-get", "install", "--yes", "apt-transport-https"]),
+                    call(["systemctl", "start", "snapd.socket"]),
+                    call(["systemctl", "restart", "snapd.service"]),
+                    call(["snap", "wait", "system", "seed.loaded"]),
                     call(["snap", "unset", "system", "proxy.http"]),
                     call(["snap", "unset", "system", "proxy.https"]),
                 ]
@@ -320,6 +323,17 @@ class BaseProviderTest(BaseProviderBaseTest):
         # Given the way we constructe this test, this directory should not exist
         # TODO add robustness to start. (LP: #1792242)
         self.assertThat(provider.provider_project_dir, Not(DirExists()))
+
+    def test_setup_snapd(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider.launch_instance()
+
+        # False.
+        provider.run_mock.assert_has_calls == [
+            call(["systemctl", "start", "snapd.socket"]),
+            call(["systemctl", "restart", "snapd.service"]),
+            call(["snap", "wait", "system", "seed.loaded"]),
+        ]
 
     def test_clean_part(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
