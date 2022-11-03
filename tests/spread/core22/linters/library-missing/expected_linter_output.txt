@@ -2,6 +2,6 @@ Running linters...
 Running linter: classic
 Running linter: library
 Lint warnings:
-- library: linter-test: missing dependency 'libcaca.so.0'.
-- library: linter-test: missing dependency 'libslang.so.2'.
+- library: linter-test: missing dependency 'libcaca.so.0'. (https://snapcraft.io/docs/linters-library)
+- library: linter-test: missing dependency 'libslang.so.2'. (https://snapcraft.io/docs/linters-library)
 Creating snap package...

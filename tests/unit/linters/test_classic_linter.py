@@ -83,12 +83,14 @@ def test_classic_linter(mocker, new_dir, confinement, stage_libc, text):
                     f"ELF interpreter should be set to "
                     f"'/snap/{snap_name}/current/lib64/ld-linux-x86-64.so.2'."
                 ),
+                url="https://snapcraft.io/docs/linters-classic",
             ),
             LinterIssue(
                 name="classic",
                 result=LinterResult.WARNING,
                 filename="elf.bin",
                 text="ELF rpath should be set to '/snap/core22/current/lib/x86_64-linux-gnu'.",
+                url="https://snapcraft.io/docs/linters-classic",
             ),
         ]
     else:
