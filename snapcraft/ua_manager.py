@@ -74,16 +74,43 @@ def _attach(ua_token: str) -> None:
 
 
 def _enable_services(services: List[str]) -> None:
-    """Enable the specified UA services."""
-    try:
-        with emit.open_stream("Enable UA services") as stream:
-            subprocess.check_call(
-                ["ua", "enable", *services, "--beta", "--assume-yes"],
-                stdout=stream,
-                stderr=stream,
+    """Enable the specified UA services.
+
+    If a service is already enabled, it will not be re-enabled because UA will raise
+    an error.
+    """
+    with emit.open_stream("Enable UA services") as stream:
+        service_data = _status().get("services")
+        enabled_services = []
+        disabled_services = []
+
+        if service_data:
+            # sort services into enabled and disabled
+            for service in services:
+                if _is_service_enabled(service, service_data):
+                    enabled_services.append(service)
+                else:
+                    disabled_services.append(service)
+        else:
+            # assume all services are disabled if they are not in the status data
+            disabled_services = services
+
+        if enabled_services:
+            emit.debug(
+                f"Not re-enabling services {enabled_services} because the "
+                "services are already enabled."
             )
-    except subprocess.CalledProcessError as error:
-        raise UAEnableServicesError from error
+
+        if disabled_services:
+            emit.debug(f"Enabling services {disabled_services}.")
+            try:
+                subprocess.check_call(
+                    ["ua", "enable", *disabled_services, "--beta", "--assume-yes"],
+                    stdout=stream,
+                    stderr=stream,
+                )
+            except subprocess.CalledProcessError as error:
+                raise UAEnableServicesError from error
 
 
 def _detach() -> None:
@@ -101,8 +128,26 @@ def _is_attached() -> bool:
     return _status()["attached"]
 
 
+def _is_service_enabled(service_name: str, service_data: List[Dict[str, str]]) -> bool:
+    """Check if a service is enabled.
+
+    :param service_name: name of service to check
+    :param service_data: list of dictionaries containing data for each service
+
+    :return: True if the service is enabled. False is the service is disabled or not
+    listed in the list of service data.
+    """
+    for service in service_data:
+        if service.get("name") == service_name:
+            # possible statuses are 'enabled', 'disabled', and 'n/a'
+            return service.get("status") == "enabled"
+
+    emit.debug(f"Could not find service {service_name!r}.")
+    return False
+
+
 def _status() -> Dict[str, Any]:
-    stdout = subprocess.check_output(["ua", "status", "--format", "json"])
+    stdout = subprocess.check_output(["ua", "status", "--all", "--format", "json"])
     return json.loads(stdout)
 
 
