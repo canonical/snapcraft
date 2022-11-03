@@ -104,6 +104,8 @@ class TestProjectDefaults:
             )
         ]
         assert project.ua_services is None
+        assert project.system_usernames is None
+        assert project.provenance is None
 
     def test_app_defaults(self, project_yaml_data):
         data = project_yaml_data(apps={"app1": {"command": "/bin/true"}})
@@ -1018,6 +1020,43 @@ class TestAppValidation:
             with pytest.raises(errors.ProjectValidationError, match=error):
                 Project.unmarshal(data)
 
+    @pytest.mark.parametrize(
+        "system_username",
+        [
+            {"snap_daemon": {"scope": "shared"}},
+            {"snap_microk8s": {"scope": "shared"}},
+            {"snap_daemon": "shared"},
+            {"snap_microk8s": "shared"},
+        ],
+    )
+    def test_project_system_usernames_valid(self, system_username, project_yaml_data):
+        project = Project.unmarshal(project_yaml_data(system_usernames=system_username))
+        assert project.system_usernames == system_username
+
+    @pytest.mark.parametrize(
+        "system_username",
+        [
+            0,
+            "string",
+        ],
+    )
+    def test_project_system_usernames_invalid(self, system_username, project_yaml_data):
+        error = "- value is not a valid dict"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(project_yaml_data(system_usernames=system_username))
+
+    def test_project_provenance(self, project_yaml_data):
+        """Verify provenance is parsed."""
+        project = Project.unmarshal(project_yaml_data(provenance="test-provenance-1"))
+        assert project.provenance == "test-provenance-1"
+
+    @pytest.mark.parametrize("provenance", ["invalid$", "invalid_invalid"])
+    def test_project_provenance_invalid(self, provenance, project_yaml_data):
+        """Verify invalid provenance values raises an error."""
+        error = "provenance must consist of alphanumeric characters and/or hyphens."
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(project_yaml_data(provenance=provenance))
+
 
 class TestGrammarValidation:
     """Basic grammar validation testing."""
@@ -1147,31 +1186,6 @@ class TestGrammarValidation:
         error = r".*- syntax error in 'on' selector"
         with pytest.raises(errors.ProjectValidationError, match=error):
             GrammarAwareProject.validate_grammar(data)
-
-    @pytest.mark.parametrize(
-        "system_username",
-        [
-            {"snap_daemon": {"scope": "shared"}},
-            {"snap_microk8s": {"scope": "shared"}},
-            {"snap_daemon": "shared"},
-            {"snap_microk8s": "shared"},
-        ],
-    )
-    def test_project_system_usernames_valid(self, system_username, project_yaml_data):
-        project = Project.unmarshal(project_yaml_data(system_usernames=system_username))
-        assert project.system_usernames == system_username
-
-    @pytest.mark.parametrize(
-        "system_username",
-        [
-            0,
-            "string",
-        ],
-    )
-    def test_project_system_usernames_invalid(self, system_username, project_yaml_data):
-        error = "- value is not a valid dict"
-        with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(system_usernames=system_username))
 
 
 def test_get_snap_project_with_base(snapcraft_yaml):
