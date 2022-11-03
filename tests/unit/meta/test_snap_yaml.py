@@ -144,6 +144,8 @@ def complex_project():
             restart-condition: on-success
             install-mode: enable
             aliases: [test-alias-1, test-alias-2]
+            plugs: [test-plug-1, test-plug-2]
+            slots: [test-slot-1, test-slot-2]
             environment:
               APP_VARIABLE: test-app-variable
             command-chain:
@@ -266,6 +268,12 @@ def test_complex_snap_yaml(complex_project, new_dir):
             stop-mode: sigterm
             restart-condition: on-success
             install-mode: enable
+            plugs:
+            - test-plug-1
+            - test-plug-2
+            slots:
+            - test-slot-1
+            - test-slot-2
             aliases:
             - test-alias-1
             - test-alias-2

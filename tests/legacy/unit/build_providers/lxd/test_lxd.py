@@ -281,6 +281,9 @@ class LXDInitTest(LXDBaseTest):
             ["apt-get", "update"],
             ["apt-get", "dist-upgrade", "--yes"],
             ["apt-get", "install", "--yes", "apt-transport-https"],
+            ["systemctl", "start", "snapd.socket"],
+            ["systemctl", "restart", "snapd.service"],
+            ["snap", "wait", "system", "seed.loaded"],
             ["snap", "unset", "system", "proxy.http"],
             ["snap", "unset", "system", "proxy.https"],
         ]
