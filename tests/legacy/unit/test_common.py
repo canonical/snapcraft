@@ -246,8 +246,16 @@ def test_get_snap_config_not_from_snap(mock_is_snap, mocker):
 
 
 @pytest.mark.parametrize("error", [AttributeError, SnapCtlError(process=MagicMock())])
-def test_get_snap_config_handle_error(error, mock_config, mock_is_snap, mocker):
-    """An error when retrieving the snap config should return None."""
+def test_get_snap_config_handle_init_error(error, mock_config, mock_is_snap):
+    """An error when initializing the snap config object should return None."""
     mock_config.side_effect = error
+
+    assert common.get_snap_config() is None
+
+
+@pytest.mark.parametrize("error", [AttributeError, SnapCtlError(process=MagicMock())])
+def test_get_snap_config_handle_fetch_error(error, mock_config, mock_is_snap):
+    """An error when fetching the snap config should return None."""
+    mock_config.return_value.fetch.side_effect = error
 
     assert common.get_snap_config() is None

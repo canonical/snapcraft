@@ -103,7 +103,7 @@ def test_get_snap_config_empty(mock_config, mock_is_running_from_snap):
     assert config == SnapConfig()
 
 
-def test_get_snap_config_not_from_snap(mocker, mock_is_running_from_snap):
+def test_get_snap_config_not_from_snap(mock_is_running_from_snap):
     """Verify None is returned when snapcraft is not running from a snap."""
     mock_is_running_from_snap.return_value = False
 
@@ -111,10 +111,20 @@ def test_get_snap_config_not_from_snap(mocker, mock_is_running_from_snap):
 
 
 @pytest.mark.parametrize("error", [AttributeError, SnapCtlError(process=MagicMock())])
-def test_get_snap_config_handle_error(
-    error, mock_config, mock_is_running_from_snap, mocker
+def test_get_snap_config_handle_init_error(
+    error, mock_config, mock_is_running_from_snap
 ):
-    """An error when retrieving the snap config should return None."""
+    """An error when initializing the snap config object should return None."""
     mock_config.side_effect = error
+
+    assert get_snap_config() is None
+
+
+@pytest.mark.parametrize("error", [AttributeError, SnapCtlError(process=MagicMock())])
+def test_get_snap_config_handle_fetch_error(
+    error, mock_config, mock_is_running_from_snap
+):
+    """An error when fetching the snap config should return None."""
+    mock_config.return_value.fetch.side_effect = error
 
     assert get_snap_config() is None
