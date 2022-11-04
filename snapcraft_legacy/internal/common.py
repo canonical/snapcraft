@@ -386,6 +386,9 @@ def get_snap_config() -> Optional[Dict[str, str]]:
 
     try:
         snap_config = SnapConfigOptions(keys=["provider"])
+        # even if the initialization of SnapConfigOptions succeeds, `fetch()` may
+        # raise the same errors since it makes calls to snapd
+        snap_config.fetch()
     except (AttributeError, SnapCtlError) as error:
         # snaphelpers raises an error (either AttributeError or SnapCtlError) when
         # it fails to get the snap config. this can occur when running inside a
@@ -393,8 +396,6 @@ def get_snap_config() -> Optional[Dict[str, str]]:
         logger.debug("Could not retrieve the snap config. Is snapd running?")
         logger.debug("snaphelpers error: {%r}", error)
         return None
-
-    snap_config.fetch()
 
     logger.debug("Retrieved snap config: %s", snap_config.as_dict())
     return snap_config.as_dict()
