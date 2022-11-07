@@ -47,5 +47,8 @@ sudo snap install black --beta
 # Install shellcheck for static tests.
 sudo snap install shellcheck
 
+# Install pyright for static tests.
+sudo snap install pyright --classic
+
 echo "Virtual environment may be activated by running:"
 echo "source ${SNAPCRAFT_VIRTUAL_ENV_DIR}/bin/activate"
