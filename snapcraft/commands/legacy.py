@@ -71,6 +71,12 @@ class StoreLegacyUploadMetadataCommand(LegacyBaseCommand):
     @overrides
     def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
         parser.add_argument(
+            "snap_file",
+            metavar="snap-file",
+            type=str,
+            help="Snap to upload metadata from",
+        )
+        parser.add_argument(
             "--force",
             action="store_true",
             default=False,
