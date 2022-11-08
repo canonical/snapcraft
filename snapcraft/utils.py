@@ -301,7 +301,7 @@ def humanize_list(
     :param conjunction: the conjunction used to join the final element to
                         the rest of the list (e.g. 'and').
     :param item_format: format string to use per item.
-    :param sort: if true, sort the list
+    :param sort: if true, sort the list.
     """
     if not items:
         return ""

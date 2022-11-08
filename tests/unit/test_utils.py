@@ -281,6 +281,21 @@ def test_humanize_list(items, conjunction, expected):
     assert utils.humanize_list(items, conjunction) == expected
 
 
+def test_humanize_list_sorted():
+    """Verify `sort` parameter."""
+    input_list = ["z", "a", "m test", "1"]
+
+    # unsorted list is in the same order as the original list
+    expected_list_unsorted = "'z', 'a', 'm test', and '1'"
+
+    # sorted list is sorted alphanumerically
+    expected_list_sorted = "'1', 'a', 'm test', and 'z'"
+
+    assert utils.humanize_list(input_list, "and") == expected_list_sorted
+    assert utils.humanize_list(input_list, "and", sort=True) == expected_list_sorted
+    assert utils.humanize_list(input_list, "and", sort=False) == expected_list_unsorted
+
+
 #################
 # Library Paths #
 #################
