@@ -18,10 +18,26 @@ import os
 from pathlib import Path
 from textwrap import dedent
 from typing import List
+from unittest.mock import call, patch
 
 import pytest
 
 from snapcraft import errors, utils
+
+
+@pytest.fixture
+def mock_isatty(mocker):
+    yield mocker.patch("snapcraft.utils.sys.stdin.isatty", return_value=True)
+
+
+@pytest.fixture
+def mock_input(mocker):
+    yield mocker.patch("snapcraft.utils.input", return_value="")
+
+
+@pytest.fixture
+def mock_is_managed_mode(mocker):
+    yield mocker.patch("snapcraft.utils.is_managed_mode", return_value=False)
 
 
 @pytest.mark.parametrize(
@@ -501,3 +517,73 @@ def test_is_snapcraft_running_from_snap(monkeypatch, snap_name, snap, result):
         monkeypatch.setenv("SNAP", snap)
 
     assert utils.is_snapcraft_running_from_snap() == result
+
+
+#####################
+# Confirm with user #
+#####################
+
+
+def test_confirm_with_user_defaults_with_tty(mock_input, mock_isatty):
+    mock_input.return_value = ""
+    mock_isatty.return_value = True
+
+    assert utils.confirm_with_user("prompt", default=True) is True
+    assert mock_input.mock_calls == [call("prompt [Y/n]: ")]
+    mock_input.reset_mock()
+
+    assert utils.confirm_with_user("prompt", default=False) is False
+    assert mock_input.mock_calls == [call("prompt [y/N]: ")]
+
+
+def test_confirm_with_user_defaults_without_tty(mock_input, mock_isatty):
+    mock_isatty.return_value = False
+
+    assert utils.confirm_with_user("prompt", default=True) is True
+    assert utils.confirm_with_user("prompt", default=False) is False
+
+    assert mock_input.mock_calls == []
+
+
+@pytest.mark.parametrize(
+    "user_input,expected",
+    [
+        ("y", True),
+        ("Y", True),
+        ("yes", True),
+        ("YES", True),
+        ("n", False),
+        ("N", False),
+        ("no", False),
+        ("NO", False),
+        ("other", False),
+        ("", False),
+    ],
+)
+def test_confirm_with_user(user_input, expected, mock_input, mock_isatty):
+    """Verify different inputs are accepted with a tendency to interpret as 'no'."""
+    mock_input.return_value = user_input
+
+    assert utils.confirm_with_user("prompt") == expected
+    assert mock_input.mock_calls == [call("prompt [y/N]: ")]
+
+
+def test_confirm_with_user_errors_in_managed_mode(mock_is_managed_mode):
+    mock_is_managed_mode.return_value = True
+
+    with pytest.raises(RuntimeError):
+        utils.confirm_with_user("prompt")
+
+
+def test_confirm_with_user_pause_emitter(mock_isatty, emitter):
+    """The emitter should be paused when using the terminal."""
+    mock_isatty.return_value = True
+
+    # pylint: disable-next=unused-argument
+    def fake_input(prompt):
+        """Check if the Emitter is paused."""
+        assert emitter.paused
+        return ""
+
+    with patch("snapcraft.utils.input", fake_input):
+        utils.confirm_with_user("prompt")
