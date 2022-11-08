@@ -262,6 +262,8 @@ class Provider(abc.ABC):
         # what is on the host.
         self._setup_snapcraft()
 
+        self._setup_snapd()
+
         # Always update snapd proxy settings to match current http(s) proxy
         # settings.
         self._setup_snapd_proxy()
@@ -506,6 +508,16 @@ class Provider(abc.ABC):
         snap_injector.add(snap_name="snapcraft")
 
         snap_injector.apply()
+
+    def _setup_snapd(self) -> None:
+        """Configure snapd and wait until ready."""
+        self._run(["systemctl", "start", "snapd.socket"])
+
+        # Restart, not start, the service in case the environment
+        # has changed and the service is already running.
+        self._run(["systemctl", "restart", "snapd.service"])
+
+        self._run(["snap", "wait", "system", "seed.loaded"])
 
     def _setup_snapd_proxy(self) -> None:
         """Configure snapd proxy settings from http(s)_proxy."""

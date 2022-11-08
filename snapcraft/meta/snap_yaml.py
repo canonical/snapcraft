@@ -81,6 +81,7 @@ class SnapApp(_SnapMetadataModel):
     restart_condition: Optional[str]
     install_mode: Optional[str]
     plugs: Optional[List[str]]
+    slots: Optional[List[str]]
     aliases: Optional[List[str]]
     environment: Optional[Dict[str, Any]]
     command_chain: Optional[List[str]]
@@ -200,6 +201,7 @@ class SnapMetadata(_SnapMetadataModel):
     hooks: Optional[Dict[str, Any]]
     layout: Optional[Dict[str, Dict[str, str]]]
     system_usernames: Optional[Dict[str, Any]]
+    provenance: Optional[str]
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "SnapMetadata":
@@ -326,6 +328,7 @@ def _create_snap_app(app: App, assumes: Set[str]) -> SnapApp:
         restart_condition=app.restart_condition,
         install_mode=app.install_mode,
         plugs=app.plugs,
+        slots=app.slots,
         aliases=app.aliases,
         environment=app.environment,
         command_chain=app.command_chain or None,
@@ -386,6 +389,7 @@ def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
         hooks=project.hooks,
         layout=project.layout,
         system_usernames=project.system_usernames,
+        provenance=project.provenance,
     )
     if project.passthrough:
         for name, value in project.passthrough.items():
