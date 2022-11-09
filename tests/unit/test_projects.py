@@ -1025,8 +1025,12 @@ class TestAppValidation:
         [
             {"snap_daemon": {"scope": "shared"}},
             {"snap_microk8s": {"scope": "shared"}},
+            {"snap_aziotedge": {"scope": "shared"}},
+            {"snap_aziotdu": {"scope": "shared"}},
             {"snap_daemon": "shared"},
             {"snap_microk8s": "shared"},
+            {"snap_aziotedge": "shared"},
+            {"snap_aziotdu": "shared"},
         ],
     )
     def test_project_system_usernames_valid(self, system_username, project_yaml_data):
