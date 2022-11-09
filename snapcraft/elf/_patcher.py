@@ -41,7 +41,7 @@ class Patcher:
         """Create a Patcher instance.
 
         :param dynamic_linker: The path to the dynamic linker to set the ELF file to.
-        :param snap_path: The base path for the snap being processed.
+        :param root_path: The base path for the snap being processed.
         :param preferred_patchelf: patch the necessary elf_files with this patchelf.
         """
         self._dynamic_linker = dynamic_linker
@@ -66,6 +66,9 @@ class Patcher:
         if elf_file.dependencies:
             current_rpath = self.get_current_rpath(elf_file)
             proposed_rpath = self.get_proposed_rpath(elf_file)
+
+            emit.debug(f"Patcher.patch: current_rpath={current_rpath!r}")
+            emit.debug(f"Patcher.patch: proposed_rpath={proposed_rpath!r}")
 
             # Removing the current rpath should not be necessary after patchelf 0.11,
             # see https://github.com/NixOS/patchelf/issues/94
