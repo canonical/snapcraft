@@ -120,7 +120,15 @@ class AptCache(ContextDecorator):
 
         # Copy current cache configuration.
         cache_etc_apt_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copytree("/etc/apt", cache_etc_apt_path)
+
+        # systems with ubuntu pro have an auth file in /etc/apt readable only by root
+        # this may raise an error when copying /etc/apt into the cache directory
+        try:
+            shutil.copytree("/etc/apt", cache_etc_apt_path)
+        except shutil.Error as error:
+            # copytree is a multi-file operation, so it generates a list of exceptions
+            # each exception in the list is a 3-element tuple: (source, dest, reason)
+            raise errors.PopulateCacheDirError(error.args[0]) from error
 
         # Specify default arch (if specified).
         if self.stage_cache_arch is not None:
