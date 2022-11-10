@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 import craft_parts
 from craft_cli import emit
 from craft_parts import ProjectInfo, StepInfo, callbacks
+from craft_providers import Executor
 
 from snapcraft import errors, extensions, linters, pack, providers, ua_manager, utils
 from snapcraft.linters import LinterStatus
@@ -255,7 +256,7 @@ def _run_command(
     else:
         work_dir = project_dir = Path.cwd()
 
-    step_name = "prime" if command_name in ("pack", "snap") else command_name
+    step_name = "prime" if command_name in ("pack", "snap", "try") else command_name
 
     lifecycle = PartsLifecycle(
         project.parts,
@@ -542,6 +543,8 @@ def _run_in_provider(
                 bind_ssh=parsed_args.bind_ssh,
             )
             with emit.pause():
+                if command_name == "try":
+                    _expose_prime(project_path, instance)
                 # run snapcraft inside the instance
                 instance.execute_run(cmd, check=True, cwd=output_dir)
         except subprocess.CalledProcessError as err:
@@ -554,6 +557,13 @@ def _run_in_provider(
             ) from err
         finally:
             providers.capture_logs_from_instance(instance)
+
+
+def _expose_prime(project_path: Path, instance: Executor):
+    """Expose the instance's prime directory in ``project_path`` on the host."""
+    host_prime = project_path / "prime"
+    host_prime.mkdir(exist_ok=True)
+    instance.mount(host_source=project_path / "prime", target=Path("/root/prime"))
 
 
 def _set_global_environment(info: ProjectInfo) -> None:

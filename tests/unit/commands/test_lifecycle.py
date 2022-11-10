@@ -27,6 +27,7 @@ from snapcraft.commands.lifecycle import (
     PullCommand,
     SnapCommand,
     StageCommand,
+    TryCommand,
 )
 
 
@@ -38,6 +39,7 @@ from snapcraft.commands.lifecycle import (
         ("stage", StageCommand),
         ("prime", PrimeCommand),
         ("clean", CleanCommand),
+        ("try", TryCommand),
     ],
 )
 def test_lifecycle_command(cmd_name, cmd_class, mocker):
