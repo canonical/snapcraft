@@ -1390,7 +1390,7 @@ class KernelPlugin(PluginV2):
                             "apt-key",
                             "adv",
                             "--keyserver",
-                            "keyserver.ubuntu.com",
+                            "hkp://keyserver.ubuntu.com:80",
                             "--recv-keys",
                             _SNAPPY_DEV_KEY_FINGERPRINT,
                         ],
