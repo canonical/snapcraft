@@ -20,9 +20,14 @@ from pathlib import Path
 import pytest
 
 from snapcraft import linters, projects
+from snapcraft.elf import elf_utils
 from snapcraft.linters.base import LinterIssue, LinterResult
 from snapcraft.linters.classic_linter import ClassicLinter
 from snapcraft.meta import snap_yaml
+
+
+def setup_function():
+    elf_utils.get_elf_files.cache_clear()
 
 
 @pytest.mark.parametrize(
