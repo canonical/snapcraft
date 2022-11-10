@@ -35,6 +35,7 @@ from snapcraft.meta import snap_yaml
 )
 def test_classic_linter(mocker, new_dir, confinement, stage_libc, text):
     shutil.copy("/bin/true", "elf.bin")
+    shutil.copy("/lib/x86_64-linux-gnu/libdl.so.2", "elf.lib")
 
     if stage_libc:
         Path("lib64").mkdir()
@@ -88,6 +89,12 @@ def test_classic_linter(mocker, new_dir, confinement, stage_libc, text):
                 name="classic",
                 result=LinterResult.WARNING,
                 filename="elf.bin",
+                text="ELF rpath should be set to '/snap/core22/current/lib/x86_64-linux-gnu'.",
+            ),
+            LinterIssue(
+                name="classic",
+                result=LinterResult.WARNING,
+                filename="elf.lib",
                 text="ELF rpath should be set to '/snap/core22/current/lib/x86_64-linux-gnu'.",
             ),
         ]
