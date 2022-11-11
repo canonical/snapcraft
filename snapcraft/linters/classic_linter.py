@@ -99,7 +99,7 @@ class ClassicLinter(Linter):
         self, elf_file: ElfFile, *, linker: str, issues: List[LinterIssue]
     ) -> None:
         """Check ELF executable interpreter is set to base or snap linker."""
-        if elf_file.interp != linker:
+        if elf_file.interp and elf_file.interp != linker:
             issue = LinterIssue(
                 name=self._name,
                 result=LinterResult.WARNING,

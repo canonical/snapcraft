@@ -20,9 +20,14 @@ from pathlib import Path
 import pytest
 
 from snapcraft import linters, projects
+from snapcraft.elf import elf_utils
 from snapcraft.linters.base import LinterIssue, LinterResult
 from snapcraft.linters.classic_linter import ClassicLinter
 from snapcraft.meta import snap_yaml
+
+
+def setup_function():
+    elf_utils.get_elf_files.cache_clear()
 
 
 @pytest.mark.parametrize(
@@ -35,6 +40,7 @@ from snapcraft.meta import snap_yaml
 )
 def test_classic_linter(mocker, new_dir, confinement, stage_libc, text):
     shutil.copy("/bin/true", "elf.bin")
+    shutil.copy("/lib/x86_64-linux-gnu/libdl.so.2", "elf.lib")
 
     if stage_libc:
         Path("lib64").mkdir()
@@ -88,6 +94,12 @@ def test_classic_linter(mocker, new_dir, confinement, stage_libc, text):
                 name="classic",
                 result=LinterResult.WARNING,
                 filename="elf.bin",
+                text="ELF rpath should be set to '/snap/core22/current/lib/x86_64-linux-gnu'.",
+            ),
+            LinterIssue(
+                name="classic",
+                result=LinterResult.WARNING,
+                filename="elf.lib",
                 text="ELF rpath should be set to '/snap/core22/current/lib/x86_64-linux-gnu'.",
             ),
         ]
