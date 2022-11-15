@@ -110,6 +110,7 @@ class AptCache(ContextDecorator):
             return
 
         # Copy apt configuration from host.
+        etc_apt_path = Path("/etc/apt")
         cache_etc_apt_path = Path(self.stage_cache, "etc", "apt")
 
         # Delete potentially outdated cache configuration.
@@ -121,14 +122,20 @@ class AptCache(ContextDecorator):
         # Copy current cache configuration.
         cache_etc_apt_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # systems with ubuntu pro have an auth file in /etc/apt readable only by root
-        # this may raise an error when copying /etc/apt into the cache directory
+        # systems with ubuntu pro have an auth file inside the /etc/apt directory.
+        # this auth file is readable only by root, so the copytree call below may
+        # fail when attempting to copy this file into the cache directory
         try:
-            shutil.copytree("/etc/apt", cache_etc_apt_path)
+            shutil.copytree(etc_apt_path, cache_etc_apt_path)
         except shutil.Error as error:
             # copytree is a multi-file operation, so it generates a list of exceptions
             # each exception in the list is a 3-element tuple: (source, dest, reason)
             raise errors.PopulateCacheDirError(error.args[0]) from error
+        except PermissionError as error:
+            # catch the PermissionError raised when `/etc/apt` is unreadable
+            raise errors.PopulateCacheDirError(
+                [(etc_apt_path, cache_etc_apt_path, error)]
+            ) from error
 
         # Specify default arch (if specified).
         if self.stage_cache_arch is not None:

@@ -196,7 +196,7 @@ class TestAptReadonlyHostCache(unit.TestCase):
             )
 
 
-def test_populate_stage_cache_dir_error(mocker, tmp_path):
+def test_populate_stage_cache_dir_shutil_error(mocker, tmp_path):
     """Raise an error when the apt cache directory cannot be populated."""
     mock_copytree = mocker.patch(
         "snapcraft_legacy.internal.repo.apt_cache.shutil.copytree",
@@ -222,7 +222,7 @@ def test_populate_stage_cache_dir_error(mocker, tmp_path):
             apt_cache.stage_cache = tmp_path
             apt_cache._populate_stage_cache_dir()
 
-    assert mock_copytree.mock_calls == [call("/etc/apt", tmp_path / "etc/apt")]
+    assert mock_copytree.mock_calls == [call(Path("/etc/apt"), tmp_path / "etc/apt")]
 
     # verify the data inside the shutil error was passed to PopulateCacheDirError
     assert raised.value.get_details() == (
@@ -230,4 +230,26 @@ def test_populate_stage_cache_dir_error(mocker, tmp_path):
         "[Errno 13] Permission denied: '/etc/apt/source-file-1'\n"
         "Unable to copy /etc/apt/source-file-2 to /root/.cache/dest-file-2: "
         "[Errno 13] Permission denied: '/etc/apt/source-file-2'\n"
+    )
+
+
+def test_populate_stage_cache_dir_permission_error(mocker, tmp_path):
+    """Raise an error when the apt cache directory cannot be populated."""
+    mock_copytree = mocker.patch(
+        "snapcraft_legacy.internal.repo.apt_cache.shutil.copytree",
+        side_effect=PermissionError("[Errno 13] Permission denied: '/etc/apt"),
+    )
+
+    with pytest.raises(PopulateCacheDirError) as raised:
+        with AptCache() as apt_cache:
+            # set stage_cache directory so method does not return early
+            apt_cache.stage_cache = tmp_path
+            apt_cache._populate_stage_cache_dir()
+
+    assert mock_copytree.mock_calls == [call(Path("/etc/apt"), tmp_path / "etc/apt")]
+
+    # verify the data inside the permission error was passed to PopulateCacheDirError
+    assert raised.value.get_details() == (
+        f"Unable to copy {Path('/etc/apt')} to {tmp_path / 'etc/apt'}: "
+        "[Errno 13] Permission denied: '/etc/apt\n"
     )
