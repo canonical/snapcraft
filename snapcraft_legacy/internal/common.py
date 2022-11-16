@@ -30,7 +30,7 @@ from contextlib import suppress
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Union
 
-from snaphelpers import SnapConfigOptions
+from snaphelpers import SnapConfigOptions, SnapCtlError
 
 from snapcraft_legacy.internal import errors
 
@@ -384,8 +384,18 @@ def get_snap_config() -> Optional[Dict[str, str]]:
         )
         return None
 
-    snap_config = SnapConfigOptions(keys=["provider"])
-    snap_config.fetch()
+    try:
+        snap_config = SnapConfigOptions(keys=["provider"])
+        # even if the initialization of SnapConfigOptions succeeds, `fetch()` may
+        # raise the same errors since it makes calls to snapd
+        snap_config.fetch()
+    except (AttributeError, SnapCtlError) as error:
+        # snaphelpers raises an error (either AttributeError or SnapCtlError) when
+        # it fails to get the snap config. this can occur when running inside a
+        # docker or podman container where snapd is not available
+        logger.debug("Could not retrieve the snap config. Is snapd running?")
+        logger.debug("snaphelpers error: {%r}", error)
+        return None
 
     logger.debug("Retrieved snap config: %s", snap_config.as_dict())
     return snap_config.as_dict()
