@@ -148,6 +148,20 @@ def get_verbosity() -> EmitterMode:
         if utils.strtobool(os.getenv("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "n").strip()):
             verbosity = EmitterMode.DEBUG
 
+    # if defined, use environmental variable SNAPCRAFT_VERBOSITY_LEVEL
+    verbosity_env = os.getenv("SNAPCRAFT_VERBOSITY_LEVEL")
+    if verbosity_env:
+        try:
+            verbosity = EmitterMode[verbosity_env.strip().upper()]
+        except KeyError:
+            values = utils.humanize_list(
+                [e.name.lower() for e in EmitterMode], "and", sort=False
+            )
+            raise ArgumentParsingError(
+                f"cannot parse verbosity level {verbosity_env!r} from environment "
+                f"variable SNAPCRAFT_VERBOSITY_LEVEL (valid values are {values})"
+            ) from KeyError
+
     return verbosity
 
 

@@ -290,7 +290,10 @@ def prompt(prompt_text: str, *, hide: bool = False) -> str:
 
 
 def humanize_list(
-    items: Iterable[str], conjunction: str, item_format: str = "{!r}"
+    items: Iterable[str],
+    conjunction: str,
+    item_format: str = "{!r}",
+    sort: bool = True,
 ) -> str:
     """Format a list into a human-readable string.
 
@@ -298,11 +301,16 @@ def humanize_list(
     :param conjunction: the conjunction used to join the final element to
                         the rest of the list (e.g. 'and').
     :param item_format: format string to use per item.
+    :param sort: if true, sort the list.
     """
     if not items:
         return ""
 
-    quoted_items = [item_format.format(item) for item in sorted(items)]
+    quoted_items = [item_format.format(item) for item in items]
+
+    if sort:
+        quoted_items = sorted(quoted_items)
+
     if len(quoted_items) == 1:
         return quoted_items[0]
 
