@@ -15,14 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import shutil
 import unittest
 from pathlib import Path
 from unittest.mock import call
 
 import fixtures
+import pytest
 from testtools.matchers import Equals
 
 from snapcraft_legacy.internal.repo.apt_cache import AptCache
+from snapcraft_legacy.internal.repo.errors import PopulateCacheDirError
 from tests.legacy import unit
 
 
@@ -191,3 +194,62 @@ class TestAptReadonlyHostCache(unit.TestCase):
             self.assertThat(
                 apt_cache.get_installed_version("fake-news-bears"), Equals(None)
             )
+
+
+def test_populate_stage_cache_dir_shutil_error(mocker, tmp_path):
+    """Raise an error when the apt cache directory cannot be populated."""
+    mock_copytree = mocker.patch(
+        "snapcraft_legacy.internal.repo.apt_cache.shutil.copytree",
+        side_effect=shutil.Error(
+            [
+                (
+                    "/etc/apt/source-file-1",
+                    "/root/.cache/dest-file-1",
+                    "[Errno 13] Permission denied: '/etc/apt/source-file-1'",
+                ),
+                (
+                    "/etc/apt/source-file-2",
+                    "/root/.cache/dest-file-2",
+                    "[Errno 13] Permission denied: '/etc/apt/source-file-2'",
+                ),
+            ]
+        ),
+    )
+
+    with pytest.raises(PopulateCacheDirError) as raised:
+        with AptCache() as apt_cache:
+            # set stage_cache directory so method does not return early
+            apt_cache.stage_cache = tmp_path
+            apt_cache._populate_stage_cache_dir()
+
+    assert mock_copytree.mock_calls == [call(Path("/etc/apt"), tmp_path / "etc/apt")]
+
+    # verify the data inside the shutil error was passed to PopulateCacheDirError
+    assert raised.value.get_details() == (
+        "Unable to copy /etc/apt/source-file-1 to /root/.cache/dest-file-1: "
+        "[Errno 13] Permission denied: '/etc/apt/source-file-1'\n"
+        "Unable to copy /etc/apt/source-file-2 to /root/.cache/dest-file-2: "
+        "[Errno 13] Permission denied: '/etc/apt/source-file-2'\n"
+    )
+
+
+def test_populate_stage_cache_dir_permission_error(mocker, tmp_path):
+    """Raise an error when the apt cache directory cannot be populated."""
+    mock_copytree = mocker.patch(
+        "snapcraft_legacy.internal.repo.apt_cache.shutil.copytree",
+        side_effect=PermissionError("[Errno 13] Permission denied: '/etc/apt"),
+    )
+
+    with pytest.raises(PopulateCacheDirError) as raised:
+        with AptCache() as apt_cache:
+            # set stage_cache directory so method does not return early
+            apt_cache.stage_cache = tmp_path
+            apt_cache._populate_stage_cache_dir()
+
+    assert mock_copytree.mock_calls == [call(Path("/etc/apt"), tmp_path / "etc/apt")]
+
+    # verify the data inside the permission error was passed to PopulateCacheDirError
+    assert raised.value.get_details() == (
+        f"Unable to copy {Path('/etc/apt')} to {tmp_path / 'etc/apt'}: "
+        "[Errno 13] Permission denied: '/etc/apt\n"
+    )
