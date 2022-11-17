@@ -144,6 +144,8 @@ def complex_project():
             restart-condition: on-success
             install-mode: enable
             aliases: [test-alias-1, test-alias-2]
+            plugs: [test-plug-1, test-plug-2]
+            slots: [test-slot-1, test-slot-2]
             environment:
               APP_VARIABLE: test-app-variable
             command-chain:
@@ -197,6 +199,9 @@ def complex_project():
           snap_daemon:
             scope: shared
           snap_microk8s: shared
+          snap_aziotedge: shared
+          snap_aziotdu:
+            scope: shared
 
         layout:
           /usr/share/libdrm:
@@ -205,6 +210,8 @@ def complex_project():
             bind: $SNAP/gnome-platform/usr/lib/x86_64-linux-gnu/webkit2gtk-4.0
           /usr/share/xml/iso-codes:
             bind: $SNAP/gnome-platform/usr/share/xml/iso-codes
+
+        provenance: test-provenance-1
         """
     )
     data = yaml.safe_load(snapcraft_yaml)
@@ -264,6 +271,12 @@ def test_complex_snap_yaml(complex_project, new_dir):
             stop-mode: sigterm
             restart-condition: on-success
             install-mode: enable
+            plugs:
+            - test-plug-1
+            - test-plug-2
+            slots:
+            - test-slot-1
+            - test-slot-2
             aliases:
             - test-alias-1
             - test-alias-2
@@ -330,6 +343,10 @@ def test_complex_snap_yaml(complex_project, new_dir):
           snap_daemon:
             scope: shared
           snap_microk8s: shared
+          snap_aziotedge: shared
+          snap_aziotdu:
+            scope: shared
+        provenance: test-provenance-1
         """
     )
 

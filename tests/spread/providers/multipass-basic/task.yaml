@@ -1,8 +1,10 @@
 summary: Build a basic snap using multipass and ensure that it runs
+
+# this test does not work on google's spread runners due to a lack of virtualization support
 manual: true
 
 environment:
-  SNAP_DIR: ../../snaps/make-hello
+  SNAP_DIR: ../snaps/make-hello
 
 prepare: |
   snap list multipass || snap install --classic multipass
@@ -14,8 +16,7 @@ prepare: |
 restore: |
   cd "$SNAP_DIR"
 
-  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
-  unset SNAPCRAFT_BUILD_ENVIRONMENT
+  export SNAPCRAFT_BUILD_ENVIRONMENT=multipass
 
   snapcraft clean
   rm -f ./*.snap
@@ -27,8 +28,7 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
 
-  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
-  unset SNAPCRAFT_BUILD_ENVIRONMENT
+  export SNAPCRAFT_BUILD_ENVIRONMENT=multipass
 
   snapcraft
   sudo snap install make-hello_*.snap --dangerous

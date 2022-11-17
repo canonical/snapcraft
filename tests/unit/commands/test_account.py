@@ -114,7 +114,7 @@ def test_export_login(emitter, fake_store_login):
     ]
     emitter.assert_message(
         "Exported login credentials:\nsecret"
-        "\n\nThese credentials must be used on Snapcraft 7.0 or greater."
+        "\n\nThese credentials must be used on Snapcraft 7.2 or greater."
     )
 
 
@@ -139,7 +139,7 @@ def test_export_login_file(new_dir, emitter, fake_store_login):
     ]
     emitter.assert_message(
         "Exported login credentials to 'target_file'"
-        "\n\nThese credentials must be used on Snapcraft 7.0 or greater."
+        "\n\nThese credentials must be used on Snapcraft 7.2 or greater."
     )
     login_file = new_dir / "target_file"
     assert login_file.exists()
@@ -171,7 +171,7 @@ def test_export_login_with_params(emitter, fake_store_login):
     ]
     emitter.assert_message(
         "Exported login credentials:\nsecret"
-        "\n\nThese credentials must be used on Snapcraft 7.0 or greater."
+        "\n\nThese credentials must be used on Snapcraft 7.2 or greater."
     )
 
 
@@ -202,7 +202,7 @@ def test_export_login_with_candid(emitter, fake_store_login, monkeypatch):
     ]
     emitter.assert_message(
         "Exported login credentials:\nsecret"
-        "\n\nThese credentials must be used on Snapcraft 7.0 or greater."
+        "\n\nThese credentials must be used on Snapcraft 7.2 or greater."
         "\nSet 'SNAPCRAFT_STORE_AUTH=candid' for these credentials to work."
     )
 

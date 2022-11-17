@@ -74,7 +74,7 @@ def test_get_discharged_macaroon(on_prem_client, mocker):
 
     assert (
         on_prem_client._get_discharged_macaroon("root-macaroon")
-        == "discharged-macaroon"
+        == '{"t": "macaroon", "v": "discharged-macaroon"}'
     )
 
     assert request_mock.mock_calls == [
@@ -97,3 +97,13 @@ def test_get_authorization_header(on_prem_client, mocker):
         on_prem_client._get_authorization_header()
         == "macaroon serialized-macaroon-string"
     )
+
+
+def test_get_authorization_header_json(on_prem_client, mocker):
+    """Ensure the correct authorization header is formed for requests"""
+    mocker.patch.object(
+        on_prem_client._auth,
+        "get_credentials",
+        return_value='{"t": "macaroon", "v": "discharged-macaroon"}',
+    )
+    assert on_prem_client._get_authorization_header() == "macaroon discharged-macaroon"
