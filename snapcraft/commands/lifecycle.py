@@ -312,7 +312,7 @@ class TryCommand(_LifecycleCommand):
 
     @overrides
     def run(self, parsed_args):
-        """Overriden to give a helpful message when the lifecycle finishes."""
-        super(TryCommand, self).run(parsed_args)
+        """Overridden to give a helpful message when the lifecycle finishes."""
+        super().run(parsed_args)
         if not utils.is_managed_mode():
             emit.message("You can now run `snap try prime`")
