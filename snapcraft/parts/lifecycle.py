@@ -563,7 +563,11 @@ def _expose_prime(project_path: Path, instance: Executor):
     """Expose the instance's prime directory in ``project_path`` on the host."""
     host_prime = project_path / "prime"
     host_prime.mkdir(exist_ok=True)
-    instance.mount(host_source=project_path / "prime", target=Path("/root/prime"))
+
+    managed_root = utils.get_managed_environment_home_path()
+    dirs = craft_parts.ProjectDirs(work_dir=managed_root)
+
+    instance.mount(host_source=project_path / "prime", target=dirs.prime_dir)
 
 
 def _set_global_environment(info: ProjectInfo) -> None:
