@@ -1,0 +1,17 @@
+summary: Test "snapcraft try" in core22
+
+execute: |
+  # TODO if we let `snapcraft try` create the dir, we get a permission error
+  # when trying to write to it from the instance.
+  mkdir prime
+  chmod a+w prime
+  
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+  snapcraft try --use-lxd
+  
+  find prime/meta/snap.yaml
+  find prime/usr/bin/hello
+  
+  snap try prime
+  hello-try | MATCH "Hello, world"
+  snap remove hello-try

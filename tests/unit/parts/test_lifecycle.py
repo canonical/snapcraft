@@ -1298,6 +1298,58 @@ def test_lifecycle_run_in_provider_all_options(
     mock_capture_logs_from_instance.assert_called_once()
 
 
+def test_lifecycle_run_in_provider_try(
+    mock_get_instance_name,
+    mock_instance,
+    mock_provider,
+    mocker,
+    snapcraft_yaml,
+    tmp_path,
+):
+    """Test that "snapcraft try" mounts the host's prime dir before priming in the instance"""
+    mock_base_configuration = Mock()
+    mocker.patch(
+        "snapcraft.parts.lifecycle.providers.get_base_configuration",
+        return_value=mock_base_configuration,
+    )
+    mocker.patch("snapcraft.parts.lifecycle.providers.capture_logs_from_instance")
+    mocker.patch("snapcraft.parts.lifecycle.providers.ensure_provider_is_available")
+    mocker.patch("snapcraft.parts.lifecycle.providers.prepare_instance")
+    mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
+    mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
+
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    parts_lifecycle._run_in_provider(
+        project=project,
+        command_name="try",
+        parsed_args=argparse.Namespace(
+            use_lxd=False,
+            debug=False,
+            bind_ssh=False,
+            http_proxy=None,
+            https_proxy=None,
+        ),
+    )
+
+    expected_command = [
+        "snapcraft",
+        "try",
+        "--verbosity=quiet",
+        "--build-for",
+        "test-arch-2",
+    ]
+
+    # Make sure the calls are made in the correct order: first the host 'prime' dir
+    # is mounted, and _then_ the command is run in the instance.
+    mock_instance.assert_has_calls(
+        [
+            call.mount(host_source=tmp_path / "prime", target=Path("/root/prime")),
+            call.execute_run(expected_command, check=True, cwd=Path("/root/project")),
+        ],
+        any_order=False,
+    )
+
+
 @pytest.fixture
 def minimal_yaml_data():
     return {
