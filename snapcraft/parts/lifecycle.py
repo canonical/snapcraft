@@ -643,7 +643,8 @@ def _patch_elf(step_info: StepInfo) -> bool:
             soname_cache=soname_cache,
         )
 
-        emit.progress(f"Patch ELF file: {str(elf_file.path)!r}")
+        relative_path = elf_file.path.relative_to(step_info.prime_dir)
+        emit.progress(f"Patch ELF file: {str(relative_path)!r}")
         patcher.patch(elf_file=elf_file)
 
     return True

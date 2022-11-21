@@ -62,13 +62,14 @@ class Patcher:
         patchelf_args = []
         if elf_file.interp and elf_file.interp != self._dynamic_linker:
             patchelf_args.extend(["--set-interpreter", self._dynamic_linker])
+            emit.progress(f"  Interpreter={self._dynamic_linker!r}")
 
         if elf_file.dependencies:
             current_rpath = self.get_current_rpath(elf_file)
             proposed_rpath = self.get_proposed_rpath(elf_file)
 
-            emit.debug(f"Patcher.patch: current_rpath={current_rpath!r}")
-            emit.debug(f"Patcher.patch: proposed_rpath={proposed_rpath!r}")
+            emit.progress(f"  Current rpath={current_rpath}")
+            emit.progress(f"  Proposed rpath={proposed_rpath}")
 
             # Removing the current rpath should not be necessary after patchelf 0.11,
             # see https://github.com/NixOS/patchelf/issues/94
