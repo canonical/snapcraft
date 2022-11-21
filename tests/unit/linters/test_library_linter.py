@@ -18,9 +18,14 @@ import shutil
 from pathlib import Path
 
 from snapcraft import linters, projects
+from snapcraft.elf import elf_utils
 from snapcraft.linters.base import LinterIssue, LinterResult
 from snapcraft.linters.library_linter import LibraryLinter
 from snapcraft.meta import snap_yaml
+
+
+def setup_function():
+    elf_utils.get_elf_files.cache_clear()
 
 
 def test_library_linter(mocker, new_dir):
