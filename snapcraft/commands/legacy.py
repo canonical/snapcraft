@@ -228,7 +228,7 @@ class StoreLegacyRegisterKeyCommand(LegacyBaseCommand):
     help_msg = "Register a key to sign assertions with the Snap Store."
     overview = textwrap.dedent(
         """
-        Register a a key with the Snap Store. Prior to registration, use register-key
+        Register a key with the Snap Store. Prior to registration, use create-key
         to create one."""
     )
 
