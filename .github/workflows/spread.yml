@@ -12,6 +12,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Remove Docker
+        run: |
+          # https://github.com/canonical/lxd-cloud/blob/f20a64a8af42485440dcbfd370faf14137d2f349/test/includes/lxd.sh#L13-L23
+          sudo rm -rf /etc/docker
+          sudo apt-get purge moby-buildx moby-engine moby-cli moby-compose moby-containerd moby-runc -y
+          sudo iptables -P FORWARD ACCEPT
       - name: Build snapcraft snap
         id: build-snapcraft
         uses: snapcore/action-build@v1.0.9
@@ -47,6 +53,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+          submodules: true
 
       - name: Download snapcraft snap
         uses: actions/download-artifact@v2
@@ -96,6 +103,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+          submodules: true
 
       - if: steps.decisions.outputs.RUN == 'true'
         name: Download snapcraft snap
