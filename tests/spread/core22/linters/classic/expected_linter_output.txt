@@ -5,14 +5,9 @@ Lint OK:
 Lint warnings:
 - classic: usr/bin/toilet: ELF interpreter should be set to '/snap/core22/current/lib64/ld-linux-x86-64.so.2'. (https://snapcraft.io/docs/linters-classic)
 - classic: usr/bin/toilet: ELF rpath should be set to '$ORIGIN/../lib/x86_64-linux-gnu:/snap/core22/current/lib/x86_64-linux-gnu'. (https://snapcraft.io/docs/linters-classic)
-- classic: usr/lib/x86_64-linux-gnu/caca/libgl_plugin.so.0.0.0: ELF interpreter should be set to '/snap/core22/current/lib64/ld-linux-x86-64.so.2'. (https://snapcraft.io/docs/linters-classic)
 - classic: usr/lib/x86_64-linux-gnu/caca/libgl_plugin.so.0.0.0: ELF rpath should be set to '$ORIGIN/..:/snap/core22/current/lib/x86_64-linux-gnu'. (https://snapcraft.io/docs/linters-classic)
-- classic: usr/lib/x86_64-linux-gnu/caca/libx11_plugin.so.0.0.0: ELF interpreter should be set to '/snap/core22/current/lib64/ld-linux-x86-64.so.2'. (https://snapcraft.io/docs/linters-classic)
 - classic: usr/lib/x86_64-linux-gnu/caca/libx11_plugin.so.0.0.0: ELF rpath should be set to '$ORIGIN/..:/snap/core22/current/lib/x86_64-linux-gnu'. (https://snapcraft.io/docs/linters-classic)
-- classic: usr/lib/x86_64-linux-gnu/libcaca++.so.0.99.19: ELF interpreter should be set to '/snap/core22/current/lib64/ld-linux-x86-64.so.2'. (https://snapcraft.io/docs/linters-classic)
 - classic: usr/lib/x86_64-linux-gnu/libcaca++.so.0.99.19: ELF rpath should be set to '$ORIGIN:/snap/core22/current/lib/x86_64-linux-gnu'. (https://snapcraft.io/docs/linters-classic)
-- classic: usr/lib/x86_64-linux-gnu/libcaca.so.0.99.19: ELF interpreter should be set to '/snap/core22/current/lib64/ld-linux-x86-64.so.2'. (https://snapcraft.io/docs/linters-classic)
 - classic: usr/lib/x86_64-linux-gnu/libcaca.so.0.99.19: ELF rpath should be set to '$ORIGIN:/snap/core22/current/lib/x86_64-linux-gnu'. (https://snapcraft.io/docs/linters-classic)
-- classic: usr/lib/x86_64-linux-gnu/libslang.so.2.3.2: ELF interpreter should be set to '/snap/core22/current/lib64/ld-linux-x86-64.so.2'. (https://snapcraft.io/docs/linters-classic)
 - classic: usr/lib/x86_64-linux-gnu/libslang.so.2.3.2: ELF rpath should be set to '/snap/core22/current/lib/x86_64-linux-gnu'. (https://snapcraft.io/docs/linters-classic)
 Creating snap package...

@@ -11,7 +11,7 @@ codespell==2.2.1
 coverage==6.5.0
 craft-cli==1.2.0
 craft-grammar==1.1.1
-craft-parts==1.16.0
+craft-parts==1.17.0
 craft-providers==1.6.1
 craft-store==2.3.0
 cryptography==3.4

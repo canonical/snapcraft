@@ -76,13 +76,12 @@ class ClassicLinter(Linter):
         elf_files = elf_utils.get_elf_files(current_path)
         patcher = Patcher(dynamic_linker=linker, root_path=current_path.absolute())
         soname_cache = SonameCache()
+        arch_triplet = elf_utils.get_arch_triplet()
 
         for elf_file in elf_files:
             # Skip linting files listed in the ignore list.
             if self._is_file_ignored(elf_file):
                 continue
-
-            arch_triplet = elf_utils.get_arch_triplet()
 
             elf_file.load_dependencies(
                 root_path=current_path.absolute(),
@@ -101,7 +100,7 @@ class ClassicLinter(Linter):
         self, elf_file: ElfFile, *, linker: str, issues: List[LinterIssue]
     ) -> None:
         """Check ELF executable interpreter is set to base or snap linker."""
-        if elf_file.interp != linker:
+        if elf_file.interp and elf_file.interp != linker:
             issue = LinterIssue(
                 name=self._name,
                 result=LinterResult.WARNING,

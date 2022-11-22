@@ -49,6 +49,7 @@ COMMAND_GROUPS = [
             commands.SnapCommand,  # hidden (legacy compatibility)
             commands.PluginsCommand,
             commands.ListPluginsCommand,
+            commands.TryCommand,
         ],
     ),
     craft_cli.CommandGroup(
