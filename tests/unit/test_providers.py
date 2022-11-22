@@ -541,6 +541,8 @@ def test_prepare_instance(bind_ssh, mock_instance, mocker, tmp_path):
                 if [[ ! $PWD = $previous_pwd ]]; then
                     # set part's environment when inside a part's build directory
                     if [[ "$PWD" =~ $HOME/parts/.*/build ]]; then
+                        part_name=$(echo "${PWD#$HOME}" | cut -d "/" -f 3)
+                        echo "build environment set for part '$part_name'"
                         source ${PWD/build*/run/environment.sh}
 
                     # else clear and set the default environment
