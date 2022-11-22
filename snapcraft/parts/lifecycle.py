@@ -27,9 +27,12 @@ from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 import craft_parts
 from craft_cli import emit
-from craft_parts import ProjectInfo, StepInfo, callbacks
+from craft_parts import ProjectInfo, Step, StepInfo, callbacks
+from craft_providers import Executor
 
 from snapcraft import errors, extensions, linters, pack, providers, ua_manager, utils
+from snapcraft.elf import Patcher, SonameCache, elf_utils
+from snapcraft.elf import errors as elf_errors
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import manifest, snap_yaml
 from snapcraft.projects import (
@@ -191,6 +194,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     # Register our own callbacks
     callbacks.register_prologue(_set_global_environment)
     callbacks.register_pre_step(_set_step_environment)
+    callbacks.register_post_step(_patch_elf, step_list=[Step.PRIME])
 
     build_count = utils.get_parallel_build_count()
 
@@ -255,7 +259,7 @@ def _run_command(
     else:
         work_dir = project_dir = Path.cwd()
 
-    step_name = "prime" if command_name in ("pack", "snap") else command_name
+    step_name = "prime" if command_name in ("pack", "snap", "try") else command_name
 
     lifecycle = PartsLifecycle(
         project.parts,
@@ -471,8 +475,7 @@ def _run_in_provider(
     emit.debug("Checking build provider availability")
     provider_name = "lxd" if parsed_args.use_lxd else None
     provider = providers.get_provider(provider_name)
-    with emit.pause():
-        providers.ensure_provider_is_available(provider)
+    providers.ensure_provider_is_available(provider)
 
     cmd = ["snapcraft", command_name]
 
@@ -542,6 +545,8 @@ def _run_in_provider(
                 bind_ssh=parsed_args.bind_ssh,
             )
             with emit.pause():
+                if command_name == "try":
+                    _expose_prime(project_path, instance)
                 # run snapcraft inside the instance
                 instance.execute_run(cmd, check=True, cwd=output_dir)
         except subprocess.CalledProcessError as err:
@@ -554,6 +559,17 @@ def _run_in_provider(
             ) from err
         finally:
             providers.capture_logs_from_instance(instance)
+
+
+def _expose_prime(project_path: Path, instance: Executor):
+    """Expose the instance's prime directory in ``project_path`` on the host."""
+    host_prime = project_path / "prime"
+    host_prime.mkdir(exist_ok=True)
+
+    managed_root = utils.get_managed_environment_home_path()
+    dirs = craft_parts.ProjectDirs(work_dir=managed_root)
+
+    instance.mount(host_source=project_path / "prime", target=dirs.prime_dir)
 
 
 def _set_global_environment(info: ProjectInfo) -> None:
@@ -584,6 +600,53 @@ def _set_step_environment(step_info: StepInfo) -> bool:
             "SNAPCRAFT_PART_INSTALL": str(step_info.part_install_dir),
         }
     )
+    return True
+
+
+def _patch_elf(step_info: StepInfo) -> bool:
+    """Patch rpath and interpreter in ELF files for classic mode."""
+    if "enable-patchelf" not in step_info.build_attributes:
+        emit.debug(f"patch_elf: not enabled for part {step_info.part_name!r}")
+        return True
+
+    if not step_info.state:
+        emit.debug("patch_elf: no state information")
+        return True
+
+    try:
+        # If libc is staged we'll find a dynamic linker in the payload. At
+        # runtime the linker will be in the installed snap path.
+        linker = elf_utils.get_dynamic_linker(
+            root_path=step_info.prime_dir,
+            snap_path=Path(f"/snap/{step_info.project_name}/current"),
+        )
+    except elf_errors.DynamicLinkerNotFound:
+        # Otherwise look for the host linker, which should match the base
+        # system linker. At runtime use the linker from the installed base
+        # snap.
+        linker = elf_utils.get_dynamic_linker(
+            root_path=Path("/"), snap_path=Path(f"/snap/{step_info.base}/current")
+        )
+
+    migrated_files = step_info.state.files
+    patcher = Patcher(dynamic_linker=linker, root_path=step_info.prime_dir)
+    elf_files = elf_utils.get_elf_files_from_list(step_info.prime_dir, migrated_files)
+    soname_cache = SonameCache()
+    arch_triplet = elf_utils.get_arch_triplet()
+
+    for elf_file in elf_files:
+        elf_file.load_dependencies(
+            root_path=step_info.prime_dir,
+            base_path=Path(f"/snap/{step_info.base}/current"),
+            content_dirs=[],  # classic snaps don't use content providers
+            arch_triplet=arch_triplet,
+            soname_cache=soname_cache,
+        )
+
+        relative_path = elf_file.path.relative_to(step_info.prime_dir)
+        emit.progress(f"Patch ELF file: {str(relative_path)!r}")
+        patcher.patch(elf_file=elf_file)
+
     return True
 
 
