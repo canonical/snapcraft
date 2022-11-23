@@ -19,9 +19,11 @@
 from pathlib import Path, PurePath
 from typing import List
 
+from craft_cli import emit
 from overrides import overrides
 
 from snapcraft.elf import ElfFile, SonameCache, elf_utils
+from snapcraft.elf import errors as elf_errors
 
 from .base import Linter, LinterIssue, LinterResult
 
@@ -87,8 +89,20 @@ class LibraryLinter(Linter):
         :param root_path: The absolute path to the payload directory.
         :param issues: The list of linter issues.
         """
+        try:
+            linker = elf_utils.get_dynamic_linker(root_path=Path("/"), snap_path=Path())
+            linker_name = Path(linker).name
+        except elf_errors.DynamicLinkerNotFound:
+            linker_name = None
+
+        emit.debug(f"dynamic linker name is: {linker_name!r}")
+
         for dependency in dependencies:
             dependency_path = PurePath(dependency)
+
+            # the dynamic linker is not a regular library
+            if linker_name == dependency_path.name:
+                continue
 
             for path in search_paths:
                 if path in dependency_path.parents:
