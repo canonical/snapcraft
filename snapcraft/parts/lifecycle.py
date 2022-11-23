@@ -27,10 +27,12 @@ from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 import craft_parts
 from craft_cli import emit
-from craft_parts import ProjectInfo, StepInfo, callbacks
+from craft_parts import ProjectInfo, Step, StepInfo, callbacks
 from craft_providers import Executor
 
 from snapcraft import errors, extensions, linters, pack, providers, ua_manager, utils
+from snapcraft.elf import Patcher, SonameCache, elf_utils
+from snapcraft.elf import errors as elf_errors
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import manifest, snap_yaml
 from snapcraft.projects import (
@@ -192,6 +194,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     # Register our own callbacks
     callbacks.register_prologue(_set_global_environment)
     callbacks.register_pre_step(_set_step_environment)
+    callbacks.register_post_step(_patch_elf, step_list=[Step.PRIME])
 
     build_count = utils.get_parallel_build_count()
 
@@ -597,6 +600,53 @@ def _set_step_environment(step_info: StepInfo) -> bool:
             "SNAPCRAFT_PART_INSTALL": str(step_info.part_install_dir),
         }
     )
+    return True
+
+
+def _patch_elf(step_info: StepInfo) -> bool:
+    """Patch rpath and interpreter in ELF files for classic mode."""
+    if "enable-patchelf" not in step_info.build_attributes:
+        emit.debug(f"patch_elf: not enabled for part {step_info.part_name!r}")
+        return True
+
+    if not step_info.state:
+        emit.debug("patch_elf: no state information")
+        return True
+
+    try:
+        # If libc is staged we'll find a dynamic linker in the payload. At
+        # runtime the linker will be in the installed snap path.
+        linker = elf_utils.get_dynamic_linker(
+            root_path=step_info.prime_dir,
+            snap_path=Path(f"/snap/{step_info.project_name}/current"),
+        )
+    except elf_errors.DynamicLinkerNotFound:
+        # Otherwise look for the host linker, which should match the base
+        # system linker. At runtime use the linker from the installed base
+        # snap.
+        linker = elf_utils.get_dynamic_linker(
+            root_path=Path("/"), snap_path=Path(f"/snap/{step_info.base}/current")
+        )
+
+    migrated_files = step_info.state.files
+    patcher = Patcher(dynamic_linker=linker, root_path=step_info.prime_dir)
+    elf_files = elf_utils.get_elf_files_from_list(step_info.prime_dir, migrated_files)
+    soname_cache = SonameCache()
+    arch_triplet = elf_utils.get_arch_triplet()
+
+    for elf_file in elf_files:
+        elf_file.load_dependencies(
+            root_path=step_info.prime_dir,
+            base_path=Path(f"/snap/{step_info.base}/current"),
+            content_dirs=[],  # classic snaps don't use content providers
+            arch_triplet=arch_triplet,
+            soname_cache=soname_cache,
+        )
+
+        relative_path = elf_file.path.relative_to(step_info.prime_dir)
+        emit.progress(f"Patch ELF file: {str(relative_path)!r}")
+        patcher.patch(elf_file=elf_file)
+
     return True
 
 
