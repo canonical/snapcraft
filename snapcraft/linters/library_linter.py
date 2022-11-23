@@ -95,7 +95,7 @@ class LibraryLinter(Linter):
         except elf_errors.DynamicLinkerNotFound:
             linker_name = None
 
-        emit.debug(f"dynamic linker name is: {linker_name}")
+        emit.debug(f"dynamic linker name is: {linker_name!r}")
 
         for dependency in dependencies:
             dependency_path = PurePath(dependency)
