@@ -127,6 +127,11 @@ class TestPluginColconPlugin:
         monkeypatch.setattr(os, "environ", {})
 
         assert plugin.get_build_commands() == [
+            "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
+            "init; fi",
+            'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
+            "rosdep install --default-yes --ignore-packages-from-source "
+            '--from-paths "${CRAFT_PART_SRC_WORK}"',
             'state="$(set +o); set -$-"',
             "set +u",
             'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/setup.sh" ]; then',
@@ -135,11 +140,6 @@ class TestPluginColconPlugin:
             "fi",
             '. "/opt/ros/${ROS_DISTRO}/local_setup.sh"',
             'eval "${state}"',
-            "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
-            "init; fi",
-            'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
-            "rosdep install --default-yes --ignore-packages-from-source "
-            '--from-paths "${CRAFT_PART_SRC_WORK}"',
             "colcon build "
             '--base-paths "${CRAFT_PART_SRC_WORK}" --build-base "${CRAFT_PART_BUILD}" '
             '--merge-install --install-base "${CRAFT_PART_INSTALL}/opt/ros/snap" '
@@ -190,6 +190,11 @@ class TestPluginColconPlugin:
         )
 
         assert plugin.get_build_commands() == [
+            "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
+            "init; fi",
+            'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
+            "rosdep install --default-yes --ignore-packages-from-source "
+            '--from-paths "${CRAFT_PART_SRC_WORK}"',
             'state="$(set +o); set -$-"',
             "set +u",
             'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/setup.sh" ]; then',
@@ -198,11 +203,6 @@ class TestPluginColconPlugin:
             "fi",
             '. "/opt/ros/${ROS_DISTRO}/local_setup.sh"',
             'eval "${state}"',
-            "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
-            "init; fi",
-            'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
-            "rosdep install --default-yes --ignore-packages-from-source "
-            '--from-paths "${CRAFT_PART_SRC_WORK}"',
             "colcon build "
             '--base-paths "${CRAFT_PART_SRC_WORK}" --build-base "${CRAFT_PART_BUILD}" '
             '--merge-install --install-base "${CRAFT_PART_INSTALL}/opt/ros/snap" '
