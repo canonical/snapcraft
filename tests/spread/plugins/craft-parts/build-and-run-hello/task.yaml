@@ -12,6 +12,9 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "${SNAP}/snap/snapcraft.yaml"
 
+  . "$TOOLS_DIR/package-utils.sh"
+  create_dpkg_restore_point
+
 restore: |
   cd "${SNAP}"
   snapcraft clean
@@ -30,6 +33,9 @@ restore: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   restore_yaml "snap/snapcraft.yaml"
+
+  . "$TOOLS_DIR/package-utils.sh"
+  dpkg_restore_point
 
 execute: |
   cd "${SNAP}"
