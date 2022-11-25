@@ -1,0 +1,43 @@
+summary: >-
+  Make sure ROS downloaded packages are properly sourced
+
+kill-timeout: 180m
+
+environment:
+  SNAP/colcon_msg_package: colcon-msg-package
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
+
+systems:
+  - ubuntu-22.04
+  - ubuntu-22.04-64
+  - ubuntu-22.04-amd64
+  - ubuntu-22.04-arm64
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "../snaps/$SNAP/snap/snapcraft.yaml"
+
+  . "$TOOLS_DIR/package-utils.sh"
+  create_dpkg_restore_point
+
+restore: |
+  cd "../snaps/$SNAP"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+  . "$TOOLS_DIR/package-utils.sh"
+  dpkg_restore_point
+
+execute: |
+  cd "../snaps/$SNAP"
+
+  # Build the snap and verify that a message only package could be build
+  snapcraft
+  [ -d parts/test-part/install/opt/ros/snap/share/pendulum_msgs ]
+
+  snap install "${SNAP}"_1.0_*.snap --dangerous
