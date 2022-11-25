@@ -5,7 +5,6 @@ kill-timeout: 180m
 
 environment:
   SNAP/colcon_msg_package: colcon-msg-package
-  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
 systems:
   - ubuntu-22.04
