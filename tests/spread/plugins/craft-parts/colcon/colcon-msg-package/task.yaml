@@ -17,6 +17,7 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "../snaps/$SNAP/snap/snapcraft.yaml"
 
+  #shellcheck source=tests/spread/tools/package-utils.sh
   . "$TOOLS_DIR/package-utils.sh"
   create_dpkg_restore_point
 
@@ -29,6 +30,7 @@ restore: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   restore_yaml "snap/snapcraft.yaml"
 
+  #shellcheck source=tests/spread/tools/package-utils.sh
   . "$TOOLS_DIR/package-utils.sh"
   dpkg_restore_point
 
