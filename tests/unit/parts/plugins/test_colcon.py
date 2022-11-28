@@ -127,6 +127,14 @@ class TestPluginColconPlugin:
         monkeypatch.setattr(os, "environ", {})
 
         assert plugin.get_build_commands() == [
+            'state="$(set +o); set -$-"',
+            "set +u",
+            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/setup.sh" ]; then',
+            'COLCON_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/snap" . '
+            '"${CRAFT_PART_INSTALL}/opt/ros/snap/setup.sh"',
+            "fi",
+            '. "/opt/ros/${ROS_DISTRO}/local_setup.sh"',
+            'eval "${state}"',
             "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
             "init; fi",
             'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
@@ -190,6 +198,14 @@ class TestPluginColconPlugin:
         )
 
         assert plugin.get_build_commands() == [
+            'state="$(set +o); set -$-"',
+            "set +u",
+            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/setup.sh" ]; then',
+            'COLCON_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/snap" . '
+            '"${CRAFT_PART_INSTALL}/opt/ros/snap/setup.sh"',
+            "fi",
+            '. "/opt/ros/${ROS_DISTRO}/local_setup.sh"',
+            'eval "${state}"',
             "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
             "init; fi",
             'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',

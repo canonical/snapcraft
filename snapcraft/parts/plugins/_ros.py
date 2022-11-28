@@ -174,7 +174,8 @@ class RosPlugin(plugins.Plugin):
     @overrides
     def get_build_commands(self) -> List[str]:
         return (
-            [
+            self._get_workspace_activation_commands()
+            + [
                 "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; "
                 "then sudo rosdep init; fi",
                 'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
