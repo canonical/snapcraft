@@ -1,8 +1,10 @@
 summary: A faulty snap to test error handling
+
+# this test does not work on google's spread runners due to a lack of virtualization support
 manual: true
 
 environment:
-  SNAP_DIR: ../../snaps/exit1
+  SNAP_DIR: ../snaps/exit1
 
 prepare: |
   snap list multipass || snap install --classic multipass
@@ -14,8 +16,7 @@ prepare: |
 restore: |
   cd "$SNAP_DIR"
 
-  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
-  unset SNAPCRAFT_BUILD_ENVIRONMENT
+  export SNAPCRAFT_BUILD_ENVIRONMENT=multipass
 
   snapcraft clean
   rm -f ./*.snap
@@ -27,8 +28,7 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
 
-  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
-  unset SNAPCRAFT_BUILD_ENVIRONMENT
+  export SNAPCRAFT_BUILD_ENVIRONMENT=multipass
 
   # Building this snap returns an error inside the provider. This error must
   # be handled by the outer environment and return code 2 instead of raising

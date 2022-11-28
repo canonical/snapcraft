@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import shutil
 import textwrap
 from datetime import datetime
 from pathlib import Path
@@ -1119,6 +1120,9 @@ def test_lifecycle_run_in_provider_default(
     mock_ensure_provider_is_available = mocker.patch(
         "snapcraft.parts.lifecycle.providers.ensure_provider_is_available"
     )
+    mock_prepare_instance = mocker.patch(
+        "snapcraft.parts.lifecycle.providers.prepare_instance"
+    )
     mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
     mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
 
@@ -1163,8 +1167,8 @@ def test_lifecycle_run_in_provider_default(
         build_base="22.04",
         instance_name="test-instance-name",
     )
-    mock_instance.mount.assert_called_with(
-        host_source=tmp_path, target=Path("/root/project")
+    mock_prepare_instance.assert_called_with(
+        instance=mock_instance, host_project_path=tmp_path, bind_ssh=False
     )
     mock_instance.execute_run.assert_called_once_with(
         expected_command, check=True, cwd=Path("/root/project")
@@ -1182,6 +1186,7 @@ def test_lifecycle_run_in_provider_default(
         (EmitterMode.TRACE, "--verbosity=trace"),
     ],
 )
+# pylint: disable-next=too-many-locals
 def test_lifecycle_run_in_provider_all_options(
     mock_get_instance_name,
     mock_instance,
@@ -1203,6 +1208,9 @@ def test_lifecycle_run_in_provider_all_options(
     )
     mock_ensure_provider_is_available = mocker.patch(
         "snapcraft.parts.lifecycle.providers.ensure_provider_is_available"
+    )
+    mock_prepare_instance = mocker.patch(
+        "snapcraft.parts.lifecycle.providers.prepare_instance"
     )
     mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
     mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
@@ -1282,16 +1290,65 @@ def test_lifecycle_run_in_provider_all_options(
         build_base="22.04",
         instance_name="test-instance-name",
     )
-    mock_instance.mount.assert_has_calls(
-        [
-            call(host_source=tmp_path, target=Path("/root/project")),
-            call(host_source=Path().home() / ".ssh", target=Path("/root/.ssh")),
-        ]
+    mock_prepare_instance.assert_called_with(
+        instance=mock_instance, host_project_path=tmp_path, bind_ssh=True
     )
     mock_instance.execute_run.assert_called_once_with(
         expected_command, check=True, cwd=Path("/root/project")
     )
     mock_capture_logs_from_instance.assert_called_once()
+
+
+def test_lifecycle_run_in_provider_try(
+    mock_get_instance_name,
+    mock_instance,
+    mock_provider,
+    mocker,
+    snapcraft_yaml,
+    tmp_path,
+):
+    """Test that "snapcraft try" mounts the host's prime dir before priming in the instance"""
+    mock_base_configuration = Mock()
+    mocker.patch(
+        "snapcraft.parts.lifecycle.providers.get_base_configuration",
+        return_value=mock_base_configuration,
+    )
+    mocker.patch("snapcraft.parts.lifecycle.providers.capture_logs_from_instance")
+    mocker.patch("snapcraft.parts.lifecycle.providers.ensure_provider_is_available")
+    mocker.patch("snapcraft.parts.lifecycle.providers.prepare_instance")
+    mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
+    mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
+
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    parts_lifecycle._run_in_provider(
+        project=project,
+        command_name="try",
+        parsed_args=argparse.Namespace(
+            use_lxd=False,
+            debug=False,
+            bind_ssh=False,
+            http_proxy=None,
+            https_proxy=None,
+        ),
+    )
+
+    expected_command = [
+        "snapcraft",
+        "try",
+        "--verbosity=quiet",
+        "--build-for",
+        "test-arch-2",
+    ]
+
+    # Make sure the calls are made in the correct order: first the host 'prime' dir
+    # is mounted, and _then_ the command is run in the instance.
+    mock_instance.assert_has_calls(
+        [
+            call.mount(host_source=tmp_path / "prime", target=Path("/root/prime")),
+            call.execute_run(expected_command, check=True, cwd=Path("/root/project")),
+        ],
+        any_order=False,
+    )
 
 
 @pytest.fixture
@@ -1457,3 +1514,67 @@ def test_get_build_plan_list_without_matching_element_and_build_for_arg(
         )
         == []
     )
+
+
+def test_patch_elf(snapcraft_yaml, mocker, new_dir):
+    """Patch binaries if the ``enable-patchelf`` build attribute is defined."""
+    run_patchelf_mock = mocker.patch("snapcraft.elf._patcher.Patcher._run_patchelf")
+    shutil.copy("/bin/true", "elf.bin")
+    callbacks.register_post_step(parts_lifecycle._patch_elf, step_list=[Step.PRIME])
+
+    mocker.patch(
+        "snapcraft.elf.elf_utils.get_dynamic_linker",
+        return_value="/snap/core22/current/lib64/ld-linux-x86-64.so.2",
+    )
+    mocker.patch(
+        "snapcraft.elf._patcher.Patcher.get_proposed_rpath",
+        return_value=["/snap/core22/current/lib/x86_64-linux-gnu"],
+    )
+    mocker.patch("snapcraft.elf._patcher.Patcher.get_current_rpath", return_value=[])
+
+    yaml_data = {
+        "base": "core22",
+        "confinement": "classic",
+        "parts": {
+            "p1": {
+                "plugin": "dump",
+                "source": ".",
+                "build-attributes": ["enable-patchelf"],
+            }
+        },
+    }
+    project = Project.unmarshal(snapcraft_yaml(**yaml_data))
+
+    parts_lifecycle._run_command(
+        "pack",
+        project=project,
+        parse_info={},
+        assets_dir=Path(),
+        start_time=datetime.now(),
+        parallel_build_count=1,
+        parsed_args=argparse.Namespace(
+            directory=None,
+            output=None,
+            debug=False,
+            destructive_mode=True,
+            shell=False,
+            shell_after=False,
+            use_lxd=False,
+            enable_manifest=False,
+            ua_token=None,
+            parts=["p1"],
+        ),
+    )
+
+    assert run_patchelf_mock.mock_calls == [
+        call(
+            patchelf_args=[
+                "--set-interpreter",
+                "/snap/core22/current/lib64/ld-linux-x86-64.so.2",
+                "--force-rpath",
+                "--set-rpath",
+                "/snap/core22/current/lib/x86_64-linux-gnu",
+            ],
+            elf_file_path=new_dir / "prime/elf.bin",
+        )
+    ]

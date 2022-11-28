@@ -113,5 +113,6 @@ class LibraryLinter(Linter):
                     result=LinterResult.WARNING,
                     filename=str(elf_file.path),
                     text=f"missing dependency {dependency_path.name!r}.",
+                    url="https://snapcraft.io/docs/linters-library",
                 )
                 issues.append(issue)

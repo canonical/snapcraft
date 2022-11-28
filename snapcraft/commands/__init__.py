@@ -49,6 +49,7 @@ from .lifecycle import (
     PullCommand,
     SnapCommand,
     StageCommand,
+    TryCommand,
 )
 from .manage import StoreCloseCommand, StoreReleaseCommand
 from .names import (
@@ -112,5 +113,6 @@ __all__ = [
     "StoreTracksCommand",
     "StoreUploadCommand",
     "StoreWhoAmICommand",
+    "TryCommand",
     "VersionCommand",
 ]

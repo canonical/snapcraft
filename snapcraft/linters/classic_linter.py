@@ -25,6 +25,8 @@ from snapcraft.elf import ElfFile, Patcher, SonameCache, elf_utils, errors
 
 from .base import Linter, LinterIssue, LinterResult
 
+_HELP_URL = "https://snapcraft.io/docs/linters-classic"
+
 
 class ClassicLinter(Linter):
     """Linter for classic snaps."""
@@ -74,13 +76,12 @@ class ClassicLinter(Linter):
         elf_files = elf_utils.get_elf_files(current_path)
         patcher = Patcher(dynamic_linker=linker, root_path=current_path.absolute())
         soname_cache = SonameCache()
+        arch_triplet = elf_utils.get_arch_triplet()
 
         for elf_file in elf_files:
             # Skip linting files listed in the ignore list.
             if self._is_file_ignored(elf_file):
                 continue
-
-            arch_triplet = elf_utils.get_arch_triplet()
 
             elf_file.load_dependencies(
                 root_path=current_path.absolute(),
@@ -105,6 +106,7 @@ class ClassicLinter(Linter):
                 result=LinterResult.WARNING,
                 filename=str(elf_file.path),
                 text=f"ELF interpreter should be set to {linker!r}.",
+                url=_HELP_URL,
             )
             issues.append(issue)
 
@@ -126,5 +128,6 @@ class ClassicLinter(Linter):
                 result=LinterResult.WARNING,
                 filename=str(elf_file.path),
                 text=f"ELF rpath should be set to {formatted_rpath!r}.",
+                url=_HELP_URL,
             )
             issues.append(issue)
