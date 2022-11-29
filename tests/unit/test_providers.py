@@ -255,6 +255,7 @@ def test_get_command_environment_passthrough(
     monkeypatch.setenv("SNAPCRAFT_BUILD_FOR", "test-build-for")
     monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "test-build-info")
     monkeypatch.setenv("SNAPCRAFT_IMAGE_INFO", "test-image-info")
+    monkeypatch.setenv("SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT", "test-build-count")
 
     # ensure other variables are not being passed
     monkeypatch.setenv("other_var", "test-other-var")
@@ -271,6 +272,7 @@ def test_get_command_environment_passthrough(
         "SNAPCRAFT_BUILD_FOR": "test-build-for",
         "SNAPCRAFT_BUILD_INFO": "test-build-info",
         "SNAPCRAFT_IMAGE_INFO": "test-image-info",
+        "SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT": "test-build-count",
     }
 
 
