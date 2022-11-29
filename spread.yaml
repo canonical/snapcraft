@@ -490,10 +490,6 @@ suites:
    summary: tests of snapcraft's craft-part's based plugins
    systems:
    - ubuntu-22.04*
- tests/spread/plugins/craft-parts/colcon/:
-   summary: tests of colcon craft-part's based plugins
-   systems:
-   - ubuntu-22.04*
 
 # Extensions tests
  tests/spread/extensions/:

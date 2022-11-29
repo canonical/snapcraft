@@ -1,10 +1,11 @@
 summary: >-
-  Make sure ROS downloaded packages are properly sourced
+  Exercise the colcon-packages/colcon-packages-ignore options of colcon plugin
 
 kill-timeout: 180m
 
 environment:
-  SNAP/colcon_msg_package: colcon-msg-package
+  SNAP/colcon_packages_ignore: colcon-packages-ignore
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
 systems:
   - ubuntu-22.04
@@ -15,14 +16,14 @@ systems:
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
-  set_base "../snaps/$SNAP/snap/snapcraft.yaml"
+  set_base "$SNAP/snap/snapcraft.yaml"
 
   #shellcheck source=tests/spread/tools/package-utils.sh
   . "$TOOLS_DIR/package-utils.sh"
   create_dpkg_restore_point
 
 restore: |
-  cd "../snaps/$SNAP"
+  cd "$SNAP"
   snapcraft clean
   rm -f ./*.snap
 
@@ -35,10 +36,13 @@ restore: |
   dpkg_restore_point
 
 execute: |
-  cd "../snaps/$SNAP"
+  cd "$SNAP"
 
-  # Build the snap and verify that a message only package could be build
+  # Build the snap and verify that only package1 was included
   snapcraft
-  [ -d parts/test-part/install/opt/ros/snap/share/pendulum_msgs ]
+  [ -d parts/test-part/install/opt/ros/snap/lib/package1 ]
+  [ ! -d parts/test-part/install/opt/ros/snap/lib/package2 ]
+  [ ! -d parts/test-part/install/opt/ros/snap/lib/package3 ]
 
   snap install "${SNAP}"_1.0_*.snap --dangerous
+  [ "$($SNAP)" = "I am package1" ]
