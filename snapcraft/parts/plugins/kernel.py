@@ -24,17 +24,17 @@ The following kernel-specific options are provided by this plugin:
       defconfig target to use as the base configuration. default: "defconfig"
 
     - kernel-kconfigfile:
-      (filepath)
+      (filepath; default: none)
       path to file to use as base configuration. If provided this option wins
       over everything else. default: None
 
     - kernel-kconfigflavour:
-      (string)
+      (string; default: none)
       Ubuntu config flavour to use as base configuration. If provided this
       option wins over kernel-kdefconfig. default: None
 
     - kernel-kconfigs:
-      (list of strings)
+      (list of strings; default: none)
       explicit list of configs to force; this will override the configs that
       were set as base through kernel-kdefconfig and kernel-kconfigfile and dependent configs
       will be fixed using the defaults encoded in the kbuild config
@@ -55,7 +55,7 @@ The following kernel-specific options are provided by this plugin:
       use this flag to disable shipping binary firmwares.
 
     - kernel-device-trees:
-      (array of string)
+      (array of string, default: none)
       list of device trees to build, the format is <device-tree-name>.dts.
 
     - kernel-build-efi-image
@@ -63,12 +63,12 @@ The following kernel-specific options are provided by this plugin:
       by default).
 
     - kernel-compiler
-      (string; default:)
+      (string; default: none)
       Optional, define compiler to use, by default gcc compiler is used.
       Other permitted compilers: clang
 
     - kernel-compiler-paths
-      (array of strings)
+      (array of strings; default: none)
       Optional, define the compiler path to be added to the PATH.
       Path is relative to the stage directory.
       Default value is empty.
@@ -87,13 +87,13 @@ The following kernel-specific options are provided by this plugin:
       use this flag to build the perf binary
 
     - kernel-initrd-modules:
-      (array of string)
+      (array of string; default: none)
       list of modules to include in initrd; note that kernel snaps do not
       provide the core boot logic which comes from snappy Ubuntu Core
       OS snap. Include all modules you need for mounting rootfs here.
 
     - kernel-initrd-configured-modules:
-      (array of string)
+      (array of string; default: none)
       list of modules to be added to the initrd
       /lib/modules-load.d/ubuntu-core-initramfs.conf config
       to be automatically loaded.
@@ -109,7 +109,7 @@ The following kernel-specific options are provided by this plugin:
       from stage directory instead.
 
     - kernel-initrd-firmware:
-      (array of string)
+      (array of string; default: none)
       list of firmware files to be included in the initrd; these need to be
       relative paths to stage directory.
       <stage/part install dir>/firmware/* -> initrd:/lib/firmware/*
@@ -137,7 +137,7 @@ The following kernel-specific options are provided by this plugin:
       Default: none
 
     - kernel-initrd-addons
-      (array of string)
+      (array of string; default: none)
       Optional list of files to be added to the initrd.
       Function is similar to kernel-initrd-overlay, only it works on per file
       selection without a need to have overlay in dedicated directory.
