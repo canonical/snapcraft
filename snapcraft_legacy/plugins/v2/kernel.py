@@ -531,14 +531,14 @@ class KernelPlugin(PluginV2):
             '\tif [ "${2}" = "*" ]; then',
             "\t\tfor f in $(ls ${1})",
             "\t\tdo",
-            "\t\t\tlink_files ${1} ${f} ${3}",
+            '\t\t\tlink_files "${1}" "${f}" "${3}"',
             "\t\tdone",
             "\t\treturn 0",
             "\tfi",
-            "\tif [ -d ${1}/${2} ]; then",
+            '\tif [ -d "${1}/${2}" ]; then',
             "\t\tfor f in $(ls ${1}/${2})",
             "\t\tdo",
-            "\t\t\tlink_files ${1} ${2}/${f} ${3}",
+            '\t\t\tlink_files "${1}" "${2}/${f}" "${3}"',
             "\t\tdone",
             "\t\treturn 0",
             "\tfi",
@@ -768,9 +768,9 @@ class KernelPlugin(PluginV2):
                         [
                             "\tif !",
                             "link_files",
-                            "${SNAPCRAFT_PART_INSTALL}",
-                            "${f}",
-                            "${uc_initrd_feature_firmware}/lib",
+                            '"${SNAPCRAFT_PART_INSTALL}"',
+                            '"${f}"',
+                            '"${uc_initrd_feature_firmware}/lib"',
                             ";",
                             "then",
                         ]
@@ -779,9 +779,9 @@ class KernelPlugin(PluginV2):
                         [
                             "\t\tif !",
                             "link_files",
-                            "${SNAPCRAFT_STAGE}",
-                            "${f}",
-                            "${uc_initrd_feature_firmware}/lib",
+                            '"${SNAPCRAFT_STAGE}"',
+                            '"${f}"',
+                            '"${uc_initrd_feature_firmware}/lib"',
                             ";",
                             "then",
                         ]
@@ -801,9 +801,9 @@ class KernelPlugin(PluginV2):
                     " ".join(
                         [
                             "link_files",
-                            "${SNAPCRAFT_STAGE}",
-                            f"{self.options.kernel_initrd_overlay}",
-                            "${uc_initrd_feature_overlay}",
+                            f'"${{SNAPCRAFT_STAGE}}/{self.options.kernel_initrd_overlay}"',
+                            '""',
+                            '"${uc_initrd_feature_overlay}"',
                         ]
                     ),
                     "",
@@ -821,9 +821,9 @@ class KernelPlugin(PluginV2):
                     " ".join(
                         [
                             "\tlink_files",
-                            "${SNAPCRAFT_STAGE}",
-                            "${a}",
-                            "${uc_initrd_feature_overlay}",
+                            '"${SNAPCRAFT_STAGE}"',
+                            '"${a}"',
+                            '"${uc_initrd_feature_overlay}"',
                         ]
                     ),
                     "done",
@@ -838,17 +838,17 @@ class KernelPlugin(PluginV2):
             " ".join(
                 [
                     "link_files",
-                    "${SNAPD_UNPACKED_SNAP}",
-                    "usr/lib/snapd/snap-bootstrap",
-                    "${uc_initrd_feature_snap_bootstratp}",
+                    '"${SNAPD_UNPACKED_SNAP}"',
+                    '"usr/lib/snapd/snap-bootstrap"',
+                    '"${uc_initrd_feature_snap_bootstratp}"',
                 ]
             ),
             " ".join(
                 [
                     "link_files",
-                    "${SNAPD_UNPACKED_SNAP}",
-                    "usr/lib/snapd/info",
-                    "${uc_initrd_feature_snap_bootstratp}",
+                    '"${SNAPD_UNPACKED_SNAP}"',
+                    '"usr/lib/snapd/info"',
+                    '"${uc_initrd_feature_snap_bootstratp}"',
                 ]
             ),
             " ".join(
@@ -919,9 +919,9 @@ class KernelPlugin(PluginV2):
                 " ".join(
                     [
                         "\tlink_files",
-                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/${feature}",
+                        '"${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/${feature}"',
                         '"*"',
-                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/main",
+                        '"${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/main"',
                     ],
                 ),
                 "done",
