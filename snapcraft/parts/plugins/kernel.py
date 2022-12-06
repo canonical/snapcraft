@@ -861,6 +861,14 @@ class KernelPlugin(plugins.Plugin):
                     ],
                 ),
                 "done",
+                " ".join(
+                    [
+                        "cp",
+                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/kernel-modules/extra-modules.conf",
+                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/modules/main/extra-modules.conf",
+                    ],
+                ),
+                "",
             ],
         )
         firmware_dir = "${CRAFT_PART_INSTALL}/lib/firmware"

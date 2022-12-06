@@ -1795,6 +1795,13 @@ _initrd_tool_workaroud_cmd = [
         ],
     ),
     "done",
+    " ".join(
+        [
+            "cp",
+            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/kernel-modules/extra-modules.conf",
+            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/modules/main/extra-modules.conf",
+        ],
+    ),
 ]
 
 _create_inird_cmd = [
