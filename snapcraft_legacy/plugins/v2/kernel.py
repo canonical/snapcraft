@@ -936,6 +936,17 @@ class KernelPlugin(PluginV2):
                 "",
                 " ".join(
                     [
+                        f'[ ! -d "{firmware_dir}" ]',
+                        "&&",
+                        f'echo -e "firmware directory {firmware_dir} does not exist, consider using'
+                        ' kernel-initrd-stage-firmware: true/false option"',
+                        "&&",
+                        "exit 1",
+                    ]
+                ),
+                "",
+                " ".join(
+                    [
                         "${ubuntu_core_initramfs}",
                         "create-initrd",
                         "--root",
