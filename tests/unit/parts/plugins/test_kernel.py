@@ -1685,6 +1685,7 @@ _install_initrd_modules_cmd = [
     "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/kernel-modules",
     "mkdir -p ${uc_initrd_feature_kernel_modules}",
     "initramfs_ko_modules_conf=${uc_initrd_feature_kernel_modules}/extra-modules.conf",
+    "touch ${initramfs_ko_modules_conf}",
     "for m in ${initrd_installed_kernel_modules} ${initrd_configured_kernel_modules}",
     "do",
     "\techo ${m} >> ${initramfs_ko_modules_conf}",

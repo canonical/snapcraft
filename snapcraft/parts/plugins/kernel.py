@@ -628,6 +628,12 @@ class KernelPlugin(plugins.Plugin):
             "initramfs_ko_modules_conf=${uc_initrd_feature_kernel_modules}/extra-modules.conf",
             " ".join(
                 [
+                    "touch",
+                    "${initramfs_ko_modules_conf}",
+                ]
+            ),
+            " ".join(
+                [
                     "for",
                     "m",
                     "in",
@@ -864,7 +870,7 @@ class KernelPlugin(plugins.Plugin):
                 " ".join(
                     [
                         "cp",
-                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/kernel-modules/extra-modules.conf",
+                        "${initramfs_ko_modules_conf}",
                         "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/modules/main/extra-modules.conf",
                     ],
                 ),
