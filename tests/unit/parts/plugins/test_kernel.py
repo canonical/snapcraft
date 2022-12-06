@@ -460,6 +460,7 @@ class TestPluginKernel:
         assert not _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
         assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
+        assert _is_sub_array(build_commands, _initrd_check_firmware_part)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
@@ -528,6 +529,7 @@ class TestPluginKernel:
         assert not _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
         assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
+        assert _is_sub_array(build_commands, _initrd_check_firmware_stage)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert _is_sub_array(build_commands, _update_initrd_compression_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
@@ -583,6 +585,7 @@ class TestPluginKernel:
         assert not _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
         assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
+        assert _is_sub_array(build_commands, _initrd_check_firmware_part)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
@@ -645,6 +648,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
         assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
+        assert _is_sub_array(build_commands, _initrd_check_firmware_part)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert _is_sub_array(build_commands, _update_initrd_compression_gz_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
@@ -700,6 +704,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
         assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
+        assert _is_sub_array(build_commands, _initrd_check_firmware_part)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
@@ -1772,9 +1777,22 @@ _clean_old_initrd_cmd = [
     "fi",
 ]
 
+_initrd_check_firmware_stage = [
+    '[ ! -d "${CRAFT_STAGE}/firmware" ] && echo -e "firmware directory '
+    "${CRAFT_STAGE}/firmware does not exist, consider using "
+    'kernel-initrd-stage-firmware: true/false option" && exit 1'
+]
+
+_initrd_check_firmware_part = [
+    '[ ! -d "${CRAFT_PART_INSTALL}/lib/firmware" ] && echo -e "firmware directory '
+    "${CRAFT_PART_INSTALL}/lib/firmware does not exist, consider using "
+    'kernel-initrd-stage-firmware: true/false option" && exit 1'
+]
+
 _initrd_tool_cmd = [
     "ubuntu_core_initramfs=${UC_INITRD_DEB}/usr/bin/ubuntu-core-initramfs",
 ]
+
 _update_initrd_compression_cmd = [
     'echo "Updating compression command to be used for initrd"',
     "sed -i 's/zstd -1 -T0/lz4 -9 -l/g' ${ubuntu_core_initramfs}",
