@@ -1265,14 +1265,14 @@ _link_files_fnc = [
     '\tif [ "${2}" = "*" ]; then',
     "\t\tfor f in $(ls ${1})",
     "\t\tdo",
-    "\t\t\tlink_files ${1} ${f} ${3}",
+    '\t\t\tlink_files "${1}" "${f}" "${3}"',
     "\t\tdone",
     "\t\treturn 0",
     "\tfi",
-    "\tif [ -d ${1}/${2} ]; then",
+    '\tif [ -d "${1}/${2}" ]; then',
     "\t\tfor f in $(ls ${1}/${2})",
     "\t\tdo",
-    "\t\t\tlink_files ${1} ${2}/${f} ${3}",
+    '\t\t\tlink_files "${1}" "${2}/${f}" "${3}"',
     "\t\tdone",
     "\t\treturn 0",
     "\tfi",
@@ -1728,8 +1728,8 @@ _install_initrd_firmware_cmd = [
     'echo "Installing initrd overlay firmware..."',
     "for f in firmware/for/wifi firmware/for/webcam",
     "do",
-    "\tif ! link_files ${CRAFT_PART_INSTALL} ${f} ${uc_initrd_feature_firmware}/lib ; then",
-    "\t\tif ! link_files ${CRAFT_STAGE} ${f} ${uc_initrd_feature_firmware}/lib ; then",
+    '\tif ! link_files "${CRAFT_PART_INSTALL}" "${f}" "${uc_initrd_feature_firmware}/lib" ; then',
+    '\t\tif ! link_files "${CRAFT_STAGE}" "${f}" "${uc_initrd_feature_firmware}/lib" ; then',
     '\t\t\techo "Missing firmware [${f}], ignoring it"',
     "\t\tfi",
     "\tfi",
@@ -1741,12 +1741,12 @@ _install_initrd_addons_cmd = [
     "for a in usr/bin/cryptsetup usr/lib/my-arch/libcrypto.so",
     "do",
     '\techo "Copy overlay: ${a}"',
-    "\tlink_files ${CRAFT_STAGE} ${a} ${uc_initrd_feature_overlay}",
+    '\tlink_files "${CRAFT_STAGE}" "${a}" "${uc_initrd_feature_overlay}"',
     "done",
 ]
 
 _intatll_initrd_overlay_cmd = [
-    "link_files ${CRAFT_STAGE} my-overlay ${uc_initrd_feature_overlay}"
+    'link_files "${CRAFT_STAGE}/my-overlay" "" "${uc_initrd_feature_overlay}"'
 ]
 
 _prepare_ininird_features_cmd = [
@@ -1757,11 +1757,12 @@ _prepare_ininird_features_cmd = [
     " ".join(
         [
             "link_files",
-            "${SNAPD_UNPACKED_SNAP} usr/lib/snapd/snap-bootstrap",
-            "${uc_initrd_feature_snap_bootstratp}",
+            '"${SNAPD_UNPACKED_SNAP}" "usr/lib/snapd/snap-bootstrap"',
+            '"${uc_initrd_feature_snap_bootstratp}"',
         ],
     ),
-    "link_files ${SNAPD_UNPACKED_SNAP} usr/lib/snapd/info ${uc_initrd_feature_snap_bootstratp}",
+    'link_files "${SNAPD_UNPACKED_SNAP}" "usr/lib/snapd/info"'
+    ' "${uc_initrd_feature_snap_bootstratp}"',
     "cp ${SNAPD_UNPACKED_SNAP}/usr/lib/snapd/info ${CRAFT_PART_INSTALL}/snapd-info",
 ]
 
@@ -1789,16 +1790,16 @@ _initrd_tool_workaroud_cmd = [
     "do",
     " ".join(
         [
-            "\tlink_files ${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/${feature}",
+            '\tlink_files "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/${feature}"',
             '"*"',
-            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/main",
+            '"${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/main"',
         ],
     ),
     "done",
     " ".join(
         [
             "cp",
-            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/kernel-modules/extra-modules.conf",
+            "${initramfs_ko_modules_conf}",
             "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/modules/main/extra-modules.conf",
         ],
     ),
