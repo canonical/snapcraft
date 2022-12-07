@@ -24,17 +24,17 @@ The following kernel-specific options are provided by this plugin:
       defconfig target to use as the base configuration. default: "defconfig"
 
     - kernel-kconfigfile:
-      (filepath)
+      (filepath; default: none)
       path to file to use as base configuration. If provided this option wins
       over everything else. default: None
 
     - kernel-kconfigflavour:
-      (string)
+      (string; default: none)
       Ubuntu config flavour to use as base configuration. If provided this
       option wins over kernel-kdefconfig. default: None
 
     - kernel-kconfigs:
-      (list of strings)
+      (list of strings; default: none)
       explicit list of configs to force; this will override the configs that
       were set as base through kernel-kdefconfig and kernel-kconfigfile and dependent configs
       will be fixed using the defaults encoded in the kbuild config
@@ -55,16 +55,16 @@ The following kernel-specific options are provided by this plugin:
       use this flag to disable shipping binary firmwares.
 
     - kernel-device-trees:
-      (array of string)
+      (array of string, default: none)
       list of device trees to build, the format is <device-tree-name>.dts.
 
     - kernel-compiler
-      (string; default:)
+      (string; default: none)
       Optional, define compiler to use, by default gcc compiler is used.
       Other permitted compilers: clang
 
     - kernel-compiler-paths
-      (array of strings)
+      (array of strings; default: none)
       Optional, define the compiler path to be added to the PATH.
       Path is relative to the stage directory.
       Default value is empty.
@@ -83,13 +83,13 @@ The following kernel-specific options are provided by this plugin:
       use this flag to build the perf binary
 
     - kernel-initrd-modules:
-      (array of string)
+      (array of string; default: none)
       list of modules to include in initrd; note that kernel snaps do not
       provide the core boot logic which comes from snappy Ubuntu Core
       OS snap. Include all modules you need for mounting rootfs here.
 
     - kernel-initrd-configured-modules:
-      (array of string)
+      (array of string; default: none)
       list of modules to be added to the initrd
       /lib/modules-load.d/ubuntu-core-initramfs.conf config
       to be automatically loaded.
@@ -105,7 +105,7 @@ The following kernel-specific options are provided by this plugin:
       from stage directory instead.
 
     - kernel-initrd-firmware:
-      (array of string)
+      (array of string; default: none)
       list of firmware files to be included in the initrd; these need to be
       relative paths to stage directory.
       <stage/part install dir>/firmware/* -> initrd:/lib/firmware/*
@@ -124,16 +124,16 @@ The following kernel-specific options are provided by this plugin:
         zstd: -1 -T0
 
     - kernel-initrd-overlay
+      (string; default: none)
       Optional overlay to be applied to built initrd.
       This option is designed to provide easy way to apply initrd overlay for
       cases modifies initrd scripts for pre uc20 initrds.
       Value is relative path, in stage directory. and related part needs to be
       built before initrd part. During build it will be expanded to
       ${SNAPCRAFT_STAGE}/{initrd-overlay}
-      Default: none
 
     - kernel-initrd-addons
-      (array of string)
+      (array of string; default: none)
       Optional list of files to be added to the initrd.
       Function is similar to kernel-initrd-overlay, only it works on per file
       selection without a need to have overlay in dedicated directory.
@@ -531,14 +531,14 @@ class KernelPlugin(PluginV2):
             '\tif [ "${2}" = "*" ]; then',
             "\t\tfor f in $(ls ${1})",
             "\t\tdo",
-            "\t\t\tlink_files ${1} ${f} ${3}",
+            '\t\t\tlink_files "${1}" "${f}" "${3}"',
             "\t\tdone",
             "\t\treturn 0",
             "\tfi",
-            "\tif [ -d ${1}/${2} ]; then",
+            '\tif [ -d "${1}/${2}" ]; then',
             "\t\tfor f in $(ls ${1}/${2})",
             "\t\tdo",
-            "\t\t\tlink_files ${1} ${2}/${f} ${3}",
+            '\t\t\tlink_files "${1}" "${2}/${f}" "${3}"',
             "\t\tdone",
             "\t\treturn 0",
             "\tfi",
@@ -768,9 +768,9 @@ class KernelPlugin(PluginV2):
                         [
                             "\tif !",
                             "link_files",
-                            "${SNAPCRAFT_PART_INSTALL}",
-                            "${f}",
-                            "${uc_initrd_feature_firmware}/lib",
+                            '"${SNAPCRAFT_PART_INSTALL}"',
+                            '"${f}"',
+                            '"${uc_initrd_feature_firmware}/lib"',
                             ";",
                             "then",
                         ]
@@ -779,9 +779,9 @@ class KernelPlugin(PluginV2):
                         [
                             "\t\tif !",
                             "link_files",
-                            "${SNAPCRAFT_STAGE}",
-                            "${f}",
-                            "${uc_initrd_feature_firmware}/lib",
+                            '"${SNAPCRAFT_STAGE}"',
+                            '"${f}"',
+                            '"${uc_initrd_feature_firmware}/lib"',
                             ";",
                             "then",
                         ]
@@ -801,9 +801,9 @@ class KernelPlugin(PluginV2):
                     " ".join(
                         [
                             "link_files",
-                            "${SNAPCRAFT_STAGE}",
-                            f"{self.options.kernel_initrd_overlay}",
-                            "${uc_initrd_feature_overlay}",
+                            f'"${{SNAPCRAFT_STAGE}}/{self.options.kernel_initrd_overlay}"',
+                            '""',
+                            '"${uc_initrd_feature_overlay}"',
                         ]
                     ),
                     "",
@@ -821,9 +821,9 @@ class KernelPlugin(PluginV2):
                     " ".join(
                         [
                             "\tlink_files",
-                            "${SNAPCRAFT_STAGE}",
-                            "${a}",
-                            "${uc_initrd_feature_overlay}",
+                            '"${SNAPCRAFT_STAGE}"',
+                            '"${a}"',
+                            '"${uc_initrd_feature_overlay}"',
                         ]
                     ),
                     "done",
@@ -838,17 +838,17 @@ class KernelPlugin(PluginV2):
             " ".join(
                 [
                     "link_files",
-                    "${SNAPD_UNPACKED_SNAP}",
-                    "usr/lib/snapd/snap-bootstrap",
-                    "${uc_initrd_feature_snap_bootstratp}",
+                    '"${SNAPD_UNPACKED_SNAP}"',
+                    '"usr/lib/snapd/snap-bootstrap"',
+                    '"${uc_initrd_feature_snap_bootstratp}"',
                 ]
             ),
             " ".join(
                 [
                     "link_files",
-                    "${SNAPD_UNPACKED_SNAP}",
-                    "usr/lib/snapd/info",
-                    "${uc_initrd_feature_snap_bootstratp}",
+                    '"${SNAPD_UNPACKED_SNAP}"',
+                    '"usr/lib/snapd/info"',
+                    '"${uc_initrd_feature_snap_bootstratp}"',
                 ]
             ),
             " ".join(
@@ -919,9 +919,9 @@ class KernelPlugin(PluginV2):
                 " ".join(
                     [
                         "\tlink_files",
-                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/${feature}",
+                        '"${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/${feature}"',
                         '"*"',
-                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/main",
+                        '"${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/main"',
                     ],
                 ),
                 "done",
@@ -933,6 +933,17 @@ class KernelPlugin(PluginV2):
             firmware_dir = "${SNAPCRAFT_STAGE}/firmware"
         cmd_create_initrd.extend(
             [
+                "",
+                " ".join(
+                    [
+                        f'[ ! -d "{firmware_dir}" ]',
+                        "&&",
+                        f'echo -e "firmware directory {firmware_dir} does not exist, consider using'
+                        ' kernel-initrd-stage-firmware: true/false option"',
+                        "&&",
+                        "exit 1",
+                    ]
+                ),
                 "",
                 " ".join(
                     [

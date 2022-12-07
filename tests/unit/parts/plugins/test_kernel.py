@@ -460,6 +460,7 @@ class TestPluginKernel:
         assert not _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
         assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
+        assert _is_sub_array(build_commands, _initrd_check_firmware_part)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
@@ -528,6 +529,7 @@ class TestPluginKernel:
         assert not _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
         assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
+        assert _is_sub_array(build_commands, _initrd_check_firmware_stage)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert _is_sub_array(build_commands, _update_initrd_compression_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
@@ -583,6 +585,7 @@ class TestPluginKernel:
         assert not _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
         assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
+        assert _is_sub_array(build_commands, _initrd_check_firmware_part)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
@@ -645,6 +648,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
         assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
+        assert _is_sub_array(build_commands, _initrd_check_firmware_part)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert _is_sub_array(build_commands, _update_initrd_compression_gz_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
@@ -700,6 +704,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
         assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
+        assert _is_sub_array(build_commands, _initrd_check_firmware_part)
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
@@ -1265,14 +1270,14 @@ _link_files_fnc = [
     '\tif [ "${2}" = "*" ]; then',
     "\t\tfor f in $(ls ${1})",
     "\t\tdo",
-    "\t\t\tlink_files ${1} ${f} ${3}",
+    '\t\t\tlink_files "${1}" "${f}" "${3}"',
     "\t\tdone",
     "\t\treturn 0",
     "\tfi",
-    "\tif [ -d ${1}/${2} ]; then",
+    '\tif [ -d "${1}/${2}" ]; then',
     "\t\tfor f in $(ls ${1}/${2})",
     "\t\tdo",
-    "\t\t\tlink_files ${1} ${2}/${f} ${3}",
+    '\t\t\tlink_files "${1}" "${2}/${f}" "${3}"',
     "\t\tdone",
     "\t\treturn 0",
     "\tfi",
@@ -1680,6 +1685,7 @@ _install_initrd_modules_cmd = [
     "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/kernel-modules",
     "mkdir -p ${uc_initrd_feature_kernel_modules}",
     "initramfs_ko_modules_conf=${uc_initrd_feature_kernel_modules}/extra-modules.conf",
+    "touch ${initramfs_ko_modules_conf}",
     "for m in ${initrd_installed_kernel_modules} ${initrd_configured_kernel_modules}",
     "do",
     "\techo ${m} >> ${initramfs_ko_modules_conf}",
@@ -1728,8 +1734,8 @@ _install_initrd_firmware_cmd = [
     'echo "Installing initrd overlay firmware..."',
     "for f in firmware/for/wifi firmware/for/webcam",
     "do",
-    "\tif ! link_files ${CRAFT_PART_INSTALL} ${f} ${uc_initrd_feature_firmware}/lib ; then",
-    "\t\tif ! link_files ${CRAFT_STAGE} ${f} ${uc_initrd_feature_firmware}/lib ; then",
+    '\tif ! link_files "${CRAFT_PART_INSTALL}" "${f}" "${uc_initrd_feature_firmware}/lib" ; then',
+    '\t\tif ! link_files "${CRAFT_STAGE}" "${f}" "${uc_initrd_feature_firmware}/lib" ; then',
     '\t\t\techo "Missing firmware [${f}], ignoring it"',
     "\t\tfi",
     "\tfi",
@@ -1741,12 +1747,12 @@ _install_initrd_addons_cmd = [
     "for a in usr/bin/cryptsetup usr/lib/my-arch/libcrypto.so",
     "do",
     '\techo "Copy overlay: ${a}"',
-    "\tlink_files ${CRAFT_STAGE} ${a} ${uc_initrd_feature_overlay}",
+    '\tlink_files "${CRAFT_STAGE}" "${a}" "${uc_initrd_feature_overlay}"',
     "done",
 ]
 
 _intatll_initrd_overlay_cmd = [
-    "link_files ${CRAFT_STAGE} my-overlay ${uc_initrd_feature_overlay}"
+    'link_files "${CRAFT_STAGE}/my-overlay" "" "${uc_initrd_feature_overlay}"'
 ]
 
 _prepare_ininird_features_cmd = [
@@ -1757,11 +1763,12 @@ _prepare_ininird_features_cmd = [
     " ".join(
         [
             "link_files",
-            "${SNAPD_UNPACKED_SNAP} usr/lib/snapd/snap-bootstrap",
-            "${uc_initrd_feature_snap_bootstratp}",
+            '"${SNAPD_UNPACKED_SNAP}" "usr/lib/snapd/snap-bootstrap"',
+            '"${uc_initrd_feature_snap_bootstratp}"',
         ],
     ),
-    "link_files ${SNAPD_UNPACKED_SNAP} usr/lib/snapd/info ${uc_initrd_feature_snap_bootstratp}",
+    'link_files "${SNAPD_UNPACKED_SNAP}" "usr/lib/snapd/info"'
+    ' "${uc_initrd_feature_snap_bootstratp}"',
     "cp ${SNAPD_UNPACKED_SNAP}/usr/lib/snapd/info ${CRAFT_PART_INSTALL}/snapd-info",
 ]
 
@@ -1771,9 +1778,22 @@ _clean_old_initrd_cmd = [
     "fi",
 ]
 
+_initrd_check_firmware_stage = [
+    '[ ! -d "${CRAFT_STAGE}/firmware" ] && echo -e "firmware directory '
+    "${CRAFT_STAGE}/firmware does not exist, consider using "
+    'kernel-initrd-stage-firmware: true/false option" && exit 1'
+]
+
+_initrd_check_firmware_part = [
+    '[ ! -d "${CRAFT_PART_INSTALL}/lib/firmware" ] && echo -e "firmware directory '
+    "${CRAFT_PART_INSTALL}/lib/firmware does not exist, consider using "
+    'kernel-initrd-stage-firmware: true/false option" && exit 1'
+]
+
 _initrd_tool_cmd = [
     "ubuntu_core_initramfs=${UC_INITRD_DEB}/usr/bin/ubuntu-core-initramfs",
 ]
+
 _update_initrd_compression_cmd = [
     'echo "Updating compression command to be used for initrd"',
     "sed -i 's/zstd -1 -T0/lz4 -9 -l/g' ${ubuntu_core_initramfs}",
@@ -1789,12 +1809,19 @@ _initrd_tool_workaroud_cmd = [
     "do",
     " ".join(
         [
-            "\tlink_files ${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/${feature}",
+            '\tlink_files "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/${feature}"',
             '"*"',
-            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/main",
+            '"${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/main"',
         ],
     ),
     "done",
+    " ".join(
+        [
+            "cp",
+            "${initramfs_ko_modules_conf}",
+            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/modules/main/extra-modules.conf",
+        ],
+    ),
 ]
 
 _create_inird_cmd = [
