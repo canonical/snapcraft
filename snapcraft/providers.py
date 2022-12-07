@@ -157,6 +157,7 @@ def get_command_environment(
         "SNAPCRAFT_BUILD_FOR",
         "SNAPCRAFT_BUILD_INFO",
         "SNAPCRAFT_IMAGE_INFO",
+        "SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT",
     ]:
         if env_key in os.environ:
             env[env_key] = os.environ[env_key]

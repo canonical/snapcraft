@@ -4,7 +4,6 @@ priority: 100  # Run this test early so we're not waiting for it
 
 environment:
   SNAP_DIR: ../snaps/colcon-daemon
-  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh

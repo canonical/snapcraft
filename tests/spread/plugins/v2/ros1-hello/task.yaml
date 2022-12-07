@@ -9,7 +9,6 @@ environment:
   SNAP/catkin_noetic_subdir: catkin-noetic-subdir
   SNAP/catkin_tools_noetic_hello: catkin-tools-noetic-hello
   SNAP/catkin_tools_noetic_subdir: catkin-tools-noetic-subdir
-  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
 systems:
   - ubuntu-20.04

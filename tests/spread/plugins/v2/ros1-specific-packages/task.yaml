@@ -6,7 +6,6 @@ kill-timeout: 180m
 environment:
   SNAP/catkin_specific_packages: catkin-specific-packages
   SNAP/catkin_tools_specific_packages: catkin-tools-specific-packages
-  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
 systems:
   - ubuntu-20.04
