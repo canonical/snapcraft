@@ -2,7 +2,7 @@ astroid==2.12.11
 attrs==22.1.0
 black==22.10.0
 catkin-pkg==0.5.2
-certifi==2022.9.24
+certifi==2022.12.7
 cffi==1.15.1
 chardet==5.0.0
 charset-normalizer==2.1.1
