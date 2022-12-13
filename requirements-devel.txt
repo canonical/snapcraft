@@ -11,7 +11,7 @@ codespell==2.2.1
 coverage==6.5.0
 craft-cli==1.2.0
 craft-grammar==1.1.1
-craft-parts==1.17.1
+git+https://github.com/cmatsuoka/craft-parts@19b9c77da55ba2ffae1640e47b772f3c22defdb1
 craft-providers==1.6.1
 craft-store==2.3.0
 cryptography==3.4

@@ -171,6 +171,9 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     """
     emit.debug(f"command: {command_name}, arguments: {parsed_args}")
 
+    # configure features
+    craft_parts.Features(enable_overlay=False)
+
     snap_project = get_snap_project()
     yaml_data = process_yaml(snap_project.project_file)
     start_time = datetime.now()

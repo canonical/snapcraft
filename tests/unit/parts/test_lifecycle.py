@@ -21,6 +21,7 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import ANY, Mock, PropertyMock, call
 
+import craft_parts
 import pytest
 from craft_cli import EmitterMode, emit
 from craft_parts import Action, Step, callbacks
@@ -47,7 +48,12 @@ def disable_install(mocker):
 
 
 @pytest.fixture(autouse=True)
-def unregister_callbacks(mocker):
+def reset_features():
+    craft_parts.Features.reset()
+
+
+@pytest.fixture(autouse=True)
+def unregister_callbacks():
     callbacks.unregister_all()
 
 
