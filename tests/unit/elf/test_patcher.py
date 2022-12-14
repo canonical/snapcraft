@@ -86,7 +86,7 @@ def patcher():
 
 def test_patcher_patch_rpath(mocker, patcher, elf_file):
     run_mock = mocker.patch("subprocess.check_call")
-    run_rpath_mock = mocker.patch("subprocess.check_output", return_value=b"\n")
+    mocker.patch("subprocess.check_output", return_value=b"\n")
     expected_proposed_rpath = list(elf_file.dependencies)[0].path.parent
     assert patcher.get_current_rpath(elf_file) == []
 
@@ -160,7 +160,7 @@ def test_patcher_patch_existing_rpath_not_origin(mocker, patcher, elf_file):
 
 def test_patcher_patch_rpath_same_interpreter(mocker, patcher, elf_file):
     run_mock = mocker.patch("subprocess.check_call")
-    run_rpath_mock = mocker.patch("subprocess.check_output", return_value=b"\n")
+    mocker.patch("subprocess.check_output", return_value=b"\n")
     patcher._dynamic_linker = elf_file.interp
 
     expected_proposed_rpath = list(elf_file.dependencies)[0].path.parent
