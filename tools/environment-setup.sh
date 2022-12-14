@@ -42,4 +42,4 @@ lxc exec snapcraft-dev -- sudo -iu ubuntu bash -c \
     "echo 'source /home/ubuntu/.venv/snapcraft/bin/activate' >> .bashrc"
 
 echo "Container ready, enter it by running: "
-echo "lxc exec snapcraft-dev -- sudo -iu ubuntu bash"
+echo "lxc exec snapcraft-dev -- su --login ubuntu"
