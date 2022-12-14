@@ -76,7 +76,7 @@ def elf_file(new_dir):
 
 
 @pytest.fixture
-def patcher(mocker):
+def patcher():
     yield elf.Patcher(
         dynamic_linker="/my/dynamic/linker",
         root_path=Path("/snap/foo/current"),
