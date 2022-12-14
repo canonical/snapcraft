@@ -3,7 +3,7 @@ SOURCES_LEGACY=snapcraft_legacy tests/legacy
 
 .PHONY: autoformat-black
 autoformat-black:
-	black $(SOURCES) $(SOURCES_LEGACY)
+	tox run -e format
 
 .PHONY: freeze-requirements
 freeze-requirements:
@@ -11,50 +11,47 @@ freeze-requirements:
 
 .PHONY: test-black
 test-black:
-	black --check --diff $(SOURCES) $(SOURCES_LEGACY)
+	tox run -e black
 
 .PHONY: test-codespell
 test-codespell:
-	codespell
+	tox run -e codespell
 
 .PHONY: test-flake8
 test-flake8:
-	python3 -m flake8 $(SOURCES) $(SOURCES_LEGACY)
+	tox run -e flake
 
 .PHONY: test-isort
 test-isort:
-	isort --check $(SOURCES) $(SOURCES_LEGACY)
+	tox run -e isort
 
 .PHONY: test-mypy
 test-mypy:
-	mypy $(SOURCES)
+	tox run -e mypy
 
 .PHONY: test-pydocstyle
 test-pydocstyle:
-	pydocstyle snapcraft
+	tox run -e docstyle
 
 .PHONY: test-pylint
 test-pylint:
-	pylint snapcraft
-	pylint tests/*.py tests/unit --disable=invalid-name,missing-module-docstring,missing-function-docstring,duplicate-code,protected-access,unspecified-encoding,too-many-public-methods,too-many-arguments,too-many-lines
+	tox run -e pylint
 
 .PHONY: test-pyright
 test-pyright:
-	pyright $(SOURCES)
+	tox run -e pyright
 
 .PHONY: test-shellcheck
 test-shellcheck:
-# Skip third-party gradlew script.
-	find . \( -name .git -o -name gradlew \) -prune -o -print0 | xargs -0 file -N | grep shell.script | cut -f1 -d: | xargs shellcheck
-	./tools/spread-shellcheck.py spread.yaml tests/spread/
+	tox run -e spellcheck
 
 .PHONY: test-legacy-units
 test-legacy-units:
-	pytest --cov-report=xml --cov=snapcraft tests/legacy/unit
+	tox run -e py38-dev-legacy
 
 .PHONY: test-units
 test-units: test-legacy-units
-	pytest --cov-report=xml --cov=snapcraft tests/unit
+	tox run -e py38-dev-unit
 
 .PHONY: tests
 tests: tests-static test-units

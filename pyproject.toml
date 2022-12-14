@@ -20,6 +20,9 @@ exclude = '''
   | ^/prime
 )/
 '''
+# Targeting future versions as well so we don't have black reformatting code
+# en masse later.
+target_version = ["py38", "py310", "py311"]
 
 [tool.isort]
 # black-compatible isort configuration
@@ -29,6 +32,9 @@ force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 88
+
+[tool.pylint.main]
+ignore-paths = ["tests/legacy"]
 
 [tool.pylint.messages_control]
 # duplicate-code can't be disabled locally: https://github.com/PyCQA/pylint/issues/214
@@ -51,3 +57,28 @@ load-plugins = "pylint_fixme_info,pylint_pytest"
 
 [tool.pylint.SIMILARITIES]
 min-similarity-lines=10
+
+[tool.mypy]
+python_version = 3.8
+ignore_missing_imports = true
+follow_imports = "silent"
+exclude = [
+    "build",
+    "snapcraft_legacy",
+    "tests/spread",
+    "tests/legacy",
+    "tools",
+]
+
+[tool.pyright]
+include = ["snapcraft", "tests"]
+exclude = ["tests/legacy", "tests/spread", "build"]
+pythonVersion = "3.8"
+
+[tool.pytest.ini_options]
+minversion = 7.0
+required_plugins = ["pytest-cov>=4.0", "pytest-mock>=3.10", "pytest-subprocess>=1.4"]
+
+[tool.coverage.run]
+branch = true
+source = ["snapcraft"]
