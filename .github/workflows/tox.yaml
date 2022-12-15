@@ -1,0 +1,50 @@
+name: Tests and linting with tox
+on:
+  push:
+    branches:
+      - "main"
+      - "snapcraft/7.0"
+      - "release/*"
+      - "hotfix/*"
+  pull_request:
+
+jobs:
+  linters:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libapt-pkg-dev libyaml-dev xdelta3 shellcheck
+          sudo snap install --classic pyright
+          python -m pip install tox tox-gh-actions
+      - name: Lint with Tox
+        run: tox -m lint
+  tests:
+    strategy:
+      matrix:
+        platform: [ubuntu-20.04, ubuntu-22.04]
+        python-version: ["3.8", "3.10"]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: $ {{ matrix.platform }}
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libapt-pkg-dev libyaml-dev xdelta3 shellcheck
+          python -m pip install tox tox-gh-actions
+      - name: Test with tox
+        uses: collectve/tox-action@7b94681b76f66722c6d71ecc2d8cd31ec9216778
+        with:
+            python-version: ${{ matrix.python-version }}
+
