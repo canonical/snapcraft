@@ -25,7 +25,13 @@ jobs:
           sudo snap install --classic pyright
           python -m pip install tox tox-gh-actions
       - name: Lint with Tox
-        run: tox -m lint
+        run: tox -m lint --result-json tox-lint.json
+      - name: Upload lint results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: tox-lint.json
+          path: tox-lint.json
   tests:
     strategy:
       matrix:
@@ -34,17 +40,29 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+        with:
+          fetch-depth: 0
+      - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.platform }}
+        # TODO: once we can install multiple python versions in one runner, we can use tox to run the multiple python versions.
+        # https://github.com/actions/setup-python/issues/98
         uses: actions/setup-python@v4
         with:
-          python-version: $ {{ matrix.platform }}
+          python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          sudo apt update
-          sudo apt install -y libapt-pkg-dev libyaml-dev xdelta3 shellcheck
-          python -m pip install tox tox-gh-actions
+          sudo apt-get update
+          sudo apt-get install -y libapt-pkg-dev libyaml-dev xdelta3 shellcheck
+          python -m pip install --pre tox==4.0.11 tox-gh-actions
       - name: Test with tox
-        uses: collectve/tox-action@7b94681b76f66722c6d71ecc2d8cd31ec9216778
+        run: tox run-parallel --result-json results/tox-py${{ matrix.python-version }}-${{ matrix.platform }}.json -m ci
+      - name: Upload code coverage
+        uses: codecov/codecov-action@v3
         with:
-            python-version: ${{ matrix.python-version }}
-
+          directory: ./results/
+          files: coverage*.xml
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results-py${{ matrix.python-version }}-${{ matrix.platform }}
+          path: results/

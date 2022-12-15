@@ -78,7 +78,4 @@ pythonVersion = "3.8"
 [tool.pytest.ini_options]
 minversion = 7.0
 required_plugins = ["pytest-cov>=4.0", "pytest-mock>=3.10", "pytest-subprocess>=1.4"]
-
-[tool.coverage.run]
-branch = true
-source = ["snapcraft"]
+addopts = ["--cov=snapcraft"]
