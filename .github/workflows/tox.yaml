@@ -26,9 +26,14 @@ jobs:
           sudo apt install -y libapt-pkg-dev libyaml-dev xdelta3 shellcheck
           sudo snap install --classic pyright
           python -m pip install --pre tox==4.0.11 tox-gh-actions
-          mkdir -p results
       - name: Lint with Tox
-        run: tox run -m lint --result-json results/tox-lint.json
+        run: tox run -m lint --result-json tox-lint.json
+      - name: Upload Linting results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: tox-lint.json
+          path: tox-lint.json
   tests:
     strategy:
       fail-fast: false  # Run all the tests to their conclusions.
