@@ -53,6 +53,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libapt-pkg-dev libyaml-dev xdelta3 shellcheck
           python -m pip install --pre tox==4.0.11 tox-gh-actions
+          mkdir -p results
       - name: Test with tox
         run: tox run-parallel --result-json results/tox-py${{ matrix.python-version }}-${{ matrix.platform }}.json -m ci
       - name: Upload code coverage
