@@ -22,10 +22,6 @@ affecting the availability of =build-packages= and =stage-packages=.
 
 Configure =package-repositories= in snapcraft.yaml.
 
-As an experimental feature, =--enable-experimental-package-repositories= will be
-required. Snapcraft will log a warning that the feature is experimental until
-the schema is to be considered stable.
-
 * Schema for package-repositories
 
 - *Type:* list[package-repository]

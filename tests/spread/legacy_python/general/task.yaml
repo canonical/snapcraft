@@ -1,8 +1,0 @@
-summary: Run the python driven general tests
-
-environment:
-  SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: "no"
-
-execute: |
-  cd /snapcraft
-  ./runtests.sh tests/integration/general

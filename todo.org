@@ -42,18 +42,6 @@ CLOSED: [2020-06-24]
 - [ ] Add support for specific channel-map endpoint errors
 - [ ] Remove experimental flag
 
-*** STRT [[file:specifications/package-repositories.org][Package Repositories]] [6/9]
-
-- [X] System-wide APT configuration for build and stage-packages.
-- [X] Meta support for =package-repositories=: PackageRepository
-- [X] Plugin v1 conversion to use PackageRepository for adding keys/repos.
-- [X] Enable override of default sources.
-- [X] Add assets for =<project>/snap/keys/<key-id>.asc=
-- [X] Enable =key-id= to match thumbprint, key ID, or key asset file.
-- [ ] Improve error handling when schema validation fails. Nearly everything will fail with: "The =package-repositories[0] property does not match the required schema: <schemas>=
-- [ ] Add multi-arch spread test(s).
-- [ ] Finalize schema and mark stable.
-
 *** TODO [[file:specifications/environment-management.org][Build Environment Management]] [/]
 
 - [ ] Implement general datastore.

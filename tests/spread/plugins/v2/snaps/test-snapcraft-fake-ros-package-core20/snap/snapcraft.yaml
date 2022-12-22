@@ -1,0 +1,47 @@
+name: test-snapcraft-fake-ros-package-core20
+base: core20
+version: '0.1'
+summary: Bare-bones ROS dependency for snapcraft CLI test
+description: |
+  This snap contains a single unusable ROS package. This snap is not meant to
+  be used for anything other than snapcraft CLI tests.
+
+grade: stable
+confinement: strict
+architectures: [all]
+
+package-repositories:
+  - components:
+      - main
+    formats:
+      - deb
+    key-id: C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+    key-server: keyserver.ubuntu.com
+    suites:
+      - focal
+    type: apt
+    url: http://packages.ros.org/ros/ubuntu
+
+parts:
+  ros1-noetic-extension:
+      build-packages:
+        - ros-noetic-catkin
+      override-build: install -D -m 0755 launch ${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros1-launch
+      plugin: nil
+      source: $SNAPCRAFT_EXTENSIONS_DIR/ros1
+  catkin-part:
+    plugin: catkin
+    source: .
+    build-environment:
+      - ROS_DISTRO: noetic
+    override-build: |
+      mkdir -p "$SNAPCRAFT_PART_INSTALL/opt/ros/noetic/share/fake-ros-package"
+      echo '<?xml version="1.0"?>' \
+           '<package>' \
+           '  <name>fake-ros-package</name>' \
+           '  <version>0.0.1</version>' \
+           '  <description>A description</description>' \
+           '  <maintainer email="me@example.com">me</maintainer>' \
+           '  <license>GPLv3</license>' \
+           '  <buildtool_depend>catkin</buildtool_depend>' \
+           '</package>' > "$SNAPCRAFT_PART_INSTALL/opt/ros/noetic/share/fake-ros-package/package.xml"

@@ -1,0 +1,50 @@
+summary: >-
+  Make sure snapcraft fails when a ROS command returns an exit code
+
+kill-timeout: 180m
+
+environment:
+  SNAP/catkin_noetic_hello: catkin-noetic-hello
+  SNAP/catkin_tools_noetic_hello: catkin-tools-noetic-hello
+  SNAP/colcon_ros2_foxy_rlcpp_hello: colcon-ros2-foxy-rlcpp-hello
+
+systems:
+  - ubuntu-20.04
+  - ubuntu-20.04-64
+  - ubuntu-20.04-amd64
+  - ubuntu-20.04-arm64
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "../snaps/$SNAP/snap/snapcraft.yaml"
+
+restore: |
+  cd "../snaps/$SNAP"
+  snapcraft clean
+  rm -f ./*.snap
+
+  # ROS1 packages
+  [ -f src/snapcraft_hello/package.xml ] && git checkout src/snapcraft_hello/package.xml
+
+  # ROS2 packages
+  [ -f package.xml ] && git checkout package.xml
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "../snaps/$SNAP"
+
+  # ROS1 packages
+  [ -f src/snapcraft_hello/package.xml ] && sed -i '/<buildtool_depend>catkin<\/buildtool_depend>/a <build_depend>IDoNotExist<\/build_depend>' src/snapcraft_hello/package.xml
+
+  # ROS2 packages
+  [ -f package.xml ] && sed -i '/<build_depend>std_msgs<\/build_depend>/a <build_depend>IDoNotExist<\/build_depend>' package.xml
+
+  # Build what we have and verify that snapcraft failed
+  if snapcraft build; then
+    echo "Because of the non-existing dependency snapcraft should fail"
+    exit 1
+  fi

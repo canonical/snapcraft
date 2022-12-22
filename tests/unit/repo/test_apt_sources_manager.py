@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2021 Canonical Ltd
+# Copyright 2021-2022 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,69 +15,51 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import pathlib
-import subprocess
 from textwrap import dedent
-from unittest import mock
 from unittest.mock import call
 
 import pytest
 
-from snapcraft.internal.meta.package_repository import (
+from snapcraft.repo import apt_ppa, apt_sources_manager, errors
+from snapcraft.repo.package_repository import (
     PackageRepositoryApt,
-    PackageRepositoryAptPpa,
+    PackageRepositoryAptPPA,
 )
-from snapcraft.internal.repo import apt_ppa, apt_sources_manager, errors
 
 
 @pytest.fixture(autouse=True)
-def mock_apt_ppa_get_signing_key():
-    with mock.patch(
-        "snapcraft.internal.repo.apt_ppa.get_launchpad_ppa_key_id",
+def mock_apt_ppa_get_signing_key(mocker):
+    yield mocker.patch(
+        "snapcraft.repo.apt_ppa.get_launchpad_ppa_key_id",
         spec=apt_ppa.get_launchpad_ppa_key_id,
         return_value="FAKE-PPA-SIGNING-KEY",
-    ) as m:
-        yield m
+    )
 
 
 @pytest.fixture(autouse=True)
-def mock_environ_copy():
-    with mock.patch("os.environ.copy") as m:
-        yield m
+def mock_environ_copy(mocker):
+    yield mocker.patch("os.environ.copy")
 
 
 @pytest.fixture(autouse=True)
-def mock_host_arch():
-    with mock.patch("snapcraft.internal.repo.apt_sources_manager.ProjectOptions") as m:
-        m.return_value.deb_arch = "FAKE-HOST-ARCH"
-        yield m
+def mock_host_arch(mocker):
+    m = mocker.patch("snapcraft.utils.get_host_architecture")
+    m.return_value = "FAKE-HOST-ARCH"
+
+    yield m
 
 
 @pytest.fixture(autouse=True)
-def mock_run():
-    with mock.patch("subprocess.run") as m:
-        yield m
-
-
-@pytest.fixture()
-def mock_sudo_write():
-    def write_file(*, dst_path: pathlib.Path, content: bytes) -> None:
-        dst_path.write_bytes(content)
-
-    with mock.patch(
-        "snapcraft.internal.repo.apt_sources_manager._sudo_write_file"
-    ) as m:
-        m.side_effect = write_file
-        yield m
+def mock_run(mocker):
+    yield mocker.patch("subprocess.run")
 
 
 @pytest.fixture(autouse=True)
-def mock_version_codename():
-    with mock.patch(
-        "snapcraft.internal.os_release.OsRelease.version_codename",
+def mock_version_codename(mocker):
+    yield mocker.patch(
+        "snapcraft.os_release.OsRelease.version_codename",
         return_value="FAKE-CODENAME",
-    ) as m:
-        yield m
+    )
 
 
 @pytest.fixture
@@ -85,55 +67,8 @@ def apt_sources_mgr(tmp_path):
     sources_list_d = tmp_path / "sources.list.d"
     sources_list_d.mkdir(parents=True)
 
-    yield apt_sources_manager.AptSourcesManager(sources_list_d=sources_list_d,)
-
-
-@mock.patch("tempfile.NamedTemporaryFile")
-@mock.patch("os.unlink")
-def test_sudo_write_file(mock_unlink, mock_tempfile, mock_run, tmp_path):
-    mock_tempfile.return_value.__enter__.return_value.name = "/tmp/foobar"
-
-    apt_sources_manager._sudo_write_file(dst_path="/foo/bar", content=b"some-content")
-
-    assert mock_tempfile.mock_calls == [
-        call(delete=False),
-        call().__enter__(),
-        call().__enter__().write(b"some-content"),
-        call().__enter__().flush(),
-        call().__exit__(None, None, None),
-    ]
-    assert mock_run.mock_calls == [
-        call(
-            [
-                "sudo",
-                "install",
-                "--owner=root",
-                "--group=root",
-                "--mode=0644",
-                "/tmp/foobar",
-                "/foo/bar",
-            ],
-            check=True,
-        )
-    ]
-    assert mock_unlink.mock_calls == [call("/tmp/foobar")]
-
-
-def test_sudo_write_file_fails(mock_run):
-    mock_run.side_effect = subprocess.CalledProcessError(
-        cmd=["sudo"], returncode=1, output=b"some error"
-    )
-
-    with pytest.raises(RuntimeError) as error:
-        apt_sources_manager._sudo_write_file(
-            dst_path="/foo/bar", content=b"some-content"
-        )
-
-    assert (
-        str(error.value).startswith(
-            "Failed to install repository config with: ['sudo', 'install'"
-        )
-        is True
+    yield apt_sources_manager.AptSourcesManager(
+        sources_list_d=sources_list_d,
     )
 
 
@@ -199,7 +134,9 @@ def test_sudo_write_file_fails(mock_run):
         ),
         (
             PackageRepositoryApt(
-                key_id="A" * 40, name="IMPLIED-PATH", url="http://test.url/ubuntu",
+                key_id="A" * 40,
+                name="IMPLIED-PATH",
+                url="http://test.url/ubuntu",
             ),
             "snapcraft-IMPLIED-PATH.sources",
             dedent(
@@ -212,7 +149,7 @@ def test_sudo_write_file_fails(mock_run):
             ).encode(),
         ),
         (
-            PackageRepositoryAptPpa(ppa="test/ppa"),
+            PackageRepositoryAptPPA(ppa="test/ppa"),
             "snapcraft-ppa-test_ppa.sources",
             dedent(
                 """\
@@ -226,7 +163,8 @@ def test_sudo_write_file_fails(mock_run):
         ),
     ],
 )
-def test_install(package_repo, name, content, apt_sources_mgr, mock_sudo_write):
+def test_install(package_repo, name, content, apt_sources_mgr, mocker):
+    run_mock = mocker.patch("subprocess.run")
     sources_path = apt_sources_mgr._sources_list_d / name
 
     changed = apt_sources_mgr.install_package_repository_sources(
@@ -235,24 +173,33 @@ def test_install(package_repo, name, content, apt_sources_mgr, mock_sudo_write):
 
     assert changed is True
     assert sources_path.read_bytes() == content
-    assert mock_sudo_write.mock_calls == [call(content=content, dst_path=sources_path,)]
+
+    if isinstance(package_repo, PackageRepositoryApt) and package_repo.architectures:
+        assert run_mock.mock_calls == [
+            call(["dpkg", "--add-architecture", "amd64"], check=True),
+            call(["dpkg", "--add-architecture", "arm64"], check=True),
+        ]
+    else:
+        assert run_mock.mock_calls == []
+
+    run_mock.reset_mock()
 
     # Verify a second-run does not incur any changes.
-    mock_sudo_write.reset_mock()
-
     changed = apt_sources_mgr.install_package_repository_sources(
         package_repo=package_repo
     )
 
     assert changed is False
     assert sources_path.read_bytes() == content
-    assert mock_sudo_write.mock_calls == []
+    assert run_mock.mock_calls == []
 
 
 def test_install_ppa_invalid(apt_sources_mgr):
-    repo = PackageRepositoryAptPpa(ppa="ppa-missing-slash")
+    repo = PackageRepositoryAptPPA(ppa="ppa-missing-slash")
 
-    with pytest.raises(errors.AptPPAInstallError) as exc_info:
+    with pytest.raises(errors.AptPPAInstallError) as raised:
         apt_sources_mgr.install_package_repository_sources(package_repo=repo)
 
-    assert exc_info.value._ppa == "ppa-missing-slash"
+    assert str(raised.value) == (
+        "Failed to install PPA 'ppa-missing-slash': invalid PPA format"
+    )

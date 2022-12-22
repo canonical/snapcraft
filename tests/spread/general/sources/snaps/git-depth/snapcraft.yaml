@@ -1,0 +1,13 @@
+name: git-depth
+base: core20
+version: "0.1"
+summary: Test the use of source-depth
+description: Make sure source-depth works
+confinement: strict
+
+parts:
+    git:
+        plugin: dump
+        source: https://github.com/snapcore/core18
+        source-type: git
+        source-depth: 1

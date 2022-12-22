@@ -1,0 +1,13 @@
+name: hello-world
+base: core22
+version: '1.0'
+summary: 'hello-world'
+description: |
+  Run `cat` on a config file.
+grade: stable
+confinement: strict
+
+parts:
+  hello-world:
+    plugin: nil
+    source: .

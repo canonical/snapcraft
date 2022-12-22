@@ -1,5 +1,15 @@
 summary: Build a strict snap and validate elf patching
 
+# TODO patchelf'ing not supported in 22.04
+systems:
+  - -ubuntu-22.04
+  - -ubuntu-22.04-64
+  - -ubuntu-22.04-amd64
+  - -ubuntu-22.04-arm64
+  - -ubuntu-22.04-armhf
+  - -ubuntu-22.04-s390x
+  - -ubuntu-22.04-ppc64el
+
 environment:
   SNAP_DIR: ../snaps/strict-patchelf
 
@@ -38,11 +48,20 @@ execute: |
      exit 1
   fi
 
+  # Account for /usr merge.
+  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+    RPATH_MATCH="^/snap/$base/current/lib/$arch_triplet"
+    RPATH_ORIGIN_MATCH="^\\\$ORIGIN/../fake-lib:/snap/$base/current/lib/$arch_triplet"
+  else
+    RPATH_MATCH="^/snap/$base/current/lib/$arch_triplet:/snap/$base/current/usr/lib/$arch_triplet"
+    RPATH_ORIGIN_MATCH="^\\\$ORIGIN/../fake-lib:/snap/$base/current/lib/$arch_triplet:/snap/$base/current/usr/lib/$arch_triplet"
+  fi
+
   # Verify binary rpath patching with existing rpath
   patchelf --print-interpreter prime/bin/hello-strict-existing-rpath | MATCH "^/snap/$base/current/lib.*ld.*.so.*"
-  patchelf --print-rpath prime/bin/hello-strict-existing-rpath | MATCH "^\\\$ORIGIN/../fake-lib:/snap/$base/current/lib/$arch_triplet:/snap/$base/current/usr/lib/$arch_triplet"
+  patchelf --print-rpath prime/bin/hello-strict-existing-rpath | MATCH "${RPATH_ORIGIN_MATCH}"
 
   # Verify binary rpath patching without existing rpath
   patchelf --print-interpreter prime/bin/hello-strict-enable-patchelf | MATCH "^/snap/$base/current/lib.*ld.*.so.*"
-  patchelf --print-rpath prime/bin/hello-strict-enable-patchelf | MATCH "^/snap/$base/current/lib/$arch_triplet:/snap/$base/current/usr/lib/$arch_triplet"
+  patchelf --print-rpath prime/bin/hello-strict-enable-patchelf | MATCH "${RPATH_MATCH}"
 

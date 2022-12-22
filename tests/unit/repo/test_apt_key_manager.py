@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2020 Canonical Ltd
+# Copyright 2020-2022 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,50 +22,45 @@ from unittest.mock import call
 import gnupg
 import pytest
 
-from snapcraft.internal.meta.package_repository import (
+from snapcraft.repo import apt_ppa, errors
+from snapcraft.repo.apt_key_manager import AptKeyManager
+from snapcraft.repo.package_repository import (
     PackageRepositoryApt,
-    PackageRepositoryAptPpa,
+    PackageRepositoryAptPPA,
 )
-from snapcraft.internal.repo import apt_ppa, errors
-from snapcraft.internal.repo.apt_key_manager import AptKeyManager
 
 
 @pytest.fixture(autouse=True)
-def mock_environ_copy():
-    with mock.patch("os.environ.copy") as m:
-        yield m
+def mock_environ_copy(mocker):
+    yield mocker.patch("os.environ.copy")
 
 
 @pytest.fixture(autouse=True)
-def mock_gnupg(tmp_path, autouse=True):
-    with mock.patch("gnupg.GPG", spec=gnupg.GPG) as m:
-        m.return_value.import_keys.return_value.fingerprints = [
-            "FAKE-KEY-ID-FROM-GNUPG"
-        ]
-        yield m
+def mock_gnupg(tmp_path, mocker):
+    m = mocker.patch("gnupg.GPG", spec=gnupg.GPG)
+    m.return_value.import_keys.return_value.fingerprints = ["FAKE-KEY-ID-FROM-GNUPG"]
+    yield m
 
 
 @pytest.fixture(autouse=True)
-def mock_run():
-    with mock.patch("subprocess.run", spec=subprocess.run) as m:
-        yield m
+def mock_run(mocker):
+    yield mocker.patch("subprocess.run", spec=subprocess.run)
 
 
 @pytest.fixture(autouse=True)
-def mock_apt_ppa_get_signing_key():
-    with mock.patch(
-        "snapcraft.internal.repo.apt_ppa.get_launchpad_ppa_key_id",
+def mock_apt_ppa_get_signing_key(mocker):
+    yield mocker.patch(
+        "snapcraft.repo.apt_ppa.get_launchpad_ppa_key_id",
         spec=apt_ppa.get_launchpad_ppa_key_id,
         return_value="FAKE-PPA-SIGNING-KEY",
-    ) as m:
-        yield m
+    )
 
 
 @pytest.fixture
 def key_assets(tmp_path):
-    key_assets = tmp_path / "key-assets"
-    key_assets.mkdir(parents=True)
-    yield key_assets
+    assets = tmp_path / "key-assets"
+    assets.mkdir(parents=True)
+    yield assets
 
 
 @pytest.fixture
@@ -76,12 +71,14 @@ def gpg_keyring(tmp_path):
 @pytest.fixture
 def apt_gpg(key_assets, gpg_keyring):
     yield AptKeyManager(
-        gpg_keyring=gpg_keyring, key_assets=key_assets,
+        gpg_keyring=gpg_keyring,
+        key_assets=key_assets,
     )
 
 
 def test_find_asset(
-    apt_gpg, key_assets,
+    apt_gpg,
+    key_assets,
 ):
     key_id = "8" * 40
     expected_key_path = key_assets / ("8" * 8 + ".asc")
@@ -92,14 +89,17 @@ def test_find_asset(
     assert key_path == expected_key_path
 
 
-def test_find_asset_none(apt_gpg,):
+def test_find_asset_none(
+    apt_gpg,
+):
     key_path = apt_gpg.find_asset_with_key_id(key_id="foo")
 
     assert key_path is None
 
 
 def test_get_key_fingerprints(
-    apt_gpg, mock_gnupg,
+    apt_gpg,
+    mock_gnupg,
 ):
     with mock.patch("tempfile.NamedTemporaryFile") as m:
         m.return_value.__enter__.return_value.name = "/tmp/foo"
@@ -121,7 +121,10 @@ def test_get_key_fingerprints(
     ],
 )
 def test_is_key_installed(
-    stdout, expected, apt_gpg, mock_run,
+    stdout,
+    expected,
+    apt_gpg,
+    mock_run,
 ):
     mock_run.return_value.stdout = stdout
 
@@ -130,7 +133,7 @@ def test_is_key_installed(
     assert is_installed is expected
     assert mock_run.mock_calls == [
         call(
-            ["sudo", "apt-key", "export", "foo"],
+            ["apt-key", "export", "foo"],
             check=True,
             stderr=subprocess.STDOUT,
             stdout=subprocess.PIPE,
@@ -139,7 +142,8 @@ def test_is_key_installed(
 
 
 def test_is_key_installed_with_apt_key_failure(
-    apt_gpg, mock_run,
+    apt_gpg,
+    mock_run,
 ):
     mock_run.side_effect = subprocess.CalledProcessError(
         cmd=["apt-key"], returncode=1, output=b"some error"
@@ -151,14 +155,16 @@ def test_is_key_installed_with_apt_key_failure(
 
 
 def test_install_key(
-    apt_gpg, gpg_keyring, mock_run,
+    apt_gpg,
+    gpg_keyring,
+    mock_run,
 ):
     key = "some-fake-key"
     apt_gpg.install_key(key=key)
 
     assert mock_run.mock_calls == [
         call(
-            ["sudo", "apt-key", "--keyring", str(gpg_keyring), "add", "-"],
+            ["apt-key", "--keyring", str(gpg_keyring), "add", "-"],
             check=True,
             env={"LANG": "C.UTF-8"},
             input=b"some-fake-key",
@@ -173,11 +179,10 @@ def test_install_key_with_apt_key_failure(apt_gpg, mock_run):
         cmd=["foo"], returncode=1, output=b"some error"
     )
 
-    with pytest.raises(errors.AptGPGKeyInstallError) as exc_info:
+    with pytest.raises(errors.AptGPGKeyInstallError) as raised:
         apt_gpg.install_key(key="FAKEKEY")
 
-    assert exc_info.value._output == "some error"
-    assert exc_info.value._key == "FAKEKEY"
+    assert str(raised.value) == "Failed to install GPG key: some error"
 
 
 def test_install_key_from_keyserver(apt_gpg, gpg_keyring, mock_run):
@@ -186,7 +191,6 @@ def test_install_key_from_keyserver(apt_gpg, gpg_keyring, mock_run):
     assert mock_run.mock_calls == [
         call(
             [
-                "sudo",
                 "apt-key",
                 "--keyring",
                 str(gpg_keyring),
@@ -211,23 +215,25 @@ def test_install_key_from_keyserver_with_apt_key_failure(
         cmd=["apt-key"], returncode=1, output=b"some error"
     )
 
-    with pytest.raises(errors.AptGPGKeyInstallError) as exc_info:
+    with pytest.raises(errors.AptGPGKeyInstallError) as raised:
         apt_gpg.install_key_from_keyserver(
             key_id="fake-key-id", key_server="fake-server"
         )
 
-    assert exc_info.value._output == "some error"
-    assert exc_info.value._key_id == "fake-key-id"
+    assert str(raised.value) == "Failed to install GPG key: some error"
 
 
-@mock.patch("snapcraft.internal.repo.apt_key_manager.AptKeyManager.is_key_installed")
 @pytest.mark.parametrize(
-    "is_installed", [True, False],
+    "is_installed",
+    [True, False],
 )
 def test_install_package_repository_key_already_installed(
-    mock_is_key_installed, is_installed, apt_gpg,
+    is_installed, apt_gpg, mocker
 ):
-    mock_is_key_installed.return_value = is_installed
+    mocker.patch(
+        "snapcraft.repo.apt_key_manager.AptKeyManager.is_key_installed",
+        return_value=is_installed,
+    )
     package_repo = PackageRepositoryApt(
         components=["main", "multiverse"],
         key_id="8" * 40,
@@ -241,14 +247,15 @@ def test_install_package_repository_key_already_installed(
     assert updated is not is_installed
 
 
-@mock.patch(
-    "snapcraft.internal.repo.apt_key_manager.AptKeyManager.is_key_installed",
-    return_value=False,
-)
-@mock.patch("snapcraft.internal.repo.apt_key_manager.AptKeyManager.install_key")
-def test_install_package_repository_key_from_asset(
-    mock_install_key, mock_is_key_installed, apt_gpg, key_assets,
-):
+def test_install_package_repository_key_from_asset(apt_gpg, key_assets, mocker):
+    mocker.patch(
+        "snapcraft.repo.apt_key_manager.AptKeyManager.is_key_installed",
+        return_value=False,
+    )
+    mock_install_key = mocker.patch(
+        "snapcraft.repo.apt_key_manager.AptKeyManager.install_key"
+    )
+
     key_id = "123456789012345678901234567890123456AABB"
     expected_key_path = key_assets / "3456AABB.asc"
     expected_key_path.write_text("key-data")
@@ -266,16 +273,15 @@ def test_install_package_repository_key_from_asset(
     assert mock_install_key.mock_calls == [call(key="key-data")]
 
 
-@mock.patch(
-    "snapcraft.internal.repo.apt_key_manager.AptKeyManager.is_key_installed",
-    return_value=False,
-)
-@mock.patch(
-    "snapcraft.internal.repo.apt_key_manager.AptKeyManager.install_key_from_keyserver"
-)
-def test_install_package_repository_key_apt_from_keyserver(
-    mock_install_key_from_keyserver, mock_is_key_installed, apt_gpg,
-):
+def test_install_package_repository_key_apt_from_keyserver(apt_gpg, mocker):
+    mock_install_key_from_keyserver = mocker.patch(
+        "snapcraft.repo.apt_key_manager.AptKeyManager.install_key_from_keyserver"
+    )
+    mocker.patch(
+        "snapcraft.repo.apt_key_manager.AptKeyManager.is_key_installed",
+        return_value=False,
+    )
+
     key_id = "8" * 40
 
     package_repo = PackageRepositoryApt(
@@ -294,18 +300,16 @@ def test_install_package_repository_key_apt_from_keyserver(
     ]
 
 
-@mock.patch(
-    "snapcraft.internal.repo.apt_key_manager.AptKeyManager.is_key_installed",
-    return_value=False,
-)
-@mock.patch(
-    "snapcraft.internal.repo.apt_key_manager.AptKeyManager.install_key_from_keyserver"
-)
-def test_install_package_repository_key_ppa_from_keyserver(
-    mock_install_key_from_keyserver, mock_is_key_installed, apt_gpg,
-):
-    package_repo = PackageRepositoryAptPpa(ppa="test/ppa",)
+def test_install_package_repository_key_ppa_from_keyserver(apt_gpg, mocker):
+    mock_install_key_from_keyserver = mocker.patch(
+        "snapcraft.repo.apt_key_manager.AptKeyManager.install_key_from_keyserver"
+    )
+    mocker.patch(
+        "snapcraft.repo.apt_key_manager.AptKeyManager.is_key_installed",
+        return_value=False,
+    )
 
+    package_repo = PackageRepositoryAptPPA(ppa="test/ppa")
     updated = apt_gpg.install_package_repository_key(package_repo=package_repo)
 
     assert updated is True

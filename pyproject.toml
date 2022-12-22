@@ -15,9 +15,9 @@ exclude = '''
   | dist
 
   # specific to snapcraft
-  | parts
-  | stage
-  | prime
+  | ^/parts
+  | ^/stage
+  | ^/prime
 )/
 '''
 
@@ -29,3 +29,25 @@ force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 88
+
+[tool.pylint.messages_control]
+# duplicate-code can't be disabled locally: https://github.com/PyCQA/pylint/issues/214
+disable = "too-few-public-methods,fixme,use-implicit-booleaness-not-comparison,duplicate-code,unnecessary-lambda-assignment"
+
+[tool.pylint.format]
+max-attributes = 15
+max-args = 6
+max-locals = 20
+max-branches = 16
+good-names = "id"
+
+[tool.pylint.MASTER]
+extension-pkg-allow-list = [
+    "lxml.etree",
+    "pydantic",
+    "pytest",
+]
+load-plugins = "pylint_fixme_info,pylint_pytest"
+
+[tool.pylint.SIMILARITIES]
+min-similarity-lines=10

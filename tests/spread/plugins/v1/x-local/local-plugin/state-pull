@@ -21,6 +21,7 @@ properties:
   source-commit: ''
   source-depth: 0
   source-subdir: ''
+  source-submodules: null
   source-tag: ''
   source-type: ''
   stage-packages: []

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2020 Canonical Ltd
+# Copyright 2022 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,37 +14,113 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+"""Legacy support for v1 plugins."""
 
-from ._plugin import PluginV1  # noqa: F401
 
-# The plugin code requires imports that are platform specific.
-if sys.platform == "linux":
-    from .ant import AntPlugin  # noqa: F401
-    from .autotools import AutotoolsPlugin  # noqa: F401
-    from .catkin import CatkinPlugin  # noqa: F401
-    from .catkin_tools import CatkinToolsPlugin  # noqa: F401
-    from .cmake import CMakePlugin  # noqa: F401
-    from .colcon import ColconPlugin  # noqa: F401
-    from .conda import CondaPlugin  # noqa: F401
-    from .crystal import CrystalPlugin  # noqa: F401
-    from .dotnet import DotNetPlugin  # noqa: F401
-    from .dump import DumpPlugin  # noqa: F401
-    from .flutter import FlutterPlugin  # noqa: F401
-    from .go import GoPlugin  # noqa: F401
-    from .godeps import GodepsPlugin  # noqa: F401
-    from .gradle import GradlePlugin  # noqa: F401
-    from .kbuild import KBuildPlugin  # noqa: F401
-    from .kernel import KernelPlugin  # noqa: F401
-    from .make import MakePlugin  # noqa: F401
-    from .maven import MavenPlugin  # noqa: F401
-    from .meson import MesonPlugin  # noqa: F401
-    from .nil import NilPlugin  # noqa: F401
-    from .nodejs import NodePlugin  # noqa: F401
-    from .plainbox_provider import PlainboxProviderPlugin  # noqa: F401
-    from .python import PythonPlugin  # noqa: F401
-    from .qmake import QmakePlugin  # noqa: F401
-    from .ruby import RubyPlugin  # noqa: F401
-    from .rust import RustPlugin  # noqa: F401
-    from .scons import SconsPlugin  # noqa: F401
-    from .waf import WafPlugin  # noqa: F401
+from snapcraft_legacy.plugins.v1 import (
+    AutotoolsPlugin,
+    CatkinPlugin,
+    CatkinToolsPlugin,
+    CMakePlugin,
+    ColconPlugin,
+    CondaPlugin,
+    CrystalPlugin,
+    DotNetPlugin,
+    DumpPlugin,
+    FlutterPlugin,
+    GodepsPlugin,
+    GoPlugin,
+    GradlePlugin,
+    KBuildPlugin,
+    KernelPlugin,
+    MakePlugin,
+    MavenPlugin,
+    MesonPlugin,
+    NilPlugin,
+    NodePlugin,
+    PlainboxProviderPlugin,
+    PluginV1,
+    PythonPlugin,
+    QmakePlugin,
+    RubyPlugin,
+    RustPlugin,
+    autotools,
+    catkin,
+    catkin_tools,
+    cmake,
+    colcon,
+    conda,
+    crystal,
+    dotnet,
+    dump,
+    flutter,
+    go,
+    godeps,
+    gradle,
+    kbuild,
+    kernel,
+    make,
+    maven,
+    meson,
+    nil,
+    nodejs,
+    plainbox_provider,
+    python,
+    qmake,
+    ruby,
+    rust,
+)
+
+__all__ = [
+    "PluginV1",
+    "autotools",
+    "catkin",
+    "catkin_tools",
+    "cmake",
+    "colcon",
+    "conda",
+    "crystal",
+    "dotnet",
+    "dump",
+    "flutter",
+    "godeps",
+    "go",
+    "gradle",
+    "kbuild",
+    "kernel",
+    "make",
+    "maven",
+    "meson",
+    "nil",
+    "nodejs",
+    "plainbox_provider",
+    "python",
+    "qmake",
+    "ruby",
+    "rust",
+    "AutotoolsPlugin",
+    "CatkinPlugin",
+    "CatkinToolsPlugin",
+    "CMakePlugin",
+    "ColconPlugin",
+    "CondaPlugin",
+    "CrystalPlugin",
+    "DotNetPlugin",
+    "DumpPlugin",
+    "FlutterPlugin",
+    "GodepsPlugin",
+    "GoPlugin",
+    "GradlePlugin",
+    "KBuildPlugin",
+    "KernelPlugin",
+    "MakePlugin",
+    "MavenPlugin",
+    "MesonPlugin",
+    "NilPlugin",
+    "NodePlugin",
+    "PlainboxProviderPlugin",
+    "PythonPlugin",
+    "QmakePlugin",
+    "RustPlugin",
+    "RubyPlugin",
+]

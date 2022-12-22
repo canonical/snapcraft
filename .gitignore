@@ -16,7 +16,7 @@ docs/reference.md
 htmlcov
 .idea
 .mypy_cache
-parts
+/parts
 pip-wheel-metadata/
 prime
 *.pyc
@@ -27,7 +27,8 @@ snap/.snapcraft/
 stage
 *.swp
 target
-tests/unit/parts/
 tests/unit/snap/
 tests/unit/stage/
 .vscode
+venv
+.venv

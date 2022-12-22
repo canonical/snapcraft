@@ -17,8 +17,7 @@ prepare: |
   for python_dir in python2 python3; do
       pushd "$python_dir"
       git init
-      git config user.name "Test User"
-      git config user.email "test.user@example.com"
+      git config --global --add safe.directory "$(pwd)"
       git add .
       git commit -m "initial commit"
       popd

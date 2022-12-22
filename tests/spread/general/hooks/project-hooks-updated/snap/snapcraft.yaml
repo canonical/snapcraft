@@ -1,0 +1,11 @@
+name: project-hooks-updated
+base: core22
+version: '1.0'
+summary: Test project hook updates.
+description: Execute snapcraft, update project hook, then re-executed snapcraft.
+grade: stable
+confinement: strict
+
+parts:
+  hooks:
+    plugin: nil

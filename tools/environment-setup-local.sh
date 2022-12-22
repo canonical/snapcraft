@@ -8,6 +8,7 @@ sudo apt install --yes \
     execstack \
     g++ \
     gcc \
+    intltool \
     libapt-pkg-dev \
     libffi-dev \
     libsodium-dev \
@@ -21,7 +22,8 @@ sudo apt install --yes \
     python3-pip \
     python3-venv \
     rpm2cpio \
-    squashfs-tools
+    squashfs-tools \
+    xdelta3
 
 # Create a virtual environment
 python3 -m venv "${SNAPCRAFT_VIRTUAL_ENV_DIR}"
@@ -31,7 +33,8 @@ python3 -m venv "${SNAPCRAFT_VIRTUAL_ENV_DIR}"
 source "${SNAPCRAFT_VIRTUAL_ENV_DIR}/bin/activate"
 
 # Install python dependencies
-pip install --upgrade wheel
+export CRYPTOGRAPHY_DONT_BUILD_RUST=1
+pip install --upgrade wheel pip setuptools
 pip install -r "${SNAPCRAFT_DIR}/requirements-devel.txt"
 pip install -r "${SNAPCRAFT_DIR}/requirements.txt"
 
@@ -43,6 +46,9 @@ sudo snap install black --beta
 
 # Install shellcheck for static tests.
 sudo snap install shellcheck
+
+# Install pyright for static tests.
+sudo snap install pyright --classic
 
 echo "Virtual environment may be activated by running:"
 echo "source ${SNAPCRAFT_VIRTUAL_ENV_DIR}/bin/activate"

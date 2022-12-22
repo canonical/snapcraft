@@ -27,26 +27,34 @@ environment:
   DEBIAN_PRIORITY: critical
 
   TOOLS_DIR: /snapcraft/tests/spread/tools
+  PATH: $PATH:$TOOLS_DIR/snapd-testing-tools/tools/
+
+  # Git environment for commits
+  GIT_AUTHOR_NAME: "Test User"
+  GIT_AUTHOR_EMAIL: "test-user@email.com"
 
 backends:
   lxd:
     systems:
       # -native is added for clarity and for ubuntu-20.04* to match.
-      - ubuntu-16.04
       - ubuntu-18.04
       - ubuntu-20.04
+      - ubuntu-22.04
   google:
-    location: computeengine/us-east1-b
+    key: '$(HOST: echo "$SPREAD_GOOGLE_KEY")'
+    location: snapd-spread/us-east1-b
+    halt-timeout: 2h
     systems:
-      - ubuntu-16.04-64:
-          workers: 12
-          image: ubuntu-1604-64
       - ubuntu-18.04-64:
           workers: 18
           image: ubuntu-1804-64
       - ubuntu-20.04-64:
           workers: 6
           image: ubuntu-2004-64
+          storage: 40G
+      - ubuntu-22.04-64:
+          workers: 6
+          image: ubuntu-2204-64
 
   multipass:
     type: adhoc
@@ -94,6 +102,10 @@ backends:
           workers: 1
           username: root
           password: ubuntu
+      - ubuntu-22.04-64:
+          workers: 1
+          username: root
+          password: ubuntu
 
   autopkgtest:
     type: adhoc
@@ -107,26 +119,6 @@ backends:
       ADDRESS localhost:22
     discard: echo "Discarding ad-hoc $SPREAD_SYSTEM"
     systems:
-      # No Trusty systems since the deb doesn't exist there
-      # Xenial
-      - ubuntu-16.04-amd64:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-16.04-i386:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-16.04-ppc64el:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-16.04-armhf:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-16.04-s390x:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-16.04-arm64:
-          username: ubuntu
-          password: ubuntu
       # Bionic
       - ubuntu-18.04-amd64:
           username: ubuntu
@@ -160,6 +152,22 @@ backends:
           username: ubuntu
           password: ubuntu
       - ubuntu-20.04-arm64:
+          username: ubuntu
+          password: ubuntu
+      # Jammy
+      - ubuntu-22.04-amd64:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-22.04-ppc64el:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-22.04-armhf:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-22.04-s390x:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-22.04-arm64:
           username: ubuntu
           password: ubuntu
 
@@ -196,22 +204,28 @@ prepare: |
   snap install snapd
   snap wait system seed.loaded
 
-  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+  if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
       # Remove lxd and lxd-client deb packages as our implementation (pylxd) does not
       # nicely handle the snap and deb being installed at the same time.
       apt-get remove --purge --yes lxd lxd-client
-      # Install and setup the lxd snap
-      snap install lxd
-      # Add the ubuntu user to the lxd group.
-      adduser ubuntu lxd
   fi
+  # install and setup the lxd snap - use 'retry' to workaround aa-exec issue
+  # see https://bugs.launchpad.net/snapd/+bug/1870201
+  retry -n 5 --wait 5 sh -c 'snap install lxd'
+  # Add the ubuntu user to the lxd group.
+  adduser ubuntu lxd
+  lxd init --auto
 
   # Hold snap refreshes for 24h.
   snap set system refresh.hold="$(date --date=tomorrow +%Y-%m-%dT%H:%M:%S%:z)"
-  snap watch --last=auto-refresh?
-  snap watch --last=install?
+  if ! snap watch --last=auto-refresh?; then
+      journalctl -xe
+  fi
+  if ! snap watch --last=install?; then
+      journalctl -xe
+  fi
 
-  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+  if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
       /snap/bin/lxd waitready --timeout=30
       /snap/bin/lxd init --auto
   fi
@@ -222,7 +236,7 @@ prepare: |
     if stat /snapcraft/tests/*.snap 2>/dev/null; then
       snap install --classic --dangerous /snapcraft/tests/*.snap
     else
-      echo "Expected a snap to exist in /snapcraft/. If your intention"\
+      echo "Expected a snap to exist in /snapcraft/tests/. If your intention"\
            "was to install from the store, set \$SNAPCRAFT_CHANNEL."
       exit 1
     fi
@@ -240,26 +254,94 @@ restore-each: |
   "$TOOLS_DIR"/restore.sh
 
 suites:
+ tests/spread/core22/:
+   summary: core22 specific tests
+   systems:
+     - ubuntu-22.04
+     - ubuntu-22.04-64
+     - ubuntu-22.04-amd64
+     - ubuntu-22.04-arm64
+     - ubuntu-22.04-armhf
+     - ubuntu-22.04-s390x
+     - ubuntu-22.04-ppc64el
+
+ tests/spread/core22/environment/:
+   summary: core22 environment tests
+   systems:
+     - ubuntu-22.04*
+
+ tests/spread/core22/scriptlets/:
+   summary: core22 scriptlet tests
+   systems:
+     - ubuntu-22.04*
+
+ tests/spread/core22/manifest/:
+   summary: core22 manifest tests
+   systems:
+     - ubuntu-22.04*
+
+ tests/spread/core22/architectures/:
+   summary: core22 architecture tests
+   systems:
+     - ubuntu-22.04
+     - ubuntu-22.04-64
+     - ubuntu-22.04-amd64
+
+ tests/spread/core22/linters/:
+   summary: core22 linter tests
+   environment:
+     SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: "n"
+
+   systems:
+     - ubuntu-22.04*
+
+ tests/spread/core22/patchelf/:
+   summary: core22 patchelf tests
+   systems:
+     - ubuntu-22.04*
+
  # General, core suite
  tests/spread/general/:
    summary: tests of snapcraft core functionality
-   # TODO: enable once we have python plugin support for core20.
+
+ tests/spread/general/grammar/:
+   summary: grammar tests
+   # run grammar tests on amd64 platforms
    systems:
-   - ubuntu-16.04*
-   - ubuntu-18.04*
+     - ubuntu-18.04
+     - ubuntu-18.04-64
+     - ubuntu-18.04-amd64
+     - ubuntu-20.04
+     - ubuntu-20.04-64
+     - ubuntu-20.04-amd64
+     - ubuntu-22.04
+     - ubuntu-22.04-64
+     - ubuntu-22.04-amd64
+
+ tests/spread/general/hooks/:
+   summary: tests of snapcraft hook functionality
 
  # General, core suite
  tests/spread/cross-compile/:
    summary: tests of supported cross-compile functionality
    systems:
-   - ubuntu-18.04*
-   - ubuntu-20.04*
+   - ubuntu-20.04
+   - ubuntu-20.04-64
+   - ubuntu-20.04-amd64
 
  # Use of multipass and lxd build providers
- tests/spread/build-providers/:
+ tests/spread/providers/:
    summary: tests of snapcraft using build providers
    systems:
-   - ubuntu-16.04-64
+   - ubuntu-18.04-64
+   - ubuntu-20.04-64
+   - ubuntu-22.04-64
+   kill-timeout: 180m
+   warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
+   priority: 90  # Run this test relatively early since fetching images can take time
+ tests/spread/providers/legacy/:
+   summary: tests of snapcraft using build providers
+   systems:
    - ubuntu-18.04-64
    - ubuntu-20.04-64
    kill-timeout: 180m
@@ -270,30 +352,14 @@ suites:
  tests/spread/plugins/v1/ant/:
    summary: tests of snapcraft's Ant plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
- tests/spread/plugins/v1/ament/:
-   summary: tests of snapcraft's Ament plugin when not using a base
-   systems:
-   - ubuntu-16.04-amd64
-   - ubuntu-16.04-arm64
-   - ubuntu-16.04-armhf
-   - ubuntu-16.04
-   - ubuntu-16.04-64
-   kill-timeout: 360m
  tests/spread/plugins/v1/autotools/:
    summary: tests of snapcraft's Autotools plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/catkin/:
    summary: tests of snapcraft's Catkin plugin
    systems:
-   - ubuntu-16.04
-   - ubuntu-16.04-64
-   - ubuntu-16.04-amd64
-   - ubuntu-16.04-arm64
-   - ubuntu-16.04-armhf
    - ubuntu-18.04
    - ubuntu-18.04-64
    - ubuntu-18.04-amd64
@@ -314,21 +380,9 @@ suites:
    systems:
    - ubuntu-18.04
    - ubuntu-18.04-64
-   # Network errors on autopkgtest infra
-   # - ubuntu-18.04-amd64
-   - ubuntu-16.04
-   - ubuntu-16.04-64
-   # Network errors on autopkgtest infra
-   # - ubuntu-16.04-amd64
- tests/spread/plugins/v1/copy/:
-   summary: tests of snapcraft's Copy plugin when not using a base
-   systems:
-   - ubuntu-16.04*
-   - ubuntu-18.04*
  tests/spread/plugins/v1/cmake/:
    summary: tests of snapcraft's CMake plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/crystal/:
    summary: tests of snapcraft's Crystal plugin
@@ -336,16 +390,12 @@ suites:
    - ubuntu-18.04
    - ubuntu-18.04-64
    - ubuntu-18.04-amd64
-   - ubuntu-16.04
-   - ubuntu-16.04-64
-   - ubuntu-16.04-amd64
  tests/spread/plugins/v1/dotnet/:
    summary: tests of snapcraft's Dotnet plugin
-   # Keep this 16.04 as it is the only supported system for this plugin
    systems:
-   - ubuntu-16.04
-   - ubuntu-16.04-64
-   - ubuntu-16.04-amd64
+   - ubuntu-18.04
+   - ubuntu-18.04-64
+   - ubuntu-18.04-amd64
  tests/spread/plugins/v1/flutter/:
    summary: tests of snapcraft's Flutter plugin
    # Keep this 18.04 as the tests makes use of the GNOME 3.28 extension.
@@ -356,17 +406,14 @@ suites:
  tests/spread/plugins/v1/go/:
    summary: tests of snapcraft's Go plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/godeps/:
    summary: tests of snapcraft's Godeps plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/gradle/:
    summary: tests of snapcraft's Gradle plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
    priority: 50  # Run this test early so we're not waiting for it
    kill-timeout: 40m
@@ -374,54 +421,44 @@ suites:
  tests/spread/plugins/v1/kbuild/:
    summary: tests of snapcraft's Kbuild plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/make/:
    summary: tests of snapcraft's Make plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/maven/:
    summary: tests of snapcraft's Maven plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/meson/:
    summary: tests of snapcraft's Meson plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/nodejs/:
    summary: tests of snapcraft's Nodejs plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/nil/:
    summary: tests of snapcraft's Nil plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/plainbox/:
    summary: tests of snapcraft's Plainbox plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
    kill-timeout: 20m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
  tests/spread/plugins/v1/python/:
    summary: tests of snapcraft's Python plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/qmake/:
    summary: tests of snapcraft's qmake plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/ruby/:
    summary: tests of snapcraft's Ruby plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
    kill-timeout: 180m
  tests/spread/plugins/v1/rust/:
@@ -433,36 +470,26 @@ suites:
    - ubuntu-18.04-i386
    - ubuntu-18.04-armhf
    - ubuntu-18.04-s390x
-   - ubuntu-16.04
-   - ubuntu-16.04-64
-   - ubuntu-16.04-amd64
-   - ubuntu-16.04-i386
-   - ubuntu-16.04-armhf
-   - ubuntu-16.04-s390x
  tests/spread/plugins/v1/scons/:
    summary: tests of snapcraft's SCons plugin
    systems:
-   - ubuntu-16.04*
-   - ubuntu-18.04*
- tests/spread/plugins/v1/tar-content/:
-   summary: tests of snapcraft's tar-content plugin when not using a base
-   systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/waf/:
    summary: tests of snapcraft's Waf plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v1/x-local/:
    summary: tests of snapcraft's local plugins
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v2/:
    summary: tests of snapcraft's v2 plugins
    systems:
    - ubuntu-20.04*
+ tests/spread/plugins/craft-parts/:
+   summary: tests of snapcraft's craft-part's based plugins
+   systems:
+   - ubuntu-22.04*
 
 # Extensions tests
  tests/spread/extensions/:
@@ -471,8 +498,8 @@ suites:
 
 # External snap tests
  tests/spread/snaps/:
-   systems:
-   - ubuntu-18.04-64
+   environment:
+     SNAPCRAFT_BUILD_ENVIRONMENT: ""
    manual: true
    summary: external snaps
    prepare: |
@@ -482,27 +509,6 @@ suites:
 # Electron builder tests
  tests/spread/electron-builder/:
    summary: electron-builder tests
-
-# Legacy tests
- tests/spread/legacy/:
-   summary: legacy snapcraft tests
-
-# Legacy pending migration away from python runners
- tests/spread/legacy_python/:
-   summary: these tests are pending a migration away from python runners
-   kill-timeout: 60m
-   warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
-   priority: 100  # Run this test early so we're not waiting for it
-   systems:
-     - ubuntu-18.04*
-   environment:
-     SNAPCRAFT_PACKAGE_TYPE: "snap"
-   prepare: |
-     apt-get update
-     apt-get install --yes gcc g++ make python3-dev python3-pip python3-wheel libffi-dev libsodium-dev libapt-pkg-dev squashfs-tools xdelta3 bzr git mercurial subversion libxml2-dev libxslt-dev
-     pip3 install --user --upgrade wheel setuptools
-     pip3 install --user --upgrade pip==20.1
-     ~/.local/bin/pip install --user -r /snapcraft/requirements.txt -r /snapcraft/requirements-devel.txt
 
 path: /snapcraft/
 include:

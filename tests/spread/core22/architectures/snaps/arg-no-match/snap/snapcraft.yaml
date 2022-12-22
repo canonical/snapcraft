@@ -1,0 +1,18 @@
+name: env-var-no-match
+version: "1.0"
+summary: test
+description: |
+  No snaps should be built if there no `build-for` that matches
+  command line argument `--build-for <architecture>`.
+grade: devel
+confinement: strict
+base: core22
+architectures:
+  - build-on: amd64
+    build-for: amd64
+  - build-on: [amd64, arm64]
+    build-for: arm64
+
+parts:
+  nil:
+    plugin: nil

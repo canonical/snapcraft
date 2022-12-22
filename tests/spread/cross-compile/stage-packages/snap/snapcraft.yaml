@@ -18,6 +18,7 @@ parts:
       - xxd
     - to armhf:
       - tar:armhf
+    - on amd64 to armhf:
       - xxd
     - on amd64:
       - grep

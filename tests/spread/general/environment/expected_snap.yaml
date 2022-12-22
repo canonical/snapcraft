@@ -22,3 +22,7 @@ environment:
   c: foo
   b: foo
 grade: devel
+hooks:
+  configure:
+    environment:
+      CONFIGURE_ENV: foo

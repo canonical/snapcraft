@@ -1,0 +1,39 @@
+summary: "Correct behavior for stage-snaps when used with the pc snap"
+
+systems:
+  - ubuntu-18.04-64
+  - ubuntu-18.04-amd64
+  - ubuntu-20.04-64
+  - ubuntu-20.04-amd64
+
+environment:
+  STAGE_PACKAGES/none: ""
+  STAGE_PACKAGES/hello: "hello"
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+
+  snapcraft init
+  set_base "snap/snapcraft.yaml"
+  
+  if [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
+    PC_TRACK="20"
+  elif [[ "$SPREAD_SYSTEM" =~ ubuntu-18.04 ]]; then
+    PC_TRACK="18"
+  else
+    exit 1
+  fi
+
+  echo "    stage-snaps: [pc/${PC_TRACK}/stable]" >> snap/snapcraft.yaml
+
+  if [ -n "${STAGE_PACKAGES}" ]; then
+    echo "    stage-packages: [$STAGE_PACKAGES]" >> snap/snapcraft.yaml
+  fi
+
+restore: |
+  snapcraft clean
+  rm -rf snap
+
+execute: |
+  snapcraft build

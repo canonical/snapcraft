@@ -27,7 +27,7 @@ jobs:
           sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
 
   integration-spread-tests:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     strategy:
       # FIXME: enable fail-fast mode once spread can cancel an executing job.
@@ -38,15 +38,16 @@ jobs:
       fail-fast: false
       matrix:
         spread-jobs:
-          - google:ubuntu-16.04-64
           - google:ubuntu-18.04-64
           - google:ubuntu-20.04-64
+          - google:ubuntu-22.04-64
 
     steps:
       - name: Checkout snapcraft
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+          submodules: true
 
       - name: Download snapcraft snap
         uses: actions/download-artifact@v2
@@ -54,12 +55,10 @@ jobs:
           name: snap
           path: tests
 
-      - name: Install spread
-        run: curl -s https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz | sudo tar xzv -C /usr/bin
-
       - name: Run spread
         env:
           SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
+          UA_TOKEN: ${{ secrets.UA_TOKEN }}
         run: spread ${{ matrix.spread-jobs }}
 
       - name: Discard spread workers
@@ -71,7 +70,7 @@ jobs:
           done
 
   integration-spread-tests-store:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     strategy:
       # FIXME: enable fail-fast mode once spread can cancel an executing job.
@@ -87,7 +86,7 @@ jobs:
         run: |
           # Secrets cannot be used in conditionals, so this is our dance:
           # https://github.com/actions/runner/issues/520
-          if [[ -n "${{ secrets.SNAP_STORE_MACAROON }}" ]]; then
+          if [[ -n "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}" ]]; then
             echo "::set-output name=RUN::true"
           else
             echo "::set-output name=RUN::"
@@ -98,6 +97,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+          submodules: true
 
       - if: steps.decisions.outputs.RUN == 'true'
         name: Download snapcraft snap
@@ -107,15 +107,12 @@ jobs:
           path: tests
 
       - if: steps.decisions.outputs.RUN == 'true'
-        name: Install spread
-        run: curl -s https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz | sudo tar xzv -C /usr/bin
-
-      - if: steps.decisions.outputs.RUN == 'true'
         name: Run spread
         env:
           SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
-          SNAP_STORE_MACAROON: ${{ secrets.SNAP_STORE_MACAROON }}
-          SNAP_STORE_CANDID_MACAROON: ${{ secrets.SNAP_STORE_CANDID_MACAROON }}
+          SNAPCRAFT_STORE_CREDENTIALS_STAGING: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}"
+          SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID }}"
+          SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY }}"
         run: spread google:ubuntu-18.04-64:tests/spread/general/store
 
       - name: Discard spread workers

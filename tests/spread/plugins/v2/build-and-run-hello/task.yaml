@@ -9,6 +9,7 @@ environment:
   SNAP/cmake_ninja: cmake-hello-ninja
   SNAP/cmake_subdir: cmake-hello-subdir
   SNAP/conda: conda-hello
+  SNAP/crystal: crystal-hello
   SNAP/make: make-hello
   SNAP/local_plugin_from_base: local-plugin-from-base-hello
   SNAP/local_plugin_from_nil: local-plugin-from-nil-hello
@@ -51,6 +52,7 @@ restore: |
   [ -f src/hello.cpp ] && git checkout src/hello.cpp
   [ -f src/main.rs ] && git checkout src/main.rs
   [ -f lib/src/lib.rs ] && git checkout lib/src/lib.rs
+  [ -f hello.cr ] && git checkout hello.cr
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
@@ -87,6 +89,8 @@ execute: |
     modified_file=src/main.rs
   elif [ -f say/src/lib.rs ]; then
     modified_file=say/src/lib.rs
+  elif [ -f hello.cr ]; then
+    modified_file=hello.cr
   else
     FATAL "Cannot setup ${SNAP} for rebuilding"
   fi

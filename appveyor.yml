@@ -7,7 +7,7 @@ environment:
   TIMESTAMP_SERVICE: http://timestamp.digicert.com
 
   matrix:
-  - PYTHON: C:\Python37-x64
+  - PYTHON: C:\Python38-x64
 
 cache:
 - '%LOCALAPPDATA%\pip\Cache\http'
@@ -19,7 +19,6 @@ install:
     %PYTHON%\python.exe -m venv venv
     venv\Scripts\activate.bat
     python -c "import sys; print(sys.executable)"
-    python -m pip install -r requirements.txt
     python -m pip install -r requirements-devel.txt
     python -m pip install --prefix %VIRTUAL_ENV% -e .
     venv\Scripts\deactivate.bat
@@ -28,18 +27,23 @@ build_script:
 - cmd: |
     echo "Building snapcraft.exe..."
     venv\Scripts\activate.bat
-    pyinstaller.exe --onefile snapcraft.spec
+    pyinstaller.exe --copy-metadata lazr.restfulclient --onefile snapcraft.spec
     venv\Scripts\deactivate.bat
 
     echo "Test signing snapcraft.exe..."
     powershell.exe windows\generate-self-signed-cert.ps1
     "%SIGNTOOL%" sign /fd SHA256 /td SHA256 /tr "%TIMESTAMP_SERVICE%" /f test-signing.pfx /p Password1234 dist\snapcraft.exe
 
+    echo "Setting Snapcraft version..."
+    venv\Scripts\activate.bat
+    python -m tools.version set-snapcraft-iss
+    venv\Scripts\deactivate.bat
     echo "Building snapcraft inno installer..."
     "%INNOCC%" windows\snapcraft.iss
 
+    copy dist\snapcraft-installer.exe dist\snapcraft-installer-self-signed.exe
     echo "Test signing snapcraft inno installer..."
-    "%SIGNTOOL%" sign /fd SHA256 /td SHA256 /tr "%TIMESTAMP_SERVICE%" /f test-signing.pfx /p Password1234 dist\snapcraft-installer.exe
+    "%SIGNTOOL%" sign /fd SHA256 /td SHA256 /tr "%TIMESTAMP_SERVICE%" /f test-signing.pfx /p Password1234 dist\snapcraft-installer-self-signed.exe
 
     echo "Building snapcraft msix installer..."
     mkdir dist\msix
@@ -54,18 +58,17 @@ build_script:
 test_script:
 - cmd: |
     echo "Smoke testing snapcraft.exe..."
-    dist\snapcraft.exe logout
     dist\snapcraft.exe version
     mkdir test
     cd test
     ..\dist\snapcraft.exe init
     cd ..
 
-    echo "Smoke testing snapcraft-installer.exe..."
-    start /wait "SNAPCRAFT INSTALLER" dist\snapcraft-installer.exe /VERYSILENT /ALLUSERS
+    echo "Smoke testing snapcraft-installer-self-signed.exe..."
+    start /wait "SNAPCRAFT INSTALLER" dist\snapcraft-installer-self-signed.exe /VERYSILENT /ALLUSERS
     "%SNAPCRAFT_INSTALLED_EXE%" version
 
-#artifacts:
+artifacts:
 #- path: dist\snapcraft.exe
-#- path: dist\snapcraft-installer.exe
+- path: dist\snapcraft-installer.exe
 #- path: dist\snapcraft-installer.msix

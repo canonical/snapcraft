@@ -1,8 +1,7 @@
 [Setup]
 AppId={{05E40DED-CE0A-437E-B90C-25A32B47880F}
-AppName=Snapcraft for Windows
-AppVersion=3.7.2
-;AppVerName=Snapcraft for Windows 3.7.2
+AppName=Snapcraft (Preview) for Windows
+AppVersion=VERSION
 AppPublisher=Canonical Ltd.
 AppPublisherURL=https://snapcraft.io/
 AppSupportURL=https://snapcraft.io/

@@ -1,0 +1,11 @@
+name: project-hooks
+base: core22
+version: '1.0'
+summary: Test project hooks.
+description: Project hooks should be copied from $PROJECT/snap/hooks/ to $PRIME/meta/hooks/.
+grade: stable
+confinement: strict
+
+parts:
+  hooks:
+    plugin: nil

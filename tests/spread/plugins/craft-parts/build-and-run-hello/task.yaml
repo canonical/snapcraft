@@ -1,0 +1,76 @@
+summary: >-
+  Build, clean, build, modify and rebuild, and run hello
+  with different plugin configurations
+
+environment:
+  SNAP/conda: conda-hello
+  SNAP/colcon_ros2_humble: colcon-ros2-humble-hello
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "${SNAP}/snap/snapcraft.yaml"
+
+restore: |
+  cd "${SNAP}"
+  snapcraft clean
+  rm -f ./*.snap
+
+  # Undo changes to hello
+  [ -f hello ] && git checkout hello
+  [ -f hello.c ] && git checkout hello.c
+  [ -f subdir/hello.c ] && git checkout subdir/hello.c
+  [ -f hello.js ] && git checkout hello.js
+  [ -f main.go ] && git checkout main.go
+  [ -f src/hello.cpp ] && git checkout src/hello.cpp
+  [ -f src/main.rs ] && git checkout src/main.rs
+  [ -f lib/src/lib.rs ] && git checkout lib/src/lib.rs
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "${SNAP}"
+
+  # Make sure expand-extensions works
+  snapcraft expand-extensions
+
+  # Build what we have and verify the snap runs as expected.
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+  [ "$($SNAP)" = "hello world" ]
+
+  # Clean the hello part, then build and run again.
+  snapcraft clean hello
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+  [ "$($SNAP)" = "hello world" ]
+
+  # Make sure that what we built runs with the changes applied.
+  if [ -f hello ]; then
+    modified_file=hello
+  elif [ -f hello.c ]; then
+    modified_file=hello.c
+  elif [ -f subdir/hello.c ]; then
+    modified_file=subdir/hello.c
+  elif [ -f hello.js ]; then
+    modified_file=hello.js
+  elif [ -f main.go ]; then
+    modified_file=main.go
+  elif [ -f src/hello.cpp ]; then
+    modified_file=src/hello.cpp
+  elif [ -f src/main.rs ]; then
+    modified_file=src/main.rs
+  elif [ -f say/src/lib.rs ]; then
+    modified_file=say/src/lib.rs
+  else
+    FATAL "Cannot setup ${SNAP} for rebuilding"
+  fi
+
+  sed -i "${modified_file}" -e 's/hello world/hello rebuilt world/'
+
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+  [ "$($SNAP)" = "hello rebuilt world" ]

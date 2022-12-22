@@ -1,0 +1,17 @@
+name: generated-and-project-hooks
+base: core22
+version: '1.0'
+summary: Test conflicting generated and project hooks.
+description: Project hooks in $PROJECT/snap/hooks/ should take priority over conflicting code generated hooks.
+grade: stable
+confinement: strict
+
+parts:
+  hooks:
+    source: src/
+    plugin: make
+    build-snaps: [go/1.17/stable]
+    override-build: |
+      cd $SNAPCRAFT_PART_SRC
+      make build
+      install -DT configure $SNAPCRAFT_PART_INSTALL/snap/hooks/configure

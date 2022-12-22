@@ -1,0 +1,107 @@
+name: gnome-calculator
+adopt-info: gnome-calculator
+summary: GNOME Calculator
+description: |
+  GNOME Calculator is an application that solves mathematical equations.
+  Though it at first appears to be a simple calculator with only basic
+  arithmetic operations, you can switch into Advanced, Financial, or
+  Programming mode to find a surprising set of capabilities.
+
+  The Advanced calculator supports many operations, including:
+  logarithms, factorials, trigonometric and hyperbolic functions,
+  modulus division, complex numbers, random number generation, prime
+  factorization and unit conversions.
+
+  Financial mode supports several computations, including periodic interest
+  rate, present and future value, double declining and straight line
+  depreciation, and many others.
+
+  Programming mode supports conversion between common bases (binary, octal,
+  decimal, and hexadecimal), boolean algebra, one’s and two’s complementation,
+  character to character code conversion, and more.
+
+grade: stable # must be 'stable' to release into candidate/stable channels
+confinement: strict
+base: core22
+
+slots:
+  # for GtkApplication registration
+  gnome-calculator:
+    interface: dbus
+    bus: session
+    name: org.gnome.Calculator
+
+apps:
+  gnome-calculator:
+    command: usr/bin/gnome-calculator
+    extensions: [gnome]
+    plugs:
+      - gsettings
+      - network
+      - network-status
+    desktop: usr/share/applications/org.gnome.Calculator.desktop
+    common-id: org.gnome.Calculator.desktop
+
+parts:
+  meson-deps:
+    plugin: nil
+    source: https://github.com/mesonbuild/meson.git
+    source-branch: '0.62'
+    override-build: |
+      pip install .
+    build-packages:
+      - python3-pip
+      - ninja-build
+
+  libraries:
+    plugin: nil
+    stage-packages:
+      - libgtksourceview-4-0
+      - libadwaita-1-0
+    prime:
+      - usr/lib/*/libgtksource*
+      - usr/lib/*/libadwaita*
+
+  gnome-calculator:
+    after: [ meson-deps ]
+    source: https://gitlab.gnome.org/GNOME/gnome-calculator.git
+    source-branch: 'gnome-42'
+    plugin: meson
+    meson-parameters:
+      - --prefix=/snap/gnome-calculator/current/usr
+      - -Dvala_args="--vapidir=$CRAFT_STAGE/usr/share/vala/vapi"
+      - -Ddisable-introspection=true
+    organize:
+      snap/gnome-calculator/current/usr: usr
+    build-snaps: [ gnome-42-2204-sdk/latest/edge ]
+    build-packages:
+      - libmpc-dev
+      - libmpfr-dev
+      - libgvc6
+      - libgtksourceview-4-dev
+      - libadwaita-1-dev
+    override-pull: |
+      craftctl default
+      craftctl set version=$(git describe --tags --abbrev=10)
+    override-build: |
+      # valadoc fails, but we don't need it in the snap anyway
+      sed -i.bak -e "s|subdir('doc')||g" $CRAFT_PART_SRC/meson.build
+      # Don't symlink media it leaves dangling symlinks in the snap
+      sed -i.bak -e 's|media: gnome_calculator_help_media|media: gnome_calculator_help_media, symlink_media: false|g' $CRAFT_PART_SRC/help/meson.build
+      # Use bundled icon rather than themed icon, needed for 18.04
+      sed -i.bak -e 's|Icon=org.gnome.Calculator$|Icon=${SNAP}/meta/gui/org.gnome.Calculator.svg|g' $CRAFT_PART_SRC/data/org.gnome.Calculator.desktop.in
+      mkdir -p $CRAFT_PART_INSTALL/meta/gui/
+      cp $CRAFT_PART_SRC/data/icons/hicolor/scalable/apps/org.gnome.Calculator.svg $CRAFT_PART_INSTALL/meta/gui/
+      craftctl default
+
+  # Find files provided by the base and platform snap and ensure they aren't
+  # duplicated in this snap
+  cleanup:
+    after: [gnome-calculator]
+    plugin: nil
+    build-snaps: [core22, gtk-common-themes, gnome-42-2204/latest/edge]
+    override-prime: |
+      set -eux
+      for snap in "core22" "gtk-common-themes" "gnome-42-2204"; do
+        cd "/snap/$snap/current" && find . -type f,l -name *.so.* -exec rm -f "$CRAFT_PRIME/{}" \;
+      done

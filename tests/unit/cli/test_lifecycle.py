@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2020 Canonical Ltd
+# Copyright 2022 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,44 +14,1095 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from unittest import mock
+import argparse
+import os
+import sys
+from unittest.mock import call
 
 import pytest
 
-from snapcraft.cli import lifecycle
+from snapcraft import cli
 
 
 @pytest.mark.parametrize(
-    "output,pack_name,pack_dir",
+    "cmd,run_method",
     [
-        ("/tmp/output.snap", "output.snap", "/tmp"),
-        ("/tmp", None, "/tmp"),
-        ("output.snap", "output.snap", None),
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
     ],
 )
-@pytest.mark.parametrize(
-    "compression", ["xz", "lzo", None],
-)
-@mock.patch("snapcraft.file_utils.get_host_tool_path", return_value="/bin/snap")
-@mock.patch("snapcraft.cli.lifecycle._run_pack", return_value="ignore.snap")
-def test_pack(mock_run_pack, mock_host_tool, compression, output, pack_name, pack_dir):
-    lifecycle._pack(directory="/my/snap", compression=compression, output=output)
-
-    assert mock_host_tool.mock_calls == [
-        mock.call(command_name="snap", package_name="snapd")
+def test_lifecycle_command(cmd, run_method, mocker):
+    mocker.patch.object(sys, "argv", ["cmd", cmd])
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                parts=[],
+                debug=False,
+                destructive_mode=False,
+                shell=False,
+                shell_after=False,
+                use_lxd=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                ua_token=None,
+                build_for=None,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
     ]
 
-    pack_command = ["/bin/snap", "pack"]
 
-    if compression:
-        pack_command.extend(["--compression", compression])
+@pytest.mark.parametrize(
+    "cmd,run_method",
+    [
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+    ],
+)
+def test_lifecycle_command_arguments(cmd, run_method, mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "cmd",
+            cmd,
+            "part1",
+            "part2",
+        ],
+    )
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                parts=["part1", "part2"],
+                debug=False,
+                destructive_mode=False,
+                shell=False,
+                shell_after=False,
+                use_lxd=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                ua_token=None,
+                build_for=None,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
 
-    if pack_name:
-        pack_command.extend(["--filename", pack_name])
 
-    pack_command.append("/my/snap")
+@pytest.mark.parametrize(
+    "cmd,run_method",
+    [
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+    ],
+)
+def test_lifecycle_command_arguments_destructive_mode(cmd, run_method, mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "cmd",
+            cmd,
+            "--destructive-mode",
+            "part1",
+            "part2",
+        ],
+    )
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                parts=["part1", "part2"],
+                debug=False,
+                destructive_mode=True,
+                shell=False,
+                shell_after=False,
+                use_lxd=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                ua_token=None,
+                build_for=None,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
 
-    if pack_dir:
-        pack_command.append(pack_dir)
 
-    assert mock_run_pack.mock_calls == [mock.call(pack_command)]
+@pytest.mark.parametrize(
+    "cmd,run_method",
+    [
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+    ],
+)
+def test_lifecycle_command_arguments_use_lxd(cmd, run_method, mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "cmd",
+            cmd,
+            "--use-lxd",
+            "part1",
+            "part2",
+        ],
+    )
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                parts=["part1", "part2"],
+                debug=False,
+                destructive_mode=False,
+                shell=False,
+                shell_after=False,
+                use_lxd=True,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                ua_token=None,
+                build_for=None,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    "cmd,run_method",
+    [
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+    ],
+)
+def test_lifecycle_command_arguments_bind_ssh(cmd, run_method, mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "cmd",
+            cmd,
+            "--bind-ssh",
+        ],
+    )
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                destructive_mode=False,
+                use_lxd=False,
+                debug=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=True,
+                build_for=None,
+                http_proxy=None,
+                https_proxy=None,
+                ua_token=None,
+                enable_experimental_ua_services=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                target_arch=None,
+                provider=None,
+                parts=[],
+                shell=False,
+                shell_after=False,
+            )
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    "cmd,run_method",
+    [
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+    ],
+)
+def test_lifecycle_command_arguments_ua_token(cmd, run_method, mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "cmd",
+            cmd,
+            "--ua-token",
+            "my-ua-token",
+            "--enable-experimental-ua-services",
+        ],
+    )
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                parts=[],
+                debug=False,
+                destructive_mode=False,
+                shell=False,
+                shell_after=False,
+                use_lxd=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                ua_token="my-ua-token",
+                build_for=None,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=True,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    "cmd,run_method",
+    [
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+    ],
+)
+def test_lifecycle_command_arguments_debug(cmd, run_method, mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "cmd",
+            cmd,
+            "--debug",
+        ],
+    )
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                parts=[],
+                debug=True,
+                destructive_mode=False,
+                shell=False,
+                shell_after=False,
+                use_lxd=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                ua_token=None,
+                build_for=None,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    "cmd,run_method",
+    [
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+    ],
+)
+def test_lifecycle_command_arguments_shell(cmd, run_method, mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "cmd",
+            cmd,
+            "--shell",
+        ],
+    )
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                parts=[],
+                debug=False,
+                destructive_mode=False,
+                shell=True,
+                shell_after=False,
+                use_lxd=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                ua_token=None,
+                build_for=None,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    "cmd,run_method",
+    [
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+    ],
+)
+def test_lifecycle_command_arguments_shell_after(cmd, run_method, mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "cmd",
+            cmd,
+            "--shell-after",
+        ],
+    )
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                parts=[],
+                debug=False,
+                destructive_mode=False,
+                shell=False,
+                shell_after=True,
+                use_lxd=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                ua_token=None,
+                build_for=None,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    "cmd,run_method",
+    [
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+    ],
+)
+def test_lifecycle_command_arguments_http_proxy(cmd, run_method, mocker):
+    mocker.patch.object(sys, "argv", ["cmd", cmd, "--http-proxy", "test-http"])
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                bind_ssh=False,
+                build_for=None,
+                debug=False,
+                destructive_mode=False,
+                enable_developer_debug=False,
+                enable_experimental_extensions=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                enable_manifest=False,
+                http_proxy="test-http",
+                https_proxy=None,
+                manifest_image_information=None,
+                parts=[],
+                provider=None,
+                shell=False,
+                shell_after=False,
+                target_arch=None,
+                ua_token=None,
+                use_lxd=False,
+            )
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    "cmd,run_method",
+    [
+        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+    ],
+)
+def test_lifecycle_command_arguments_https_proxy(cmd, run_method, mocker):
+    mocker.patch.object(sys, "argv", ["cmd", cmd, "--https-proxy", "test-https"])
+    mock_lifecycle_cmd = mocker.patch(run_method)
+    cli.run()
+    assert mock_lifecycle_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                bind_ssh=False,
+                build_for=None,
+                debug=False,
+                enable_developer_debug=False,
+                enable_experimental_extensions=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                enable_manifest=False,
+                http_proxy=None,
+                https_proxy="test-https",
+                manifest_image_information=None,
+                parts=[],
+                provider=None,
+                shell=False,
+                shell_after=False,
+                target_arch=None,
+                ua_token=None,
+                use_lxd=False,
+                destructive_mode=False,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack(mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack"],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                debug=False,
+                destructive_mode=False,
+                use_lxd=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                ua_token=None,
+                build_for=None,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_destructive_mode(mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack", "--destructive-mode"],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                debug=False,
+                destructive_mode=True,
+                use_lxd=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                ua_token=None,
+                build_for=None,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_use_lxd(mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack", "--use-lxd"],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                debug=False,
+                destructive_mode=False,
+                use_lxd=True,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                ua_token=None,
+                build_for=None,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_enable_manifest(mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack", "--enable-manifest"],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                debug=False,
+                destructive_mode=False,
+                use_lxd=False,
+                enable_manifest=True,
+                manifest_image_information=None,
+                enable_experimental_extensions=False,
+                bind_ssh=False,
+                ua_token=None,
+                build_for=None,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_env_enable_manifest(mocker):
+    mocker.patch.dict(os.environ, {"SNAPCRAFT_BUILD_INFO": "1"})
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack"],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                debug=False,
+                destructive_mode=False,
+                use_lxd=False,
+                enable_manifest=True,
+                manifest_image_information=None,
+                bind_ssh=False,
+                ua_token=None,
+                build_for=None,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_manifest_image_information(mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack", "--manifest-image-information", "{'some-info': true}"],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                debug=False,
+                destructive_mode=False,
+                use_lxd=False,
+                enable_manifest=False,
+                manifest_image_information="{'some-info': true}",
+                bind_ssh=False,
+                ua_token=None,
+                build_for=None,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_env_manifest_image_information(mocker):
+    mocker.patch.dict(os.environ, {"SNAPCRAFT_IMAGE_INFO": "{'some-info': true}"})
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack"],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                bind_ssh=False,
+                build_for=None,
+                debug=False,
+                directory=None,
+                enable_developer_debug=False,
+                enable_experimental_extensions=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                enable_manifest=False,
+                http_proxy=None,
+                https_proxy=None,
+                manifest_image_information="{'some-info': true}",
+                output=None,
+                provider=None,
+                target_arch=None,
+                ua_token=None,
+                use_lxd=False,
+                destructive_mode=False,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_bind_ssh(mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack", "--bind-ssh"],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                bind_ssh=True,
+                build_for=None,
+                debug=False,
+                directory=None,
+                enable_developer_debug=False,
+                enable_experimental_extensions=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                enable_manifest=False,
+                http_proxy=None,
+                https_proxy=None,
+                manifest_image_information=None,
+                output=None,
+                provider=None,
+                target_arch=None,
+                ua_token=None,
+                use_lxd=False,
+                destructive_mode=False,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_ua_token(mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "cmd",
+            "pack",
+            "--ua-token",
+            "my-ua-token",
+            "--enable-experimental-ua-services",
+        ],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                bind_ssh=False,
+                build_for=None,
+                debug=False,
+                destructive_mode=False,
+                directory=None,
+                enable_developer_debug=False,
+                enable_experimental_extensions=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=True,
+                enable_manifest=False,
+                http_proxy=None,
+                https_proxy=None,
+                manifest_image_information=None,
+                output=None,
+                provider=None,
+                target_arch=None,
+                ua_token="my-ua-token",
+                use_lxd=False,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_env_ua_token(mocker):
+    mocker.patch.dict(os.environ, {"SNAPCRAFT_UA_TOKEN": "my-ua-token"})
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack"],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                bind_ssh=False,
+                build_for=None,
+                debug=False,
+                destructive_mode=False,
+                directory=None,
+                enable_developer_debug=False,
+                enable_experimental_extensions=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                enable_manifest=False,
+                http_proxy=None,
+                https_proxy=None,
+                manifest_image_information=None,
+                output=None,
+                provider=None,
+                target_arch=None,
+                ua_token="my-ua-token",
+                use_lxd=False,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_build_for(mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack", "--build-for", "armhf"],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                debug=False,
+                destructive_mode=False,
+                use_lxd=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                ua_token=None,
+                build_for="armhf",
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_env_build_for(mocker):
+    mocker.patch.dict(os.environ, {"SNAPCRAFT_BUILD_FOR": "armhf"})
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack"],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                debug=False,
+                destructive_mode=False,
+                use_lxd=False,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                ua_token=None,
+                build_for="armhf",
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_debug(mocker):
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["cmd", "pack", "--debug"],
+    )
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                debug=True,
+                destructive_mode=False,
+                use_lxd=False,
+                enable_manifest=False,
+                manifest_image_information=None,
+                bind_ssh=False,
+                ua_token=None,
+                build_for=None,
+                enable_experimental_extensions=False,
+                enable_developer_debug=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                target_arch=None,
+                provider=None,
+                http_proxy=None,
+                https_proxy=None,
+            )
+        )
+    ]
+
+
+@pytest.mark.parametrize("option", ["-o", "--output"])
+def test_lifecycle_command_pack_output(mocker, option):
+    mocker.patch.object(sys, "argv", ["cmd", "pack", option, "name"])
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                bind_ssh=False,
+                build_for=None,
+                debug=False,
+                destructive_mode=False,
+                directory=None,
+                enable_developer_debug=False,
+                enable_experimental_extensions=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                enable_manifest=False,
+                http_proxy=None,
+                https_proxy=None,
+                manifest_image_information=None,
+                output="name",
+                provider=None,
+                target_arch=None,
+                ua_token=None,
+                use_lxd=False,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_directory(mocker):
+    mocker.patch.object(sys, "argv", ["cmd", "pack", "name"])
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                bind_ssh=False,
+                build_for=None,
+                debug=False,
+                destructive_mode=False,
+                directory="name",
+                enable_developer_debug=False,
+                enable_experimental_extensions=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                enable_manifest=False,
+                http_proxy=None,
+                https_proxy=None,
+                manifest_image_information=None,
+                output=None,
+                provider=None,
+                target_arch=None,
+                ua_token=None,
+                use_lxd=False,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_http_proxy(mocker):
+    mocker.patch.object(sys, "argv", ["cmd", "pack", "--http-proxy", "test-http"])
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                bind_ssh=False,
+                build_for=None,
+                debug=False,
+                destructive_mode=False,
+                directory=None,
+                enable_developer_debug=False,
+                enable_experimental_extensions=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                enable_manifest=False,
+                http_proxy="test-http",
+                https_proxy=None,
+                manifest_image_information=None,
+                output=None,
+                provider=None,
+                target_arch=None,
+                ua_token=None,
+                use_lxd=False,
+            )
+        )
+    ]
+
+
+def test_lifecycle_command_pack_https_proxy(mocker):
+    mocker.patch.object(sys, "argv", ["cmd", "pack", "--https-proxy", "test-https"])
+    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    cli.run()
+    assert mock_pack_cmd.mock_calls == [
+        call(
+            argparse.Namespace(
+                bind_ssh=False,
+                build_for=None,
+                debug=False,
+                destructive_mode=False,
+                directory=None,
+                enable_developer_debug=False,
+                enable_experimental_extensions=False,
+                enable_experimental_target_arch=False,
+                enable_experimental_ua_services=False,
+                enable_manifest=False,
+                http_proxy=None,
+                https_proxy="test-https",
+                manifest_image_information=None,
+                output=None,
+                provider=None,
+                target_arch=None,
+                ua_token=None,
+                use_lxd=False,
+            )
+        )
+    ]

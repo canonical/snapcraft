@@ -4,7 +4,6 @@ kill-timeout: 180m
 
 environment:
   SNAP/catkin_ros1_run: catkin-ros1-run
-  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
 systems:
   - ubuntu-20.04

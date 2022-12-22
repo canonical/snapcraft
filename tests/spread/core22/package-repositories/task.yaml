@@ -1,0 +1,39 @@
+summary: Test various package-repository configurations on core22
+
+environment:
+  SNAP/test_apt_key_fingerprint: test-apt-key-fingerprint
+  SNAP/test_apt_key_name: test-apt-key-name
+  SNAP/test_apt_keyserver: test-apt-keyserver
+  SNAP/test_apt_ppa: test-apt-ppa
+  SNAPCRAFT_BUILD_ENVIRONMENT: ""
+
+restore: |
+  cd "$SNAP"
+  rm -f ./*.snap
+  snapcraft clean
+  snapcraft clean --destructive-mode
+  ls -l /etc/apt/sources.list.d/
+  rm /etc/apt/sources.list.d/snapcraft-*
+  snap remove "${SNAP}"
+
+execute: |
+  cd "$SNAP"
+
+  # Build what we have.
+  snapcraft --verbose --use-lxd
+
+  # And verify the snap runs as expected.
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+  snap_executable="${SNAP}.test-ppa"
+  [ "$("${snap_executable}")" = "hello!" ]
+
+  snap remove "${SNAP}"
+  rm -f ./*.snap
+
+  # Also build in destructive mode.
+  snapcraft --verbose --destructive-mode
+
+  # And verify the snap runs as expected.
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+  snap_executable="${SNAP}.test-ppa"
+  [ "$("${snap_executable}")" = "hello!" ]

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2020 Canonical Ltd
+# Copyright 2022 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,25 +14,78 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+"""Legacy support for v2 plugins."""
 
-from ._plugin import PluginV2  # noqa: F401
 
-# The plugin code requires imports that are platform specific.
-if sys.platform == "linux":
-    from .autotools import AutotoolsPlugin  # noqa: F401
-    from .catkin import CatkinPlugin  # noqa: F401
-    from .catkin_tools import CatkinToolsPlugin  # noqa: F401
-    from .cmake import CMakePlugin  # noqa: F401
-    from .colcon import ColconPlugin  # noqa: F401
-    from .conda import CondaPlugin  # noqa: F401
-    from .dump import DumpPlugin  # noqa: F401
-    from .go import GoPlugin  # noqa: F401
-    from .make import MakePlugin  # noqa: F401
-    from .meson import MesonPlugin  # noqa: F401
-    from .nil import NilPlugin  # noqa: F401
-    from .npm import NpmPlugin  # noqa: F401
-    from .python import PythonPlugin  # noqa: F401
-    from .qmake import QMakePlugin  # noqa: F401
-    from .ruby import RubyPlugin  # noqa: F401
-    from .rust import RustPlugin  # noqa: F401
+
+from snapcraft_legacy.plugins.v2 import (
+    AutotoolsPlugin,
+    CatkinPlugin,
+    CatkinToolsPlugin,
+    CMakePlugin,
+    ColconPlugin,
+    CondaPlugin,
+    CrystalPlugin,
+    DumpPlugin,
+    GoPlugin,
+    MakePlugin,
+    MesonPlugin,
+    NilPlugin,
+    NpmPlugin,
+    PluginV2,
+    PythonPlugin,
+    QMakePlugin,
+    RustPlugin,
+    autotools,
+    catkin,
+    catkin_tools,
+    cmake,
+    colcon,
+    conda,
+    crystal,
+    dump,
+    go,
+    make,
+    meson,
+    nil,
+    npm,
+    python,
+    qmake,
+    rust,
+)
+
+__all__ = [
+    "autotools",
+    "cmake",
+    "catkin",
+    "catkin_tools",
+    "conda",
+    "colcon",
+    "crystal",
+    "dump",
+    "go",
+    "make",
+    "meson",
+    "nil",
+    "npm",
+    "python",
+    "qmake",
+    "rust",
+    "PluginV2",
+    "AutotoolsPlugin",
+    "CatkinPlugin",
+    "CatkinToolsPlugin",
+    "CMakePlugin",
+    "ColconPlugin",
+    "CondaPlugin",
+    "CrystalPlugin",
+    "DumpPlugin",
+    "GoPlugin",
+    "MakePlugin",
+    "MesonPlugin",
+    "NilPlugin",
+    "NpmPlugin",
+    "PythonPlugin",
+    "QMakePlugin",
+    "RustPlugin",
+]

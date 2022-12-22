@@ -1,0 +1,15 @@
+name: git-recurse-submodules
+base: core20
+version: "0.1"
+summary: Test the use of source-submodules
+description: Make sure source-submodules works
+confinement: strict
+
+parts:
+    git:
+        plugin: dump
+        source: https://github.com/snapcore/core18
+        source-type: git
+        source-submodules:
+          - submodule_1
+          - dir/submodule_2

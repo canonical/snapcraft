@@ -1,0 +1,38 @@
+summary: Verify environment passthrough flags are configured for LXD
+
+environment:
+  SNAP_DIR: ../../snaps/env-passthrough
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  cd "$SNAP_DIR"
+
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  snapcraft clean --use-lxd
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "$SNAP_DIR"
+
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  output=$(snapcraft --use-lxd --enable-experimental-extensions --enable-developer-debug)
+  echo "$output" | MATCH "TEST:SNAPCRAFT_ENABLE_DEVELOPER_DEBUG=True"
+  echo "$output" | MATCH "TEST:SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=True"
+
+  # Clean and run again using environment variable variants.
+  snapcraft clean --use-lxd
+  output=$(SNAPCRAFT_ENABLE_DEVELOPER_DEBUG=1 SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1 snapcraft --use-lxd)
+  echo "$output" | MATCH "TEST:SNAPCRAFT_ENABLE_DEVELOPER_DEBUG=True"
+  echo "$output" | MATCH "TEST:SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=True"

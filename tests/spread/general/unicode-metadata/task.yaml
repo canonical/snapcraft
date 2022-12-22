@@ -1,23 +1,33 @@
 summary: "Test that unicode in metadata still looks good once dumped"
 
-# We currently only have core18 on a stable channel
-systems:
-  - ubuntu-18.04-64
-  - ubuntu-18.04-amd64
-
 prepare: |
   apt-get install diffutils
   apt-mark auto diffutils
 
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snap/snapcraft.yaml"
+
+  base=$(get_base)
+  sed -e "s/base: {{BASE}}/base: ${base}/g" expected_snap_tmpl.yaml > expected_snap.yaml
+  if [[ "$base" =~ "core22" ]]; then
+    # shellcheck disable=SC2016
+    echo -e 'environment:\n  LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}\n  PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH' >> expected_snap.yaml
+  fi
+
 restore: |
   snapcraft clean
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+  rm -rf expected_snap.yaml
 
 execute: |
   snapcraft prime
 
-  expected_snap_yaml="$PWD/expected_snap.yaml"
-
-  if ! diff prime/meta/snap.yaml "$expected_snap_yaml"; then
+  if ! diff prime/meta/snap.yaml expected_snap.yaml; then
       echo "The formatting for snap.yaml is incorrect"
       exit 1
   fi

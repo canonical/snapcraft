@@ -1,0 +1,19 @@
+name: hooks-stub
+version: "1.0"
+summary: command-chain for the install hook with no hook
+description: ensure a stub hook is created
+base: core22
+confinement: strict
+
+hooks:
+  install:
+    command-chain:
+      - install-chain
+
+parts:
+  nil:
+    plugin: nil
+    override-build: |
+      echo "#!/bin/sh" > $SNAPCRAFT_PART_INSTALL/install-chain
+      echo 'exec "$@"' >> $SNAPCRAFT_PART_INSTALL/install-chain
+      chmod +x $SNAPCRAFT_PART_INSTALL/install-chain

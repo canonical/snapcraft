@@ -1,0 +1,32 @@
+name: catkin-stage-snaps
+version: '1.0'
+summary: ROS stage-snaps test
+description: Verify that ROS stage-snaps are checked for dependencies.
+confinement: strict
+base: core20
+
+package-repositories:
+  - components:
+      - main
+    formats:
+      - deb
+    key-id: C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+    key-server: keyserver.ubuntu.com
+    suites:
+      - focal
+    type: apt
+    url: http://packages.ros.org/ros/ubuntu
+
+parts:
+  ros1-noetic-extension:
+      build-packages:
+        - ros-noetic-catkin
+      override-build: install -D -m 0755 launch ${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros1-launch
+      plugin: nil
+      source: $SNAPCRAFT_EXTENSIONS_DIR/ros1
+  catkin-part:
+    plugin: catkin
+    source: .
+    stage-snaps: [test-snapcraft-fake-ros-package-core20/latest/edge]
+    build-environment:
+      - ROS_DISTRO: noetic

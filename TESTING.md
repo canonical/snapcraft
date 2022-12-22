@@ -155,7 +155,7 @@ It's possible to select only one of the suites using `--test-name`, for example:
 
 To run them, first, download the spread binary:
 
-    curl -s -O https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz && tar xzvf spread-amd64.tar.gz
+    curl -s -O https://storage.googleapis.com/snapd-spread-tests/spread/spread-amd64.tar.gz && tar xzvf spread-amd64.tar.gz
 
 Then, you can run them using a local LXD as the backend with:
 

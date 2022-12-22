@@ -1,9 +1,0 @@
-name: wiki-filesets
-version: "1.0"
-summary: Get part from wiki with filesets
-description: Get part from wiki with filesets
-confinement: strict
-grade: devel
-
-parts:
-    simple-make-filesets:

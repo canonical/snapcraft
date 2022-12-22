@@ -22,6 +22,11 @@ apps:
       c: foo
       b: foo
 
+hooks:
+  configure:
+    environment:
+      CONFIGURE_ENV: foo
+
 environment:
   a: foo
   c: foo

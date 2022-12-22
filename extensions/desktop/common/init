@@ -43,16 +43,19 @@ export XDG_CONFIG_HOME="$SNAP_USER_DATA/.config"
 ensure_dir_exists "$XDG_CONFIG_HOME"
 chmod 700 "$XDG_CONFIG_HOME"
 
-# If the user has modified their user-dirs settings, force an update
-if [[ -f "$XDG_CONFIG_HOME/user-dirs.dirs.md5sum" ]]; then
-  if [[ "$(md5sum < "$REALHOME/.config/user-dirs.dirs")" != "$(cat "$XDG_CONFIG_HOME/user-dirs.dirs.md5sum")" ||
-        ( -f "$XDG_CONFIG_HOME/user-dirs.locale.md5sum" &&
-          "$(md5sum < "$REALHOME/.config/user-dirs.locale")" != "$(cat "$XDG_CONFIG_HOME/user-dirs.locale.md5sum")" ) ]]; then
+# If there is no user user-dirs, don't check for the checksum
+if [[ -f "$REALHOME/.config/user-dirs.dirs" ]]; then
+  # If the user has modified their user-dirs settings, force an update
+  if [[ -f "$XDG_CONFIG_HOME/user-dirs.dirs.md5sum" ]]; then
+    if [[ "$(md5sum < "$REALHOME/.config/user-dirs.dirs")" != "$(cat "$XDG_CONFIG_HOME/user-dirs.dirs.md5sum")" ||
+          ( -f "$XDG_CONFIG_HOME/user-dirs.locale.md5sum" &&
+            "$(md5sum < "$REALHOME/.config/user-dirs.locale")" != "$(cat "$XDG_CONFIG_HOME/user-dirs.locale.md5sum")" ) ]]; then
+      needs_update=true
+    fi
+  else
+    # shellcheck disable=SC2034
     needs_update=true
   fi
-else
-  # shellcheck disable=SC2034
-  needs_update=true
 fi
 
 if [ "$SNAP_ARCH" = "amd64" ]; then
@@ -73,5 +76,7 @@ export SNAP_LAUNCHER_ARCH_TRIPLET="$ARCH"
 if ! grep -qs "^\s*confinement:\s*classic\s*" "$SNAP/meta/snap.yaml"; then
   if [ -f "$SNAP/lib/$ARCH/bindtextdomain.so" ]; then
     export LD_PRELOAD="$LD_PRELOAD:$SNAP/\$LIB/bindtextdomain.so"
+  elif [ -f "$SNAP/gnome-platform/lib/$ARCH/bindtextdomain.so" ]; then
+    export LD_PRELOAD="$LD_PRELOAD:$SNAP/gnome-platform/\$LIB/bindtextdomain.so"
   fi
 fi

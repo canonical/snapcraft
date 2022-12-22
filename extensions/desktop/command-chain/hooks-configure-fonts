@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -- "${SNAP}/gnome-platform/command-chain/hooks-configure-fonts" "$@"
+# shellcheck source=/dev/null
+source "${SNAP}/snap/command-chain/run"

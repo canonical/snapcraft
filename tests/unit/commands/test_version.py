@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright 2022 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,21 +13,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from testtools.matchers import Equals
 
-from . import CommandBaseTestCase
+from argparse import Namespace
+
+from snapcraft import __version__
+from snapcraft.commands.version import VersionCommand
 
 
-class VersionCommandTestCase(CommandBaseTestCase):
-    def test_has_version(self):
-        result = self.run_command(["--version"])
-        self.assertThat(result.exit_code, Equals(0))
-
-    def test_has_version_without_hyphens(self):
-        result = self.run_command(["version"])
-        self.assertThat(result.exit_code, Equals(0))
-
-    def test_method_return_same_value(self):
-        result1 = self.run_command(["version"])
-        result2 = self.run_command(["--version"])
-        self.assertEqual(result1.output, result2.output)
+def test_version_command(emitter):
+    cmd = VersionCommand(None)
+    cmd.run(Namespace())
+    emitter.assert_message(f"snapcraft {__version__}")

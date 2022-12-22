@@ -19,6 +19,6 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
 
-  output=$(snapcraft prime)
+  output=$(snapcraft prime 2>&1 >/dev/null || true)
 
-  echo "$output" | MATCH "Could not install snap defined in plug"
+  echo "$output" | grep -q -e "Could not install snap defined in plug" -e "Failed to install or refresh snap 'unknown-content-snap'"

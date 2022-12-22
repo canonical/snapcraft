@@ -2,14 +2,14 @@
 
 get_base()
 {
-    if [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
+    if [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
+        echo "core22"
+    elif [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
         echo "core20"
     elif [[ "$SPREAD_SYSTEM" =~ ubuntu-18.04 ]]; then
         echo "core18"
-    elif [[ "$SPREAD_SYSTEM" =~ ubuntu-16.04 ]]; then
-        echo "core"
     else
-	echo ""
+        exit 1
     fi
 }
 
@@ -83,8 +83,6 @@ set_openjdk_version()
 
     if [[ "$SPREAD_SYSTEM" =~ ubuntu-18.04 ]]; then
         openjdk_version="11"
-    elif [[ "$SPREAD_SYSTEM" =~ ubuntu-16.04 ]]; then
-        openjdk_version="9"
     else
         echo "Test not supported for $SPREAD_SYSTEM"
         exit 1
