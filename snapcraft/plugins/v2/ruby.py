@@ -103,7 +103,7 @@ class RubyPlugin(PluginV2):
         return set()
 
     def get_build_packages(self) -> Set[str]:
-        packages = {"curl", "jq"}
+        packages = {"curl"}
 
         if self.options.ruby_use_jemalloc:
             packages.add("libjemalloc-dev")
@@ -136,16 +136,27 @@ class RubyPlugin(PluginV2):
         return configure_opts
 
     def get_build_commands(self) -> List[str]:
-        commands = []
-        commands.append("ruby_install_url=$(curl -L --proto '=https' --tlsv1.2 'https://api.github.com/repos/postmodern/ruby-install/tags' | jq -r '.[0].tarball_url')")
-        commands.append("curl -L --proto '=https' --tlsv1.2 $ruby_install_url | tar xz")
-        commands.append("postmodern-ruby-install-*/bin/ruby-install --src-dir ${{SNAPCRAFT_PART_SRC}} --install-dir ${{SNAPCRAFT_PART_INSTALL}}{} --package-manager apt --jobs=${{SNAPCRAFT_PARALLEL_BUILD_COUNT}} {}-{} -- {}".format(
-            self.options.ruby_prefix,
-            self.options.ruby_flavor,
-            self.options.ruby_version,
-            ' '.join(self._configure_opts())))
+        # NOTE: To update ruby-install version, go to https://github.com/postmodern/ruby-install/tags
+        ruby_install_version = '0.8.5'
 
-        # NOTE: Update bundler. Avoid conflicts/prompts about replacing bundler
+        # NOTE: To update SHA256 checksum, run the following command (with updated version) and copy the output (one line) here:
+        #   curl -L https://github.com/postmodern/ruby-install/archive/refs/tags/v0.8.5.tar.gz -o ruby-install.tar.gz && sha256sum --tag ruby-install.tar.gz
+        ruby_install_checksum = 'SHA256 (ruby-install.tar.gz) = 793fcf44dce375c6c191003c3bfd22ebc85fa296d751808ab315872f5ee0179b'
+
+        configure_opts = ' '.join(self._configure_opts())
+        commands = []
+
+        # NOTE: Download and verify ruby-install and use it to download, compile, and install Ruby
+        commands.append(f"curl -L --proto '=https' --tlsv1.2 https://github.com/postmodern/ruby-install/archive/refs/tags/v{ruby_install_version}.tar.gz -o ruby-install.tar.gz")
+        commands.append("echo 'Checksum of downloaded file:'")
+        commands.append("sha256sum --tag ruby-install.tar.gz")
+        commands.append("echo 'Checksum is correct if it matches:'")
+        commands.append(f"echo '{ruby_install_checksum}'")
+        commands.append(f"echo '{ruby_install_checksum}' | sha256sum --check --strict")
+        commands.append("tar xfz ruby-install.tar.gz")
+        commands.append(f"ruby-install-{ruby_install_version}/bin/ruby-install --src-dir ${{SNAPCRAFT_PART_SRC}} --install-dir ${{SNAPCRAFT_PART_INSTALL}}{self.options.ruby_prefix} --package-manager apt --jobs=${{SNAPCRAFT_PARALLEL_BUILD_COUNT}} {self.options.ruby_flavor}-{self.options.ruby_version} -- {configure_opts}")
+
+        # NOTE: Update bundler and avoid conflicts/prompts about replacing bundler
         #       executables by removing them first.
         commands.append(f"rm -f ${{SNAPCRAFT_PART_INSTALL}}{self.options.ruby_prefix}/bin/{{bundle,bundler}}")
         commands.append("gem install --env-shebang --no-document bundler")
