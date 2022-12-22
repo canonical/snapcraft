@@ -139,7 +139,7 @@ class RubyPlugin(PluginV2):
         commands = []
         commands.append("ruby_install_url=$(curl -L --proto '=https' --tlsv1.2 'https://api.github.com/repos/postmodern/ruby-install/tags' | jq -r '.[0].tarball_url')")
         commands.append("curl -L --proto '=https' --tlsv1.2 $ruby_install_url | tar xz")
-        commands.append("postmodern-ruby-install-*/bin/ruby-install -i ${{SNAPCRAFT_PART_INSTALL}}{} --package-manager apt -j${{SNAPCRAFT_PARALLEL_BUILD_COUNT}} {}-{} -- {}".format(
+        commands.append("postmodern-ruby-install-*/bin/ruby-install --src-dir ${{SNAPCRAFT_PART_SRC}} --install-dir ${{SNAPCRAFT_PART_INSTALL}}{} --package-manager apt --jobs=${{SNAPCRAFT_PARALLEL_BUILD_COUNT}} {}-{} -- {}".format(
             self.options.ruby_prefix,
             self.options.ruby_flavor,
             self.options.ruby_version,
