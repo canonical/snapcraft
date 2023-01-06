@@ -525,33 +525,41 @@ def test_prepare_instance(bind_ssh, mock_instance, mocker, tmp_path):
         )
 
     mock_temp_file.write.assert_called_once_with(
+        # pylint: disable=line-too-long
         dedent(
             """\
             #!/bin/bash
 
+            env_file="$HOME/environment.sh"
+
             # save default environment on first login
-            if [[ ! -e ~/environment.sh ]]; then
-                env > ~/environment.sh
-                sed -i 's/^/export /' ~/environment.sh
-                sed -i '1i#! /bin/bash\\n' ~/environment.sh
+            if [[ ! -e $env_file ]]; then
+                env > "$env_file"
+                sed -i 's/^/export /' "$env_file"      # prefix 'export' to variables
+                sed -i 's/=/="/; s/$/"/' "$env_file"   # surround values with quotes
+                sed -i '1i#! /bin/bash\\n' "$env_file" # add shebang
             fi
 
             previous_pwd=$PWD
 
             function set_environment {
                 # only update the environment when the directory changes
-                if [[ ! $PWD = $previous_pwd ]]; then
+                if [[ ! $PWD = "$previous_pwd" ]]; then
                     # set part's environment when inside a part's build directory
-                    if [[ "$PWD" =~ $HOME/parts/.*/build ]]; then
-                        part_name=$(echo "${PWD#$HOME}" | cut -d "/" -f 3)
+                    if [[ "$PWD" =~ $HOME/parts/.*/build ]] && [[ -e "${PWD/build*/run/environment.sh}" ]] ; then
+                        part_name=$(echo "${PWD#$"HOME"}" | cut -d "/" -f 3)
                         echo "build environment set for part '$part_name'"
-                        source ${PWD/build*/run/environment.sh}
+                        # shellcheck disable=SC1090
+                        source "${PWD/build*/run/environment.sh}"
 
                     # else clear and set the default environment
                     else
+                        # shellcheck disable=SC2046
                         unset $(/usr/bin/env | /usr/bin/cut -d= -f1)
-                        source ~/environment.sh
-                        export PWD=$(pwd)
+                        # shellcheck disable=SC1090
+                        source "$env_file"
+                        PWD="$(pwd)"
+                        export PWD
                     fi
                 fi
                 previous_pwd=$PWD

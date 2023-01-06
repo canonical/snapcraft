@@ -284,6 +284,7 @@ def prepare_instance(
 
     with tempfile.NamedTemporaryFile(mode="w+t") as bashrc:
         bashrc.write(
+            # pylint: disable=line-too-long
             dedent(
                 """\
                 #!/bin/bash
@@ -304,8 +305,7 @@ def prepare_instance(
                     # only update the environment when the directory changes
                     if [[ ! $PWD = "$previous_pwd" ]]; then
                         # set part's environment when inside a part's build directory
-                        if [[ "$PWD" =~ $HOME/parts/.*/build ]] && \
-                        [[ -e "${PWD/build*/run/environment.sh}" ]] ; then
+                        if [[ "$PWD" =~ $HOME/parts/.*/build ]] && [[ -e "${PWD/build*/run/environment.sh}" ]] ; then
                             part_name=$(echo "${PWD#$"HOME"}" | cut -d "/" -f 3)
                             echo "build environment set for part '$part_name'"
                             # shellcheck disable=SC1090
