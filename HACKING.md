@@ -2,12 +2,12 @@
 
 ## Setting up a development environment
 
-We want to make sure everyone develops using a consistent base, to ensure that these instructions rely on LXD (use whatever is convenient as long as you do not stray away from an Ubuntu 16.04 LTS base)
+We want to make sure everyone develops using a consistent base, to ensure that these instructions rely on LXD (use whatever is convenient as long as you do not stray away from an Ubuntu LTS base)
 
-Clone these sources and make it your working directory:
+Clone the snapcraft repository and its submodules and make it your working directory:
 
 ```shell
-git clone https://github.com/snapcore/snapcraft.git
+git clone https://github.com/snapcore/snapcraft.git --recurse-submodules
 cd snapcraft
 ```
 
