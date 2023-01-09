@@ -72,7 +72,7 @@ class TestPluginColconPlugin:
         try:
             colcon.ColconPlugin.properties_class.unmarshal({"source": "."})
         except ValidationError as e:
-            assert False, f"{e}"
+            raise AssertionError(f"{e}")
 
     def test_property_all(self):
         try:
@@ -87,7 +87,7 @@ class TestPluginColconPlugin:
                 }
             )
         except ValidationError as e:
-            assert False, f"{e}"
+            raise AssertionError(f"{e}")
 
         assert properties.source == "."  # type: ignore
         assert properties.colcon_ament_cmake_args == ["ament", "args..."]  # type: ignore
