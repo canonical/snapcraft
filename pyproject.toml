@@ -98,7 +98,7 @@ ignore = [
     "ANN101", "ANN102",  # Type annotations for `self` and `cls` in methods
     "ANN204",  # Missing type annotations for magic methods
     "ANN401",  # Disallowing `typing.Any`
-    "B904",  # Within an except clause, always explictly `raise` an exception `from` something.
+    "B904",  # Within an except clause, always explicitly `raise` an exception `from` something.
     "B905",  # Zip without explicit `strict=` parameter - this only exists in 3.10+
 
 
