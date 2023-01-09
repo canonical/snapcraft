@@ -51,3 +51,97 @@ load-plugins = "pylint_fixme_info,pylint_pytest"
 
 [tool.pylint.SIMILARITIES]
 min-similarity-lines=10
+
+# Most of this ruff configuration comes from craft-parts
+[tool.ruff]
+line-length = 88
+extend-exclude = [
+    "docs",
+    "__pycache__"
+]
+select = [
+    "E", "F",  # The rules built into Flake8
+    "D",  # Implement pydocstyle checking as well.
+    "I",  # isort checking
+    "PLC", "PLE", "PLR", "PLW",  # Pylint
+    # Additional stricter checking than previously enabled:
+    "A",  # Shadowing built-ins.
+    "W",  # PyCodeStyle warnings.
+    "N",  # Pep8 naming
+    "YTT",  # flake8-2020: Misuse of `sys.version` and `sys.version_info`
+    "ANN",  # Annotations
+    "S",  # Checks for common security issues
+    "BLE",  # Blind exception
+    "B",  # Opinionated bugbear linting
+    "C4",  # better comprehensions
+    "T10",  # Ensure we don't leave code that starts the debugger in
+    "ICN",  # Unconventional import aliases.
+    "Q",  # Consistent quotations
+    "RET",  # Return values
+]
+ignore = [
+    # These following copy the flake8 configuration
+    #"E203",  # Whitespace before ":"  -- Commented because ruff doesn't currently check E203
+    "E501",  # Line too long
+    # The following copy our pydocstyle configuration
+    "D105",  # Missing docstring in magic method (reason: magic methods already have definitions)
+    "D107",  # Missing docstring in __init__ (reason: documented in class docstring)
+    "D203",  # 1 blank line required before class docstring (reason: pep257 default)
+    "D213",  # Multi-line docstring summary should start at the second line (reason: pep257 default)
+    "D215",  # Section underline is over-indented (reason: pep257 default)
+
+
+    # Stricter type checking rules that that are disabled.
+    "A003",  # Class attribute shadowing a python bulitin (class attributes are seldom if ever referred to bare)
+    "N818",  # Exception names ending with suffix `Error`
+    "ANN002",  "ANN003",  # Missing type annotation for *args and **kwargs
+    "ANN101", "ANN102",  # Type annotations for `self` and `cls` in methods
+    "ANN204",  # Missing type annotations for magic methods
+    "ANN401",  # Disallowing `typing.Any`
+    "B904",  # Within an except clause, always explictly `raise` an exception `from` something.
+    "B905",  # Zip without explicit `strict=` parameter - this only exists in 3.10+
+
+
+    # Disabled because the current code breaks these rules without "noqa" comments
+    # Most of these are probably worth enabling eventually.
+
+    # 3 instances of breaking N802, all from overriding do_GET in http.server.BaseHTTPRequestHandler
+    # We can probably noqa these and enable the rule
+    "N802",  # Function names should be lowercase.
+    # 3 instances of N805, all PyDantic validators (which are classmethods).
+    # These have pylint disablers, but ruff doesn't understand those (yet).
+    # https://github.com/charliermarsh/ruff/issues/1203
+    "N805",  # First argument of a method should be named `self`
+    # Annotation issues appear to be mostly in older code, so could be eventually enabled.
+    # 39 instances of ANN001.
+    "ANN001",  # Missing type annotation for function argument
+    # 5 instances of ANN201, 10 instances of ANN202
+    "ANN201", "ANN202",  # Missing return type annotation for public/private function
+    # 13 instances of ANN206 - probably mostly :noqa-able
+    "ANN206",
+    # 4 instances - would break if run with optimization
+    "S101", # Use of assert detected
+    # 1 instance, disabled for pylint
+    "BLE001",
+    # Comprehensions - IDK, these ones flagged and they really could go either way.
+    "C405", "C408", "C414",
+    "Q000", # 2 single-quoted strings - probably accidental
+    "RET504", "RET506",  # Return value related.
+
+]
+
+[tool.ruff.per-file-ignores]
+"tests/**.py" = [
+    "D",  # Ignore docstring rules in tests
+    "ANN", # Ignore type annotations in tests
+    "S101",  # Yeah of course we assert in tests
+    "B009",  # Allow calling `getattr` in tests since it can be used to make the test clearer.
+    "S103", # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
+    "S105", # Allow Possible hardcoded password.
+    "S106", # Allow Possible hardcoded password.
+    "S108", # Allow Probable insecure usage of temporary file or directory.
+]
+"__init__.py" = ["I001"]  # Imports in __init__ filesare allowed to be out of order
+
+[tool.ruff.flake8-annotations]
+suppress-none-returning = true  # We don't need to explicitly point out that a function doesn't return anything
