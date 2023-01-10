@@ -1,0 +1,30 @@
+# ruff configuration file to run on legacy code and tests.
+# generated with flake8-to-ruff
+exclude = [
+    ".direnv",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "_build",
+    "buck-out",
+    "__pycache__",
+    "build",
+    "dist",
+    "parts",
+    "stage",
+    "prime",
+]
+ignore = ["E501"]
+line-length = 88
+select = [
+    "C9",
+    "E",
+    "F",
+    "W",
+]
+
+[mccabe]
+max-complexity = 10
