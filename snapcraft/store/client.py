@@ -47,7 +47,8 @@ _HUMAN_STATUS = {
 
 
 def build_user_agent(
-    version=__version__, os_platform: utils.OSPlatform = utils.get_os_platform()
+    version=__version__,
+    os_platform: utils.OSPlatform = utils.get_os_platform(),  # noqa: B008
 ):
     """Build Snapcraft's user agent."""
     if any(
@@ -99,7 +100,7 @@ def _prompt_login() -> Tuple[str, str]:
     return (email, password)
 
 
-def _get_hostname(hostname: Optional[str] = platform.node()) -> str:
+def _get_hostname(hostname: Optional[str] = platform.node()) -> str:  # noqa: B008
     """Return the computer's network name or UNNKOWN if it cannot be determined."""
     if not hostname:
         hostname = "UNKNOWN"
@@ -177,7 +178,7 @@ class LegacyStoreClientCLI:
     def login(
         self,
         *,
-        ttl: int = int(timedelta(days=365).total_seconds()),
+        ttl: int = int(timedelta(days=365).total_seconds()),  # noqa: B008
         acls: Optional[Sequence[str]] = None,
         packages: Optional[Sequence[str]] = None,
         channels: Optional[Sequence[str]] = None,

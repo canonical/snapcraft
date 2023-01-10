@@ -33,7 +33,9 @@ _ID_TO_UBUNTU_CODENAME = {
 class OsRelease:
     """A class to intelligently determine the OS on which we're running."""
 
-    def __init__(self, *, os_release_file: Path = Path("/etc/os-release")) -> None:
+    def __init__(
+        self, *, os_release_file: Path = Path("/etc/os-release")  # noqa: B008
+    ) -> None:
         """Create a new OsRelease instance.
 
         :param str os_release_file: Path to os-release file to be parsed.

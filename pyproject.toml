@@ -61,7 +61,6 @@ extend-exclude = [
 ]
 select = [
     "E", "F",  # The rules built into Flake8
-    "D",  # Implement pydocstyle checking as well.
     "I",  # isort checking
     "PLC", "PLE", "PLR", "PLW",  # Pylint
     # Additional stricter checking than previously enabled:
