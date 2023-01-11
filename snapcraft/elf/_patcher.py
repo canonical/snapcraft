@@ -115,7 +115,7 @@ class Patcher:
             os.unlink(elf_file_path)
             shutil.copy2(temp_file.name, elf_file_path)
 
-    @functools.lru_cache(maxsize=1024)  # noqa: B019
+    @functools.lru_cache(maxsize=1024)  # noqa: B019 Possible memory leaks in lru_cache
     def get_current_rpath(self, elf_file: ElfFile) -> List[str]:
         """Obtain the current rpath from the ELF file dynamic section."""
         output = subprocess.check_output(
@@ -123,7 +123,7 @@ class Patcher:
         )
         return [x for x in output.decode().strip().split(":") if x]
 
-    @functools.lru_cache(maxsize=1024)  # noqa: B019
+    @functools.lru_cache(maxsize=1024)  # noqa: B019 Possible memory leaks in lru_cache
     def get_proposed_rpath(self, elf_file: ElfFile) -> List[str]:
         """Obtain the proposed rpath pointing to the base or application snaps."""
         origin_rpaths: List[str] = []

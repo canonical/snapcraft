@@ -100,7 +100,11 @@ def _prompt_login() -> Tuple[str, str]:
     return (email, password)
 
 
-def _get_hostname(hostname: Optional[str] = platform.node()) -> str:  # noqa: B008
+def _get_hostname(
+    hostname: Optional[
+        str
+    ] = platform.node(),  # noqa: B008 Function call in arg defaults
+) -> str:
     """Return the computer's network name or UNNKOWN if it cannot be determined."""
     if not hostname:
         hostname = "UNKNOWN"

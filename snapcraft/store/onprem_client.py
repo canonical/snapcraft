@@ -30,7 +30,7 @@ from . import constants
 ON_PREM_ENDPOINTS: Final = endpoints.Endpoints(
     namespace="snap",
     whoami="/v1/tokens/whoami",
-    tokens="",  # noqa: S106
+    tokens="",  # noqa: S106 Possible hardcoded password
     tokens_exchange="/v1/tokens/offline/exchange",  # noqa: S106
     valid_package_types=["snap"],
     list_releases_model=models.charm_list_releases_model.ListReleasesModel,

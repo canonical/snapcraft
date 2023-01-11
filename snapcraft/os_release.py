@@ -34,7 +34,11 @@ class OsRelease:
     """A class to intelligently determine the OS on which we're running."""
 
     def __init__(
-        self, *, os_release_file: Path = Path("/etc/os-release")  # noqa: B008
+        self,
+        *,
+        os_release_file: Path = Path(  # noqa: B008 Function call in arg defaults
+            "/etc/os-release"
+        )
     ) -> None:
         """Create a new OsRelease instance.
 

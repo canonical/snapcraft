@@ -75,7 +75,7 @@ class AptSourcesManager:
     def __init__(
         self,
         *,
-        sources_list_d: pathlib.Path = pathlib.Path(  # noqa: B008
+        sources_list_d: pathlib.Path = pathlib.Path(  # noqa: B008 Function call in arg defaults
             "/etc/apt/sources.list.d"
         ),
     ) -> None:

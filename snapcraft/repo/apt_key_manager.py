@@ -33,7 +33,7 @@ class AptKeyManager:
     def __init__(
         self,
         *,
-        gpg_keyring: pathlib.Path = pathlib.Path(  # noqa: B008
+        gpg_keyring: pathlib.Path = pathlib.Path(  # noqa: B008 Function call in arg defaults
             "/etc/apt/trusted.gpg.d/snapcraft.gpg"
         ),
         key_assets: pathlib.Path,

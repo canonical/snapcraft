@@ -96,6 +96,9 @@ def load(filestream: TextIO) -> Dict[str, Any]:
     filestream.seek(0)
 
     try:
-        return yaml.load(filestream, Loader=_SafeLoader)  # noqa: S506
+        return yaml.load(
+            filestream,
+            Loader=_SafeLoader,  # noqa: S506 Probable unsafe use of yaml.load()
+        )
     except yaml.error.YAMLError as err:
         raise errors.SnapcraftError(f"snapcraft.yaml parsing error: {err!s}") from err
