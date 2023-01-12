@@ -24,7 +24,6 @@ docutils==0.19
 exceptiongroup==1.1.0
 extras==1.0.0
 fixtures==4.0.1
-flake8==6.0.0
 gnupg==2.3.1
 httplib2==0.21.0
 hupper==1.11
@@ -90,6 +89,7 @@ raven==6.10.0
 requests==2.28.1
 requests-toolbelt==0.10.0
 requests-unixsocket==0.3.0
+ruff==0.0.215
 SecretStorage==3.3.3
 semantic-version==2.10.0
 semver==2.13.0

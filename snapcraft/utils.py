@@ -81,7 +81,11 @@ _32BIT_USERSPACE_ARCHITECTURE = {
 }
 
 
-def get_os_platform(filepath=pathlib.Path("/etc/os-release")):
+def get_os_platform(
+    filepath=pathlib.Path(  # noqa: B008 Function call in arg defaults
+        "/etc/os-release"
+    ),
+):
     """Determine a system/release combo for an OS using /etc/os-release if available."""
     system = platform.system()
     release = platform.release()
@@ -172,7 +176,9 @@ def get_managed_environment_project_path():
 
 def get_managed_environment_log_path():
     """Path for log when running in managed environment."""
-    return pathlib.Path("/tmp/snapcraft.log")
+    return pathlib.Path(
+        "/tmp/snapcraft.log"  # noqa: S108 Probable insecure use of temp file
+    )
 
 
 def get_managed_environment_snap_channel() -> Optional[str]:

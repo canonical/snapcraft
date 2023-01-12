@@ -90,7 +90,7 @@ def _apply_extension(
     # Next, apply the part-specific components
     part_extension = extension.get_part_snippet()
     parts = yaml_data["parts"]
-    for part_name, part_definition in parts.items():
+    for _part_name, part_definition in parts.items():
         for property_name, property_value in part_extension.items():
             part_definition[property_name] = _apply_extension_property(
                 part_definition.get(property_name), property_value

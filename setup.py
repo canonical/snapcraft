@@ -26,7 +26,7 @@ from tools.version import determine_version
 
 def recursive_data_files(directory, install_directory):
     data_files = []
-    for root, directories, file_names in os.walk(directory):
+    for root, _directories, file_names in os.walk(directory):
         file_paths = [os.path.join(root, file_name) for file_name in file_names]
         data_files.append((os.path.join(install_directory, root), file_paths))
     return data_files
@@ -37,7 +37,7 @@ name = "snapcraft"
 description = "Publish your app for Linux users for desktop, cloud, and IoT."
 author_email = "snapcraft@lists.snapcraft.io"
 url = "https://github.com/snapcore/snapcraft"
-license = "GPL v3"
+license_ = "GPL v3"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -63,7 +63,6 @@ dev_requires = [
     "black",
     "codespell",
     "coverage[toml]",
-    "flake8<6.0.0",  # TODO: Eliminate type comments and upgrade this
     "pyflakes",
     "fixtures",
     "isort",
@@ -83,6 +82,7 @@ dev_requires = [
     "pytest-cov",
     "pytest-mock",
     "pytest-subprocess",
+    "ruff",
     "tox>=4.0",
     "types-PyYAML",
     "types-requests",
@@ -161,7 +161,7 @@ setup(
     author_email=author_email,
     url=url,
     packages=find_namespace_packages(),
-    license=license,
+    license=license_,
     classifiers=classifiers,
     scripts=scripts,
     entry_points=dict(

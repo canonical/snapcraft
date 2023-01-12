@@ -44,7 +44,6 @@ def test_schema():
                 "uniqueItems": True,
             },
         },
-        "type": "object",
     }
 
 
