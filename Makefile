@@ -47,11 +47,11 @@ test-shellcheck:
 
 .PHONY: test-legacy-units
 test-legacy-units:
-	tox run -e py38-dev-legacy
+	tox run -e py38-withreq-legacy
 
 .PHONY: test-units
 test-units: test-legacy-units
-	tox run -e py38-dev-unit
+	tox run -e py38-withreq-unit
 
 .PHONY: tests
 tests: tests-static test-units

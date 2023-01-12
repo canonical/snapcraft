@@ -25,9 +25,11 @@ jobs:
           sudo apt update
           sudo apt install -y libapt-pkg-dev libyaml-dev xdelta3 shellcheck
           sudo snap install --classic pyright
-          python -m pip install --pre 'tox>=4.0.11<5.0' tox-gh-actions
+          python -m pip install 'tox>=4.0.11<5.0' tox-gh
+      - name: Setup test suite
+        run: tox run-parallel --parallel all --parallel-no-spinner -m lint --notest
       - name: Lint with Tox
-        run: tox run -m lint --result-json tox-lint.json
+        run: tox run -m lint --skip-pkg-install --result-json tox-lint.json
       - name: Upload Linting results
         if: always()
         uses: actions/upload-artifact@v3
@@ -54,10 +56,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libapt-pkg-dev libyaml-dev xdelta3 shellcheck
-          python -m pip install --pre 'tox>=4.0.11<5.0' tox-gh-actions
+          python -m pip install 'tox>=4.0.11<5.0' tox-gh
           mkdir -p results
+      - name: Setup Tox environments
+        run: tox run-parallel --parallel all --parallel-no-spinner --parallel-live -m ci --notest
       - name: Test with tox
-        run: tox run-parallel --parallel-live --parallel-no-spinner --result-json results/tox-${{ matrix.platform }}.json -m ci -- --no-header --quiet -rN
+        run: tox run-parallel --parallel all --parallel-live --parallel-no-spinner --result-json results/tox-${{ matrix.platform }}.json -m ci --skip-pkg-install -- --no-header --quiet -rN
       - name: Upload code coverage
         uses: codecov/codecov-action@v3
         with:
