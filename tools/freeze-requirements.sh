@@ -5,7 +5,7 @@ requirements_fixups() {
 
   # Python apt library pinned to source.
   sed -i '/python-apt=*/d' "$req_file"
-  echo 'python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.0ubuntu0.20.04.8/python-apt_2.0.0ubuntu0.20.04.8.tar.xz; sys.platform == "linux"' >> "$req_file"
+  echo 'python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.0ubuntu0.20.04.6/python-apt_2.0.0ubuntu0.20.04.6.tar.xz; sys.platform == "linux"' >> "$req_file"
 
   # PyNaCl 1.4.0 has crypto related symbol issues when using the system
   # provided sodium.  Ensure it is compiled on linux by pointing to source.
