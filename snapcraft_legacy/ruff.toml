@@ -1,18 +1,8 @@
 # ruff configuration file to run on legacy code and tests.
 # generated with flake8-to-ruff
-exclude = [
-    ".direnv",
-    ".git",
-    ".hg",
-    ".mypy_cache",
-    ".tox",
-    ".venv",
+extend-exclude = [
     ".vscode",
-    "_build",
-    "buck-out",
     "__pycache__",
-    "build",
-    "dist",
     "parts",
     "stage",
     "prime",
