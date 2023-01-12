@@ -15,7 +15,7 @@ test-black:
 
 .PHONY: test-codespell
 test-codespell:
-	codespell --quiet-level 4
+	codespell
 
 .PHONY: test-flake8
 test-flake8:
