@@ -1,8 +1,7 @@
 name: ruby-bundle-install
 version: "1.0"
 summary: Test bundle install
-description: |
-  Snap to test 'bundle install' command
+description: Snap to test 'bundle install' command
 
 grade: devel
 base: core18
@@ -17,3 +16,6 @@ parts:
     plugin: ruby
     source: .
     use-bundler: true
+    ruby-version: "2.6.10" # bundler requires ruby >= 2.6.0
+    build-environment:
+      - BUNDLE_GEMFILE: "$SNAPCRAFT_PART_SRC/Gemfile"
