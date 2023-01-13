@@ -15,11 +15,7 @@ test-black:
 
 .PHONY: test-codespell
 test-codespell:
-	codespell --quiet-level 4 --ignore-words-list crate,keyserver,comandos,ro --skip '*.tar,*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,*.so,changelog,.git,.hg,.mypy_cache,.tox,.venv,venv,_build,buck-out,__pycache__,build,dist,.vscode,parts,stage,prime,test_appstream.py,./snapcraft.spec,./.direnv,./.pytest_cache'
-
-.PHONY: test-flake8
-test-flake8:
-	python3 -m flake8 $(SOURCES) $(SOURCES_LEGACY)
+	codespell
 
 .PHONY: test-isort
 test-isort:
@@ -42,6 +38,11 @@ test-pylint:
 test-pyright:
 	pyright $(SOURCES)
 
+.PHONY: test-ruff
+test-ruff:
+	ruff --config snapcraft_legacy/ruff.toml $(SOURCES_LEGACY)
+	ruff $(SOURCES)
+
 .PHONY: test-shellcheck
 test-shellcheck:
 # Skip third-party gradlew script.
@@ -60,7 +61,7 @@ test-units: test-legacy-units
 tests: tests-static test-units
 
 .PHONY: tests-static
-tests-static: test-black test-codespell test-flake8 test-isort test-mypy test-pydocstyle test-pyright test-pylint test-shellcheck
+tests-static: test-black test-codespell test-ruff test-isort test-mypy test-pydocstyle test-pyright test-pylint test-shellcheck
 
 .PHONY: lint
 lint: tests-static

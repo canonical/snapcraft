@@ -32,9 +32,9 @@ jobs:
       - name: Run codespell
         run: |
           make test-codespell
-      - name: Run flake8
+      - name: Run ruff
         run: |
-          make test-flake8
+          make test-ruff
       - name: Run isort
         run: |
           make test-isort

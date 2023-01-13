@@ -14,9 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import sys
-
 import pytest
 
 import snapcraft.extensions.registry as reg
@@ -53,7 +50,7 @@ class TestExtensionROS2HumbleExtension:
         try:
             reg.get_extension_class(_EXTENSION_NAME)
         except errors.ExtensionError as exc:
-            assert False, f"Couldn't get extension '{_EXTENSION_NAME}': {exc}"
+            raise AssertionError(f"Couldn't get extension '{_EXTENSION_NAME}': {exc}")
 
     def test_ros_version(self, setup_method_fixture):
         extension = setup_method_fixture()
