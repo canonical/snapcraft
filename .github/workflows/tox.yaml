@@ -22,21 +22,38 @@ jobs:
           python-version: '3.10'
       - name: Install dependencies
         run: |
+          # Install snaps in the background while running apt and pip
+          sudo snap install --no-wait --classic pyright
+          sudo snap install --no-wait shellcheck
           sudo apt update
           sudo apt install -y libapt-pkg-dev libyaml-dev xdelta3
-          sudo snap install --classic pyright
-          sudo snap install shellcheck
           python -m pip install 'tox>=4.0.11<5.0' tox-gh
-      - name: Setup test suite
-        run: tox run-parallel --parallel all --parallel-no-spinner -m lint --notest
-      - name: Lint with Tox
-        run: tox run-parallel --parallel all -m lint --skip-pkg-install --result-json tox-lint.json
-      - name: Upload Linting results
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: tox-lint.json
-          path: tox-lint.json
+          # Create virtual environments for linting processes.
+          tox run-parallel --parallel all --parallel-no-spinner -m lint --notest
+          # Ensure that snaps have installed before continuing.
+          snap watch --last=install
+      - name: Lint with black
+        run: tox run --skip-pkg-install -e black
+      - name: Run codespell
+        run: tox run --skip-pkg-install -e codespell
+      - name: Run ruff
+        run: tox run --skip-pkg-install -e ruff
+      - name: Run isort
+        run: tox run --skip-pkg-install -e isort
+      - name: Run mypy
+        run: tox run --skip-pkg-install -e mypy
+      - name: Run pydocstyle
+        run: tox run --skip-pkg-install -e
+      - name: Run pyright
+        run: tox run --skip-pkg-install -e pyright
+      - name: Run pylint
+        env:
+          SNAPCRAFT_IGNORE_YAML_BINDINGS: "1"
+        run: tox run --skip-pkg-install -e pylint
+      - name: Run shellcheck
+        run: tox run --skip-pkg-install -e shellcheck
+      - name: Run pydocstyle
+        run: tox run --skip-pkg-install -e docstyle
   tests:
     strategy:
       fail-fast: false  # Run all the tests to their conclusions.
