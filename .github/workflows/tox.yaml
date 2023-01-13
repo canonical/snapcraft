@@ -22,18 +22,28 @@ jobs:
           python-version: '3.10'
       - name: Install dependencies
         run: |
-          # Install snaps in the background while running apt and pip
+          echo "::group::Begin snap install"
+          echo "Installing snaps in the background while running apt and pip..."
           sudo snap install --no-wait --classic pyright
           sudo snap install --no-wait shellcheck
-          sudo apt update
-          sudo apt install -y libapt-pkg-dev libyaml-dev xdelta3
+          echo "::endgroup::"
+          echo "::group::apt-get update"
+          sudo apt-get update
+          echo "::endgroup::"
+          echo "::group::apt-get install..."
+          sudo apt-get install --yes libapt-pkg-dev libyaml-dev xdelta3
+          echo "::endgroup::"
+          echo "::group::pip install"
           python -m pip install 'tox>=4.0.11<5.0' tox-gh
-          # Create virtual environments for linting processes.
+          echo "::endgroup::"
+          echo "::group::Create virtual environments for linting processes."
           tox run-parallel --parallel all --parallel-no-spinner -m lint --notest
-          # Ensure that snaps have installed before continuing.
+          echo "::endgroup::"
+          echo "::group::Wait for snap to complete"
           snap watch --last=install
+          echo "::endgroup::"
       - name: Run Linters
-        run: tox run-parallel --parallel 4 --parallel-no-spinner --skip-pkg-install -m lint
+        run: tox run --skip-pkg-install -m lint
   tests:
     strategy:
       fail-fast: false  # Run all the tests to their conclusions.
@@ -52,9 +62,15 @@ jobs:
             3.10
       - name: Install dependencies
         run: |
+          echo "::group::apt-get update"
           sudo apt-get update
+          echo "::endgroup::"
+          echo "::group::apt-get install..."
           sudo apt-get install -y libapt-pkg-dev libyaml-dev xdelta3
+          echo "::endgroup::"
+          echo "::group::pip install"
           python -m pip install 'tox>=4.0.11<5.0' tox-gh
+          echo "::endgroup::"
           mkdir -p results
       - name: Setup Tox environments
         run: tox run-parallel --parallel auto --parallel-no-spinner --parallel-live -m ci --notest
