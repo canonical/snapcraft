@@ -29,7 +29,7 @@ jobs:
       - name: Setup test suite
         run: tox run-parallel --parallel all --parallel-no-spinner -m lint --notest
       - name: Lint with Tox
-        run: tox run -m lint --skip-pkg-install --result-json tox-lint.json
+        run: tox run-parallel --parallel all -m lint --skip-pkg-install --result-json tox-lint.json
       - name: Upload Linting results
         if: always()
         uses: actions/upload-artifact@v3
@@ -59,7 +59,7 @@ jobs:
           python -m pip install 'tox>=4.0.11<5.0' tox-gh
           mkdir -p results
       - name: Setup Tox environments
-        run: tox run-parallel --parallel all --parallel-no-spinner --parallel-live -m ci --notest
+        run: tox run-parallel --parallel auto --parallel-no-spinner --parallel-live -m ci --notest
       - name: Test with tox
         run: tox run-parallel --parallel all --parallel-live --parallel-no-spinner --result-json results/tox-${{ matrix.platform }}.json -m ci --skip-pkg-install -- --no-header --quiet -rN
       - name: Upload code coverage
