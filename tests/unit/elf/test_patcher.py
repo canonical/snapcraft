@@ -190,7 +190,6 @@ def test_patcher_patch_rpath_already_set(mocker, patcher, elf_file):
     )
 
     patcher.patch(elf_file=elf_file)
-    # raise Exception(os.environ['PATH'])
     assert run_mock.mock_calls == [
         call(
             [
