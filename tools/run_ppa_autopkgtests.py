@@ -17,6 +17,7 @@
 
 import os
 import subprocess
+import sys
 import tempfile
 
 from launchpadlib.launchpad import Launchpad
@@ -84,7 +85,7 @@ def request_autopkgtest_execution(cookie_path, distro, architecture, version):
         ]
     )
     if "Test request submitted" not in output:
-        exit("Failed to request the autopkgtest")
+        sys.exit("Failed to request the autopkgtest")
 
 
 if __name__ == "__main__":
