@@ -85,7 +85,9 @@ addopts = ["--cov=snapcraft"]
 line-length = 88
 extend-exclude = [
     "docs",
-    "__pycache__"
+    "__pycache__",
+    "legacy",
+    "tests/legacy",
 ]
 select = [
     "E", "F",  # The rules built into Flake8
