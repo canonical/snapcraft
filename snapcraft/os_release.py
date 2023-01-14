@@ -38,7 +38,7 @@ class OsRelease:
         *,
         os_release_file: Path = Path(  # noqa: B008 Function call in arg defaults
             "/etc/os-release"
-        )
+        ),
     ) -> None:
         """Create a new OsRelease instance.
 

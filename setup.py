@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import re
 import sys
 
 from setuptools import find_namespace_packages, setup
@@ -61,7 +62,7 @@ else:
 dev_requires = [
     "black",
     "codespell",
-    "coverage",
+    "coverage[toml]",
     "pyflakes",
     "fixtures",
     "isort",
@@ -82,6 +83,7 @@ dev_requires = [
     "pytest-mock",
     "pytest-subprocess",
     "ruff",
+    "tox>=4.0",
     "types-PyYAML",
     "types-requests",
     "types-setuptools",
@@ -126,8 +128,13 @@ install_requires = [
 ]
 
 try:
-    os_release = open("/etc/os-release").read()
-    ubuntu = "ID=ubuntu" in os_release
+    ubuntu = bool(
+        re.search(
+            r"^ID(?:_LIKE)?=.*\bubuntu\b.*$",
+            open("/etc/os-release").read(),
+            re.MULTILINE,
+        )
+    )
 except FileNotFoundError:
     ubuntu = False
 
