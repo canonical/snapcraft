@@ -1,5 +1,5 @@
 name: snapcraft
-base: core20
+base: core22
 summary: easily create snaps
 description: |
     Snapcraft aims to make upstream developers' lives easier and as such is not
@@ -55,15 +55,17 @@ parts:
       - g++
       - git
       - make
+    build-attributes:
+      - enable-patchelf
     override-pull: |
-      snapcraftctl pull
+      craftctl default
 
-      if [ "${SNAPCRAFT_TARGET_ARCH}" = "riscv64" ]; then
-        git am "${SNAPCRAFT_PROJECT_DIR}/snap/local/patches/patchelf/0001-Always-use-the-ET_DYN-codepath-avoiding-shifting-loa.patch"
-        git am "${SNAPCRAFT_PROJECT_DIR}/snap/local/patches/patchelf/0002-Fix-rewriteSectionsLibrary-to-not-assume-the-base-ad.patch"
+      if [ "${CRAFT_TARGET_ARCH}" = "riscv64" ]; then
+        git am "${CRAFT_PROJECT_DIR}/snap/local/patches/patchelf/0001-Always-use-the-ET_DYN-codepath-avoiding-shifting-loa.patch"
+        git am "${CRAFT_PROJECT_DIR}/snap/local/patches/patchelf/0002-Fix-rewriteSectionsLibrary-to-not-assume-the-base-ad.patch"
       fi
     override-build: |
-      snapcraftctl build
+      craftctl default
       make check
     prime:
       - bin/patchelf
@@ -83,8 +85,8 @@ parts:
         - libxml2
         - libxslt1.1
         - libpython3-stdlib
-        - libpython3.8-stdlib
-        - libpython3.8-minimal
+        - libpython3.10-stdlib
+        - libpython3.10-minimal
         - python3-pip
         - python3-setuptools
         - python3-wheel
@@ -92,19 +94,21 @@ parts:
         - python3-minimal
         - python3-distutils
         - python3-pkg-resources
-        - python3.8-minimal
+        - python3.10-minimal
         - squashfs-tools
         - xdelta3
+    build-attributes:
+        - enable-patchelf
     override-build: |
-      snapcraftctl build
+      craftctl default
 
       echo "Create libsodium symlink..."
-      TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
+      TRIPLET_PATH="$CRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
       LIBSODIUM="$(readlink -n "$TRIPLET_PATH/libsodium.so.23")"
       # Remove so the link can be recreated on re-builds
       rm -f "$TRIPLET_PATH/libsodium.so"
       ln -s "$LIBSODIUM" "$TRIPLET_PATH/libsodium.so"
-      $SNAPCRAFT_PROJECT_DIR/tools/snapcraft-override-build.sh
+      $CRAFT_PROJECT_DIR/tools/snapcraft-override-build.sh
 
   snapcraft:
     source: .
@@ -115,7 +119,7 @@ parts:
         - wheel
         - pip
         - setuptools
-    requirements:
+    python-requirements:
         - requirements.txt
     organize:
         # Put snapcraftctl into its own directory that can be included in the PATH
@@ -126,19 +130,21 @@ parts:
     build-environment:
         - "CRYPTOGRAPHY_DONT_BUILD_RUST": "1"
         - "SODIUM_INSTALL": "system"
-        - "CFLAGS": "$(pkg-config python-3.8 yaml-0.1 --cflags)"
+        - "CFLAGS": "$(pkg-config python-3.10 yaml-0.1 --cflags)"
+    build-attributes:
+        - enable-patchelf
     override-build: |
-        snapcraftctl build
+        craftctl default
 
         version="$(python3 setup.py --version)"
-        snapcraftctl set-version "$version"
+        craftctl set version="$version"
 
         [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
-        snapcraftctl set-grade "$grade"
-        ln -sf ../usr/bin/python3.8 $SNAPCRAFT_PART_INSTALL/bin/python3
-        mkdir -p $SNAPCRAFT_PART_INSTALL/libexec/snapcraft
-        mv $SNAPCRAFT_PART_INSTALL/bin/craftctl $SNAPCRAFT_PART_INSTALL/libexec/snapcraft/
-        sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python -E|' $SNAPCRAFT_PART_INSTALL/libexec/snapcraft/craftctl
+        craftctl set grade="$grade"
+        ln -sf ../usr/bin/python3.10 $CRAFT_PART_INSTALL/bin/python3
+        mkdir -p $CRAFT_PART_INSTALL/libexec/snapcraft
+        mv $CRAFT_PART_INSTALL/bin/craftctl $CRAFT_PART_INSTALL/libexec/snapcraft/
+        sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python -E|' $CRAFT_PART_INSTALL/libexec/snapcraft/craftctl
     after: [snapcraft-libs]
 
 hooks:
