@@ -297,6 +297,17 @@ class CleanCommand(_LifecycleStepCommand):
         """
     )
 
+    @overrides
+    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+        """Add arguments specific to the clean command."""
+        super().fill_parser(parser)
+        parser.add_argument(
+            "-k",
+            "--keep-environment",
+            action="store_true",
+            help="Clean all the parts but don't destroy the container.",
+        )
+
 
 class TryCommand(_LifecycleCommand):
     """Command to prepare the parts for ``snap try``."""
