@@ -40,6 +40,7 @@ COMMAND_GROUPS = [
         "Lifecycle",
         [
             commands.CleanCommand,
+            commands.CleanPartsCommand,
             commands.PullCommand,
             commands.BuildCommand,
             commands.StageCommand,
