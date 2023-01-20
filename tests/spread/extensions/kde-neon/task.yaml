@@ -4,12 +4,12 @@ summary: Build and run a basic kde snap using extensions
 # available on a subset of all the architectures this testbed
 # can run on.
 systems:
-  - ubuntu-18.04
-  - ubuntu-18.04-64
-  - ubuntu-18.04-amd64
   - ubuntu-20.04
   - ubuntu-20.04-64
   - ubuntu-20.04-amd64
+  - ubuntu-22.04
+  - ubunut-22.04-64
+  - ubuntu-22.04-amd64
 
 environment:
   SNAP_DIR: ../snaps/neon-hello
@@ -37,6 +37,7 @@ execute: |
   cd "$SNAP_DIR"
   output="$(snapcraft)"
   snap install neon-hello_*.snap --dangerous
+  snap connect neon-hello:kde-frameworks-5-102-qt-5-15-8-core22 kde-frameworks-5-102-qt-5-15-8-core22
 
   [ "$(neon-hello)" = "hello world" ]
 
@@ -46,6 +47,10 @@ execute: |
   [ -d "$snap_user_data/.local" ]
   [ -f "$snap_user_data/.last_revision" ]
   [ "$(cat "$snap_user_data/.last_revision")" = "SNAP_DESKTOP_LAST_REVISION=x1" ]
+
+  # Verify content snap was installed for dependency checks.
+  snap list kde-frameworks-5-102-qt-5-15-8-core22
+  snap list gtk-common-themes
 
   # Verify all dependencies were found.
   if echo "$output" | grep -q "part is missing libraries"; then
