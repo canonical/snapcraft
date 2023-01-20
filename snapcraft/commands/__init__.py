@@ -44,7 +44,6 @@ from .legacy import (
 from .lifecycle import (
     BuildCommand,
     CleanCommand,
-    CleanPartsCommand,
     PackCommand,
     PrimeCommand,
     PullCommand,
@@ -74,7 +73,6 @@ from .version import VersionCommand
 __all__ = [
     "BuildCommand",
     "CleanCommand",
-    "CleanPartsCommand",
     "ExpandExtensionsCommand",
     "ExtensionsCommand",
     "ListExtensionsCommand",

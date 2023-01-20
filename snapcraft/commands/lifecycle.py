@@ -297,6 +297,17 @@ class CleanCommand(_LifecycleStepCommand):
         """
     )
 
+    @overrides
+    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+        """Add arguments specific to the clean command."""
+        super().fill_parser(parser)
+        parser.add_argument(
+            "-k",
+            "--keep-environment",
+            action="store_true",
+            help="Clean all the parts but don't destroy the container.",
+        )
+
 
 class TryCommand(_LifecycleCommand):
     """Command to prepare the parts for ``snap try``."""
@@ -316,17 +327,3 @@ class TryCommand(_LifecycleCommand):
         super().run(parsed_args)
         if not utils.is_managed_mode():
             emit.message("You can now run `snap try prime`")
-
-
-class CleanPartsCommand(_LifecycleStepCommand):
-    """Command to remove all parts assets."""
-
-    name = "clean-parts"
-    help_msg = "Remove all parts'assets"
-    overview = textwrap.dedent(
-        """
-        Clean up artifacts belonging to all parts. It allows to
-        rebuild the whole snap from scratch, like 'clean', but
-        without having to rebuild the VM or the container.
-        """
-    )
