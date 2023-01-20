@@ -303,9 +303,9 @@ class CleanCommand(_LifecycleStepCommand):
         super().fill_parser(parser)
         parser.add_argument(
             "-k",
-            "--keep-environment",
+            "--keep-instance",
             action="store_true",
-            help="Clean all the parts but don't destroy the container.",
+            help="Clean all the parts but don't destroy the container/VM instance.",
         )
 
 

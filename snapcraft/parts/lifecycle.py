@@ -232,9 +232,9 @@ def _run_command(
 ) -> None:
     managed_mode = utils.is_managed_mode()
     part_names = getattr(parsed_args, "parts", None)
-    clean_all_parts = getattr(parsed_args, "keep_environment", False)
+    only_clean_all_parts = getattr(parsed_args, "keep_instance", False)
 
-    if command_name == "clean" and clean_all_parts:
+    if command_name == "clean" and only_clean_all_parts:
         part_names = list(project.parts)
 
     if not managed_mode:
