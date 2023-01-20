@@ -69,7 +69,7 @@ def _verify_all_key_assets_installed(
         for key_id in key_manager.get_key_fingerprints(key=key):
             if not key_manager.is_key_installed(key_id=key_id):
                 raise errors.PackageRepositoryError(
-                    "Found unused key asset {key_asset!r}.",
+                    f"Found unused key asset {key_asset!r}.",
                     details="All configured key assets must be utilized.",
                     resolution="Verify key usage and remove all unused keys.",
                 )
