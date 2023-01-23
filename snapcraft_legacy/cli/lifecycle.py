@@ -429,6 +429,7 @@ def pack(directory, output, **kwargs):
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 @click.option("--unprime", is_flag=True, required=False, hidden=True)
+@click.option("-k", "--keep-instance", is_flag=True, required=False)
 def clean(ctx, parts, unprime, **kwargs):
     """Remove a part's assets.
 
@@ -452,6 +453,9 @@ def clean(ctx, parts, unprime, **kwargs):
     except errors.ProjectNotFoundError:
         # Fresh environment, nothing to clean.
         return
+
+    if not parts and kwargs["keep_instance"]:
+        parts = tuple(project.info.parts)
 
     if unprime and not is_managed_host:
         raise click.BadOptionUsage("--unprime", "no such option: --unprime")
