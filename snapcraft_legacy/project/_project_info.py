@@ -44,7 +44,11 @@ class ProjectInfo:
         self.base = self.__raw_snapcraft.get("base")
         self.build_base = self.__raw_snapcraft.get("build-base")
         self.type = self.__raw_snapcraft.get("type")
-        self.parts = self.__raw_snapcraft.get("parts").keys()
+        parts = self.__raw_snapcraft.get("parts")
+        if parts:
+            self.parts = parts.keys()
+        else:
+            self.parts = []
 
     def validate_raw_snapcraft(self):
         """Validate the snapcraft.yaml for this project."""
