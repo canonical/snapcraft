@@ -44,7 +44,8 @@ test-ruff:
 
 .PHONY: test-shellcheck
 test-shellcheck:
-	tox run -e spellcheck
+	tox run -e shellcheck
+	tox run -e spread-shellcheck
 
 .PHONY: test-legacy-units
 test-legacy-units:
