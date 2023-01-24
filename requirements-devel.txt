@@ -13,7 +13,7 @@ colorama==0.4.6
 coverage==7.0.4
 craft-cli==1.2.0
 craft-grammar==1.1.1
-craft-parts==1.17.1
+craft-parts==1.18.0
 craft-providers==1.7.1
 craft-store==2.3.0
 cryptography==3.4
