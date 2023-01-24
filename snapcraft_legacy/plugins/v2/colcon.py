@@ -137,8 +137,13 @@ class ColconPlugin(_ros.RosPlugin):
             'state="$(set +o); set -$-"',
             "set +u",
             # If it exists, source the stage-snap underlay
-            'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/setup.sh ]; then',
-            "COLCON_CURRENT_PREFIX={path} . {path}/setup.sh".format(
+            'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
+            'AMENT_CURRENT_PREFIX="{path}" . "{path}/local_setup.sh"'.format(
+                path='${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}'
+            ),
+            "fi",
+            'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/local_setup.sh ]; then',
+            "COLCON_CURRENT_PREFIX={path} . {path}/local_setup.sh".format(
                 path='"${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap'
             ),
             "fi",
