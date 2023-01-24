@@ -48,6 +48,7 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
         parse_info={},
         project_vars={"version": "1", "grade": "stable"},
         extra_build_snaps=["core22"],
+        track_stage_packages=True,
         target_arch="amd64",
     )
     lifecycle.run(step_name)
@@ -63,6 +64,7 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
             base="core22",
             ignore_local_sources=["*.snap"],
             extra_build_snaps=["core22"],
+            track_stage_packages=True,
             parallel_build_count=8,
             project_name="test-project",
             project_vars_part_name=None,
@@ -86,6 +88,7 @@ def test_parts_lifecycle_run_bad_step(parts_data, new_dir):
         project_name="test-project",
         project_vars={"version": "1", "grade": "stable"},
         target_arch="amd64",
+        track_stage_packages=True,
     )
     with pytest.raises(RuntimeError) as raised:
         lifecycle.run("invalid")
@@ -106,6 +109,7 @@ def test_parts_lifecycle_run_internal_error(parts_data, new_dir, mocker):
         parse_info={},
         project_vars={"version": "1", "grade": "stable"},
         target_arch="amd64",
+        track_stage_packages=True,
     )
     mocker.patch("craft_parts.LifecycleManager.plan", side_effect=RuntimeError("crash"))
     with pytest.raises(RuntimeError) as raised:
@@ -127,6 +131,7 @@ def test_parts_lifecycle_run_parts_error(new_dir):
         parse_info={},
         project_vars={"version": "1", "grade": "stable"},
         target_arch="amd64",
+        track_stage_packages=True,
     )
     with pytest.raises(errors.PartsLifecycleError) as raised:
         lifecycle.run("prime")
@@ -149,6 +154,7 @@ def test_parts_lifecycle_clean(parts_data, new_dir, emitter):
         parse_info={},
         project_vars={"version": "1", "grade": "stable"},
         target_arch="amd64",
+        track_stage_packages=True,
     )
     lifecycle.clean(part_names=None)
     emitter.assert_progress("Cleaning all parts")
@@ -168,6 +174,7 @@ def test_parts_lifecycle_clean_parts(parts_data, new_dir, emitter):
         parse_info={},
         project_vars={"version": "1", "grade": "stable"},
         target_arch="amd64",
+        track_stage_packages=True,
     )
     lifecycle.clean(part_names=["p1"])
     emitter.assert_progress("Cleaning parts: p1")
@@ -211,6 +218,7 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_not_installed
         parse_info={},
         project_vars={"version": "1", "grade": "stable"},
         extra_build_snaps=["core22"],
+        track_stage_packages=True,
         target_arch="amd64",
     )
 
@@ -259,6 +267,7 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_installed(
         parse_info={},
         project_vars={"version": "1", "grade": "stable"},
         extra_build_snaps=["core22"],
+        track_stage_packages=True,
         target_arch="amd64",
     )
 
@@ -275,6 +284,7 @@ def test_parts_lifecycle_bad_architecture(parts_data, new_dir):
             assets_dir=new_dir,
             base="core22",
             parallel_build_count=8,
+            track_stage_packages=True,
             part_names=[],
             package_repositories=[],
             adopt_info=None,
@@ -298,6 +308,7 @@ def test_parts_lifecycle_run_with_all_architecture(mocker, parts_data, new_dir):
         assets_dir=new_dir,
         base="core22",
         parallel_build_count=8,
+        track_stage_packages=True,
         part_names=[],
         package_repositories=[],
         adopt_info=None,
@@ -318,6 +329,7 @@ def test_parts_lifecycle_run_with_all_architecture(mocker, parts_data, new_dir):
             base="core22",
             ignore_local_sources=["*.snap"],
             extra_build_snaps=None,
+            track_stage_packages=True,
             parallel_build_count=8,
             project_name="test-project",
             project_vars_part_name=None,
