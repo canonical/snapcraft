@@ -42,6 +42,7 @@ SNAPCRAFT_BASE_TO_PROVIDER_BASE = {
     "core22": bases.BuilddBaseAlias.JAMMY,
 }
 
+# TODO: move to a package data file for shellcheck and syntax highlighting
 # pylint: disable=line-too-long
 BASHRC = dedent(
     """\
