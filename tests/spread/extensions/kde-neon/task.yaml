@@ -8,7 +8,7 @@ systems:
   - ubuntu-20.04-64
   - ubuntu-20.04-amd64
   - ubuntu-22.04
-  - ubunut-22.04-64
+  - ubuntu-22.04-64
   - ubuntu-22.04-amd64
 
 environment:

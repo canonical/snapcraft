@@ -230,7 +230,6 @@ class KDENeon(Extension):
                     ),
                 },
                 {
-                if cmake_args is not None:
                     "SNAPCRAFT_CMAKE_ARGS": prepend_to_env(
                         "SNAPCRAFT_CMAKE_ARGS",
                         [
