@@ -3,9 +3,12 @@
   extends: ["config:base"],
   labels: ["dependencies"],  // For convenient searching in GitHub
   pip_requirements: {
-    fileMatch: ["pyproject.toml", "tox.ini"]
+    fileMatch: ["^tox.ini$"]
   },
-  packageRules: [
+  pip_setup: {
+    fileMatch: ["^pyproject.toml$", "(^|/)setup\\.py$"]
+  },
+   packageRules: [
     {
       // Automerge patches, pin changes and digest changes.
       // Also groups these changes together.
@@ -23,6 +26,7 @@
     },
     {
       // GitHub Actions are higher priority to update than most dependencies.
+      groupName: "GitHub Actions",
       matchManagers: ["github-actions"],
       prPriority: 1
     },
@@ -52,8 +56,9 @@
     {
       // tox.ini can get updates too if we specify for each package.
       fileMatch: ["tox.ini"],
+      depTypeTemplate: "devDependencies",
       matchStrings: [
-        "# renovate: datasource=(?<datasource>\\S+)\n\\s+(?<depName>.*?)[=><]=?(?<currentValue>.*?)\\n",
+        "# renovate: datasource=(?<datasource>\S+)\n\s+(?<depName>.*?)(\[[\w]*\])*[=><]=?(?<currentValue>.*?)\n"
       ]
     }
   ],
