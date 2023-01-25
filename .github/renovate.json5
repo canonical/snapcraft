@@ -1,0 +1,68 @@
+ {
+  // Configuration file for RenovateBot: https://docs.renovatebot.com/configuration-options
+  extends: ["config:base"],
+  labels: ["dependencies"],  // For convenient searching in GitHub
+  pip_requirements: {
+    fileMatch: ["pyproject.toml", "tox.ini"]
+  },
+  packageRules: [
+    {
+      // Automerge patches, pin changes and digest changes.
+      // Also groups these changes together.
+      groupName: "patch updates",
+      matchUpdateTypes: ["patch", "pin", "digest"],
+      prPriority: 3, // Patches should go first!
+      automerge: true
+    },
+    {
+      // Update all internal packages in one higher-priority PR
+      groupName: "internal packages",
+      matchPackagePrefixes: ["craft-", "snap-"],
+      matchLanguages: ["python"],
+      prPriority: 2
+    },
+    {
+      // GitHub Actions are higher priority to update than most dependencies.
+      matchManagers: ["github-actions"],
+      prPriority: 1
+    },
+    // Everything not in one of these rules gets priority 0 and falls here.
+    {
+      // Minor changes can be grouped and automerged for dev dependencies, but are also deprioritised.
+      groupName: "development dependencies (minor and patch)",
+      groupSlug: "dev-dependencies",
+      matchDepTypes: ["devDependencies"],
+      matchUpdateTypes: ["minor", "patch", "pin", "digest"],
+      prPriority: -1,
+      automerge: true
+    },
+    {
+      // Other major dependencies get deprioritised below minor dev dependencies.
+      matchUpdateTypes: ["major"],
+      prPriority: -2
+    },
+    {
+      // Major dev dependencies are stone last.
+      matchDepTypes: ["devDependencies"],
+      matchUpdateTypes: ["major"],
+      prPriority: -3
+    }
+  ],
+  regexManagers: [
+    {
+      // tox.ini can get updates too if we specify for each package.
+      fileMatch: ["tox.ini"],
+      matchStrings: [
+        "# renovate: datasource=(?<datasource>\\S+)\n\\s+(?<depName>.*?)[=><]=?(?<currentValue>.*?)\\n",
+      ]
+    }
+  ],
+  timezone: "Etc/UTC",
+  automergeSchedule: "after 1 am and before 7 am",
+  schedule: "every weekend",
+  prConcurrentLimit: 5, // No more than 5 open PRs at a time.
+  prCreation: "not-pending", // Wait until status checks have completed before raising the PR
+  prNotPendingHours: 4, // ...unless the status checks have been running for 4+ hours.
+  prHourlyLimit: 1, // No more than 1 PR per hour.
+  stabilityDays: 2 // Wait 2 days from release before updating.
+}

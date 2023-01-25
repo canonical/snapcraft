@@ -1,0 +1,152 @@
+[project]
+name = "starcraft"
+version = "0.0.1"
+readme = "README.rst"
+dependencies = [
+
+]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "License :: OSI Approved :: GNU General Public License (GPL)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+]
+requires-python = ">=3.8"
+
+[project.scripts]
+starcraft-hello = "starcraft:hello"
+
+[project.optional-dependencies]
+dev = [
+    "pytest==7.0.0",
+    "pytest-cov==4.0.0",
+    "pytest-mock==3.10.0",
+]
+types = [
+]
+
+[build-system]
+requires = [
+    "setuptools==45.2.0",  # This is the version provided in apt with focal
+]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+target-version = ["py38"]
+
+[tool.codespell]
+ignore-words-list = "buildd,crate,keyserver,comandos,ro,dedent,dedented"
+skip = ".tox,.git,build,.*_cache,__pycache__,*.tar,*.snap,*.png,node_modules"
+quiet-level = 3
+check-filenames = true
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = "tests"
+xfail_strict = true
+addopts = [
+    "--cov",
+]
+
+[tool.coverage.run]
+branch = true
+omit = ["tests/**"]
+
+[tool.coverage.report]
+skip_empty = true
+fail_under = 80
+
+[tool.pyright]
+strict = ["starcraft"]
+pythonVersion = "3.8"
+pythonPlatform = "Linux"
+venvPath = ".tox"
+venv = "py38"
+
+[tool.ruff]
+line-length = 88
+target-version = "py38"
+src = ["starcraft", "tests"]
+extend-exclude = [
+    "docs",
+    "__pycache__",
+]
+# Follow ST063 - Maintaining and updating linting specifications for updating these.
+select = [  # Base linting rule selections.
+    # See the internal document for discussion:
+    # https://docs.google.com/document/d/1i1n8pDmFmWi4wTDpk-JfnWCVUThPJiggyPi2DYwBBu4/edit
+    # All sections here are stable in ruff and shouldn't randomly introduce
+    # failures with ruff updates.
+    "F",  # The rules built into Flake8
+    "E", "W",  # pycodestyle errors and warnings
+    "D",  # Implement pydocstyle checking as well.
+    "I",  # isort checking
+    "PLC", "PLE", "PLR", "PLW",  # Pylint
+    "N",  # PEP8 naming
+    "YTT",  # flake8-2020: Misuse of `sys.version` and `sys.version_info`
+    "BLE",  # Do not catch blind exceptions
+    "FBT",  # Disallow boolean positional arguments (make them keyword-only)
+    "A",  # Shadowing built-ins.
+    "C4", # Encourage comprehensions, which tend to be faster than alternatives.
+    "T10",  # Don't call the debugger in production code
+    "ISC",  # Implicit string concatenation that can cause subtle issues
+    "ICN",  # Only use common conventions for import aliases.
+    "Q",  # Consistent quotations
+    "RET"  # Simpler logic after return, raise, continue or break
+]
+extend-select = [
+    # These sets are still frequently getting new rules.
+    # Therefore, they're getting frozen with the current rules so we can
+    # upgrade ruff without breaking linting.
+    # Pyupgrade: https://github.com/charliermarsh/ruff#pyupgrade-up
+    "UP00", "UP01", "UP02", "UP030", "UP032", "UP033",
+    # "UP034",  # Very new, not yet enabled in ruff 0.0.227
+    # Annotations: https://github.com/charliermarsh/ruff#flake8-annotations-ann
+    "ANN0",  # Type annotations for arguments other than `self` and `cls`
+    "ANN2",  # Return type annotations
+    # flake8-bandit: security testing. https://github.com/charliermarsh/ruff#flake8-bandit-s
+    # https://bandit.readthedocs.io/en/latest/plugins/index.html#complete-test-plugin-listing
+    "S101", "S102",  # assert or exec
+    "S103", "S108",  # File permissions and tempfiles - use #noqa to silence when appropriate.
+    "S104",  # Network binds
+    "S105", "S106", "S107",  # Hardcoded passwords
+    "S113",  # Requests calls without timeouts
+    "S506",  # Unsafe YAML load
+    "S508", "S509",  # Insecure SNMP
+    "S701",  # jinja2 templates without autoescape
+    "B0",  # Common mistakes and typos.
+    "RUF001", "RUF002", "RUF003",  # Ambiguous unicode characters
+    "RUF004",  # Keyword arguments must come after starred arguments
+    "RUF005",  # Encourages unpacking rather than concatenation
+    "RUF100",  # #noqa directive that doesn't flag anything.
+]
+ignore = [
+    #"E203",  # Whitespace before ":"  -- Commented because ruff doesn't currently check E203
+    "E501",  # Line too long (reason: black will automatically fix this for us)
+    "D105",  # Missing docstring in magic method (reason: magic methods already have definitions)
+    "D107",  # Missing docstring in __init__ (reason: documented in class docstring)
+    "D203",  # 1 blank line required before class docstring (reason: pep257 default)
+    "D213",  # Multi-line docstring summary should start at the second line (reason: pep257 default)
+    "D215",  # Section underline is over-indented (reason: pep257 default)
+    "A003",  # Class attribute shadowing built-in (reason: Class attributes don't often get bare references)
+
+]
+
+[tool.ruff.per-file-ignores]
+"tests/**.py" = [  # Some things we want for the moin project are unnecessary in tests.
+    "D",  # Ignore docstring rules in tests
+    "ANN", # Ignore type annotations in tests
+    "S101",  # Allow assertions in tests
+    "S103", # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
+    "S108", # Allow Probable insecure usage of temporary file or directory
+]
+# isort leaves init files alone by default, this makes ruff ignore them too.
+"__init__.py" = ["I001"]
