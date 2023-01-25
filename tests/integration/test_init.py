@@ -14,27 +14,12 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Basic Starcraft package demo tests."""
-from unittest import mock
-
-from starcraft import hello
+import subprocess
 
 
-def test_hello(mocker):
-    mocker.patch("builtins.print")
+def test_cli():
+    expected = "Hello *craft team!\n"
 
-    hello()
+    actual = subprocess.check_output(["starcraft-hello"], text=True)
 
-    print.assert_called_once_with("Hello *craft team!")
-
-
-def test_hello_people(mocker):
-    mocker.patch("builtins.print")
-
-    hello(["people"])
-
-    print.assert_has_calls(
-        [
-            mock.call("Hello *craft team!"),
-            mock.call("Hello people!"),
-        ]
-    )
+    assert expected == actual
