@@ -32,6 +32,8 @@ force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 88
+skip_gitignore = true
+skip = ["tests/spread/tools/snapd-testing-tools"]
 
 [tool.pylint.main]
 ignore-paths = ["tests/legacy"]
@@ -68,6 +70,7 @@ exclude = [
     "tests/spread",
     "tests/legacy",
     "tools",
+    "venv",
 ]
 
 [tool.pyright]
