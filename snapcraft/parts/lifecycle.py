@@ -261,6 +261,8 @@ def _run_command(
 
     step_name = "prime" if command_name in ("pack", "snap", "try") else command_name
 
+    track_stage_packages = getattr(parsed_args, "enable_manifest", False)
+
     lifecycle = PartsLifecycle(
         project.parts,
         work_dir=work_dir,
@@ -278,6 +280,7 @@ def _run_command(
         },
         extra_build_snaps=project.get_extra_build_snaps(),
         target_arch=project.get_build_for(),
+        track_stage_packages=track_stage_packages,
     )
 
     if command_name == "clean":

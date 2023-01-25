@@ -67,6 +67,7 @@ class PartsLifecycle:
         project_vars: Dict[str, str],
         extra_build_snaps: Optional[List[str]] = None,
         target_arch: str,
+        track_stage_packages: bool,
     ):
         self._work_dir = work_dir
         self._assets_dir = assets_dir
@@ -96,6 +97,7 @@ class PartsLifecycle:
                 base=base,
                 ignore_local_sources=["*.snap"],
                 extra_build_snaps=extra_build_snaps,
+                track_stage_packages=track_stage_packages,
                 parallel_build_count=parallel_build_count,
                 project_name=project_name,
                 project_vars_part_name=adopt_info,
