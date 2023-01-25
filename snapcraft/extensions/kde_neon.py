@@ -251,7 +251,7 @@ class KDENeon(Extension):
             return {
                 "kde-neon-extension": {
                     "source": str(source),
-                    "source-subdir": "kde-neon"
+                    "source-subdir": "kde-neon",
                     "plugin": "make",
                     "make-parameters": [f"PLATFORM_PLUG={provider}"],
                     "build-packages": ["g++"],
