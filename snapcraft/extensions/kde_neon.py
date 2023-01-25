@@ -126,6 +126,7 @@ class KDENeon(Extension):
     @overrides
     def get_root_snippet(self) -> Dict[str, Any]:
         platform_snap = self.kde_snaps.content
+        content_snap = self.kde_snaps.content + f"-all"
 
         return {
             "assumes": ["snapd2.43"],  # for 'snapctl is-connected'
@@ -143,6 +144,7 @@ class KDENeon(Extension):
                     "default-provider": "gtk-common-themes",
                 },
                 platform_snap: {
+                    "content": content_snap,
                     "interface": "content",
                     "default-provider": platform_snap,
                     "target": "$SNAP/kf5",
@@ -246,7 +248,7 @@ class KDENeon(Extension):
         if self.kde_snaps.builtin:
             base = self.yaml_data["base"]
             sdk_snap = _SDK_SNAP[base]
-            provider = self.kde_snaps.content + "-all"
+            provider = self.kde_snaps.content + f"-all"
             return {
                 "kde-neon-extension": {
                     "source": str(source),
