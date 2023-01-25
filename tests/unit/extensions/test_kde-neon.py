@@ -26,7 +26,7 @@ from snapcraft.extensions.extension import get_extensions_data_dir
 
 @pytest.fixture
 def kde-neon_extension():
-    return kde_neon.KDENeon
+    return kde_neon.KDENeon(
         yaml_data={"base": "core22", "parts": {}}, arch="amd64", target_arch="amd64"
     )
 
