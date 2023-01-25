@@ -27,9 +27,12 @@ types = [
 
 [build-system]
 requires = [
-    "setuptools==45.2.0",  # This is the version provided in apt with focal
+    "setuptools==66.1.1",
 ]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["starcraft"]
 
 [tool.black]
 target-version = ["py38"]

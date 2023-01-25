@@ -31,7 +31,7 @@ jobs:
           python -m pip install 'tox>=4' tox-gh
           echo "::endgroup::"
           echo "::group::Create virtual environments for linting processes."
-          tox run-parallel --parallel all --parallel-no-spinner -m lint --notest
+          tox run -m lint --notest
           echo "::endgroup::"
           echo "::group::Wait for snap to complete"
           snap watch --last=install
@@ -63,16 +63,9 @@ jobs:
           echo "::endgroup::"
           mkdir -p results
       - name: Setup Tox environments
-        run: >
-          tox run-parallel --parallel auto --parallel-no-spinner 
-          --parallel-live -m tests --notest
+        run: tox run -m tests --notest
       - name: Test with tox
-        run: > 
-          tox run-parallel --parallel all --parallel-no-spinner 
-            --skip-pkg-install 
-            --result-json results/tox-${{ matrix.platform }}.json 
-            -m tests
-            -- --no-header --quiet -rN
+        run: tox run-parallel --parallel all --parallel-no-spinner --skip-pkg-install --result-json results/tox-${{ matrix.platform }}.json -m tests -- --no-header --quiet -rN
       - name: Upload code coverage
         uses: codecov/codecov-action@v3
         with:
