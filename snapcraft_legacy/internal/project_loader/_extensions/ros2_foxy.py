@@ -87,6 +87,11 @@ class ExtensionImpl(Extension):
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/ros2",
                 "plugin": "nil",
                 "override-build": "install -D -m 0755 launch ${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros2-launch",
-                "build-packages": [f"ros-{self.ROS_DISTRO}-ros-core"],
+                "build-packages": [
+                    f"ros-{self.ROS_DISTRO}-ros-environment",
+                    f"ros-{self.ROS_DISTRO}-ros-workspace",
+                    f"ros-{self.ROS_DISTRO}-ament-index-cpp",
+                    f"ros-{self.ROS_DISTRO}-ament-index-python",
+                ],
             }
         }
