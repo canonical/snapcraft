@@ -26,16 +26,12 @@ from overrides import overrides
 from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
 _SDK_SNAP = {"core22": "kde-frameworks-5-102-qt-5-15-8-core22-sd"}
-_ExtensionInfo = namedtuple("ExtensionInfo", "cmake_args content provider build_snaps")
 
-_Info = dict(
-    core22=_ExtensionInfo(
-        cmake_args="-DCMAKE_FIND_ROOT_PATH=/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current",
-        content="kde-frameworks-5-102-qt-5-15-8-core22-all",
-        provider="kde-frameworks-5-102-qt-5-15-8-core22",
-        build_snaps=["kde-frameworks-5-102-qt-5-15-8-core22-sd/latest/stable"],
-    ),
-)
+@dataclasses.dataclass
+class ExtensionInfo:
+    """ Content/SDK build information"""
+
+    cmake_args: str
 
 @dataclasses.dataclass
 class KDESnaps:
@@ -46,7 +42,7 @@ class KDESnaps:
     builtin: bool = True
 
 
-class KDENEON(Extension):
+class KDENeon(Extension):
     """The KDE Neon extension.
 
     This extension makes it easy to assemble KDE based applications
@@ -102,12 +98,30 @@ class KDENEON(Extension):
     def kde_snaps(self) -> KDESnaps:
         """Return the KDE related snaps to use to construct the environment."""
         base = self.yaml_data["base"]
-        info = _Info[yaml_data[base]]
         sdk_snap = _SDK_SNAP[base]
 
-        build_snaps: info.build_snaps
-        content = info.content
-        return KDESnaps(sdk=sdk_snap, content=content, builtin=False)
+        build_snaps: List[str] = []
+        for part in self.yaml_data["parts"].values():
+            build_snaps.extend(part.get("build-snaps", []))
+
+        matcher = re.compile(r"kde-frameworks-\d+-qt-\d+" + base + r"sd.*")
+        sdk_snap_candidates = [s for s in build_snaps if matcher.match(s)]
+        if sdk_snap_candidates:
+            sdk_snap = sdk_snap_candidates[0].split("/")[0]
+            builtin = False
+        else:
+            builtin = True
+        # The same except the trailing -sdk
+        content = sdk_snap[:-3]
+
+        return KDESnaps(sdk=sdk_snap, content=content, builtin=builtin)
+
+    @functools.cached_property
+    def ext_info(self) -> ExtensionInfo:
+        """Return the extension info cmake_args, provider, content, build_snaps"""
+        cmake_args=f"-DCMAKE_FIND_ROOT_PATH=/snap/" + self.kde_snaps.sdk + f"/current"
+
+        return ExtensionInfo(cmake_args=cmake_args)
 
     @overrides
     def get_root_snippet(self) -> Dict[str, Any]:
@@ -128,10 +142,9 @@ class KDENEON(Extension):
                     "target": "$SNAP/data-dir/sounds",
                     "default-provider": "gtk-common-themes",
                 },
-                info.provider: {
-                    "content": info.content,
+                platform_snap: {
                     "interface": "content",
-                    "default-provider": info.provider,
+                    "default-provider": platform_snap,
                     "target": "$SNAP/kf5",
                 },
             },
@@ -147,6 +160,7 @@ class KDENEON(Extension):
     @overrides
     def get_part_snippet(self) -> Dict[str, Any]:
         sdk_snap = self.kde_snaps.sdk
+        cmake_args = self.ext_info.cmake_args
 
         return {
             "build-environment": [
@@ -214,10 +228,12 @@ class KDENEON(Extension):
                     ),
                 },
                 {
-                if info.cmake_args is not None:
+                if cmake_args is not None:
                     "SNAPCRAFT_CMAKE_ARGS": prepend_to_env(
                         "SNAPCRAFT_CMAKE_ARGS",
-                        [info.cmake_args],
+                        [
+                            f"{cmake_args}",
+                        ],
                     ),
                 },
             ],
@@ -225,13 +241,26 @@ class KDENEON(Extension):
 
     @overrides
     def get_parts_snippet(self) -> Dict[str, Any]:
+        source = get_extensions_data_dir() / "desktop" / "command-chain"
+
+        if self.kde_snaps.builtin:
+            base = self.yaml_data["base"]
+            sdk_snap = _SDK_SNAP[base]
+            provider = self.kde_snaps.content + "-all"
+            return {
+                "kde-neon-extension": {
+                    "source": str(source),
+                    "source-subdir": "kde-neon"
+                    "plugin": "make",
+                    "make-parameters": [f"PLATFORM_PLUG={provider}"],
+                    "build-packages": ["g++"],
+                    "build-snaps": [sdk_snap],
+                }
+            }
+
         return {
             "kde-neon-extension": {
-                "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
-                "source-subdir": "kde-neon",
+                "source": str(source),
                 "plugin": "make",
-                "make-parameters": [f"PLATFORM_PLUG={info.provider}"],
-                "build-packages": ["g++"],
-                "build-snaps": info.build_snaps,
             }
         }
