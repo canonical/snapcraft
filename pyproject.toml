@@ -31,15 +31,20 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["starcraft"]
+[tool.setuptools.packages.find]
+exclude = [
+    "dist",
+    "docs",
+    "results",
+    "tests",
+]
 
 [tool.black]
 target-version = ["py38"]
 
 [tool.codespell]
 ignore-words-list = "buildd,crate,keyserver,comandos,ro,dedent,dedented"
-skip = ".tox,.git,build,.*_cache,__pycache__,*.tar,*.snap,*.png,node_modules"
+skip = ".tox,.git,build,.*_cache,__pycache__,*.tar,*.snap,*.png,./node_modules,./docs/_build"
 quiet-level = 3
 check-filenames = true
 
@@ -74,9 +79,10 @@ venv = "py38"
 
 [tool.mypy]
 python_version = "3.8"
-packages = ["starcraft"]
 exclude = [
-    "build"
+    "build",
+    "tests",
+    "results",
 ]
 warn_unused_configs = true
 warn_redundant_casts = true
