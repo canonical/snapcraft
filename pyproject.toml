@@ -74,6 +74,30 @@ pythonPlatform = "Linux"
 venvPath = ".tox"
 venv = "py38"
 
+[tool.mypy]
+python_version = "3.8"
+packages = ["starcraft"]
+exclude = [
+    "build"
+]
+warn_unused_configs = true
+warn_redundant_casts = true
+strict_equality = true
+strict_concatenate = true
+warn_return_any = true
+disallow_subclassing_any = true
+disallow_untyped_decorators = true
+disallow_any_generics = true
+
+[[tool.mypy.overrides]]
+module = ["starcraft"]
+disallow_untyped_defs = true
+no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+strict = false
+
 [tool.ruff]
 line-length = 88
 target-version = "py38"
