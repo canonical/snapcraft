@@ -25,14 +25,14 @@ from snapcraft.extensions.extension import get_extensions_data_dir
 
 
 @pytest.fixture
-def kde-neon_extension():
+def kde_neon_extension():
     return kde_neon.KDENeon(
         yaml_data={"base": "core22", "parts": {}}, arch="amd64", target_arch="amd64"
     )
 
 
 @pytest.fixture
-def kde-neon_extension_with_build_snap():
+def kde_neon_extension_with_build_snap():
     return kde_neon.KDENeon(
         yaml_data={
             "base": "core22",
@@ -44,7 +44,7 @@ def kde-neon_extension_with_build_snap():
 
 
 @pytest.fixture
-def kde-neon_extension_with_default_build_snap_from_latest_edge():
+def kde_neon_extension_with_default_build_snap_from_latest_edge():
     return kde_neon.KDENeon(
         yaml_data={
             "base": "core22",
@@ -60,20 +60,20 @@ def kde-neon_extension_with_default_build_snap_from_latest_edge():
 ###################
 
 
-def test_get_supported_bases(kde-neon_extension):
-    assert kde-neon_extension.get_supported_bases() == ("core22",)
+def test_get_supported_bases(kde_neon_extension):
+    assert kde_neon_extension.get_supported_bases() == ("core22",)
 
 
-def test_get_supported_confinement(kde-neon_extension):
-    assert kde-neon_extension.get_supported_confinement() == ("strict", "devmode")
+def test_get_supported_confinement(kde_neon_extension):
+    assert kde_neon_extension.get_supported_confinement() == ("strict", "devmode")
 
 
 def test_is_experimental():
     assert kde_neon.KDENeon.is_experimental(base="core22") is False
 
 
-def test_get_app_snippet(kde-neon_extension):
-    assert kde-neon_extension.get_app_snippet() == {
+def test_get_app_snippet(kde_neon_extension):
+    assert kde_neon_extension.get_app_snippet() == {
         "command-chain": ["snap/command-chain/desktop-launch"],
         "plugs": ["desktop",
                 "desktop-legacy",
@@ -83,8 +83,8 @@ def test_get_app_snippet(kde-neon_extension):
     }
 
 
-def test_get_root_snippet(kde-neon_extension):
-    assert kde-neon_extension.get_root_snippet() == {
+def test_get_root_snippet(kde_neon_extension):
+    assert kde_neon_extension.get_root_snippet() == {
         "assumes": ["snapd2.43"],
         "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
         "hooks": {
@@ -116,8 +116,8 @@ def test_get_root_snippet(kde-neon_extension):
     }
 
 
-def test_get_root_snippet_with_external_sdk(kde-neon_extension_with_build_snap):
-    assert kde-neon_extension_with_build_snap.get_root_snippet() == {
+def test_get_root_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
+    assert kde_neon_extension_with_build_snap.get_root_snippet() == {
         "assumes": ["snapd2.43"],
         "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
         "hooks": {
@@ -152,19 +152,19 @@ def test_get_root_snippet_with_external_sdk(kde-neon_extension_with_build_snap):
 class TestGetPartSnippet:
     """Tests for KDENeon.get_part_snippet when using the default sdk snap name."""
 
-    def test_get_part_snippet(self, kde-neon_extension):
-        self.assert_get_part_snippet(kde-neon_extension)
+    def test_get_part_snippet(self, kde_neon_extension):
+        self.assert_get_part_snippet(kde_neon_extension)
 
     def test_get_part_snippet_latest_edge(
-        self, kde-neon_extension_with_default_build_snap_from_latest_edge
+        self, kde_neon_extension_with_default_build_snap_from_latest_edge
     ):
         self.assert_get_part_snippet(
-            kde-neon_extension_with_default_build_snap_from_latest_edge
+            kde_neon_extension_with_default_build_snap_from_latest_edge
         )
 
     @staticmethod
-    def assert_get_part_snippet(kde-neon_instance):
-        assert kde-neon_instance.get_part_snippet() == {
+    def assert_get_part_snippet(kde_neon_instance):
+        assert kde_neon_instance.get_part_snippet() == {
              "build-environment": [
                 {
                     "PATH": prepend_to_env(
@@ -239,8 +239,8 @@ class TestGetPartSnippet:
         }
 
 
-def test_get_part_snippet_with_external_sdk(kde-neon_extension_with_build_snap):
-    assert kde-neon_extension_with_build_snap.get_part_snippet() == {
+def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
+    assert kde_neon_extension_with_build_snap.get_part_snippet() == {
         "build-environment": [
             {"PATH": "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/usr/bin${PATH:+:$PATH}"},
             {
@@ -301,11 +301,11 @@ def test_get_part_snippet_with_external_sdk(kde-neon_extension_with_build_snap):
     }
 
 
-def test_get_parts_snippet(kde-neon_extension):
-    assert kde-neon_extension.get_parts_snippet() == {
-        "kde-neon-extension": {
+def test_get_parts_snippet(kde_neon_extension):
+    assert kde_neon_extension.get_parts_snippet() == {
+        "kde_neon-extension": {
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
-                "source-subdir": "kde-neon",
+                "source-subdir": "kde_neon",
                 "plugin": "make",
                 "make-parameters": [f"PLATFORM_PLUG={"kde-frameworks-5-102-qt-5-15-8-core22-all"}"],
                 "build-packages": ["g++"],
@@ -313,9 +313,9 @@ def test_get_parts_snippet(kde-neon_extension):
             }
     }
 
-def test_get_parts_snippet_with_external_sdk(kde-neon_extension_with_build_snap):
-    assert kde-neon_extension_with_build_snap.get_parts_snippet() == {
-        "kde-neon-extension": {
+def test_get_parts_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
+    assert kde_neon_extension_with_build_snap.get_parts_snippet() == {
+        "kde_neon-extension": {
             "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
             "plugin": "make",
         }
@@ -323,12 +323,12 @@ def test_get_parts_snippet_with_external_sdk(kde-neon_extension_with_build_snap)
 
 
 def test_get_parts_snippet_with_external_sdk_different_channel(
-    kde-neon_extension_with_default_build_snap_from_latest_edge,
+    kde_neon_extension_with_default_build_snap_from_latest_edge,
 ):
     assert (
-        kde-neon_extension_with_default_build_snap_from_latest_edge.get_parts_snippet()
+        kde_neon_extension_with_default_build_snap_from_latest_edge.get_parts_snippet()
         == {
-            "kde-neon-extension": {
+            "kde_neon-extension": {
                 "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
                 "plugin": "make",
             }
