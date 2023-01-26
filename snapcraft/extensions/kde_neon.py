@@ -27,11 +27,13 @@ from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
 _SDK_SNAP = {"core22": "kde-frameworks-5-102-qt-5-15-8-core22-sd"}
 
+
 @dataclasses.dataclass
 class ExtensionInfo:
-    """ Content/SDK build information"""
+    """Content/SDK build information"""
 
     cmake_args: str
+
 
 @dataclasses.dataclass
 class KDESnaps:
@@ -85,13 +87,7 @@ class KDENeon(Extension):
     def get_app_snippet(self) -> Dict[str, Any]:
         return {
             "command-chain": ["snap/command-chain/desktop-launch"],
-            "plugs": [
-                "desktop",
-                "desktop-legacy",
-                "opengl",
-                "wayland",
-                "x11"
-            ],
+            "plugs": ["desktop", "desktop-legacy", "opengl", "wayland", "x11"],
         }
 
     @functools.cached_property
@@ -119,7 +115,7 @@ class KDENeon(Extension):
     @functools.cached_property
     def ext_info(self) -> ExtensionInfo:
         """Return the extension info cmake_args, provider, content, build_snaps"""
-        cmake_args=f"-DCMAKE_FIND_ROOT_PATH=/snap/" + self.kde_snaps.sdk + f"/current"
+        cmake_args = f"-DCMAKE_FIND_ROOT_PATH=/snap/" + self.kde_snaps.sdk + f"/current"
 
         return ExtensionInfo(cmake_args=cmake_args)
 
@@ -159,6 +155,7 @@ class KDENeon(Extension):
             },
             "layout": {"/usr/share/X11": {"symlink": "$SNAP/kf5/usr/share/X11"}},
         }
+
     @overrides
     def get_part_snippet(self) -> Dict[str, Any]:
         sdk_snap = self.kde_snaps.sdk

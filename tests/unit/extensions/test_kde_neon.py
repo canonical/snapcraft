@@ -36,7 +36,13 @@ def kde_neon_extension_with_build_snap():
     return kde_neon.KDENeon(
         yaml_data={
             "base": "core22",
-            "parts": {"part1": {"build-snaps": ["kde-frameworks-5-102-qt-5-15-8-core22-sd/latest/stable"]}},
+            "parts": {
+                "part1": {
+                    "build-snaps": [
+                        "kde-frameworks-5-102-qt-5-15-8-core22-sd/latest/stable"
+                    ]
+                }
+            },
         },
         arch="amd64",
         target_arch="amd64",
@@ -48,7 +54,13 @@ def kde_neon_extension_with_default_build_snap_from_latest_edge():
     return kde_neon.KDENeon(
         yaml_data={
             "base": "core22",
-            "parts": {"part1": {"build-snaps": ["kde-frameworks-5-102-qt-5-15-8-core22-sd/latest/edge"]}},
+            "parts": {
+                "part1": {
+                    "build-snaps": [
+                        "kde-frameworks-5-102-qt-5-15-8-core22-sd/latest/edge"
+                    ]
+                }
+            },
         },
         arch="amd64",
         target_arch="amd64",
@@ -75,11 +87,7 @@ def test_is_experimental():
 def test_get_app_snippet(kde_neon_extension):
     assert kde_neon_extension.get_app_snippet() == {
         "command-chain": ["snap/command-chain/desktop-launch"],
-        "plugs": ["desktop",
-                "desktop-legacy",
-                "opengl",
-                "wayland",
-                "x11"],
+        "plugs": ["desktop", "desktop-legacy", "opengl", "wayland", "x11"],
     }
 
 
@@ -88,30 +96,30 @@ def test_get_root_snippet(kde_neon_extension):
         "assumes": ["snapd2.43"],
         "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
         "hooks": {
-                "configure": {
-                    "plugs": ["desktop"],
-                    "command-chain": ["snap/command-chain/hooks-configure-desktop"],
-                }
+            "configure": {
+                "plugs": ["desktop"],
+                "command-chain": ["snap/command-chain/hooks-configure-desktop"],
+            }
         },
         "layout": {"/usr/share/X11": {"symlink": "$SNAP/kf5/usr/share/X11"}},
         "plugs": {
-                "desktop": {"mount-host-font-cache": False},
-                "icon-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/icons",
-                    "default-provider": "gtk-common-themes",
-                },
-                "sound-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/sounds",
-                    "default-provider": "gtk-common-themes",
-                },
-                "kde-frameworks-5-102-qt-5-15-8-core22": {
-                    "content": "kde-frameworks-5-102-qt-5-15-8-core22-all",
-                    "interface": "content",
-                    "default-provider": "kde-frameworks-5-102-qt-5-15-8-core22",
-                    "target": "$SNAP/kf5",
-                },
+            "desktop": {"mount-host-font-cache": False},
+            "icon-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/icons",
+                "default-provider": "gtk-common-themes",
+            },
+            "sound-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/sounds",
+                "default-provider": "gtk-common-themes",
+            },
+            "kde-frameworks-5-102-qt-5-15-8-core22": {
+                "content": "kde-frameworks-5-102-qt-5-15-8-core22-all",
+                "interface": "content",
+                "default-provider": "kde-frameworks-5-102-qt-5-15-8-core22",
+                "target": "$SNAP/kf5",
+            },
         },
     }
 
@@ -121,30 +129,30 @@ def test_get_root_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
         "assumes": ["snapd2.43"],
         "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
         "hooks": {
-                "configure": {
-                    "plugs": ["desktop"],
-                    "command-chain": ["snap/command-chain/hooks-configure-desktop"],
-                }
+            "configure": {
+                "plugs": ["desktop"],
+                "command-chain": ["snap/command-chain/hooks-configure-desktop"],
+            }
         },
         "layout": {"/usr/share/X11": {"symlink": "$SNAP/kf5/usr/share/X11"}},
         "plugs": {
-                "desktop": {"mount-host-font-cache": False},
-                "icon-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/icons",
-                    "default-provider": "gtk-common-themes",
-                },
-                "sound-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/sounds",
-                    "default-provider": "gtk-common-themes",
-                },
-                "kde-frameworks-5-102-qt-5-15-8-core22": {
-                    "content": "kde-frameworks-5-102-qt-5-15-8-core22-all",
-                    "interface": "content",
-                    "default-provider": "kde-frameworks-5-102-qt-5-15-8-core22",
-                    "target": "$SNAP/kf5",
-                },
+            "desktop": {"mount-host-font-cache": False},
+            "icon-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/icons",
+                "default-provider": "gtk-common-themes",
+            },
+            "sound-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/sounds",
+                "default-provider": "gtk-common-themes",
+            },
+            "kde-frameworks-5-102-qt-5-15-8-core22": {
+                "content": "kde-frameworks-5-102-qt-5-15-8-core22-all",
+                "interface": "content",
+                "default-provider": "kde-frameworks-5-102-qt-5-15-8-core22",
+                "target": "$SNAP/kf5",
+            },
         },
     }
 
@@ -165,10 +173,13 @@ class TestGetPartSnippet:
     @staticmethod
     def assert_get_part_snippet(kde_neon_instance):
         assert kde_neon_instance.get_part_snippet() == {
-             "build-environment": [
+            "build-environment": [
                 {
                     "PATH": prepend_to_env(
-                        "PATH", [f"/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/usr/bin"]
+                        "PATH",
+                        [
+                            f"/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/usr/bin"
+                        ]
                     ),
                 },
                 {
@@ -232,7 +243,9 @@ class TestGetPartSnippet:
                 {
                     "SNAPCRAFT_CMAKE_ARGS": prepend_to_env(
                         "SNAPCRAFT_CMAKE_ARGS",
-                        ["-DCMAKE_FIND_ROOT_PATH=/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current"],
+                        [
+                            "-DCMAKE_FIND_ROOT_PATH=/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current"
+                        ],
                     ),
                 },
             ],
@@ -242,7 +255,9 @@ class TestGetPartSnippet:
 def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
     assert kde_neon_extension_with_build_snap.get_part_snippet() == {
         "build-environment": [
-            {"PATH": "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/usr/bin${PATH:+:$PATH}"},
+            {
+                "PATH": "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/usr/bin${PATH:+:$PATH}"
+            },
             {
                 "XDG_DATA_DIRS": (
                     "$SNAPCRAFT_STAGE/usr/share:/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd"
@@ -304,12 +319,12 @@ def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
 def test_get_parts_snippet(kde_neon_extension):
     assert kde_neon_extension.get_parts_snippet() == {
         "kde-neon-extension": {
-                "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
-                "source-subdir": "kde-neon",
-                "plugin": "make",
-                "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22-all"],
-                "build-packages": ["g++"],
-                "build-snaps": ["kde-frameworks-5-102-qt-5-15-8-core22-sd"],
+            "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
+            "source-subdir": "kde-neon",
+            "plugin": "make",
+            "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22-all"],
+            "build-packages": ["g++"],
+            "build-snaps": ["kde-frameworks-5-102-qt-5-15-8-core22-sd"],
         }
     }
 
