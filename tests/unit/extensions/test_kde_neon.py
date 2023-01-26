@@ -305,12 +305,12 @@ def test_get_parts_snippet(kde_neon_extension):
     assert kde_neon_extension.get_parts_snippet() == {
         "kde-neon-extension": {
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
-                "source-subdir": "kde_neon",
+                "source-subdir": "kde-neon",
                 "plugin": "make",
                 "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22-all"],
                 "build-packages": ["g++"],
                 "build-snaps": ["kde-frameworks-5-102-qt-5-15-8-core22-sd"],
-            }
+        }
     }
 
 def test_get_parts_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
