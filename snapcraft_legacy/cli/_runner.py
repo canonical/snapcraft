@@ -91,17 +91,26 @@ def configure_requests_ca() -> None:
 @click.pass_context
 @add_provider_options(hidden=True)
 @click.option("--debug", "-d", is_flag=True)
+@click.option("--verbose", "-v", is_flag=True)
 def run(ctx, debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""
 
     is_snapcraft_developer_debug = kwargs["enable_developer_debug"]
+    verbose = kwargs["verbose"]
+
     if is_snapcraft_developer_debug:
+        if verbose:
+            raise click.BadArgumentUsage(
+                "The 'enable-developer-debug' and 'verbose' options are "
+                "mutually exclusive."
+            )
         log_level = logging.DEBUG
         click.echo(
             "Starting snapcraft {} from {}.".format(
                 snapcraft_legacy.__version__, os.path.dirname(__file__)
             )
         )
+    # verbose is the default log level so no need to check if `--verbose` was passed
     else:
         log_level = logging.INFO
 

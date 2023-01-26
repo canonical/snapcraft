@@ -1,0 +1,24 @@
+summary: Test verbosity arguments
+
+prepare: |
+  snapcraft init
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base snap/snapcraft.yaml
+
+restore: |
+  rm -rf test-snap
+  rm -rf ./*.snap
+
+execute: |
+  # run with the default command
+  snapcraft --verbose
+
+  # run with an argument after a lifecycle command
+  snapcraft pull --verbose
+  snapcraft pull -v
+
+  # run with an argument before a lifecycle command
+  snapcraft --verbose pull
+  snapcraft -v pull

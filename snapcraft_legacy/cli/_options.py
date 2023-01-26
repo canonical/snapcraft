@@ -72,50 +72,50 @@ _HIDDEN_PROVIDERS = ["managed-host"]
 _ALL_PROVIDERS = _SUPPORTED_PROVIDERS + _HIDDEN_PROVIDERS
 _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
     dict(
-        param_decls="--target-arch",
+        param_decls=["--target-arch"],
         metavar="<arch>",
         help="Target architecture to cross compile to",
         supported_providers=["host", "lxd", "multipass"],
     ),
     dict(
-        param_decls="--debug",
+        param_decls=["--debug"],
         is_flag=True,
         help="Shells into the environment if the build fails.",
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
-        param_decls="--shell",
+        param_decls=["--shell"],
         is_flag=True,
         help="Shells into the environment in lieu of the step to run.",
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
-        param_decls="--offline",
+        param_decls=["--offline"],
         is_flag=True,
         help="Operate in offline mode.",
         envvar="SNAPCRAFT_OFFLINE",
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
-        param_decls="--shell-after",
+        param_decls=["--shell-after"],
         is_flag=True,
         help="Shells into the environment after the step has run.",
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
-        param_decls="--destructive-mode",
+        param_decls=["--destructive-mode"],
         is_flag=True,
         help="Forces snapcraft to try and use the current host to build (implies `--provider=host`).",
         supported_providers=["host", "managed-host"],
     ),
     dict(
-        param_decls="--use-lxd",
+        param_decls=["--use-lxd"],
         is_flag=True,
         help="Forces snapcraft to use LXD to build (implies `--provider=lxd`).",
         supported_providers=["lxd"],
     ),
     dict(
-        param_decls="--provider",
+        param_decls=["--provider"],
         envvar="SNAPCRAFT_BUILD_ENVIRONMENT",
         show_envvar=False,
         help="Build provider to use.",
@@ -124,21 +124,21 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         supported_providers=_ALL_PROVIDERS,
     ),
     dict(
-        param_decls="--http-proxy",
+        param_decls=["--http-proxy"],
         metavar="<http-proxy>",
         help="HTTP proxy for host build environments.",
         envvar="http_proxy",
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
-        param_decls="--https-proxy",
+        param_decls=["--https-proxy"],
         metavar="<https-proxy>",
         help="HTTPS proxy for host build environments.",
         envvar="https_proxy",
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
-        param_decls="--add-ca-certificates",
+        param_decls=["--add-ca-certificates"],
         metavar="<certificate-path>",
         help="File or directory containing CA certificates to install into build environments.",
         envvar="SNAPCRAFT_ADD_CA_CERTIFICATES",
@@ -148,14 +148,14 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         ),
     ),
     dict(
-        param_decls="--bind-ssh",
+        param_decls=["--bind-ssh"],
         is_flag=True,
         help="Bind ~/.ssh directory to locally-run build environments.",
         envvar="SNAPCRAFT_BIND_SSH",
         supported_providers=["lxd", "multipass"],
     ),
     dict(
-        param_decls="--enable-developer-debug",
+        param_decls=["--enable-developer-debug"],
         is_flag=True,
         help="Enable developer debug logging.",
         envvar="SNAPCRAFT_ENABLE_DEVELOPER_DEBUG",
@@ -163,7 +163,7 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         hidden=True,
     ),
     dict(
-        param_decls="--enable-manifest",
+        param_decls=["--enable-manifest"],
         is_flag=True,
         type=BoolParamType(),
         help="Generate snap manifest.",
@@ -172,7 +172,7 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         hidden=True,
     ),
     dict(
-        param_decls="--manifest-image-information",
+        param_decls=["--manifest-image-information"],
         metavar="<json string>",
         help="Set snap manifest image-info",
         envvar="SNAPCRAFT_IMAGE_INFO",
@@ -180,31 +180,37 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         hidden=True,
     ),
     dict(
-        param_decls="--enable-experimental-extensions",
+        param_decls=["--enable-experimental-extensions"],
         is_flag=True,
         help="Enable extensions that are experimental and not considered stable.",
         envvar="SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS",
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
-        param_decls="--enable-experimental-target-arch",
+        param_decls=["--enable-experimental-target-arch"],
         is_flag=True,
         help="Enable experimental `--target-arch` support for core20.",
         envvar="SNAPCRAFT_ENABLE_EXPERIMENTAL_TARGET_ARCH",
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
-        param_decls="--ua-token",
+        param_decls=["--ua-token"],
         metavar="<ua-token>",
         help="Configure build environment with ESM using specified UA token.",
         envvar="SNAPCRAFT_UA_TOKEN",
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
-        param_decls="--enable-experimental-ua-services",
+        param_decls=["--enable-experimental-ua-services"],
         is_flag=True,
         help="Allow selection of UA services to enable.",
         envvar="SNAPCRAFT_ENABLE_EXPERIMENTAL_UA_SERVICES",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+    ),
+    dict(
+        param_decls=["--verbose", "-v"],
+        is_flag=True,
+        help="Show debug information and be more verbose.",
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
 ]
@@ -222,7 +228,7 @@ def _add_options(options, func, hidden):
             option.pop("supported_providers")
 
         hidden_override = option.pop("hidden", hidden)
-        click_option = click.option(param_decls, **option, hidden=hidden_override)
+        click_option = click.option(*param_decls, **option, hidden=hidden_override)
         func = click_option(func)
     return func
 
@@ -264,12 +270,13 @@ def _sanity_check_build_provider_flags(build_provider: str, **kwargs) -> None:
     # change defaults, so they are safe to ignore due to filtering
     # in get_build_provider_flags().
     for option in _PROVIDER_OPTIONS:
-        key: str = option["param_decls"]  # type: ignore
+        keys: List[str] = option["param_decls"]  # type: ignore
         supported_providers: List[str] = option["supported_providers"]  # type: ignore
-        if key in sys.argv and build_provider not in supported_providers:
-            raise click.BadArgumentUsage(
-                f"{key} cannot be used with build provider {build_provider!r}"
-            )
+        for key in keys:
+            if key in sys.argv and build_provider not in supported_providers:
+                raise click.BadArgumentUsage(
+                    f"{key} cannot be used with build provider {build_provider!r}"
+                )
 
     # Check if running as sudo but only if the host is not managed-host where Snapcraft
     # runs as root already. This effectively avoids the warning when using the default
@@ -336,9 +343,11 @@ def get_build_provider(**kwargs) -> str:
 
 def _param_decls_to_kwarg(key: str) -> str:
     """Format a param_decls to keyword argument name."""
-
-    # Drop leading "--".
-    key = key.replace("--", "", 1)
+    # Drop leading dashes ("-" or "--")
+    if key.startswith("--"):
+        key = key.replace("--", "", 1)
+    elif key.startswith("-"):
+        key = key.replace("-", "", 1)
 
     # Convert dashes to underscores.
     return key.replace("-", "_")
@@ -354,27 +363,28 @@ def get_build_provider_flags(build_provider: str, **kwargs) -> Dict[str, str]:
         raise RuntimeError(f"Invalid build provider: {build_provider}")
 
     for option in _PROVIDER_OPTIONS:
-        key: str = option["param_decls"]  # type: ignore
+        keys: List[str] = option["param_decls"]  # type: ignore
         is_flag: bool = option.get("is_flag", False)  # type: ignore
         envvar: Optional[str] = option.get("envvar")  # type: ignore
         supported_providers: List[str] = option["supported_providers"]  # type: ignore
 
-        # Skip --provider option.
-        if key == "--provider":
-            continue
+        for key in keys:
+            # Skip --provider option.
+            if key == "--provider":
+                continue
 
-        # Skip options that do not apply to configured provider.
-        if build_provider not in supported_providers:
-            continue
+            # Skip options that do not apply to configured provider.
+            if build_provider not in supported_providers:
+                continue
 
-        # Skip boolean flags that have not been set.
-        key_formatted = _param_decls_to_kwarg(key)
-        if is_flag and not kwargs.get(key_formatted):
-            continue
+            # Skip boolean flags that have not been set.
+            key_formatted = _param_decls_to_kwarg(key)
+            if is_flag and not kwargs.get(key_formatted):
+                continue
 
-        # Add build provider flag using envvar as key.
-        if envvar is not None and key_formatted in kwargs:
-            build_provider_flags[envvar] = kwargs[key_formatted]
+            # Add build provider flag using envvar as key.
+            if envvar is not None and key_formatted in kwargs:
+                build_provider_flags[envvar] = kwargs[key_formatted]
 
     return build_provider_flags
 
