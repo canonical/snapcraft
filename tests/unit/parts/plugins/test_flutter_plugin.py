@@ -67,7 +67,6 @@ def test_get_build_commands(part_info):
         "flutter precache --linux",
         "flutter pub get",
         "flutter build linux --release --verbose --target lib/main.dart",
-        "mkdir -p $CRAFT_PART_INSTALL/bin/",
         "cp -r build/linux/*/release/bundle/* $CRAFT_PART_INSTALL/",
     ]
 
@@ -84,7 +83,6 @@ def test_get_build_commands_alternative_target(part_info):
         "flutter precache --linux",
         "flutter pub get",
         "flutter build linux --release --verbose --target lib/not-main.dart",
-        "mkdir -p $CRAFT_PART_INSTALL/bin/",
         "cp -r build/linux/*/release/bundle/* $CRAFT_PART_INSTALL/",
     ]
 
@@ -102,7 +100,6 @@ def test_get_build_commands_different_channels(part_info, value):
         "flutter precache --linux",
         "flutter pub get",
         "flutter build linux --release --verbose --target lib/main.dart",
-        "mkdir -p $CRAFT_PART_INSTALL/bin/",
         "cp -r build/linux/*/release/bundle/* $CRAFT_PART_INSTALL/",
     ]
 
@@ -114,6 +111,5 @@ def test_get_build_commands_flutter_bin_exists(part_info):
 
     assert plugin.get_build_commands() == [
         "flutter build linux --release --verbose --target lib/main.dart",
-        "mkdir -p $CRAFT_PART_INSTALL/bin/",
         "cp -r build/linux/*/release/bundle/* $CRAFT_PART_INSTALL/",
     ]

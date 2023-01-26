@@ -115,7 +115,6 @@ class FlutterPlugin(plugins.Plugin):
 
         flutter_build_cmd = [
             f"flutter build linux --release --verbose --target {options.flutter_target}",
-            "mkdir -p $CRAFT_PART_INSTALL/bin/",
             "cp -r build/linux/*/release/bundle/* $CRAFT_PART_INSTALL/",
         ]
         return flutter_install_cmd + flutter_build_cmd
