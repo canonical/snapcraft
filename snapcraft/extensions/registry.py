@@ -16,7 +16,7 @@
 
 """Extension registry."""
 
-from typing import TYPE_CHECKING, Dict, List, Type
+from typing import Dict, List, Type, TYPE_CHECKING
 
 from snapcraft import errors
 

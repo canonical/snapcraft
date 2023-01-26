@@ -115,14 +115,14 @@ class KDENeon(Extension):
     @functools.cached_property
     def ext_info(self) -> ExtensionInfo:
         """Return the extension info cmake_args, provider, content, build_snaps"""
-        cmake_args = f"-DCMAKE_FIND_ROOT_PATH=/snap/" + self.kde_snaps.sdk + f"/current"
+        cmake_args = "-DCMAKE_FIND_ROOT_PATH=/snap/" + self.kde_snaps.sdk + "/current"
 
         return ExtensionInfo(cmake_args=cmake_args)
 
     @overrides
     def get_root_snippet(self) -> Dict[str, Any]:
         platform_snap = self.kde_snaps.content
-        content_snap = self.kde_snaps.content + f"-all"
+        content_snap = self.kde_snaps.content + "-all"
 
         return {
             "assumes": ["snapd2.43"],  # for 'snapctl is-connected'
@@ -244,7 +244,7 @@ class KDENeon(Extension):
         if self.kde_snaps.builtin:
             base = self.yaml_data["base"]
             sdk_snap = _SDK_SNAP[base]
-            provider = self.kde_snaps.content + f"-all"
+            provider = self.kde_snaps.content + "-all"
             return {
                 "kde-neon-extension": {
                     "source": str(source),
