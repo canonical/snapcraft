@@ -24,6 +24,15 @@ dev = [
 ]
 types = [
 ]
+docs = [
+    "sphinx==5.3.0",
+    "sphinx-copybutton==0.5.1",
+    "sphinx-design==0.3.0",
+    "sphinx-pydantic==0.1.1",
+    "sphinx-toolbox==3.4.0",
+    "sphinx-lint==0.6.7",
+    "furo==2022.12.07",
+]
 
 [build-system]
 requires = [

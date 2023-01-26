@@ -25,7 +25,9 @@ How to create a new project
 3. Rename any files or directories and ensure references are updated.
 4. Replace any appropriate `starcraft` references with the appropriate name.
 5. Put correct contact information into CODE_OF_CONDUCT.md
-6. Write a new README!
+6. Write a new README
+7. Import your documentation to ReadTheDocs_.
 
 .. _EditorConfig: https://editorconfig.org/
 .. _pre-commit: https://pre-commit.com/
+.. _ReadTheDocs: https://docs.readthedocs.io/en/stable/intro/import-guide.html
