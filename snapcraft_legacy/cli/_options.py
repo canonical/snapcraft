@@ -369,6 +369,8 @@ def get_build_provider_flags(build_provider: str, **kwargs) -> Dict[str, str]:
         supported_providers: List[str] = option["supported_providers"]  # type: ignore
 
         for key in keys:
+            # TODO: skip single character flags (e.g. keep `verbose` but discard `v`)
+
             # Skip --provider option.
             if key == "--provider":
                 continue
