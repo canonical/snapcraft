@@ -12,6 +12,8 @@ restore: |
   rm -rf ./*.snap
 
 execute: |
+  unset SNAPCRAFT_ENABLE_DEVELOPER_DEBUG
+
   # run with the default command
   snapcraft --verbose
 
