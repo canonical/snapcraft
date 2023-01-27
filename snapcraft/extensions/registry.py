@@ -16,13 +16,13 @@
 
 """Extension registry."""
 
-from typing import Dict, List, Type, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Type
 
 from snapcraft import errors
 
 from .gnome import GNOME
-from .ros2_humble import ROS2HumbleExtension
 from .kde_neon import KDENeon
+from .ros2_humble import ROS2HumbleExtension
 
 if TYPE_CHECKING:
     from .extension import Extension
