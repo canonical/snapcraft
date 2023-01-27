@@ -1,0 +1,12 @@
+name: remove-hook
+base: core22
+version: '1.0'
+summary: 'remove-hook'
+description: Verify remove hook works.
+grade: stable
+confinement: strict
+
+parts:
+  hello-world:
+    plugin: nil
+    source: .
