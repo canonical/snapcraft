@@ -115,7 +115,6 @@ class KDENeon(Extension):
     @functools.cached_property
     def ext_info(self) -> ExtensionInfo:
         """Return the extension info cmake_args, provider, content, build_snaps."""
-
         cmake_args = "-DCMAKE_FIND_ROOT_PATH=/snap/" + self.kde_snaps.sdk + "/current"
 
         return ExtensionInfo(cmake_args=cmake_args)
