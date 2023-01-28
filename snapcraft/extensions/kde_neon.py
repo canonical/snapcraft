@@ -30,7 +30,7 @@ _SDK_SNAP = {"core22": "kde-frameworks-5-102-qt-5-15-8-core22-sd"}
 
 @dataclasses.dataclass
 class ExtensionInfo:
-    """Content/SDK build information"""
+    """Content/SDK build information."""
 
     cmake_args: str
 
@@ -45,7 +45,7 @@ class KDESnaps:
 
 
 class KDENeon(Extension):
-    """The KDE Neon extension.
+    r"""The KDE Neon extension.
 
     This extension makes it easy to assemble KDE based applications
     using the Neon stack.
@@ -114,7 +114,8 @@ class KDENeon(Extension):
 
     @functools.cached_property
     def ext_info(self) -> ExtensionInfo:
-        """Return the extension info cmake_args, provider, content, build_snaps"""
+        """Return the extension info cmake_args, provider, content, build_snaps."""
+
         cmake_args = "-DCMAKE_FIND_ROOT_PATH=/snap/" + self.kde_snaps.sdk + "/current"
 
         return ExtensionInfo(cmake_args=cmake_args)
