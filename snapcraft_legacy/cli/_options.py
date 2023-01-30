@@ -354,9 +354,20 @@ def _param_decls_to_kwarg(key: str) -> str:
 
 
 def get_build_provider_flags(build_provider: str, **kwargs) -> Dict[str, str]:
-    """Get configured options applicable to build_provider."""
+    """Get provider options from kwargs for a build provider.
 
-    build_provider_flags: Dict[str, str] = dict()
+    Boolean options that are false are not collected from kwargs.
+    Options without an environment variable are not collected from kwargs.
+
+    :param build_provider: Build provider to collect options for. Valid providers are
+    'host', 'lxd', 'multipass', and 'managed-host'.
+    :param kwargs: Dictionary containing provider options.
+
+    :return: Dictionary of provider options with their environment variable as the key.
+
+    :raises RuntimeError: If build provider is invalid.
+    """
+    build_provider_flags: Dict[str, str] = {}
 
     # Should not happen - developer safety check.
     if build_provider not in _ALL_PROVIDERS:
