@@ -140,7 +140,8 @@ select = [  # Base linting rule selections.
     "ISC",  # Implicit string concatenation that can cause subtle issues
     "ICN",  # Only use common conventions for import aliases.
     "Q",  # Consistent quotations
-    "RET"  # Simpler logic after return, raise, continue or break
+    "RET",  # Simpler logic after return, raise, continue or break
+    "UP018", "C408",  # Convert type calls to literals. The latest pylint enforces this, but ruff has auto-fixes.
 ]
 extend-select = [
     # These sets are still frequently getting new rules.
@@ -187,6 +188,7 @@ ignore = [
     "S101",  # Allow assertions in tests
     "S103", # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
     "S108", # Allow Probable insecure usage of temporary file or directory
+    "PLR0913",  # Allow many arguments for test functions
 ]
 # isort leaves init files alone by default, this makes ruff ignore them too.
 "__init__.py" = ["I001"]
