@@ -1,6 +1,6 @@
-**************
-starcraft-base
-**************
+********
+starbase
+********
 
 A base repository for Starcraft projects.
 
