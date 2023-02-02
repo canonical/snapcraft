@@ -94,6 +94,7 @@ def test_get_app_snippet(kde_neon_extension):
 def test_get_root_snippet(kde_neon_extension):
     assert kde_neon_extension.get_root_snippet() == {
         "assumes": ["snapd2.43"],
+        "compression": "lzo",
         "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
         "hooks": {
             "configure": {
@@ -127,6 +128,7 @@ def test_get_root_snippet(kde_neon_extension):
 def test_get_root_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
     assert kde_neon_extension_with_build_snap.get_root_snippet() == {
         "assumes": ["snapd2.43"],
+        "compression": "lzo",
         "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
         "hooks": {
             "configure": {
