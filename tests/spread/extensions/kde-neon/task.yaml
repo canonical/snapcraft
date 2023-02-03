@@ -37,7 +37,7 @@ execute: |
   cd "$SNAP_DIR"
   output="$(snapcraft)"
   snap install neon-hello_*.snap --dangerous
-  snap connect neon-hello:kde-frameworks-5-102-qt-5-15-8-core22 kde-frameworks-5-102-qt-5-15-8-core22
+  snap connect neon-hello:kde-frameworks-5-99-qt-5-15-7-core20 kde-frameworks-5-99-qt-5-15-7-core20
 
   [ "$(neon-hello)" = "hello world" ]
 
