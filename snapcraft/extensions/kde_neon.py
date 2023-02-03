@@ -246,7 +246,7 @@ class KDENeon(Extension):
             sdk_snap = _SDK_SNAP[base]
             provider = self.kde_snaps.content + "-all"
             return {
-                "kde-neon-extension": {
+                "kde-neon-extension/sdk": {
                     "source": str(source),
                     "source-subdir": "kde-neon",
                     "plugin": "make",
@@ -257,7 +257,7 @@ class KDENeon(Extension):
             }
 
         return {
-            "kde-neon-extension": {
+            "kde-neon-extension/sdk": {
                 "source": str(source),
                 "plugin": "make",
             }

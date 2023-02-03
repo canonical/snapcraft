@@ -341,7 +341,7 @@ def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
 
 def test_get_parts_snippet(kde_neon_extension):
     assert kde_neon_extension.get_parts_snippet() == {
-        "kde-neon-extension": {
+        "kde-neon-extension/sdk": {
             "source": get_extensions_data_dir() / "desktop" / "command-chain",
             "source-subdir": "kde-neon",
             "plugin": "make",
@@ -356,7 +356,7 @@ def test_get_parts_snippet(kde_neon_extension):
 
 def test_get_parts_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
     assert kde_neon_extension_with_build_snap.get_parts_snippet() == {
-        "kde-neon-extension": {
+        "kde-neon-extension/sdk": {
             "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
             "plugin": "make",
         }
@@ -369,7 +369,7 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
     assert (
         kde_neon_extension_with_default_build_snap_from_latest_edge.get_parts_snippet()
         == {
-            "kde_neon-extension": {
+            "kde_neon-extension/sdk": {
                 "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
                 "plugin": "make",
             }
