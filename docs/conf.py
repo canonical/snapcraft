@@ -37,6 +37,9 @@ show_authors = False
 
 html_theme = "furo"
 html_static_path = ["_static"]
+html_css_files = [
+    "css/custom.css",
+]
 
 # endregion
 # region Options for extensions
