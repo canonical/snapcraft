@@ -176,70 +176,65 @@ class TestGetPartSnippet:
     def assert_get_part_snippet(kde_neon_instance):
         assert kde_neon_instance.get_part_snippet() == {
             "build-environment": [
-                {
-                    "PATH": (
-                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/usr/bin"
-                        + "${PATH:+:$PATH}"
-                    )
-                },
+                {"PATH":"/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/usr/bin${PATH:+:$PATH}"},
                 {
                     "XDG_DATA_DIRS": (
                         "$SNAPCRAFT_STAGE/usr/share:"
-                        + "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd"
+                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd"
                         "/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
                     )
                 },
                 {
                     "LD_LIBRARY_PATH": ":".join(
                         [
-                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                            + "lib/$CRAFT_ARCH_TRIPLET",
-                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                            + "usr/lib/$CRAFT_ARCH_TRIPLET",
-                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                            + "usr/lib",
-                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                            + "usr/lib/vala-current",
-                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                            + "usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
+                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                            lib/$CRAFT_ARCH_TRIPLET",
+                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                            usr/lib/$CRAFT_ARCH_TRIPLET",
+                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                            usr/lib",
+                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                            usr/lib/vala-current",
+                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                            usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
                         ]
                     )
                     + "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
                 },
                 {
                     "PKG_CONFIG_PATH": (
-                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                        + "usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig:"
-                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                        + "usr/lib/pkgconfig:"
-                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                        + "usr/share/pkgconfig"
+                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                        usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig:"
+                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                        usr/lib/pkgconfig:"
+                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                        usr/share/pkgconfig"
                         "${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
                     )
                 },
                 {
                     "GETTEXTDATADIRS": (
                         "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                        + "usr/share/gettext-current"
+                        "usr/share/gettext-current"
                         "${GETTEXTDATADIRS:+:$GETTEXTDATADIRS}"
                     )
                 },
                 {
                     "ACLOCAL_PATH": (
                         "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                        + "usr/share/aclocal"
+                        "usr/share/aclocal"
                         "${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
                     )
                 },
                 {
                     "PYTHONPATH": ":".join(
                         [
-                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                            + "usr/lib/python3.10",
-                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                            + "usr/lib/python3/dist-packages",
-                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                            + "usr/lib/$CRAFT_ARCH_TRIPLET",
+                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                            usr/lib/python3.10",
+                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                            usr/lib/python3/dist-packages",
+                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                            usr/lib/$CRAFT_ARCH_TRIPLET",
                             "/gobject-introspection",
                         ]
                     )
@@ -248,7 +243,7 @@ class TestGetPartSnippet:
                 {
                     "SNAPCRAFT_CMAKE_ARGS": (
                         "-DCMAKE_FIND_ROOT_PATH="
-                        + "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current"
+                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current"
                     )
                 },
             ]
@@ -258,70 +253,65 @@ class TestGetPartSnippet:
 def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
     assert kde_neon_extension_with_build_snap.get_part_snippet() == {
         "build-environment": [
-            {
-                "PATH": (
-                    "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/usr/bin"
-                    + "${PATH:+:$PATH}"
-                )
-            },
+            {"PATH":"/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/usr/bin${PATH:+:$PATH}"},
             {
                 "XDG_DATA_DIRS": (
                     "$SNAPCRAFT_STAGE/usr/share:"
-                    + "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd"
+                    "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd"
                     "/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
                 )
             },
             {
                 "LD_LIBRARY_PATH": ":".join(
                     [
-                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                        + "lib/$CRAFT_ARCH_TRIPLET",
-                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                        + "usr/lib/$CRAFT_ARCH_TRIPLET",
-                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                        + "usr/lib",
-                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                        + "usr/lib/vala-current",
-                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                        + "usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
+                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                        lib/$CRAFT_ARCH_TRIPLET",
+                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                        usr/lib/$CRAFT_ARCH_TRIPLET",
+                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                        usr/lib",
+                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                        usr/lib/vala-current",
+                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                        usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
                     ]
                 )
                 + "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
             },
             {
                 "PKG_CONFIG_PATH": (
-                    "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                    + "usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig:"
-                    "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                    + "usr/lib/pkgconfig:"
-                    "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                    + "usr/share/pkgconfig"
+                    "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                    usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig:"
+                    "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                    usr/lib/pkgconfig:"
+                    "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                    usr/share/pkgconfig"
                     "${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
                 )
             },
             {
                 "GETTEXTDATADIRS": (
                     "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                    + "usr/share/gettext-current"
+                    "usr/share/gettext-current"
                     "${GETTEXTDATADIRS:+:$GETTEXTDATADIRS}"
                 )
             },
             {
                 "ACLOCAL_PATH": (
                     "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                    + "usr/share/aclocal"
+                    "usr/share/aclocal"
                     "${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
                 )
             },
             {
                 "PYTHONPATH": ":".join(
                     [
-                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                        + "usr/lib/python3.10",
-                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                        + "usr/lib/python3/dist-packages",
-                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                        + "usr/lib/$CRAFT_ARCH_TRIPLET",
+                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                        usr/lib/python3.10",
+                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                        usr/lib/python3/dist-packages",
+                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                        usr/lib/$CRAFT_ARCH_TRIPLET",
                         "/gobject-introspection",
                     ]
                 )
@@ -330,7 +320,7 @@ def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
             {
                 "SNAPCRAFT_CMAKE_ARGS": (
                     "-DCMAKE_FIND_ROOT_PATH="
-                    + "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current"
+                    "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current"
                 )
             },
         ]
