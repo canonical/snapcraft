@@ -4,15 +4,9 @@ summary: Build and run a basic kde snap using extensions
 # available on a subset of all the architectures this testbed
 # can run on.
 systems:
-  - ubuntu-18.04
-  - ubuntu-18.04-64
-  - ubuntu-18.04-amd64
   - ubuntu-20.04
   - ubuntu-20.04-64
   - ubuntu-20.04-amd64
-  - ubuntu-22.04
-  - ubuntu-22.04-64
-  - ubuntu-22.04-amd64
 
 environment:
   SNAP_DIR: ../snaps/neon-hello
