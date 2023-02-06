@@ -16,7 +16,7 @@
 
 """Library linter implementation."""
 
-from pathlib import Path, PurePath
+from pathlib import Path
 from typing import List
 
 from craft_cli import emit
@@ -80,7 +80,7 @@ class LibraryLinter(Linter):
         elf_file: ElfFile,
         *,
         search_paths: List[Path],
-        dependencies: List[str],
+        dependencies: List[Path],
         issues: List[LinterIssue],
     ) -> None:
         """Check if ELF executable dependencies are satisfied by snap files.
@@ -98,21 +98,19 @@ class LibraryLinter(Linter):
         emit.debug(f"dynamic linker name is: {linker_name!r}")
 
         for dependency in dependencies:
-            dependency_path = PurePath(dependency)
-
             # the dynamic linker is not a regular library
-            if linker_name == dependency_path.name:
+            if linker_name == dependency.name:
                 continue
 
             for path in search_paths:
-                if path in dependency_path.parents:
+                if path in dependency.parents:
                     break
             else:
                 issue = LinterIssue(
                     name=self._name,
                     result=LinterResult.WARNING,
                     filename=str(elf_file.path),
-                    text=f"missing dependency {dependency_path.name!r}.",
+                    text=f"missing dependency {dependency.name!r}.",
                     url="https://snapcraft.io/docs/linters-library",
                 )
                 issues.append(issue)
