@@ -132,7 +132,6 @@ class DotNetProjectBaseTest(PluginsV1BaseTestCase):
 
 
 class TestDotNetErrors:
-
     scenarios = (
         (
             "DotNetBadArchitectureError",

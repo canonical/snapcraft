@@ -24,7 +24,6 @@ from snapcraft_legacy.internal.pluginhandler._dirty_report import (
 
 
 class TestDirtyReportGetReport:
-
     property_scenarios = [
         ("no properties", dict(dirty_properties=None, properties_report="")),
         (
@@ -122,7 +121,6 @@ class TestDirtyReportGetReport:
 
 
 class TestDirtyReportGetSummary:
-
     scenarios = [
         (
             "single property",

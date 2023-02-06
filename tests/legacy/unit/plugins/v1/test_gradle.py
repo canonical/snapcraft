@@ -204,7 +204,6 @@ def test_build_war_gradlew(mock_run, gradle_plugin_with_assets):
 
 
 class TestGradleProxies:
-
     scenarios = [
         (
             "http proxy url",

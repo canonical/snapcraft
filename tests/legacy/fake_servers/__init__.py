@@ -64,7 +64,6 @@ class FakePartsServer(http.server.HTTPServer):
 
 
 class FakePartsRequestHandler(BaseHTTPRequestHandler):
-
     _date_format = "%a, %d %b %Y %H:%M:%S GMT"
     _parts_date = datetime(2016, 7, 7, 10, 0, 20)
 
@@ -244,7 +243,6 @@ class FakeSSOServer(http.server.HTTPServer):
 
 
 class FakeSSORequestHandler(BaseHTTPRequestHandler):
-
     _API_PATH = "/api/v2/"
 
     def do_POST(self):

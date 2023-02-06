@@ -317,7 +317,6 @@ class AntPluginUnsupportedBase(PluginsV1BaseTestCase):
 
 
 class TestUnsupportedJDKVersionError:
-
     scenarios = (
         (
             "core18",

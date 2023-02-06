@@ -18,7 +18,6 @@ from snapcraft_legacy.internal.repo import errors
 
 
 class TestErrorFormatting:
-
     scenarios = (
         (
             "SnapdConnectionError",
@@ -38,7 +37,6 @@ class TestErrorFormatting:
 
 
 class TestAptGPGKeyInstallError:
-
     scenarios = [
         (
             "AptGPGKeyInstallError basic",

@@ -36,7 +36,6 @@ def load_tests(loader, tests, ignore):
 
 
 class TestPartGrammarSource:
-
     source_scenarios = [
         (
             "empty",
@@ -238,7 +237,6 @@ class TestPartGrammarSource:
 
 
 class TestPartGrammarBuildAndStageSnaps:
-
     source_scenarios = [
         (
             "empty",
@@ -395,7 +393,6 @@ class TestPartGrammarBuildAndStageSnaps:
 
 
 class TestPartGrammarStagePackages:
-
     source_scenarios = [
         (
             "empty",
@@ -528,7 +525,6 @@ class TestPartGrammarStagePackages:
 
 
 class TestPartGrammarBuildPackages:
-
     source_scenarios = [
         (
             "empty",
