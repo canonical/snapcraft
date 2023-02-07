@@ -637,7 +637,6 @@ class StrangeExceptionWithFormatting(errors.SnapcraftException):
 
 
 class TestSnapcraftExceptionTests:
-
     scenarios = (
         (
             "StrangeExceptionSimple",

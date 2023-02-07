@@ -29,7 +29,6 @@ from . import PluginsV1BaseTestCase
 
 
 class CondaPluginBaseTest(PluginsV1BaseTestCase):
-
     deb_arch = None
 
     def setUp(self):

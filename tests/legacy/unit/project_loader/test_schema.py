@@ -45,7 +45,6 @@ def get_project_config(snapcraft_yaml_content, target_deb_arch=None):
 
 
 class TestValidArchitectures:
-
     yaml_scenarios = [
         (
             "none",

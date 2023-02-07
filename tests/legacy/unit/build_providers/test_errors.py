@@ -18,7 +18,6 @@ from snapcraft_legacy.internal.build_providers import errors
 
 
 class TestErrorFormatting:
-
     scenarios = [
         (
             "ProviderNotSupportedError",

@@ -125,7 +125,6 @@ class _Library:
         arch_tuple: _ElfArchitectureTuple,
         soname_cache: SonameCache,
     ) -> None:
-
         self.soname = soname
         self.soname_path = soname_path
         self.search_paths = search_paths

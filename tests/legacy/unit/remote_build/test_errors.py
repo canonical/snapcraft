@@ -18,7 +18,6 @@ from snapcraft_legacy.internal.remote_build import errors
 
 
 class TestSnapcraftException:
-
     scenarios = (
         (
             "LaunchpadGitPushError",

@@ -161,7 +161,6 @@ def _ignore_matching_filenames(
         return
 
     for issue in issues:
-
         files = lint.ignored_files(issue.name)
         for pattern in files:
             if (

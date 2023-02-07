@@ -49,7 +49,6 @@ class DumbTerminalTests(unit.TestCase):
 
 
 class TestProgressBarInitialization:
-
     scenarios = [("Terminal", {"is_dumb": True}), ("Dumb Terminal", {"is_dumb": False})]
 
     def test_init_progress_bar_with_length(self, monkeypatch, is_dumb):

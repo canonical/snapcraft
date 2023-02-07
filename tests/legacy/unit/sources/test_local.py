@@ -342,7 +342,6 @@ class TestLocalUpdate(unit.TestCase):
 
 
 class TestLocalUpdateSnapcraftYaml:
-
     scenarios = [
         ("snapcraft.yaml", dict(snapcraft_file="snapcraft.yaml")),
         (".snapcraft.yaml", dict(snapcraft_file=".snapcraft.yaml")),

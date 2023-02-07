@@ -24,7 +24,6 @@ from . import CommandBaseTestCase
 
 
 class ListPluginsCommandTestCase(CommandBaseTestCase):
-
     command_name = "list-plugins"
 
     default_plugin_output = (

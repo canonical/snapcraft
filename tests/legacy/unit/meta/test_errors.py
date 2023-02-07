@@ -18,7 +18,6 @@ from snapcraft_legacy.internal.meta import errors
 
 
 class TestErrorFormatting:
-
     scenarios = (
         (
             "MissingSnapcraftYamlKeysError",
@@ -153,7 +152,6 @@ class TestErrorFormatting:
 
 
 class TestSnapcraftException:
-
     scenarios = (
         (
             "GradeDevelRequiredError",

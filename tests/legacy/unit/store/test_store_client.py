@@ -49,12 +49,10 @@ class StoreTestCase(unit.TestCase):
 
 
 class DownloadTestCase(StoreTestCase):
-
     # sha3-384 of tests/data/test-snap.snap
     EXPECTED_SHA3_384 = ""
 
     def test_download_nonexistent_snap_raises_exception(self):
-
         raised = self.assertRaises(
             errors.SnapNotFoundError,
             self.client.download,
@@ -792,7 +790,6 @@ class GetSnapStatusTestCase(StoreTestCase):
         )
 
     def test_get_snap_status_filter_by_unknown_arch(self):
-
         raised = self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.client.get_snap_status,

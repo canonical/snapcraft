@@ -18,7 +18,6 @@ from snapcraft_legacy.internal.lifecycle import errors
 
 
 class TestErrorFormatting:
-
     scenarios = (
         (
             "PackVerificationError",

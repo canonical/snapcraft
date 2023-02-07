@@ -20,7 +20,6 @@ from snapcraft_legacy.internal import sources
 
 
 class TestUri:
-
     scenarios = [
         ("tar.gz", dict(result="tar", source="https://golang.tar.gz")),
         ("tar.gz", dict(result="tar", source="https://golang.tar.xz")),
@@ -43,7 +42,6 @@ class TestUri:
 
 
 class TestSourceWithBranchErrors:
-
     scenarios = [
         (
             "bzr with source branch",
@@ -136,7 +134,6 @@ class TestSourceWithBranchErrors:
 
 
 class TestSourceWithBranchAndTagErrors:
-
     scenarios = [
         (
             "git with source branch and tag",
