@@ -119,6 +119,8 @@ install_requires = [
     "requests-toolbelt",
     "requests-unixsocket",
     "requests",
+    # pin setuptools<66 (CRAFT-1598)
+    "setuptools<66",
     "simplejson",
     "snap-helpers",
     "tabulate",

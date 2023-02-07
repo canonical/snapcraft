@@ -324,6 +324,7 @@ class ElfFile:
     def is_linker_compatible(self, *, linker_version: str) -> bool:
         """Determine if the linker will work given the required glibc version."""
         version_required = self.get_required_glibc()
+        # TODO: pkg_resources is deprecated in setuptools>66 (CRAFT-1598)
         is_compatible = parse_version(version_required) <= parse_version(linker_version)
         emit.debug(
             f"Check if linker {linker_version!r} works with GLIBC_{version_required} "
@@ -342,6 +343,7 @@ class ElfFile:
                 if not version.startswith("GLIBC_"):
                     continue
                 version = version[6:]
+                # TODO: pkg_resources is deprecated in setuptools>66 (CRAFT-1598)
                 if parse_version(version) > parse_version(version_required):
                     version_required = version
 
