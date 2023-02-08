@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2022 Canonical Ltd.
+# Copyright 2016-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -136,3 +136,8 @@ def get_arch_triplet() -> str:
         raise RuntimeError(f"Arch triplet not defined for arch {arch!r}")
 
     return arch_config.arch_triplet
+
+
+def get_all_arch_triplets() -> List[str]:
+    """Get a list of all architecture triplets."""
+    return [architecture.arch_triplet for architecture in _ARCH_CONFIG.values()]
