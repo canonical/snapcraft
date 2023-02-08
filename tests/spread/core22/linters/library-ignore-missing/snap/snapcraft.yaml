@@ -1,11 +1,16 @@
-name: library-missing
+name: library-ignore-missing
 base: core22
 version: '0.1'
-summary: Raise linter warnings for missing libraries
+summary: Ignore missing library linter issues
 description: spread test
 
 grade: devel
 confinement: strict
+
+lint:
+  ignore:
+    - library:
+      - linter-test
 
 parts:
   my-part:

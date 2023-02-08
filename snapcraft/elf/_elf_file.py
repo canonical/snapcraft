@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2022 Canonical Ltd.
+# Copyright 2016-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -357,7 +357,7 @@ class ElfFile:
         content_dirs: List[Path],
         arch_triplet: str,
         soname_cache: Optional[SonameCache] = None,
-    ) -> Set[str]:
+    ) -> Set[Path]:
         """Load the set of libraries that are needed to satisfy elf's runtime.
 
         This may include libraries contained within the project.
@@ -365,9 +365,11 @@ class ElfFile:
 
         :param root_path: the root path to search for missing dependencies.
         :param base_path: the core base path to search for missing dependencies.
+        :param content_dirs: list of paths sourced from content snaps.
+        :param arch_triplet: architecture triplet of the platform.
         :param soname_cache: a cache of previously search dependencies.
 
-        :returns: a set of string with paths to the library dependencies of elf.
+        :returns: a set of paths to the library dependencies of elf.
         """
         if soname_cache is None:
             soname_cache = SonameCache()
@@ -403,10 +405,10 @@ class ElfFile:
             )
 
         # Return the set of dependency paths, minus those found in the base.
-        dependencies: Set[str] = set()
+        dependencies: Set[Path] = set()
         for library in self.dependencies:
             if not library.in_base_snap:
-                dependencies.add(str(library.path))
+                dependencies.add(library.path)
         return dependencies
 
 
