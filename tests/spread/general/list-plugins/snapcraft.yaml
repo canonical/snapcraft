@@ -1,0 +1,26 @@
+name: list-plugins
+base: core22
+version: '0.1'
+summary: "Test `list-plugins` and `plugins` can successfully parse plugins."
+description: |
+  This snapcraft.yaml includes regression tests to verify extensions, parse-info,
+  and advanced grammar are parsed before listing plugins.
+
+grade: stable
+confinement: strict
+
+apps:
+  list-plugins:
+    command: /bin/true
+    extensions: [gnome]
+
+parts:
+  nil:
+    plugin: nil
+    parse-info:
+    - usr/share/metainfo/photos.ansel.app.appdata.xml
+    stage-packages:
+      - mesa-opencl-icd
+      - ocl-icd-libopencl1
+      - on amd64:
+          - intel-opencl-icd
