@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -114,3 +114,33 @@ class LibraryLinter(Linter):
                     url="https://snapcraft.io/docs/linters-library",
                 )
                 issues.append(issue)
+
+    def _is_library_path(self, path: Path) -> bool:
+        """Check if a file is in a library directory.
+
+        An elf file is considered a library if it has an soname and it is within a
+        library directory.
+        A library directory is a directory whose pathname ends in `lib/` or
+        `lib/<architecture-triplet>/` (i.e. lib/x86_64-linux-gnu/`)
+
+        :param path: filepath to check
+
+        :returns: True if the file is in a library directory. False if the path is not
+        a file or if it is not in a library directory.
+        """
+        # follow symlinks
+        path = path.resolve()
+
+        if not path.is_file():
+            return False
+
+        # TODO: get library directories from LD_LIBRARY_PATH and `ld --verbose`
+        # instead of matching against patterns
+        if path.match("lib/*") or path.match("lib32/*") or path.match("lib64/*"):
+            return True
+
+        for arch_triplet in elf_utils.get_all_arch_triplets():
+            if path.match(f"lib/{arch_triplet}/*"):
+                return True
+
+        return False
