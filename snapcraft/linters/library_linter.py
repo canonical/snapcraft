@@ -17,7 +17,7 @@
 """Library linter implementation."""
 
 from pathlib import Path
-from typing import List
+from typing import List, Set
 
 from craft_cli import emit
 from overrides import overrides
@@ -45,6 +45,8 @@ class LibraryLinter(Linter):
         issues: List[LinterIssue] = []
         elf_files = elf_utils.get_elf_files(current_path)
         soname_cache = SonameCache()
+        all_libraries: Set[Path] = set()
+        used_libraries: Set[Path] = set()
 
         for elf_file in elf_files:
             # Skip linting files listed in the ignore list.
@@ -62,6 +64,20 @@ class LibraryLinter(Linter):
                 soname_cache=soname_cache,
             )
 
+            # collect paths to local libraries used by the elf file
+            for dependency in dependencies:
+                if (
+                    self._is_library_path(path=dependency)
+                    and current_path.resolve() in dependency.resolve().parents
+                ):
+                    # resolve symlinks to libraries
+                    used_libraries.add(dependency.resolve())
+
+            # if the elf file is a library, add it to the list of all libraries
+            if elf_file.soname and self._is_library_path(elf_file.path):
+                # resolve symlinks to libraries
+                all_libraries.add(elf_file.path.resolve())
+
             search_paths = [current_path.absolute(), *content_dirs]
             if installed_base_path:
                 search_paths.append(installed_base_path)
@@ -72,6 +88,8 @@ class LibraryLinter(Linter):
                 dependencies=sorted(dependencies),
                 issues=issues,
             )
+
+        issues.extend(self._get_unused_library_issues(all_libraries, used_libraries))
 
         return issues
 
@@ -114,6 +132,49 @@ class LibraryLinter(Linter):
                     url="https://snapcraft.io/docs/linters-library",
                 )
                 issues.append(issue)
+
+    def _get_unused_library_issues(
+        self, all_libraries: Set[Path], used_libraries: Set[Path]
+    ) -> List[LinterIssue]:
+        """Get a list of unused library issues.
+
+        :param all_libraries: a set of paths to all libraries
+        :param used_libraries: a set of libraries used by elf files in the snap
+
+        :returns: list of LinterIssues for unused libraries
+        """
+        issues: List[LinterIssue] = []
+        unused_libraries = all_libraries - used_libraries
+
+        # sort libraries so the results are ordered in a determistic way
+        for library_path in sorted(unused_libraries):
+            try:
+                # Resolving symlinks to a library will change the path from relative
+                # to absolute. To make it relative again, remove the current directory
+                # prefix from the path.
+                resolved_library_path = library_path.resolve().relative_to(Path.cwd())
+            except ValueError:
+                # A ValueError is not expected because these libraries should be within
+                # the current directory, but check anyways
+                emit.debug(f"could not resolve path for library {library_path!r}")
+                continue
+
+            library = ElfFile(path=resolved_library_path)
+
+            # skip linting files listed in the ignore list
+            if self._is_file_ignored(library):
+                continue
+
+            issue = LinterIssue(
+                name=self._name,
+                result=LinterResult.WARNING,
+                filename=library.soname,
+                text=f"unused library {str(library.path)!r}.",
+                url="https://snapcraft.io/docs/linters-library",
+            )
+            issues.append(issue)
+
+        return issues
 
     def _is_library_path(self, path: Path) -> bool:
         """Check if a file is in a library directory.
