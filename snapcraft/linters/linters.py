@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -104,7 +104,7 @@ def report(
 
 
 def _update_status(status: LinterStatus, result: LinterResult) -> LinterStatus:
-    """Compute the consolitated status based on individual linter results."""
+    """Compute the consolidated status based on individual linter results."""
     if result == LinterResult.FATAL:
         status = LinterStatus.FATAL
     elif result == LinterResult.ERROR and status != LinterStatus.FATAL:

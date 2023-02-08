@@ -143,3 +143,46 @@ class TestGetDynamicLinker:
         assert str(err.value) == (
             "Dynamic linker 'prime/lib64/ld-linux-x86-64.so.2' not found."
         )
+
+
+class TestArchConfig:
+    """Test architecture config functionality."""
+
+    @pytest.mark.parametrize(
+        "machine, expected_arch_triplet",
+        [
+            ("aarch64", "aarch64-linux-gnu"),
+            ("armv7l", "arm-linux-gnueabihf"),
+            ("ppc64le", "powerpc64le-linux-gnu"),
+            ("riscv64", "riscv64-linux-gnu"),
+            ("s390x", "s390x-linux-gnu"),
+            ("x86_64", "x86_64-linux-gnu"),
+        ],
+    )
+    def test_get_arch_triplet(self, mocker, machine, expected_arch_triplet):
+        """Verify `get_arch_triplet()` gets the host's architecture triplet."""
+        mocker.patch("snapcraft.elf.elf_utils.platform.machine", return_value=machine)
+        arch_triplet = elf_utils.get_arch_triplet()
+
+        assert arch_triplet == expected_arch_triplet
+
+    def test_get_arch_triplet_error(self, mocker):
+        """Verify `get_arch_triplet()` raises an error for invalid machines."""
+        mocker.patch("snapcraft.elf.elf_utils.platform.machine", return_value="4004")
+        with pytest.raises(RuntimeError) as raised:
+            elf_utils.get_arch_triplet()
+
+        assert str(raised.value) == "Arch triplet not defined for arch '4004'"
+
+    def test_get_all_arch_triplets(self):
+        """Verify `get_all_arch_triplets()` gets a list of all architecture triplets."""
+        arch_triplets = elf_utils.get_all_arch_triplets()
+
+        assert arch_triplets == [
+            "aarch64-linux-gnu",
+            "arm-linux-gnueabihf",
+            "powerpc64le-linux-gnu",
+            "riscv64-linux-gnu",
+            "s390x-linux-gnu",
+            "x86_64-linux-gnu",
+        ]
