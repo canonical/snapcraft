@@ -76,6 +76,8 @@ class ListPluginsCommand(BaseCommand, abc.ABC):
                 # process yaml before unmarshalling the data
                 arch = get_host_architecture()
                 yaml_data_for_arch = apply_yaml(yaml_data, arch, arch)
+                # discard parse-info as it is not part of Project which we use to
+                # determine the base
                 extract_parse_info(yaml_data_for_arch)
 
                 project = Project.unmarshal(yaml_data_for_arch)
