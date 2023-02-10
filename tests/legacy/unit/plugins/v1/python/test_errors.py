@@ -19,7 +19,6 @@ from snapcraft_legacy.plugins.v1._python import errors
 
 
 class TestErrorFormatting:
-
     scenarios = (
         (
             "PipListInvalidLegacyFormatError",

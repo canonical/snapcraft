@@ -95,7 +95,6 @@ class ScriptletCommandsTestCase(CommandBaseTestCase):
 
 
 class TestScriptletSetter:
-
     scenarios = [
         (
             "set-version",
@@ -180,7 +179,6 @@ class TestScriptletSetter:
 
 
 class TestScriptletMultipleSettersError:
-
     scriptlet_scenarios = [
         (
             "override-pull/build",

@@ -1022,7 +1022,6 @@ class DependentTest(ReStepOrderTestBase):
         self.run_test()
 
     def test_all_build_rebuild(self):
-
         self.set_attributes(
             {
                 "initial_step": steps.BUILD,

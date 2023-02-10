@@ -476,7 +476,6 @@ class TestSonameCache(unit.TestCase):
 
 
 class TestSonameCacheErrors:
-
     scenarios = (
         ("invalid string key", dict(key="soname.so", partial_message="The key for")),
         (

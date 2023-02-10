@@ -474,7 +474,6 @@ class PluginTestCase(unit.TestCase):
 
 
 class TestMigratePartFiles:
-
     scenarios = [
         ("nothing", {"fileset": ["-*"], "result": []}),
         (
@@ -616,7 +615,6 @@ class MigratableFilesetsTestCase(unit.TestCase):
 
 
 class TestOrganize:
-
     scenarios = [
         (
             "simple_file",

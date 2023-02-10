@@ -177,7 +177,6 @@ class CMakeTest(CMakeBaseTest):
 
 
 class TestSnapCMakeBuild:
-
     scenarios = [
         ("no snaps", dict(build_snaps=[], expected_config_flags=[])),
         (

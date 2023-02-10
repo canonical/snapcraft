@@ -25,7 +25,6 @@ from . import CommandBaseTestCase
 
 
 class RefreshCommandBaseTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
-
     yaml_template = dedent(
         """\
         name: snap-test

@@ -292,22 +292,18 @@ class FakeServerRunning(fixtures.Fixture):
 
 
 class FakePartsWikiOriginRunning(FakeServerRunning):
-
     fake_server = fake_servers.FakePartsWikiOriginServer
 
 
 class FakePartsWikiRunning(FakeServerRunning):
-
     fake_server = fake_servers.FakePartsWikiServer
 
 
 class FakePartsWikiWithSlashesRunning(FakeServerRunning):
-
     fake_server = fake_servers.FakePartsWikiWithSlashesServer
 
 
 class FakePartsServerRunning(FakeServerRunning):
-
     fake_server = fake_servers.FakePartsServer
 
 
@@ -318,7 +314,6 @@ class FakeSSOServerRunning(FakeServerRunning):
 
 
 class FakeStoreUploadServerRunning(FakeServerRunning):
-
     fake_server = upload.FakeStoreUploadServer
 
 
@@ -329,7 +324,6 @@ class FakeStoreAPIServerRunning(FakeServerRunning):
 
 
 class FakeStoreSearchServerRunning(FakeServerRunning):
-
     fake_server = search.FakeStoreSearchServer
 
 
@@ -658,7 +652,6 @@ class SharedCache(fixtures.Fixture):
 
 
 class FakeBaseEnvironment(fixtures.Fixture):
-
     _LINKER_FOR_ARCH = dict(
         armv7l="lib/ld-linux-armhf.so.3",
         aarch64="lib/ld-linux-aarch64.so.1",
