@@ -176,7 +176,9 @@ class TestGetPartSnippet:
     def assert_get_part_snippet(kde_neon_instance):
         assert kde_neon_instance.get_part_snippet() == {
             "build-environment": [
-                {   "PATH": "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/usr/bin${PATH:+:$PATH}" },
+                {
+                    "PATH": "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/usr/bin${PATH:+:$PATH}"
+                },
                 {
                     "XDG_DATA_DIRS": (
                         "$SNAPCRAFT_STAGE/usr/share: \
@@ -253,7 +255,9 @@ class TestGetPartSnippet:
 def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
     assert kde_neon_extension_with_build_snap.get_part_snippet() == {
         "build-environment": [
-            {"PATH":"/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/usr/bin${PATH:+:$PATH}"},
+            {
+                "PATH":"/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/usr/bin${PATH:+:$PATH}"
+            },
             {
                 "XDG_DATA_DIRS": (
                     "$SNAPCRAFT_STAGE/usr/share:"
@@ -333,9 +337,7 @@ def test_get_parts_snippet(kde_neon_extension):
             "source": get_extensions_data_dir() / "desktop" / "command-chain",
             "source-subdir": "kde-neon",
             "plugin": "make",
-            "make-parameters": [
-                "PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22"
-            ],
+            "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22"],            ],
             "build-packages": ["g++"],
             "build-snaps": ["kde-frameworks-5-102-qt-5-15-8-core22-sd"],
         }
@@ -348,9 +350,7 @@ def test_get_parts_snippet_with_external_sdk(kde_neon_extension_with_build_snap)
             "source": get_extensions_data_dir() / "desktop" / "command-chain",
             "source-subdir": "kde-neon",
             "plugin": "make",
-            "make-parameters": [
-                "PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22"
-            ],
+            "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22"],
             "build-packages": ["g++"],
             "build-snaps": ["kde-frameworks-5-102-qt-5-15-8-core22-sd"],
         }
@@ -366,9 +366,7 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
             "source": get_extensions_data_dir() / "desktop" / "command-chain",
             "source-subdir": "kde-neon",
             "plugin": "make",
-            "make-parameters": [
-                "PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22"
-            ],
+            "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22"],
             "build-packages": ["g++"],
             "build-snaps": ["kde-frameworks-5-102-qt-5-15-8-core22-sd"],
         }
