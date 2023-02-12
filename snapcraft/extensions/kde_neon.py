@@ -252,7 +252,7 @@ class KDENeon(Extension):
                     "plugin": "make",
                     "make-parameters": [f"PLATFORM_PLUG={provider}"],
                     "build-packages": ["g++"],
-                    "build-snaps": [sdk_snap],
+                    "build-snaps": [f"{sdk_snap}/current/stable"],
                 }
             }
 
