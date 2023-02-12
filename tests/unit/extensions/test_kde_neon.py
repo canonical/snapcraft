@@ -177,7 +177,8 @@ class TestGetPartSnippet:
         assert kde_neon_instance.get_part_snippet() == {
             "build-environment": [
                 {
-                    "PATH": "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/usr/bin${PATH:+:$PATH}"
+                    "PATH": "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                        usr/bin${PATH:+:$PATH}"
                 },
                 {
                     "XDG_DATA_DIRS": (
@@ -256,7 +257,8 @@ def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
     assert kde_neon_extension_with_build_snap.get_part_snippet() == {
         "build-environment": [
             {
-                "PATH":"/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/usr/bin${PATH:+:$PATH}"
+                "PATH":"/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/ \
+                    usr/bin${PATH:+:$PATH}"
             },
             {
                 "XDG_DATA_DIRS": (
