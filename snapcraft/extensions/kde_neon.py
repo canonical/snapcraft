@@ -244,7 +244,7 @@ class KDENeon(Extension):
         if self.kde_snaps.builtin:
             base = self.yaml_data["base"]
             sdk_snap = _SDK_SNAP[base]
-            provider = self.kde_snaps.content + "-all"
+            provider = self.kde_snaps.content
             return {
                 "kde-neon-extension/sdk": {
                     "source": str(source),
