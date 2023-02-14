@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019 Canonical Ltd
+# Copyright (C) 2019-2023 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -37,11 +37,11 @@ def test_extension_core18():
                 "target": "$SNAP/data-dir/sounds",
                 "default-provider": "gtk-common-themes",
             },
-            "kde-frameworks-5-core18": {
-                "content": "kde-frameworks-5-core18-all",
+            "kde-frameworks-5-qt-5-14-core18": {
+                "content": "kde-frameworks-5-qt-5-14-core18-all",
                 "interface": "content",
                 "target": "$SNAP/kf5",
-                "default-provider": "kde-frameworks-5-core18",
+                "default-provider": "kde-frameworks-5-qt-5-14-core18",
             },
         },
         "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
@@ -63,9 +63,9 @@ def test_extension_core18():
             "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
             "source-subdir": "kde-neon",
             "plugin": "make",
-            "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-core18"],
+            "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-qt-5-14-core18"],
             "build-packages": ["g++"],
-            "build-snaps": ["kde-frameworks-5-core18-sdk/latest/stable"],
+            "build-snaps": ["kde-frameworks-5-qt-5-14-core18-sdk/latest/stable"],
         }
     }
 

@@ -14,6 +14,6 @@ apps:
 
 parts:
   hello:
-    build-snaps: [kde-frameworks-5-core18-sdk]
+    build-snaps: [kde-frameworks-5-qt-5-14-core18-sdk]
     plugin: cmake
     source: .

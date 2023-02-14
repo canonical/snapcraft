@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018-2019 Canonical Ltd
+# Copyright (C) 2018-2023 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -26,9 +26,9 @@ _ExtensionInfo = namedtuple("ExtensionInfo", "cmake_args content provider build_
 _Info = dict(
     core18=_ExtensionInfo(
         cmake_args=None,
-        content="kde-frameworks-5-core18-all",
-        provider="kde-frameworks-5-core18",
-        build_snaps=["kde-frameworks-5-core18-sdk/latest/stable"],
+        content="kde-frameworks-5-qt-5-14-core18-all",
+        provider="kde-frameworks-5-qt-5-14-core18",
+        build_snaps=["kde-frameworks-5-qt-5-14-core18-sdk/latest/stable"],
     ),
     core20=_ExtensionInfo(
         cmake_args="-DCMAKE_FIND_ROOT_PATH=/snap/kde-frameworks-5-99-qt-5-15-7-core20-sdk/current",
