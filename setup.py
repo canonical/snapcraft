@@ -101,7 +101,7 @@ install_requires = [
     "craft-parts",
     "craft-providers",
     "craft-store",
-    "cryptography==3.4",
+    "cryptography==39.0.1",
     "gnupg",
     "jsonschema==2.5.1",
     "launchpadlib",
