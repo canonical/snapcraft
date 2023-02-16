@@ -333,53 +333,53 @@ def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
 
 
 def test_get_parts_snippet(kde_neon_extension):
-     source = get_extensions_data_dir() / "desktop" / "command-chain"
+    source = get_extensions_data_dir() / "desktop" / "command-chain"
 
-     assert kde_neon_extension.get_parts_snippet() == {
-         "kde-neon-extension/sdk": {
-             "source": str(source),
-             "source-subdir": "kde-neon",
-             "plugin": "make",
-             "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22"],
-             "build-packages": ["g++"],
-             "build-snaps": ["kde-frameworks-5-102-qt-5-15-8-core22-sd/current/stable"],
-        }
+    assert kde_neon_extension.get_parts_snippet() == {
+        "kde-neon-extension/sdk": {
+            "source": str(source),
+            "source-subdir": "kde-neon",
+            "plugin": "make",
+            "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22"],
+            "build-packages": ["g++"],
+            "build-snaps": ["kde-frameworks-5-102-qt-5-15-8-core22-sd/current/stable"],
+       }
     }
 
 
 def test_get_parts_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
-     source = get_extensions_data_dir() / "desktop" / "command-chain"
+    source = get_extensions_data_dir() / "desktop" / "command-chain"
 
-     assert kde_neon_extension_with_build_snap.get_parts_snippet() == {
-         "kde-neon-extension/sdk": {
-             "source": str(source),
-             "source-subdir": "kde-neon",
-             "plugin": "make",
-             "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22"],
-             "build-packages": ["g++"],
-             "build-snaps": ["kde-frameworks-5-102-qt-5-15-8-core22-sd/current/stable"],
-         }
-     }
+    assert kde_neon_extension_with_build_snap.get_parts_snippet() == {
+        "kde-neon-extension/sdk": {
+            "source": str(source),
+            "source-subdir": "kde-neon",
+            "plugin": "make",
+            "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22"],
+            "build-packages": ["g++"],
+            "build-snaps": ["kde-frameworks-5-102-qt-5-15-8-core22-sd/current/stable"],
+        }
+    }
 
 
 def test_get_parts_snippet_with_external_sdk_different_channel(
     kde_neon_extension_with_default_build_snap_from_latest_edge,
 ):
-     source = get_extensions_data_dir() / "desktop" / "command-chain"
-     assert (
-        kde_neon_extension_with_default_build_snap_from_latest_edge.get_parts_snippet()
-        == {
-            "kde-neon-extension/sdk": {
-                "source": str(source),
-                "source-subdir": "kde-neon",
-                "plugin": "make",
-                "make-parameters": [
-                    "PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22"
-                ],
-                "build-packages": ["g++"],
-                "build-snaps": [
-                    "kde-frameworks-5-102-qt-5-15-8-core22-sd/current/stable"
-                ],
-            }
-        }
+    source = get_extensions_data_dir() / "desktop" / "command-chain"
+    assert (
+       kde_neon_extension_with_default_build_snap_from_latest_edge.get_parts_snippet()
+       == {
+           "kde-neon-extension/sdk": {
+               "source": str(source),
+               "source-subdir": "kde-neon",
+               "plugin": "make",
+               "make-parameters": [
+                   "PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22"
+               ],
+               "build-packages": ["g++"],
+               "build-snaps": [
+                   "kde-frameworks-5-102-qt-5-15-8-core22-sd/current/stable"
+               ],
+           }
+       }
     )
