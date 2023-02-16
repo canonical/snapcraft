@@ -230,16 +230,14 @@ class TestGetPartSnippet:
                     +  "${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
                 },
                 {
-                    "PYTHONPATH": (
-                        [
-                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                            + "usr/lib/python3.10",
-                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                            + "usr/lib/python3/dist-packages",
-                            "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                            + "usr/lib/$CRAFT_ARCH_TRIPLET",
-                            "/gobject-introspection",
-                        ]
+                    "PYTHONPATH": ":".join(
+                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
+                        + "usr/lib/python3.10",
+                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
+                        + "usr/lib/python3/dist-packages",
+                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
+                        + "usr/lib/$CRAFT_ARCH_TRIPLET",
+                        "/gobject-introspection",
                     )
                     + "${PYTHONPATH:+:$PYTHONPATH}"
                 },
@@ -309,16 +307,14 @@ def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
                 + "${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
             },
             {
-                "PYTHONPATH": (
-                    [
-                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                        + "usr/lib/python3.10",
-                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                        + "usr/lib/python3/dist-packages",
-                        "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
-                        + "usr/lib/$CRAFT_ARCH_TRIPLET",
-                        "/gobject-introspection",
-                    ]
+                "PYTHONPATH": ":".join(
+                    "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
+                    + "usr/lib/python3.10",
+                    "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
+                    + "usr/lib/python3/dist-packages",
+                    "/snap/kde-frameworks-5-102-qt-5-15-8-core22-sd/current/"
+                    + "usr/lib/$CRAFT_ARCH_TRIPLET",
+                    "/gobject-introspection",
                 )
                 + "${PYTHONPATH:+:$PYTHONPATH}"
             },
