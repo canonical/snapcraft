@@ -199,14 +199,6 @@ class KDENeon(Extension):
                         ],
                     ),
                 },
-                # {
-                #     "GETTEXTDATADIRS": prepend_to_env(
-                #         "GETTEXTDATADIRS",
-                #         [
-                #             f"/snap/{sdk_snap}/current/usr/share/gettext-current",
-                #         ],
-                #     ),
-                # },
                 {
                     "ACLOCAL_PATH": prepend_to_env(
                         "ACLOCAL_PATH",
@@ -216,21 +208,10 @@ class KDENeon(Extension):
                     ),
                 },
                 {
-                    "PYTHONPATH": prepend_to_env(
-                        "PYTHONPATH",
-                        [
-                            f"/snap/{sdk_snap}/current/usr/lib/python3.10",
-                            f"/snap/{sdk_snap}/current/usr/lib/python3/dist-packages",
-                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET"
-                            "/gobject-introspection",
-                        ],
-                    ),
-                },
-                {
                     "SNAPCRAFT_CMAKE_ARGS": prepend_to_env(
                         "SNAPCRAFT_CMAKE_ARGS",
                         [
-                            f"{cmake_args}",
+                            cmake_args,
                         ],
                     ),
                 },
