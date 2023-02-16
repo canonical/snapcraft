@@ -199,14 +199,14 @@ class KDENeon(Extension):
                         ],
                     ),
                 },
-                {
-                    "GETTEXTDATADIRS": prepend_to_env(
-                        "GETTEXTDATADIRS",
-                        [
-                            f"/snap/{sdk_snap}/current/usr/share/gettext-current",
-                        ],
-                    ),
-                },
+                # {
+                #     "GETTEXTDATADIRS": prepend_to_env(
+                #         "GETTEXTDATADIRS",
+                #         [
+                #             f"/snap/{sdk_snap}/current/usr/share/gettext-current",
+                #         ],
+                #     ),
+                # },
                 {
                     "ACLOCAL_PATH": prepend_to_env(
                         "ACLOCAL_PATH",
