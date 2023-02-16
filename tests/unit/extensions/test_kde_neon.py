@@ -338,9 +338,7 @@ def test_get_parts_snippet(kde_neon_extension):
             "source": get_extensions_data_dir() / "desktop" / "command-chain",
             "source-subdir": "kde-neon",
             "plugin": "make",
-            "make-parameters": [
-                "PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22"
-            ],
+            "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22"],
             "build-packages": ["g++"],
             "build-snaps": ["kde-frameworks-5-102-qt-5-15-8-core22-sd/current/stable"],
         }
@@ -353,9 +351,7 @@ def test_get_parts_snippet_with_external_sdk(kde_neon_extension_with_build_snap)
             "source": get_extensions_data_dir() / "desktop" / "command-chain",
             "source-subdir": "kde-neon",
             "plugin": "make",
-            "make-parameters": [
-                "PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22"
-            ],
+            "make-parameters": ["PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22"],
             "build-packages": ["g++"],
             "build-snaps": ["kde-frameworks-5-102-qt-5-15-8-core22-sd/current/stable"],
         }
@@ -376,7 +372,9 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
                     "PLATFORM_PLUG=kde-frameworks-5-102-qt-5-15-8-core22"
                 ],
                 "build-packages": ["g++"],
-                "build-snaps": ["kde-frameworks-5-102-qt-5-15-8-core22-sd/current/stable"],
+                "build-snaps": [
+                    "kde-frameworks-5-102-qt-5-15-8-core22-sd/current/stable"
+                ],
             }
         }
     )
