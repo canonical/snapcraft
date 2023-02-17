@@ -1,0 +1,19 @@
+name: python-hello
+version: "1.0"
+summary: .
+description: .
+
+grade: devel
+base: core22
+confinement: devmode
+
+apps:
+  hello:
+    command: bin/helloworld_in_python
+
+parts:
+  python-sample:
+    plugin: python
+    source: src
+    python-packages: [black]
+    stage-packages: [python3-minimal, python3.10-minimal]

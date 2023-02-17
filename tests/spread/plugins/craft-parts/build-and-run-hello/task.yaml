@@ -6,6 +6,7 @@ environment:
   SNAP/conda: conda-hello
   SNAP/colcon_ros2_humble: colcon-ros2-humble-hello
   SNAP/flutter: flutter-hello
+  SNAP/python: python-hello
   SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
 prepare: |
@@ -75,6 +76,8 @@ execute: |
     modified_file=say/src/lib.rs
   elif [ -f lib/main.dart ]; then
     modified_file=lib/main.dart
+  elif [ -f src/hello/__init__.py ]; then
+    modified_file=src/hello/__init__.py
   else
     FATAL "Cannot setup ${SNAP} for rebuilding"
   fi

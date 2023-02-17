@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -40,6 +40,8 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
         work_dir=new_dir,
         assets_dir=new_dir,
         base="core22",
+        project_base="core22",
+        confinement="strict",
         parallel_build_count=8,
         part_names=[],
         package_repositories=[],
@@ -69,6 +71,8 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
             project_name="test-project",
             project_vars_part_name=None,
             project_vars={"version": "1", "grade": "stable"},
+            confinement="strict",
+            project_base="core22",
         )
     ]
     emitter.assert_progress(f"Executing parts lifecycle: {step_name} p1")
@@ -80,6 +84,8 @@ def test_parts_lifecycle_run_bad_step(parts_data, new_dir):
         work_dir=new_dir,
         assets_dir=new_dir,
         base="core22",
+        project_base="core22",
+        confinement="strict",
         parallel_build_count=8,
         part_names=[],
         package_repositories=[],
@@ -101,6 +107,8 @@ def test_parts_lifecycle_run_internal_error(parts_data, new_dir, mocker):
         work_dir=new_dir,
         assets_dir=new_dir,
         base="core22",
+        project_base="core22",
+        confinement="strict",
         parallel_build_count=8,
         part_names=[],
         package_repositories=[],
@@ -123,6 +131,8 @@ def test_parts_lifecycle_run_parts_error(new_dir):
         work_dir=new_dir,
         assets_dir=new_dir,
         base="core22",
+        project_base="core22",
+        confinement="strict",
         parallel_build_count=8,
         part_names=[],
         package_repositories=[],
@@ -146,6 +156,8 @@ def test_parts_lifecycle_clean(parts_data, new_dir, emitter):
         work_dir=new_dir,
         assets_dir=new_dir,
         base="core22",
+        project_base="core22",
+        confinement="strict",
         parallel_build_count=8,
         part_names=[],
         package_repositories=[],
@@ -166,6 +178,8 @@ def test_parts_lifecycle_clean_parts(parts_data, new_dir, emitter):
         work_dir=new_dir,
         assets_dir=new_dir,
         base="core22",
+        project_base="core22",
+        confinement="strict",
         parallel_build_count=8,
         part_names=[],
         package_repositories=[],
@@ -205,6 +219,8 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_not_installed
         work_dir=new_dir,
         assets_dir=new_dir,
         base="core22",
+        project_base="core22",
+        confinement="strict",
         parallel_build_count=8,
         part_names=[],
         package_repositories=[
@@ -254,6 +270,8 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_installed(
         work_dir=new_dir,
         assets_dir=new_dir,
         base="core22",
+        project_base="core22",
+        confinement="strict",
         parallel_build_count=8,
         part_names=[],
         package_repositories=[
@@ -283,6 +301,8 @@ def test_parts_lifecycle_bad_architecture(parts_data, new_dir):
             work_dir=new_dir,
             assets_dir=new_dir,
             base="core22",
+            project_base="core22",
+            confinement="strict",
             parallel_build_count=8,
             track_stage_packages=True,
             part_names=[],
@@ -307,6 +327,8 @@ def test_parts_lifecycle_run_with_all_architecture(mocker, parts_data, new_dir):
         work_dir=new_dir,
         assets_dir=new_dir,
         base="core22",
+        project_base="core22",
+        confinement="strict",
         parallel_build_count=8,
         track_stage_packages=True,
         part_names=[],
@@ -334,5 +356,7 @@ def test_parts_lifecycle_run_with_all_architecture(mocker, parts_data, new_dir):
             project_name="test-project",
             project_vars_part_name=None,
             project_vars={"version": "1", "grade": "stable"},
+            project_base="core22",
+            confinement="strict",
         )
     ]

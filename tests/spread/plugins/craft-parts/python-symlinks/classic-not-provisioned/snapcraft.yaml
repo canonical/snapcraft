@@ -1,0 +1,18 @@
+name: python-hello
+version: "1.0"
+summary: .
+description: .
+
+grade: devel
+base: core22
+confinement: classic
+
+apps:
+  hello:
+    command: bin/hello
+
+parts:
+  python-sample:
+    plugin: python
+    source: src
+    python-packages: [black]

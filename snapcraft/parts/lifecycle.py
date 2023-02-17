@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -271,6 +271,8 @@ def _run_command(
         work_dir=work_dir,
         assets_dir=assets_dir,
         base=project.get_effective_base(),
+        project_base=project.base or "",
+        confinement=project.confinement,
         package_repositories=project.package_repositories,
         parallel_build_count=parallel_build_count,
         part_names=part_names,

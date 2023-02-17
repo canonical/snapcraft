@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -57,7 +57,9 @@ class PartsLifecycle:
         *,
         work_dir: pathlib.Path,
         assets_dir: pathlib.Path,
-        base: str,
+        base: str,  # effective base
+        project_base: str,
+        confinement: str,
         package_repositories: List[Dict[str, Any]],
         parallel_build_count: int,
         part_names: Optional[List[str]],
@@ -102,6 +104,9 @@ class PartsLifecycle:
                 project_name=project_name,
                 project_vars_part_name=adopt_info,
                 project_vars=project_vars,
+                # custom arguments
+                project_base=project_base,
+                confinement=confinement,
             )
         except craft_parts.PartsError as err:
             raise errors.PartsLifecycleError(str(err)) from err
