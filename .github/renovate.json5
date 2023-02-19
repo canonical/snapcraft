@@ -46,7 +46,9 @@
       prPriority: -2
     },
     {
-      // Major dev dependencies are stone last.
+      // Major dev dependencies are stone last, but grouped.
+      groupName: "development dependencies (major versions)",
+      groupSlug: "dev-dependencies",
       matchDepTypes: ["devDependencies"],
       matchUpdateTypes: ["major"],
       prPriority: -3
