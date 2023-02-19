@@ -38,7 +38,7 @@ docs = [
 
 [build-system]
 requires = [
-    "setuptools==67.2.0",
+    "setuptools==67.3.2",
 ]
 build-backend = "setuptools.build_meta"
 
