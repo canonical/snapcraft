@@ -118,7 +118,6 @@ class TestSnapNotFoundException:
 
 
 class TestErrorFormatting:
-
     scenarios = [
         (
             "NoSnapIdError",

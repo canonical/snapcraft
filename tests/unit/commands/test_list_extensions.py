@@ -31,7 +31,7 @@ def test_command(emitter, command):
         dedent(
             """\
         Extension name    Supported bases
-        ----------------  -----------------
+        ----------------  ----------------------
         fake-extension    core22
         flutter-beta      core18
         flutter-dev       core18
@@ -41,7 +41,7 @@ def test_command(emitter, command):
         gnome-3-28        core18
         gnome-3-34        core18
         gnome-3-38        core20
-        kde-neon          core18, core20
+        kde-neon          core18, core20, core22
         ros1-noetic       core20
         ros2-foxy         core20
         ros2-humble       core22"""
@@ -58,7 +58,7 @@ def test_command_extension_dups(emitter, command):
         dedent(
             """\
         Extension name    Supported bases
-        ----------------  -----------------
+        ----------------  ----------------------
         flutter-beta      core18
         flutter-dev       core18
         flutter-master    core18
@@ -67,7 +67,7 @@ def test_command_extension_dups(emitter, command):
         gnome-3-28        core18
         gnome-3-34        core18
         gnome-3-38        core20
-        kde-neon          core18, core20
+        kde-neon          core18, core20, core22
         ros1-noetic       core20
         ros2-foxy         core20
         ros2-humble       core22"""

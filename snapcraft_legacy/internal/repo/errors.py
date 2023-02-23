@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Tuple
 
 from snapcraft_legacy import formatting_utils
 from snapcraft_legacy.internal import errors
@@ -55,6 +55,27 @@ class CacheUpdateFailedError(RepoError):
         else:
             errors = " "
         super().__init__(errors=errors)
+
+
+class PopulateCacheDirError(SnapcraftException):
+    def __init__(self, copy_errors: List[Tuple]) -> None:
+        """:param copy_errors: A list of tuples containing the copy errors, where each
+        tuple is ordered as (source, destination, reason)."""
+        self.copy_errors = copy_errors
+
+    def get_brief(self) -> str:
+        return "Could not populate apt cache directory."
+
+    def get_details(self) -> str:
+        """Build a readable list of errors."""
+        details = ""
+        for error in self.copy_errors:
+            source, dest, reason = error
+            details += f"Unable to copy {source} to {dest}: {reason}\n"
+        return details
+
+    def get_resolution(self) -> str:
+        return "Verify user has read access to contents of /etc/apt."
 
 
 class FileProviderNotFound(RepoError):

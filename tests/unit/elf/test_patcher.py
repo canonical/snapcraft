@@ -13,7 +13,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import shutil
 from pathlib import Path
 from unittest.mock import ANY, call
@@ -22,6 +21,8 @@ import pytest
 
 from snapcraft import elf
 from snapcraft.elf import errors
+
+PATCHELF_PATH = "/path/to/patchelf"
 
 
 @pytest.mark.usefixtures("fake_tools")
@@ -79,12 +80,13 @@ def patcher():
     yield elf.Patcher(
         dynamic_linker="/my/dynamic/linker",
         root_path=Path("/snap/foo/current"),
+        preferred_patchelf=PATCHELF_PATH,
     )
 
 
 def test_patcher_patch_rpath(mocker, patcher, elf_file):
     run_mock = mocker.patch("subprocess.check_call")
-
+    mocker.patch("subprocess.check_output", return_value=b"\n")
     expected_proposed_rpath = list(elf_file.dependencies)[0].path.parent
     assert patcher.get_current_rpath(elf_file) == []
 
@@ -92,7 +94,7 @@ def test_patcher_patch_rpath(mocker, patcher, elf_file):
     assert run_mock.mock_calls == [
         call(
             [
-                "/usr/bin/patchelf",
+                PATCHELF_PATH,
                 "--set-interpreter",
                 "/my/dynamic/linker",
                 "--force-rpath",
@@ -118,7 +120,7 @@ def test_patcher_patch_existing_rpath_origin(mocker, patcher, elf_file):
     assert run_mock.mock_calls == [
         call(
             [
-                "/usr/bin/patchelf",
+                PATCHELF_PATH,
                 "--set-interpreter",
                 "/my/dynamic/linker",
                 "--force-rpath",
@@ -144,7 +146,7 @@ def test_patcher_patch_existing_rpath_not_origin(mocker, patcher, elf_file):
     assert run_mock.mock_calls == [
         call(
             [
-                "/usr/bin/patchelf",
+                PATCHELF_PATH,
                 "--set-interpreter",
                 "/my/dynamic/linker",
                 "--force-rpath",
@@ -158,6 +160,7 @@ def test_patcher_patch_existing_rpath_not_origin(mocker, patcher, elf_file):
 
 def test_patcher_patch_rpath_same_interpreter(mocker, patcher, elf_file):
     run_mock = mocker.patch("subprocess.check_call")
+    mocker.patch("subprocess.check_output", return_value=b"\n")
     patcher._dynamic_linker = elf_file.interp
 
     expected_proposed_rpath = list(elf_file.dependencies)[0].path.parent
@@ -167,7 +170,7 @@ def test_patcher_patch_rpath_same_interpreter(mocker, patcher, elf_file):
     assert run_mock.mock_calls == [
         call(
             [
-                "/usr/bin/patchelf",
+                PATCHELF_PATH,
                 "--force-rpath",
                 "--set-rpath",
                 str(expected_proposed_rpath),
@@ -190,7 +193,7 @@ def test_patcher_patch_rpath_already_set(mocker, patcher, elf_file):
     assert run_mock.mock_calls == [
         call(
             [
-                "/usr/bin/patchelf",
+                PATCHELF_PATH,
                 "--set-interpreter",
                 "/my/dynamic/linker",
                 ANY,

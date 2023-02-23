@@ -21,7 +21,6 @@ from tests.legacy import fake_servers
 
 
 class FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):
-
     snaps_result = []  # type: List[Dict[str, Any]]
     snap_details_func = None
     find_result = []  # type: List[Dict[str, Any]]

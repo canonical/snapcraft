@@ -391,7 +391,6 @@ def pip_instance(tmp_work_path):
 
 
 class TestPipDownload:
-
     scenarios = [
         (
             "packages",
@@ -507,7 +506,6 @@ def test_download_without_packages_or_setup_py_or_requirements_should_noop(
 
 
 class TestPipInstall:
-
     scenarios = [
         (
             "packages",
@@ -662,7 +660,6 @@ def test_install_without_packages_or_setup_py_or_requirements_should_noop(
 
 
 class TestPipInstallFixupShebang:
-
     scenarios = [
         (
             "bad shebang",
@@ -726,7 +723,6 @@ class TestPipInstallFixupShebang:
 
 
 class TestPipInstallFixupPermissions:
-
     scenarios = [
         ("755", {"file_path": "example.py", "mode": 0o755, "expected_mode": "755"}),
         (
@@ -774,7 +770,6 @@ def test_symlink(mock_chmod, tmp_work_path):
 
 
 class TestPipWheel:
-
     scenarios = [
         (
             "packages",

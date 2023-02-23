@@ -15,10 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Snapcraft-specific code to interface with craft-providers."""
-
+import io
 import os
 import sys
 from pathlib import Path
+from textwrap import dedent
 from typing import Dict, Optional
 
 from craft_cli import emit
@@ -29,7 +30,9 @@ from craft_providers.multipass import MultipassProvider
 from snapcraft.snap_config import get_snap_config
 from snapcraft.utils import (
     confirm_with_user,
+    get_managed_environment_home_path,
     get_managed_environment_log_path,
+    get_managed_environment_project_path,
     get_managed_environment_snap_channel,
 )
 
@@ -38,6 +41,66 @@ SNAPCRAFT_BASE_TO_PROVIDER_BASE = {
     "core20": bases.BuilddBaseAlias.FOCAL,
     "core22": bases.BuilddBaseAlias.JAMMY,
 }
+
+# TODO: move to a package data file for shellcheck and syntax highlighting
+# pylint: disable=line-too-long
+BASHRC = dedent(
+    """\
+    #!/bin/bash
+
+    env_file="$HOME/environment.sh"
+
+    # save default environment on first login
+    if [[ ! -e $env_file ]]; then
+        env > "$env_file"
+        sed -i 's/^/export /' "$env_file"      # prefix 'export' to variables
+        sed -i 's/=/="/; s/$/"/' "$env_file"   # surround values with quotes
+        sed -i '1i#! /bin/bash\\n' "$env_file" # add shebang
+        fi
+        previous_pwd=$PWD
+
+    function set_environment {
+        # only update the environment when the directory changes
+        if [[ ! $PWD = "$previous_pwd" ]]; then
+            # set part's environment when inside a part's build directory
+            if [[ "$PWD" =~ $HOME/parts/.*/build ]] && [[ -e "${PWD/build*/run/environment.sh}" ]] ; then
+                part_name=$(echo "${PWD#$"HOME"}" | cut -d "/" -f 3)
+                echo "build environment set for part '$part_name'"
+                # shellcheck disable=SC1090
+                source "${PWD/build*/run/environment.sh}"
+
+            # else clear and set the default environment
+            else
+                # shellcheck disable=SC2046
+                unset $(/usr/bin/env | /usr/bin/cut -d= -f1)
+                # shellcheck disable=SC1090
+                source "$env_file"
+                PWD="$(pwd)"
+                export PWD
+            fi
+        fi
+        previous_pwd=$PWD
+    }
+
+    function set_prompt {
+        # do not show path in HOME directory
+        if [[ "$PWD" = "$HOME" ]]; then
+            export PS1="\\h # "
+
+        # show relative path inside a subdirectory of HOME
+        elif [[ "$PWD" =~ ^$HOME/* ]]; then
+            export PS1="\\h ..${PWD/$HOME/}# "
+
+        # show full path outside the home directory
+        else
+            export PS1="\\h $PWD# "
+        fi
+    }
+
+    PROMPT_COMMAND="set_environment; set_prompt"
+    """
+)
+# pylint: enable=line-too-long
 
 
 def capture_logs_from_instance(instance: executor.Executor) -> None:
@@ -153,6 +216,7 @@ def get_command_environment(
         "SNAPCRAFT_BUILD_FOR",
         "SNAPCRAFT_BUILD_INFO",
         "SNAPCRAFT_IMAGE_INFO",
+        "SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT",
     ]:
         if env_key in os.environ:
             env[env_key] = os.environ[env_key]
@@ -246,3 +310,33 @@ def get_provider(provider: Optional[str] = None) -> Provider:
         return MultipassProvider()
 
     raise ValueError(f"unsupported provider specified: {chosen_provider!r}")
+
+
+def prepare_instance(
+    instance: executor.Executor, host_project_path: Path, bind_ssh: bool
+) -> None:
+    """Prepare an instance to run snapcraft.
+
+    The preparation includes:
+    - mounting the project directory
+    - mounting the `.ssh` directory, if specified
+    - setting up `.bashrc` and the command line prompt
+    """
+    # mount project
+    instance.mount(
+        host_source=host_project_path,
+        target=get_managed_environment_project_path(),
+    )
+
+    # mount ssh directory
+    if bind_ssh:
+        instance.mount(
+            host_source=Path.home() / ".ssh",
+            target=get_managed_environment_home_path() / ".ssh",
+        )
+
+    instance.push_file_io(
+        destination=Path("/root/.bashrc"),
+        content=io.BytesIO(BASHRC.encode()),
+        file_mode="644",
+    )

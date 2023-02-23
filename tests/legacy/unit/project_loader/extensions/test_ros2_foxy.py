@@ -60,7 +60,12 @@ def test_extension(extension_class):
 
     assert ros2_extension.parts == {
         "ros2-foxy-extension": {
-            "build-packages": ["ros-foxy-ros-core"],
+            "build-packages": [
+                "ros-foxy-ros-environment",
+                "ros-foxy-ros-workspace",
+                "ros-foxy-ament-index-cpp",
+                "ros-foxy-ament-index-python",
+            ],
             "override-build": "install -D -m 0755 launch "
             "${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros2-launch",
             "plugin": "nil",

@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import re
 import sys
 
 from setuptools import find_namespace_packages, setup
@@ -25,7 +26,7 @@ from tools.version import determine_version
 
 def recursive_data_files(directory, install_directory):
     data_files = []
-    for root, directories, file_names in os.walk(directory):
+    for root, _directories, file_names in os.walk(directory):
         file_paths = [os.path.join(root, file_name) for file_name in file_names]
         data_files.append((os.path.join(install_directory, root), file_paths))
     return data_files
@@ -36,7 +37,7 @@ name = "snapcraft"
 description = "Publish your app for Linux users for desktop, cloud, and IoT."
 author_email = "snapcraft@lists.snapcraft.io"
 url = "https://github.com/snapcore/snapcraft"
-license = "GPL v3"
+license_ = "GPL v3"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -61,8 +62,7 @@ else:
 dev_requires = [
     "black",
     "codespell",
-    "coverage",
-    "flake8",
+    "coverage[toml]",
     "pyflakes",
     "fixtures",
     "isort",
@@ -82,6 +82,8 @@ dev_requires = [
     "pytest-cov",
     "pytest-mock",
     "pytest-subprocess",
+    "ruff==0.0.220",
+    "tox>=4.0",
     "types-PyYAML",
     "types-requests",
     "types-setuptools",
@@ -117,6 +119,8 @@ install_requires = [
     "requests-toolbelt",
     "requests-unixsocket",
     "requests",
+    # pin setuptools<66 (CRAFT-1598)
+    "setuptools<66",
     "simplejson",
     "snap-helpers",
     "tabulate",
@@ -126,8 +130,13 @@ install_requires = [
 ]
 
 try:
-    os_release = open("/etc/os-release").read()
-    ubuntu = "ID=ubuntu" in os_release
+    ubuntu = bool(
+        re.search(
+            r"^ID(?:_LIKE)?=.*\bubuntu\b.*$",
+            open("/etc/os-release").read(),
+            re.MULTILINE,
+        )
+    )
 except FileNotFoundError:
     ubuntu = False
 
@@ -154,7 +163,7 @@ setup(
     author_email=author_email,
     url=url,
     packages=find_namespace_packages(),
-    license=license,
+    license=license_,
     classifiers=classifiers,
     scripts=scripts,
     entry_points=dict(

@@ -616,7 +616,6 @@ class MavenPluginUnsupportedBase(PluginsV1BaseTestCase):
 
 
 class TestUnsupportedJDKVersionError:
-
     scenarios = (
         (
             "core18",

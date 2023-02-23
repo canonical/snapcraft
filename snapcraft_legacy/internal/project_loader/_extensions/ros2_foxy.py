@@ -41,7 +41,7 @@ class ExtensionImpl(Extension):
 
     @staticmethod
     def is_experimental(base: Optional[str]) -> bool:
-        return True
+        return False
 
     def __init__(self, *, extension_name: str, yaml_data: Dict[str, Any]) -> None:
         super().__init__(extension_name=extension_name, yaml_data=yaml_data)
@@ -87,6 +87,11 @@ class ExtensionImpl(Extension):
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/ros2",
                 "plugin": "nil",
                 "override-build": "install -D -m 0755 launch ${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros2-launch",
-                "build-packages": [f"ros-{self.ROS_DISTRO}-ros-core"],
+                "build-packages": [
+                    f"ros-{self.ROS_DISTRO}-ros-environment",
+                    f"ros-{self.ROS_DISTRO}-ros-workspace",
+                    f"ros-{self.ROS_DISTRO}-ament-index-cpp",
+                    f"ros-{self.ROS_DISTRO}-ament-index-python",
+                ],
             }
         }

@@ -18,7 +18,6 @@ from snapcraft_legacy.project._project_options import _find_machine
 
 
 class TestFindMachine:
-
     scenarios = [
         ("x86_64", dict(machine="x86_64", expected_machine="x86_64")),
         ("amd64", dict(machine="amd64", expected_machine="x86_64")),

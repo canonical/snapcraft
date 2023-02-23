@@ -41,7 +41,7 @@ class Patcher:
         """Create a Patcher instance.
 
         :param dynamic_linker: The path to the dynamic linker to set the ELF file to.
-        :param snap_path: The base path for the snap being processed.
+        :param root_path: The base path for the snap being processed.
         :param preferred_patchelf: patch the necessary elf_files with this patchelf.
         """
         self._dynamic_linker = dynamic_linker
@@ -62,10 +62,14 @@ class Patcher:
         patchelf_args = []
         if elf_file.interp and elf_file.interp != self._dynamic_linker:
             patchelf_args.extend(["--set-interpreter", self._dynamic_linker])
+            emit.progress(f"  Interpreter={self._dynamic_linker!r}")
 
         if elf_file.dependencies:
             current_rpath = self.get_current_rpath(elf_file)
             proposed_rpath = self.get_proposed_rpath(elf_file)
+
+            emit.progress(f"  Current rpath={current_rpath}")
+            emit.progress(f"  Proposed rpath={proposed_rpath}")
 
             # Removing the current rpath should not be necessary after patchelf 0.11,
             # see https://github.com/NixOS/patchelf/issues/94
@@ -111,7 +115,7 @@ class Patcher:
             os.unlink(elf_file_path)
             shutil.copy2(temp_file.name, elf_file_path)
 
-    @functools.lru_cache(maxsize=1024)
+    @functools.lru_cache(maxsize=1024)  # noqa: B019 Possible memory leaks in lru_cache
     def get_current_rpath(self, elf_file: ElfFile) -> List[str]:
         """Obtain the current rpath from the ELF file dynamic section."""
         output = subprocess.check_output(
@@ -119,7 +123,7 @@ class Patcher:
         )
         return [x for x in output.decode().strip().split(":") if x]
 
-    @functools.lru_cache(maxsize=1024)
+    @functools.lru_cache(maxsize=1024)  # noqa: B019 Possible memory leaks in lru_cache
     def get_proposed_rpath(self, elf_file: ElfFile) -> List[str]:
         """Obtain the proposed rpath pointing to the base or application snaps."""
         origin_rpaths: List[str] = []

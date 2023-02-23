@@ -1,0 +1,20 @@
+# ruff configuration file to run on legacy code and tests.
+# generated with flake8-to-ruff
+extend-exclude = [
+    ".vscode",
+    "__pycache__",
+    "parts",
+    "stage",
+    "prime",
+]
+ignore = ["E501"]
+line-length = 88
+select = [
+    "C9",
+    "E",
+    "F",
+    "W",
+]
+
+[mccabe]
+max-complexity = 10

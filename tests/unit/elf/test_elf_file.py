@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2022 Canonical Ltd.
+# Copyright 2016-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -92,7 +92,7 @@ class TestGetLibraries:
         )
 
         # bar.so.2 comes from fake ldd result
-        assert libs == set([str(fake_libs["foo.so.1"]), "/usr/lib/bar.so.2"])
+        assert libs == set([fake_libs["foo.so.1"], Path("/usr/lib/bar.so.2")])
 
     def test_get_libraries_missing_libs(self, new_dir, fake_elf, fake_libs):
         elf_file = fake_elf("fake_elf-with-missing-libs")
@@ -103,7 +103,7 @@ class TestGetLibraries:
             content_dirs=[],
         )
 
-        assert libs == {str(fake_libs["foo.so.1"]), "missing.so.2"}
+        assert libs == {fake_libs["foo.so.1"], Path("missing.so.2")}
 
     def test_get_libraries_with_soname_cache(self, new_dir, fake_elf, fake_libs):
         elf_file = fake_elf("fake_elf-2.23")
@@ -121,7 +121,7 @@ class TestGetLibraries:
         )
 
         # With no cache this would have returned '/usr/lib/bar.so.2'
-        assert libs == {str(fake_libs["foo.so.1"]), "/lib/bar.so.2"}
+        assert libs == {fake_libs["foo.so.1"], Path("/lib/bar.so.2")}
 
     def test_primed_libraries_are_preferred(self, new_dir, fake_elf, fake_libs):
         elf_file = fake_elf("fake_elf-2.23")
@@ -132,7 +132,7 @@ class TestGetLibraries:
             content_dirs=[],
         )
 
-        assert libs == frozenset([str(fake_libs["foo.so.1"]), "/usr/lib/bar.so.2"])
+        assert libs == frozenset([fake_libs["foo.so.1"], Path("/usr/lib/bar.so.2")])
 
     def test_non_elf_primed_sonames_matches_are_ignored(self, new_dir, fake_elf):
         primed_foo = new_dir / "foo.so.1"
@@ -146,7 +146,7 @@ class TestGetLibraries:
             content_dirs=[],
         )
 
-        assert libs == frozenset(["/lib/foo.so.1", "/usr/lib/bar.so.2"])
+        assert libs == frozenset([Path("/lib/foo.so.1"), Path("/usr/lib/bar.so.2")])
 
     def test_get_libraries_excludes_slash_snap(self, new_dir, fake_elf, fake_libs):
         elf_file = fake_elf("fake_elf-with-core-libs")
@@ -157,7 +157,7 @@ class TestGetLibraries:
             content_dirs=[],
         )
 
-        assert libs == {str(fake_libs["foo.so.1"]), "/usr/lib/bar.so.2"}
+        assert libs == {fake_libs["foo.so.1"], Path("/usr/lib/bar.so.2")}
 
     def test_get_libraries_ldd_failure_logs_warning(self, emitter, new_dir, fake_elf):
         elf_file = fake_elf("fake_elf-bad-ldd")
@@ -198,7 +198,7 @@ class TestGetLibraries:
             content_dirs=[],
         )
 
-        assert libs == {str(fake_libs["moo.so.2"])}
+        assert libs == {fake_libs["moo.so.2"]}
 
 
 class TestLibrary:

@@ -6,7 +6,6 @@ kill-timeout: 180m
 
 environment:
   SNAP/colcon_stage_snaps: colcon-stage-snaps
-  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
 systems:
   - ubuntu-20.04

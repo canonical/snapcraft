@@ -90,7 +90,6 @@ class ExtractedMetadataTestCase(unit.TestCase):
 
 
 class TestExtractedMetadataGetters:
-
     scenarios = [
         ("common_id", {"prop": "common_id", "value": "test-value"}),
         ("summary", {"prop": "summary", "value": "test-value"}),

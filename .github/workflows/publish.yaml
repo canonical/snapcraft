@@ -19,22 +19,14 @@ jobs:
           fi
 
       - if: steps.decisions.outputs.PUBLISH == 'true'
-        name: Remove Docker
-        run: |
-          # https://github.com/canonical/lxd-cloud/blob/f20a64a8af42485440dcbfd370faf14137d2f349/test/includes/lxd.sh#L13-L23
-          sudo rm -rf /etc/docker
-          sudo apt-get purge moby-buildx moby-engine moby-cli moby-compose moby-containerd moby-runc -y
-          sudo iptables -P FORWARD ACCEPT
-
-      - if: steps.decisions.outputs.PUBLISH == 'true'
-        name: Checkout Snapcraft        
+        name: Checkout Snapcraft
         uses: actions/checkout@v2
         with:
           # Fetch all of history so Snapcraft can determine its own version from git.
           fetch-depth: 0
 
       - if: steps.decisions.outputs.PUBLISH == 'true'
-        uses: snapcore/action-build@v1.0.9
+        uses: snapcore/action-build@v1
         name: Build Snapcraft Snap
         id: build
         with:

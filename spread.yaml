@@ -27,6 +27,7 @@ environment:
   DEBIAN_PRIORITY: critical
 
   TOOLS_DIR: /snapcraft/tests/spread/tools
+  PATH: $PATH:$TOOLS_DIR/snapd-testing-tools/tools/
 
   # Git environment for commits
   GIT_AUTHOR_NAME: "Test User"
@@ -208,8 +209,9 @@ prepare: |
       # nicely handle the snap and deb being installed at the same time.
       apt-get remove --purge --yes lxd lxd-client
   fi
-  # Install and setup the lxd snap
-  snap install lxd
+  # install and setup the lxd snap - use 'retry' to workaround aa-exec issue
+  # see https://bugs.launchpad.net/snapd/+bug/1870201
+  retry -n 5 --wait 5 sh -c 'snap install lxd'
   # Add the ubuntu user to the lxd group.
   adduser ubuntu lxd
   lxd init --auto
@@ -228,19 +230,9 @@ prepare: |
       /snap/bin/lxd init --auto
   fi
 
-  # If $SNAPCRAFT_CHANNEL is defined, install snapcraft from that channel.
-  # Otherwise, look for it in /snapcraft/.
-  if [ -z "$SNAPCRAFT_CHANNEL" ]; then
-    if stat /snapcraft/tests/*.snap 2>/dev/null; then
-      snap install --classic --dangerous /snapcraft/tests/*.snap
-    else
-      echo "Expected a snap to exist in /snapcraft/tests/. If your intention"\
-           "was to install from the store, set \$SNAPCRAFT_CHANNEL."
-      exit 1
-    fi
-  else
-    snap install --classic snapcraft --channel="$SNAPCRAFT_CHANNEL"
-  fi
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/prepare.sh"
+  install_snapcraft
 
   pushd /snapcraft
   git init
@@ -290,6 +282,11 @@ suites:
    environment:
      SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: "n"
 
+   systems:
+     - ubuntu-22.04*
+
+ tests/spread/core22/patchelf/:
+   summary: core22 patchelf tests
    systems:
      - ubuntu-22.04*
 

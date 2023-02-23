@@ -686,7 +686,6 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
     def test_run_environment_with_catkin_ros_master_uri(
         self, run_mock, source_setup_sh_mock
     ):
-
         self.properties.catkin_ros_master_uri = "http://rosmaster:11311"
         plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
 
@@ -912,7 +911,6 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
 
 
 class PullNoUnderlayTestCase(CatkinPluginBaseTest):
-
     underlay = None
     expected_underlay_path = None
 
@@ -1170,7 +1168,6 @@ class PullNoUnderlayTestCase(CatkinPluginBaseTest):
 
 
 class PullUnderlayTestCase(CatkinPluginBaseTest):
-
     underlay = {"build-path": "test-build-path", "run-path": "test-run-path"}
     expected_underlay_path = "test-build-path"
 
@@ -1455,7 +1452,6 @@ def options():
 
 
 class TestBuildArgs:
-
     scenarios = [
         (
             "release without catkin-cmake-args",
@@ -1511,7 +1507,6 @@ class TestBuildArgs:
         catkin_cmake_args,
         disable_parallel,
     ):
-
         options.build_attributes += build_attributes
         options.catkin_cmake_args += catkin_cmake_args
         options.disable_parallel = disable_parallel
@@ -1603,7 +1598,6 @@ class TestBuildArgs:
 
 
 class FinishBuildNoUnderlayTestCase(CatkinPluginBaseTest):
-
     underlay = None
     expected_underlay_path = None
 
@@ -1759,7 +1753,6 @@ class FinishBuildNoUnderlayTestCase(CatkinPluginBaseTest):
 
 
 class FinishBuildUnderlayTestCase(CatkinPluginBaseTest):
-
     underlay = {"build-path": "test-build-path", "run-path": "test-run-path"}
     expected_underlay_path = "test-run-path"
 

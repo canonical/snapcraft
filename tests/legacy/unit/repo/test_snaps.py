@@ -68,7 +68,6 @@ class SnapPackageIsInstalledTest(unit.TestCase):
         )
 
     def test_track_risk(self):
-
         self.assert_installed(
             snap="fake-snap-stable/latest/stable",
             installed_snaps=[{"name": "fake-snap-stable", "channel": "stable"}],
