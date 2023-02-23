@@ -4,9 +4,6 @@ summary: Build and run a basic kde snap using extensions
 # available on a subset of all the architectures this testbed
 # can run on.
 systems:
-  - ubuntu-18.04
-  - ubuntu-18.04-64
-  - ubuntu-18.04-amd64
   - ubuntu-20.04
   - ubuntu-20.04-64
   - ubuntu-20.04-amd64
@@ -46,6 +43,10 @@ execute: |
   [ -d "$snap_user_data/.local" ]
   [ -f "$snap_user_data/.last_revision" ]
   [ "$(cat "$snap_user_data/.last_revision")" = "SNAP_DESKTOP_LAST_REVISION=x1" ]
+
+  # Verify content snap was installed for dependency checks.
+  snap list kde-frameworks-5-99-qt-5-15-7-core20
+  snap list gtk-common-themes
 
   # Verify all dependencies were found.
   if echo "$output" | grep -q "part is missing libraries"; then
