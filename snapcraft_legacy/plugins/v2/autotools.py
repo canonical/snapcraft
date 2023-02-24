@@ -20,7 +20,7 @@ Autotools based projects are the ones that have the usual
 `./configure && make && make install` instruction set.
 
 This plugin will check for the existence of a 'configure' file, if one
-cannot be found, it will run 'autoconf --install'.
+cannot be found, it will run 'autoreconf --install'.
 
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
