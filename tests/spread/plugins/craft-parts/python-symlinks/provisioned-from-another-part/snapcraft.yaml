@@ -9,7 +9,7 @@ confinement: strict
 
 apps:
   hello:
-    command: bin/helloworld_in_python
+    command: bin/hello
 
 parts:
   python-sample:
