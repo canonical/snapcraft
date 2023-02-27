@@ -112,7 +112,7 @@ class RunTest(unit.TestCase):
         )
         self.assert_fake_check_output_called()
 
-    def test_review_unkown_error_bubbles_up(self):
+    def test_review_unknown_error_bubbles_up(self):
         self.fake_check_output.mock.side_effect = subprocess.CalledProcessError(
             cmd=[self.review_tools_path, "fake.snap", "--json", "--allow-classic"],
             returncode=4,
