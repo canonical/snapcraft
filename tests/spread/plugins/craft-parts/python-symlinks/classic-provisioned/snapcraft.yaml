@@ -1,7 +1,11 @@
-name: python-hello
+name: classic-provisioned
 version: "1.0"
-summary: .
-description: .
+summary: Classic confinement with staged python
+description: |
+  Classic confinement requires the python interpreter to be
+  provisioned by the user because we can't rely on the host to
+  provide a compatible version. The expected venv symlink is
+  python3 -> ../usr/bin/<staged interpreter>.
 
 grade: devel
 base: core22

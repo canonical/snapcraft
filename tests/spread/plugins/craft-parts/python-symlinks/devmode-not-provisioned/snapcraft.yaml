@@ -1,7 +1,11 @@
-name: python-hello
+name: devmode-not-provisioned
 version: "1.0"
-summary: .
-description: .
+summary: Devmode confinement without staged python
+description: |
+  Devmode works like strict confinement and if we don't have a staged
+  python interpreter the venv symlink must point to the interpreter
+  provided by the base snap (which will appear as the root filesystem).
+  The expected link for core22 is python3 -> /usr/bin/python3.10.
 
 grade: devel
 base: core22

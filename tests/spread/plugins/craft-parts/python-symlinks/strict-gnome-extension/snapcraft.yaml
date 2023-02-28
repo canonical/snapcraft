@@ -1,7 +1,10 @@
-name: python-hello
+name: strict-gnome-extension
 version: "1.0"
-summary: .
-description: .
+summary: Strict with gnome extension
+description: |
+  Using the gnome extension must not affect the python
+  interpreter symlink. With strict confinement, the expected
+  symlink for base core22 is python3 -> /usr/bin/python3.10.
 
 grade: devel
 base: core22

@@ -1,7 +1,10 @@
-name: python-hello
+name: strict-provisioned
 version: "1.0"
-summary: .
-description: .
+summary: Strict confinement with staged python
+description: |
+  When confinement is strict and python is staged, the venv
+  symlink must point to the staged interpreter. The expected
+  symlink is python3 -> ../usr/bin/<staged interpreter>.
 
 grade: devel
 base: core22

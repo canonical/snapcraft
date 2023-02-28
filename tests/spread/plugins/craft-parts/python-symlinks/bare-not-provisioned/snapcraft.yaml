@@ -1,7 +1,9 @@
-name: python-hello
+name: bare-not-provisioned
 version: "1.0"
-summary: .
-description: .
+summary: Bare base without staged python
+description: |
+  If we use base bare staging python is mandatory. If the
+  interpreter is not staged, we must fail.
 
 grade: devel
 base: bare

@@ -1,7 +1,10 @@
-name: python-hello
+name: bare-provisioned
 version: "1.0"
-summary: .
-description: .
+summary: Bare base with staged python
+description: |
+  If we use base bare staging python is mandatory, and the venv
+  symlink must point to the staged interpreter. The expected
+  symlink is python3 -> ../usr/bin/<staged interpreter>.
 
 grade: devel
 base: bare
