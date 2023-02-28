@@ -233,12 +233,13 @@ def get_parallel_build_count() -> int:
             )
             build_count = 1
 
+    max_count_env = os.environ.get("SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT", "")
     try:
-        max_count = int(os.environ.get("SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT", ""))
+        max_count = int(max_count_env)
         if max_count > 0:
             build_count = min(build_count, max_count)
     except ValueError:
-        emit.debug("Invalid SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT value")
+        emit.debug(f"Invalid SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT {max_count_env!r}")
 
     return build_count
 
