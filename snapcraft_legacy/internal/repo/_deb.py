@@ -476,7 +476,7 @@ class Ubuntu(BaseRepo):
         base: str,
         stage_packages_path: pathlib.Path,
         target_arch: str,
-        filters: Set[str] = set(),
+        packages_filters: Set[str] = set(),
     ) -> List[str]:
         logger.debug(f"Requested stage-packages: {sorted(package_names)!r}")
 
@@ -487,7 +487,7 @@ class Ubuntu(BaseRepo):
             base=base, package_list=package_list
         )
 
-        filtered_names.update(filters)
+        filtered_names.update(packages_filters)
 
         stage_packages_path.mkdir(exist_ok=True)
         with AptCache(

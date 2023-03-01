@@ -203,7 +203,7 @@ class TestPackages(unit.TestCase):
     @mock.patch(
         "snapcraft_legacy.internal.repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES", {}
     )
-    def test_fetch_stage_package_with_deps_with_filters(self):
+    def test_fetch_stage_package_with_deps_with_package_filters(self):
         fake_package = self.debs_path / "fake-package_1.0_all.deb"
         fake_package.touch()
         fake_package_dep = self.debs_path / "fake-package-dep_2.0_all.deb"
@@ -221,7 +221,7 @@ class TestPackages(unit.TestCase):
             stage_packages_path=self.stage_packages_path,
             base="core18",
             target_arch="amd64",
-            filters={"fake-package-dep", "other-fake-package"},
+            packages_filters={"fake-package-dep", "other-fake-package"},
         )
 
         self.fake_apt_cache.assert_has_calls(
