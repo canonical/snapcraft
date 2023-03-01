@@ -204,7 +204,7 @@ class StoreExportLoginCommand(BaseCommand):
                 with contextlib.suppress(ValueError):
                     expiry_date = datetime.strptime(parsed_args.expires, date_format)
                     break
-            else:
+            else:  # noqa: PLW0120 Else clause on loop without a break statement
                 valid_formats = utils.humanize_list(_VALID_DATE_FORMATS, "or")
                 raise ArgumentParsingError(
                     f"The expiry follow an ISO 8601 format ({valid_formats})"

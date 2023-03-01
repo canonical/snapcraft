@@ -38,7 +38,6 @@ from tests.legacy import fixture_setup, unit
 
 
 class SnapcraftTError(snapcraft_legacy.internal.errors.SnapcraftError):
-
     fmt = "{message}"
 
     def __init__(self, message):

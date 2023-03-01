@@ -31,7 +31,6 @@ from tests.legacy import fixture_setup, unit
 
 
 class TestReplaceInFile:
-
     scenarios = [
         (
             "2to3",
@@ -298,7 +297,6 @@ _BIN_PATHS = [
 
 
 class TestGetToolPath:
-
     scenarios = [
         (i, dict(tool_path=pathlib.Path(i) / "tool-command")) for i in _BIN_PATHS
     ]

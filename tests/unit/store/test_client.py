@@ -258,7 +258,7 @@ def test_get_store_login_from_env(monkeypatch):
 ####################
 
 
-def test_get_hostname_none_is_unkown():
+def test_get_hostname_none_is_unknown():
     assert client._get_hostname(hostname=None) == "UNKNOWN"
 
 

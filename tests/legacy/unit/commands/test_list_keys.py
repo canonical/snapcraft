@@ -23,7 +23,6 @@ from . import FAKE_UNAUTHORIZED_ERROR, FakeStoreCommandsBaseTestCase, get_sample
 
 
 class ListKeysCommandTestCase(FakeStoreCommandsBaseTestCase):
-
     command_name = "list-keys"
 
     def test_command_without_login_must_ask(self):

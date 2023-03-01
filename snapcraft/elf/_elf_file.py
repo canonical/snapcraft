@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2022 Canonical Ltd.
+# Copyright 2016-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -125,7 +125,6 @@ class _Library:
         arch_tuple: _ElfArchitectureTuple,
         soname_cache: SonameCache,
     ) -> None:
-
         self.soname = soname
         self.soname_path = soname_path
         self.search_paths = search_paths
@@ -325,6 +324,7 @@ class ElfFile:
     def is_linker_compatible(self, *, linker_version: str) -> bool:
         """Determine if the linker will work given the required glibc version."""
         version_required = self.get_required_glibc()
+        # TODO: pkg_resources is deprecated in setuptools>66 (CRAFT-1598)
         is_compatible = parse_version(version_required) <= parse_version(linker_version)
         emit.debug(
             f"Check if linker {linker_version!r} works with GLIBC_{version_required} "
@@ -343,6 +343,7 @@ class ElfFile:
                 if not version.startswith("GLIBC_"):
                     continue
                 version = version[6:]
+                # TODO: pkg_resources is deprecated in setuptools>66 (CRAFT-1598)
                 if parse_version(version) > parse_version(version_required):
                     version_required = version
 
@@ -356,7 +357,7 @@ class ElfFile:
         content_dirs: List[Path],
         arch_triplet: str,
         soname_cache: Optional[SonameCache] = None,
-    ) -> Set[str]:
+    ) -> Set[Path]:
         """Load the set of libraries that are needed to satisfy elf's runtime.
 
         This may include libraries contained within the project.
@@ -364,9 +365,11 @@ class ElfFile:
 
         :param root_path: the root path to search for missing dependencies.
         :param base_path: the core base path to search for missing dependencies.
+        :param content_dirs: list of paths sourced from content snaps.
+        :param arch_triplet: architecture triplet of the platform.
         :param soname_cache: a cache of previously search dependencies.
 
-        :returns: a set of string with paths to the library dependencies of elf.
+        :returns: a set of paths to the library dependencies of elf.
         """
         if soname_cache is None:
             soname_cache = SonameCache()
@@ -402,10 +405,10 @@ class ElfFile:
             )
 
         # Return the set of dependency paths, minus those found in the base.
-        dependencies: Set[str] = set()
+        dependencies: Set[Path] = set()
         for library in self.dependencies:
             if not library.in_base_snap:
-                dependencies.add(str(library.path))
+                dependencies.add(library.path)
         return dependencies
 
 

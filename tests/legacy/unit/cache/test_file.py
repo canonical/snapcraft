@@ -21,7 +21,6 @@ from snapcraft_legacy.file_utils import calculate_hash
 
 
 class TestFileCache:
-
     scenarios = [
         ("sha384", dict(algo="sha384")),
         ("md5", dict(algo="md5")),

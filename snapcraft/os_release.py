@@ -33,13 +33,19 @@ _ID_TO_UBUNTU_CODENAME = {
 class OsRelease:
     """A class to intelligently determine the OS on which we're running."""
 
-    def __init__(self, *, os_release_file: Path = Path("/etc/os-release")) -> None:
+    def __init__(
+        self,
+        *,
+        os_release_file: Path = Path(  # noqa: B008 Function call in arg defaults
+            "/etc/os-release"
+        ),
+    ) -> None:
         """Create a new OsRelease instance.
 
         :param str os_release_file: Path to os-release file to be parsed.
         """
         with contextlib.suppress(FileNotFoundError):
-            self._os_release = {}  # type: Dict[str, str]
+            self._os_release: Dict[str, str] = {}
             with os_release_file.open(encoding="utf-8") as release_file:
                 for line in release_file:
                     entry = line.rstrip().split("=")

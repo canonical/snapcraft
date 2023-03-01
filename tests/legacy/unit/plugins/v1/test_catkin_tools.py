@@ -139,7 +139,6 @@ def options():
 
 
 class TestPrepareBuild:
-
     scenarios = [
         (
             "release without catkin-cmake-args",

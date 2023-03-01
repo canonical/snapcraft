@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import ANY, MagicMock, Mock, call, patch
 
 import pytest
 from craft_providers import ProviderError, bases
@@ -254,6 +254,7 @@ def test_get_command_environment_passthrough(
     monkeypatch.setenv("SNAPCRAFT_BUILD_FOR", "test-build-for")
     monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "test-build-info")
     monkeypatch.setenv("SNAPCRAFT_IMAGE_INFO", "test-image-info")
+    monkeypatch.setenv("SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT", "test-build-count")
 
     # ensure other variables are not being passed
     monkeypatch.setenv("other_var", "test-other-var")
@@ -270,6 +271,7 @@ def test_get_command_environment_passthrough(
         "SNAPCRAFT_BUILD_FOR": "test-build-for",
         "SNAPCRAFT_BUILD_INFO": "test-build-info",
         "SNAPCRAFT_IMAGE_INFO": "test-image-info",
+        "SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT": "test-build-count",
     }
 
 
@@ -497,3 +499,24 @@ def test_get_provider_snap_config_default(mocker, platform, expected_provider):
     actual_provider = providers.get_provider()
 
     assert isinstance(actual_provider, expected_provider)
+
+
+@pytest.mark.parametrize("bind_ssh", [False, True])
+def test_prepare_instance(bind_ssh, mock_instance, mocker, tmp_path):
+    """Verify instance is properly prepared."""
+    providers.prepare_instance(
+        instance=mock_instance, host_project_path=tmp_path, bind_ssh=bind_ssh
+    )
+
+    mock_instance.mount.assert_has_calls(
+        [call(host_source=tmp_path, target=Path("/root/project"))]
+    )
+
+    if bind_ssh:
+        mock_instance.mount.assert_has_calls(
+            [call(host_source=Path().home() / ".ssh", target=Path("/root/.ssh"))]
+        )
+
+    mock_instance.push_file_io.assert_called_with(
+        content=ANY, destination=Path("/root/.bashrc"), file_mode="644"
+    )

@@ -296,3 +296,23 @@ class CleanCommand(_LifecycleStepCommand):
         remove the managed snap packing environment (VM or container).
         """
     )
+
+
+class TryCommand(_LifecycleCommand):
+    """Command to prepare the parts for ``snap try``."""
+
+    name = "try"
+    help_msg = 'Prepare a snap for "snap try".'
+    overview = textwrap.dedent(
+        """
+        Process parts and expose the ``prime`` directory containing the
+        final payload, ready for ``snap try prime``.
+        """
+    )
+
+    @overrides
+    def run(self, parsed_args):
+        """Overridden to give a helpful message when the lifecycle finishes."""
+        super().run(parsed_args)
+        if not utils.is_managed_mode():
+            emit.message("You can now run `snap try prime`")

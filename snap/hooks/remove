@@ -1,0 +1,51 @@
+#! /usr/bin/env sh
+
+# Remove hook for snapcraft
+
+# separate lxc output by newlines
+# \n can not be last, or it will be stripped by $() - see shellcheck SC3003
+IFS=$(printf '\n\t')
+
+# check for lxc
+if ! command -v lxc > /dev/null 2>&1; then
+  >&2 echo "lxc not installed"
+  exit 0
+fi
+
+# check for snapcraft project
+if ! lxc project info snapcraft > /dev/null 2>&1; then
+  >&2 echo "lxc project 'snapcraft' does not exist"
+  exit 0
+fi
+
+# get instances
+instances="$(lxc list --project=snapcraft --format=csv --columns="n")"
+
+# delete base instances
+if [ -n "$instances" ]; then
+  for instance in $instances; do
+    >&2 echo "checking instance $instance"
+    if [ "$(expr "$instance" : "^base-instance-snapcraft-.*")" -ne 0 ]; then
+      >&2 echo "deleting base instance $instance"
+      lxc delete --project=snapcraft --force "$instance"
+    fi
+  done
+else
+  >&2 echo "no base instances to remove"
+fi
+
+# get images
+images="$(lxc image list --project=snapcraft --format=csv --columns=l)"
+
+# delete base images created by craft-providers < 1.7.0
+if [ -n "$images" ]; then
+  for image in $images; do
+    >&2 echo "image: $image"
+    if expr "$image" : "^snapshot-.*"; then
+      >&2 echo "deleting base image $instance"
+      lxc image delete --project=snapcraft "$image"
+    fi
+  done
+else
+  >&2 echo "no base images to remove"
+fi

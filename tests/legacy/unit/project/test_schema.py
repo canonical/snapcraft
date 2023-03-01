@@ -613,7 +613,6 @@ def test_invalid_part_names(data, name):
 
 
 class TestInvalidArchitectures:
-
     scenarios = [
         (
             "single string",
@@ -1225,13 +1224,29 @@ def test_invalid_command_chain(data, command_chain):
     assert expected_message in str(error.value)
 
 
-@pytest.mark.parametrize("username", ["snap_daemon", "snap_microk8s"])
+@pytest.mark.parametrize(
+    "username",
+    [
+        "snap_daemon",
+        "snap_microk8s",
+        "snap_aziotedge",
+        "snap_aziotdu",
+    ],
+)
 def test_yaml_valid_system_usernames_long(data, username):
     data["system-usernames"] = {username: {"scope": "shared"}}
     Validator(data).validate()
 
 
-@pytest.mark.parametrize("username", ["snap_daemon", "snap_microk8s"])
+@pytest.mark.parametrize(
+    "username",
+    [
+        "snap_daemon",
+        "snap_microk8s",
+        "snap_aziotedge",
+        "snap_aziotdu",
+    ],
+)
 def test_yaml_valid_system_usernames_short(data, username):
     data["system-usernames"] = {username: "shared"}
     Validator(data).validate()

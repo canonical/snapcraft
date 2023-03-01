@@ -31,7 +31,6 @@ from . import CommandBaseTestCase
 
 
 class LifecycleCommandsBaseTestCase(CommandBaseTestCase):
-
     yaml_template = """name: {step}-test
 version: "1.0"
 summary: test {step}

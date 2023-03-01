@@ -64,7 +64,6 @@ class TestParts(ProjectLoaderBaseTest):
 
 
 class TestPartOrder:
-
     scenarios = [
         (
             "part1 then part2",

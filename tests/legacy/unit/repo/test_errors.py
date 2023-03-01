@@ -18,7 +18,6 @@ from snapcraft_legacy.internal.repo import errors
 
 
 class TestErrorFormatting:
-
     scenarios = (
         (
             "SnapdConnectionError",
@@ -38,7 +37,6 @@ class TestErrorFormatting:
 
 
 class TestAptGPGKeyInstallError:
-
     scenarios = [
         (
             "AptGPGKeyInstallError basic",
@@ -179,5 +177,35 @@ def test_multiple_packages_not_found_error():
         == "Verify APT repository configuration and package names are correct."
     )
     assert exception.get_details() is None
+    assert exception.get_docs_url() is None
+    assert exception.get_reportable() is False
+
+
+def test_snapcraft_exception_handling():
+    exception = errors.PopulateCacheDirError(
+        [
+            (
+                "/etc/apt/source-file-1",
+                "/root/.cache/dest-file-1",
+                "[Errno 13] Permission denied: '/etc/apt/source-file-1'",
+            ),
+            (
+                "/etc/apt/source-file-2",
+                "/root/.cache/dest-file-2",
+                "[Errno 13] Permission denied: '/etc/apt/source-file-2'",
+            ),
+        ]
+    )
+
+    assert exception.get_brief() == "Could not populate apt cache directory."
+    assert exception.get_resolution() == (
+        "Verify user has read access to contents of /etc/apt."
+    )
+    assert exception.get_details() == (
+        "Unable to copy /etc/apt/source-file-1 to /root/.cache/dest-file-1: "
+        "[Errno 13] Permission denied: '/etc/apt/source-file-1'\n"
+        "Unable to copy /etc/apt/source-file-2 to /root/.cache/dest-file-2: "
+        "[Errno 13] Permission denied: '/etc/apt/source-file-2'\n"
+    )
     assert exception.get_docs_url() is None
     assert exception.get_reportable() is False

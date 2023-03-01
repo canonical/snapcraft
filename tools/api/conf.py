@@ -55,7 +55,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "snapcraft"
-copyright = "2017, Canonical"
+copyright = "2017, Canonical"  # noqa A001 Variable `copyright` is shadowing a python builtin
 author = "Canonical"
 
 # The version info for the project you're documenting, acts as replacement for

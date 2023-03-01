@@ -1032,7 +1032,6 @@ def options():
 
 
 class TestBuildArgs:
-
     package_scenarios = [
         ("one package", {"colcon_packages": ["my_package"]}),
         ("no packages", {"colcon_packages": []}),

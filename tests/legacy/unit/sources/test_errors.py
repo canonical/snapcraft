@@ -18,7 +18,6 @@ from snapcraft_legacy.internal.sources import errors
 
 
 class TestErrorFormatting:
-
     scenarios = (
         (
             "SnapcraftSourceNotFoundError",
@@ -88,7 +87,6 @@ class TestErrorFormatting:
 
 
 class TestSnapcraftException:
-
     scenarios = (
         (
             "GitCommandError",

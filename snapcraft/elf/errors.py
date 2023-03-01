@@ -30,10 +30,7 @@ class PatcherError(errors.SnapcraftError):
         self.cmd = cmd
         self.code = code
 
-        super().__init__(
-            f"{str(path)!r} cannot be patched to function properly in a classic"
-            f"confined snap: {cmd} failed with exit code {code}"
-        )
+        super().__init__(f"Error patching ELF file: {cmd} failed with exit code {code}")
 
 
 class CorruptedElfFile(errors.SnapcraftError):

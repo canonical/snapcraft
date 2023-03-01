@@ -20,7 +20,6 @@ from snapcraft_legacy.internal.review_tools import errors
 
 
 class TestSnapcraftException:
-
     scenarios = (
         (
             "ReviewError (linting error with link)",

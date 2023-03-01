@@ -379,7 +379,6 @@ class CreateTestCase(CreateBaseTestCase):
 
 
 class StopModeTestCase(CreateBaseTestCase):
-
     stop_modes = [
         "sigterm",
         "sigterm-all",
@@ -405,7 +404,6 @@ class StopModeTestCase(CreateBaseTestCase):
 
 
 class RefreshModeTestCase(CreateBaseTestCase):
-
     refresh_modes = ["endure", "restart"]
 
     def test_valid(self):
@@ -523,7 +521,6 @@ class PassthroughErrorTestCase(PassthroughBaseTestCase):
 
 
 class PassthroughPropagateTestCase(PassthroughBaseTestCase):
-
     cases = [
         (
             "new",

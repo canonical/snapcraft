@@ -183,7 +183,6 @@ class FixXmlToolsTestCase(RepoBaseTestCase):
 
 
 class FixShebangTestCase(RepoBaseTestCase):
-
     scenarios = [
         (
             "python bin dir",

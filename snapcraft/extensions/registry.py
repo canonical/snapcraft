@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Dict, List, Type
 from snapcraft import errors
 
 from .gnome import GNOME
+from .kde_neon import KDENeon
 from .ros2_humble import ROS2HumbleExtension
 
 if TYPE_CHECKING:
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
 _EXTENSIONS: Dict[str, "ExtensionType"] = {
     "gnome": GNOME,
     "ros2-humble": ROS2HumbleExtension,
+    "kde-neon": KDENeon,
 }
 
 

@@ -442,7 +442,6 @@ class TestCommandChain:
         )
 
     def test_command_chain_path_not_found(self, new_dir):
-
         with pytest.raises(errors.SnapcraftError) as raised:
             _validate_command_chain(["file-not-found"], name="foo", prime_dir=new_dir)
 

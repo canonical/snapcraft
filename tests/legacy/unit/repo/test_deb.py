@@ -200,6 +200,47 @@ class TestPackages(unit.TestCase):
             Equals(sorted(["fake-package=1.0", "fake-package-dep=2.0"])),
         )
 
+    @mock.patch(
+        "snapcraft_legacy.internal.repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES", {}
+    )
+    def test_fetch_stage_package_with_deps_with_package_filters(self):
+        fake_package = self.debs_path / "fake-package_1.0_all.deb"
+        fake_package.touch()
+        fake_package_dep = self.debs_path / "fake-package-dep_2.0_all.deb"
+        fake_package_dep.touch()
+        other_fake_package = self.debs_path / "other-fake-package_1.0_all.deb"
+        other_fake_package.touch()
+        self.fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = [
+            ("fake-package", "1.0", fake_package)
+        ]
+
+        package_names = ["fake-package", "other-fake-package"]
+
+        fetched_packages = repo.Ubuntu.fetch_stage_packages(
+            package_names=package_names,
+            stage_packages_path=self.stage_packages_path,
+            base="core18",
+            target_arch="amd64",
+            packages_filters={"fake-package-dep", "other-fake-package"},
+        )
+
+        self.fake_apt_cache.assert_has_calls(
+            [
+                call(stage_cache=self.stage_cache_path, stage_cache_arch="amd64"),
+                call().__enter__(),
+                call().__enter__().mark_packages(set(package_names)),
+                call()
+                .__enter__()
+                .unmark_packages({"fake-package-dep", "other-fake-package"}),
+                call().__enter__().fetch_archives(self.debs_path),
+            ]
+        )
+
+        self.assertThat(
+            fetched_packages,
+            Equals(sorted(["fake-package=1.0"])),
+        )
+
     def test_get_package_fetch_error(self):
         self.fake_apt_cache.return_value.__enter__.return_value.fetch_archives.side_effect = errors.PackageFetchError(
             "foo"

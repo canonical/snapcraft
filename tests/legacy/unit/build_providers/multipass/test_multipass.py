@@ -440,7 +440,6 @@ class MultipassTest(BaseProviderBaseTest):
 
 
 class TestMultipassWithBases:
-
     scenarios = (
         ("linux", dict(base="core20", expected_image="snapcraft:core20")),
         ("linux", dict(base="core18", expected_image="snapcraft:core18")),
@@ -525,7 +524,6 @@ class TestMultipassWithBases:
     def test_mount_prime_directory(
         self, xdg_dirs, in_snap, snap_injector, multipass_cmd, base, expected_image
     ):
-
         with MultipassTestImpl(
             project=get_project(base), echoer=mock.Mock(), is_ephemeral=False
         ) as instance:

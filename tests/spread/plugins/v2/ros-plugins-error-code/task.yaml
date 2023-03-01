@@ -7,7 +7,6 @@ environment:
   SNAP/catkin_noetic_hello: catkin-noetic-hello
   SNAP/catkin_tools_noetic_hello: catkin-tools-noetic-hello
   SNAP/colcon_ros2_foxy_rlcpp_hello: colcon-ros2-foxy-rlcpp-hello
-  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
 systems:
   - ubuntu-20.04

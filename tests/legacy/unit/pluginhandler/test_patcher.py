@@ -150,7 +150,6 @@ class TestStaticBasePatching:
 
 
 class TestPrimeTypeExcludesPatching:
-
     scenarios = (
         (
             "kernel",
@@ -237,7 +236,6 @@ class TestPrimeTypeExcludesPatching:
 
 
 class TestPrimeTypeIncludesPatching:
-
     scenarios = (
         (
             "classic",

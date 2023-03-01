@@ -1,4 +1,4 @@
-summary: Test library linter output
+summary: Raise linter warnings for missing libraries
 
 restore: |
   snapcraft clean
@@ -7,7 +7,7 @@ restore: |
 execute: |
   snapcraft 2> output.txt
 
-  test -f library-linter-test_0.1_*.snap
+  test -f library-missing_0.1_*.snap
 
   sed -n '/^Running linters/,/^Creating snap/p' < output.txt > linter_output.txt
   diff -u linter_output.txt expected_linter_output.txt

@@ -32,7 +32,6 @@ from tests.legacy import unit
 
 
 class TestNativeOptions:
-
     scenarios = [
         (
             "amd64",
@@ -241,7 +240,6 @@ class OptionsTestCase(unit.TestCase):
 
 
 class TestHostIsCompatibleWithTargetBase:
-
     scenarios = (
         ("trusty core", dict(codename="trusty", base="core", is_compatible=False)),
         ("xenial core", dict(codename="xenial", base="core", is_compatible=False)),

@@ -17,7 +17,6 @@ from snapcraft_legacy.project import errors
 
 
 class TestErrorFormatting:
-
     scenarios = [
         (
             "MissingSnapcraftYamlError",

@@ -6,7 +6,6 @@ kill-timeout: 180m
 environment:
   SNAP/catkin_cmake_args: catkin-cmake-args
   SNAP/catkin_tools_cmake_args: catkin-tools-cmake-args
-  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
 systems:
   - ubuntu-20.04
