@@ -18,6 +18,8 @@ exclude = '''
   | ^/parts
   | ^/stage
   | ^/prime
+  | snapcraft_legacy
+  | tools
 )/
 '''
 # Targeting future versions as well so we don't have black reformatting code

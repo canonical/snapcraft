@@ -34,10 +34,10 @@ jobs:
           sudo apt-get install --yes libapt-pkg-dev libyaml-dev xdelta3
           echo "::endgroup::"
           echo "::group::pip install"
-          python -m pip install 'tox>=4.0.11<5.0' tox-gh
+          python -m pip install 'tox<5.0' tox-gh
           echo "::endgroup::"
           echo "::group::Create virtual environments for linting processes."
-          tox run-parallel --parallel all --parallel-no-spinner -m lint --notest
+          tox run -m lint --notest
           echo "::endgroup::"
           echo "::group::Wait for snap to complete"
           snap watch --last=install
@@ -49,17 +49,21 @@ jobs:
       fail-fast: false  # Run all the tests to their conclusions.
       matrix:
         platform: [ubuntu-20.04, ubuntu-22.04]
+        python_version: ["3.8", "3.10"]
+        include:
+          - python_version: "3.8"
+            tox_python: py38
+          - python_version: "3.10"
+            tox_python: py310
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Set up Python versions on ${{ matrix.platform }}
+      - name: Set up Python version ${{ matrix.python_version }} on ${{ matrix.platform }}
         uses: actions/setup-python@v4
         with:
-          python-version: |
-            3.8
-            3.10
+          python-version: ${{ matrix.python_version }}
       - name: Install dependencies
         run: |
           echo "::group::apt-get update"
@@ -69,13 +73,13 @@ jobs:
           sudo apt-get install -y libapt-pkg-dev libyaml-dev xdelta3
           echo "::endgroup::"
           echo "::group::pip install"
-          python -m pip install 'tox>=4.0.11<5.0' tox-gh
+          python -m pip install 'tox<5.0' tox-gh
           echo "::endgroup::"
           mkdir -p results
       - name: Setup Tox environments
-        run: tox run-parallel --parallel auto --parallel-no-spinner --parallel-live -m ci --notest
+        run: tox run-parallel --parallel auto --parallel-no-spinner --parallel-live -e test-${{ matrix.tox_python }},test-legacy-${{ matrix.tox_python }} --notest
       - name: Test with tox
-        run: tox run-parallel --parallel all --parallel-no-spinner --result-json results/tox-${{ matrix.platform }}.json -m ci --skip-pkg-install -- --no-header --quiet -rN
+        run: tox run --skip-pkg-install --result-json results/tox-${{ matrix.platform }}.json -e test-${{ matrix.tox_python }},test-legacy-${{ matrix.tox_python }}
       - name: Upload code coverage
         uses: codecov/codecov-action@v3
         with:

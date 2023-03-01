@@ -1,0 +1,29 @@
+# Variances from starbase:
+# * Thruthiness checks set to warning
+# * Indentation checks disabled
+# * Trailing spaces checks disabled
+# * Comment checks disabled
+# * Empty line checks disabled
+# * New line at end of file check disabled
+# * Bracket spaces checks disabled
+---
+ignore-from-file: [.gitignore]
+
+extends: default
+
+rules:
+  document-start: disable
+  float-values: enable
+  line-length: disable
+  octal-values: enable
+  truthy:
+    check-keys: false
+  # Changes from starbase start here
+    level: warning
+  indentation: disable
+  trailing-spaces: disable
+  comments: disable
+  comments-indentation: disable
+  empty-lines: disable
+  new-line-at-end-of-file: disable
+  brackets: disable
