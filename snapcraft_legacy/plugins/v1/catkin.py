@@ -81,9 +81,13 @@ import tempfile
 import textwrap
 from typing import TYPE_CHECKING, List, Set
 
+from craft_archives.repo.package_repository import (
+    PackageRepository,
+    PackageRepositoryApt,
+)
+
 from snapcraft_legacy import file_utils, formatting_utils
 from snapcraft_legacy.internal import common, errors, mangling, os_release, repo
-from craft_archives.repo.package_repository import PackageRepository, PackageRepositoryApt
 from snapcraft_legacy.plugins.v1 import PluginV1, _python, _ros
 
 if TYPE_CHECKING:
