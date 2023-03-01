@@ -24,7 +24,6 @@ from tests.legacy import unit
 
 
 class TestSetupPy:
-
     metadata = [
         (
             "description",

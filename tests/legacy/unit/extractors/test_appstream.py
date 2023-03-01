@@ -36,7 +36,6 @@ def _create_desktop_file(desktop_file_path, icon: str = None) -> None:
 
 
 class TestAppstream:
-
     scenarios = testscenarios.multiply_scenarios(
         [
             (
@@ -726,7 +725,6 @@ class AppstreamUnhandledFileTestCase(unit.TestCase):
 
 
 class TestAppstreamLaunchable:
-
     scenarios = (
         (
             "usr/share",
@@ -765,7 +763,6 @@ class TestAppstreamLaunchable:
 
 
 class TestAppstreamLegacyDesktop:
-
     scenarios = (
         (
             "usr/share",

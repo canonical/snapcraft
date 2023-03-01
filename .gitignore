@@ -1,6 +1,7 @@
 build
 Cargo.lock
 .coverage**
+coverage-*
 demos/*/parts/
 demos/*/prime/
 demos/**/*.snap
@@ -21,6 +22,7 @@ pip-wheel-metadata/
 prime
 *.pyc
 __pycache__
+.pytest_cache
 *.snap
 snap/.snapcraft/
 .spread-reuse.*
@@ -29,6 +31,8 @@ stage
 target
 tests/unit/snap/
 tests/unit/stage/
+test-results*
+.tox
 .vscode
 venv
 .venv

@@ -875,7 +875,7 @@ def test_extract_parse_info():
         "name": "foo",
         "parts": {"p1": {"plugin": "nil", "parse-info": "foo/metadata.xml"}, "p2": {}},
     }
-    parse_info = parts_lifecycle._extract_parse_info(yaml_data)
+    parse_info = parts_lifecycle.extract_parse_info(yaml_data)
     assert yaml_data == {"name": "foo", "parts": {"p1": {"plugin": "nil"}, "p2": {}}}
     assert parse_info == {"p1": "foo/metadata.xml"}
 

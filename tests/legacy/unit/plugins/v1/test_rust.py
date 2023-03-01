@@ -140,7 +140,6 @@ def options():
 
 
 class TestRustPluginCrossCompile:
-
     scenarios = [
         ("armv7l", dict(deb_arch="armhf", target="armv7-unknown-linux-gnueabihf")),
         ("aarch64", dict(deb_arch="arm64", target="aarch64-unknown-linux-gnu")),

@@ -43,7 +43,6 @@ _scenarios = [
 
 
 class TestGlobalState:
-
     scenarios = _scenarios
 
     def test_save(self, tmp_work_path, build_packages, build_snaps, required_grade):

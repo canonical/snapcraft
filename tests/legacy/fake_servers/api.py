@@ -32,7 +32,6 @@ logger = logging.getLogger(__name__)
 
 
 class FakeStoreAPIServer(base.BaseFakeServer):
-
     _DEV_API_PATH = "/dev/api/"
     _V2_DEV_API_PATH = "/api/v2/snaps/"
 

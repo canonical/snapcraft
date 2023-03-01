@@ -15,8 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
-from textwrap import dedent
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import ANY, MagicMock, Mock, call, patch
 
 import pytest
 from craft_providers import ProviderError, bases
@@ -255,6 +254,7 @@ def test_get_command_environment_passthrough(
     monkeypatch.setenv("SNAPCRAFT_BUILD_FOR", "test-build-for")
     monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "test-build-info")
     monkeypatch.setenv("SNAPCRAFT_IMAGE_INFO", "test-image-info")
+    monkeypatch.setenv("SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT", "test-build-count")
 
     # ensure other variables are not being passed
     monkeypatch.setenv("other_var", "test-other-var")
@@ -271,6 +271,7 @@ def test_get_command_environment_passthrough(
         "SNAPCRAFT_BUILD_FOR": "test-build-for",
         "SNAPCRAFT_BUILD_INFO": "test-build-info",
         "SNAPCRAFT_IMAGE_INFO": "test-image-info",
+        "SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT": "test-build-count",
     }
 
 
@@ -503,14 +504,8 @@ def test_get_provider_snap_config_default(mocker, platform, expected_provider):
 @pytest.mark.parametrize("bind_ssh", [False, True])
 def test_prepare_instance(bind_ssh, mock_instance, mocker, tmp_path):
     """Verify instance is properly prepared."""
-    mock_temp_file = MagicMock()
-    mock_named_temporary_file = mocker.patch(
-        "snapcraft.providers.tempfile.NamedTemporaryFile"
-    )
-    mock_named_temporary_file.return_value.__enter__.return_value = mock_temp_file
-
     providers.prepare_instance(
-        instance=mock_instance, host_project_path=tmp_path, bind_ssh=True
+        instance=mock_instance, host_project_path=tmp_path, bind_ssh=bind_ssh
     )
 
     mock_instance.mount.assert_has_calls(
@@ -522,61 +517,6 @@ def test_prepare_instance(bind_ssh, mock_instance, mocker, tmp_path):
             [call(host_source=Path().home() / ".ssh", target=Path("/root/.ssh"))]
         )
 
-    mock_temp_file.write.assert_called_once_with(
-        dedent(
-            """\
-            #!/bin/bash
-
-            # save default environment on first login
-            if [[ ! -e ~/environment.sh ]]; then
-                env > ~/environment.sh
-                sed -i 's/^/export /' ~/environment.sh
-                sed -i '1i#! /bin/bash\\n' ~/environment.sh
-            fi
-
-            previous_pwd=$PWD
-
-            function set_environment {
-                # only update the environment when the directory changes
-                if [[ ! $PWD = $previous_pwd ]]; then
-                    # set part's environment when inside a part's build directory
-                    if [[ "$PWD" =~ $HOME/parts/.*/build ]]; then
-                        part_name=$(echo "${PWD#$HOME}" | cut -d "/" -f 3)
-                        echo "build environment set for part '$part_name'"
-                        source ${PWD/build*/run/environment.sh}
-
-                    # else clear and set the default environment
-                    else
-                        unset $(/usr/bin/env | /usr/bin/cut -d= -f1)
-                        source ~/environment.sh
-                        export PWD=$(pwd)
-                    fi
-                fi
-                previous_pwd=$PWD
-            }
-
-            function set_prompt {
-                # do not show path in HOME directory
-                if [[ "$PWD" = "$HOME" ]]; then
-                    export PS1="\\h # "
-
-                # show relative path inside a subdirectory of HOME
-                elif [[ "$PWD" =~ ^$HOME/* ]]; then
-                    export PS1="\\h ..${PWD/$HOME/}# "
-
-                # show full path outside the home directory
-                else
-                    export PS1="\\h $PWD# "
-                fi
-            }
-
-            PROMPT_COMMAND="set_environment; set_prompt"
-            """
-        )
-    )
-
-    mock_temp_file.flush.assert_called_once()
-
-    mock_instance.push_file.assert_has_calls(
-        [call(source=Path(mock_temp_file.name), destination=Path("/root/.bashrc"))]
+    mock_instance.push_file_io.assert_called_with(
+        content=ANY, destination=Path("/root/.bashrc"), file_mode="644"
     )

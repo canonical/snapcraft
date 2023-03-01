@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=all
+
 ##############################################################################
 ##
 ##  Gradle start up script for UN*X

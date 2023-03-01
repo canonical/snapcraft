@@ -98,7 +98,10 @@ def apply_yaml(
     The architectures data is reduced to architectures in the current build plan.
 
     :param yaml_data: The project YAML data.
+    :param build_on: Architecture the snap project will be built on.
     :param build_for: Target architecture the snap project will be built to.
+
+    :return: A dictionary of yaml data with snapcraft logic applied.
     """
     # validate project grammar
     GrammarAwareProject.validate_grammar(yaml_data)
@@ -145,7 +148,7 @@ def process_yaml(project_file: Path) -> Dict[str, Any]:
     return yaml_data
 
 
-def _extract_parse_info(yaml_data: Dict[str, Any]) -> Dict[str, List[str]]:
+def extract_parse_info(yaml_data: Dict[str, Any]) -> Dict[str, List[str]]:
     """Remove parse-info data from parts.
 
     :param yaml_data: The project YAML data.
@@ -201,7 +204,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     for build_on, build_for in build_plan:
         emit.verbose(f"Running on {build_on} for {build_for}")
         yaml_data_for_arch = apply_yaml(yaml_data, build_on, build_for)
-        parse_info = _extract_parse_info(yaml_data_for_arch)
+        parse_info = extract_parse_info(yaml_data_for_arch)
         _expand_environment(
             yaml_data_for_arch,
             parallel_build_count=build_count,
@@ -261,6 +264,8 @@ def _run_command(
 
     step_name = "prime" if command_name in ("pack", "snap", "try") else command_name
 
+    track_stage_packages = getattr(parsed_args, "enable_manifest", False)
+
     lifecycle = PartsLifecycle(
         project.parts,
         work_dir=work_dir,
@@ -278,6 +283,7 @@ def _run_command(
         },
         extra_build_snaps=project.get_extra_build_snaps(),
         target_arch=project.get_build_for(),
+        track_stage_packages=track_stage_packages,
     )
 
     if command_name == "clean":

@@ -28,7 +28,6 @@ logger = logging.getLogger(__name__)
 
 
 class FakeStoreSearchServer(base.BaseFakeServer):
-
     # XXX This fake server as reused as download server, to avoid passing a
     # port as an argument. --elopio - 2016-05-01
 

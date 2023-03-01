@@ -613,7 +613,6 @@ def test_invalid_part_names(data, name):
 
 
 class TestInvalidArchitectures:
-
     scenarios = [
         (
             "single string",

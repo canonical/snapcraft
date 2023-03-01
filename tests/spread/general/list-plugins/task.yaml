@@ -1,0 +1,22 @@
+summary: "Test `list-plugins` and `plugins` can successfully parse plugins."
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snapcraft.yaml"
+
+restore: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snapcraft.yaml"
+
+execute: |
+  # verify both aliases executes without error
+  snapcraft list-plugins
+  snapcraft plugins
+
+  # verify the `--base` parameter executes without error
+  for base in "core18" "core20" "core22"; do
+    snapcraft list-plugins --base=$base
+    snapcraft plugins --base=$base
+  done

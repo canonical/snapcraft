@@ -1,0 +1,16 @@
+name: flutter-hello
+version: "1.0"
+summary: simple flutter application
+description: build a flutter application using core22
+base: core22
+confinement: strict
+
+apps:
+  flutter-hello:
+    command: "flutter_hello"
+    extensions: [gnome]
+
+parts:
+  hello:
+    source: .
+    plugin: flutter

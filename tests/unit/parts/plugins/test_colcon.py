@@ -72,7 +72,7 @@ class TestPluginColconPlugin:
         try:
             colcon.ColconPlugin.properties_class.unmarshal({"source": "."})
         except ValidationError as e:
-            assert False, f"{e}"
+            raise AssertionError(f"{e}") from e
 
     def test_property_all(self):
         try:
@@ -87,7 +87,7 @@ class TestPluginColconPlugin:
                 }
             )
         except ValidationError as e:
-            assert False, f"{e}"
+            raise AssertionError(f"{e}") from e
 
         assert properties.source == "."  # type: ignore
         assert properties.colcon_ament_cmake_args == ["ament", "args..."]  # type: ignore
@@ -129,9 +129,13 @@ class TestPluginColconPlugin:
         assert plugin.get_build_commands() == [
             'state="$(set +o); set -$-"',
             "set +u",
-            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/setup.sh" ]; then',
+            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
+            'COLCON_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . '
+            '"${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh"',
+            "fi",
+            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/local_setup.sh" ]; then',
             'COLCON_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/snap" . '
-            '"${CRAFT_PART_INSTALL}/opt/ros/snap/setup.sh"',
+            '"${CRAFT_PART_INSTALL}/opt/ros/snap/local_setup.sh"',
             "fi",
             '. "/opt/ros/${ROS_DISTRO}/local_setup.sh"',
             'eval "${state}"',
@@ -200,9 +204,13 @@ class TestPluginColconPlugin:
         assert plugin.get_build_commands() == [
             'state="$(set +o); set -$-"',
             "set +u",
-            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/setup.sh" ]; then',
+            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
+            'COLCON_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . '
+            '"${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh"',
+            "fi",
+            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/local_setup.sh" ]; then',
             'COLCON_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/snap" . '
-            '"${CRAFT_PART_INSTALL}/opt/ros/snap/setup.sh"',
+            '"${CRAFT_PART_INSTALL}/opt/ros/snap/local_setup.sh"',
             "fi",
             '. "/opt/ros/${ROS_DISTRO}/local_setup.sh"',
             'eval "${state}"',

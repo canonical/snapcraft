@@ -300,7 +300,6 @@ class CleanTestCase(TestCase):
 
 
 class TestCleanPrime:
-
     scenarios = [
         ("all", {"fileset": ["*"]}),
         ("no1", {"fileset": ["-1"]}),
@@ -343,7 +342,6 @@ class TestCleanPrime:
 
 
 class TestCleanStage:
-
     scenarios = [
         ("all", {"fileset": ["*"]}),
         ("no1", {"fileset": ["-1"]}),

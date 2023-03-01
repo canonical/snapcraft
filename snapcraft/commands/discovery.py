@@ -25,8 +25,14 @@ from craft_parts.plugins import get_registered_plugins
 from overrides import overrides
 
 from snapcraft import errors
-from snapcraft.parts.lifecycle import get_snap_project, process_yaml
+from snapcraft.parts.lifecycle import (
+    apply_yaml,
+    extract_parse_info,
+    get_snap_project,
+    process_yaml,
+)
 from snapcraft.projects import Project
+from snapcraft.utils import get_host_architecture
 
 if TYPE_CHECKING:
     import argparse
@@ -66,7 +72,15 @@ class ListPluginsCommand(BaseCommand, abc.ABC):
                 snap_project = get_snap_project()
                 # Run this to trigger legacy behavior
                 yaml_data = process_yaml(snap_project.project_file)
-                project = Project.unmarshal(yaml_data)
+
+                # process yaml before unmarshalling the data
+                arch = get_host_architecture()
+                yaml_data_for_arch = apply_yaml(yaml_data, arch, arch)
+                # discard parse-info as it is not part of Project which we use to
+                # determine the base
+                extract_parse_info(yaml_data_for_arch)
+
+                project = Project.unmarshal(yaml_data_for_arch)
                 base = project.get_effective_base()
                 message = (
                     f"Displaying plugins available to the current base {base!r} project"

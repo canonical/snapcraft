@@ -35,7 +35,6 @@ def fake_git_command_error(*args, **kwargs):
 # LP: #1733584
 class TestGit(unit.sources.SourceTestCase):  # type: ignore
     def setUp(self):
-
         super().setUp()
         patcher = mock.patch("snapcraft_legacy.sources.Git._get_source_details")
         self.mock_get_source_details = patcher.start()
@@ -657,7 +656,6 @@ class TestGitConflicts(GitBaseTestCase):
     """Test that git pull errors don't kill the parser"""
 
     def test_git_conflicts(self):
-
         repo = "/tmp/conflict-test.git"
         working_tree = "/tmp/git-conflict-test"
         conflicting_tree = "{}-conflict".format(working_tree)
@@ -863,7 +861,6 @@ class GitGenerateVersionBaseTestCase(unit.TestCase):
 
 
 class TestGitGenerateVersion:
-
     scenarios = (
         ("only_tag", dict(return_value="2.28", expected="2.28")),
         (

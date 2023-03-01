@@ -1,4 +1,7 @@
 Running linters...
 Running linter: classic
 Running linter: library
+Lint warnings:
+- library: libgci-1.so.0.0.0: unused library 'usr/lib/x86_64-linux-gnu/libgci-1.so.0'. (https://snapcraft.io/docs/linters-library)
+- library: libgtksourceview-4.so.0: unused library 'usr/lib/x86_64-linux-gnu/libgtksourceview-4.so.0.0.0'. (https://snapcraft.io/docs/linters-library)
 Creating snap package...

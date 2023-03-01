@@ -79,7 +79,6 @@ class CommonMigratedTestCase(unit.TestCase):
 
 
 class FormatInColumnsTestCase(unit.TestCase):
-
     elements_list = [
         "ant",
         "autotools",
@@ -151,7 +150,6 @@ class FormatInColumnsTestCase(unit.TestCase):
 
 
 class TestFormatSnapFileName:
-
     scenarios = [
         (
             "all info",

@@ -390,7 +390,6 @@ def test_channel_map():
 
 
 def test_channel_map_from_list_releases_model():
-
     list_releases = SnapListReleasesModel.unmarshal(
         {
             "channel-map": [
