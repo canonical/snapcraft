@@ -3,7 +3,7 @@ SOURCES_LEGACY=snapcraft_legacy tests/legacy
 
 .PHONY: autoformat-black
 autoformat-black:
-	tox run -e format
+	tox run -e format-black
 
 .PHONY: freeze-requirements
 freeze-requirements:
@@ -11,31 +11,31 @@ freeze-requirements:
 
 .PHONY: test-black
 test-black:
-	tox run -e black
+	tox run -e test-black
 
 .PHONY: test-codespell
 test-codespell:
-	tox run -e codespell
+	tox run -e test-codespell
 
 .PHONY: test-isort
 test-isort:
-	tox run -e isort
+	tox run -e test-isort
 
 .PHONY: test-mypy
 test-mypy:
-	tox run -e mypy
+	tox run -e test-mypy
 
 .PHONY: test-pydocstyle
 test-pydocstyle:
-	tox run -e docstyle
+	tox run -e test-docstyle
 
 .PHONY: test-pylint
 test-pylint:
-	tox run -e pylint
+	tox run -e test-pylint
 
 .PHONY: test-pyright
 test-pyright:
-	tox run -e pyright
+	tox run -e test-pyright
 
 .PHONY: test-ruff
 test-ruff:
@@ -44,16 +44,15 @@ test-ruff:
 
 .PHONY: test-shellcheck
 test-shellcheck:
-	tox run -e shellcheck
-	tox run -e spread-shellcheck
+	tox run -e test-shellcheck
 
 .PHONY: test-legacy-units
 test-legacy-units:
-	tox run -e py38-withreq-legacy
+	tox run -e py38-legacy
 
 .PHONY: test-units
 test-units: test-legacy-units
-	tox run -e py38-withreq-unit
+	tox run -e py38-unit
 
 .PHONY: tests
 tests: tests-static test-units
