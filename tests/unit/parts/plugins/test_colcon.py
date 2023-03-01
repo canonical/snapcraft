@@ -146,9 +146,13 @@ class TestPluginColconPlugin:
             '--from-paths "${CRAFT_PART_SRC_WORK}"',
             'state="$(set +o); set -$-"',
             "set +u",
-            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/setup.sh" ]; then',
+            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
+            'COLCON_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . '
+            '"${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh"',
+            "fi",
+            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/local_setup.sh" ]; then',
             'COLCON_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/snap" . '
-            '"${CRAFT_PART_INSTALL}/opt/ros/snap/setup.sh"',
+            '"${CRAFT_PART_INSTALL}/opt/ros/snap/local_setup.sh"',
             "fi",
             '. "/opt/ros/${ROS_DISTRO}/local_setup.sh"',
             'eval "${state}"',
@@ -221,9 +225,13 @@ class TestPluginColconPlugin:
             '--from-paths "${CRAFT_PART_SRC_WORK}"',
             'state="$(set +o); set -$-"',
             "set +u",
-            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/setup.sh" ]; then',
+            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
+            'COLCON_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . '
+            '"${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh"',
+            "fi",
+            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/local_setup.sh" ]; then',
             'COLCON_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/snap" . '
-            '"${CRAFT_PART_INSTALL}/opt/ros/snap/setup.sh"',
+            '"${CRAFT_PART_INSTALL}/opt/ros/snap/local_setup.sh"',
             "fi",
             '. "/opt/ros/${ROS_DISTRO}/local_setup.sh"',
             'eval "${state}"',
