@@ -20,7 +20,7 @@ jobs:
 
       - if: steps.decisions.outputs.PUBLISH == 'true'
         name: Checkout Snapcraft
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           # Fetch all of history so Snapcraft can determine its own version from git.
           fetch-depth: 0
