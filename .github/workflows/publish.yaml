@@ -13,9 +13,9 @@ jobs:
           # Secrets cannot be used in conditionals, so this is our dance:
           # https://github.com/actions/runner/issues/520
           if [[ -n "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}" ]]; then
-            echo "::set-output name=PUBLISH::true"
+            echo PUBLISH=true >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=PUBLISH::"
+            echo PUBLISH= >> $GITHUB_OUTPUT
           fi
 
       - if: steps.decisions.outputs.PUBLISH == 'true'
