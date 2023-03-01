@@ -44,6 +44,26 @@ If you'd like to run the tests with a newer version of Python, you can pass a sp
 
     tox -e test-py310
 
+Tox environments and labels
+###########################
+
+We group tox environments with the following labels:
+
+* ``format``: Runs all code formatters with auto-fixing
+* ``type``: Runs all type checkers
+* ``lint``: Runs all linters (including type checkers)
+* ``unit-tests``: Runs unit tests in Python versions on supported LTS's + latest
+* ``integration-tests``: Same as above but for integration tests
+* ``tests``: The union of ``unit-tests`` and ``integration-tests``
+
+For each of these, you can see which environments will be run with ``tox list``. For example:
+
+    tox list -m lint
+
+You can also see all the environments by simply running ``tox list``
+
+Running ``tox run -m format`` and ``tox run -m lint`` before committing code is recommended.
+
 .. _Black: https://black.readthedocs.io
 .. _`Canonical contributor licence agreement`: http://www.ubuntu.com/legal/contributors/
 .. _deadsnakes: https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa
