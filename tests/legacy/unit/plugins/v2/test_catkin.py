@@ -99,6 +99,17 @@ def test_get_build_commands(monkeypatch):
         "init; fi",
         'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
         'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
+        'state="$(set +o); set -$-"',
+        "set +u",
+        'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
+        "set -- --local",
+        '_CATKIN_SETUP_DIR="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh"',
+        "set -- --local --extend",
+        "else",
+        "set -- --local",
+        "fi",
+        '. /opt/ros/"${ROS_DISTRO}"/setup.sh',
+        'eval "${state}"',
         "catkin_make_isolated --install --merge "
         '--source-space "${SNAPCRAFT_PART_SRC_WORK}" --build-space "${SNAPCRAFT_PART_BUILD}" '
         '--install-space "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" '
@@ -152,6 +163,17 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "init; fi",
         'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
         'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
+        'state="$(set +o); set -$-"',
+        "set +u",
+        'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
+        "set -- --local",
+        '_CATKIN_SETUP_DIR="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh"',
+        "set -- --local --extend",
+        "else",
+        "set -- --local",
+        "fi",
+        '. /opt/ros/"${ROS_DISTRO}"/setup.sh',
+        'eval "${state}"',
         "catkin_make_isolated --install --merge "
         '--source-space "${SNAPCRAFT_PART_SRC_WORK}" --build-space "${SNAPCRAFT_PART_BUILD}" '
         '--install-space "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" '

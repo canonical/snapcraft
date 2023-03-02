@@ -21,12 +21,13 @@ import subprocess
 from typing import Any, Dict, List, Optional, Set
 
 import craft_parts
+from craft_archives import repo
 from craft_cli import emit
 from craft_parts import ActionType, Part, ProjectDirs, Step
 from craft_parts.packages import Repository
 from xdg import BaseDirectory  # type: ignore
 
-from snapcraft import errors, repo
+from snapcraft import errors
 from snapcraft.meta import ExtractedMetadata, extract_metadata
 from snapcraft.utils import convert_architecture_deb_to_platform, get_host_architecture
 

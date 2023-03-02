@@ -10,7 +10,7 @@ parts:
   hooks:
     source: src/
     plugin: make
-    build-snaps: [go/1.17/stable]
+    build-snaps: [go/1.20/stable]
     override-build: |
       cd $SNAPCRAFT_PART_SRC
       make build

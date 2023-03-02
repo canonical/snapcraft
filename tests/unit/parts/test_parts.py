@@ -206,11 +206,13 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_not_installed
         "craft_parts.packages.Repository.install_packages"
     )
     mocker.patch(
-        "snapcraft.repo.apt_key_manager.AptKeyManager.install_package_repository_key",
+        "craft_archives.repo.apt_key_manager."
+        "AptKeyManager.install_package_repository_key",
         return_value=True,
     )
     mocker.patch(
-        "snapcraft.repo.apt_sources_manager.AptSourcesManager.install_package_repository_sources"
+        "craft_archives.repo.apt_sources_manager."
+        "AptSourcesManager.install_package_repository_sources"
     )
     mocker.patch("craft_parts.packages.Repository.refresh_packages_list")
 
@@ -257,11 +259,12 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_installed(
         "craft_parts.packages.Repository.install_packages"
     )
     mocker.patch(
-        "snapcraft.repo.apt_key_manager.AptKeyManager.install_package_repository_key",
+        "craft_archives.repo.apt_key_manager.AptKeyManager.install_package_repository_key",
         return_value=True,
     )
     mocker.patch(
-        "snapcraft.repo.apt_sources_manager.AptSourcesManager.install_package_repository_sources"
+        "craft_archives.repo.apt_sources_manager."
+        "AptSourcesManager.install_package_repository_sources"
     )
     mocker.patch("craft_parts.packages.Repository.refresh_packages_list")
 
