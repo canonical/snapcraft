@@ -119,6 +119,16 @@ def test_get_build_commands(monkeypatch):
         "init; fi",
         'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
         'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
+        'state="$(set +o); set -$-"',
+        "set +u",
+        'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
+        'AMENT_CURRENT_PREFIX="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh"',
+        "fi",
+        'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/local_setup.sh ]; then',
+        'COLCON_CURRENT_PREFIX="${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap . "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/local_setup.sh',
+        "fi",
+        '. /opt/ros/"${ROS_DISTRO}"/local_setup.sh',
+        'eval "${state}"',
         "colcon build "
         '--base-paths "${SNAPCRAFT_PART_SRC_WORK}" --build-base "${SNAPCRAFT_PART_BUILD}" '
         '--merge-install --install-base "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap '
@@ -176,6 +186,16 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "init; fi",
         'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
         'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
+        'state="$(set +o); set -$-"',
+        "set +u",
+        'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
+        'AMENT_CURRENT_PREFIX="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh"',
+        "fi",
+        'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/local_setup.sh ]; then',
+        'COLCON_CURRENT_PREFIX="${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap . "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/local_setup.sh',
+        "fi",
+        '. /opt/ros/"${ROS_DISTRO}"/local_setup.sh',
+        'eval "${state}"',
         "colcon build "
         '--base-paths "${SNAPCRAFT_PART_SRC_WORK}" --build-base "${SNAPCRAFT_PART_BUILD}" '
         '--merge-install --install-base "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap '
