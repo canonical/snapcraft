@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2022 Canonical Ltd
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -26,7 +26,8 @@ import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
 from pydantic import ValidationError
 
-from snapcraft.parts.plugins.kernel import KernelPlugin, check_new_config
+from snapcraft.parts.plugins.kernel import KernelPlugin
+from snapcraft_legacy.plugins.v2._kernel_build import check_new_config
 
 
 @pytest.fixture
@@ -367,15 +368,15 @@ class TestPluginKernel:
 
     def test_check_get_build_environment(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(new_dir)
-        plugin.kernel_arch = "amd64"
+        plugin._kernel_arch = "amd64"
 
         assert plugin.get_build_environment() == {
             "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET}-",
-            "ARCH": plugin.kernel_arch,
+            "ARCH": plugin._kernel_arch,
             "DEB_ARCH": "${CRAFT_TARGET_ARCH}",
             "UC_INITRD_DEB": "${CRAFT_PART_BUILD}/ubuntu-core-initramfs",
             "SNAPD_UNPACKED_SNAP": "${CRAFT_PART_BUILD}/unpacked_snapd",
-            "KERNEL_BUILD_ARCH_DIR": f"${{CRAFT_PART_BUILD}}/arch/{plugin.kernel_arch}/boot",
+            "KERNEL_BUILD_ARCH_DIR": f"${{CRAFT_PART_BUILD}}/arch/{plugin._kernel_arch}/boot",
             "KERNEL_IMAGE_TARGET": plugin.kernel_image_target,
         }
 
@@ -411,15 +412,15 @@ class TestPluginKernel:
                 "kernel-compiler-paths": ["gcc-11/bin", "gcc-11/sbin"],
             },
         )
-        plugin.kernel_arch = "amd64"
+        plugin._kernel_arch = "amd64"
 
         assert plugin.get_build_environment() == {
             "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET}-",
-            "ARCH": plugin.kernel_arch,
+            "ARCH": plugin._kernel_arch,
             "DEB_ARCH": "${CRAFT_TARGET_ARCH}",
             "UC_INITRD_DEB": "${CRAFT_PART_BUILD}/ubuntu-core-initramfs",
             "SNAPD_UNPACKED_SNAP": "${CRAFT_PART_BUILD}/unpacked_snapd",
-            "KERNEL_BUILD_ARCH_DIR": f"${{CRAFT_PART_BUILD}}/arch/{plugin.kernel_arch}/boot",
+            "KERNEL_BUILD_ARCH_DIR": f"${{CRAFT_PART_BUILD}}/arch/{plugin._kernel_arch}/boot",
             "KERNEL_IMAGE_TARGET": plugin.kernel_image_target,
             "PATH": "${CRAFT_STAGE}/gcc-11/bin:${CRAFT_STAGE}/gcc-11/sbin:${PATH}",
         }
@@ -713,64 +714,23 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _build_perf_armhf_cmd)
         assert _is_sub_array(build_commands, _finalize_install_cmd)
 
-    def test_check_arch_aarch64(self, setup_method_fixture, new_dir):
-        arch = "aarch64"
-        cross_building = False
-        if platform.machine() != arch:
-            cross_building = True
+    @pytest.mark.parametrize("arch", ["aarch64", "armv7l", "riscv64", "x86_64"])
+    def test_check_arch(self, arch, setup_method_fixture, new_dir):
+        cross_building = platform.machine() != arch
         plugin = setup_method_fixture(new_dir, arch=arch)
-        assert plugin.kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
-        assert plugin.deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
-        assert (
-            plugin._part_info.project_info.target_arch == _DEB_ARCH_TRANSLATIONS[arch]
-        )
-        assert plugin._cross_building == cross_building
 
-    def test_check_arch_armhf(self, setup_method_fixture, new_dir):
-        arch = "armv7l"
-        cross_building = False
-        if platform.machine() != arch:
-            cross_building = True
-        plugin = setup_method_fixture(new_dir, arch=arch)
-        assert plugin.kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
-        assert plugin.deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
-        assert (
-            plugin._part_info.project_info.target_arch == _DEB_ARCH_TRANSLATIONS[arch]
-        )
-        assert plugin._cross_building == cross_building
-
-    def test_check_arch_riscv64(self, setup_method_fixture, new_dir):
-        arch = "riscv64"
-        cross_building = False
-        if platform.machine() != arch:
-            cross_building = True
-        plugin = setup_method_fixture(new_dir, arch=arch)
-        assert plugin.kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
-        assert plugin.deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
-        assert (
-            plugin._part_info.project_info.target_arch == _DEB_ARCH_TRANSLATIONS[arch]
-        )
-        assert plugin._cross_building == cross_building
-
-    def test_check_arch_x86_64(self, setup_method_fixture, new_dir):
-        arch = "x86_64"
-        cross_building = False
-        if platform.machine() != arch:
-            cross_building = True
-        plugin = setup_method_fixture(new_dir, arch=arch)
-        assert plugin.kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
-        assert plugin.deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
-        assert (
-            plugin._part_info.project_info.target_arch == _DEB_ARCH_TRANSLATIONS[arch]
-        )
+        assert plugin._kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
+        assert plugin._deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        assert plugin._target_arch == _DEB_ARCH_TRANSLATIONS[arch]
         assert plugin._cross_building == cross_building
 
     def test_check_arch_i686(self, setup_method_fixture, new_dir):
         # we do not support i686 so use this arch to test unknnown arch by plugin
         arch = "i686"
-        plugin = setup_method_fixture(new_dir, arch=arch)
-        assert not hasattr(plugin, "kernel_arch")
-        assert not hasattr(plugin, "deb_arch")
+        with pytest.raises(ValueError) as error:
+            setup_method_fixture(new_dir, arch=arch)
+
+        assert str(error.value) == "unknown deb architecture"
 
     def test_check_new_config_good(self, setup_method_fixture, new_dir, caplog):
         # create test config
@@ -812,8 +772,8 @@ class TestPluginKernel:
                 filter(
                     None,
                     caplog.text.split(
-                        "WARNING  snapcraft.parts.plugins.kernel:kernel.py"
-                    ),
+                        "WARNING  snapcraft_legacy.plugins.v2._kernel_build:_kernel_build.py"
+                    ),  # XXX: use a better way to check log messages
                 )
             )
             # there should be 2 warning logs, one for missing configs, one for kernel module
@@ -1139,7 +1099,7 @@ class TestPluginKernel:
         plugin.get_build_environment()
         cmd = plugin.get_build_commands()
         targets = f"{plugin.kernel_image_target} modules"
-        if plugin.kernel_arch in ("arm", "arm64", "riscv64"):
+        if plugin._kernel_arch in ("arm", "arm64", "riscv64"):
             targets += " dtbs"
         assert (
             f'make -j$(nproc) -C ${{KERNEL_SRC}} O=${{CRAFT_PART_BUILD}} LLVM="1" {targets}'
@@ -1172,7 +1132,7 @@ class TestPluginKernel:
         plugin.get_build_environment()
         cmd = plugin.get_build_commands()
         targets = f"{plugin.kernel_image_target} modules"
-        if plugin.kernel_arch in ("arm", "arm64", "riscv64"):
+        if plugin._kernel_arch in ("arm", "arm64", "riscv64"):
             targets += " dtbs"
         assert (
             f'make -j$(nproc) -C ${{KERNEL_SRC}} O=${{CRAFT_PART_BUILD}} LLVM="{version}" {targets}'
@@ -1358,21 +1318,21 @@ _clean_old_build_cmd = [
 _prepare_config_cmd = [
     'echo "Preparing config..."',
     "if [ ! -e ${CRAFT_PART_BUILD}/.config ]; then",
-    "\t make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} defconfig",
+    "\tmake -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} defconfig",
     "fi",
 ]
 
 _prepare_config_custom_cc_cmd = [
     'echo "Preparing config..."',
     "if [ ! -e ${CRAFT_PART_BUILD}/.config ]; then",
-    '\t make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} CC="my-gcc" defconfig',
+    '\tmake -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} CC="my-gcc" defconfig',
     "fi",
 ]
 
 _prepare_config_defconfig_cmd = [
     'echo "Preparing config..."',
     "if [ ! -e ${CRAFT_PART_BUILD}/.config ]; then",
-    "\t cp arch/arm64/configs/snappy_defconfig ${CRAFT_PART_BUILD}/.config",
+    "\tcp arch/arm64/configs/snappy_defconfig ${CRAFT_PART_BUILD}/.config",
     "fi",
 ]
 
@@ -1407,12 +1367,12 @@ _prepare_config_extra_config_cmd = [
 
 _remake_old_config_cmd = [
     'echo "Remaking oldconfig...."',
-    "bash -c ' yes \"\" || true' | make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} oldconfig",
+    "bash -c 'yes \"\" || true' | make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} oldconfig",
 ]
 
 _remake_old_config_custom_cc_cmd = [
     'echo "Remaking oldconfig...."',
-    "bash -c ' yes \"\" || true'"
+    "bash -c 'yes \"\" || true'"
     ' | make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} CC="my-gcc" oldconfig',
 ]
 
@@ -1420,8 +1380,7 @@ _remake_old_config_clang_cmd = [
     'echo "Remaking oldconfig...."',
     " ".join(
         [
-            "bash -c ' yes \"\" || true' |",
-            "make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD}",
+            "bash -c 'yes \"\" || true' | make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD}",
             'CC="clang"',
             "-arch arm64",
             "oldconfig",
@@ -1433,8 +1392,7 @@ _remake_old_config_armhf_cmd = [
     'echo "Remaking oldconfig...."',
     " ".join(
         [
-            "bash -c ' yes \"\" || true' |",
-            "make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD}",
+            "bash -c 'yes \"\" || true' | make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD}",
             "ARCH=arm CROSS_COMPILE=${CRAFT_ARCH_TRIPLET}-",
             "oldconfig",
         ],
@@ -1445,12 +1403,11 @@ _check_config = " ".join(
     [
         sys.executable,
         "-I",
-        inspect.getfile(KernelPlugin),
+        inspect.getfile(check_new_config),
         "check_new_config",
         "${CRAFT_PART_BUILD}/.config",
         "${initrd_installed_kernel_modules}",
         "${initrd_configured_kernel_modules}",
-        "",
     ],
 )
 
@@ -1769,7 +1726,7 @@ _prepare_ininird_features_cmd = [
 ]
 
 _clean_old_initrd_cmd = [
-    "if compgen -G  ${CRAFT_PART_INSTALL}/initrd.img* >  /dev/null; then",
+    "if compgen -G ${CRAFT_PART_INSTALL}/initrd.img* > /dev/null; then",
     "\trm -rf ${CRAFT_PART_INSTALL}/initrd.img*",
     "fi",
 ]
