@@ -21,10 +21,13 @@ import sys
 import tempfile
 from dataclasses import dataclass
 from typing import Union
+from unittest import mock
 
+import pytest
 from testtools import TestCase
 
-from snapcraft_legacy.plugins.v2.kernel import KernelPlugin, check_new_config
+from snapcraft_legacy.plugins.v2._kernel_build import check_new_config
+from snapcraft_legacy.plugins.v2.kernel import KernelPlugin
 
 
 class Kernelv2PluginProperties:
@@ -110,15 +113,21 @@ class TestPluginKernel(TestCase):
             # Ensure that the PPA is not added so we don't cause side-effects
             kernel_add_ppa = False
 
-        plugin = KernelPlugin(part_name="kernel", options=Options())
+        target_arch = _DEB_ARCH_TRANSLATIONS[arch]
 
-        # snapcraft if broken to report correctly target arch, make sure plugin is set correctly
-        # in normal exuction plugin detects cross build based on the command invoking snapcraft
+        with mock.patch(
+            "snapcraft_legacy.plugins.v2.kernel._get_target_architecture",
+            return_value=target_arch,
+        ):
+            plugin = KernelPlugin(part_name="kernel", options=Options())
+
+        # Snapcraft is broken to report correctly target arch. Make sure the plugin is set correctly.
+        # In normal execution the plugin detects cross build based on the snapcraft command line.
         if arch != platform.machine():
             plugin._cross_building = True
-            plugin.target_arch = _DEB_ARCH_TRANSLATIONS[arch]
-            plugin.kernel_arch = _KERNEL_ARCH_TRANSLATIONS[arch]
-            plugin.deb_arch = _DEB_ARCH_TRANSLATIONS[arch]
+            plugin._target_arch = target_arch
+            plugin._kernel_arch = _KERNEL_ARCH_TRANSLATIONS[arch]
+            plugin._deb_arch = _DEB_ARCH_TRANSLATIONS[arch]
         else:
             plugin._cross_building = False
 
@@ -479,17 +488,17 @@ class TestPluginKernel(TestCase):
 
     def test_check_get_build_environment(self):
         plugin = self._setup_test()
-        plugin.kernel_arch = "amd64"
+        plugin._kernel_arch = "amd64"
 
         self.assertEqual(
             plugin.get_build_environment(),
             {
                 "CROSS_COMPILE": "${SNAPCRAFT_ARCH_TRIPLET}-",
-                "ARCH": plugin.kernel_arch,
+                "ARCH": plugin._kernel_arch,
                 "DEB_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
                 "UC_INITRD_DEB": "${SNAPCRAFT_PART_BUILD}/ubuntu-core-initramfs",
                 "SNAPD_UNPACKED_SNAP": "${SNAPCRAFT_PART_BUILD}/unpacked_snapd",
-                "KERNEL_BUILD_ARCH_DIR": f"${{SNAPCRAFT_PART_BUILD}}/arch/{plugin.kernel_arch}/boot",
+                "KERNEL_BUILD_ARCH_DIR": f"${{SNAPCRAFT_PART_BUILD}}/arch/{plugin._kernel_arch}/boot",
                 "KERNEL_IMAGE_TARGET": plugin.kernel_image_target,
             },
         )
@@ -520,17 +529,17 @@ class TestPluginKernel(TestCase):
         plugin = self._setup_test(
             kernelcompilerpaths=["gcc-11/bin", "gcc-11/sbin"],
         )
-        plugin.kernel_arch = "amd64"
+        plugin._kernel_arch = "amd64"
 
         self.assertEqual(
             plugin.get_build_environment(),
             {
                 "CROSS_COMPILE": "${SNAPCRAFT_ARCH_TRIPLET}-",
-                "ARCH": plugin.kernel_arch,
+                "ARCH": plugin._kernel_arch,
                 "DEB_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
                 "UC_INITRD_DEB": "${SNAPCRAFT_PART_BUILD}/ubuntu-core-initramfs",
                 "SNAPD_UNPACKED_SNAP": "${SNAPCRAFT_PART_BUILD}/unpacked_snapd",
-                "KERNEL_BUILD_ARCH_DIR": f"${{SNAPCRAFT_PART_BUILD}}/arch/{plugin.kernel_arch}/boot",
+                "KERNEL_BUILD_ARCH_DIR": f"${{SNAPCRAFT_PART_BUILD}}/arch/{plugin._kernel_arch}/boot",
                 "KERNEL_IMAGE_TARGET": plugin.kernel_image_target,
                 "PATH": "${SNAPCRAFT_STAGE}/gcc-11/bin:${SNAPCRAFT_STAGE}/gcc-11/sbin:${PATH}",
             },
@@ -809,13 +818,10 @@ class TestPluginKernel(TestCase):
         if platform.machine() != arch:
             cross_building = True
         plugin = self._setup_test(arch=arch)
-        plugin.target_arch = _DEB_ARCH_TRANSLATIONS[arch]
-        plugin.kernel_arch = None
-        plugin.deb_arch = None
-        plugin._get_deb_architecture()
-        plugin._get_kernel_architecture()
-        assert plugin.kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
-        assert plugin.deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
+
+        assert plugin._target_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        assert plugin._kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
+        assert plugin._deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
         assert plugin._cross_building == cross_building
 
     def test_check_arch_armhf(self):
@@ -824,13 +830,10 @@ class TestPluginKernel(TestCase):
         if platform.machine() != arch:
             cross_building = True
         plugin = self._setup_test(arch=arch)
-        plugin.target_arch = _DEB_ARCH_TRANSLATIONS[arch]
-        plugin.kernel_arch = None
-        plugin.deb_arch = None
-        plugin._get_deb_architecture()
-        plugin._get_kernel_architecture()
-        assert plugin.kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
-        assert plugin.deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
+
+        assert plugin._target_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        assert plugin._kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
+        assert plugin._deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
         assert plugin._cross_building == cross_building
 
     def test_check_arch_riscv64(self):
@@ -839,13 +842,10 @@ class TestPluginKernel(TestCase):
         if platform.machine() != arch:
             cross_building = True
         plugin = self._setup_test(arch=arch)
-        plugin.target_arch = _DEB_ARCH_TRANSLATIONS[arch]
-        plugin.kernel_arch = None
-        plugin.deb_arch = None
-        plugin._get_deb_architecture()
-        plugin._get_kernel_architecture()
-        assert plugin.kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
-        assert plugin.deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
+
+        assert plugin._target_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        assert plugin._kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
+        assert plugin._deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
         assert plugin._cross_building == cross_building
 
     def test_check_arch_x86_64(self):
@@ -854,26 +854,19 @@ class TestPluginKernel(TestCase):
         if platform.machine() != arch:
             cross_building = True
         plugin = self._setup_test(arch=arch)
-        plugin.target_arch = _DEB_ARCH_TRANSLATIONS[arch]
-        plugin.kernel_arch = None
-        plugin.deb_arch = None
-        plugin._get_deb_architecture()
-        plugin._get_kernel_architecture()
-        assert plugin.kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
-        assert plugin.deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
+
+        assert plugin._target_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        assert plugin._kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
+        assert plugin._deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
         assert plugin._cross_building == cross_building
 
     def test_check_arch_i686(self):
         # we do not support i686 so use this arch to test unknnown arch by plugin
         arch = "i686"
-        plugin = self._setup_test(arch=arch)
-        plugin.target_arch = _DEB_ARCH_TRANSLATIONS[arch]
-        plugin.kernel_arch = None
-        plugin.deb_arch = None
-        plugin._get_deb_architecture()
-        plugin._get_kernel_architecture()
-        assert plugin.kernel_arch is None
-        assert plugin.deb_arch is None
+        with pytest.raises(ValueError) as error:
+            self._setup_test(arch=arch)
+
+        assert str(error.value) == "unknown deb architecture"
 
     def test_check_new_config_good(self):
         # create test config
@@ -1021,7 +1014,7 @@ class TestPluginKernel(TestCase):
         plugin.get_build_environment()
         cmd = plugin.get_build_commands()
         targets = f"{plugin.kernel_image_target} modules"
-        if plugin.kernel_arch in ("arm", "arm64", "riscv64"):
+        if plugin._kernel_arch in ("arm", "arm64", "riscv64"):
             targets += " dtbs"
         self.assertIn(
             f'make -j$(nproc) -C ${{KERNEL_SRC}} O=${{SNAPCRAFT_PART_BUILD}} LLVM="1" {targets}',
@@ -1052,7 +1045,7 @@ class TestPluginKernel(TestCase):
         plugin.get_build_environment()
         cmd = plugin.get_build_commands()
         targets = f"{plugin.kernel_image_target} modules"
-        if plugin.kernel_arch in ("arm", "arm64", "riscv64"):
+        if plugin._kernel_arch in ("arm", "arm64", "riscv64"):
             targets += " dtbs"
         self.assertIn(
             f'make -j$(nproc) -C ${{KERNEL_SRC}} O=${{SNAPCRAFT_PART_BUILD}} LLVM="{version}" {targets}',
@@ -1216,24 +1209,25 @@ _clean_old_build_cmd = [
     "[ -L ${SNAPCRAFT_PART_INSTALL}/lib/modules ] && rm -rf ${SNAPCRAFT_PART_INSTALL}/lib/modules",
 ]
 
+
 _prepare_config_cmd = [
     'echo "Preparing config..."',
     "if [ ! -e ${SNAPCRAFT_PART_BUILD}/.config ]; then",
-    "\t make -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} defconfig",
+    "\tmake -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} defconfig",
     "fi",
 ]
 
 _prepare_config_custom_cc_cmd = [
     'echo "Preparing config..."',
     "if [ ! -e ${SNAPCRAFT_PART_BUILD}/.config ]; then",
-    '\t make -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} CC="my-gcc" defconfig',
+    '\tmake -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} CC="my-gcc" defconfig',
     "fi",
 ]
 
 _prepare_config_defconfig_cmd = [
     'echo "Preparing config..."',
     "if [ ! -e ${SNAPCRAFT_PART_BUILD}/.config ]; then",
-    "\t cp arch/arm64/configs/snappy_defconfig ${SNAPCRAFT_PART_BUILD}/.config",
+    "\tcp arch/arm64/configs/snappy_defconfig ${SNAPCRAFT_PART_BUILD}/.config",
     "fi",
 ]
 
@@ -1267,12 +1261,12 @@ _prepare_config_extra_config_cmd = [
 ]
 _remake_old_config_cmd = [
     'echo "Remaking oldconfig...."',
-    "bash -c ' yes \"\" || true' | make -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} oldconfig",
+    "bash -c 'yes \"\" || true' | make -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} oldconfig",
 ]
 
 _remake_old_config_custom_cc_cmd = [
     'echo "Remaking oldconfig...."',
-    "bash -c ' yes \"\" || true'"
+    "bash -c 'yes \"\" || true'"
     ' | make -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} CC="my-gcc" oldconfig',
 ]
 
@@ -1280,7 +1274,7 @@ _remake_old_config_clang_cmd = [
     'echo "Remaking oldconfig...."',
     " ".join(
         [
-            "bash -c ' yes \"\" || true' |",
+            "bash -c 'yes \"\" || true' |",
             "make -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD}",
             'CC="clang"',
             "-arch arm64",
@@ -1293,7 +1287,7 @@ _remake_old_config_armhf_cmd = [
     'echo "Remaking oldconfig...."',
     " ".join(
         [
-            "bash -c ' yes \"\" || true' |",
+            "bash -c 'yes \"\" || true' |",
             "make -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD}",
             "ARCH=arm CROSS_COMPILE=${SNAPCRAFT_ARCH_TRIPLET}-",
             "oldconfig",
@@ -1305,12 +1299,11 @@ _check_config = " ".join(
     [
         sys.executable,
         "-I",
-        inspect.getfile(KernelPlugin),
+        inspect.getfile(check_new_config),
         "check_new_config",
         "${SNAPCRAFT_PART_BUILD}/.config",
         "${initrd_installed_kernel_modules}",
         "${initrd_configured_kernel_modules}",
-        "",
     ],
 )
 
@@ -1615,7 +1608,7 @@ _prepare_ininird_features_cmd = [
 ]
 
 _clean_old_initrd_cmd = [
-    "if compgen -G  ${SNAPCRAFT_PART_INSTALL}/initrd.img* >  /dev/null; then",
+    "if compgen -G ${SNAPCRAFT_PART_INSTALL}/initrd.img* > /dev/null; then",
     "\trm -rf ${SNAPCRAFT_PART_INSTALL}/initrd.img*",
     "fi",
 ]
