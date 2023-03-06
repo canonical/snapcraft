@@ -16,10 +16,14 @@ systems:
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
-  set_base "../snaps/$SNAP/snap/snapcraft.yaml"
+  set_base "$SNAP/snap/snapcraft.yaml"
+
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  create_dpkg_restore_point
 
 restore: |
-  cd "../snaps/$SNAP"
+  cd "$SNAP"
   snapcraft clean
   rm -f ./*.snap
 
@@ -27,8 +31,12 @@ restore: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   restore_yaml "snap/snapcraft.yaml"
 
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  dpkg_restore_point
+
 execute: |
-  cd "../snaps/$SNAP"
+  cd "$SNAP"
 
   # Build the snap and verify that only package1 was included
   snapcraft
