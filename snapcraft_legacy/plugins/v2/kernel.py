@@ -1482,7 +1482,7 @@ class KernelPlugin(PluginV2):
                 "llvm",
                 "lld",
             ]
-            build_packages |= set(f"{f}{suffix}" for f in llvm_packages)
+            build_packages |= {f"{f}{suffix}" for f in llvm_packages}
 
         return build_packages
 

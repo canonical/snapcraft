@@ -228,7 +228,6 @@ class TestPluginKernel:
         assert not opt.kernel_add_ppa
 
     def test_check_configuration_kde_config(self, setup_method_fixture, new_dir):
-
         plugin = setup_method_fixture(
             new_dir,
             properties={
@@ -1048,8 +1047,8 @@ class TestPluginKernel:
             try:
                 plugin.get_build_packages()
             except ValueError as e:
-                assert "error to check for key=F1831DDAFC42E99D: command failed" == str(
-                    e
+                assert (
+                    str(e) == "error to check for key=F1831DDAFC42E99D: command failed"
                 )
 
         assert (
@@ -1089,8 +1088,8 @@ class TestPluginKernel:
             try:
                 plugin.get_build_packages()
             except ValueError as e:
-                assert "Failed to add ppa key: F1831DDAFC42E99D: command failed" == str(
-                    e
+                assert (
+                    str(e) == "Failed to add ppa key: F1831DDAFC42E99D: command failed"
                 )
 
         assert (
@@ -1198,7 +1197,6 @@ def subprocess_callback_function(process):
 
 
 def _is_sub_array(array, sub_array):
-
     a = len(array)
     s = len(sub_array)
     # Two pointers to traverse the arrays
@@ -1207,11 +1205,9 @@ def _is_sub_array(array, sub_array):
 
     # Traverse both arrays simultaneously
     while i < a and j < s:
-
         # If element matches
         # increment both pointers
         if array[i] == sub_array[j]:
-
             i += 1
             j += 1
 

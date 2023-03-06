@@ -1064,7 +1064,6 @@ class TestPluginKernel(TestCase):
 
 
 def _is_sub_array(array, sub_array):
-
     a = len(array)
     s = len(sub_array)
     # Two pointers to traverse the arrays
@@ -1073,11 +1072,9 @@ def _is_sub_array(array, sub_array):
 
     # Traverse both arrays simultaneously
     while i < a and j < s:
-
         # If element matches
         # increment both pointers
         if array[i] == sub_array[j]:
-
             i += 1
             j += 1
 
