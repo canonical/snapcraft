@@ -88,9 +88,10 @@ The following kernel-specific options are provided by this plugin:
 
     - kernel-initrd-modules:
       (array of string; default: none)
-      list of modules to include in initrd; note that kernel snaps do not
-      provide the core boot logic which comes from snappy Ubuntu Core
-      OS snap. Include all modules you need for mounting rootfs here.
+      list of modules to include in initrd.
+      Note that kernel snaps do not provide the core boot logic which comes from snappy
+      Ubuntu Core OS snap. Include all modules you need for mounting rootfs here.
+      If installed module(s) have any dependencies, those are automatically installed.
 
     - kernel-initrd-configured-modules:
       (array of string; default: none)
@@ -98,8 +99,7 @@ The following kernel-specific options are provided by this plugin:
       /lib/modules-load.d/ubuntu-core-initramfs.conf config
       to be automatically loaded.
       Configured modules are automatically added to kernel-initrd-modules.
-      If module in question is not supported by the kernel, it's automatically
-      removed.
+      If module in question is not supported by the kernel, it is ignored.
 
     - kernel-initrd-stage-firmware:
       (boolean; default: False)
@@ -679,7 +679,7 @@ class KernelPlugin(plugins.Plugin):
                     [
                         "\tif [",
                         "-n",
-                        '"$(modprobe -n -q --show-depends -d ${uc_initrd_feature_kernel_modules} -S "${KERNEL_RELEASE}" ${m})"',
+                        '"$(modprobe -n -q --show-depends -d ${CRAFT_PART_INSTALL} -S "${KERNEL_RELEASE}" ${m})"',
                         "]; then",
                     ]
                 ),

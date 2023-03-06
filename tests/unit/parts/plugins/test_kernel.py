@@ -1713,7 +1713,7 @@ _configure_initrd_modules_cmd = [
             "\tif",
             "[ -n",
             '"$(modprobe -n -q --show-depends',
-            "-d ${uc_initrd_feature_kernel_modules}",
+            "-d ${CRAFT_PART_INSTALL}",
             '-S "${KERNEL_RELEASE}"',
             '${m})" ]; then',
         ],

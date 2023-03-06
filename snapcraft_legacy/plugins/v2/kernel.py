@@ -84,9 +84,13 @@ The following kernel-specific options are provided by this plugin:
 
     - kernel-initrd-modules:
       (array of string; default: none)
-      list of modules to include in initrd; note that kernel snaps do not
-      provide the core boot logic which comes from snappy Ubuntu Core
-      OS snap. Include all modules you need for mounting rootfs here.
+      list of modules to include in initrd.
+      Note that kernel snaps do not provide the core boot logic which comes from snappy
+      Ubuntu Core OS snap. Include all modules you need for mounting rootfs here.
+      If installed module(s) have any dependencies, those are automatically installed.
+      WARNING: Due to a bug in ubuntu-core-initramfs this option is same as
+      kernel-initrd-configured-modules, and all included modules are configured
+      to be autoloaded.
 
     - kernel-initrd-configured-modules:
       (array of string; default: none)
@@ -94,8 +98,7 @@ The following kernel-specific options are provided by this plugin:
       /lib/modules-load.d/ubuntu-core-initramfs.conf config
       to be automatically loaded.
       Configured modules are automatically added to kernel-initrd-modules.
-      If module in question is not supported by the kernel, it's automatically
-      removed.
+      If module in question is not supported by the kernel, it is ignored.
 
     - kernel-initrd-stage-firmware:
       (boolean; default: False)
@@ -689,7 +692,13 @@ class KernelPlugin(PluginV2):
             'install_modules=""',
             "uc_initrd_feature_kernel_modules=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/kernel-modules",
             "mkdir -p ${uc_initrd_feature_kernel_modules}",
-            "initramfs_ko_modules_conf=${uc_initrd_feature_kernel_modules}/extra-kernel-modules.conf",
+            "initramfs_ko_modules_conf=${uc_initrd_feature_kernel_modules}/extra-modules.conf",
+            " ".join(
+                [
+                    "touch",
+                    "${initramfs_ko_modules_conf}",
+                ]
+            ),
             " ".join(
                 [
                     "for",
@@ -729,7 +738,7 @@ class KernelPlugin(PluginV2):
                         "for",
                         "m",
                         "in",
-                        "${initrd_configured_kernel_modules}",
+                        "$(cat ${initramfs_ko_modules_conf})",
                     ]
                 ),
                 "do",
@@ -737,7 +746,7 @@ class KernelPlugin(PluginV2):
                     [
                         "\tif [",
                         "-n",
-                        '"$(modprobe -n -q --show-depends -d ${uc_initrd_feature_kernel_modules} -S "${KERNEL_RELEASE}" ${m})"',
+                        '"$(modprobe -n -q --show-depends -d ${SNAPCRAFT_PART_INSTALL} -S "${KERNEL_RELEASE}" ${m})"',
                         "]; then",
                     ]
                 ),
