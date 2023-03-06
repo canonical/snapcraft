@@ -2,6 +2,8 @@
 
 get_base()
 {
+    if [[ "$SPREAD_SYSTEM" =~ ubuntu-24.04 ]]; then
+        echo "core24"
     if [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
         echo "core22"
     elif [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
