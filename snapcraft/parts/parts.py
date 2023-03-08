@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,12 +21,13 @@ import subprocess
 from typing import Any, Dict, List, Optional, Set
 
 import craft_parts
+from craft_archives import repo
 from craft_cli import emit
 from craft_parts import ActionType, Part, ProjectDirs, Step
 from craft_parts.packages import Repository
 from xdg import BaseDirectory  # type: ignore
 
-from snapcraft import errors, repo
+from snapcraft import errors
 from snapcraft.meta import ExtractedMetadata, extract_metadata
 from snapcraft.utils import convert_architecture_deb_to_platform, get_host_architecture
 
@@ -57,7 +58,9 @@ class PartsLifecycle:
         *,
         work_dir: pathlib.Path,
         assets_dir: pathlib.Path,
-        base: str,
+        base: str,  # effective base
+        project_base: str,
+        confinement: str,
         package_repositories: List[Dict[str, Any]],
         parallel_build_count: int,
         part_names: Optional[List[str]],
@@ -102,6 +105,9 @@ class PartsLifecycle:
                 project_name=project_name,
                 project_vars_part_name=adopt_info,
                 project_vars=project_vars,
+                # custom arguments
+                project_base=project_base,
+                confinement=confinement,
             )
         except craft_parts.PartsError as err:
             raise errors.PartsLifecycleError(str(err)) from err

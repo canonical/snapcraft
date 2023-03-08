@@ -1,0 +1,22 @@
+name: devmode-provisioned
+version: "1.0"
+summary: Devmode confinement with staged python
+description: |
+  Devmode works like strict confinement so if python is staged, the
+  venv symlink must point to the staged interpreter. The expected
+  symlink is python3 -> ../usr/bin/<staged interpreter>.
+
+grade: devel
+base: core22
+confinement: devmode
+
+apps:
+  hello:
+    command: bin/hello
+
+parts:
+  python-sample:
+    plugin: python
+    source: src
+    python-packages: [black]
+    stage-packages: [python3-minimal, python3.10-minimal]
