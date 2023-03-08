@@ -131,27 +131,9 @@ def link_files_fnc_cmd() -> List[str]:
         "\tfor f in $(ls ${1}/${2})",
         "\tdo",
         '\t\tif [[ -L "${f}" ]]; then',
-        " ".join(
-            [
-                "\t\t\tlocal rel_path=$(",
-                "realpath",
-                "--no-symlinks",
-                "--relative-to=${1}",
-                "${f}",
-                ")",
-            ]
-        ),
+        "\t\t\tlocal rel_path=$( realpath --no-symlinks --relative-to=${1} ${f} )",
         "\t\telse",
-        " ".join(
-            [
-                "\t\t\tlocal rel_path=$(",
-                "realpath",
-                "-se",
-                "--relative-to=${1}",
-                "${f}",
-                ")",
-            ]
-        ),
+        "\t\t\tlocal rel_path=$( realpath -se --relative-to=${1} ${f} )",
         "\t\tfi",
         "\t\tlocal dir_path=$(dirname ${rel_path})",
         "\t\tmkdir -p ${3}/${dir_path}",
@@ -223,17 +205,7 @@ def clone_zfs_cmd(enable_zfs: bool, dest_dir: str) -> List[str]:
         return [
             f"if [ ! -d {dest_dir}/zfs ]; then",
             '\techo "cloning zfs..."',
-            " ".join(
-                [
-                    "\tgit",
-                    "clone",
-                    "--depth=1",
-                    _ZFS_URL,
-                    f"{dest_dir}/zfs",
-                    "-b",
-                    "master",
-                ]
-            ),
+            f"\tgit clone --depth=1 {_ZFS_URL} {dest_dir}/zfs -b master",
             "fi",
         ]
     return [
@@ -529,29 +501,12 @@ def copy_vmlinuz_cmd(install_dir: str) -> List[str]:
         'echo "Copying kernel image..."',
         # if kernel already exists, replace it, we are probably re-running
         # build
-        " ".join(
-            [
-                f"[ -e {install_dir}/kernel.img ]",
-                "&&",
-                f"rm -rf {install_dir}/kernel.img",
-            ]
+        f"[ -e {install_dir}/kernel.img ] && rm -rf {install_dir}/kernel.img",
+        (
+            "ln -f ${KERNEL_BUILD_ARCH_DIR}/${KERNEL_IMAGE_TARGET} "
+            f"{install_dir}/${{KERNEL_IMAGE_TARGET}}-${{KERNEL_RELEASE}}"
         ),
-        " ".join(
-            [
-                "ln",
-                "-f",
-                "${KERNEL_BUILD_ARCH_DIR}/${KERNEL_IMAGE_TARGET}",
-                f"{install_dir}/${{KERNEL_IMAGE_TARGET}}-${{KERNEL_RELEASE}}",
-            ]
-        ),
-        " ".join(
-            [
-                "ln",
-                "-f",
-                "${KERNEL_BUILD_ARCH_DIR}/${KERNEL_IMAGE_TARGET}",
-                f"{install_dir}/kernel.img",
-            ]
-        ),
+        f"ln -f ${{KERNEL_BUILD_ARCH_DIR}}/${{KERNEL_IMAGE_TARGET}} {install_dir}/kernel.img",
     ]
     return cmd
 
@@ -560,21 +515,8 @@ def copy_system_map_cmd(build_dir: str, install_dir: str) -> List[str]:
     """Install the system map."""
     cmd = [
         'echo "Copying System map..."',
-        " ".join(
-            [
-                f"[ -e {install_dir}/System.map ]",
-                "&&",
-                f"rm -rf {install_dir}/System.map*",
-            ]
-        ),
-        " ".join(
-            [
-                "ln",
-                "-f",
-                f"{build_dir}/System.map",
-                f"{install_dir}/System.map-${{KERNEL_RELEASE}}",
-            ]
-        ),
+        f"[ -e {install_dir}/System.map ] && rm -rf {install_dir}/System.map*",
+        f"ln -f {build_dir}/System.map {install_dir}/System.map-${{KERNEL_RELEASE}}",
     ]
     return cmd
 
@@ -599,17 +541,10 @@ def copy_dtbs_cmd(
         else:
             install_dtb = dtb
 
-        cmd.extend(
-            [
-                " ".join(
-                    [
-                        "ln -f",
-                        f"${{KERNEL_BUILD_ARCH_DIR}}/dts/{dtb}",
-                        f"{install_dir}/dtbs/{install_dtb}",
-                    ]
-                ),
-            ]
+        cmd.append(
+            f"ln -f ${{KERNEL_BUILD_ARCH_DIR}}/dts/{dtb} {install_dir}/dtbs/{install_dtb}"
         )
+
     return cmd
 
 
@@ -635,15 +570,7 @@ def arrange_install_dir_cmd(install_dir: str) -> List[str]:
         f"rm {install_dir}/modules/*/build {install_dir}/modules/*/source",
         # if there is firmware dir, move it to snap root
         # this could have been from stage packages or from kernel build
-        " ".join(
-            [
-                f"[ -d {install_dir}/lib/firmware ]",
-                "&&",
-                "mv",
-                f"{install_dir}/lib/firmware",
-                f"{install_dir}",
-            ]
-        ),
+        f"[ -d {install_dir}/lib/firmware ] && mv {install_dir}/lib/firmware {install_dir}",
         # create symlinks for modules and firmware for convenience
         f"ln -sf ../modules {install_dir}/lib/modules",
         f"ln -sf ../firmware {install_dir}/lib/firmware",
