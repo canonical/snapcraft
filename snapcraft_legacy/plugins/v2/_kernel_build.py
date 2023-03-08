@@ -580,10 +580,10 @@ def copy_system_map_cmd(build_dir: str, install_dir: str) -> List[str]:
 
 
 def copy_dtbs_cmd(
-    kernel_device_trees: Optional[List[str]], install_dir: str
+    device_trees: Optional[List[str]], install_dir: str
 ) -> List[str]:
     """Install custom device trees."""
-    if not kernel_device_trees:
+    if not device_trees:
         return [""]
 
     cmd = [
@@ -591,7 +591,7 @@ def copy_dtbs_cmd(
         f"mkdir -p {install_dir}/dtbs",
     ]
 
-    for dtb in [f"{i}.dtb" for i in kernel_device_trees]:
+    for dtb in [f"{i}.dtb" for i in device_trees]:
         # Strip any subdirectories
         subdir_index = dtb.rfind("/")
         if subdir_index > 0:
