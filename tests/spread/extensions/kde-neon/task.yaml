@@ -7,6 +7,9 @@ systems:
   - ubuntu-20.04
   - ubuntu-20.04-64
   - ubuntu-20.04-amd64
+  - ubuntu-22.04
+  - ubuntu-22.04-64
+  - ubuntu-22.04-amd64
 
 environment:
   SNAP_DIR: ../snaps/neon-hello
@@ -15,11 +18,6 @@ prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
-
-  if [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
-    sed -i 's|command: bin/hello|command: usr/local/bin/hello|' "${SNAP_DIR}/snap/snapcraft.yaml"
-    sed '/build-snaps: .*/d' "${SNAP_DIR}/snap/snapcraft.yaml"
-  fi
 
 restore: |
   cd "$SNAP_DIR"
@@ -44,9 +42,15 @@ execute: |
   [ -f "$snap_user_data/.last_revision" ]
   [ "$(cat "$snap_user_data/.last_revision")" = "SNAP_DESKTOP_LAST_REVISION=x1" ]
 
+
   # Verify content snap was installed for dependency checks.
-  snap list kde-frameworks-5-99-qt-5-15-7-core20
   snap list gtk-common-themes
+  if [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
+    snap list kde-frameworks-5-99-qt-5-15-7-core20
+  elif [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
+    snap list kde-frameworks-5-102-qt-5-15-8-core22
+  fi
+
 
   # Verify all dependencies were found.
   if echo "$output" | grep -q "part is missing libraries"; then
