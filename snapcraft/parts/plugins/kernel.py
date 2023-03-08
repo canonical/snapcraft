@@ -258,7 +258,6 @@ class KernelPluginProperties(plugins.PluginProperties, plugins.PluginModel):
         return cls(**plugin_data)
 
 
-# pylint: disable-next=too-many-instance-attributes
 class KernelPlugin(plugins.Plugin):
     """Plugin for the kernel snap build."""
 
@@ -366,8 +365,18 @@ class KernelPlugin(plugins.Plugin):
             "INSTALL_FW_PATH=${CRAFT_PART_INSTALL}/lib/firmware",
         ]
 
+    # pylint: disable-next=too-many-arguments
     def _make_initrd_cmd(
-        self, initrd_overlay: Optional[str], install_dir: str, stage_dir: str
+        self,
+        initrd_compression: Optional[str],
+        initrd_compression_options: Optional[List[str]],
+        initrd_firmware: Optional[List[str]],
+        initrd_addons: Optional[List[str]],
+        initrd_overlay: Optional[str],
+        initrd_stage_firmware: bool,
+        build_efi_image: bool,
+        install_dir: str,
+        stage_dir: str,
     ) -> List[str]:
         cmd_echo = [
             'echo "Generating initrd with ko modules for kernel release: ${KERNEL_RELEASE}"',
@@ -454,11 +463,11 @@ class KernelPlugin(plugins.Plugin):
         ]
 
         # gather firmware files
-        if self.options.kernel_initrd_firmware:
+        if initrd_firmware:
             cmd_prepare_initrd_overlay_feature.extend(
                 [
                     'echo "Installing initrd overlay firmware..."',
-                    f"for f in {' '.join(self.options.kernel_initrd_firmware)}",
+                    f"for f in {' '.join(initrd_firmware)}",
                     "do",
                     # firmware can be from kernel build or from stage
                     # firmware from kernel build takes preference
@@ -509,11 +518,11 @@ class KernelPlugin(plugins.Plugin):
             )
 
         # apply overlay addons if defined
-        if self.options.kernel_initrd_addons:
+        if initrd_addons:
             cmd_prepare_initrd_overlay_feature.extend(
                 [
                     'echo "Installing initrd addons..."',
-                    f"for a in {' '.join(self.options.kernel_initrd_addons)}",
+                    f"for a in {' '.join(initrd_addons)}",
                     "do",
                     '\techo "Copy overlay: ${a}"',
                     " ".join(
@@ -579,8 +588,8 @@ class KernelPlugin(plugins.Plugin):
         # ubuntu-core-initramfs does not support configurable compression command
         # we still want to support this as configurable option though.
         comp_command = _kernel_build.compression_cmd(
-            initrd_compression=self.options.kernel_initrd_compression,
-            initrd_compression_options=self.options.kernel_initrd_compression_options,
+            initrd_compression=initrd_compression,
+            initrd_compression_options=initrd_compression_options,
         )
         if comp_command:
             cmd_create_initrd.extend(
@@ -632,7 +641,7 @@ class KernelPlugin(plugins.Plugin):
             ],
         )
         firmware_dir = f"{install_dir}/lib/firmware"
-        if self.options.kernel_initrd_stage_firmware:
+        if initrd_stage_firmware:
             firmware_dir = f"{stage_dir}/firmware"
         cmd_create_initrd.extend(
             [
@@ -671,7 +680,7 @@ class KernelPlugin(plugins.Plugin):
                 f"ln $(ls {install_dir}/initrd.img*) {install_dir}/initrd.img",
             ]
         )
-        if self.options.kernel_build_efi_image:
+        if build_efi_image:
             cmd_create_initrd.extend(
                 [
                     "",
@@ -885,9 +894,16 @@ class KernelPlugin(plugins.Plugin):
 
         return env
 
+    # pylint: disable-next=too-many-arguments
     def _get_post_install_cmd(
         self,
+        initrd_compression: Optional[str],
+        initrd_compression_options: Optional[List[str]],
+        initrd_firmware: Optional[List[str]],
+        initrd_addons: Optional[List[str]],
         initrd_overlay: Optional[str],
+        initrd_stage_firmware: bool,
+        build_efi_image: bool,
         build_dir: str,
         install_dir: str,
         stage_dir: str,
@@ -903,21 +919,34 @@ class KernelPlugin(plugins.Plugin):
             ),
             "",
             *_kernel_build.copy_dtbs_cmd(
-                kernel_device_trees=self.options.kernel_device_trees,
+                device_trees=self.options.kernel_device_trees,
                 install_dir=install_dir,
             ),
             "",
             *self._make_initrd_cmd(
+                initrd_compression=initrd_compression,
+                initrd_compression_options=initrd_compression_options,
+                initrd_firmware=initrd_firmware,
+                initrd_addons=initrd_addons,
                 initrd_overlay=initrd_overlay,
+                initrd_stage_firmware=initrd_stage_firmware,
+                build_efi_image=build_efi_image,
                 install_dir=install_dir,
                 stage_dir=stage_dir,
             ),
             "",
         ]
 
+    # pylint: disable-next=too-many-arguments
     def _get_install_command(
         self,
+        initrd_compression: Optional[str],
+        initrd_compression_options: Optional[List[str]],
+        initrd_firmware: Optional[List[str]],
+        initrd_addons: Optional[List[str]],
         initrd_overlay: Optional[str],
+        initrd_stage_firmware: bool,
+        build_efi_image: bool,
         build_dir: str,
         install_dir: str,
         stage_dir: str,
@@ -936,7 +965,13 @@ class KernelPlugin(plugins.Plugin):
         # add post-install steps
         cmd.extend(
             self._get_post_install_cmd(
+                initrd_compression=initrd_compression,
+                initrd_compression_options=initrd_compression_options,
+                initrd_firmware=initrd_firmware,
+                initrd_addons=initrd_addons,
                 initrd_overlay=initrd_overlay,
+                initrd_stage_firmware=initrd_stage_firmware,
+                build_efi_image=build_efi_image,
                 build_dir=build_dir,
                 install_dir=install_dir,
                 stage_dir=stage_dir,
@@ -1001,7 +1036,13 @@ class KernelPlugin(plugins.Plugin):
                 make_cmd=self._make_cmd, targets=self._make_targets
             ),
             *self._get_install_command(
+                initrd_compression=self.options.kernel_initrd_compression,
+                initrd_compression_options=self.options.kernel_initrd_compression_options,
+                initrd_firmware=self.options.kernel_initrd_firmware,
+                initrd_addons=self.options.kernel_initrd_addons,
                 initrd_overlay=self.options.kernel_initrd_overlay,
+                initrd_stage_firmware=self.options.kernel_initrd_stage_firmware,
+                build_efi_image=self.options.kernel_build_efi_image,
                 build_dir="${CRAFT_PART_BUILD}",
                 install_dir="${CRAFT_PART_INSTALL}",
                 stage_dir="${CRAFT_STAGE}",

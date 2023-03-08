@@ -412,7 +412,15 @@ class KernelPlugin(PluginV2):
         ]
 
     def _make_initrd_cmd(
-        self, initrd_overlay: Optional[str], install_dir: str, stage_dir: str
+        self,
+        initrd_compression: Optional[str],
+        initrd_compression_options: Optional[List[str]],
+        initrd_firmware: Optional[List[str]],
+        initrd_addons: Optional[List[str]],
+        initrd_overlay: Optional[str],
+        initrd_stage_firmware: bool,
+        install_dir: str,
+        stage_dir: str,
     ) -> List[str]:
         cmd_echo = [
             'echo "Generating initrd with ko modules for kernel release: ${KERNEL_RELEASE}"',
@@ -499,11 +507,11 @@ class KernelPlugin(PluginV2):
         ]
 
         # gather firmware files
-        if self.options.kernel_initrd_firmware:
+        if initrd_firmware:
             cmd_prepare_initrd_overlay_feature.extend(
                 [
                     'echo "Installing initrd overlay firmware..."',
-                    f"for f in {' '.join(self.options.kernel_initrd_firmware)}",
+                    f"for f in {' '.join(initrd_firmware)}",
                     "do",
                     # firmware can be from kernel build or from stage
                     # firmware from kernel build takes preference
@@ -554,11 +562,11 @@ class KernelPlugin(PluginV2):
             )
 
         # apply overlay addons if defined
-        if self.options.kernel_initrd_addons:
+        if initrd_addons:
             cmd_prepare_initrd_overlay_feature.extend(
                 [
                     'echo "Installing initrd addons..."',
-                    f"for a in {' '.join(self.options.kernel_initrd_addons)}",
+                    f"for a in {' '.join(initrd_addons)}",
                     "do",
                     '\techo "Copy overlay: ${a}"',
                     " ".join(
@@ -624,8 +632,8 @@ class KernelPlugin(PluginV2):
         # ubuntu-core-initramfs does not support configurable compression command
         # we still want to support this as configurable option though.
         comp_command = _kernel_build.compression_cmd(
-            initrd_compression=self.options.kernel_initrd_compression,
-            initrd_compression_options=self.options.kernel_initrd_compression_options,
+            initrd_compression=initrd_compression,
+            initrd_compression_options=initrd_compression_options,
         )
         if comp_command:
             cmd_create_initrd.extend(
@@ -670,7 +678,7 @@ class KernelPlugin(PluginV2):
             ],
         )
         firmware_dir = f"{install_dir}/lib/firmware"
-        if self.options.kernel_initrd_stage_firmware:
+        if initrd_stage_firmware:
             firmware_dir = f"{stage_dir}/firmware"
         cmd_create_initrd.extend(
             [
@@ -896,7 +904,12 @@ class KernelPlugin(PluginV2):
 
     def _get_post_install_cmd(
         self,
+        initrd_compression: [str],
+        initrd_compression_options: Optional[List[str]],
+        initrd_firmware: Optional[List[str]],
+        initrd_addons: Optional[List[str]],
         initrd_overlay: Optional[str],
+        initrd_stage_firmware: bool,
         build_dir: str,
         install_dir: str,
         stage_dir: str,
@@ -912,12 +925,17 @@ class KernelPlugin(PluginV2):
             ),
             "",
             *_kernel_build.copy_dtbs_cmd(
-                kernel_device_trees=self.options.kernel_device_trees,
+                device_trees=self.options.kernel_device_trees,
                 install_dir=install_dir,
             ),
             "",
             *self._make_initrd_cmd(
+                initrd_compression=initrd_compression,
+                initrd_compression_options=initrd_compression_options,
+                initrd_firmware=initrd_firmware,
+                initrd_addons=initrd_addons,
                 initrd_overlay=initrd_overlay,
+                initrd_stage_firmware=initrd_stage_firmware,
                 install_dir=install_dir,
                 stage_dir=stage_dir,
             ),
@@ -926,7 +944,12 @@ class KernelPlugin(PluginV2):
 
     def _get_install_command(
         self,
+        initrd_compression: Optional[str],
+        initrd_compression_options: Optional[List[str]],
+        initrd_firmware: Optional[List[str]],
+        initrd_addons: Optional[List[str]],
         initrd_overlay: Optional[str],
+        initrd_stage_firmware: bool,
         build_dir: str,
         install_dir: str,
         stage_dir: str,
@@ -945,7 +968,12 @@ class KernelPlugin(PluginV2):
         # add post-install steps
         cmd.extend(
             self._get_post_install_cmd(
+                initrd_compression=initrd_compression,
+                initrd_compression_options=initrd_compression_options,
+                initrd_firmware=initrd_firmware,
+                initrd_addons=initrd_addons,
                 initrd_overlay=initrd_overlay,
+                initrd_stage_firmware=initrd_stage_firmware,
                 build_dir=build_dir,
                 install_dir=install_dir,
                 stage_dir=stage_dir,
@@ -1011,7 +1039,12 @@ class KernelPlugin(PluginV2):
             ),
             "",
             *self._get_install_command(
+                initrd_compression=self.options.kernel_initrd_compression,
+                initrd_compression_options=self.options.kernel_initrd_compression_options,
+                initrd_firmware=self.options.kernel_initrd_firmware,
+                initrd_addons=self.options.kernel_initrd_addons,
                 initrd_overlay=self.options.kernel_initrd_overlay,
+                initrd_stage_firmware=self.options.kernel_initrd_stage_firmware,
                 build_dir="${SNAPCRAFT_PART_BUILD}",
                 install_dir="${SNAPCRAFT_PART_INSTALL}",
                 stage_dir="${SNAPCRAFT_STAGE}",
