@@ -11,31 +11,31 @@ freeze-requirements:
 
 .PHONY: test-black
 test-black:
-	tox run -e test-black
+	tox run -e lint-black
 
 .PHONY: test-codespell
 test-codespell:
-	tox run -e test-codespell
+	tox run -e lint-codespell
 
 .PHONY: test-isort
 test-isort:
-	tox run -e test-isort
+	tox run -e lint-isort
 
 .PHONY: test-mypy
 test-mypy:
-	tox run -e test-mypy
+	tox run -e lint-mypy
 
 .PHONY: test-pydocstyle
 test-pydocstyle:
-	tox run -e test-docstyle
+	tox run -e lint-docstyle
 
 .PHONY: test-pylint
 test-pylint:
-	tox run -e test-pylint
+	tox run -e lint-pylint
 
 .PHONY: test-pyright
 test-pyright:
-	tox run -e test-pyright
+	tox run -e lint-pyright
 
 .PHONY: test-ruff
 test-ruff:
@@ -44,7 +44,7 @@ test-ruff:
 
 .PHONY: test-shellcheck
 test-shellcheck:
-	tox run -e test-shellcheck
+	tox run -e lint-shellcheck
 
 .PHONY: test-legacy-units
 test-legacy-units:
