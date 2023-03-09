@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from ._clean import clean  # noqa: F401
+from ._clean import clean, clean_try_dir  # noqa: F401
 from ._init import init  # noqa: F401
 from ._runner import execute  # noqa: F401
 from ._status_cache import StatusCache  # noqa: F401

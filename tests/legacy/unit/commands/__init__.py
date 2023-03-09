@@ -123,6 +123,11 @@ class LifecycleCommandsBaseTestCase(CommandBaseTestCase):
         )
         self.useFixture(self.fake_lifecycle_clean)
 
+        self.fake_lifecycle_clean_try_dir = fixtures.MockPatch(
+            "snapcraft_legacy.internal.lifecycle.clean_try_dir"
+        )
+        self.useFixture(self.fake_lifecycle_clean_try_dir)
+
         self.fake_lifecycle_execute = fixtures.MockPatch(
             "snapcraft_legacy.internal.lifecycle.execute"
         )

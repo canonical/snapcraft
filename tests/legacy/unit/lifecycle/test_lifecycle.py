@@ -401,6 +401,31 @@ class CleanTestCase(LifecycleTestBase):
         )
 
 
+class CleanTryDirTestCase(LifecycleTestBase):
+    def test_clean_removes_global_state(self):
+        project_config = self.make_snapcraft_project(
+            textwrap.dedent(
+                """\
+                parts:
+                  test-part:
+                    plugin: nil
+                """
+            )
+        )
+        lifecycle.execute(steps.PRIME, project_config)
+        self.assertThat(
+            steps.PRIME.name,
+            DirExists(),
+            "Expected prime directory to remain after cleaning for tried snap",
+        )
+        lifecycle.clean_try_dir(project_config.project)
+        self.assertThat(
+            steps.PRIME.name,
+            Not(DirExists()),
+            "Expected prime directory to be removed",
+        )
+
+
 class RecordSnapcraftYamlTestCase(LifecycleTestBase):
     def test_prime_without_build_info_does_not_record(self):
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_INFO", None))

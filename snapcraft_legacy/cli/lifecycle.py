@@ -468,9 +468,9 @@ def clean(ctx, parts, unprime, **kwargs):
                 instance.clean_parts(part_names=parts)
         else:
             build_provider_class(project=project, echoer=echo).clean_project()
-            # Clear the prime directory on the host, unless on Windows.
+            # Clear the prime directory on the host in case snapcraft try was used, unless on Windows.
             if sys.platform != "win32":
-                lifecycle.clean(project, parts, steps.PRIME)
+                lifecycle.clean_try_dir(project)
 
 
 if __name__ == "__main__":

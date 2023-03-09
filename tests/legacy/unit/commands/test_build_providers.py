@@ -522,12 +522,12 @@ class BuildProviderCleanCommandTestCase(LifecycleCommandsBaseTestCase):
 
         self.make_snapcraft_yaml("pull", base="core20")
 
-    @mock.patch("snapcraft_legacy.internal.lifecycle.clean")
-    def test_clean(self, lifecycle_clean_mock):
+    @mock.patch("snapcraft_legacy.internal.lifecycle.clean_try_dir")
+    def test_clean(self, lifecycle_clean_try_dir_mock):
         result = self.run_command(["clean"])
 
         self.assertThat(result.exit_code, Equals(0))
-        lifecycle_clean_mock.assert_called_once_with(mock.ANY, tuple(), steps.PRIME)
+        lifecycle_clean_try_dir_mock.assert_called_once_with(mock.ANY)
         self.clean_project_mock.assert_called_once_with()
         self.clean_mock.assert_not_called()
 

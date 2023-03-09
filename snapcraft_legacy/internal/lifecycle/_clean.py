@@ -201,6 +201,7 @@ def clean(project: "Project", parts, step=None):
         # If we've been asked to clean stage or prime without being given
         # specific parts, just blow away those directories instead of
         # doing it per part (it would just be a waste of time).
+        print("Calling the cleanup prime part but the project is not loaded")
         _cleanup_common_directories_for_step(step, project, parts=config.all_parts)
 
         # No need to continue if that's all that was required
@@ -218,3 +219,10 @@ def clean(project: "Project", parts, step=None):
     _clean_parts(parts, step, config, staged_state, primed_state)
 
     _cleanup_common_directories(config, project)
+
+def clean_try_dir(project: "Project"):
+    # Attempt to clean the "try" directory on the host without loading the project
+    # since we are not on the normal provider
+
+    _cleanup_common_directories_for_step(steps.PRIME, project)
+    return
