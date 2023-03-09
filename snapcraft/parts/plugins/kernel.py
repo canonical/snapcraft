@@ -1399,6 +1399,12 @@ class KernelPlugin(plugins.Plugin):
             # add ppa itself
             logger.warning("adding ppa:snappy-dev/image to handle initrd builds")
             subprocess.run(
+                ["apt-get", "install", "-y", "software-properties-common"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=True,
+            )
+            subprocess.run(
                 ["add-apt-repository", "-y", "ppa:snappy-dev/image"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
