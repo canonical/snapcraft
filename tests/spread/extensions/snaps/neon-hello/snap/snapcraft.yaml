@@ -5,15 +5,13 @@ description: It simply prints a hello world
 
 grade: devel
 confinement: strict
-base: core18
 
 apps:
   neon-hello:
-    command: bin/hello
+    command: usr/local/bin/hello
     extensions: [kde-neon]
 
 parts:
   hello:
-    build-snaps: [kde-frameworks-5-core18-sdk]
     plugin: cmake
     source: .
