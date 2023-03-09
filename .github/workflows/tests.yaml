@@ -72,7 +72,7 @@ jobs:
           directory: ./results/
           files: coverage*.xml
       - name: Upload test results
-        if: always()
+        if: success() || failure()
         uses: actions/upload-artifact@v3
         with:
           name: test-results-${{ matrix.platform }}
