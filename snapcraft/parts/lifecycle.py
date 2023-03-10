@@ -545,6 +545,7 @@ def _run_in_provider(
         base_configuration=base_configuration,
         build_base=build_base.value,
         instance_name=instance_name,
+        allow_unstable=True,  # type: ignore  # TODO: fix in craft-providers 1.8.2
     ) as instance:
         try:
             providers.prepare_instance(

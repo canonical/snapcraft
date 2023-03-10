@@ -199,7 +199,7 @@ def test_lifecycle_legacy_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
         )
 
     assert run_mock.mock_calls == []
-    assert str(raised.value) == "base is not core22"
+    assert str(raised.value) == "base is core20"
 
 
 @pytest.mark.parametrize(
@@ -1166,6 +1166,7 @@ def test_lifecycle_run_in_provider_default(
         base_configuration=mock_base_configuration,
         build_base="22.04",
         instance_name="test-instance-name",
+        allow_unstable=True,
     )
     mock_prepare_instance.assert_called_with(
         instance=mock_instance, host_project_path=tmp_path, bind_ssh=False
@@ -1289,6 +1290,7 @@ def test_lifecycle_run_in_provider_all_options(
         base_configuration=mock_base_configuration,
         build_base="22.04",
         instance_name="test-instance-name",
+        allow_unstable=True,
     )
     mock_prepare_instance.assert_called_with(
         instance=mock_instance, host_project_path=tmp_path, bind_ssh=True
