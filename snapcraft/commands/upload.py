@@ -36,7 +36,7 @@ class StoreUploadCommand(BaseCommand):
     """Command to upload a snap to the Snap Store."""
 
     name = "upload"
-    help_msg = "Login to the Snap Store"
+    help_msg = "Upload a snap to the Snap Store"
     overview = textwrap.dedent(
         """
         By passing --release with a comma separated list of channels the snap would

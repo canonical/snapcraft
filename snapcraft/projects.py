@@ -20,10 +20,11 @@ import re
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
 
 import pydantic
+from craft_archives import repo
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from pydantic import PrivateAttr, conlist, constr
 
-from snapcraft import parts, repo
+from snapcraft import parts
 from snapcraft.errors import ProjectValidationError
 from snapcraft.utils import get_effective_base, get_host_architecture
 
