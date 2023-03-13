@@ -25,7 +25,7 @@ from overrides import overrides
 
 from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
-_SDK_SNAP = {"core22": "kde-frameworks-5-102-qt-5-15-8-core22-sd"}
+_SDK_SNAP = {"core22": "kf5-5-104-qt-5-15-8-core22-sdk"}
 
 
 @dataclasses.dataclass
@@ -100,7 +100,7 @@ class KDENeon(Extension):
         for part in self.yaml_data["parts"].values():
             build_snaps.extend(part.get("build-snaps", []))
 
-        matcher = re.compile(r"kde-frameworks-\d+-\d+-qt-\d+.*-" + base + r"-sd.*")
+        matcher = re.compile(r"kf5-\d+-\d+-qt-\d+.*-" + base + r"-sdk.*")
         sdk_snap_candidates = [s for s in build_snaps if matcher.match(s)]
         if sdk_snap_candidates:
             sdk_snap = sdk_snap_candidates[0].split("/")[0]
