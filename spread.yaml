@@ -227,7 +227,15 @@ prepare: |
   fi
   # install and setup the lxd snap - use 'retry' to workaround aa-exec issue
   # see https://bugs.launchpad.net/snapd/+bug/1870201
-  retry -n 5 --wait 5 sh -c 'snap install lxd'
+  for _ in {1..5}
+  do
+    if [[ $(sh -c 'snap install lxd') ]]
+    then
+      break
+    else
+      sleep 5
+    fi
+  done
   # Add the ubuntu user to the lxd group.
   adduser ubuntu lxd
   lxd init --auto
