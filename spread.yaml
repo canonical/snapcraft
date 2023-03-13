@@ -72,7 +72,7 @@ backends:
           # SPREAD_SYSTEM has the following format here 'ubuntu-XX.YY-64' and gets
           # translated to an image XX.YY.
           image=$(echo $SPREAD_SYSTEM | sed -e 's/ubuntu-\(.*\)-64/\1/')
-          instance_name="spread-${image}"
+          instance_name="spread-$(echo $image | sed "s/\./\-/")"
       fi
 
       if [ -z "${image}" ]; then
@@ -101,7 +101,7 @@ backends:
           # SPREAD_SYSTEM has the following format here 'ubuntu-XX.YY-64' and gets
           # translated to an image XX.YY.
           image=$(echo $SPREAD_SYSTEM | sed -e 's/ubuntu-\(.*\)-64/\1/')
-          instance_name="spread-${image}"
+          instance_name="spread-$(echo $image | sed "s/\./\-/")"
       fi
 
       if [ -z "${image}" ]; then
