@@ -100,14 +100,14 @@ class KDENeon(Extension):
         for part in self.yaml_data["parts"].values():
             build_snaps.extend(part.get("build-snaps", []))
 
-        matcher = re.compile(r"kde-frameworks-\d+-qt-\d+" + base + r"sd.*")
+        matcher = re.compile(r"kde-frameworks-\d+-\d+-qt-\d+.*-" + base + r"-sd.*")
         sdk_snap_candidates = [s for s in build_snaps if matcher.match(s)]
         if sdk_snap_candidates:
             sdk_snap = sdk_snap_candidates[0].split("/")[0]
             builtin = False
         else:
             builtin = True
-        # The same except the trailing -sdk
+        # The same except the trailing -sd
         content = sdk_snap[:-3]
 
         return KDESnaps(sdk=sdk_snap, content=content, builtin=builtin)
@@ -220,26 +220,25 @@ class KDENeon(Extension):
 
     @overrides
     def get_parts_snippet(self) -> Dict[str, Any]:
-        source = get_extensions_data_dir() / "desktop" / "command-chain"
+        # We can change this to the lightweight command-chain when
+        # the content snap includes the desktop-launch from
+        # https://github.com/snapcore/snapcraft-desktop-integration
+        source = get_extensions_data_dir() / "desktop" / "kde-neon"
 
         if self.kde_snaps.builtin:
-            base = self.yaml_data["base"]
-            sdk_snap = _SDK_SNAP[base]
-            provider = self.kde_snaps.content
             return {
-                "kde-neon-extension/sdk": {
+                "kde-neon/sdk": {
                     "source": str(source),
-                    "source-subdir": "kde-neon",
                     "plugin": "make",
-                    "make-parameters": [f"PLATFORM_PLUG={provider}"],
-                    "build-packages": ["g++"],
-                    "build-snaps": [f"{sdk_snap}/current/stable"],
-                }
+                    "make-parameters": [f"PLATFORM_PLUG={self.kde_snaps.content}"],
+                    "build-snaps": [self.kde_snaps.sdk],
+                },
             }
 
         return {
-            "kde-neon-extension/sdk": {
+            "kde-neon/sdk": {
                 "source": str(source),
                 "plugin": "make",
-            }
+                "make-parameters": [f"PLATFORM_PLUG={self.kde_snaps.content}"],
+            },
         }
