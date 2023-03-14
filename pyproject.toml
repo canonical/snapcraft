@@ -1,23 +1,6 @@
 [tool.black]
-exclude = '''
+extend-exclude = '''
 /(
-    \.git
-  | \.direnv
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | \.vscode
-  | _build
-  | buck-out
-  | __pycache__
-  | build
-  | dist
-
-  # specific to snapcraft
-  | ^/parts
-  | ^/stage
-  | ^/prime
   | snapcraft_legacy
   | tools
 )/
