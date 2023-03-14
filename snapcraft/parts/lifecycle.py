@@ -529,7 +529,17 @@ def _run_in_provider(
         build_for=project.get_build_for(),
     )
 
-    build_base = providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE[project.get_effective_base()]
+    snapcraft_base = project.get_effective_base()
+    build_base = providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE[snapcraft_base]
+
+    if snapcraft_base == "devel":
+        emit.progress(
+            "Running snapcraft with a devel instance is for testing purposes only.",
+            permanent=True,
+        )
+        allow_unstable = True
+    else:
+        allow_unstable = False
 
     base_configuration = providers.get_base_configuration(
         alias=build_base,
@@ -545,7 +555,8 @@ def _run_in_provider(
         base_configuration=base_configuration,
         build_base=build_base.value,
         instance_name=instance_name,
-        allow_unstable=True,  # type: ignore  # TODO: fix in craft-providers 1.8.2
+        # TODO: mypy typing issue to be fixed in craft-providers 1.8.2
+        allow_unstable=allow_unstable,  # type: ignore
     ) as instance:
         try:
             providers.prepare_instance(
