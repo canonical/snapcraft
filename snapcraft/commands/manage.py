@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
 
 class StoreReleaseCommand(BaseCommand):
-    """Command to release a snap on the Snap Store."""
+    """Command to release a snap in the Snap Store."""
 
     name = "release"
     help_msg = "Release <name> to the store"
@@ -108,7 +108,7 @@ class StoreReleaseCommand(BaseCommand):
 
 
 class StoreCloseCommand(BaseCommand):
-    """Command to close a channel for a snap on the Snap Store."""
+    """Command to close a channel for a snap in the Snap Store."""
 
     name = "close"
     help_msg = "Close <channel> for <name> on the store"
