@@ -36,9 +36,9 @@ class StoreReleaseCommand(BaseCommand):
     overview = textwrap.dedent(
         """
         Release <name> on <revision> to the selected store <channels>.
-        <channels> is a comma separated list of valid channels on the store.
+        <channels> is a comma-separated list of valid channels in the store.
 
-        The <revision> must exist on the store, to see available revisions run
+        The <revision> must exist in the store, to see available revisions run
         `snapcraft list-revisions <name>`.
 
         The channel map will be displayed after the operation takes place. To see
@@ -78,7 +78,7 @@ class StoreReleaseCommand(BaseCommand):
         parser.add_argument(
             "channels",
             type=str,
-            help="The comma separated list of channels to release to",
+            help="The comma-separated list of channels to release to",
         )
         parser.add_argument(
             "--progressive",
@@ -111,7 +111,7 @@ class StoreCloseCommand(BaseCommand):
     """Command to close a channel for a snap in the Snap Store."""
 
     name = "close"
-    help_msg = "Close <channel> for <name> on the store"
+    help_msg = "Close <channel> for <name> in the store"
     overview = textwrap.dedent(
         """
         Closing a channel allows the <channel> that is closed to track the

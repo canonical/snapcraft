@@ -510,7 +510,7 @@ class StoreReleaseError(StoreError):
 class StoreMetadataError(StoreError):
 
     __FMT_NOT_FOUND = (
-        "Sorry, updating the information on the store has failed, first run "
+        "Sorry, updating the information in the store has failed, first run "
         "`snapcraft register {snap_name}` and then "
         "`snapcraft upload <snap-file>`."
     )
