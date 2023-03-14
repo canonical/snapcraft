@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 
 class StoreUploadCommand(BaseCommand):
-    """Command to upload a snap to the Snap Store."""
+    """Upload a snap to the Snap Store."""
 
     name = "upload"
     help_msg = "Upload a snap to the Snap Store"
