@@ -54,14 +54,14 @@ def _read_config(config_path) -> str:
 
 
 class StoreLoginCommand(BaseCommand):
-    """Command to login to the Snap Store."""
+    """Command to log in to the Snap Store."""
 
     name = "login"
-    help_msg = "Login to the Snap Store"
+    help_msg = "Log in to the Snap Store"
     overview = textwrap.dedent(
         f"""
-        Login to the Snap Store with your Ubuntu One SSO credentials.
-        If you do not have any, you can create them on https://login.ubuntu.com
+        Log in to the Snap Store with your Ubuntu One SSO credentials.
+        If you do not have any, you can create them at https://login.ubuntu.com
 
         To use the alternative authentication mechanism (Candid), set the
         environment variable {store.constants.ENVIRONMENT_STORE_AUTH!r} to 'candid'.
@@ -119,11 +119,11 @@ class StoreExportLoginCommand(BaseCommand):
     """Command to export login to use with the Snap Store."""
 
     name = "export-login"
-    help_msg = "Login to the Snap Store exporting the credentials"
+    help_msg = "Log in to the Snap Store exporting the credentials"
     overview = textwrap.dedent(
         f"""
-        Login to the Snap Store with your Ubuntu One SSO credentials.
-        If you do not have any, you can create them on https://login.ubuntu.com
+        Log in to the Snap Store with your Ubuntu One SSO credentials.
+        If you do not have any, you can create them at https://login.ubuntu.com
 
         To use the alternative authentication mechanism (Candid), set the
         environment variable {store.constants.ENVIRONMENT_STORE_AUTH!r} to 'candid'.
@@ -288,7 +288,7 @@ class StoreWhoAmICommand(BaseCommand):
 
 
 class StoreLogoutCommand(BaseCommand):
-    """Command to logout from the Snap Store."""
+    """Command to log out from the Snap Store."""
 
     name = "logout"
     help_msg = "Clear Snap Store credentials."

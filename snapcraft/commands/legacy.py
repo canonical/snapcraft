@@ -211,7 +211,7 @@ class StoreLegacyCreateKeyCommand(LegacyBaseCommand):
     overview = textwrap.dedent(
         """
         Create a key and store it locally. Use the register-key command to register
-        it on the store."""
+        it in the store."""
     )
 
     @overrides
