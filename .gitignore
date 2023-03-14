@@ -19,14 +19,14 @@ htmlcov
 .mypy_cache
 /parts
 pip-wheel-metadata/
-prime
+/prime
 *.pyc
 __pycache__
 .pytest_cache
 *.snap
 snap/.snapcraft/
 .spread-reuse.*
-stage
+/stage
 *.swp
 target
 tests/unit/snap/

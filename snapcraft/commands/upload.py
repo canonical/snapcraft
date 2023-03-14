@@ -39,7 +39,7 @@ class StoreUploadCommand(BaseCommand):
     help_msg = "Upload a snap to the Snap Store"
     overview = textwrap.dedent(
         """
-        By passing --release with a comma separated list of channels the snap would
+        By passing --release with a comma-separated list of channels the snap would
         be released to the selected channels if the store review passes for this
         <snap-file>.
 
@@ -65,7 +65,7 @@ class StoreUploadCommand(BaseCommand):
             dest="channels",
             type=str,
             default=None,
-            help="Optional comma separated list of channels to release to",
+            help="Optional comma-separated list of channels to release to",
         )
 
     @overrides
