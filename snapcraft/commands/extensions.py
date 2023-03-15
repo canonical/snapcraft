@@ -51,13 +51,13 @@ class ExtensionModel(BaseModel):
 
 
 class ListExtensionsCommand(BaseCommand, abc.ABC):
-    """A command to list the available extensions."""
+    """List available extensions for all supported bases."""
 
     name = "list-extensions"
-    help_msg = "List available extensions"
+    help_msg = "List available extensions for all supported bases."
     overview = textwrap.dedent(
         """
-        List the available extensions and the bases it can work on.
+        List available extensions and their corresponding bases.
         """
     )
 
@@ -100,13 +100,13 @@ class ExtensionsCommand(ListExtensionsCommand, abc.ABC):
 
 
 class ExpandExtensionsCommand(BaseCommand, abc.ABC):
-    """A command to expand the yaml from extensions."""
+    """Expand the extensions in the snapcraft.yaml file."""
 
     name = "expand-extensions"
     help_msg = "Expand extensions in snapcraft.yaml"
     overview = textwrap.dedent(
         """
-        Extensions defined under apps in snapcraft.yaml will be
+        Extensions selected in apps in snapcraft.yaml will be
         expanded and shown as output.
         """
     )
