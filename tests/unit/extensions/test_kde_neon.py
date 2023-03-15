@@ -37,7 +37,9 @@ def kde_neon_extension_with_build_snap():
         yaml_data={
             "base": "core22",
             "parts": {
-                "part1": {"build-snaps": ["kf5-5-104-qt-5-15-8-core22-sdk/latest/stable"]}
+                "part1": {
+                    "build-snaps": ["kf5-5-104-qt-5-15-8-core22-sdk/latest/stable"]
+                }
             },
         },
         arch="amd64",
@@ -312,9 +314,7 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
             "kde-neon/sdk": {
                 "source": str(source),
                 "plugin": "make",
-                "make-parameters": [
-                    "PLATFORM_PLUG=kf5-5-104-qt-5-15-8-core22"
-                ],
+                "make-parameters": ["PLATFORM_PLUG=kf5-5-104-qt-5-15-8-core22"],
             }
         }
     )
