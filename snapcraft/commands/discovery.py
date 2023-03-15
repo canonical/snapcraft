@@ -39,13 +39,13 @@ if TYPE_CHECKING:
 
 
 class ListPluginsCommand(BaseCommand, abc.ABC):
-    """A command to list the available plugins."""
+    """List available plugins."""
 
     name = "list-plugins"
-    help_msg = "List the available plugins that handle different types of part"
+    help_msg = "List available plugins, optionally for a given base"
     overview = textwrap.dedent(
         """
-        List the available plugins that handle different types of part
+        List available plugins, optionally for a given base.
         """
     )
 

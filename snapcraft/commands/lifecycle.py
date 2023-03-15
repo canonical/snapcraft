@@ -160,62 +160,62 @@ class _LifecycleStepCommand(_LifecycleCommand):
 
 
 class PullCommand(_LifecycleStepCommand):
-    """Command to pull parts."""
+    """Pull parts."""
 
     name = "pull"
     help_msg = "Download or retrieve artifacts defined for a part"
     overview = textwrap.dedent(
         """
         Download or retrieve artifacts defined for a part. If part names
-        are specified only those parts will be pulled, otherwise all parts
+        are specified, only those parts will be pulled; otherwise, all parts
         will be pulled.
         """
     )
 
 
 class BuildCommand(_LifecycleStepCommand):
-    """Command to build parts."""
+    """Build parts."""
 
     name = "build"
     help_msg = "Build artifacts defined for a part"
     overview = textwrap.dedent(
         """
-        Build artifacts defined for a part. If part names are specified only
-        those parts will be built, otherwise all parts will be built.
+        Build artifacts defined for a part. If part names are specified, only
+        those parts will be built; otherwise, all parts will be built.
         """
     )
 
 
 class StageCommand(_LifecycleStepCommand):
-    """Command to stage parts."""
+    """Stage parts."""
 
     name = "stage"
     help_msg = "Stage built artifacts into a common staging area"
     overview = textwrap.dedent(
         """
         Stage built artifacts into a common staging area. If part names are
-        specified only those parts will be staged. The default is to stage
-        all parts.
+        specified, only those parts will be staged. By default, all parts
+        will be staged.
         """
     )
 
 
 class PrimeCommand(_LifecycleStepCommand):
-    """Command to prime parts."""
+    """Prime parts."""
 
     name = "prime"
     help_msg = "Prime artifacts defined for a part"
     overview = textwrap.dedent(
         """
         Prepare the final payload to be packed as a snap, performing additional
-        processing and adding metadata files. If part names are specified only
-        those parts will be primed. The default is to prime all parts.
+        processing and adding metadata files. If part names are specified, only
+        those parts will be primed. By default, all parts will be primed.
         """
     )
 
 
 class PackCommand(_LifecycleCommand):
-    """Command to pack the final snap payload."""
+    """Pack the final snap payload."""
 
     name = "pack"
     help_msg = "Create the snap package"
@@ -268,7 +268,8 @@ class SnapCommand(_LifecycleCommand):
     overview = textwrap.dedent(
         """
         Process parts and create a snap file containing the project payload
-        with the provided metadata.
+        with the provided metadata. This command is deprecated in favour
+        of the newer 'pack' command.
         """
     )
 
@@ -286,7 +287,7 @@ class SnapCommand(_LifecycleCommand):
 
 
 class CleanCommand(_LifecycleStepCommand):
-    """Command to remove part assets."""
+    """Remove part assets."""
 
     name = "clean"
     help_msg = "Remove a part's assets"
@@ -299,14 +300,14 @@ class CleanCommand(_LifecycleStepCommand):
 
 
 class TryCommand(_LifecycleCommand):
-    """Command to prepare the parts for ``snap try``."""
+    """Prepare the parts for ``snap try``."""
 
     name = "try"
     help_msg = 'Prepare a snap for "snap try".'
     overview = textwrap.dedent(
         """
         Process parts and expose the ``prime`` directory containing the
-        final payload, ready for ``snap try prime``.
+        final payload, in preparation for ``snap try prime``.
         """
     )
 
