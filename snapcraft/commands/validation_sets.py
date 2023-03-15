@@ -60,10 +60,10 @@ _VALIDATION_SETS_TEMPLATE = textwrap.dedent(
 
 
 class StoreEditValidationSetsCommand(BaseCommand):
-    """Command for edit-validation-sets."""
+    """Edit a validation set."""
 
     name = "edit-validation-sets"
-    help_msg = "Edit the list of validations for <name>"
+    help_msg = "Edit the list of validations for <snap-name>"
     overview = textwrap.dedent(
         """
         Refer to https://snapcraft.io/docs/validation-sets for further information
