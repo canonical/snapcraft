@@ -214,6 +214,7 @@ class TestGetPartSnippet:
                     "SNAPCRAFT_CMAKE_ARGS": (
                         "-DCMAKE_FIND_ROOT_PATH="
                         "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current"
+                        "${SNAPCRAFT_CMAKE_ARGS:+:$SNAPCRAFT_CMAKE_ARGS}"
                     )
                 },
             ]
@@ -271,6 +272,7 @@ def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
                 "SNAPCRAFT_CMAKE_ARGS": (
                     "-DCMAKE_FIND_ROOT_PATH="
                     "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current"
+                    "${SNAPCRAFT_CMAKE_ARGS:+:$SNAPCRAFT_CMAKE_ARGS}"
                 )
             },
         ]
@@ -298,6 +300,7 @@ def test_get_parts_snippet_with_external_sdk(kde_neon_extension_with_build_snap)
             "source": str(source),
             "plugin": "make",
             "make-parameters": ["PLATFORM_PLUG=kf5-5-104-qt-5-15-8-core22"],
+            "build-snaps": ["kf5-5-104-qt-5-15-8-core22-sdk"],
         }
     }
 
@@ -313,6 +316,7 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
                 "source": str(source),
                 "plugin": "make",
                 "make-parameters": ["PLATFORM_PLUG=kf5-5-104-qt-5-15-8-core22"],
+                "build-snaps": ["kf5-5-104-qt-5-15-8-core22-sdk"],
             }
         }
     )
