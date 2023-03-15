@@ -108,7 +108,7 @@ class KDENeon(Extension):
         else:
             builtin = True
         # The same except the trailing -sd
-        content = sdk_snap[:-3]
+        content = sdk_snap[:-4]
 
         return KDESnaps(sdk=sdk_snap, content=content, builtin=builtin)
 
