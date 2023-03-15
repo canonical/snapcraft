@@ -542,14 +542,15 @@ class TestProjectValidation:
 
         assert project.grade == "devel"
 
-    def test_project_build_base_devel_grade_not_defined(self, project_yaml_data):
-        """Do not error when grade is not defined and  build_base is `devel`."""
-        data = project_yaml_data(build_base="devel")
+    @pytest.mark.parametrize("build_base", {"core22", "devel"})
+    def test_project_grade_not_defined(self, build_base, project_yaml_data):
+        """Do not validate the grade if it is not defined, regardless of build_base."""
+        data = project_yaml_data(build_base=build_base)
         data.pop("grade")
 
         project = Project.unmarshal(data)
 
-        assert project.build_base == "devel"
+        assert project.build_base == build_base
         assert not project.grade
 
     def test_project_build_base_devel_grade_stable_error(self, project_yaml_data):

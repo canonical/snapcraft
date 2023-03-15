@@ -30,7 +30,6 @@ from snapcraft import errors
 from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts.update_metadata import update_project_metadata
 from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Architecture, Project
-from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import get_host_architecture
 
 _SNAPCRAFT_YAML_FILENAMES = [
@@ -1354,13 +1353,7 @@ def test_lifecycle_run_in_provider_try(
     )
 
 
-@pytest.mark.parametrize(
-    "snapcraft_base, provider_base", SNAPCRAFT_BASE_TO_PROVIDER_BASE.items()
-)
-def test_lifecycle_run_in_provider_bases(
-    emitter,
-    snapcraft_base,
-    provider_base,
+def test_lifecycle_run_in_provider(
     mock_get_instance_name,
     mock_instance,
     mock_provider,
@@ -1369,9 +1362,6 @@ def test_lifecycle_run_in_provider_bases(
     tmp_path,
 ):
     """Verify snapcraft bases are handled properly when launching an instance."""
-    mocker.patch(
-        "snapcraft.projects.Project.get_effective_base", return_value=snapcraft_base
-    )
     mock_base_configuration = Mock()
     mocker.patch(
         "snapcraft.parts.lifecycle.providers.get_base_configuration",
@@ -1400,16 +1390,51 @@ def test_lifecycle_run_in_provider_bases(
         project_name="mytest",
         project_path=ANY,
         base_configuration=mock_base_configuration,
-        build_base=provider_base.value,
+        build_base=BuilddBaseAlias.JAMMY.value,
         instance_name="test-instance-name",
-        allow_unstable=bool(snapcraft_base == "devel"),
+        allow_unstable=False,
     )
 
-    if snapcraft_base == "devel":
-        emitter.assert_progress(
-            "Running snapcraft with a devel instance is for testing purposes only.",
-            permanent=True,
-        )
+
+def test_lifecycle_run_in_provider_devel_base(
+    emitter,
+    mock_get_instance_name,
+    mock_instance,
+    mock_provider,
+    mocker,
+    snapcraft_yaml,
+    tmp_path,
+):
+    """Verify the `devel` base is handled properly when launching an instance."""
+    mocker.patch("snapcraft.projects.Project.get_effective_base", return_value="devel")
+    mock_base_configuration = Mock()
+    mocker.patch(
+        "snapcraft.parts.lifecycle.providers.get_base_configuration",
+        return_value=mock_base_configuration,
+    )
+    mocker.patch("snapcraft.parts.lifecycle.providers.capture_logs_from_instance")
+    mocker.patch("snapcraft.parts.lifecycle.providers.ensure_provider_is_available")
+    mocker.patch("snapcraft.parts.lifecycle.providers.prepare_instance")
+    mocker.patch("snapcraft.projects.Project.get_build_on")
+    mocker.patch("snapcraft.projects.Project.get_build_for")
+
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    parts_lifecycle._run_in_provider(
+        project=project,
+        command_name="test",
+        parsed_args=argparse.Namespace(
+            use_lxd=False,
+            debug=False,
+            bind_ssh=False,
+            http_proxy=None,
+            https_proxy=None,
+        ),
+    )
+
+    emitter.assert_progress(
+        "Running snapcraft with a devel instance is for testing purposes only.",
+        permanent=True,
+    )
 
 
 @pytest.fixture
