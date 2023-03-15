@@ -172,7 +172,7 @@ class KDENeon(Extension):
                     "XDG_DATA_DIRS": prepend_to_env(
                         "XDG_DATA_DIRS",
                         [
-                            f"$SNAPCRAFT_STAGE/usr/share:/snap/{sdk_snap}/current/usr/share",
+                            f"$CRAFT_STAGE/usr/share:/snap/{sdk_snap}/current/usr/share",
                             "/usr/share",
                         ],
                     ),
