@@ -227,7 +227,7 @@ class KDENeon(Extension):
 
         if self.kde_snaps.builtin:
             return {
-                "kde-neon/sdk": {
+                "kde-neon": {
                     "source": str(source),
                     "plugin": "make",
                     "make-parameters": [f"PLATFORM_PLUG={self.kde_snaps.content}"],
@@ -236,7 +236,7 @@ class KDENeon(Extension):
             }
 
         return {
-            "kde-neon/sdk": {
+            "kde-neon": {
                 "source": str(source),
                 "plugin": "make",
                 "make-parameters": [f"PLATFORM_PLUG={self.kde_snaps.content}"],

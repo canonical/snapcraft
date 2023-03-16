@@ -283,7 +283,7 @@ def test_get_parts_snippet(kde_neon_extension):
     source = get_extensions_data_dir() / "desktop" / "kde-neon"
 
     assert kde_neon_extension.get_parts_snippet() == {
-        "kde-neon/sdk": {
+        "kde-neon": {
             "source": str(source),
             "plugin": "make",
             "make-parameters": ["PLATFORM_PLUG=kf5-5-104-qt-5-15-8-core22"],
@@ -296,7 +296,7 @@ def test_get_parts_snippet_with_external_sdk(kde_neon_extension_with_build_snap)
     source = get_extensions_data_dir() / "desktop" / "kde-neon"
 
     assert kde_neon_extension_with_build_snap.get_parts_snippet() == {
-        "kde-neon/sdk": {
+        "kde-neon": {
             "source": str(source),
             "plugin": "make",
             "make-parameters": ["PLATFORM_PLUG=kf5-5-104-qt-5-15-8-core22"],
@@ -311,7 +311,7 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
     assert (
         kde_neon_extension_with_default_build_snap_from_latest_edge.get_parts_snippet()
         == {
-            "kde-neon/sdk": {
+            "kde-neon": {
                 "source": str(source),
                 "plugin": "make",
                 "make-parameters": ["PLATFORM_PLUG=kf5-5-104-qt-5-15-8-core22"],
