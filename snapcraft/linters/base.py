@@ -19,7 +19,8 @@
 import abc
 import enum
 import fnmatch
-from typing import TYPE_CHECKING, List, Literal, Optional
+from pathlib import Path
+from typing import TYPE_CHECKING, List, Literal, Optional, Union
 
 import pydantic
 from craft_cli import emit
@@ -103,14 +104,44 @@ class Linter(abc.ABC):
         :return: A list of linter issues flagged by this linter.
         """
 
-    def _is_file_ignored(self, elf_file: ElfFile) -> bool:
-        """Check if the file name matches an ignored file pattern."""
-        for pattern in self._lint.ignored_files(self._name):
-            if fnmatch.fnmatch(str(elf_file.path), pattern):
+    def _is_file_ignored(
+        self, filepath: Union[ElfFile, Path], category: str = ""
+    ) -> bool:
+        """Check if the file name matches an ignored file pattern.
+
+        :param category:
+            For linters that implement categories, the specific category that
+            should be checked for the ignored patterns. `filepath` will be checked
+            against the linter's "main" patterns (based on the linter's name) *and*
+            against the category-specific patterns.
+        """
+        ignored_files = self._lint.ignored_files(self._name)
+
+        if category:
+            # No "extend()" because we don't want to affect the original list.
+            ignored_files = ignored_files + self._lint.ignored_files(category)
+
+        if isinstance(filepath, ElfFile):
+            path = filepath.path
+        else:
+            path = filepath
+
+        for pattern in ignored_files:
+            if fnmatch.fnmatch(str(path), pattern):
                 emit.debug(
-                    f"{self._name} linter: skip file {str(elf_file.path)!r} "
+                    f"{self._name} linter: skip file {str(path)!r} "
                     f"(matches {pattern!r})"
                 )
                 return True
 
         return False
+
+    @staticmethod
+    def get_categories() -> List[str]:
+        """Get a list of specific subcategories that can be filtered against.
+
+        For Linter subclasses that perform multiple "kinds" of linting, this
+        must return the list of names that can be used to selectively ignore
+        parts of the linting behavior for given paths.
+        """
+        return []

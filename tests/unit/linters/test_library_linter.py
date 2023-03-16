@@ -133,7 +133,11 @@ def test_library_linter_unused_library(mocker, new_dir):
     ]
 
 
-def test_library_linter_filter_missing_library(mocker, new_dir):
+@pytest.mark.parametrize(
+    "filter_name",
+    ("library", "missing-library"),
+)
+def test_library_linter_filter_missing_library(mocker, new_dir, filter_name):
     """Verify missing libraries can be filtered out."""
     shutil.copy("/bin/true", "elf.bin")
 
@@ -164,12 +168,16 @@ def test_library_linter_filter_missing_library(mocker, new_dir):
     )
 
     issues = linters.run_linters(
-        new_dir, lint=projects.Lint(ignore=[{"library": ["elf.*"]}])
+        new_dir, lint=projects.Lint(ignore=[{filter_name: ["elf.*"]}])
     )
     assert issues == []
 
 
-def test_library_linter_filter_unused_library(mocker, new_dir):
+@pytest.mark.parametrize(
+    "filter_name",
+    ("library", "unused-library"),
+)
+def test_library_linter_filter_unused_library(mocker, new_dir, filter_name):
     """Verify unused libraries can be filtered out."""
     # mock an elf file
     mock_elf_file = Mock(spec=_elf_file.ElfFile)
@@ -210,9 +218,62 @@ def test_library_linter_filter_unused_library(mocker, new_dir):
     )
 
     issues = linters.run_linters(
-        new_dir, lint=projects.Lint(ignore=[{"library": ["lib/libfoo.*"]}])
+        new_dir, lint=projects.Lint(ignore=[{filter_name: ["lib/libfoo.*"]}])
     )
     assert issues == []
+
+
+def test_library_linter_mixed_filters(mocker, new_dir):
+    """Check that filtering *missing* libraries does not affect *unused* ones."""
+
+    # mock a library
+    mock_library = Mock(spec=_elf_file.ElfFile)
+    mock_library.soname = "libfoo.so"
+    mock_library.path = Path("lib/libfoo.so")
+    mock_library.load_dependencies.return_value = []
+
+    mocker.patch(
+        "snapcraft.linters.library_linter.elf_utils.get_elf_files",
+        return_value=[mock_library],
+    )
+
+    mocker.patch("snapcraft.linters.library_linter.ElfFile", return_value=mock_library)
+    mocker.patch("snapcraft.linters.library_linter.Path.is_file", return_value=True)
+    mocker.patch("snapcraft.linters.linters.LINTERS", {"library": LibraryLinter})
+
+    yaml_data = {
+        "name": "mytest",
+        "version": "1.29.3",
+        "base": "core22",
+        "summary": "Single-line elevator pitch for your amazing snap",
+        "description": "test-description",
+        "confinement": "strict",
+        "parts": {},
+    }
+
+    project = projects.Project.unmarshal(yaml_data)
+    snap_yaml.write(
+        project,
+        prime_dir=Path(new_dir),
+        arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
+    )
+
+    # lib/libfoo.so is an *unused* library, but here we filter out *missing* library
+    # issues for this path.
+    issues = linters.run_linters(
+        new_dir, lint=projects.Lint(ignore=[{"missing-library": ["lib/libfoo.*"]}])
+    )
+    # The "unused library" issue must be generated.
+    assert issues == [
+        LinterIssue(
+            name="library",
+            result=LinterResult.WARNING,
+            filename="libfoo.so",
+            text="unused library 'lib/libfoo.so'.",
+            url="https://snapcraft.io/docs/linters-library",
+        ),
+    ]
 
 
 @pytest.mark.parametrize(

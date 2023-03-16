@@ -16,7 +16,7 @@
 
 from pathlib import Path
 from typing import List
-from unittest.mock import call
+from unittest.mock import MagicMock, call
 
 import pytest
 from overrides import overrides
@@ -128,26 +128,32 @@ class TestLinterStatus:
         assert status == expected_status
 
 
+class _TestLinter(Linter):
+    @overrides
+    def run(self) -> List[linters.LinterIssue]:
+        assert self._snap_metadata.name == "mytest"
+        return [
+            linters.LinterIssue(
+                name="test",
+                result=LinterResult.WARNING,
+                text="Something wrong.",
+                url="https://some/url",
+            )
+        ]
+
+    @staticmethod
+    def get_categories() -> List[str]:
+        return ["test-1", "test-2"]
+
+    def is_file_ignored(self, filepath: Path, category: str = "") -> bool:
+        return self._is_file_ignored(filepath, category)
+
+
 class TestLinterRun:
     """Check linter execution."""
 
-    class _TestLinter(Linter):
-        @overrides
-        def run(self) -> List[linters.LinterIssue]:
-            assert self._snap_metadata.name == "mytest"
-            return [
-                linters.LinterIssue(
-                    name="test",
-                    result=LinterResult.WARNING,
-                    text="Something wrong.",
-                    url="https://some/url",
-                )
-            ]
-
     def test_run_linters(self, mocker, new_dir, linter_issue):
-        mocker.patch(
-            "snapcraft.linters.linters.LINTERS", {"test": TestLinterRun._TestLinter}
-        )
+        mocker.patch("snapcraft.linters.linters.LINTERS", {"test": _TestLinter})
         yaml_data = {
             "name": "mytest",
             "version": "1.29.3",
@@ -177,9 +183,7 @@ class TestLinterRun:
         ]
 
     def test_run_linters_ignore(self, mocker, new_dir, linter_issue):
-        mocker.patch(
-            "snapcraft.linters.linters.LINTERS", {"test": TestLinterRun._TestLinter}
-        )
+        mocker.patch("snapcraft.linters.linters.LINTERS", {"test": _TestLinter})
         yaml_data = {
             "name": "mytest",
             "version": "1.29.3",
@@ -202,6 +206,32 @@ class TestLinterRun:
         issues = linters.run_linters(new_dir, lint=lint)
         assert issues == []
 
+    def test_run_linters_ignore_all_categories(self, mocker, new_dir, linter_issue):
+        """Verify that if the spec ignores all categories one-by-one, run_linters()
+        exits early with no issues."""
+        mocker.patch("snapcraft.linters.linters.LINTERS", {"test": _TestLinter})
+        yaml_data = {
+            "name": "mytest",
+            "version": "1.29.3",
+            "base": "core22",
+            "summary": "Single-line elevator pitch for your amazing snap",
+            "description": "test-description",
+            "confinement": "strict",
+            "parts": {},
+        }
+
+        project = projects.Project.unmarshal(yaml_data)
+        snap_yaml.write(
+            project,
+            prime_dir=Path(new_dir),
+            arch="amd64",
+            arch_triplet="x86_64-linux-gnu",
+        )
+
+        lint = projects.Lint(ignore=["test-1", "test-2"])
+        issues = linters.run_linters(new_dir, lint=lint)
+        assert issues == []
+
     def test_ignore_matching_filenames(self, linter_issue):
         lint = projects.Lint(ignore=[{"test": ["foo*", "some/dir/*"]}])
         issues = [
@@ -218,3 +248,30 @@ class TestLinterRun:
             linter_issue(filename="some/dir/baz.txt", result=LinterResult.IGNORED),
             linter_issue(filename="other/dir/quux.txt", result=LinterResult.ERROR),
         ]
+
+
+def test_base_linter_is_file_ignored():
+    """Test the base Linter class' ignore mechanism with categories."""
+    lint = projects.Lint(
+        ignore=[
+            {"test": ["test-path"]},
+            {"test-1": ["test-1-path"]},
+            {"test-2": ["test-2-path"]},
+        ]
+    )
+    linter = _TestLinter(name="test", snap_metadata=MagicMock(), lint=lint)
+
+    # The "test-path" Path must be ignored by the "main" filter and all categories.
+    assert linter.is_file_ignored(Path("test-path"))
+    assert linter.is_file_ignored(Path("test-path", category="test-1"))
+    assert linter.is_file_ignored(Path("test-path", category="test-2"))
+
+    # "test-1-path" is ignored by the "test-1" only
+    assert not linter.is_file_ignored(Path("test-1-path"))
+    assert linter.is_file_ignored(Path("test-1-path"), category="test-1")
+    assert not linter.is_file_ignored(Path("test-1-path"), category="test-2")
+
+    # Likewise for "test-2-path" is ignored by the "test-2" only
+    assert not linter.is_file_ignored(Path("test-2-path"))
+    assert not linter.is_file_ignored(Path("test-2-path"), category="test-1")
+    assert linter.is_file_ignored(Path("test-2-path"), category="test-2")

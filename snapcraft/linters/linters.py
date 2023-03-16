@@ -141,6 +141,11 @@ def run_linters(location: Path, *, lint: Optional[projects.Lint]) -> List[Linter
             if lint and lint.all_ignored(name):
                 continue
 
+            categories = linter_class.get_categories()
+
+            if lint and categories and all(lint.all_ignored(c) for c in categories):
+                continue
+
             linter = linter_class(name=name, lint=lint, snap_metadata=snap_metadata)
             emit.progress(f"Running linter: {name}")
             issues = linter.run()
