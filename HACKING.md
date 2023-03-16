@@ -54,4 +54,4 @@ We'd love the help!
 - Submit pull requests against [snapcraft](https://github.com/snapcore/snapcraft/pulls)
 - Make sure to read the [contribution guide](CONTRIBUTING.md)
 - Find us under the snapcraft category of the forum https://forum.snapcraft.io
-- Discuss with us using IRC in #snapcraft on Freenode.
+- Discuss with us using IRC in #snapcraft on [Libera.chat](https://libera.chat/).
