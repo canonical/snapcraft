@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Library linter implementation."""
-
 from pathlib import Path
 from typing import List, Set
 
@@ -30,6 +29,11 @@ from .base import Linter, LinterIssue, LinterResult
 
 class LibraryLinter(Linter):
     """Linter for dynamic library availability in snap."""
+
+    @staticmethod
+    def get_categories() -> List[str]:
+        """Get the specific sub-categories that can be filtered against."""
+        return ["unused-library", "missing-library"]
 
     @overrides
     def run(self) -> List[LinterIssue]:
@@ -49,12 +53,18 @@ class LibraryLinter(Linter):
         used_libraries: Set[Path] = set()
 
         for elf_file in elf_files:
-            # Skip linting files listed in the ignore list.
+            # Skip linting files listed in the ignore list for the main "library"
+            # filter.
             if self._is_file_ignored(elf_file):
                 continue
 
             arch_triplet = elf_utils.get_arch_triplet()
             content_dirs = self._snap_metadata.get_provider_content_directories()
+
+            # if the elf file is a library, add it to the list of all libraries
+            if elf_file.soname and self._is_library_path(elf_file.path):
+                # resolve symlinks to libraries
+                all_libraries.add(elf_file.path.resolve())
 
             dependencies = elf_file.load_dependencies(
                 root_path=current_path.absolute(),
@@ -73,21 +83,19 @@ class LibraryLinter(Linter):
                     # resolve symlinks to libraries
                     used_libraries.add(dependency.resolve())
 
-            # if the elf file is a library, add it to the list of all libraries
-            if elf_file.soname and self._is_library_path(elf_file.path):
-                # resolve symlinks to libraries
-                all_libraries.add(elf_file.path.resolve())
+            # Check whether all dependencies are satisfied, *if* the missing-library
+            # category is not filtered out for the elf file's path.
+            if not self._is_file_ignored(elf_file, "missing-library"):
+                search_paths = [current_path.absolute(), *content_dirs]
+                if installed_base_path:
+                    search_paths.append(installed_base_path)
 
-            search_paths = [current_path.absolute(), *content_dirs]
-            if installed_base_path:
-                search_paths.append(installed_base_path)
-
-            self._check_dependencies_satisfied(
-                elf_file,
-                search_paths=search_paths,
-                dependencies=sorted(dependencies),
-                issues=issues,
-            )
+                self._check_dependencies_satisfied(
+                    elf_file,
+                    search_paths=search_paths,
+                    dependencies=sorted(dependencies),
+                    issues=issues,
+                )
 
         issues.extend(self._get_unused_library_issues(all_libraries, used_libraries))
 
@@ -159,11 +167,11 @@ class LibraryLinter(Linter):
                 emit.debug(f"could not resolve path for library {library_path!r}")
                 continue
 
-            library = ElfFile(path=resolved_library_path)
-
             # skip linting files listed in the ignore list
-            if self._is_file_ignored(library):
+            if self._is_file_ignored(resolved_library_path, "unused-library"):
                 continue
+
+            library = ElfFile(path=resolved_library_path)
 
             issue = LinterIssue(
                 name=self._name,
