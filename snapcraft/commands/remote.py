@@ -42,16 +42,19 @@ class RemoteBuildCommand(BaseCommand):
     help_msg = "Dispatch a snap for remote build"
     overview = textwrap.dedent(
         """
-        Command remote-build sends the current project to be built remotely. After the build
-        is complete, packages for each architecture are retrieved and will be available in
-        the local filesystem.
+        Command remote-build sends the current project to be built
+        remotely.  After the build is complete, packages for each
+        architecture are retrieved and will be available in the
+        local filesystem.
 
-        If not specified in the snapcraft.yaml file, the list of architectures to build
-        can be set using the --build-on option. If both are specified, an error will occur.
+        If not specified in the snapcraft.yaml file, the list of
+        architectures to build can be set using the --build-on option.
+        If both are specified, an error will occur.
 
-        Interrupted remote builds can be resumed using the --recover option, followed by
-        the build number informed when the remote build was originally dispatched. The
-        current state of the remote build for each architecture can be checked using the
+        Interrupted remote builds can be resumed using the --recover
+        option, followed by the build number informed when the remote
+        build was originally dispatched. The current state of the
+        remote build for each architecture can be checked using the
         --status option."""
     )
 

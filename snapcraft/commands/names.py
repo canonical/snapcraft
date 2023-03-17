@@ -58,14 +58,14 @@ _MESSAGE_REGISTER_NO = "Snap name {!r} not registered"
 
 
 class StoreRegisterCommand(BaseCommand):
-    """Command to register a snap with the Snap Store."""
+    """Register a snap name with the Snap Store."""
 
     name = "register"
     help_msg = "Register <snap-name> with the store"
     overview = textwrap.dedent(
         """
-        You can use this command to register an available <snap-name> and become the
-        publisher for this snap."""
+        Register an available <snap-name> with the Snap Store,
+        at which time you become the publisher for the snap."""
     )
 
     @overrides
@@ -118,14 +118,14 @@ class StoreRegisterCommand(BaseCommand):
 
 
 class StoreNamesCommand(BaseCommand):
-    """Command to list the snap names registered with the current account."""
+    """List the snap names registered with the current account."""
 
     name = "names"
-    help_msg = "List the names registered to the logged in account"
+    help_msg = "List the names registered to the logged-in account"
     overview = textwrap.dedent(
         """
         Return the list of snap names together with the registration date,
-        its visibility and any additional notes."""
+        visibility and any additional notes."""
     )
 
     @overrides
