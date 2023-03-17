@@ -25,10 +25,10 @@ from typing import Dict, Optional, Sequence
 
 import craft_store
 import pymacaroons
-import xdg.BaseDirectory
 from craft_cli import emit
 from overrides import overrides
 from urllib3.util import parse_url
+from xdg import BaseDirectory
 
 from snapcraft import errors
 
@@ -117,7 +117,7 @@ def set_legacy_env() -> None:
 class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
     """Legacy client to easily transition existing CI users."""
 
-    CONFIG_PATH = Path(xdg.BaseDirectory.xdg_config_home) / "snapcraft/snapcraft.cfg"
+    CONFIG_PATH = Path(BaseDirectory.xdg_config_home) / "snapcraft/snapcraft.cfg"
 
     @classmethod
     def env_has_legacy_credentials(cls) -> bool:
