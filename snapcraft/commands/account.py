@@ -67,8 +67,8 @@ class StoreLoginCommand(BaseCommand):
         environment variable {store.constants.ENVIRONMENT_STORE_AUTH!r} to 'candid'.
 
         The login command requires a working keyring on the system it is used on.
-        As an alternative to login in one can export
-        {store.constants.ENVIRONMENT_STORE_CREDENTIALS!r} with the exported credentials.
+        As an alternative, export {store.constants.ENVIRONMENT_STORE_CREDENTIALS!r}
+        with the exported credentials.
         """
     )
 
@@ -294,7 +294,7 @@ class StoreLogoutCommand(BaseCommand):
     help_msg = "Clear Snap Store credentials."
     overview = textwrap.dedent(
         """
-        Remove stored credentials Snap Store credentials from the system.
+        Remove stored Snap Store credentials from the system.
         """
     )
 
