@@ -184,11 +184,14 @@ class TestGetPartSnippet:
                 {
                     "LD_LIBRARY_PATH": ":".join(
                         [
-                            "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/lib/$CRAFT_ARCH_TRIPLET",
+                            "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/"
+                            "lib/$CRAFT_ARCH_TRIPLET",
                             "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/"
                             "usr/lib/$CRAFT_ARCH_TRIPLET",
-                            "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/usr/lib",
-                            "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/usr/lib/vala-current",
+                            "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/"
+                            "usr/lib",
+                            "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/"
+                            "usr/lib/vala-current",
                             "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/"
                             "usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
                         ]
@@ -208,7 +211,8 @@ class TestGetPartSnippet:
                 },
                 {
                     "ACLOCAL_PATH": (
-                        "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/usr/share/aclocal"
+                        "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/"
+                        "usr/share/aclocal"
                     )
                     + "${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
                 },
@@ -245,8 +249,10 @@ def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
                         "lib/$CRAFT_ARCH_TRIPLET",
                         "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/"
                         "usr/lib/$CRAFT_ARCH_TRIPLET",
-                        "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/usr/lib",
-                        "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/usr/lib/vala-current",
+                        "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/"
+                        "usr/lib",
+                        "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/"
+                        "usr/lib/vala-current",
                         "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/"
                         "usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
                     ]
@@ -266,7 +272,8 @@ def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
             },
             {
                 "ACLOCAL_PATH": (
-                    "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/usr/share/aclocal"
+                    "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/"
+                    "usr/share/aclocal"
                 )
                 + "${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
             },
