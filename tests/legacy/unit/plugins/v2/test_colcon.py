@@ -96,6 +96,7 @@ def test_get_build_commands(monkeypatch):
         colcon_cmake_args = list()
         colcon_packages = list()
         colcon_packages_ignore = list()
+        build_snaps = list()
 
     plugin = colcon.ColconPlugin(part_name="my-part", options=Options())
 
@@ -111,6 +112,7 @@ def test_get_build_commands(monkeypatch):
         'state="$(set +o); set -$-"',
         "set +u",
         "",
+        "## Sourcing ROS ws in build snaps",
         "## Sourcing ROS ws in stage snaps",
         'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
         'AMENT_CURRENT_PREFIX="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh"',
@@ -127,6 +129,7 @@ def test_get_build_commands(monkeypatch):
         'state="$(set +o); set -$-"',
         "set +u",
         "",
+        "## Sourcing ROS ws in build snaps",
         "## Sourcing ROS ws in stage snaps",
         'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
         'AMENT_CURRENT_PREFIX="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh"',
@@ -161,6 +164,7 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         colcon_cmake_args = ["cmake", "args..."]
         colcon_packages = ["package1", "package2..."]
         colcon_packages_ignore = ["ipackage1", "ipackage2..."]
+        build_snaps = ["foo"]
 
     plugin = colcon.ColconPlugin(part_name="my-part", options=Options())
 
@@ -189,6 +193,14 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         'state="$(set +o); set -$-"',
         "set +u",
         "",
+        "## Sourcing ROS ws in build snaps",
+        'if [ -f "/snap/foo/current/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
+        'AMENT_CURRENT_PREFIX="/snap/foo/current/opt/ros/${ROS_DISTRO}" . "/snap/foo/current/opt/ros/${ROS_DISTRO}/local_setup.sh"',
+        "fi",
+        'if [ -f "/snap/foo/current/opt/ros/snap/local_setup.sh" ]; then',
+        'COLCON_CURRENT_PREFIX="/snap/foo/current/opt/ros/snap" . "/snap/foo/current/opt/ros/snap/local_setup.sh"',
+        "fi",
+        "",
         "## Sourcing ROS ws in stage snaps",
         'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
         'AMENT_CURRENT_PREFIX="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh"',
@@ -204,6 +216,14 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
         'state="$(set +o); set -$-"',
         "set +u",
+        "",
+        "## Sourcing ROS ws in build snaps",
+        'if [ -f "/snap/foo/current/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
+        'AMENT_CURRENT_PREFIX="/snap/foo/current/opt/ros/${ROS_DISTRO}" . "/snap/foo/current/opt/ros/${ROS_DISTRO}/local_setup.sh"',
+        "fi",
+        'if [ -f "/snap/foo/current/opt/ros/snap/local_setup.sh" ]; then',
+        'COLCON_CURRENT_PREFIX="/snap/foo/current/opt/ros/snap" . "/snap/foo/current/opt/ros/snap/local_setup.sh"',
+        "fi",
         "",
         "## Sourcing ROS ws in stage snaps",
         'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',

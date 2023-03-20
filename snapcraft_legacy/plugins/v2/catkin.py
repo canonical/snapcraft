@@ -38,6 +38,7 @@
 
 from typing import Any, Dict, List, Set
 
+from snapcraft_legacy.internal.repo.snaps import _get_parsed_snap
 from snapcraft_legacy.plugins.v2 import _ros
 
 
@@ -99,7 +100,15 @@ class CatkinPlugin(_ros.RosPlugin):
 
         activation_commands = list()
 
-        # Source ROS ws in stage-snaps
+        # Source ROS ws in all build-snaps first
+        activation_commands.append("## Sourcing ROS ws in build snaps")
+        if self.options.build_snaps:
+            for build_snap in self.options.build_snaps:
+                snap_name = _get_parsed_snap(build_snap)[0]
+                activation_commands.extend(self._get_source_command('/snap/{build_snap}/current'.format(build_snap=snap_name)))
+            activation_commands.append("")
+
+        # Source ROS ws in stage-snaps next
         activation_commands.append("## Sourcing ROS ws in stage snaps")
         activation_commands.extend(self._get_source_command("${SNAPCRAFT_PART_INSTALL}"))
         activation_commands.append("")
