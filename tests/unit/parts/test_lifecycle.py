@@ -27,6 +27,7 @@ from craft_parts import Action, Step, callbacks
 from craft_providers.bases.buildd import BuilddBaseAlias
 
 from snapcraft import errors
+from snapcraft.elf import ElfFile
 from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts.update_metadata import update_project_metadata
 from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Architecture, Project
@@ -1618,6 +1619,9 @@ def test_patch_elf(snapcraft_yaml, mocker, new_dir):
     )
     mocker.patch("snapcraft.elf._patcher.Patcher.get_current_rpath", return_value=[])
 
+    # don't load dependencies in a unit test
+    mocker.patch.object(ElfFile, "load_dependencies")
+
     yaml_data = {
         "base": "core22",
         "confinement": "classic",
@@ -1657,9 +1661,6 @@ def test_patch_elf(snapcraft_yaml, mocker, new_dir):
             patchelf_args=[
                 "--set-interpreter",
                 "/snap/core22/current/lib64/ld-linux-x86-64.so.2",
-                "--force-rpath",
-                "--set-rpath",
-                "/snap/core22/current/lib/x86_64-linux-gnu",
             ],
             elf_file_path=new_dir / "prime/elf.bin",
         )

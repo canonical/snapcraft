@@ -23,9 +23,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Set
 
-import elftools.common.exceptions
-import elftools.elf.elffile
 from craft_cli import emit
+from elftools.common.exceptions import ELFError
 
 from . import ElfFile, errors
 
@@ -77,7 +76,7 @@ def get_elf_files_from_list(root: Path, file_list: Iterable[str]) -> List[ElfFil
 
         try:
             elf_file = ElfFile(path=path)
-        except elftools.common.exceptions.ELFError:
+        except ELFError:
             # Ignore invalid ELF files.
             continue
         except errors.CorruptedElfFile as exception:
