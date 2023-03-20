@@ -185,10 +185,12 @@ class TestGetPartSnippet:
                     "LD_LIBRARY_PATH": ":".join(
                         [
                             "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/lib/$CRAFT_ARCH_TRIPLET",
-                            "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET",
+                            "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/"
+                            "usr/lib/$CRAFT_ARCH_TRIPLET",
                             "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/usr/lib",
                             "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/usr/lib/vala-current",
-                            "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
+                            "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/"
+                            "usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
                         ]
                     )
                     + "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
