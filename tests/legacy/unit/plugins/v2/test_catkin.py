@@ -75,6 +75,7 @@ def test_get_build_commands(monkeypatch):
         catkin_cmake_args = list()
         catkin_packages = list()
         catkin_packages_ignore = list()
+        build_snaps = list()
 
     plugin = catkin.CatkinPlugin(part_name="my-part", options=Options())
 
@@ -101,6 +102,7 @@ def test_get_build_commands(monkeypatch):
         'state="$(set +o); set -$-"',
         "set +u",
         "",
+        "## Sourcing ROS ws in build snaps",
         "## Sourcing ROS ws in stage snaps",
         'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
         'set -- --local "${_EXTEND_WS}"',
@@ -120,6 +122,7 @@ def test_get_build_commands(monkeypatch):
         'state="$(set +o); set -$-"',
         "set +u",
         "",
+        "## Sourcing ROS ws in build snaps",
         "## Sourcing ROS ws in stage snaps",
         'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
         'set -- --local "${_EXTEND_WS}"',
@@ -152,6 +155,7 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         catkin_cmake_args = ["cmake", "args..."]
         catkin_packages = ["package1", "package2..."]
         catkin_packages_ignore = ["ipackage1", "ipackage2..."]
+        build_snaps = ["foo"]
 
     plugin = catkin.CatkinPlugin(part_name="my-part", options=Options())
 
@@ -191,6 +195,13 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         'state="$(set +o); set -$-"',
         "set +u",
         "",
+        "## Sourcing ROS ws in build snaps",
+        'if [ -f "/snap/foo/current/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
+        'set -- --local "${_EXTEND_WS}"',
+        '_CATKIN_SETUP_DIR="/snap/foo/current/opt/ros/${ROS_DISTRO}" . "/snap/foo/current/opt/ros/${ROS_DISTRO}/setup.sh"',
+        'if [ -z ${_EXTEND_WS} ]; then _EXTEND_WS="--extend"; fi',
+        "fi",
+        "",
         "## Sourcing ROS ws in stage snaps",
         'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
         'set -- --local "${_EXTEND_WS}"',
@@ -209,6 +220,13 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
         'state="$(set +o); set -$-"',
         "set +u",
+        "",
+        "## Sourcing ROS ws in build snaps",
+        'if [ -f "/snap/foo/current/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
+        'set -- --local "${_EXTEND_WS}"',
+        '_CATKIN_SETUP_DIR="/snap/foo/current/opt/ros/${ROS_DISTRO}" . "/snap/foo/current/opt/ros/${ROS_DISTRO}/setup.sh"',
+        'if [ -z ${_EXTEND_WS} ]; then _EXTEND_WS="--extend"; fi',
+        "fi",
         "",
         "## Sourcing ROS ws in stage snaps",
         'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
