@@ -475,7 +475,7 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
     emit.progress("Cleaned build provider", permanent=True)
 
 
-# pylint: disable-next=too-many-branches
+# pylint: disable-next=too-many-branches, too-many-statements
 def _run_in_provider(
     project: Project, command_name: str, parsed_args: "argparse.Namespace"
 ) -> None:
@@ -555,8 +555,7 @@ def _run_in_provider(
         base_configuration=base_configuration,
         build_base=build_base.value,
         instance_name=instance_name,
-        # TODO: mypy typing issue to be fixed in craft-providers 1.8.2
-        allow_unstable=allow_unstable,  # type: ignore
+        allow_unstable=allow_unstable,
     ) as instance:
         try:
             providers.prepare_instance(
