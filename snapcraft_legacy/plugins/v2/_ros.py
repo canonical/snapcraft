@@ -118,13 +118,30 @@ class RosPlugin(PluginV2):
 
     def get_build_commands(self) -> List[str]:
         return (
-            self._get_workspace_activation_commands()
-            + [
+            [
                 "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep init; fi",
                 'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
-                'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
+            ]
+            # There are a number of unbound vars, disable flag
+            # after saving current state to restore after.
+            + [
+                'state="$(set +o); set -$-"',
+                "set +u",
+                "",
             ]
             + self._get_workspace_activation_commands()
+            # Restore saved state
+            + ['eval "${state}"']
+            + [
+                'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
+            ]
+            + [
+                'state="$(set +o); set -$-"',
+                "set +u",
+                "",
+            ]
+            + self._get_workspace_activation_commands()
+            + ['eval "${state}"']
             + self._get_build_commands()
             + self._get_stage_runtime_dependencies_commands()
         )

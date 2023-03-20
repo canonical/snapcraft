@@ -119,6 +119,20 @@ class ColconPlugin(_ros.RosPlugin):
 
         return env
 
+    def _get_source_command(self, path: str) -> List[str]:
+        return [
+            f'if [ -f "{path}/opt/ros/${{ROS_DISTRO}}/local_setup.sh" ]; then',
+            'AMENT_CURRENT_PREFIX="{wspath}" . "{wspath}/local_setup.sh"'.format(
+                wspath=f"{path}/opt/ros/${{ROS_DISTRO}}"
+            ),
+            "fi",
+            f'if [ -f "{path}/opt/ros/snap/local_setup.sh" ]; then',
+            'COLCON_CURRENT_PREFIX="{wspath}" . "{wspath}/local_setup.sh"'.format(
+                wspath=f"{path}/opt/ros/snap"
+            ),
+            "fi",
+        ]
+
     def _get_workspace_activation_commands(self) -> List[str]:
         """Return a list of commands source a ROS 2 workspace.
 
@@ -131,25 +145,21 @@ class ColconPlugin(_ros.RosPlugin):
         specific functionality.
         """
 
-        # There are a number of unbound vars, disable flag
-        # after saving current state to restore after.
-        return [
-            'state="$(set +o); set -$-"',
-            "set +u",
-            # If it exists, source the stage-snap underlay
-            'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
-            'AMENT_CURRENT_PREFIX="{path}" . "{path}/local_setup.sh"'.format(
-                path='${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}'
-            ),
-            "fi",
-            'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/local_setup.sh ]; then',
-            "COLCON_CURRENT_PREFIX={path} . {path}/local_setup.sh".format(
-                path='"${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap'
-            ),
-            "fi",
-            '. /opt/ros/"${ROS_DISTRO}"/local_setup.sh',
-            'eval "${state}"',
-        ]
+        activation_commands = list()
+
+        # Source ROS ws in stage-snaps
+        activation_commands.append("## Sourcing ROS ws in stage snaps")
+        activation_commands.extend(
+            self._get_source_command("${SNAPCRAFT_PART_INSTALL}")
+        )
+        activation_commands.append("")
+
+        # Finally source system's ROS ws
+        activation_commands.append("## Sourcing ROS ws in system")
+        activation_commands.extend(self._get_source_command(""))
+        activation_commands.append("")
+
+        return activation_commands
 
     def _get_build_commands(self) -> List[str]:
         cmd = [
@@ -182,7 +192,7 @@ class ColconPlugin(_ros.RosPlugin):
         # Specify the number of workers
         cmd.extend(["--parallel-workers", '"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"'])
 
-        return [" ".join(cmd)] + [
+        return ["## Build command", " ".join(cmd)] + [
             # Remove the COLCON_IGNORE marker so that, at staging,
             # catkin can crawl the entire folder to look up for packages.
             'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE ]; then',
