@@ -210,7 +210,8 @@ class TestGetPartSnippet:
                 },
                 {
                     "ACLOCAL_PATH": (
-                        "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/" "usr/share/aclocal"
+                        "/snap/kf5-5-104-qt-5-15-8-core22-sdk/current/"
+                        "usr/share/aclocal"
                     )
                     + "${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
                 },
