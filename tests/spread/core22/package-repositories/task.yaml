@@ -5,6 +5,7 @@ environment:
   SNAP/test_apt_key_name: test-apt-key-name
   SNAP/test_apt_keyserver: test-apt-keyserver
   SNAP/test_apt_ppa: test-apt-ppa
+  SNAP/test_pin: test-pin
   SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
 restore: |
@@ -12,8 +13,6 @@ restore: |
   rm -f ./*.snap
   snapcraft clean
   snapcraft clean --destructive-mode
-  ls -l /etc/apt/sources.list.d/
-  rm /etc/apt/sources.list.d/snapcraft-*
   snap remove "${SNAP}"
 
 execute: |

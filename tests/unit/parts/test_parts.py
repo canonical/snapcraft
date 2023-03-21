@@ -214,6 +214,9 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_not_installed
         "craft_archives.repo.apt_sources_manager."
         "AptSourcesManager.install_package_repository_sources"
     )
+    mocker.patch(
+        "craft_archives.repo.apt_preferences_manager.AptPreferencesManager.write"
+    )
     mocker.patch("craft_parts.packages.Repository.refresh_packages_list")
 
     parts_lifecycle = PartsLifecycle(
@@ -265,6 +268,9 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_installed(
     mocker.patch(
         "craft_archives.repo.apt_sources_manager."
         "AptSourcesManager.install_package_repository_sources"
+    )
+    mocker.patch(
+        "craft_archives.repo.apt_preferences_manager.AptPreferencesManager.write"
     )
     mocker.patch("craft_parts.packages.Repository.refresh_packages_list")
 
