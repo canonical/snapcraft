@@ -1,0 +1,30 @@
+name: test-pin
+version: '1.0'
+summary: test
+description: test
+grade: stable
+confinement: strict
+base: core22
+
+parts:
+  test-ppa:
+    plugin: nil
+    stage-packages:
+      - test-ppa
+    override-build: |
+      apt-cache policy test-ppa
+      apt-cache policy test-ppa | grep -F "999 http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu"
+      craftctl default
+
+package-repositories:
+  - type: apt
+    formats: [deb, deb-src]
+    components: [main]
+    suites: [focal]
+    key-id: 78E1918602959B9C59103100F1831DDAFC42E99D
+    url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu
+    priority: 999
+
+apps:
+    test-ppa:
+      command: usr/bin/test-ppa
