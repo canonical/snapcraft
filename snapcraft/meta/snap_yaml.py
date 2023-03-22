@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -171,8 +171,6 @@ class SnapMetadata(_SnapMetadataModel):
 
     This is currently a partial implementation, see
     https://snapcraft.io/docs/snap-format for details.
-
-    TODO: implement adopt-info (CRAFT-803)
     """
 
     class Config:
@@ -344,6 +342,28 @@ def _create_snap_app(app: App, assumes: Set[str]) -> SnapApp:
     return snap_app
 
 
+def _get_grade(grade: Optional[str], build_base: Optional[str]) -> str:
+    """Get the grade for a project.
+
+    If the build_base is `devel`, then the grade should be `devel`.
+    If the grade is not defined, default to `stable`.
+
+    :param grade: Grade set by project or during the lifecycle.
+    :param build_base: build-base defined in the snapcraft.yaml.
+
+    :returns: Grade of project (`stable` or `devel`).
+    """
+    if build_base == "devel":
+        emit.debug("Setting grade to 'devel' because build_base is 'devel'.")
+        return "devel"
+
+    if not grade:
+        emit.debug("Grade not specified, using default value 'stable'.")
+        return "stable"
+
+    return grade
+
+
 def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
     """Create a snap.yaml file.
 
@@ -382,7 +402,7 @@ def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
         epoch=project.epoch,
         apps=snap_apps or None,
         confinement=project.confinement,
-        grade=project.grade or "stable",
+        grade=_get_grade(project.grade, project.build_base),
         environment=environment,
         plugs=project.plugs,
         slots=project.slots,

@@ -9,7 +9,7 @@ craft-archives==0.0.1
 craft-cli==1.2.0
 craft-grammar==1.1.1
 craft-parts==1.18.3
-craft-providers==1.7.2
+craft-providers==1.9.0
 craft-store==2.3.0
 cryptography==3.4
 Deprecated==1.2.13
