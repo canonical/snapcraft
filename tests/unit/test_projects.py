@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -533,6 +533,35 @@ class TestProjectValidation:
     def test_slot_valid(self, slots, project_yaml_data):
         project = Project.unmarshal(project_yaml_data(slots=slots))
         assert project.slots == slots
+
+    def test_project_build_base_devel_grade_devel(self, project_yaml_data):
+        """When build_base is `devel`, the grade must be `devel`."""
+        project = Project.unmarshal(
+            project_yaml_data(build_base="devel", grade="devel")
+        )
+
+        assert project.grade == "devel"
+
+    @pytest.mark.parametrize("build_base", {"core22", "devel"})
+    def test_project_grade_not_defined(self, build_base, project_yaml_data):
+        """Do not validate the grade if it is not defined, regardless of build_base."""
+        data = project_yaml_data(build_base=build_base)
+        data.pop("grade")
+
+        project = Project.unmarshal(data)
+
+        assert project.build_base == build_base
+        assert not project.grade
+
+    def test_project_build_base_devel_grade_stable_error(self, project_yaml_data):
+        """Raise an error if build_base is `devel` and grade is `stable`."""
+        error = (
+            "Bad snapcraft.yaml content:\n"
+            "- grade must be 'devel' when build-base is 'devel'"
+        )
+
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(project_yaml_data(build_base="devel", grade="stable"))
 
 
 class TestHookValidation:

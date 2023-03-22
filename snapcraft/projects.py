@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -509,6 +509,14 @@ class Project(ProjectModel):
                 f"{field.name.capitalize()} must be declared if not adopting metadata"
             )
         return field_value
+
+    @pydantic.root_validator()
+    @classmethod
+    def _validate_grade_and_build_base(cls, values):
+        """If build_base is devel, then grade must be devel."""
+        if values.get("build_base") == "devel" and values.get("grade") == "stable":
+            raise ValueError("grade must be 'devel' when build-base is 'devel'")
+        return values
 
     @pydantic.validator("build_base", always=True)
     @classmethod
