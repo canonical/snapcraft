@@ -1,0 +1,13 @@
+summary: Check linter warnings ros2-humble extension plus user ignores.
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap ./*.txt
+
+execute: |
+  snapcraft 2> output.txt
+
+  test -f linter-ros2-humble-mixed_1.0_*.snap
+
+  sed -n '/^Running linters/,/^Creating snap/p' < output.txt > linter_output.txt
+  diff -u linter_output.txt expected_linter_output.txt

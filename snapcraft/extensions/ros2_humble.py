@@ -60,7 +60,30 @@ class ROS2HumbleExtension(Extension):
                     "key-server": "keyserver.ubuntu.com",
                     "suites": ["jammy"],
                 }
-            ]
+            ],
+            "lint": {
+                "ignore": [
+                    {
+                        "unused-library": [
+                            "opt/ros/*",
+                            "lib/*/libcrypt.so*",
+                            "lib/*/libexpat.so*",
+                            "lib/*/libtirpc.so*",
+                            "lib/*/libz.so*",
+                            "usr/lib/*libatomic.so*",
+                            "usr/lib/*libconsole_bridge.so*",
+                            "usr/lib/*libfmt.so*",
+                            "usr/lib/*libicui18n.so*",
+                            "usr/lib/*libicuio.so*",
+                            "usr/lib/*libicutest.so*",
+                            "usr/lib/*libicutu.so*",
+                            "usr/lib/*libpython3.10.so*",
+                            "usr/lib/*libspdlog.so*",
+                            "usr/lib/*libtinyxml2.so*",
+                        ]
+                    }
+                ]
+            },
         }
 
     @overrides
