@@ -1,0 +1,34 @@
+name: library-ignore-mixed
+base: core22
+version: '0.1'
+summary: Ignore a mix of unused and missing library linter issues
+description: spread test
+
+grade: devel
+confinement: strict
+
+lint:
+  ignore:
+    - unused-library:
+      - usr/lib/*/libpng16.so*
+    - missing-library:
+      - linter-test-missing
+
+parts:
+  unused-part:
+    plugin: nil
+    source: src
+    stage-packages:
+      - libpng16-16
+    override-build:
+      gcc -o $CRAFT_PART_INSTALL/linter-test-unused test_unused.c
+
+  missing-part:
+    plugin: nil
+    source: src
+    build-packages:
+      - gcc
+      - libcaca-dev
+    override-build:
+      gcc -o $CRAFT_PART_INSTALL/linter-test-missing test_missing.c -lcaca
+
