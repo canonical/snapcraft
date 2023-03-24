@@ -485,6 +485,401 @@ def get_perf_build_commands(
         f'install -Dm0755 "{build_dir}/tools/perf/perf" "{install_dir}/bin/perf"',
     ]
 
+# pylint: disable-next=too-many-arguments
+def make_initrd_cmd(
+    initrd_compression: Optional[str],
+    initrd_compression_options: Optional[List[str]],
+    initrd_firmware: Optional[List[str]],
+    initrd_addons: Optional[List[str]],
+    initrd_overlay: Optional[str],
+    initrd_stage_firmware: bool,
+    build_efi_image: bool,
+    initrd_ko_use_workaround: bool,
+    initrd_default_compression: str,
+    initrd_include_extra_modules_conf: bool,
+    initrd_tool_pass_root: bool,
+    install_dir: str,
+    stage_dir: str,
+) -> List[str]:
+    cmd_echo = [
+        'echo "Generating initrd with ko modules for kernel release: ${KERNEL_RELEASE}"',
+    ]
+
+    cmd_prepare_modules_feature = [
+        # install required modules to initrd
+        'echo "Installing ko modules to initrd..."',
+        'install_modules=""',
+        'echo "Gathering module dependencies..."',
+        'install_modules=""',
+        "uc_initrd_feature_kernel_modules=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/kernel-modules",
+        "mkdir -p ${uc_initrd_feature_kernel_modules}",
+        "initramfs_ko_modules_conf=${uc_initrd_feature_kernel_modules}/extra-modules.conf",
+        " ".join(
+            [
+                "touch",
+                "${initramfs_ko_modules_conf}",
+            ]
+        ),
+        " ".join(
+            [
+                "for",
+                "m",
+                "in",
+                "${initrd_installed_kernel_modules}",
+                "${initrd_configured_kernel_modules}",
+            ]
+        ),
+        "do",
+        " ".join(["\techo", "${m}", ">>", "${initramfs_ko_modules_conf}"]),
+        "done",
+        " ".join(
+            [
+                "[",
+                "-e",
+                "${initramfs_ko_modules_conf}",
+                "]",
+                "&&",
+                "sort",
+                "-fu",
+                "${initramfs_ko_modules_conf} -o ${initramfs_ko_modules_conf}",
+            ],
+        ),
+    ]
+
+    if initrd_ko_use_workaround:
+        configured_modules = "$(cat ${initramfs_ko_modules_conf})"
+    else:
+        configured_modules = "${initrd_configured_kernel_modules}"
+
+    cmd_prepare_modules_feature.extend(
+        [
+            'echo "Configuring ubuntu-core-initramfs.conf with supported modules"',
+            'echo "If module is not included in initrd, do not include it"',
+            "initramfs_conf_dir=${uc_initrd_feature_kernel_modules}/usr/lib/modules-load.d",
+            "mkdir -p ${initramfs_conf_dir}",
+            "initramfs_conf=${initramfs_conf_dir}/ubuntu-core-initramfs.conf",
+            'echo "# configures modules" > ${initramfs_conf}',
+            " ".join(
+                [
+                    "for",
+                    "m",
+                    "in",
+                    configured_modules,
+                ]
+            ),
+            "do",
+            " ".join(
+                [
+                    "\tif [",
+                    "-n",
+                    f'"$(modprobe -n -q --show-depends -d {install_dir} -S "${{KERNEL_RELEASE}}" ${{m}})"',
+                    "]; then",
+                ]
+            ),
+            "\t\techo ${m} >> ${initramfs_conf}",
+            "\tfi",
+            "done",
+        ]
+    )
+
+    cmd_prepare_initrd_overlay_feature = [
+        "uc_initrd_feature_firmware=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/uc-firmware",
+        "mkdir -p ${uc_initrd_feature_firmware}",
+        "uc_initrd_feature_overlay=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/uc-overlay",
+        "mkdir -p ${uc_initrd_feature_overlay}",
+        "",
+    ]
+
+    # gather firmware files
+    if initrd_firmware:
+        cmd_prepare_initrd_overlay_feature.extend(
+            [
+                'echo "Installing initrd overlay firmware..."',
+                f"for f in {' '.join(initrd_firmware)}",
+                "do",
+                # firmware can be from kernel build or from stage
+                # firmware from kernel build takes preference
+                " ".join(
+                    [
+                        "\tif !",
+                        "link_files",
+                        f'"{install_dir}"',
+                        '"${f}"',
+                        '"${uc_initrd_feature_firmware}/lib"',
+                        ";",
+                        "then",
+                    ]
+                ),
+                " ".join(
+                    [
+                        "\t\tif !",
+                        "link_files",
+                        f'"{stage_dir}"',
+                        '"${f}"',
+                        '"${uc_initrd_feature_firmware}/lib"',
+                        ";",
+                        "then",
+                    ]
+                ),
+                '\t\t\techo "Missing firmware [${f}], ignoring it"',
+                "\t\tfi",
+                "\tfi",
+                "done",
+                "",
+            ]
+        )
+
+    # apply overlay if defined
+    if initrd_overlay:
+        cmd_prepare_initrd_overlay_feature.extend(
+            [
+                " ".join(
+                    [
+                        "link_files",
+                        f'"{stage_dir}/{initrd_overlay}"',
+                        '""',
+                        '"${uc_initrd_feature_overlay}"',
+                    ]
+                ),
+                "",
+            ]
+        )
+
+    # apply overlay addons if defined
+    if initrd_addons:
+        cmd_prepare_initrd_overlay_feature.extend(
+            [
+                'echo "Installing initrd addons..."',
+                f"for a in {' '.join(initrd_addons)}",
+                "do",
+                '\techo "Copy overlay: ${a}"',
+                " ".join(
+                    [
+                        "\tlink_files",
+                        f'"{stage_dir}"',
+                        '"${a}"',
+                        '"${uc_initrd_feature_overlay}"',
+                    ]
+                ),
+                "done",
+            ],
+        )
+
+    cmd_prepare_snap_bootstrap_feature = [
+        # install selected snap bootstrap
+        'echo "Preparing snap-boostrap initrd feature..."',
+        "uc_initrd_feature_snap_bootstratp=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snap-bootstrap",
+        "mkdir -p ${uc_initrd_feature_snap_bootstratp}",
+        " ".join(
+            [
+                "link_files",
+                '"${SNAPD_UNPACKED_SNAP}"',
+                '"usr/lib/snapd/snap-bootstrap"',
+                '"${uc_initrd_feature_snap_bootstratp}"',
+            ]
+        ),
+        " ".join(
+            [
+                "link_files",
+                '"${SNAPD_UNPACKED_SNAP}"',
+                '"usr/lib/snapd/info"',
+                '"${uc_initrd_feature_snap_bootstratp}"',
+            ]
+        ),
+        " ".join(
+            [
+                "cp",
+                "${SNAPD_UNPACKED_SNAP}/usr/lib/snapd/info",
+                f"{install_dir}/snapd-info",
+            ]
+        ),
+    ]
+
+    cmd_create_initrd = [
+        f"if compgen -G {install_dir}/initrd.img* > /dev/null; then",
+        f"\trm -rf {install_dir}/initrd.img*",
+        "fi",
+    ]
+
+    cmd_create_initrd.extend(
+        [
+            "",
+            "",
+            " ".join(
+                [
+                    "ubuntu_core_initramfs=${UC_INITRD_DEB}/usr/bin/ubuntu-core-initramfs"
+                ]
+            ),
+        ],
+    )
+
+    # ubuntu-core-initramfs does not support configurable compression command
+    # we still want to support this as configurable option though.
+    comp_command = _compression_cmd(
+        initrd_compression=initrd_compression,
+        initrd_compression_options=initrd_compression_options,
+    )
+    if comp_command:
+        cmd_create_initrd.extend(
+            [
+                "",
+                'echo "Updating compression command to be used for initrd"',
+                " ".join(
+                    [
+                        "sed",
+                        "-i",
+                        f"'s/{initrd_default_compression}/{comp_command}/g'",
+                        "${ubuntu_core_initramfs}",
+                    ],
+                ),
+            ]
+        )
+    cmd_create_initrd.extend(
+        [
+            'echo "Workaround for bug in ubuntu-core-initramfs"',
+            " ".join(
+                [
+                    "for",
+                    "feature",
+                    "in",
+                    "kernel-modules",
+                    "snap-bootstrap",
+                    "uc-firmware",
+                    "uc-overlay",
+                ],
+            ),
+            "do",
+            " ".join(
+                [
+                    "\tlink_files",
+                    '"${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/${feature}"',
+                    '"*"',
+                    '"${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/main"',
+                ],
+            ),
+            "done",
+        ]
+    )
+
+    if initrd_include_extra_modules_conf:
+        cmd_create_initrd.extend(
+            [
+                " ".join(
+                    [
+                        "cp",
+                        "${initramfs_ko_modules_conf}",
+                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/modules/main/extra-modules.conf",
+                    ],
+                ),
+                "",
+            ],
+        )
+
+    firmware_dir = f"{install_dir}/lib/firmware"
+    if initrd_stage_firmware:
+        firmware_dir = f"{stage_dir}/firmware"
+
+
+    cmd_create_initrd.extend(
+        [
+            "",
+            " ".join(
+                [
+                    f'[ ! -d "{firmware_dir}" ]',
+                    "&&",
+                    f'echo -e "firmware directory {firmware_dir} does not exist, consider using'
+                    ' kernel-initrd-stage-firmware: true/false option"',
+                    "&&",
+                    "exit 1",
+                ]
+            ),
+            "",
+        ],
+    )
+    if initrd_tool_pass_root:
+        build_initrd = [
+            "${ubuntu_core_initramfs}",
+            "create-initrd",
+            "--root",
+            "${UC_INITRD_DEB}",
+        ]
+    else:
+        build_initrd = [
+            "${ubuntu_core_initramfs}",
+            "create-initrd",
+        ]
+
+    build_initrd.extend(
+        [
+            "--kernelver=${KERNEL_RELEASE}",
+            "--kerneldir",
+            f"{install_dir}/lib/modules/${{KERNEL_RELEASE}}",
+            "--firmwaredir",
+            firmware_dir,
+            "--skeleton",
+            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs",
+            # "--feature",
+            # "kernel-modules",
+            # "snap-bootstrap",
+            # "uc-firmware",
+            # "uc-overlay",
+            "--output",
+            f"{install_dir}/initrd.img",
+        ],
+    )
+    cmd_create_initrd.extend(
+        [
+            " ".join(build_initrd),
+        ],
+    )
+    cmd_create_initrd.extend(
+        [
+            f"ln $(ls {install_dir}/initrd.img*) {install_dir}/initrd.img",
+        ],
+    )
+    if build_efi_image:
+        cmd_create_initrd.extend(
+            [
+                "",
+                'echo "Building kernel.efi"',
+                "stub_p=$(find ${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/efi/ -maxdepth 1 -name 'linux*.efi.stub' -printf '%f\\n')",
+                " ".join(
+                    [
+                        "${ubuntu_core_initramfs}",
+                        "create-efi",
+                        "--kernelver=${KERNEL_RELEASE}",
+                        "--stub",
+                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/efi/${stub_p}",
+                        "--sbat",
+                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/efi/sbat.txt",
+                        "--key",
+                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key",
+                        "--cert",
+                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem",
+                        "--initrd",
+                        f"{install_dir}/initrd.img",
+                        "--kernel",
+                        f"{install_dir}/${{KERNEL_IMAGE_TARGET}}",
+                        "--output",
+                        f"{install_dir}/kernel.efi",
+                    ],
+                ),
+                f"ln $(ls {install_dir}/kernel.efi*) {install_dir}/kernel.efi",
+            ],
+        )
+
+    return [
+        *cmd_echo,
+        *cmd_prepare_modules_feature,
+        "",
+        *cmd_prepare_initrd_overlay_feature,
+        "",
+        *cmd_prepare_snap_bootstrap_feature,
+        "",
+        'echo "Create new initrd..."',
+        *cmd_create_initrd,
+    ]
+
 
 ### Install
 
@@ -579,7 +974,7 @@ def arrange_install_dir_cmd(install_dir: str) -> List[str]:
     ]
 
 
-def compression_cmd(
+def _compression_cmd(
     initrd_compression: Optional[str], initrd_compression_options: Optional[List[str]]
 ) -> str:
     if not initrd_compression:
