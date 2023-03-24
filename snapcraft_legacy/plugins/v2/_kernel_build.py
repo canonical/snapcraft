@@ -89,7 +89,7 @@ _required_systemd = [
 _required_boot = ["squashfs"]
 
 
-def get_initrd_kernel_modules(
+def _get_initrd_kernel_modules(
     initrd_modules: Optional[List[str]], configured_modules: Optional[List[str]]
 ) -> List[str]:
     """Collect a list of kernel modules to add to the initrd."""
@@ -108,7 +108,7 @@ def get_initrd_kernel_modules(
         f'initrd_configured_kernel_modules="{initrd_configured_kernel_modules}"',
     ]
 
-def link_files_fnc_cmd() -> List[str]:
+def _link_files_fnc_cmd() -> List[str]:
     """Add function to link files."""
     cmd = textwrap.dedent(
         """
@@ -154,7 +154,7 @@ def link_files_fnc_cmd() -> List[str]:
     )
     return [cmd]
 
-def download_core_initrd_fnc_cmd() -> List[str]:
+def _download_core_initrd_fnc_cmd() -> List[str]:
     """Define helper to download code initrd deb package."""
     return [
         "# Helper to download code initrd deb package",
@@ -167,7 +167,7 @@ def download_core_initrd_fnc_cmd() -> List[str]:
     ]
 
 
-def download_generic_initrd_cmd(target_arch: str) -> List[str]:
+def _download_generic_initrd_cmd(target_arch: str) -> List[str]:
     """Download Ubuntu Core initrd deb."""
     return [
         'echo "Getting ubuntu-core-initrd...."',
@@ -178,7 +178,7 @@ def download_generic_initrd_cmd(target_arch: str) -> List[str]:
     ]
 
 
-def download_snap_bootstrap_fnc_cmd() -> List[str]:
+def _download_snap_bootstrap_fnc_cmd() -> List[str]:
     """Define helper to download snap-bootstrap from snapd deb package."""
     return [
         "# Helper to download snap-bootstrap from snapd deb package",
@@ -191,7 +191,7 @@ def download_snap_bootstrap_fnc_cmd() -> List[str]:
     ]
 
 
-def download_snap_bootstrap_cmd(target_arch: str) -> List[str]:
+def _download_snap_bootstrap_cmd(target_arch: str) -> List[str]:
     """Download snap-bootstrap deb."""
     return [
         'echo "Getting snapd deb for snap bootstrap..."',
@@ -203,7 +203,7 @@ def download_snap_bootstrap_cmd(target_arch: str) -> List[str]:
     ]
 
 
-def clone_zfs_cmd(enable_zfs: bool, dest_dir: str) -> List[str]:
+def _clone_zfs_cmd(enable_zfs: bool, dest_dir: str) -> List[str]:
     """Clone zfs git repository if needed."""
     if enable_zfs:
         return [
@@ -217,7 +217,7 @@ def clone_zfs_cmd(enable_zfs: bool, dest_dir: str) -> List[str]:
     ]
 
 
-def clean_old_build_cmd(dest_dir: str) -> List[str]:
+def _clean_old_build_cmd(dest_dir: str) -> List[str]:
     """Clean previous build."""
     return [
         'echo "Cleaning previous build first..."',
@@ -301,7 +301,7 @@ def _do_remake_config_cmd(make_cmd: List[str]) -> List[str]:
     ]
 
 
-def get_configure_command(
+def _get_configure_command(
     make_cmd: List[str],
     config_file: Optional[str],
     config_flavour: Optional[str],
@@ -404,7 +404,7 @@ def check_new_config(config_path: str, initrd_modules: List[str]):
     _do_check_initrd(builtin, modules, initrd_modules)
 
 
-def call_check_config_cmd(dest_dir: str) -> List[str]:
+def _call_check_config_cmd(dest_dir: str) -> List[str]:
     """Invoke the python interpreter and execute check_new_config()."""
     return [
         'echo "Checking config for expected options..."',
@@ -422,7 +422,7 @@ def call_check_config_cmd(dest_dir: str) -> List[str]:
     ]
 
 
-def get_build_command(make_cmd: List[str], targets: List[str]) -> List[str]:
+def _get_build_command(make_cmd: List[str], targets: List[str]) -> List[str]:
     """Build the kernel."""
     return [
         'echo "Building kernel..."',
@@ -430,7 +430,7 @@ def get_build_command(make_cmd: List[str], targets: List[str]) -> List[str]:
     ]
 
 
-def get_zfs_build_commands(
+def _get_zfs_build_commands(
     enable_zfs: bool, arch_triplet: str, build_dir: str, install_dir: str
 ) -> List[str]:
     """Include zfs build steps if required."""
@@ -463,7 +463,7 @@ def get_zfs_build_commands(
     ]
 
 
-def get_perf_build_commands(
+def _get_perf_build_commands(
     make_cmd: List[str],
     enable_perf: bool,
     src_dir: str,
@@ -883,6 +883,119 @@ def _make_initrd_cmd(
     ]
 
 
+# pylint: disable-next=too-many-arguments
+def get_build_commands(
+    make_cmd: List[str],
+    make_targets: List[str],
+    make_install_targets: List[str],
+    target_arch: str,
+    target_arch_triplet: str,
+    config_file: Optional[str],
+    config_flavour: Optional[str],
+    defconfig: Optional[List[str]],
+    configs: Optional[List[str]],
+    device_trees: Optional[List[str]],
+    initrd_modules: Optional[List[str]],
+    configured_modules: Optional[List[str]],
+    initrd_compression: Optional[str],
+    initrd_compression_options: Optional[List[str]],
+    initrd_firmware: Optional[List[str]],
+    initrd_addons: Optional[List[str]],
+    initrd_overlay: Optional[str],
+    initrd_stage_firmware: bool,
+    build_efi_image: bool,
+    initrd_ko_use_workaround: bool,
+    initrd_default_compression: str,
+    initrd_include_extra_modules_conf: bool,
+    initrd_tool_pass_root: bool,
+    enable_zfs_support: bool,
+    enable_perf: bool,
+    project_dir: str,
+    source_dir: str,
+    build_dir: str,
+    install_dir: str,
+    stage_dir: str,
+) -> List[str]:
+    # kernel source can be either CRAFT_PART_SRC or CRAFT_PROJECT_DIR
+    return [
+        f"[ -d {source_dir}/kernel ] && KERNEL_SRC={source_dir} || KERNEL_SRC={project_dir}",
+        'echo "PATH=$PATH"',
+        'echo "KERNEL_SRC=${KERNEL_SRC}"',
+        "",
+        *_get_initrd_kernel_modules(
+            initrd_modules=initrd_modules,
+            configured_modules=configured_modules,
+        ),
+        "",
+        *_link_files_fnc_cmd(),
+        "",
+        *_download_core_initrd_fnc_cmd(),
+        "",
+        *_download_generic_initrd_cmd(target_arch=target_arch),
+        "",
+        *_download_snap_bootstrap_fnc_cmd(),
+        "",
+        *_download_snap_bootstrap_cmd(target_arch=target_arch),
+        "",
+        *_clone_zfs_cmd(
+            enable_zfs=enable_zfs_support,
+            dest_dir=build_dir,
+        ),
+        "",
+        *_clean_old_build_cmd(dest_dir=install_dir),
+        "",
+        *_get_configure_command(
+            make_cmd=make_cmd,
+            config_file=config_file,
+            config_flavour=config_flavour,
+            defconfig=defconfig,
+            configs=configs,
+            dest_dir=build_dir,
+        ),
+        "",
+        *_call_check_config_cmd(dest_dir=build_dir),
+        "",
+        *_get_build_command(
+            make_cmd=make_cmd, targets=make_targets
+        ),
+        *_get_install_command(
+            device_trees=device_trees,
+            make_cmd=make_cmd.copy(),
+            make_install_targets=make_install_targets,
+            initrd_compression=initrd_compression,
+            initrd_compression_options=initrd_compression_options,
+            initrd_firmware=initrd_firmware,
+            initrd_addons=initrd_addons,
+            initrd_overlay=initrd_overlay,
+            initrd_stage_firmware=initrd_stage_firmware,
+            build_efi_image=build_efi_image,
+            initrd_ko_use_workaround=initrd_ko_use_workaround,
+            initrd_default_compression=initrd_default_compression,
+            initrd_include_extra_modules_conf=initrd_include_extra_modules_conf,
+            initrd_tool_pass_root=initrd_tool_pass_root,
+            build_dir=build_dir,
+            install_dir=install_dir,
+            stage_dir=stage_dir,
+        ),
+        "",
+        *_get_zfs_build_commands(
+            enable_zfs=enable_zfs_support,
+            arch_triplet=target_arch_triplet,
+            build_dir=build_dir,
+            install_dir=install_dir,
+        ),
+        "",
+        *_get_perf_build_commands(
+            make_cmd=make_cmd,
+            enable_perf=enable_perf,
+            src_dir="${KERNEL_SRC}",
+            build_dir=build_dir,
+            install_dir=install_dir,
+        ),
+        'echo "Kernel build finished!"',
+    ]
+
+
 ### Install
 
 
@@ -1044,7 +1157,7 @@ def _get_post_install_cmd(
     ]
 
 # pylint: disable-next=too-many-arguments
-def get_install_command(
+def _get_install_command(
     device_trees: Optional[List[str]],
     make_cmd: List[str],
     make_install_targets: List[str],
