@@ -488,7 +488,7 @@ def get_perf_build_commands(
     ]
 
 # pylint: disable-next=too-many-arguments
-def make_initrd_cmd(
+def _make_initrd_cmd(
     initrd_compression: Optional[str],
     initrd_compression_options: Optional[List[str]],
     initrd_firmware: Optional[List[str]],
@@ -886,7 +886,7 @@ def make_initrd_cmd(
 ### Install
 
 
-def parse_kernel_release_cmd(build_dir: str) -> List[str]:
+def _parse_kernel_release_cmd(build_dir: str) -> List[str]:
     """Set release from kernel.release file."""
     return [
         'echo "Parsing created kernel release..."',
@@ -894,7 +894,7 @@ def parse_kernel_release_cmd(build_dir: str) -> List[str]:
     ]
 
 
-def copy_vmlinuz_cmd(install_dir: str) -> List[str]:
+def _copy_vmlinuz_cmd(install_dir: str) -> List[str]:
     """Install kernel image."""
     cmd = [
         'echo "Copying kernel image..."',
@@ -910,7 +910,7 @@ def copy_vmlinuz_cmd(install_dir: str) -> List[str]:
     return cmd
 
 
-def copy_system_map_cmd(build_dir: str, install_dir: str) -> List[str]:
+def _copy_system_map_cmd(build_dir: str, install_dir: str) -> List[str]:
     """Install the system map."""
     cmd = [
         'echo "Copying System map..."',
@@ -920,7 +920,7 @@ def copy_system_map_cmd(build_dir: str, install_dir: str) -> List[str]:
     return cmd
 
 
-def copy_dtbs_cmd(
+def _copy_dtbs_cmd(
     device_trees: Optional[List[str]], install_dir: str
 ) -> List[str]:
     """Install custom device trees."""
@@ -992,6 +992,56 @@ def _compression_cmd(
     logger.warning("WARNING: Using custom initrd compressions command: %s", cmd)
     return cmd
 
+# pylint: disable-next=too-many-arguments
+def get_post_install_cmd(
+    device_trees: Optional[List[str]],
+    initrd_compression: Optional[str],
+    initrd_compression_options: Optional[List[str]],
+    initrd_firmware: Optional[List[str]],
+    initrd_addons: Optional[List[str]],
+    initrd_overlay: Optional[str],
+    initrd_stage_firmware: bool,
+    build_efi_image: bool,
+    initrd_ko_use_workaround: bool,
+    initrd_default_compression: str,
+    initrd_include_extra_modules_conf: bool,
+    initrd_tool_pass_root: bool,
+    build_dir: str,
+    install_dir: str,
+    stage_dir: str,
+) -> List[str]:
+    return [
+        "",
+        *_parse_kernel_release_cmd(build_dir=build_dir),
+        "",
+        *_copy_vmlinuz_cmd(install_dir=install_dir),
+        "",
+        *_copy_system_map_cmd(
+            build_dir=build_dir, install_dir=install_dir
+        ),
+        "",
+        *_copy_dtbs_cmd(
+            device_trees=device_trees,
+            install_dir=install_dir,
+        ),
+        "",
+        *_make_initrd_cmd(
+            initrd_compression=initrd_compression,
+            initrd_compression_options=initrd_compression_options,
+            initrd_firmware=initrd_firmware,
+            initrd_addons=initrd_addons,
+            initrd_overlay=initrd_overlay,
+            initrd_stage_firmware=initrd_stage_firmware,
+            build_efi_image=build_efi_image,
+            initrd_ko_use_workaround=initrd_ko_use_workaround,
+            initrd_default_compression=initrd_default_compression,
+            initrd_include_extra_modules_conf=initrd_include_extra_modules_conf,
+            initrd_tool_pass_root=initrd_tool_pass_root,
+            install_dir=install_dir,
+            stage_dir=stage_dir,
+        ),
+        "",
+    ]
 
 ### build dependencies
 

@@ -508,51 +508,6 @@ class KernelPlugin(PluginV2):
 
         return env
 
-    def _get_post_install_cmd(
-        self,
-        initrd_compression: [str],
-        initrd_compression_options: Optional[List[str]],
-        initrd_firmware: Optional[List[str]],
-        initrd_addons: Optional[List[str]],
-        initrd_overlay: Optional[str],
-        initrd_stage_firmware: bool,
-        build_dir: str,
-        install_dir: str,
-        stage_dir: str,
-    ) -> List[str]:
-        return [
-            "",
-            *_kernel_build.parse_kernel_release_cmd(build_dir=build_dir),
-            "",
-            *_kernel_build.copy_vmlinuz_cmd(install_dir=install_dir),
-            "",
-            *_kernel_build.copy_system_map_cmd(
-                build_dir=build_dir, install_dir=install_dir
-            ),
-            "",
-            *_kernel_build.copy_dtbs_cmd(
-                device_trees=self.options.kernel_device_trees,
-                install_dir=install_dir,
-            ),
-            "",
-            *_kernel_build.make_initrd_cmd(
-                initrd_compression=initrd_compression,
-                initrd_compression_options=initrd_compression_options,
-                initrd_firmware=initrd_firmware,
-                initrd_addons=initrd_addons,
-                initrd_overlay=initrd_overlay,
-                initrd_stage_firmware=initrd_stage_firmware,
-                build_efi_image=False,
-                initrd_ko_use_workaround=True,
-                initrd_default_compression="lz4 -9 -l",
-                initrd_include_extra_modules_conf=False,
-                initrd_tool_pass_root=True,
-                install_dir=install_dir,
-                stage_dir=stage_dir,
-            ),
-            "",
-        ]
-
     def _get_install_command(
         self,
         initrd_compression: Optional[str],
@@ -578,13 +533,19 @@ class KernelPlugin(PluginV2):
 
         # add post-install steps
         cmd.extend(
-            self._get_post_install_cmd(
+            _kernel_build.get_post_install_cmd(
+                device_trees=self.options.kernel_device_trees,
                 initrd_compression=initrd_compression,
                 initrd_compression_options=initrd_compression_options,
                 initrd_firmware=initrd_firmware,
                 initrd_addons=initrd_addons,
                 initrd_overlay=initrd_overlay,
                 initrd_stage_firmware=initrd_stage_firmware,
+                build_efi_image=False,
+                initrd_ko_use_workaround=True,
+                initrd_default_compression="lz4 -9 -l",
+                initrd_include_extra_modules_conf=False,
+                initrd_tool_pass_root=True,
                 build_dir=build_dir,
                 install_dir=install_dir,
                 stage_dir=stage_dir,
