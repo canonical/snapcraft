@@ -464,63 +464,6 @@ class KernelPlugin(plugins.Plugin):
 
         return env
 
-    # pylint: disable-next=too-many-arguments
-    def _get_install_command(
-        self,
-        initrd_compression: Optional[str],
-        initrd_compression_options: Optional[List[str]],
-        initrd_firmware: Optional[List[str]],
-        initrd_addons: Optional[List[str]],
-        initrd_overlay: Optional[str],
-        initrd_stage_firmware: bool,
-        build_efi_image: bool,
-        build_dir: str,
-        install_dir: str,
-        stage_dir: str,
-    ) -> List[str]:
-        # install to installdir
-        make_cmd = self._make_cmd.copy()
-        make_cmd += [
-            f"CONFIG_PREFIX={install_dir}",
-        ]
-        make_cmd += self._make_install_targets
-        cmd = [
-            'echo "Installing kernel build..."',
-            " ".join(make_cmd),
-        ]
-
-        # add post-install steps
-        cmd.extend(
-            _kernel_build.get_post_install_cmd(
-                device_trees=self.options.kernel_device_trees,
-                initrd_compression=initrd_compression,
-                initrd_compression_options=initrd_compression_options,
-                initrd_firmware=initrd_firmware,
-                initrd_addons=initrd_addons,
-                initrd_overlay=initrd_overlay,
-                initrd_stage_firmware=initrd_stage_firmware,
-                build_efi_image=build_efi_image,
-                initrd_ko_use_workaround=False,
-                initrd_default_compression="zstd -1 -T0",
-                initrd_include_extra_modules_conf=True,
-                initrd_tool_pass_root=False,
-                build_dir=build_dir,
-                install_dir=install_dir,
-                stage_dir=stage_dir,
-            ),
-        )
-
-        # install .config as config-$version
-        cmd.extend(
-            _kernel_build.install_config_cmd(
-                build_dir=build_dir, install_dir=install_dir
-            )
-        )
-
-        cmd.extend(_kernel_build.arrange_install_dir_cmd(install_dir=install_dir))
-
-        return cmd
-
     @overrides
     def get_build_commands(self) -> List[str]:
         logger.info("Getting build commands...")
@@ -567,7 +510,10 @@ class KernelPlugin(plugins.Plugin):
             *_kernel_build.get_build_command(
                 make_cmd=self._make_cmd, targets=self._make_targets
             ),
-            *self._get_install_command(
+            *_kernel_build.get_install_command(
+                device_trees=self.options.kernel_device_trees,
+                make_cmd=self._make_cmd.copy(),
+                make_install_targets=self._make_install_targets,
                 initrd_compression=self.options.kernel_initrd_compression,
                 initrd_compression_options=self.options.kernel_initrd_compression_options,
                 initrd_firmware=self.options.kernel_initrd_firmware,
@@ -575,6 +521,10 @@ class KernelPlugin(plugins.Plugin):
                 initrd_overlay=self.options.kernel_initrd_overlay,
                 initrd_stage_firmware=self.options.kernel_initrd_stage_firmware,
                 build_efi_image=self.options.kernel_build_efi_image,
+                initrd_ko_use_workaround=False,
+                initrd_default_compression="zstd -1 -T0",
+                initrd_include_extra_modules_conf=True,
+                initrd_tool_pass_root=False,
                 build_dir="${CRAFT_PART_BUILD}",
                 install_dir="${CRAFT_PART_INSTALL}",
                 stage_dir="${CRAFT_STAGE}",

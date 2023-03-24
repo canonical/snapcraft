@@ -947,7 +947,7 @@ def _copy_dtbs_cmd(
     return cmd
 
 
-def install_config_cmd(build_dir: str, install_dir: str) -> List[str]:
+def _install_config_cmd(build_dir: str, install_dir: str) -> List[str]:
     """Install the kernel configuration file."""
     # install .config as config-$version
     return [
@@ -993,7 +993,7 @@ def _compression_cmd(
     return cmd
 
 # pylint: disable-next=too-many-arguments
-def get_post_install_cmd(
+def _get_post_install_cmd(
     device_trees: Optional[List[str]],
     initrd_compression: Optional[str],
     initrd_compression_options: Optional[List[str]],
@@ -1042,6 +1042,70 @@ def get_post_install_cmd(
         ),
         "",
     ]
+
+# pylint: disable-next=too-many-arguments
+def get_install_command(
+    device_trees: Optional[List[str]],
+    make_cmd: List[str],
+    make_install_targets: List[str],
+    initrd_compression: Optional[str],
+    initrd_compression_options: Optional[List[str]],
+    initrd_firmware: Optional[List[str]],
+    initrd_addons: Optional[List[str]],
+    initrd_overlay: Optional[str],
+    initrd_stage_firmware: bool,
+    build_efi_image: bool,
+    initrd_ko_use_workaround: bool,
+    initrd_default_compression: str,
+    initrd_include_extra_modules_conf: bool,
+    initrd_tool_pass_root: bool,
+    build_dir: str,
+    install_dir: str,
+    stage_dir: str,
+) -> List[str]:
+    # install to installdir
+    # make_cmd = self._make_cmd.copy()
+    make_cmd += [
+        f"CONFIG_PREFIX={install_dir}",
+    ]
+    make_cmd += make_install_targets
+    cmd = [
+        'echo "Installing kernel build..."',
+        " ".join(make_cmd),
+    ]
+
+    # add post-install steps
+    cmd.extend(
+        _get_post_install_cmd(
+            device_trees=device_trees,
+            initrd_compression=initrd_compression,
+            initrd_compression_options=initrd_compression_options,
+            initrd_firmware=initrd_firmware,
+            initrd_addons=initrd_addons,
+            initrd_overlay=initrd_overlay,
+            initrd_stage_firmware=initrd_stage_firmware,
+            build_efi_image=build_efi_image,
+            initrd_ko_use_workaround=initrd_ko_use_workaround,
+            initrd_default_compression=initrd_default_compression,
+            initrd_include_extra_modules_conf=initrd_include_extra_modules_conf,
+            initrd_tool_pass_root=initrd_tool_pass_root,
+            build_dir=build_dir,
+            install_dir=install_dir,
+            stage_dir=stage_dir,
+        ),
+    )
+
+    # install .config as config-$version
+    cmd.extend(
+        _install_config_cmd(
+            build_dir=build_dir, install_dir=install_dir
+        )
+    )
+
+    cmd.extend(_arrange_install_dir_cmd(install_dir=install_dir))
+
+    return cmd
+
 
 ### build dependencies
 
