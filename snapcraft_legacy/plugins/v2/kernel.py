@@ -166,7 +166,6 @@ setup accordingly.
 import logging
 import os
 import re
-import subprocess
 import sys
 from typing import Any, Dict, List, Optional, Set
 
@@ -182,7 +181,6 @@ logger = logging.getLogger(__name__)
 
 _SNAPD_SNAP_NAME = "snapd"
 _SNAPD_SNAP_FILE = "{snap_name}_{architecture}.snap"
-_SNAPPY_DEV_KEY_FINGERPRINT = "F1831DDAFC42E99D"
 
 _default_kernel_image_target = {
     "amd64": "bzImage",
@@ -428,77 +426,6 @@ class KernelPlugin(PluginV2):
     def get_build_snaps(self) -> Set[str]:
         return set()
 
-    def _add_snappy_ppa(self) -> None:
-        # Add ppa necessary to build initrd.
-        # TODO: reimplement once snapcraft allows to the plugins
-        # to add custom ppa.
-        # For the moment we need to handle this as part of the
-        # get_build_packages() call and add ppa manually.
-
-        # Building of the initrd requires custom tools available in
-        # ppa:snappy-dev/image.
-
-        proc = subprocess.run(
-            ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            check=False,
-        )
-
-        if (
-            not proc.stdout
-            or proc.stdout.decode().find("snappy-dev/image/ubuntu") == -1
-        ):
-            # check if we need to import key
-            try:
-                proc = subprocess.run(
-                    ["apt-key", "export", _SNAPPY_DEV_KEY_FINGERPRINT],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    check=True,
-                )
-            except subprocess.CalledProcessError as error:
-                # Export shouldn't exit with failure based on testing
-                raise ValueError(
-                    f"error to check for key={_SNAPPY_DEV_KEY_FINGERPRINT}: {error.output}"
-                ) from error
-
-            apt_key_output = proc.stdout.decode()
-            if "BEGIN PGP PUBLIC KEY BLOCK" in apt_key_output:
-                logger.info("key for ppa:snappy-dev/image already imported")
-
-            if "nothing exported" in apt_key_output:
-                logger.info("importing key for ppa:snappy-dev/image")
-                # first import key for the ppa
-                try:
-                    subprocess.run(
-                        [
-                            "sudo",
-                            "apt-key",
-                            "adv",
-                            "--keyserver",
-                            "keyserver.ubuntu.com",
-                            "--recv-keys",
-                            _SNAPPY_DEV_KEY_FINGERPRINT,
-                        ],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT,
-                        check=True,
-                    )
-                except subprocess.CalledProcessError as error:
-                    raise errors.AptGPGKeyInstallError(
-                        output=error.output, key=_SNAPPY_DEV_KEY_FINGERPRINT
-                    )
-
-            # add ppa itself
-            logger.warning("adding ppa:snappy-dev/image to handle initrd builds")
-            subprocess.run(
-                ["sudo", "add-apt-repository", "-y", "ppa:snappy-dev/image"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                check=True,
-            )
-
     @overrides
     def get_build_packages(self) -> Set[str]:
         build_packages = {
@@ -539,7 +466,7 @@ class KernelPlugin(PluginV2):
 
         # add snappy ppa to get correct initrd tools
         if self.options.kernel_add_ppa:
-            self._add_snappy_ppa()
+            _kernel_build.add_snappy_ppa(with_sudo=True)
 
         if self._llvm_version is not None:
             # Use the specified version suffix for the packages if it has been

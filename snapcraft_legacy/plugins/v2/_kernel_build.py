@@ -19,6 +19,7 @@
 
 import logging
 import os
+import subprocess
 import sys
 import textwrap
 from typing import List, Optional
@@ -30,6 +31,7 @@ _compression_command = {"gz": "gzip", "lz4": "lz4", "xz": "xz", "zstd": "zstd"}
 _compressor_options = {"gz": "-7", "lz4": "-l -9", "xz": "-7", "zstd": "-1 -T0"}
 
 _ZFS_URL = "https://github.com/openzfs/zfs"
+_SNAPPY_DEV_KEY_FINGERPRINT = "F1831DDAFC42E99D"
 
 
 _required_generic = [
@@ -989,6 +991,92 @@ def _compression_cmd(
     cmd = f"{compressor} {options}"
     logger.warning("WARNING: Using custom initrd compressions command: %s", cmd)
     return cmd
+
+
+### build dependencies
+
+
+def add_snappy_ppa(with_sudo=False) -> None:
+    # Add ppa necessary to build initrd.
+    # TODO: reimplement once snapcraft allows to the plugins
+    # to add custom ppa.
+    # For the moment we need to handle this as part of the
+    # get_build_packages() call and add ppa manually.
+
+    # Building of the initrd requires custom tools available in
+    # ppa:snappy-dev/image.
+
+    proc = subprocess.run(
+        ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+
+    if (
+        not proc.stdout
+        or proc.stdout.decode().find("snappy-dev/image/ubuntu") == -1
+    ):
+        # check if we need to import key
+        try:
+            proc = subprocess.run(
+                ["apt-key", "export", _SNAPPY_DEV_KEY_FINGERPRINT],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=True,
+            )
+        except subprocess.CalledProcessError as error:
+            # Export shouldn't exit with failure based on testing
+            raise ValueError(
+                f"error to check for key={_SNAPPY_DEV_KEY_FINGERPRINT}: {error.output}"
+            ) from error
+
+        apt_key_output = proc.stdout.decode()
+        if "BEGIN PGP PUBLIC KEY BLOCK" in apt_key_output:
+            logger.info("key for ppa:snappy-dev/image already imported")
+
+        if with_sudo:
+            cmd=[ "sudo", "apt-key"]
+        else:
+            cmd=["apt-key"]
+
+        cmd.extend(
+            [
+                "adv",
+                "--keyserver",
+                "keyserver.ubuntu.com",
+                "--recv-keys",
+                _SNAPPY_DEV_KEY_FINGERPRINT,
+            ],
+        )
+
+        if "nothing exported" in apt_key_output:
+            logger.info("importing key for ppa:snappy-dev/image")
+            # first import key for the ppa
+            try:
+                subprocess.run(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    check=True,
+                )
+            except subprocess.CalledProcessError as error:
+                raise ValueError(
+                    f"Failed to add ppa key: {_SNAPPY_DEV_KEY_FINGERPRINT}: {error.output}"
+                ) from error
+
+        # add ppa itself
+        logger.warning("adding ppa:snappy-dev/image to handle initrd builds")
+        if with_sudo:
+            cmd=["sudo", "add-apt-repository", "-y", "ppa:snappy-dev/image"]
+        else:
+            cmd=["add-apt-repository", "-y", "ppa:snappy-dev/image"]
+        subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=True,
+        )
 
 
 ### Utilities
