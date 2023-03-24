@@ -171,7 +171,6 @@ from typing import Any, Dict, List, Optional, Set
 
 from overrides import overrides
 
-from snapcraft_legacy.internal.repo import errors
 from snapcraft_legacy.plugins.v2 import PluginV2
 from snapcraft_legacy.project._project_options import ProjectOptions
 

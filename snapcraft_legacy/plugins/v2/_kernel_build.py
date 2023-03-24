@@ -108,6 +108,7 @@ def _get_initrd_kernel_modules(
         f'initrd_configured_kernel_modules="{initrd_configured_kernel_modules}"',
     ]
 
+
 def _link_files_fnc_cmd() -> List[str]:
     """Add function to link files."""
     cmd = textwrap.dedent(
@@ -115,102 +116,125 @@ def _link_files_fnc_cmd() -> List[str]:
         # link files, accept wild cards
         # 1: reference dir, 2: file(s) including wild cards, 3: dst dir
         link_files() {
-            if [ "${2}" = "*" ]; then
-                    for f in $(ls ${1})
-                    do
-                            link_files "${1}" "${f}" "${3}"
-                    done
-                    return 0
-            fi
-            if [ -d "${1}/${2}" ]; then
-                    for f in $(ls ${1}/${2})
-                    do
-                            link_files "${1}" "${2}/${f}" "${3}"
-                    done
-                    return 0
-            fi
+        	if [ "${2}" = "*" ]; then
+        		for f in $(ls ${1})
+        		do
+        			link_files "${1}" "${f}" "${3}"
+        		done
+        		return 0
+        	fi
+        	if [ -d "${1}/${2}" ]; then
+        		for f in $(ls ${1}/${2})
+        		do
+        			link_files "${1}" "${2}/${f}" "${3}"
+        		done
+        		return 0
+        	fi
 
-            local found=""
-            for f in $(ls ${1}/${2})
-            do
-                    if [[ -L "${f}" ]]; then
-                            local rel_path=$( realpath --no-symlinks --relative-to=${1} ${f} )
-                    else
-                            local rel_path=$( realpath -se --relative-to=${1} ${f} )
-                    fi
-                    local dir_path=$(dirname ${rel_path})
-                    mkdir -p ${3}/${dir_path}
-                    echo "installing ${f} to ${3}/${dir_path}"
-                    ln -f ${f} ${3}/${dir_path}
-                    found="yes"
-            done
-            if [ "yes" = "${found}" ]; then
-                    return 0
-            else
-                    return 1
-            fi
+        	local found=""
+        	for f in $(ls ${1}/${2})
+        	do
+        		if [[ -L "${f}" ]]; then
+        			local rel_path=$( realpath --no-symlinks --relative-to=${1} ${f} )
+        		else
+        			local rel_path=$( realpath -se --relative-to=${1} ${f} )
+        		fi
+        		local dir_path=$(dirname ${rel_path})
+        		mkdir -p ${3}/${dir_path}
+        		echo "installing ${f} to ${3}/${dir_path}"
+        		ln -f ${f} ${3}/${dir_path}
+        		found="yes"
+        	done
+        	if [ "yes" = "${found}" ]; then
+        		return 0
+        	else
+        		return 1
+        	fi
         }
         """
     )
     return [cmd]
 
+
 def _download_core_initrd_fnc_cmd() -> List[str]:
     """Define helper to download code initrd deb package."""
-    return [
-        "# Helper to download code initrd deb package",
-        "# 1: arch, 2: output dir",
-        "download_core_initrd() {",
-        "\tapt-get download ubuntu-core-initramfs:${1}",
-        "\t# unpack dep to the target dir",
-        "\tdpkg -x ubuntu-core-initramfs_*.deb ${2}",
-        "}",
-    ]
+    cmd = textwrap.dedent(
+        """
+        # Helper to download code initrd deb package
+        # 1: arch, 2: output dir
+        download_core_initrd() {
+        	apt-get download ubuntu-core-initramfs:${1}
+        	# unpack dep to the target dir
+        	dpkg -x ubuntu-core-initramfs_*.deb ${2}
+        }
+        """
+    )
+    return [cmd]
 
 
 def _download_generic_initrd_cmd(target_arch: str) -> List[str]:
     """Download Ubuntu Core initrd deb."""
-    return [
-        'echo "Getting ubuntu-core-initrd...."',
+    cmd = textwrap.dedent(
+        """
+        echo "Getting ubuntu-core-initrd...."
         # only download u-c-initrd deb if needed
-        "if [ ! -e ${UC_INITRD_DEB} ]; then",
-        f"\tdownload_core_initrd {target_arch} ${{UC_INITRD_DEB}}",
-        "fi",
-    ]
+        if [ ! -e ${{UC_INITRD_DEB}} ]; then
+        	download_core_initrd {arch} ${{UC_INITRD_DEB}}
+        fi
+        """.format(
+            arch=target_arch
+        )
+    )
+    return [cmd]
 
 
 def _download_snap_bootstrap_fnc_cmd() -> List[str]:
     """Define helper to download snap-bootstrap from snapd deb package."""
-    return [
-        "# Helper to download snap-bootstrap from snapd deb package",
-        "# 1: arch, 2: output dir",
-        "download_snap_bootstrap() {",
-        "\tapt-get download snapd:${1}",
-        "\t# unpack dep to the target dir",
-        "\tdpkg -x snapd_*.deb ${2}",
-        "}",
-    ]
+    cmd = textwrap.dedent(
+        """
+        # Helper to download snap-bootstrap from snapd deb package
+        # 1: arch, 2: output dir
+        download_snap_bootstrap() {
+        	apt-get download snapd:${1}
+        	# unpack dep to the target dir
+        	dpkg -x snapd_*.deb ${2}
+        }
+        """
+    )
+    return [cmd]
 
 
 def _download_snap_bootstrap_cmd(target_arch: str) -> List[str]:
     """Download snap-bootstrap deb."""
-    return [
-        'echo "Getting snapd deb for snap bootstrap..."',
+    cmd = textwrap.dedent(
+        """
+        echo "Getting snapd deb for snap bootstrap..."
         # only download again if files does not exist, otherwise
         # assume we are re-running build
-        "if [ ! -e ${SNAPD_UNPACKED_SNAP} ]; then",
-        f"\tdownload_snap_bootstrap {target_arch} ${{SNAPD_UNPACKED_SNAP}}",
-        "fi",
-    ]
+        if [ ! -e ${{SNAPD_UNPACKED_SNAP}} ]; then
+        	download_snap_bootstrap {arch} ${{SNAPD_UNPACKED_SNAP}}
+        fi
+        """.format(
+            arch=target_arch
+        )
+    )
+    return [cmd]
 
 
 def _clone_zfs_cmd(enable_zfs: bool, dest_dir: str) -> List[str]:
     """Clone zfs git repository if needed."""
     if enable_zfs:
         return [
-            f"if [ ! -d {dest_dir}/zfs ]; then",
-            '\techo "cloning zfs..."',
-            f"\tgit clone --depth=1 {_ZFS_URL} {dest_dir}/zfs -b master",
-            "fi",
+            textwrap.dedent(
+                """
+                if [ ! -d {dest_dir}/zfs ]; then
+                	echo "cloning zfs..."
+                	git clone --depth=1 {zfs_url} {dest_dir}/zfs -b master
+                fi
+                """.format(
+                    dest_dir=dest_dir, zfs_url=_ZFS_URL
+                )
+            )
         ]
     return [
         'echo "zfs is not enabled"',
@@ -220,9 +244,15 @@ def _clone_zfs_cmd(enable_zfs: bool, dest_dir: str) -> List[str]:
 def _clean_old_build_cmd(dest_dir: str) -> List[str]:
     """Clean previous build."""
     return [
-        'echo "Cleaning previous build first..."',
-        f"[ -e {dest_dir}/modules ] && rm -rf {dest_dir}/modules",
-        f"[ -L {dest_dir}/lib/modules ] && rm -rf {dest_dir}/lib/modules",
+        textwrap.dedent(
+            """
+            echo "Cleaning previous build first..."
+            [ -e {dest_dir}/modules ] && rm -rf {dest_dir}/modules
+            [ -L {dest_dir}/lib/modules ] && rm -rf {dest_dir}/lib/modules
+            """.format(
+                dest_dir=dest_dir
+            )
+        )
     ]
 
 
@@ -246,19 +276,21 @@ def _do_base_config_cmd(
         cmd.append(f"\tcp {config_file} {dest_dir}/.config")
     elif config_flavour:
         logger.info("Using ubuntu config flavour %s", config_flavour)
-        cmd.extend(
-            [
-                '\techo "Assembling Ubuntu config..."',
-                "\tbranch=$(cut -d'.' -f 2- < ${KERNEL_SRC}/debian/debian.env)",
-                "\tbaseconfigdir=${KERNEL_SRC}/debian.${branch}/config",
-                "\tarchconfigdir=${KERNEL_SRC}/debian.${branch}/config/${DEB_ARCH}",
-                "\tcommonconfig=${baseconfigdir}/config.common.ports",
-                "\tubuntuconfig=${baseconfigdir}/config.common.ubuntu",
-                "\tarchconfig=${archconfigdir}/config.common.${DEB_ARCH}",
-                f"\tflavourconfig=${{archconfigdir}}/config.flavour.{config_flavour}",
-                f"\tcat ${{commonconfig}} ${{ubuntuconfig}} ${{archconfig}} ${{flavourconfig}} > {dest_dir}/.config 2>/dev/null",
-            ]
+        conf_cmd = textwrap.dedent(
+            """	echo "Assembling Ubuntu config..."
+	branch=$(cut -d'.' -f 2- < ${{KERNEL_SRC}}/debian/debian.env)
+	baseconfigdir=${{KERNEL_SRC}}/debian.${{branch}}/config
+	archconfigdir=${{KERNEL_SRC}}/debian.${{branch}}/config/${{DEB_ARCH}}
+	commonconfig=${{baseconfigdir}}/config.common.ports
+	ubuntuconfig=${{baseconfigdir}}/config.common.ubuntu
+	archconfig=${{archconfigdir}}/config.common.${{DEB_ARCH}}
+	flavourconfig=${{archconfigdir}}/config.flavour.{config_flavour}
+    cat ${{commonconfig}} ${{ubuntuconfig}} ${{archconfig}} ${{flavourconfig}} \
+> {dest_dir}/.config 2>/dev/null""".format(
+                config_flavour=config_flavour, dest_dir=dest_dir
+            )
         )
+        cmd.extend([conf_cmd])
     else:
         make_cmd = make_cmd.copy()
         make_cmd[1] = "-j1"  # FIXME: make this more robust
@@ -438,28 +470,25 @@ def _get_zfs_build_commands(
         return ['echo "Not building zfs modules"']
 
     return [
-        'echo "Building zfs modules..."',
-        f"cd {build_dir}/zfs",
-        "./autogen.sh",
-        " ".join(
-            [
-                "./configure",
-                "--with-linux=${KERNEL_SRC}",
-                f"--with-linux-obj={build_dir}",
-                "--with-config=kernel",
-                f"--host={arch_triplet}",
-            ]
-        ),
-        "make -j$(nproc)",
-        f"make install DESTDIR={install_dir}/zfs",
-        f'release_version="$(ls {install_dir}/modules)"',
-        (
-            f"mv {install_dir}/zfs/lib/modules/${{release_version}}/extra "
-            f"{install_dir}/modules/${{release_version}}"
-        ),
-        f"rm -rf {install_dir}/zfs",
-        'echo "Rebuilding module dependencies"',
-        f"depmod -b {install_dir} ${{release_version}}",
+        textwrap.dedent(
+            """
+            echo "Building zfs modules..."
+            cd {build_dir}/zfs
+            ./autogen.sh
+            ./configure --with-linux=${{KERNEL_SRC}} --with-linux-obj={build_dir} \
+--with-config=kernel --host={arch_triplet}
+            make -j$(nproc)
+            make install DESTDIR={install_dir}/zfs
+            release_version="$(ls {install_dir}/modules)"
+            mv {install_dir}/zfs/lib/modules/${{release_version}}/extra \
+{install_dir}/modules/${{release_version}}
+            rm -rf {install_dir}/zfs
+            echo "Rebuilding module dependencies"
+            depmod -b {install_dir} ${{release_version}}
+            """.format(
+                build_dir=build_dir, install_dir=install_dir, arch_triplet=arch_triplet
+            )
+        )
     ]
 
 
@@ -486,6 +515,7 @@ def _get_perf_build_commands(
         " ".join(cmd),
         f'install -Dm0755 "{build_dir}/tools/perf/perf" "{install_dir}/bin/perf"',
     ]
+
 
 # pylint: disable-next=too-many-arguments
 def _make_initrd_cmd(
@@ -708,9 +738,7 @@ def _make_initrd_cmd(
             "",
             "",
             " ".join(
-                [
-                    "ubuntu_core_initramfs=${UC_INITRD_DEB}/usr/bin/ubuntu-core-initramfs"
-                ]
+                ["ubuntu_core_initramfs=${UC_INITRD_DEB}/usr/bin/ubuntu-core-initramfs"]
             ),
         ],
     )
@@ -780,7 +808,6 @@ def _make_initrd_cmd(
     firmware_dir = f"{install_dir}/lib/firmware"
     if initrd_stage_firmware:
         firmware_dir = f"{stage_dir}/firmware"
-
 
     cmd_create_initrd.extend(
         [
@@ -892,7 +919,7 @@ def get_build_commands(
     target_arch_triplet: str,
     config_file: Optional[str],
     config_flavour: Optional[str],
-    defconfig: Optional[List[str]],
+    defconfig: List[str],
     configs: Optional[List[str]],
     device_trees: Optional[List[str]],
     initrd_modules: Optional[List[str]],
@@ -955,9 +982,7 @@ def get_build_commands(
         "",
         *_call_check_config_cmd(dest_dir=build_dir),
         "",
-        *_get_build_command(
-            make_cmd=make_cmd, targets=make_targets
-        ),
+        *_get_build_command(make_cmd=make_cmd, targets=make_targets),
         *_get_install_command(
             device_trees=device_trees,
             make_cmd=make_cmd.copy(),
@@ -1033,9 +1058,7 @@ def _copy_system_map_cmd(build_dir: str, install_dir: str) -> List[str]:
     return cmd
 
 
-def _copy_dtbs_cmd(
-    device_trees: Optional[List[str]], install_dir: str
-) -> List[str]:
+def _copy_dtbs_cmd(device_trees: Optional[List[str]], install_dir: str) -> List[str]:
     """Install custom device trees."""
     if not device_trees:
         return [""]
@@ -1070,22 +1093,28 @@ def _install_config_cmd(build_dir: str, install_dir: str) -> List[str]:
     ]
 
 
-def arrange_install_dir_cmd(install_dir: str) -> List[str]:
+def _arrange_install_dir_cmd(install_dir: str) -> List[str]:
     """Final adjustments to installation directory."""
     return [
-        "",
-        'echo "Finalizing install directory..."',
-        # upstream kernel installs under $INSTALL_MOD_PATH/lib/modules/
-        # but snapd expects modules/ and firmware/
-        f"mv {install_dir}/lib/modules {install_dir}/",
-        # remove symlinks modules/*/build and modules/*/source
-        f"rm {install_dir}/modules/*/build {install_dir}/modules/*/source",
-        # if there is firmware dir, move it to snap root
-        # this could have been from stage packages or from kernel build
-        f"[ -d {install_dir}/lib/firmware ] && mv {install_dir}/lib/firmware {install_dir}",
-        # create symlinks for modules and firmware for convenience
-        f"ln -sf ../modules {install_dir}/lib/modules",
-        f"ln -sf ../firmware {install_dir}/lib/firmware",
+        textwrap.dedent(
+            """
+
+            echo "Finalizing install directory..."
+            # upstream kernel installs under $INSTALL_MOD_PATH/lib/modules/
+            # but snapd expects modules/ and firmware/
+            mv {install_dir}/lib/modules {install_dir}/
+            # remove symlinks modules/*/build and modules/*/source
+            rm {install_dir}/modules/*/build {install_dir}/modules/*/source
+            # if there is firmware dir, move it to snap root
+            # this could have been from stage packages or from kernel build
+            [ -d {install_dir}/lib/firmware ] && mv {install_dir}/lib/firmware {install_dir}
+            # create symlinks for modules and firmware for convenience
+            ln -sf ../modules {install_dir}/lib/modules
+            ln -sf ../firmware {install_dir}/lib/firmware
+            """.format(
+                install_dir=install_dir
+            )
+        )
     ]
 
 
@@ -1104,6 +1133,7 @@ def _compression_cmd(
     cmd = f"{compressor} {options}"
     logger.warning("WARNING: Using custom initrd compressions command: %s", cmd)
     return cmd
+
 
 # pylint: disable-next=too-many-arguments
 def _get_post_install_cmd(
@@ -1129,9 +1159,7 @@ def _get_post_install_cmd(
         "",
         *_copy_vmlinuz_cmd(install_dir=install_dir),
         "",
-        *_copy_system_map_cmd(
-            build_dir=build_dir, install_dir=install_dir
-        ),
+        *_copy_system_map_cmd(build_dir=build_dir, install_dir=install_dir),
         "",
         *_copy_dtbs_cmd(
             device_trees=device_trees,
@@ -1155,6 +1183,7 @@ def _get_post_install_cmd(
         ),
         "",
     ]
+
 
 # pylint: disable-next=too-many-arguments
 def _get_install_command(
@@ -1209,11 +1238,7 @@ def _get_install_command(
     )
 
     # install .config as config-$version
-    cmd.extend(
-        _install_config_cmd(
-            build_dir=build_dir, install_dir=install_dir
-        )
-    )
+    cmd.extend(_install_config_cmd(build_dir=build_dir, install_dir=install_dir))
 
     cmd.extend(_arrange_install_dir_cmd(install_dir=install_dir))
 
@@ -1240,10 +1265,7 @@ def add_snappy_ppa(with_sudo=False) -> None:
         check=False,
     )
 
-    if (
-        not proc.stdout
-        or proc.stdout.decode().find("snappy-dev/image/ubuntu") == -1
-    ):
+    if not proc.stdout or proc.stdout.decode().find("snappy-dev/image/ubuntu") == -1:
         # check if we need to import key
         try:
             proc = subprocess.run(
@@ -1263,9 +1285,9 @@ def add_snappy_ppa(with_sudo=False) -> None:
             logger.info("key for ppa:snappy-dev/image already imported")
 
         if with_sudo:
-            cmd=[ "sudo", "apt-key"]
+            cmd = ["sudo", "apt-key"]
         else:
-            cmd=["apt-key"]
+            cmd = ["apt-key"]
 
         cmd.extend(
             [
@@ -1295,9 +1317,9 @@ def add_snappy_ppa(with_sudo=False) -> None:
         # add ppa itself
         logger.warning("adding ppa:snappy-dev/image to handle initrd builds")
         if with_sudo:
-            cmd=["sudo", "add-apt-repository", "-y", "ppa:snappy-dev/image"]
+            cmd = ["sudo", "add-apt-repository", "-y", "ppa:snappy-dev/image"]
         else:
-            cmd=["add-apt-repository", "-y", "ppa:snappy-dev/image"]
+            cmd = ["add-apt-repository", "-y", "ppa:snappy-dev/image"]
         subprocess.run(
             cmd,
             stdout=subprocess.PIPE,
