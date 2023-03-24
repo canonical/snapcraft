@@ -20,6 +20,7 @@
 import logging
 import os
 import sys
+import textwrap
 from typing import List, Optional
 
 logger = logging.getLogger(__name__)
@@ -105,50 +106,51 @@ def get_initrd_kernel_modules(
         f'initrd_configured_kernel_modules="{initrd_configured_kernel_modules}"',
     ]
 
-
 def link_files_fnc_cmd() -> List[str]:
     """Add function to link files."""
-    return [
-        "# link files, accept wild cards",
-        "# 1: reference dir, 2: file(s) including wild cards, 3: dst dir",
-        "link_files() {",
-        '\tif [ "${2}" = "*" ]; then',
-        "\t\tfor f in $(ls ${1})",
-        "\t\tdo",
-        '\t\t\tlink_files "${1}" "${f}" "${3}"',
-        "\t\tdone",
-        "\t\treturn 0",
-        "\tfi",
-        '\tif [ -d "${1}/${2}" ]; then',
-        "\t\tfor f in $(ls ${1}/${2})",
-        "\t\tdo",
-        '\t\t\tlink_files "${1}" "${2}/${f}" "${3}"',
-        "\t\tdone",
-        "\t\treturn 0",
-        "\tfi",
-        "",
-        '\tlocal found=""',
-        "\tfor f in $(ls ${1}/${2})",
-        "\tdo",
-        '\t\tif [[ -L "${f}" ]]; then',
-        "\t\t\tlocal rel_path=$( realpath --no-symlinks --relative-to=${1} ${f} )",
-        "\t\telse",
-        "\t\t\tlocal rel_path=$( realpath -se --relative-to=${1} ${f} )",
-        "\t\tfi",
-        "\t\tlocal dir_path=$(dirname ${rel_path})",
-        "\t\tmkdir -p ${3}/${dir_path}",
-        '\t\techo "installing ${f} to ${3}/${dir_path}"',
-        "\t\tln -f ${f} ${3}/${dir_path}",
-        '\t\tfound="yes"',
-        "\tdone",
-        '\tif [ "yes" = "${found}" ]; then',
-        "\t\treturn 0",
-        "\telse",
-        "\t\treturn 1",
-        "\tfi",
-        "}",
-    ]
+    cmd = textwrap.dedent(
+        """
+        # link files, accept wild cards
+        # 1: reference dir, 2: file(s) including wild cards, 3: dst dir
+        link_files() {
+            if [ "${2}" = "*" ]; then
+                    for f in $(ls ${1})
+                    do
+                            link_files "${1}" "${f}" "${3}"
+                    done
+                    return 0
+            fi
+            if [ -d "${1}/${2}" ]; then
+                    for f in $(ls ${1}/${2})
+                    do
+                            link_files "${1}" "${2}/${f}" "${3}"
+                    done
+                    return 0
+            fi
 
+            local found=""
+            for f in $(ls ${1}/${2})
+            do
+                    if [[ -L "${f}" ]]; then
+                            local rel_path=$( realpath --no-symlinks --relative-to=${1} ${f} )
+                    else
+                            local rel_path=$( realpath -se --relative-to=${1} ${f} )
+                    fi
+                    local dir_path=$(dirname ${rel_path})
+                    mkdir -p ${3}/${dir_path}
+                    echo "installing ${f} to ${3}/${dir_path}"
+                    ln -f ${f} ${3}/${dir_path}
+                    found="yes"
+            done
+            if [ "yes" = "${found}" ]; then
+                    return 0
+            else
+                    return 1
+            fi
+        }
+        """
+    )
+    return [cmd]
 
 def download_core_initrd_fnc_cmd() -> List[str]:
     """Define helper to download code initrd deb package."""
