@@ -96,7 +96,7 @@ if sys.platform == "win32":
 install_requires = [
     "attrs",
     "click",
-    "craft-archives==0.0.1",
+    "craft-archives==0.0.3",
     "craft-cli",
     "craft-grammar",
     "craft-parts",
