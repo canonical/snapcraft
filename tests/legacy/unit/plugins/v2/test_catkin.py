@@ -53,7 +53,11 @@ def test_schema():
 def test_get_build_packages():
     plugin = catkin.CatkinPlugin(part_name="my-part", options=lambda: None)
 
-    assert plugin.get_build_packages() == {"python3-rosdep", "ros-noetic-catkin"}
+    assert plugin.get_build_packages() == {
+        "python3-rosdep",
+        "ros-noetic-catkin",
+        "rospack-tools",
+    }
 
 
 def test_get_build_environment():
@@ -107,6 +111,8 @@ def test_get_build_commands(monkeypatch):
         "fi",
         "",
         'eval "${state}"',
+        'rm -f "${SNAPCRAFT_PART_INSTALL}/.installed_packages.txt"',
+        'rm -f "${SNAPCRAFT_PART_INSTALL}/.build_snaps.txt"',
         'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
         'state="$(set +o); set -$-"',
         "set +u",
@@ -127,6 +133,7 @@ def test_get_build_commands(monkeypatch):
         "fi",
         "",
         'eval "${state}"',
+        "## Prepare build",
         "## Build command",
         "catkin_make_isolated --install --merge "
         '--source-space "${SNAPCRAFT_PART_SRC_WORK}" --build-space "${SNAPCRAFT_PART_BUILD}" '
@@ -195,6 +202,27 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "fi",
         "",
         'eval "${state}"',
+        'rm -f "${SNAPCRAFT_PART_INSTALL}/.installed_packages.txt"',
+        'rm -f "${SNAPCRAFT_PART_INSTALL}/.build_snaps.txt"',
+        "if [ -d /snap/foo/current/opt/ros ]; then",
+        "ROS_PACKAGE_PATH=/snap/foo/current/opt/ros rospack list-names | (xargs "
+        'rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | awk '
+        '"/#apt/{getline;print;}" >> '
+        '"${SNAPCRAFT_PART_INSTALL}/.installed_packages.txt"',
+        "fi",
+        'if [ -d "/snap/foo/current/opt/ros/${ROS_DISTRO}/" ]; then',
+        'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths '
+        '"/snap/foo/current/opt/ros/${ROS_DISTRO}" --ignore-packages-from-source | '
+        '(xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" '
+        '>> "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+        "fi",
+        'if [ -d "/snap/foo/current/opt/ros/snap/" ]; then',
+        'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths '
+        '"/snap/foo/current/opt/ros/snap" --ignore-packages-from-source | (xargs '
+        'rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> '
+        '"${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+        "fi",
+        "",
         'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
         'state="$(set +o); set -$-"',
         "set +u",
@@ -221,6 +249,19 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "fi",
         "",
         'eval "${state}"',
+        "## Prepare build",
+        'if [ -d "/snap/foo/current/opt/ros/${ROS_DISTRO}/share" ]; then ',
+        'mkdir -p "${SNAPCRAFT_PART_BUILD}"/build_snaps/foo',
+        'cp -r "/snap/foo/current/opt/ros/${ROS_DISTRO}/share" '
+        '"${SNAPCRAFT_PART_BUILD}/build_snaps/foo/."',
+        'find "${SNAPCRAFT_PART_BUILD}/build_snaps/foo" \\( -name "*Config.cmake" -o '
+        '-name "*extras.cmake" \\) -exec sed -i -e "s|/opt|/snap/foo/current&|g" -e '
+        '"s|/usr|/snap/foo/current&|g" -e '
+        '"s|\\${.*_DIR}/../../..|/snap/foo/current/opt/ros/${ROS_DISTRO}|g" {} \\;',
+        "fi",
+        'if [ -d "${SNAPCRAFT_PART_BUILD}"/build_snaps/foo ]; then export '
+        'CMAKE_PREFIX_PATH="${SNAPCRAFT_PART_BUILD}/build_snaps/foo:${CMAKE_PREFIX_PATH}"; '
+        "fi",
         "## Build command",
         "catkin_make_isolated --install --merge "
         '--source-space "${SNAPCRAFT_PART_SRC_WORK}" --build-space "${SNAPCRAFT_PART_BUILD}" '

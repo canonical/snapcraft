@@ -70,6 +70,7 @@ def test_get_build_packages():
         "python3-rosdep",
         "python3-rosinstall",
         "python3-wstool",
+        "rospack-tools",
     }
 
 
@@ -125,6 +126,8 @@ def test_get_build_commands(monkeypatch):
         '. /opt/ros/"${ROS_DISTRO}"/local_setup.sh',
         "",
         'eval "${state}"',
+        'rm -f "${SNAPCRAFT_PART_INSTALL}/.installed_packages.txt"',
+        'rm -f "${SNAPCRAFT_PART_INSTALL}/.build_snaps.txt"',
         'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
         'state="$(set +o); set -$-"',
         "set +u",
@@ -213,6 +216,27 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         '. /opt/ros/"${ROS_DISTRO}"/local_setup.sh',
         "",
         'eval "${state}"',
+        'rm -f "${SNAPCRAFT_PART_INSTALL}/.installed_packages.txt"',
+        'rm -f "${SNAPCRAFT_PART_INSTALL}/.build_snaps.txt"',
+        "if [ -d /snap/foo/current/opt/ros ]; then",
+        "ROS_PACKAGE_PATH=/snap/foo/current/opt/ros rospack list-names | (xargs "
+        'rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | awk '
+        '"/#apt/{getline;print;}" >> '
+        '"${SNAPCRAFT_PART_INSTALL}/.installed_packages.txt"',
+        "fi",
+        'if [ -d "/snap/foo/current/opt/ros/${ROS_DISTRO}/" ]; then',
+        'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths '
+        '"/snap/foo/current/opt/ros/${ROS_DISTRO}" --ignore-packages-from-source | '
+        '(xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" '
+        '>> "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+        "fi",
+        'if [ -d "/snap/foo/current/opt/ros/snap/" ]; then',
+        'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths '
+        '"/snap/foo/current/opt/ros/snap" --ignore-packages-from-source | (xargs '
+        'rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> '
+        '"${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+        "fi",
+        "",
         'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
         'state="$(set +o); set -$-"',
         "set +u",
