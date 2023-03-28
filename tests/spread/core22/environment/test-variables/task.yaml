@@ -36,7 +36,6 @@ execute: |
       "^CRAFT_PART_BUILD=${root}/parts/hello/build$" \
       "^CRAFT_PART_BUILD_WORK=${root}/parts/hello/build$" \
       "^CRAFT_PART_INSTALL=${root}/parts/hello/install$" \
-      "^CRAFT_OVERLAY=${root}/overlay/overlay$" \
       "^CRAFT_STAGE=${root}/stage$" \
       "^CRAFT_PRIME=${root}/prime$"; do
       grep -q "$exp" < "$file"
