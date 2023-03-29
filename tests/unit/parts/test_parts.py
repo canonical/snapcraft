@@ -31,7 +31,7 @@ def parts_data():
     }
 
 
-@pytest.mark.parametrize("step_name", ["pull", "overlay", "build", "stage", "prime"])
+@pytest.mark.parametrize("step_name", ["pull", "build", "stage", "prime"])
 def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
     mocker.patch("craft_parts.executor.executor.Executor._install_build_snaps")
     lcm_spy = mocker.spy(craft_parts, "LifecycleManager")

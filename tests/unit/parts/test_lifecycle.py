@@ -761,7 +761,7 @@ def test_lifecycle_post_lifecycle_debug_shell(snapcraft_yaml, new_dir, mocker):
     "cmd,expected_last_step",
     [
         ("pull", None),
-        ("build", Step.OVERLAY),
+        ("build", Step.PULL),
         ("stage", Step.BUILD),
         ("prime", Step.STAGE),
     ],
