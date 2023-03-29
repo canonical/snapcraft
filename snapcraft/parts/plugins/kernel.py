@@ -168,7 +168,6 @@ setup accordingly.
 import logging
 import os
 import re
-import subprocess
 from typing import Any, Dict, List, Optional, Set, Union, cast
 
 from craft_parts import infos, plugins
@@ -181,7 +180,6 @@ logger = logging.getLogger(__name__)
 
 _SNAPD_SNAP_NAME = "snapd"
 _SNAPD_SNAP_FILE = "{snap_name}_{architecture}.snap"
-_SNAPPY_DEV_KEY_FINGERPRINT = "F1831DDAFC42E99D"
 
 _default_kernel_image_target = {
     "amd64": "bzImage",
@@ -365,364 +363,6 @@ class KernelPlugin(plugins.Plugin):
             "INSTALL_FW_PATH=${CRAFT_PART_INSTALL}/lib/firmware",
         ]
 
-    # pylint: disable-next=too-many-arguments
-    def _make_initrd_cmd(
-        self,
-        initrd_compression: Optional[str],
-        initrd_compression_options: Optional[List[str]],
-        initrd_firmware: Optional[List[str]],
-        initrd_addons: Optional[List[str]],
-        initrd_overlay: Optional[str],
-        initrd_stage_firmware: bool,
-        build_efi_image: bool,
-        install_dir: str,
-        stage_dir: str,
-    ) -> List[str]:
-        cmd_echo = [
-            'echo "Generating initrd with ko modules for kernel release: ${KERNEL_RELEASE}"',
-        ]
-
-        cmd_prepare_modules_feature = [
-            # install required modules to initrd
-            'echo "Installing ko modules to initrd..."',
-            'install_modules=""',
-            'echo "Gathering module dependencies..."',
-            'install_modules=""',
-            "uc_initrd_feature_kernel_modules=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/kernel-modules",
-            "mkdir -p ${uc_initrd_feature_kernel_modules}",
-            "initramfs_ko_modules_conf=${uc_initrd_feature_kernel_modules}/extra-modules.conf",
-            " ".join(
-                [
-                    "touch",
-                    "${initramfs_ko_modules_conf}",
-                ]
-            ),
-            " ".join(
-                [
-                    "for",
-                    "m",
-                    "in",
-                    "${initrd_installed_kernel_modules}",
-                    "${initrd_configured_kernel_modules}",
-                ]
-            ),
-            "do",
-            " ".join(["\techo", "${m}", ">>", "${initramfs_ko_modules_conf}"]),
-            "done",
-            " ".join(
-                [
-                    "[",
-                    "-e",
-                    "${initramfs_ko_modules_conf}",
-                    "]",
-                    "&&",
-                    "sort",
-                    "-fu",
-                    "${initramfs_ko_modules_conf} -o ${initramfs_ko_modules_conf}",
-                ],
-            ),
-        ]
-
-        cmd_prepare_modules_feature.extend(
-            [
-                'echo "Configuring ubuntu-core-initramfs.conf with supported modules"',
-                'echo "If module is not included in initrd, do not include it"',
-                "initramfs_conf_dir=${uc_initrd_feature_kernel_modules}/usr/lib/modules-load.d",
-                "mkdir -p ${initramfs_conf_dir}",
-                "initramfs_conf=${initramfs_conf_dir}/ubuntu-core-initramfs.conf",
-                'echo "# configures modules" > ${initramfs_conf}',
-                " ".join(
-                    [
-                        "for",
-                        "m",
-                        "in",
-                        "${initrd_configured_kernel_modules}",
-                    ]
-                ),
-                "do",
-                " ".join(
-                    [
-                        "\tif [",
-                        "-n",
-                        f'"$(modprobe -n -q --show-depends -d {install_dir} -S "${{KERNEL_RELEASE}}" ${{m}})"',
-                        "]; then",
-                    ]
-                ),
-                "\t\techo ${m} >> ${initramfs_conf}",
-                "\tfi",
-                "done",
-            ]
-        )
-
-        cmd_prepare_initrd_overlay_feature = [
-            "uc_initrd_feature_firmware=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/uc-firmware",
-            "mkdir -p ${uc_initrd_feature_firmware}",
-            "uc_initrd_feature_overlay=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/uc-overlay",
-            "mkdir -p ${uc_initrd_feature_overlay}",
-            "",
-        ]
-
-        # gather firmware files
-        if initrd_firmware:
-            cmd_prepare_initrd_overlay_feature.extend(
-                [
-                    'echo "Installing initrd overlay firmware..."',
-                    f"for f in {' '.join(initrd_firmware)}",
-                    "do",
-                    # firmware can be from kernel build or from stage
-                    # firmware from kernel build takes preference
-                    " ".join(
-                        [
-                            "\tif !",
-                            "link_files",
-                            f'"{install_dir}"',
-                            '"${f}"',
-                            '"${uc_initrd_feature_firmware}/lib"',
-                            ";",
-                            "then",
-                        ]
-                    ),
-                    " ".join(
-                        [
-                            "\t\tif !",
-                            "link_files",
-                            f'"{stage_dir}"',
-                            '"${f}"',
-                            '"${uc_initrd_feature_firmware}/lib"',
-                            ";",
-                            "then",
-                        ]
-                    ),
-                    '\t\t\techo "Missing firmware [${f}], ignoring it"',
-                    "\t\tfi",
-                    "\tfi",
-                    "done",
-                    "",
-                ]
-            )
-
-        # apply overlay if defined
-        if initrd_overlay:
-            cmd_prepare_initrd_overlay_feature.extend(
-                [
-                    " ".join(
-                        [
-                            "link_files",
-                            f'"{stage_dir}/{initrd_overlay}"',
-                            '""',
-                            '"${uc_initrd_feature_overlay}"',
-                        ]
-                    ),
-                    "",
-                ]
-            )
-
-        # apply overlay addons if defined
-        if initrd_addons:
-            cmd_prepare_initrd_overlay_feature.extend(
-                [
-                    'echo "Installing initrd addons..."',
-                    f"for a in {' '.join(initrd_addons)}",
-                    "do",
-                    '\techo "Copy overlay: ${a}"',
-                    " ".join(
-                        [
-                            "\tlink_files",
-                            f'"{stage_dir}"',
-                            '"${a}"',
-                            '"${uc_initrd_feature_overlay}"',
-                        ]
-                    ),
-                    "done",
-                ],
-            )
-
-        cmd_prepare_snap_bootstrap_feature = [
-            # install selected snap bootstrap
-            'echo "Preparing snap-boostrap initrd feature..."',
-            "uc_initrd_feature_snap_bootstratp=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snap-bootstrap",
-            "mkdir -p ${uc_initrd_feature_snap_bootstratp}",
-            " ".join(
-                [
-                    "link_files",
-                    '"${SNAPD_UNPACKED_SNAP}"',
-                    '"usr/lib/snapd/snap-bootstrap"',
-                    '"${uc_initrd_feature_snap_bootstratp}"',
-                ]
-            ),
-            " ".join(
-                [
-                    "link_files",
-                    '"${SNAPD_UNPACKED_SNAP}"',
-                    '"usr/lib/snapd/info"',
-                    '"${uc_initrd_feature_snap_bootstratp}"',
-                ]
-            ),
-            " ".join(
-                [
-                    "cp",
-                    "${SNAPD_UNPACKED_SNAP}/usr/lib/snapd/info",
-                    f"{install_dir}/snapd-info",
-                ]
-            ),
-        ]
-
-        cmd_create_initrd = [
-            f"if compgen -G {install_dir}/initrd.img* > /dev/null; then",
-            f"\trm -rf {install_dir}/initrd.img*",
-            "fi",
-        ]
-
-        cmd_create_initrd.extend(
-            [
-                "",
-                "",
-                " ".join(
-                    [
-                        "ubuntu_core_initramfs=${UC_INITRD_DEB}/usr/bin/ubuntu-core-initramfs"
-                    ]
-                ),
-            ],
-        )
-
-        # ubuntu-core-initramfs does not support configurable compression command
-        # we still want to support this as configurable option though.
-        comp_command = _kernel_build.compression_cmd(
-            initrd_compression=initrd_compression,
-            initrd_compression_options=initrd_compression_options,
-        )
-        if comp_command:
-            cmd_create_initrd.extend(
-                [
-                    "",
-                    'echo "Updating compression command to be used for initrd"',
-                    " ".join(
-                        [
-                            "sed",
-                            "-i",
-                            f"'s/zstd -1 -T0/{comp_command}/g'",
-                            "${ubuntu_core_initramfs}",
-                        ],
-                    ),
-                ]
-            )
-        cmd_create_initrd.extend(
-            [
-                'echo "Workaround for bug in ubuntu-core-initramfs"',
-                " ".join(
-                    [
-                        "for",
-                        "feature",
-                        "in",
-                        "kernel-modules",
-                        "snap-bootstrap",
-                        "uc-firmware",
-                        "uc-overlay",
-                    ],
-                ),
-                "do",
-                " ".join(
-                    [
-                        "\tlink_files",
-                        '"${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/${feature}"',
-                        '"*"',
-                        '"${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/main"',
-                    ],
-                ),
-                "done",
-                " ".join(
-                    [
-                        "cp",
-                        "${initramfs_ko_modules_conf}",
-                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/modules/main/extra-modules.conf",
-                    ],
-                ),
-                "",
-            ],
-        )
-        firmware_dir = f"{install_dir}/lib/firmware"
-        if initrd_stage_firmware:
-            firmware_dir = f"{stage_dir}/firmware"
-        cmd_create_initrd.extend(
-            [
-                "",
-                " ".join(
-                    [
-                        f'[ ! -d "{firmware_dir}" ]',
-                        "&&",
-                        f'echo -e "firmware directory {firmware_dir} does not exist, consider using'
-                        ' kernel-initrd-stage-firmware: true/false option"',
-                        "&&",
-                        "exit 1",
-                    ]
-                ),
-                "",
-                " ".join(
-                    [
-                        "${ubuntu_core_initramfs}",
-                        "create-initrd",
-                        "--kernelver=${KERNEL_RELEASE}",
-                        "--kerneldir",
-                        f"{install_dir}/lib/modules/${{KERNEL_RELEASE}}",
-                        "--firmwaredir",
-                        firmware_dir,
-                        "--skeleton",
-                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs",
-                        # "--feature",
-                        # "kernel-modules",
-                        # "snap-bootstrap",
-                        # "uc-firmware",
-                        # "uc-overlay",
-                        "--output",
-                        f"{install_dir}/initrd.img",
-                    ],
-                ),
-                f"ln $(ls {install_dir}/initrd.img*) {install_dir}/initrd.img",
-            ]
-        )
-        if build_efi_image:
-            cmd_create_initrd.extend(
-                [
-                    "",
-                    'echo "Building kernel.efi"',
-                    "stub_p=$(find ${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/efi/ -maxdepth 1 -name 'linux*.efi.stub' -printf '%f\\n')",
-                    " ".join(
-                        [
-                            "${ubuntu_core_initramfs}",
-                            "create-efi",
-                            "--kernelver=${KERNEL_RELEASE}",
-                            "--stub",
-                            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/efi/${stub_p}",
-                            "--sbat",
-                            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/efi/sbat.txt",
-                            "--key",
-                            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key",
-                            "--cert",
-                            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem",
-                            "--initrd",
-                            f"{install_dir}/initrd.img",
-                            "--kernel",
-                            f"{install_dir}/${{KERNEL_IMAGE_TARGET}}",
-                            "--output",
-                            f"{install_dir}/kernel.efi",
-                        ],
-                    ),
-                    f"ln $(ls {install_dir}/kernel.efi*) {install_dir}/kernel.efi",
-                ],
-            )
-
-        return [
-            *cmd_echo,
-            *cmd_prepare_modules_feature,
-            "",
-            *cmd_prepare_initrd_overlay_feature,
-            "",
-            *cmd_prepare_snap_bootstrap_feature,
-            "",
-            'echo "Create new initrd..."',
-            *cmd_create_initrd,
-        ]
-
     def _configure_compiler(self) -> None:
         # check if we are using gcc or another compiler
         if self.options.kernel_compiler:
@@ -739,76 +379,6 @@ class KernelPlugin(plugins.Plugin):
     @overrides
     def get_build_snaps(self) -> Set[str]:
         return set()
-
-    def _add_snappy_ppa(self) -> None:
-        # Add ppa necessary to build initrd.
-        # TODO: reimplement once snapcraft allows to the plugins
-        # to add custom ppa.
-        # For the moment we need to handle this as part of the
-        # get_build_packages() call and add ppa manually.
-
-        # Building of the initrd requires custom tools available in
-        # ppa:snappy-dev/image.
-
-        proc = subprocess.run(
-            ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            check=False,
-        )
-
-        if (
-            not proc.stdout
-            or proc.stdout.decode().find("snappy-dev/image/ubuntu") == -1
-        ):
-            # check if we need to import key
-            try:
-                proc = subprocess.run(
-                    ["apt-key", "export", _SNAPPY_DEV_KEY_FINGERPRINT],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    check=True,
-                )
-            except subprocess.CalledProcessError as error:
-                # Export shouldn't exit with failure based on testing
-                raise ValueError(
-                    f"error to check for key={_SNAPPY_DEV_KEY_FINGERPRINT}: {error.output}"
-                ) from error
-
-            apt_key_output = proc.stdout.decode()
-            if "BEGIN PGP PUBLIC KEY BLOCK" in apt_key_output:
-                logger.info("key for ppa:snappy-dev/image already imported")
-
-            if "nothing exported" in apt_key_output:
-                logger.info("importing key for ppa:snappy-dev/image")
-                # first import key for the ppa
-                try:
-                    subprocess.run(
-                        [
-                            "apt-key",
-                            "adv",
-                            "--keyserver",
-                            "keyserver.ubuntu.com",
-                            "--recv-keys",
-                            _SNAPPY_DEV_KEY_FINGERPRINT,
-                        ],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT,
-                        check=True,
-                    )
-                except subprocess.CalledProcessError as error:
-                    raise ValueError(
-                        f"Failed to add ppa key: {_SNAPPY_DEV_KEY_FINGERPRINT}: {error.output}"
-                    ) from error
-
-            # add ppa itself
-            logger.warning("adding ppa:snappy-dev/image to handle initrd builds")
-            subprocess.run(
-                ["add-apt-repository", "-y", "ppa:snappy-dev/image"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                check=True,
-            )
 
     @overrides
     def get_build_packages(self) -> Set[str]:
@@ -852,7 +422,7 @@ class KernelPlugin(plugins.Plugin):
 
         # add snappy ppa to get correct initrd tools
         if self.options.kernel_add_ppa:
-            self._add_snappy_ppa()
+            _kernel_build.add_snappy_ppa(with_sudo=False)
 
         if self._llvm_version is not None:
             # Use the specified version suffix for the packages if it has been
@@ -894,176 +464,42 @@ class KernelPlugin(plugins.Plugin):
 
         return env
 
-    # pylint: disable-next=too-many-arguments
-    def _get_post_install_cmd(
-        self,
-        initrd_compression: Optional[str],
-        initrd_compression_options: Optional[List[str]],
-        initrd_firmware: Optional[List[str]],
-        initrd_addons: Optional[List[str]],
-        initrd_overlay: Optional[str],
-        initrd_stage_firmware: bool,
-        build_efi_image: bool,
-        build_dir: str,
-        install_dir: str,
-        stage_dir: str,
-    ) -> List[str]:
-        return [
-            "",
-            *_kernel_build.parse_kernel_release_cmd(build_dir=build_dir),
-            "",
-            *_kernel_build.copy_vmlinuz_cmd(install_dir=install_dir),
-            "",
-            *_kernel_build.copy_system_map_cmd(
-                build_dir=build_dir, install_dir=install_dir
-            ),
-            "",
-            *_kernel_build.copy_dtbs_cmd(
-                device_trees=self.options.kernel_device_trees,
-                install_dir=install_dir,
-            ),
-            "",
-            *self._make_initrd_cmd(
-                initrd_compression=initrd_compression,
-                initrd_compression_options=initrd_compression_options,
-                initrd_firmware=initrd_firmware,
-                initrd_addons=initrd_addons,
-                initrd_overlay=initrd_overlay,
-                initrd_stage_firmware=initrd_stage_firmware,
-                build_efi_image=build_efi_image,
-                install_dir=install_dir,
-                stage_dir=stage_dir,
-            ),
-            "",
-        ]
-
-    # pylint: disable-next=too-many-arguments
-    def _get_install_command(
-        self,
-        initrd_compression: Optional[str],
-        initrd_compression_options: Optional[List[str]],
-        initrd_firmware: Optional[List[str]],
-        initrd_addons: Optional[List[str]],
-        initrd_overlay: Optional[str],
-        initrd_stage_firmware: bool,
-        build_efi_image: bool,
-        build_dir: str,
-        install_dir: str,
-        stage_dir: str,
-    ) -> List[str]:
-        # install to installdir
-        make_cmd = self._make_cmd.copy()
-        make_cmd += [
-            f"CONFIG_PREFIX={install_dir}",
-        ]
-        make_cmd += self._make_install_targets
-        cmd = [
-            'echo "Installing kernel build..."',
-            " ".join(make_cmd),
-        ]
-
-        # add post-install steps
-        cmd.extend(
-            self._get_post_install_cmd(
-                initrd_compression=initrd_compression,
-                initrd_compression_options=initrd_compression_options,
-                initrd_firmware=initrd_firmware,
-                initrd_addons=initrd_addons,
-                initrd_overlay=initrd_overlay,
-                initrd_stage_firmware=initrd_stage_firmware,
-                build_efi_image=build_efi_image,
-                build_dir=build_dir,
-                install_dir=install_dir,
-                stage_dir=stage_dir,
-            ),
-        )
-
-        # install .config as config-$version
-        cmd.extend(
-            _kernel_build.install_config_cmd(
-                build_dir=build_dir, install_dir=install_dir
-            )
-        )
-
-        cmd.extend(_kernel_build.arrange_install_dir_cmd(install_dir=install_dir))
-
-        return cmd
-
     @overrides
     def get_build_commands(self) -> List[str]:
         logger.info("Getting build commands...")
         self._configure_compiler()
-        # kernel source can be either CRAFT_PART_SRC or CRAFT_PROJECT_DIR
-        return [
-            "[ -d ${CRAFT_PART_SRC}/kernel ] && KERNEL_SRC=${CRAFT_PART_SRC} || KERNEL_SRC=${CRAFT_PROJECT_DIR}",
-            'echo "PATH=$PATH"',
-            'echo "KERNEL_SRC=${KERNEL_SRC}"',
-            "",
-            *_kernel_build.get_initrd_kernel_modules(
-                initrd_modules=self.options.kernel_initrd_modules,
-                configured_modules=self.options.kernel_initrd_configured_modules,
-            ),
-            "",
-            *_kernel_build.link_files_fnc_cmd(),
-            "",
-            *_kernel_build.download_core_initrd_fnc_cmd(),
-            "",
-            *_kernel_build.download_generic_initrd_cmd(target_arch=self._target_arch),
-            "",
-            *_kernel_build.download_snap_bootstrap_fnc_cmd(),
-            "",
-            *_kernel_build.download_snap_bootstrap_cmd(target_arch=self._target_arch),
-            "",
-            *_kernel_build.clone_zfs_cmd(
-                enable_zfs=self.options.kernel_enable_zfs_support,
-                dest_dir="${CRAFT_PART_BUILD}",
-            ),
-            "",
-            *_kernel_build.clean_old_build_cmd(dest_dir="${CRAFT_PART_INSTALL}"),
-            "",
-            *_kernel_build.get_configure_command(
-                make_cmd=self._make_cmd,
-                config_file=self.options.kernel_kconfigfile,
-                config_flavour=self.options.kernel_kconfigflavour,
-                defconfig=self.options.kernel_kdefconfig,
-                configs=self.options.kernel_kconfigs,
-                dest_dir="${CRAFT_PART_BUILD}",
-            ),
-            "",
-            *_kernel_build.call_check_config_cmd(dest_dir="${CRAFT_PART_BUILD}"),
-            "",
-            *_kernel_build.get_build_command(
-                make_cmd=self._make_cmd, targets=self._make_targets
-            ),
-            *self._get_install_command(
-                initrd_compression=self.options.kernel_initrd_compression,
-                initrd_compression_options=self.options.kernel_initrd_compression_options,
-                initrd_firmware=self.options.kernel_initrd_firmware,
-                initrd_addons=self.options.kernel_initrd_addons,
-                initrd_overlay=self.options.kernel_initrd_overlay,
-                initrd_stage_firmware=self.options.kernel_initrd_stage_firmware,
-                build_efi_image=self.options.kernel_build_efi_image,
-                build_dir="${CRAFT_PART_BUILD}",
-                install_dir="${CRAFT_PART_INSTALL}",
-                stage_dir="${CRAFT_STAGE}",
-            ),
-            "",
-            *_kernel_build.get_zfs_build_commands(
-                enable_zfs=self.options.kernel_enable_zfs_support,
-                arch_triplet="${CRAFT_ARCH_TRIPLET}",
-                build_dir="${CRAFT_PART_BUILD}",
-                install_dir="${CRAFT_PART_INSTALL}",
-            ),
-            "",
-            *_kernel_build.get_perf_build_commands(
-                make_cmd=self._make_cmd,
-                enable_perf=self.options.kernel_enable_perf,
-                src_dir="${CRAFT_PART_SRC}",
-                build_dir="${CRAFT_PART_BUILD}",
-                install_dir="${CRAFT_PART_INSTALL}",
-            ),
-            'echo "Kernel build finished!"',
-        ]
+        return _kernel_build.get_build_commands(
+            make_cmd=self._make_cmd.copy(),
+            make_targets=self._make_targets,
+            make_install_targets=self._make_install_targets,
+            target_arch=self._target_arch,
+            target_arch_triplet="${CRAFT_ARCH_TRIPLET}",
+            config_file=self.options.kernel_kconfigfile,
+            config_flavour=self.options.kernel_kconfigflavour,
+            defconfig=self.options.kernel_kdefconfig,
+            configs=self.options.kernel_kconfigs,
+            device_trees=self.options.kernel_device_trees,
+            initrd_modules=self.options.kernel_initrd_modules,
+            configured_modules=self.options.kernel_initrd_configured_modules,
+            initrd_compression=self.options.kernel_initrd_compression,
+            initrd_compression_options=self.options.kernel_initrd_compression_options,
+            initrd_firmware=self.options.kernel_initrd_firmware,
+            initrd_addons=self.options.kernel_initrd_addons,
+            initrd_overlay=self.options.kernel_initrd_overlay,
+            initrd_stage_firmware=self.options.kernel_initrd_stage_firmware,
+            build_efi_image=self.options.kernel_build_efi_image,
+            initrd_ko_use_workaround=False,
+            initrd_default_compression="zstd -1 -T0",
+            initrd_include_extra_modules_conf=True,
+            initrd_tool_pass_root=False,
+            enable_zfs_support=self.options.kernel_enable_zfs_support,
+            enable_perf=self.options.kernel_enable_perf,
+            project_dir="${CRAFT_PROJECT_DIR}",
+            source_dir="${CRAFT_PART_SRC}",
+            build_dir="${CRAFT_PART_BUILD}",
+            install_dir="${CRAFT_PART_INSTALL}",
+            stage_dir="${CRAFT_STAGE}",
+        )
 
     @classmethod
     def get_out_of_source_build(cls) -> bool:
