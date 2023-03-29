@@ -436,7 +436,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _initrd_modules_empty_cmd)
         assert _is_sub_array(build_commands, _initrd_configured_modules_empty_cmd)
         assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _donwload_initrd_fnc)
+        assert _is_sub_array(build_commands, _download_initrd_fnc)
         assert _is_sub_array(build_commands, _get_initrd_cmd)
         assert _is_sub_array(build_commands, _download_snapd_fnc)
         assert _is_sub_array(build_commands, _get_snapd_cmd)
@@ -502,7 +502,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _initrd_modules_cmd)
         assert _is_sub_array(build_commands, _initrd_configured_modules_empty_cmd)
         assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _donwload_initrd_fnc)
+        assert _is_sub_array(build_commands, _download_initrd_fnc)
         assert _is_sub_array(build_commands, _get_initrd_cmd)
         assert _is_sub_array(build_commands, _download_snapd_fnc)
         assert _is_sub_array(build_commands, _get_snapd_cmd)
@@ -561,7 +561,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _initrd_modules_empty_cmd)
         assert _is_sub_array(build_commands, _initrd_configured_modules_empty_cmd)
         assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _donwload_initrd_fnc)
+        assert _is_sub_array(build_commands, _download_initrd_fnc)
         assert _is_sub_array(build_commands, _get_initrd_cmd)
         assert _is_sub_array(build_commands, _download_snapd_fnc)
         assert _is_sub_array(build_commands, _get_snapd_cmd)
@@ -623,7 +623,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _initrd_modules_cmd)
         assert _is_sub_array(build_commands, _initrd_configured_modules_cmd)
         assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _donwload_initrd_fnc)
+        assert _is_sub_array(build_commands, _download_initrd_fnc)
         assert _is_sub_array(build_commands, _get_initrd_cmd)
         assert _is_sub_array(build_commands, _download_snapd_fnc)
         assert _is_sub_array(build_commands, _get_snapd_cmd)
@@ -683,7 +683,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _initrd_modules_cmd)
         assert _is_sub_array(build_commands, _initrd_configured_modules_cmd)
         assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _donwload_initrd_fnc)
+        assert _is_sub_array(build_commands, _download_initrd_fnc)
         assert _is_sub_array(build_commands, _get_initrd_armhf_cmd)
         assert _is_sub_array(build_commands, _download_snapd_fnc)
         assert _is_sub_array(build_commands, _get_snapd_armhf_cmd)
@@ -1267,7 +1267,7 @@ _link_files_fnc = [
     )
 ]
 
-_donwload_initrd_fnc = [
+_download_initrd_fnc = [
     textwrap.dedent(
         """
         # Helper to download code initrd deb package
