@@ -21,6 +21,7 @@ import platform
 import subprocess
 import sys
 import tempfile
+import textwrap
 
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
@@ -435,7 +436,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _initrd_modules_empty_cmd)
         assert _is_sub_array(build_commands, _initrd_configured_modules_empty_cmd)
         assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _donwload_initrd_fnc)
+        assert _is_sub_array(build_commands, _download_initrd_fnc)
         assert _is_sub_array(build_commands, _get_initrd_cmd)
         assert _is_sub_array(build_commands, _download_snapd_fnc)
         assert _is_sub_array(build_commands, _get_snapd_cmd)
@@ -501,7 +502,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _initrd_modules_cmd)
         assert _is_sub_array(build_commands, _initrd_configured_modules_empty_cmd)
         assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _donwload_initrd_fnc)
+        assert _is_sub_array(build_commands, _download_initrd_fnc)
         assert _is_sub_array(build_commands, _get_initrd_cmd)
         assert _is_sub_array(build_commands, _download_snapd_fnc)
         assert _is_sub_array(build_commands, _get_snapd_cmd)
@@ -560,7 +561,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _initrd_modules_empty_cmd)
         assert _is_sub_array(build_commands, _initrd_configured_modules_empty_cmd)
         assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _donwload_initrd_fnc)
+        assert _is_sub_array(build_commands, _download_initrd_fnc)
         assert _is_sub_array(build_commands, _get_initrd_cmd)
         assert _is_sub_array(build_commands, _download_snapd_fnc)
         assert _is_sub_array(build_commands, _get_snapd_cmd)
@@ -622,7 +623,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _initrd_modules_cmd)
         assert _is_sub_array(build_commands, _initrd_configured_modules_cmd)
         assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _donwload_initrd_fnc)
+        assert _is_sub_array(build_commands, _download_initrd_fnc)
         assert _is_sub_array(build_commands, _get_initrd_cmd)
         assert _is_sub_array(build_commands, _download_snapd_fnc)
         assert _is_sub_array(build_commands, _get_snapd_cmd)
@@ -682,7 +683,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _initrd_modules_cmd)
         assert _is_sub_array(build_commands, _initrd_configured_modules_cmd)
         assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _donwload_initrd_fnc)
+        assert _is_sub_array(build_commands, _download_initrd_fnc)
         assert _is_sub_array(build_commands, _get_initrd_armhf_cmd)
         assert _is_sub_array(build_commands, _download_snapd_fnc)
         assert _is_sub_array(build_commands, _get_snapd_armhf_cmd)
@@ -1222,97 +1223,138 @@ _initrd_configured_modules_empty_cmd = ['initrd_configured_kernel_modules=""']
 _initrd_configured_modules_cmd = ['initrd_configured_kernel_modules="libarc4"']
 
 _link_files_fnc = [
-    "link_files() {",
-    '\tif [ "${2}" = "*" ]; then',
-    "\t\tfor f in $(ls ${1})",
-    "\t\tdo",
-    '\t\t\tlink_files "${1}" "${f}" "${3}"',
-    "\t\tdone",
-    "\t\treturn 0",
-    "\tfi",
-    '\tif [ -d "${1}/${2}" ]; then',
-    "\t\tfor f in $(ls ${1}/${2})",
-    "\t\tdo",
-    '\t\t\tlink_files "${1}" "${2}/${f}" "${3}"',
-    "\t\tdone",
-    "\t\treturn 0",
-    "\tfi",
-    "",
-    '\tlocal found=""',
-    "\tfor f in $(ls ${1}/${2})",
-    "\tdo",
-    '\t\tif [[ -L "${f}" ]]; then',
-    "\t\t\tlocal rel_path=$( realpath --no-symlinks --relative-to=${1} ${f} )",
-    "\t\telse",
-    "\t\t\tlocal rel_path=$( realpath -se --relative-to=${1} ${f} )",
-    "\t\tfi",
-    "\t\tlocal dir_path=$(dirname ${rel_path})",
-    "\t\tmkdir -p ${3}/${dir_path}",
-    '\t\techo "installing ${f} to ${3}/${dir_path}"',
-    "\t\tln -f ${f} ${3}/${dir_path}",
-    '\t\tfound="yes"',
-    "\tdone",
-    '\tif [ "yes" = "${found}" ]; then',
-    "\t\treturn 0",
-    "\telse",
-    "\t\treturn 1",
-    "\tfi",
-    "}",
+    textwrap.dedent(
+        """
+        # link files, accept wild cards
+        # 1: reference dir, 2: file(s) including wild cards, 3: dst dir
+        link_files() {
+        	if [ "${2}" = "*" ]; then
+        		for f in $(ls ${1})
+        		do
+        			link_files "${1}" "${f}" "${3}"
+        		done
+        		return 0
+        	fi
+        	if [ -d "${1}/${2}" ]; then
+        		for f in $(ls ${1}/${2})
+        		do
+        			link_files "${1}" "${2}/${f}" "${3}"
+        		done
+        		return 0
+        	fi
+
+        	local found=""
+        	for f in $(ls ${1}/${2})
+        	do
+        		if [[ -L "${f}" ]]; then
+        			local rel_path=$( realpath --no-symlinks --relative-to=${1} ${f} )
+        		else
+        			local rel_path=$( realpath -se --relative-to=${1} ${f} )
+        		fi
+        		local dir_path=$(dirname ${rel_path})
+        		mkdir -p ${3}/${dir_path}
+        		echo "installing ${f} to ${3}/${dir_path}"
+        		ln -f ${f} ${3}/${dir_path}
+        		found="yes"
+        	done
+        	if [ "yes" = "${found}" ]; then
+        		return 0
+        	else
+        		return 1
+        	fi
+        }
+        """
+    )
 ]
 
-_donwload_initrd_fnc = [
-    "download_core_initrd() {",
-    "\tapt-get download ubuntu-core-initramfs:${1}",
-    "\t# unpack dep to the target dir",
-    "\tdpkg -x ubuntu-core-initramfs_*.deb ${2}",
-    "}",
+_download_initrd_fnc = [
+    textwrap.dedent(
+        """
+        # Helper to download code initrd deb package
+        # 1: arch, 2: output dir
+        download_core_initrd() {
+        	apt-get download ubuntu-core-initramfs:${1}
+        	# unpack dep to the target dir
+        	dpkg -x ubuntu-core-initramfs_*.deb ${2}
+        }
+        """
+    )
 ]
+
+_machine_arch = _DEB_ARCH_TRANSLATIONS[platform.machine()]
 
 _get_initrd_cmd = [
-    'echo "Getting ubuntu-core-initrd...."',
-    "if [ ! -e ${UC_INITRD_DEB} ]; then",
-    f"\tdownload_core_initrd {_DEB_ARCH_TRANSLATIONS[platform.machine()]} ${{UC_INITRD_DEB}}",
-    "fi",
+    textwrap.dedent(
+        f"""
+        echo "Getting ubuntu-core-initrd...."
+        # only download u-c-initrd deb if needed
+        if [ ! -e ${{UC_INITRD_DEB}} ]; then
+        	download_core_initrd {_machine_arch} ${{UC_INITRD_DEB}}
+        fi
+        """
+    )
 ]
 
 _get_initrd_armhf_cmd = [
-    'echo "Getting ubuntu-core-initrd...."',
-    "if [ ! -e ${UC_INITRD_DEB} ]; then",
-    "\tdownload_core_initrd armhf ${UC_INITRD_DEB}",
-    "fi",
+    textwrap.dedent(
+        """
+        echo "Getting ubuntu-core-initrd...."
+        # only download u-c-initrd deb if needed
+        if [ ! -e ${UC_INITRD_DEB} ]; then
+        	download_core_initrd armhf ${UC_INITRD_DEB}
+        fi
+        """
+    )
 ]
 
 _download_snapd_fnc = [
-    "\tapt-get download snapd:${1}",
-    "\t# unpack dep to the target dir",
-    "\tdpkg -x snapd_*.deb ${2}",
-    "}",
+    textwrap.dedent(
+        """
+        # Helper to download snap-bootstrap from snapd deb package
+        # 1: arch, 2: output dir
+        download_snap_bootstrap() {
+        	apt-get download snapd:${1}
+        	# unpack dep to the target dir
+        	dpkg -x snapd_*.deb ${2}
+        }
+        """
+    )
 ]
 
 _get_snapd_cmd = [
-    'echo "Getting snapd deb for snap bootstrap..."',
-    "if [ ! -e ${SNAPD_UNPACKED_SNAP} ]; then",
-    " ".join(
-        [
-            "\tdownload_snap_bootstrap",
-            f"{_DEB_ARCH_TRANSLATIONS[platform.machine()]}",
-            "${SNAPD_UNPACKED_SNAP}",
-        ],
-    ),
-    "fi",
+    textwrap.dedent(
+        f"""
+        echo "Getting snapd deb for snap bootstrap..."
+        # only download again if files does not exist, otherwise
+        # assume we are re-running build
+        if [ ! -e ${{SNAPD_UNPACKED_SNAP}} ]; then
+        	download_snap_bootstrap {_machine_arch} ${{SNAPD_UNPACKED_SNAP}}
+        fi
+        """
+    )
 ]
 
 _get_snapd_armhf_cmd = [
-    'echo "Getting snapd deb for snap bootstrap..."',
-    "if [ ! -e ${SNAPD_UNPACKED_SNAP} ]; then",
-    "\tdownload_snap_bootstrap armhf ${SNAPD_UNPACKED_SNAP}",
-    "fi",
+    textwrap.dedent(
+        """
+        echo "Getting snapd deb for snap bootstrap..."
+        # only download again if files does not exist, otherwise
+        # assume we are re-running build
+        if [ ! -e ${SNAPD_UNPACKED_SNAP} ]; then
+        	download_snap_bootstrap armhf ${SNAPD_UNPACKED_SNAP}
+        fi
+        """
+    )
 ]
 
 _clean_old_build_cmd = [
-    'echo "Cleaning previous build first..."',
-    "[ -e ${CRAFT_PART_INSTALL}/modules ] && rm -rf ${CRAFT_PART_INSTALL}/modules",
-    "[ -L ${CRAFT_PART_INSTALL}/lib/modules ] && rm -rf ${CRAFT_PART_INSTALL}/lib/modules",
+    textwrap.dedent(
+        """
+        echo "Cleaning previous build first..."
+        [ -e ${CRAFT_PART_INSTALL}/modules ] && rm -rf ${CRAFT_PART_INSTALL}/modules
+        [ -L ${CRAFT_PART_INSTALL}/lib/modules ] && rm -rf ${CRAFT_PART_INSTALL}/lib/modules
+        """
+    )
 ]
 
 _prepare_config_cmd = [
@@ -1339,20 +1381,17 @@ _prepare_config_defconfig_cmd = [
 _prepare_config_flavour_cmd = [
     'echo "Preparing config..."',
     "if [ ! -e ${CRAFT_PART_BUILD}/.config ]; then",
-    '\techo "Assembling Ubuntu config..."',
-    "\tbranch=$(cut -d'.' -f 2- < ${KERNEL_SRC}/debian/debian.env)",
-    "\tbaseconfigdir=${KERNEL_SRC}/debian.${branch}/config",
-    "\tarchconfigdir=${KERNEL_SRC}/debian.${branch}/config/${DEB_ARCH}",
-    "\tcommonconfig=${baseconfigdir}/config.common.ports",
-    "\tubuntuconfig=${baseconfigdir}/config.common.ubuntu",
-    "\tarchconfig=${archconfigdir}/config.common.${DEB_ARCH}",
-    "\tflavourconfig=${archconfigdir}/config.flavour.raspi",
-    " ".join(
-        [
-            "\tcat",
-            "${commonconfig} ${ubuntuconfig} ${archconfig} ${flavourconfig}",
-            "> ${CRAFT_PART_BUILD}/.config 2>/dev/null",
-        ],
+    textwrap.dedent(
+        """	echo "Assembling Ubuntu config..."
+	branch=$(cut -d'.' -f 2- < ${KERNEL_SRC}/debian/debian.env)
+	baseconfigdir=${KERNEL_SRC}/debian.${branch}/config
+	archconfigdir=${KERNEL_SRC}/debian.${branch}/config/${DEB_ARCH}
+	commonconfig=${baseconfigdir}/config.common.ports
+	ubuntuconfig=${baseconfigdir}/config.common.ubuntu
+	archconfig=${archconfigdir}/config.common.${DEB_ARCH}
+	flavourconfig=${archconfigdir}/config.flavour.raspi
+    cat ${commonconfig} ${ubuntuconfig} ${archconfig} ${flavourconfig} \
+> ${CRAFT_PART_BUILD}/.config 2>/dev/null"""
     ),
     "fi",
 ]
@@ -1845,54 +1884,57 @@ _install_config_cmd = [
     "ln -f ${CRAFT_PART_BUILD}/.config ${CRAFT_PART_INSTALL}/config-${KERNEL_RELEASE}",
 ]
 
+# pylint: disable=line-too-long
 _finalize_install_cmd = [
-    'echo "Finalizing install directory..."',
-    "mv ${CRAFT_PART_INSTALL}/lib/modules ${CRAFT_PART_INSTALL}/",
-    "rm ${CRAFT_PART_INSTALL}/modules/*/build ${CRAFT_PART_INSTALL}/modules/*/source",
-    " ".join(
-        [
-            "[ -d ${CRAFT_PART_INSTALL}/lib/firmware ]",
-            "&&",
-            "mv ${CRAFT_PART_INSTALL}/lib/firmware ${CRAFT_PART_INSTALL}",
-        ],
-    ),
-    "ln -sf ../modules ${CRAFT_PART_INSTALL}/lib/modules",
-    "ln -sf ../firmware ${CRAFT_PART_INSTALL}/lib/firmware",
+    textwrap.dedent(
+        """
+
+        echo "Finalizing install directory..."
+        # upstream kernel installs under $INSTALL_MOD_PATH/lib/modules/
+        # but snapd expects modules/ and firmware/
+        mv ${CRAFT_PART_INSTALL}/lib/modules ${CRAFT_PART_INSTALL}/
+        # remove symlinks modules/*/build and modules/*/source
+        rm ${CRAFT_PART_INSTALL}/modules/*/build ${CRAFT_PART_INSTALL}/modules/*/source
+        # if there is firmware dir, move it to snap root
+        # this could have been from stage packages or from kernel build
+        [ -d ${CRAFT_PART_INSTALL}/lib/firmware ] && mv ${CRAFT_PART_INSTALL}/lib/firmware ${CRAFT_PART_INSTALL}
+        # create symlinks for modules and firmware for convenience
+        ln -sf ../modules ${CRAFT_PART_INSTALL}/lib/modules
+        ln -sf ../firmware ${CRAFT_PART_INSTALL}/lib/firmware
+        """
+    )
 ]
+# pylint: enable=line-too-long
 
 _clone_zfs_cmd = [
-    "if [ ! -d ${CRAFT_PART_BUILD}/zfs ]; then",
-    '\techo "cloning zfs..."',
-    "\tgit clone --depth=1 https://github.com/openzfs/zfs ${CRAFT_PART_BUILD}/zfs -b master",
-    "fi",
+    textwrap.dedent(
+        """
+        if [ ! -d ${CRAFT_PART_BUILD}/zfs ]; then
+        	echo "cloning zfs..."
+        	git clone --depth=1 https://github.com/openzfs/zfs ${CRAFT_PART_BUILD}/zfs -b master
+        fi
+        """
+    )
 ]
 
 _build_zfs_cmd = [
-    'echo "Building zfs modules..."',
-    "cd ${CRAFT_PART_BUILD}/zfs",
-    "./autogen.sh",
-    " ".join(
-        [
-            "./configure",
-            "--with-linux=${KERNEL_SRC}",
-            "--with-linux-obj=${CRAFT_PART_BUILD}",
-            "--with-config=kernel",
-            "--host=${CRAFT_ARCH_TRIPLET}",
-        ],
-    ),
-    "make -j$(nproc)",
-    "make install DESTDIR=${CRAFT_PART_INSTALL}/zfs",
-    'release_version="$(ls ${CRAFT_PART_INSTALL}/modules)"',
-    " ".join(
-        [
-            "mv",
-            "${CRAFT_PART_INSTALL}/zfs/lib/modules/${release_version}/extra",
-            "${CRAFT_PART_INSTALL}/modules/${release_version}",
-        ],
-    ),
-    "rm -rf ${CRAFT_PART_INSTALL}/zfs",
-    'echo "Rebuilding module dependencies"',
-    "depmod -b ${CRAFT_PART_INSTALL} ${release_version}",
+    textwrap.dedent(
+        """
+        echo "Building zfs modules..."
+        cd ${CRAFT_PART_BUILD}/zfs
+        ./autogen.sh
+        ./configure --with-linux=${KERNEL_SRC} --with-linux-obj=${CRAFT_PART_BUILD} \
+--with-config=kernel --host=${CRAFT_ARCH_TRIPLET}
+        make -j$(nproc)
+        make install DESTDIR=${CRAFT_PART_INSTALL}/zfs
+        release_version="$(ls ${CRAFT_PART_INSTALL}/modules)"
+        mv ${CRAFT_PART_INSTALL}/zfs/lib/modules/${release_version}/extra \
+${CRAFT_PART_INSTALL}/modules/${release_version}
+        rm -rf ${CRAFT_PART_INSTALL}/zfs
+        echo "Rebuilding module dependencies"
+        depmod -b ${CRAFT_PART_INSTALL} ${release_version}
+        """
+    )
 ]
 
 _build_perf_cmd = [
@@ -1903,7 +1945,7 @@ _build_perf_cmd = [
             "make -j$(nproc)",
             "-C ${KERNEL_SRC}",
             "O=${CRAFT_PART_BUILD}",
-            '-C "${CRAFT_PART_SRC}/tools/perf"',
+            '-C "${KERNEL_SRC}/tools/perf"',
             'O="${CRAFT_PART_BUILD}/tools/perf"',
         ],
     ),
@@ -1920,7 +1962,7 @@ _build_perf_armhf_cmd = [
             "O=${CRAFT_PART_BUILD}",
             "ARCH=arm",
             "CROSS_COMPILE=${CRAFT_ARCH_TRIPLET}-",
-            '-C "${CRAFT_PART_SRC}/tools/perf"',
+            '-C "${KERNEL_SRC}/tools/perf"',
             'O="${CRAFT_PART_BUILD}/tools/perf"',
         ],
     ),
