@@ -1281,17 +1281,17 @@ _download_initrd_fnc = [
     )
 ]
 
+_machine_arch = _DEB_ARCH_TRANSLATIONS[platform.machine()]
+
 _get_initrd_cmd = [
     textwrap.dedent(
-        """
+        f"""
         echo "Getting ubuntu-core-initrd...."
         # only download u-c-initrd deb if needed
         if [ ! -e ${{UC_INITRD_DEB}} ]; then
-        	download_core_initrd {arch} ${{UC_INITRD_DEB}}
+        	download_core_initrd {_machine_arch} ${{UC_INITRD_DEB}}
         fi
-        """.format(
-            arch=_DEB_ARCH_TRANSLATIONS[platform.machine()]
-        )
+        """
     )
 ]
 
@@ -1300,12 +1300,10 @@ _get_initrd_armhf_cmd = [
         """
         echo "Getting ubuntu-core-initrd...."
         # only download u-c-initrd deb if needed
-        if [ ! -e ${{UC_INITRD_DEB}} ]; then
-        	download_core_initrd {arch} ${{UC_INITRD_DEB}}
+        if [ ! -e ${UC_INITRD_DEB} ]; then
+        	download_core_initrd armhf ${UC_INITRD_DEB}
         fi
-        """.format(
-            arch="armhf"
-        )
+        """
     )
 ]
 
@@ -1325,16 +1323,14 @@ _download_snapd_fnc = [
 
 _get_snapd_cmd = [
     textwrap.dedent(
-        """
+        f"""
         echo "Getting snapd deb for snap bootstrap..."
         # only download again if files does not exist, otherwise
         # assume we are re-running build
         if [ ! -e ${{SNAPD_UNPACKED_SNAP}} ]; then
-        	download_snap_bootstrap {arch} ${{SNAPD_UNPACKED_SNAP}}
+        	download_snap_bootstrap {_machine_arch} ${{SNAPD_UNPACKED_SNAP}}
         fi
-        """.format(
-            arch=_DEB_ARCH_TRANSLATIONS[platform.machine()]
-        )
+        """
     )
 ]
 
@@ -1344,12 +1340,10 @@ _get_snapd_armhf_cmd = [
         echo "Getting snapd deb for snap bootstrap..."
         # only download again if files does not exist, otherwise
         # assume we are re-running build
-        if [ ! -e ${{SNAPD_UNPACKED_SNAP}} ]; then
-        	download_snap_bootstrap {arch} ${{SNAPD_UNPACKED_SNAP}}
+        if [ ! -e ${SNAPD_UNPACKED_SNAP} ]; then
+        	download_snap_bootstrap armhf ${SNAPD_UNPACKED_SNAP}
         fi
-        """.format(
-            arch="armhf"
-        )
+        """
     )
 ]
 
@@ -1890,6 +1884,7 @@ _install_config_cmd = [
     "ln -f ${CRAFT_PART_BUILD}/.config ${CRAFT_PART_INSTALL}/config-${KERNEL_RELEASE}",
 ]
 
+# pylint: disable=line-too-long
 _finalize_install_cmd = [
     textwrap.dedent(
         """
@@ -1909,6 +1904,7 @@ _finalize_install_cmd = [
         """
     )
 ]
+# pylint: enable=line-too-long
 
 _clone_zfs_cmd = [
     textwrap.dedent(
