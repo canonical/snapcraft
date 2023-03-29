@@ -1,23 +1,8 @@
 [tool.black]
-exclude = '''
+extend-exclude = '''
 /(
-    \.git
-  | \.direnv
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | \.vscode
-  | _build
-  | buck-out
-  | __pycache__
-  | build
-  | dist
-
-  # specific to snapcraft
-  | ^/parts
-  | ^/stage
-  | ^/prime
+  | snapcraft_legacy
+  | tools
 )/
 '''
 # Targeting future versions as well so we don't have black reformatting code
@@ -124,7 +109,7 @@ ignore = [
 
 
     # Stricter type checking rules that that are disabled.
-    "A003",  # Class attribute shadowing a python bulitin (class attributes are seldom if ever referred to bare)
+    "A003",  # Class attribute shadowing a python built-in (class attributes are seldom if ever referred to bare)
     "N818",  # Exception names ending with suffix `Error`
     "ANN002",  "ANN003",  # Missing type annotation for *args and **kwargs
     "ANN101", "ANN102",  # Type annotations for `self` and `cls` in methods

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -27,6 +27,7 @@ from craft_parts import Action, Step, callbacks
 from craft_providers.bases.buildd import BuilddBaseAlias
 
 from snapcraft import errors
+from snapcraft.elf import ElfFile
 from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts.update_metadata import update_project_metadata
 from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Architecture, Project
@@ -199,7 +200,7 @@ def test_lifecycle_legacy_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
         )
 
     assert run_mock.mock_calls == []
-    assert str(raised.value) == "base is not core22"
+    assert str(raised.value) == "base is core20"
 
 
 @pytest.mark.parametrize(
@@ -1166,6 +1167,7 @@ def test_lifecycle_run_in_provider_default(
         base_configuration=mock_base_configuration,
         build_base="22.04",
         instance_name="test-instance-name",
+        allow_unstable=False,
     )
     mock_prepare_instance.assert_called_with(
         instance=mock_instance, host_project_path=tmp_path, bind_ssh=False
@@ -1289,6 +1291,7 @@ def test_lifecycle_run_in_provider_all_options(
         base_configuration=mock_base_configuration,
         build_base="22.04",
         instance_name="test-instance-name",
+        allow_unstable=False,
     )
     mock_prepare_instance.assert_called_with(
         instance=mock_instance, host_project_path=tmp_path, bind_ssh=True
@@ -1348,6 +1351,90 @@ def test_lifecycle_run_in_provider_try(
             call.execute_run(expected_command, check=True, cwd=Path("/root/project")),
         ],
         any_order=False,
+    )
+
+
+def test_lifecycle_run_in_provider(
+    mock_get_instance_name,
+    mock_instance,
+    mock_provider,
+    mocker,
+    snapcraft_yaml,
+    tmp_path,
+):
+    """Verify snapcraft bases are handled properly when launching an instance."""
+    mock_base_configuration = Mock()
+    mocker.patch(
+        "snapcraft.parts.lifecycle.providers.get_base_configuration",
+        return_value=mock_base_configuration,
+    )
+    mocker.patch("snapcraft.parts.lifecycle.providers.capture_logs_from_instance")
+    mocker.patch("snapcraft.parts.lifecycle.providers.ensure_provider_is_available")
+    mocker.patch("snapcraft.parts.lifecycle.providers.prepare_instance")
+    mocker.patch("snapcraft.projects.Project.get_build_on")
+    mocker.patch("snapcraft.projects.Project.get_build_for")
+
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    parts_lifecycle._run_in_provider(
+        project=project,
+        command_name="test",
+        parsed_args=argparse.Namespace(
+            use_lxd=False,
+            debug=False,
+            bind_ssh=False,
+            http_proxy=None,
+            https_proxy=None,
+        ),
+    )
+
+    mock_provider.launched_environment.assert_called_with(
+        project_name="mytest",
+        project_path=ANY,
+        base_configuration=mock_base_configuration,
+        build_base=BuilddBaseAlias.JAMMY.value,
+        instance_name="test-instance-name",
+        allow_unstable=False,
+    )
+
+
+def test_lifecycle_run_in_provider_devel_base(
+    emitter,
+    mock_get_instance_name,
+    mock_instance,
+    mock_provider,
+    mocker,
+    snapcraft_yaml,
+    tmp_path,
+):
+    """Verify the `devel` base is handled properly when launching an instance."""
+    mocker.patch("snapcraft.projects.Project.get_effective_base", return_value="devel")
+    mock_base_configuration = Mock()
+    mocker.patch(
+        "snapcraft.parts.lifecycle.providers.get_base_configuration",
+        return_value=mock_base_configuration,
+    )
+    mocker.patch("snapcraft.parts.lifecycle.providers.capture_logs_from_instance")
+    mocker.patch("snapcraft.parts.lifecycle.providers.ensure_provider_is_available")
+    mocker.patch("snapcraft.parts.lifecycle.providers.prepare_instance")
+    mocker.patch("snapcraft.projects.Project.get_build_on")
+    mocker.patch("snapcraft.projects.Project.get_build_for")
+
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    parts_lifecycle._run_in_provider(
+        project=project,
+        command_name="test",
+        parsed_args=argparse.Namespace(
+            use_lxd=False,
+            debug=False,
+            bind_ssh=False,
+            http_proxy=None,
+            https_proxy=None,
+        ),
+    )
+
+    emitter.assert_progress(
+        "Running snapcraft with a devel instance is for testing purposes only.",
+        permanent=True,
     )
 
 
@@ -1532,6 +1619,9 @@ def test_patch_elf(snapcraft_yaml, mocker, new_dir):
     )
     mocker.patch("snapcraft.elf._patcher.Patcher.get_current_rpath", return_value=[])
 
+    # don't load dependencies in a unit test
+    mocker.patch.object(ElfFile, "load_dependencies")
+
     yaml_data = {
         "base": "core22",
         "confinement": "classic",
@@ -1571,9 +1661,6 @@ def test_patch_elf(snapcraft_yaml, mocker, new_dir):
             patchelf_args=[
                 "--set-interpreter",
                 "/snap/core22/current/lib64/ld-linux-x86-64.so.2",
-                "--force-rpath",
-                "--set-rpath",
-                "/snap/core22/current/lib/x86_64-linux-gnu",
             ],
             elf_file_path=new_dir / "prime/elf.bin",
         )

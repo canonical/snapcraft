@@ -1,0 +1,24 @@
+name: colcon-msg-package
+version: "1.0"
+summary: snapcraft test
+description: |
+  Make sure ROS downloaded packages are properly sourced
+
+grade: stable
+confinement: strict
+base: core22
+
+apps:
+  colcon-msg-package:
+    command: opt/ros/humble/bin/rosidl
+    plugs: [network, network-bind]
+    extensions: [ros2-humble]
+
+parts:
+  test-part:
+    plugin: colcon
+    source: https://github.com/ros2/demos.git
+    source-branch: humble
+    source-subdir: pendulum_msgs
+    build-packages: [g++, make]
+

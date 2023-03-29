@@ -188,7 +188,7 @@ class LegacyStoreClientCLI:
         channels: Optional[Sequence[str]] = None,
         **kwargs,
     ) -> str:
-        """Login to the Snap Store and prompt if required."""
+        """Log in to the Snap Store and prompt if required."""
         if os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS):
             raise errors.SnapcraftError(
                 f"Cannot login with {constants.ENVIRONMENT_STORE_CREDENTIALS!r} set.",

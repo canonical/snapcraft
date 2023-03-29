@@ -20,12 +20,13 @@ from collections import OrderedDict
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Sequence, Set
 
+from craft_archives.repo.package_repository import PackageRepository
+
 from snapcraft_legacy import yaml_utils
 from snapcraft_legacy.internal import common
 from snapcraft_legacy.internal.meta import errors
 from snapcraft_legacy.internal.meta.application import Application
 from snapcraft_legacy.internal.meta.hooks import Hook
-from snapcraft_legacy.internal.meta.package_repository import PackageRepository
 from snapcraft_legacy.internal.meta.plugs import ContentPlug, Plug
 from snapcraft_legacy.internal.meta.slots import ContentSlot, Slot
 from snapcraft_legacy.internal.meta.system_user import SystemUser

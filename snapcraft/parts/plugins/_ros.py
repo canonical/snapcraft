@@ -182,6 +182,7 @@ class RosPlugin(plugins.Plugin):
                 "rosdep install --default-yes --ignore-packages-from-source "
                 '--from-paths "${CRAFT_PART_SRC_WORK}"',
             ]
+            + self._get_workspace_activation_commands()
             + self._get_build_commands()
             + self._get_stage_runtime_dependencies_commands()
         )

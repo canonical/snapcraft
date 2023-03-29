@@ -25,7 +25,7 @@ from overrides import overrides
 
 from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
-_SDK_SNAP = {"core22": "kde-frameworks-5-102-qt-5-15-8-core22-sd"}
+_SDK_SNAP = {"core22": "kf5-5-104-qt-5-15-8-core22-sdk"}
 
 
 @dataclasses.dataclass
@@ -100,15 +100,15 @@ class KDENeon(Extension):
         for part in self.yaml_data["parts"].values():
             build_snaps.extend(part.get("build-snaps", []))
 
-        matcher = re.compile(r"kde-frameworks-\d+-qt-\d+" + base + r"sd.*")
+        matcher = re.compile(r"kf5-\d+-\d+-qt-\d+.*-" + base + r"-sdk.*")
         sdk_snap_candidates = [s for s in build_snaps if matcher.match(s)]
         if sdk_snap_candidates:
             sdk_snap = sdk_snap_candidates[0].split("/")[0]
             builtin = False
         else:
             builtin = True
-        # The same except the trailing -sdk
-        content = sdk_snap[:-3]
+        # The same except the trailing -sd
+        content = sdk_snap[:-4]
 
         return KDESnaps(sdk=sdk_snap, content=content, builtin=builtin)
 
@@ -172,7 +172,7 @@ class KDENeon(Extension):
                     "XDG_DATA_DIRS": prepend_to_env(
                         "XDG_DATA_DIRS",
                         [
-                            f"$SNAPCRAFT_STAGE/usr/share:/snap/{sdk_snap}/current/usr/share",
+                            f"$CRAFT_STAGE/usr/share:/snap/{sdk_snap}/current/usr/share",
                             "/usr/share",
                         ],
                     ),
@@ -220,26 +220,25 @@ class KDENeon(Extension):
 
     @overrides
     def get_parts_snippet(self) -> Dict[str, Any]:
-        source = get_extensions_data_dir() / "desktop" / "command-chain"
+        # We can change this to the lightweight command-chain when
+        # the content snap includes the desktop-launch from
+        # https://github.com/snapcore/snapcraft-desktop-integration
+        source = get_extensions_data_dir() / "desktop" / "kde-neon"
 
         if self.kde_snaps.builtin:
-            base = self.yaml_data["base"]
-            sdk_snap = _SDK_SNAP[base]
-            provider = self.kde_snaps.content
             return {
-                "kde-neon-extension/sdk": {
+                "kde-neon/sdk": {
                     "source": str(source),
-                    "source-subdir": "kde-neon",
                     "plugin": "make",
-                    "make-parameters": [f"PLATFORM_PLUG={provider}"],
-                    "build-packages": ["g++"],
-                    "build-snaps": [f"{sdk_snap}/current/stable"],
-                }
+                    "make-parameters": [f"PLATFORM_PLUG={self.kde_snaps.content}"],
+                    "build-snaps": [self.kde_snaps.sdk],
+                },
             }
 
         return {
-            "kde-neon-extension/sdk": {
+            "kde-neon/sdk": {
                 "source": str(source),
                 "plugin": "make",
-            }
+                "make-parameters": [f"PLATFORM_PLUG={self.kde_snaps.content}"],
+            },
         }
