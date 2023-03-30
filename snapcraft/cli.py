@@ -21,6 +21,7 @@ import contextlib
 import logging
 import os
 import sys
+from typing import Any, Dict
 
 import craft_cli
 import craft_store
@@ -126,6 +127,13 @@ GLOBAL_ARGS = [
     craft_cli.GlobalArgument(
         "version", "flag", "-V", "--version", "Show the application version and exit"
     ),
+    craft_cli.GlobalArgument(
+        "enable-experimental-plugins",
+        "flag",
+        None,
+        "--enable-experimental-plugins",
+        "Allow using experimental (unstable) plugins",
+    ),
     craft_cli.GlobalArgument("trace", "flag", "-t", "--trace", argparse.SUPPRESS),
 ]
 
@@ -204,8 +212,9 @@ def get_dispatcher() -> craft_cli.Dispatcher:
     )
 
 
-def _run_dispatcher(dispatcher: craft_cli.Dispatcher) -> None:
-    global_args = dispatcher.pre_parse_args(sys.argv[1:])
+def _run_dispatcher(
+    dispatcher: craft_cli.Dispatcher, global_args: Dict[str, Any]
+) -> None:
     if global_args.get("version"):
         emit.message(f"snapcraft {__version__}")
     else:
@@ -235,13 +244,19 @@ def _emit_error(error, cause=None):
 
 def run():  # noqa: C901
     """Run the CLI."""
-    # Register our own plugins
-    plugins.register()
-
     dispatcher = get_dispatcher()
     retcode = 1
+
     try:
-        _run_dispatcher(dispatcher)
+        # Register our own plugins
+        global_args = dispatcher.pre_parse_args(sys.argv[1:])
+        enable_experimental = (
+            global_args.get("enable-experimental-plugins")
+            or os.getenv("SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS", "") != ""
+        )
+        plugins.register(enable_experimental)
+
+        _run_dispatcher(dispatcher, global_args)
         retcode = 0
     except ArgumentParsingError as err:
         # TODO https://github.com/canonical/craft-cli/issues/78

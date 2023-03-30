@@ -17,6 +17,7 @@
 """Snapcraft provided plugin registration."""
 
 import craft_parts
+from craft_cli import emit
 
 from .colcon_plugin import ColconPlugin
 from .conda_plugin import CondaPlugin
@@ -25,10 +26,13 @@ from .kernel import KernelPlugin
 from .python_plugin import PythonPlugin
 
 
-def register() -> None:
+def register(enable_experimental: bool) -> None:
     """Register Snapcraft plugins."""
     craft_parts.plugins.register({"colcon": ColconPlugin})
     craft_parts.plugins.register({"conda": CondaPlugin})
     craft_parts.plugins.register({"flutter": FlutterPlugin})
-    craft_parts.plugins.register({"kernel": KernelPlugin})
     craft_parts.plugins.register({"python": PythonPlugin})
+
+    if enable_experimental:
+        craft_parts.plugins.register({"kernel": KernelPlugin})
+        emit.progress("*EXPERIMENTAL* plugin 'kernel' enabled", permanent=True)
