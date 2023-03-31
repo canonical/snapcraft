@@ -519,6 +519,13 @@ def _run_in_provider(
     if getattr(parsed_args, "enable_experimental_ua_services", False):
         cmd.append("--enable-experimental-ua-services")
 
+    if getattr(
+        parsed_args,
+        "enable_experimental_plugins",
+        os.getenv("SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS"),
+    ):
+        cmd.append("--enable-experimental-plugins")
+
     project_path = Path().absolute()
     output_dir = utils.get_managed_environment_project_path()
 
