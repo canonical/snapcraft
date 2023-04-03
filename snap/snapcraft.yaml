@@ -10,7 +10,7 @@ adopt-info: snapcraft
 confinement: classic
 license: GPL-3.0
 assumes:
-  - snapd2.39
+  - snapd2.43
 
 apps:
   snapcraft:
