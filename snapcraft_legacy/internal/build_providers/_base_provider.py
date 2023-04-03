@@ -505,7 +505,14 @@ class Provider(abc.ABC):
 
         # Inject snapcraft and its base.
         snap_injector.add(snap_name="core20")
-        snap_injector.add(snap_name="snapcraft")
+
+        if common.is_snap():
+            # Use SNAP_INSTANCE_NAME for snapcraft's snap name, as it may not be
+            # 'snapcraft' if the '--name' parameter was used to install snapcraft.
+            snap_injector.add(snap_name=os.getenv("SNAP_INSTANCE_NAME", "snapcraft"))
+        else:
+            # If snapcraft is not running as a snap, then default to 'snapcraft'.
+            snap_injector.add(snap_name="snapcraft")
 
         snap_injector.apply()
 
