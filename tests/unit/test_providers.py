@@ -184,6 +184,9 @@ def test_get_base_configuration(
     """Verify the base configuration is properly configured."""
     mocker.patch("sys.platform", "linux")
     mocker.patch(
+        "snapcraft.providers.is_snapcraft_running_from_snap", return_value=True
+    )
+    mocker.patch(
         "snapcraft.providers.get_managed_environment_snap_channel",
         return_value="test-channel",
     )
@@ -269,6 +272,9 @@ def test_get_base_configuration_snap_instance_name_default(
     """If `SNAP_INSTANCE_NAME` does not exist, use the default name 'snapcraft'."""
     mocker.patch("sys.platform", "linux")
     mocker.patch(
+        "snapcraft.providers.is_snapcraft_running_from_snap", return_value=True
+    )
+    mocker.patch(
         "snapcraft.providers.get_managed_environment_snap_channel",
         return_value=None,
     )
@@ -276,6 +282,40 @@ def test_get_base_configuration_snap_instance_name_default(
     mocker.patch("snapcraft.providers.get_instance_name")
     mock_buildd_base = mocker.patch("snapcraft.providers.bases.BuilddBase")
     monkeypatch.delenv("SNAP_INSTANCE_NAME", raising=False)
+
+    providers.get_base_configuration(
+        alias=bases.BuilddBaseAlias.JAMMY,
+        instance_name="test-instance-name",
+    )
+
+    mock_buildd_base.assert_called_with(
+        alias=ANY,
+        compatibility_tag=ANY,
+        environment=ANY,
+        hostname=ANY,
+        snaps=[bases.buildd.Snap(name="snapcraft", channel=None, classic=True)],
+        packages=ANY,
+    )
+
+
+def test_get_base_configuration_snap_instance_name_not_running_as_snap(
+    tmp_path,
+    mocker,
+    monkeypatch,
+):
+    """If snapcraft is not running as a snap, then use the default name 'snapcraft'."""
+    mocker.patch(
+        "snapcraft.providers.is_snapcraft_running_from_snap", return_value=False
+    )
+    mocker.patch("sys.platform", "linux")
+    mocker.patch(
+        "snapcraft.providers.get_managed_environment_snap_channel",
+        return_value=None,
+    )
+    mocker.patch("snapcraft.providers.get_command_environment")
+    mocker.patch("snapcraft.providers.get_instance_name")
+    mock_buildd_base = mocker.patch("snapcraft.providers.bases.BuilddBase")
+    monkeypatch.setenv("SNAP_INSTANCE_NAME", "other-snap")
 
     providers.get_base_configuration(
         alias=bases.BuilddBaseAlias.JAMMY,
