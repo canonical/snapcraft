@@ -11,9 +11,11 @@ parts:
     plugin: nil
     stage-packages:
       - test-ppa
+      - keystone
     override-build: |
       apt-cache policy test-ppa
       apt-cache policy test-ppa | grep -F "999 http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu"
+      apt-cache policy keystone | grep -F "888 http://ubuntu-cloud.archive.canonical.com/ubuntu jammy-proposed/antelope/main amd64 Packages"      
       craftctl default
 
 package-repositories:
@@ -24,6 +26,10 @@ package-repositories:
     key-id: 78E1918602959B9C59103100F1831DDAFC42E99D
     url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu
     priority: 999
+  - type: apt
+    cloud: antelope
+    pocket: proposed
+    priority: 888
 
 apps:
     test-ppa:
