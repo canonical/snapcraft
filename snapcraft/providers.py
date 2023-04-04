@@ -34,6 +34,7 @@ from snapcraft.utils import (
     get_managed_environment_log_path,
     get_managed_environment_project_path,
     get_managed_environment_snap_channel,
+    is_snapcraft_running_from_snap,
 )
 
 SNAPCRAFT_BASE_TO_PROVIDER_BASE = {
@@ -183,12 +184,14 @@ def get_base_configuration(
         )
         snap_name = "snapcraft"
         snap_channel = "stable"
-    else:
-        # Use SNAP_INSTANCE_NAME for snapcraft's snap name, as it may not be 'snapcraft'
-        # if the '--name' parameter was used to install snapcraft.
-        # If snapcraft is not running as a snap, then envvar will not exist so default
-        # to 'snapcraft'.
+    elif is_snapcraft_running_from_snap():
+        # Use SNAP_INSTANCE_NAME for snapcraft's snap name, as it may not be
+        # 'snapcraft' if the '--name' parameter was used to install snapcraft.
         snap_name = os.getenv("SNAP_INSTANCE_NAME", "snapcraft")
+    else:
+        # If snapcraft is not running as a snap, then envvar may not exist so
+        # default to 'snapcraft'.
+        snap_name = "snapcraft"
 
     return bases.BuilddBase(
         alias=alias,
