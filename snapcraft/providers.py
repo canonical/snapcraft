@@ -176,7 +176,19 @@ def get_base_configuration(
     # install snapcraft from the store's stable channel
     snap_channel = get_managed_environment_snap_channel()
     if sys.platform != "linux" and not snap_channel:
+        emit.progress(
+            "Using snapcraft from snap store channel 'latest/stable' in instance "
+            "because snap injection is only supported on Linux hosts.",
+            permanent=True,
+        )
+        snap_name = "snapcraft"
         snap_channel = "stable"
+    else:
+        # Use SNAP_INSTANCE_NAME for snapcraft's snap name, as it may not be 'snapcraft'
+        # if the '--name' parameter was used to install snapcraft.
+        # If snapcraft is not running as a snap, then envvar will not exist so default
+        # to 'snapcraft'.
+        snap_name = os.getenv("SNAP_INSTANCE_NAME", "snapcraft")
 
     return bases.BuilddBase(
         alias=alias,
@@ -185,7 +197,7 @@ def get_base_configuration(
         hostname=instance_name,
         snaps=[
             bases.buildd.Snap(
-                name="snapcraft",
+                name=snap_name,
                 channel=snap_channel,
                 classic=True,
             )

@@ -1,0 +1,39 @@
+summary: Verify snapcraft can be installed in parallel
+
+prepare: |
+  #shellcheck source=tests/spread/tools/prepare.sh
+  . "$TOOLS_DIR/prepare.sh"
+
+  # enabling parallel installs requires a reboot
+  # see https://snapcraft.io/docs/parallel-installs
+  if [[ $SPREAD_REBOOT = 0 ]]; then
+    snap set system experimental.parallel-instances=true
+    REBOOT
+  fi
+
+  # install snapcraft using snapd's parallel-instances feature
+  install_snapcraft_as snapcraft_a
+
+restore: |
+  #shellcheck source=tests/spread/tools/prepare.sh
+  . "$TOOLS_DIR/prepare.sh"
+
+  if [[ $SPREAD_REBOOT = 0 ]]; then
+    # remove the parallel installed snapcraft
+    snap remove snapcraft_a --purge
+
+    # unset parallel instance support
+    snap set system experimental.parallel-instances=null
+    REBOOT
+  fi
+
+  # reinstall snapcraft after reboot
+  install_snapcraft
+
+execute: |
+  # remove snapcraft to ensure it is not injected into the instance
+  snap remove snapcraft --purge
+
+  # use lxd so snapcraft_a gets injected
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+  snapcraft_a pull --use-lxd --verbosity=trace

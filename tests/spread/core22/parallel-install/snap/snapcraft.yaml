@@ -1,0 +1,12 @@
+name: parallel-install
+base: core22
+version: '1.0'
+summary: 'remove-hook'
+description: Verify snapcraft can be installed in parallel.
+grade: stable
+confinement: strict
+
+parts:
+  hello-world:
+    plugin: nil
+    source: .
