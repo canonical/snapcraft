@@ -920,7 +920,10 @@
                                     "ros1-noetic-robot",
                                     "ros1-noetic-ros-base",
                                     "ros1-noetic-ros-core",
-                                    "ros2-foxy"
+                                    "ros2-foxy",
+                                    "ros2-foxy-ros-base",
+                                    "ros2-foxy-ros-core",
+                                    "ros2-foxy-desktop"
                                 ]
                             }
                         }
