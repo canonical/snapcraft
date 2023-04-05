@@ -239,6 +239,7 @@ def run():  # noqa: C901
     plugins.register()
 
     dispatcher = get_dispatcher()
+    retcode = 1
     try:
         _run_dispatcher(dispatcher)
         retcode = 0

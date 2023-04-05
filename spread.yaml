@@ -55,17 +55,25 @@ backends:
       - ubuntu-22.04-64:
           workers: 6
           image: ubuntu-2204-64
+      - ubuntu-24.04-64:
+          image: ubuntu-23.04-64
+          storage: 12G
+          workers: 6
 
   multipass:
     type: adhoc
     allocate: |
-      if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ]; then
-        image="18.04"
-        instance_name="spread-18-04"
-      elif [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
-        image="20.04"
-        instance_name="spread-20-04"
+      if [ "$SPREAD_SYSTEM" = "ubuntu-24.04-64" ]; then
+          image="daily:devel"
+          instance_name=spread-devel
       else
+          # SPREAD_SYSTEM has the following format here 'ubuntu-XX.YY-64' and gets
+          # translated to an image XX.YY.
+          image=$(echo $SPREAD_SYSTEM | sed -e 's/ubuntu-\(.*\)-64/\1/')
+          instance_name="spread-${image}"
+      fi
+
+      if [ -z "${image}" ]; then
         FATAL "$SPREAD_SYSTEM is not supported!"
       fi
 
@@ -84,11 +92,17 @@ backends:
 
       ADDRESS "$ip:22"
     discard: |
-      if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ]; then
-        instance_name="spread-18-04"
-      elif [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
-        instance_name="spread-20-04"
+      if [ "$SPREAD_SYSTEM" = "ubuntu-24.04-64" ]; then
+          image="daily:devel"
+          instance_name=spread-devel
       else
+          # SPREAD_SYSTEM has the following format here 'ubuntu-XX.YY-64' and gets
+          # translated to an image XX.YY.
+          image=$(echo $SPREAD_SYSTEM | sed -e 's/ubuntu-\(.*\)-64/\1/')
+          instance_name="spread-${image}"
+      fi
+
+      if [ -z "${image}" ]; then
         FATAL "$SPREAD_SYSTEM is not supported!"
       fi
 
@@ -174,6 +188,9 @@ backends:
 exclude: [snaps-cache/]
 
 prepare: |
+  #shellcheck source=tests/spread/tools/prepare.sh
+  . "$TOOLS_DIR/prepare.sh"
+
   # This unfortunately cannot be extracted into a standalone script since this
   # portion of of YAML runs before the source code has been fetched.
 
@@ -209,12 +226,10 @@ prepare: |
       # nicely handle the snap and deb being installed at the same time.
       apt-get remove --purge --yes lxd lxd-client
   fi
-  # install and setup the lxd snap - use 'retry' to workaround aa-exec issue
-  # see https://bugs.launchpad.net/snapd/+bug/1870201
-  retry -n 5 --wait 5 sh -c 'snap install lxd'
+
+  install_lxd
   # Add the ubuntu user to the lxd group.
   adduser ubuntu lxd
-  lxd init --auto
 
   # Hold snap refreshes for 24h.
   snap set system refresh.hold="$(date --date=tomorrow +%Y-%m-%dT%H:%M:%S%:z)"
@@ -230,8 +245,6 @@ prepare: |
       /snap/bin/lxd init --auto
   fi
 
-  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
-  . "$TOOLS_DIR/prepare.sh"
   install_snapcraft
 
   pushd /snapcraft

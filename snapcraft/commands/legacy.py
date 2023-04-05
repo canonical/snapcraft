@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Snapcraft Commands that call to the legacy implementation."""
+"""Snapcraft commands that refer to the legacy implementation."""
 
 import textwrap
 from typing import TYPE_CHECKING
@@ -59,7 +59,7 @@ class StoreLegacyUploadMetadataCommand(LegacyBaseCommand):
         - description
         - icon
 
-        If --force is given, it will force the local metadata into the Store,
+        If --force is used, it will force the local metadata into the Store,
         ignoring any possible conflict.
 
         Examples:
@@ -91,7 +91,7 @@ class StoreLegacyPromoteCommand(LegacyBaseCommand):
     help_msg = "Promote a build set from a channel"
     overview = textwrap.dedent(
         """
-        A build set is a set of commonly tagged revisions, the most simple
+        A build set is a set of commonly-tagged revisions; the simplest
         form of a build set is a set of revisions released to a channel.
 
         Currently, only channels are supported to release from (<from-channel>)
@@ -100,12 +100,13 @@ class StoreLegacyPromoteCommand(LegacyBaseCommand):
 
         The format for channels is `[<track>/]<risk>[/<branch>]` where
 
-        - <track> is used to have long term release channels. It is implicitly
-          set to the default.
-        - <risk> is mandatory and can be either `stable`, `candidate`, `beta`
-          or `edge`.
+        - <track> is used to support long-term release channels. It is
+          implicitly set to the default.
+        - <risk> is mandatory and must be one of `stable`, `candidate`,
+          `beta` or `edge`.
         - <branch> is optional and dynamically creates a channel with a
-          specific expiration date.
+          specific expiration date. Branches are specifically designed
+          to support short-term hot fixes.
         """
     )
 
@@ -139,7 +140,9 @@ class StoreLegacySetDefaultTrackCommand(LegacyBaseCommand):
     help_msg = "Set the default track for a snap"
     overview = textwrap.dedent(
         """
-        Set the default track for <snap-name> to <track>. <track> must already exist."""
+        Set the default track for <snap-name> to <track>;
+        the <track> must already exist.
+        """
     )
 
     @overrides
@@ -211,7 +214,7 @@ class StoreLegacyCreateKeyCommand(LegacyBaseCommand):
     overview = textwrap.dedent(
         """
         Create a key and store it locally. Use the register-key command to register
-        it on the store."""
+        it in the store."""
     )
 
     @overrides
@@ -228,8 +231,7 @@ class StoreLegacyRegisterKeyCommand(LegacyBaseCommand):
     help_msg = "Register a key to sign assertions with the Snap Store."
     overview = textwrap.dedent(
         """
-        Register a key with the Snap Store. Prior to registration, use create-key
-        to create one."""
+        Register a locally-created key with the Snap Store."""
     )
 
     @overrides
@@ -259,7 +261,7 @@ class StoreLegacySignBuildCommand(LegacyBaseCommand):
             "--local",
             "--local",
             action="store_true",
-            help="do not aupload to the Snap Store",
+            help="sign assertion, but do not upload to the Snap Store",
         )
 
 
@@ -270,7 +272,7 @@ class StoreLegacyValidateCommand(LegacyBaseCommand):
     help_msg = "Validate a gated snap"
     overview = textwrap.dedent(
         """
-        Each validation can be presented with either syntax:
+        Each validation can be specified with either syntax:
 
         -  <snap-name>=<revision>
         -  <snap-id>=<revision>"""
@@ -293,7 +295,7 @@ class StoreLegacyGatedCommand(LegacyBaseCommand):
     help_msg = "List all gated snaps for <snap-name>"
     overview = textwrap.dedent(
         """
-        Get the list of snaps and revisions gating a snaps"""
+        Get the list of snaps and revisions gating a snap"""
     )
 
     @overrides
@@ -302,7 +304,7 @@ class StoreLegacyGatedCommand(LegacyBaseCommand):
 
 
 class StoreLegacyListValidationSetsCommand(LegacyBaseCommand):
-    """Command passthrough for the edit-validation-sets command."""
+    """Command passthrough for the list-validation-sets command."""
 
     name = "list-validation-sets"
     help_msg = "Get the list of validation sets"

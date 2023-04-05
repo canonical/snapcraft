@@ -174,37 +174,21 @@ def test_ensure_provider_is_available_unknown_error():
     assert error.value.brief == "cannot install unknown provider"
 
 
-@pytest.mark.parametrize(
-    "platform, snap_channel, expected_snap_channel",
-    [
-        ("linux", None, None),
-        ("linux", "edge", "edge"),
-        ("darwin", "edge", "edge"),
-        # default to stable on non-linux system
-        ("darwin", None, "stable"),
-    ],
-)
-@pytest.mark.parametrize(
-    "alias",
-    [
-        bases.BuilddBaseAlias.BIONIC,
-        bases.BuilddBaseAlias.FOCAL,
-        bases.BuilddBaseAlias.JAMMY,
-    ],
-)
+@pytest.mark.parametrize("alias", providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE.values())
 def test_get_base_configuration(
-    platform,
-    snap_channel,
-    expected_snap_channel,
     alias,
     tmp_path,
     mocker,
+    monkeypatch,
 ):
-    """Verify the snapcraft snap is installed from the correct channel."""
-    mocker.patch("sys.platform", platform)
+    """Verify the base configuration is properly configured."""
+    mocker.patch("sys.platform", "linux")
+    mocker.patch(
+        "snapcraft.providers.is_snapcraft_running_from_snap", return_value=True
+    )
     mocker.patch(
         "snapcraft.providers.get_managed_environment_snap_channel",
-        return_value=snap_channel,
+        return_value="test-channel",
     )
     mocker.patch(
         "snapcraft.providers.get_command_environment",
@@ -216,6 +200,7 @@ def test_get_base_configuration(
     )
     mock_buildd_base = mocker.patch("snapcraft.providers.bases.BuilddBase")
     mock_buildd_base.compatibility_tag = "buildd-base-v0"
+    monkeypatch.setenv("SNAP_INSTANCE_NAME", "test-snap-name")
 
     providers.get_base_configuration(
         alias=alias,
@@ -229,10 +214,121 @@ def test_get_base_configuration(
         hostname="test-instance-name",
         snaps=[
             bases.buildd.Snap(
-                name="snapcraft", channel=expected_snap_channel, classic=True
+                name="test-snap-name", channel="test-channel", classic=True
             )
         ],
         packages=["gnupg", "dirmngr", "git"],
+    )
+
+
+@pytest.mark.parametrize(
+    ["platform", "snap_channel"],
+    [
+        # default to snapcraft from the stable channel on non-linux systems
+        ("darwin", "stable"),
+        ("win32", "stable"),
+        # Linux hosts support snap injection, so there should be no default channel
+        ("linux", None),
+    ],
+)
+def test_get_base_configuration_snap_channel(
+    platform,
+    snap_channel,
+    tmp_path,
+    mocker,
+    monkeypatch,
+):
+    """Verify the correct snap channel is chosen for different host OS's."""
+    mocker.patch("sys.platform", platform)
+    mocker.patch(
+        "snapcraft.providers.get_managed_environment_snap_channel",
+        return_value=None,
+    )
+    mocker.patch("snapcraft.providers.get_command_environment")
+    mocker.patch("snapcraft.providers.get_instance_name")
+    mock_buildd_base = mocker.patch("snapcraft.providers.bases.BuilddBase")
+    monkeypatch.setenv("SNAP_INSTANCE_NAME", "snapcraft")
+
+    providers.get_base_configuration(
+        alias=bases.BuilddBaseAlias.JAMMY,
+        instance_name="test-instance-name",
+    )
+
+    mock_buildd_base.assert_called_with(
+        alias=ANY,
+        compatibility_tag=ANY,
+        environment=ANY,
+        hostname=ANY,
+        snaps=[bases.buildd.Snap(name="snapcraft", channel=snap_channel, classic=True)],
+        packages=ANY,
+    )
+
+
+def test_get_base_configuration_snap_instance_name_default(
+    tmp_path,
+    mocker,
+    monkeypatch,
+):
+    """If `SNAP_INSTANCE_NAME` does not exist, use the default name 'snapcraft'."""
+    mocker.patch("sys.platform", "linux")
+    mocker.patch(
+        "snapcraft.providers.is_snapcraft_running_from_snap", return_value=True
+    )
+    mocker.patch(
+        "snapcraft.providers.get_managed_environment_snap_channel",
+        return_value=None,
+    )
+    mocker.patch("snapcraft.providers.get_command_environment")
+    mocker.patch("snapcraft.providers.get_instance_name")
+    mock_buildd_base = mocker.patch("snapcraft.providers.bases.BuilddBase")
+    monkeypatch.delenv("SNAP_INSTANCE_NAME", raising=False)
+
+    providers.get_base_configuration(
+        alias=bases.BuilddBaseAlias.JAMMY,
+        instance_name="test-instance-name",
+    )
+
+    mock_buildd_base.assert_called_with(
+        alias=ANY,
+        compatibility_tag=ANY,
+        environment=ANY,
+        hostname=ANY,
+        snaps=[bases.buildd.Snap(name="snapcraft", channel=None, classic=True)],
+        packages=ANY,
+    )
+
+
+def test_get_base_configuration_snap_instance_name_not_running_as_snap(
+    tmp_path,
+    mocker,
+    monkeypatch,
+):
+    """If snapcraft is not running as a snap, then use the default name 'snapcraft'."""
+    mocker.patch(
+        "snapcraft.providers.is_snapcraft_running_from_snap", return_value=False
+    )
+    mocker.patch("sys.platform", "linux")
+    mocker.patch(
+        "snapcraft.providers.get_managed_environment_snap_channel",
+        return_value=None,
+    )
+    mocker.patch("snapcraft.providers.get_command_environment")
+    mocker.patch("snapcraft.providers.get_instance_name")
+    mock_buildd_base = mocker.patch("snapcraft.providers.bases.BuilddBase")
+    monkeypatch.setenv("SNAP_INSTANCE_NAME", "other-snap")
+
+    providers.get_base_configuration(
+        alias=bases.BuilddBaseAlias.JAMMY,
+        instance_name="test-instance-name",
+    )
+
+    mock_buildd_base.assert_called_with(
+        alias=ANY,
+        compatibility_tag=ANY,
+        environment=ANY,
+        hostname=ANY,
+        snaps=[bases.buildd.Snap(name="snapcraft", channel=None, classic=True)],
+        packages=ANY,
     )
 
 

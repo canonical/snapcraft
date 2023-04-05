@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,6 +22,8 @@ import yaml
 import yaml.error
 
 from snapcraft import errors, utils
+
+_LEGACY_BASES = {"core", "core18", "core20"}
 
 
 def _check_duplicate_keys(node):
@@ -75,7 +77,7 @@ def load(filestream: TextIO) -> Dict[str, Any]:
     :param filename: The YAML file to load.
 
     :raises SnapcraftError: if loading didn't succeed.
-    :raises LegacyFallback: if the project's base is not core22.
+    :raises LegacyFallback: if the project's base is a legacy base.
     """
     try:
         data = yaml.safe_load(filestream)
@@ -88,8 +90,8 @@ def load(filestream: TextIO) -> Dict[str, Any]:
 
         if build_base is None:
             raise errors.LegacyFallback("no base defined")
-        if build_base != "core22":
-            raise errors.LegacyFallback("base is not core22")
+        if build_base in _LEGACY_BASES:
+            raise errors.LegacyFallback(f"base is {build_base}")
     except yaml.error.YAMLError as err:
         raise errors.SnapcraftError(f"snapcraft.yaml parsing error: {err!s}") from err
 

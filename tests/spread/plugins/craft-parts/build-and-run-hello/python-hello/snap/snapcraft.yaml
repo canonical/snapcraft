@@ -1,0 +1,16 @@
+name: python-hello
+version: "1.0"
+summary: simple python application
+description: build a python application using core22
+base: core22
+confinement: strict
+
+apps:
+  python-hello:
+    command: bin/hello
+    extensions: [gnome]
+
+parts:
+  hello:
+    plugin: python
+    source: src
