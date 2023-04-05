@@ -1,0 +1,75 @@
+summary: Build and run a basic ROS 2 snap using meta-ros extension
+
+kill-timeout: 180m
+
+environment:
+  SNAP/colcon_foxy_ros_core: colcon-foxy-ros-core
+  META_SNAP/colcon_foxy_ros_core: ros2-meta-ros-core
+  SNAP/colcon_foxy_ros_base: colcon-foxy-ros-core
+  META_SNAP/colcon_foxy_ros_base: ros2-meta-ros-base
+  # SNAP/colcon_foxy_desktop: colcon-foxy-desktop
+  # META_SNAP/colcon_foxy_desktop: ros-meta-desktop
+  SNAP_DIR: "../snaps/$SNAP"
+
+# The content snap required for the test to succeed is only
+# available on a subset of all the architectures this testbed
+# can run on.
+systems:
+  - ubuntu-20.04
+  - ubuntu-20.04-64
+  - ubuntu-20.04-amd64
+  - ubuntu-20.04-arm64
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  [ -f src/colcon-foxy-ros-core/src/hello.cpp ] && git checkout src/colcon-foxy-ros-core/src/hello.cpp
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "$SNAP_DIR"
+
+  # Build what we have and verify the snap runs as expected.
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+
+  # Check that the snap size is fairly small
+  # The non-content sharing snap is ~90M
+  SNAP_SIZE=$(ls -s "${SNAP}"_1.0_*.snap | cut -d " " -f1)
+  [ "200" -gt "$SNAP_SIZE" ]
+
+  snap connect ${SNAP}:ros-meta ${META_SNAP}
+  [ "$($SNAP)" = "hello world" ]
+
+  # Clean the hello part, then build and run again.
+  snapcraft clean hello
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+
+  snap connect ${SNAP}:ros-meta ${META_SNAP}
+  [ "$($SNAP)" = "hello world" ]
+
+  # Make sure that what we built runs with the changes applied.
+  if [ -f src/hello.cpp ]; then
+    modified_file=src/hello.cpp
+  else
+    FATAL "Cannot setup ${SNAP} for rebuilding"
+  fi
+
+  sed -i "${modified_file}" -e 's/hello world/hello rebuilt world/'
+
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+
+  snap connect ${SNAP}:ros-meta ${META_SNAP}
+  [ "$($SNAP)" = "hello rebuilt world" ]
