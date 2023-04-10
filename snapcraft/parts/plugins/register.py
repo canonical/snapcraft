@@ -17,7 +17,6 @@
 """Snapcraft provided plugin registration."""
 
 import craft_parts
-from craft_cli import emit
 
 from .colcon_plugin import ColconPlugin
 from .conda_plugin import CondaPlugin
