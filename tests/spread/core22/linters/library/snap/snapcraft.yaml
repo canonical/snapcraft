@@ -73,7 +73,7 @@ parts:
       - -Ddisable-introspection=true
     organize:
       snap/gnome-calculator/current/usr: usr
-    build-snaps: [ gnome-42-2204-sdk/latest/edge ]
+    build-snaps: [ gnome-42-2204-sdk/latest/stable ]
     build-packages:
       - libmpc-dev
       - libmpfr-dev
@@ -99,7 +99,7 @@ parts:
   cleanup:
     after: [gnome-calculator]
     plugin: nil
-    build-snaps: [core22, gtk-common-themes, gnome-42-2204/latest/edge]
+    build-snaps: [core22, gtk-common-themes, gnome-42-2204/latest/stable]
     override-prime: |
       set -eux
       for snap in "core22" "gtk-common-themes" "gnome-42-2204"; do

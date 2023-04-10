@@ -44,11 +44,11 @@ def gnome_extension_with_build_snap():
 
 
 @pytest.fixture
-def gnome_extension_with_default_build_snap_from_latest_edge():
+def gnome_extension_with_default_build_snap_from_latest_stable():
     return gnome.GNOME(
         yaml_data={
             "base": "core22",
-            "parts": {"part1": {"build-snaps": ["gnome-42-2204-sdk/latest/edge"]}},
+            "parts": {"part1": {"build-snaps": ["gnome-42-2204-sdk/latest/stable"]}},
         },
         arch="amd64",
         target_arch="amd64",
@@ -181,11 +181,11 @@ class TestGetPartSnippet:
     def test_get_part_snippet(self, gnome_extension):
         self.assert_get_part_snippet(gnome_extension)
 
-    def test_get_part_snippet_latest_edge(
-        self, gnome_extension_with_default_build_snap_from_latest_edge
+    def test_get_part_snippet_latest_stable(
+        self, gnome_extension_with_default_build_snap_from_latest_stable
     ):
         self.assert_get_part_snippet(
-            gnome_extension_with_default_build_snap_from_latest_edge
+            gnome_extension_with_default_build_snap_from_latest_stable
         )
 
     @staticmethod
@@ -336,10 +336,10 @@ def test_get_parts_snippet_with_external_sdk(gnome_extension_with_build_snap):
 
 
 def test_get_parts_snippet_with_external_sdk_different_channel(
-    gnome_extension_with_default_build_snap_from_latest_edge,
+    gnome_extension_with_default_build_snap_from_latest_stable,
 ):
     assert (
-        gnome_extension_with_default_build_snap_from_latest_edge.get_parts_snippet()
+        gnome_extension_with_default_build_snap_from_latest_stable.get_parts_snippet()
         == {
             "gnome/sdk": {
                 "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
