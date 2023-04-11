@@ -187,6 +187,13 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
+        param_decls=["--enable-experimental-plugins"],
+        is_flag=True,
+        help="Enable plugins that are experimental and not considered stable.",
+        envvar="SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+    ),
+    dict(
         param_decls=["--enable-experimental-target-arch"],
         is_flag=True,
         help="Enable experimental `--target-arch` support for core20.",
