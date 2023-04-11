@@ -101,7 +101,7 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
         parser.add_argument(
             "--enable-experimental-plugins",
             action="store_true",
-            default=os.getenv("SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS"),
+            default=os.getenv("SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS", False),
             help="Allow using experimental (unstable) plugins.",
         )
 
