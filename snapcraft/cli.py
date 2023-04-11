@@ -133,13 +133,6 @@ GLOBAL_ARGS = [
     craft_cli.GlobalArgument(
         "version", "flag", "-V", "--version", "Show the application version and exit"
     ),
-    craft_cli.GlobalArgument(
-        "enable-experimental-plugins",
-        "flag",
-        None,
-        "--enable-experimental-plugins",
-        "Allow using experimental (unstable) plugins",
-    ),
     craft_cli.GlobalArgument("trace", "flag", "-t", "--trace", argparse.SUPPRESS),
 ]
 
@@ -256,11 +249,7 @@ def run():  # noqa: C901
     try:
         # Register our own plugins
         global_args = dispatcher.pre_parse_args(sys.argv[1:])
-        enable_experimental = (
-            global_args.get("enable-experimental-plugins")
-            or os.getenv("SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS", "") != ""
-        )
-        plugins.register(enable_experimental)
+        plugins.register()
 
         _run_dispatcher(dispatcher, global_args)
         retcode = 0
