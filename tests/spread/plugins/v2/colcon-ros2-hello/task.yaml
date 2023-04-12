@@ -6,6 +6,7 @@ kill-timeout: 180m
 
 environment:
   SNAP/colcon_ros2_foxy_rlcpp_hello: colcon-ros2-foxy-rlcpp-hello
+  SNAP/colcon_ros2_wrapper: colcon-ros2-wrapper
   SNAP/colcon_subdir: colcon-subdir
 
 systems:
