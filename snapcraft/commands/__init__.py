@@ -51,6 +51,7 @@ from .lifecycle import (
     StageCommand,
     TryCommand,
 )
+from .lint import LintCommand
 from .manage import StoreCloseCommand, StoreReleaseCommand
 from .names import (
     StoreLegacyListCommand,
@@ -75,6 +76,7 @@ __all__ = [
     "CleanCommand",
     "ExpandExtensionsCommand",
     "ExtensionsCommand",
+    "LintCommand",
     "ListExtensionsCommand",
     "ListPluginsCommand",
     "PackCommand",
