@@ -173,7 +173,20 @@ class ColconPlugin(_ros.RosPlugin):
         return activation_commands
 
     def _get_build_commands(self) -> List[str]:
-        cmd = [
+
+        export_command = list()
+
+        if self.options.build_snaps:
+            for build_snap in self.options.build_snaps:
+                build_snap = _get_parsed_snap(build_snap)[0]
+
+                export_command.extend([
+                    'if [ -d "/snap/{build_snap}/current" ]; then '
+                    'export CMAKE_PREFIX_PATH="/snap/{build_snap}/current:/snap/{build_snap}/current/usr:${{CMAKE_PREFIX_PATH}}"; '
+                    'fi'.format(build_snap=build_snap)
+                ])
+
+        build_command = [
             "colcon",
             "build",
             "--base-paths",
@@ -186,27 +199,33 @@ class ColconPlugin(_ros.RosPlugin):
         ]
 
         if self.options.colcon_packages_ignore:
-            cmd.extend(["--packages-ignore", *self.options.colcon_packages_ignore])
+            build_command.extend(["--packages-ignore", *self.options.colcon_packages_ignore])
 
         if self.options.colcon_packages:
-            cmd.extend(["--packages-select", *self.options.colcon_packages])
+            build_command.extend(["--packages-select", *self.options.colcon_packages])
 
         if self.options.colcon_cmake_args:
-            cmd.extend(["--cmake-args", *self.options.colcon_cmake_args])
+            build_command.extend(["--cmake-args", *self.options.colcon_cmake_args])
 
         if self.options.colcon_ament_cmake_args:
-            cmd.extend(["--ament-cmake-args", *self.options.colcon_ament_cmake_args])
+            build_command.extend(["--ament-cmake-args", *self.options.colcon_ament_cmake_args])
 
         if self.options.colcon_catkin_cmake_args:
-            cmd.extend(["--catkin-cmake-args", *self.options.colcon_catkin_cmake_args])
+            build_command.extend(["--catkin-cmake-args", *self.options.colcon_catkin_cmake_args])
 
         # Specify the number of workers
-        cmd.extend(["--parallel-workers", '"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"'])
+        build_command.extend(["--parallel-workers", '"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"'])
 
-        return ["## Build command", " ".join(cmd)] + [
-            # Remove the COLCON_IGNORE marker so that, at staging,
-            # catkin can crawl the entire folder to look up for packages.
-            'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE ]; then',
-            'rm "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE',
-            "fi",
-        ]
+        return (
+            ["## Prepare build"]
+            + export_command
+            + ["## Build command", " ".join(build_command)]
+            + [
+                "## Post build command",
+                # Remove the COLCON_IGNORE marker so that, at staging,
+                # catkin can crawl the entire folder to look up for packages.
+                'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE ]; then',
+                'rm "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE',
+                "fi",
+            ]
+        )
