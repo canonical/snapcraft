@@ -13,6 +13,14 @@ function source_with_prefix() {
 # Save off parameters, the sourced setup scripts may manipulate them.
 original_args=("$@")
 
+if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" ]; then
+  source_with_prefix "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO"
+fi
+if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/snap" ]; then
+  source_with_prefix "$SNAP/opt/ros/underlay_ws/opt/ros/snap"
+  export LD_LIBRARY_PATH="$SNAP/opt/ros/underlay_ws/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
+fi
+
 source_with_prefix "$SNAP/opt/ros/$ROS_DISTRO"
 source_with_prefix "$SNAP/opt/ros/snap"
 
