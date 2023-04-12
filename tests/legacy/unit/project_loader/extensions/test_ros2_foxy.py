@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from textwrap import dedent
+
 import pytest
 
 from snapcraft_legacy.internal.project_loader._extensions.ros2_foxy import (
@@ -66,8 +68,12 @@ def test_extension(extension_class):
                 "ros-foxy-ament-index-cpp",
                 "ros-foxy-ament-index-python",
             ],
-            "override-build": "install -D -m 0755 launch "
-            "${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros2-launch",
+            "override-build": dedent(
+                """\
+                install -D -m 0755 launch ${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros2-launch
+                install -D -m 0755 ros2 ${SNAPCRAFT_PART_INSTALL}/ros2
+            """
+            ),
             "plugin": "nil",
             "source": "$SNAPCRAFT_EXTENSIONS_DIR/ros2",
         }

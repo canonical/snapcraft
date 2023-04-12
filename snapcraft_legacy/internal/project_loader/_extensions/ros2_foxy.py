@@ -16,6 +16,7 @@
 
 # Import types and tell flake8 to ignore the "unused" List.
 
+from textwrap import dedent
 from typing import Any, Dict, Optional, Tuple
 
 from typing_extensions import Final
@@ -86,7 +87,12 @@ class ExtensionImpl(Extension):
             f"ros2-{self.ROS_DISTRO}-extension": {
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/ros2",
                 "plugin": "nil",
-                "override-build": "install -D -m 0755 launch ${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros2-launch",
+                "override-build": dedent(
+                    """\
+                    install -D -m 0755 launch ${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros2-launch
+                    install -D -m 0755 ros2 ${SNAPCRAFT_PART_INSTALL}/ros2
+                """
+                ),
                 "build-packages": [
                     f"ros-{self.ROS_DISTRO}-ros-environment",
                     f"ros-{self.ROS_DISTRO}-ros-workspace",

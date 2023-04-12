@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from textwrap import dedent
+
 import pytest
 
 import snapcraft.extensions.registry as reg
@@ -132,7 +134,12 @@ class TestExtensionROS2HumbleExtension:
             "ros2-humble/ros2-launch": {
                 "source": f"{get_extensions_data_dir()}/ros2",
                 "plugin": "nil",
-                "override-build": "install -D -m 0755 launch ${CRAFT_PART_INSTALL}/snap/command-chain/ros2-launch",
+                "override-build": dedent(
+                    """\
+                    install -D -m 0755 launch ${CRAFT_PART_INSTALL}/snap/command-chain/ros2-launch
+                    install -D -m 0755 ros2 ${SNAPCRAFT_PART_INSTALL}/ros2
+                """
+                ),
                 "build-packages": [
                     "ros-humble-ros-environment",
                     "ros-humble-ros-workspace",
