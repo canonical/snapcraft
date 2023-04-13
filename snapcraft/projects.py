@@ -21,10 +21,11 @@ from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Uni
 
 import pydantic
 from craft_archives import repo
+from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from pydantic import PrivateAttr, conlist, constr
 
-from snapcraft import parts
+from snapcraft import parts, utils
 from snapcraft.errors import ProjectValidationError
 from snapcraft.utils import get_effective_base, get_host_architecture
 
@@ -376,6 +377,14 @@ class ContentPlug(ProjectModel):
 
 MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
+GLOBAL_PLUGS_SLOTS_WARNING = (
+    "Implicit {lowercase} assignment in {culprits}. "
+    "{uppercase}s should be assigned to the app that they apply, "
+    "and not implicitly assigned via the global '{lowercase}s:' "
+    "stanza which is intended for configuration only."
+    "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"
+)
+
 
 class Project(ProjectModel):
     """Snapcraft project definition.
@@ -429,6 +438,7 @@ class Project(ProjectModel):
     @pydantic.validator("plugs")
     @classmethod
     def _validate_plugs(cls, plugs):
+        empty_plugs = []
         if plugs is not None:
             for plug_name, plug in plugs.items():
                 if (
@@ -442,7 +452,35 @@ class Project(ProjectModel):
                 if isinstance(plug, list):
                     raise ValueError(f"Plug '{plug_name}' cannot be a list.")
 
+                if plug is None:
+                    empty_plugs.append(plug_name)
+
+        if empty_plugs:
+            culprits = utils.humanize_list(empty_plugs, "and")
+            message = GLOBAL_PLUGS_SLOTS_WARNING.format(
+                lowercase="plug", uppercase="Plug", culprits=culprits
+            )
+            emit.message(message)
+
         return plugs
+
+    @pydantic.validator("slots")
+    @classmethod
+    def _validate_slots(cls, slots):
+        empty_slots = []
+        if slots is not None:
+            for slot_name, slot in slots.items():
+                if slot is None:
+                    empty_slots.append(slot_name)
+
+        if empty_slots:
+            culprits = utils.humanize_list(empty_slots, "and")
+            message = GLOBAL_PLUGS_SLOTS_WARNING.format(
+                lowercase="slot", uppercase="Slot", culprits=culprits
+            )
+            emit.message(message)
+
+        return slots
 
     @pydantic.root_validator(pre=True)
     @classmethod
