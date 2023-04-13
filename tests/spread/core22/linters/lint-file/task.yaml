@@ -1,0 +1,10 @@
+summary: Run snapcraft lint on a snap file.
+
+restore: |
+  rm -f ./*.snap ./*.assert
+
+execute: |
+  snap download hello
+
+  # `snapcraft lint` is a no-op, but ensure it exits without error
+  snapcraft lint hello_*.snap

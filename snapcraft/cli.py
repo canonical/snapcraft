@@ -119,7 +119,13 @@ COMMAND_GROUPS = [
             commands.StoreLegacyGatedCommand,
         ],
     ),
-    craft_cli.CommandGroup("Other", [commands.VersionCommand]),
+    craft_cli.CommandGroup(
+        "Other",
+        [
+            commands.VersionCommand,
+            commands.LintCommand,
+        ],
+    ),
 ]
 
 GLOBAL_ARGS = [
