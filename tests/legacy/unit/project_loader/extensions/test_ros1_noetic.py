@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from textwrap import dedent
-
 import pytest
 
 from snapcraft_legacy.internal.project_loader._extensions.ros1_noetic import (
@@ -63,14 +61,7 @@ def test_extension(extension_class):
     assert ros1_extension.parts == {
         "ros1-noetic-extension": {
             "build-packages": ["ros-noetic-catkin"],
-            "override-build": dedent(
-                """\
-                install -D -m 0755 launch ${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros1-launch
-                install -D -m 0755 rosrun ${SNAPCRAFT_PART_INSTALL}/rosrun
-                install -D -m 0755 roslaunch ${SNAPCRAFT_PART_INSTALL}/roslaunch
-            """
-            ),
-            "plugin": "nil",
+            "plugin": "make",
             "source": "$SNAPCRAFT_EXTENSIONS_DIR/ros1",
         }
     }
