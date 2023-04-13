@@ -51,11 +51,6 @@ class LintCommand(BaseCommand):
             help="Snap file to lint",
         )
         parser.add_argument(
-            "--use-lxd",
-            action="store_true",
-            help="Use LXD to lint",
-        )
-        parser.add_argument(
             "--http-proxy",
             type=str,
             default=os.getenv("http_proxy"),
@@ -75,6 +70,7 @@ class LintCommand(BaseCommand):
         :raises ArgumentParsingError: If the snap file does not exist or is not valid.
         """
         emit.progress("Running linter.", permanent=True)
+
         snap_file = Path(parsed_args.snap_file)
 
         if not snap_file.exists():
