@@ -18,7 +18,6 @@
 
 """Extension to the Colcon plugin for ROS 2 Humble."""
 
-from textwrap import dedent
 from typing import Any, Dict, Optional, Tuple
 
 from overrides import overrides
@@ -120,14 +119,7 @@ class ROS2HumbleExtension(Extension):
         return {
             f"ros2-{self.ROS_DISTRO}/ros2-launch": {
                 "source": f"{get_extensions_data_dir()}/ros2",
-                "plugin": "nil",
-                #  disable=line-too-long
-                "override-build": dedent(
-                    """\
-                    install -D -m 0755 launch ${CRAFT_PART_INSTALL}/snap/command-chain/ros2-launch
-                    install -D -m 0755 ros2 ${SNAPCRAFT_PART_INSTALL}/ros2
-                """
-                ),
+                "plugin": "make",
                 "build-packages": [
                     f"ros-{self.ROS_DISTRO}-ros-environment",
                     f"ros-{self.ROS_DISTRO}-ros-workspace",
