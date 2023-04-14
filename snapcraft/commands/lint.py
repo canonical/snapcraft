@@ -20,11 +20,17 @@ import argparse
 import os
 import textwrap
 from pathlib import Path
+from shlex import join
+from subprocess import CalledProcessError
 from typing import Optional
 
 from craft_cli import BaseCommand, emit
 from craft_cli.errors import ArgumentParsingError
 from overrides import overrides
+
+from snapcraft import providers
+from snapcraft.errors import SnapcraftError
+from snapcraft.utils import is_managed_mode
 
 
 class LintCommand(BaseCommand):
@@ -64,26 +70,33 @@ class LintCommand(BaseCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace):
         """Run the linter command.
+
+        :param parsed_args: snapcraft's argument namespace
 
         :raises ArgumentParsingError: If the snap file does not exist or is not valid.
         """
         emit.progress("Running linter.", permanent=True)
 
-        snap_file = Path(parsed_args.snap_file)
+        snap_file = parsed_args.snap_file
 
         if not snap_file.exists():
-            raise ArgumentParsingError(f"Snap file {str(snap_file)!r} does not exist.")
+            raise ArgumentParsingError(f"snap file {str(snap_file)!r} does not exist")
 
         if not snap_file.is_file():
             raise ArgumentParsingError(
-                f"Snap file {str(snap_file)!r} is not a valid file."
+                f"snap file {str(snap_file)!r} is not a valid file"
             )
 
-        self._get_assert_file(snap_file)
+        assert_file = self._get_assert_file(snap_file)
 
-        emit.progress("'snapcraft lint' not implemented.", permanent=True)
+        if is_managed_mode():
+            self._run_linter(snap_file, assert_file)
+        else:
+            self._prepare_instance(
+                snap_file, assert_file, parsed_args.http_proxy, parsed_args.https_proxy
+            )
 
     def _get_assert_file(self, snap_file: Path) -> Optional[Path]:
         """Get an assertion file for a snap file.
@@ -107,3 +120,73 @@ class LintCommand(BaseCommand):
 
         emit.debug(f"Found assertion file {str(assert_file)!r}.")
         return assert_file
+
+    def _prepare_instance(
+        self,
+        snap_file: Path,
+        assert_file: Optional[Path],
+        http_proxy: Optional[str],
+        https_proxy: Optional[str],
+    ) -> None:
+        """Prepare an instance to lint a snap file.
+
+        Launches an instance, pushes the snap file and optional assert file, then
+        re-executes `snapcraft lint` inside the instance.
+
+        :param snap_file: Path to snap file to push into the instance.
+        :param assert_file: Optional path to assertion file to push into the instance.
+        :param http_proxy: http proxy to add to environment
+        :param https_proxy: https proxy to add to environment
+        """
+        emit.progress("Checking build provider availability.")
+
+        provider = providers.get_provider()
+        providers.ensure_provider_is_available(provider)
+
+        # create base configuration
+        instance_name = "snapcraft-linter"
+        build_base = providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE["core22"]
+        base_configuration = providers.get_base_configuration(
+            alias=build_base,
+            instance_name=instance_name,
+            http_proxy=http_proxy,
+            https_proxy=https_proxy,
+        )
+
+        emit.progress("Launching instance.")
+
+        with provider.launched_environment(
+            project_name="snapcraft-linter",
+            project_path=Path().absolute(),
+            base_configuration=base_configuration,
+            build_base=build_base.value,
+            instance_name=instance_name,
+            allow_unstable=False,
+        ) as instance:
+            # push snap file
+            snap_file_instance = Path("/root") / snap_file.name
+            instance.push_file(source=snap_file, destination=snap_file_instance)
+
+            # push assert file
+            if assert_file:
+                assert_file_instance = Path("/root") / assert_file.name
+                instance.push_file(source=assert_file, destination=assert_file_instance)
+
+            # run linter inside the instance
+            command = ["snapcraft", "lint", str(snap_file_instance)]
+            try:
+                with emit.pause():
+                    instance.execute_run(command, check=True)
+            except CalledProcessError as err:
+                raise SnapcraftError(
+                    f"failed to execute {join(command)!r} in instance",
+                ) from err
+
+    # pylint: disable-next=unused-argument
+    def _run_linter(self, snap_file: Path, assert_file: Optional[Path]) -> None:
+        """Run snapcraft linters on a snap file.
+
+        :param snap_file: Path to snap file to lint.
+        :param assert_file: Optional path to assertion file for the snap file.
+        """
+        emit.progress("'snapcraft lint' not implemented.", permanent=True)
