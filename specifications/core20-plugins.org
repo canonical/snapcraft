@@ -149,7 +149,7 @@ class SamuraiPlugin(snapcraft.plugins.v2.PluginV2):
         commands = super().get_build_commands()
         commands.extend(
             [
-                "samurai -j $SNAPCRAFT_SAMURAI_ARGS $SNAPCRAFT_PARALELL_BUILD_COUNT",
+                "samurai -j $SNAPCRAFT_SAMURAI_ARGS $SNAPCRAFT_PARALLEL_BUILD_COUNT",
                 "samurai install DESTDIR=$SNAPCRAFT_PART_INSTALL",
             ]
         )
@@ -215,6 +215,6 @@ parts:
     build-environment:
       SNAPCRAFT_SAMURAI_ARGS: "--seppuku"
     override-build: |
-     samurai -j $SNAPCRAFT_PARALELL_BUILD_COUNT
+     samurai -j $SNAPCRAFT_PARALLEL_BUILD_COUNT
      samurai $SNAPCRAFT_SAMURAI_INSTALL_TARGET DESTDIR=$SNAPCRAFT_PART_INSTALL
 #+END_SRC
