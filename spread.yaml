@@ -77,7 +77,7 @@ backends:
         FATAL "$SPREAD_SYSTEM is not supported!"
       fi
 
-      multipass launch --disk 20G --mem 2G --name "$instance_name" "$image"
+      multipass launch --disk 20G --memory 2G --name "$instance_name" "$image"
 
       # Get the IP from the instance
       ip=$(multipass info --format csv "$instance_name" | tail -1 | cut -d\, -f3)
