@@ -1,0 +1,15 @@
+summary: Craft Parts kernel plugin test
+manual: true
+kill-timeout: 180m
+
+systems:
+  - ubuntu-22.04-64
+
+restore: |
+  snapcraft clean --enable-experimental-plugins
+  rm -f ./*.snap
+
+execute: |
+  rm -f ./*.snap
+  snapcraft --enable-experimental-plugins
+  ls -l pc-kernel_*_amd64.snap
