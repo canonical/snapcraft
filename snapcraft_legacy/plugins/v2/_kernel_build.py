@@ -1248,7 +1248,7 @@ def _get_install_command(
 ### build dependencies
 
 
-def add_snappy_ppa(with_sudo=False) -> None:
+def add_snappy_ppa(with_sudo=False) -> None:  # noqa: C901
     # Add ppa necessary to build initrd.
     # TODO: reimplement once snapcraft allows to the plugins
     # to add custom ppa.
