@@ -191,6 +191,11 @@ prepare: |
   #shellcheck source=tests/spread/tools/prepare.sh
   . "$TOOLS_DIR/prepare.sh"
 
+  if [[ -z $(ls -A "$TOOLS_DIR/snapd-testing-tools") ]]; then
+    echo "Cannot run spread because submodule 'snapd-testing-tools' does not exist. Fetch with 'git submodule update --init' and rerun spread."
+    exit 1
+  fi
+
   # This unfortunately cannot be extracted into a standalone script since this
   # portion of of YAML runs before the source code has been fetched.
 
