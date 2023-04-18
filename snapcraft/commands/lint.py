@@ -163,15 +163,15 @@ class LintCommand(BaseCommand):
             instance_name=instance_name,
             allow_unstable=False,
         ) as instance:
+            home_path = get_managed_environment_home_path()
+
             # push snap file
-            snap_file_instance = get_managed_environment_home_path() / snap_file.name
+            snap_file_instance = home_path / snap_file.name
             instance.push_file(source=snap_file, destination=snap_file_instance)
 
             # push assert file
             if assert_file:
-                assert_file_instance = (
-                    get_managed_environment_home_path() / assert_file.name
-                )
+                assert_file_instance = home_path / assert_file.name
                 instance.push_file(source=assert_file, destination=assert_file_instance)
 
             # run linter inside the instance
