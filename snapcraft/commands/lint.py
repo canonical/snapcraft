@@ -30,7 +30,7 @@ from overrides import overrides
 
 from snapcraft import providers
 from snapcraft.errors import SnapcraftError
-from snapcraft.utils import is_managed_mode
+from snapcraft.utils import get_managed_environment_home_path, is_managed_mode
 
 
 class LintCommand(BaseCommand):
@@ -164,12 +164,14 @@ class LintCommand(BaseCommand):
             allow_unstable=False,
         ) as instance:
             # push snap file
-            snap_file_instance = Path("/root") / snap_file.name
+            snap_file_instance = get_managed_environment_home_path() / snap_file.name
             instance.push_file(source=snap_file, destination=snap_file_instance)
 
             # push assert file
             if assert_file:
-                assert_file_instance = Path("/root") / assert_file.name
+                assert_file_instance = (
+                    get_managed_environment_home_path() / assert_file.name
+                )
                 instance.push_file(source=assert_file, destination=assert_file_instance)
 
             # run linter inside the instance
