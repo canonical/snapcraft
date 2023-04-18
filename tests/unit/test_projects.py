@@ -567,8 +567,8 @@ class TestProjectValidation:
         data = project_yaml_data(plugs={"desktop": None, "desktop-legacy": None})
         Project.unmarshal(data)
         expected_message = (
-            "Implicit plug assignment in 'desktop' and 'desktop-legacy'. "
-            "Plugs should be assigned to the app that they apply, and not "
+            "Warning: implicit plug assignment in 'desktop' and 'desktop-legacy'. "
+            "Plugs should be assigned to the app to which they apply, and not "
             "implicitly assigned via the global 'plugs:' stanza "
             "which is intended for configuration only."
             "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"
@@ -579,8 +579,8 @@ class TestProjectValidation:
         data = project_yaml_data(slots={"home": None, "removable-media": None})
         Project.unmarshal(data)
         expected_message = (
-            "Implicit slot assignment in 'home' and 'removable-media'. "
-            "Slots should be assigned to the app that they apply, and not "
+            "Warning: implicit slot assignment in 'home' and 'removable-media'. "
+            "Slots should be assigned to the app to which they apply, and not "
             "implicitly assigned via the global 'slots:' stanza "
             "which is intended for configuration only."
             "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"

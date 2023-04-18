@@ -377,14 +377,6 @@ class ContentPlug(ProjectModel):
 
 MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
-GLOBAL_PLUGS_SLOTS_WARNING = (
-    "Implicit {lowercase} assignment in {culprits}. "
-    "{uppercase}s should be assigned to the app that they apply, "
-    "and not implicitly assigned via the global '{lowercase}s:' "
-    "stanza which is intended for configuration only."
-    "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"
-)
-
 
 class Project(ProjectModel):
     """Snapcraft project definition.
@@ -456,10 +448,7 @@ class Project(ProjectModel):
                     empty_plugs.append(plug_name)
 
         if empty_plugs:
-            culprits = utils.humanize_list(empty_plugs, "and")
-            message = GLOBAL_PLUGS_SLOTS_WARNING.format(
-                lowercase="plug", uppercase="Plug", culprits=culprits
-            )
+            message = _format_global_keyword_warning("plug", empty_plugs)
             emit.message(message)
 
         return plugs
@@ -474,10 +463,7 @@ class Project(ProjectModel):
                     empty_slots.append(slot_name)
 
         if empty_slots:
-            culprits = utils.humanize_list(empty_slots, "and")
-            message = GLOBAL_PLUGS_SLOTS_WARNING.format(
-                lowercase="slot", uppercase="Slot", culprits=culprits
-            )
+            message = _format_global_keyword_warning("slot", empty_slots)
             emit.message(message)
 
         return slots
@@ -862,3 +848,24 @@ def _printable_field_location_split(location: str) -> Tuple[str, str]:
         return field_name, repr(".".join(loc_split))
 
     return field_name, "top-level"
+
+
+def _format_global_keyword_warning(keyword: str, empty_entries: List[str]) -> str:
+    """Create a warning message about global assignment in the ``keyword`` field.
+
+    :param keyword:
+        The top-level keyword that contains empty entries (currently either
+        "plug" or "slot").
+    :param empty_entries:
+        The entries inside the ``keyword`` dict that are empty.
+    :return:
+        A properly-formatted warning message.
+    """
+    culprits = utils.humanize_list(empty_entries, "and")
+    return (
+        f"Warning: implicit {keyword.lower()} assignment in {culprits}. "
+        f"{keyword.capitalize()}s should be assigned to the app to which they apply, "
+        f"and not implicitly assigned via the global '{keyword.lower()}s:' "
+        "stanza which is intended for configuration only."
+        "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"
+    )
