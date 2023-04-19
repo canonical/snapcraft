@@ -512,7 +512,7 @@ class TestProjectValidation:
         }
 
         error = (
-            "Specifying a Snap channel in 'default_provider' is not supported: "
+            "Specifying a snap channel in 'default_provider' is not supported: "
             "test-provider/edge"
         )
 

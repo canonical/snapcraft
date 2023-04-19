@@ -153,7 +153,7 @@ class ContentPlug(Plug):
             raise PlugValidationError(
                 plug_name=self.plug_name,
                 message=(
-                    "Specifying a Snap channel in 'default_provider' is not supported: "
+                    "Specifying a snap channel in 'default_provider' is not supported: "
                     f"{self._default_provider}"
                 )
             )

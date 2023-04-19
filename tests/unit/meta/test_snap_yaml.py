@@ -708,7 +708,7 @@ def test_content_plug_provider_with_channel():
     }
 
     error = (
-        "Specifying a Snap channel in 'default_provider' is not supported: "
+        "Specifying a snap channel in 'default_provider' is not supported: "
         "gtk-common-themes:gtk-3-themes/edge"
     )
 
