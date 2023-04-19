@@ -563,6 +563,30 @@ class TestProjectValidation:
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(project_yaml_data(build_base="devel", grade="stable"))
 
+    def test_project_global_plugs_warning(self, project_yaml_data, emitter):
+        data = project_yaml_data(plugs={"desktop": None, "desktop-legacy": None})
+        Project.unmarshal(data)
+        expected_message = (
+            "Warning: implicit plug assignment in 'desktop' and 'desktop-legacy'. "
+            "Plugs should be assigned to the app to which they apply, and not "
+            "implicitly assigned via the global 'plugs:' stanza "
+            "which is intended for configuration only."
+            "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"
+        )
+        emitter.assert_message(expected_message)
+
+    def test_project_global_slots_warning(self, project_yaml_data, emitter):
+        data = project_yaml_data(slots={"home": None, "removable-media": None})
+        Project.unmarshal(data)
+        expected_message = (
+            "Warning: implicit slot assignment in 'home' and 'removable-media'. "
+            "Slots should be assigned to the app to which they apply, and not "
+            "implicitly assigned via the global 'slots:' stanza "
+            "which is intended for configuration only."
+            "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"
+        )
+        emitter.assert_message(expected_message)
+
 
 class TestHookValidation:
     """Validate hooks."""

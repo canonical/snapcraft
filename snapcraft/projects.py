@@ -21,10 +21,11 @@ from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Uni
 
 import pydantic
 from craft_archives import repo
+from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from pydantic import PrivateAttr, conlist, constr
 
-from snapcraft import parts
+from snapcraft import parts, utils
 from snapcraft.errors import ProjectValidationError
 from snapcraft.utils import get_effective_base, get_host_architecture
 
@@ -429,6 +430,7 @@ class Project(ProjectModel):
     @pydantic.validator("plugs")
     @classmethod
     def _validate_plugs(cls, plugs):
+        empty_plugs = []
         if plugs is not None:
             for plug_name, plug in plugs.items():
                 if (
@@ -442,7 +444,29 @@ class Project(ProjectModel):
                 if isinstance(plug, list):
                     raise ValueError(f"Plug '{plug_name}' cannot be a list.")
 
+                if plug is None:
+                    empty_plugs.append(plug_name)
+
+        if empty_plugs:
+            message = _format_global_keyword_warning("plug", empty_plugs)
+            emit.message(message)
+
         return plugs
+
+    @pydantic.validator("slots")
+    @classmethod
+    def _validate_slots(cls, slots):
+        empty_slots = []
+        if slots is not None:
+            for slot_name, slot in slots.items():
+                if slot is None:
+                    empty_slots.append(slot_name)
+
+        if empty_slots:
+            message = _format_global_keyword_warning("slot", empty_slots)
+            emit.message(message)
+
+        return slots
 
     @pydantic.root_validator(pre=True)
     @classmethod
@@ -824,3 +848,24 @@ def _printable_field_location_split(location: str) -> Tuple[str, str]:
         return field_name, repr(".".join(loc_split))
 
     return field_name, "top-level"
+
+
+def _format_global_keyword_warning(keyword: str, empty_entries: List[str]) -> str:
+    """Create a warning message about global assignment in the ``keyword`` field.
+
+    :param keyword:
+        The top-level keyword that contains empty entries (currently either
+        "plug" or "slot").
+    :param empty_entries:
+        The entries inside the ``keyword`` dict that are empty.
+    :return:
+        A properly-formatted warning message.
+    """
+    culprits = utils.humanize_list(empty_entries, "and")
+    return (
+        f"Warning: implicit {keyword.lower()} assignment in {culprits}. "
+        f"{keyword.capitalize()}s should be assigned to the app to which they apply, "
+        f"and not implicitly assigned via the global '{keyword.lower()}s:' "
+        "stanza which is intended for configuration only."
+        "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"
+    )
