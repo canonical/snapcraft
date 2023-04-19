@@ -127,3 +127,20 @@ class ContentPlugTests(unit.TestCase):
         plug = ContentPlug.from_dict(plug_dict=plug_dict, plug_name=plug_name)
 
         self.assertThat(plug.provider, Is(None))
+
+    def test_basic_default_provider_with_channel(self):
+        plug_dict = OrderedDict(
+            {
+                "interface": "content",
+                "content": "content",
+                "target": "target",
+                "default-provider": "gtk-common-themes:gtk-3-themes/edge",
+            }
+        )
+        plug_name = "plug-test"
+
+        plug = ContentPlug.from_dict(
+            plug_dict=plug_dict,
+            plug_name=plug_name,
+        )
+        self.assertRaises(errors.PlugValidationError, plug.validate)

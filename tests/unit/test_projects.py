@@ -501,6 +501,24 @@ class TestProjectValidation:
         project = Project.unmarshal(project_yaml_data(plugs=content_plug_data))
         assert project.get_content_snaps() == ["test-provider"]
 
+    def test_project_default_provider_with_channel(self, project_yaml_data):
+        content_plug_data = {
+            "content-interface": {
+                "interface": "content",
+                "target": "test-target",
+                "content": "test-content",
+                "default-provider": "test-provider/edge",
+            }
+        }
+
+        error = (
+            "Specifying a Snap channel in 'default_provider' is not supported: "
+            "test-provider/edge"
+        )
+
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(project_yaml_data(plugs=content_plug_data))
+
     @pytest.mark.parametrize("decl_type", ["symlink", "bind", "bind-file", "type"])
     def test_project_layout(self, decl_type, project_yaml_data):
         project = Project.unmarshal(

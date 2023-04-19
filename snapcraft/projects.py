@@ -374,6 +374,16 @@ class ContentPlug(ProjectModel):
     target: str
     default_provider: Optional[str]
 
+    @pydantic.validator("default_provider")
+    @classmethod
+    def _validate_default_provider(cls, default_provider):
+        if default_provider and "/" in default_provider:
+            raise ValueError(
+                "Specifying a Snap channel in 'default_provider' is not supported: "
+                f"{default_provider}"
+            )
+        return default_provider
+
 
 MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
@@ -441,8 +451,17 @@ class Project(ProjectModel):
                     raise ValueError(
                         f"ContentPlug '{plug_name}' must have a 'target' parameter."
                     )
+
                 if isinstance(plug, list):
                     raise ValueError(f"Plug '{plug_name}' cannot be a list.")
+
+                if isinstance(plug, dict) and plug.get("default-provider"):
+                    default_provider: str = plug.get("default-provider", "")
+                    if "/" in default_provider:
+                        raise ValueError(
+                            "Specifying a Snap channel in 'default_provider' is not supported: "
+                            f"{default_provider}"
+                        )
 
                 if plug is None:
                     empty_plugs.append(plug_name)
