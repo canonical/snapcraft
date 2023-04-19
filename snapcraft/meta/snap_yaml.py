@@ -118,6 +118,16 @@ class ContentPlug(_SnapMetadataModel):
             raise ValueError("value cannot be empty")
         return val
 
+    @validator("default_provider")
+    @classmethod
+    def _validate_default_provider(cls, default_provider):
+        if default_provider and "/" in default_provider:
+            raise ValueError(
+                "Specifying a snap channel in 'default_provider' is not supported: "
+                f"{default_provider}"
+            )
+        return default_provider
+
     @property
     def provider(self) -> Optional[str]:
         """Return the default content provider name."""
