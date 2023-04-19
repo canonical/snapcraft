@@ -206,7 +206,7 @@ class MultipassCommandLaunchTest(MultipassCommandPassthroughBaseTest):
                 "16.04",
                 "--name",
                 self.instance_name,
-                "--mem",
+                "--memory",
                 "2G",
             ],
             stdin=subprocess.DEVNULL,
