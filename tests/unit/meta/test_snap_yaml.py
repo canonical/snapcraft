@@ -699,6 +699,23 @@ def test_content_plug_provider():
     assert plug.provider == "gtk-common-themes"
 
 
+def test_content_plug_provider_with_channel():
+    plug_dict = {
+        "interface": "content",
+        "content": "foo",
+        "target": "target",
+        "default-provider": "gtk-common-themes:gtk-3-themes/edge",
+    }
+
+    error = (
+        "Specifying a snap channel in 'default_provider' is not supported: "
+        "gtk-common-themes:gtk-3-themes/edge"
+    )
+
+    with pytest.raises(pydantic.ValidationError, match=error):
+        ContentPlug.unmarshal(plug_dict)
+
+
 def test_get_content_plugs():
     yaml_data = textwrap.dedent(
         """\
