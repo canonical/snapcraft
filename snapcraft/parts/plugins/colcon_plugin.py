@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The colcon plugin for ROS2 parts.
+"""The colcon plugin for ROS 2 parts.
 
     - colcon-packages:
       (list of strings)
@@ -58,6 +58,7 @@ specific to the ROS distro. If not using the extension, set these in your
 from typing import Any, Dict, List, Set, cast
 
 from craft_parts import plugins
+from craft_parts.packages.snaps import _get_parsed_snap
 from overrides import overrides
 
 from . import _ros
@@ -71,11 +72,13 @@ class ColconPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     colcon_cmake_args: List[str] = []
     colcon_packages: List[str] = []
     colcon_packages_ignore: List[str] = []
+    build_snaps: List[str] = []
 
     # part properties required by the plugin
     source: str
 
     @classmethod
+    @overrides
     def unmarshal(cls, data: Dict[str, Any]) -> "ColconPluginProperties":
         """Populate make properties from the part specification.
 
@@ -86,7 +89,7 @@ class ColconPluginProperties(plugins.PluginProperties, plugins.PluginModel):
         :raise pydantic.ValidationError: If validation fails.
         """
         plugin_data = plugins.extract_plugin_properties(
-            data, plugin_name="colcon", required=["source"]
+            data, plugin_name="colcon", required=["source", "build-snaps"]
         )
         return cls(**plugin_data)
 
@@ -116,6 +119,20 @@ class ColconPlugin(_ros.RosPlugin):
 
         return env
 
+    def _get_source_command(self, path: str) -> List[str]:
+        return [
+            f'if [ -f "{path}/opt/ros/${{ROS_DISTRO}}/local_setup.sh" ]; then',
+            'AMENT_CURRENT_PREFIX="{wspath}" . "{wspath}/local_setup.sh"'.format(
+                wspath=f"{path}/opt/ros/${{ROS_DISTRO}}"
+            ),
+            "fi",
+            f'if [ -f "{path}/opt/ros/snap/local_setup.sh" ]; then',
+            'COLCON_CURRENT_PREFIX="{wspath}" . "{wspath}/local_setup.sh"'.format(
+                wspath=f"{path}/opt/ros/snap"
+            ),
+            "fi",
+        ]
+
     @overrides
     def _get_workspace_activation_commands(self) -> List[str]:
         """Return a list of commands source a ROS 2 workspace.
@@ -129,31 +146,49 @@ class ColconPlugin(_ros.RosPlugin):
         specific functionality.
         """
 
-        # There are a number of unbound vars, disable flag
-        # after saving current state to restore after.
-        return [
-            'state="$(set +o); set -$-"',
-            "set +u",
-            # If it exists, source the stage-snap underlay
-            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
-            'COLCON_CURRENT_PREFIX="{path}" . "{path}/local_setup.sh"'.format(
-                path="${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}"
-            ),
-            "fi",
-            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/local_setup.sh" ]; then',
-            'COLCON_CURRENT_PREFIX="{path}" . "{path}/local_setup.sh"'.format(
-                path="${CRAFT_PART_INSTALL}/opt/ros/snap"
-            ),
-            "fi",
-            '. "/opt/ros/${ROS_DISTRO}/local_setup.sh"',
-            'eval "${state}"',
-        ]
+        activation_commands = list()
+
+        # Source ROS ws in all build-snaps first
+        activation_commands.append("## Sourcing ROS ws in build snaps")
+        if self._options.build_snaps:
+            for build_snap in self._options.build_snaps:
+                snap_name = _get_parsed_snap(build_snap)[0]
+                activation_commands.extend(
+                    self._get_source_command(f"/snap/{snap_name}/current")
+                )
+            activation_commands.append("")
+
+        # Source ROS ws in stage-snaps next
+        activation_commands.append("## Sourcing ROS ws in stage snaps")
+        activation_commands.extend(
+            self._get_source_command("${CRAFT_PART_INSTALL}")
+        )
+        activation_commands.append("")
+
+        # Finally source system's ROS ws
+        activation_commands.append("## Sourcing ROS ws in system")
+        activation_commands.extend(self._get_source_command(""))
+        activation_commands.append("")
+
+        return activation_commands
 
     @overrides
     def _get_build_commands(self) -> List[str]:
         options = cast(ColconPluginProperties, self._options)
 
-        cmd = [
+        export_command = list()
+
+        if self._options.build_snaps:
+            for build_snap in self._options.build_snaps:
+                build_snap = _get_parsed_snap(build_snap)[0]
+
+                export_command.extend([
+                    'if [ -d "/snap/{build_snap}/current" ]; then '
+                    'export CMAKE_PREFIX_PATH="/snap/{build_snap}/current:/snap/{build_snap}/current/usr:${{CMAKE_PREFIX_PATH}}"; '
+                    'fi'.format(build_snap=build_snap)
+                ])
+
+        build_command = [
             "colcon",
             "build",
             "--base-paths",
@@ -166,27 +201,33 @@ class ColconPlugin(_ros.RosPlugin):
         ]
 
         if options.colcon_packages_ignore:
-            cmd.extend(["--packages-ignore", *options.colcon_packages_ignore])
+            build_command.extend(["--packages-ignore", *options.colcon_packages_ignore])
 
         if options.colcon_packages:
-            cmd.extend(["--packages-select", *options.colcon_packages])
+            build_command.extend(["--packages-select", *options.colcon_packages])
 
         if options.colcon_cmake_args:
-            cmd.extend(["--cmake-args", *options.colcon_cmake_args])
+            build_command.extend(["--cmake-args", *options.colcon_cmake_args])
 
         if options.colcon_ament_cmake_args:
-            cmd.extend(["--ament-cmake-args", *options.colcon_ament_cmake_args])
+            build_command.extend(["--ament-cmake-args", *options.colcon_ament_cmake_args])
 
         if options.colcon_catkin_cmake_args:
-            cmd.extend(["--catkin-cmake-args", *options.colcon_catkin_cmake_args])
+            build_command.extend(["--catkin-cmake-args", *options.colcon_catkin_cmake_args])
 
         # Specify the number of workers
-        cmd.extend(["--parallel-workers", '"${CRAFT_PARALLEL_BUILD_COUNT}"'])
+        build_command.extend(["--parallel-workers", '"${CRAFT_PARALLEL_BUILD_COUNT}"'])
 
-        return [" ".join(cmd)] + [
-            # Remove the COLCON_IGNORE marker so that, at staging,
-            # catkin can crawl the entire folder to look up for packages.
-            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/COLCON_IGNORE" ]; then',
-            'rm "${CRAFT_PART_INSTALL}/opt/ros/snap/COLCON_IGNORE"',
-            "fi",
-        ]
+        return (
+            ["## Prepare build"]
+            + export_command
+            + ["## Build command", " ".join(build_command)]
+            + [
+                "## Post build command",
+                # Remove the COLCON_IGNORE marker so that, at staging,
+                # catkin can crawl the entire folder to look up for packages.
+                'if [ -f "${CRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE ]; then',
+                'rm "${CRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE',
+                "fi",
+            ]
+        )

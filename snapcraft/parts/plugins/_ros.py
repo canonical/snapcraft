@@ -30,6 +30,7 @@ import click
 from catkin_pkg import packages as catkin_packages
 from craft_parts import plugins
 from craft_parts.packages import Repository as Repo
+from craft_parts.packages.snaps import _get_parsed_snap
 from overrides import overrides
 
 from snapcraft.errors import SnapcraftError
@@ -89,7 +90,7 @@ class RosPlugin(plugins.Plugin):
 
     @overrides
     def get_build_packages(self) -> Set[str]:
-        return {"python3-rosdep"}
+        return {"python3-rosdep", "rospack-tools"}
 
     @overrides
     def get_build_environment(self) -> Dict[str, str]:
@@ -126,6 +127,50 @@ class RosPlugin(plugins.Plugin):
         snapcraftctl can be used in the script to call out to snapcraft
         specific functionality.
         """
+
+    def _get_list_packages_commands(self) -> List[str]:
+        """Generate a list of ROS 2 packages available in build snaps.
+
+        The ROS 2 workspaces contained in build snaps are crawled with `rospack`
+        to establish the list of all available ROS 2 packages.
+        The package names are then resolved with `rosdep` to map their names to debs.
+        The list is finally saved in the part's install directory.
+        """
+
+        cmd = list()
+
+        # Clean up previously established list of packages in build snaps
+        cmd.append('rm -f "${CRAFT_PART_INSTALL}/.installed_packages.txt"')
+        cmd.append('rm -f "${CRAFT_PART_INSTALL}/.build_snaps.txt"')
+
+        # self.get_build_properties
+
+        if self._options.build_snaps:
+            for build_snap in self._options.build_snaps:
+                snap_name = _get_parsed_snap(build_snap)[0]
+                path = f"/snap/{snap_name}/current/opt/ros"
+                cmd.extend([
+                    # Retrieve the list of all ROS packages available in the build snap
+                    f"if [ -d {path} ]; then",
+                    f"ROS_PACKAGE_PATH={path} "
+                    'rospack list-names | (xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | '
+                    'awk "/#apt/{getline;print;}" >> "${CRAFT_PART_INSTALL}/.installed_packages.txt"',
+                    "fi",
+
+                    # Retrieve the list of all non-ROS packages available in the build snap
+                    f'if [ -d "{path}/${{ROS_DISTRO}}/" ]; then',
+                    f'rosdep keys --rosdistro "${{ROS_DISTRO}}" --from-paths "{path}/${{ROS_DISTRO}}" --ignore-packages-from-source '
+                    '| (xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> "${CRAFT_PART_INSTALL}"/.installed_packages.txt',
+                    "fi",
+
+                    f'if [ -d "{path}/snap/" ]; then',
+                    f'rosdep keys --rosdistro "${{ROS_DISTRO}}" --from-paths "{path}/snap" --ignore-packages-from-source '
+                    '| (xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> "${CRAFT_PART_INSTALL}"/.installed_packages.txt',
+                    "fi",
+                ])
+            cmd.append("")
+
+        return cmd
 
     def _get_stage_runtime_dependencies_commands(self) -> List[str]:
         env = {"LANG": "C.UTF-8", "LC_ALL": "C.UTF-8"}
@@ -183,10 +228,28 @@ class RosPlugin(plugins.Plugin):
                 # https://github.com/ros-infrastructure/rosdep/issues/271
                 "sudo --preserve-env=http_proxy,https_proxy rosdep init; fi",
                 'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
-                "rosdep install --default-yes --ignore-packages-from-source "
-                '--from-paths "${CRAFT_PART_SRC_WORK}"',
+            ]
+            # There are a number of unbound vars, disable flag
+            # after saving current state to restore after.
+            + [
+                'state="$(set +o); set -$-"',
+                "set +u",
+                "",
             ]
             + self._get_workspace_activation_commands()
+            # Restore saved state
+            + ['eval "${state}"']
+            + self._get_list_packages_commands()
+            + [
+                'rosdep install --default-yes --ignore-packages-from-source --from-paths "${CRAFT_PART_SRC_WORK}"',
+            ]
+            + [
+                'state="$(set +o); set -$-"',
+                "set +u",
+                "",
+            ]
+            + self._get_workspace_activation_commands()
+            + ['eval "${state}"']
             + self._get_build_commands()
             + self._get_stage_runtime_dependencies_commands()
         )
@@ -263,6 +326,17 @@ def stage_runtime_dependencies(
             if parsed:
                 click.echo(f"unhandled dependencies: {parsed!r}")
 
+    build_snap_packages: Set[str] = set()
+    installed_packages_file = part_install + "/.installed_packages.txt"
+    if os.path.isfile(installed_packages_file):
+        try:
+            with open(installed_packages_file, "r") as f:
+                build_snap_packages = set(f.read().split())
+                click.echo(f"Will not fetch staged packages: {build_snap_packages!r}")
+        except IOError:
+            click.echo(f"failed to open file {installed_packages_file}")
+            pass
+
     if apt_packages:
         package_names = sorted(apt_packages)
         install_path = pathlib.Path(part_install)
@@ -277,6 +351,7 @@ def stage_runtime_dependencies(
             arch=target_arch,
             base=base,
             stage_packages_path=stage_packages_path,
+            packages_filters=build_snap_packages,
         )
 
         click.echo(f"Unpacking stage packages: {fetched_stage_packages!r}")
