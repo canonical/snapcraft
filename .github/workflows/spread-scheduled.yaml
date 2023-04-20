@@ -1,4 +1,4 @@
-name: Large Manual Spread
+name: Scheduled spread tests
 on:
   schedule:
     # At 03:00 on Wednesday and Sunday.
