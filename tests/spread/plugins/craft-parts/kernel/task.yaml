@@ -10,6 +10,9 @@ restore: |
   rm -f ./*.snap
 
 execute: |
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
   rm -f ./*.snap
   snapcraft --enable-experimental-plugins
   ls -l pc-kernel_*_amd64.snap
