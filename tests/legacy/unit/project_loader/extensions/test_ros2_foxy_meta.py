@@ -70,7 +70,7 @@ class TestClass:
                 }
             ],
             "plugs": {
-                "ros2": {
+                "ros-foxy": {
                     "interface": "content",
                     "content": "ros-foxy",
                     "target": "$SNAP/opt/ros/underlay_ws",

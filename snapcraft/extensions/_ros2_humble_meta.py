@@ -32,7 +32,7 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
     def get_root_snippet(self) -> Dict[str, Any]:
         root_snippet = super().get_root_snippet()
         root_snippet["plugs"] = {
-            "ros2":
+            "ros-humble":
                 {
                     "interface": "content",
                     "content": "ros-humble",

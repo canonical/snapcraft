@@ -125,7 +125,7 @@ class TestExtensionROS2HumbleMetaExtensions:
                 ]
             },
             'plugs': {
-                'ros2': {
+                'ros-humble': {
                     'content': 'ros-humble',
                     'default-provider': meta,
                     'interface': 'content',

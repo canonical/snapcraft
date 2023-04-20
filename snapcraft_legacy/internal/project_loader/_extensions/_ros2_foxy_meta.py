@@ -44,7 +44,7 @@ class RosFoxyMetaBase(RosFoxyExtension):
         ]
 
         self.root_snippet["plugs"] = {
-            "ros2":
+            "ros-foxy":
                 {
                     "interface": "content",
                     "content": "ros-foxy",
