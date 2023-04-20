@@ -17,6 +17,7 @@
 import abc
 import os
 import pathlib
+import re
 import subprocess
 import sys
 from typing import Dict, List, Set
@@ -190,6 +191,47 @@ def plugin_cli():
     pass
 
 
+def get_installed_dependencies(installed_packages_path: str) -> Set[str]:
+    try:
+        with open(installed_packages_path, "r") as f:
+            build_snap_packages = set(f.read().split())
+            package_dependencies = set()
+            for package in build_snap_packages:
+                try:
+                    cmd = [
+                        "apt",
+                        "depends",
+                        "--recurse",
+                        "--no-recommends",
+                        "--no-suggests",
+                        "--no-conflicts",
+                        "--no-breaks",
+                        "--no-replaces",
+                        "--no-enhances",
+                        f"{package}",
+                    ]
+                    click.echo(f"Running {cmd!r}")
+                    proc = subprocess.run(
+                        cmd,
+                        check=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        env=dict(PATH=os.environ["PATH"]),
+                    )
+                except subprocess.CalledProcessError as error:
+                    click.echo(f"failed to run {cmd!r}: {error.output}")
+                apt_dependency_regex = re.compile("^\w.*$")
+                for line in proc.stdout.decode().strip().split("\n"):
+                    if apt_dependency_regex.match(line):
+                        package_dependencies.add(line)
+
+            build_snap_packages.update(package_dependencies)
+            click.echo(f"Will not fetch staged packages: {build_snap_packages!r}")
+            return build_snap_packages
+    except IOError:
+        return Set(str)
+
+
 @plugin_cli.command()
 @click.option("--part-src", envvar="SNAPCRAFT_PART_SRC_WORK", required=True)
 @click.option("--part-install", envvar="SNAPCRAFT_PART_INSTALL", required=True)
@@ -246,13 +288,9 @@ def stage_runtime_dependencies(
             if parsed:
                 click.echo(f"unhandled dependencies: {parsed!r}")
 
-    build_snap_packages: Set[str] = set()
-    try:
-        with open(part_install + "/.installed_packages.txt", "r") as f:
-            build_snap_packages = set(f.read().split())
-            click.echo(f"Will not fetch staged packages: {build_snap_packages!r}")
-    except IOError:
-        pass
+    build_snap_packages = get_installed_dependencies(
+        part_install + "/.installed_packages.txt"
+    )
 
     if apt_packages:
         package_names = sorted(apt_packages)
