@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0
 # Copyright (C) 2021 Canonical Ltd
 name: pc-kernel
-summary: Generic Ubuntu pc-kernel
-description: The generic Ubuntu pc-kernel
+summary: Kernel plugin test
+description: A stripped-down pc kernel to test the kernel plugin.
 
 grade: stable
 build-base: core22
@@ -13,10 +13,6 @@ adopt-info: kernel
 architectures:
   - build-on: [amd64]
     build-for: amd64
-#  - build-on: [amd64, arm64]
-#    build-for: arm64
-#  - build-on: [amd64, arm64, armhf]
-#    build-for: armhf
 
 parts:
   kernel:
