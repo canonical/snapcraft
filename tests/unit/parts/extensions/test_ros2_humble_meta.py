@@ -125,8 +125,8 @@ class TestExtensionROS2HumbleMetaExtensions:
                 ]
             },
             'plugs': {
-                'ros-meta': {
-                    'content': 'ros2-meta',
+                'ros2': {
+                    'content': 'ros-humble',
                     'default-provider': meta,
                     'interface': 'content',
                     'target': '$SNAP/opt/ros/underlay_ws'

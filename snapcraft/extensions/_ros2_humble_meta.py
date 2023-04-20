@@ -32,10 +32,10 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
     def get_root_snippet(self) -> Dict[str, Any]:
         root_snippet = super().get_root_snippet()
         root_snippet["plugs"] = {
-            "ros-meta":
+            "ros2":
                 {
                     "interface": "content",
-                    "content": "ros2-meta",
+                    "content": "ros-humble",
                     "target": "$SNAP/opt/ros/underlay_ws",
                     "default-provider": self.ROS_META,
                 }

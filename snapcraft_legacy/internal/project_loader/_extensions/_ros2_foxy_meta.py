@@ -44,10 +44,10 @@ class RosFoxyMetaBase(RosFoxyExtension):
         ]
 
         self.root_snippet["plugs"] = {
-            "ros-meta":
+            "ros2":
                 {
                     "interface": "content",
-                    "content": "ros2-meta",
+                    "content": "ros-foxy",
                     "target": "$SNAP/opt/ros/underlay_ws",
                     "default-provider": self.ROS_META,
                 }

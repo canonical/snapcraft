@@ -34,10 +34,10 @@ class RosNoeticMetaBase(RosNoeticExtension):
         # ]
 
         self.root_snippet["plugs"] = {
-            "ros-meta":
+            "ros":
                 {
                     "interface": "content",
-                    "content": "ros-meta",
+                    "content": "ros-noetic",
                     "target": "$SNAP/opt/ros/underlay_ws",
                     "default-provider": self.ROS_META,
                 }

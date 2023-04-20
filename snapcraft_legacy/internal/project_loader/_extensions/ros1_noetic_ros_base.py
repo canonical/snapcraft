@@ -24,5 +24,5 @@ from ._ros1_noetic_meta import RosNoeticMetaBase
 class ExtensionImpl(RosNoeticMetaBase):
     """Setup a ROS 1 build and runtime environment suitable for a snap."""
 
-    ROS_META: Final[str] = "ros-meta-ros-base"
-    ROS_META_DEV: Final[str] = "ros-meta-ros-base"
+    ROS_META: Final[str] = "ros-noetic-ros-base"
+    ROS_META_DEV: Final[str] = "ros-noetic-ros-base"
