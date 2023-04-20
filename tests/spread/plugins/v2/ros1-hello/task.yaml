@@ -10,6 +10,7 @@ environment:
   SNAP/catkin_tools_noetic_hello: catkin-tools-noetic-hello
   SNAP/catkin_tools_noetic_subdir: catkin-tools-noetic-subdir
   SNAP/catkin_rosrun_wrapper: catkin-rosrun-wrapper
+  SNAP/catkin_noetic_content_sharing: catkin-noetic-content-sharing
 
 systems:
   - ubuntu-20.04
@@ -40,6 +41,24 @@ execute: |
   # Build what we have and verify the snap runs as expected.
   snapcraft
   snap install "${SNAP}"_1.0_*.snap --dangerous
+
+  # Check specific to content sharing SNAP
+  if [ "$SNAP" = "catkin-noetic-content-sharing" ]; then
+    # Make sure final snap doesn't contain roscpp or roslaunch pkg
+    for to_check in \
+            "/snap/$SNAP/current/opt/ros/noetic/share/roscpp" \
+            "/snap/$SNAP/current/opt/ros/noetic/share/roslaunch" \
+            "/snap/$SNAP/current/usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.71.0"
+    do
+        if [ -e "$to_check" ]; then
+            FATAL "The $SNAP is containing $to_check from the content-sharing snap"
+        fi
+    done
+
+    # Connect the content sharing snap
+    snap connect $SNAP:ros-meta ros-meta-ros-core:ros-core
+  fi
+
   [ "$($SNAP)" = "hello world" ]
 
   # Clean the hello part, then build and run again.
