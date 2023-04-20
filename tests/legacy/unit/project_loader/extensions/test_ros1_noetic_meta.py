@@ -36,30 +36,35 @@ class TestClass:
         (
             "desktop",
             {
+                "extension_name": "ros1-noetic-desktop",
                 "extension_class": Ros1NoeticDesktopExtension,
                 "meta": "ros-meta-desktop",
                 "meta_dev": "ros-meta-desktop",
             },
             "perception",
             {
+                "extension_name": "ros1-noetic-perception",
                 "extension_class": Ros1NoeticPerceptionExtension,
                 "meta": "ros-meta-perception",
                 "meta_dev": "ros-meta-perception",
             },
             "robot",
             {
+                "extension_name": "ros1-noetic-robot",
                 "extension_class": Ros1NoeticRobotExtension,
                 "meta": "ros-meta-robot",
                 "meta_dev": "ros-meta-robot",
             },
             "ros-base",
             {
+                "extension_name": "ros1-noetic-ros-base",
                 "extension_class": Ros1NoeticRosBaseExtension,
                 "meta": "ros-meta-ros-base",
                 "meta_dev": "ros-meta-ros-base",
             },
             "ros-core",
             {
+                "extension_name": "ros1-noetic-ros-core",
                 "extension_class": Ros1NoeticRosCoreExtension,
                 "meta": "ros-meta-ros-core",
                 "meta_dev": "ros-meta-ros-core",
@@ -67,9 +72,9 @@ class TestClass:
         ),
     ]
 
-    def test_extension(self, extension_class, meta, meta_dev):
+    def test_extension(self, extension_name, extension_class, meta, meta_dev):
         ros1_extension = extension_class(
-            extension_name="ros1-noetic", yaml_data=dict(base="core20")
+            extension_name=extension_name, yaml_data=dict(base="core20")
         )
 
         assert ros1_extension.root_snippet == {
@@ -111,15 +116,13 @@ class TestClass:
         assert ros1_extension.parts == {
             "ros1-noetic-extension": {
                 "build-packages": ["ros-noetic-catkin"],
-                "override-build": "install -D -m 0755 launch "
-                "${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros1-launch",
-                "plugin": "nil",
+                "plugin": "make",
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/ros1",
             }
         }
 
-    def test_supported_bases(self, extension_class, meta, meta_dev):
+    def test_supported_bases(self, extension_name, extension_class, meta, meta_dev):
         assert extension_class.get_supported_bases() == ("core20",)
 
-    def test_supported_confinement(self, extension_class, meta, meta_dev):
+    def test_supported_confinement(self, extension_name, extension_class, meta, meta_dev):
         extension_class.get_supported_confinement() == ("strict", "devmode")
