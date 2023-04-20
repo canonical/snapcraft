@@ -24,5 +24,5 @@ from ._ros2_foxy_meta import RosFoxyMetaBase
 class ExtensionImpl(RosFoxyMetaBase):
     """Setup a ROS 2 build and runtime environment suitable for a snap."""
 
-    ROS_META: Final[str] = "ros2-meta-ros-core"
-    ROS_META_DEV: Final[str] = "ros2-meta-ros-core"
+    ROS_META: Final[str] = "ros-foxy-ros-core"
+    ROS_META_DEV: Final[str] = "ros-foxy-ros-core"

@@ -32,22 +32,22 @@ class TestClass:
             {
                 "extension_name": "ros2-foxy-desktop",
                 "extension_class": Ros2FoxyDesktopExtension,
-                "meta": "ros2-meta-desktop",
-                "meta_dev": "ros2-meta-desktop",
+                "meta": "ros-foxy-desktop",
+                "meta_dev": "ros-foxy-desktop",
             },
             "ros-base",
             {
                 "extension_name": "ros2-foxy-ros-base",
                 "extension_class": Ros2FoxyRosBaseExtension,
-                "meta": "ros2-meta-ros-base",
-                "meta_dev": "ros2-meta-ros-base",
+                "meta": "ros-foxy-ros-base",
+                "meta_dev": "ros-foxy-ros-base",
             },
             "ros-core",
             {
                 "extension_name": "ros2-foxy-ros-core",
                 "extension_class": Ros2FoxyRosCoreExtension,
-                "meta": "ros2-meta-ros-core",
-                "meta_dev": "ros2-meta-ros-core",
+                "meta": "ros-foxy-ros-core",
+                "meta_dev": "ros-foxy-ros-core",
             },
         ),
     ]
@@ -70,9 +70,9 @@ class TestClass:
                 }
             ],
             "plugs": {
-                "ros-meta": {
+                "ros2": {
                     "interface": "content",
-                    "content": "ros2-meta",
+                    "content": "ros-foxy",
                     "target": "$SNAP/opt/ros/underlay_ws",
                     "default-provider": meta,
                 }

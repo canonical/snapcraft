@@ -38,29 +38,29 @@ class TestClass:
             {
                 "extension_name": "ros1-noetic-desktop",
                 "extension_class": Ros1NoeticDesktopExtension,
-                "meta": "ros-meta-desktop",
-                "meta_dev": "ros-meta-desktop",
+                "meta": "ros-noetic-desktop",
+                "meta_dev": "ros-noetic-desktop",
             },
             "perception",
             {
                 "extension_name": "ros1-noetic-perception",
                 "extension_class": Ros1NoeticPerceptionExtension,
-                "meta": "ros-meta-perception",
-                "meta_dev": "ros-meta-perception",
+                "meta": "ros-noetic-perception",
+                "meta_dev": "ros-noetic-perception",
             },
             "robot",
             {
                 "extension_name": "ros1-noetic-robot",
                 "extension_class": Ros1NoeticRobotExtension,
-                "meta": "ros-meta-robot",
-                "meta_dev": "ros-meta-robot",
+                "meta": "ros-noetic-robot",
+                "meta_dev": "ros-noetic-robot",
             },
             "ros-base",
             {
                 "extension_name": "ros1-noetic-ros-base",
                 "extension_class": Ros1NoeticRosBaseExtension,
-                "meta": "ros-meta-ros-base",
-                "meta_dev": "ros-meta-ros-base",
+                "meta": "ros-noetic-ros-base",
+                "meta_dev": "ros-noetic-ros-base",
             },
             "ros-core",
             {
@@ -90,9 +90,9 @@ class TestClass:
                 }
             ],
             "plugs": {
-                "ros-meta": {
+                "ros": {
                     "interface": "content",
-                    "content": "ros-meta",
+                    "content": "ros-noetic",
                     "target": "$SNAP/opt/ros/underlay_ws",
                     "default-provider": meta,
                 }
