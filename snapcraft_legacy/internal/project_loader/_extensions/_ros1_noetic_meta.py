@@ -34,7 +34,7 @@ class RosNoeticMetaBase(RosNoeticExtension):
         # ]
 
         self.root_snippet["plugs"] = {
-            "ros":
+            "ros-noetic":
                 {
                     "interface": "content",
                     "content": "ros-noetic",

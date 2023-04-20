@@ -90,7 +90,7 @@ class TestClass:
                 }
             ],
             "plugs": {
-                "ros": {
+                "ros-noetic": {
                     "interface": "content",
                     "content": "ros-noetic",
                     "target": "$SNAP/opt/ros/underlay_ws",
