@@ -1299,7 +1299,7 @@ _prepare_config_flavour_cmd = [
 	archconfig=${archconfigdir}/config.common.${DEB_ARCH}
 	flavourconfig=${archconfigdir}/config.flavour.raspi
     cat ${commonconfig} ${ubuntuconfig} ${archconfig} ${flavourconfig} \
-> ${SNAPCRAFT_PART_BUILD}/.config 2>/dev/null"""
+> ${SNAPCRAFT_PART_BUILD}/.config 2>/dev/null || true"""
     ),
     "fi",
 ]
