@@ -892,6 +892,7 @@ class TestPluginKernel:
 
     def test_add_ppa_key_exists(self, setup_method_fixture, new_dir, fp):
         # we need to  mock subprocess.run first
+        fp.register(["apt-get", "install", "-y", "software-properties-common"])
         fp.register(
             ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
             stdout=[
@@ -912,6 +913,7 @@ class TestPluginKernel:
 
     def test_add_ppa_key_exists_happy(self, setup_method_fixture, new_dir, caplog, fp):
         # we need to  mock subprocess.run first
+        fp.register(["apt-get", "install", "-y", "software-properties-common"])
         fp.register(
             ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
             stdout=[""],
@@ -943,6 +945,7 @@ class TestPluginKernel:
 
     def test_add_ppa_no_key_happy(self, setup_method_fixture, new_dir, caplog, fp):
         # we need to  mock subprocess.run first
+        fp.register(["apt-get", "install", "-y", "software-properties-common"])
         fp.register(
             ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
             stdout=[""],
@@ -993,6 +996,7 @@ class TestPluginKernel:
 
     def test_add_ppa_key_check_unhappy(self, setup_method_fixture, new_dir, caplog, fp):
         # we need to  mock subprocess.run first
+        fp.register(["apt-get", "install", "-y", "software-properties-common"])
         fp.register(
             ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
             stdout=[""],
@@ -1023,6 +1027,7 @@ class TestPluginKernel:
 
     def test_add_ppa_key_add_unhappy(self, setup_method_fixture, new_dir, caplog, fp):
         # we need to  mock subprocess.run first
+        fp.register(["apt-get", "install", "-y", "software-properties-common"])
         fp.register(
             ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
             stdout=[""],
@@ -1391,7 +1396,7 @@ _prepare_config_flavour_cmd = [
 	archconfig=${archconfigdir}/config.common.${DEB_ARCH}
 	flavourconfig=${archconfigdir}/config.flavour.raspi
     cat ${commonconfig} ${ubuntuconfig} ${archconfig} ${flavourconfig} \
-> ${CRAFT_PART_BUILD}/.config 2>/dev/null"""
+> ${CRAFT_PART_BUILD}/.config 2>/dev/null || true"""
     ),
     "fi",
 ]

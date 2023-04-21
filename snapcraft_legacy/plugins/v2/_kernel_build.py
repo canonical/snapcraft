@@ -286,7 +286,7 @@ def _do_base_config_cmd(
 	archconfig=${{archconfigdir}}/config.common.${{DEB_ARCH}}
 	flavourconfig=${{archconfigdir}}/config.flavour.{config_flavour}
     cat ${{commonconfig}} ${{ubuntuconfig}} ${{archconfig}} ${{flavourconfig}} \
-> {dest_dir}/.config 2>/dev/null""".format(
+> {dest_dir}/.config 2>/dev/null || true""".format(
                 config_flavour=config_flavour, dest_dir=dest_dir
             )
         )
@@ -1248,7 +1248,7 @@ def _get_install_command(
 ### build dependencies
 
 
-def add_snappy_ppa(with_sudo=False) -> None:
+def add_snappy_ppa(with_sudo=False) -> None:  # noqa: C901
     # Add ppa necessary to build initrd.
     # TODO: reimplement once snapcraft allows to the plugins
     # to add custom ppa.
@@ -1257,6 +1257,15 @@ def add_snappy_ppa(with_sudo=False) -> None:
 
     # Building of the initrd requires custom tools available in
     # ppa:snappy-dev/image.
+
+    proc = subprocess.run(
+        ["apt-get", "install", "-y", "software-properties-common"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if proc.returncode != 0:
+        raise ValueError(f"error installing package: {proc.stderr.decode().strip()}")
 
     proc = subprocess.run(
         ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
