@@ -350,7 +350,7 @@ class TestPluginColconPlugin:
             'eval "${state}"',
             "## Prepare build",
             'if [ -d "/snap/foo/current" ]; then export '
-            'CMAKE_PREFIX_PATH="/snap/foo/current:/snap/foo/current/usr:${CMAKE_PREFIX_PATH}"; '
+            'CMAKE_PREFIX_PATH="/snap/foo/current:/snap/foo/current/usr:${CMAKE_PREFIX_PATH-}"; '
             "fi",
             "## Build command",
             "colcon build "

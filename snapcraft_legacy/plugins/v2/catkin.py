@@ -148,7 +148,7 @@ class CatkinPlugin(_ros.RosPlugin):
                 ])
                 export_command.extend([
                     'if [ -d "${{SNAPCRAFT_PART_BUILD}}"/build_snaps/{build_snap} ]; then '
-                    'export CMAKE_PREFIX_PATH="${{SNAPCRAFT_PART_BUILD}}/build_snaps/{build_snap}:${{CMAKE_PREFIX_PATH}}"; '
+                    'export CMAKE_PREFIX_PATH="${{SNAPCRAFT_PART_BUILD}}/build_snaps/{build_snap}:${{CMAKE_PREFIX_PATH-}}"; '
                     'fi'.format(build_snap=build_snap)
                 ])
 

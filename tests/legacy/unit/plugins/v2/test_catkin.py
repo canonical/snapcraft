@@ -282,7 +282,7 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         '"s|\\${.*_DIR}/../../..|/snap/foo/current/opt/ros/${ROS_DISTRO}|g" {} \\;',
         "fi",
         'if [ -d "${SNAPCRAFT_PART_BUILD}"/build_snaps/foo ]; then export '
-        'CMAKE_PREFIX_PATH="${SNAPCRAFT_PART_BUILD}/build_snaps/foo:${CMAKE_PREFIX_PATH}"; '
+        'CMAKE_PREFIX_PATH="${SNAPCRAFT_PART_BUILD}/build_snaps/foo:${CMAKE_PREFIX_PATH-}"; '
         "fi",
         "## Build command",
         "catkin_make_isolated --install --merge "
