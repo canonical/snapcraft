@@ -184,7 +184,7 @@ class ColconPlugin(_ros.RosPlugin):
                 export_command.extend(
                     [
                         'if [ -d "/snap/{build_snap}/current" ]; then '
-                        'export CMAKE_PREFIX_PATH="/snap/{build_snap}/current:/snap/{build_snap}/current/usr:${{CMAKE_PREFIX_PATH}}"; '
+                        'export CMAKE_PREFIX_PATH="/snap/{build_snap}/current:/snap/{build_snap}/current/usr:${{CMAKE_PREFIX_PATH-}}"; '
                         "fi".format(build_snap=build_snap)
                     ]
                 )
