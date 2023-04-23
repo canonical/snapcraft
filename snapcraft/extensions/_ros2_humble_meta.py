@@ -18,7 +18,8 @@
 
 """Base for ROS 2 Humble extensions to the Colcon plugin using content-sharing."""
 
-from typing import Any, Dict, Optional
+from abc import abstractmethod
+from typing import Any, Dict
 
 from overrides import overrides
 
@@ -28,17 +29,28 @@ from .ros2_humble import ROS2HumbleExtension
 class ROS2HumbleMetaBase(ROS2HumbleExtension):
     """Drives ROS 2 build and runtime environment for snap using content-sharing."""
 
+    @property
+    @abstractmethod
+    def ROS_META(cls):
+        """Abstract property to define the extension's content-sharing snap."""
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def ROS_META_DEV(cls):
+        """Abstract property to define the extension's build snap."""
+        raise NotImplementedError
+
     @overrides
     def get_root_snippet(self) -> Dict[str, Any]:
         root_snippet = super().get_root_snippet()
         root_snippet["plugs"] = {
-            "ros-humble":
-                {
-                    "interface": "content",
-                    "content": "ros-humble",
-                    "target": "$SNAP/opt/ros/underlay_ws",
-                    "default-provider": self.ROS_META,
-                }
+            "ros-humble": {
+                "interface": "content",
+                "content": "ros-humble",
+                "target": "$SNAP/opt/ros/underlay_ws",
+                "default-provider": self.ROS_META,
+            }
         }
         return root_snippet
 
