@@ -221,7 +221,7 @@ def get_installed_dependencies(installed_packages_path: str) -> Set[str]:
                         )
                     except subprocess.CalledProcessError as error:
                         click.echo(f"failed to run {cmd!r}: {error.output}")
-                    apt_dependency_regex = re.compile("^\w.*$")
+                    apt_dependency_regex = re.compile("^\w.*$") # noqa: W605
                     for line in proc.stdout.decode().strip().split("\n"):
                         if apt_dependency_regex.match(line):
                             package_dependencies.add(line)

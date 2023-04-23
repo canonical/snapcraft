@@ -115,5 +115,7 @@ class TestClass:
     def test_supported_bases(self, extension_name, extension_class, meta, meta_dev):
         assert extension_class.get_supported_bases() == ("core20",)
 
-    def test_supported_confinement(self, extension_name, extension_class, meta, meta_dev):
+    def test_supported_confinement(
+        self, extension_name, extension_class, meta, meta_dev
+    ):
         extension_class.get_supported_confinement() == ("strict", "devmode")

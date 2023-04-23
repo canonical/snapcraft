@@ -155,13 +155,13 @@ def test_get_build_commands(monkeypatch):
         "fi",
         "",
         'eval "${state}"',
-        '## Prepare build',
+        "## Prepare build",
         "## Build command",
         "colcon build "
         '--base-paths "${SNAPCRAFT_PART_SRC_WORK}" --build-base "${SNAPCRAFT_PART_BUILD}" '
         '--merge-install --install-base "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap '
         '--parallel-workers "${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
-        '## Post build command',
+        "## Post build command",
         'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE ]; then',
         'rm "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE',
         "fi",
@@ -283,7 +283,7 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "fi",
         "",
         'eval "${state}"',
-        '## Prepare build',
+        "## Prepare build",
         'if [ -d "/snap/foo/current" ]; then export '
         'CMAKE_PREFIX_PATH="/snap/foo/current:/snap/foo/current/usr:${CMAKE_PREFIX_PATH}"; '
         "fi",
@@ -295,7 +295,7 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "package2... --cmake-args cmake args... "
         "--ament-cmake-args ament args... --catkin-cmake-args catkin "
         'args... --parallel-workers "${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
-        '## Post build command',
+        "## Post build command",
         'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE ]; then',
         'rm "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE',
         "fi",
