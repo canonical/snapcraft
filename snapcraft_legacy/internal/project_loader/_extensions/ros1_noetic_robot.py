@@ -25,4 +25,4 @@ class ExtensionImpl(RosNoeticMetaBase):
     """Setup a ROS 1 build and runtime environment suitable for a snap."""
 
     ROS_META: Final[str] = "ros-noetic-robot"
-    ROS_META_DEV: Final[str] = "ros-noetic-robot"
+    ROS_META_DEV: Final[str] = "ros-noetic-robot-dev"

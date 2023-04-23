@@ -50,7 +50,7 @@ execute: |
   SNAP_SIZE=$(ls -s "${SNAP}"_1.0_*.snap | cut -d " " -f1)
   [ "100" -gt "$SNAP_SIZE" ]
 
-  snap connect ${SNAP}:ros-meta ${META_SNAP}
+  snap connect ${SNAP}:ros-noetic ${META_SNAP}
   [ "$($SNAP)" = "hello world" ]
 
   # Clean the hello part, then build and run again.
@@ -58,7 +58,7 @@ execute: |
   snapcraft
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
-  snap connect ${SNAP}:ros-meta ${META_SNAP}
+  snap connect ${SNAP}:ros-noetic ${META_SNAP}
   [ "$($SNAP)" = "hello world" ]
 
   # Make sure that what we built runs with the changes applied.
