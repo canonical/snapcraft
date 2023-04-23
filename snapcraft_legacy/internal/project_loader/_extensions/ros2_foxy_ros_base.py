@@ -25,4 +25,4 @@ class ExtensionImpl(RosFoxyMetaBase):
     """Setup a ROS 2 build and runtime environment suitable for a snap."""
 
     ROS_META: Final[str] = "ros-foxy-ros-base"
-    ROS_META_DEV: Final[str] = "ros-foxy-ros-base"
+    ROS_META_DEV: Final[str] = "ros-foxy-ros-base-dev"
