@@ -46,19 +46,19 @@ class TestExtensionROS2HumbleMetaExtensions:
             "ros2-humble-desktop",
             ROS2HumbleDesktopExtension,
             "ros-humble-desktop",
-            "ros-humble-desktop"
+            "ros-humble-desktop-dev"
         ),
         (
             "ros2-humble-ros-base",
             ROS2HumbleRosBaseExtension,
             "ros-humble-ros-base",
-            "ros-humble-ros-base"
+            "ros-humble-ros-base-dev"
         ),
         (
             "ros2-humble-ros-core",
             ROS2HumbleRosCoreExtension,
             "ros-humble-ros-core",
-            "ros-humble-ros-core"
+            "ros-humble-ros-core-dev"
         ),
     ]
 

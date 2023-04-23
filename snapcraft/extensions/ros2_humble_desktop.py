@@ -35,4 +35,4 @@ class ROS2HumbleDesktopExtension(ROS2HumbleMetaBase):
         return True
 
     ROS_META: Final[str] = "ros-humble-desktop"
-    ROS_META_DEV: Final[str] = "ros-humble-desktop"
+    ROS_META_DEV: Final[str] = "ros-humble-desktop-dev"
