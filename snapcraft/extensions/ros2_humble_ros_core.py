@@ -35,4 +35,4 @@ class ROS2HumbleRosCoreExtension(ROS2HumbleMetaBase):
         return True
 
     ROS_META: Final[str] = "ros-humble-ros-core"
-    ROS_META_DEV: Final[str] = "ros-humble-ros-core"
+    ROS_META_DEV: Final[str] = "ros-humble-ros-core-dev"
