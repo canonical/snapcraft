@@ -76,12 +76,14 @@ class TestPluginColconPlugin:
 
     def test_property_unexpected(self):
         try:
-            properties = colcon.ColconPlugin.properties_class(source=".")
+            properties = colcon.ColconPlugin.properties_class(source=".")  # noqa F841
         except ValidationError as e:
             raise AssertionError(f"{e}") from e
 
         with pytest.raises(ValidationError):
-            properties = colcon.ColconPlugin.properties_class(source=".", foo="bar")
+            properties = colcon.ColconPlugin.properties_class(  # noqa F841
+                source=".", foo="bar"
+            )
 
     def test_property_all(self):
         try:
@@ -187,13 +189,13 @@ class TestPluginColconPlugin:
             "fi",
             "",
             'eval "${state}"',
-            '## Prepare build',
+            "## Prepare build",
             "## Build command",
-            'colcon build '
+            "colcon build "
             '--base-paths "${CRAFT_PART_SRC_WORK}" --build-base "${CRAFT_PART_BUILD}" '
             '--merge-install --install-base "${CRAFT_PART_INSTALL}/opt/ros/snap" '
             '--parallel-workers "${CRAFT_PARALLEL_BUILD_COUNT}"',
-            '## Post build command',
+            "## Post build command",
             'if [ -f "${CRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE ]; then',
             'rm "${CRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE',
             "fi",

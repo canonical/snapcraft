@@ -150,6 +150,7 @@ class ColconPlugin(_ros.RosPlugin):
 
         # Source ROS ws in all build-snaps first
         activation_commands.append("## Sourcing ROS ws in build snaps")
+        self._options: ColconPluginProperties
         if self._options.build_snaps:
             for build_snap in self._options.build_snaps:
                 snap_name = _get_parsed_snap(build_snap)[0]
@@ -160,9 +161,7 @@ class ColconPlugin(_ros.RosPlugin):
 
         # Source ROS ws in stage-snaps next
         activation_commands.append("## Sourcing ROS ws in stage snaps")
-        activation_commands.extend(
-            self._get_source_command("${CRAFT_PART_INSTALL}")
-        )
+        activation_commands.extend(self._get_source_command("${CRAFT_PART_INSTALL}"))
         activation_commands.append("")
 
         # Finally source system's ROS ws
@@ -182,11 +181,13 @@ class ColconPlugin(_ros.RosPlugin):
             for build_snap in self._options.build_snaps:
                 build_snap = _get_parsed_snap(build_snap)[0]
 
-                export_command.extend([
-                    'if [ -d "/snap/{build_snap}/current" ]; then '
-                    'export CMAKE_PREFIX_PATH="/snap/{build_snap}/current:/snap/{build_snap}/current/usr:${{CMAKE_PREFIX_PATH}}"; '
-                    'fi'.format(build_snap=build_snap)
-                ])
+                export_command.extend(
+                    [
+                        'if [ -d "/snap/{build_snap}/current" ]; then '
+                        'export CMAKE_PREFIX_PATH="/snap/{build_snap}/current:/snap/{build_snap}/current/usr:${{CMAKE_PREFIX_PATH}}"; '
+                        "fi".format(build_snap=build_snap)
+                    ]
+                )
 
         build_command = [
             "colcon",
@@ -210,10 +211,14 @@ class ColconPlugin(_ros.RosPlugin):
             build_command.extend(["--cmake-args", *options.colcon_cmake_args])
 
         if options.colcon_ament_cmake_args:
-            build_command.extend(["--ament-cmake-args", *options.colcon_ament_cmake_args])
+            build_command.extend(
+                ["--ament-cmake-args", *options.colcon_ament_cmake_args]
+            )
 
         if options.colcon_catkin_cmake_args:
-            build_command.extend(["--catkin-cmake-args", *options.colcon_catkin_cmake_args])
+            build_command.extend(
+                ["--catkin-cmake-args", *options.colcon_catkin_cmake_args]
+            )
 
         # Specify the number of workers
         build_command.extend(["--parallel-workers", '"${CRAFT_PARALLEL_BUILD_COUNT}"'])

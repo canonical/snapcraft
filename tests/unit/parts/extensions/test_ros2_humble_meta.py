@@ -32,9 +32,7 @@ def setup_method_fixture(extension, yaml_data=None, arch=None, target_arch=None)
     if target_arch is None:
         target_arch = "amd64"
 
-    return extension(
-        yaml_data=yaml_data, arch=arch, target_arch=target_arch
-    )
+    return extension(yaml_data=yaml_data, arch=arch, target_arch=target_arch)
 
 
 class TestExtensionROS2HumbleMetaExtensions:
@@ -46,19 +44,19 @@ class TestExtensionROS2HumbleMetaExtensions:
             "ros2-humble-desktop",
             ROS2HumbleDesktopExtension,
             "ros-humble-desktop",
-            "ros-humble-desktop-dev"
+            "ros-humble-desktop-dev",
         ),
         (
             "ros2-humble-ros-base",
             ROS2HumbleRosBaseExtension,
             "ros-humble-ros-base",
-            "ros-humble-ros-base-dev"
+            "ros-humble-ros-base-dev",
         ),
         (
             "ros2-humble-ros-core",
             ROS2HumbleRosCoreExtension,
             "ros-humble-ros-core",
-            "ros-humble-ros-core-dev"
+            "ros-humble-ros-core-dev",
         ),
     ]
 
@@ -82,7 +80,9 @@ class TestExtensionROS2HumbleMetaExtensions:
         assert extension.get_supported_bases() == ("core22",)
 
     @pytest.mark.parametrize(fixture_variables, fixture_values)
-    def test_get_supported_confinement(self, extension_name, extension_class, meta, meta_dev):
+    def test_get_supported_confinement(
+        self, extension_name, extension_class, meta, meta_dev
+    ):
         extension = setup_method_fixture(extension_class)
         assert extension.get_supported_confinement() == ("strict", "devmode")
 
@@ -124,12 +124,12 @@ class TestExtensionROS2HumbleMetaExtensions:
                     }
                 ]
             },
-            'plugs': {
-                'ros-humble': {
-                    'content': 'ros-humble',
-                    'default-provider': meta,
-                    'interface': 'content',
-                    'target': '$SNAP/opt/ros/underlay_ws'
+            "plugs": {
+                "ros-humble": {
+                    "content": "ros-humble",
+                    "default-provider": meta,
+                    "interface": "content",
+                    "target": "$SNAP/opt/ros/underlay_ws",
                 }
             },
         }
@@ -157,7 +157,7 @@ class TestExtensionROS2HumbleMetaExtensions:
         extension = setup_method_fixture(extension_class)
         assert extension.get_part_snippet() == {
             "build-environment": [{"ROS_VERSION": "2"}, {"ROS_DISTRO": "humble"}],
-            'build-snaps': [meta_dev]
+            "build-snaps": [meta_dev],
         }
 
     @pytest.mark.parametrize(fixture_variables, fixture_values)
