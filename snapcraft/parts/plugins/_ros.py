@@ -251,6 +251,46 @@ class RosPlugin(plugins.Plugin):
 def plugin_cli():
     """Define the plugin_cli Click group."""
 
+def get_installed_dependencies(installed_packages_path: str) -> Set[str]:
+    if os.path.isfile(installed_packages_path):
+        try:
+            with open(installed_packages_path, "r") as f:
+                build_snap_packages = set(f.read().split())
+                package_dependencies = set()
+                for package in build_snap_packages:
+                    try:
+                        cmd = [
+                            "apt",
+                            "depends",
+                            "--recurse",
+                            "--no-recommends",
+                            "--no-suggests",
+                            "--no-conflicts",
+                            "--no-breaks",
+                            "--no-replaces",
+                            "--no-enhances",
+                            f"{package}",
+                        ]
+                        click.echo(f"Running {cmd!r}")
+                        proc = subprocess.run(
+                            cmd,
+                            check=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                            env=dict(PATH=os.environ["PATH"]),
+                        )
+                    except subprocess.CalledProcessError as error:
+                        click.echo(f"failed to run {cmd!r}: {error.output}")
+                    apt_dependency_regex = re.compile("^\w.*$") # noqa: W605
+                    for line in proc.stdout.decode().strip().split("\n"):
+                        if apt_dependency_regex.match(line):
+                            package_dependencies.add(line)
+
+                build_snap_packages.update(package_dependencies)
+                click.echo(f"Will not fetch staged packages: {build_snap_packages!r}")
+                return build_snap_packages
+        except IOError:
+            return Set(str)
 
 @plugin_cli.command()
 @click.option("--part-src", envvar="CRAFT_PART_SRC", required=True)
@@ -318,16 +358,9 @@ def stage_runtime_dependencies(
             if parsed:
                 click.echo(f"unhandled dependencies: {parsed!r}")
 
-    build_snap_packages: Set[str] = set()
-    installed_packages_file = part_install + "/.installed_packages.txt"
-    if os.path.isfile(installed_packages_file):
-        try:
-            with open(installed_packages_file, "r") as f:
-                build_snap_packages = set(f.read().split())
-                click.echo(f"Will not fetch staged packages: {build_snap_packages!r}")
-        except IOError:
-            click.echo(f"failed to open file {installed_packages_file}")
-            pass
+    build_snap_packages = get_installed_dependencies(
+        part_install + "/.installed_packages.txt"
+    )
 
     if apt_packages:
         package_names = sorted(apt_packages)
