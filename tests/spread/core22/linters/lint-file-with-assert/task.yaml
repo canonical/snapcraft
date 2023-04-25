@@ -1,0 +1,34 @@
+summary: Run snapcraft lint on a snap file with a valid assert file.
+
+restore: |
+  rm -f ./*.snap ./*.assert
+
+execute: |
+  # download a snap and assertion with a core22 base
+  snap download core22
+
+  # give it a predictable name to simplify testing
+  mv core22_*.snap core22.snap
+  mv core22_*.assert core22.assert
+
+  # test the linter using a build provider
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  snapcraft lint core22.snap 2> output.txt
+
+  # confirm there was not an assertion error
+  if grep -q "Could not add assertions from file" output.txt; then
+    exit 1
+  fi
+  # confirm linter executed
+  grep "Running linters..." output.txt
+
+  # make a bad assert file
+  cp core22.snap core22.assert
+
+  # snapcraft should handle the bad assert file and still run the linter
+  snapcraft lint core22.snap 2> output.txt
+
+  # confirm there was an assertion error
+  grep "Could not add assertions from file" output.txt
+  grep "Running linters..." output.txt
