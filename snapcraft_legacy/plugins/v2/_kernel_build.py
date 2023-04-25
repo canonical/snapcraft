@@ -1257,9 +1257,12 @@ def add_snappy_ppa(with_sudo=False) -> None:  # noqa: C901
 
     # Building of the initrd requires custom tools available in
     # ppa:snappy-dev/image.
-
+    if with_sudo:
+        cmd = ["sudo", "apt-get", "install", "-y", "software-properties-common"]
+    else:
+        cmd = ["apt-get", "install", "-y", "software-properties-common"]
     proc = subprocess.run(
-        ["apt-get", "install", "-y", "software-properties-common"],
+        cmd,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.PIPE,
         check=False,
