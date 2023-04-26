@@ -261,20 +261,20 @@ def get_installed_dependencies(installed_packages_path: str) -> Set[str]:
                 build_snap_packages = set(file.read().split())
                 package_dependencies = set()
                 for package in build_snap_packages:
+                    cmd = [
+                        "apt",
+                        "depends",
+                        "--recurse",
+                        "--no-recommends",
+                        "--no-suggests",
+                        "--no-conflicts",
+                        "--no-breaks",
+                        "--no-replaces",
+                        "--no-enhances",
+                        f"{package}",
+                    ]
+                    click.echo(f"Running {cmd!r}")
                     try:
-                        cmd = [
-                            "apt",
-                            "depends",
-                            "--recurse",
-                            "--no-recommends",
-                            "--no-suggests",
-                            "--no-conflicts",
-                            "--no-breaks",
-                            "--no-replaces",
-                            "--no-enhances",
-                            f"{package}",
-                        ]
-                        click.echo(f"Running {cmd!r}")
                         proc = subprocess.run(
                             cmd,
                             check=True,
@@ -284,16 +284,19 @@ def get_installed_dependencies(installed_packages_path: str) -> Set[str]:
                         )
                     except subprocess.CalledProcessError as error:
                         click.echo(f"failed to run {cmd!r}: {error.output}")
-                    apt_dependency_regex = re.compile("^\w.*$") # noqa: W605
-                    for line in proc.stdout.decode().strip().split("\n"):
-                        if apt_dependency_regex.match(line):
-                            package_dependencies.add(line)
+                    else:
+                        apt_dependency_regex = re.compile("^\w.*$")  # noqa: W605
+                        for line in proc.stdout.decode().strip().split("\n"):
+                            if apt_dependency_regex.match(line):
+                                package_dependencies.add(line)
 
                 build_snap_packages.update(package_dependencies)
                 click.echo(f"Will not fetch staged packages: {build_snap_packages!r}")
                 return build_snap_packages
         except IOError:
-            return Set(str)
+            pass
+    return set()
+
 
 @plugin_cli.command()
 @click.option("--part-src", envvar="CRAFT_PART_SRC", required=True)
