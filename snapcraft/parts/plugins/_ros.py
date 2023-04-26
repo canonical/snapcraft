@@ -130,13 +130,13 @@ class RosPlugin(plugins.Plugin):
 
     def _get_list_packages_commands(self) -> List[str]:
         """Generate a list of ROS 2 packages available in build snaps.
+
         The ROS 2 workspaces contained in build snaps are crawled with `rospack`
         to establish the list of all available ROS 2 packages.
         The package names are then resolved with `rosdep` to map their names to debs.
         The list is finally saved in the part's install directory.
         """
-
-        cmd = list()
+        cmd = []
 
         # Clean up previously established list of packages in build snaps
         cmd.append('rm -f "${CRAFT_PART_INSTALL}/.installed_packages.txt"')

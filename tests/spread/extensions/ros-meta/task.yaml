@@ -68,5 +68,5 @@ execute: |
   # # Install the providing snap
   # snap install "${META_SNAP}"
 
-  snap connect ${SNAP}:${INTERFACE} ${META_SNAP}:${INTERFACE}
+  snap connect "${SNAP}":"${INTERFACE}" "${META_SNAP}":"${INTERFACE}"
   [ "$($SNAP)" = "hello world" ]

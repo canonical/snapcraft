@@ -31,13 +31,13 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
 
     @property
     @abstractmethod
-    def ROS_META(cls):
+    def ROS_META(self):
         """Abstract property to define the extension's content-sharing snap."""
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def ROS_META_DEV(cls):
+    def ROS_META_DEV(self):
         """Abstract property to define the extension's build snap."""
         raise NotImplementedError
 

@@ -146,7 +146,7 @@ class ColconPlugin(_ros.RosPlugin):
         specific functionality.
         """
 
-        activation_commands = list()
+        activation_commands = []
 
         # Source ROS ws in all build-snaps first
         activation_commands.append("## Sourcing ROS ws in build snaps")
@@ -175,7 +175,7 @@ class ColconPlugin(_ros.RosPlugin):
     def _get_build_commands(self) -> List[str]:
         options = cast(ColconPluginProperties, self._options)
 
-        export_command = list()
+        export_command = []
 
         if self._options.build_snaps:
             for build_snap in self._options.build_snaps:
