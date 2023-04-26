@@ -192,6 +192,7 @@ def plugin_cli():
 
 
 def get_installed_dependencies(installed_packages_path: str) -> Set[str]:
+    """Retrieve recursive apt dependencies of a given package list."""
     if os.path.isfile(installed_packages_path):
         try:
             with open(installed_packages_path, "r") as f:
