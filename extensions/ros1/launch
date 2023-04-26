@@ -18,7 +18,7 @@ original_args=("$@")
 # activate_workspace in content shared snaps
 if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" ]; then
     activate_workspace "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" --local
-    export LD_LIBRARY_PATH="$SNAP/opt/ros/underlay_ws/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH-}"
+    export LD_LIBRARY_PATH="$SNAP/opt/ros/underlay_ws/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 fi
 
 activate_workspace "$SNAP/opt/ros/$ROS_DISTRO" --local --extend
