@@ -76,13 +76,15 @@ class TestPluginColconPlugin:
 
     def test_property_unexpected(self):
         try:
-            properties = colcon.ColconPlugin.properties_class(source=".")  # noqa F841
+            properties = colcon.ColconPlugin.properties_class(  # noqa F841
+                source="."  # type: ignore
+            )
         except ValidationError as e:
             raise AssertionError(f"{e}") from e
 
         with pytest.raises(ValidationError):
             properties = colcon.ColconPlugin.properties_class(  # noqa F841
-                source=".", foo="bar"
+                source=".", foo="bar"  # type: ignore
             )
 
     def test_property_all(self):
