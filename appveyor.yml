@@ -61,7 +61,10 @@ test_script:
     dist\snapcraft.exe version
     mkdir test
     cd test
-    ..\dist\snapcraft.exe init
+    ..\dist\snapcraft.exe --help
+    ..\dist\snapcraft.exe help
+    ..\dist\snapcraft.exe --enable-developer-debug --debug
+    ..\dist\snapcraft.exe init --verbosity=trace
     cd ..
 
     echo "Smoke testing snapcraft-installer-self-signed.exe..."
