@@ -901,25 +901,23 @@ def test_load_project_unsupported_core_error(base, tmp_path):
     # create a simple snapcraft.yaml
     (tmp_path / "snap").mkdir()
     snap_file = tmp_path / "snap/snapcraft.yaml"
-    with snap_file.open("w") as yaml_file:
-        print(
-            dedent(
-                f"""\
-                name: test-name
-                version: "1.0"
-                summary: test summary
-                description: test description
-                base: {base}
-                confinement: strict
-                grade: stable
+    snap_file.write_text(
+        dedent(
+            f"""\
+            name: test-name
+            version: "1.0"
+            summary: test summary
+            description: test description
+            base: {base}
+            confinement: strict
+            grade: stable
 
-                parts:
-                  part1:
-                    plugin: nil
-                """
-            ),
-            file=yaml_file,
+            parts:
+              part1:
+                plugin: nil
+            """
         )
+    )
 
     with pytest.raises(SnapcraftError) as raised:
         LintCommand(None)._load_project(snapcraft_yaml_file=snap_file)
