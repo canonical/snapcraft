@@ -18,19 +18,29 @@
 
 import argparse
 import os
+import shlex
+import subprocess
+import tempfile
 import textwrap
+from contextlib import contextmanager
 from pathlib import Path
-from shlex import join
-from subprocess import CalledProcessError
-from typing import Optional
+from typing import Iterator, Optional
 
 from craft_cli import BaseCommand, emit
 from craft_cli.errors import ArgumentParsingError
+from craft_providers.multipass import MultipassProvider
+from craft_providers.util import snap_cmd
 from overrides import overrides
 
-from snapcraft import providers
-from snapcraft.errors import SnapcraftError
-from snapcraft.utils import get_managed_environment_home_path, is_managed_mode
+from snapcraft import linters, projects, providers
+from snapcraft.errors import LegacyFallback, SnapcraftError
+from snapcraft.meta import snap_yaml
+from snapcraft.parts.lifecycle import apply_yaml, extract_parse_info, process_yaml
+from snapcraft.utils import (
+    get_host_architecture,
+    get_managed_environment_home_path,
+    is_managed_mode,
+)
 
 
 class LintCommand(BaseCommand):
@@ -137,10 +147,17 @@ class LintCommand(BaseCommand):
         :param assert_file: Optional path to assertion file to push into the instance.
         :param http_proxy: http proxy to add to environment
         :param https_proxy: https proxy to add to environment
+
+        :raises SnapcraftError: If `snapcraft lint` fails inside the instance.
         """
         emit.progress("Checking build provider availability.")
 
         provider = providers.get_provider()
+        if isinstance(provider, MultipassProvider):
+            # blocked by https://github.com/canonical/craft-providers/issues/169
+            raise SnapcraftError(
+                "'snapcraft lint' is not supported with Multipass as the build provider"
+            )
         providers.ensure_provider_is_available(provider)
 
         # create base configuration
@@ -177,18 +194,189 @@ class LintCommand(BaseCommand):
             # run linter inside the instance
             command = ["snapcraft", "lint", str(snap_file_instance)]
             try:
+                emit.debug(f"running {shlex.join(command)!r} in instance")
                 with emit.pause():
                     instance.execute_run(command, check=True)
-            except CalledProcessError as err:
+            except subprocess.CalledProcessError as error:
                 raise SnapcraftError(
-                    f"failed to execute {join(command)!r} in instance",
-                ) from err
+                    f"failed to execute {shlex.join(command)!r} in instance",
+                ) from error
+            finally:
+                providers.capture_logs_from_instance(instance)
 
-    # pylint: disable-next=unused-argument
     def _run_linter(self, snap_file: Path, assert_file: Optional[Path]) -> None:
         """Run snapcraft linters on a snap file.
 
         :param snap_file: Path to snap file to lint.
         :param assert_file: Optional path to assertion file for the snap file.
         """
-        emit.progress("'snapcraft lint' not implemented.", permanent=True)
+        # unsquash, load snap.yaml, and optionally load snapcraft.yaml
+        with self._unsquash_snap(snap_file) as unsquashed_snap:
+            snap_metadata = snap_yaml.read(unsquashed_snap)
+            project = self._load_project(unsquashed_snap / "snap" / "snapcraft.yaml")
+
+        snap_install_path = self._install_snap(snap_file, assert_file, snap_metadata)
+
+        lint_filters = self._load_lint_filters(project)
+
+        # run the linters
+        issues = linters.run_linters(location=snap_install_path, lint=lint_filters)
+        linters.report(issues, intermediate=True)
+
+    @contextmanager
+    def _unsquash_snap(self, snap_file: Path) -> Iterator[Path]:
+        """Unsquash a snap file to a temporary directory.
+
+        :param snap_file: Snap package to extract.
+
+        :yields: Path to the snap's unsquashed directory.
+
+        :raises SnapcraftError: If the snap fails to unsquash.
+        """
+        snap_file = snap_file.resolve()
+
+        with tempfile.TemporaryDirectory(prefix=str(snap_file.parent)) as temp_dir:
+            emit.progress(f"Unsquashing snap file {snap_file.name!r}.")
+
+            # unsquashfs [options] filesystem [directories or files to extract] options:
+            # -force: if file already exists then overwrite
+            # -dest <pathname>: unsquash to <pathname>
+            extract_command = [
+                "unsquashfs",
+                "-force",
+                "-dest",
+                temp_dir,
+                str(snap_file),
+            ]
+
+            try:
+                subprocess.run(extract_command, capture_output=True, check=True)
+            except subprocess.CalledProcessError as error:
+                raise SnapcraftError(
+                    f"could not unsquash snap file {snap_file.name!r}"
+                ) from error
+
+            yield Path(temp_dir)
+
+    def _load_project(self, snapcraft_yaml_file: Path) -> Optional[projects.Project]:
+        """Load a snapcraft Project from a snapcraft.yaml, if present.
+
+        The snapcraft.yaml exist for snaps built with the `--enable-manifest` parameter.
+
+        :param snapcraft_yaml_file: path to snapcraft.yaml file to load
+
+        :returns: A Project containing the snapcraft.yaml's data or None if the yaml
+        file does not exist.
+        """
+        if not snapcraft_yaml_file.exists():
+            emit.debug(f"Could not find {snapcraft_yaml_file.name!r}.")
+            return None
+
+        try:
+            # process_yaml will not parse core, core18, and core20 snaps
+            yaml_data = process_yaml(snapcraft_yaml_file)
+        except LegacyFallback as error:
+            raise SnapcraftError(
+                "can not lint snap using a base older than core22"
+            ) from error
+
+        # process yaml before unmarshalling the data
+        arch = get_host_architecture()
+        yaml_data_for_arch = apply_yaml(yaml_data, arch, arch)
+        # discard parse-info - it is not needed
+        extract_parse_info(yaml_data_for_arch)
+        project = projects.Project.unmarshal(yaml_data_for_arch)
+        return project
+
+    def _install_snap(
+        self,
+        snap_file: Path,
+        assert_file: Optional[Path],
+        snap_metadata: snap_yaml.SnapMetadata,
+    ) -> Path:
+        """Install a snap file and optional assertion file.
+
+        If the architecture of the snap file does not match the host architecture, then
+        `snap install` will exit with a descriptive error.
+
+        :param snap_file: Snap file to install.
+        :param assert_file: Optional assertion file to install.
+        :param snap_metadata: SnapMetadata from the snap file.
+
+        :returns: Path to where snap was installed.
+
+        :raises SnapcraftError: If the snap cannot be installed.
+        """
+        is_dangerous = not bool(assert_file)
+
+        if assert_file:
+            ack_command = snap_cmd.formulate_ack_command(assert_file)
+            emit.progress(
+                f"Installing assertion file with {shlex.join(ack_command)!r}."
+            )
+
+            try:
+                subprocess.run(ack_command, capture_output=True, check=True)
+            except subprocess.CalledProcessError:
+                # if assertion fails, then install the snap dangerously
+                is_dangerous = True
+                emit.progress(
+                    f"Could not add assertions from file {assert_file.name!r}",
+                    permanent=True,
+                )
+
+        install_command = snap_cmd.formulate_local_install_command(
+            classic=bool(snap_metadata.confinement == "classic"),
+            dangerous=is_dangerous,
+            snap_path=snap_file,
+        )
+        if snap_metadata.grade == "devel":
+            install_command.append("--devmode")
+
+        emit.progress(f"Installing snap with {shlex.join(install_command)!r}.")
+
+        try:
+            subprocess.run(install_command, capture_output=True, check=True)
+        except subprocess.CalledProcessError as error:
+            raise SnapcraftError(
+                f"could not install snap file {snap_file.name!r}"
+            ) from error
+
+        return Path("/snap") / snap_metadata.name / "current"
+
+    def _load_lint_filters(self, project: Optional[projects.Project]) -> projects.Lint:
+        """Load lint filters from a Project and disable the classic linter.
+
+        :param project: Project from the snap file, if present.
+
+        :returns: Lint config with classic linter disabled.
+        """
+        lint_config = projects.Lint(ignore=["classic"])
+
+        if project:
+            if project.lint:
+                emit.verbose("Collected lint config from 'snapcraft.yaml'.")
+                lint_config = project.lint
+
+                # remove any file-specific classic filters
+                for item in lint_config.ignore:
+                    if isinstance(item, dict) and "classic" in item.keys():
+                        lint_config.ignore.remove(item)
+
+                # disable entire classic linter with the "classic" string
+                if "classic" not in lint_config.ignore:
+                    lint_config.ignore.append("classic")
+
+            else:
+                emit.verbose("No lint filters defined in 'snapcraft.yaml'.")
+        else:
+            emit.verbose(
+                "Not loading lint filters from 'snapcraft.yaml' because the file "
+                "does not exist inside the snap file."
+            )
+            emit.verbose(
+                "To include 'snapcraft.yaml' in a snap file, use the parameter "
+                "'--enable-manifest' when building the snap."
+            )
+
+        return lint_config
