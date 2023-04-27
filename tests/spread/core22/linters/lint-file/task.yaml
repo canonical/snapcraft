@@ -4,9 +4,14 @@ restore: |
   rm -f ./*.snap ./*.assert
 
 execute: |
+  # build the test snap destructively to save time
+  snapcraft
+
+  # test the linter using a build provider
   unset SNAPCRAFT_BUILD_ENVIRONMENT
+  snapcraft lint lint-file_0.1_*.snap 2> output.txt
 
-  snap download hello
+  # get the lint warnings at end of the log file
+  sed -n '/Running linters.../,+4 p' < output.txt > linter-output.txt
 
-  # `snapcraft lint` is a no-op, but ensure it exits without error
-  snapcraft lint hello_*.snap
+  diff -u linter-output.txt expected-linter-output.txt
