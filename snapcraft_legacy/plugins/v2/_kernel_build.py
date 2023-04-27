@@ -281,11 +281,10 @@ def _do_base_config_cmd(
 	branch=$(cut -d'.' -f 2- < ${{KERNEL_SRC}}/debian/debian.env)
 	baseconfigdir=${{KERNEL_SRC}}/debian.${{branch}}/config
 	archconfigdir=${{KERNEL_SRC}}/debian.${{branch}}/config/${{DEB_ARCH}}
-	commonconfig=${{baseconfigdir}}/config.common.ports
 	ubuntuconfig=${{baseconfigdir}}/config.common.ubuntu
 	archconfig=${{archconfigdir}}/config.common.${{DEB_ARCH}}
 	flavourconfig=${{archconfigdir}}/config.flavour.{config_flavour}
-    cat ${{commonconfig}} ${{ubuntuconfig}} ${{archconfig}} ${{flavourconfig}} \
+    cat ${{ubuntuconfig}} ${{archconfig}} ${{flavourconfig}} \
 > {dest_dir}/.config 2>/dev/null || true""".format(
                 config_flavour=config_flavour, dest_dir=dest_dir
             )
