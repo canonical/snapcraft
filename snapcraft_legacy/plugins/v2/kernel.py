@@ -430,6 +430,7 @@ class KernelPlugin(PluginV2):
         build_packages = {
             "bc",
             "binutils",
+            "fakeroot",
             "gcc",
             "cmake",
             "cryptsetup",
