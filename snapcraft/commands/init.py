@@ -49,7 +49,7 @@ _TEMPLATE_YAML = dedent(
 )
 
 
-class InitializeCommand(BaseCommand, abc.ABC):
+class InitCommand(BaseCommand, abc.ABC):
     """Initialize a snapcraft project."""
 
     name = "init"
@@ -58,7 +58,10 @@ class InitializeCommand(BaseCommand, abc.ABC):
 
     @overrides
     def run(self, parsed_args):
-        """Initialize a snapcraft project in the current directory."""
+        """Initialize a snapcraft project in the current directory.
+
+        :raises SnapcraftError: If a snapcraft.yaml already exists.
+        """
         emit.progress("Checking for an existing 'snapcraft.yaml'.")
 
         # if a project is found, then raise an error
@@ -77,9 +80,7 @@ class InitializeCommand(BaseCommand, abc.ABC):
         emit.progress(f"Creating {str(snapcraft_yaml_path)!r}.")
 
         snapcraft_yaml_path.parent.mkdir(exist_ok=True)
-
-        with open(snapcraft_yaml_path, mode="w", encoding="utf-8") as file:
-            file.write(_TEMPLATE_YAML)
+        snapcraft_yaml_path.write_text(_TEMPLATE_YAML, encoding="utf-8")
 
         emit.message(f"Created {str(snapcraft_yaml_path)!r}.")
         emit.message(

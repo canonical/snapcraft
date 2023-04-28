@@ -125,7 +125,7 @@ COMMAND_GROUPS = [
         [
             commands.VersionCommand,
             commands.LintCommand,
-            commands.InitializeCommand,
+            commands.InitCommand,
         ],
     ),
 ]

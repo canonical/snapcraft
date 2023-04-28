@@ -31,14 +31,13 @@ def mock_argv(mocker):
     return mocker.patch.object(sys, "argv", ["snapcraft", "init"])
 
 
-def test_initialize_default(emitter, new_dir):
+def test_init_default(emitter, new_dir):
     """Test the 'snapcraft init' command."""
     snapcraft_yaml = Path("snap/snapcraft.yaml")
 
     cli.run()
 
     assert snapcraft_yaml.exists()
-
     # unmarshal the snapcraft.yaml to verify its contents
     data = apply_yaml(process_yaml(snapcraft_yaml), "amd64", "amd64")
     project = Project.unmarshal(data)
@@ -77,7 +76,7 @@ def test_initialize_default(emitter, new_dir):
     )
 
 
-def test_initialize_snap_dir_exists(emitter, new_dir):
+def test_init_snap_dir_exists(emitter, new_dir):
     """'snapcraft init' should work even if the 'snap/' directory already exists."""
     snapcraft_yaml = Path("snap/snapcraft.yaml")
     Path("snap").mkdir()
@@ -91,7 +90,7 @@ def test_initialize_snap_dir_exists(emitter, new_dir):
 @pytest.mark.parametrize(
     "snapcraft_yaml", [project.project_file for project in _SNAP_PROJECT_FILES]
 )
-def test_initialize_exists(capsys, emitter, new_dir, snapcraft_yaml):
+def test_init_exists(capsys, emitter, new_dir, snapcraft_yaml):
     """Raise an error if a snapcraft.yaml file already exists."""
     snapcraft_yaml.parent.mkdir(parents=True, exist_ok=True)
     snapcraft_yaml.touch()
