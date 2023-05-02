@@ -1,0 +1,66 @@
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (C) 2021 Canonical Ltd
+name: pc-kernel
+summary: Kernel plugin test
+description: A stripped-down pc kernel to test the kernel plugin.
+
+grade: stable
+build-base: core20
+confinement: strict
+type: kernel
+adopt-info: kernel
+
+architectures:
+  - build-on: amd64
+    run-on: amd64
+
+parts:
+  kernel:
+    plugin: kernel
+    source: https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/focal
+    source-depth: 1
+    source-type: git
+    source-branch: master
+    stage-packages:
+      - linux-firmware
+      - wireless-regdb
+    kernel-kconfigfile: $SNAPCRAFT_PROJECT_DIR/config
+    kernel-kconfigflavour: "generic"
+    kernel-with-firmware: false
+    kernel-enable-zfs-support: true
+    kernel-image-target:
+      amd64: bzImage
+      arm64: Image
+      armhf: zImage
+    kernel-initrd-firmware:
+      - firmware/regulatory.db
+      - firmware/regulatory.db.p7s
+    kernel-kconfigs:
+      - CONFIG_DEBUG_INFO=n
+    build-environment:
+      - PATH: "/usr/lib/ccache:${PATH}"
+    override-build: |
+      pushd ${SNAPCRAFT_PART_SRC}
+      fakeroot ./debian/rules clean
+      popd
+      snapcraftctl build
+      snapcraftctl set-version $(git --git-dir=${SNAPCRAFT_PART_SRC}/.git describe --tags | cut -c 8-38)
+    override-prime: |
+      snapcraftctl prime
+      # Trim firmware
+      mkdir -p ${SNAPCRAFT_PRIME}/firmware.new
+      trim_tool="https://git.launchpad.net/~canonical-kernel-snaps/+git/kernel-snaps-uc20/plain/trim-firmware"
+      curl -s ${trim_tool} | bash /dev/stdin ${SNAPCRAFT_PRIME}
+
+build-packages:
+    - bison
+    - cpio
+    - curl
+    - debhelper
+    - dpkg-dev
+    - fakeroot
+    - flex
+    - gcc
+    - libfdt-dev
+    - libssl-dev
+    - libelf-dev

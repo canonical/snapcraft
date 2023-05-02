@@ -29,6 +29,7 @@ from craft_providers.bases.buildd import BuilddBaseAlias
 from snapcraft import errors
 from snapcraft.elf import ElfFile
 from snapcraft.parts import lifecycle as parts_lifecycle
+from snapcraft.parts.plugins import KernelPlugin
 from snapcraft.parts.update_metadata import update_project_metadata
 from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Architecture, Project
 from snapcraft.utils import get_host_architecture
@@ -761,7 +762,7 @@ def test_lifecycle_post_lifecycle_debug_shell(snapcraft_yaml, new_dir, mocker):
     "cmd,expected_last_step",
     [
         ("pull", None),
-        ("build", Step.OVERLAY),
+        ("build", Step.PULL),
         ("stage", Step.BUILD),
         ("prime", Step.STAGE),
     ],
@@ -879,6 +880,26 @@ def test_extract_parse_info():
     parse_info = parts_lifecycle.extract_parse_info(yaml_data)
     assert yaml_data == {"name": "foo", "parts": {"p1": {"plugin": "nil"}, "p2": {}}}
     assert parse_info == {"p1": "foo/metadata.xml"}
+
+
+def test_check_experimental_plugins_disabled(snapcraft_yaml, mocker):
+    mocker.patch("craft_parts.plugins.plugins._PLUGINS", {"kernel": KernelPlugin})
+    project = Project.unmarshal(
+        snapcraft_yaml(base="core22", parts={"foo": {"plugin": "kernel"}})
+    )
+    with pytest.raises(errors.SnapcraftError) as raised:
+        parts_lifecycle._check_experimental_plugins(project, False)
+    assert str(raised.value) == (
+        "Plugin 'kernel' in part 'foo' is unstable and may change in the future."
+    )
+
+
+def test_check_experimental_plugins_enabled(snapcraft_yaml, mocker):
+    mocker.patch("craft_parts.plugins.plugins._PLUGINS", {"kernel": KernelPlugin})
+    project = Project.unmarshal(
+        snapcraft_yaml(base="core22", parts={"foo": {"plugin": "kernel"}})
+    )
+    parts_lifecycle._check_experimental_plugins(project, True)
 
 
 def test_get_snap_project_no_base(snapcraft_yaml, new_dir):

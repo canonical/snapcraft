@@ -733,4 +733,5 @@ class FakeSnapcraftIsASnap(fixtures.Fixture):
 
         self.useFixture(fixtures.EnvironmentVariable("SNAP", "/snap/snapcraft/current"))
         self.useFixture(fixtures.EnvironmentVariable("SNAP_NAME", "snapcraft"))
+        self.useFixture(fixtures.EnvironmentVariable("SNAP_INSTANCE_NAME", "snapcraft"))
         self.useFixture(fixtures.EnvironmentVariable("SNAP_VERSION", "4.0"))

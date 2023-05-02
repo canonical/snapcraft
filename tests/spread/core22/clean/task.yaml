@@ -32,8 +32,6 @@ execute: |
 
   grep "Executing parts lifecycle: pull part1" < output.txt
   grep "Executing parts lifecycle: skip pull part2 (already ran)" < output.txt
-  grep "Executing parts lifecycle: overlay part1" < output.txt
-  grep "Executing parts lifecycle: skip overlay part2 (already ran)" < output.txt
   grep "Executing parts lifecycle: build part1" < output.txt
   grep "Executing parts lifecycle: skip build part2 (already ran)" < output.txt
   grep "Executing parts lifecycle: stage part1" < output.txt

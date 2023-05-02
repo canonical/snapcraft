@@ -54,6 +54,7 @@ backends:
           storage: 40G
       - ubuntu-22.04-64:
           workers: 6
+          storage: 20G
           image: ubuntu-2204-64
       - ubuntu-24.04-64:
           image: ubuntu-23.04-64
@@ -77,7 +78,7 @@ backends:
         FATAL "$SPREAD_SYSTEM is not supported!"
       fi
 
-      multipass launch --disk 20G --mem 2G --name "$instance_name" "$image"
+      multipass launch --disk 20G --memory 2G --name "$instance_name" "$image"
 
       # Get the IP from the instance
       ip=$(multipass info --format csv "$instance_name" | tail -1 | cut -d\, -f3)
@@ -188,6 +189,14 @@ backends:
 exclude: [snaps-cache/]
 
 prepare: |
+  #shellcheck source=tests/spread/tools/prepare.sh
+  . "$TOOLS_DIR/prepare.sh"
+
+  if [[ -z $(ls -A "$TOOLS_DIR/snapd-testing-tools") ]]; then
+    echo "Cannot run spread because submodule 'snapd-testing-tools' does not exist. Fetch with 'git submodule update --init' and rerun spread."
+    exit 1
+  fi
+
   # This unfortunately cannot be extracted into a standalone script since this
   # portion of of YAML runs before the source code has been fetched.
 
@@ -223,12 +232,10 @@ prepare: |
       # nicely handle the snap and deb being installed at the same time.
       apt-get remove --purge --yes lxd lxd-client
   fi
-  # install and setup the lxd snap - use 'retry' to workaround aa-exec issue
-  # see https://bugs.launchpad.net/snapd/+bug/1870201
-  retry -n 5 --wait 5 sh -c 'snap install lxd'
+
+  install_lxd
   # Add the ubuntu user to the lxd group.
   adduser ubuntu lxd
-  lxd init --auto
 
   # Hold snap refreshes for 24h.
   snap set system refresh.hold="$(date --date=tomorrow +%Y-%m-%dT%H:%M:%S%:z)"
@@ -244,8 +251,6 @@ prepare: |
       /snap/bin/lxd init --auto
   fi
 
-  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
-  . "$TOOLS_DIR/prepare.sh"
   install_snapcraft
 
   pushd /snapcraft

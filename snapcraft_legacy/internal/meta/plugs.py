@@ -149,6 +149,15 @@ class ContentPlug(Plug):
                 message="`target` is required for content slot",
             )
 
+        if self._default_provider and "/" in self._default_provider:
+            raise PlugValidationError(
+                plug_name=self.plug_name,
+                message=(
+                    "Specifying a snap channel in 'default_provider' is not supported: "
+                    f"{self._default_provider}"
+                )
+            )
+
     @classmethod
     def from_dict(cls, *, plug_dict: Dict[str, str], plug_name: str) -> "ContentPlug":
         interface = plug_dict.get("interface")
