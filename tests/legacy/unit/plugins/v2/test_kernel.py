@@ -266,6 +266,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "fakeroot",
                 "gcc",
                 "cmake",
                 "cryptsetup",
@@ -284,6 +285,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "fakeroot",
                 "gcc",
                 "cmake",
                 "cryptsetup",
@@ -302,6 +304,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "fakeroot",
                 "gcc",
                 "cmake",
                 "cryptsetup",
@@ -320,6 +323,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "fakeroot",
                 "gcc",
                 "cmake",
                 "cryptsetup",
@@ -343,6 +347,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "fakeroot",
                 "gcc",
                 "cmake",
                 "cryptsetup",
@@ -1000,6 +1005,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "fakeroot",
                 "gcc",
                 "cmake",
                 "cryptsetup",
@@ -1031,6 +1037,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "fakeroot",
                 "gcc",
                 "cmake",
                 "cryptsetup",
@@ -1297,8 +1304,13 @@ _prepare_config_flavour_cmd = [
 	ubuntuconfig=${baseconfigdir}/config.common.ubuntu
 	archconfig=${archconfigdir}/config.common.${DEB_ARCH}
 	flavourconfig=${archconfigdir}/config.flavour.raspi
-    cat ${ubuntuconfig} ${archconfig} ${flavourconfig} \
-> ${SNAPCRAFT_PART_BUILD}/.config 2>/dev/null || true"""
+	cat ${ubuntuconfig} ${archconfig} ${flavourconfig} \
+> ${SNAPCRAFT_PART_BUILD}/.config 2>/dev/null || true
+	if [ -f ${KERNEL_SRC}/debian/rules ] && [ -x ${KERNEL_SRC}/debian/rules ]; then
+		pushd ${KERNEL_SRC}
+		fakeroot debian/rules clean
+		popd
+	fi"""
     ),
     "fi",
 ]

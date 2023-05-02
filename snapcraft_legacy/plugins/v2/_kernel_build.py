@@ -284,8 +284,13 @@ def _do_base_config_cmd(
 	ubuntuconfig=${{baseconfigdir}}/config.common.ubuntu
 	archconfig=${{archconfigdir}}/config.common.${{DEB_ARCH}}
 	flavourconfig=${{archconfigdir}}/config.flavour.{config_flavour}
-    cat ${{ubuntuconfig}} ${{archconfig}} ${{flavourconfig}} \
-> {dest_dir}/.config 2>/dev/null || true""".format(
+	cat ${{ubuntuconfig}} ${{archconfig}} ${{flavourconfig}} \
+> {dest_dir}/.config 2>/dev/null || true
+	if [ -f ${{KERNEL_SRC}}/debian/rules ] && [ -x ${{KERNEL_SRC}}/debian/rules ]; then
+		pushd ${{KERNEL_SRC}}
+		fakeroot debian/rules clean
+		popd
+	fi""".format(
                 config_flavour=config_flavour, dest_dir=dest_dir
             )
         )
