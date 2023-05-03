@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2019 Canonical Ltd
+# Copyright (C) 2017-2019, 2023 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -303,17 +303,6 @@ def _retrieve_provider_error(instance) -> None:
 @click.pass_context
 def lifecyclecli(ctx, **kwargs):
     pass
-
-
-@lifecyclecli.command()
-def init():
-    """Initialize a snapcraft project."""
-    snapcraft_yaml_path = lifecycle.init()
-    echo.info("Created {}.".format(snapcraft_yaml_path))
-    echo.wrapped(
-        "Go to https://docs.snapcraft.io/the-snapcraft-format/8337 for more "
-        "information about the snapcraft.yaml format."
-    )
 
 
 @lifecyclecli.command()
