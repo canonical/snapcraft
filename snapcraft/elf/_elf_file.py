@@ -264,8 +264,8 @@ class ElfFile:
                         self.needed[needed] = _NeededLibrary(name=needed)
                     elif tag.entry.d_tag == "DT_SONAME":
                         self.soname = (
-                            tag.soname
-                        )  # pyright: ignore[reportGeneralTypeIssues]
+                            tag.soname  # pyright: ignore[reportGeneralTypeIssues]
+                        )
 
             for segment in elf_file.iter_segments():
                 if segment["p_type"] == "PT_GNU_STACK":
