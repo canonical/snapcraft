@@ -14,7 +14,7 @@ craft-store==2.4.0
 cryptography==3.4
 Deprecated==1.2.13
 distro==1.8.0
-docutils==0.20
+docutils==0.19
 gnupg==2.3.1
 httplib2==0.22.0
 idna==3.4
