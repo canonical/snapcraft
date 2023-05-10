@@ -402,7 +402,7 @@ def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
         name=project.name,
         title=project.title,
         version=version,
-        summary=project.summary,
+        summary=project.summary,  # type: ignore[arg-type]
         description=project.description,  # type: ignore
         license=project.license,
         type=project.type,
@@ -417,7 +417,7 @@ def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
         plugs=project.plugs,
         slots=project.slots,
         hooks=project.hooks,
-        layout=project.layout,
+        layout=project.layout,  # type: ignore[arg-type]
         system_usernames=project.system_usernames,
         provenance=project.provenance,
     )
