@@ -19,6 +19,7 @@ from unittest.mock import ANY, MagicMock, Mock, call, patch
 
 import pytest
 from craft_providers import ProviderError, bases
+from craft_providers.actions import snap_installer
 from craft_providers.lxd import LXDProvider
 from craft_providers.multipass import MultipassProvider
 
@@ -213,7 +214,7 @@ def test_get_base_configuration(
         environment="test-env",
         hostname="test-instance-name",
         snaps=[
-            bases.buildd.Snap(
+            snap_installer.Snap(
                 name="test-snap-name", channel="test-channel", classic=True
             )
         ],
@@ -259,7 +260,9 @@ def test_get_base_configuration_snap_channel(
         compatibility_tag=ANY,
         environment=ANY,
         hostname=ANY,
-        snaps=[bases.buildd.Snap(name="snapcraft", channel=snap_channel, classic=True)],
+        snaps=[
+            snap_installer.Snap(name="snapcraft", channel=snap_channel, classic=True)
+        ],
         packages=ANY,
     )
 
@@ -293,7 +296,7 @@ def test_get_base_configuration_snap_instance_name_default(
         compatibility_tag=ANY,
         environment=ANY,
         hostname=ANY,
-        snaps=[bases.buildd.Snap(name="snapcraft", channel=None, classic=True)],
+        snaps=[snap_installer.Snap(name="snapcraft", channel=None, classic=True)],
         packages=ANY,
     )
 
@@ -327,7 +330,7 @@ def test_get_base_configuration_snap_instance_name_not_running_as_snap(
         compatibility_tag=ANY,
         environment=ANY,
         hostname=ANY,
-        snaps=[bases.buildd.Snap(name="snapcraft", channel=None, classic=True)],
+        snaps=[snap_installer.Snap(name="snapcraft", channel=None, classic=True)],
         packages=ANY,
     )
 
