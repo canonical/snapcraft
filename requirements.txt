@@ -60,7 +60,7 @@ semantic-version==2.10.0
 setuptools-rust==1.6.0
 simplejson==3.19.1
 six==1.16.0
-snap-helpers==0.3.2
+snap-helpers==0.2.0
 tabulate==0.9.0
 tinydb==4.7.1
 toml==0.10.2
