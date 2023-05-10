@@ -128,6 +128,8 @@ install_requires = [
     "toml",
     "tinydb",
     "typing-extensions",
+    # requests-unixsocket does not yet work with urllib3 v2.0+
+    "urllib3<2",
 ]
 
 try:
