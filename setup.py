@@ -60,19 +60,19 @@ else:
     scripts = []
 
 dev_requires = [
-    "black",
-    "codespell",
+    "black==23.1.0",
+    "codespell[toml]==2.2.4",
     "coverage[toml]",
     "pyflakes",
     "fixtures",
-    "isort",
+    "isort==5.11.4",
     "mccabe",
     "mypy",
     "testscenarios",
     "pexpect",
     "pip",
     "pycodestyle",
-    "pydocstyle",
+    "pydocstyle==6.2.3",
     "pyftpdlib",
     "pylint",
     "pylint-fixme-info",
@@ -83,11 +83,12 @@ dev_requires = [
     "pytest-mock",
     "pytest-subprocess",
     "ruff==0.0.220",
-    "tox>=4.0",
+    "tox>=4.5",
     "types-PyYAML",
     "types-requests",
     "types-setuptools",
     "types-tabulate",
+    "yamllint==1.29.0",
 ]
 
 if sys.platform == "win32":
@@ -149,7 +150,7 @@ if sys.platform == "linux":
 if ubuntu:
     install_requires += [
         "catkin-pkg",
-        "python-apt",
+        "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.0ubuntu0.20.04.6/python-apt_2.0.0ubuntu0.20.04.6.tar.xz",
         "python-debian",
     ]
 
