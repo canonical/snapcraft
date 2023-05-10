@@ -1,9 +1,9 @@
- {
+{
   // Configuration file for RenovateBot: https://docs.renovatebot.com/configuration-options
   extends: ["config:base"],
   labels: ["dependencies"],  // For convenient searching in GitHub
   pip_requirements: {
-    fileMatch: ["^tox.ini$"]
+    fileMatch: ["^tox.ini$", "(^|/)requirements([\\w-]*)\\.txt$"]
   },
   pip_setup: {
     fileMatch: ["^pyproject.toml$", "(^|/)setup\\.py$"]
@@ -12,7 +12,8 @@
     {
       // Automerge patches, pin changes and digest changes.
       // Also groups these changes together.
-      groupName: "patch updates",
+      groupName: "bugfixes",
+      excludePackageNames: ["ruff"],
       matchUpdateTypes: ["patch", "pin", "digest"],
       prPriority: 3, // Patches should go first!
       automerge: true
@@ -35,10 +36,35 @@
       // Minor changes can be grouped and automerged for dev dependencies, but are also deprioritised.
       groupName: "development dependencies (minor and patch)",
       groupSlug: "dev-dependencies",
-      matchDepTypes: ["devDependencies"],
+      matchPackageNames: [
+        "black",
+        "codespell",
+        "coverage",
+        "isort",
+        "mypy",
+        "pydocstyle",
+        "pylint",
+        "pytest",
+        "tox",
+      ],
+      matchPackagePatterns: [
+        ".*-mock$"
+      ],
+      matchPackagePrefixes: [
+        "pytest-",
+        "pylint-",
+        "types-",
+      ],
       matchUpdateTypes: ["minor", "patch", "pin", "digest"],
       prPriority: -1,
       automerge: true
+    },
+    {
+      // Documentation related updates
+      groupName: "documentation dependencies",
+      groupSlug: "doc-dependencies",
+      matchPackageNames: ["Sphinx"],
+      matchPackagePatterns: ["^[Ss]phinx.*$", "^furo$"]
     },
     {
       // Other major dependencies get deprioritised below minor dev dependencies.
@@ -52,6 +78,11 @@
       matchDepTypes: ["devDependencies"],
       matchUpdateTypes: ["major"],
       prPriority: -3
+    },
+    {
+      // Ruff is still unstable, so update it separately.
+      matchPackageNames: ["ruff"],
+      prPriority: -3
     }
   ],
   regexManagers: [
@@ -60,14 +91,14 @@
       fileMatch: ["tox.ini"],
       depTypeTemplate: "devDependencies",
       matchStrings: [
-        "# renovate: datasource=(?<datasource>\S+)\n\s+(?<depName>.*?)(\[[\w]*\])*[=><]=?(?<currentValue>.*?)\n"
+        "# renovate: datasource=(?<datasource>\\S+)\n\\s+(?<depName>.*?)(\\[[\\w]*\\])*[=><]=?(?<currentValue>.*?)\n"
       ]
     }
   ],
   timezone: "Etc/UTC",
   automergeSchedule: "every weekend",
   schedule: "every weekend",
-  prConcurrentLimit: 5, // No more than 5 open PRs at a time.
+  prConcurrentLimit: 2, // No more than 2 open PRs at a time.
   prCreation: "not-pending", // Wait until status checks have completed before raising the PR
   prNotPendingHours: 4, // ...unless the status checks have been running for 4+ hours.
   prHourlyLimit: 1, // No more than 1 PR per hour.
