@@ -87,7 +87,9 @@ dev_requires = [
     "types-PyYAML",
     "types-requests",
     "types-setuptools",
+    "types-simplejson",
     "types-tabulate",
+    "types-toml",
 ]
 
 if sys.platform == "win32":
