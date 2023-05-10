@@ -103,6 +103,7 @@ install_requires = [
     "craft-providers",
     "craft-store",
     "cryptography==3.4",
+    "docutils<0.20",  # Frozen until we can update sphinx dependencies.
     "gnupg",
     "jsonschema==2.5.1",
     "launchpadlib",
@@ -130,6 +131,7 @@ install_requires = [
     "typing-extensions",
     # requests-unixsocket does not yet work with urllib3 v2.0+
     "urllib3<2",
+    "wheel",  # Test if this fixes appveyor...
 ]
 
 try:

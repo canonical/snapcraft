@@ -13,12 +13,13 @@ requirements_fixups() {
   echo 'PyNaCl==1.4.0; sys.platform != "linux"' >> "$req_file"
   echo 'PyNaCl @ https://files.pythonhosted.org/packages/61/ab/2ac6dea8489fa713e2b4c6c5b549cc962dd4a842b5998d9e80cf8440b7cd/PyNaCl-1.3.0.tar.gz; sys.platform == "linux"' >> "$req_file"
 
-  # https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1635463
-  sed -i '/pkg[-_]resources==0.0.0/d' "$req_file"
+#  # https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1635463
+#  sed -i '/pkg[-_]resources==0.0.0/d' "$req_file"
 
   # We updated setuptools in venv, forget it.
-  sed -i '/^setuptools/d' "$req_file"
-  echo 'setuptools==49.6.0' >> "$req_file"
+#  sed -i '/^setuptools/d' "$req_file"
+  echo 'setuptools==65.7.0' >> "$req_file"
+  echo 'wheel==0.38.4' >> "$req_file"
 
   # Pinned pyinstaller for windows.
   if [[ "$req_file" == "requirements-devel.txt" ]]; then
