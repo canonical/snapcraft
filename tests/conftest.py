@@ -18,7 +18,7 @@ import os
 
 import keyring
 import pytest
-import xdg
+import xdg.BaseDirectory
 from craft_store.auth import MemoryKeyring
 
 

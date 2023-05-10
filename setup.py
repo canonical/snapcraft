@@ -103,6 +103,7 @@ install_requires = [
     "craft-parts",
     "craft-providers",
     "craft-store",
+    "docutils<0.20",  # Frozen until we can update sphinx dependencies.
     "cryptography==3.4",
     "gnupg",
     "jsonschema==2.5.1",
@@ -129,6 +130,7 @@ install_requires = [
     "toml",
     "tinydb",
     "typing-extensions",
+    "urllib3<2",  # requests-unixsocket does not yet work with urllib3 v2.0+
 ]
 
 try:
