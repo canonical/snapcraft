@@ -87,7 +87,9 @@ dev_requires = [
     "types-PyYAML",
     "types-requests",
     "types-setuptools",
+    "types-simplejson",
     "types-tabulate",
+    "types-toml",
     "yamllint==1.29.0",
 ]
 
