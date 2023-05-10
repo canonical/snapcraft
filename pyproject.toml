@@ -23,7 +23,15 @@ dev = [
     "pytest-cov==4.0.0",
     "pytest-mock==3.10.0",
 ]
+lint = [
+    "black==23.3.0",
+    "codespell[toml]==2.2.4",
+    "ruff==0.0.256",
+    "yamllint==1.29.0"
+]
 types = [
+    "mypy[reports]==1.2.0",
+    "pyright==1.1.306",
 ]
 docs = [
     "furo==2023.3.27",
@@ -85,8 +93,6 @@ fail_under = 80
 strict = ["starcraft"]
 pythonVersion = "3.8"
 pythonPlatform = "Linux"
-venvPath = ".tox"
-venv = "py38"
 
 [tool.mypy]
 python_version = "3.8"
