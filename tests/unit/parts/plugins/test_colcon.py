@@ -193,16 +193,16 @@ class TestPluginColconPlugin:
         monkeypatch.setattr(
             os,
             "environ",
-            dict(
-                FOO="baR",
-                PATH="/bin:/test",
-                SNAP="TESTSNAP",
-                SNAP_ARCH="TESTARCH",
-                SNAP_NAME="TESTSNAPNAME",
-                SNAP_VERSION="TESTV1",
-                http_proxy="http://foo",
-                https_proxy="https://bar",
-            ),
+            {
+                "FOO": "baR",
+                "PATH": "/bin:/test",
+                "SNAP": "TESTSNAP",
+                "SNAP_ARCH": "TESTARCH",
+                "SNAP_NAME": "TESTSNAPNAME",
+                "SNAP_VERSION": "TESTV1",
+                "http_proxy": "http://foo",
+                "https_proxy": "https://bar",
+            },
         )
 
         assert plugin.get_build_commands() == [
