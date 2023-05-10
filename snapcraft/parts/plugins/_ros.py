@@ -23,7 +23,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Set, cast, Iterable
+from typing import Dict, Iterable, List, Set, cast
 
 import catkin_pkg.package
 import click
@@ -218,7 +218,7 @@ def stage_runtime_dependencies(
 
     installed_pkgs = cast(
         Iterable[catkin_pkg.package.Package],
-        catkin_packages.find_packages(part_install).values()
+        catkin_packages.find_packages(part_install).values(),
     )
     for pkg in catkin_packages.find_packages(part_src).values():
         pkg = cast(catkin_pkg.package.Package, pkg)
