@@ -30,7 +30,7 @@ from snapcraft.snap_config import SnapConfig
 def mock_default_command_environment():
     with patch(
         "craft_providers.bases.buildd.default_command_environment",
-        return_value=dict(PATH="test-path"),
+        return_value={"PATH": "test-path"},
     ) as mock_environment:
         yield mock_environment
 
