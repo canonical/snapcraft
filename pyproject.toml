@@ -57,6 +57,9 @@ exclude = [
     "tools",
     "venv",
 ]
+plugins = [
+    "pydantic.mypy",
+]
 
 [tool.pyright]
 include = ["snapcraft", "tests"]
