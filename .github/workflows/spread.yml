@@ -50,7 +50,7 @@ jobs:
           submodules: true
 
       - name: Download snapcraft snap
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: snap
           path: tests
@@ -101,7 +101,7 @@ jobs:
 
       - if: steps.decisions.outputs.RUN == 'true'
         name: Download snapcraft snap
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: snap
           path: tests
