@@ -23,8 +23,9 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, Iterable, List, Set, cast
 
+import catkin_pkg.package
 import click
 from catkin_pkg import packages as catkin_packages
 from craft_parts import plugins
@@ -215,8 +216,12 @@ def stage_runtime_dependencies(
     # @todo: support python packages (only apt currently supported)
     apt_packages: Set[str] = set()
 
-    installed_pkgs = catkin_packages.find_packages(part_install).values()
+    installed_pkgs = cast(
+        Iterable[catkin_pkg.package.Package],
+        catkin_packages.find_packages(part_install).values(),
+    )
     for pkg in catkin_packages.find_packages(part_src).values():
+        pkg = cast(catkin_pkg.package.Package, pkg)
         # Evaluate the conditions of all dependencies
         pkg.evaluate_conditions(
             {
