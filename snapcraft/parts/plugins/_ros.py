@@ -128,7 +128,7 @@ class RosPlugin(plugins.Plugin):
         """
 
     def _get_stage_runtime_dependencies_commands(self) -> List[str]:
-        env = dict(LANG="C.UTF-8", LC_ALL="C.UTF-8")
+        env = {"LANG": "C.UTF-8", "LC_ALL": "C.UTF-8"}
 
         for key in [
             "PATH",
@@ -246,7 +246,7 @@ def stage_runtime_dependencies(
                     check=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
-                    env=dict(PATH=os.environ["PATH"]),
+                    env={"PATH": os.environ["PATH"]},
                 )
             except subprocess.CalledProcessError as error:
                 click.echo(f"failed to run {cmd!r}: {error.output}")

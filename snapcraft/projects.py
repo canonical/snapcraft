@@ -47,8 +47,16 @@ class ProjectModel(pydantic.BaseModel):
 # see https://github.com/samuelcolvin/pydantic/issues/975#issuecomment-551147305
 # fmt: off
 if TYPE_CHECKING:
+    ProjectName = str
+    ProjectSummary = str
+    ProjectTitle = str
+    ProjectVersion = str
     UniqueStrList = List[str]
 else:
+    ProjectName = constr(max_length=40)
+    ProjectSummary = constr(max_length=78)
+    ProjectTitle = constr(max_length=40)
+    ProjectVersion = constr(max_length=32, strict=True)
     UniqueStrList = conlist(str, unique_items=True)
 # fmt: on
 
@@ -397,18 +405,18 @@ class Project(ProjectModel):
     - system-usernames
     """
 
-    name: constr(max_length=40)  # type: ignore
-    title: Optional[constr(max_length=40)]  # type: ignore
+    name: ProjectName
+    title: Optional[ProjectTitle]
     base: Optional[str]
     build_base: Optional[str]
     compression: Literal["lzo", "xz"] = "xz"
-    version: Optional[constr(max_length=32, strict=True)]  # type: ignore
+    version: Optional[ProjectVersion]
     contact: Optional[Union[str, UniqueStrList]]
     donation: Optional[Union[str, UniqueStrList]]
     issues: Optional[Union[str, UniqueStrList]]
     source_code: Optional[str]
     website: Optional[str]
-    summary: Optional[constr(max_length=78)]  # type: ignore
+    summary: Optional[ProjectSummary]
     description: Optional[str]
     type: Optional[Literal["app", "base", "gadget", "kernel", "snapd"]]
     icon: Optional[str]
