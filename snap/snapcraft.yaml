@@ -116,6 +116,10 @@ parts:
   snapcraft:
     source: .
     plugin: python
+    python-packages:
+        - wheel
+        - pip
+        - setuptools<66  # Limited to < 66 because we need `pkg_resources` and because `python-apt` doesn't build with the latest.
     requirements:
         - requirements.txt
     organize:
