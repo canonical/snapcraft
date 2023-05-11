@@ -20,7 +20,7 @@ import contextlib
 import operator
 import os
 from io import StringIO
-from typing import List, Optional
+from typing import List, Optional, cast
 
 import lxml.etree
 from xdg.DesktopEntry import DesktopEntry
@@ -228,7 +228,7 @@ def _get_icon_from_desktop_file(
     for path in desktop_file_paths:
         entry = DesktopEntry()
         entry.parse(os.path.join(workdir, path))
-        icon = entry.getIcon()
+        icon = cast(str, entry.getIcon())
         icon_path = (
             icon
             if os.path.isabs(icon)
