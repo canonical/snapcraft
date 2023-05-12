@@ -1,0 +1,24 @@
+matrix:
+- name: rST files
+  aspell:
+    lang: en
+    d: en_GB
+  dictionary:
+    wordlists:
+    - .wordlist.txt
+    output: .sphinx/.wordlist.dic
+  sources:
+  - _build/**/*.html
+  pipeline:
+  - pyspelling.filters.html:
+      comments: false
+      attributes:
+      - title
+      - alt
+      ignores:
+      - code
+      - pre
+      - spellexception
+      - link
+      - title
+      - div.relatedlinks

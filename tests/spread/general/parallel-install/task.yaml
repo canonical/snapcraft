@@ -1,8 +1,14 @@
 summary: Verify snapcraft can be installed in parallel
+kill-timeout: 45m  # Needed for 18.04 - newer distros should be fine at 30m.
 
 prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+
   #shellcheck source=tests/spread/tools/prepare.sh
   . "$TOOLS_DIR/prepare.sh"
+
+  set_base "snap/snapcraft.yaml"
 
   # enabling parallel installs requires a reboot
   # see https://snapcraft.io/docs/parallel-installs
@@ -36,4 +42,4 @@ execute: |
 
   # use lxd so snapcraft_a gets injected
   unset SNAPCRAFT_BUILD_ENVIRONMENT
-  snapcraft_a pull --use-lxd --verbosity=trace
+  snapcraft_a pull --use-lxd

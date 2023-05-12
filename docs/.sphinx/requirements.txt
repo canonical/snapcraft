@@ -1,0 +1,11 @@
+sphinx
+sphinx-autobuild
+sphinx-design
+pyenchant
+furo
+sphinx-tabs
+sphinx-reredirects
+pyspelling
+sphinx-copybutton
+sphinx-pydantic
+sphinx-toolbox

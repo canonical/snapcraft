@@ -66,6 +66,7 @@ if sys.platform == "linux" or TYPE_CHECKING:
             "crystal": v2.CrystalPlugin,
             "dump": v2.DumpPlugin,
             "go": v2.GoPlugin,
+            "kernel": v2.KernelPlugin,
             "make": v2.MakePlugin,
             "meson": v2.MesonPlugin,
             "nil": v2.NilPlugin,

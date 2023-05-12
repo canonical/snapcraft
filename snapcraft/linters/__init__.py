@@ -17,12 +17,11 @@
 """Extension processor and related utilities."""
 
 from .base import LinterIssue
-from .linters import LinterStatus, lint_command, report, run_linters
+from .linters import LinterStatus, report, run_linters
 
 __all__ = [
     "LinterIssue",
     "LinterStatus",
-    "lint_command",
     "report",
     "run_linters",
 ]

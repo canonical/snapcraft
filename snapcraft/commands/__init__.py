@@ -28,6 +28,7 @@ from .extensions import (
     ExtensionsCommand,
     ListExtensionsCommand,
 )
+from .init import InitCommand
 from .legacy import (
     StoreLegacyCreateKeyCommand,
     StoreLegacyGatedCommand,
@@ -51,6 +52,7 @@ from .lifecycle import (
     StageCommand,
     TryCommand,
 )
+from .lint import LintCommand
 from .manage import StoreCloseCommand, StoreReleaseCommand
 from .names import (
     StoreLegacyListCommand,
@@ -75,6 +77,8 @@ __all__ = [
     "CleanCommand",
     "ExpandExtensionsCommand",
     "ExtensionsCommand",
+    "InitCommand",
+    "LintCommand",
     "ListExtensionsCommand",
     "ListPluginsCommand",
     "PackCommand",
