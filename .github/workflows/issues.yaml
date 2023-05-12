@@ -1,53 +1,17 @@
-name: Issues
+# this workflow requires to provide JIRA webhook URL via JIRA_URL GitHub Secret
+# read more: https://support.atlassian.com/cloud-automation/docs/jira-automation-triggers/#Automationtriggers-Incomingwebhook
+# original code source: https://github.com/beliaev-maksim/github-to-jira-automation
 
-on: [issues]
+name: Issues to JIRA
+
+on:
+  issues:
+    # available via github.event.action
+    types: [opened, reopened, closed]
 
 jobs:
   update:
     name: Update Issue
-    runs-on: ubuntu-latest
-    steps:
-      - name: Dump Github Context
-        run: |
-          echo "update=false" >> $GITHUB_ENV          
-          if [ ${{ github.event_name }} != "issues" ]; then
-            echo "This action only operates on issues"
-            exit 0
-          fi
-          echo "update=true" >> $GITHUB_ENV
-      - name: Determine action
-        run: |
-          if [ ${{ github.event.action }} == "opened" ]; then
-            echo "action=open" >> $GITHUB_ENV
-          fi
-          if [ ${{ github.event.action }} == "reopened" ]; then
-            echo "action=reopen" >> $GITHUB_ENV
-          fi
-          if [ ${{ github.event.action }} == "closed" ]; then
-            echo "action=close" >> $GITHUB_ENV
-          fi
-      - name: Determine type
-        run: |
-          if ${{ contains(github.event.*.labels.*.name, 'Type: Bug') }}; then
-            echo "type=bug" >> $GITHUB_ENV
-          else
-            echo "type=story" >> $GITHUB_ENV
-          fi
-      - name: Update
-        if: ${{ env.update == 'true' }}
-        env:
-          ID: ${{ github.event.issue.html_url }}
-          TITLE: ${{github.event.issue.title }}
-          COMPONENT: Snapcraft
-          DESCRIPTION: Opened by ${{ github.event.issue.user.login }}.
-        run: |
-          data=$(jq -n \
-            --arg id "$ID" \
-            --arg action "${{ env.action }}" \
-            --arg title "$TITLE" \
-            --arg description "$DESCRIPTION" \
-            --arg component "$COMPONENT" \
-            --arg type "${{ env.type }}" \
-            '{data: {id: $id, action: $action, title: $title, description: $description, component: $component, type: $type}}')
-            
-          curl -X POST -H 'Content-type: application/json' --data "${data}" "${{ secrets.JIRA_URL }}"
+    uses: beliaev-maksim/github-to-jira-automation/.github/workflows/issues_to_jira.yaml@master
+    secrets:
+      JIRA_URL: ${{ secrets.JIRA_URL }}
