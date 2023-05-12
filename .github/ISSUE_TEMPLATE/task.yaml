@@ -10,7 +10,7 @@ body:
         isn't already a prior issue concerning this. If there is,
         please join that discussion instead.
   - type: textarea
-    id: enhancement-proposal
+    id: enhancement-proposal-what
     attributes:
       label: What needs to get done
       description: >
@@ -18,7 +18,7 @@ body:
     validations:
       required: true
   - type: textarea
-    id: enhancement-proposal
+    id: enhancement-proposal-why
     attributes:
       label: Why it needs to get done
       description: >
