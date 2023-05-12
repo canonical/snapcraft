@@ -38,7 +38,7 @@ body:
     validations:
       required: true
   - type: textarea
-    id: snapcraft.yaml
+    id: snapcraft_yaml
     attributes:
       label: snapcraft.yaml
       description: >
