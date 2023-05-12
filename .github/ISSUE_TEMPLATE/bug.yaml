@@ -1,0 +1,65 @@
+name: Bug Report
+description: File a bug report
+labels: ["Type: Bug", "Status: Triage"]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Thanks for taking the time to fill out this bug report! Before
+        submitting your issue, make sure this has not been already
+        reported or if it works with the latest published version
+        of Snapcraft.
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug Description
+      description: >
+        If applicable, add screenshots to help explain your
+        problem.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: To Reproduce
+      description: >
+        Provide a step-by-step instruction of how to reproduce the behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: >
+        We need to know a bit more about the context in which Snapcraft failed.
+        - Are you running Snapcraft in destructive-mode, using LXD or Multipass.
+        - On what system is Snapcraft running (e.g.; Ubuntu 22.04 LTS, Windows 11,
+          OS X 10.15).
+    validations:
+      required: true
+  - type: textarea
+    id: snapcraft.yaml
+    attributes:
+      label: snapcraft.yaml
+      description: >
+        If possible, please paste your snapcraft.yaml contents. This
+        will be automatically formatted into code, so no need for
+        backticks.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: >
+        Please copy and paste any relevant log output. This will be
+        automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+
