@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2019 Canonical Ltd
+# Copyright (C) 2017-2019, 2023 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -39,6 +39,7 @@ from snapcraft_legacy.internal import (
 )
 from snapcraft_legacy.internal.errors import SnapcraftEnvironmentError
 from snapcraft_legacy.internal.repo import ua_manager
+from snapcraft_legacy.plugins.v2.kernel import KernelPlugin
 from snapcraft_legacy.project._sanity_checks import conduct_project_sanity_check
 
 from . import echo
@@ -103,6 +104,15 @@ def _execute(  # noqa: C901
 
     if build_provider in ["host", "managed-host"]:
         project_config = project_loader.load_config(project)
+
+        # validate experimental plugins
+        plugins = [part.plugin for part in project_config.parts.all_parts]
+        if not kwargs.get("enable_experimental_plugins") and any(isinstance(plugin, KernelPlugin) for plugin in plugins):
+            raise SnapcraftEnvironmentError(
+                "*EXPERIMENTAL* 'kernel' plugin used, but not enabled. "
+                "Enable with '--enable-experimental-plugins' flag."
+            )
+
         ua_services = project_config.data.get("ua-services")
 
         if ua_services:
@@ -293,17 +303,6 @@ def _retrieve_provider_error(instance) -> None:
 @click.pass_context
 def lifecyclecli(ctx, **kwargs):
     pass
-
-
-@lifecyclecli.command()
-def init():
-    """Initialize a snapcraft project."""
-    snapcraft_yaml_path = lifecycle.init()
-    echo.info("Created {}.".format(snapcraft_yaml_path))
-    echo.wrapped(
-        "Go to https://docs.snapcraft.io/the-snapcraft-format/8337 for more "
-        "information about the snapcraft.yaml format."
-    )
 
 
 @lifecyclecli.command()

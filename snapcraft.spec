@@ -18,7 +18,7 @@ data += copy_metadata("lazr.uri")
 data += copy_metadata("wadllib")
 
 a = Analysis(
-    ["snapcraft_legacy\\cli\\__main__.py"],
+    ["snapcraft\\__main__.py"],
     pathex=[],
     binaries=[],
     datas=data,

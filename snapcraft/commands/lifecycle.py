@@ -98,6 +98,12 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             action="store_true",
             help="Allow selection of UA services to enable.",
         )
+        parser.add_argument(
+            "--enable-experimental-plugins",
+            action="store_true",
+            default=os.getenv("SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS", "") != "",
+            help="Allow using experimental (unstable) plugins.",
+        )
 
         # --enable-experimental-extensions is only available in legacy
         parser.add_argument(

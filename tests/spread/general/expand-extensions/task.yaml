@@ -1,0 +1,15 @@
+summary: "Test `expand-extensions` can expand extensions."
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snapcraft.yaml"
+
+restore: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snapcraft.yaml"
+
+execute: |
+  # verify command executes without error
+  snapcraft expand-extensions

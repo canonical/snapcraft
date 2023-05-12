@@ -21,10 +21,11 @@ from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Uni
 
 import pydantic
 from craft_archives import repo
+from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from pydantic import PrivateAttr, conlist, constr
 
-from snapcraft import parts
+from snapcraft import parts, utils
 from snapcraft.errors import ProjectValidationError
 from snapcraft.utils import get_effective_base, get_host_architecture
 
@@ -46,8 +47,16 @@ class ProjectModel(pydantic.BaseModel):
 # see https://github.com/samuelcolvin/pydantic/issues/975#issuecomment-551147305
 # fmt: off
 if TYPE_CHECKING:
+    ProjectName = str
+    ProjectSummary = str
+    ProjectTitle = str
+    ProjectVersion = str
     UniqueStrList = List[str]
 else:
+    ProjectName = constr(max_length=40)
+    ProjectSummary = constr(max_length=78)
+    ProjectTitle = constr(max_length=40)
+    ProjectVersion = constr(max_length=32, strict=True)
     UniqueStrList = conlist(str, unique_items=True)
 # fmt: on
 
@@ -373,6 +382,16 @@ class ContentPlug(ProjectModel):
     target: str
     default_provider: Optional[str]
 
+    @pydantic.validator("default_provider")
+    @classmethod
+    def _validate_default_provider(cls, default_provider):
+        if default_provider and "/" in default_provider:
+            raise ValueError(
+                "Specifying a snap channel in 'default_provider' is not supported: "
+                f"{default_provider}"
+            )
+        return default_provider
+
 
 MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
@@ -386,18 +405,18 @@ class Project(ProjectModel):
     - system-usernames
     """
 
-    name: constr(max_length=40)  # type: ignore
-    title: Optional[constr(max_length=40)]  # type: ignore
+    name: ProjectName
+    title: Optional[ProjectTitle]
     base: Optional[str]
     build_base: Optional[str]
     compression: Literal["lzo", "xz"] = "xz"
-    version: Optional[constr(max_length=32, strict=True)]  # type: ignore
+    version: Optional[ProjectVersion]
     contact: Optional[Union[str, UniqueStrList]]
     donation: Optional[Union[str, UniqueStrList]]
     issues: Optional[Union[str, UniqueStrList]]
     source_code: Optional[str]
     website: Optional[str]
-    summary: Optional[constr(max_length=78)]  # type: ignore
+    summary: Optional[ProjectSummary]
     description: Optional[str]
     type: Optional[Literal["app", "base", "gadget", "kernel", "snapd"]]
     icon: Optional[str]
@@ -429,6 +448,7 @@ class Project(ProjectModel):
     @pydantic.validator("plugs")
     @classmethod
     def _validate_plugs(cls, plugs):
+        empty_plugs = []
         if plugs is not None:
             for plug_name, plug in plugs.items():
                 if (
@@ -439,10 +459,41 @@ class Project(ProjectModel):
                     raise ValueError(
                         f"ContentPlug '{plug_name}' must have a 'target' parameter."
                     )
+
                 if isinstance(plug, list):
                     raise ValueError(f"Plug '{plug_name}' cannot be a list.")
 
+                if isinstance(plug, dict) and plug.get("default-provider"):
+                    default_provider: str = plug.get("default-provider", "")
+                    if "/" in default_provider:
+                        raise ValueError(
+                            "Specifying a snap channel in 'default_provider' is not supported: "
+                            f"{default_provider}"
+                        )
+
+                if plug is None:
+                    empty_plugs.append(plug_name)
+
+        if empty_plugs:
+            message = _format_global_keyword_warning("plug", empty_plugs)
+            emit.message(message)
+
         return plugs
+
+    @pydantic.validator("slots")
+    @classmethod
+    def _validate_slots(cls, slots):
+        empty_slots = []
+        if slots is not None:
+            for slot_name, slot in slots.items():
+                if slot is None:
+                    empty_slots.append(slot_name)
+
+        if empty_slots:
+            message = _format_global_keyword_warning("slot", empty_slots)
+            emit.message(message)
+
+        return slots
 
     @pydantic.root_validator(pre=True)
     @classmethod
@@ -824,3 +875,24 @@ def _printable_field_location_split(location: str) -> Tuple[str, str]:
         return field_name, repr(".".join(loc_split))
 
     return field_name, "top-level"
+
+
+def _format_global_keyword_warning(keyword: str, empty_entries: List[str]) -> str:
+    """Create a warning message about global assignment in the ``keyword`` field.
+
+    :param keyword:
+        The top-level keyword that contains empty entries (currently either
+        "plug" or "slot").
+    :param empty_entries:
+        The entries inside the ``keyword`` dict that are empty.
+    :return:
+        A properly-formatted warning message.
+    """
+    culprits = utils.humanize_list(empty_entries, "and")
+    return (
+        f"Warning: implicit {keyword.lower()} assignment in {culprits}. "
+        f"{keyword.capitalize()}s should be assigned to the app to which they apply, "
+        f"and not implicitly assigned via the global '{keyword.lower()}s:' "
+        "stanza which is intended for configuration only."
+        "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"
+    )

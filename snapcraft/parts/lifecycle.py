@@ -75,6 +75,7 @@ _SNAP_PROJECT_FILES = [
 
 _CORE_PART_KEYS = ["build-packages", "build-snaps"]
 _CORE_PART_NAME = "snapcraft/core"
+_EXPERIMENTAL_PLUGINS = ["kernel"]
 
 
 def get_snap_project() -> _SnapProject:
@@ -235,6 +236,11 @@ def _run_command(
 ) -> None:
     managed_mode = utils.is_managed_mode()
     part_names = getattr(parsed_args, "parts", None)
+
+    enable_experimental_plugins = getattr(
+        parsed_args, "enable_experimental_plugins", False
+    )
+    _check_experimental_plugins(project, enable_experimental_plugins)
 
     if not managed_mode:
         run_project_checks(project, assets_dir=assets_dir)
@@ -519,6 +525,9 @@ def _run_in_provider(
     if getattr(parsed_args, "enable_experimental_ua_services", False):
         cmd.append("--enable-experimental-ua-services")
 
+    if getattr(parsed_args, "enable_experimental_plugins", False):
+        cmd.append("--enable-experimental-plugins")
+
     project_path = Path().absolute()
     output_dir = utils.get_managed_environment_project_path()
 
@@ -606,6 +615,28 @@ def _set_global_environment(info: ProjectInfo) -> None:
             "SNAPCRAFT_PRIME": str(info.prime_dir),
         }
     )
+
+
+def _check_experimental_plugins(
+    project: Project, enable_experimental_plugins: bool
+) -> None:
+    """Ensure the experimental plugin flag is enabled to use unstable plugins."""
+    for name, part in project.parts.items():
+        if not isinstance(part, Dict):
+            continue
+
+        plugin = part.get("plugin", "")
+        if plugin not in _EXPERIMENTAL_PLUGINS:
+            continue
+
+        if enable_experimental_plugins:
+            emit.progress(f"*EXPERIMENTAL* plugin '{name}' enabled", permanent=True)
+            continue
+
+        raise errors.SnapcraftError(
+            f"Plugin '{plugin}' in part '{name}' is unstable and may change in the future.",
+            resolution="Rerun with --enable-experimental-plugins to use this plugin.",
+        )
 
 
 def _set_step_environment(step_info: StepInfo) -> bool:

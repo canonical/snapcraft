@@ -27,7 +27,12 @@ from overrides import overrides
 from pydantic import BaseModel
 
 from snapcraft import extensions
-from snapcraft.parts.lifecycle import get_snap_project, process_yaml
+from snapcraft.parts.lifecycle import (
+    apply_yaml,
+    extract_parse_info,
+    get_snap_project,
+    process_yaml,
+)
 from snapcraft.projects import Project
 from snapcraft.utils import get_host_architecture
 from snapcraft_legacy.internal.project_loader import (
@@ -114,11 +119,21 @@ class ExpandExtensionsCommand(BaseCommand, abc.ABC):
     @overrides
     def run(self, parsed_args):
         snap_project = get_snap_project()
+
+        # load yaml file and trigger legacy behavior if base is core, core18, or core20
         yaml_data = process_yaml(snap_project.project_file)
-        expanded_yaml_data = extensions.apply_extensions(
-            yaml_data,
-            arch=get_host_architecture(),
-            target_arch=get_host_architecture(),
-        )
-        Project.unmarshal(expanded_yaml_data)
-        emit.message(yaml.safe_dump(expanded_yaml_data, indent=4, sort_keys=False))
+
+        # process yaml before unmarshalling the data
+        arch = get_host_architecture()
+        yaml_data_for_arch = apply_yaml(yaml_data, arch, arch)
+
+        # `apply_yaml()` adds or replaces the architectures keyword with an Architecture
+        # object, which does not easily dump to a yaml file
+        yaml_data_for_arch.pop("architectures")
+
+        # `parse-info` keywords must be removed before unmarshalling, because they are
+        # not part of the Project model
+        extract_parse_info(yaml_data_for_arch)
+
+        Project.unmarshal(yaml_data_for_arch)
+        emit.message(yaml.safe_dump(yaml_data_for_arch, indent=4, sort_keys=False))
