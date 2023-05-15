@@ -8,7 +8,8 @@ click==8.1.3
 craft-archives==0.0.3
 craft-cli==1.2.0
 craft-grammar==1.1.1
-craft-parts==1.19.3
+#craft-parts==1.19.3
+git+https://github.com/tigarmo/craft-parts.git@CRAFT-1725-ensure-payload-python#egg=craft_parts
 craft-providers==1.10.0
 craft-store==2.4.0
 cryptography==3.4
