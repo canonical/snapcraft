@@ -1,6 +1,6 @@
 name: Task
 description: File an enhancement proposal
-labels: ["Type: Task", "Status: Triage"]
+labels: "Enhancement"
 body:
   - type: markdown
     attributes:
