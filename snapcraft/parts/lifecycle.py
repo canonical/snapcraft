@@ -413,7 +413,7 @@ def _generate_metadata(
     snap_yaml.write(
         project,
         lifecycle.prime_dir,
-        arch=lifecycle.target_arch,
+        arch=project.get_build_for(),
         arch_triplet=lifecycle.target_arch_triplet,
     )
     emit.progress("Generated snap metadata", permanent=True)
@@ -449,7 +449,7 @@ def _generate_manifest(
     manifest.write(
         project,
         lifecycle.prime_dir,
-        arch=lifecycle.target_arch,
+        arch=project.get_build_for(),
         parts=parts,
         start_time=start_time,
         image_information=image_information,

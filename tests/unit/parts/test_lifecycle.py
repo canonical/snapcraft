@@ -1686,3 +1686,58 @@ def test_patch_elf(snapcraft_yaml, mocker, new_dir):
             elf_file_path=new_dir / "prime/elf.bin",
         )
     ]
+
+
+@pytest.mark.parametrize("build_for", ["amd64", "arm64", "all"])
+def test_lifecycle_write_metadata(
+    build_for, snapcraft_yaml, project_vars, new_dir, mocker
+):
+    """Verify metadata and manifest are written during the lifecycle."""
+    yaml_data = {
+        "base": "core22",
+        "architectures": [{"build-on": "amd64", "build-for": build_for}],
+    }
+    project = Project.unmarshal(snapcraft_yaml(**yaml_data))
+    mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch("snapcraft.pack.pack_snap")
+    mock_write_metadata = mocker.patch("snapcraft.meta.snap_yaml.write")
+    mock_write_manifest = mocker.patch("snapcraft.meta.manifest.write")
+
+    parsed_args = argparse.Namespace(
+        debug=False,
+        destructive_mode=True,
+        enable_manifest=True,
+        ua_token=None,
+        parts=[],
+        manifest_image_information=None,
+    )
+
+    parts_lifecycle._run_command(
+        "prime",
+        project=project,
+        parse_info={},
+        assets_dir=Path(),
+        start_time=datetime.now(),
+        parallel_build_count=8,
+        parsed_args=parsed_args,
+    )
+
+    assert mock_write_metadata.mock_calls == [
+        call(
+            project,
+            new_dir / "prime",
+            arch=build_for,
+            arch_triplet=mocker.ANY,
+        )
+    ]
+    assert mock_write_manifest.mock_calls == [
+        call(
+            project,
+            new_dir / "prime",
+            arch=build_for,
+            parts=mocker.ANY,
+            start_time=mocker.ANY,
+            image_information="{}",
+            primed_stage_packages=[],
+        )
+    ]
