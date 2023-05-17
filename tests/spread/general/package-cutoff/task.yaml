@@ -1,0 +1,8 @@
+summary: Stage package cutoff test
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  snapcraft
