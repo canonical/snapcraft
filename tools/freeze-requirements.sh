@@ -5,25 +5,19 @@ requirements_fixups() {
 
   # Python apt library pinned to source.
   sed -i '/python-apt=*/d' "$req_file"
-  echo 'python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.0ubuntu0.20.04.6/python-apt_2.0.0ubuntu0.20.04.6.tar.xz; sys.platform == "linux"' >> "$req_file"
-
-  # PyNaCl 1.4.0 has crypto related symbol issues when using the system
-  # provided sodium.  Ensure it is compiled on linux by pointing to source.
-  sed -i '/PyNaCl=*/d' "$req_file"
-  echo 'PyNaCl==1.4.0; sys.platform != "linux"' >> "$req_file"
-  echo 'PyNaCl @ https://files.pythonhosted.org/packages/61/ab/2ac6dea8489fa713e2b4c6c5b549cc962dd4a842b5998d9e80cf8440b7cd/PyNaCl-1.3.0.tar.gz; sys.platform == "linux"' >> "$req_file"
+  echo 'python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.1ubuntu0.20.04.1/python-apt_2.0.1ubuntu0.20.04.1.tar.xz; sys.platform == "linux"' >> "$req_file"
 
   # https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1635463
   sed -i '/pkg[-_]resources==0.0.0/d' "$req_file"
 
-  # We updated setuptools in venv, forget it.
+  # Keep setuptools < 66
   sed -i '/^setuptools/d' "$req_file"
-  echo 'setuptools==49.6.0' >> "$req_file"
+  echo 'setuptools<66' >> "$req_file"
 
   # Pinned pyinstaller for windows.
   if [[ "$req_file" == "requirements-devel.txt" ]]; then
       sed -i '/pyinstaller/d' "$req_file"
-      echo 'pyinstaller==4.3; sys.platform == "win32"' >> "$req_file"
+      echo 'pyinstaller==4.10; sys.platform == "win32"' >> "$req_file"
   fi
 }
 

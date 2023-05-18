@@ -29,28 +29,28 @@ if TYPE_CHECKING:
 
 
 class StoreReleaseCommand(BaseCommand):
-    """Command to release a snap on the Snap Store."""
+    """Release a snap in the Snap Store."""
 
     name = "release"
-    help_msg = "Release <name> to the store"
+    help_msg = "Release <snap-name> to the store"
     overview = textwrap.dedent(
         """
-        Release <name> on <revision> to the selected store <channels>.
-        <channels> is a comma separated list of valid channels on the store.
+        Release <snap-name> at <revision> to the selected store <channels>.
+        <channels> is a comma-separated list of valid channels in the store.
 
-        The <revision> must exist on the store, to see available revisions run
-        `snapcraft list-revisions <name>`.
+        The <revision> must exist in the store; to see available revisions,
+        run `snapcraft list-revisions <name>`.
 
         The channel map will be displayed after the operation takes place. To see
         the status map at any other time run `snapcraft status <name>`.
 
-        The format for channels is `[<track>/]<risk>[/<branch>]` where
+        The format for a channel is `[<track>/]<risk>[/<branch>]` where
 
-            - <track> is used to have long term release channels. It is implicitly
+            - <track> is used to have long-term release channels. It is implicitly
               set to `latest`. If this snap requires one, it can be created by
               request by having a conversation on https://forum.snapcraft.io
               under the *store* category.
-            - <risk> is mandatory and can be either `stable`, `candidate`, `beta`
+            - <risk> is mandatory and must be one of `stable`, `candidate`, `beta`
               or `edge`.
             - <branch> is optional and dynamically creates a channel with a
               specific expiration date.
@@ -78,7 +78,7 @@ class StoreReleaseCommand(BaseCommand):
         parser.add_argument(
             "channels",
             type=str,
-            help="The comma separated list of channels to release to",
+            help="The comma-separated list of channels to release to",
         )
         parser.add_argument(
             "--progressive",
@@ -108,16 +108,16 @@ class StoreReleaseCommand(BaseCommand):
 
 
 class StoreCloseCommand(BaseCommand):
-    """Command to close a channel for a snap on the Snap Store."""
+    """Close a channel for a snap in the Snap Store."""
 
     name = "close"
-    help_msg = "Close <channel> for <name> on the store"
+    help_msg = "Close <channel> for <snap-name> in the store"
     overview = textwrap.dedent(
         """
-        Closing a channel allows the <channel> that is closed to track the
+        Closing a channel allows the channel that is closed to track the
         channel that follows it in the channel release chain.
-        As such closing the 'candidate' channel would make it track the
-        'stable' channel.
+        As such, closing the 'candidate' channel for a snap would make
+        that snap begin to track the 'stable' channel.
 
         Examples:
             snapcraft close my-snap --channel beta

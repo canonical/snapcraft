@@ -188,7 +188,7 @@ class LegacyStoreClientCLI:
         channels: Optional[Sequence[str]] = None,
         **kwargs,
     ) -> str:
-        """Login to the Snap Store and prompt if required."""
+        """Log in to the Snap Store and prompt if required."""
         if os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS):
             raise errors.SnapcraftError(
                 f"Cannot login with {constants.ENVIRONMENT_STORE_CREDENTIALS!r} set.",
@@ -295,9 +295,11 @@ class LegacyStoreClientCLI:
         :param is_private: makes the registered snap a private snap
         :param store_id: alternative store to register with
         """
-        data = dict(
-            snap_name=snap_name, is_private=is_private, series=constants.DEFAULT_SERIES
-        )
+        data = {
+            "snap_name": snap_name,
+            "is_private": is_private,
+            "series": constants.DEFAULT_SERIES,
+        }
         if store_id is not None:
             data["store"] = store_id
 

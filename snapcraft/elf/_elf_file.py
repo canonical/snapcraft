@@ -21,17 +21,11 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, cast
 
-import elftools.common.exceptions
-import elftools.elf.constants
-import elftools.elf.dynamic
-import elftools.elf.elffile
-import elftools.elf.gnuversions
-import elftools.elf.sections
-import elftools.elf.segments
 from craft_cli import emit
 from elftools.construct import ConstructError
+from elftools.elf import constants, dynamic, elffile, gnuversions, sections, segments
 from pkg_resources import parse_version
 
 from snapcraft import utils
@@ -242,7 +236,7 @@ class ElfFile:
 
     def _extract_attributes(self) -> None:  # noqa: C901
         with self.path.open("rb") as file:
-            elf = elftools.elf.elffile.ELFFile(file)
+            elf_file = elffile.ELFFile(file)
 
             # A set of fields to identify the architecture of the ELF file:
             #  EI_CLASS: 32/64 bit (e.g. amd64 vs. x32)
@@ -252,37 +246,40 @@ class ElfFile:
             # For amd64 binaries, this will evaluate to:
             #   ('ELFCLASS64', 'ELFDATA2LSB', 'EM_X86_64')
             self.arch_tuple = (
-                elf.header.e_ident.EI_CLASS,
-                elf.header.e_ident.EI_DATA,
-                elf.header.e_machine,
+                elf_file.header.e_ident.EI_CLASS,
+                elf_file.header.e_ident.EI_DATA,
+                elf_file.header.e_machine,
             )
 
             # Gather attributes from dynamic sections.
-            for section in elf.iter_sections():
-                if not isinstance(section, elftools.elf.dynamic.DynamicSection):
+            for section in elf_file.iter_sections():
+                if not isinstance(section, dynamic.DynamicSection):
                     continue
 
                 self.is_dynamic = True
 
                 for tag in section.iter_tags():
                     if tag.entry.d_tag == "DT_NEEDED":
-                        self.needed[tag.needed] = _NeededLibrary(name=tag.needed)
+                        needed = tag.needed  # pyright: ignore[reportGeneralTypeIssues]
+                        self.needed[needed] = _NeededLibrary(name=needed)
                     elif tag.entry.d_tag == "DT_SONAME":
-                        self.soname = tag.soname
+                        self.soname = (
+                            tag.soname  # pyright: ignore[reportGeneralTypeIssues]
+                        )
 
-            for segment in elf.iter_segments():
+            for segment in elf_file.iter_segments():
                 if segment["p_type"] == "PT_GNU_STACK":
                     # p_flags holds the bit mask for this segment.
                     # See `man 5 elf`.
                     mode = segment["p_flags"]
-                    if mode & elftools.elf.constants.P_FLAGS.PF_X:
+                    if mode & constants.P_FLAGS.PF_X:
                         self.execstack_set = True
-                elif isinstance(segment, elftools.elf.segments.InterpSegment):
+                elif isinstance(segment, segments.InterpSegment):
                     self.interp = segment.get_interp_name()
 
-            build_id_section = elf.get_section_by_name(".note.gnu.build-id")
+            build_id_section = elf_file.get_section_by_name(".note.gnu.build-id")
             if (
-                isinstance(build_id_section, elftools.elf.sections.NoteSection)
+                isinstance(build_id_section, sections.NoteSection)
                 and build_id_section.header["sh_type"] != "SHT_NOBITS"
             ):
                 for note in build_id_section.iter_notes():
@@ -291,10 +288,10 @@ class ElfFile:
 
             # If we are processing a detached debug info file, these
             # sections will be present but empty.
-            verneed_section = elf.get_section_by_name(_GNU_VERSION_R)
-            if isinstance(verneed_section, elftools.elf.gnuversions.GNUVerNeedSection):
+            verneed_section = elf_file.get_section_by_name(_GNU_VERSION_R)
+            if isinstance(verneed_section, gnuversions.GNUVerNeedSection):
                 for library, versions in verneed_section.iter_versions():
-                    library_name = library.name
+                    library_name = cast(str, library.name)
                     # If the ELF file only references weak symbols
                     # from a library, it may be absent from DT_NEEDED
                     # but still have an entry in .gnu.version_r for
@@ -305,19 +302,19 @@ class ElfFile:
                     for version in versions:
                         lib.add_version(version.name)
 
-            verdef_section = elf.get_section_by_name(_GNU_VERSION_D)
-            if isinstance(verdef_section, elftools.elf.gnuversions.GNUVerDefSection):
+            verdef_section = elf_file.get_section_by_name(_GNU_VERSION_D)
+            if isinstance(verdef_section, gnuversions.GNUVerDefSection):
                 for _, auxiliaries in verdef_section.iter_versions():
                     for aux in auxiliaries:
                         self.versions.add(aux.name)
 
-            debug_info_section = elf.get_section_by_name(_DEBUG_INFO)
+            debug_info_section = elf_file.get_section_by_name(_DEBUG_INFO)
             self.has_debug_info = (
                 debug_info_section is not None
                 and debug_info_section.header.sh_type != "SHT_NOBITS"
             )
 
-            self.elf_type = elf.header["e_type"]
+            self.elf_type = elf_file.header["e_type"]
 
     # pylint: enable=too-many-branches
 

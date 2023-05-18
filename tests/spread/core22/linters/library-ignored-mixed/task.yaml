@@ -1,0 +1,13 @@
+summary: Ignore mixed library linter issues
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap ./*.txt
+
+execute: |
+  snapcraft 2> output.txt
+
+  test -f library-ignore-mixed_0.1_*.snap
+
+  sed -n '/^Running linters/,/^Creating snap/p' < output.txt > linter_output.txt
+  diff -u linter_output.txt expected_linter_output.txt

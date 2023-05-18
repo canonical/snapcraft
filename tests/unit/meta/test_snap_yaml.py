@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -688,6 +688,59 @@ def test_get_provider_content_directories(new_dir, mocker):
     ]
 
 
+@pytest.mark.parametrize("grade", ["devel", "stable"])
+def test_grade(grade, simple_project, new_dir):
+    """Use the grade provided by the project."""
+    snap_yaml.write(
+        project=simple_project(grade=grade),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    data = yaml.safe_load(yaml_file.read_text())
+
+    assert data["grade"] == grade
+
+
+def test_grade_default(emitter, simple_project, new_dir):
+    """Grade should default to `stable` when not provided by the project."""
+    snap_yaml.write(
+        project=simple_project(),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    data = yaml.safe_load(yaml_file.read_text())
+
+    assert data["grade"] == "stable"
+
+    emitter.assert_debug("Grade not specified, using default value 'stable'.")
+
+
+def test_grade_build_base_devel(emitter, simple_project, new_dir):
+    """Grade should default to `devel` when build_base is `devel`."""
+    snap_yaml.write(
+        project=simple_project(build_base="devel"),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    data = yaml.safe_load(yaml_file.read_text())
+
+    assert data["grade"] == "devel"
+
+    emitter.assert_debug("Setting grade to 'devel' because build_base is 'devel'.")
+
+
 #####################
 # Test content plug #
 #####################
@@ -724,6 +777,23 @@ def test_content_plug_provider():
     plug = ContentPlug.unmarshal(plug_dict)
 
     assert plug.provider == "gtk-common-themes"
+
+
+def test_content_plug_provider_with_channel():
+    plug_dict = {
+        "interface": "content",
+        "content": "foo",
+        "target": "target",
+        "default-provider": "gtk-common-themes:gtk-3-themes/edge",
+    }
+
+    error = (
+        "Specifying a snap channel in 'default_provider' is not supported: "
+        "gtk-common-themes:gtk-3-themes/edge"
+    )
+
+    with pytest.raises(pydantic.ValidationError, match=error):
+        ContentPlug.unmarshal(plug_dict)
 
 
 def test_get_content_plugs():

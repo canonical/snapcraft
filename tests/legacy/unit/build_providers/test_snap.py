@@ -201,6 +201,38 @@ class SnapInjectionTest(unit.TestCase):
             ),
         )
 
+    def test_snapcraft_installed_on_host_in_parallel_install_from_store(self):
+        """Handle a parallel-installed snapcraft and install from the store."""
+        self.useFixture(fixture_setup.FakeStore())
+
+        snap_injector = SnapInjector(
+            registry_filepath=self.registry_filepath,
+            runner=self.provider._run,
+            file_pusher=self.provider._push_file,
+            inject_from_host=False,
+        )
+        snap_injector.add("snapcraft_foo")
+        snap_injector.apply()
+
+        self.provider.run_mock.assert_has_calls(
+            [
+                call(
+                    ["snap", "install", "--classic", "--channel", "stable", "snapcraft"]
+                ),
+            ]
+        )
+        self.assertThat(
+            self.registry_filepath,
+            FileContains(
+                dedent(
+                    """\
+                    snapcraft:
+                    - revision: '25'
+                    """
+                )
+            ),
+        )
+
     def test_snapcraft_installed_on_host_with_dangerous(self):
         self.fake_snapd.snaps_result = [
             {
@@ -283,6 +315,50 @@ class SnapInjectionTest(unit.TestCase):
                 call(source=ANY, destination="/var/tmp/snapcraft.snap"),
                 call(source=ANY, destination="/var/tmp/snapcraft.assert"),
             ]
+        )
+
+    def test_snapcraft_installed_on_host_in_parallel_inject_from_host(self):
+        """Inject a parallel-installed snapcraft snap in the instance."""
+        self.fake_snapd.snaps_result = [
+            {
+                "name": "snapcraft_test",
+                "confinement": "classic",
+                "revision": "x20",
+                "tracking-channel": "latest/stable",
+            },
+        ]
+
+        snap_injector = SnapInjector(
+            registry_filepath=self.registry_filepath,
+            runner=self.provider._run,
+            file_pusher=self.provider._push_file,
+        )
+        snap_injector.add("snapcraft_test")
+        snap_injector.apply()
+
+        self.provider.run_mock.assert_has_calls(
+            [
+                call(
+                    [
+                        "snap",
+                        "install",
+                        "--dangerous",
+                        "--classic",
+                        "/var/tmp/snapcraft_test.snap",
+                    ]
+                ),
+            ]
+        )
+        self.assertThat(
+            self.registry_filepath,
+            FileContains(
+                dedent(
+                    """\
+                    snapcraft:
+                    - revision: x20
+                    """
+                )
+            ),
         )
 
     def test_snapcraft_not_installed_on_host(self):

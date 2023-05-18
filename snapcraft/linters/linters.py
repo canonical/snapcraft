@@ -22,7 +22,7 @@ import json
 import os
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Type
+from typing import Dict, List, Optional, Type
 
 from craft_cli import emit
 
@@ -32,10 +32,6 @@ from snapcraft.meta import snap_yaml
 from .base import Linter, LinterIssue, LinterResult
 from .classic_linter import ClassicLinter
 from .library_linter import LibraryLinter
-
-if TYPE_CHECKING:
-    import argparse
-
 
 LinterType = Type[Linter]
 
@@ -115,12 +111,6 @@ def _update_status(status: LinterStatus, result: LinterResult) -> LinterStatus:
     return status
 
 
-def lint_command(parsed_args: "argparse.Namespace") -> None:
-    """``snapcraft lint`` command handler."""
-    # XXX: obtain lint configuration
-    run_linters(parsed_args.snap_file, lint=None)
-
-
 def run_linters(location: Path, *, lint: Optional[projects.Lint]) -> List[LinterIssue]:
     """Run all the defined linters.
 
@@ -139,6 +129,11 @@ def run_linters(location: Path, *, lint: Optional[projects.Lint]) -> List[Linter
         emit.progress("Running linters...")
         for name, linter_class in LINTERS.items():
             if lint and lint.all_ignored(name):
+                continue
+
+            categories = linter_class.get_categories()
+
+            if lint and categories and all(lint.all_ignored(c) for c in categories):
                 continue
 
             linter = linter_class(name=name, lint=lint, snap_metadata=snap_metadata)

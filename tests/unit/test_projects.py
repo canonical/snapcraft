@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -501,6 +501,24 @@ class TestProjectValidation:
         project = Project.unmarshal(project_yaml_data(plugs=content_plug_data))
         assert project.get_content_snaps() == ["test-provider"]
 
+    def test_project_default_provider_with_channel(self, project_yaml_data):
+        content_plug_data = {
+            "content-interface": {
+                "interface": "content",
+                "target": "test-target",
+                "content": "test-content",
+                "default-provider": "test-provider/edge",
+            }
+        }
+
+        error = (
+            "Specifying a snap channel in 'default_provider' is not supported: "
+            "test-provider/edge"
+        )
+
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(project_yaml_data(plugs=content_plug_data))
+
     @pytest.mark.parametrize("decl_type", ["symlink", "bind", "bind-file", "type"])
     def test_project_layout(self, decl_type, project_yaml_data):
         project = Project.unmarshal(
@@ -533,6 +551,59 @@ class TestProjectValidation:
     def test_slot_valid(self, slots, project_yaml_data):
         project = Project.unmarshal(project_yaml_data(slots=slots))
         assert project.slots == slots
+
+    def test_project_build_base_devel_grade_devel(self, project_yaml_data):
+        """When build_base is `devel`, the grade must be `devel`."""
+        project = Project.unmarshal(
+            project_yaml_data(build_base="devel", grade="devel")
+        )
+
+        assert project.grade == "devel"
+
+    @pytest.mark.parametrize("build_base", {"core22", "devel"})
+    def test_project_grade_not_defined(self, build_base, project_yaml_data):
+        """Do not validate the grade if it is not defined, regardless of build_base."""
+        data = project_yaml_data(build_base=build_base)
+        data.pop("grade")
+
+        project = Project.unmarshal(data)
+
+        assert project.build_base == build_base
+        assert not project.grade
+
+    def test_project_build_base_devel_grade_stable_error(self, project_yaml_data):
+        """Raise an error if build_base is `devel` and grade is `stable`."""
+        error = (
+            "Bad snapcraft.yaml content:\n"
+            "- grade must be 'devel' when build-base is 'devel'"
+        )
+
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(project_yaml_data(build_base="devel", grade="stable"))
+
+    def test_project_global_plugs_warning(self, project_yaml_data, emitter):
+        data = project_yaml_data(plugs={"desktop": None, "desktop-legacy": None})
+        Project.unmarshal(data)
+        expected_message = (
+            "Warning: implicit plug assignment in 'desktop' and 'desktop-legacy'. "
+            "Plugs should be assigned to the app to which they apply, and not "
+            "implicitly assigned via the global 'plugs:' stanza "
+            "which is intended for configuration only."
+            "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"
+        )
+        emitter.assert_message(expected_message)
+
+    def test_project_global_slots_warning(self, project_yaml_data, emitter):
+        data = project_yaml_data(slots={"home": None, "removable-media": None})
+        Project.unmarshal(data)
+        expected_message = (
+            "Warning: implicit slot assignment in 'home' and 'removable-media'. "
+            "Slots should be assigned to the app to which they apply, and not "
+            "implicitly assigned via the global 'slots:' stanza "
+            "which is intended for configuration only."
+            "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"
+        )
+        emitter.assert_message(expected_message)
 
 
 class TestHookValidation:

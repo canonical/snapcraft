@@ -9,6 +9,7 @@ environment:
   SNAP/catkin_noetic_subdir: catkin-noetic-subdir
   SNAP/catkin_tools_noetic_hello: catkin-tools-noetic-hello
   SNAP/catkin_tools_noetic_subdir: catkin-tools-noetic-subdir
+  SNAP/catkin_rosrun_wrapper: catkin-rosrun-wrapper
 
 systems:
   - ubuntu-20.04

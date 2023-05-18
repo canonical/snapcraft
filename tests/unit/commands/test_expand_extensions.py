@@ -24,7 +24,8 @@ from snapcraft.commands import ExpandExtensionsCommand
 
 
 @pytest.mark.usefixtures("fake_extension")
-def test_command(new_dir, emitter):
+def test_expand_extensions_simple(new_dir, emitter):
+    """Expand an extension for a simple snapcraft.yaml file."""
     with Path("snapcraft.yaml").open("w") as yaml_file:
         print(
             dedent(
@@ -77,6 +78,85 @@ def test_command(new_dir, emitter):
                 - fake-extension/fake-part
             fake-extension/fake-part:
                 plugin: nil
+        """
+        )
+    )
+
+
+@pytest.mark.usefixtures("fake_extension")
+def test_expand_extensions_complex(new_dir, emitter, mocker):
+    """Expand an extension for a complex snapcraft.yaml file.
+
+    This includes parse-info, architectures, and advanced grammar.
+    """
+    # mock for advanced grammar parsing (i.e. `on amd64:`)
+    mocker.patch(
+        "snapcraft.commands.extensions.get_host_architecture", return_value="amd64"
+    )
+    with Path("snapcraft.yaml").open("w") as yaml_file:
+        print(
+            dedent(
+                """\
+                name: test-name
+                version: "0.1"
+                summary: testing extensions
+                description: expand a fake extension
+                base: core22
+                confinement: strict
+                grade: stable
+                architectures: [amd64, arm64, armhf]
+
+                apps:
+                  app1:
+                    command: app1
+                    command-chain: [fake-command]
+                    extensions: [fake-extension]
+
+                parts:
+                  nil:
+                    plugin: nil
+                    parse-info:
+                      - usr/share/metainfo/app1.appdata.xml
+                    stage-packages:
+                      - mesa-opencl-icd
+                      - ocl-icd-libopencl1
+                      - on amd64:
+                        - intel-opencl-icd
+            """
+            ),
+            file=yaml_file,
+        )
+
+    cmd = ExpandExtensionsCommand(None)
+    cmd.run(Namespace())
+    emitter.assert_message(
+        dedent(
+            """\
+            name: test-name
+            version: '0.1'
+            summary: testing extensions
+            description: expand a fake extension
+            base: core22
+            confinement: strict
+            grade: stable
+            apps:
+                app1:
+                    command: app1
+                    command-chain:
+                    - fake-command
+                    plugs:
+                    - fake-plug
+            parts:
+                nil:
+                    plugin: nil
+                    stage-packages:
+                    - mesa-opencl-icd
+                    - ocl-icd-libopencl1
+                    - intel-opencl-icd
+                    after:
+                    - fake-extension/fake-part
+                fake-extension/fake-part:
+                    plugin: nil
         """
         )
     )

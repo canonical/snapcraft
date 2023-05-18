@@ -691,7 +691,7 @@ def test_list_tracks(emitter, command_class):
 ##########################
 
 
-@pytest.mark.usefixtures("fake_store_list_revisions")
+@pytest.mark.usefixtures("memory_keyring", "fake_store_list_revisions")
 def test_list_revisions(emitter):
     cmd = commands.StoreListRevisionsCommand(None)
 
@@ -707,7 +707,7 @@ def test_list_revisions(emitter):
     )
 
 
-@pytest.mark.usefixtures("fake_store_list_revisions")
+@pytest.mark.usefixtures("memory_keyring", "fake_store_list_revisions")
 def test_list_revisions_arch(emitter):
     cmd = commands.StoreListRevisionsCommand(None)
 
@@ -722,7 +722,7 @@ def test_list_revisions_arch(emitter):
     )
 
 
-@pytest.mark.usefixtures("fake_store_list_revisions")
+@pytest.mark.usefixtures("memory_keyring", "fake_store_list_revisions")
 def test_list_revisions_no_release_information(emitter, list_revisions_result):
     list_revisions_result.releases = []
 

@@ -23,15 +23,15 @@ import re
 from typing import List, Set
 
 import jsonschema
+from craft_archives.repo import apt_key_manager, apt_sources_manager
+from craft_archives.repo.package_repository import PackageRepository
 
 from snapcraft_legacy import formatting_utils, plugins, project
 from snapcraft_legacy.internal import deprecations, repo, states, steps
-from snapcraft_legacy.internal.meta.package_repository import PackageRepository
 from snapcraft_legacy.internal.meta.snap import Snap
 from snapcraft_legacy.internal.pluginhandler._part_environment import (
     get_snapcraft_global_environment,
 )
-from snapcraft_legacy.internal.repo import apt_key_manager, apt_sources_manager
 from snapcraft_legacy.project._schema import Validator
 
 from . import errors, grammar_processing, replace_attr

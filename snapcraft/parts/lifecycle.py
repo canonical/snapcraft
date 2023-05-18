@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -75,6 +75,7 @@ _SNAP_PROJECT_FILES = [
 
 _CORE_PART_KEYS = ["build-packages", "build-snaps"]
 _CORE_PART_NAME = "snapcraft/core"
+_EXPERIMENTAL_PLUGINS = ["kernel"]
 
 
 def get_snap_project() -> _SnapProject:
@@ -236,6 +237,11 @@ def _run_command(
     managed_mode = utils.is_managed_mode()
     part_names = getattr(parsed_args, "parts", None)
 
+    enable_experimental_plugins = getattr(
+        parsed_args, "enable_experimental_plugins", False
+    )
+    _check_experimental_plugins(project, enable_experimental_plugins)
+
     if not managed_mode:
         run_project_checks(project, assets_dir=assets_dir)
 
@@ -271,6 +277,8 @@ def _run_command(
         work_dir=work_dir,
         assets_dir=assets_dir,
         base=project.get_effective_base(),
+        project_base=project.base or "",
+        confinement=project.confinement,
         package_repositories=project.package_repositories,
         parallel_build_count=parallel_build_count,
         part_names=part_names,
@@ -473,7 +481,7 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
     emit.progress("Cleaned build provider", permanent=True)
 
 
-# pylint: disable-next=too-many-branches
+# pylint: disable-next=too-many-branches, too-many-statements
 def _run_in_provider(
     project: Project, command_name: str, parsed_args: "argparse.Namespace"
 ) -> None:
@@ -517,6 +525,9 @@ def _run_in_provider(
     if getattr(parsed_args, "enable_experimental_ua_services", False):
         cmd.append("--enable-experimental-ua-services")
 
+    if getattr(parsed_args, "enable_experimental_plugins", False):
+        cmd.append("--enable-experimental-plugins")
+
     project_path = Path().absolute()
     output_dir = utils.get_managed_environment_project_path()
 
@@ -527,7 +538,17 @@ def _run_in_provider(
         build_for=project.get_build_for(),
     )
 
-    build_base = providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE[project.get_effective_base()]
+    snapcraft_base = project.get_effective_base()
+    build_base = providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE[snapcraft_base]
+
+    if snapcraft_base == "devel":
+        emit.progress(
+            "Running snapcraft with a devel instance is for testing purposes only.",
+            permanent=True,
+        )
+        allow_unstable = True
+    else:
+        allow_unstable = False
 
     base_configuration = providers.get_base_configuration(
         alias=build_base,
@@ -543,6 +564,7 @@ def _run_in_provider(
         base_configuration=base_configuration,
         build_base=build_base.value,
         instance_name=instance_name,
+        allow_unstable=allow_unstable,
     ) as instance:
         try:
             providers.prepare_instance(
@@ -593,6 +615,28 @@ def _set_global_environment(info: ProjectInfo) -> None:
             "SNAPCRAFT_PRIME": str(info.prime_dir),
         }
     )
+
+
+def _check_experimental_plugins(
+    project: Project, enable_experimental_plugins: bool
+) -> None:
+    """Ensure the experimental plugin flag is enabled to use unstable plugins."""
+    for name, part in project.parts.items():
+        if not isinstance(part, Dict):
+            continue
+
+        plugin = part.get("plugin", "")
+        if plugin not in _EXPERIMENTAL_PLUGINS:
+            continue
+
+        if enable_experimental_plugins:
+            emit.progress(f"*EXPERIMENTAL* plugin '{name}' enabled", permanent=True)
+            continue
+
+        raise errors.SnapcraftError(
+            f"Plugin '{plugin}' in part '{name}' is unstable and may change in the future.",
+            resolution="Rerun with --enable-experimental-plugins to use this plugin.",
+        )
 
 
 def _set_step_environment(step_info: StepInfo) -> bool:

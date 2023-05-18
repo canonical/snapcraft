@@ -1,0 +1,14 @@
+summary: Run snapcraft init
+
+restore: |
+  rm -f ./*.snap
+
+execute: |
+  # initialize a new snapcraft project
+  snapcraft init
+
+  # the base should be core22
+  grep "^base: core22" snap/snapcraft.yaml
+
+  # 'snapcraft init' should create a usable snapcraft.yaml file
+  snapcraft

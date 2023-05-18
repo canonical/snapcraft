@@ -1,0 +1,24 @@
+name: catkin-rosrun-wrapper
+version: "1.0"
+summary: hello world
+description: |
+  A ROS 1 roscpp-based workspace.
+
+grade: stable
+confinement: strict
+base: core20
+
+apps:
+  catkin-rosrun-wrapper:
+    command: rosrun snapcraft_hello snapcraft_hello
+    plugs: [network, network-bind]
+    extensions: [ros1-noetic]
+    environment:
+      ROS_HOME: "$SNAP_USER_DATA/ros"
+
+parts:
+  hello:
+    plugin: catkin-tools
+    source: .
+    build-packages: [g++, make]
+    stage-packages: [rosbash]

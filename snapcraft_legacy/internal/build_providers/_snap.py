@@ -59,6 +59,8 @@ class _SnapManager:
         inject_from_host: bool = True
     ) -> None:
         self.snap_name = snap_name
+        # the local snap name may have a suffix if it was installed with `--name`
+        self.snap_store_name = snap_name.split("_")[0]
         self._remote_snap_dir = remote_snap_dir
         self._inject_from_host = inject_from_host
 
@@ -196,9 +198,9 @@ class _SnapManager:
 
         elif op == _SnapOp.INSTALL or op == _SnapOp.REFRESH:
             install_cmd = ["snap", op.name.lower()]
-            snap_channel = _get_snap_channel(self.snap_name)
+            snap_channel = _get_snap_channel(self.snap_store_name)
 
-            store_snap_info = storeapi.SnapAPI().get_info(self.snap_name)
+            store_snap_info = storeapi.SnapAPI().get_info(self.snap_store_name)
             snap_channel_map = store_snap_info.get_channel_mapping(
                 risk=snap_channel.risk, track=snap_channel.track
             )
@@ -206,7 +208,7 @@ class _SnapManager:
             if snap_channel_map.confinement == "classic":
                 install_cmd.append("--classic")
             install_cmd.extend(["--channel", snap_channel_map.channel_details.name])
-            install_cmd.append(host_snap_repo.name)
+            install_cmd.append(self.snap_store_name)
 
         self.__install_cmd = install_cmd
         self.__switch_cmd = switch_cmd
@@ -394,6 +396,6 @@ class SnapInjector:
             self._runner(snap.get_snap_install_cmd())
             if snap.get_channel_switch_cmd() is not None:
                 self._runner(snap.get_channel_switch_cmd())
-            self._record_revision(snap.snap_name, snap.get_revision())
+            self._record_revision(snap.snap_store_name, snap.get_revision())
 
         _save_registry(self._registry_data, self._registry_filepath)

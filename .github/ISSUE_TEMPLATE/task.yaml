@@ -1,0 +1,27 @@
+name: Task
+description: File an enhancement proposal
+labels: "Enhancement"
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Thanks for taking the time to fill out this enhancement
+        proposal! Before submitting your issue, please make sure there
+        isn't already a prior issue concerning this. If there is,
+        please join that discussion instead.
+  - type: textarea
+    id: enhancement-proposal-what
+    attributes:
+      label: What needs to get done
+      description: >
+        Describe what needs to get done
+    validations:
+      required: true
+  - type: textarea
+    id: enhancement-proposal-why
+    attributes:
+      label: Why it needs to get done
+      description: >
+        Describe why it needs to get done
+    validations:
+      required: true

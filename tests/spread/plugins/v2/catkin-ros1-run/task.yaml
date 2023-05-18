@@ -4,6 +4,7 @@ kill-timeout: 180m
 
 environment:
   SNAP/catkin_ros1_run: catkin-ros1-run
+  SNAP/catkin_roslaunch_wrapper: catkin-roslaunch-wrapper
 
 systems:
   - ubuntu-20.04

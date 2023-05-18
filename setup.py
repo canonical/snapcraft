@@ -60,19 +60,19 @@ else:
     scripts = []
 
 dev_requires = [
-    "black",
-    "codespell[tomli]==2.2.4",
+    "black==23.1.0",
+    "codespell[toml]==2.2.4",
     "coverage[toml]",
     "pyflakes",
     "fixtures",
-    "isort",
+    "isort==5.11.4",
     "mccabe",
     "mypy",
     "testscenarios",
     "pexpect",
     "pip",
     "pycodestyle",
-    "pydocstyle",
+    "pydocstyle==6.2.3",
     "pyftpdlib",
     "pylint",
     "pylint-fixme-info",
@@ -83,11 +83,14 @@ dev_requires = [
     "pytest-mock",
     "pytest-subprocess",
     "ruff==0.0.220",
-    "tox>=4.0",
+    "tox>=4.5",
     "types-PyYAML",
     "types-requests",
     "types-setuptools",
+    "types-simplejson",
     "types-tabulate",
+    "types-toml",
+    "yamllint==1.29.0",
 ]
 
 if sys.platform == "win32":
@@ -96,12 +99,13 @@ if sys.platform == "win32":
 install_requires = [
     "attrs",
     "click",
+    "craft-archives==0.0.3",
     "craft-cli",
     "craft-grammar",
     "craft-parts",
     "craft-providers",
     "craft-store",
-    "cryptography==3.4",
+    "docutils<0.20",  # Frozen until we can update sphinx dependencies.
     "gnupg",
     "jsonschema==2.5.1",
     "launchpadlib",
@@ -127,6 +131,7 @@ install_requires = [
     "toml",
     "tinydb",
     "typing-extensions",
+    "urllib3<2",  # requests-unixsocket does not yet work with urllib3 v2.0+
 ]
 
 try:
@@ -148,7 +153,7 @@ if sys.platform == "linux":
 if ubuntu:
     install_requires += [
         "catkin-pkg",
-        "python-apt",
+        "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.0ubuntu0.20.04.6/python-apt_2.0.0ubuntu0.20.04.6.tar.xz",
         "python-debian",
     ]
 

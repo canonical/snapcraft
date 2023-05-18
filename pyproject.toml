@@ -1,23 +1,8 @@
 [tool.black]
-exclude = '''
+extend-exclude = '''
 /(
-    \.git
-  | \.direnv
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | \.vscode
-  | _build
-  | buck-out
-  | __pycache__
-  | build
-  | dist
-
-  # specific to snapcraft
-  | ^/parts
-  | ^/stage
-  | ^/prime
+  | snapcraft_legacy
+  | tools
 )/
 '''
 # Targeting future versions as well so we don't have black reformatting code
@@ -71,6 +56,9 @@ exclude = [
     "tests/legacy",
     "tools",
     "venv",
+]
+plugins = [
+    "pydantic.mypy",
 ]
 
 [tool.pyright]

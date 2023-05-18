@@ -168,7 +168,7 @@ class MultipassCommand:
         if cpus is not None:
             cmd.extend(["--cpus", cpus])
         if mem is not None:
-            cmd.extend(["--mem", mem])
+            cmd.extend(["--memory", mem])
         if disk is not None:
             cmd.extend(["--disk", disk])
         try:

@@ -132,7 +132,7 @@ class MultipassCommandSetupMultipassTest(MultipassCommandBaseTest):
         self.check_call_mock.assert_called_once_with(["brew", "install", "multipass"])
         self.echoer_mock.wrapped.assert_called_once_with("Waiting for multipass...")
 
-    def test_unkown_platform_raises(self):
+    def test_unknown_platform_raises(self):
         self.assertRaises(
             EnvironmentError,
             MultipassCommand.setup_multipass,
@@ -206,7 +206,7 @@ class MultipassCommandLaunchTest(MultipassCommandPassthroughBaseTest):
                 "16.04",
                 "--name",
                 self.instance_name,
-                "--mem",
+                "--memory",
                 "2G",
             ],
             stdin=subprocess.DEVNULL,

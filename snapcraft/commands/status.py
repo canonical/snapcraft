@@ -34,13 +34,13 @@ if TYPE_CHECKING:
 
 
 class StoreStatusCommand(BaseCommand):
-    """Command to check the status of a snap on the Snap Store."""
+    """Check the status of a snap in the Snap Store."""
 
     name = "status"
-    help_msg = "Show the status of a snap on the Snap Store"
+    help_msg = "Show the status of a snap in the Snap Store"
     overview = textwrap.dedent(
         """
-        Show the status of a snap on the Snap Store.
+        Show the status of a snap in the Snap Store.
         The name must be accessible from the requesting account by being
         the owner or a collaborator of the snap."""
     )
@@ -359,10 +359,10 @@ def get_tabulated_channel_map(  # pylint: disable=too-many-branches, too-many-lo
 
 
 class StoreListTracksCommand(BaseCommand):
-    """Command to list the tracks from a snap on the Snap Store."""
+    """List the tracks of a snap in the Snap Store."""
 
     name = "list-tracks"
-    help_msg = "Show the available tracks for a snap on the Snap Store"
+    help_msg = "Show the available tracks for a snap in the Snap Store"
     overview = textwrap.dedent(
         """
         Track status, creation dates and version patterns are returned alongside the
@@ -415,14 +415,14 @@ class StoreListTracksCommand(BaseCommand):
 
 
 class StoreTracksCommand(StoreListTracksCommand):
-    """Command alias to list the tracks from a snap on the Snap Store."""
+    """Command alias to list the tracks of a snap in the Snap Store."""
 
     name = "tracks"
     hidden = True
 
 
 class StoreListRevisionsCommand(BaseCommand):
-    """Command to list-revisions."""
+    """List revisions of a published snap."""
 
     name = "list-revisions"
     help_msg = "List published revisions for <snap-name>"
