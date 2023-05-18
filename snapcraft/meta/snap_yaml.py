@@ -368,6 +368,9 @@ def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
     environment = _populate_environment(project.environment, prime_dir, arch_triplet)
     version = process_version(project.version)
 
+    # project provided assumes and computed assumes
+    total_assumes = sorted(project.assumes + list(assumes))
+
     snap_metadata = SnapMetadata(
         name=project.name,
         title=project.title,
@@ -378,7 +381,7 @@ def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
         type=project.type,
         architectures=[arch],
         base=cast(str, project.base),
-        assumes=list(assumes) if assumes else None,
+        assumes=total_assumes if total_assumes else None,
         epoch=project.epoch,
         apps=snap_apps or None,
         confinement=project.confinement,

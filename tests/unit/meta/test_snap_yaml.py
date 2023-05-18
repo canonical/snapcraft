@@ -96,6 +96,40 @@ def test_simple_snap_yaml(simple_project, new_dir):
     )
 
 
+def test_assumes(simple_project, new_dir):
+    snap_yaml.write(
+        simple_project(assumes=["foossumes"]),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    content = yaml_file.read_text()
+    assert content == textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        base: core22
+        assumes:
+        - foossumes
+        apps:
+          app1:
+            command: bin/mytest
+        confinement: strict
+        grade: stable
+        environment:
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+        """
+    )
+
+
 @pytest.fixture
 def complex_project():
     snapcraft_yaml = textwrap.dedent(
@@ -379,6 +413,52 @@ def test_hook_command_chain_assumes(simple_project, new_dir):
         base: core22
         assumes:
         - command-chain
+        apps:
+          app1:
+            command: bin/mytest
+        confinement: strict
+        grade: stable
+        environment:
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+        hooks:
+          hook:
+            command-chain:
+            - c1
+        """
+    )
+
+
+def test_hook_command_chain_assumes_with_existing_assumes(simple_project, new_dir):
+    hooks = {
+        "hook": {
+            "command-chain": ["c1"],
+        },
+    }
+
+    snap_yaml.write(
+        simple_project(hooks=hooks, assumes=["foossumes", "barssumes"]),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+        arch_triplet="x86_64-linux-gnu",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    content = yaml_file.read_text()
+    assert content == textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        base: core22
+        assumes:
+        - barssumes
+        - command-chain
+        - foossumes
         apps:
           app1:
             command: bin/mytest
