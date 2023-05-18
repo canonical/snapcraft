@@ -902,20 +902,33 @@ def test_app_passthrough_snap_yaml(simple_project, new_dir):
     )
 
 
-def test_architectures(simple_project, new_dir):
+@pytest.mark.parametrize(
+    ["arch", "arch_triplet"],
+    [
+        ("amd64", "x86_64-linux-gnu"),
+        ("arm64", "aarch64-linux-gnu"),
+        ("armhf", "arm-linux-gnueabihf"),
+        ("ppc64el", "powerpc64le-linux-gnu"),
+        ("s390x", "s390x-linux-gnu"),
+        ("riscv64", "riscv64-linux-gnu"),
+    ],
+)
+def test_architectures(arch, arch_triplet, simple_project, new_dir):
     """LD_LIBRARY_PATH should contain paths of the architecture."""
     # create library directories
-    (new_dir / "usr/lib/x86_64-linux-gnu").mkdir(parents=True)
-    (new_dir / "lib/x86_64-linux-gnu").mkdir(parents=True)
+    (new_dir / f"usr/lib/{arch_triplet}").mkdir(parents=True)
+    (new_dir / f"lib/{arch_triplet}").mkdir(parents=True)
 
-    snap_yaml.write(simple_project(), prime_dir=Path(new_dir), arch="amd64")
+    snap_yaml.write(
+        simple_project(architectures=[arch]), prime_dir=Path(new_dir), arch=arch
+    )
 
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
     content = yaml_file.read_text()
     assert (
         "${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:$SNAP/lib:"
-        "$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu\n"
+        f"$SNAP/usr/lib:$SNAP/lib/{arch_triplet}:$SNAP/usr/lib/{arch_triplet}\n"
     ) in content
 
 
