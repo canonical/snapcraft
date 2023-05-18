@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Snapcraft Forum
+    url: https://forum.snapcraft.io/c/snapcraft/13
+    about: Issues creating snaps
+  - name: Snap Runtime Issues
+    url: https://forum.snapcraft.io/c/snapd/5
+    about: Issues running snaps
+  - name: Security Issues with Snapcraft
+    url: https://bugs.launchpad.net/snapcraft/+filebug?field.title=Security%20Issue&field.information_type=PRIVATESECURITY
+    about: Please report security vulnerabilities here.
