@@ -87,7 +87,9 @@ dev_requires = [
     "types-PyYAML",
     "types-requests",
     "types-setuptools",
+    "types-simplejson",
     "types-tabulate",
+    "types-toml",
     "yamllint==1.29.0",
 ]
 
@@ -104,7 +106,6 @@ install_requires = [
     "craft-providers",
     "craft-store",
     "docutils<0.20",  # Frozen until we can update sphinx dependencies.
-    "cryptography==3.4",
     "gnupg",
     "jsonschema==2.5.1",
     "launchpadlib",
