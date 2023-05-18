@@ -1,4 +1,6 @@
 summary: Build a base snap using the snap-name as a base for the environment
+# This test sometimes needs extra time on the Google runners.
+kill-timeout: 30m
 
 environment:
   SNAP_DIR: ../snaps/core18-base
