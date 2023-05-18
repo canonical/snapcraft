@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -169,7 +169,6 @@ class TestLinterRun:
             project,
             prime_dir=Path(new_dir),
             arch="amd64",
-            arch_triplet="x86_64-linux-gnu",
         )
 
         issues = linters.run_linters(new_dir, lint=None)
@@ -199,7 +198,6 @@ class TestLinterRun:
             project,
             prime_dir=Path(new_dir),
             arch="amd64",
-            arch_triplet="x86_64-linux-gnu",
         )
 
         lint = projects.Lint(ignore=["test"])
@@ -221,12 +219,7 @@ class TestLinterRun:
         }
 
         project = projects.Project.unmarshal(yaml_data)
-        snap_yaml.write(
-            project,
-            prime_dir=Path(new_dir),
-            arch="amd64",
-            arch_triplet="x86_64-linux-gnu",
-        )
+        snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
 
         lint = projects.Lint(ignore=["test-1", "test-2"])
         issues = linters.run_linters(new_dir, lint=lint)

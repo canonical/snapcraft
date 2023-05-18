@@ -26,8 +26,13 @@ from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, Grammar
 from pydantic import PrivateAttr, conlist, constr
 
 from snapcraft import parts, utils
+from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
-from snapcraft.utils import get_effective_base, get_host_architecture
+from snapcraft.utils import (
+    convert_architecture_deb_to_platform,
+    get_effective_base,
+    get_host_architecture,
+)
 
 
 class ProjectModel(pydantic.BaseModel):
@@ -712,6 +717,18 @@ class Project(ProjectModel):
 
         # will not happen after schema validation
         raise RuntimeError("cannot determine build-for architecture")
+
+    def get_build_for_arch_triplet(self) -> Optional[str]:
+        """Get the architecture triplet for the first build-for architecture.
+
+        :returns: The build-for arch triplet. If build-for is "all", then return None.
+        """
+        arch = self.get_build_for()
+
+        if arch != "all":
+            return get_arch_triplet(convert_architecture_deb_to_platform(arch))
+
+        return None
 
 
 class _GrammarAwareModel(pydantic.BaseModel):

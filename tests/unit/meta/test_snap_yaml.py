@@ -65,12 +65,7 @@ def simple_project():
 
 
 def test_simple_snap_yaml(simple_project, new_dir):
-    snap_yaml.write(
-        simple_project(),
-        prime_dir=Path(new_dir),
-        arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
-    )
+    snap_yaml.write(simple_project(), prime_dir=Path(new_dir), arch="amd64")
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
 
@@ -219,12 +214,7 @@ def complex_project():
 
 
 def test_complex_snap_yaml(complex_project, new_dir):
-    snap_yaml.write(
-        complex_project,
-        prime_dir=Path(new_dir),
-        arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
-    )
+    snap_yaml.write(complex_project, prime_dir=Path(new_dir), arch="amd64")
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
 
@@ -358,12 +348,7 @@ def test_hook_command_chain_assumes(simple_project, new_dir):
         },
     }
 
-    snap_yaml.write(
-        simple_project(hooks=hooks),
-        prime_dir=Path(new_dir),
-        arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
-    )
+    snap_yaml.write(simple_project(hooks=hooks), prime_dir=Path(new_dir), arch="amd64")
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
 
@@ -405,7 +390,6 @@ def test_project_environment_ld_library_path_and_path_defined(simple_project, ne
         simple_project(environment=environment),
         prime_dir=Path(new_dir),
         arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -440,7 +424,6 @@ def test_project_environment_ld_library_path_defined(simple_project, new_dir):
         simple_project(environment=environment),
         prime_dir=Path(new_dir),
         arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -474,7 +457,6 @@ def test_project_environment_path_defined(simple_project, new_dir):
         simple_project(environment=environment),
         prime_dir=Path(new_dir),
         arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -508,7 +490,6 @@ def test_project_environment_ld_library_path_null(simple_project, new_dir):
         simple_project(environment=environment),
         prime_dir=Path(new_dir),
         arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -545,7 +526,6 @@ def test_version_git(simple_project, new_dir, mocker):
         simple_project(version="git"),
         prime_dir=Path(new_dir),
         arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
     )
 
     yaml_file = Path("meta/snap.yaml")
@@ -615,7 +595,6 @@ def test_grade(grade, simple_project, new_dir):
         project=simple_project(grade=grade),
         prime_dir=Path(new_dir),
         arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -631,7 +610,6 @@ def test_grade_default(emitter, simple_project, new_dir):
         project=simple_project(),
         prime_dir=Path(new_dir),
         arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -649,7 +627,6 @@ def test_grade_build_base_devel(emitter, simple_project, new_dir):
         project=simple_project(build_base="devel"),
         prime_dir=Path(new_dir),
         arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -851,7 +828,6 @@ def test_project_passthrough_snap_yaml(simple_project, new_dir):
         ),
         prime_dir=Path(new_dir),
         arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -897,7 +873,6 @@ def test_app_passthrough_snap_yaml(simple_project, new_dir):
         ),
         prime_dir=Path(new_dir),
         arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -925,3 +900,37 @@ def test_app_passthrough_snap_yaml(simple_project, new_dir):
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
         """
     )
+
+
+def test_architectures(simple_project, new_dir):
+    """LD_LIBRARY_PATH should contain paths of the architecture."""
+    # create library directories
+    (new_dir / "usr/lib/x86_64-linux-gnu").mkdir(parents=True)
+    (new_dir / "lib/x86_64-linux-gnu").mkdir(parents=True)
+
+    snap_yaml.write(simple_project(), prime_dir=Path(new_dir), arch="amd64")
+
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+    content = yaml_file.read_text()
+    assert (
+        "${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:$SNAP/lib:"
+        "$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu\n"
+    ) in content
+
+
+def test_architectures_all(simple_project, new_dir):
+    """LD_LIBRARY_PATH should not contain arch-specific paths when arch = "all"."""
+    # create library directories
+    (new_dir / "usr/lib/x86_64-linux-gnu").mkdir(parents=True)
+    (new_dir / "lib/x86_64-linux-gnu").mkdir(parents=True)
+
+    snap_yaml.write(simple_project(), prime_dir=Path(new_dir), arch="all")
+
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+    content = yaml_file.read_text()
+    assert (
+        "${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:"
+        "$SNAP/lib:$SNAP/usr/lib\n"
+    ) in content

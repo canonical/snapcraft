@@ -1692,7 +1692,7 @@ def test_patch_elf(snapcraft_yaml, mocker, new_dir):
 def test_lifecycle_write_metadata(
     build_for, snapcraft_yaml, project_vars, new_dir, mocker
 ):
-    """Verify metadata and manifest are written during the lifecycle."""
+    """Metadata and manifest should be written during the lifecycle."""
     yaml_data = {
         "base": "core22",
         "architectures": [{"build-on": "amd64", "build-for": build_for}],
@@ -1723,12 +1723,7 @@ def test_lifecycle_write_metadata(
     )
 
     assert mock_write_metadata.mock_calls == [
-        call(
-            project,
-            new_dir / "prime",
-            arch=build_for,
-            arch_triplet=mocker.ANY,
-        )
+        call(project, new_dir / "prime", arch=build_for)
     ]
     assert mock_write_manifest.mock_calls == [
         call(
