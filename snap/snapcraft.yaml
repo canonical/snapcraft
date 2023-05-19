@@ -140,6 +140,7 @@ parts:
         - "CFLAGS": "$(pkg-config python-3.8 yaml-0.1 --cflags)"
     override-build: |
         if [ "${SNAPCRAFT_TARGET_ARCH}" = "riscv64" ]; then
+          apt-get remove -y cargo rustc
           export PATH="$HOME/.cargo/bin:$PATH"
         fi
         snapcraftctl build
