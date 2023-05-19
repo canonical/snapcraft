@@ -5,15 +5,12 @@
   pip_requirements: {
     fileMatch: ["^tox.ini$", "(^|/)requirements([\\w-]*)\\.txt$"]
   },
-  pip_setup: {
-    fileMatch: ["^pyproject.toml$", "(^|/)setup\\.py$"]
-  },
    packageRules: [
     {
       // Automerge patches, pin changes and digest changes.
       // Also groups these changes together.
       groupName: "bugfixes",
-      excludePackageNames: ["ruff"],
+      excludePackagePrefixes: ["dev", "lint", "types"],
       matchUpdateTypes: ["patch", "pin", "digest"],
       prPriority: 3, // Patches should go first!
       automerge: true
@@ -29,32 +26,20 @@
       // GitHub Actions are higher priority to update than most dependencies.
       groupName: "GitHub Actions",
       matchManagers: ["github-actions"],
-      prPriority: 1
+      prPriority: 1,
+      automerge: true,
     },
     // Everything not in one of these rules gets priority 0 and falls here.
     {
       // Minor changes can be grouped and automerged for dev dependencies, but are also deprioritised.
-      groupName: "development dependencies (minor and patch)",
+      groupName: "development dependencies (non-major)",
       groupSlug: "dev-dependencies",
-      matchPackageNames: [
-        "black",
-        "codespell",
-        "coverage",
-        "isort",
-        "mypy",
-        "pydocstyle",
-        "pylint",
-        "pytest",
-        "tox",
-      ],
-      matchPackagePatterns: [
-        ".*-mock$"
-      ],
       matchPackagePrefixes: [
-        "pytest-",
-        "pylint-",
-        "types-",
+        "dev",
+        "lint",
+        "types"
       ],
+      excludePackagePatterns: ["ruff"],
       matchUpdateTypes: ["minor", "patch", "pin", "digest"],
       prPriority: -1,
       automerge: true
@@ -64,7 +49,8 @@
       groupName: "documentation dependencies",
       groupSlug: "doc-dependencies",
       matchPackageNames: ["Sphinx"],
-      matchPackagePatterns: ["^[Ss]phinx.*$", "^furo$"]
+      matchPackagePatterns: ["^[Ss]phinx.*$", "^furo$"],
+      matchPackagePrefixes: ["docs"],
     },
     {
       // Other major dependencies get deprioritised below minor dev dependencies.
@@ -81,7 +67,8 @@
     },
     {
       // Ruff is still unstable, so update it separately.
-      matchPackageNames: ["ruff"],
+      groupName: "ruff",
+      matchPackagePatterns: ["^(lint/)?ruff$"],
       prPriority: -3
     }
   ],
