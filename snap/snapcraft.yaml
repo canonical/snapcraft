@@ -44,6 +44,12 @@ parts:
     build-packages:
       - cargo
       - rustc
+      - curl
+    override-pull: |
+      # RISC-V doesn't have a new enough rust (>=1.48) on focal.
+      if [[ "${SNAPCRAFT_TARGET_ARCH}" = "riscv64" ]]; then
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+      fi
 
   bash-completion:
     source: debian
@@ -133,6 +139,9 @@ parts:
         - "SODIUM_INSTALL": "system"  # Use base image's libsodium for PyNaCl
         - "CFLAGS": "$(pkg-config python-3.8 yaml-0.1 --cflags)"
     override-build: |
+        if [ "${SNAPCRAFT_TARGET_ARCH}" = "riscv64" ]; then
+          source "$HOME/.cargo/env"
+        fi
         snapcraftctl build
 
         version="$(python3 setup.py --version)"
