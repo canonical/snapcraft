@@ -1,0 +1,37 @@
+name: Documentation
+on:
+  push:
+    branches:
+      - "main"
+      - "feature/*"
+      - "hotfix/*"
+      - "release/*"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "pyproject.toml"
+      - ".github/workflows/docs.yaml"
+
+jobs:
+  sphinx:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install Tox
+        run: pip install tox
+      - name: Lint documentation
+        run: tox run -e lint-docs
+      - name: Build documentation
+        run: tox run -e build-docs
+      - name: Upload documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: docs
+          path: docs/_build/
