@@ -35,7 +35,7 @@ types = [
 ]
 docs = [
     "furo==2023.3.27",
-    "sphinx==5.3.0",
+    "sphinx>=6.2.1,<7.0",
     "sphinx-autobuild==2021.3.14",
     "sphinx-copybutton==0.5.2",
     "sphinx-design==0.4.1",
