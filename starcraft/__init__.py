@@ -14,7 +14,10 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Starcraft package demo."""
+from importlib.metadata import version
 from typing import List, Optional, Any
+
+__version__ = version(__name__)
 
 
 def hello(people: Optional[List[Any]] = None) -> None:

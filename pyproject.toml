@@ -1,7 +1,6 @@
 [project]
 name = "starcraft"
-version = "0.0.1"
-readme = "README.rst"
+dynamic = ["version", "readme"]
 dependencies = [
 
 ]
@@ -47,8 +46,12 @@ docs = [
 [build-system]
 requires = [
     "setuptools==67.7.2",
+    "setuptools_scm[toml]>=7.1"
 ]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+readme = {file = "README.rst"}
 
 [tool.setuptools.packages.find]
 exclude = [
@@ -57,6 +60,7 @@ exclude = [
     "results",
     "tests",
 ]
+
 
 [tool.black]
 target-version = ["py38"]
