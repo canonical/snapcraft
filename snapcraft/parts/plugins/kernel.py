@@ -36,10 +36,10 @@ The following kernel-specific options are provided by this plugin:
     - kernel-kconfigs:
       (list of strings; default: none)
       explicit list of configs to force; this will override the configs that
-      were set as base through kernel-kdefconfig and kernel-kconfigfile and dependent configs
-      will be fixed using the defaults encoded in the kbuild config
-      definitions.  If you don't want default for one or more implicit configs
-      coming out of these, just add them to this list as well.
+      were set as base through kernel-kdefconfig and kernel-kconfigfile and
+      dependent configs will be fixed using the defaults encoded in the kbuild
+      config definitions.  If you don't want default for one or more implicit
+      configs coming out of these, just add them to this list as well.
 
     - kernel-image-target:
       (yaml object, string or null for default target)
@@ -89,9 +89,10 @@ The following kernel-specific options are provided by this plugin:
     - kernel-initrd-modules:
       (array of string; default: none)
       list of modules to include in initrd.
-      Note that kernel snaps do not provide the core boot logic which comes from snappy
-      Ubuntu Core OS snap. Include all modules you need for mounting rootfs here.
-      If installed module(s) have any dependencies, those are automatically installed.
+      Note that kernel snaps do not provide the core boot logic which comes
+      from snappy Ubuntu Core OS snap. Include all modules you need for
+      mounting rootfs here. If installed module(s) have any dependencies,
+      those are automatically installed.
 
     - kernel-initrd-configured-modules:
       (array of string; default: none)
@@ -105,8 +106,8 @@ The following kernel-specific options are provided by this plugin:
       (boolean; default: False)
       When building initrd, required firmware is automatically added based
       on the included kernel modules. By default required firmware is searched
-      in the install directory of the current part. This flag allows used of firmware
-      from stage directory instead.
+      in the install directory of the current part. This flag allows use of
+      firmware from stage directory instead.
 
     - kernel-initrd-firmware:
       (array of string; default: none)
@@ -147,8 +148,7 @@ The following kernel-specific options are provided by this plugin:
       specific hook needs to be added to the initrd.
       Values are relative path from stage directory, so related part(s)
       need to be built before kernel part.
-      During build it will be expanded to
-      ${CRAFT_STAGE}/{initrd-addon}
+      During build it will be expanded to ${CRAFT_STAGE}/{initrd-addon}.
       Default: none
 
     - kernel-add-ppa
@@ -160,7 +160,7 @@ The following kernel-specific options are provided by this plugin:
       Use the LLVM substitutes for the GNU binutils utilities. Set this to a
       string (e.g. "-12") to use a specific version of the LLVM utilities.
 
-This plugin support cross compilation, for which plugin expects
+This plugin supports cross compilation, for which plugin expects
 the build-environment is comfigured accordingly and has foreign architectures
 setup accordingly.
 """
@@ -224,7 +224,7 @@ class KernelPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     @root_validator
     @classmethod
     def validate_pluging_options(cls, values):
-        """If kernel-image-target is defined, it has to be string of dictionary."""
+        """If kernel-image-target is defined, it has to be string or dictionary."""
         if values.get("kernel_image_target"):
             if not isinstance(values.get("kernel_image_target"), str):
                 if not isinstance(values.get("kernel_image_target"), dict):
