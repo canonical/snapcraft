@@ -54,12 +54,7 @@ def test_library_linter_missing_library(mocker, new_dir):
     }
 
     project = projects.Project.unmarshal(yaml_data)
-    snap_yaml.write(
-        project,
-        prime_dir=Path(new_dir),
-        arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
-    )
+    snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
 
     issues = linters.run_linters(new_dir, lint=None)
     assert issues == [
@@ -114,12 +109,7 @@ def test_library_linter_unused_library(mocker, new_dir):
     }
 
     project = projects.Project.unmarshal(yaml_data)
-    snap_yaml.write(
-        project,
-        prime_dir=Path(new_dir),
-        arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
-    )
+    snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
 
     issues = linters.run_linters(new_dir, lint=None)
     assert issues == [
@@ -160,12 +150,7 @@ def test_library_linter_filter_missing_library(mocker, new_dir, filter_name):
     }
 
     project = projects.Project.unmarshal(yaml_data)
-    snap_yaml.write(
-        project,
-        prime_dir=Path(new_dir),
-        arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
-    )
+    snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
 
     issues = linters.run_linters(
         new_dir, lint=projects.Lint(ignore=[{filter_name: ["elf.*"]}])
@@ -210,12 +195,7 @@ def test_library_linter_filter_unused_library(mocker, new_dir, filter_name):
     }
 
     project = projects.Project.unmarshal(yaml_data)
-    snap_yaml.write(
-        project,
-        prime_dir=Path(new_dir),
-        arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
-    )
+    snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
 
     issues = linters.run_linters(
         new_dir, lint=projects.Lint(ignore=[{filter_name: ["lib/libfoo.*"]}])
@@ -252,12 +232,7 @@ def test_library_linter_mixed_filters(mocker, new_dir):
     }
 
     project = projects.Project.unmarshal(yaml_data)
-    snap_yaml.write(
-        project,
-        prime_dir=Path(new_dir),
-        arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
-    )
+    snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
 
     # lib/libfoo.so is an *unused* library, but here we filter out *missing* library
     # issues for this path.
