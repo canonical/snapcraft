@@ -9,7 +9,7 @@ craft-archives==1.0.0
 craft-cli==1.2.0
 craft-grammar==1.1.1
 craft-parts==1.19.3
-craft-providers==1.10.0
+git+https://github.com/syu-w/craft-providers.git@os-bases-handling-refactor#egg=craft-providers
 craft-store==2.4.0
 cryptography==40.0.2
 Deprecated==1.2.13
