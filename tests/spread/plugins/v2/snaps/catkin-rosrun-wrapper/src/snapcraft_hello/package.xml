@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>snapcraft_hello</name>
+  <version>0.0.1</version>
+  <description>snapcraft test for roscpp</description>
+  <maintainer email="me@example.com">me</maintainer>
+  <license>GPLv3</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend condition="$ROS_VERSION == 1">roscpp</build_depend>
+  <build_depend condition="$ROS_VERSION == 2">fake_package_that_does_not_exists</build_depend>
+  <build_export_depend condition="$ROS_VERSION == 1">roscpp</build_export_depend>
+  <exec_depend condition="$ROS_VERSION == 1">roscpp</exec_depend>
+</package>

@@ -85,8 +85,7 @@ class ExtensionImpl(Extension):
         self.parts = {
             f"ros2-{self.ROS_DISTRO}-extension": {
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/ros2",
-                "plugin": "nil",
-                "override-build": "install -D -m 0755 launch ${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros2-launch",
+                "plugin": "make",
                 "build-packages": [
                     f"ros-{self.ROS_DISTRO}-ros-environment",
                     f"ros-{self.ROS_DISTRO}-ros-workspace",
