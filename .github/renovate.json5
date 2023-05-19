@@ -80,6 +80,14 @@
       matchStrings: [
         "# renovate: datasource=(?<datasource>\\S+)\n\\s+(?<depName>.*?)(\\[[\\w]*\\])*[=><]=?(?<currentValue>.*?)\n"
       ]
+    },
+    {
+      // .pre-commit-config.yaml version updates
+      fileMatch: [".pre-commit-config.yaml"],
+      depTypeTemplate: "devDependencies",
+      matchStrings: [
+        "# renovate: datasource=(?<datasource>\\S+);\\s*depName=(?<depName>.*?)\n\s+rev: \"v?(?<currentValue>.*?)\""
+      ]
     }
   ],
   timezone: "Etc/UTC",

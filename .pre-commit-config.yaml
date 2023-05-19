@@ -1,0 +1,30 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: fix-byte-order-marker
+      - id: mixed-line-ending
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    # renovate: datasource=pypi;depName=ruff
+    rev: "v0.0.267"
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+  - repo: https://github.com/psf/black
+    # renovate: datasource=pypi;depName=black
+    rev: "23.3.0"
+    hooks:
+      - id: black
+  - repo: https://github.com/adrienverge/yamllint.git
+    # renovate: datasource=pypi;depName=yamllint
+    rev: "v1.31.0"
+    hooks:
+      - id: yamllint
