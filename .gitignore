@@ -133,3 +133,6 @@ dmypy.json
 
 # Test results
 /results/
+
+# direnv
+.envrc
