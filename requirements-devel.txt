@@ -11,7 +11,7 @@ click==8.1.3
 codespell==2.2.4
 colorama==0.4.6
 coverage==7.2.5
-craft-archives==0.0.3
+craft-archives@git+https://github.com/lengau/craft-archives@distro
 craft-cli==1.2.0
 craft-grammar==1.1.1
 craft-parts==1.19.3
