@@ -138,10 +138,8 @@ parts:
         - "PIP_NO_BINARY": "PyNaCl"  # Build PyNaCl from source since the wheel files interact strangely with classic snaps.
         - "SODIUM_INSTALL": "system"  # Use base image's libsodium for PyNaCl
         - "CFLAGS": "$(pkg-config python-3.8 yaml-0.1 --cflags)"
+        - "PATH": "${HOME}/.cargo/bin:${PATH}"
     override-build: |
-        if [ "${SNAPCRAFT_TARGET_ARCH}" = "riscv64" ]; then
-          export PATH="$HOME/.cargo/bin:$PATH"
-        fi
         snapcraftctl build
 
         version="$(python3 setup.py --version)"
