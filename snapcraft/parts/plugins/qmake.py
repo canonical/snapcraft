@@ -66,9 +66,7 @@ class QMakePlugin(plugins.Plugin):
 
         if self._options.qmake_project_file:
             cmd.append(
-                '"${{CRAFT_PART_SRC_WORK}}/{}"'.format(
-                    self.options.qmake_project_file
-                )
+                f'"{self._part_info.part_src_dir}/{self._options.qmake_project_file}"'
             )
         else:
             cmd.append('"${CRAFT_PART_SRC_WORK}"')
