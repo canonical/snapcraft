@@ -27,12 +27,6 @@ class RosNoeticMetaBase(RosNoeticExtension):
     def __init__(self, *, extension_name: str, yaml_data: Dict[str, Any]) -> None:
         super().__init__(extension_name=extension_name, yaml_data=yaml_data)
 
-        # python_paths = [
-        #     f"$SNAP/opt/ros/{self.ROS_DISTRO}/lib/python3.8/site-packages",
-        #     "$SNAP/usr/lib/python3/dist-packages",
-        #     "${PYTHONPATH}",
-        # ]
-
         self.root_snippet["plugs"] = {
             "ros-noetic":
                 {
@@ -48,3 +42,11 @@ class RosNoeticMetaBase(RosNoeticExtension):
         ]
 
         self.part_snippet["build-snaps"] = [self.ROS_META_DEV]
+
+        python_paths = self.app_snippet["environment"]["PYTHONPATH"]
+        new_python_paths = [
+            f"$SNAP/opt/ros/underlay_ws/opt/ros/{self.ROS_DISTRO}/lib/python3.8/site-packages",
+            f"$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
+        ]
+
+        self.app_snippet["environment"]["PYTHONPATH"] = f'{python_paths}:{":".join(new_python_paths)}'

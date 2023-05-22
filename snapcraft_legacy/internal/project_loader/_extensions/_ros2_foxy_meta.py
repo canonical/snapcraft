@@ -27,12 +27,6 @@ class RosFoxyMetaBase(RosFoxyExtension):
     def __init__(self, *, extension_name: str, yaml_data: Dict[str, Any]) -> None:
         super().__init__(extension_name=extension_name, yaml_data=yaml_data)
 
-        # python_paths = [
-        #     f"$SNAP/opt/ros/{self.ROS_DISTRO}/lib/python3.8/site-packages",
-        #     "$SNAP/usr/lib/python3/dist-packages",
-        #     "${PYTHONPATH}",
-        # ]
-
         # Very unlikely but it may happen that the snapped application doesn't
         # even pull those deps. In that case, there is no valid ROS 2 ws to source.
         # We make sure here that they are staged no matter what.
@@ -53,4 +47,16 @@ class RosFoxyMetaBase(RosFoxyExtension):
                 }
         }
 
+        self.part_snippet["catkin-cmake-args"] = [
+            f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{self.ROS_META_DEV}/current/usr"'
+        ]
+
         self.part_snippet["build-snaps"] = [self.ROS_META_DEV]
+
+        python_paths = self.app_snippet["environment"]["PYTHONPATH"]
+        new_python_paths = [
+            f"$SNAP/opt/ros/underlay_ws/opt/ros/{self.ROS_DISTRO}/lib/python3.8/site-packages",
+            f"$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
+        ]
+
+        self.app_snippet["environment"]["PYTHONPATH"] = f'{python_paths}:{":".join(new_python_paths)}'
