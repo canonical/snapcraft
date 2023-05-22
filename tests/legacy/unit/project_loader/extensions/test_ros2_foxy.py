@@ -66,9 +66,7 @@ def test_extension(extension_class):
                 "ros-foxy-ament-index-cpp",
                 "ros-foxy-ament-index-python",
             ],
-            "override-build": "install -D -m 0755 launch "
-            "${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros2-launch",
-            "plugin": "nil",
+            "plugin": "make",
             "source": "$SNAPCRAFT_EXTENSIONS_DIR/ros2",
         }
     }

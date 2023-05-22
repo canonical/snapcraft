@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+  echo "ros2 <ros2cli verb>"
+  exit 1
+fi
+
+if [ -z "${SNAP}" ]; then
+  echo "Not running inside a snap context: SNAP not declared"
+  exit
+fi
+
+ros2 "$@"

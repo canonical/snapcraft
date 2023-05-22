@@ -374,13 +374,12 @@ def _get_grade(grade: Optional[str], build_base: Optional[str]) -> str:
     return grade
 
 
-def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
+def write(project: Project, prime_dir: Path, *, arch: str):
     """Create a snap.yaml file.
 
     :param project: Snapcraft project.
     :param prime_dir: The directory containing the content to be snapped.
     :param arch: Target architecture the snap project is built to.
-    :param arch_triplet: Architecture triplet of the platform.
     """
     meta_dir = prime_dir / "meta"
     meta_dir.mkdir(parents=True, exist_ok=True)
@@ -395,8 +394,14 @@ def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
     if project.hooks and any(h for h in project.hooks.values() if h.command_chain):
         assumes.add("command-chain")
 
+    # if arch is "all", do not include architecture-specific paths in the environment
+    arch_triplet = None if arch == "all" else project.get_build_for_arch_triplet()
+
     environment = _populate_environment(project.environment, prime_dir, arch_triplet)
     version = process_version(project.version)
+
+    # project provided assumes and computed assumes
+    total_assumes = sorted(project.assumes + list(assumes))
 
     snap_metadata = SnapMetadata(
         name=project.name,
@@ -408,7 +413,7 @@ def write(project: Project, prime_dir: Path, *, arch: str, arch_triplet: str):
         type=project.type,
         architectures=[arch],
         base=cast(str, project.base),
-        assumes=list(assumes) if assumes else None,
+        assumes=total_assumes if total_assumes else None,
         epoch=project.epoch,
         apps=snap_apps or None,
         confinement=project.confinement,
@@ -446,7 +451,9 @@ def _repr_str(dumper, data):
 
 
 def _populate_environment(
-    environment: Optional[Dict[str, Optional[str]]], prime_dir: Path, arch_triplet: str
+    environment: Optional[Dict[str, Optional[str]]],
+    prime_dir: Path,
+    arch_triplet: Optional[str],
 ):
     """Populate default app environmental variables.
 
@@ -454,6 +461,11 @@ def _populate_environment(
         - If LD_LIBRARY_PATH or PATH are defined, keep user-defined values.
         - If LD_LIBRARY_PATH or PATH are not defined, set to default values.
         - If LD_LIBRARY_PATH or PATH are null, do not use default values.
+
+    :param environment: Dictionary of environment variables from the project.
+    :param prime_dir: The directory containing the content to be snapped.
+    :param arch_triplet: Architecture triplet of the target arch. If None, the
+    environment will not contain architecture-specific paths.
     """
     if environment is None:
         return {

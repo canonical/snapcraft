@@ -1,0 +1,21 @@
+name: catkin-roslaunch-wrapper
+version: "1.0"
+summary: ensure a launch file runs properly
+description: |
+  A ROS 1 workspace.
+
+grade: stable
+confinement: strict
+base: core20
+
+apps:
+  catkin-roslaunch-wrapper:
+    command: roslaunch listener talk_and_listen.launch
+    plugs: [network, network-bind]
+    extensions: [ros1-noetic]
+
+parts:
+  test-part:
+    plugin: catkin
+    source: .
+    build-packages: [g++, make]
