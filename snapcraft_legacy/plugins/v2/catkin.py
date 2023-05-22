@@ -125,33 +125,6 @@ class CatkinPlugin(_ros.RosPlugin):
         prepare_build_command = list()
         export_command = list()
 
-        if self.options.build_snaps:
-            for build_snap in self.options.build_snaps:
-                build_snap = _get_parsed_snap(build_snap)[0]
-                # ROS workspaces present in buid-snaps have their '*.cmake' files pointing to hard-coded internal paths.
-                # We need to fix those paths so that they can be properly sourced.
-                # Since snaps are immutable, we copy the said '*.cmake' files to the current SNAPCRAFT_PART_BUILD path
-                # and edit these copies accordingly.
-
-                pkg_path=f"/snap/{build_snap}/current/opt/ros/${{ROS_DISTRO}}/share"
-
-                prepare_build_command.extend([
-                    f'if [ -d "{pkg_path}" ]; then ',
-                    f'mkdir -p "${{SNAPCRAFT_PART_BUILD}}"/build_snaps/{build_snap}',
-                    f'cp -r "{pkg_path}" "${{SNAPCRAFT_PART_BUILD}}/build_snaps/{build_snap}/."',
-                    (
-                        'find "${{SNAPCRAFT_PART_BUILD}}/build_snaps/{build_snap}" \( -name "*Config.cmake" -o -name "*extras.cmake" \) -exec ' # noqa: W605
-                        'sed -i -e "s|/opt|/snap/{build_snap}/current&|g" -e "s|/usr|/snap/{build_snap}/current&|g" '
-                        '-e "s|\${{.*_DIR}}/../../..|/snap/{build_snap}/current/opt/ros/${{ROS_DISTRO}}|g" {{}} \;' # noqa: W605
-                    ).format(build_snap=build_snap),
-                    "fi",
-                ])
-                export_command.extend([
-                    'if [ -d "${{SNAPCRAFT_PART_BUILD}}"/build_snaps/{build_snap} ]; then '
-                    'export CMAKE_PREFIX_PATH="${{SNAPCRAFT_PART_BUILD}}/build_snaps/{build_snap}${{CMAKE_PREFIX_PATH:+:${{CMAKE_PREFIX_PATH}}}}"; '
-                    'fi'.format(build_snap=build_snap)
-                ])
-
         build_command = [
             "catkin_make_isolated",
             "--install",
