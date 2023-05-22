@@ -80,6 +80,6 @@ class QMakePlugin(plugins.Plugin):
             self._get_qmake_configure_command(),
             # Avoid overriding the CFLAGS and CXXFLAGS environment
             # variables qmake sets in the generated Makefile
-            'env -u CFLAGS -u CXXFLAGS make -j"${CRAFT_PARALLEL_BUILD_COUNT}"',
-            'make install INSTALL_ROOT="${CRAFT_PART_INSTALL}"',
+            f'env -u CFLAGS -u CXXFLAGS make "-j{self._part_info.parallel_build_count}"',
+            f'make install INSTALL_ROOT="{self._part_info.part_install_dir}"',
         ]
