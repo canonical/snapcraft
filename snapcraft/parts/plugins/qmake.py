@@ -62,7 +62,7 @@ class QMakePlugin(plugins.Plugin):
             'QMAKE_CFLAGS+="${CFLAGS:-}"',
             'QMAKE_CXXFLAGS+="${CXXFLAGS:-}"',
             'QMAKE_LFLAGS+="${LDFLAGS:-}"',
-        ] + self.options.qmake_parameters
+        ] + self._options.qmake_parameters
 
         if self.options.qmake_project_file:
             cmd.append(
