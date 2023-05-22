@@ -43,4 +43,8 @@ class RosNoeticMetaBase(RosNoeticExtension):
                 }
         }
 
+        self.part_snippet["catkin-cmake-args"] = [
+            f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{self.ROS_META_DEV}/current/usr"'
+        ]
+
         self.part_snippet["build-snaps"] = [self.ROS_META_DEV]
