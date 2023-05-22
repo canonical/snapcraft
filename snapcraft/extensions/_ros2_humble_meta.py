@@ -55,6 +55,19 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
         return root_snippet
 
     @overrides
+    def get_app_snippet(self) -> Dict[str, Any]:
+        app_snippet = super().get_app_snippet()
+        python_paths = app_snippet["environment"]["PYTHONPATH"]
+        new_python_paths = [
+            f"$SNAP/opt/ros/underlay_ws/opt/ros/{self.ROS_DISTRO}/lib/python3.8/site-packages",
+            f"$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
+        ]
+
+        app_snippet["environment"]["PYTHONPATH"] = f'{python_paths}:{":".join(new_python_paths)}'
+
+        return app_snippet
+
+    @overrides
     def get_part_snippet(self) -> Dict[str, Any]:
         part_snippet = super().get_part_snippet()
         part_snippet["build-snaps"] = [self.ROS_META_DEV]
