@@ -69,7 +69,7 @@ class QMakePlugin(plugins.Plugin):
                 f'"{self._part_info.part_src_dir}/{self._options.qmake_project_file}"'
             )
         else:
-            cmd.append('"${CRAFT_PART_SRC_WORK}"')
+            cmd.append(self._part_info.part_build_dir)
 
         return " ".join(cmd)
 
