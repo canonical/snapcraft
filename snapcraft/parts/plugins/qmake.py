@@ -64,7 +64,7 @@ class QMakePlugin(plugins.Plugin):
             'QMAKE_LFLAGS+="${LDFLAGS:-}"',
         ] + self._options.qmake_parameters
 
-        if self.options.qmake_project_file:
+        if self._options.qmake_project_file:
             cmd.append(
                 '"${{CRAFT_PART_SRC_WORK}}/{}"'.format(
                     self.options.qmake_project_file
