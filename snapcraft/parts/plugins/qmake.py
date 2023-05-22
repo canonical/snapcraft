@@ -42,22 +42,6 @@ from craft_parts import plugins
 class QMakePlugin(plugins.Plugin):
 
     properties_class = QMakePluginProperties
-    @classmethod
-    def get_schema(cls) -> Dict[str, Any]:
-        return {
-            "$schema": "http://json-schema.org/draft-04/schema#",
-            "type": "object",
-            "additionalProperties": False,
-            "properties": {
-                "qmake-parameters": {
-                    "type": "array",
-                    "uniqueItems": True,
-                    "items": {"type": "string"},
-                    "default": [],
-                },
-                "qmake-project-file": {"type": "string", "default": ""},
-            },
-        }
 
     def get_build_snaps(self) -> Set[str]:
         return set()
