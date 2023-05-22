@@ -39,7 +39,9 @@ from typing import Any, Dict, List, Set
 from craft_parts import plugins
 
 
-class QMakePlugin(qmake.QmakePlugin):
+class QMakePlugin(plugins.Plugin):
+
+    properties_class = QMakePluginProperties
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:
         return {
