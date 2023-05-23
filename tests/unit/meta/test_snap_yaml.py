@@ -96,7 +96,6 @@ def test_assumes(simple_project, new_dir):
         simple_project(assumes=["foossumes"]),
         prime_dir=Path(new_dir),
         arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -425,7 +424,6 @@ def test_hook_command_chain_assumes_with_existing_assumes(simple_project, new_di
         simple_project(hooks=hooks, assumes=["foossumes", "barssumes"]),
         prime_dir=Path(new_dir),
         arch="amd64",
-        arch_triplet="x86_64-linux-gnu",
     )
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
