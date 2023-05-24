@@ -122,6 +122,7 @@ class TestClass:
             "build-environment": [{"ROS_VERSION": "1"}, {"ROS_DISTRO": "noetic"}],
             "build-snaps": [meta_dev],
             "catkin-cmake-args": [f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{meta_dev}/current/usr"'],
+            "stage-packages": ["ros-noetic-ros-environment"],
         }
 
         assert ros1_extension.parts == {
