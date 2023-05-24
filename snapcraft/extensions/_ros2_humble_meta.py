@@ -64,6 +64,8 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
         ]
 
         app_snippet["environment"]["PYTHONPATH"] = f'{python_paths}:{":".join(new_python_paths)}'
+        app_snippet["environment"]["PATH"] = "$PATH:$SNAP/opt/ros/underlay_ws/usr/bin"
+        app_snippet["environment"]["LD_LIBRARY_PATH"] = "$LD_LIBRARY_PATH:$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET"
 
         return app_snippet
 
@@ -71,6 +73,9 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
     def get_part_snippet(self) -> Dict[str, Any]:
         part_snippet = super().get_part_snippet()
         part_snippet["build-snaps"] = [self.ROS_META_DEV]
+        part_snippet["colcon-cmake-args"] = [
+            f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{self.ROS_META_DEV}/current/usr"'
+        ]
         return part_snippet
 
     @overrides
