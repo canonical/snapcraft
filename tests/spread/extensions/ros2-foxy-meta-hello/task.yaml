@@ -3,37 +3,19 @@ summary: Build and run a basic ROS 2 snap using meta-ros extension
 kill-timeout: 180m
 
 environment:
-  SNAP/colcon_foxy_ros_core: colcon-foxy-ros-core
   META_SNAP/colcon_foxy_ros_core: ros-foxy-ros-core
   EXTENSION/colcon_foxy_ros_core: ros2-foxy-ros-core
-  INTERFACE/colcon_foxy_ros_core: ros-foxy
 
-  SNAP/colcon_foxy_ros_base: colcon-foxy-ros-core
   META_SNAP/colcon_foxy_ros_base: ros-foxy-ros-base
   EXTENSION/colcon_foxy_ros_base: ros2-foxy-ros-base
-  INTERFACE/colcon_foxy_ros_base: ros-foxy
 
-  SNAP/colcon_foxy_desktop: colcon-foxy-ros-core
   META_SNAP/colcon_foxy_desktop: ros-foxy-desktop
   EXTENSION/colcon_foxy_desktop: ros2-foxy-desktop
-  INTERFACE/colcon_foxy_desktop: ros-foxy
 
-  SNAP/colcon_humble_ros_core: colcon-humble-ros-core
-  META_SNAP/colcon_humble_ros_core: ros-humble-ros-base
-  EXTENSION/colcon_humble_ros_core: ros2-humble-ros-base
-  INTERFACE/colcon_humble_ros_core: ros-humble
-
-  SNAP/colcon_humble_ros_base: colcon-humble-ros-core
-  META_SNAP/colcon_humble_ros_base: ros-humble-ros-base
-  EXTENSION/colcon_humble_ros_base: ros2-humble-ros-base
-  INTERFACE/colcon_humble_ros_base: ros-humble
-
-  SNAP/colcon_humble_desktop: colcon-humble-ros-core
-  META_SNAP/colcon_humble_desktop: ros-humble-desktop
-  EXTENSION/colcon_humble_desktop: ros2-humble-desktop
-  INTERFACE/colcon_humble_desktop: ros-humble
-
+  SNAP: colcon-foxy-ros-core
   SNAP_DIR: "../snaps/$SNAP"
+
+  INTERFACE: ros-foxy
 
 # The content snap required for the test to succeed is only
 # available on a subset of all the architectures this testbed
@@ -50,14 +32,14 @@ prepare: |
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
   # Overwrite the extension to test them all out of a single snap
-  sed -i "s|ros2-foxy-ros-core|${EXTENSION}|" "$SNAP_DIR/snap/snapcraft.yaml"
+  sed -i "s|ros2-.*-ros-core|${EXTENSION}|" "$SNAP_DIR/snap/snapcraft.yaml"
 
 restore: |
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
 
-  [ -f src/colcon-foxy-ros-core/src/hello.cpp ] && git checkout src/colcon-foxy-ros-core/src/hello.cpp
+  [ -f src/colcon-*-ros-core/src/hello.cpp ] && git checkout src/colcon-*-ros-core/src/hello.cpp
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"

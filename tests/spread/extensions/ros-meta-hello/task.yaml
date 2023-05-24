@@ -3,27 +3,22 @@ summary: Build and run a basic ROS snap using meta-ros extension
 kill-timeout: 180m
 
 environment:
-  SNAP/catkin_noetic_ros_core: catkin-noetic-ros-core
+  SNAP: catkin-noetic-hello
+  SNAP_DIR: "../../plugins/v2/snaps/$SNAP"
+
+  INTERFACE: ros-noetic
+
   META_SNAP/catkin_noetic_ros_core: ros-noetic-ros-core
   EXTENSION/catkin_noetic_ros_core: ros1-noetic-ros-core
-  INTERFACE/catkin_noetic_ros_core: ros-noetic
 
-  SNAP/catkin_noetic_ros_base: catkin-noetic-ros-core
   META_SNAP/catkin_noetic_ros_base: ros-noetic-ros-base
   EXTENSION/catkin_noetic_ros_base: ros1-noetic-ros-base
-  INTERFACE/catkin_noetic_ros_base: ros-noetic
 
-  SNAP/catkin_noetic_robot: catkin-noetic-ros-core
   META_SNAP/catkin_noetic_robot: ros-noetic-robot
   EXTENSION/catkin_noetic_robot: ros1-noetic-robot
-  INTERFACE/catkin_noetic_robot: ros-noetic
 
-  SNAP/catkin_noetic_desktop: catkin-noetic-ros-core
   META_SNAP/catkin_noetic_desktop: ros-noetic-desktop
   EXTENSION/catkin_noetic_desktop: ros1-noetic-desktop
-  INTERFACE/catkin_noetic_desktop: ros-noetic
-
-  SNAP_DIR: "../snaps/$SNAP"
 
 # The content snap required for the test to succeed is only
 # available on a subset of all the architectures this testbed
@@ -40,7 +35,7 @@ prepare: |
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
   # Overwrite the extension to test them all out of a single snap
-  sed -i "s|ros1-noetic-ros-core|${EXTENSION}|" "$SNAP_DIR/snap/snapcraft.yaml"
+  sed -i "s|ros1-noetic|${EXTENSION}|" "$SNAP_DIR/snap/snapcraft.yaml"
 
 restore: |
   cd "$SNAP_DIR"
