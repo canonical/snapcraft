@@ -162,6 +162,7 @@ class TestExtensionROS2HumbleMetaExtensions:
         assert extension.get_part_snippet() == {
             "build-environment": [{"ROS_VERSION": "2"}, {"ROS_DISTRO": "humble"}],
             "build-snaps": [meta_dev],
+            "colcon-cmake-args": [f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{meta_dev}/current/usr"']
         }
 
     @pytest.mark.parametrize(fixture_variables, fixture_values)
