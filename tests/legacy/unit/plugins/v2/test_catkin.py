@@ -133,7 +133,6 @@ def test_get_build_commands(monkeypatch):
         "fi",
         "",
         'eval "${state}"',
-        "## Prepare build",
         "## Build command",
         "catkin_make_isolated --install --merge "
         '--source-space "${SNAPCRAFT_PART_SRC_WORK}" --build-space "${SNAPCRAFT_PART_BUILD}" '
@@ -249,19 +248,6 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "fi",
         "",
         'eval "${state}"',
-        "## Prepare build",
-        'if [ -d "/snap/foo/current/opt/ros/${ROS_DISTRO}/share" ]; then ',
-        'mkdir -p "${SNAPCRAFT_PART_BUILD}"/build_snaps/foo',
-        'cp -r "/snap/foo/current/opt/ros/${ROS_DISTRO}/share" '
-        '"${SNAPCRAFT_PART_BUILD}/build_snaps/foo/."',
-        'find "${SNAPCRAFT_PART_BUILD}/build_snaps/foo" \\( -name "*Config.cmake" -o '
-        '-name "*extras.cmake" \\) -exec sed -i -e "s|/opt|/snap/foo/current&|g" -e '
-        '"s|/usr|/snap/foo/current&|g" -e '
-        '"s|\\${.*_DIR}/../../..|/snap/foo/current/opt/ros/${ROS_DISTRO}|g" {} \\;',
-        "fi",
-        'if [ -d "${SNAPCRAFT_PART_BUILD}"/build_snaps/foo ]; then export '
-        'CMAKE_PREFIX_PATH="${SNAPCRAFT_PART_BUILD}/build_snaps/foo:${CMAKE_PREFIX_PATH-}"; '
-        "fi",
         "## Build command",
         "catkin_make_isolated --install --merge "
         '--source-space "${SNAPCRAFT_PART_SRC_WORK}" --build-space "${SNAPCRAFT_PART_BUILD}" '

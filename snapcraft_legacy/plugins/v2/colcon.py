@@ -174,18 +174,6 @@ class ColconPlugin(_ros.RosPlugin):
 
     def _get_build_commands(self) -> List[str]:
 
-        export_command = list()
-
-        if self.options.build_snaps:
-            for build_snap in self.options.build_snaps:
-                build_snap = _get_parsed_snap(build_snap)[0]
-
-                export_command.extend([
-                    'if [ -d "/snap/{build_snap}/current" ]; then '
-                    'export CMAKE_PREFIX_PATH="/snap/{build_snap}/current:/snap/{build_snap}/current/usr${{CMAKE_PREFIX_PATH:+:${{CMAKE_PREFIX_PATH}}}}"; '
-                    'fi'.format(build_snap=build_snap)
-                ])
-
         build_command = [
             "colcon",
             "build",
@@ -217,9 +205,7 @@ class ColconPlugin(_ros.RosPlugin):
         build_command.extend(["--parallel-workers", '"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"'])
 
         return (
-            ["## Prepare build"]
-            + export_command
-            + ["## Build command", " ".join(build_command)]
+            ["## Build command", " ".join(build_command)]
             + [
                 "## Post build command",
                 # Remove the COLCON_IGNORE marker so that, at staging,

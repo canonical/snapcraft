@@ -122,9 +122,6 @@ class CatkinPlugin(_ros.RosPlugin):
 
     def _get_build_commands(self) -> List[str]:
 
-        prepare_build_command = list()
-        export_command = list()
-
         build_command = [
             "catkin_make_isolated",
             "--install",
@@ -148,9 +145,4 @@ class CatkinPlugin(_ros.RosPlugin):
         if self.options.catkin_cmake_args:
             build_command.extend(["--cmake-args", *self.options.catkin_cmake_args])
 
-        return (
-            ["## Prepare build"]
-            + prepare_build_command
-            + export_command
-            + ["## Build command", " ".join(build_command)]
-        )
+        return (["## Build command", " ".join(build_command)])

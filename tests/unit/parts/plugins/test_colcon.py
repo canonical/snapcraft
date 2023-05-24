@@ -192,7 +192,6 @@ class TestPluginColconPlugin:
             "fi",
             "",
             'eval "${state}"',
-            "## Prepare build",
             "## Build command",
             "colcon build "
             '--base-paths "${CRAFT_PART_SRC_WORK}" --build-base "${CRAFT_PART_BUILD}" '
@@ -328,10 +327,6 @@ class TestPluginColconPlugin:
             "fi",
             "",
             'eval "${state}"',
-            "## Prepare build",
-            'if [ -d "/snap/foo/current" ]; then export '
-            'CMAKE_PREFIX_PATH="/snap/foo/current:/snap/foo/current/usr:${CMAKE_PREFIX_PATH-}"; '
-            "fi",
             "## Build command",
             "colcon build "
             '--base-paths "${CRAFT_PART_SRC_WORK}" --build-base "${CRAFT_PART_BUILD}" '

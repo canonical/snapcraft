@@ -19,9 +19,6 @@ fi
 if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/snap" ]; then
   source_with_prefix "$SNAP/opt/ros/underlay_ws/opt/ros/snap"
 fi
-if [[ -d "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" || -d "$SNAP/opt/ros/underlay_ws/opt/ros/snap" ]]; then
-  export LD_LIBRARY_PATH="$SNAP/opt/ros/underlay_ws/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
-fi
 
 source_with_prefix "$SNAP/opt/ros/$ROS_DISTRO"
 source_with_prefix "$SNAP/opt/ros/snap"

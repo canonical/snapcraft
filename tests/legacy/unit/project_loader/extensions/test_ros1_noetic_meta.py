@@ -99,10 +99,20 @@ class TestClass:
             },
         }
 
+        python_paths = [
+            "$SNAP/opt/ros/noetic/lib/python3.8/site-packages",
+            "$SNAP/usr/lib/python3/dist-packages",
+            "${PYTHONPATH}",
+            "$SNAP/opt/ros/underlay_ws/opt/ros/noetic/lib/python3.8/site-packages",
+            "$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
+        ]
+
         assert ros1_extension.app_snippet == {
             "command-chain": ["snap/command-chain/ros1-launch"],
             "environment": {
-                "PYTHONPATH": "$SNAP/opt/ros/noetic/lib/python3.8/site-packages:$SNAP/usr/lib/python3/dist-packages:${PYTHONPATH}",
+                "LD_LIBRARY_PATH": "$LD_LIBRARY_PATH:$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET",
+                "PATH": "$PATH:$SNAP/opt/ros/underlay_ws/usr/bin",
+                "PYTHONPATH": ":".join(python_paths),
                 "ROS_VERSION": "1",
                 "ROS_DISTRO": "noetic",
             },
@@ -111,6 +121,7 @@ class TestClass:
         assert ros1_extension.part_snippet == {
             "build-environment": [{"ROS_VERSION": "1"}, {"ROS_DISTRO": "noetic"}],
             "build-snaps": [meta_dev],
+            "catkin-cmake-args": [f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{meta_dev}/current/usr"'],
         }
 
         assert ros1_extension.parts == {

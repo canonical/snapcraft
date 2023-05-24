@@ -140,6 +140,8 @@ class TestExtensionROS2HumbleMetaExtensions:
             "$SNAP/opt/ros/humble/lib/python3.10/site-packages",
             "$SNAP/usr/lib/python3/dist-packages",
             "${PYTHONPATH}",
+            "$SNAP/opt/ros/underlay_ws/opt/ros/humble/lib/python3.8/site-packages",
+            "$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
         ]
         extension = setup_method_fixture(extension_class)
         assert extension.get_app_snippet() == {
@@ -149,6 +151,8 @@ class TestExtensionROS2HumbleMetaExtensions:
                 "ROS_DISTRO": "humble",
                 "PYTHONPATH": ":".join(python_paths),
                 "ROS_HOME": "$SNAP_USER_DATA/ros",
+                "LD_LIBRARY_PATH": "$LD_LIBRARY_PATH:$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET",
+                "PATH": "$PATH:$SNAP/opt/ros/underlay_ws/usr/bin",
             },
         }
 

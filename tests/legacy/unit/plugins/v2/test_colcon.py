@@ -155,7 +155,6 @@ def test_get_build_commands(monkeypatch):
         "fi",
         "",
         'eval "${state}"',
-        "## Prepare build",
         "## Build command",
         "colcon build "
         '--base-paths "${SNAPCRAFT_PART_SRC_WORK}" --build-base "${SNAPCRAFT_PART_BUILD}" '
@@ -283,10 +282,6 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "fi",
         "",
         'eval "${state}"',
-        "## Prepare build",
-        'if [ -d "/snap/foo/current" ]; then export '
-        'CMAKE_PREFIX_PATH="/snap/foo/current:/snap/foo/current/usr:${CMAKE_PREFIX_PATH-}"; '
-        "fi",
         "## Build command",
         "colcon build "
         '--base-paths "${SNAPCRAFT_PART_SRC_WORK}" --build-base "${SNAPCRAFT_PART_BUILD}" '
