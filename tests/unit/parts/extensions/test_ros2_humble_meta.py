@@ -168,7 +168,7 @@ class TestExtensionROS2HumbleMetaExtensions:
     def test_get_parts_snippet(self, extension_name, extension_class, meta, meta_dev):
         extension = setup_method_fixture(extension_class)
         assert extension.get_parts_snippet() == {
-            "ros2-humble/ros2-launch": {
+            f"{extension_name}/ros2-launch": {
                 "source": f"{get_extensions_data_dir()}/ros2",
                 "plugin": "make",
                 "build-packages": [

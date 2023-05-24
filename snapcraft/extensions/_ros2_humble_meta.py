@@ -41,6 +41,12 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
         """Abstract property to define the extension's build snap."""
         raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def ROS_VARIANT(self):
+        """Abstract property to define the extension's ROS variant."""
+        raise NotImplementedError
+
     @overrides
     def get_root_snippet(self) -> Dict[str, Any]:
         root_snippet = super().get_root_snippet()
@@ -84,11 +90,15 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
         # Very unlikely but it may happen that the snapped application doesn't
         # even pull those deps. In that case, there is no valid ROS 2 ws to source.
         # We make sure here that they are staged no matter what.
-        print("parts_snippet ", parts_snippet)
         parts_snippet[f"ros2-{self.ROS_DISTRO}/ros2-launch"]["stage-packages"] = [
             f"ros-{self.ROS_DISTRO}-ros-environment",
             f"ros-{self.ROS_DISTRO}-ros-workspace",
             f"ros-{self.ROS_DISTRO}-ament-index-cpp",
             f"ros-{self.ROS_DISTRO}-ament-index-python",
         ]
+
+        # The part name must follow the format <extension-name>/<part-name>
+        parts_snippet[f"ros2-{self.ROS_DISTRO}-{self.ROS_VARIANT}/ros2-launch"] = parts_snippet[f"ros2-{self.ROS_DISTRO}/ros2-launch"]
+        parts_snippet.pop(f"ros2-{self.ROS_DISTRO}/ros2-launch")
+
         return parts_snippet
