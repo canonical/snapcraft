@@ -78,7 +78,7 @@ class ExtensionImpl(Extension):
                 {"ROS_VERSION": self.ROS_VERSION},
                 {"ROS_DISTRO": self.ROS_DISTRO},
             ],
-            "stage-packages": [f"ros-{self.ROS_DISTRO}-roslib"]
+            "stage-packages": [f"ros-{self.ROS_DISTRO}-ros-environment"]
         }
 
         self.parts = {
