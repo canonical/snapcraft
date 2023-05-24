@@ -23,7 +23,6 @@ from .flutter_plugin import FlutterPlugin
 from .kernel import KernelPlugin
 from .python_plugin import PythonPlugin
 from .register import register
-from .qmake import QmakePlugin
 
 __all__ = [
     "ColconPlugin",
@@ -32,5 +31,4 @@ __all__ = [
     "KernelPlugin",
     "PythonPlugin",
     "register",
-    "QmakePlugin"
 ]
