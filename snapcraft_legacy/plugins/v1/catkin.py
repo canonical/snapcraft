@@ -308,7 +308,16 @@ class CatkinPlugin(PluginV1):
         base = self.project._get_build_base()
         self._rosdistro = _BASE_TO_ROS_RELEASE_MAP[base]
 
-        self.build_packages.extend(["gcc", "g++", "libc6-dev", "make", "python-pip"])
+        self.build_packages.extend(
+            [
+                "distro-info-data",
+                "gcc",
+                "g++",
+                "libc6-dev",
+                "make",
+                "python-pip",
+            ]
+        )
         self.__pip = None
 
         # roslib is the base requiremet to actually create a workspace with
