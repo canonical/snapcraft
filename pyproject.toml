@@ -53,6 +53,9 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.dynamic]
 readme = {file = "README.rst"}
 
+[tool.setuptools_scm]
+write_to = "starcraft/_version.py"
+
 [tool.setuptools.packages.find]
 exclude = [
     "dist",
@@ -165,6 +168,7 @@ extend-select = [
     # Annotations: https://github.com/charliermarsh/ruff#flake8-annotations-ann
     "ANN0",  # Type annotations for arguments other than `self` and `cls`
     "ANN2",  # Return type annotations
+    "B026",  # Keyword arguments must come after starred arguments
     # flake8-bandit: security testing. https://github.com/charliermarsh/ruff#flake8-bandit-s
     # https://bandit.readthedocs.io/en/latest/plugins/index.html#complete-test-plugin-listing
     "S101", "S102",  # assert or exec
@@ -177,7 +181,6 @@ extend-select = [
     "S701",  # jinja2 templates without autoescape
     "B0",  # Common mistakes and typos.
     "RUF001", "RUF002", "RUF003",  # Ambiguous unicode characters
-    "RUF004",  # Keyword arguments must come after starred arguments
     "RUF005",  # Encourages unpacking rather than concatenation
     "RUF100",  # #noqa directive that doesn't flag anything.
 ]

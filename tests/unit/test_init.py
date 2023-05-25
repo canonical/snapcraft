@@ -16,13 +16,17 @@
 """Basic Starcraft package demo unit tests."""
 from unittest import mock
 
-from starcraft import hello
+import starcraft
+
+
+def test_version():
+    assert starcraft.__version__ is not None
 
 
 def test_hello(mocker):
     mocker.patch("builtins.print")
 
-    hello()
+    starcraft.hello()
 
     print.assert_called_once_with("Hello *craft team!")
 
@@ -30,7 +34,7 @@ def test_hello(mocker):
 def test_hello_people(mocker):
     mocker.patch("builtins.print")
 
-    hello(["people"])
+    starcraft.hello(["people"])
 
     print.assert_has_calls(
         [
