@@ -6,22 +6,19 @@ environment:
 
   SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
-  # META_SNAP/colcon_humble_ros_core: ros-humble-ros-core
-  # EXTENSION/colcon_humble_ros_core: ros2-humble-ros-core
+  SNAP: colcon-ros2-wrapper
+  SNAP_DIR: "../../plugins/craft-parts/build-and-run-hello/$SNAP"
 
-  # META_SNAP/colcon_humble_ros_base: ros-humble-ros-base
-  # EXTENSION/colcon_humble_ros_base: ros2-humble-ros-base
+  INTERFACE: ros-humble
+
+  META_SNAP/colcon_humble_ros_core: ros-humble-ros-core
+  EXTENSION/colcon_humble_ros_core: ros2-humble-ros-core
+
+  META_SNAP/colcon_humble_ros_base: ros-humble-ros-base
+  EXTENSION/colcon_humble_ros_base: ros2-humble-ros-base
 
   META_SNAP/colcon_humble_desktop: ros-humble-desktop
   EXTENSION/colcon_humble_desktop: ros2-humble-desktop
-
-  META_SNAP/colcon_foxy_desktop: ros-foxy-desktop
-  EXTENSION/colcon_foxy_desktop: ros2-foxy-desktop
-
-  SNAP: colcon-humble-ros-core
-  SNAP_DIR: "../snaps/$SNAP"
-
-  INTERFACE: ros-humble
 
 # The content snap required for the test to succeed is only
 # available on a subset of all the architectures this testbed
@@ -38,7 +35,10 @@ prepare: |
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
   # Overwrite the extension to test them all out of a single snap
-  sed -i "s|ros2-.*-ros-core|${EXTENSION}|" "$SNAP_DIR/snap/snapcraft.yaml"
+  sed -i "s|ros2-humble|${EXTENSION}|" "$SNAP_DIR/snap/snapcraft.yaml"
+
+  # The snap stages ros2run which will be available through content-sharing
+  sed -i "\|stage-packages|d" "$SNAP_DIR/snap/snapcraft.yaml"
 
 restore: |
   cd "$SNAP_DIR"

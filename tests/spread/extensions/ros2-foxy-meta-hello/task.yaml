@@ -3,6 +3,13 @@ summary: Build and run a basic ROS 2 snap using meta-ros extension
 kill-timeout: 180m
 
 environment:
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
+
+  SNAP: colcon-ros2-wrapper
+  SNAP_DIR: "../../plugins/v2/snaps/$SNAP"
+
+  INTERFACE: ros-foxy
+
   META_SNAP/colcon_foxy_ros_core: ros-foxy-ros-core
   EXTENSION/colcon_foxy_ros_core: ros2-foxy-ros-core
 
@@ -11,11 +18,6 @@ environment:
 
   META_SNAP/colcon_foxy_desktop: ros-foxy-desktop
   EXTENSION/colcon_foxy_desktop: ros2-foxy-desktop
-
-  SNAP: colcon-foxy-ros-core
-  SNAP_DIR: "../snaps/$SNAP"
-
-  INTERFACE: ros-foxy
 
 # The content snap required for the test to succeed is only
 # available on a subset of all the architectures this testbed
@@ -32,7 +34,10 @@ prepare: |
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
   # Overwrite the extension to test them all out of a single snap
-  sed -i "s|ros2-.*-ros-core|${EXTENSION}|" "$SNAP_DIR/snap/snapcraft.yaml"
+  sed -i "s|ros2-foxy|${EXTENSION}|" "$SNAP_DIR/snap/snapcraft.yaml"
+
+  # The snap stages ros2run which will be available through content-sharing
+  sed -i "\|stage-packages|d" "$SNAP_DIR/snap/snapcraft.yaml"
 
 restore: |
   cd "$SNAP_DIR"

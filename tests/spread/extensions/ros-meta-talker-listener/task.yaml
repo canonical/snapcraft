@@ -3,9 +3,10 @@ summary: Build and run a basic ROS snap using meta-ros extension
 kill-timeout: 180m
 
 environment:
-  SNAP: catkin-ros1-run
-  # SNAP/catkin_ros1_run: catkin-ros1-run
-  # SNAP/catkin_roslaunch_wrapper: catkin-roslaunch-wrapper
+
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
+
+  SNAP: catkin-roslaunch-wrapper
 
   SNAP_DIR: "../../plugins/v2/snaps/$SNAP"
 
@@ -39,8 +40,6 @@ prepare: |
 
   # Overwrite the extension to test them all out of a single snap
   sed -i "s|ros1-noetic|${EXTENSION}|" "$SNAP_DIR/snap/snapcraft.yaml"
-
-  sed -i "s|opt/ros/noetic/bin/||" "$SNAP_DIR/snap/snapcraft.yaml"
 
 restore: |
   cd "$SNAP_DIR"
