@@ -3,6 +3,9 @@ summary: Build and run a basic ROS snap using meta-ros extension
 kill-timeout: 180m
 
 environment:
+
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
+
   SNAP: catkin-noetic-hello
   SNAP_DIR: "../../plugins/v2/snaps/$SNAP"
 
