@@ -77,6 +77,8 @@ class TestClass:
             extension_name=extension_name, yaml_data=dict(base="core20")
         )
 
+        assert ros1_extension.is_experimental(None)
+
         assert ros1_extension.root_snippet == {
             "package-repositories": [
                 {

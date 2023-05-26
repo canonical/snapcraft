@@ -18,9 +18,6 @@
 
 """Extension to the Colcon plugin for ROS 2 Humble using content sharing."""
 
-from typing import Optional
-
-from overrides import overrides
 from typing_extensions import Final
 
 from ._ros2_humble_meta import ROS2HumbleMetaBase
@@ -28,11 +25,6 @@ from ._ros2_humble_meta import ROS2HumbleMetaBase
 
 class ROS2HumbleDesktopExtension(ROS2HumbleMetaBase):
     """Drives ROS 2 build and runtime environment for snap using content-sharing."""
-
-    @staticmethod
-    @overrides
-    def is_experimental(base: Optional[str]) -> bool:
-        return True
 
     ROS_META: Final[str] = "ros-humble-desktop"
     ROS_META_DEV: Final[str] = "ros-humble-desktop-dev"

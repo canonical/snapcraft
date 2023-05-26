@@ -19,7 +19,7 @@
 """Base for ROS 2 Humble extensions to the Colcon plugin using content-sharing."""
 
 from abc import abstractmethod
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from overrides import overrides
 
@@ -46,6 +46,11 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
     def ROS_VARIANT(self):
         """Abstract property to define the extension's ROS variant."""
         raise NotImplementedError
+
+    @staticmethod
+    @overrides
+    def is_experimental(base: Optional[str]) -> bool:
+        return True
 
     @overrides
     def get_root_snippet(self) -> Dict[str, Any]:

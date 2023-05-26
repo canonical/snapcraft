@@ -16,13 +16,20 @@
 
 # Import types and tell flake8 to ignore the "unused" List.
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
+
+from overrides import overrides
 
 from .ros2_foxy import ExtensionImpl as RosFoxyExtension
 
 
 class RosFoxyMetaBase(RosFoxyExtension):
     """Setup a ROS 2 build and runtime environment suitable for a snap."""
+
+    @staticmethod
+    @overrides
+    def is_experimental(base: Optional[str]) -> bool:
+        return True
 
     def __init__(self, *, extension_name: str, yaml_data: Dict[str, Any]) -> None:
         super().__init__(extension_name=extension_name, yaml_data=yaml_data)
