@@ -102,6 +102,10 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
             f"ros-{self.ROS_DISTRO}-ament-index-python",
         ]
 
+        parts_snippet[f"ros2-{self.ROS_DISTRO}/ros2-launch"][
+            "build-packages"
+        ].append("libpython3.10-dev")
+
         # The part name must follow the format <extension-name>/<part-name>
         parts_snippet[f"ros2-{self.ROS_DISTRO}-{self.ROS_VARIANT}/ros2-launch"] = parts_snippet[f"ros2-{self.ROS_DISTRO}/ros2-launch"]
         parts_snippet.pop(f"ros2-{self.ROS_DISTRO}/ros2-launch")
