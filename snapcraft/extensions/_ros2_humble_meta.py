@@ -23,6 +23,7 @@ from typing import Any, Dict, Optional
 
 from overrides import overrides
 
+# from .extension import prepend_to_env
 from .ros2_humble import ROS2HumbleExtension
 
 
@@ -75,8 +76,16 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
         ]
 
         app_snippet["environment"]["PYTHONPATH"] = f'{python_paths}:{":".join(new_python_paths)}'
-        app_snippet["environment"]["PATH"] = "$PATH:$SNAP/opt/ros/underlay_ws/usr/bin"
-        app_snippet["environment"]["LD_LIBRARY_PATH"] = "$LD_LIBRARY_PATH:$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET"
+        app_snippet["environment"]["PATH"] = "$SNAP/opt/ros/underlay_ws/usr/bin:$PATH"
+        app_snippet["environment"]["LD_LIBRARY_PATH"] = "$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:$LD_LIBRARY_PATH"
+
+        # @todo: for some reason ${VAR:+:$VAR} resulsts in empty substitution
+        # prepend_to_env(
+        #     "PATH", ["$SNAP/opt/ros/underlay_ws/usr/bin"]
+        # )
+        # prepend_to_env(
+        #     "LD_LIBRARY_PATH", ["$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET"]
+        # )
 
         return app_snippet
 

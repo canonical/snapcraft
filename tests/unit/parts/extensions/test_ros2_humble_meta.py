@@ -156,8 +156,8 @@ class TestExtensionROS2HumbleMetaExtensions:
                 "ROS_DISTRO": "humble",
                 "PYTHONPATH": ":".join(python_paths),
                 "ROS_HOME": "$SNAP_USER_DATA/ros",
-                "LD_LIBRARY_PATH": "$LD_LIBRARY_PATH:$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET",
-                "PATH": "$PATH:$SNAP/opt/ros/underlay_ws/usr/bin",
+                "LD_LIBRARY_PATH": "$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:$LD_LIBRARY_PATH",
+                "PATH": "$SNAP/opt/ros/underlay_ws/usr/bin:$PATH",
             },
         }
 

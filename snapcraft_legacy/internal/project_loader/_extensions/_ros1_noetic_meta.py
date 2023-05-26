@@ -53,10 +53,14 @@ class RosNoeticMetaBase(RosNoeticExtension):
         python_paths = self.app_snippet["environment"]["PYTHONPATH"]
         new_python_paths = [
             f"$SNAP/opt/ros/underlay_ws/opt/ros/{self.ROS_DISTRO}/lib/python3.8/site-packages",
-            f"$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
+            "$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
         ]
 
         self.app_snippet["environment"]["PYTHONPATH"] = f'{python_paths}:{":".join(new_python_paths)}'
 
-        self.app_snippet["environment"]["PATH"] = "$PATH:$SNAP/opt/ros/underlay_ws/usr/bin"
-        self.app_snippet["environment"]["LD_LIBRARY_PATH"] = "$LD_LIBRARY_PATH:$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET"
+        self.app_snippet["environment"]["PATH"] = "$SNAP/opt/ros/underlay_ws/usr/bin:$PATH"
+        self.app_snippet["environment"]["LD_LIBRARY_PATH"] = "$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:$LD_LIBRARY_PATH"
+
+        # @todo: for some reason ${VAR:+:$VAR} resulsts in empty substitution
+        # self.app_snippet["environment"]["PATH"] = "$SNAP/opt/ros/underlay_ws/usr/bin${PATH:+:$PATH}"
+        # self.app_snippet["environment"]["LD_LIBRARY_PATH"] = "$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
