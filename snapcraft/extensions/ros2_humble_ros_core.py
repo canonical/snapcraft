@@ -18,14 +18,21 @@
 
 """Extension to the Colcon plugin for ROS 2 Humble using content sharing."""
 
-from typing_extensions import Final
+import functools
 
-from ._ros2_humble_meta import ROS2HumbleMetaBase
+from overrides import overrides
+
+from ._ros2_humble_meta import ROS2HumbleMetaBase, ROS2HumbleSnaps
 
 
 class ROS2HumbleRosCoreExtension(ROS2HumbleMetaBase):
     """Drives ROS 2 build and runtime environment for snap using content-sharing."""
 
-    ROS_META: Final[str] = "ros-humble-ros-core"
-    ROS_META_DEV: Final[str] = "ros-humble-ros-core-dev"
-    ROS_VARIANT: Final[str] = "ros-core"
+    @functools.cached_property
+    @overrides
+    def ros2_humble_snaps(self) -> ROS2HumbleSnaps:
+        return ROS2HumbleSnaps(
+            sdk="ros-humble-ros-core-dev",
+            content="ros-humble-ros-core",
+            variant="ros-core",
+        )

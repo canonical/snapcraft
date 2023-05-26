@@ -18,6 +18,7 @@
 
 """Base for ROS 2 Humble extensions to the Colcon plugin using content-sharing."""
 
+import dataclasses
 from abc import abstractmethod
 from typing import Any, Dict, Optional
 
@@ -27,25 +28,21 @@ from overrides import overrides
 from .ros2_humble import ROS2HumbleExtension
 
 
+@dataclasses.dataclass
+class ROS2HumbleSnaps:
+    """A structure of ROS 2 Humble related snaps."""
+
+    sdk: str
+    content: str
+    variant: str
+
+
 class ROS2HumbleMetaBase(ROS2HumbleExtension):
     """Drives ROS 2 build and runtime environment for snap using content-sharing."""
 
     @property
     @abstractmethod
-    def ROS_META(self):
-        """Abstract property to define the extension's content-sharing snap."""
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def ROS_META_DEV(self):
-        """Abstract property to define the extension's build snap."""
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def ROS_VARIANT(self):
-        """Abstract property to define the extension's ROS variant."""
+    def ros2_humble_snaps(self) -> ROS2HumbleSnaps:
         raise NotImplementedError
 
     @staticmethod
@@ -61,7 +58,7 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
                 "interface": "content",
                 "content": "ros-humble",
                 "target": "$SNAP/opt/ros/underlay_ws",
-                "default-provider": self.ROS_META,
+                "default-provider": self.ros2_humble_snaps.content,
             }
         }
         return root_snippet
@@ -92,10 +89,11 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
     @overrides
     def get_part_snippet(self) -> Dict[str, Any]:
         part_snippet = super().get_part_snippet()
-        part_snippet["build-snaps"] = [self.ROS_META_DEV]
+        part_snippet["build-snaps"] = [self.ros2_humble_snaps.sdk]
         part_snippet["colcon-cmake-args"] = [
-            f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{self.ROS_META_DEV}/current/usr"'
+            f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{self.ros2_humble_snaps.sdk}/current/usr"'
         ]
+
         return part_snippet
 
     @overrides
@@ -116,7 +114,9 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
         ].append("libpython3.10-dev")
 
         # The part name must follow the format <extension-name>/<part-name>
-        parts_snippet[f"ros2-{self.ROS_DISTRO}-{self.ROS_VARIANT}/ros2-launch"] = parts_snippet[f"ros2-{self.ROS_DISTRO}/ros2-launch"]
+        parts_snippet[
+            f"ros2-{self.ROS_DISTRO}-{self.ros2_humble_snaps.variant}/ros2-launch"
+        ] = parts_snippet[f"ros2-{self.ROS_DISTRO}/ros2-launch"]
         parts_snippet.pop(f"ros2-{self.ROS_DISTRO}/ros2-launch")
 
         return parts_snippet

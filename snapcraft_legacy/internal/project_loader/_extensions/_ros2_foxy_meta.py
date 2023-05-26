@@ -16,6 +16,8 @@
 
 # Import types and tell flake8 to ignore the "unused" List.
 
+import dataclasses
+from abc import abstractmethod
 from typing import Any, Dict, Optional
 
 from overrides import overrides
@@ -23,8 +25,21 @@ from overrides import overrides
 from .ros2_foxy import ExtensionImpl as RosFoxyExtension
 
 
+@dataclasses.dataclass
+class ROS2FoxySnaps:
+    """A structure of ROS 2 Foxy related snaps."""
+
+    sdk: str
+    content: str
+
+
 class RosFoxyMetaBase(RosFoxyExtension):
     """Setup a ROS 2 build and runtime environment suitable for a snap."""
+
+    @property
+    @abstractmethod
+    def ros2_foxy_snaps(self) -> ROS2FoxySnaps:
+        raise NotImplementedError
 
     @staticmethod
     @overrides
@@ -50,15 +65,15 @@ class RosFoxyMetaBase(RosFoxyExtension):
                     "interface": "content",
                     "content": "ros-foxy",
                     "target": "$SNAP/opt/ros/underlay_ws",
-                    "default-provider": self.ROS_META,
+                    "default-provider": self.ros2_foxy_snaps.content,
                 }
         }
 
         self.part_snippet["colcon-cmake-args"] = [
-            f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{self.ROS_META_DEV}/current/usr"'
+            f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{self.ros2_foxy_snaps.sdk}/current/usr"'
         ]
 
-        self.part_snippet["build-snaps"] = [self.ROS_META_DEV]
+        self.part_snippet["build-snaps"] = [self.ros2_foxy_snaps.sdk]
 
         python_paths = self.app_snippet["environment"]["PYTHONPATH"]
         new_python_paths = [
