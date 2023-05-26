@@ -78,7 +78,7 @@ class RosFoxyMetaBase(RosFoxyExtension):
         python_paths = self.app_snippet["environment"]["PYTHONPATH"]
         new_python_paths = [
             f"$SNAP/opt/ros/underlay_ws/opt/ros/{self.ROS_DISTRO}/lib/python3.8/site-packages",
-            f"$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
+            "$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
         ]
 
         self.app_snippet["environment"]["PYTHONPATH"] = f'{python_paths}:{":".join(new_python_paths)}'

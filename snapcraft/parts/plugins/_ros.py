@@ -387,7 +387,7 @@ def stage_runtime_dependencies(
             arch=target_arch,
             base=base,
             stage_packages_path=stage_packages_path,
-            packages_filters=build_snap_packages,
+            packages_filters=build_snap_packages,  # type: ignore
         )
 
         click.echo(f"Unpacking stage packages: {fetched_stage_packages!r}")
