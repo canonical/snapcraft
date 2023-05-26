@@ -37,7 +37,7 @@ def load_plugin(
     properties,
     part_schema,
     definitions_schema,
-) -> plugins.v1.PluginV1:
+) -> plugins.v2.PluginV2:
     local_plugins_dir = project._get_local_plugins_dir()
     if local_plugins_dir is not None:
         plugin_class = _get_local_plugin_class(
@@ -48,29 +48,11 @@ def load_plugin(
             plugin_name, build_base=project._get_build_base()
         )
 
-    if issubclass(plugin_class, plugins.v2.PluginV2):
-        plugin_schema = plugin_class.get_schema()
-        options = _make_options(
-            part_name, part_schema, definitions_schema, properties, plugin_schema
-        )
-        plugin = plugin_class(part_name=part_name, options=options)
-    else:
-        plugin_schema = plugin_class.schema()
-        _validate_pull_and_build_properties(
-            plugin_name, plugin_class, part_schema, definitions_schema
-        )
-        options = _make_options(
-            part_name, part_schema, definitions_schema, properties, plugin_schema
-        )
-        plugin = plugin_class(part_name, options, project)
-
-        if project.is_cross_compiling:
-            logger.debug(
-                "Setting {!r} as the compilation target for {!r}".format(
-                    project.deb_arch, plugin_name
-                )
-            )
-            plugin.enable_cross_compilation()
+    plugin_schema = plugin_class.get_schema()
+    options = _make_options(
+        part_name, part_schema, definitions_schema, properties, plugin_schema
+    )
+    plugin = plugin_class(part_name=part_name, options=options)
 
     return plugin
 
@@ -125,21 +107,7 @@ def _get_local_plugin_class(*, plugin_name: str, local_plugins_dir: str):
         ):
             return module.PluginImpl
 
-        for attr in vars(module).values():
-            if not isinstance(attr, type):
-                continue
-            if not issubclass(attr, plugins.v1.PluginV1):
-                continue
-            if not hasattr(attr, "__module__"):
-                continue
-            logger.debug(
-                f"Plugin attribute {attr!r} has __module__: {attr.__module__!r}"
-            )
-            if attr.__module__.startswith("snapcraft_legacy.plugins"):
-                continue
-            return attr
-        else:
-            raise errors.PluginError(f"unknown plugin: {plugin_name!r}")
+        raise errors.PluginError(f"unknown plugin: {plugin_name!r}")
 
 
 def _validate_pull_and_build_properties(
