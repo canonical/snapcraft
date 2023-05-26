@@ -35,7 +35,7 @@ class TestGlobalState(TestCase):
         self.useFixture(temp_cwd)
 
         snapcraft_yaml = fixture_setup.SnapcraftYaml(
-            temp_cwd.path, base="core18", parts={"test-part": {"plugin": "nil"}}
+            temp_cwd.path, base="core20", parts={"test-part": {"plugin": "nil"}}
         )
         self.useFixture(snapcraft_yaml)
 
@@ -49,7 +49,7 @@ class TestGlobalState(TestCase):
 
         self.useFixture(
             fixtures.MockPatchObject(
-                self.project_config, "get_build_snaps", return_value={"core18"}
+                self.project_config, "get_build_snaps", return_value={"core20"}
             )
         )
 
@@ -88,9 +88,9 @@ class TestGlobalState(TestCase):
         info = {
             "channel-map": channel_map,
             "default-track": None,
-            "name": "core18",
+            "name": "core20",
             "snap": {
-                "name": "core18",
+                "name": "core20",
                 "publisher": {
                     "display-name": "Canonical",
                     "id": "canonical",
@@ -112,17 +112,17 @@ class TestGlobalState(TestCase):
 
         global_state = states.GlobalState.load(filepath=self.global_state_filepath)
         self.assertThat(global_state.get_required_grade(), Equals("stable"))
-        self.fake_storeapi_get_info.mock.assert_called_once_with("core18")
+        self.fake_storeapi_get_info.mock.assert_called_once_with("core20")
 
     def test_stable_grade_for_non_stable_base(self):
         self.fake_storeapi_get_info.mock.side_effect = SnapNotFoundError(
-            snap_name="core18"
+            snap_name="core20"
         )
         lifecycle.execute(steps.PULL, self.project_config)
 
         global_state = states.GlobalState.load(filepath=self.global_state_filepath)
         self.assertThat(global_state.get_required_grade(), Equals("devel"))
-        self.fake_storeapi_get_info.mock.assert_called_once_with("core18")
+        self.fake_storeapi_get_info.mock.assert_called_once_with("core20")
 
     def test_grade_not_queried_for_if_already_set(self):
         # Set the grade

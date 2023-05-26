@@ -563,7 +563,7 @@ class SnapcraftYaml(fixtures.Fixture):
         self,
         path,
         name="test-snap",
-        base="core18",
+        base="core20",
         build_base=None,
         version="test-version",
         summary="test-summary",
