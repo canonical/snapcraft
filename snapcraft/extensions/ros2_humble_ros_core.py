@@ -18,7 +18,6 @@
 
 """Extension to the Colcon plugin for ROS 2 Humble using content sharing."""
 
-from overrides import overrides
 from typing_extensions import Final
 
 from ._ros2_humble_meta import ROS2HumbleMetaBase
