@@ -76,9 +76,11 @@ class TestPluginColconPlugin:
 
     def test_property_unexpected(self):
         try:
+            # pylint: disable=unused-variable
             properties = colcon.ColconPlugin.properties_class(  # noqa F841
                 source="."  # type: ignore
             )
+            # pylint: enable=unused-variable
         except ValidationError as e:
             raise AssertionError(f"{e}") from e
 

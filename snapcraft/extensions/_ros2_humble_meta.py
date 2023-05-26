@@ -43,6 +43,7 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
     @property
     @abstractmethod
     def ros2_humble_snaps(self) -> ROS2HumbleSnaps:
+        """Return the ROS 2 Humble related snaps to use to construct the environment."""
         raise NotImplementedError
 
     @staticmethod

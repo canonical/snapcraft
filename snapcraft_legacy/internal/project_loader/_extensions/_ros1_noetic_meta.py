@@ -39,6 +39,7 @@ class RosNoeticMetaBase(RosNoeticExtension):
     @property
     @abstractmethod
     def ros_noetic_snaps(self) -> ROS2NoeticSnaps:
+        """Return the ROS Noetic related snaps to use to construct the environment."""
         raise NotImplementedError
 
     @staticmethod

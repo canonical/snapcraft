@@ -136,7 +136,6 @@ class RosPlugin(plugins.Plugin):
         The package names are then resolved with `rosdep` to map their names to debs.
         The list is finally saved in the part's install directory.
         """
-        # pylint: disable=line-too-long
         cmd = []
 
         # Clean up previously established list of packages in build snaps
@@ -147,6 +146,7 @@ class RosPlugin(plugins.Plugin):
             for build_snap in self._options.build_snaps:  # type: ignore
                 snap_name = _get_parsed_snap(build_snap)[0]
                 path = f"/snap/{snap_name}/current/opt/ros"
+                # pylint: disable=line-too-long
                 cmd.extend(
                     [
                         # Retrieve the list of all ROS packages available in the build snap
@@ -166,6 +166,7 @@ class RosPlugin(plugins.Plugin):
                         "fi",
                     ]
                 )
+                # pylint: enable=line-too-long
             cmd.append("")
 
         return cmd
@@ -241,6 +242,7 @@ class RosPlugin(plugins.Plugin):
             + [
                 'rosdep install --default-yes --ignore-packages-from-source --from-paths "${CRAFT_PART_SRC_WORK}"',
             ]
+            # pylint: enable=line-too-long
             + [
                 'state="$(set +o); set -$-"',
                 "set +u",
@@ -262,7 +264,7 @@ def get_installed_dependencies(installed_packages_path: str) -> Set[str]:
     """Retrieve recursive apt dependencies of a given package list."""
     if os.path.isfile(installed_packages_path):
         try:
-            with open(installed_packages_path, "r") as file:
+            with open(installed_packages_path, "r", encoding="utf8") as file:
                 build_snap_packages = set(file.read().split())
                 package_dependencies = set()
                 for package in build_snap_packages:
@@ -285,12 +287,14 @@ def get_installed_dependencies(installed_packages_path: str) -> Set[str]:
                             check=True,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT,
-                            env=dict(PATH=os.environ["PATH"]),
+                            env={"PATH": os.environ["PATH"]},
                         )
                     except subprocess.CalledProcessError as error:
                         click.echo(f"failed to run {cmd!r}: {error.output}")
                     else:
+                        # pylint: disable=anomalous-backslash-in-string
                         apt_dependency_regex = re.compile("^\w.*$")  # noqa: W605
+                        # pylint: enable=anomalous-backslash-in-string
                         for line in proc.stdout.decode().strip().split("\n"):
                             if apt_dependency_regex.match(line):
                                 package_dependencies.add(line)

@@ -39,6 +39,7 @@ class RosFoxyMetaBase(RosFoxyExtension):
     @property
     @abstractmethod
     def ros2_foxy_snaps(self) -> ROS2FoxySnaps:
+        """Return the ROS 2 Foxy related snaps to use to construct the environment."""
         raise NotImplementedError
 
     @staticmethod

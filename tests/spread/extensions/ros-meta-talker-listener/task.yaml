@@ -59,7 +59,7 @@ execute: |
 
   # Check that the snap size is fairly small
   # The non-content sharing snap is ~90M
-  SNAP_SIZE=$(ls -s "${SNAP}"_1.0_*.snap | cut -d " " -f1)
+  SNAP_SIZE=$(find . -maxdepth 1 -mindepth 1 -name '*_1.0_*.snap' -exec ls -s {} + | cut -d " " -f1)
   [ "100" -gt "$SNAP_SIZE" ]
 
   # # Install the providing snap
