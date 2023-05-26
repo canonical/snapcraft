@@ -16,13 +16,19 @@
 
 # Import types and tell flake8 to ignore the "unused" List.
 
-from typing_extensions import Final
+import functools
 
-from ._ros2_foxy_meta import RosFoxyMetaBase
+from overrides import overrides
+
+from ._ros2_foxy_meta import ROS2FoxySnaps, RosFoxyMetaBase
 
 
 class ExtensionImpl(RosFoxyMetaBase):
     """Setup a ROS 2 build and runtime environment suitable for a snap."""
 
-    ROS_META: Final[str] = "ros-foxy-ros-base"
-    ROS_META_DEV: Final[str] = "ros-foxy-ros-base-dev"
+    @functools.cached_property
+    @overrides
+    def ros2_foxy_snaps(self) -> ROS2FoxySnaps:
+        return ROS2FoxySnaps(
+            content="ros-foxy-ros-base", sdk="ros-foxy-ros-base-dev"
+        )

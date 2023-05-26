@@ -16,13 +16,19 @@
 
 # Import types and tell flake8 to ignore the "unused" List.
 
-from typing_extensions import Final
+import functools
 
-from ._ros1_noetic_meta import RosNoeticMetaBase
+from overrides import overrides
+
+from ._ros1_noetic_meta import ROS2NoeticSnaps, RosNoeticMetaBase
 
 
 class ExtensionImpl(RosNoeticMetaBase):
     """Setup a ROS 1 build and runtime environment suitable for a snap."""
 
-    ROS_META: Final[str] = "ros-noetic-perception"
-    ROS_META_DEV: Final[str] = "ros-noetic-perception"
+    @functools.cached_property
+    @overrides
+    def ros_noetic_snaps(self) -> ROS2NoeticSnaps:
+        return ROS2NoeticSnaps(
+            content="ros-noetic-perception", sdk="ros-noetic-perception-dev"
+        )

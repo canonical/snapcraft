@@ -16,6 +16,8 @@
 
 # Import types and tell flake8 to ignore the "unused" List.
 
+import dataclasses
+from abc import abstractmethod
 from typing import Any, Dict, Optional
 
 from overrides import overrides
@@ -23,8 +25,21 @@ from overrides import overrides
 from .ros1_noetic import ExtensionImpl as RosNoeticExtension
 
 
+@dataclasses.dataclass
+class ROS2NoeticSnaps:
+    """A structure of ROS 2 Noetic related snaps."""
+
+    sdk: str
+    content: str
+
+
 class RosNoeticMetaBase(RosNoeticExtension):
     """Setup a ROS 1 build and runtime environment suitable for a snap."""
+
+    @property
+    @abstractmethod
+    def ros_noetic_snaps(self) -> ROS2NoeticSnaps:
+        raise NotImplementedError
 
     @staticmethod
     @overrides
@@ -40,15 +55,15 @@ class RosNoeticMetaBase(RosNoeticExtension):
                     "interface": "content",
                     "content": "ros-noetic",
                     "target": "$SNAP/opt/ros/underlay_ws",
-                    "default-provider": self.ROS_META,
+                    "default-provider": self.ros_noetic_snaps.content,
                 }
         }
 
         self.part_snippet["catkin-cmake-args"] = [
-            f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{self.ROS_META_DEV}/current/usr"'
+            f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{self.ros_noetic_snaps.sdk}/current/usr"'
         ]
 
-        self.part_snippet["build-snaps"] = [self.ROS_META_DEV]
+        self.part_snippet["build-snaps"] = [self.ros_noetic_snaps.sdk]
 
         python_paths = self.app_snippet["environment"]["PYTHONPATH"]
         new_python_paths = [
