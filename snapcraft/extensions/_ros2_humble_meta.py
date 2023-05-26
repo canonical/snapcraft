@@ -68,13 +68,17 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
         app_snippet = super().get_app_snippet()
         python_paths = app_snippet["environment"]["PYTHONPATH"]
         new_python_paths = [
-            f"$SNAP/opt/ros/underlay_ws/opt/ros/{self.ROS_DISTRO}/lib/python3.8/site-packages",
-            f"$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
+            f"$SNAP/opt/ros/underlay_ws/opt/ros/{self.ROS_DISTRO}/lib/python3.10/site-packages",
+            "$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
         ]
 
-        app_snippet["environment"]["PYTHONPATH"] = f'{python_paths}:{":".join(new_python_paths)}'
+        app_snippet["environment"][
+            "PYTHONPATH"
+        ] = f'{python_paths}:{":".join(new_python_paths)}'
         app_snippet["environment"]["PATH"] = "$SNAP/opt/ros/underlay_ws/usr/bin:$PATH"
-        app_snippet["environment"]["LD_LIBRARY_PATH"] = "$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:$LD_LIBRARY_PATH"
+        app_snippet["environment"][
+            "LD_LIBRARY_PATH"
+        ] = "$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:$LD_LIBRARY_PATH"
 
         # @todo: for some reason ${VAR:+:$VAR} resulsts in empty substitution
         # prepend_to_env(
@@ -109,9 +113,9 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
             f"ros-{self.ROS_DISTRO}-ament-index-python",
         ]
 
-        parts_snippet[f"ros2-{self.ROS_DISTRO}/ros2-launch"][
-            "build-packages"
-        ].append("libpython3.10-dev")
+        parts_snippet[f"ros2-{self.ROS_DISTRO}/ros2-launch"]["build-packages"].append(
+            "libpython3.10-dev"
+        )
 
         # The part name must follow the format <extension-name>/<part-name>
         parts_snippet[

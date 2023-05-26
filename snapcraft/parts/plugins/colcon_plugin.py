@@ -209,14 +209,11 @@ class ColconPlugin(_ros.RosPlugin):
         # Specify the number of workers
         build_command.extend(["--parallel-workers", '"${CRAFT_PARALLEL_BUILD_COUNT}"'])
 
-        return (
-            ["## Build command", " ".join(build_command)]
-            + [
-                "## Post build command",
-                # Remove the COLCON_IGNORE marker so that, at staging,
-                # catkin can crawl the entire folder to look up for packages.
-                'if [ -f "${CRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE ]; then',
-                'rm "${CRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE',
-                "fi",
-            ]
-        )
+        return ["## Build command", " ".join(build_command)] + [
+            "## Post build command",
+            # Remove the COLCON_IGNORE marker so that, at staging,
+            # catkin can crawl the entire folder to look up for packages.
+            'if [ -f "${CRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE ]; then',
+            'rm "${CRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE',
+            "fi",
+        ]
