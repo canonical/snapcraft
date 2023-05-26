@@ -145,7 +145,7 @@ class TestExtensionROS2HumbleMetaExtensions:
             "$SNAP/opt/ros/humble/lib/python3.10/site-packages",
             "$SNAP/usr/lib/python3/dist-packages",
             "${PYTHONPATH}",
-            "$SNAP/opt/ros/underlay_ws/opt/ros/humble/lib/python3.8/site-packages",
+            "$SNAP/opt/ros/underlay_ws/opt/ros/humble/lib/python3.10/site-packages",
             "$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
         ]
         extension = setup_method_fixture(extension_class)
@@ -182,6 +182,7 @@ class TestExtensionROS2HumbleMetaExtensions:
                     "ros-humble-ros-workspace",
                     "ros-humble-ament-index-cpp",
                     "ros-humble-ament-index-python",
+                    'libpython3.10-dev',
                 ],
                 "stage-packages": [
                     "ros-humble-ros-environment",
