@@ -70,6 +70,11 @@ class TestExtensionROS2HumbleMetaExtensions:
             raise AssertionError(f"Couldn't get extension '{extension_name}': {exc}")
 
     @pytest.mark.parametrize(fixture_variables, fixture_values)
+    def test_experimental(self, extension_name, extension_class, meta, meta_dev):
+        extension = setup_method_fixture(extension_class)
+        assert extension.is_experimental(None)
+
+    @pytest.mark.parametrize(fixture_variables, fixture_values)
     def test_ros_version(self, extension_name, extension_class, meta, meta_dev):
         extension = setup_method_fixture(extension_class)
         assert extension.ROS_VERSION == "2"
