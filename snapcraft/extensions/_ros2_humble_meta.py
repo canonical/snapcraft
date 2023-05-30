@@ -114,6 +114,8 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
             f"ros-{self.ROS_DISTRO}-ament-index-python",
         ]
 
+        # Something in the ROS 2 build chain requires to find this lib during cmake call,
+        # however its cmake files ship with the '-dev' package.
         parts_snippet[f"ros2-{self.ROS_DISTRO}/ros2-launch"]["build-packages"].append(
             "libpython3.10-dev"
         )
