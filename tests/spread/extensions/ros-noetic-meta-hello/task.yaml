@@ -6,8 +6,7 @@ environment:
 
   SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
-  SNAP: catkin-roslaunch-wrapper
-
+  SNAP: catkin-noetic-hello
   SNAP_DIR: "../../plugins/v2/snaps/$SNAP"
 
   INTERFACE: ros-noetic
@@ -41,6 +40,10 @@ prepare: |
   # Overwrite the extension to test them all out of a single snap
   sed -i "s|ros1-noetic|${EXTENSION}|" "$SNAP_DIR/snap/snapcraft.yaml"
 
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  create_dpkg_restore_point
+
 restore: |
   cd "$SNAP_DIR"
   snapcraft clean
@@ -49,6 +52,10 @@ restore: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   restore_yaml "snap/snapcraft.yaml"
+
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  dpkg_restore_point
 
 execute: |
   cd "$SNAP_DIR"
@@ -66,12 +73,4 @@ execute: |
   # snap install "${META_SNAP}"
 
   snap connect "${SNAP}":"${INTERFACE}" "${META_SNAP}":"${INTERFACE}"
-
-  # Regression test for LP: #1660852. Make sure --help actually gets passed to
-  # roslaunch instead of being eaten by setup.sh.
-  "$SNAP" --help | MATCH "Usage: roslaunch"
-
-  # Run the ROS system. By default this will never exit, but the snap supports
-  # an `exit_after_receive` parameter that, if true, will cause the system to
-  # shutdown after the listener has successfully received a message.
-  "$SNAP" exit_after_receive:=true | MATCH "I heard Hello world"
+  [ "$($SNAP)" = "hello world" ]

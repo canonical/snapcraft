@@ -39,6 +39,10 @@ prepare: |
   # The snap stages ros2run which will be available through content-sharing
   sed -i "\|stage-packages|d" "$SNAP_DIR/snap/snapcraft.yaml"
 
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  create_dpkg_restore_point
+
 restore: |
   cd "$SNAP_DIR"
   snapcraft clean
@@ -47,6 +51,12 @@ restore: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   restore_yaml "snap/snapcraft.yaml"
+
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  dpkg_restore_point
+
+  snap remove --purge "${META_SNAP}"
 
 execute: |
   cd "$SNAP_DIR"
