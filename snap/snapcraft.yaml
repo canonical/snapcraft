@@ -1,5 +1,5 @@
 name: snapcraft
-base: core20
+base: core22
 summary: easily create snaps
 description: |
     Snapcraft aims to make upstream developers' lives easier and as such is not
@@ -22,6 +22,7 @@ apps:
     completer: snapcraft-completion
 
 build-packages:
+  - cargo
   - build-essential
   - intltool
   - libapt-pkg-dev
@@ -35,16 +36,10 @@ build-packages:
   - patch
   - pkg-config
   - python3-dev
+  - rustc
   - sed
 
 parts:
-  cryptography-deps:
-    # Rust build dependencies for Python cryptography library
-    plugin: nil
-    build-packages:
-      - cargo
-      - rustc
-
   bash-completion:
     source: debian
     plugin: dump
@@ -58,19 +53,21 @@ parts:
     source-branch: '0.9+snapcraft'
     autotools-configure-parameters:
       - --prefix=/
+    build-attributes:
+      - enable-patchelf
     build-packages:
       - g++
       - git
       - make
     override-pull: |
-      snapcraftctl pull
+      ${SNAP}/libexec/snapcraft/craftctl default
 
-      if [ "${SNAPCRAFT_TARGET_ARCH}" = "riscv64" ]; then
-        git am "${SNAPCRAFT_PROJECT_DIR}/snap/local/patches/patchelf/0001-Always-use-the-ET_DYN-codepath-avoiding-shifting-loa.patch"
-        git am "${SNAPCRAFT_PROJECT_DIR}/snap/local/patches/patchelf/0002-Fix-rewriteSectionsLibrary-to-not-assume-the-base-ad.patch"
+      if [ "${CRAFT_TARGET_ARCH}" = "riscv64" ]; then
+        git am "${CRAFT_PROJECT_DIR}/snap/local/patches/patchelf/0001-Always-use-the-ET_DYN-codepath-avoiding-shifting-loa.patch"
+        git am "${CRAFT_PROJECT_DIR}/snap/local/patches/patchelf/0002-Fix-rewriteSectionsLibrary-to-not-assume-the-base-ad.patch"
       fi
     override-build: |
-      snapcraftctl build
+      ${SNAP}/libexec/snapcraft/craftctl default
       make check
     prime:
       - bin/patchelf
@@ -90,8 +87,8 @@ parts:
         - libxml2
         - libxslt1.1
         - libpython3-stdlib
-        - libpython3.8-stdlib
-        - libpython3.8-minimal
+        - libpython3.10-stdlib
+        - libpython3.10-minimal
         - python3-pip
         - python3-setuptools
         - python3-wheel
@@ -99,11 +96,13 @@ parts:
         - python3-minimal
         - python3-distutils
         - python3-pkg-resources
-        - python3.8-minimal
+        - python3.10-minimal
         - squashfs-tools
         - xdelta3
+    build-attributes:
+      - enable-patchelf
     override-build: |
-      snapcraftctl build
+      ${SNAP}/libexec/snapcraft/craftctl default
 
       echo "Create libsodium symlink..."
       TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
@@ -111,7 +110,26 @@ parts:
       # Remove so the link can be recreated on re-builds
       rm -f "$TRIPLET_PATH/libsodium.so"
       ln -s "$LIBSODIUM" "$TRIPLET_PATH/libsodium.so"
-      $SNAPCRAFT_PROJECT_DIR/tools/snapcraft-override-build.sh
+
+      # Restore patched files
+      PYTHON_PACKAGE_PATH="${SNAPCRAFT_PART_INSTALL}/usr/lib/python3.10/"
+      CTYPES_INIT="ctypes/__init__.py"
+      CTYPES_INIT_ORIG="patched/${CTYPES_INIT}.orig"
+      [ -f "${CTYPES_INIT_ORIG}" ] && mv "${CTYPES_INIT_ORIG}" "${PYTHON_PACKAGE_PATH}/${CTYPES_INIT}"
+
+      # Apply patches
+      echo "Patching ctypes..."
+      patch -s -b "${PYTHON_PACKAGE_PATH}/${CTYPES_INIT}" "${SNAPCRAFT_PROJECT_DIR}/patches/ctypes_init.diff"
+
+      # Save patches to allow rebuilding
+      mkdir -p patched/ctypes
+      if [ -f "${PYTHON_PACKAGE_PATH}/${CTYPES_INIT}.orig" ]; then
+        mv "${PYTHON_PACKAGE_PATH}/${CTYPES_INIT}.orig" patched/ctypes
+      fi
+
+      # Disable site packages
+      sed -i "${SNAPCRAFT_PART_INSTALL}/usr/lib/python3.10/site.py" \
+        -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
 
   snapcraft:
     source: .
@@ -119,32 +137,38 @@ parts:
     python-packages:
         - wheel
         - pip
-        - setuptools<66  # Limited to < 66 because we need `pkg_resources` and because `python-apt` doesn't build with the latest.
-    requirements:
+        # Limited to < 66 because we need `pkg_resources` and because `python-apt`
+        # does not build with the latest.
+        - setuptools<66
+    python-requirements:
         - requirements.txt
     organize:
-        # Put snapcraftctl into its own directory that can be included in the PATH
+        # Put snapcraftctl and craftctl into its own directory that can be included in the PATH
         # without including other binaries.
+        bin/craftctl: libexec/snapcraft/craftctl
         bin/snapcraftctl: bin/scriptlet-bin/snapcraftctl
         # Also install the compatibility wrapper for core22+
         bin/snapcraftctl-compat: libexec/snapcraft/snapcraftctl
+    build-attributes:
+      - enable-patchelf
     build-environment:
-        - "PIP_NO_BINARY": "PyNaCl"  # Build PyNaCl from source since the wheel files interact strangely with classic snaps.
-        - "SODIUM_INSTALL": "system"  # Use base image's libsodium for PyNaCl
-        - "CFLAGS": "$(pkg-config python-3.8 yaml-0.1 --cflags)"
+        # Build PyNaCl from source since the wheel files interact strangely with classic snaps.
+        - "PIP_NO_BINARY": "PyNaCl"
+        # Use base image's libsodium for PyNaCl
+        - "SODIUM_INSTALL": "system"
+        - "CFLAGS": "$(pkg-config python-3.10 yaml-0.1 --cflags)"
     override-build: |
-        snapcraftctl build
+        set -x
+
+        ${SNAP}/libexec/snapcraft/craftctl default
 
         version="$(python3 setup.py --version)"
-        snapcraftctl set-version "$version"
+        ${SNAP}/libexec/snapcraft/craftctl set version="$version"
 
         [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
-        snapcraftctl set-grade "$grade"
-        ln -sf ../usr/bin/python3.8 $SNAPCRAFT_PART_INSTALL/bin/python3
-        mkdir -p $SNAPCRAFT_PART_INSTALL/libexec/snapcraft
-        mv $SNAPCRAFT_PART_INSTALL/bin/craftctl $SNAPCRAFT_PART_INSTALL/libexec/snapcraft/
-        sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python -E|' $SNAPCRAFT_PART_INSTALL/libexec/snapcraft/craftctl
-    after: [snapcraft-libs, cryptography-deps]
+        sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python -E|' $SNAPCRAFT_PART_INSTALL/bin/craftctl
+        ${SNAP}/libexec/snapcraft/craftctl set grade="$grade"
+    after: [snapcraft-libs]
 
 hooks:
   configure:
