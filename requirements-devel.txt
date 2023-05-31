@@ -125,6 +125,6 @@ wrapt==1.15.0
 ws4py==0.5.1
 zope.deprecation==5.0
 zope.interface==6.0
-python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.1ubuntu0.20.04.1/python-apt_2.0.1ubuntu0.20.04.1.tar.xz; sys.platform == "linux"
 setuptools<66
+python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz; sys.platform == "linux"
 pyinstaller==4.10; sys.platform == "win32"
