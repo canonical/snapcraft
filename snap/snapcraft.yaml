@@ -175,8 +175,3 @@ parts:
         # The new implementation still requires this.
         ln -sf ../usr/bin/python3.10 $SNAPCRAFT_PART_INSTALL/bin/python3
     after: [snapcraft-libs]
-
-hooks:
-  configure:
-    environment:
-      PATH: "$SNAP/bin"
