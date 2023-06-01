@@ -1,7 +1,6 @@
 summary: Build a snap that uses build-environment
 
-# This test snap uses core18
-systems: [ubuntu-18*]
+systems: [ubuntu-20.04]
 
 environment:
   SNAP_DIR: snaps/build-environment-test

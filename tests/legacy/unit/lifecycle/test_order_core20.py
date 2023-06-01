@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Sequence
+from typing import Optional, Sequence
 from unittest.mock import call, patch
 
 import pytest
@@ -27,7 +27,9 @@ from snapcraft_legacy.project import Project
 
 
 class FakePart:
-    def __init__(self, name: str = "part1", build_attributes: Sequence = None) -> None:
+    def __init__(
+        self, name: str = "part1", build_attributes: Optional[Sequence] = None
+    ) -> None:
         self.name = name
 
         if build_attributes is None:
