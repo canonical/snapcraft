@@ -1,0 +1,21 @@
+name: colcon-ros2-talker-listener
+version: "1.0"
+summary: hello world
+description: |
+  A ROS 2 talker-listener.
+
+grade: stable
+confinement: strict
+base: core20
+
+apps:
+  colcon-ros2-talker-listener:
+    command: ros2 launch colcon-ros2-talker-listener talker_listener.launch.py
+    plugs: [network, network-bind]
+    extensions: [ros2-foxy]
+
+parts:
+  hello:
+    plugin: colcon
+    source: .
+    build-packages: [g++, make]
