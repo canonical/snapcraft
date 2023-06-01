@@ -55,8 +55,7 @@ def test_extension(extension_class):
     }
 
     assert ros1_extension.part_snippet == {
-        "build-environment": [{"ROS_VERSION": "1"}, {"ROS_DISTRO": "noetic"}],
-        "stage-packages": ["ros-noetic-ros-environment"],
+        "build-environment": [{"ROS_VERSION": "1"}, {"ROS_DISTRO": "noetic"}]
     }
 
     assert ros1_extension.parts == {

@@ -64,6 +64,8 @@ class RosNoeticMetaBase(RosNoeticExtension):
             f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{self.ros_noetic_snaps.sdk}/current/usr"'
         ]
 
+        self.part_snippet["stage-packages"] = [f"ros-{self.ROS_DISTRO}-ros-environment"]
+
         self.part_snippet["build-snaps"] = [self.ros_noetic_snaps.sdk]
 
         python_paths = self.app_snippet["environment"]["PYTHONPATH"]
