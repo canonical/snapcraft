@@ -157,6 +157,7 @@ class TestArchConfig:
             ("riscv64", "riscv64-linux-gnu"),
             ("s390x", "s390x-linux-gnu"),
             ("x86_64", "x86_64-linux-gnu"),
+            ("i686", "i386-linux-gnu"),
         ],
     )
     def test_get_arch_triplet_host(self, mocker, machine, expected_arch_triplet):
@@ -175,6 +176,7 @@ class TestArchConfig:
             ("riscv64", "riscv64-linux-gnu"),
             ("s390x", "s390x-linux-gnu"),
             ("x86_64", "x86_64-linux-gnu"),
+            ("i686", "i386-linux-gnu"),
         ],
     )
     def test_get_arch_triplet(self, mocker, machine, expected_arch_triplet):
@@ -202,4 +204,5 @@ class TestArchConfig:
             "riscv64-linux-gnu",
             "s390x-linux-gnu",
             "x86_64-linux-gnu",
+            "i386-linux-gnu",
         ]

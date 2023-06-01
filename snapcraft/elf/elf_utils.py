@@ -104,6 +104,7 @@ _ARCH_CONFIG = {
     "riscv64": _ArchConfig("riscv64-linux-gnu", "lib/ld-linux-riscv64-lp64d.so.1"),
     "s390x": _ArchConfig("s390x-linux-gnu", "lib/ld64.so.1"),
     "x86_64": _ArchConfig("x86_64-linux-gnu", "lib64/ld-linux-x86-64.so.2"),
+    "i686": _ArchConfig("i386-linux-gnu", "lib/ld-linux.so.2"),
 }
 
 
