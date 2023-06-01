@@ -12,10 +12,14 @@ license: GPL-3.0
 assumes:
   - snapd2.43
 
+# https://github.com/snapcore/snapcraft/issues/4187
+environment:
+  PATH: "$SNAP/libexec/snapcraft:/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+  LD_LIBRARY_PATH: "$SNAP/none"
+
 apps:
   snapcraft:
     environment:
-      PATH: "$SNAP/libexec/snapcraft:/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
       # https://github.com/lxc/pylxd/pull/361
       PYLXD_WARNINGS: "none"
     command: bin/python $SNAP/bin/snapcraft
