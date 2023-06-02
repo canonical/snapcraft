@@ -8,7 +8,7 @@ click==8.1.3
 craft-archives==1.0.0
 craft-cli==1.2.0
 craft-grammar==1.1.1
-craft-parts==1.19.3
+craft-parts==1.19.5
 craft-providers==1.10.0
 craft-store==2.4.0
 cryptography==40.0.2
