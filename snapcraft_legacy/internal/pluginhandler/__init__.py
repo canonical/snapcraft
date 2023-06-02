@@ -521,17 +521,11 @@ class PluginHandler:
         if self.source_handler:
             self.source_handler.pull()
 
-        if isinstance(self.plugin, plugins.v1.PluginV1):
-            self.plugin.pull()
-
     def mark_pull_done(self):
         # Send an empty pull_properties for state. This makes it easy
         # to keep using what we have or to back out of not doing any
         # pulling in the plugins.
-        if isinstance(self.plugin, plugins.v1.PluginV1):
-            pull_properties = self.plugin.get_pull_properties()
-        else:
-            pull_properties = dict()
+        pull_properties = dict()
 
         # Add the processed list of build packages and snaps.
         part_build_packages = self._grammar_processor.get_build_packages()
@@ -580,15 +574,11 @@ class PluginHandler:
         if self.stage_packages_path.exists():
             shutil.rmtree(self.stage_packages_path)
 
-        if isinstance(self.plugin, plugins.v1.PluginV1):
-            self.plugin.clean_pull()
         self.mark_cleaned(steps.PULL)
 
     def prepare_build(self, force=False):
         # TODO cleanup entire rebuilding and cleanup logic.
-        if not isinstance(self.plugin, plugins.v1.PluginV1) and os.path.exists(
-            self.part_install_dir
-        ):
+        if os.path.exists(self.part_install_dir):
             shutil.rmtree(self.part_install_dir)
 
         self.makedirs()
@@ -632,9 +622,6 @@ class PluginHandler:
 
         :returns: str with the build step environment.
         """
-        if isinstance(self.plugin, plugins.v1.PluginV1):
-            raise RuntimeError("PluginV1 not supported.")
-
         # Snapcraft's say.
         snapcraft_build_environment = get_snapcraft_part_environment(self, step=step)
 
@@ -668,9 +655,6 @@ class PluginHandler:
             return run_environment.getvalue()
 
     def _do_v2_build(self):
-        if isinstance(self.plugin, plugins.v1.PluginV1):
-            raise RuntimeError("PluginV1 not supported.")
-
         # Save script executed by snapcraft.
         build_script_path = pathlib.Path(self.part_dir) / "run" / "build.sh"
         build_script_path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
@@ -723,12 +707,8 @@ class PluginHandler:
         self.mark_build_done()
 
     def mark_build_done(self):
-        if isinstance(self.plugin, plugins.v1.PluginV1):
-            build_properties = self.plugin.get_build_properties()
-            plugin_manifest = self.plugin.get_manifest()
-        else:
-            build_properties = dict()
-            plugin_manifest = dict()
+        build_properties = dict()
+        plugin_manifest = dict()
         machine_manifest = self._get_machine_manifest()
 
         # Extract any requested metadata available in the build directory,
@@ -818,15 +798,9 @@ class PluginHandler:
         if os.path.exists(self.part_install_dir):
             shutil.rmtree(self.part_install_dir)
 
-        if isinstance(self.plugin, plugins.v1.PluginV1):
-            self.plugin.clean_build()
         self.mark_cleaned(steps.BUILD)
 
     def migratable_fileset_for(self, step):
-        if isinstance(self.plugin, plugins.v1.PluginV1):
-            plugin_fileset = self.plugin.snap_fileset()
-        else:
-            plugin_fileset = list()
         fileset = self._get_fileset(step.name).copy()
         includes = _get_includes(fileset)
         # If we're priming and we don't have an explicit set of files to prime
@@ -834,8 +808,6 @@ class PluginHandler:
         if step == steps.PRIME and (fileset == ["*"] or len(includes) == 0):
             stage_fileset = self._get_fileset(steps.STAGE.name).copy()
             fileset = _combine_filesets(stage_fileset, fileset)
-
-        fileset.extend(plugin_fileset)
 
         return _migratable_filesets(fileset, self.part_install_dir)
 
@@ -1106,9 +1078,6 @@ class PluginHandler:
                 )
 
         return dependency_paths
-
-    def env(self, root):
-        return self.plugin.env(root)
 
     def clean(self, project_staged_state=None, project_primed_state=None, step=None):
         if not project_staged_state:

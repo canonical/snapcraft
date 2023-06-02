@@ -14,7 +14,7 @@ prepare: |
 
 restore: |
   cd "$SNAP"
-  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
       snapcraft clean --use-lxd
   else
       snapcraft clean --destructive-mode
@@ -31,7 +31,7 @@ execute: |
 
   # Build what we have.
   # We cannot use --use-lxd for autopkgtest so we resort to --destructive-mode there.
-  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
       snapcraft --use-lxd
   else
       snapcraft --destructive-mode

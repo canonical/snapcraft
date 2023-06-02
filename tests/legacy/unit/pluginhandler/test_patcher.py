@@ -66,7 +66,7 @@ class TestStaticBasePatching:
             "test-part",
             snap_type="app",
             base="bare",
-            build_base="core18",
+            build_base="core20",
             confinement=confinement,
         )
 
@@ -93,7 +93,7 @@ class TestStaticBasePatching:
             "test-part",
             snap_type="app",
             base="bare",
-            build_base="core18",
+            build_base="core20",
             confinement=confinement,
         )
 
@@ -113,7 +113,7 @@ class TestStaticBasePatching:
             "test-part",
             snap_type="app",
             base=None,
-            build_base="core18",
+            build_base="core20",
             confinement=confinement,
         )
 
@@ -173,7 +173,7 @@ class TestPrimeTypeExcludesPatching:
             "base",
             dict(
                 snap_type="base",
-                snap_name="core18",
+                snap_name="core20",
                 confinement=None,
                 build_attributes=None,
             ),

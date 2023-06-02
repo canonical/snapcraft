@@ -181,7 +181,6 @@ def get_dispatcher() -> craft_cli.Dispatcher:
     """
     # Run the legacy implementation if inside a legacy managed environment.
     if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
-        snapcraft.BasePlugin = snapcraft_legacy.BasePlugin  # type: ignore
         snapcraft.ProjectOptions = snapcraft_legacy.ProjectOptions  # type: ignore
         legacy.legacy_run()
 
