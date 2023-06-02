@@ -43,7 +43,8 @@ jobs:
           snap watch --last=install
           echo "::endgroup::"
       - name: Run Linters
-        run: tox run --skip-pkg-install -m lint
+        run: |
+          tox run --skip-pkg-install -m lint
   tests:
     strategy:
       fail-fast: false  # Run all the tests to their conclusions.
