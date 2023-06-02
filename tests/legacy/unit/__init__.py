@@ -125,8 +125,6 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         # source changes.
         self.xdg_path = self.useFixture(fixtures.TempDir()).path
         self.useFixture(fixture_setup.TempXDG(self.xdg_path))
-        self.fake_terminal = fixture_setup.FakeTerminal()
-        self.useFixture(self.fake_terminal)
         # Some tests will directly or indirectly change the plugindir, which
         # is a module variable. Make sure that it is returned to the original
         # value when a test ends.
@@ -265,7 +263,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         project=None,
         stage_packages_repo=None,
         snap_name="test-snap",
-        base="core18",
+        base="core20",
         build_base=None,
         confinement="strict",
         snap_type="app",
