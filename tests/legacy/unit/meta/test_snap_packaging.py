@@ -17,7 +17,7 @@
 import textwrap
 from pathlib import Path
 
-from testtools.matchers import Equals, FileContains, Is
+from testtools.matchers import Equals, Is
 
 from snapcraft_legacy.internal.meta._snap_packaging import _SnapPackaging
 from snapcraft_legacy.internal.project_loader import load_config
@@ -77,28 +77,6 @@ class SnapPackagingRunnerTests(unit.TestCase):
 
         self.assertThat(snapcraft_runner, Equals(expected_runner))
 
-    def test_classic_app_with_snapd_workaround(self):
-        """Test workaround for classic (LP: #1860369)."""
-        apps = dict(testapp=dict(command="echo"))
-
-        sp = self._get_snap_packaging(apps=apps, base="core18", confinement="classic")
-        runner = sp._generate_snapcraft_runner()
-
-        self.expectThat(runner, Equals("snap/command-chain/snapcraft-runner"))
-        runner_path = Path(self.path, "prime", runner)
-        self.expectThat(
-            runner_path,
-            FileContains(
-                textwrap.dedent(
-                    """
-            #!/bin/sh
-
-            exec "$@"
-            """
-                ).lstrip()
-            ),
-        )
-
     def test_classic_app_without_snapd_workaround(self):
         """Test no workaround for classic (LP: #1860369)."""
         apps = dict(testapp=dict(command="echo"))
@@ -116,7 +94,7 @@ class SnapPackagingRunnerTests(unit.TestCase):
             confinement="classic",
             type="snapd",
             base=None,
-            build_base="core18",
+            build_base="core20",
         )
         runner = sp._generate_snapcraft_runner()
 
@@ -126,7 +104,7 @@ class SnapPackagingRunnerTests(unit.TestCase):
         apps = dict(testapp=dict(command="echo"))
 
         sp = self._get_snap_packaging(
-            apps=apps, confinement="classic", type="app", base="core18"
+            apps=apps, confinement="classic", type="app", base="core20"
         )
 
         assembled_env = sp._assemble_runtime_environment()
@@ -137,7 +115,7 @@ class SnapPackagingRunnerTests(unit.TestCase):
         apps = dict(testapp=dict(command="echo"))
 
         sp = self._get_snap_packaging(
-            apps=apps, confinement="strict", type="app", base="core18"
+            apps=apps, confinement="strict", type="app", base="core20"
         )
 
         assembled_env = sp._assemble_runtime_environment()
@@ -156,7 +134,7 @@ class SnapPackagingRunnerTests(unit.TestCase):
         parts = {"part1": {"plugin": "nil", "build-attributes": ["enable-patchelf"]}}
 
         sp = self._get_snap_packaging(
-            apps=apps, parts=parts, confinement="strict", type="app", base="core18"
+            apps=apps, parts=parts, confinement="strict", type="app", base="core20"
         )
 
         assembled_env = sp._assemble_runtime_environment()
@@ -180,7 +158,7 @@ class SnapPackagingRunnerTests(unit.TestCase):
             parts=parts,
             confinement="strict",
             type="app",
-            base="core18",
+            base="core20",
             hooks=hooks,
         )
 
@@ -201,7 +179,7 @@ class SnapPackagingRunnerTests(unit.TestCase):
             parts=parts,
             confinement="strict",
             type="app",
-            base="core18",
+            base="core20",
             hooks=hooks,
         )
 

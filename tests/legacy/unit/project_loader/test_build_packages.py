@@ -36,7 +36,7 @@ def test_build_packages_from_snapcraft_yaml(tmp_work_path):
     snapcraft_yaml = dedent(
         """\
         name: test
-        base: core18
+        base: core20
         version: "1.0"
         summary: test
         description: test
@@ -67,7 +67,7 @@ def test_config_adds_vcs_packages_to_build_packages(
     snapcraft_yaml = dedent(
         f"""\
             name: test
-            base: core18
+            base: core20
             version: "1"
             summary: test
             description: test
@@ -103,7 +103,7 @@ def test_config_adds_vcs_packages_to_build_packages_from_types(
     snapcraft_yaml = dedent(
         f"""\
             name: test
-            base: core18
+            base: core20
             version: "1"
             summary: test
             description: test
@@ -127,7 +127,7 @@ def test_git_added_for_version_git(tmp_work_path):
     snapcraft_yaml = dedent(
         """\
             name: test
-            base: core18
+            base: core20
             version: "git"
             summary: test
             description: test

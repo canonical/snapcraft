@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import copy
 import os
 import re
 import stat
@@ -26,7 +25,6 @@ import fixtures
 import pytest
 from testtools.matchers import Contains, Equals, FileExists, Not
 
-import snapcraft_legacy
 from snapcraft_legacy.internal import (
     common,
     errors,
@@ -39,14 +37,16 @@ from snapcraft_legacy.internal import (
 )
 from snapcraft_legacy.internal.sources.errors import SnapcraftSourceUnhandledError
 from snapcraft_legacy.project import Project
-from tests.legacy import fixture_setup, unit
-
-from . import mocks
+from tests.legacy import unit
 
 
 class PluginTestCase(unit.TestCase):
     def test_build_with_subdir_copies_sourcedir(self):
-        handler = self.load_part("test-part", part_properties={"source-subdir": "src"})
+        handler = self.load_part(
+            "test-part",
+            plugin_name="dump",
+            part_properties={"source": ".", "source-subdir": "src"},
+        )
 
         sourcedir = handler.part_source_dir
         source_subdir = handler.plugin.options.source_subdir
@@ -58,7 +58,7 @@ class PluginTestCase(unit.TestCase):
 
         self.assertThat(
             handler.part_build_work_dir,
-            Equals(os.path.join(handler.plugin.build_basedir, source_subdir)),
+            Equals(os.path.join(handler.part_dir, "build", source_subdir)),
         )
 
         handler.build()
@@ -83,13 +83,14 @@ class PluginTestCase(unit.TestCase):
         os.makedirs(handler.part_source_dir)
         open(os.path.join(handler.part_source_dir, "file"), "w").close()
 
-        self.assertThat(handler.part_build_dir, Equals(handler.plugin.build_basedir))
+        self.assertThat(
+            handler.part_build_dir,
+            Equals(os.path.join(handler.part_dir, "build")),
+        )
 
         handler.build()
 
-        self.assertTrue(
-            os.path.exists(os.path.join(handler.plugin.build_basedir, "file"))
-        )
+        self.assertTrue(os.path.exists(os.path.join(handler.part_dir, "build", "file")))
 
     @patch("os.path.isdir", return_value=False)
     def test_local_non_dir_source_path_must_raise_exception(self, mock_isdir):
@@ -118,31 +119,6 @@ class PluginTestCase(unit.TestCase):
             include, Equals(["opt/something", "usr/bin", "-everything", r"\a"])
         )
         self.assertThat(exclude, Equals(["etc", "usr/lib/*.a"]))
-
-    @patch.object(snapcraft_legacy.plugins.v1.nil.NilPlugin, "snap_fileset")
-    def test_migratable_fileset_for_no_options_modification(self, mock_snap_fileset):
-        """Making sure migratable_fileset_for() doesn't modify options"""
-
-        mock_snap_fileset.return_value = ["baz"]
-
-        handler = self.load_part("test-part")
-        handler.plugin.options.snap = ["foo"]
-        handler.plugin.options.stage = ["bar"]
-        expected_options = copy.deepcopy(handler.plugin.options)
-
-        handler.migratable_fileset_for(steps.STAGE)
-        self.assertThat(
-            vars(handler.plugin.options),
-            Equals(vars(expected_options)),
-            "Expected options to be unmodified",
-        )
-
-        handler.migratable_fileset_for(steps.BUILD)
-        self.assertThat(
-            vars(handler.plugin.options),
-            Equals(vars(expected_options)),
-            "Expected options to be unmodified",
-        )
 
     def test_fileset_only_includes(self):
         stage_set = ["opt/something", "usr/bin"]
@@ -454,22 +430,6 @@ class PluginTestCase(unit.TestCase):
         handler.build()
         mock_organize.assert_called_once_with(
             "test-part", {}, handler.part_install_dir, False
-        )
-
-    @patch("snapcraft_legacy.internal.pluginhandler._organize_filesets")
-    def test_update_build_organizes_with_overwrite(self, mock_organize):
-        class TestPlugin(snapcraft_legacy.BasePlugin):
-            def __init__(self, *args, **kwargs):
-                super().__init__(*args, **kwargs)
-                self.out_of_source_build = True
-
-        self.useFixture(fixture_setup.FakePlugin("test-plugin", TestPlugin))
-
-        handler = self.load_part("test-part", plugin_name="test-plugin")
-        handler.makedirs()
-        handler.update_build()
-        mock_organize.assert_called_once_with(
-            "test-part", {}, handler.part_install_dir, True
         )
 
 
@@ -850,7 +810,7 @@ class RealStageTestCase(unit.TestCase):
             dedent(
                 """\
             name: pc-file-test
-            base: core18
+            base: core20
             version: "1.0"
             summary: test pkg-config .pc
             description: when the .pc files reach stage the should be reprefixed
@@ -1074,32 +1034,7 @@ class IsDirtyTestCase(unit.TestCase):
             "Expected vanilla handler to not have a dirty stage step",
         )
 
-    def test_build_is_dirty_from_options(self):
-        self.useFixture(fixture_setup.FakePlugin("test-plugin", mocks.TestPlugin))
-        self.handler = self.load_part(
-            "test-part", "test-plugin", {"test-property": "foo"}
-        )
-        self.handler.mark_build_done()
-        self.assertFalse(
-            self.handler.is_clean(steps.BUILD), "Build step was unexpectedly clean"
-        )
-        self.assertFalse(
-            self.handler.is_dirty(steps.BUILD), "Build step was unexpectedly dirty"
-        )
-
-        # Change `test-property`, thereby making the build step dirty.
-        self.handler = self.load_part(
-            "test-part", "test-plugin", {"test-property": "bar"}
-        )
-        self.assertFalse(
-            self.handler.is_clean(steps.BUILD), "Build step was unexpectedly clean"
-        )
-        self.assertTrue(
-            self.handler.is_dirty(steps.BUILD), "Expected build step to be dirty"
-        )
-
-    @patch.object(snapcraft_legacy.BasePlugin, "enable_cross_compilation")
-    def test_build_is_dirty_from_project(self, mock_enable_cross_compilation):
+    def test_build_is_dirty_from_project(self):
         project = Project(target_deb_arch="amd64")
         self.handler = self.load_part("test-part", project=project)
         self.handler.mark_build_done()
@@ -1131,32 +1066,7 @@ class IsDirtyTestCase(unit.TestCase):
             "Expected vanilla handler to not have a dirty build step",
         )
 
-    def test_pull_is_dirty_from_options(self):
-        self.useFixture(fixture_setup.FakePlugin("test-plugin", mocks.TestPlugin))
-        self.handler = self.load_part(
-            "test-part", "test-plugin", {"test-property": "foo"}
-        )
-        self.handler.mark_pull_done()
-        self.assertFalse(
-            self.handler.is_clean(steps.PULL), "Pull step was unexpectedly clean"
-        )
-        self.assertFalse(
-            self.handler.is_dirty(steps.PULL), "Pull step was unexpectedly dirty"
-        )
-
-        # Change `test-property`, thereby making the pull step dirty.
-        self.handler = self.load_part(
-            "test-part", "test-plugin", {"test-property": "bar"}
-        )
-        self.assertFalse(
-            self.handler.is_clean(steps.PULL), "Pull step was unexpectedly clean"
-        )
-        self.assertTrue(
-            self.handler.is_dirty(steps.PULL), "Expected pull step to be dirty"
-        )
-
-    @patch.object(snapcraft_legacy.BasePlugin, "enable_cross_compilation")
-    def test_pull_is_dirty_from_project(self, mock_enable_cross_compilation):
+    def test_pull_is_dirty_from_project(self):
         project = Project(target_deb_arch="amd64")
         self.handler = self.load_part("test-part", project=project)
         self.handler.mark_pull_done()
@@ -1211,10 +1121,10 @@ class IsOutdatedTest(unit.TestCase):
         # Now mark the stage state as done, but ensure it has a later
         # timestamp, thereby making the prime step out of date.
         prime_state_path = states.get_step_state_file(
-            self.handler.plugin.statedir, steps.PRIME
+            self.handler.part_state_dir, steps.PRIME
         )
         stage_state_path = states.get_step_state_file(
-            self.handler.plugin.statedir, steps.STAGE
+            self.handler.part_state_dir, steps.STAGE
         )
         open(stage_state_path, "w").close()
         self.set_modified_time_later(stage_state_path, prime_state_path)
@@ -1234,10 +1144,10 @@ class IsOutdatedTest(unit.TestCase):
         # Now mark the build state as done, but ensure it has a later
         # timestamp, thereby making the stage step out of date.
         stage_state_path = states.get_step_state_file(
-            self.handler.plugin.statedir, steps.STAGE
+            self.handler.part_state_dir, steps.STAGE
         )
         build_state_path = states.get_step_state_file(
-            self.handler.plugin.statedir, steps.BUILD
+            self.handler.part_state_dir, steps.BUILD
         )
         open(build_state_path, "w").close()
         self.set_modified_time_later(build_state_path, stage_state_path)
@@ -1257,10 +1167,10 @@ class IsOutdatedTest(unit.TestCase):
         # Now mark the pull state as done, but ensure it has a later
         # timestamp, thereby making the build step out of date.
         build_state_path = states.get_step_state_file(
-            self.handler.plugin.statedir, steps.BUILD
+            self.handler.part_state_dir, steps.BUILD
         )
         pull_state_path = states.get_step_state_file(
-            self.handler.plugin.statedir, steps.PULL
+            self.handler.part_state_dir, steps.PULL
         )
         open(pull_state_path, "w").close()
         self.set_modified_time_later(pull_state_path, build_state_path)
@@ -1280,7 +1190,7 @@ class IsOutdatedTest(unit.TestCase):
         # thereby making the pull step out of date.
         open("new_file", "w").close()
         pull_state_path = states.get_step_state_file(
-            self.handler.plugin.statedir, steps.PULL
+            self.handler.part_state_dir, steps.PULL
         )
         self.set_modified_time_later("new_file", pull_state_path)
 

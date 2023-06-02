@@ -1684,3 +1684,29 @@ class TestArchitecture:
         )
         project = Project.unmarshal(data)
         assert project.get_build_for() == "armhf"
+
+    def test_project_get_build_for_arch_triplet(self, project_yaml_data):
+        """Get architecture triplet for the build-for architecture."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["arm64"], "build-for": ["armhf"]},
+            ]
+        )
+
+        project = Project.unmarshal(data)
+        arch_triplet = project.get_build_for_arch_triplet()
+
+        assert arch_triplet == "arm-linux-gnueabihf"
+
+    def test_project_get_build_for_arch_triplet_all(self, project_yaml_data):
+        """When build-for = "all", the build-for arch triplet should be None."""
+        data = project_yaml_data(
+            architectures=[
+                {"build-on": ["arm64"], "build-for": ["all"]},
+            ]
+        )
+
+        project = Project.unmarshal(data)
+        arch_triplet = project.get_build_for_arch_triplet()
+
+        assert not arch_triplet
