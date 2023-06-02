@@ -182,40 +182,6 @@ class TestGetPartSnippet:
                     )
                 },
                 {
-                    "LD_LIBRARY_PATH": ":".join(
-                        [
-                            "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                            "lib/$CRAFT_ARCH_TRIPLET",
-                            "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                            "usr/lib/$CRAFT_ARCH_TRIPLET",
-                            "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/usr/lib",
-                            "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                            "usr/lib/vala-current",
-                            "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                            "usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
-                        ]
-                    )
-                    + "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-                },
-                {
-                    "PKG_CONFIG_PATH": (
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                        "usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig:"
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                        "usr/lib/pkgconfig:"
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                        "usr/share/pkgconfig"
-                    )
-                    + "${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
-                },
-                {
-                    "ACLOCAL_PATH": (
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                        "usr/share/aclocal"
-                    )
-                    + "${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
-                },
-                {
                     "SNAPCRAFT_CMAKE_ARGS": (
                         "-DCMAKE_FIND_ROOT_PATH="
                         "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current"
@@ -240,39 +206,6 @@ def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
                     "$CRAFT_STAGE/usr/share:/snap/kf5-5-105-qt-5-15-9-core22-sdk"
                     "/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
                 )
-            },
-            {
-                "LD_LIBRARY_PATH": ":".join(
-                    [
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                        "lib/$CRAFT_ARCH_TRIPLET",
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                        "usr/lib/$CRAFT_ARCH_TRIPLET",
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/usr/lib",
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                        "usr/lib/vala-current",
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                        "usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
-                    ]
-                )
-                + "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-            },
-            {
-                "PKG_CONFIG_PATH": (
-                    "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                    "usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig:"
-                    "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                    "usr/lib/pkgconfig:"
-                    "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                    "usr/share/pkgconfig"
-                )
-                + "${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
-            },
-            {
-                "ACLOCAL_PATH": (
-                    "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/" "usr/share/aclocal"
-                )
-                + "${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
             },
             {
                 "SNAPCRAFT_CMAKE_ARGS": (
