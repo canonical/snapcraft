@@ -91,7 +91,7 @@ class ProvidesTest(unit.TestCase):
         )
 
     def test_provides_file_outside_stage_or_prime(self):
-        file_path = os.path.join(self.part1.plugin.sourcedir, "file")
+        file_path = os.path.join(self.part1.part_source_dir, "file")
         open(file_path, "w").close()
 
         raised = self.assertRaises(
