@@ -45,6 +45,13 @@ def test_schema():
                 "type": "array",
                 "uniqueItems": True,
             },
+            "ros-build-snaps": {
+                "default": [],
+                "items": {"type": "string"},
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": True,
+            },
         },
         "type": "object",
     }
@@ -58,6 +65,22 @@ def test_get_build_packages():
         "ros-noetic-catkin",
         "rospack-tools",
     }
+
+
+def test_get_build_snaps():
+    class OptionsDefault:
+        ros_build_snaps = list()
+
+    plugin = catkin.CatkinPlugin(part_name="my-part", options=OptionsDefault())
+
+    assert plugin.get_build_snaps() == set()
+
+    class Options:
+        ros_build_snaps = ["Foo"]
+
+    plugin = catkin.CatkinPlugin(part_name="my-part", options=Options())
+
+    assert plugin.get_build_snaps() == {"Foo"}
 
 
 def test_get_build_environment():
@@ -79,7 +102,7 @@ def test_get_build_commands(monkeypatch):
         catkin_cmake_args = list()
         catkin_packages = list()
         catkin_packages_ignore = list()
-        build_snaps = list()
+        ros_build_snaps = list()
 
     plugin = catkin.CatkinPlugin(part_name="my-part", options=Options())
 
@@ -161,7 +184,7 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         catkin_cmake_args = ["cmake", "args..."]
         catkin_packages = ["package1", "package2..."]
         catkin_packages_ignore = ["ipackage1", "ipackage2..."]
-        build_snaps = ["foo"]
+        ros_build_snaps = ["foo"]
 
     plugin = catkin.CatkinPlugin(part_name="my-part", options=Options())
 

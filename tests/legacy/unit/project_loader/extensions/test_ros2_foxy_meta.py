@@ -102,7 +102,7 @@ class TestClass:
 
         assert ros_extension.part_snippet == {
             "build-environment": [{"ROS_VERSION": "2"}, {"ROS_DISTRO": "foxy"}],
-            "build-snaps": [meta_dev],
+            "ros-build-snaps": [meta_dev],
             "colcon-cmake-args": [
                 f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{meta_dev}/current/usr"'
             ],

@@ -99,7 +99,7 @@ class TestPluginColconPlugin:
                     "colcon-cmake-args": ["cmake", "args..."],
                     "colcon-packages": ["package1", "package2..."],
                     "colcon-packages-ignore": ["ipackage1", "ipackage2..."],
-                    "build-snaps": ["ros-core"],
+                    "ros-build-snaps": ["ros-core"],
                 }
             )
         except ValidationError as e:
@@ -111,7 +111,7 @@ class TestPluginColconPlugin:
         assert properties.colcon_cmake_args == ["cmake", "args..."]  # type: ignore
         assert properties.colcon_packages == ["package1", "package2..."]  # type: ignore
         assert properties.colcon_packages_ignore == ["ipackage1", "ipackage2..."]  # type: ignore
-        assert properties.build_snaps == ["ros-core"]  # type: ignore
+        assert properties.ros_build_snaps == ["ros-core"]  # type: ignore
 
     def test_get_build_packages(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(new_dir)
@@ -123,6 +123,26 @@ class TestPluginColconPlugin:
             "python3-wstool",
             "rospack-tools",
         }
+
+    def test_get_build_snaps(self, setup_method_fixture, new_dir):
+        plugin = setup_method_fixture(new_dir)
+
+        assert plugin.get_build_snaps() == set()
+
+        plugin = setup_method_fixture(
+            new_dir,
+            properties={
+                "source": ".",
+                "colcon-ament-cmake-args": [],
+                "colcon-catkin-cmake-args": [],
+                "colcon-cmake-args": [],
+                "colcon-packages": [],
+                "colcon-packages-ignore": [],
+                "ros-build-snaps": ["Foo"],
+            },
+        )
+
+        assert plugin.get_build_snaps() == {"Foo"}
 
     def test_get_build_environment(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(new_dir)
@@ -237,7 +257,7 @@ class TestPluginColconPlugin:
                 "colcon-cmake-args": ["cmake", "args..."],
                 "colcon-packages": ["package1", "package2..."],
                 "colcon-packages-ignore": ["ipackage1", "ipackage2..."],
-                "build-snaps": ["foo"],
+                "ros-build-snaps": ["foo"],
             },
         )
 

@@ -74,7 +74,7 @@ class RosFoxyMetaBase(RosFoxyExtension):
             f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{self.ros2_foxy_snaps.sdk}/current/usr"'
         ]
 
-        self.part_snippet["build-snaps"] = [self.ros2_foxy_snaps.sdk]
+        self.part_snippet["ros-build-snaps"] = [self.ros2_foxy_snaps.sdk]
 
         python_paths = self.app_snippet["environment"]["PYTHONPATH"]
         new_python_paths = [

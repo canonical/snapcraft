@@ -86,7 +86,7 @@ class RosPlugin(plugins.Plugin):
 
     @overrides
     def get_build_snaps(self) -> Set[str]:
-        return set()
+        return set(self._options.ros_build_snaps) if self._options.ros_build_snaps else set()
 
     @overrides
     def get_build_packages(self) -> Set[str]:
@@ -142,9 +142,9 @@ class RosPlugin(plugins.Plugin):
         cmd.append('rm -f "${CRAFT_PART_INSTALL}/.installed_packages.txt"')
         cmd.append('rm -f "${CRAFT_PART_INSTALL}/.build_snaps.txt"')
 
-        if self._options.build_snaps:  # type: ignore
-            for build_snap in self._options.build_snaps:  # type: ignore
-                snap_name = _get_parsed_snap(build_snap)[0]
+        if self._options.ros_build_snaps:  # type: ignore
+            for ros_build_snap in self._options.ros_build_snaps:  # type: ignore
+                snap_name = _get_parsed_snap(ros_build_snap)[0]
                 path = f"/snap/{snap_name}/current/opt/ros"
                 # pylint: disable=line-too-long
                 cmd.extend(

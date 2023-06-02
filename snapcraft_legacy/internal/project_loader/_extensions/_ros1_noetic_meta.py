@@ -66,7 +66,7 @@ class RosNoeticMetaBase(RosNoeticExtension):
 
         self.part_snippet["stage-packages"] = [f"ros-{self.ROS_DISTRO}-ros-environment"]
 
-        self.part_snippet["build-snaps"] = [self.ros_noetic_snaps.sdk]
+        self.part_snippet["ros-build-snaps"] = [self.ros_noetic_snaps.sdk]
 
         python_paths = self.app_snippet["environment"]["PYTHONPATH"]
         new_python_paths = [

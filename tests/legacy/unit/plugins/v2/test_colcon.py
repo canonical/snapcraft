@@ -57,6 +57,13 @@ def test_schema():
                 "type": "array",
                 "uniqueItems": True,
             },
+            "ros-build-snaps": {
+                "type": "array",
+                "minItems": 0,
+                "uniqueItems": True,
+                "items": {"type": "string"},
+                "default": [],
+            },
         },
         "type": "object",
     }
@@ -72,6 +79,22 @@ def test_get_build_packages():
         "python3-wstool",
         "rospack-tools",
     }
+
+
+def test_get_build_snaps():
+    class OptionsDefault:
+        ros_build_snaps = list()
+
+    plugin = colcon.ColconPlugin(part_name="my-part", options=OptionsDefault())
+
+    assert plugin.get_build_snaps() == set()
+
+    class Options:
+        ros_build_snaps = ["Foo"]
+
+    plugin = colcon.ColconPlugin(part_name="my-part", options=Options())
+
+    assert plugin.get_build_snaps() == {"Foo"}
 
 
 def test_get_build_environment():
@@ -97,7 +120,7 @@ def test_get_build_commands(monkeypatch):
         colcon_cmake_args = list()
         colcon_packages = list()
         colcon_packages_ignore = list()
-        build_snaps = list()
+        ros_build_snaps = list()
 
     plugin = colcon.ColconPlugin(part_name="my-part", options=Options())
 
@@ -188,7 +211,7 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         colcon_cmake_args = ["cmake", "args..."]
         colcon_packages = ["package1", "package2..."]
         colcon_packages_ignore = ["ipackage1", "ipackage2..."]
-        build_snaps = ["foo"]
+        ros_build_snaps = ["foo"]
 
     plugin = colcon.ColconPlugin(part_name="my-part", options=Options())
 

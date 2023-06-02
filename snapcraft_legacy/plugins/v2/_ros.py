@@ -77,7 +77,7 @@ class RosPlugin(PluginV2):
     """Base class for ROS-related plugins. Not intended for use by end users."""
 
     def get_build_snaps(self) -> Set[str]:
-        return set()
+        return set(self.options.ros_build_snaps) if self.options.ros_build_snaps else set()
 
     def get_build_packages(self) -> Set[str]:
         return {
@@ -129,9 +129,9 @@ class RosPlugin(PluginV2):
         cmd.append('rm -f "${SNAPCRAFT_PART_INSTALL}/.installed_packages.txt"')
         cmd.append('rm -f "${SNAPCRAFT_PART_INSTALL}/.build_snaps.txt"')
 
-        if self.options.build_snaps:
-            for build_snap in self.options.build_snaps:
-                snap_name = _get_parsed_snap(build_snap)[0]
+        if self.options.ros_build_snaps:
+            for ros_build_snap in self.options.ros_build_snaps:
+                snap_name = _get_parsed_snap(ros_build_snap)[0]
                 path = f"/snap/{snap_name}/current/opt/ros"
                 cmd.extend([
                     # Retrieve the list of all ROS packages available in the build snap

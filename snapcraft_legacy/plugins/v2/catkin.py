@@ -69,6 +69,13 @@ class CatkinPlugin(_ros.RosPlugin):
                     "items": {"type": "string"},
                     "default": [],
                 },
+                "ros-build-snaps": {
+                    "type": "array",
+                    "minItems": 0,
+                    "uniqueItems": True,
+                    "items": {"type": "string"},
+                    "default": [],
+                },
             },
         }
 
@@ -102,9 +109,9 @@ class CatkinPlugin(_ros.RosPlugin):
 
         # Source ROS ws in all build-snaps first
         activation_commands.append("## Sourcing ROS ws in build snaps")
-        if self.options.build_snaps:
-            for build_snap in self.options.build_snaps:
-                snap_name = _get_parsed_snap(build_snap)[0]
+        if self.options.ros_build_snaps:
+            for ros_build_snap in self.options.ros_build_snaps:
+                snap_name = _get_parsed_snap(ros_build_snap)[0]
                 activation_commands.extend(self._get_source_command(f"/snap/{snap_name}/current"))
             activation_commands.append("")
 
