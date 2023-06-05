@@ -11,10 +11,10 @@ deactivate() {
     unset deactivate
 }
 
-export STORE_DASHBOARD_URL="https://dashboard.staging.snapcraft.io/"
-export STORE_API_URL="https://api.staging.snapcraft.io/"
-export STORE_UPLOAD_URL="https://storage.staging.snapcraftcontent.com/"
-export UBUNTU_ONE_SSO_URL="https://login.staging.ubuntu.com/"
+export STORE_DASHBOARD_URL="https://dashboard.staging.snapcraft.io"
+export STORE_API_URL="https://api.staging.snapcraft.io"
+export STORE_UPLOAD_URL="https://storage.staging.snapcraftcontent.com"
+export UBUNTU_ONE_SSO_URL="https://login.staging.ubuntu.com"
 export TEST_STORE="staging"
 
 export ORIGINAL_PS1="$PS1"
