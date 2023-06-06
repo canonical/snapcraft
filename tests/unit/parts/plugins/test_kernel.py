@@ -388,7 +388,6 @@ class TestPluginKernel:
             "ARCH": plugin._kernel_arch,
             "DEB_ARCH": "${CRAFT_TARGET_ARCH}",
             "UC_INITRD_DEB": "${CRAFT_PART_BUILD}/ubuntu-core-initramfs",
-            "SNAPD_UNPACKED_SNAP": "${CRAFT_PART_BUILD}/unpacked_snapd",
             "KERNEL_BUILD_ARCH_DIR": f"${{CRAFT_PART_BUILD}}/arch/{plugin._kernel_arch}/boot",
             "KERNEL_IMAGE_TARGET": plugin.kernel_image_target,
         }
@@ -410,7 +409,6 @@ class TestPluginKernel:
             "ARCH": "arm",
             "DEB_ARCH": "${CRAFT_TARGET_ARCH}",
             "UC_INITRD_DEB": "${CRAFT_PART_BUILD}/ubuntu-core-initramfs",
-            "SNAPD_UNPACKED_SNAP": "${CRAFT_PART_BUILD}/unpacked_snapd",
             "KERNEL_BUILD_ARCH_DIR": "${CRAFT_PART_BUILD}/arch/arm/boot",
             "KERNEL_IMAGE_TARGET": "Image.gz",
             "PATH": "${CRAFT_STAGE}/gcc-11/bin:${PATH}",
@@ -432,7 +430,6 @@ class TestPluginKernel:
             "ARCH": plugin._kernel_arch,
             "DEB_ARCH": "${CRAFT_TARGET_ARCH}",
             "UC_INITRD_DEB": "${CRAFT_PART_BUILD}/ubuntu-core-initramfs",
-            "SNAPD_UNPACKED_SNAP": "${CRAFT_PART_BUILD}/unpacked_snapd",
             "KERNEL_BUILD_ARCH_DIR": f"${{CRAFT_PART_BUILD}}/arch/{plugin._kernel_arch}/boot",
             "KERNEL_IMAGE_TARGET": plugin.kernel_image_target,
             "PATH": "${CRAFT_STAGE}/gcc-11/bin:${CRAFT_STAGE}/gcc-11/sbin:${PATH}",
@@ -1348,8 +1345,8 @@ _get_snapd_cmd = [
         echo "Getting snapd deb for snap bootstrap..."
         # only download again if files does not exist, otherwise
         # assume we are re-running build
-        if [ ! -e ${{SNAPD_UNPACKED_SNAP}} ]; then
-        	download_snap_bootstrap {_machine_arch} ${{SNAPD_UNPACKED_SNAP}}
+        if [ ! -e ${{UC_INITRD_DEB}}/usr/lib/snapd ]; then
+        	download_snap_bootstrap {_machine_arch} ${{UC_INITRD_DEB}}
         fi
         """
     )
@@ -1361,8 +1358,8 @@ _get_snapd_armhf_cmd = [
         echo "Getting snapd deb for snap bootstrap..."
         # only download again if files does not exist, otherwise
         # assume we are re-running build
-        if [ ! -e ${SNAPD_UNPACKED_SNAP} ]; then
-        	download_snap_bootstrap armhf ${SNAPD_UNPACKED_SNAP}
+        if [ ! -e ${UC_INITRD_DEB}/usr/lib/snapd ]; then
+        	download_snap_bootstrap armhf ${UC_INITRD_DEB}
         fi
         """
     )
@@ -1780,13 +1777,13 @@ _prepare_ininird_features_cmd = [
     " ".join(
         [
             "link_files",
-            '"${SNAPD_UNPACKED_SNAP}" "usr/lib/snapd/snap-bootstrap"',
+            '"${UC_INITRD_DEB}" "usr/lib/snapd/snap-bootstrap"',
             '"${uc_initrd_feature_snap_bootstratp}"',
         ],
     ),
-    'link_files "${SNAPD_UNPACKED_SNAP}" "usr/lib/snapd/info"'
+    'link_files "${UC_INITRD_DEB}" "usr/lib/snapd/info"'
     ' "${uc_initrd_feature_snap_bootstratp}"',
-    "cp ${SNAPD_UNPACKED_SNAP}/usr/lib/snapd/info ${CRAFT_PART_INSTALL}/snapd-info",
+    "cp ${UC_INITRD_DEB}/usr/lib/snapd/info ${CRAFT_PART_INSTALL}/snapd-info",
 ]
 
 _clean_old_initrd_cmd = [
