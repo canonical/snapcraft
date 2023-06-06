@@ -27,7 +27,7 @@ import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
 from pydantic import ValidationError
 
-from snapcraft.parts.plugins.kernel import KernelPlugin
+from snapcraft.parts.plugins import KernelPlugin
 from snapcraft_legacy.plugins.v2._kernel_build import check_new_config
 
 
