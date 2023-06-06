@@ -11,7 +11,6 @@ Lint warnings:
 - library: libaction_msgs__rosidl_typesupport_fastrtps_cpp.so: unused library 'opt/ros/humble/lib/libaction_msgs__rosidl_typesupport_fastrtps_cpp.so'. (https://snapcraft.io/docs/linters-library)
 - library: libaction_msgs__rosidl_typesupport_introspection_c.so: unused library 'opt/ros/humble/lib/libaction_msgs__rosidl_typesupport_introspection_c.so'. (https://snapcraft.io/docs/linters-library)
 - library: libaction_msgs__rosidl_typesupport_introspection_cpp.so: unused library 'opt/ros/humble/lib/libaction_msgs__rosidl_typesupport_introspection_cpp.so'. (https://snapcraft.io/docs/linters-library)
-- library: libbuiltin_interfaces__rosidl_generator_py.so: unused library 'opt/ros/humble/lib/libbuiltin_interfaces__rosidl_generator_py.so'. (https://snapcraft.io/docs/linters-library)
 - library: libbuiltin_interfaces__rosidl_typesupport_cpp.so: unused library 'opt/ros/humble/lib/libbuiltin_interfaces__rosidl_typesupport_cpp.so'. (https://snapcraft.io/docs/linters-library)
 - library: liblifecycle_msgs__rosidl_typesupport_cpp.so: unused library 'opt/ros/humble/lib/liblifecycle_msgs__rosidl_typesupport_cpp.so'. (https://snapcraft.io/docs/linters-library)
 - library: liblifecycle_msgs__rosidl_typesupport_fastrtps_c.so: unused library 'opt/ros/humble/lib/liblifecycle_msgs__rosidl_typesupport_fastrtps_c.so'. (https://snapcraft.io/docs/linters-library)
