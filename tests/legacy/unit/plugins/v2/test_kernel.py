@@ -266,6 +266,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "debhelper",
                 "fakeroot",
                 "gcc",
                 "cmake",
@@ -285,6 +286,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "debhelper",
                 "fakeroot",
                 "gcc",
                 "cmake",
@@ -304,6 +306,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "debhelper",
                 "fakeroot",
                 "gcc",
                 "cmake",
@@ -323,6 +326,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "debhelper",
                 "fakeroot",
                 "gcc",
                 "cmake",
@@ -347,6 +351,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "debhelper",
                 "fakeroot",
                 "gcc",
                 "cmake",
@@ -1002,6 +1007,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "debhelper",
                 "fakeroot",
                 "gcc",
                 "cmake",
@@ -1034,6 +1040,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "debhelper",
                 "fakeroot",
                 "gcc",
                 "cmake",

@@ -385,6 +385,7 @@ class KernelPlugin(plugins.Plugin):
         build_packages = {
             "bc",
             "binutils",
+            "debhelper",
             "fakeroot",
             "gcc",
             "cmake",

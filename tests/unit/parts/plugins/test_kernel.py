@@ -71,6 +71,7 @@ class TestPluginKernel:
         assert plugin.get_build_packages() == {
             "bc",
             "binutils",
+            "debhelper",
             "fakeroot",
             "gcc",
             "cmake",
@@ -92,6 +93,7 @@ class TestPluginKernel:
         assert plugin.get_build_packages() == {
             "bc",
             "binutils",
+            "debhelper",
             "fakeroot",
             "gcc",
             "cmake",
@@ -113,6 +115,7 @@ class TestPluginKernel:
         assert plugin.get_build_packages() == {
             "bc",
             "binutils",
+            "debhelper",
             "fakeroot",
             "gcc",
             "cmake",
@@ -134,6 +137,7 @@ class TestPluginKernel:
         assert plugin.get_build_packages() == {
             "bc",
             "binutils",
+            "debhelper",
             "fakeroot",
             "gcc",
             "cmake",
@@ -161,6 +165,7 @@ class TestPluginKernel:
         assert plugin.get_build_packages() == {
             "bc",
             "binutils",
+            "debhelper",
             "fakeroot",
             "gcc",
             "cmake",
@@ -188,6 +193,7 @@ class TestPluginKernel:
         assert plugin.get_build_packages() == {
             "bc",
             "binutils",
+            "debhelper",
             "fakeroot",
             "gcc",
             "cmake",
@@ -1094,6 +1100,7 @@ class TestPluginKernel:
         assert plugin.get_build_packages() == {
             "bc",
             "binutils",
+            "debhelper",
             "fakeroot",
             "gcc",
             "cmake",
@@ -1128,6 +1135,7 @@ class TestPluginKernel:
         assert plugin.get_build_packages() == {
             "bc",
             "binutils",
+            "debhelper",
             "fakeroot",
             "gcc",
             "cmake",
