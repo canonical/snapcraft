@@ -211,8 +211,8 @@ def _download_snap_bootstrap_cmd(target_arch: str) -> List[str]:
         echo "Getting snapd deb for snap bootstrap..."
         # only download again if files does not exist, otherwise
         # assume we are re-running build
-        if [ ! -e ${{SNAPD_UNPACKED_SNAP}} ]; then
-        	download_snap_bootstrap {arch} ${{SNAPD_UNPACKED_SNAP}}
+        if [ ! -e ${{UC_INITRD_DEB}}/usr/lib/snapd ]; then
+        	download_snap_bootstrap {arch} ${{UC_INITRD_DEB}}
         fi
         """.format(
             arch=target_arch
@@ -709,7 +709,7 @@ def _make_initrd_cmd(
         " ".join(
             [
                 "link_files",
-                '"${SNAPD_UNPACKED_SNAP}"',
+                '"${UC_INITRD_DEB}"',
                 '"usr/lib/snapd/snap-bootstrap"',
                 '"${uc_initrd_feature_snap_bootstratp}"',
             ]
@@ -717,7 +717,7 @@ def _make_initrd_cmd(
         " ".join(
             [
                 "link_files",
-                '"${SNAPD_UNPACKED_SNAP}"',
+                '"${UC_INITRD_DEB}"',
                 '"usr/lib/snapd/info"',
                 '"${uc_initrd_feature_snap_bootstratp}"',
             ]
@@ -725,7 +725,7 @@ def _make_initrd_cmd(
         " ".join(
             [
                 "cp",
-                "${SNAPD_UNPACKED_SNAP}/usr/lib/snapd/info",
+                "${UC_INITRD_DEB}/usr/lib/snapd/info",
                 f"{install_dir}/snapd-info",
             ]
         ),
