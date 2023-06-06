@@ -142,26 +142,36 @@ select = [  # Base linting rule selections.
     # failures with ruff updates.
     "F",  # The rules built into Flake8
     "E", "W",  # pycodestyle errors and warnings
-    "D",  # Implement pydocstyle checking as well.
     "I",  # isort checking
-    "PLC", "PLE", "PLR", "PLW",  # Pylint
     "N",  # PEP8 naming
+    "D",  # Implement pydocstyle checking as well.
+    "UP",  # Pyupgrade - note that some of are excluded below due to Python versions
     "YTT",  # flake8-2020: Misuse of `sys.version` and `sys.version_info`
+    "ANN",  # Type annotations.
     "BLE",  # Do not catch blind exceptions
     "FBT",  # Disallow boolean positional arguments (make them keyword-only)
+    "B0",  # Common mistakes and typos.
     "A",  # Shadowing built-ins.
     "C4", # Encourage comprehensions, which tend to be faster than alternatives.
     "T10",  # Don't call the debugger in production code
     "ISC",  # Implicit string concatenation that can cause subtle issues
     "ICN",  # Only use common conventions for import aliases.
+    "INP",  # Implicit namespace packages
+    "PYI",  # Linting for type stubs.
+    "PT",  # Pytest
     "Q",  # Consistent quotations
+    "RSE",  # Errors on pytest raises.
     "RET",  # Simpler logic after return, raise, continue or break
-    "UP018", "C408",  # Convert type calls to literals. The latest pylint enforces this, but ruff has auto-fixes.
+    "SIM",  # Code simplification
+    "TCH",  # Guard imports only used for type checking behind a type-checkning block.
+    "ARG",  # Unused arguments
+    "PTH",  # Migrate to pathlib
+    "ERA",  # Don't check in commented out code
+    "PGH",  # Pygrep hooks
+    "PL",  # Pylint
+    "TRY",  # Cleaner try/except,
 ]
 extend-select = [
-    # These sets are still frequently getting new rules.
-    # Therefore, they're getting frozen with the current rules so we can
-    # upgrade ruff without breaking linting.
     # Pyupgrade: https://github.com/charliermarsh/ruff#pyupgrade-up
     "UP00", "UP01", "UP02", "UP030", "UP032", "UP033",
     # "UP034",  # Very new, not yet enabled in ruff 0.0.227
@@ -175,16 +185,19 @@ extend-select = [
     "S103", "S108",  # File permissions and tempfiles - use #noqa to silence when appropriate.
     "S104",  # Network binds
     "S105", "S106", "S107",  # Hardcoded passwords
+    "S110",  # try-except-pass (use contextlib.suppress instead)
     "S113",  # Requests calls without timeouts
+    "S3",  # Serialising, deserialising, hashing, crypto, etc.
     "S506",  # Unsafe YAML load
     "S508", "S509",  # Insecure SNMP
     "S701",  # jinja2 templates without autoescape
-    "B0",  # Common mistakes and typos.
     "RUF001", "RUF002", "RUF003",  # Ambiguous unicode characters
     "RUF005",  # Encourages unpacking rather than concatenation
-    "RUF100",  # #noqa directive that doesn't flag anything.
+    "RUF008",  # Do not use mutable default values for dataclass attributes
+    "RUF100",  # #noqa directive that doesn't flag anything
 ]
 ignore = [
+    "ANN10",  # Type annotations for `self` and `cls`
     #"E203",  # Whitespace before ":"  -- Commented because ruff doesn't currently check E203
     "E501",  # Line too long (reason: black will automatically fix this for us)
     "D105",  # Missing docstring in magic method (reason: magic methods already have definitions)
@@ -194,6 +207,8 @@ ignore = [
     "D215",  # Section underline is over-indented (reason: pep257 default)
     "A003",  # Class attribute shadowing built-in (reason: Class attributes don't often get bare references)
 
+    # Ignored due to common usage in current code
+    "TRY003",  # Avoid specifying long messages outside the exception class
 ]
 
 [tool.ruff.per-file-ignores]
