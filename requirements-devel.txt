@@ -14,7 +14,7 @@ coverage==7.2.5
 craft-archives==1.0.0
 craft-cli==1.2.0
 craft-grammar==1.1.1
-craft-parts==1.19.5
+craft-parts==1.21.0
 craft-providers==1.13.0
 craft-store==2.4.0
 cryptography==40.0.2

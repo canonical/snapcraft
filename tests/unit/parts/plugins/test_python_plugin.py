@@ -65,7 +65,7 @@ def test_get_build_commands(plugin, new_dir):
         f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/my-part/install"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/my-part/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         f"{new_dir}/parts/my-part/install/bin/pip install  -U pip setuptools wheel",
-        f"[ -f setup.py ] && {new_dir}/parts/my-part/install/bin/pip install  -U .",
+        f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/my-part/install/bin/pip install  -U .",
         f'find "{new_dir}/parts/my-part/install" -type f -executable -print0 | xargs -0 \\\n'
         '    sed -i "1 s|^#\\!${PARTS_PYTHON_VENV_INTERP_PATH}.*$|#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}|"\n',
         dedent(
@@ -98,9 +98,9 @@ def test_get_build_commands(plugin, new_dir):
             fi
 
             eval "${{opts_state}}"
-            ln -sf "${{symlink_target}}" "${{PARTS_PYTHON_VENV_INTERP_PATH}}"
             """
         ),
+        'ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"\n',
     ]
     # pylint: enable=line-too-long
 
