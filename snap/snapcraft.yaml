@@ -38,6 +38,19 @@ build-packages:
   - sed
 
 parts:
+  cryptography-deps:
+    # Rust build dependencies for Python cryptography library
+    plugin: nil
+    build-packages:
+      - cargo
+      - rustc
+      - curl
+    override-pull: |
+      # RISC-V doesn't have a new enough rust (>=1.48) on focal.
+      if [[ "${SNAPCRAFT_TARGET_ARCH}" = "riscv64" ]]; then
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+      fi
+
   bash-completion:
     source: debian
     plugin: dump
@@ -110,11 +123,9 @@ parts:
     source: .
     plugin: python
     python-packages:
-        # Lock down cryptography to 3.4 to override the rust dependency.
-        - cryptography==3.4
         - wheel
         - pip
-        - setuptools
+        - setuptools<66  # Limited to < 66 because we need `pkg_resources` and because `python-apt` doesn't build with the latest.
     requirements:
         - requirements.txt
     organize:
@@ -124,9 +135,10 @@ parts:
         # Also install the compatibility wrapper for core22+
         bin/snapcraftctl-compat: libexec/snapcraft/snapcraftctl
     build-environment:
-        - "CRYPTOGRAPHY_DONT_BUILD_RUST": "1"
-        - "SODIUM_INSTALL": "system"
+        - "PIP_NO_BINARY": "PyNaCl"  # Build PyNaCl from source since the wheel files interact strangely with classic snaps.
+        - "SODIUM_INSTALL": "system"  # Use base image's libsodium for PyNaCl
         - "CFLAGS": "$(pkg-config python-3.8 yaml-0.1 --cflags)"
+        - "PATH": "${HOME}/.cargo/bin:${PATH}"
     override-build: |
         snapcraftctl build
 
@@ -139,7 +151,7 @@ parts:
         mkdir -p $SNAPCRAFT_PART_INSTALL/libexec/snapcraft
         mv $SNAPCRAFT_PART_INSTALL/bin/craftctl $SNAPCRAFT_PART_INSTALL/libexec/snapcraft/
         sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python -E|' $SNAPCRAFT_PART_INSTALL/libexec/snapcraft/craftctl
-    after: [snapcraft-libs]
+    after: [snapcraft-libs, cryptography-deps]
 
 hooks:
   configure:

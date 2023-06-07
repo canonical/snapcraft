@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2022 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -329,20 +329,42 @@ def humanize_list(
     return f"{humanized} {conjunction} {quoted_items[-1]}"
 
 
-def get_common_ld_library_paths(prime_dir: Path, arch_triplet: str) -> List[str]:
-    """Return common existing PATH entries for a snap."""
+def get_common_ld_library_paths(
+    prime_dir: Path, arch_triplet: Optional[str]
+) -> List[str]:
+    """Return common existing PATH entries for a snap.
+
+    :param prime_dir: Path to the prime directory.
+    :param arch_triplet: Architecture triplet of target arch. If None, the list of paths
+    will not contain architecture-specific paths.
+
+    :returns: List of common library paths in the prime directory that exist.
+    """
     paths = [
         prime_dir / "lib",
         prime_dir / "usr" / "lib",
-        prime_dir / "lib" / arch_triplet,
-        prime_dir / "usr" / "lib" / arch_triplet,
     ]
+
+    if arch_triplet:
+        paths.extend(
+            [
+                prime_dir / "lib" / arch_triplet,
+                prime_dir / "usr" / "lib" / arch_triplet,
+            ]
+        )
 
     return [str(p) for p in paths if p.exists()]
 
 
-def get_ld_library_paths(prime_dir: Path, arch_triplet: str) -> str:
-    """Return a usable in-snap LD_LIBRARY_PATH variable."""
+def get_ld_library_paths(prime_dir: Path, arch_triplet: Optional[str]) -> str:
+    """Return a usable in-snap LD_LIBRARY_PATH variable.
+
+    :param prime_dir: Path to the prime directory.
+    :param arch_triplet: Architecture triplet of target arch. If None, LD_LIBRARY_PATH
+    will not contain architecture-specific paths.
+
+    :returns: The LD_LIBRARY_PATH environment variable to be used for the snap.
+    """
     paths = ["${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"]
     # Add the default LD_LIBRARY_PATH
     paths += get_common_ld_library_paths(prime_dir, arch_triplet)

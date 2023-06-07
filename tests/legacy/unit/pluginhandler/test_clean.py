@@ -166,11 +166,11 @@ class CleanTestCase(TestCase):
 
         handler.mark_done(steps.PRIME, None)
 
-        self.assertTrue(os.path.exists(handler.plugin.partdir))
+        self.assertTrue(os.path.exists(handler.part_dir))
 
         handler.clean()
 
-        self.assertFalse(os.path.exists(handler.plugin.partdir))
+        self.assertFalse(os.path.exists(handler.part_dir))
 
     def test_clean_prime_old_prime_state(self):
         handler = self.load_part("test-part")
@@ -276,11 +276,11 @@ class CleanTestCase(TestCase):
 
         handler.mark_done(steps.STAGE, None)
 
-        self.assertTrue(os.path.exists(handler.plugin.partdir))
+        self.assertTrue(os.path.exists(handler.part_dir))
 
         handler.clean()
 
-        self.assertFalse(os.path.exists(handler.plugin.partdir))
+        self.assertFalse(os.path.exists(handler.part_dir))
 
     def test_clean_stage_old_stage_state(self):
         handler = self.load_part("test-part")
@@ -477,7 +477,7 @@ def test_clean_build(tmp_work_path):
     handler.build()
 
     source_file = pathlib.Path(handler.part_source_dir) / "source"
-    build_basedir = pathlib.Path(handler.plugin.build_basedir)
+    build_basedir = pathlib.Path(handler.part_build_dir)
     source_file.touch()
     (build_basedir / "built").touch()
     (build_basedir / "built").touch()
@@ -491,4 +491,4 @@ def test_clean_build(tmp_work_path):
     assert not build_basedir.exists()
 
     # Make sure the install directory is gone
-    assert not pathlib.Path(handler.plugin.installdir).exists()
+    assert not pathlib.Path(handler.part_install_dir).exists()

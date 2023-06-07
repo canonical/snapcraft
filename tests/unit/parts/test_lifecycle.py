@@ -24,7 +24,7 @@ from unittest.mock import ANY, Mock, PropertyMock, call
 import pytest
 from craft_cli import EmitterMode, emit
 from craft_parts import Action, Step, callbacks
-from craft_providers.bases.buildd import BuilddBaseAlias
+from craft_providers.bases.ubuntu import BuilddBaseAlias
 
 from snapcraft import errors
 from snapcraft.elf import ElfFile
@@ -1186,7 +1186,6 @@ def test_lifecycle_run_in_provider_default(
         project_name="mytest",
         project_path=ANY,
         base_configuration=mock_base_configuration,
-        build_base="22.04",
         instance_name="test-instance-name",
         allow_unstable=False,
     )
@@ -1310,7 +1309,6 @@ def test_lifecycle_run_in_provider_all_options(
         project_name="mytest",
         project_path=ANY,
         base_configuration=mock_base_configuration,
-        build_base="22.04",
         instance_name="test-instance-name",
         allow_unstable=False,
     )
@@ -1412,7 +1410,6 @@ def test_lifecycle_run_in_provider(
         project_name="mytest",
         project_path=ANY,
         base_configuration=mock_base_configuration,
-        build_base=BuilddBaseAlias.JAMMY.value,
         instance_name="test-instance-name",
         allow_unstable=False,
     )
@@ -1684,5 +1681,55 @@ def test_patch_elf(snapcraft_yaml, mocker, new_dir):
                 "/snap/core22/current/lib64/ld-linux-x86-64.so.2",
             ],
             elf_file_path=new_dir / "prime/elf.bin",
+        )
+    ]
+
+
+@pytest.mark.parametrize("build_for", ["amd64", "arm64", "all"])
+def test_lifecycle_write_metadata(
+    build_for, snapcraft_yaml, project_vars, new_dir, mocker
+):
+    """Metadata and manifest should be written during the lifecycle."""
+    yaml_data = {
+        "base": "core22",
+        "architectures": [{"build-on": "amd64", "build-for": build_for}],
+    }
+    project = Project.unmarshal(snapcraft_yaml(**yaml_data))
+    mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch("snapcraft.pack.pack_snap")
+    mock_write_metadata = mocker.patch("snapcraft.meta.snap_yaml.write")
+    mock_write_manifest = mocker.patch("snapcraft.meta.manifest.write")
+
+    parsed_args = argparse.Namespace(
+        debug=False,
+        destructive_mode=True,
+        enable_manifest=True,
+        ua_token=None,
+        parts=[],
+        manifest_image_information=None,
+    )
+
+    parts_lifecycle._run_command(
+        "prime",
+        project=project,
+        parse_info={},
+        assets_dir=Path(),
+        start_time=datetime.now(),
+        parallel_build_count=8,
+        parsed_args=parsed_args,
+    )
+
+    assert mock_write_metadata.mock_calls == [
+        call(project, new_dir / "prime", arch=build_for)
+    ]
+    assert mock_write_manifest.mock_calls == [
+        call(
+            project,
+            new_dir / "prime",
+            arch=build_for,
+            parts=mocker.ANY,
+            start_time=mocker.ANY,
+            image_information="{}",
+            primed_stage_packages=[],
         )
     ]

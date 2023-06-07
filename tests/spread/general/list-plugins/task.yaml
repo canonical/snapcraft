@@ -16,7 +16,7 @@ execute: |
   snapcraft plugins
 
   # verify the `--base` parameter executes without error
-  for base in "core18" "core20" "core22"; do
+  for base in "core20" "core22"; do
     snapcraft list-plugins --base=$base
     snapcraft plugins --base=$base
   done

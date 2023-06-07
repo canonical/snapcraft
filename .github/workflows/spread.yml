@@ -38,7 +38,6 @@ jobs:
       fail-fast: false
       matrix:
         spread-jobs:
-          - google:ubuntu-18.04-64
           - google:ubuntu-20.04-64
           - google:ubuntu-22.04-64
 
@@ -50,7 +49,7 @@ jobs:
           submodules: true
 
       - name: Download snapcraft snap
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: snap
           path: tests
@@ -101,7 +100,7 @@ jobs:
 
       - if: steps.decisions.outputs.RUN == 'true'
         name: Download snapcraft snap
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: snap
           path: tests
@@ -113,7 +112,7 @@ jobs:
           SNAPCRAFT_STORE_CREDENTIALS_STAGING: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}"
           SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID }}"
           SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY }}"
-        run: spread google:ubuntu-18.04-64:tests/spread/general/store
+        run: spread google:ubuntu-22.04-64:tests/spread/general/store
 
       - name: Discard spread workers
         if: always()

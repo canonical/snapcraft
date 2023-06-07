@@ -76,7 +76,7 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
         self.useFixture(
             fixture_setup.SnapcraftYaml(
                 self.path,
-                base="core18",
+                base="core20",
                 parts={"part1": {"source": ".", "plugin": "nil"}},
             )
         )
@@ -85,10 +85,10 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
-            result.output, Contains("Displaying plugins available for 'core18")
+            result.output, Contains("Displaying plugins available for 'core20")
         )
         self.fake_iter_modules.mock.assert_called_once_with(
-            snapcraft_legacy.plugins.v1.__path__
+            snapcraft_legacy.plugins.v2.__path__
         )
 
     def test_alias(self):
@@ -96,7 +96,7 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
         self.useFixture(
             fixture_setup.SnapcraftYaml(
                 self.path,
-                base="core18",
+                base="core20",
                 parts={"part1": {"source": ".", "plugin": "nil"}},
             )
         )
@@ -129,24 +129,24 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
         fake_terminal = fixture_setup.FakeTerminal(isatty=False)
         self.useFixture(fake_terminal)
 
-        result = self.run_command([self.command_name, "--base", "core18"])
+        result = self.run_command([self.command_name, "--base", "core20"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(self.default_plugin_output))
         self.fake_iter_modules.mock.assert_called_once_with(
-            snapcraft_legacy.plugins.v1.__path__
+            snapcraft_legacy.plugins.v2.__path__
         )
 
     def test_list_plugins_large_terminal(self):
         fake_terminal = fixture_setup.FakeTerminal(columns=999)
         self.useFixture(fake_terminal)
 
-        result = self.run_command([self.command_name, "--base", "core18"])
+        result = self.run_command([self.command_name, "--base", "core20"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(self.default_plugin_output))
         self.fake_iter_modules.mock.assert_called_once_with(
-            snapcraft_legacy.plugins.v1.__path__
+            snapcraft_legacy.plugins.v2.__path__
         )
 
     def test_list_plugins_small_terminal(self):
@@ -162,11 +162,11 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
             "planton         fake-tools         pmake",
         ]
 
-        result = self.run_command([self.command_name, "--base", "core18"])
+        result = self.run_command([self.command_name, "--base", "core20"])
 
         self.assertThat(result.exit_code, Equals(0))
         output_slice = [o.strip() for o in result.output.splitlines()][1:]
         self.assertThat(output_slice, Equals(expected_output))
         self.fake_iter_modules.mock.assert_called_once_with(
-            snapcraft_legacy.plugins.v1.__path__
+            snapcraft_legacy.plugins.v2.__path__
         )

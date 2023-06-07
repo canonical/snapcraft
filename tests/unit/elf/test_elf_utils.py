@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2022 Canonical Ltd.
+# Copyright 2016-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -157,12 +157,31 @@ class TestArchConfig:
             ("riscv64", "riscv64-linux-gnu"),
             ("s390x", "s390x-linux-gnu"),
             ("x86_64", "x86_64-linux-gnu"),
+            ("i686", "i386-linux-gnu"),
         ],
     )
-    def test_get_arch_triplet(self, mocker, machine, expected_arch_triplet):
+    def test_get_arch_triplet_host(self, mocker, machine, expected_arch_triplet):
         """Verify `get_arch_triplet()` gets the host's architecture triplet."""
         mocker.patch("snapcraft.elf.elf_utils.platform.machine", return_value=machine)
         arch_triplet = elf_utils.get_arch_triplet()
+
+        assert arch_triplet == expected_arch_triplet
+
+    @pytest.mark.parametrize(
+        "machine, expected_arch_triplet",
+        [
+            ("aarch64", "aarch64-linux-gnu"),
+            ("armv7l", "arm-linux-gnueabihf"),
+            ("ppc64le", "powerpc64le-linux-gnu"),
+            ("riscv64", "riscv64-linux-gnu"),
+            ("s390x", "s390x-linux-gnu"),
+            ("x86_64", "x86_64-linux-gnu"),
+            ("i686", "i386-linux-gnu"),
+        ],
+    )
+    def test_get_arch_triplet(self, mocker, machine, expected_arch_triplet):
+        """Get the architecture triplet from the architecture passed as a parameter."""
+        arch_triplet = elf_utils.get_arch_triplet(machine)
 
         assert arch_triplet == expected_arch_triplet
 
@@ -185,4 +204,5 @@ class TestArchConfig:
             "riscv64-linux-gnu",
             "s390x-linux-gnu",
             "x86_64-linux-gnu",
+            "i386-linux-gnu",
         ]

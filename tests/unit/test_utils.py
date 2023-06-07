@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -336,6 +336,26 @@ def test_get_ld_library_paths(tmp_path, lib_dirs, expected_env):
         f"${{SNAP_LIBRARY_PATH}}${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}:{expected_env}"
     )
     assert utils.get_ld_library_paths(tmp_path, "i286-none-none") == expected_env
+
+
+@pytest.mark.parametrize(
+    ["lib_dirs", "expected_env"],
+    [
+        (["lib"], "$SNAP/lib"),
+        (["lib", "usr/lib"], "$SNAP/lib:$SNAP/usr/lib"),
+        (["lib/i286-none-none", "usr/lib/i286-none-none"], "$SNAP/lib:$SNAP/usr/lib"),
+    ],
+)
+def test_get_ld_library_paths_no_architecture(tmp_path, lib_dirs, expected_env):
+    """Do not include architecture-specfic paths if an architecture is not provided."""
+    for lib_dir in lib_dirs:
+        (tmp_path / lib_dir).mkdir(parents=True)
+
+    env = utils.get_ld_library_paths(tmp_path, None)
+
+    assert env == (
+        f"${{SNAP_LIBRARY_PATH}}${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}:{expected_env}"
+    )
 
 
 #################

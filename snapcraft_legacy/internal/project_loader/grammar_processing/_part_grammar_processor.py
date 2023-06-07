@@ -18,8 +18,8 @@ from typing import Any, Dict, List, Set
 
 from craft_grammar import Grammar, GrammarProcessor
 
-from snapcraft_legacy import BasePlugin
 from snapcraft_legacy.internal import repo
+from snapcraft_legacy.plugins.v2 import PluginV2
 
 from ._package_transformer import package_transformer
 
@@ -76,11 +76,11 @@ class PartGrammarProcessor:
     def __init__(
         self,
         *,
-        plugin: BasePlugin,
+        plugin: PluginV2,
         properties: Dict[str, Any],
         arch: str,
         target_arch: str,
-        repo: "repo.Ubuntu"
+        repo: "repo.Ubuntu",
     ) -> None:
         self._plugin = plugin
         self._properties = properties
