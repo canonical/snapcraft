@@ -14,10 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import textwrap
 
-from snapcraft_legacy.internal import lifecycle, states, steps
+from snapcraft_legacy.internal import lifecycle, steps
 from snapcraft_legacy.internal.lifecycle._status_cache import StatusCache
 
 from . import LifecycleTestBase
@@ -90,28 +89,3 @@ class StatusCacheTestCase(LifecycleTestBase):
         # Now clear that step from the cache, and it should be up-to-date
         self.cache.clear_step(dependent_part, steps.PULL)
         self.assertTrue(self.cache.get_dirty_report(dependent_part, steps.PULL))
-
-    def test_get_outdated_report(self):
-        # No outdated reports should be available, yet
-        main_part = self.project_config.parts.get_part("main")
-        self.assertFalse(self.cache.get_outdated_report(main_part, steps.PULL))
-
-        # Now run the pull step for main
-        lifecycle.execute(steps.PULL, self.project_config, part_names=["main"])
-
-        # Change the source on disk, which will make the pull step of main
-        # outdated (to ensure this is the case, manually set the timestamp)
-        open("new-file", "w").close()
-        pull_state_file = states.get_step_state_file(
-            main_part.plugin.statedir, steps.PULL
-        )
-        access_time = os.stat(pull_state_file).st_atime
-        modified_time = os.stat(pull_state_file).st_atime
-        os.utime("new-file", (access_time, modified_time + 1))
-
-        # Should still have cached that it's not outdated, though
-        self.assertFalse(self.cache.get_outdated_report(main_part, steps.PULL))
-
-        # Now clear that step from the cache, and it should be up-to-date
-        self.cache.clear_step(main_part, steps.PULL)
-        self.assertTrue(self.cache.get_outdated_report(main_part, steps.PULL))

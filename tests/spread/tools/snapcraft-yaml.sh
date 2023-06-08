@@ -8,8 +8,6 @@ get_base()
         echo "core22"
     elif [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
         echo "core20"
-    elif [[ "$SPREAD_SYSTEM" =~ ubuntu-18.04 ]]; then
-        echo "core18"
     else
         exit 1
     fi
@@ -69,28 +67,6 @@ set_grade()
     else
         sed -i "1igrade: $grade"  "$snapcraft_yaml_path"
     fi
-}
-
-set_openjdk_version()
-{
-    snapcraft_yaml_path="$1"
-    plugin="$2"
-    openjdk_version="$3"
-
-    # if openjdk_version is not set to LATEST, then there is nothing
-    # to be done
-    if [[ "$openjdk_version" != "LATEST" ]]; then
-        return
-    fi
-
-    if [[ "$SPREAD_SYSTEM" =~ ubuntu-18.04 ]]; then
-        openjdk_version="11"
-    else
-        echo "Test not supported for $SPREAD_SYSTEM"
-        exit 1
-    fi
-
-    sed -i -e "s/\(\s$plugin-openjdk-version:\).*/\1 \"$openjdk_version\"/" "$snapcraft_yaml_path"
 }
 
 restore_yaml()

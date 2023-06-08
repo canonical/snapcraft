@@ -39,7 +39,7 @@ class ScriptletCommandsTestCase(CommandBaseTestCase):
             textwrap.dedent(
                 """\
                 name: my-snap-name
-                base: core18
+                base: core20
                 summary: summary
                 description: description
 
