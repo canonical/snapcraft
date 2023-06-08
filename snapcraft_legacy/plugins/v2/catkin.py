@@ -76,6 +76,12 @@ class CatkinPlugin(_ros.RosPlugin):
                     "items": {"type": "string"},
                     "default": [],
                 },
+                "ros-content-sharing-extension-cmake-args": {
+                    "type": "array",
+                    "minItems": 0,
+                    "items": {"type": "string"},
+                    "default": [],
+                },
             },
         }
 
@@ -149,7 +155,9 @@ class CatkinPlugin(_ros.RosPlugin):
         if self.options.catkin_packages_ignore:
             build_command.extend(["--ignore-pkg", *self.options.catkin_packages_ignore])
 
-        if self.options.catkin_cmake_args:
-            build_command.extend(["--cmake-args", *self.options.catkin_cmake_args])
+        if self.options.catkin_cmake_args or self.options.ros_content_sharing_extension_cmake_args:
+            build_command.append("--cmake-args")
+            build_command.extend(self.options.catkin_cmake_args)
+            build_command.extend(self.options.ros_content_sharing_extension_cmake_args)
 
         return (["## Build command", " ".join(build_command)])

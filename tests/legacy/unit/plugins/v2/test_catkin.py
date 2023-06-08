@@ -52,6 +52,12 @@ def test_schema():
                 "type": "array",
                 "uniqueItems": True,
             },
+            "ros-content-sharing-extension-cmake-args": {
+                "type": "array",
+                "minItems": 0,
+                "items": {"type": "string"},
+                "default": [],
+            },
         },
         "type": "object",
     }
@@ -103,6 +109,7 @@ def test_get_build_commands(monkeypatch):
         catkin_packages = list()
         catkin_packages_ignore = list()
         ros_build_snaps = list()
+        ros_content_sharing_extension_cmake_args = list()
 
     plugin = catkin.CatkinPlugin(part_name="my-part", options=Options())
 
@@ -185,6 +192,7 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         catkin_packages = ["package1", "package2..."]
         catkin_packages_ignore = ["ipackage1", "ipackage2..."]
         ros_build_snaps = ["foo"]
+        ros_content_sharing_extension_cmake_args = ["DCMAKE_EXNTENSION_ARGS", "bar"]
 
     plugin = catkin.CatkinPlugin(part_name="my-part", options=Options())
 
@@ -298,7 +306,7 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         '--source-space "${SNAPCRAFT_PART_SRC_WORK}" --build-space "${SNAPCRAFT_PART_BUILD}" '
         '--install-space "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" '
         '-j "${SNAPCRAFT_PARALLEL_BUILD_COUNT}" --pkg package1 package2... '
-        "--ignore-pkg ipackage1 ipackage2... --cmake-args cmake args...",
+        "--ignore-pkg ipackage1 ipackage2... --cmake-args cmake args... DCMAKE_EXNTENSION_ARGS bar",
         "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/bin:/test SNAP=TESTSNAP "
         "SNAP_ARCH=TESTARCH SNAP_NAME=TESTSNAPNAME SNAP_VERSION=TESTV1 "
         "http_proxy=http://foo https_proxy=https://bar "
