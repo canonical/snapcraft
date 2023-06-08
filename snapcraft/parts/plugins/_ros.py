@@ -86,7 +86,11 @@ class RosPlugin(plugins.Plugin):
 
     @overrides
     def get_build_snaps(self) -> Set[str]:
-        return set(self._options.ros_build_snaps) if self._options.ros_build_snaps else set()
+        return (
+            set(self._options.ros_build_snaps)  # type: ignore
+            if self._options.ros_build_snaps  # type: ignore
+            else set()
+        )
 
     @overrides
     def get_build_packages(self) -> Set[str]:
