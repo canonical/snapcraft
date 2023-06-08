@@ -24,7 +24,6 @@ from testtools.matchers import Equals, IsInstance
 
 from snapcraft_legacy.internal import errors
 from snapcraft_legacy.plugins._plugin_finder import _PLUGINS
-from snapcraft_legacy.plugins.v1 import PluginV1
 from snapcraft_legacy.plugins.v2 import PluginV2
 from tests.legacy import unit
 
@@ -49,9 +48,23 @@ class NonLocalTest(unit.TestCase):
             print(
                 dedent(
                     """\
-                import snapcraft_legacy.plugins.v1
-                class Local(snapcraft_legacy.plugins.v1.PluginV1):
-                    pass
+                import snapcraft_legacy.plugins.v2
+                class PluginImpl(snapcraft_legacy.plugins.v2.PluginV2):
+                    @classmethod
+                    def get_schema(cls):
+                        return {}
+
+                    def get_build_commands(self):
+                        return []
+
+                    def get_build_environment(self):
+                        return []
+
+                    def get_build_packages(self):
+                        return []
+
+                    def get_build_snaps(self):
+                        return []
                 """
                 ),
                 file=plugin,
@@ -61,29 +74,10 @@ class NonLocalTest(unit.TestCase):
 
 
 class InTreePluginsTest(unit.TestCase):
-    def test_all_known_v1(self):
-        # We don't want validation to take place here.
-        self.useFixture(fixtures.MockPatch("jsonschema.validate"))
-        for plugin_name in _PLUGINS["v1"]:
-            plugin_handler = self.load_part(
-                "test-part", plugin_name=plugin_name, base="core18"
-            )
-            self.expectThat(plugin_handler.plugin, IsInstance(PluginV1))
-
     def test_all_v2(self):
         self.useFixture(fixtures.MockPatch("jsonschema.validate"))
-        for plugin_name in _PLUGINS["v2"]:
+        for plugin_name in _PLUGINS:
             plugin_handler = self.load_part(
                 "test-part", plugin_name=plugin_name, base="core20"
             )
             self.expectThat(plugin_handler.plugin, IsInstance(PluginV2))
-
-    def test_fail_on_schema(self):
-        # conda requires some part_properties to be set.
-        self.assertRaises(
-            errors.PluginError,
-            self.load_part,
-            "test-part",
-            plugin_name="conda",
-            base="core18",
-        )
