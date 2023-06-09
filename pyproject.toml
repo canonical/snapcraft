@@ -206,6 +206,8 @@ ignore = [
     "D213",  # Multi-line docstring summary should start at the second line (reason: pep257 default)
     "D215",  # Section underline is over-indented (reason: pep257 default)
     "A003",  # Class attribute shadowing built-in (reason: Class attributes don't often get bare references)
+    "SIM117", # Use a single `with` statement with multiple contexts instead of nested `with` statements
+              # (reason: this creates long lines that get wrapped and reduces readability)
 
     # Ignored due to common usage in current code
     "TRY003",  # Avoid specifying long messages outside the exception class
