@@ -495,6 +495,92 @@ class ExtensionRootMergeTest(ExtensionTestBase):
         self.run_test()
 
 
+class ExtensionNoExtension(ExtensionTestBase):
+    def test_no_extension(self):
+        config = self.make_snapcraft_project(
+            textwrap.dedent(
+                """\
+                    name: test
+                    version: "1"
+                    summary: test
+                    description: test
+                    base: core20
+                    grade: stable
+                    confinement: strict
+
+                    apps:
+                        app1:
+                            command: app1
+                            extensions: [environment]
+
+                    parts:
+                        part1:
+                            plugin: nil
+                        part2:
+                            plugin: dump
+                            source: .
+                            no_extension: true
+                    """
+            )
+        )
+
+        # Verify that the extension was removed
+        self.expectThat(config.data, Not(Contains("extensions")))
+
+        # Verify that the extension was removed
+        self.expectThat(config.data, Not(Contains("no_extension")))
+
+        self.assertThat(config.parts.after_requests, Contains("part1"))
+        self.expectThat(
+            config.parts.after_requests["part1"], Equals(["extension-part"])
+        )
+
+        self.assertThat(config.parts.after_requests, Not(Contains("part2")))
+
+        config = self.make_snapcraft_project(
+            textwrap.dedent(
+                """\
+                    name: test
+                    version: "1"
+                    summary: test
+                    description: test
+                    base: core20
+                    grade: stable
+                    confinement: strict
+
+                    apps:
+                        app1:
+                            command: app1
+                            extensions: [environment]
+
+                    parts:
+                        part1:
+                            plugin: nil
+                        part2:
+                            plugin: dump
+                            source: .
+                            no_extension: false
+                    """
+            )
+        )
+
+        # Verify that the extension was removed
+        self.expectThat(config.data, Not(Contains("extensions")))
+
+        # Verify that the extension was removed
+        self.expectThat(config.data, Not(Contains("no_extension")))
+
+        self.assertThat(config.parts.after_requests, Contains("part1"))
+        self.expectThat(
+            config.parts.after_requests["part1"], Equals(["extension-part"])
+        )
+
+        self.assertThat(config.parts.after_requests, Contains("part2"))
+        self.expectThat(
+            config.parts.after_requests["part2"], Equals(["extension-part"])
+        )
+
+
 class InvalidExtensionTest(ExtensionTestBase):
     def test_invalid_app_extension_format(self):
         raised = self.assertRaises(
@@ -757,6 +843,41 @@ class InvalidExtensionTest(ExtensionTestBase):
 
         self.assertThat(raised.extension_name, Equals("environment"))
         self.assertThat(raised.confinement, Equals("unsupported"))
+
+    def test_no_extension_not_bool(self):
+        raised = self.assertRaises(
+            snapcraft_legacy.yaml_utils.errors.YamlValidationError,
+            self.make_snapcraft_project,
+            textwrap.dedent(
+                """\
+                    name: test
+                    version: "1"
+                    summary: test
+                    description: test
+                    base: core20
+                    grade: stable
+                    confinement: strict
+
+                    apps:
+                        app1:
+                            command: app1
+                            extensions: [environment]
+
+                    parts:
+                        part1:
+                            plugin: nil
+                        part2:
+                            plugin: dump
+                            source: .
+                            no_extension: foo
+                    """
+            ),
+        )
+
+        self.assertThat(
+            str(raised),
+            Contains("Entry 'no_extension' must be a bool."),
+        )
 
 
 def _environment_extension_fixture():

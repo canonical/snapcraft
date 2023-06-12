@@ -21,6 +21,8 @@ import contextlib
 import copy
 from typing import TYPE_CHECKING, Any, Dict, List, Set
 
+from snapcraft import errors
+
 from .registry import get_extension_class
 
 if TYPE_CHECKING:
@@ -66,7 +68,7 @@ def apply_extensions(
     return yaml_data
 
 
-def _apply_extension(
+def _apply_extension(  # noqa: C901
     yaml_data: Dict[str, Any],
     app_names: Set[str],
     extension: "Extension",
@@ -91,6 +93,12 @@ def _apply_extension(
     part_extension = extension.get_part_snippet()
     parts = yaml_data["parts"]
     for _part_name, part_definition in parts.items():
+        if "no_extension" in part_definition:
+            if not isinstance(part_definition["no_extension"], bool):
+                raise errors.SnapcraftError("Entry 'no_extension' must be a bool.")
+            if part_definition.pop("no_extension"):
+                continue
+
         for property_name, property_value in part_extension.items():
             part_definition[property_name] = _apply_extension_property(
                 part_definition.get(property_name), property_value

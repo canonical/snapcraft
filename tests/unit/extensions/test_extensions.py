@@ -230,6 +230,96 @@ def test_apply_extension_experimental_with_environment(emitter, monkeypatch):
     )
 
 
+@pytest.mark.usefixtures("fake_extension")
+def test_no_extension():
+    yaml_data = {
+        "base": "core22",
+        "grade": "fake-grade",
+        "apps": {
+            "fake-command": {
+                "command": "bin/fake-command",
+                "extensions": ["fake-extension"],
+            }
+        },
+        "parts": {
+            "part1": {"plugin": "nil"},
+            "part2": {
+                "plugin": "dump",
+                "source": ".",
+                "no_extension": True,
+            },
+        },
+    }
+
+    assert extensions.apply_extensions(
+        yaml_data, arch="amd64", target_arch="amd64"
+    ) == {
+        "base": "core22",
+        "grade": "fake-grade",
+        "apps": {
+            "fake-command": {
+                "command": "bin/fake-command",
+                "plugs": ["fake-plug"],
+            }
+        },
+        "parts": {
+            "part1": {
+                "plugin": "nil",
+                "after": ["fake-extension/fake-part"],
+            },
+            "part2": {
+                "plugin": "dump",
+                "source": ".",
+            },
+            "fake-extension/fake-part": {"plugin": "nil"},
+        },
+    }
+
+    yaml_data = {
+        "base": "core22",
+        "grade": "fake-grade",
+        "apps": {
+            "fake-command": {
+                "command": "bin/fake-command",
+                "extensions": ["fake-extension"],
+            }
+        },
+        "parts": {
+            "part1": {"plugin": "nil"},
+            "part2": {
+                "plugin": "dump",
+                "source": ".",
+                "no_extension": False,
+            },
+        },
+    }
+
+    assert extensions.apply_extensions(
+        yaml_data, arch="amd64", target_arch="amd64"
+    ) == {
+        "base": "core22",
+        "grade": "fake-grade",
+        "apps": {
+            "fake-command": {
+                "command": "bin/fake-command",
+                "plugs": ["fake-plug"],
+            }
+        },
+        "parts": {
+            "part1": {
+                "plugin": "nil",
+                "after": ["fake-extension/fake-part"],
+            },
+            "part2": {
+                "plugin": "dump",
+                "source": ".",
+                "after": ["fake-extension/fake-part"],
+            },
+            "fake-extension/fake-part": {"plugin": "nil"},
+        },
+    }
+
+
 def test_get_extensions_data_dir():
     assert (get_extensions_data_dir() / "desktop").is_dir()
     assert (get_extensions_data_dir() / "ros1").is_dir()

@@ -141,7 +141,7 @@ def _load_extension(
     )
 
 
-def _apply_extension(
+def _apply_extension(  # noqa: C901
     yaml_data: Dict[str, Any],
     app_names: Set[str],
     extension_name: str,
@@ -167,6 +167,14 @@ def _apply_extension(
     part_extension = extension.part_snippet
     parts = yaml_data["parts"]
     for part_name, part_definition in parts.items():
+        if "no_extension" in part_definition:
+            if not isinstance(part_definition["no_extension"], bool):
+                raise snapcraft_legacy.yaml_utils.errors.YamlValidationError(
+                    "Entry 'no_extension' must be a bool."
+                )
+            if part_definition.pop("no_extension"):
+                continue
+
         for property_name, property_value in part_extension.items():
             part_definition[property_name] = _apply_extension_property(
                 part_definition.get(property_name), property_value
