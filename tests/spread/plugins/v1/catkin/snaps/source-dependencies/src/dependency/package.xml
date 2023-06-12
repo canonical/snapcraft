@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<package>
-  <name>dependency</name>
-  <version>0.0.0</version>
-  <description>The dependency package</description>
-  <maintainer email="me@example.com">me</maintainer>
-  <license>GPLv3</license>
-  <buildtool_depend>catkin</buildtool_depend>
-</package>

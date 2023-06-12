@@ -4,7 +4,7 @@ summary: Help verify (some) device files can be created in LXD builds
 description: ...
 
 grade: devel
-base: core18
+base: core20
 confinement: strict
 
 parts:

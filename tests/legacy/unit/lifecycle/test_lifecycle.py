@@ -84,7 +84,7 @@ class ExecutionTestCase(LifecycleTestBase):
             )
         )
 
-        lifecycle.execute(steps.PULL, project_config, part_names=["part2"])
+        lifecycle.execute(steps.BUILD, project_config, part_names=["part2"])
 
         self.assertThat(
             self.fake_logger.output,
@@ -272,14 +272,12 @@ class ExecutionTestCase(LifecycleTestBase):
             Equals("The 'bar' and 'foo' project options appear to have changed.\n"),
         )
 
-    @mock.patch.object(snapcraft_legacy.BasePlugin, "enable_cross_compilation")
     @mock.patch("snapcraft_legacy.repo.Repo.install_build_packages")
     @mock.patch("snapcraft_legacy.repo.snaps.install_snaps")
     def test_pull_is_dirty_if_target_arch_changes(
         self,
         mock_install_build_snaps,
         mock_install_build_packages,
-        mock_enable_cross_compilation,
     ):
         # Set the option to error on dirty/outdated steps
         with snapcraft_legacy.config.CLIConfig() as cli_config:
@@ -436,7 +434,7 @@ class RecordSnapcraftYamlTestCase(LifecycleTestBase):
         expected = textwrap.dedent(
             """\
             name: test
-            base: core18
+            base: core20
             version: "1.0"
             summary: test
             description: test

@@ -24,9 +24,8 @@ from typing import List, Set
 
 import jsonschema
 from craft_archives.repo import apt_key_manager, apt_sources_manager
-from craft_archives.repo.package_repository import PackageRepository
 
-from snapcraft_legacy import formatting_utils, plugins, project
+from snapcraft_legacy import formatting_utils, project
 from snapcraft_legacy.internal import deprecations, repo, states, steps
 from snapcraft_legacy.internal.meta.snap import Snap
 from snapcraft_legacy.internal.pluginhandler._part_environment import (
@@ -35,7 +34,7 @@ from snapcraft_legacy.internal.pluginhandler._part_environment import (
 from snapcraft_legacy.project._schema import Validator
 
 from . import errors, grammar_processing, replace_attr
-from ._env import environment_to_replacements, runtime_env
+from ._env import environment_to_replacements
 from ._extensions import apply_extensions
 from ._parts_config import PartsConfig
 
@@ -245,19 +244,6 @@ class Config:
         if duplicates:
             raise errors.DuplicateAliasError(aliases=duplicates)
 
-    def _get_required_package_repositories(self) -> List[PackageRepository]:
-        package_repos = self.project._snap_meta.package_repositories.copy()
-
-        v1_plugins = [
-            part.plugin
-            for part in self.all_parts
-            if isinstance(part.plugin, plugins.v1.PluginV1)
-        ]
-        for plugin in v1_plugins:
-            package_repos.extend(plugin.get_required_package_repositories())
-
-        return package_repos
-
     def _verify_all_key_assets_installed(
         self,
         *,
@@ -272,7 +258,7 @@ class Config:
                     raise errors.SnapcraftProjectUnusedKeyAssetError(key_path=key_asset)
 
     def install_package_repositories(self) -> None:
-        package_repos = self._get_required_package_repositories()
+        package_repos = self.project._snap_meta.package_repositories.copy()
         if not package_repos:
             return
 
@@ -284,7 +270,7 @@ class Config:
         sources_manager = apt_sources_manager.AptSourcesManager()
 
         refresh_required = False
-        for package_repo in self._get_required_package_repositories():
+        for package_repo in package_repos:
             refresh_required |= key_manager.install_package_repository_key(
                 package_repo=package_repo
             )
@@ -321,8 +307,7 @@ class Config:
                     part.source_handler.command
                 )
 
-            if not isinstance(part.plugin, plugins.v1.PluginV1):
-                build_packages |= part.plugin.get_build_packages()
+            build_packages |= part.plugin.get_build_packages()
 
         return build_packages
 
@@ -335,8 +320,7 @@ class Config:
 
         for part in self.all_parts:
             build_snaps |= part._grammar_processor.get_build_snaps()
-            if not isinstance(part.plugin, plugins.v1.PluginV1):
-                build_snaps |= part.plugin.get_build_snaps()
+            build_snaps |= part.plugin.get_build_snaps()
 
         return build_snaps
 
@@ -348,32 +332,6 @@ class Config:
             state[part.name] = states.get_state(part.part_state_dir, step)
 
         return state
-
-    def snap_env(self):
-        prime_dir = self.project.prime_dir
-        env = []
-
-        env += runtime_env(prime_dir, self.project.arch_triplet)
-        dependency_paths = set()
-        for part in self.parts.all_parts:
-            env += part.env(prime_dir)
-            dependency_paths |= part.get_primed_dependency_paths()
-
-        # Dependency paths are only valid if they actually exist. Sorting them
-        # here as well so the LD_LIBRARY_PATH is consistent between runs.
-        dependency_paths = sorted(
-            {path for path in dependency_paths if os.path.isdir(path)}
-        )
-
-        if dependency_paths:
-            # Add more specific LD_LIBRARY_PATH from the dependencies.
-            env.append(
-                'LD_LIBRARY_PATH="'
-                + ":".join(dependency_paths)
-                + '${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"'
-            )
-
-        return env
 
     def project_env(self):
         return [

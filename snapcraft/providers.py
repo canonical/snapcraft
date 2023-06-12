@@ -24,6 +24,7 @@ from typing import Dict, Optional
 
 from craft_cli import emit
 from craft_providers import Provider, ProviderError, bases, executor
+from craft_providers.actions.snap_installer import Snap
 from craft_providers.lxd import LXDProvider
 from craft_providers.multipass import MultipassProvider
 
@@ -198,13 +199,7 @@ def get_base_configuration(
         compatibility_tag=f"snapcraft-{bases.BuilddBase.compatibility_tag}.0",
         environment=environment,
         hostname=instance_name,
-        snaps=[
-            bases.buildd.Snap(
-                name=snap_name,
-                channel=snap_channel,
-                classic=True,
-            )
-        ],
+        snaps=[Snap(name=snap_name, channel=snap_channel, classic=True)],
         # Requirement for apt gpg and version:git
         packages=["gnupg", "dirmngr", "git"],
     )

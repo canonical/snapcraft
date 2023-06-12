@@ -196,7 +196,7 @@ class TestValidArchitectures:
         snapcraft_yaml = dedent(
             """\
             name: test
-            base: core18
+            base: core20
             version: "1"
             summary: test
             description: test
@@ -297,7 +297,7 @@ def test_loading_additional_properties_fails(tmp_work_path, entry):
     snapcraft_yaml = dedent(
         f"""\
             name: my-package-1
-            base: core18
+            base: core20
             version: 1.0-snapcraft1~ppa1
             summary: my summary less that 79 chars
             description: description which can be pretty long
