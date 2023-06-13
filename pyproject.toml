@@ -55,6 +55,19 @@ readme = {file = "README.rst"}
 
 [tool.setuptools_scm]
 write_to = "starcraft/_version.py"
+# the version comes from the latest annotated git tag formatted as 'X.Y.Z'
+# standard version scheme:
+#   'X.Y.Z.post<commits since tag>+g<hash>'
+# scheme when no tags exist:
+#   '0.0.post<total commits>+g<hash>
+# scheme when no tags exist and working dir is dirty:
+#   '0.0.post<total commits>+g<hash>.d<date formatted as %Y%m%d>'
+version_scheme = "post-release"
+# deviations from the default 'git describe' command:
+# - only match annotated tags
+# - only match tags formatted as 'X.Y.Z'
+# - exclude '+dirty<hash>' suffix
+git_describe_command = "git describe --long --match '[0-9]*.[0-9]*.[0-9]*' --exclude '*[^0-9.]*'"
 
 [tool.setuptools.packages.find]
 exclude = [
