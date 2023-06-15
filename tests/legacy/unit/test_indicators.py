@@ -22,13 +22,17 @@ import progressbar
 import requests
 
 from snapcraft_legacy.internal import indicators
-from tests.legacy import unit
+from tests.legacy import fixture_setup, unit
 
 
 class DumbTerminalTests(unit.TestCase):
     @patch("os.isatty")
     def setUp(self, mock_os_isatty):
         super().setUp()
+
+        self.fake_terminal = fixture_setup.FakeTerminal()
+        self.useFixture(self.fake_terminal)
+
         self.mock_os_isatty = mock_os_isatty
         self.mock_os_isatty.return_value = True
 

@@ -54,7 +54,7 @@ class BasicExtensionTest(ExtensionTestBase):
                     version: "1"
                     summary: test
                     description: test
-                    base: core18
+                    base: core20
                     grade: stable
                     confinement: strict
 
@@ -104,7 +104,7 @@ class BasicExtensionTest(ExtensionTestBase):
                     version: "1"
                     summary: test
                     description: test
-                    base: core18
+                    base: core20
                     grade: stable
                     confinement: strict
 
@@ -157,7 +157,7 @@ class BasicExtensionTest(ExtensionTestBase):
                     version: "1"
                     summary: test
                     description: test
-                    base: core18
+                    base: core20
                     grade: stable
                     confinement: strict
 
@@ -209,7 +209,7 @@ class ExtensionOrderConsistencyTest(ExtensionTestBase):
                     version: "1"
                     summary: test
                     description: test
-                    base: core18
+                    base: core20
                     grade: stable
                     confinement: strict
 
@@ -248,7 +248,7 @@ class ExtensionMergeTest(ExtensionTestBase):
             version: "1"
             summary: test
             description: test
-            base: core18
+            base: core20
             grade: stable
             confinement: strict
 
@@ -432,7 +432,7 @@ class ExtensionRootMergeTest(ExtensionTestBase):
             version: "1"
             summary: test
             description: test
-            base: core18
+            base: core20
             grade: stable
             confinement: strict
 
@@ -542,7 +542,7 @@ class InvalidExtensionTest(ExtensionTestBase):
                 description: test
                 grade: stable
                 confinement: strict
-                base: core18
+                base: core20
 
                 apps:
                     test-app:
@@ -574,7 +574,7 @@ class InvalidExtensionTest(ExtensionTestBase):
                 version: "1"
                 summary: test
                 description: test
-                base: core18
+                base: core20
                 grade: stable
                 confinement: strict
 
@@ -628,7 +628,7 @@ class InvalidExtensionTest(ExtensionTestBase):
                 version: "1"
                 summary: test
                 description: test
-                base: core18
+                base: core20
                 grade: stable
                 confinement: strict
 
@@ -712,7 +712,7 @@ class InvalidExtensionTest(ExtensionTestBase):
                 summary: test
                 description: test
                 grade: stable
-                base: core18
+                base: core20
 
                 apps:
                     test-app:
@@ -741,7 +741,7 @@ class InvalidExtensionTest(ExtensionTestBase):
                 description: test
                 grade: stable
                 confinement: unsupported
-                base: core18
+                base: core20
 
                 apps:
                     test-app:
@@ -763,7 +763,7 @@ def _environment_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core18",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -783,7 +783,7 @@ def _build_environment_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core18",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -809,7 +809,7 @@ def _build_environment2_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core18",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -835,7 +835,7 @@ def _plug_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core18",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -852,7 +852,7 @@ def _plug2_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core18",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -869,7 +869,7 @@ def _daemon_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core18",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -886,7 +886,7 @@ def _adopt_info_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core18",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -903,7 +903,7 @@ def _invalid_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core18",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:

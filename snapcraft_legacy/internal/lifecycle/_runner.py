@@ -17,7 +17,7 @@
 import logging
 from typing import List, Optional, Sequence, Set
 
-from snapcraft_legacy import config, plugins, storeapi
+from snapcraft_legacy import config, storeapi
 from snapcraft_legacy.internal import (
     common,
     errors,
@@ -293,13 +293,7 @@ class _Executor:
     def _handle_part_dependencies(
         self, *, step: steps.Step, part: pluginhandler.PluginHandler
     ) -> None:
-        # core20 uses Plugins V2 which does not require staging parts for pull
-        # like V1 Plugins do.
-        if (
-            part._build_attributes.core22_step_dependencies()
-            and self.project._get_build_base() == "core20"
-            and step == steps.PULL
-        ):
+        if part._build_attributes.core22_step_dependencies() and step == steps.PULL:
             return
         elif (
             part._build_attributes.core22_step_dependencies()
@@ -342,10 +336,6 @@ class _Executor:
         if preparation_function:
             notify_part_progress(part, "Preparing to {}".format(step.name), debug=True)
             preparation_function()
-
-        if isinstance(part.plugin, plugins.v1.PluginV1):
-            common.env = self.parts_config.build_env_for_part(part)
-            common.env.extend(self.config.project_env())
 
         part = _replace_in_part(part)
 

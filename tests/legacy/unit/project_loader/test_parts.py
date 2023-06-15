@@ -71,7 +71,7 @@ class TestPartOrder:
                 "contents": dedent(
                     """\
                 name: test
-                base: core18
+                base: core20
                 version: "1"
                 summary: test
                 description: test
@@ -93,7 +93,7 @@ class TestPartOrder:
                 "contents": dedent(
                     """\
                 name: test
-                base: core18
+                base: core20
                 version: "1"
                 summary: test
                 description: test
@@ -115,7 +115,7 @@ class TestPartOrder:
                 "contents": dedent(
                     """\
                 name: test
-                base: core18
+                base: core20
                 version: "1"
                 summary: test
                 description: test
@@ -140,7 +140,7 @@ class TestPartOrder:
                 "contents": dedent(
                     """\
                 name: test
-                base: core18
+                base: core20
                 version: "1"
                 summary: test
                 description: test
@@ -179,7 +179,7 @@ class PluginLoadTest(LoadPartBaseTest):
             dedent(
                 """\
             name: test
-            base: core18
+            base: core20
             version: "1"
             summary: test
             description: test

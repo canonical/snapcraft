@@ -21,7 +21,7 @@ from unittest.mock import call, patch
 import fixtures
 from testtools.matchers import Contains, Equals
 
-from snapcraft_legacy import extractors, plugins
+from snapcraft_legacy import extractors
 from snapcraft_legacy.internal import elf, errors, states, steps
 from tests.legacy import fixture_setup, unit
 
@@ -29,20 +29,6 @@ from tests.legacy import fixture_setup, unit
 class StateBaseTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
-
-        self.get_pull_properties_mock = self.useFixture(
-            fixtures.MockPatch(
-                "snapcraft_legacy.plugins.v1.PluginV1.get_pull_properties",
-                return_value=[],
-            )
-        ).mock
-
-        self.get_build_properties_mock = self.useFixture(
-            fixtures.MockPatch(
-                "snapcraft_legacy.plugins.v1.PluginV1.get_build_properties",
-                return_value=[],
-            )
-        ).mock
 
         self.handler = self.load_part("test_part")
         self.handler.makedirs()
@@ -253,31 +239,7 @@ class StateTestCase(StateBaseTestCase):
         metadata = state.scriptlet_metadata
         self.assertThat(metadata.get_version(), Equals("override-version"))
 
-    def test_pull_state_with_properties(self):
-        self.get_pull_properties_mock.return_value = ["foo"]
-        self.handler.plugin.options.foo = "bar"
-        self.handler._part_properties["foo"] = "bar"
-
-        self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
-        self.assertThat(self.handler.next_step(), Equals(steps.PULL))
-
-        self.handler.pull()
-
-        self.assertThat(self.handler.latest_step(), Equals(steps.PULL))
-        self.assertThat(self.handler.next_step(), Equals(steps.BUILD))
-        state = self.handler.get_pull_state()
-
-        self.assertTrue(state, "Expected pull to save state YAML")
-        self.assertTrue(type(state) is states.PullState)
-        self.assertTrue(type(state.properties) is OrderedDict)
-        if isinstance(self.handler.plugin, plugins.v1.PluginV1):
-            self.assertTrue("foo" in state.properties)
-            self.assertThat(state.properties["foo"], Equals("bar"))
-        self.assertTrue(type(state.project_options) is OrderedDict)
-        self.assertTrue("deb_arch" in state.project_options)
-
-    @patch.object(plugins.v1.nil.NilPlugin, "clean_pull")
-    def test_clean_pull_state(self, mock_clean_pull):
+    def test_clean_pull_state(self):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
 
@@ -285,41 +247,8 @@ class StateTestCase(StateBaseTestCase):
 
         self.handler.clean_pull()
 
-        # Verify that the plugin had clean_pull() called
-        if isinstance(self.handler.plugin, plugins.v1.PluginV1):
-            mock_clean_pull.assert_called_once_with()
-
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
-
-    def test_build_state(self):
-        if not isinstance(self.handler.plugin, plugins.v1.PluginV1):
-            self.skipTest("Test designed for PluginV1")
-
-        self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
-        self.assertThat(self.handler.next_step(), Equals(steps.PULL))
-
-        self.handler.build()
-
-        self.assertThat(self.handler.latest_step(), Equals(steps.BUILD))
-        self.assertThat(self.handler.next_step(), Equals(steps.STAGE))
-        state = self.handler.get_build_state()
-
-        self.assertTrue(state, "Expected build to save state YAML")
-        self.assertTrue(type(state) is states.BuildState)
-        self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(6))
-        for expected in [
-            "after",
-            "build-attributes",
-            "build-packages",
-            "disable-parallel",
-            "organize",
-            "override-build",
-        ]:
-            self.assertTrue(expected in state.properties)
-        self.assertTrue(type(state.project_options) is OrderedDict)
-        self.assertTrue("deb_arch" in state.project_options)
 
     def test_build_state_with_extracted_metadata(self):
         self.handler = self.load_part(
@@ -422,47 +351,6 @@ class StateTestCase(StateBaseTestCase):
 
         metadata = state.scriptlet_metadata
         self.assertThat(metadata.get_version(), Equals("override-version"))
-
-    def test_build_state_with_properties(self):
-        self.get_build_properties_mock.return_value = ["foo"]
-        self.handler.plugin.options.foo = "bar"
-        self.handler._part_properties = {"foo": "bar"}
-
-        self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
-        self.assertThat(self.handler.next_step(), Equals(steps.PULL))
-
-        self.handler.build()
-
-        self.assertThat(self.handler.latest_step(), Equals(steps.BUILD))
-        self.assertThat(self.handler.next_step(), Equals(steps.STAGE))
-        state = self.handler.get_build_state()
-
-        self.assertTrue(state, "Expected build to save state YAML")
-        self.assertTrue(type(state) is states.BuildState)
-        self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertTrue("foo" in state.properties)
-        self.assertThat(state.properties["foo"], Equals("bar"))
-        self.assertTrue(type(state.project_options) is OrderedDict)
-        self.assertTrue("deb_arch" in state.project_options)
-
-    @patch.object(plugins.v1.nil.NilPlugin, "clean_build")
-    def test_clean_build_state(self, mock_clean_build):
-        if not isinstance(self.handler.plugin, plugins.v1.PluginV1):
-            self.skipTest("Test designed for PluginV1")
-
-        self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
-
-        self.handler.mark_done(steps.PULL)
-        self.handler.build()
-
-        self.handler.clean_build()
-
-        # Verify that the plugin had clean_build() called for v1.
-        if isinstance(self.handler.plugin, plugins.v1.PluginV1):
-            mock_clean_build.assert_called_once_with()
-
-        self.assertThat(self.handler.latest_step(), Equals(steps.PULL))
-        self.assertThat(self.handler.next_step(), Equals(steps.BUILD))
 
     def test_stage_state(self):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
@@ -1083,9 +971,9 @@ class TestStateFileMigration:
     def test_state_file_migration(self, tmp_work_path, step):
         part_name = "foo"
 
-        part_dir = tmp_work_path / "parts" / part_name
-        part_dir.mkdir(parents=True)
-        with (part_dir / "state").open("w") as state_file:
+        part_state = tmp_work_path / "parts" / part_name / "state" / step.name
+        part_state.parent.mkdir(parents=True)
+        with part_state.open("w") as state_file:
             print(step.name, file=state_file, end="")
 
         handler = unit.load_part(part_name)

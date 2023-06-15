@@ -24,7 +24,7 @@ class TestBuildSnapsFromSnapcraftYaml(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
-            base: core18
+            base: core20
             version: "1.0"
             summary: test
             description: test
@@ -43,7 +43,7 @@ class TestBuildSnapsFromSnapcraftYaml(ProjectLoaderBaseTest):
 
         self.assertThat(
             project_config.get_build_snaps(),
-            Equals({"foo/latest/stable", "core18", "bar/default/edge"}),
+            Equals({"foo/latest/stable", "core20", "bar/default/edge"}),
         )
 
     def test_build_snaps_v2(self):

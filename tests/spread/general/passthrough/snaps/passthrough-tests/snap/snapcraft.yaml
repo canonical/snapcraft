@@ -3,7 +3,7 @@ version: "1.0"
 summary: passthrough-tests
 description: passthrough-tests
 
-base: core18
+base: core20
 grade: devel
 confinement: strict
 
@@ -16,7 +16,6 @@ parts:
 
 apps:
   test-cmd:
-    adapter: none
     command: test-cmd
     passthrough:
       pt-test-app: pt-test-app
