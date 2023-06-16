@@ -49,7 +49,7 @@ def test_version_without_tags():
     version = starcraft.__version__
 
     # match on '0.0.post<total commits>+g<hash>'
-    #       or '0.0.post<total commits>+g<hash>.d<date formatted as %Y%m%d>'
+    #       or '0.0.post<total commits>+g<hash>.d<%Y%m%d>'
     assert re.fullmatch(r"\d+\.\d+\.post\d+\+g[0-9a-f]+(\.d[0-9]*)?", version)
 
 
@@ -61,5 +61,8 @@ def test_version_with_tags():
     """Version should be properly formatted when a valid tag exists."""
     version = starcraft.__version__
 
-    # match on 'X.Y.Z.post<commits since tag>+g<hash>'
-    assert re.fullmatch(r"\d+\.\d+\.\d+\.post\d+\+g[0-9a-f]+", version)
+    # match on 'X.Y.Z'
+    #       or 'X.Y.Z.d<%Y%m%d>'
+    #       or 'X.Y.Z.post<commits since tag>+g<hash>'
+    #       or 'X.Y.Z.post<commits since tag>+g<hash>.d<%Y%m%d>'
+    assert re.fullmatch(r"\d+\.\d+\.\d+(\.post\d+\+g[0-9a-f]+)?(\.d[0-9]*)?", version)
