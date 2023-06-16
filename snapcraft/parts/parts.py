@@ -173,6 +173,7 @@ class PartsLifecycle:
                 for action in actions:
                     message = _action_message(action)
                     emit.progress(f"Executing parts lifecycle: {message}")
+                    print(f"\033]2;Executing parts lifecycle: {message}\007")
                     with emit.open_stream("Executing action") as stream:
                         aex.execute(action, stdout=stream, stderr=stream)
                     emit.progress(f"Executed: {message}", permanent=True)
