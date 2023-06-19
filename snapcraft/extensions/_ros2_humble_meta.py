@@ -77,9 +77,13 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
             "PYTHONPATH"
         ] = f'{python_paths}:{":".join(new_python_paths)}'
         app_snippet["environment"]["PATH"] = "$SNAP/opt/ros/underlay_ws/usr/bin:$PATH"
-        app_snippet["environment"][
-            "LD_LIBRARY_PATH"
-        ] = "$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:$LD_LIBRARY_PATH"
+        app_snippet["environment"]["LD_LIBRARY_PATH"] = ":".join(
+            [
+                "$SNAP/opt/ros/underlay_ws/usr/lib",
+                "$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET",
+                "$LD_LIBRARY_PATH",
+            ]
+        )
 
         # @todo: for some reason ${VAR:+:$VAR} resulsts in empty substitution
         # prepend_to_env(
