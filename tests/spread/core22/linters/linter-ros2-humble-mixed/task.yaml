@@ -14,8 +14,10 @@ execute: |
   # diff everything except the list of libraries
   diff --ignore-matching-lines "^- library: lib" expected_linter_output.txt linter_output.txt
 
+  # `|| true` is used because grep will error if there is no output from the `diff` call
+  NUM_DIFFERENCES=$(diff expected_linter_output.txt linter_output.txt | grep --count "[<>]" || true)
+
   # the list of unused libraries may change from time to time, so check the output is similar but not identical
-  NUM_DIFFERENCES=$(diff expected_linter_output.txt linter_output.txt | grep --count "[<>]")
   if [[ $NUM_DIFFERENCES -gt 10 ]]; then
     echo "Error: linter warnings are significantly different:"
     diff --unified expected_linter_output.txt linter_output.txt
