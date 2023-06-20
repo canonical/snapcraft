@@ -279,7 +279,8 @@ def get_installed_dependencies(installed_packages_path: str) -> Set[str]:
                 click.echo(f"Will not fetch staged packages: {build_snap_packages!r}")
                 return build_snap_packages
         except IOError:
-            return set()
+            pass
+    return set()
 
 
 @plugin_cli.command()
