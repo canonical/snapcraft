@@ -2,23 +2,32 @@
 Starcraft
 *********
 
-Welcome to Starcraft! We hope this document helps you get started. Before contributing any code, please sign the `Canonical contributor licence agreement`_.
+Welcome to Starcraft! We hope this document helps you get started. Before
+contributing any code, please sign the `Canonical contributor licence
+agreement`_.
 
 Setting up a development environment
 ------------------------------------
-We use a forking, feature-based workflow, so you should start by forking the repository. Once you've done that, clone the project to your computer using git clone's ``--recurse-submodules`` parameter. (See more on the `git submodules`_ documentation.)
+We use a forking, feature-based workflow, so you should start by forking the
+repository. Once you've done that, clone the project to your computer using git
+clone's ``--recurse-submodules`` parameter. (See more on the `git submodules`_
+documentation.)
 
 Tooling
 =======
-We use a large number of tools for our project. Most of these are installed for you with tox, but you'll need to install:
+We use a large number of tools for our project. Most of these are installed for
+you with tox, but you'll need to install:
 
-- Python 3.8 (default on Ubuntu 20.04, available on Ubuntu 22.04 through the deadsnakes_ PPA) with setuptools.
+- Python 3.8 (default on Ubuntu 20.04, available on Ubuntu 22.04 through the
+  deadsnakes_ PPA) with setuptools.
 - tox_ version 4 or later. (3.8+ will automatically provision a v4 virtualenv)
-- Pyright_ (it's recommended you install with ``snap install --classic pyright``)
+- Pyright_ (it's recommended you install with ``snap install --classic
+  pyright``)
 - ShellCheck_  (also available via snap: ``snap install shellcheck``)
 - pre-commit_
 
-Once you have all of those installed, you can install the necessary virtual environments for this repository using tox.
+Once you have all of those installed, you can install the necessary virtual
+environments for this repository using tox.
 
 Other tools
 ###########
@@ -33,7 +42,10 @@ A complete list is kept in our pyproject.toml_ file in dev dependencies.
 Initial Setup
 #############
 
-After cloning the repository but before making any changes, it's worth ensuring that the tests, linting and tools all run on your machine. Running ``tox`` with no parameters will create the necessary virtual environments for linting and testing and run those::
+After cloning the repository but before making any changes, it's worth ensuring
+that the tests, linting and tools all run on your machine. Running ``tox`` with
+no parameters will create the necessary virtual environments for linting and
+testing and run those::
 
     tox
 
@@ -41,11 +53,19 @@ If you want to install the environments but not run the tests, you can run::
 
     tox --notest
 
-If you'd like to run the tests with a newer version of Python, you can pass a specific environment. You must have an appropriately versioned Python interpreter installed. For example, to run with Python 3.10, run::
+If you'd like to run the tests with a newer version of Python, you can pass a
+specific environment. You must have an appropriately versioned Python
+interpreter installed. For example, to run with Python 3.10, run::
 
     tox -e test-py310
 
-While the use of pre-commit_ is optional, it is highly encouraged, as it runs automatic fixes for files when `git commit` is called, including code formatting with ``black`` and ``ruff``.  The versions available in ``apt`` from Debian 11 (bullseye), Ubuntu 22.04 (jammy) and newer are sufficient, but you can also install the latest with ``pip install pre-commit``. Once you've installed it, run ``pre-commit install`` in this git repository to install the pre-commit hooks.
+While the use of pre-commit_ is optional, it is highly encouraged, as it runs
+automatic fixes for files when ``git commit`` is called, including code
+formatting with ``black`` and ``ruff``.  The versions available in ``apt`` from
+Debian 11 (bullseye), Ubuntu 22.04 (jammy) and newer are sufficient, but you can
+also install the latest with ``pip install pre-commit``. Once you've installed
+it, run ``pre-commit install`` in this git repository to install the pre-commit
+hooks.
 
 Tox environments and labels
 ###########################
@@ -59,13 +79,15 @@ We group tox environments with the following labels:
 * ``integration-tests``: Same as above but for integration tests
 * ``tests``: The union of ``unit-tests`` and ``integration-tests``
 
-For each of these, you can see which environments will be run with ``tox list``. For example:
+For each of these, you can see which environments will be run with ``tox list``.
+For example::
 
     tox list -m lint
 
 You can also see all the environments by simply running ``tox list``
 
-Running ``tox run -m format`` and ``tox run -m lint`` before committing code is recommended.
+Running ``tox run -m format`` and ``tox run -m lint`` before committing code is
+recommended.
 
 .. _Black: https://black.readthedocs.io
 .. _`Canonical contributor licence agreement`: http://www.ubuntu.com/legal/contributors/
