@@ -99,7 +99,7 @@ class TestPluginColconPlugin:
                     "colcon-cmake-args": ["cmake", "args..."],
                     "colcon-packages": ["package1", "package2..."],
                     "colcon-packages-ignore": ["ipackage1", "ipackage2..."],
-                    "ros-build-snaps": ["ros-core"],
+                    "colcon-ros-build-snaps": ["ros-core"],
                 }
             )
         except ValidationError as e:
@@ -111,7 +111,7 @@ class TestPluginColconPlugin:
         assert properties.colcon_cmake_args == ["cmake", "args..."]  # type: ignore
         assert properties.colcon_packages == ["package1", "package2..."]  # type: ignore
         assert properties.colcon_packages_ignore == ["ipackage1", "ipackage2..."]  # type: ignore
-        assert properties.ros_build_snaps == ["ros-core"]  # type: ignore
+        assert properties.colcon_ros_build_snaps == ["ros-core"]  # type: ignore
 
     def test_get_build_packages(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(new_dir)
@@ -138,7 +138,7 @@ class TestPluginColconPlugin:
                 "colcon-cmake-args": [],
                 "colcon-packages": [],
                 "colcon-packages-ignore": [],
-                "ros-build-snaps": ["Foo"],
+                "colcon-ros-build-snaps": ["Foo"],
             },
         )
 
@@ -257,7 +257,7 @@ class TestPluginColconPlugin:
                 "colcon-cmake-args": ["cmake", "args..."],
                 "colcon-packages": ["package1", "package2..."],
                 "colcon-packages-ignore": ["ipackage1", "ipackage2..."],
-                "ros-build-snaps": ["foo"],
+                "colcon-ros-build-snaps": ["foo"],
             },
         )
 

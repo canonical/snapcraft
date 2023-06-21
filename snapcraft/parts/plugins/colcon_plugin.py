@@ -72,7 +72,7 @@ class ColconPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     colcon_cmake_args: List[str] = []
     colcon_packages: List[str] = []
     colcon_packages_ignore: List[str] = []
-    ros_build_snaps: List[str] = []
+    colcon_ros_build_snaps: List[str] = []
 
     # part properties required by the plugin
     source: str
@@ -93,7 +93,7 @@ class ColconPluginProperties(plugins.PluginProperties, plugins.PluginModel):
         # However we'd like to avoid that for 'ros-build-snaps'.
         # Marking it required allows us to circumvent the prefix requirement.
         plugin_data = plugins.extract_plugin_properties(
-            data, plugin_name="colcon", required=["source", "ros-build-snaps"]
+            data, plugin_name="colcon", required=["source"]
         )
         return cls(**plugin_data)
 
@@ -155,8 +155,8 @@ class ColconPlugin(_ros.RosPlugin):
         # Source ROS ws in all build-snaps first
         activation_commands.append("## Sourcing ROS ws in build snaps")
         self._options: ColconPluginProperties
-        if self._options.ros_build_snaps:
-            for ros_build_snap in self._options.ros_build_snaps:
+        if self._options.colcon_ros_build_snaps:
+            for ros_build_snap in self._options.colcon_ros_build_snaps:
                 snap_name = _get_parsed_snap(ros_build_snap)[0]
                 activation_commands.extend(
                     self._get_source_command(f"/snap/{snap_name}/current")

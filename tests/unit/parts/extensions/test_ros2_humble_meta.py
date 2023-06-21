@@ -166,7 +166,7 @@ class TestExtensionROS2HumbleMetaExtensions:
         extension = setup_method_fixture(extension_class)
         assert extension.get_part_snippet() == {
             "build-environment": [{"ROS_VERSION": "2"}, {"ROS_DISTRO": "humble"}],
-            "ros-build-snaps": [meta_dev],
+            "colcon-ros-build-snaps": [meta_dev],
             "colcon-cmake-args": [
                 f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{meta_dev}/current/usr"'
             ],
