@@ -112,7 +112,7 @@ class TestClass:
         assert ros1_extension.app_snippet == {
             "command-chain": ["snap/command-chain/ros1-launch"],
             "environment": {
-                "LD_LIBRARY_PATH": "$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:$LD_LIBRARY_PATH",
+                "LD_LIBRARY_PATH": "$SNAP/opt/ros/underlay_ws/usr/lib:$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:$LD_LIBRARY_PATH",
                 "PATH": "$SNAP/opt/ros/underlay_ws/usr/bin:$PATH",
                 "PYTHONPATH": ":".join(python_paths),
                 "ROS_VERSION": "1",
