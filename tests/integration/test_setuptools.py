@@ -1,5 +1,3 @@
-# This file is part of starcraft.
-#
 # Copyright 2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify it
@@ -13,14 +11,14 @@
 #
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Starcraft integration tests related to building the package."""
+"""Integration tests related to building the package."""
 import re
 import subprocess
 from pathlib import Path
 from zipfile import ZipFile
 
 
-def test_packages(tmp_path, request):
+def test_packages(project_main_module, tmp_path, request):
     """Check wheel generation from our pyproject.toml"""
     root_dir = Path(request.config.rootdir)
     out_dir = tmp_path
@@ -29,10 +27,12 @@ def test_packages(tmp_path, request):
     assert len(wheels) == 1
     wheel = wheels[0]
 
-    starcraft_files = []
+    main_module = project_main_module.__name__
+
+    project_files = []
 
     dist_files = []
-    dist_info_re = re.compile("starcraft-.*.dist-info")
+    dist_info_re = re.compile(f"{main_module}-.*.dist-info")
 
     invalid = []
 
@@ -41,15 +41,15 @@ def test_packages(tmp_path, request):
         assert len(names) > 1
         for name in names:
             top = name.parts[0]
-            if top == "starcraft":
-                starcraft_files.append(name)
+            if top == main_module:
+                project_files.append(name)
             elif dist_info_re.match(top):
                 dist_files.append(top)
             else:
                 invalid = []
 
-    # Only the top-level "starcraft" dir should be present, plus the
-    # starcraft-xyz-dist-info/ entries.
-    assert starcraft_files, "No 'starcraft' modules were packaged!"
+    # Only the top-level "project_name" dir should be present, plus the
+    # project_name-xyz-dist-info/ entries.
+    assert project_files, f"No '{main_module}' modules were packaged!"
     assert dist_files, "The dist-info directory was not created!"
     assert not invalid, f"Invalid files were packaged: {invalid}"
