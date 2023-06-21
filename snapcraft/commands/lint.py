@@ -236,7 +236,9 @@ class LintCommand(BaseCommand):
         snap_file = snap_file.resolve()
 
         with tempfile.TemporaryDirectory(prefix=str(snap_file.parent)) as temp_dir:
-            emit.progress(f"Unsquashing snap file {snap_file.name!r}.", update_titlebar=True)
+            emit.progress(
+                f"Unsquashing snap file {snap_file.name!r}.", update_titlebar=True
+            )
 
             # unsquashfs [options] filesystem [directories or files to extract] options:
             # -force: if file already exists then overwrite
@@ -313,7 +315,7 @@ class LintCommand(BaseCommand):
             ack_command = snap_cmd.formulate_ack_command(assert_file)
             emit.progress(
                 f"Installing assertion file with {shlex.join(ack_command)!r}.",
-                update_titlebar=True
+                update_titlebar=True,
             )
 
             try:
@@ -334,7 +336,10 @@ class LintCommand(BaseCommand):
         if snap_metadata.grade == "devel":
             install_command.append("--devmode")
 
-        emit.progress(f"Installing snap with {shlex.join(install_command)!r}.", update_titlebar=True)
+        emit.progress(
+            f"Installing snap with {shlex.join(install_command)!r}.",
+            update_titlebar=True,
+        )
 
         try:
             subprocess.run(install_command, capture_output=True, check=True)

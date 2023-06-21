@@ -167,12 +167,14 @@ class PartsLifecycle:
 
             self._install_package_repositories()
 
-            emit.progress("Executing parts lifecycle...")
+            emit.progress("Executing parts lifecycle...", update_titlebar=True)
 
             with self._lcm.action_executor() as aex:
                 for action in actions:
                     message = _action_message(action)
-                    emit.progress(f"Executing parts lifecycle: {message}", update_titlebar=True)
+                    emit.progress(
+                        f"Executing parts lifecycle: {message}", update_titlebar=True
+                    )
                     with emit.open_stream("Executing action") as stream:
                         aex.execute(action, stdout=stream, stderr=stream)
                     emit.progress(f"Executed: {message}", permanent=True)
