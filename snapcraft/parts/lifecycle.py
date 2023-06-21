@@ -391,7 +391,7 @@ def _generate_metadata(
 ):
     project_vars = lifecycle.project_vars
 
-    emit.progress("Extracting and updating metadata...")
+    emit.progress("Extracting and updating metadata...", update_titlebar=True)
     metadata_list = lifecycle.extract_metadata()
     update_project_metadata(
         project,
@@ -401,7 +401,7 @@ def _generate_metadata(
         prime_dir=lifecycle.prime_dir,
     )
 
-    emit.progress("Copying snap assets...")
+    emit.progress("Copying snap assets...", update_titlebar=True)
     setup_assets(
         project,
         assets_dir=assets_dir,
@@ -409,7 +409,7 @@ def _generate_metadata(
         prime_dir=lifecycle.prime_dir,
     )
 
-    emit.progress("Generating snap metadata...")
+    emit.progress("Generating snap metadata...", update_titlebar=True)
     snap_yaml.write(project, lifecycle.prime_dir, arch=project.get_build_for())
     emit.progress("Generated snap metadata", permanent=True)
 
@@ -462,7 +462,7 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
 
     :param project: The project to clean.
     """
-    emit.progress("Cleaning build provider")
+    emit.progress("Cleaning build provider", update_titlebar=True)
     provider_name = "lxd" if parsed_args.use_lxd else None
     provider = providers.get_provider(provider_name)
     instance_name = providers.get_instance_name(
@@ -552,7 +552,7 @@ def _run_in_provider(
         https_proxy=parsed_args.https_proxy,
     )
 
-    emit.progress("Launching instance...")
+    emit.progress("Launching instance...", update_titlebar=True)
     with provider.launched_environment(
         project_name=project.name,
         project_path=project_path,

@@ -182,19 +182,19 @@ def ua_manager(
             )
         else:
             ua_needs_detach = True
-            emit.progress("Attaching specified UA token...")
+            emit.progress("Attaching specified UA token...", update_titlebar=True)
             _attach(ua_token)
             emit.progress("Attached specified UA token", permanent=True)
 
     try:
         if services:
-            emit.progress("Enabling UA services...")
+            emit.progress("Enabling UA services...", update_titlebar=True)
             _enable_services(services)
             emit.progress(f"Enabled UA services: {' '.join(services)}")
 
         yield
     finally:
         if ua_needs_detach:
-            emit.progress("Detaching specified UA token...")
+            emit.progress("Detaching specified UA token...", update_titlebar=True)
             _detach()
             emit.progress("Detached specified UA token", permanent=True)

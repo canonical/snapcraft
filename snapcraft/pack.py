@@ -128,7 +128,7 @@ def pack_snap(
     command.append(directory)
     command.append(_get_directory(output))
 
-    emit.progress("Creating snap package...")
+    emit.progress("Creating snap package...", update_titlebar=True)
     emit.debug(f"Pack command: {command}")
     try:
         proc = subprocess.run(

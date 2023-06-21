@@ -87,7 +87,7 @@ class LintCommand(BaseCommand):
 
         :raises ArgumentParsingError: If the snap file does not exist or is not valid.
         """
-        emit.progress("Running linter.", permanent=True)
+        emit.progress("Running linter.", permanent=True, update_titlebar=True)
 
         snap_file = parsed_args.snap_file
 
@@ -150,7 +150,7 @@ class LintCommand(BaseCommand):
 
         :raises SnapcraftError: If `snapcraft lint` fails inside the instance.
         """
-        emit.progress("Checking build provider availability.")
+        emit.progress("Checking build provider availability.", update_titlebar=True)
 
         provider = providers.get_provider()
         if isinstance(provider, MultipassProvider):
@@ -170,7 +170,7 @@ class LintCommand(BaseCommand):
             https_proxy=https_proxy,
         )
 
-        emit.progress("Launching instance.")
+        emit.progress("Launching instance.", update_titlebar=True)
 
         with provider.launched_environment(
             project_name="snapcraft-linter",
@@ -236,7 +236,7 @@ class LintCommand(BaseCommand):
         snap_file = snap_file.resolve()
 
         with tempfile.TemporaryDirectory(prefix=str(snap_file.parent)) as temp_dir:
-            emit.progress(f"Unsquashing snap file {snap_file.name!r}.")
+            emit.progress(f"Unsquashing snap file {snap_file.name!r}.", update_titlebar=True)
 
             # unsquashfs [options] filesystem [directories or files to extract] options:
             # -force: if file already exists then overwrite
@@ -312,7 +312,8 @@ class LintCommand(BaseCommand):
         if assert_file:
             ack_command = snap_cmd.formulate_ack_command(assert_file)
             emit.progress(
-                f"Installing assertion file with {shlex.join(ack_command)!r}."
+                f"Installing assertion file with {shlex.join(ack_command)!r}.",
+                update_titlebar=True
             )
 
             try:
@@ -333,7 +334,7 @@ class LintCommand(BaseCommand):
         if snap_metadata.grade == "devel":
             install_command.append("--devmode")
 
-        emit.progress(f"Installing snap with {shlex.join(install_command)!r}.")
+        emit.progress(f"Installing snap with {shlex.join(install_command)!r}.", update_titlebar=True)
 
         try:
             subprocess.run(install_command, capture_output=True, check=True)

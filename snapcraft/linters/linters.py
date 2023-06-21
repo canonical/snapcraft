@@ -137,7 +137,7 @@ def run_linters(location: Path, *, lint: Optional[projects.Lint]) -> List[Linter
                 continue
 
             linter = linter_class(name=name, lint=lint, snap_metadata=snap_metadata)
-            emit.progress(f"Running linter: {name}")
+            emit.progress(f"Running linter: {name}", update_titlebar=True)
             issues = linter.run()
             all_issues += issues
     finally:

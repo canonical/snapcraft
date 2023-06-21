@@ -80,7 +80,7 @@ class PartsLifecycle:
         self._parse_info = parse_info
         self._all_part_names = [*all_parts]
 
-        emit.progress("Initializing parts lifecycle")
+        emit.progress("Initializing parts lifecycle", update_titlebar=True)
 
         # set the cache dir for parts package management
         cache_dir = BaseDirectory.save_cache_path("snapcraft")
@@ -172,8 +172,7 @@ class PartsLifecycle:
             with self._lcm.action_executor() as aex:
                 for action in actions:
                     message = _action_message(action)
-                    emit.progress(f"Executing parts lifecycle: {message}")
-                    print(f"\033]2;Executing parts lifecycle: {message}\007")
+                    emit.progress(f"Executing parts lifecycle: {message}", update_titlebar=True)
                     with emit.open_stream("Executing action") as stream:
                         aex.execute(action, stdout=stream, stderr=stream)
                     emit.progress(f"Executed: {message}", permanent=True)
@@ -201,12 +200,12 @@ class PartsLifecycle:
         if any(p for p in required_packages if not Repository.is_package_installed(p)):
             Repository.install_packages(required_packages, refresh_package_cache=True)
 
-        emit.progress("Installing package repositories...")
+        emit.progress("Installing package repositories...", update_titlebar=True)
         refresh_required = repo.install(
             self._package_repositories, key_assets=self._assets_dir / "keys"
         )
         if refresh_required:
-            emit.progress("Refreshing package repositories...")
+            emit.progress("Refreshing package repositories...", update_titlebar=True)
             # TODO: craft-parts API for: force_refresh=refresh_required
             # pylint: disable=C0415
             from craft_parts.packages import deb
