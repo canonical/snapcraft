@@ -175,7 +175,8 @@ select = [  # Base linting rule selections.
     "RSE",  # Errors on pytest raises.
     "RET",  # Simpler logic after return, raise, continue or break
     "SIM",  # Code simplification
-    "TCH",  # Guard imports only used for type checking behind a type-checkning block.
+    "TCH004",  # Remove imports from type-checking guard blocks if used at runtime
+    "TCH005",  # Delete empty type-checking blocks
     "ARG",  # Unused arguments
     "PTH",  # Migrate to pathlib
     "ERA",  # Don't check in commented out code
