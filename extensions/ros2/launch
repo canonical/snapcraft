@@ -19,6 +19,24 @@ fi
 if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/snap" ]; then
   source_with_prefix "$SNAP/opt/ros/underlay_ws/opt/ros/snap"
 fi
+if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" ] || [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/snap" ]; then
+
+  case "$SNAP_ARCH" in
+    "amd64") ARCH_TRIPLET='x86_64-linux-gnu'
+    ;;
+    "arm64") ARCH_TRIPLET="aarch64-linux-gnu"
+    ;;
+    "armhf") ARCH_TRIPLET="arm-linux-gnueabihf"
+    ;;
+    *)
+      echo "Unsupported architecture '$SNAP_ARCH' for this app build."
+      exit 1
+    ;;
+  esac
+
+  export PATH="$SNAP/opt/ros/underlay_ws/usr/bin:$PATH"
+  export LD_LIBRARY_PATH="$SNAP/opt/ros/underlay_ws/usr/lib:$SNAP/opt/ros/underlay_ws/usr/lib/$ARCH_TRIPLET:$LD_LIBRARY_PATH"
+fi
 
 source_with_prefix "$SNAP/opt/ros/$ROS_DISTRO"
 source_with_prefix "$SNAP/opt/ros/snap"

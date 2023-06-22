@@ -92,8 +92,6 @@ class TestClass:
         assert ros_extension.app_snippet == {
             "command-chain": ["snap/command-chain/ros2-launch"],
             "environment": {
-                "LD_LIBRARY_PATH": "$SNAP/opt/ros/underlay_ws/usr/lib:$SNAP/opt/ros/underlay_ws/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:$LD_LIBRARY_PATH",
-                "PATH": "$SNAP/opt/ros/underlay_ws/usr/bin:$PATH",
                 "PYTHONPATH": ":".join(python_paths),
                 "ROS_VERSION": "2",
                 "ROS_DISTRO": "foxy",

@@ -18,6 +18,22 @@ original_args=("$@")
 # activate_workspace in content shared snaps
 if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" ]; then
     activate_workspace "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" --local
+
+    case "$SNAP_ARCH" in
+        "amd64") ARCH_TRIPLET='x86_64-linux-gnu'
+        ;;
+        "arm64") ARCH_TRIPLET="aarch64-linux-gnu"
+        ;;
+        "armhf") ARCH_TRIPLET="arm-linux-gnueabihf"
+        ;;
+        *)
+            echo "Unsupported architecture '$SNAP_ARCH' for this app build."
+            exit 1
+        ;;
+    esac
+
+    export PATH="$SNAP/opt/ros/underlay_ws/usr/bin:$PATH"
+    export LD_LIBRARY_PATH="$SNAP/opt/ros/underlay_ws/usr/lib:$SNAP/opt/ros/underlay_ws/usr/lib/$ARCH_TRIPLET:$LD_LIBRARY_PATH"
 fi
 
 activate_workspace "$SNAP/opt/ros/$ROS_DISTRO" --local --extend
