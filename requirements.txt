@@ -6,7 +6,7 @@ chardet==5.1.0
 charset-normalizer==3.1.0
 click==8.1.3
 craft-archives==1.0.0
-craft-cli==2.0.0
+git+https://github.com/sergio-costas/craft-cli@UDENG-832-allow-to-set-the-window-title#craft-cli
 craft-grammar==1.1.1
 craft-parts==1.21.1
 craft-providers==1.13.0
