@@ -1,0 +1,59 @@
+name: Release
+on:
+  push:
+    tags:
+      # These tags should be protected, remember to enable the rule:
+      # https://github.com/canonical/starbase/settings/tag_protection
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+
+jobs:
+  source-wheel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          check-latest: true
+      - name: Build packages
+        run: |
+          pip install build twine
+          python3 -m build
+          twine check dist/*
+      - name: Upload pypi packages artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: pypi-packages
+          path: dist/
+  pypi:
+    needs: ["source-wheel"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get packages
+        uses: actions/download-artifact@v3
+        with:
+          name: pypi-packages
+          path: dist/
+      - name: Publish to pypi
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+  github-release:
+    needs: ["source-wheel"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get pypi artifacts
+        uses: actions/download-artifact@v3
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            **
