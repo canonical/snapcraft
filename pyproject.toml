@@ -72,7 +72,8 @@ version_scheme = "post-release"
 git_describe_command = "git describe --dirty --long --match '[0-9]*.[0-9]*.[0-9]*' --exclude '*[^0-9.]*'"
 
 [tool.setuptools.packages.find]
-include = ["starcraft"]
+include = ["*craft*"]
+namespaces = false
 
 [tool.black]
 target-version = ["py38"]
