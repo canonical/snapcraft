@@ -133,7 +133,13 @@ class ListKeysCommandTestCase(FakeStoreCommandsBaseTestCase):
         self.assertThat(
             result.output,
             Contains(
-                "No keys have been registered. "
-                "See 'snapcraft register-key --help' to register a key."
+                "No keys have been registered with this account.\n"
+                "The following keys are available on this system:"
             ),
+        )
+        self.assertThat(
+            result.output,
+            Contains(
+                "See 'snapcraft register-key --help' to register a key."
+            )
         )
