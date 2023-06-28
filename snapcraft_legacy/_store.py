@@ -435,49 +435,48 @@ def list_keys():
     """Lists keys available to sign assertions."""
     keys = list(_get_usable_keys())
     account_info = StoreClientCLI().get_account_information()
-    enabled_keys = {
+    enabled_keys = [
         account_key["public-key-sha3-384"]
         for account_key in account_info["account_keys"]
-    }
+    ]
+    if keys:
+        tabulated_keys = tabulate(
+            [
+                (
+                    "*" if key["sha3-384"] in enabled_keys else "-",
+                    key["name"],
+                    key["sha3-384"],
+                    "" if key["sha3-384"] in enabled_keys else "(not registered)",
+                )
+                for key in keys
+            ],
+            headers=["", "Name", "SHA3-384 fingerprint", ""],
+            tablefmt="plain",
+        )
+        print(
+            "The following keys are available on this system:"
+        )
+        print(tabulated_keys)
+    else:
+        print(
+            "No keys have been created on this system. "
+            "See 'snapcraft create-key --help' to create a key."
+        )
     if enabled_keys:
-        if keys:
-            tabulated_keys = tabulate(
-                [
-                    (
-                        "*" if key["sha3-384"] in enabled_keys else "-",
-                        key["name"],
-                        key["sha3-384"],
-                        "" if key["sha3-384"] in enabled_keys else "(not registered)",
-                    )
-                    for key in keys
-                ],
-                headers=["", "Name", "SHA3-384 fingerprint", ""],
-                tablefmt="plain",
-            )
-            print(tabulated_keys)
-        else:
-            registered_keys = "\n".join([f"- {key}" for key in enabled_keys])
+        local_hashes = {key["sha3-384"] for key in keys}
+        registered_keys = "\n".join(
+            (f"- {key}" for key in enabled_keys if key not in local_hashes)
+        )
+        if registered_keys:
             print(
-                "No keys have been created on this system. "
-                " See 'snapcraft create-key --help' to create a key.\n"
                 "The following SHA3-384 key fingerprints have been registered "
                 f"but are not available on this system:\n{registered_keys}"
             )
     else:
-        if keys:
-            tabulated_keys = tabulate(
-                [("-", key["name"], key["sha3-384"]) for key in keys],
-                headers=["", "Name", "SHA3-384 fingerprint", ""],
-                tablefmt="plain",
-            )
-            print(
-                "No keys have been registered with this account.\n"
-                "The following keys are available on this system:"
-            )
-            print(tabulated_keys)
-        else:
-            print("No keys have been registered.")
-        print("See 'snapcraft register-key --help' to register a key.")
+        print(
+            "No keys have been registered with this account. "
+            "See 'snapcraft register-key --help' to register a key."
+        )
 
 
 def create_key(name):
