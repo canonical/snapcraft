@@ -317,7 +317,7 @@ suites:
    kill-timeout: 180m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
    priority: 90  # Run this test relatively early since fetching images can take time
- tests/spread/providers/legacy/:
+ tests/spread-legacy/providers/:
    summary: tests of snapcraft using build providers
    systems:
    - ubuntu-20.04-64
@@ -326,7 +326,7 @@ suites:
    priority: 90  # Run this test relatively early since fetching images can take time
 
  # Plugin-specific suites
- tests/spread/plugins/v2/:
+ tests/spread-legacy/plugins-v2/:
    summary: tests of snapcraft's v2 plugins
    systems:
    - ubuntu-20.04*

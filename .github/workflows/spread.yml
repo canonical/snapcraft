@@ -40,6 +40,9 @@ jobs:
         spread-jobs:
           - google:ubuntu-20.04-64
           - google:ubuntu-22.04-64
+        spread-groups:
+          - tests/spread/
+          - tests/spread-legacy/
 
     steps:
       - name: Checkout snapcraft
@@ -58,7 +61,7 @@ jobs:
         env:
           SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
           UA_TOKEN: ${{ secrets.UA_TOKEN }}
-        run: spread ${{ matrix.spread-jobs }}
+        run: spread ${{ matrix.spread-jobs }}:${{ matrix.spread-groups }}
 
       - name: Discard spread workers
         if: always()
