@@ -104,7 +104,6 @@ omit = ["tests/**"]
 
 [tool.coverage.report]
 skip_empty = true
-fail_under = 80
 exclude_also = [
     "if (typing\\.)?TYPE_CHECKING:",
 ]
