@@ -132,12 +132,13 @@ class StoreNamesCommand(BaseCommand):
     def run(self, parsed_args):
         store_client = store.StoreClientCLI()
         snaps = store_client.get_names()
+        snaps.sort(key=operator.itemgetter(0))
 
         if not snaps:
             emit.message("No registered snaps")
         else:
             tabulated_snaps = tabulate(
-                sorted(snaps, key=operator.itemgetter(0)),
+                snaps,
                 headers=["Name", "Since", "Visibility", "Notes"],
                 tablefmt="plain",
             )
