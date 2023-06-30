@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2022 Canonical Ltd
+# Copyright 2016-2023 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -435,11 +435,11 @@ def list_keys():
     """Lists keys available to sign assertions."""
     keys = list(_get_usable_keys())
     account_info = StoreClientCLI().get_account_information()
-    enabled_keys = {
+    enabled_keys = [
         account_key["public-key-sha3-384"]
         for account_key in account_info["account_keys"]
-    }
-    if keys and enabled_keys:
+    ]
+    if keys:
         tabulated_keys = tabulate(
             [
                 (
@@ -453,19 +453,29 @@ def list_keys():
             headers=["", "Name", "SHA3-384 fingerprint", ""],
             tablefmt="plain",
         )
-        print(tabulated_keys)
-    elif not keys and enabled_keys:
-        registered_keys = "\n".join([f"- {key}" for key in enabled_keys])
         print(
-            "No keys have been created on this system. "
-            " See 'snapcraft create-key --help' to create a key.\n"
-            "The following SHA3-384 key fingerprints have been registered "
-            f"but are not available on this system:\n{registered_keys}"
+            "The following keys are available on this system:"
         )
+        print(tabulated_keys)
     else:
         print(
-            "No keys have been registered."
-            " See 'snapcraft register-key --help' to register a key."
+            "No keys have been created on this system. "
+            "See 'snapcraft create-key --help' to create a key."
+        )
+    if enabled_keys:
+        local_hashes = {key["sha3-384"] for key in keys}
+        registered_keys = "\n".join(
+            (f"- {key}" for key in enabled_keys if key not in local_hashes)
+        )
+        if registered_keys:
+            print(
+                "The following SHA3-384 key fingerprints have been registered "
+                f"but are not available on this system:\n{registered_keys}"
+            )
+    else:
+        print(
+            "No keys have been registered with this account. "
+            "See 'snapcraft register-key --help' to register a key."
         )
 
 
