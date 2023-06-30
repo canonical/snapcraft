@@ -416,10 +416,12 @@ suites:
    summary: tests of snapcraft's Go plugin
    systems:
    - ubuntu-18.04*
- tests/spread/plugins/v1/godeps/:
-   summary: tests of snapcraft's Godeps plugin
-   systems:
-   - ubuntu-18.04*
+ # godeps can no longer build due to:
+ #   https://github.com/golang/go/issues/57051
+ # tests/spread/plugins/v1/godeps/:
+ #   summary: tests of snapcraft's Godeps plugin
+ #   systems:
+ #   - ubuntu-18.04*
  tests/spread/plugins/v1/gradle/:
    summary: tests of snapcraft's Gradle plugin
    systems:
