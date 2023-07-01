@@ -343,7 +343,7 @@ class KernelPlugin(plugins.Plugin):
             self.dtbs = [f"{i}.dtb" for i in self.options.kernel_device_trees]
             if self.dtbs:
                 self._make_targets.extend(self.dtbs)
-        elif self._kernel_arch in ("arm", "arm64", "riscv64"):
+        elif self._kernel_arch in ("arm", "arm64", "riscv", "riscv64"):
             self._make_targets.append("dtbs")
             self._make_install_targets.extend(
                 ["dtbs_install", "INSTALL_DTBS_PATH=${CRAFT_PART_INSTALL}/dtbs"]
