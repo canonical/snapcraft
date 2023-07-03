@@ -115,8 +115,8 @@ def test_get_build_commands(monkeypatch):
         "fi",
         '. /opt/ros/"${ROS_DISTRO}"/local_setup.sh',
         'eval "${state}"',
-        "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
-        "init; fi",
+        "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
+        "sudo --preserve-env=http_proxy,https_proxy rosdep init; fi",
         'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
         'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
         'state="$(set +o); set -$-"',
@@ -182,8 +182,8 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "fi",
         '. /opt/ros/"${ROS_DISTRO}"/local_setup.sh',
         'eval "${state}"',
-        "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
-        "init; fi",
+        "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
+        "sudo --preserve-env=http_proxy,https_proxy rosdep init; fi",
         'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
         'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
         'state="$(set +o); set -$-"',

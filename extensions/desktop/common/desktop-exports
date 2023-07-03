@@ -467,3 +467,6 @@ ln -sfn "$REALHOME/.config/ibus/bus" "$IBUS_CONFIG_PATH"
 
 # Set libgweather path
 export LIBGWEATHER_LOCATIONS_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/libgweather-4/Locations.bin"
+
+# Set libthai dict path
+export LIBTHAI_DICTDIR="$SNAP_DESKTOP_RUNTIME/usr/share/libthai/"

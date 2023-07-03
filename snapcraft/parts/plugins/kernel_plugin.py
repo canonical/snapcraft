@@ -385,6 +385,7 @@ class KernelPlugin(plugins.Plugin):
         build_packages = {
             "bc",
             "binutils",
+            "debhelper",
             "fakeroot",
             "gcc",
             "cmake",
@@ -447,7 +448,6 @@ class KernelPlugin(plugins.Plugin):
             "ARCH": self._kernel_arch,
             "DEB_ARCH": "${CRAFT_TARGET_ARCH}",
             "UC_INITRD_DEB": "${CRAFT_PART_BUILD}/ubuntu-core-initramfs",
-            "SNAPD_UNPACKED_SNAP": "${CRAFT_PART_BUILD}/unpacked_snapd",
             "KERNEL_BUILD_ARCH_DIR": f"${{CRAFT_PART_BUILD}}/arch/{self._kernel_arch}/boot",
             "KERNEL_IMAGE_TARGET": self.kernel_image_target,
         }
