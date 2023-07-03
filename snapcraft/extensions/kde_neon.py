@@ -178,36 +178,6 @@ class KDENeon(Extension):
                     ),
                 },
                 {
-                    "LD_LIBRARY_PATH": prepend_to_env(
-                        "LD_LIBRARY_PATH",
-                        [
-                            f"/snap/{sdk_snap}/current/lib/$CRAFT_ARCH_TRIPLET",
-                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET",
-                            f"/snap/{sdk_snap}/current/usr/lib",
-                            f"/snap/{sdk_snap}/current/usr/lib/vala-current",
-                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
-                        ],
-                    ),
-                },
-                {
-                    "PKG_CONFIG_PATH": prepend_to_env(
-                        "PKG_CONFIG_PATH",
-                        [
-                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig",
-                            f"/snap/{sdk_snap}/current/usr/lib/pkgconfig",
-                            f"/snap/{sdk_snap}/current/usr/share/pkgconfig",
-                        ],
-                    ),
-                },
-                {
-                    "ACLOCAL_PATH": prepend_to_env(
-                        "ACLOCAL_PATH",
-                        [
-                            f"/snap/{sdk_snap}/current/usr/share/aclocal",
-                        ],
-                    ),
-                },
-                {
                     "SNAPCRAFT_CMAKE_ARGS": prepend_to_env(
                         "SNAPCRAFT_CMAKE_ARGS",
                         [

@@ -16,7 +16,7 @@ pyenchant==3.2.2
 Pygments==2.13.0
 pyparsing==3.0.9
 pytz==2022.6
-requests==2.28.1
+requests==2.31.0
 six==1.16.0
 snowballstemmer==2.2.0
 soupsieve==2.3.2.post1
@@ -30,5 +30,5 @@ sphinxcontrib-htmlhelp==2.0.0
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.5
-tornado==6.2
+tornado==6.3.2
 urllib3==1.26.13
