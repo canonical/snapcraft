@@ -403,11 +403,11 @@ class StoreListTracksCommand(BaseCommand):
             ]
             for track in snap_channel_map.snap.tracks
         ]
+        track_table.sort(key=operator.itemgetter(2))  # Sort by "creation-date".
 
         emit.message(
             tabulate(
-                # Sort by "creation-date".
-                sorted(track_table, key=operator.itemgetter(2)),
+                track_table,
                 headers=["Name", "Status", "Creation-Date", "Version-Pattern"],
                 tablefmt="plain",
             )
