@@ -15,13 +15,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      - name: Fetch tag annotations
+        run: |
+          git fetch --force --tags --depth 1
+          git describe --dirty --long --match '[0-9]*.[0-9]*.[0-9]*' --exclude '*[^0-9.]*'
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-          cache: "pip"
           check-latest: true
       - name: Build packages
         run: |
