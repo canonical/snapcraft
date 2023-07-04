@@ -304,9 +304,6 @@ function make_user_fontconfig {
       echo "  <dir>${data_dirs_array[$i]}/fonts</dir>"
     fi
   done
-  # fix font render for modified fonts, that discussed on Snapcraft Forum:
-  # https://forum.snapcraft.io/t/snap-package-cannot-read-fonts-conf/16657
-  echo '  <include ignore_missing="yes">/etc/fonts/conf.d</include>'
   echo '  <include ignore_missing="yes">conf.d</include>'
   # We need to include a user-writable cachedir first to support
   # caching of per-user fonts.
