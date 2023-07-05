@@ -1,0 +1,18 @@
+.. _AppStream: https://www.freedesktop.org/software/appstream/docs/
+.. _Canonical Documentation Style Guide: https://docs.ubuntu.com/styleguide/en
+.. _Canonical website: https://canonical.com/
+.. _`Create a brand account`: https://snapcraft.io/docs/t/creating-snap-store-brand-accounts/6271
+.. _`Kernel connector`: https://www.kernel.org/doc/Documentation/connector/connector.txt
+.. _managing-snap-configuration: https://snapcraft.io/docs/configuration-in-snaps
+.. _`Markdown`: https://commonmark.org/help/
+.. _reStructuredText style guide: https://canonical-documentation-with-sphinx-and-readthedocscom.readthedocs-hosted.com/style-guide/
+.. _ROS: https://www.ros.org/
+.. _setuptools: https://setuptools.readthedocs.io/en/latest/
+.. _`snap-channels`: https://snapcraft.io/docs/channels
+.. _`Snap Store desktop app`: https://snapcraft.io/snap-store
+.. _`Snap Store`: https://snapcraft.io/store
+.. _Sphinx reStructuredText Primer: https://tinyurl.com/rstprimer
+.. _`the Snapcraft forum`: https://forum.snapcraft.io
+.. _`Ubuntu Core`: https://ubuntu.com/core/
+.. _vscode: https://code.visualstudio.com/
+.. _`YAML specification`: https://yaml.org/spec/
