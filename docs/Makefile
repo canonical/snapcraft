@@ -5,7 +5,7 @@
 # from the environment for the first two.
 SPHINXOPTS    ?= -q
 SPHINXBUILD   ?= sphinx-build
-SOURCEDIR     = snapcraft
+SOURCEDIR     = .
 BUILDDIR      = _build
 VENV          = sphinx-resources/.sphinx/venv/bin/activate
 
