@@ -13,7 +13,7 @@ build:
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
-  builder: dirhtml
+  builder: html
   fail_on_warning: true
 
 # Build documentation with MkDocs
