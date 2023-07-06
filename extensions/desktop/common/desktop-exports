@@ -1,7 +1,10 @@
 #!/bin/bash
-###############################################
-# Launcher common exports for any desktop app #
-###############################################
+###########################################################
+# Launcher common exports for any desktop app
+# This is not used with the gnome extension for
+# core22 and later, please see
+# https://github.com/snapcore/snapcraft-desktop-integration
+###########################################################
 
 # Note: We avoid using `eval` because we don't want to expand variable names
 #       in paths. For example: LD_LIBRARY_PATH paths might contain `$LIB`.
