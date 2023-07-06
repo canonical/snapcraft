@@ -1,5 +1,10 @@
 import datetime
+import pathlib
 import sys
+
+sys.path.insert(0, str(pathlib.Path("..").absolute()))
+
+import snapcraft
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -12,7 +17,7 @@ import sys
 project = 'Snapcraft'
 author = 'Canonical Group Ltd'
 copyright = "%s, %s" % (datetime.date.today().year, author)
-release = '1.0'
+release = snapcraft.__version__
 
 # Open Graph configuration - defines what is displayed in the website preview
 ogp_site_url = "https://canonical-snapcraft.readthedocs-hosted.com"
