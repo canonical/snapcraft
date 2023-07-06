@@ -1,8 +1,10 @@
 import datetime
+import os
 import pathlib
 import sys
 
-sys.path.insert(0, str(pathlib.Path("..").absolute()))
+project_dir = pathlib.Path("..").resolve()
+sys.path.insert(0, str(project_dir.absolute()))
 
 import snapcraft
 
@@ -169,3 +171,12 @@ if "github_issues" in html_context and html_context["github_issues"]:
 # Set up redirects (https://documatt.gitlab.io/sphinx-reredirects/usage.html)
 # For example: "explanation/old-name.html": "../how-to/prettify.html",
 redirects = {}
+
+
+def generate_cli_docs(nil):
+    gen_cli_docs_path = (project_dir / "tools" / "docs" / "gen_cli_docs.py").resolve()
+    os.system("%s %s" % (gen_cli_docs_path, project_dir / "docs"))
+
+
+def setup(app):
+    app.connect("builder-inited", generate_cli_docs)

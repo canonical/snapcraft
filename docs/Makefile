@@ -39,6 +39,7 @@ serve:
 
 clean: clean-doc
 	rm -rf .sphinx/venv
+	rm -rf reference/commands
 
 clean-doc:
 	git clean -fx "$(BUILDDIR)"
