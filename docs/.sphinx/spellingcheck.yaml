@@ -22,3 +22,5 @@ matrix:
       - link
       - title
       - div.relatedlinks
+      - div.visually-hidden
+      - img

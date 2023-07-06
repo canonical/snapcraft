@@ -6,6 +6,9 @@ furo
 sphinx-tabs
 sphinx-reredirects
 pyspelling
+sphinxext-opengraph
+lxd-sphinx-extensions
 sphinx-copybutton
 sphinx-pydantic
 sphinx-toolbox
+myst-parser

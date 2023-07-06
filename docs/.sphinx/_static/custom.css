@@ -26,9 +26,9 @@ table.docutils td, table.docutils th, table.docutils td:last-child, table.docuti
     border-left: none;
 }
 
-/* center align table cells with ":-:" */
-td.text-center {
-    text-align: center;
+/* Allow to centre text horizontally in table data cells */
+table.align-center {
+    text-align: center !important;
 }
 
 /** No rounded corners **/
@@ -167,4 +167,23 @@ ol.arabic ol.arabic {
 /** Make expandable sections look like links **/
 details summary {
     color: var(--color-link);
+}
+
+/** Fix the styling of the version box for readthedocs **/
+
+#furo-readthedocs-versions .rst-versions, #furo-readthedocs-versions .rst-current-version, #furo-readthedocs-versions:focus-within .rst-current-version, #furo-readthedocs-versions:hover .rst-current-version  {
+    background: var(--color-sidebar-item-background--hover);
+}
+
+.rst-versions .rst-other-versions dd a {
+    color: var(--color-link);
+}
+
+#furo-readthedocs-versions:focus-within .rst-current-version .fa-book, #furo-readthedocs-versions:hover .rst-current-version .fa-book, .rst-versions .rst-other-versions {
+    color: var(--color-sidebar-link-text);
+}
+
+.rst-versions .rst-current-version {
+    color: var(--color-version-popup);
+    font-weight: bolder;
 }
