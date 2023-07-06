@@ -91,8 +91,8 @@
     }
   ],
   timezone: "Etc/UTC",
-  automergeSchedule: "every weekend",
-  schedule: "every weekend",
+  automergeSchedule: ["every weekend"],
+  schedule: ["every weekend"],
   prConcurrentLimit: 2, // No more than 2 open PRs at a time.
   prCreation: "not-pending", // Wait until status checks have completed before raising the PR
   prNotPendingHours: 4, // ...unless the status checks have been running for 4+ hours.
