@@ -52,6 +52,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_data_from_snap_file(snap_path):
+    manifest_yaml = None
     with tempfile.TemporaryDirectory() as temp_dir:
         unsquashfs_path = get_snap_tool_path("unsquashfs")
         try:
@@ -61,9 +62,9 @@ def get_data_from_snap_file(snap_path):
                     "-d",
                     os.path.join(temp_dir, "squashfs-root"),
                     snap_path,
-                    "-e",
                     # cygwin unsquashfs on windows uses unix paths.
                     Path("meta", "snap.yaml").as_posix(),
+                    Path("snap", "manifest.yaml").as_posix(),
                 ]
             )
         except subprocess.CalledProcessError:
@@ -73,7 +74,12 @@ def get_data_from_snap_file(snap_path):
             os.path.join(temp_dir, "squashfs-root", "meta", "snap.yaml")
         ) as yaml_file:
             snap_yaml = yaml_utils.load(yaml_file)
-    return snap_yaml
+        manifest_path = Path(temp_dir, "squashfs-root", "snap", "manifest.yaml")
+        if manifest_path.exists():
+            with open(manifest_path) as manifest_yaml_file:
+                manifest_yaml = yaml_utils.load(manifest_yaml_file)
+
+    return snap_yaml, manifest_yaml
 
 
 @contextlib.contextmanager
@@ -584,7 +590,7 @@ def sign_build(snap_filename, key_name=None, local=False):
     if not os.path.exists(snap_filename):
         raise FileNotFoundError("The file {!r} does not exist.".format(snap_filename))
 
-    snap_yaml = get_data_from_snap_file(snap_filename)
+    snap_yaml, _ = get_data_from_snap_file(snap_filename)
     snap_name = snap_yaml["name"]
     grade = snap_yaml.get("grade", "stable")
 
@@ -635,7 +641,7 @@ def upload_metadata(snap_filename, force):
     logger.debug("Uploading metadata to the Store (force=%s)", force)
 
     # get the metadata from the snap
-    snap_yaml = get_data_from_snap_file(snap_filename)
+    snap_yaml, _ = get_data_from_snap_file(snap_filename)
     metadata = {
         "summary": snap_yaml["summary"],
         "description": snap_yaml["description"],
