@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 
 import argparse
+from craft_cli.dispatcher import _CustomArgumentParser, Dispatcher
 import os
 import pathlib
-from craft_cli.dispatcher import _CustomArgumentParser, Dispatcher
 import sys
 
 this_dir = pathlib.Path(os.path.split(__file__)[0])
 sys.path.insert(0, str((this_dir / ".." / "..").absolute()))
 
 from snapcraft import cli
+
 
 def command_page_header(cmd, options_str, required_str):
     underline = "=" * len(cmd.name)
@@ -115,7 +116,9 @@ def main(docs_dir):
 
             if options or global_options:
                 options_str += "[options]"
-            required_str = "".join([(" <%s>" % argname(d, vl)) for d, (vl, h) in required])
+            required_str = "".join(
+                [(" <%s>" % argname(d, vl)) for d, (vl, h) in required]
+            )
 
             f = cmd_path.open("w")
             f.write(command_page_header(cmd, options_str, required_str))
