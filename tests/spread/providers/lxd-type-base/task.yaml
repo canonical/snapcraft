@@ -24,4 +24,13 @@ execute: |
 
   /snap/bin/lxc start snapcraft-core20
   /snap/bin/lxc exec snapcraft-core20 cat /etc/os-release | MATCH "VERSION_CODENAME=focal"
-  /snap/bin/lxc stop snapcraft-core20
+  
+  # Retry stopping, as on the Google runners this sometimes times out due to system load.
+  for _ in {1..4}; do
+    sleep 5
+    /snap/bin/lxc stop --timeout 60 snapcraft-core20 && break
+  done || (
+    # If the last stop failed, include the LXC logs in the output to establish why.
+    lxc info --show-log snapcraft-core20
+    exit 1
+  )

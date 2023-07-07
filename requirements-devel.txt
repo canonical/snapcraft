@@ -12,12 +12,12 @@ codespell==2.2.4
 colorama==0.4.6
 coverage==7.2.5
 craft-archives==1.0.0
-craft-cli==1.2.0
+craft-cli==2.0.0
 craft-grammar==1.1.1
-craft-parts==1.21.0
+craft-parts==1.21.1
 craft-providers==1.13.0
 craft-store==2.4.0
-cryptography==40.0.2
+cryptography==41.0.0
 Deprecated==1.2.13
 dill==0.3.6
 distlib==0.3.6
@@ -91,7 +91,7 @@ pytz==2023.3
 pyxdg==0.28
 PyYAML==6.0
 raven==6.10.0
-requests==2.30.0
+requests==2.31.0
 requests-toolbelt==1.0.0
 requests-unixsocket==0.3.0
 ruff==0.0.220
@@ -125,6 +125,6 @@ wrapt==1.15.0
 ws4py==0.5.1
 zope.deprecation==5.0
 zope.interface==6.0
-python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.1ubuntu0.20.04.1/python-apt_2.0.1ubuntu0.20.04.1.tar.xz; sys.platform == "linux"
 setuptools<66
+python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz; sys.platform == "linux"
 pyinstaller==4.10; sys.platform == "win32"

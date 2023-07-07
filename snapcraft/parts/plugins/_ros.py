@@ -177,8 +177,11 @@ class RosPlugin(plugins.Plugin):
         return (
             self._get_workspace_activation_commands()
             + [
-                "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; "
-                "then sudo rosdep init; fi",
+                "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
+                # Preserve http(s)_proxy env var in root for remote-build proxy since rosdep
+                # doesn't support proxy
+                # https://github.com/ros-infrastructure/rosdep/issues/271
+                "sudo --preserve-env=http_proxy,https_proxy rosdep init; fi",
                 'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
                 "rosdep install --default-yes --ignore-packages-from-source "
                 '--from-paths "${CRAFT_PART_SRC_WORK}"',
