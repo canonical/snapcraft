@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
 import argparse
-from craft_cli.dispatcher import _CustomArgumentParser, Dispatcher
 import os
 import pathlib
 import sys
+
+from craft_cli.dispatcher import Dispatcher, _CustomArgumentParser
 
 this_dir = pathlib.Path(os.path.split(__file__)[0])
 sys.path.insert(0, str((this_dir / ".." / "..").absolute()))
