@@ -24,7 +24,6 @@ from typing import Any, Dict, Optional
 
 from overrides import overrides
 
-# from .extension import prepend_to_env
 from .ros2_humble import ROS2HumbleExtension
 
 

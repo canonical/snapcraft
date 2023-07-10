@@ -67,10 +67,10 @@ execute: |
   SNAP_SIZE=$(find . -maxdepth 1 -mindepth 1 -name '*_1.0_*.snap' -exec ls -s {} + | cut -d " " -f1)
   [ "600" -gt "$SNAP_SIZE" ]
 
-  # Install the providing snap
+  # The default providing snap is installed automatically
   # snap install "${META_SNAP}"
 
-  snap connect "${SNAP}":"${INTERFACE}" "${META_SNAP}":"${INTERFACE}"
+  snap connect "${SNAP}:${INTERFACE}" "${META_SNAP}:${INTERFACE}"
 
   # Run the ROS system. By default this will never exit, but the snap supports
   # an `exit_after_receive` parameter that, if true, will cause the system to

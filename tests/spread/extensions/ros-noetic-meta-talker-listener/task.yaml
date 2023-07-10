@@ -70,10 +70,10 @@ execute: |
   SNAP_SIZE=$(find . -maxdepth 1 -mindepth 1 -name '*_1.0_*.snap' -exec ls -s {} + | cut -d " " -f1)
   [ "100" -gt "$SNAP_SIZE" ]
 
-  # # Install the providing snap
+  # The default providing snap is installed automatically
   # snap install "${META_SNAP}"
 
-  snap connect "${SNAP}":"${INTERFACE}" "${META_SNAP}":"${INTERFACE}"
+  snap connect "${SNAP}:${INTERFACE}" "${META_SNAP}:${INTERFACE}"
 
   # Regression test for LP: #1660852. Make sure --help actually gets passed to
   # roslaunch instead of being eaten by setup.sh.
