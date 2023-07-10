@@ -306,7 +306,7 @@ def get_installed_dependencies(installed_packages_path: str) -> Set[str]:
                 build_snap_packages.update(package_dependencies)
                 click.echo(f"Will not fetch staged packages: {build_snap_packages!r}")
                 return build_snap_packages
-        except IOError:
+        except OSError:
             pass
     return set()
 
