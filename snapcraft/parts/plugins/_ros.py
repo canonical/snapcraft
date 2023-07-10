@@ -296,9 +296,7 @@ def get_installed_dependencies(installed_packages_path: str) -> Set[str]:
                     except subprocess.CalledProcessError as error:
                         click.echo(f"failed to run {cmd!r}: {error.output}")
                     else:
-                        # pylint: disable=anomalous-backslash-in-string
-                        apt_dependency_regex = re.compile("^\w.*$")  # noqa: W605
-                        # pylint: enable=anomalous-backslash-in-string
+                        apt_dependency_regex = re.compile(r"^\w.*$")
                         for line in proc.stdout.decode().strip().split("\n"):
                             if apt_dependency_regex.match(line):
                                 package_dependencies.add(line)
