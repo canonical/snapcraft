@@ -268,7 +268,7 @@ def get_installed_dependencies(installed_packages_path: str) -> Set[str]:
     """Retrieve recursive apt dependencies of a given package list."""
     if os.path.isfile(installed_packages_path):
         try:
-            with open(installed_packages_path, "r", encoding="utf8") as file:
+            with open(installed_packages_path, encoding="utf8") as file:
                 build_snap_packages = set(file.read().split())
                 package_dependencies = set()
                 for package in build_snap_packages:
