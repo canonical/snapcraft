@@ -16,8 +16,8 @@
 
 import pytest
 
-import snapcraft.extensions.registry as reg
 from snapcraft import errors
+from snapcraft.extensions import registry
 from snapcraft.extensions.extension import get_extensions_data_dir
 from snapcraft.extensions.ros2_humble_desktop import ROS2HumbleDesktopExtension
 from snapcraft.extensions.ros2_humble_ros_base import ROS2HumbleRosBaseExtension
@@ -62,10 +62,10 @@ class TestExtensionROS2HumbleMetaExtensions:
 
     @pytest.mark.parametrize(fixture_variables, fixture_values)
     def test_is_registered(self, extension_name, extension_class, meta, meta_dev):
-        assert extension_name in reg.get_extension_names()
+        assert extension_name in registry.get_extension_names()
 
         try:
-            reg.get_extension_class(extension_name)
+            registry.get_extension_class(extension_name)
         except errors.ExtensionError as exc:
             raise AssertionError(f"Couldn't get extension '{extension_name}': {exc}")
 
