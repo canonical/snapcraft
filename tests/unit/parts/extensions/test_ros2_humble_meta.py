@@ -25,13 +25,6 @@ from snapcraft.extensions.ros2_humble_ros_core import ROS2HumbleRosCoreExtension
 
 
 def setup_method_fixture(extension, yaml_data=None, arch=None, target_arch=None):
-    if yaml_data is None:
-        yaml_data = {}
-    if arch is None:
-        arch = "amd64"
-    if target_arch is None:
-        target_arch = "amd64"
-
     return extension(yaml_data=yaml_data, arch=arch, target_arch=target_arch)
 
 
