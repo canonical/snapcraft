@@ -107,6 +107,7 @@ def main(docs_dir):
             required = []
             options_str = " "
 
+            # Separate the options from required arguments, discarding global options.
             for action in p._actions:
                 if action.option_strings and action.dest not in global_options:
                     options[action.dest] = (action.option_strings, action.help)
