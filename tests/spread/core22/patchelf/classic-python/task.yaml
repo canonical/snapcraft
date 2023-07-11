@@ -38,4 +38,4 @@ execute: |
 restore: |
   cd python-ctypes-example
   snapcraft clean
-  rm -f *.snap
+  rm -f ./*.snap
