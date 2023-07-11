@@ -63,6 +63,7 @@ always_document_param_types = True
 github_username = "snapcore"
 github_repository = "snapcraft"
 
+
 def generate_cli_docs(nil):
     gen_cli_docs_path = (project_dir / "tools" / "docs" / "gen_cli_docs.py").resolve()
     os.system("%s %s" % (gen_cli_docs_path, project_dir / "docs"))
