@@ -11,6 +11,8 @@ demos/*/stage/
 dist
 docs/**.html
 docs/reference.md
+docs/reference/commands
+docs/.sphinx
 *.egg-info
 .eggs/
 .envrc
