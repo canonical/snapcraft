@@ -163,10 +163,13 @@ def _apply_extension(
                 app_definition.get(property_name), property_value
             )
 
-    # Next, apply the part-specific components
-    part_extension = extension.part_snippet
+    # Next, apply the part-specific components, this can be plugin
+    # aware.
     parts = yaml_data["parts"]
-    for part_name, part_definition in parts.items():
+    for _, part_definition in parts.items():
+        part_extension = extension.get_part_snippet(
+            plugin_name=part_definition["plugin"]
+        )
         for property_name, property_value in part_extension.items():
             part_definition[property_name] = _apply_extension_property(
                 part_definition.get(property_name), property_value
