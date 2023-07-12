@@ -1,6 +1,3 @@
-[submodule "docs"]
-	path = docs
-	url = https://github.com/CanonicalLtd/snappy-docs.git
 [submodule "tests/spread/tools/snapd-testing-tools"]
 	path = tests/spread/tools/snapd-testing-tools
 	url = https://github.com/snapcore/snapd-testing-tools.git
