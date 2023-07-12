@@ -68,6 +68,52 @@ def test_apply_extension():
 
 
 @pytest.mark.usefixtures("fake_extension")
+def test_apply_extension_plugin_dependent():
+    yaml_data = {
+        "name": "fake-snap",
+        "summary": "fake summary",
+        "description": "fake description",
+        "base": "core22",
+        "apps": {
+            "fake-command": {
+                "command": "bin/fake-command",
+                "plugs": ["my-fake-plug"],
+                "extensions": ["fake-extension"],
+            }
+        },
+        "parts": {
+            "fake-part": {"source": ".", "plugin": "dump"},
+            "ros-untouched": {"source": "ros", "plugin": "catkin"},
+        },
+    }
+
+    assert extensions.apply_extensions(
+        yaml_data, arch="amd64", target_arch="amd64"
+    ) == {
+        "name": "fake-snap",
+        "summary": "fake summary",
+        "description": "fake description",
+        "base": "core22",
+        "grade": "fake-grade",
+        "apps": {
+            "fake-command": {
+                "command": "bin/fake-command",
+                "plugs": ["fake-plug", "my-fake-plug"],
+            }
+        },
+        "parts": {
+            "fake-part": {
+                "source": ".",
+                "plugin": "dump",
+                "after": ["fake-extension/fake-part"],
+            },
+            "ros-untouched": {"source": "ros", "plugin": "catkin"},
+            "fake-extension/fake-part": {"plugin": "nil"},
+        },
+    }
+
+
+@pytest.mark.usefixtures("fake_extension")
 @pytest.mark.usefixtures("fake_extension_extra")
 def test_apply_multiple_extensions():
     yaml_data = {

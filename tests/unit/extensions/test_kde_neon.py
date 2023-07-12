@@ -168,7 +168,7 @@ class TestGetPartSnippet:
 
     @staticmethod
     def assert_get_part_snippet(kde_neon_instance):
-        assert kde_neon_instance.get_part_snippet() == {
+        assert kde_neon_instance.get_part_snippet(plugin_name="cmake") == {
             "build-environment": [
                 {
                     "PATH": (
@@ -193,7 +193,7 @@ class TestGetPartSnippet:
 
 
 def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
-    assert kde_neon_extension_with_build_snap.get_part_snippet() == {
+    assert kde_neon_extension_with_build_snap.get_part_snippet(plugin_name="cmake") == {
         "build-environment": [
             {
                 "PATH": (

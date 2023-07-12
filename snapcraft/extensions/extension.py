@@ -70,7 +70,7 @@ class Extension(abc.ABC):
         """Return the app snippet to apply."""
 
     @abc.abstractmethod
-    def get_part_snippet(self) -> Dict[str, Any]:
+    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
         """Return the part snippet to apply to existing parts."""
 
     @abc.abstractmethod
