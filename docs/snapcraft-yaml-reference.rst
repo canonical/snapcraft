@@ -39,6 +39,15 @@ The name exposed to run a program inside the snap.
 
 If ``<app-name>`` is the same as ``name``, the program will be invoked as ``app-name``. However, if they differ, the program will be exposed as ``<snap-name>.<app-name>``.
 
+apps.<app-name>.activates-on
+----------------------------
+The names of slots the service exposes via D-Bus names that can be used to
+activate the application or service.
+
+**Type:** ``list[string]``
+
+Requires ``daemon`` to be set to ``dbus`` in app metadata. See also :ref:`snapcraft-yaml-after` and :ref:`services-and-daemons` for more details.
+
 apps.<app-name>.adapter
 -----------------------
 Controls the creation of an env variable wrapper. **Type** ``enum`` Can be one of the following:
@@ -70,9 +79,17 @@ apps.<app-name>.before
 ----------------------
 Lists the applications a daemon is to be started before.
 
-**Type** ``list[string]``
+**Type:** ``list[string]``
 
 Requires ``daemon`` to be set in app metadata. See also :ref:`snapcraft-yaml-after` and :ref:`services-and-daemons` for more details.
+
+apps.<app-name>.bus-name
+------------------------
+The bus name that the application or service exposes via D-Bus.
+
+**Type:** ``string``
+
+Requires ``daemon`` to be set to ``dbus`` in app metadata. See also :ref:`snapcraft-yaml-after` and :ref:`services-and-daemons` for more details.
 
 apps.<app-name>.command
 -----------------------
