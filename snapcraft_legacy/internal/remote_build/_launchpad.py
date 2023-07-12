@@ -19,7 +19,7 @@ import logging
 import os
 import shutil
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Sequence, Type
 from urllib.parse import unquote, urlsplit
 
@@ -460,11 +460,20 @@ class LaunchpadClient:
         snap = self._get_snap()
         return snap is not None
 
-    def push_source_tree(self, repo_dir: str) -> str:
-        """Push source tree to Launchpad, returning URL."""
+    def push_source_tree(self, repo_dir: str) -> None:
+        """Push source tree to Launchpad."""
         git_handler = self._gitify_repository(repo_dir)
         lp_repo = self._create_git_repository(force=True)
-        token = lp_repo.issueAccessToken()
+        # This token will only be used once, immediately after issuing it,
+        # so it can have a short expiry time.  It's not a problem if it
+        # expires before the build completes, or even before the push
+        # completes.
+        date_expires = datetime.now(timezone.utc) + timedelta(minutes=1)
+        token = lp_repo.issueAccessToken(
+            description=f"snapcraft remote-build for {self._build_id}",
+            scopes=["repository:push"],
+            date_expires=date_expires.isoformat(),
+        )
 
         url = self.get_git_https_url(token=token)
         stripped_url = self.get_git_https_url(token="<token>")
@@ -478,5 +487,3 @@ class LaunchpadClient:
             command = error.command.replace(token, "<token>")  # type: ignore
             exit_code = error.exit_code  # type: ignore
             raise errors.LaunchpadGitPushError(command=command, exit_code=exit_code)
-
-        return url
