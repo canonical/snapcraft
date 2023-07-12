@@ -26,7 +26,7 @@ from pydantic import Extra, ValidationError, validator
 from pydantic_yaml import YamlModel
 
 from snapcraft import errors
-from snapcraft.projects import App, Project
+from snapcraft.projects import App, Project, UniqueStrList
 from snapcraft.utils import get_ld_library_paths, process_version
 
 
@@ -176,6 +176,41 @@ class ContentSlot(_SnapMetadataModel):
         return content_dirs
 
 
+class Links(_SnapMetadataModel):
+    """Metadata links used in snaps."""
+
+    contact: Optional[UniqueStrList]
+    donation: Optional[UniqueStrList]
+    issues: Optional[UniqueStrList]
+    source_code: Optional[UniqueStrList]
+    website: Optional[UniqueStrList]
+
+    @staticmethod
+    def _normalize_value(
+        value: Optional[Union[str, UniqueStrList]]
+    ) -> Optional[List[str]]:
+        if isinstance(value, str):
+            value = [value]
+        return value
+
+    @classmethod
+    def from_project(cls, project: Project) -> "Links":
+        """Create Links from a Project."""
+        return cls(
+            contact=cls._normalize_value(project.contact),
+            donation=cls._normalize_value(project.donation),
+            issues=cls._normalize_value(project.issues),
+            source_code=cls._normalize_value(project.source_code),
+            website=cls._normalize_value(project.website),
+        )
+
+    def __bool__(self) -> bool:
+        """Return True if any of the Links attributes are set."""
+        return any(
+            [self.contact, self.donation, self.issues, self.source_code, self.website]
+        )
+
+
 class SnapMetadata(_SnapMetadataModel):
     """The snap.yaml model.
 
@@ -210,6 +245,7 @@ class SnapMetadata(_SnapMetadataModel):
     layout: Optional[Dict[str, Dict[str, str]]]
     system_usernames: Optional[Dict[str, Any]]
     provenance: Optional[str]
+    links: Optional[Links]
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "SnapMetadata":
@@ -403,6 +439,8 @@ def write(project: Project, prime_dir: Path, *, arch: str):
     # project provided assumes and computed assumes
     total_assumes = sorted(project.assumes + list(assumes))
 
+    links = Links.from_project(project)
+
     snap_metadata = SnapMetadata(
         name=project.name,
         title=project.title,
@@ -425,6 +463,7 @@ def write(project: Project, prime_dir: Path, *, arch: str):
         layout=project.layout,
         system_usernames=project.system_usernames,
         provenance=project.provenance,
+        links=links if links else None,
     )
     if project.passthrough:
         for name, value in project.passthrough.items():
