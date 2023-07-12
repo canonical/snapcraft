@@ -15,217 +15,6 @@ This page arranges the same material found in :ref:`The snapcraft.yaml schema <t
 
    This document is reference material, where possible, the attribute should include the version it was introduced or deprecated in. Links to more in-depth explanations for these resources are welcome as well as links to reasons for the deprecation.
 
-name
-----
-*mandatory*
-
-The identifying name of the snap.
-
-**Type:** ``string``
-
-Max length 40 characters. It must start with an ASCII character and can only contain letters in lower case, numbers, and hyphens, and it can’t start or end with a hyphen. The name must be unique if you want to :ref:`publish to the Snap Store <releasing-your-app>`. For help on choosing a name and registering it on the Snap Store, see :ref:`Registering your app name <registering-your-app-name>`.
-
-**Example:** ``my-awesome-app``
-
-title
------
-*optional*
-
-The canonical title of the application, displayed in the software centre graphical frontends.
-
-**Type:** ``string``
-
-Max length 40 characters.
-
-In the legacy Snapcraft syntax (prior to the ``base`` key), this key is only available through the :ref:`passthrough <using-in-development-features-in-snapcraft-yaml>` key.
-
-**Example:** My Awesome Application
-
-base
-----
-*mandatory*
-
-A snap of type :ref:`base <base-snaps>` to be used as the execution environment for this snap.
-
-**Examples:** ``'core'``, ``'core18'``, ``'core20'``
-
-This is mandatory unless the ``type`` parameter is set to either ``base``, ``kernel``, or ``snapd``.
-
-build-base
-----------
-*optional*
-
-Used to build a :ref:`base <base-snaps>` snap when the base is unavailable or has yet to be bootstrapped. See :ref:`Building a base snap <building-a-base-snap>` for details.
-
-**Examples:** ``'core20'``, ``'core22'``
-
-Requires that the ``type`` parameter is set to ``base``.
-
-compression
------------
-*optional*
-
-Sets the compression type for the snap.
-
-**Type**: ``string``
-
-Can be ``xz`` or ``lzo`` . Defaults to ``xz`` when not specified. See :ref:`snapcraft-top-level-metadata-compression` for further details.
-
-version
--------
-*mandatory*
-
-A user facing version to display.
-
-**Type**: ``string``
-
-Maximum length 32 chars.
-
-Needs to be wrapped with single-quotes when the value will be interpreted by the YAML parser as non-string. This field is mandatory unless version information is provided by ``adopt-info``. See :ref:`using-external-metadata` for details.
-
-**Examples:** ``'1'``, ``'1.2'``, ``'1.2.3'``, ``git`` (will be replaced by a ``git describe`` based version string)
-
-contact
--------
-*optional*
-
-Contact information for the snap.
-
-**Type:** ``string|list[string]`` Links or email address for users to contact the publisher of the snap.
-
-**Example:** ``contact@product.org``
-
-donation
---------
-*optional*
-
-Donation information for the snap.
-
-**Type:** ``string|list[string]`` Links to provide donations for the publisher of the snap.
-
-**Example:** ``https://patreon.com``
-
-issues
-------
-*optional*
-
-Issue tracker or bug reporting location for the snap.
-
-**Type:** ``string|list[string]`` Links or email address for users to report issues to the publisher of the snap.
-
-**Example:** ``https://github.com/org/project/issues, contact@product.org``
-
-source-code
------------
-*optional*
-
-Location where the source of the snap can be found.
-
-**Type:** ``string`` Repository link to where the snap project assets can be found.
-
-**Example:** ``https://github.com/org/project.git``
-
-website
--------
-*optional*
-
-Publisher website for the snap.
-
-**Type:** ``string`` Product link for the snap.
-
-**Example:** ``https://project.com``
-
-version-script
---------------
-:ref:`deprecated <deprecation-notice-10>`
-
-**Deprecated** Use ``snapcraftctl set-version`` :ref:`part scriptlet <meta-scriptlet>` instead. A command to determine the snap’s version string
-
-**Type**: ``string``
-
-Runs from the working directory of the source tree root, and prints a version string to the standard output. Replaces the value of the version keyword. The version keyword is still mandatory (but ignored).
-
-summary
--------
-*mandatory*
-
-Sentence summarising the snap.
-
-**Type:** ``string``
-
-Max len. 78 characters, describing the snap in short and simple terms.
-
-**Example:** ``The super cat generator``
-
-description
------------
-*mandatory*
-
-Multi-line description of the snap.
-
-**Type:** ``string`` A more in-depth look at what your snap does and who may find it most useful.
-
-type
-----
-*optional*
-
-The type of snap, implicitly set to ``app`` if not set.
-
-**Type:** ``enum`` For more details, see :ref:`gadget <gadget-snaps>`, :ref:`kernel <the-kernel-snap>` and :ref:`base <base-snaps>`
-
-confinement
------------
-*optional*
-
-Determines if the snap should be restricted in access or not.
-
-**Type:** ``enum`` Possible values are ``strict`` (for no access outside of declared ``interfaces`` through ``plugs``), ``devmode`` (for unrestricted access) or ``classic``. For more information, refer to :ref:`snap-confinement`.
-
-**Examples:** ``strict``, or ``devmode``
-
-icon
-----
-*optional*
-
-Path to icon image that represents the snap in the snapcraft.io store pages and other graphical store fronts. *Note that the* `desktop menu <https://en.wikipedia.org/wiki/Start_menu>`__ *does not use this icon. It uses the icon in the* ``.desktop`` *file of the application.*
-
-**Type:** ``string`` It is a relative path to a ``.png`` or ``.svg`` file from the source tree root. The `recommended <https://snapcraft.io/docs/restrictions-on-screenshots-and-videos-in-snap-listings24>`__ size is 256x256 pixels. Aspect ratio needs to be 1:1. Image size can vary from 40x40 to 512x512 px and the file size should not be larger than 256 KB.
-
-**Examples:** ``_package_name_.svg``, or ``snap/gui/logo.png``
-
-layout
-------
-*optional*
-
-Modify the execution environment of a strictly-confined snap.
-
-**Type:** ``list[dict]``
-
-Layouts are defined as a key-value map, mapping from a ``<target-path>`` to a layout declaration. See :ref:`Using layouts <snap-layouts>` for more details.
-
-**Examples:** ``/var/lib/foo: bind: $SNAP_DATA/var/lib/foo``
-
-license
--------
-*optional*
-
-A license for the snap in the form of an SPDX-expression_ for the license. In the legacy Snapcraft syntax (not using the ``base`` key), this key is only available :ref:`through the passthrough key <using-in-development-features-in-snapcraft-yaml>`.
-Currently, `only SPDX 2.1 expressions are supported <SPDX-2.1-support_>`_, refer to `snapd/licenses.go <snapd-licenses_>`_ for accepted expressions.
-
-**Type:** ``string``
-
-**Examples:** ``GPL-3.0``, ``MIT``, ``Proprietary``
-
-grade
------
-*optional*
-
-Defines the quality ``grade`` of the snap.
-
-**Type:** ``enum`` Can be either ``devel`` (i.e. a development version of the snap, so not to be published to the ``stable`` or ``candidate`` channels) or ``stable`` (i.e. a stable release or release candidate, which can be released to all channels)
-
-**Example:** [``stable`` or ``devel``]
-
 adopt-info
 ----------
 *optional*
@@ -235,64 +24,6 @@ Incorporate external metadata via the referenced part.
 **Type:** ``string``
 
 See :ref:`Using external metadata <using-external-metadata>` for more details.
-
-architectures
--------------
-*optional*
-
-List of build and run architectures.
-
-**Type:** ``list[object]``
-
-For more details, see :ref:`architectures`.
-
-epoch
------
-*optional*
-
-Controls when users receive a configuration-breaking application release.
-
-**Type:** ``integer``
-
-Incrementing the epoch in the new release stops old users automatically refreshing to the new version. See :ref:`snap-epochs` for further details.
-
-package-repositories
---------------------
-*optional*
-
-Adds package repositories, including PPA-type and deb-type repositories.
-
-**Type:** ``list[dict]``
-
-See :ref:`snapcraft-package-repositories` for further information.
-
-assumes
--------
-*optional*
-
-A list of features that must be supported by the core in order for this snap to install. For example, to make the snap only installable on certain recent version of snapd (like 2.38) you can specify ``snapd2.38`` as an item in this list.
-
-See :ref:`snapcraft-top-level-metadata-assumes` for other potential values.
-
-**Type:** ``list[string]``
-
-hooks
------
-*optional*
-
-This top-level keyword to define a hook with a plug to access more privileges. See :ref:`supported-snap-hooks` for further details.
-
-**Type:** ``list[string]``
-
-passthrough
------------
-*optional*
-
-Attributes to passthrough to ``snap.yaml`` without validation from snapcraft.
-
-**Type:** ``type[object]``
-
-See :ref:`using-in-development-features-in-snapcraft-yaml` for more details.
 
 apps
 ----
@@ -572,61 +303,186 @@ Time duration units can be ``10ns``, ``10us``, ``10ms``, ``10s``, ``10m``. For w
 
 Requires ``daemon`` to be set in the ``app`` metadata.
 
-plugs
+architectures
+-------------
+*optional*
+
+List of build and run architectures.
+
+**Type:** ``list[object]``
+
+For more details, see :ref:`architectures`.
+
+assumes
+-------
+*optional*
+
+A list of features that must be supported by the core in order for this snap to install. For example, to make the snap only installable on certain recent version of snapd (like 2.38) you can specify ``snapd2.38`` as an item in this list.
+
+See :ref:`snapcraft-top-level-metadata-assumes` for other potential values.
+
+**Type:** ``list[string]``
+
+base
+----
+*mandatory*
+
+A snap of type :ref:`base <base-snaps>` to be used as the execution environment for this snap.
+
+**Examples:** ``'core'``, ``'core18'``, ``'core20'``
+
+This is mandatory unless the ``type`` parameter is set to either ``base``, ``kernel``, or ``snapd``.
+
+build-base
+----------
+*optional*
+
+Used to build a :ref:`base <base-snaps>` snap when the base is unavailable or has yet to be bootstrapped. See :ref:`Building a base snap <building-a-base-snap>` for details.
+
+**Examples:** ``'core20'``, ``'core22'``
+
+Requires that the ``type`` parameter is set to ``base``.
+
+compression
+-----------
+*optional*
+
+Sets the compression type for the snap.
+
+**Type**: ``string``
+
+Can be ``xz`` or ``lzo`` . Defaults to ``xz`` when not specified. See :ref:`snapcraft-top-level-metadata-compression` for further details.
+
+confinement
+-----------
+*optional*
+
+Determines if the snap should be restricted in access or not.
+
+**Type:** ``enum`` Possible values are ``strict`` (for no access outside of declared ``interfaces`` through ``plugs``), ``devmode`` (for unrestricted access) or ``classic``. For more information, refer to :ref:`snap-confinement`.
+
+**Examples:** ``strict``, or ``devmode``
+
+contact
+-------
+*optional*
+
+Contact information for the snap.
+
+**Type:** ``string|list[string]`` Links or email address for users to contact the publisher of the snap.
+
+**Example:** ``contact@product.org``
+
+description
+-----------
+*mandatory*
+
+Multi-line description of the snap.
+
+**Type:** ``string`` A more in-depth look at what your snap does and who may find it most useful.
+
+donation
+--------
+*optional*
+
+Donation information for the snap.
+
+**Type:** ``string|list[string]`` Links to provide donations for the publisher of the snap.
+
+**Example:** ``https://patreon.com``
+
+epoch
 -----
 *optional*
 
-A set of plugs that the snap asserts.
+Controls when users receive a configuration-breaking application release.
 
-**Type:** ``dict``
+**Type:** ``integer``
 
-These plugs apply to all ``apps`` and differs from ``apps.<app-name>.plugs`` in that the type is in a ``dict`` rather than a ``list`` format, ``:`` (colon) must be postfixed to the interface name and shouldn't start with ``-`` (dash-space)
+Incrementing the epoch in the new release stops old users automatically refreshing to the new version. See :ref:`snap-epochs` for further details.
 
-plugs.<plug-name>
------------------
+grade
+-----
 *optional*
 
-A set of attributes for a plug
+Defines the quality ``grade`` of the snap.
 
-**Type:** ``dict``
+**Type:** ``enum`` Can be either ``devel`` (i.e. a development version of the snap, so not to be published to the ``stable`` or ``candidate`` channels) or ``stable`` (i.e. a stable release or release candidate, which can be released to all channels)
 
-**Example:** ``read`` attribute for the ``home`` interface
+**Example:** [``stable`` or ``devel``]
 
-plugs.<plug-name>.<attribute-name>
-----------------------------------
+hooks
+-----
 *optional*
 
-Value of the attribute
+This top-level keyword to define a hook with a plug to access more privileges. See :ref:`supported-snap-hooks` for further details.
+
+**Type:** ``list[string]``
+
+icon
+----
+*optional*
+
+Path to icon image that represents the snap in the snapcraft.io store pages and other graphical store fronts. *Note that the* `desktop menu <https://en.wikipedia.org/wiki/Start_menu>`__ *does not use this icon. It uses the icon in the* ``.desktop`` *file of the application.*
+
+**Type:** ``string`` It is a relative path to a ``.png`` or ``.svg`` file from the source tree root. The `recommended <https://snapcraft.io/docs/restrictions-on-screenshots-and-videos-in-snap-listings24>`__ size is 256x256 pixels. Aspect ratio needs to be 1:1. Image size can vary from 40x40 to 512x512 px and the file size should not be larger than 256 KB.
+
+**Examples:** ``_package_name_.svg``, or ``snap/gui/logo.png``
+
+issues
+------
+*optional*
+
+Issue tracker or bug reporting location for the snap.
+
+**Type:** ``string|list[string]`` Links or email address for users to report issues to the publisher of the snap.
+
+**Example:** ``https://github.com/org/project/issues, contact@product.org``
+
+layout
+------
+*optional*
+
+Modify the execution environment of a strictly-confined snap.
+
+**Type:** ``list[dict]``
+
+Layouts are defined as a key-value map, mapping from a ``<target-path>`` to a layout declaration. See :ref:`Using layouts <snap-layouts>` for more details.
+
+**Examples:** ``/var/lib/foo: bind: $SNAP_DATA/var/lib/foo``
+
+license
+-------
+*optional*
+
+A license for the snap in the form of an SPDX-expression_ for the license. In the legacy Snapcraft syntax (not using the ``base`` key), this key is only available :ref:`through the passthrough key <using-in-development-features-in-snapcraft-yaml>`.
+Currently, `only SPDX 2.1 expressions are supported <SPDX-2.1-support_>`_, refer to `snapd/licenses.go <snapd-licenses_>`_ for accepted expressions.
 
 **Type:** ``string``
 
-**Example:** ``all`` for ``read`` attribute of the ``home`` interface
+**Examples:** ``GPL-3.0``, ``MIT``, ``Proprietary``
 
-slots
------
+name
+----
+*mandatory*
+
+The identifying name of the snap.
+
+**Type:** ``string``
+
+Max length 40 characters. It must start with an ASCII character and can only contain letters in lower case, numbers, and hyphens, and it can’t start or end with a hyphen. The name must be unique if you want to :ref:`publish to the Snap Store <releasing-your-app>`. For help on choosing a name and registering it on the Snap Store, see :ref:`Registering your app name <registering-your-app-name>`.
+
+**Example:** ``my-awesome-app``
+
+package-repositories
+--------------------
 *optional*
 
-A set of slots that the snap provides.
+Adds package repositories, including PPA-type and deb-type repositories.
 
-**Type:** ``dict``
+**Type:** ``list[dict]``
 
-These slots apply to all the ``apps``
-
-slots.<slot-name>
------------------
-*optional*
-
-A set of attributes of the slot
-
-**Type:** ``dict``
-
-slots.<slot-name>.<attribute-name>
-----------------------------------
-*optional*
-
-Value of the attribute
-
-**Type:** ``dict``
+See :ref:`snapcraft-package-repositories` for further information.
 
 parts
 -----
@@ -869,6 +725,150 @@ A list of named attributes to modify the behaviour of plugins.
 **Type:** ``enum``
 
 For more information, refer to :ref:`snapcraft-parts-metadata`.
+
+passthrough
+-----------
+*optional*
+
+Attributes to passthrough to ``snap.yaml`` without validation from snapcraft.
+
+**Type:** ``type[object]``
+
+See :ref:`using-in-development-features-in-snapcraft-yaml` for more details.
+
+plugs
+-----
+*optional*
+
+A set of plugs that the snap asserts.
+
+**Type:** ``dict``
+
+These plugs apply to all ``apps`` and differs from ``apps.<app-name>.plugs`` in that the type is in a ``dict`` rather than a ``list`` format, ``:`` (colon) must be postfixed to the interface name and shouldn't start with ``-`` (dash-space)
+
+plugs.<plug-name>
+-----------------
+*optional*
+
+A set of attributes for a plug
+
+**Type:** ``dict``
+
+**Example:** ``read`` attribute for the ``home`` interface
+
+plugs.<plug-name>.<attribute-name>
+----------------------------------
+*optional*
+
+Value of the attribute
+
+**Type:** ``string``
+
+**Example:** ``all`` for ``read`` attribute of the ``home`` interface
+
+slots
+-----
+*optional*
+
+A set of slots that the snap provides.
+
+**Type:** ``dict``
+
+These slots apply to all the ``apps``
+
+slots.<slot-name>
+-----------------
+*optional*
+
+A set of attributes of the slot
+
+**Type:** ``dict``
+
+slots.<slot-name>.<attribute-name>
+----------------------------------
+*optional*
+
+Value of the attribute
+
+**Type:** ``dict``
+
+source-code
+-----------
+*optional*
+
+Location where the source of the snap can be found.
+
+**Type:** ``string`` Repository link to where the snap project assets can be found.
+
+**Example:** ``https://github.com/org/project.git``
+
+summary
+-------
+*mandatory*
+
+Sentence summarising the snap.
+
+**Type:** ``string``
+
+Max len. 78 characters, describing the snap in short and simple terms.
+
+**Example:** ``The super cat generator``
+
+title
+-----
+*optional*
+
+The canonical title of the application, displayed in the software centre graphical frontends.
+
+**Type:** ``string``
+
+Max length 40 characters.
+
+In the legacy Snapcraft syntax (prior to the ``base`` key), this key is only available through the :ref:`passthrough <using-in-development-features-in-snapcraft-yaml>` key.
+
+**Example:** My Awesome Application
+
+type
+----
+*optional*
+
+The type of snap, implicitly set to ``app`` if not set.
+
+**Type:** ``enum`` For more details, see :ref:`gadget <gadget-snaps>`, :ref:`kernel <the-kernel-snap>` and :ref:`base <base-snaps>`
+
+version
+-------
+*mandatory*
+
+A user facing version to display.
+
+**Type**: ``string``
+
+Maximum length 32 chars.
+
+Needs to be wrapped with single-quotes when the value will be interpreted by the YAML parser as non-string. This field is mandatory unless version information is provided by ``adopt-info``. See :ref:`using-external-metadata` for details.
+
+**Examples:** ``'1'``, ``'1.2'``, ``'1.2.3'``, ``git`` (will be replaced by a ``git describe`` based version string)
+
+version-script
+--------------
+:ref:`deprecated <deprecation-notice-10>`
+
+**Deprecated** Use ``snapcraftctl set-version`` :ref:`part scriptlet <meta-scriptlet>` instead. A command to determine the snap’s version string
+
+**Type**: ``string``
+
+Runs from the working directory of the source tree root, and prints a version string to the standard output. Replaces the value of the version keyword. The version keyword is still mandatory (but ignored).
+
+website
+-------
+*optional*
+
+Publisher website for the snap.
+
+**Type:** ``string`` Product link for the snap.
+
+**Example:** ``https://project.com``
 
 
 .. _timer-string-format: https://forum.snapcraft.io/t/6562
