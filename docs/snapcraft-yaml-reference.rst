@@ -25,6 +25,10 @@ Incorporate external metadata via the referenced part.
 
 See :ref:`Using external metadata <using-external-metadata>` for more details.
 
+..
+.. Note: aliases was deprecated in deprecation-notice-5
+..
+
 apps
 ----
 A map of app-names representing entry points to run for the snap.
