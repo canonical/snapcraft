@@ -50,7 +50,6 @@ if 'discourse' in html_context:
 
 extensions = [
     'sphinx_design',
-    'sphinx_tabs.tabs',
     'sphinx_reredirects',
     'youtube-links',
     'related-links',
