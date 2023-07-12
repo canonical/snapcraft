@@ -21,8 +21,6 @@ extensions = [
     "sphinx_design",
     "sphinx_copybutton",
     "sphinx-pydantic",
-    "sphinx_toolbox",
-    "sphinx_toolbox.more_autodoc",
     "sphinx.ext.autodoc",  # Must be loaded after more_autodoc
 ]
 
