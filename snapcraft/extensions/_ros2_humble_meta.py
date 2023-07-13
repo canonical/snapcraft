@@ -79,12 +79,15 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
         return app_snippet
 
     @overrides
-    def get_part_snippet(self) -> Dict[str, Any]:
-        part_snippet = super().get_part_snippet()
-        part_snippet["colcon-ros-build-snaps"] = [self.ros2_humble_snaps.sdk]
-        part_snippet["colcon-cmake-args"] = [
-            f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{self.ros2_humble_snaps.sdk}/current/usr"'
-        ]
+    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+        part_snippet = super().get_part_snippet(plugin_name=plugin_name)
+
+        # These are colcon-plugin specific entries
+        if plugin_name == "colcon":
+            part_snippet["colcon-ros-build-snaps"] = [self.ros2_humble_snaps.sdk]
+            part_snippet["colcon-cmake-args"] = [
+                f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{self.ros2_humble_snaps.sdk}/current/usr"'
+            ]
 
         return part_snippet
 

@@ -50,6 +50,8 @@ class RosNoeticMetaBase(RosNoeticExtension):
     def __init__(self, *, extension_name: str, yaml_data: Dict[str, Any]) -> None:
         super().__init__(extension_name=extension_name, yaml_data=yaml_data)
 
+        self.part_snippet_extra = dict()
+
         self.root_snippet["plugs"] = {
             "ros-noetic":
                 {
@@ -75,3 +77,11 @@ class RosNoeticMetaBase(RosNoeticExtension):
         ]
 
         self.app_snippet["environment"]["PYTHONPATH"] = f'{python_paths}:{":".join(new_python_paths)}'
+
+    @overrides
+    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+        # If the part uses a ROS plugin, return the extra bits containing ROS plugin specifics entries
+        # If not, still return the base ROS plugin entries.
+        if plugin_name in ["catkin", "catkin-tools", "colcon"]:
+            return self.part_snippet | self.part_snippet_extra
+        return self.part_snippet
