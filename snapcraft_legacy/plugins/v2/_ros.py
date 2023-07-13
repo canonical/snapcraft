@@ -198,8 +198,7 @@ class RosPlugin(PluginV2):
 
     def get_build_commands(self) -> List[str]:
         return (
-            self._get_workspace_activation_commands()
-            + [
+            [
                 "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
                 # Preserve http(s)_proxy env var in root for remote-build proxy since rosdep
                 # doesn't support proxy

@@ -164,18 +164,6 @@ class TestPluginColconPlugin:
         monkeypatch.setattr(os, "environ", {})
 
         assert plugin.get_build_commands() == [
-            'state="$(set +o); set -$-"',
-            "set +u",
-            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
-            'COLCON_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . '
-            '"${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh"',
-            "fi",
-            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/local_setup.sh" ]; then',
-            'COLCON_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/snap" . '
-            '"${CRAFT_PART_INSTALL}/opt/ros/snap/local_setup.sh"',
-            "fi",
-            '. "/opt/ros/${ROS_DISTRO}/local_setup.sh"',
-            'eval "${state}"',
             "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
             "sudo --preserve-env=http_proxy,https_proxy rosdep init; fi",
             'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
@@ -278,18 +266,6 @@ class TestPluginColconPlugin:
         )
 
         assert plugin.get_build_commands() == [
-            'state="$(set +o); set -$-"',
-            "set +u",
-            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
-            'COLCON_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . '
-            '"${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh"',
-            "fi",
-            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/local_setup.sh" ]; then',
-            'COLCON_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/snap" . '
-            '"${CRAFT_PART_INSTALL}/opt/ros/snap/local_setup.sh"',
-            "fi",
-            '. "/opt/ros/${ROS_DISTRO}/local_setup.sh"',
-            'eval "${state}"',
             "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
             "sudo --preserve-env=http_proxy,https_proxy rosdep init; fi",
             'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',

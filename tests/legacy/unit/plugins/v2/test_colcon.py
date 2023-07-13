@@ -130,16 +130,6 @@ def test_get_build_commands(monkeypatch):
     monkeypatch.setattr(os, "environ", dict())
 
     assert plugin.get_build_commands() == [
-        'state="$(set +o); set -$-"',
-        "set +u",
-        'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
-        'AMENT_CURRENT_PREFIX="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh"',
-        "fi",
-        'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/local_setup.sh ]; then',
-        'COLCON_CURRENT_PREFIX="${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap . "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/local_setup.sh',
-        "fi",
-        '. /opt/ros/"${ROS_DISTRO}"/local_setup.sh',
-        'eval "${state}"',
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
         "sudo --preserve-env=http_proxy,https_proxy rosdep init; fi",
         'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
@@ -234,16 +224,6 @@ def test_get_build_commands_with_all_properties(monkeypatch):
     )
 
     assert plugin.get_build_commands() == [
-        'state="$(set +o); set -$-"',
-        "set +u",
-        'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
-        'AMENT_CURRENT_PREFIX="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh"',
-        "fi",
-        'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/local_setup.sh ]; then',
-        'COLCON_CURRENT_PREFIX="${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap . "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/local_setup.sh',
-        "fi",
-        '. /opt/ros/"${ROS_DISTRO}"/local_setup.sh',
-        'eval "${state}"',
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
         "sudo --preserve-env=http_proxy,https_proxy rosdep init; fi",
         'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
