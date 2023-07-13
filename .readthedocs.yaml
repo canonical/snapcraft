@@ -14,6 +14,7 @@ build:
   jobs:
     post_checkout:
       - git submodule update --init docs/sphinx-resources
+      - pip install -r docs/sphinx-resources/.sphinx/requirements.txt
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
@@ -34,4 +35,3 @@ sphinx:
 python:
   install:
     - requirements: docs/requirements.txt
-    - requirements: docs/sphinx-resources/.sphinx/requirements.txt
