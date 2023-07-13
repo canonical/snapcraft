@@ -122,7 +122,7 @@ class LegacyFallback(Exception):
 class MaintenanceBase(SnapcraftError):
     """Error for bases under ESM and no longer supported in this release."""
 
-    def __init__(self, base) -> None:
+    def __init__(self, base: str) -> None:
         channel: Optional[str] = None
         if base == "core":
             channel = "4.x"
