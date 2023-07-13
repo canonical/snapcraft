@@ -37,6 +37,7 @@ Finally, for a better understanding of how Snapcraft works, and how it can be us
 
    architectures
    base-snaps
+   reference/commands
    documentation-guidelines
    environment-variables
    environment-variables-that-snapcraft-exposes
