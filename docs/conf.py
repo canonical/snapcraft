@@ -72,15 +72,6 @@ rst_epilog = """
 .. include:: /reuse/links.txt
 """
 
-# Links to ignore when checking links
-linkcheck_ignore = ["http://127.0.0.1:8000"]
-
-html_theme = "furo"
-html_static_path = ["_static"]
-html_css_files = [
-    "css/custom.css",
-]
-
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
 }
@@ -92,6 +83,9 @@ source_suffix = {
 
 # Links to ignore when checking links
 linkcheck_ignore = ["http://127.0.0.1:8000"]
+
+# -- Options for HTML output -------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 # Find the current builder
 builder = "dirhtml"
