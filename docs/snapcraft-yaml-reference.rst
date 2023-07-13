@@ -45,12 +45,14 @@ If ``<app-name>`` is the same as ``name``, the program will be invoked as ``app-
 
 apps.<app-name>.activates-on
 ----------------------------
+*optional*
+
 The names of slots the service exposes via D-Bus names that can be used to
 activate the application or service.
 
 **Type:** ``list[string]``
 
-Requires ``daemon`` to be set to ``dbus`` in app metadata. See also :ref:`snapcraft-yaml-after` and :ref:`services-and-daemons` for more details.
+Requires ``daemon`` to be set to ``"dbus"`` in app metadata. See also :ref:`snapcraft-yaml-after` and :ref:`services-and-daemons` for more details.
 
 apps.<app-name>.adapter
 -----------------------
@@ -89,11 +91,13 @@ Requires ``daemon`` to be set in app metadata. See also :ref:`snapcraft-yaml-aft
 
 apps.<app-name>.bus-name
 ------------------------
+*optional*
+
 The bus name that the application or service exposes via D-Bus.
 
 **Type:** ``string``
 
-Requires ``daemon`` to be set to ``dbus`` in app metadata. See also :ref:`snapcraft-yaml-after` and :ref:`services-and-daemons` for more details.
+Requires ``daemon`` to be set to ``"dbus"`` in app metadata. See also :ref:`snapcraft-yaml-after` and :ref:`services-and-daemons` for more details.
 
 apps.<app-name>.command
 -----------------------
