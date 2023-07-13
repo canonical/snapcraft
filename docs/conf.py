@@ -40,62 +40,57 @@ html_context = {
     # Change to the folder that contains the documentation (usually "/" or "/docs/")
     "github_folder": "/docs/",
     # Change to an empty value if your GitHub repo doesn't have issues enabled
-    "github_issues": "enabled"
+    "github_issues": "enabled",
 }
 
 # Used for related links - no need to change
-if 'discourse' in html_context:
-    html_context['discourse_prefix'] = html_context['discourse'] + "/t/"
+if "discourse" in html_context:
+    html_context["discourse_prefix"] = html_context["discourse"] + "/t/"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    'sphinx_design',
-    'sphinx_reredirects',
-    'youtube-links',
-    'related-links',
-    'custom-rst-roles',
-    'terminal-output',
-    'sphinx_copybutton',
-    'sphinxext.opengraph',
-    'myst_parser'
-    ]
-
-myst_enable_extensions = [
-    "substitution",
-    "deflist"
+    "sphinx_design",
+    "sphinx_reredirects",
+    "youtube-links",
+    "related-links",
+    "custom-rst-roles",
+    "terminal-output",
+    "sphinx_copybutton",
+    "sphinxext.opengraph",
+    "myst_parser",
 ]
 
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'sphinx-resources']
+myst_enable_extensions = ["substitution", "deflist"]
+
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "sphinx-resources"]
 
 rst_epilog = """
 .. include:: /reuse/links.txt
 """
 
 source_suffix = {
-    '.rst': 'restructuredtext',
-    '.md': 'markdown',
+    ".rst": "restructuredtext",
+    ".md": "markdown",
 }
 
 # Links to ignore when checking links
-linkcheck_ignore = [
-    'http://127.0.0.1:8000'
-    ]
+linkcheck_ignore = ["http://127.0.0.1:8000"]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 # Find the current builder
 builder = "dirhtml"
-if '-b' in sys.argv:
-    builder = sys.argv[sys.argv.index('-b')+1]
+if "-b" in sys.argv:
+    builder = sys.argv[sys.argv.index("-b") + 1]
 
 # Setting templates_path for epub makes the build fail
 if builder == "dirhtml" or builder == "html":
     templates_path = ["sphinx-resources/.sphinx/_templates"]
 
-html_theme = 'furo'
+html_theme = "furo"
 html_last_updated_fmt = ""
 html_permalinks_icon = "¶"
 html_theme_options = {
@@ -127,7 +122,7 @@ html_theme_options = {
         "color-highlighted-background": "#EbEbEb",
         "color-link-underline": "var(--color-background-primary)",
         "color-link-underline--hover": "var(--color-background-primary)",
-        "color-version-popup": "#772953"
+        "color-version-popup": "#772953",
     },
     "dark_css_variables": {
         "color-foreground-secondary": "var(--color-foreground-primary)",
@@ -151,20 +146,19 @@ html_theme_options = {
         "color-highlighted-background": "#666",
         "color-link-underline": "var(--color-background-primary)",
         "color-link-underline--hover": "var(--color-background-primary)",
-        "color-version-popup": "#F29879"
+        "color-version-popup": "#F29879",
     },
 }
 
-html_static_path = ['sphinx-resources/.sphinx/_static']
+html_static_path = ["sphinx-resources/.sphinx/_static"]
 html_css_files = [
-    'custom.css',
-    'github_issue_links.css',
+    "custom.css",
+    "github_issue_links.css",
 ]
 
 html_js_files = []
 if "github_issues" in html_context and html_context["github_issues"]:
-    html_js_files.append('github_issue_links.js')
-
+    html_js_files.append("github_issue_links.js")
 
 
 # Set up redirects (https://documatt.gitlab.io/sphinx-reredirects/usage.html)
