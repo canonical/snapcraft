@@ -48,6 +48,16 @@ Snap and Snapcraft are members of the Ubuntu family. They’re both open source 
 
 Thinking about using snap for your next project? `Get in touch! <https://forum.snapcraft.io/>`__
 
+
+License
+-------
+
+.. image:: images/cc-by-nc-sa-3.0-88x31.png
+   :alt: License: CC BY-NC-SA 3.0
+
+This documentation is licensed under a `Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License`_.
+
+
 .. toctree::
    :hidden:
 
