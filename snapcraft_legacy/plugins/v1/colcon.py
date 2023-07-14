@@ -231,7 +231,6 @@ class ColconPlugin(PluginV1):
         codename = os_release.OsRelease().version_codename()
         return [
             PackageRepositoryApt(
-                type="apt",
                 formats=["deb"],
                 components=["main"],
                 key_id="C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654",
