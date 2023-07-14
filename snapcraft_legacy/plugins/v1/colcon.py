@@ -66,13 +66,12 @@ import shutil
 import textwrap
 from typing import List
 
-from craft_archives.repo.package_repository import (
+from snapcraft_legacy import file_utils
+from snapcraft_legacy.internal import errors, mangling, os_release, repo
+from snapcraft_legacy.internal.meta.package_repository import (
     PackageRepository,
     PackageRepositoryApt,
 )
-
-from snapcraft_legacy import file_utils
-from snapcraft_legacy.internal import errors, mangling, os_release, repo
 from snapcraft_legacy.plugins.v1 import PluginV1, _python, _ros
 
 logger = logging.getLogger(__name__)
