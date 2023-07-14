@@ -54,6 +54,8 @@ Finally, for a better understanding of how Snapcraft works, and how it can be us
    desktop-applications
    how-to-create-a-snap
    how-to-snap-publishing
+   how-to-set-up-classic-confinement
+   how-to-use-xdg-portals
    installing-snapcraft
    join-snapcrafters
    micro-howto-migrate-from-core20-to-core22
@@ -76,4 +78,3 @@ Finally, for a better understanding of how Snapcraft works, and how it can be us
    using-external-metadata
    using-in-development-features-in-snapcraft-yaml
    writing-local-plugins
-   xdg-desktop-portals
