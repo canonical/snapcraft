@@ -18,4 +18,4 @@ Create a snap
    remote-build
    iterating-over-a-build
    using-the-craftctl-tool
-   how-to-guides-for-classic-confinement
+   how-to-set-up-classic-confinement
