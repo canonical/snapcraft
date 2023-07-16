@@ -183,8 +183,8 @@ class TestGetPartSnippet:
                 },
                 {
                     "XDG_CONFIG_HOME": (
-                        "$CRAFT_STAGE/etc/xdg:/snap/kf5-5-108-qt-5-15-10-core22-sdk/current/etc/xdg"
-                        "/etc/xdg"
+                        "$CRAFT_STAGE/etc/xdg:/snap/kf5-5-108-qt-5-15-10-core22-sdk"
+                        "/current/etc/xdg:/etc/xdg${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}"
                     )
                 },
                 {
