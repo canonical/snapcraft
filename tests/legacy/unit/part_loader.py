@@ -28,7 +28,7 @@ def load_part(
     project=None,
     stage_packages_repo=None,
     snap_name="test-snap",
-    base="core18",
+    base="core20",
     build_base=None,
     confinement="strict",
     snap_type="app",

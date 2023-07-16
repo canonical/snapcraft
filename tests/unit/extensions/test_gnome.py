@@ -190,7 +190,7 @@ class TestGetPartSnippet:
 
     @staticmethod
     def assert_get_part_snippet(gnome_instance):
-        assert gnome_instance.get_part_snippet() == {
+        assert gnome_instance.get_part_snippet(plugin_name="autotools") == {
             "build-environment": [
                 {"PATH": "/snap/gnome-42-2204-sdk/current/usr/bin${PATH:+:$PATH}"},
                 {
@@ -254,7 +254,7 @@ class TestGetPartSnippet:
 
 
 def test_get_part_snippet_with_external_sdk(gnome_extension_with_build_snap):
-    assert gnome_extension_with_build_snap.get_part_snippet() == {
+    assert gnome_extension_with_build_snap.get_part_snippet(plugin_name="meson") == {
         "build-environment": [
             {"PATH": "/snap/gnome-44-2204-sdk/current/usr/bin${PATH:+:$PATH}"},
             {

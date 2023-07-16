@@ -557,7 +557,6 @@ def _run_in_provider(
         project_name=project.name,
         project_path=project_path,
         base_configuration=base_configuration,
-        build_base=build_base.value,
         instance_name=instance_name,
         allow_unstable=allow_unstable,
     ) as instance:

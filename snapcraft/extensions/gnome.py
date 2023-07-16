@@ -166,7 +166,7 @@ class GNOME(Extension):
         }
 
     @overrides
-    def get_part_snippet(self) -> Dict[str, Any]:
+    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
         sdk_snap = self.gnome_snaps.sdk
 
         return {

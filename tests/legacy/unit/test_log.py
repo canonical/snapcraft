@@ -26,6 +26,9 @@ class LogTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
+        self.fake_terminal = fixture_setup.FakeTerminal()
+        self.useFixture(self.fake_terminal)
+
         self.info_color = log._ColoredFormatter.LEVEL_COLORS["INFO"]
         self.warning_color = log._ColoredFormatter.LEVEL_COLORS["WARNING"]
         self.error_color = log._ColoredFormatter.LEVEL_COLORS["ERROR"]

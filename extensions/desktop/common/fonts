@@ -1,5 +1,11 @@
 #!/bin/bash
 
+###########################################################
+# This is not used with the gnome extension for
+# core22 and later, please see
+# https://github.com/snapcore/snapcraft-desktop-integration
+###########################################################
+
 set -e
 
 [ ! -d "${SNAP_COMMON}/fontconfig" ] && mkdir -p "${SNAP_COMMON}/fontconfig"

@@ -122,7 +122,7 @@ class TestExtensionROS2HumbleExtension:
 
     def test_get_part_snippet(self, setup_method_fixture):
         extension = setup_method_fixture()
-        assert extension.get_part_snippet() == {
+        assert extension.get_part_snippet(plugin_name="colcon") == {
             "build-environment": [{"ROS_VERSION": "2"}, {"ROS_DISTRO": "humble"}]
         }
 

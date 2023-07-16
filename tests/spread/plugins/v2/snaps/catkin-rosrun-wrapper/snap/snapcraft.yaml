@@ -21,4 +21,4 @@ parts:
     plugin: catkin-tools
     source: .
     build-packages: [g++, make]
-    stage-packages: [rosbash]
+    stage-packages: [ros-noetic-rosbash]

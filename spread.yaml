@@ -37,7 +37,6 @@ backends:
   lxd:
     systems:
       # -native is added for clarity and for ubuntu-20.04* to match.
-      - ubuntu-18.04
       - ubuntu-20.04
       - ubuntu-22.04
   google:
@@ -45,9 +44,6 @@ backends:
     location: snapd-spread/us-east1-b
     halt-timeout: 2h
     systems:
-      - ubuntu-18.04-64:
-          workers: 18
-          image: ubuntu-1804-64
       - ubuntu-20.04-64:
           workers: 6
           image: ubuntu-2004-64
@@ -109,10 +105,6 @@ backends:
 
       multipass delete --purge "$instance_name"
     systems:
-      - ubuntu-18.04-64:
-          workers: 1
-          username: root
-          password: ubuntu
       - ubuntu-20.04-64:
           workers: 1
           username: root
@@ -134,25 +126,6 @@ backends:
       ADDRESS localhost:22
     discard: echo "Discarding ad-hoc $SPREAD_SYSTEM"
     systems:
-      # Bionic
-      - ubuntu-18.04-amd64:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.04-i386:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.04-ppc64el:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.04-armhf:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.04-s390x:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.04-arm64:
-          username: ubuntu
-          password: ubuntu
       # Focal
       - ubuntu-20.04-amd64:
           username: ubuntu
@@ -227,7 +200,7 @@ prepare: |
   snap install snapd
   snap wait system seed.loaded
 
-  if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
       # Remove lxd and lxd-client deb packages as our implementation (pylxd) does not
       # nicely handle the snap and deb being installed at the same time.
       apt-get remove --purge --yes lxd lxd-client
@@ -246,7 +219,7 @@ prepare: |
       journalctl -xe
   fi
 
-  if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
       /snap/bin/lxd waitready --timeout=30
       /snap/bin/lxd init --auto
   fi
@@ -317,9 +290,6 @@ suites:
    summary: grammar tests
    # run grammar tests on amd64 platforms
    systems:
-     - ubuntu-18.04
-     - ubuntu-18.04-64
-     - ubuntu-18.04-amd64
      - ubuntu-20.04
      - ubuntu-20.04-64
      - ubuntu-20.04-amd64
@@ -342,7 +312,6 @@ suites:
  tests/spread/providers/:
    summary: tests of snapcraft using build providers
    systems:
-   - ubuntu-18.04-64
    - ubuntu-20.04-64
    - ubuntu-22.04-64
    kill-timeout: 180m
@@ -351,148 +320,12 @@ suites:
  tests/spread/providers/legacy/:
    summary: tests of snapcraft using build providers
    systems:
-   - ubuntu-18.04-64
    - ubuntu-20.04-64
    kill-timeout: 180m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
    priority: 90  # Run this test relatively early since fetching images can take time
 
  # Plugin-specific suites
- tests/spread/plugins/v1/ant/:
-   summary: tests of snapcraft's Ant plugin
-   systems:
-   - ubuntu-18.04*
- tests/spread/plugins/v1/autotools/:
-   summary: tests of snapcraft's Autotools plugin
-   systems:
-   - ubuntu-18.04*
- tests/spread/plugins/v1/catkin/:
-   summary: tests of snapcraft's Catkin plugin
-   systems:
-   - ubuntu-18.04
-   - ubuntu-18.04-64
-   - ubuntu-18.04-amd64
-   - ubuntu-18.04-arm64
-   - ubuntu-18.04-armhf
-   kill-timeout: 180m
- tests/spread/plugins/v1/colcon/:
-   summary: tests of snapcraft's Colcon plugin
-   systems:
-   - ubuntu-18.04
-   - ubuntu-18.04-64
-   - ubuntu-18.04-amd64
-   - ubuntu-18.04-arm64
-   - ubuntu-18.04-armhf
-   kill-timeout: 180m
- tests/spread/plugins/v1/conda/:
-   summary: tests of snapcraft's Conda plugin
-   systems:
-   - ubuntu-18.04
-   - ubuntu-18.04-64
- tests/spread/plugins/v1/cmake/:
-   summary: tests of snapcraft's CMake plugin
-   systems:
-   - ubuntu-18.04*
- tests/spread/plugins/v1/crystal/:
-   summary: tests of snapcraft's Crystal plugin
-   systems:
-   - ubuntu-18.04
-   - ubuntu-18.04-64
-   - ubuntu-18.04-amd64
- tests/spread/plugins/v1/dotnet/:
-   summary: tests of snapcraft's Dotnet plugin
-   systems:
-   - ubuntu-18.04
-   - ubuntu-18.04-64
-   - ubuntu-18.04-amd64
- tests/spread/plugins/v1/flutter/:
-   summary: tests of snapcraft's Flutter plugin
-   # Keep this 18.04 as the tests makes use of the GNOME 3.28 extension.
-   systems:
-   - ubuntu-18.04
-   - ubuntu-18.04-64
-   - ubuntu-18.04-amd64
- tests/spread/plugins/v1/go/:
-   summary: tests of snapcraft's Go plugin
-   systems:
-   - ubuntu-18.04*
- # godeps can no longer build due to:
- #   https://github.com/golang/go/issues/57051
- # tests/spread/plugins/v1/godeps/:
- #   summary: tests of snapcraft's Godeps plugin
- #   systems:
- #   - ubuntu-18.04*
- tests/spread/plugins/v1/gradle/:
-   summary: tests of snapcraft's Gradle plugin
-   systems:
-   - ubuntu-18.04*
-   priority: 50  # Run this test early so we're not waiting for it
-   kill-timeout: 40m
-   warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
- tests/spread/plugins/v1/kbuild/:
-   summary: tests of snapcraft's Kbuild plugin
-   systems:
-   - ubuntu-18.04*
- tests/spread/plugins/v1/make/:
-   summary: tests of snapcraft's Make plugin
-   systems:
-   - ubuntu-18.04*
- tests/spread/plugins/v1/maven/:
-   summary: tests of snapcraft's Maven plugin
-   systems:
-   - ubuntu-18.04*
- tests/spread/plugins/v1/meson/:
-   summary: tests of snapcraft's Meson plugin
-   systems:
-   - ubuntu-18.04*
- tests/spread/plugins/v1/nodejs/:
-   summary: tests of snapcraft's Nodejs plugin
-   systems:
-   - ubuntu-18.04*
- tests/spread/plugins/v1/nil/:
-   summary: tests of snapcraft's Nil plugin
-   systems:
-   - ubuntu-18.04*
- tests/spread/plugins/v1/plainbox/:
-   summary: tests of snapcraft's Plainbox plugin
-   systems:
-   - ubuntu-18.04*
-   kill-timeout: 20m
-   warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
- tests/spread/plugins/v1/python/:
-   summary: tests of snapcraft's Python plugin
-   systems:
-   - ubuntu-18.04*
- tests/spread/plugins/v1/qmake/:
-   summary: tests of snapcraft's qmake plugin
-   systems:
-   - ubuntu-18.04*
- tests/spread/plugins/v1/ruby/:
-   summary: tests of snapcraft's Ruby plugin
-   systems:
-   - ubuntu-18.04*
-   kill-timeout: 180m
- tests/spread/plugins/v1/rust/:
-   summary: tests of snapcraft's Rust plugin
-   systems:
-   - ubuntu-18.04
-   - ubuntu-18.04-64
-   - ubuntu-18.04-amd64
-   - ubuntu-18.04-i386
-   - ubuntu-18.04-armhf
-   - ubuntu-18.04-s390x
- tests/spread/plugins/v1/scons/:
-   summary: tests of snapcraft's SCons plugin
-   systems:
-   - ubuntu-18.04*
- tests/spread/plugins/v1/waf/:
-   summary: tests of snapcraft's Waf plugin
-   systems:
-   - ubuntu-18.04*
- tests/spread/plugins/v1/x-local/:
-   summary: tests of snapcraft's local plugins
-   systems:
-   - ubuntu-18.04*
  tests/spread/plugins/v2/:
    summary: tests of snapcraft's v2 plugins
    systems:
@@ -516,10 +349,6 @@ suites:
    prepare: |
      sudo apt-get install git
      sudo apt-mark auto git
-
-# Electron builder tests
- tests/spread/electron-builder/:
-   summary: electron-builder tests
 
 path: /snapcraft/
 include:

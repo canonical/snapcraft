@@ -1,6 +1,0 @@
-name: hello
-version: 0.1.0
-
-targets:
-  hello:
-    main: src/hello.cr
