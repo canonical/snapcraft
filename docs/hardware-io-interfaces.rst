@@ -5,7 +5,7 @@
 Hardware IO interfaces
 ======================
 
-Hardware IO (input/output) interfaces, including the :ref:`serial-port <the-serial-port-interface>`, :ref:`gpio <the-gpio-interface>` and :ref:`i2c <the-i2c-interface>` interfaces, are designed to be used on devices running :ref:`glossary-ubuntu-core`. These interfaces are driven from a device’s :ref:`gadget snap <gadget-snaps>` which is used to define and configure a device’s system properties.
+Hardware IO (input/output) interfaces, including the :ref:`serial-port <the-serial-port-interface>`, :ref:`gpio <the-gpio-interface>` and :ref:`i2c <the-i2c-interface>` interfaces, are designed to be used on devices running :term:`Ubuntu Core`. These interfaces are driven from a device’s :ref:`gadget snap <gadget-snaps>` which is used to define and configure a device’s system properties.
 
 This approach is more robust because it allows the gadget snap providing the slot to centralise and arbitrate the connection conditions. These conditions include which other snaps, identified by their snap ID, can connect to the slots the gadget offers and, consequently, gain privileged access to the hardware. For the application snap, usually no change is required other than to declare and use an appropriately-configured plug.
 
@@ -19,8 +19,8 @@ The extent of access an interface has is granted through both *connection permis
 
 1. **Connection permissions**: :ref:`auto-connect <the-interface-auto-connection-mechanism>` \| :ref:`privileged <interface-management>` \| :ref:`super-privileged <super-privileged-interfaces>` Connection requirements are dependent on which store a developer is using.
 
-   -  :ref:`Global Snap Store <glossary-snap-store>`: privileged and super-privileged interfaces require store approval because of the level of trust and permissiveness these interfaces have, which is also why certain interfaces need certain oversight. See :ref:`Permission requests <permission-requests>` for further details.
-   -  :ref:`Dedicated Snap Store <glossary-dedicated>`: trust and permissiveness are now the responsibility of the store owner, and many privileged interface connections can be self-served and defined within the dedicated snap store and the device context.
+   -  Global :term:`Snap Store`: privileged and super-privileged interfaces require store approval because of the level of trust and permissiveness these interfaces have, which is also why certain interfaces need certain oversight. See :ref:`Permission requests <permission-requests>` for further details.
+   -  :term:`Dedicated Snap Store`: trust and permissiveness are now the responsibility of the store owner, and many privileged interface connections can be self-served and defined within the dedicated snap store and the device context.
 
 2. **Interface connections**: hardware IO interfaces \| app-provided interfaces \| other interfaces
 

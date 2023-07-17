@@ -11,7 +11,7 @@ This interface enables the management of the ``extrausers`` table in the Name Se
 
 The interface **does not** allow the management of users and groups for the system NSS databases in */etc*.
 
-Due to the privileged nature of access enabled by this interface, its use is reserved exclusively for “management snaps” from :ref:`brand stores <glossary-brand-store>`.
+Due to the privileged nature of access enabled by this interface, its use is reserved exclusively for “management snaps” from :term:`brand stores`.
 
 .. note::
 

@@ -7,7 +7,7 @@ Validation sets
 
 A validation set is an `assertion <https://snapcraft.io/docs/assertions>`__ that lists specific snaps that are either required to be installed together or are permitted to be installed together on a device or system.
 
-One or more validation sets can be used to ensure only specific snaps are installed, and optionally, only specific snaps at fixed :ref:`revisions <glossary-revision>`. They can help a set of interdependent snaps maintain their testing and certification integrity, as well as help orchestrate their updates. But they can equally be used to simplify dependency deployment and to help manage devices.
+One or more validation sets can be used to ensure only specific snaps are installed, and optionally, only specific snaps at fixed :term:`revisions`. They can help a set of interdependent snaps maintain their testing and certification integrity, as well as help orchestrate their updates. But they can equally be used to simplify dependency deployment and to help manage devices.
 
 Prerequisites
 -------------
@@ -18,7 +18,7 @@ Validation set functionality is currently under active development and there are
 - Snapd version 2.50 and :ref:`Snapcraft <snapcraft-overview>` version :ref:`4.7 <release-notes-snapcraft-4-7>`, or newer, are required.
 - **Currently, in order to enforce a validation set, the following is also required:**
 
-  - a :ref:`brand store <glossary-brand-store>` account
+  - a :term:`brand store` account
   - the validation set’s ``name``, ``account-id`` and listed snaps, need to be added to an allowlist in the store backends (this is done by filing a brand store support ticket).
   - Snapd version 2.54
 
@@ -65,7 +65,7 @@ The template validation set assertion needs to be populated with the details of 
 -  **name** (*required*): The name of the snap, as you find on the store or in *snap search*.
 -  **id** (*optional*): The unique snap-id of the snap (see *snap info <snap name>* ). Defaults to the snap-id of the named snap.
 -  **presence** (*optional*): Can be either ``required``, ``optional`` or ``invalid``. ``required`` snaps need to be installed, ``optional`` snaps are permitted to be installed and ``invalid`` snaps explicitly must not be installed. Defaults to *required*.
--  **revision** (*optional*): Specifies which :ref:`revision <glossary-revision>` of the snap needs to be installed.
+-  **revision** (*optional*): Specifies which :term:`revision` of the snap needs to be installed.
 
 The following is a populated example of a validation set assertion:
 

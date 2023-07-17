@@ -7,7 +7,7 @@ The qualcomm-ipc-router interface
 
 The ``qualcomm-ipc-router`` interface allows access to the Qualcomm IPC Router sockets.
 
-This interface is primarily intended to be used with :ref:`glossary-ubuntu-core`.
+This interface is primarily intended to be used with :term:`Ubuntu Core`.
 
 .. note::
 

@@ -47,7 +47,7 @@ Developer details
 :ref:`Auto-Connect <the-interface-auto-connection-mechanism-autoconnect>`:
 
 - **yes** on traditional distributions
-- **no** on all other systems, including :ref:`glossary-ubuntu-core`
+- **no** on all other systems, including :term:`Ubuntu Core`
 
 **Transitional**: yes
 

@@ -7,7 +7,7 @@ The classic-support interface
 
 The ``classic-support`` interface sets special permissions for the `classic snap <https://snapcraft.io/classic>`__, effectively giving device ownership to its connected snaps.
 
-This interface is intended to be used only with :ref:`glossary-ubuntu-core`.
+This interface is intended to be used only with :term:`Ubuntu Core`.
 
 Requires snapd version *2.23+*.
 

@@ -15,7 +15,7 @@ The gadget metadata and content defines:
 - Interface connections configured in the ``connections:`` section are executed on the device’s first boot only. Later changes to this section – that is, changes added to the device at run time through gadget refreshes – are not applied.
 - Optional hooks that are invoked to control and customise the behaviour over the device lifecycle, e.g. installation, initialisation and establishing device identity, factory reset.
 
-See `Building a gadget snap <https://ubuntu.com/core/docs/gadget-building>`__ for details on how a gadget snap can be built. For store deployment, gadget snaps must be produced by the device :ref:`brand <glossary>`, as defined in the `model assertion <https://ubuntu.com/core/docs/reference/assertions/model>`__, or a reference gadget must be used. It is perfectly possible for different models to share a gadget snap.
+See `Building a gadget snap <https://ubuntu.com/core/docs/gadget-building>`__ for details on how a gadget snap can be built. For store deployment, gadget snaps must be produced by the device :term:`brand`, as defined in the `model assertion <https://ubuntu.com/core/docs/reference/assertions/model>`__, or a reference gadget must be used. It is perfectly possible for different models to share a gadget snap.
 
 --------------
 

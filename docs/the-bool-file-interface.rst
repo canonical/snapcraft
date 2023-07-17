@@ -7,7 +7,7 @@ The bool-file interface
 
 The ``bool-file`` interface allows access to a specific class of file that contains boolean semantics, typically used to toggle or represent the state of binary hardware values.
 
-This interface is primarily intended to be used with :ref:`glossary-ubuntu-core` devices, it’s also restricted because it provides privileged access to hardware.
+This interface is primarily intended to be used with :term:`Ubuntu Core` devices, it’s also restricted because it provides privileged access to hardware.
 
 These kinds of file are located within specific directories inside the `sysfs <https://man7.org/linux/man-pages/man5/sysfs.5.html>`__ filesystem (``/sys``) and this interface allows a file to be *read*, to obtaining a current value, or *written to*, setting a new value.
 

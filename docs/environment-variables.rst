@@ -192,7 +192,7 @@ Typical value: ``27`` or ``x1``
 SNAP_SAVE_DATA
 ~~~~~~~~~~~~~~
 
-This variable is only exposed on :ref:`glossary-ubuntu-core` systems, and was introduced with snapd 2.57.
+This variable is only exposed on :term:`Ubuntu Core` systems, and was introduced with snapd 2.57.
 
 It points to a snap-specific location on the ubuntu-save partition where the snap is allowed to store persistent files (like certificates or configuration files) that will survive a `factory reset <https://ubuntu.com/core/docs/recovery-modes#environment-variables-heading--factory>`__ of the Ubuntu Core device.
 
