@@ -18,13 +18,20 @@ Programming languages
 Go
 ~~
 
-+-----------------------------------+----------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Plugin name                       | Description                                                                | Base support                                                                                                                                                                                                   |
-+===================================+============================================================================+================================================================================================================================================================================================================+
-| :ref:`go <the-go-plugin>`         | integrates projects written in Go and using the *go get* package installer | `core22 </t/the-go-plugin/8505#supported-plugins-heading--core22>`__ `core20 </t/the-go-plugin/8505#supported-plugins-heading--core20>`__ `core18 </t/the-go-plugin/8505#supported-plugins-heading--core18>`__ |
-+-----------------------------------+----------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| :ref:`godeps <the-godeps-plugin>` | integrates projects written in Go and using the *godep* dependency tool    | :ref:`core18 <the-godeps-plugin>`                                                                                                                                                                              |
-+-----------------------------------+----------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+.. list-table::
+   :header-rows: 1
+
+   * - Plugin name
+     - Description
+     - Base support
+   * - :ref:`go <the-go-plugin>`
+     - integrates projects written in Go and using the *go get* package installer
+     - :ref:`core22 <the-go-plugin-core22>`
+       :ref:`core20 <the-go-plugin-core20>`
+       :ref:`core18 <the-go-plugin-core18>`
+   * - :ref:`godeps <the-godeps-plugin>`
+     - integrates projects written in Go and using the *godep* dependency tool
+     - :ref:`core18 <the-godeps-plugin>`
 
 
 .. _supported-plugins-heading--java:
@@ -32,15 +39,21 @@ Go
 Java
 ~~~~
 
-+-----------------------------------+-----------------------------------------------------------------------+-----------------------+
-| Plugin name                       | Description                                                           | Base support          |
-+===================================+=======================================================================+=======================+
-| :ref:`ant <the-ant-plugin>`       | Ant build system integration, commonly used by Java projects          | core22core20core18    |
-+-----------------------------------+-----------------------------------------------------------------------+-----------------------+
-| :ref:`gradle <the-gradle-plugin>` | integrate projects built using the Gradle build tool with your snaps  | core18                |
-+-----------------------------------+-----------------------------------------------------------------------+-----------------------+
-| :ref:`maven <the-maven-plugin>`   | build system integration with *Maven*, commonly used by Java projects | core22core18          |
-+-----------------------------------+-----------------------------------------------------------------------+-----------------------+
+.. list-table::
+   :header-rows: 1
+
+   * - Plugin name
+     - Description
+     - Base support
+   * - :ref:`ant <the-ant-plugin>`
+     - Ant build system integration, commonly used by Java projects
+     - core22 core20 core18
+   * - :ref:`gradle <the-gradle-plugin>`
+     - integrate projects built using the Gradle build tool with your snaps
+     - core18
+   * - :ref:`maven <the-maven-plugin>`
+     - build system integration with *Maven*, commonly used by Java projects
+     - core22 core18
 
 
 .. _supported-plugins-heading--javascript:
@@ -48,15 +61,22 @@ Java
 Node.js/JavaScript
 ~~~~~~~~~~~~~~~~~~
 
-+-----------------------------------+--------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------+
-| Plugin name                       | Description                                                              | Base support                                                                                                                                  |
-+===================================+==========================================================================+===============================================================================================================================================+
-| :ref:`gulp <the-gulp-plugin>`     | build parts from projects using the gulp.js streaming build system       | core18                                                                                                                                        |
-+-----------------------------------+--------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------+
-| :ref:`npm <the-npm-plugin>`       | create parts that use Node.js and/or the JavaScript package manager, npm | `core22 </t/the-npm-plugin/17591#supported-plugins-heading--core22>`__ `core20 </t/the-npm-plugin/17591#supported-plugins-heading--core20>`__ |
-+-----------------------------------+--------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------+
-| :ref:`nodejs <the-nodejs-plugin>` | create parts that use Node.js and/or the JavaScript package manager, npm | `core18 </t/the-nodejs-plugin/8514#supported-plugins-heading--core18>`__                                                                      |
-+-----------------------------------+--------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------+
+.. list-table::
+   :header-rows: 1
+
+   * - Plugin name
+     - Description
+     - Base support
+   * - :ref:`gulp <the-gulp-plugin>`
+     - build parts from projects using the gulp.js streaming build system
+     - core18
+   * - :ref:`npm <the-npm-plugin>`
+     - create parts that use Node.js and/or the JavaScript package manager, npm
+     - :ref:`core22 <the-npm-plugin-core22>`
+       :ref:`core20 <the-npm-plugin-core20>`
+   * - :ref:`nodejs <the-nodejs-plugin>`
+     - create parts that use Node.js and/or the JavaScript package manager, npm
+     - :ref:`core18 <the-nodejs-plugin-core18>`
 
 
 .. _supported-plugins-heading--python:
@@ -64,13 +84,22 @@ Node.js/JavaScript
 Python
 ~~~~~~
 
-+-----------------------------------+---------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Plugin name                       | Description                                                               | Base support                                                                                                                                                                                                               |
-+===================================+===========================================================================+============================================================================================================================================================================================================================+
-| :ref:`conda <the-conda-plugin>`   | used for parts incorporating the Conda open source package manager system | `core22 </t/the-conda-plugin/12530#supported-plugins-heading--core22>`__ `core20 </t/the-conda-plugin/12530#supported-plugins-heading--core20>`__ `core18 </t/the-conda-plugin/12530#supported-plugins-heading--core18>`__ |
-+-----------------------------------+---------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| :ref:`python <the-python-plugin>` | used for parts incorporating projects written with Python 2 or Python 3   | `core22 </t/the-python-plugin/8529#supported-plugins-heading--core22>`__ `core20 </t/the-python-plugin/8529#supported-plugins-heading--core20>`__ `core18 </t/the-python-plugin/8529#supported-plugins-heading--core18>`__ |
-+-----------------------------------+---------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+.. list-table::
+   :header-rows: 1
+
+   * - Plugin name
+     - Description
+     - Base support
+   * - :ref:`conda <the-conda-plugin>`
+     - used for parts incorporating the Conda open source package manager system
+     - :ref:`core22 <the-conda-plugin-core22>`
+       :ref:`core20 <the-conda-plugin-core20>`
+       :ref:`core18 <the-conda-plugin-core18>`
+   * - :ref:`python <the-python-plugin>`
+     - used for parts incorporating projects written with Python 2 or Python 3
+     - :ref:`core22 <the-python-plugin-core22>`
+       :ref:`core20 <the-python-plugin-core20>`
+       :ref:`core18 <the-python-plugin-core18>`
 
 
 .. _supported-plugins-heading--other:
@@ -78,19 +107,32 @@ Python
 Other languages
 ~~~~~~~~~~~~~~~
 
-+-------------------------------------+-------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Plugin name                         | Description                                                                         | Base support                                                                                                                                                                                                         |
-+=====================================+=====================================================================================+======================================================================================================================================================================================================================+
-| :ref:`crystal <the-crystal-plugin>` | build parts from projects written in the Ruby-like Crystal language                 | `core20 </t/the-crystal-plugin/12527#supported-plugins-heading--core20>`__ `core18 </t/the-crystal-plugin/12527#supported-plugins-heading--core18>`__                                                                |
-+-------------------------------------+-------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| :ref:`dotnet <the-dotnet-plugin>`   | integrates with the Microsoft’s .NET SDK to build core runtime parts                | `core22 </t/the-dotnet-plugin/8584#supported-plugins-heading--core22>`__ `core18 </t/the-dotnet-plugin/8584#supported-plugins-heading--core18>`__                                                                    |
-+-------------------------------------+-------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| :ref:`flutter <the-flutter-plugin>` | easily build and deploy parts for the expressive Flutter UI toolkit                 | `core22 </t/the-flutter-plugin/18746#supported-plugins-heading--core22>`__\ \ `core18 </t/the-flutter-plugin/18746#supported-plugins-heading--core18>`__                                                             |
-+-------------------------------------+-------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| :ref:`ruby <the-ruby-plugin>`       | built parts from projects written in Ruby and its Gemfile dependency bundler        | core18                                                                                                                                                                                                               |
-+-------------------------------------+-------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| :ref:`rust <the-rust-plugin>`       | build parts from projects written in Rust and using Cargo for dependency management | `core22 </t/the-rust-plugin/8588#supported-plugins-heading--core22>`__ `core20 </t/the-rust-plugin/8588#supported-plugins-heading--core20>`__ `core18 </t/the-rust-plugin/8588#supported-plugins-heading--core18>`__ |
-+-------------------------------------+-------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+.. list-table::
+   :header-rows: 1
+
+   * - Plugin name
+     - Description
+     - Base support
+   * - :ref:`crystal <the-crystal-plugin>`
+     - build parts from projects written in the Ruby-like Crystal language
+     - :ref:`core20 <the-crystal-plugin-core20>`
+       :ref:`core18 <the-crystal-plugin-core18>`
+   * - :ref:`dotnet <the-dotnet-plugin>`
+     - integrates with the Microsoft’s .NET SDK to build core runtime parts
+     - :ref:`core22 <the-dotnet-plugin-core22>`
+       :ref:`core18 <the-dotnet-plugin-core18>`
+   * - :ref:`flutter <the-flutter-plugin>`
+     - easily build and deploy parts for the expressive Flutter UI toolkit
+     - :ref:`core22 <the-flutter-plugin-core22>`
+       :ref:`core18 <the-flutter-plugin-core18>`
+   * - :ref:`ruby <the-ruby-plugin>`
+     - built parts from projects written in Ruby and its Gemfile dependency bundler
+     - core18
+   * - :ref:`rust <the-rust-plugin>`
+     - build parts from projects written in Rust and using Cargo for dependency management
+     - :ref:`core22 <the-rust-plugin-core22>`
+       :ref:`core20 <the-rust-plugin-core20>`
+       :ref:`core18 <the-rust-plugin-core18>`
 
 
 .. _supported-plugins-heading--build-tools:
@@ -98,23 +140,42 @@ Other languages
 Build tools
 -----------
 
-+-----------------------------------------+---------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Plugin name                             | Description                                                                     | Base support                                                                                                                                                                                                                        |
-+=========================================+=================================================================================+=====================================================================================================================================================================================================================================+
-| :ref:`autotools <the-autotools-plugin>` | integrates projects that use the common Autotools suite with your snaps         | `core22 </t/the-autotools-plugin/8616#supported-plugins-heading--core22>`__ `core20 </t/the-autotools-plugin/8616#supported-plugins-heading--core20>`__ `core18 </t/the-autotools-plugin/8616#supported-plugins-heading--core18>`__ |
-+-----------------------------------------+---------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| :ref:`cmake <the-cmake-plugin>`         | integrates projects that use the common CMake build tool with your snaps        | `core22 </t/the-cmake-plugin/8621#supported-plugins-heading--core22>`__ `core20 </t/the-cmake-plugin/8621#supported-plugins-heading--core20>`__ `core18 </t/the-cmake-plugin/8621#supported-plugins-heading--core18>`__             |
-+-----------------------------------------+---------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| :ref:`make <the-make-plugin>`           | integrates projects using the commonly found *make* build system                | `core22 </t/the-make-plugin/8622#supported-plugins-heading--core22>`__ `core20 </t/the-make-plugin/8622#supported-plugins-heading--core20>`__ `core18 </t/the-make-plugin/8622#supported-plugins-heading--core18>`__                |
-+-----------------------------------------+---------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| :ref:`meson <the-meson-plugin>`         | integrate projects build using the Meson build system into your snap            | `core22 </t/the-meson-plugin/8623#supported-plugins-heading--core22>`__ `core20 </t/the-meson-plugin/8623#supported-plugins-heading--core20>`__ `core18 </t/the-meson-plugin/8623#supported-plugins-heading--core18>`__             |
-+-----------------------------------------+---------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| :ref:`qmake <the-qmake-plugin>`         | integrates projects using the qmake build tool, commonly by *Qt*-based projects | `core20 </t/the-qmake-plugin/8628#supported-plugins-heading--core20>`__ `core18 </t/the-qmake-plugin/8628#supported-plugins-heading--core18>`__                                                                                     |
-+-----------------------------------------+---------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| :ref:`scons <the-scons-plugin>`         | integrates projects that use the SCons construction tool                        | core22core18                                                                                                                                                                                                                        |
-+-----------------------------------------+---------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| :ref:`waf <the-waf-plugin>`             | integrate projects using the Waf build automation tool                          | core18                                                                                                                                                                                                                              |
-+-----------------------------------------+---------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+.. list-table::
+   :header-rows: 1
+
+   * - Plugin name
+     - Description
+     - Base support
+   * - :ref:`autotools <the-autotools-plugin>`
+     - integrates projects that use the common Autotools suite with your snaps
+     - :ref:`core22 <the-autotools-plugin-core22>`
+       :ref:`core20 <the-autotools-plugin-core20>`
+       :ref:`core18 <the-autotools-plugin-core18>`
+   * - :ref:`cmake <the-cmake-plugin>`
+     - integrates projects that use the common CMake build tool with your snaps
+     - :ref:`core22 <the-cmake-plugin-core22>`
+       :ref:`core20 <the-cmake-plugin-core20>`
+       :ref:`core18 <the-cmake-plugin-core18>`
+   * - :ref:`make <the-make-plugin>`
+     - integrates projects using the commonly found *make* build system
+     - :ref:`core22 <the-make-plugin-core22>`
+       :ref:`core20 <the-make-plugin-core20>`
+       :ref:`core18 <the-make-plugin-core18>`
+   * - :ref:`meson <the-meson-plugin>`
+     - integrate projects build using the Meson build system into your snap
+     - :ref:`core22 <the-meson-plugin-core22>`
+       :ref:`core20 <the-meson-plugin-core20>`
+       :ref:`core18 <the-meson-plugin-core18>`
+   * - :ref:`qmake <the-qmake-plugin>`
+     - integrates projects using the qmake build tool, commonly by *Qt*-based projects
+     - :ref:`core20 <the-qmake-plugin-core20>`
+       :ref:`core18 <the-qmake-plugin-core18>`
+   * - :ref:`scons <the-scons-plugin>`
+     - integrates projects that use the SCons construction tool
+     - core22core18
+   * - :ref:`waf <the-waf-plugin>`
+     - integrate projects using the Waf build automation tool
+     - core18
 
 Platforms
 ---------
@@ -122,41 +183,63 @@ Platforms
 Linux kernel
 ~~~~~~~~~~~~
 
-+-----------------------------------+--------------------------------------------------------------------+-----------------------+
-| Plugin name                       | Description                                                        | Base support          |
-+===================================+====================================================================+=======================+
-| :ref:`kbuild <the-kbuild-plugin>` | build parts that use the Linux kernel build system (kBuild)        | core18                |
-+-----------------------------------+--------------------------------------------------------------------+-----------------------+
-| :ref:`kernel <the-kernel-plugin>` | derived from the *kbuild* plugin and used to build your own kernel | core18                |
-+-----------------------------------+--------------------------------------------------------------------+-----------------------+
+.. list-table::
+   :header-rows: 1
+
+   * - Plugin name
+     - Description
+     - Base support
+   * - :ref:`kbuild <the-kbuild-plugin>`
+     - build parts that use the Linux kernel build system (kBuild)
+     - core18
+   * - :ref:`kernel <the-kernel-plugin>`
+     - derived from the *kbuild* plugin and used to build your own kernel
+     - core18
 
 Robot Operating System (ROS)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-+-----------------------------------------------+------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Plugin name                                   | Description                                                                                    | Base support                                                                                                                                                                                                                    |
-+===============================================+================================================================================================+=================================================================================================================================================================================================================================+
-| :ref:`ament <the-ament-plugin>`               | uses ament_cmake to build parts for version 2 of the Robot Operating System (ROS 2)            | core18                                                                                                                                                                                                                          |
-+-----------------------------------------------+------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| :ref:`catkin <the-catkin-plugin>`             | build catkin-based parts, typically used with version 1 of the Robot Operating System (ROS 1)  | `core20 </t/the-catkin-plugin/8644#supported-plugins-heading--core20>`__ `core18 </t/the-catkin-plugin/8644#supported-plugins-heading--core18>`__                                                                               |
-+-----------------------------------------------+------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| :ref:`catkin-tools <the-catkin-tools-plugin>` | alternative method for building projects using version 1 of the Robot Operating System (ROS 1) | `core20 </t/the-catkin-tools-plugin/8645#supported-plugins-heading--core20>`__ `core18 </t/the-catkin-tools-plugin/8645#supported-plugins-heading--core18>`__                                                                   |
-+-----------------------------------------------+------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| :ref:`colcon <the-colcon-plugin>`             | build colcon-based parts, typically used with version 2 of the Robot Operating System (ROS 2)  | `core22 </t/the-colcon-plugin/11895#supported-plugins-heading--core22>`__ \ `core20 </t/the-colcon-plugin/11895#supported-plugins-heading--core20>`__ `core18 </t/the-colcon-plugin/11895#supported-plugins-heading--core18>`__ |
-+-----------------------------------------------+------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+.. list-table::
+   :header-rows: 1
+
+   * - Plugin name
+     - Description
+     - Base support
+   * - :ref:`ament <the-ament-plugin>`
+     - uses ament_cmake to build parts for version 2 of the Robot Operating System (ROS 2)
+     - core18
+   * - :ref:`catkin <the-catkin-plugin>`
+     - build catkin-based parts, typically used with version 1 of the Robot Operating System (ROS 1)
+     - :ref:`core20 <the-catkin-plugin-core20>`
+       :ref:`core18 <the-catkin-plugin-core18>`
+   * - :ref:`catkin-tools <the-catkin-tools-plugin>`
+     - alternative method for building projects using version 1 of the Robot Operating System (ROS 1)
+     - :ref:`core20 <the-catkin-tools-plugin-core20>`
+       :ref:`core18 <the-catkin-tools-plugin-core18>`
+   * - :ref:`colcon <the-colcon-plugin>`
+     - build colcon-based parts, typically used with version 2 of the Robot Operating System (ROS 2)
+     - :ref:`core22 <the-colcon-plugin-core22>`
+       :ref:`core20 <the-colcon-plugin-core20>`
+       :ref:`core18 <the-colcon-plugin-core18>`
 
 Tools
 -----
 
-+---------------------------------------------------------+--------------------------------------------------------------------------+-----------------------+
-| Plugin name                                             | Description                                                              | Base support          |
-+=========================================================+==========================================================================+=======================+
-| :ref:`dump <the-dump-plugin>`                           | simply dumps the contents from the specified source                      | core22 core20 core18  |
-+---------------------------------------------------------+--------------------------------------------------------------------------+-----------------------+
-| :ref:`nil <the-nil-plugin>`                             | useful for parts with no source to import                                | core22 core20 core18  |
-+---------------------------------------------------------+--------------------------------------------------------------------------+-----------------------+
-| :ref:`plainbox-provider <the-plainbox-provider-plugin>` | create parts containing a Plainbox test collection known as a *provider* | core18                |
-+---------------------------------------------------------+--------------------------------------------------------------------------+-----------------------+
+.. list-table::
+   :header-rows: 1
+
+   * - Plugin name
+     - Description
+     - Base support
+   * - :ref:`dump <the-dump-plugin>`
+     - simply dumps the contents from the specified source
+     - core22 core20 core18
+   * - :ref:`nil <the-nil-plugin>`
+     - useful for parts with no source to import
+     - core22 core20 core18
+   * - :ref:`plainbox-provider <the-plainbox-provider-plugin>`
+     - create parts containing a Plainbox test collection known as a *provider*
+     - core18
 
 .. toctree::
    :hidden:

@@ -69,7 +69,7 @@ This plugin enables the following plugin-specific keywords on core18:
 -  **colcon-ament-cmake-args** (list of strings) Arguments to pass to ament_cmake packages. Note that any arguments here which match colcon arguments need to be prefixed with a space. This can be done by quoting each argument with a leading space.
 
 Related Information
-===================
+-------------------
 
 See the :ref:`catkin plugin <the-catkin-plugin>` for building ROS 1 parts.
 

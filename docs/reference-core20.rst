@@ -2,7 +2,7 @@ core20
 ======
 
 .. toctree::
-   :hidden:
+   :maxdepth: 1
 
    the-ant-plugin
    the-autotools-plugin

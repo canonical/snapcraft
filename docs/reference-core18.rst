@@ -2,7 +2,7 @@ core18
 ======
 
 .. toctree::
-   :hidden:
+   :maxdepth: 1
 
    the-ant-plugin
    the-ament-plugin

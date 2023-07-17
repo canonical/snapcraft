@@ -15,15 +15,15 @@ This plugin uses the common plugin keywords as well as those for “sources”. 
 
 Plugin-specific features and syntax are dependent on which :ref:`base <base-snaps>` is being used, as outlined below:
 
--  `base: core22 <the-npm-plugin-heading--core22_>`__
--  `base: core20 <the-npm-plugin-heading--core20_>`__
+-  `base: core22 <the-npm-plugin-core22_>`__
+-  `base: core20 <the-npm-plugin-core20_>`__
 
 See `Node applications <https://snapcraft.io/docs/node-apps>`__ for a simple example, or search `GitHub <https://github.com/search?q=path%3Asnapcraft.yaml+%22plugin%3A+npm%22&type=Code>`__ for projects already using the plugin.
 
    ⓘ This is a *snapcraft* plugin. See :ref:`Snapcraft plugins <snapcraft-plugins>` and :ref:`Supported plugins <supported-plugins>` for further details on how plugins are used.
 
 
-.. _the-npm-plugin-heading--core22:
+.. _the-npm-plugin-core22:
 
 base: core22
 ~~~~~~~~~~~~
@@ -37,7 +37,7 @@ This plugin uses the following plugin-specific keyword:
 Requires Snapcraft version *7.0+*.
 
 
-.. _the-npm-plugin-heading--core20:
+.. _the-npm-plugin-core20:
 
 base: core20
 ~~~~~~~~~~~~

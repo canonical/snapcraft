@@ -2,7 +2,7 @@ core22
 ======
 
 .. toctree::
-   :hidden:
+   :maxdepth: 1
 
    the-dotnet-plugin
    the-ant-plugin

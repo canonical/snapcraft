@@ -11,16 +11,16 @@ This plugin uses the common plugin keywords as well as those for “sources”. 
 
 Additional features and syntax are dependent on which :ref:`base <base-snaps>` is being used, as outlined below:
 
--  `base: core22 <the-conda-plugin-heading--core22_>`__
--  `base: core20 <the-conda-plugin-heading--core20_>`__
--  `base: core18 \| core <the-conda-plugin-heading--core18_>`__
+-  `base: core22 <the-conda-plugin-core22_>`__
+-  `base: core20 <the-conda-plugin-core20_>`__
+-  `base: core18 \| core <the-conda-plugin-core18_>`__
 
 For examples, search `GitHub <https://github.com/search?q=path%3Asnapcraft.yaml+%22plugin%3A+conda%22&type=Code>`__ for projects already using the plugin.
 
    ⓘ This is a *snapcraft* plugin. See :ref:`Snapcraft plugins <snapcraft-plugins>` and :ref:`Supported plugins <supported-plugins>` for further details on how plugins are used.
 
 
-.. _the-conda-plugin-heading--core22:
+.. _the-conda-plugin-core22:
 
 base: core22
 ~~~~~~~~~~~~
@@ -34,7 +34,7 @@ This plugin uses the following plugin-specific keywords:
 Requires Snapcraft version *7.0+* .
 
 
-.. _the-conda-plugin-heading--core20:
+.. _the-conda-plugin-core20:
 
 base: core20
 ~~~~~~~~~~~~
@@ -48,7 +48,7 @@ This plugin uses the following plugin-specific keywords:
 Requires Snapcraft version *4.6+* .
 
 
-.. _the-conda-plugin-heading--core18:
+.. _the-conda-plugin-core18:
 
 base: core18 \| core
 ~~~~~~~~~~~~~~~~~~~~

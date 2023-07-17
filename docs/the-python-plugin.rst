@@ -14,16 +14,16 @@ This plugin uses the common plugin keywords as well as those for “sources”. 
 
 Plugin-specific features and syntax are dependent on which :ref:`base <base-snaps>` is being used, as outlined below:
 
--  `base: core22 <the-python-plugin-heading--core22_>`__
--  `base: core20 <the-python-plugin-heading--core20_>`__
--  `base: core18 \| core <the-python-plugin-heading--core18_>`__
+-  `base: core22 <the-python-plugin-core22_>`__
+-  `base: core20 <the-python-plugin-core20_>`__
+-  `base: core18 \| core <the-python-plugin-core18_>`__
 
 See :ref:`Python applications <python-apps>` for a simple example, or search `GitHub <https://github.com/search?q=path%3Asnapcraft.yaml+%22plugin%3A+python%22&type=Code>`__ for projects already using the plugin.
 
    ⓘ This is a *snapcraft* plugin. See :ref:`Snapcraft plugins <snapcraft-plugins>` and :ref:`Supported plugins <supported-plugins>` for further details on how plugins are used.
 
 
-.. _the-python-plugin-heading--core22:
+.. _the-python-plugin-core22:
 
 base: core22
 ~~~~~~~~~~~~
@@ -49,7 +49,7 @@ Use of python3- in stage-packages will force the inclusion of the python interpr
 Requires Snapcraft version *7.0+*.
 
 
-.. _the-python-plugin-heading--core20:
+.. _the-python-plugin-core20:
 
 base: core20
 ~~~~~~~~~~~~
@@ -75,7 +75,7 @@ Use of python3- in stage-packages will force the inclusion of the python interpr
 Requires Snapcraft version *4.0+*.
 
 
-.. _the-python-plugin-heading--core18:
+.. _the-python-plugin-core18:
 
 base: core18 \| core
 ~~~~~~~~~~~~~~~~~~~~

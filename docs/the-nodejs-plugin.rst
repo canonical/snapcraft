@@ -16,7 +16,7 @@ The plugin uses *node* to install dependencies from ``package.json``. It also se
 This plugin uses the common plugin keywords as well as those for “sources”. For more information, see :ref:`Snapcraft parts metadata <snapcraft-parts-metadata>`.
 
 
-.. _the-nodejs-plugin-heading--core18:
+.. _the-nodejs-plugin-core18:
 
 base: core18 \| core
 ~~~~~~~~~~~~~~~~~~~~
