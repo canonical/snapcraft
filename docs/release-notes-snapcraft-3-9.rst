@@ -208,7 +208,7 @@ Chris Patterson
 -  remote-build: explicitly default build arch to host arch
 -  remote-build: remove ``all`` option for ``--arch``
 -  remote-build: remove old TODO comment
--  erorrs: preserve quotes when printing SnapcraftPluginCommandError
+-  errors: preserve quotes when printing SnapcraftPluginCommandError
 -  remote-build: improve resiliency for https connection issues
 -  remote-build: add unit tests for errors
 -  remote-build: support autorecovery of builds

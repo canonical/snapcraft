@@ -105,7 +105,7 @@ The ``snapcraft.yaml`` file starts with a small amount of human-readable metadat
 
 The ``name`` must be unique in the Snap Store. Valid snap names consist of lower-case alphanumeric characters and hyphens. They cannot be all numbers and they also cannot start or end with a hyphen.
 
-The ``version`` is a “human readable” version string. It contains no semantic meaning, its purpose is to inform users of which version of the application they are intalling.
+The ``version`` is a “human readable” version string. It contains no semantic meaning, its purpose is to inform users of which version of the application they are installing.
 
 You can also fill in the ``title``, ``summary`` and ``description``. However, KCalc already has this metadata defined using an `AppStream <https://www.freedesktop.org/wiki/Distributions/AppStream/>`__ metadata file ``org.kde.kcalc.appdata.xml``, so we don’t want to duplicate this data. We use ``adopt-info`` to tell Snapcraft to get the metadata from the part itself. More on this later.
 

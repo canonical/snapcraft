@@ -5,7 +5,7 @@
 Flutter applications
 ====================
 
-`Flutter <https://flutter.dev/>`__ is Google’s open source tookit to help create beautiful, responsive, and natively compiled applications for mobile, web and desktop.
+`Flutter <https://flutter.dev/>`__ is Google’s open source toolkit to help create beautiful, responsive, and natively compiled applications for mobile, web and desktop.
 
 Why are snaps good for Flutter projects?
 ----------------------------------------

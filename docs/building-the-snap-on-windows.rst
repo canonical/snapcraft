@@ -19,7 +19,7 @@ The Microsoft Store contains an installable (WSL) Windows Subsystem for Linux co
 .. note::
           ⚠ While it is possible to build, publish and release snaps using WSL, it’s not currently possible to install or run them in that environment.
 
-Snapcraft, the command-line tool for building snaps, is distributed in the Ubuntu repository, which is accesible under WSL. Be sure to `install WSL <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`__, choosing Ubuntu before continuing.
+Snapcraft, the command-line tool for building snaps, is distributed in the Ubuntu repository, which is accessible under WSL. Be sure to `install WSL <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`__, choosing Ubuntu before continuing.
 
 Once installed, run WSL from the Windows Start menu.
 

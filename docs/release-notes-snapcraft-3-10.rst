@@ -229,7 +229,7 @@ Chris Patterson:
 -  multipass provider: improve safety in \_requests_exception_hint()
 -  multipass provider: fix except in \_fetch_installer_url()
 -  lxd provider: fix \_run() return when hide_output is False
--  lxd provider: address mypy uprev errrors
+-  lxd provider: address mypy uprev errors
 -  lxd provider: fix incorrectly formatted error message
 -  snap provider: add assertions to address mypy errors
 -  multipass provider: label \_instance_info as Optional
@@ -378,7 +378,7 @@ Sergio Schvezov:
 -  store: improve platform detection (`#2931 <https://github.com/snapcore/snapcraft/pull/2931>`__)
 -  build providers: clean up LXD startup message (`#2936 <https://github.com/snapcore/snapcraft/pull/2936>`__)
 -  build providers: remove tzdata workaround (`#2935 <https://github.com/snapcore/snapcraft/pull/2935>`__)
--  store: temprorarily remove support for progressive releases (`#2946 <https://github.com/snapcore/snapcraft/pull/2946>`__)
+-  store: temporarily remove support for progressive releases (`#2946 <https://github.com/snapcore/snapcraft/pull/2946>`__)
 
 Ted Kern:
 ---------

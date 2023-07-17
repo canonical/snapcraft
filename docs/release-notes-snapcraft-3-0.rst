@@ -419,7 +419,7 @@ The issues and features worked on for 3.0 can be seen on the `3.0 launchpad mile
 -  meson plugin: add support for bases (`#2331 <https://github.com/snapcore/snapcraft/pull/2331>`__)
 -  lifecycle: remove lxd support for bases (`#2335 <https://github.com/snapcore/snapcraft/pull/2335>`__)
 -  tests: remove dependency on snapcraft for integration tests (`#2353 <https://github.com/snapcore/snapcraft/pull/2353>`__)
--  schema: enfore string for versions (`#2334 <https://github.com/snapcore/snapcraft/pull/2334>`__)
+-  schema: enforce string for versions (`#2334 <https://github.com/snapcore/snapcraft/pull/2334>`__)
 -  lifecycle: switch to multipass by default (`#2339 <https://github.com/snapcore/snapcraft/pull/2339>`__)
 -  schema: remove the deprecated snap keyword for bases (`#2344 <https://github.com/snapcore/snapcraft/pull/2344>`__)
 -  tests: use valid snap names in unit tests (`#2352 <https://github.com/snapcore/snapcraft/pull/2352>`__)

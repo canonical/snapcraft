@@ -142,7 +142,7 @@ For more details on promoting snaps to different channels, see `Release manageme
 Setting a default track
 -----------------------
 
-All snaps have a default track. When not specified explicitely, a snap is installed from the default track and without the snap publisher specifying otherwise, the default track is called *latest*
+All snaps have a default track. When not specified explicitly, a snap is installed from the default track and without the snap publisher specifying otherwise, the default track is called *latest*
 
 A default track can be specified manually with *snapcraft* when a snap has more than one track:
 

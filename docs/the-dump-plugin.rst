@@ -28,7 +28,7 @@ For example:
        source: https://remote-resource.org/cool-package.deb
        source-type: deb
 
-See :ref:`source keywords <snapcraft-parts-metadata-source>` and :ref:`common plugin keywords <snapcraft-plugins>` for more informations.
+See :ref:`source keywords <snapcraft-parts-metadata-source>` and :ref:`common plugin keywords <snapcraft-plugins>` for more information.
 
 For more examples, click here to find `GitHub <https://github.com/search?o=desc&q=path%3Asnapcraft.yaml+%22plugin%3A+dump%22+&s=indexed&type=Code&utf8=%E2%9C%93>`__ projects already using this plugin.
 

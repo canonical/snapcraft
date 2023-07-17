@@ -95,7 +95,7 @@ The command can be in either a snap runtime’s command path, ``$SNAP/usr/sbin:$
 
 If daemon is set, this will be the command to run the service. Only a snap with *classic* confinement can use a relative path because ``PATH`` isn’t modified by a wrapper in classic confinement. See :ref:`Classic confinement <snap-confinement>` for more details.
 
-Examples: ``app-launch`` for an excecutable placed under ``$SNAP/bin``. With ``classic`` confinement, ``bin/app-launch`` for an executable placed under ``$SNAP/bin``.
+Examples: ``app-launch`` for an executable placed under ``$SNAP/bin``. With ``classic`` confinement, ``bin/app-launch`` for an executable placed under ``$SNAP/bin``.
 
 
 .. _snapcraft-app-and-service-metadata-command-chain:

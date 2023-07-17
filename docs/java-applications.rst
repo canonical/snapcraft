@@ -163,7 +163,7 @@ If you don’t want your command prefixed you can request an alias for it on the
          - network
          - cups-control
 
-Since Freeplane is a desktop application, we use the :ref:`gnome-3-28 extension <the-gnome-3-28-extension>` to configure and setup the desktop integration and permissions for the snap. Although Freeplane is a Java Swing application which doesn’t need acces to GTK or GNOME, the GNOME extension is stil useful because it sets up many toolkit-independent libraries and functionality such as mouse cursor themes, locales and the XDG runtime environment.
+Since Freeplane is a desktop application, we use the :ref:`gnome-3-28 extension <the-gnome-3-28-extension>` to configure and setup the desktop integration and permissions for the snap. Although Freeplane is a Java Swing application which doesn’t need access to GTK or GNOME, the GNOME extension is still useful because it sets up many toolkit-independent libraries and functionality such as mouse cursor themes, locales and the XDG runtime environment.
 
 Parts
 -----

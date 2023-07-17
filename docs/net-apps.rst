@@ -149,7 +149,7 @@ By doing this, the parameter ``dotnet-self-contained-runtime-identifier`` become
 
 The ``source`` should point to the root of your .NET project. In our case, it points to the local directory as it’s where the source tree is located. It can also point to a URL if the source code is available as a compressed archive or a revision control repository.
 
-You should also use ``build-packages`` to list any required package during build time. We are listing the dotnet-sdk-6.0 package as it instals the .NET 6 SDK, which is required by the plugin and does not get installed automatically.
+You should also use ``build-packages`` to list any required package during build time. We are listing the dotnet-sdk-6.0 package as it installs the .NET 6 SDK, which is required by the plugin and does not get installed automatically.
 
 The ``stage-packages`` directive is used to list any required packages during run time. In our case, the libicu70 is a required system package to run the .NET application.
 

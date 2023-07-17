@@ -44,7 +44,7 @@ For help completing these details, see `global metadata <https://snapcraft.io/do
 Build environment
 -----------------
 
-Docker allows users to create images based on existing parent images that provide the required environment for the application. This is useful to avoid having to set up the same core libraries everytime. Similarly, snaps provide `base snaps <https://snapcraft.io/docs/base-snaps>`__.
+Docker allows users to create images based on existing parent images that provide the required environment for the application. This is useful to avoid having to set up the same core libraries every time. Similarly, snaps provide `base snaps <https://snapcraft.io/docs/base-snaps>`__.
 
 Both base snaps and parent Docker images serve as the foundation for building our application. For example, for a ROS Noetic application, in Docker you would include the Ubuntu 20.04 Lts image with the following command:
 

@@ -48,7 +48,7 @@ Taking the following AppStream metadata as an example input:
        </ul>
      </description>
 
-…would generate the following desription in ``snap.yaml``:
+…would generate the following description in ``snap.yaml``:
 
 .. code:: yaml
 

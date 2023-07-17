@@ -13,7 +13,7 @@ Use ``snap interface gpio`` to see which gpio devices are available on the syste
 
    $ snap interface gpio
    name:    gpio
-   summary: allows access to specifc GPIO pin
+   summary: allows access to specific GPIO pin
    slots:
      - pi:bcm-gpio-0
      - pi:bcm-gpio-1

@@ -15,7 +15,7 @@ For general details, including installation instructions, see :ref:`Snapcraft ov
 - rust plugin: new link for rustup (`#2438 <https://github.com/snapcore/snapcraft/pull/2438>`__) (LP: #1662960)
 - baseplugin: add a proper exception for cross-compilation support (`#2454 <https://github.com/snapcore/snapcraft/pull/2454>`__) (LP: #1808454)
 - clean: error out on invalid or missing yaml (`#2458 <https://github.com/snapcore/snapcraft/pull/2458>`__) (LP: #1777501)
-- lifecyle: avoid installation of snaps in docker (`#2457 <https://github.com/snapcore/snapcraft/pull/2457>`__) (LP: #1814148)
+- lifecycle: avoid installation of snaps in docker (`#2457 <https://github.com/snapcore/snapcraft/pull/2457>`__) (LP: #1814148)
 - ci: use non virt-enabled gce instances for 16.04 (`#2461 <https://github.com/snapcore/snapcraft/pull/2461>`__)
 - extractors: fix typo in code comment (`#2452 <https://github.com/snapcore/snapcraft/pull/2452>`__)
 - pluginhandler: handle removal of inconsistent files (`#2450 <https://github.com/snapcore/snapcraft/pull/2450>`__) (LP: #1813033)
