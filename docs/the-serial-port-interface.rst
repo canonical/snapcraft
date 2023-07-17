@@ -5,7 +5,7 @@
 The serial-port interface
 =========================
 
-The ``serial-port`` interface enables input and output access to a specific serial port on a device typically running :ref:`glossary-ubuntu-core`. As a result, and because it provides such privileged access to configure serial port hardware, ``serial-port`` is considered a restricted interface.
+The ``serial-port`` interface enables input and output access to a specific serial port on a device typically running :term:`Ubuntu Core`. As a result, and because it provides such privileged access to configure serial port hardware, ``serial-port`` is considered a restricted interface.
 
 Use ``snap interface serial-port`` to see which serial-port devices are available on the system:
 

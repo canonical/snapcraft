@@ -27,7 +27,7 @@ Our How-to guides help you achieve an end result but may require you to understa
 +--------------------------------------------------------------------+---------------------------------------------------------------+
 | :ref:`Iterate over a build <iterating-over-a-build>`               | Check build state, view logs, and probe environment variables |
 +--------------------------------------------------------------------+---------------------------------------------------------------+
-| :ref:`Classic confinement <how-to-guides-for-classic-confinement>` | Build snaps with classic confinement                          |
+| :ref:`Classic confinement <how-to-set-up-classic-confinement>`     | Build snaps with classic confinement                          |
 +--------------------------------------------------------------------+---------------------------------------------------------------+
 
 Alternatively, our tutorials section contain step-by-step tutorials to help outline what Snapcraft is capable of while helping you achieve specific aims, such as installing Snapcraft and building your first snap.
@@ -54,6 +54,8 @@ Finally, for a better understanding of how Snapcraft works, and how it can be us
    desktop-applications
    how-to-create-a-snap
    how-to-snap-publishing
+   how-to-set-up-classic-confinement
+   how-to-use-xdg-portals
    installing-snapcraft
    join-snapcrafters
    micro-howto-migrate-from-core20-to-core22
@@ -76,4 +78,3 @@ Finally, for a better understanding of how Snapcraft works, and how it can be us
    using-external-metadata
    using-in-development-features-in-snapcraft-yaml
    writing-local-plugins
-   xdg-desktop-portals

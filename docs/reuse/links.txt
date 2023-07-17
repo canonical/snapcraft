@@ -3,6 +3,7 @@
 .. _Canonical website: https://canonical.com/
 .. _`Create a brand account`: https://snapcraft.io/docs/t/creating-snap-store-brand-accounts/6271
 .. _`Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License`: https://creativecommons.org/licenses/by-nc-sa/3.0/
+.. _`freedesktop.org`: https://www.freedesktop.org
 .. _`Kernel connector`: https://www.kernel.org/doc/Documentation/connector/connector.txt
 .. _managing-snap-configuration: https://snapcraft.io/docs/configuration-in-snaps
 .. _`Markdown`: https://commonmark.org/help/

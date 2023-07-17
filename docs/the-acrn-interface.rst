@@ -7,7 +7,7 @@ The acrn interface
 
 The ``acrn`` interface allows access to, and control of, user virtual machines using the `ACRN hypervisor <https://projectacrn.org/>`__.
 
-**This interface is primarily intended to be used with**\ :ref:`glossary-ubuntu-core`\ **devices.**
+**This interface is primarily intended to be used with**\ :term:`Ubuntu Core`\ **devices.**
 
 .. note::
 

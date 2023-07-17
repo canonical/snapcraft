@@ -56,3 +56,4 @@ Take a look at our *Reference section* when you need to know which interfaces ca
    troubleshoot-snap-building
    using-the-snapctl-tool
    explanation-robotics
+   xdg-desktop-portals

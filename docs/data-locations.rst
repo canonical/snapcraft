@@ -33,7 +33,7 @@ Snap installation
 
 When a user `installs a snap <https://snapcraft.io/docs/quickstart-guide#data-locations-heading--install-snap>`__ from the `Snap Store <https://snapcraft.io/store>`__, the following happens:
 
-1. The :ref:`snapd services <glossary-snapd>` downloads the snap as a single file – a compressed SquashFS archive with a *.snap* suffix.
+1. The :term:`snapd` service downloads the snap as a single file – a compressed SquashFS archive with a *.snap* suffix.
 2. The snap file is uncompressed and mounted as a read-only filesystem under */snap.* See :ref:`The snap format <the-snap-format>` for further details on what is included in a snap.
 
 By design, the read-only filesystem cannot provide a persistent experience between application launches, which is why snaps also have writable parts for system data and for user data.
@@ -46,7 +46,7 @@ System data
 
 Within the snap environment, :ref:`environment variables <environment-variables>` are used to reference different accessible locations. The following variables and default referenced locations are used to store system data:
 
--  **SNAP_COMMON**: ``/var/snap/<snap name>/common`` This directory is owned and writable by root and is used to store data that is common across multiple :ref:`revisions <glossary-revision>` of the snap (e.g.: revision 6, revision 7, etc.).
+-  **SNAP_COMMON**: ``/var/snap/<snap name>/common`` This directory is owned and writable by root and is used to store data that is common across multiple :term:`revisions` of the snap (e.g.: revision 6, revision 7, etc.).
 
 -  **SNAP\_ DATA**: ``/var/snap/<snap name>/<revision number>`` This location it is also used to store data, mostly information utilised by background application and services, for logging, and other tasks that require persistence between snap launches.
 
