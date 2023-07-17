@@ -17,6 +17,7 @@
 from copy import deepcopy
 
 import snapcraft_legacy.yaml_utils.errors
+from snapcraft.utils import remove_custom_data
 from snapcraft_legacy import yaml_utils
 
 from . import _schema
@@ -27,7 +28,8 @@ class ProjectInfo:
 
     def __init__(self, *, snapcraft_yaml_file_path) -> None:
         self.snapcraft_yaml_file_path = snapcraft_yaml_file_path
-        self.__raw_snapcraft = yaml_utils.load_yaml_file(snapcraft_yaml_file_path)
+        self.__raw_snapcraft = remove_custom_data(
+            yaml_utils.load_yaml_file(snapcraft_yaml_file_path))
 
         try:
             self.name = self.__raw_snapcraft["name"]

@@ -21,6 +21,7 @@ from typing import List
 from unittest.mock import call, patch
 
 import pytest
+import yaml
 
 from snapcraft import errors, utils
 
@@ -607,3 +608,206 @@ def test_confirm_with_user_pause_emitter(mock_isatty, emitter):
 
     with patch("snapcraft.utils.input", fake_input):
         utils.confirm_with_user("prompt")
+
+
+def test_remove_custom_data():
+    """Tests that remove_custom_data removes correctly the custom
+    metadata from a .yaml file."""
+    test_snap = yaml.load(
+        """name: snapcraft
+base: core22
+summary: easily create snaps
+description: |
+  Snapcraft aims to make upstream developers' lives easier and as such is not
+  a single toolset, but instead is a collection of tools that enable the
+  natural workflow of an upstream to be extended with a simple release step
+  into Snappy.
+adopt-info: snapcraft
+confinement: classic
+license: GPL-3.0
+assumes:
+  - snapd2.43
+
+custom-data-tests:
+  entry1: "data1"
+  entry2: 4
+
+environment:
+  PATH: "$SNAP/libexec/snapcraft:/snap/bin:/usr/local/sbin:\
+/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+  LD_LIBRARY_PATH: "$SNAP/none"
+
+apps:
+  snapcraft:
+    custom-data-tests:
+      entry_app: "snapcraft"
+    environment:
+      PYLXD_WARNINGS: "none"
+    command: bin/python $SNAP/bin/snapcraft
+    completer: snapcraft-completion
+
+build-packages:
+  - cargo
+  - rustc
+  - sed
+
+parts:
+  bash-completion:
+    custom-data-tests:
+      entry_part: "bash-completion"
+    source: debian
+    plugin: dump
+    stage:
+      - snapcraft-completion
+
+  patchelf:
+    plugin: autotools
+    source: https://github.com/snapcore/patchelf
+    source-type: git
+    source-branch: '0.9+snapcraft'
+    custom-data-tests:
+      entry_part: "patchelf"
+    autotools-configure-parameters:
+      - --prefix=/
+    build-attributes:
+      - enable-patchelf
+    build-packages:
+      - g++
+      - git
+      - make
+    override-pull: |
+      ${SNAP}/libexec/snapcraft/craftctl default
+
+      if [ "${CRAFT_TARGET_ARCH}" = "riscv64" ]; then
+        git am "${CRAFT_PROJECT_DIR}/snap/local/patches/patchelf/\
+0001-Always-use-the-ET_DYN-codepath-avoiding-shifting-loa.patch"
+        git am "${CRAFT_PROJECT_DIR}/snap/local/patches/patchelf/\
+0002-Fix-rewriteSectionsLibrary-to-not-assume-the-base-ad.patch"
+      fi
+    override-build: |
+      ${SNAP}/libexec/snapcraft/craftctl default
+      make check
+    prime:
+      - bin/patchelf
+
+  snapcraft-libs:
+    custom-data-tests:
+      entry_part: "snapcraft-libs"
+    plugin: nil
+    stage-packages:
+        - apt
+        - apt-transport-https
+        - python3.10-minimal
+        - squashfs-tools
+        - xdelta3
+    build-attributes:
+      - enable-patchelf
+
+  snapcraft:
+    custom-data-tests:
+      entry_part: "snapcraft"
+    source: .
+    plugin: python
+    python-packages:
+        - wheel
+        - pip
+    python-requirements:
+        - requirements.txt
+    organize:
+        bin/craftctl: libexec/snapcraft/craftctl
+        bin/snapcraftctl: bin/scriptlet-bin/snapcraftctl
+        bin/snapcraftctl-compat: libexec/snapcraft/snapcraftctl
+    build-attributes:
+      - enable-patchelf
+    build-environment:
+        - "PIP_NO_BINARY": "PyNaCl"
+        - "SODIUM_INSTALL": "system"
+        - "CFLAGS": "$(pkg-config python-3.10 yaml-0.1 --cflags)"
+    after: [snapcraft-libs]
+""",
+        Loader=yaml.SafeLoader,
+    )
+    filtered_data = utils.remove_custom_data(test_snap)
+    expected = {
+        "name": "snapcraft",
+        "base": "core22",
+        "summary": "easily create snaps",
+        "description": "Snapcraft aims to make upstream developers' lives "
+        "easier and as such is not\na single toolset, but "
+        "instead is a collection of tools that enable the\n"
+        "natural workflow of an upstream to be extended with "
+        "a simple release step\ninto Snappy.\n",
+        "adopt-info": "snapcraft",
+        "confinement": "classic",
+        "license": "GPL-3.0",
+        "assumes": ["snapd2.43"],
+        "environment": {
+            "PATH": "$SNAP/libexec/snapcraft:/snap/bin:/usr/local/sbin:"
+            "/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "LD_LIBRARY_PATH": "$SNAP/none",
+        },
+        "apps": {
+            "snapcraft": {
+                "environment": {"PYLXD_WARNINGS": "none"},
+                "command": "bin/python $SNAP/bin/snapcraft",
+                "completer": "snapcraft-completion",
+            }
+        },
+        "build-packages": ["cargo", "rustc", "sed"],
+        "parts": {
+            "bash-completion": {
+                "source": "debian",
+                "plugin": "dump",
+                "stage": ["snapcraft-completion"],
+            },
+            "patchelf": {
+                "plugin": "autotools",
+                "source": "https://github.com/snapcore/patchelf",
+                "source-type": "git",
+                "source-branch": "0.9+snapcraft",
+                "autotools-configure-parameters": ["--prefix=/"],
+                "build-attributes": ["enable-patchelf"],
+                "build-packages": ["g++", "git", "make"],
+                "override-pull": "${SNAP}/libexec/snapcraft/craftctl default\n\n"
+                'if [ "${CRAFT_TARGET_ARCH}" = "riscv64" ]; then'
+                '\n  git am "${CRAFT_PROJECT_DIR}/snap/local/'
+                "patches/patchelf/0001-Always-use-the-ET_DYN-codepath"
+                '-avoiding-shifting-loa.patch"\n  git am '
+                '"${CRAFT_PROJECT_DIR}/snap/local/patches/patchelf/'
+                "0002-Fix-rewriteSectionsLibrary-to-not-assume-"
+                'the-base-ad.patch"\nfi\n',
+                "override-build": "${SNAP}/libexec/snapcraft/craftctl default\nmake check\n",
+                "prime": ["bin/patchelf"],
+            },
+            "snapcraft-libs": {
+                "plugin": "nil",
+                "stage-packages": [
+                    "apt",
+                    "apt-transport-https",
+                    "python3.10-minimal",
+                    "squashfs-tools",
+                    "xdelta3",
+                ],
+                "build-attributes": ["enable-patchelf"],
+            },
+            "snapcraft": {
+                "source": ".",
+                "plugin": "python",
+                "python-packages": ["wheel", "pip"],
+                "python-requirements": ["requirements.txt"],
+                "organize": {
+                    "bin/craftctl": "libexec/snapcraft/craftctl",
+                    "bin/snapcraftctl": "bin/scriptlet-bin/snapcraftctl",
+                    "bin/snapcraftctl-compat": "libexec/snapcraft/snapcraftctl",
+                },
+                "build-attributes": ["enable-patchelf"],
+                "build-environment": [
+                    {"PIP_NO_BINARY": "PyNaCl"},
+                    {"SODIUM_INSTALL": "system"},
+                    {"CFLAGS": "$(pkg-config python-3.10 yaml-0.1 --cflags)"},
+                ],
+                "after": ["snapcraft-libs"],
+            },
+        },
+    }
+    assert filtered_data == expected

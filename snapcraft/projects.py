@@ -32,6 +32,7 @@ from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_effective_base,
     get_host_architecture,
+    remove_custom_data,
 )
 
 
@@ -639,6 +640,7 @@ class Project(ProjectModel):
         if not isinstance(data, dict):
             raise TypeError("Project data is not a dictionary")
 
+        data = remove_custom_data(data)
         try:
             project = Project(**data)
         except pydantic.ValidationError as err:

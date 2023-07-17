@@ -25,7 +25,7 @@ import sys
 from dataclasses import dataclass
 from getpass import getpass
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from craft_cli import emit
 from craft_parts.sources.git_source import GitSource
@@ -457,3 +457,30 @@ def process_version(version: Optional[str]) -> str:
 def is_snapcraft_running_from_snap() -> bool:
     """Check if snapcraft is running from the snap."""
     return os.getenv("SNAP_NAME") == "snapcraft" and os.getenv("SNAP") is not None
+
+
+def _remove_custom_data_from_dict(data: Dict[str, Any]) -> Dict[str, Any]:
+    if data is None or isinstance(data, str):
+        return data
+    prog = re.compile("^custom-data-[a-zA-Z0-9][a-zA-Z0-9_-]*$")
+    for element in list(data.keys()):
+        if prog.match(element) is not None:
+            data.pop(element)
+    return data
+
+
+def remove_custom_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Remove custom metadata from the snapcraft.yaml dictionary."""
+    if data is None or isinstance(data, str):
+        return data
+    # remove custom data from the root
+    data = _remove_custom_data_from_dict(data)
+
+    # remove custom data from apps, plugs, slots and parts
+    for entry_name in ["apps", "plugs", "slots", "parts"]:
+        if entry_name in data and isinstance(data[entry_name], dict):
+            for app in list(data[entry_name].keys()):
+                data[entry_name][app] = _remove_custom_data_from_dict(
+                    data[entry_name][app]
+                )
+    return data
