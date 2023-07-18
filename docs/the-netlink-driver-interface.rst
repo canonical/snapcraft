@@ -11,13 +11,8 @@ See also :ref:`netlink-audit <the-netlink-audit-interface>` and :ref:`netlink-co
 
 .. note::
 
+   See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
 
-          See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
-
---------------
-
-
-.. _the-netlink-driver-interface-heading--dev-details:
 
 Developer details
 -----------------
@@ -28,8 +23,6 @@ Further confinement for particular families/protocols is implemented via Seccomp
 
 Requires snapd version *2.51.1+*.
 
-
-.. _the-netlink-driver-interface-heading-code:
 
 Code examples
 ~~~~~~~~~~~~~

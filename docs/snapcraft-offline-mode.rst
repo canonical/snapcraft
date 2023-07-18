@@ -9,18 +9,10 @@ By default, Snapcraft requires network connectivity to both source the Multipass
 
 It may sometimes be necessary, or helpful, to build snaps without this network dependency, such as when needing *Aeroplane mode* on a laptop, or in areas with restricted bandwidth. For those situations, Snapcraft 6.x has an experimental offline mode.
 
--  `Preparation <snapcraft-offline-mode-heading--preparation_>`__
--  `Run snapcraft offline <snapcraft-offline-mode-heading--offline_>`__
-
 .. note::
 
+   Offline mode is considered **experimental** and only works with Snapcraft 6.x. It will not work with earlier versions, or Snapcraft 7.x.
 
-          Offline mode is considered **experimental** and only works with Snapcraft 6.x. It will not work with earlier versions, or Snapcraft 7.x.
-
---------------
-
-
-.. _snapcraft-offline-mode-heading--preparation:
 
 Preparation
 -----------
@@ -36,8 +28,6 @@ This requirement is the equivalent of running the build process up to and includ
 
 With the pull stage complete, everything the snap depends upon to build is now locally cached.
 
-
-.. _snapcraft-offline-mode-heading--offline:
 
 Run snapcraft offline
 ---------------------

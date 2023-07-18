@@ -10,8 +10,6 @@ The ``audio-record`` interface allows an application to access your audio record
 This interface is a companion interface to the :ref:`audio-playback <the-audio-playback-interface>` interface, and is not intended to be used without it.
 
 
-.. _the-audio-record-interface-heading--example:
-
 Example
 -------
 
@@ -23,13 +21,8 @@ Example
 
 .. note::
 
+   See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
 
-          See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
-
---------------
-
-
-.. _the-audio-record-interface-heading--dev-details:
 
 Developer details
 -----------------
@@ -40,8 +33,6 @@ The design of this interface is based on the principle that the slot implementat
 
 On systems with snapd integration, PulseAudio’s mediation is limited and will only verify that the *snap* is connected to ``audio-record`` and not if the specific snap command plugs the interface.
 
-
-.. _the-audio-record-interface-heading-code:
 
 Code examples
 ~~~~~~~~~~~~~

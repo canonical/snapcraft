@@ -99,7 +99,6 @@ The following, example, will build a *hello-world* snap within :ref:`LXD <build-
 
 .. code:: bash
 
-
    $ snapcraft try --use-lxd
    Pulling hello-world
    + snapcraftctl pull

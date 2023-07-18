@@ -17,29 +17,15 @@ A snap which needs user-access to files should use an :ref:`interface <interface
 
 But it can also be helpful to understand how snaps operate on and access data, even without an interface, and this is outlined below:
 
--  `Snap installation <data-locations-installation_>`__
--  `System data <data-locations-system_>`__
--  `User data <data-locations-user_>`__
--  `Other locations <data-locations-other_>`__
--  `Deleting a snap <data-locations-delete_>`__
-
---------------
-
-
-.. _data-locations-installation:
-
 Snap installation
 -----------------
 
-When a user `installs a snap <https://snapcraft.io/docs/quickstart-guide#data-locations-heading--install-snap>`__ from the `Snap Store <https://snapcraft.io/store>`__, the following happens:
+When a user `installs a snap <https://snapcraft.io/docs/getting-started#heading--install-snap>`__ from the `Snap Store <https://snapcraft.io/store>`__, the following happens:
 
 1. The :term:`snapd` service downloads the snap as a single file – a compressed SquashFS archive with a *.snap* suffix.
 2. The snap file is uncompressed and mounted as a read-only filesystem under */snap.* See :ref:`The snap format <the-snap-format>` for further details on what is included in a snap.
 
 By design, the read-only filesystem cannot provide a persistent experience between application launches, which is why snaps also have writable parts for system data and for user data.
-
-
-.. _data-locations-system:
 
 System data
 -----------
@@ -51,9 +37,6 @@ Within the snap environment, :ref:`environment variables <environment-variables>
 -  **SNAP\_ DATA**: ``/var/snap/<snap name>/<revision number>`` This location it is also used to store data, mostly information utilised by background application and services, for logging, and other tasks that require persistence between snap launches.
 
 A `snapshot <https://snapcraft.io/docs/snapshots>`__ of ``SNAP_DATA`` and ``SNAP_COMMON`` is created and restored when performing a snap update (refresh) or revert operation. The contents of ``SNAP_DATA`` is specific to the snap revision, while the contents of ``SNAP_COMMON`` is applicable to all revisions and will overwrite the contents of ``SNAP_COMMON`` when restored. See `What a snapshot stores <https://snapcraft.io/docs/snapshots#data-locations-heading--what-is-stored>`__ for more details.
-
-
-.. _data-locations-user:
 
 User data
 ---------

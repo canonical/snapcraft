@@ -194,9 +194,9 @@ SNAP_SAVE_DATA
 
 This variable is only exposed on :term:`Ubuntu Core` systems, and was introduced with snapd 2.57.
 
-It points to a snap-specific location on the ubuntu-save partition where the snap is allowed to store persistent files (like certificates or configuration files) that will survive a `factory reset <https://ubuntu.com/core/docs/recovery-modes#environment-variables-heading--factory>`__ of the Ubuntu Core device.
+It points to a snap-specific location on the ubuntu-save partition where the snap is allowed to store persistent files (like certificates or configuration files) that will survive a `factory reset`_ of the Ubuntu Core device.
 
-See `ubuntu-save <https://ubuntu.com/core/docs/storage-layout#environment-variables-heading--save>`__ in the Ubuntu Core documentation for more details on storage layout with this specific partition.
+See `ubuntu-save`_ in the Ubuntu Core documentation for more details on storage layout with this specific partition.
 
 
 .. _environment-variables-snap-uid:
@@ -284,3 +284,5 @@ The value is always:
 -  For classic confinement snaps: ``/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games``
 
 .. _`acquire original HOME variable`: https://forum.snapcraft.io/t/19475
+.. _`factory reset`: https://ubuntu.com/core/docs/recovery-modes#environment-variables-heading--factory
+.. _`ubuntu-save`: https://ubuntu.com/core/docs/storage-layout#environment-variables-heading--save

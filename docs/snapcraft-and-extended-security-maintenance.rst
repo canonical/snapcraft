@@ -19,8 +19,6 @@ To remain secure and supported, these snaps will need to either:
 See :ref:`Migrating between bases <migrating-between-bases>` for help switching to a newer base, and see below for details on Snapcraft changes and using ESM when building core-based snaps.
 
 
-.. _snapcraft-and-extended-security-maintenance-heading--changes:
-
 Changes to Snapcraft
 --------------------
 
@@ -39,8 +37,6 @@ If you’re building snaps locally or through your own CI/CD system:
   * Snap developers and publishers using the ESM base **will not** be able to use Snapcraft 5 or later. A notification will inform developers to use the ``4.x`` track.
 
 
-.. _snapcraft-and-extended-security-maintenance-heading--esm:
-
 Extended Security Maintenance
 -----------------------------
 
@@ -58,8 +54,6 @@ Visit `ubuntu.com/advantage <https://ubuntu.com/advantage>`__ to create an accou
    :alt: image|616x500
 
 
-
-.. _snapcraft-and-extended-security-maintenance-heading--using:
 
 Using the Ubuntu Advantage token
 --------------------------------
@@ -108,10 +102,6 @@ When the snapcraft command is run, the provisioning of the ESM packages will be 
    Detaching specified UA token...
 
 
-
-
-.. _snapcraft-and-extended-security-maintenance-heading--launchpad:
-
 Remote and Snapcraft build services
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -119,8 +109,6 @@ In addition to running *snapcraft* locally, or inside a CI system, snaps can als
 
 Launchpad will continue to build for the ESM base without restrictions. It will use the Snapcraft 4.x track for these builds. Similarly, the remote build feature will continue working as before.
 
-
-.. _snapcraft-and-extended-security-maintenance-heading--github:
 
 GitHub Actions
 ~~~~~~~~~~~~~~

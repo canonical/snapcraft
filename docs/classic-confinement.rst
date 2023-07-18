@@ -11,23 +11,6 @@ It’s often used as a stop-gap measure to enable developers to publish applicat
 
 This document serves as a reference for software developers who intend or need to build their snaps as classic. It outlines the principles and implementation of the classic confinement in snaps. It provides explanations and examples on what happens at build, install and runtime for snaps packaged using classic confinement.
 
--  `Confinement levels <33649-heading--levels_>`__
--  `Inside Classic confinement <33649-heading--classic_>`__
-
-   -  `Classic confinement at runtime <33649-heading--runtime_>`__
-
-      -  `Possible conflicts <33649-heading--conflict_>`__
-
-   -  `Classic confinement at install time <33649-heading--install_>`__
-   -  `Classic confinement at build time <33649-heading--build_>`__
-
-      -  `Setting RPATH from sources <33649-heading--source_>`__
-      -  `Setting RPATH from pre-built (ELF) binaries <33649-heading--elf_>`__
-
---------------
-
-
-.. _33649-heading--levels:
 
 Confinement levels
 ------------------
@@ -51,8 +34,6 @@ Confinement is defined by general levels and fine-tuned using interfaces, and th
    Classically confined snaps are reviewed by the Snap Store reviewers team before they can be published. Snaps that use classic confinement may be rejected if they don’t meet the necessary requirements.
 
 
-.. _33649-heading--classic:
-
 Inside classic confinement
 --------------------------
 
@@ -60,8 +41,6 @@ Applications can be packaged as classic snaps for a variety of reasons. Primaril
 
 Applications packaged as classic snaps then behave *almost* like software provided and installed through the system’s repository archives, using the traditional packaging mechanisms (like apt or rpm), but with some important distinctions.
 
-
-.. _33649-heading--runtime:
 
 Classic confinement at runtime
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -98,8 +77,6 @@ When a classic snap is executed on the host system, the snap daemon, *snapd*, wi
 +-------------------------+-----------------------+--------------------------------+
 
 
-.. _33649-heading--conflict:
-
 Possible conflicts
 ^^^^^^^^^^^^^^^^^^
 
@@ -118,10 +95,9 @@ Pre-built binaries
 
 Since there is no isolation between classic snaps and the underlying host system, special care needs to be taken care of any pre-built binaries with hard-coded library dependency paths, as they will “skip” the normal loading order of libraries at runtime.
 
-This is outlined in the `Build time <33649-heading--build_>`__ section below.
+This is outlined in the :ref:`build time <classic-confinement-build>` section
+below.
 
-
-.. _33649-heading--install:
 
 Classic confinement at install time
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -141,7 +117,7 @@ When a classic snap is installed, *snapd* will perform the following actions:
    -  ``@unrestricted\n``
 
 
-.. _33649-heading--build:
+.. _classic-confinement-build:
 
 Classic confinement at build time
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -169,8 +145,6 @@ To execute as expected, binaries in a classic snap application must be configure
 -  ``$RPATH`` entries that point to locations inside the payload are changed to be relative to ``$ORIGIN``.
 
 
-.. _33649-heading--source:
-
 Setting RPATH from sources (using *Snapcraft*)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -180,8 +154,6 @@ An ELF binary created during the parts lifecycle execution can have its ``RPATH`
 
    gcc -o foo foo.o -Wl,-rpath=\$ORIGIN/lib,--disable-new-dtags -Llib -lbar
 
-
-.. _33649-heading--elf:
 
 Setting RPATH for pre-built (ELF) binaries - Patching generated executables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -197,6 +169,7 @@ PatchELF can also be used to change the interpreter to a different dynamic linke
 .. code:: bash
 
    patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 foo
+
 
 Possible conflicts
 ~~~~~~~~~~~~~~~~~~

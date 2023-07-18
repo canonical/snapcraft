@@ -10,8 +10,6 @@ The ``system-files`` interface enables a snap to access specific system files an
 This interface is typically used to provide read-only access to system configuration directories created by a non-snap version of an application now running from an equivalent snap.
 
 
-.. _the-system-files-interface-heading--example:
-
 Example
 -------
 
@@ -19,13 +17,8 @@ The `Firefox <https://snapcraft.io/firefox>`__, `Chromium <https://snapcraft.io/
 
 .. note::
 
+   See :ref:`interface-management` and :ref:`supported-interfaces` for further details on how interfaces are used.
 
-          See :ref:`interface-management` and :ref:`supported-interfaces` for further details on how interfaces are used.
-
---------------
-
-
-.. _the-system-files-interface-heading--dev-details:
 
 Developer details
 -----------------
@@ -52,7 +45,6 @@ Consumers of this interface require a `snap declaration <https://snapcraft.io/do
           Do not share data between snaps. While ``system-files`` can be used to share data with another snap, such as within a configuration file, this behaviour is not recommended. The :ref:`content interface <the-content-interface>` should be used instead.
 
 
-
 An additional requirement for acceptance in the Global store is using a descriptive interface reference for use with ``snap connections|interfaces|connect|disconnect``.
 
 For example, the ‘foo’ application is packaged as a snap and the snap publisher wants to import existing configuration from ``/etc/foo`` into the snap. The snapcraft.yaml might be:
@@ -77,8 +69,6 @@ Note, when declaring an instance of the ``system-files`` plug as above, it shoul
 
 With the above, a ``snap connect`` command would look like: ``snap connect foo:etc-foo``.
 
-
-.. _the-system-files-interface-heading-code:
 
 Code examples
 ~~~~~~~~~~~~~

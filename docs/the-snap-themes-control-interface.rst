@@ -9,13 +9,10 @@ The ``snap-themes-control`` interface permits the use of snapd’s theme install
 
 .. note::
 
-
-          See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
-
---------------
+   See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
 
 
-.. _the-snap-themes-control-interface-heading--dev-details:
+.. _the-snap-themes-control-interface-dev-details:
 
 Developer details
 -----------------
@@ -23,6 +20,7 @@ Developer details
 :ref:`Auto-connect <interface-management-auto-connections>`: no
 
 :ref:`Super-privileged <super-privileged-interfaces>`: yes
+
 
 Code examples
 -------------

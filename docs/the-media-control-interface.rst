@@ -9,13 +9,8 @@ The ``media-control`` interface permits access to media control devices and Vide
 
 .. note::
 
+   See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
 
-          See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
-
---------------
-
-
-.. _the-media-control-interface-heading--dev-details:
 
 Developer details
 -----------------

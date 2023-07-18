@@ -13,10 +13,6 @@ See also :ref:`netlink-driver <the-netlink-driver-interface>` and :ref:`netlink-
 
    See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
 
---------------
-
-
-.. _the-netlink-connector-interface-heading--dev-details:
 
 Developer details
 -----------------
@@ -27,8 +23,6 @@ As NETLINK_CONNECTOR is not finely mediated and app-specific, use of this interf
 
 Requires snapd version *2.26+*.
 
-
-.. _the-netlink-connector-interface-heading-code:
 
 Code examples
 ~~~~~~~~~~~~~

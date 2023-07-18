@@ -8,8 +8,6 @@ The accounts-service interface
 ``accounts-service`` allows communication with the *accounts* service, such as `GNOME Online Accounts`_.
 
 
-.. _the-accounts-service-interface-heading--example:
-
 Example
 -------
 
@@ -20,18 +18,12 @@ This interface automatically connected by the `ONLY OFFICE Document Server`_ sna
 
           See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
 
---------------
-
-
-.. _the-accounts-service-interface-heading--dev-details:
 
 Developer details
 -----------------
 
 **Auto-connect**: no
 
-
-.. _the-accounts-service-interface-heading-code:
 
 Code examples
 ~~~~~~~~~~~~~
