@@ -106,7 +106,7 @@ The bus name that the application or service exposes via D-Bus.
 
 See :ref:`services-and-daemons` for more information.
 
-.. _snapcraft-yaml-reference-command:
+.. _snapcraft-yaml-command:
 
 apps.<app-name>.command
 -----------------------
@@ -144,7 +144,7 @@ An identifier to a desktop-id within an external appstream file.
 
 See :ref:`using-external-metadata` for more details.
 
-.. _snapcraft-yaml-reference-daemon:
+.. _snapcraft-yaml-daemon:
 
 apps.<app-name>.daemon
 ----------------------

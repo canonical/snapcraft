@@ -19,6 +19,8 @@ To set memory and CPU resource limits for a service or daemon, see `Quota groups
 
 If you need to add user configurable options to your service or daemon, such as which port it should use, see :ref:`Adding snap configuration <adding-snap-configuration>`.
 
+.. _defining-a-daemon:
+
 Defining a daemon
 -----------------
 
@@ -78,44 +80,43 @@ D-Bus activation can only be used for services on the system bus.
 Daemon type
 ~~~~~~~~~~~
 
+The :ref:`daemon <snapcraft-yaml-daemon>` keyword is used to specify
+the :ref:`type of a daemon <defining-a-daemon>` and the mechanism it uses to
+inform *systemd* that it is running.
+
 A daemon can be configured to use D-Bus to notify *systemd* that it is running
-by claiming a D-Bus name. This behaviour is enabled by setting the
-:ref:`daemon <snapcraft-yaml-reference-daemon>` keyword to a value of ``dbus``
-in the app metadata.
+by claiming a D-Bus name. This behaviour is enabled by setting the ``daemon`` keyword to a value of ``dbus`` in the app metadata.
 
-This only specifies the type of notification that the daemon uses to inform
-*systemd* that it is running.
+Daemons that use D-Bus in other ways that do not need this feature can set the
+``daemon`` type to a value other than ``dbus``. This enables other methods to
+be used to indicate to *systemd* that they are running.
 
-Either the :ref:`bus-name <snapcraft-yaml-reference-bus-name>` keyword or
-:ref:`activates-on <snapcraft-yaml-reference-activates-on>` keyword must be
-used to define a bus name for this type of daemon. If both keywords are
-defined, the bus name takes precedence. If only the ``activates-on`` keyword
-is defined, the last name in its list of slots is used as the bus name.
-
-Daemons that use D-Bus are not required to set the ``daemon`` type to ``dbus``.
-They can use other methods to indicate to *systemd* that they are running and
-set the ``daemon`` type accordingly.
+If the ``dbus`` type is used, either the
+:ref:`bus-name <snapcraft-yaml-bus-name>` keyword or
+:ref:`activates-on <snapcraft-yaml-activates-on>` keyword must be
+used to define a bus name for the daemon. If both keywords are defined, the
+bus name takes precedence. If only the ``activates-on`` keyword is defined,
+the last name in its list of slots is used as the bus name.
 
 Activation
 ~~~~~~~~~~
 
-The :ref:`activates-on <snapcraft-yaml-reference-activates-on>` keyword is used
+The :ref:`activates-on <snapcraft-yaml-activates-on>` keyword is used
 to define a list of names that will be exposed via D-Bus. These names are
 automatically added to the slots for the snap.
 
 This provides a way for a daemon to be started on a D-Bus method call. When a
 method on any of the names is invoked, the daemon's
-:ref:`command <snapcraft-yaml-reference-command>` is run.
-
+:ref:`command <snapcraft-yaml-command>` is run to start the daemon.
 
 General use
 ~~~~~~~~~~~
 
 A daemon that needs to provide services to applications can be configured
 to use a bus name by setting its
-:ref:`bus-name <snapcraft-yaml-reference-bus-name>` keyword. This enables the
+:ref:`bus-name <snapcraft-yaml-bus-name>` keyword. This enables the
 system bus to be used for communication, as with regular system daemons.
 
-As noted above, the :ref:`daemon <snapcraft-yaml-reference-daemon>` keyword
+As noted above, the :ref:`daemon <snapcraft-yaml-daemon>` keyword
 does not need to specify the ``dbus`` type for this use case, unless it is
 convenient to notify *systemd* about start-up by claiming a D-Bus name.
