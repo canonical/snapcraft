@@ -13,18 +13,10 @@ Previous Gnome extensions were built to use ``core18``, based on `Ubuntu 18.04 L
 
 This extension provides many of the components needed for general desktop applications making it useful for a broader set of applications outside of those tailored for the GNOME desktop.
 
--  `How to use it <the-gnome-extension-heading--how_>`__: adding the necessary keywords to your snapcraft.yaml
--  `Interface connections <the-gnome-extension-heading--plugs_>`__: which interfaces are accessible from the extension
--  `Included packages <the-gnome-extension-heading--packages_>`__: a list of the packages the extension is build from and provides
--  `Environment variables <the-gnome-extension-heading--environment_>`__: variables used during build and snap runntime
--  `Layout set <the-gnome-extension-heading--layouts_>`__: layouts used by this extension to access files on the host
+.. note::
 
-..
+   Snapcraft extensions enable snap developers to easily incorporate a set of common requirements into a snap. See :ref:`Snapcraft extensions <snapcraft-extensions>` for further details.
 
-   ℹ Snapcraft extensions enable snap developers to easily incorporate a set of common requirements into a snap. See :ref:`Snapcraft extensions <snapcraft-extensions>` for further details.
-
-
-.. _the-gnome-extension-heading--how:
 
 How to use it
 -------------
@@ -43,8 +35,6 @@ For instance:
 
 See :ref:`GTK3 applications <gtk3-applications>` for a comprehensive overview of using extensions with GNOME applications.
 
-
-.. _the-gnome-extension-heading--plugs:
 
 Interface connections
 ---------------------
@@ -82,8 +72,6 @@ Your app may still need additional plugs, but you can expect the following plugs
 See :ref:`Adding interfaces <adding-interfaces>` for more details.
 
 
-.. _the-gnome-extension-heading--packages:
-
 Included packages
 -----------------
 
@@ -93,8 +81,6 @@ The **build snap** builds compiles libraries from source that are commonly used 
 
 The **platform snap** takes the build snap and makes all of those libraries available to your snap at build time without needing to include the pieces of the build snap that are unnecessary at runtime (like compilers) in your final snap.
 
-
-.. _the-gnome-extension-heading--environment:
 
 Environment variables
 ---------------------
@@ -131,8 +117,6 @@ The following environment is set when your application is run:
      SNAP_DESKTOP_RUNTIME: $SNAP/gnome-platform
      GTK_USE_PORTAL: '1'
 
-
-.. _the-gnome-extension-heading--layouts:
 
 Layouts set
 -----------

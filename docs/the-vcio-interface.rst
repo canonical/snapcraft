@@ -11,13 +11,8 @@ This interface is primarily intended to be used with :term:`Ubuntu Core`.
 
 .. note::
 
+   See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
 
-          See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
-
---------------
-
-
-.. _the-vcio-interface-heading--dev-details:
 
 Developer details
 -----------------

@@ -15,16 +15,8 @@ To deploy a progressive releases, add an additional argument to the ``snapcraft 
 
 The percentage value defines the proportion of devices a progressive release will be deployed to.
 
--  `Creating a progressive release <progressive-releases-heading--creating_>`__
--  `Monitoring a progressive release <progressive-releases-heading--monitoring_>`__
--  `Finalising a progressive release <progressive-releases-heading--finalising_>`__
+.. note:: Snapcraft 7.x or newer is required to use progressive releases.
 
-..
-
-   ℹ Snapcraft 7.x or newer is required to use progressive releases.
-
-
-.. _progressive-releases-heading--creating:
 
 Creating a progressive release
 ------------------------------
@@ -56,8 +48,6 @@ To release revision 356 to the stable channel of the default (latest) track as a
 The command above will release the snap to 30% of devices, chosen pseudo-randomly based in part on a hash of their device ID, with the snap installed from its stable channel. This means that roughly every third device will get the update when it next requests a refresh.
 
 
-.. _progressive-releases-heading--monitoring:
-
 Monitoring a release
 --------------------
 
@@ -77,8 +67,6 @@ The above output shows that the progressive release of the *stable* channel has 
 
 If an issue is discovered with a revision deployed as a progressive release, a new revision can be built and uploaded to address the issue without further deployment. When the new revision is itself published as a progressive release to the same channel, the devices that received the earlier release will be prioritised.
 
-
-.. _progressive-releases-heading--finalising:
 
 Finalising a progressive release
 --------------------------------

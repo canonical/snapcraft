@@ -9,15 +9,6 @@ Snap epochs
 
 Epochs require snap version *2.38+*.
 
--  `Defining an epoch <snap-epochs-heading--define_>`__
--  `Migrating to a new epoch <snap-epochs-heading--migrate_>`__
--  `Epoch transitions <snap-epochs-heading--transitions_>`__
--  `Internal read/write configuration <snap-epochs-heading--internal_>`__
-
---------------
-
-
-.. _snap-epochs-heading--define:
 
 Defining an epoch
 -----------------
@@ -32,8 +23,6 @@ By default, snaps have an epoch of ‘0’. When a new version breaks data compa
 
 The revisions with the new epoch are invisible to users on the original ``epoch: 0``; conversely, the old epoch is invisible to new users who always get the latest epoch with a fresh installation. You can still push updates to users of the old epoch by specifying ``epoch: 0`` (or omitting the epoch) in its *snapcraft.yaml*, while pushing updates to the new version using ``epoch: 1``. It’s a little like having subchannels.
 
-
-.. _snap-epochs-heading--migrate:
 
 Migrating to a new epoch
 ------------------------
@@ -52,14 +41,12 @@ For example, to create a snap that says it knows how to read both epoch 0 data a
 
    epoch: 1*
 
-The resulting snap acts as a bridge between epoch 0 and epoch 1. Users of the old version migrate automatically when they refresh. They will then upgrade to any newer releases in epoch 1, just like any new user. You can use `revert <https://snapcraft.io/docs/quickstart-guide#snap-epochs-heading--revert>`__ to switch back to releases from a previous epoch, discarding any data changes done by the latest revision.
+The resulting snap acts as a bridge between epoch 0 and epoch 1. Users of the old version migrate automatically when they refresh. They will then upgrade to any newer releases in epoch 1, just like any new user. You can use `revert <https://snapcraft.io/docs/getting-started#heading--revert>`__ to switch back to releases from a previous epoch, discarding any data changes done by the latest revision.
 
 If users need to test data compatibility with the new epoch version, and the snap is not a ``confinement: classic`` snap, you can install both epoch 0 and epoch 1 snaps at the same time using `Parallel installs <https://snapcraft.io/docs/parallel-installs>`__. This allows your users to migrate only when they have the confidence to do so.
 
 A big advantage with automatic migration is that the data transformation process needs to be supported only for a limited number of revisions. If a user neglects to update their system across epochs, for example, when they eventually refresh, they will be stepped through each epoch: 0 to 1\ *, 1 to 2*, and 2 onwards, for instance, by performing the migration process for each step as necessary. You don’t need to push old migration code to new versions of your application.
 
-
-.. _snap-epochs-heading--transitions:
 
 Epoch transitions
 -----------------
@@ -130,8 +117,6 @@ The following table illustrates which revision (R) and epoch (E) a user will rec
 
 (!) is used to show the influence of epochs on locally installed revisions.
 
-
-.. _snap-epochs-heading--internal:
 
 Internal read/write configuration
 ---------------------------------

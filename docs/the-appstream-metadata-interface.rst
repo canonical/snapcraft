@@ -9,13 +9,8 @@ The appstream-metadata interface
 
 .. note::
 
+   See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
 
-          See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
-
---------------
-
-
-.. _the-appstream-metadata-interface-heading--dev-details:
 
 Developer details
 -----------------
@@ -24,8 +19,6 @@ Developer details
 
 Requires snapd version *2.41+*.
 
-
-.. _the-appstream-metadata-interface-heading-code:
 
 Code examples
 ~~~~~~~~~~~~~

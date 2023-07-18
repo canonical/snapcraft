@@ -11,13 +11,7 @@ This interface is primarily intended to be used with :term:`Ubuntu Core`.
 
 .. note::
 
-
-          See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
-
---------------
-
-
-.. _the-ion-memory-control-interface-heading--dev-details:
+   See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
 
 Developer details
 -----------------

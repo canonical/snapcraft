@@ -11,15 +11,6 @@ Branch names convey their purpose, such as ``fix-for-bug123``, but the name isnâ
 
 After 30 days with no further updates, a branch will be closed automatically. The replacement snap will then be chosen from the next most conservative risk-level of the same track. For example, *beta/fix-for-bug123* will fall back to *beta* after the *fix-for-bug123* branch is closed.
 
--  `Creating a branch <publish-to-a-branch-heading--creating_>`__
--  `Installing a snap from a branch <publish-to-a-branch-heading--installing_>`__
--  `Promoting a snap from a branch <publish-to-a-branch-heading--promote_>`__
--  `Setting a default branch <publish-to-a-branch-heading--default_>`__
-
---------------
-
-
-.. _publish-to-a-branch-heading--creating:
 
 Creating a branch
 -----------------
@@ -88,8 +79,6 @@ The above shows that the new branch now exists under the latest track, beta bran
      latest/edge:      0.6.3   2021-09-28 (225) 101MB -
 
 
-.. _publish-to-a-branch-heading--installing:
-
 Installing a snap from a branch
 -------------------------------
 
@@ -106,8 +95,6 @@ If the snap is already installed, replace **install** with **refresh**.
 
 After 30 days with no further updates, a branch will be closed automatically. The replacement snap will then be chosen from the next most conservative risk-level of the same track. For example, *beta/fix-test-061* will fall back to whatever snap is provided by *beta* after the fix-test-061 branch is closed.
 
-
-.. _publish-to-a-branch-heading--promote:
 
 Promoting a snap from a branch
 ------------------------------
@@ -136,8 +123,6 @@ After a snap has been promoted, the branch will remain in-place until its expiry
 
 For more details on promoting snaps to different channels, see `Release management <https://snapcraft.io/docs/release-management>`__.
 
-
-.. _publish-to-a-branch-heading--default:
 
 Setting a default track
 -----------------------

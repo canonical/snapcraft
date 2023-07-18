@@ -16,8 +16,6 @@ This plugin uses the common plugin keywords as well as those for “sources”. 
 This plugin is only available to *core22* and *core18* based snaps. See :ref:`Base snaps <base-snaps>` for details.
 
 
-.. _the-ant-plugin-heading--core22:
-
 base: core22 and base: core18
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

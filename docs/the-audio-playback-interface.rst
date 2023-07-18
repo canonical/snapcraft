@@ -10,8 +10,6 @@ The ``audio-playback`` interface allows a snap to play sounds and music, via the
 Audio recording is enabled with the companion :ref:`audio-record <the-audio-record-interface>` interface, and unlike ``audio-playback``, is not enabled (auto-connected) by default.
 
 
-.. _the-audio-playback-interface-heading--example:
-
 Example
 -------
 
@@ -38,13 +36,8 @@ The connect command can be used to re-enable audio playback:
 
 .. note::
 
+   See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
 
-          See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
-
---------------
-
-
-.. _the-audio-playback-interface-heading--dev-details:
 
 Developer details
 -----------------

@@ -12,9 +12,6 @@ The following plugins are currently supported by Snapcraft. See :ref:`Snapcraft 
 Programming languages
 ---------------------
 
-
-.. _supported-plugins-heading--go:
-
 Go
 ~~
 
@@ -33,8 +30,6 @@ Go
      - integrates projects written in Go and using the *godep* dependency tool
      - :ref:`core18 <the-godeps-plugin>`
 
-
-.. _supported-plugins-heading--java:
 
 Java
 ~~~~
@@ -55,8 +50,6 @@ Java
      - build system integration with *Maven*, commonly used by Java projects
      - core22 core18
 
-
-.. _supported-plugins-heading--javascript:
 
 Node.js/JavaScript
 ~~~~~~~~~~~~~~~~~~
@@ -79,8 +72,6 @@ Node.js/JavaScript
      - :ref:`core18 <the-nodejs-plugin-core18>`
 
 
-.. _supported-plugins-heading--python:
-
 Python
 ~~~~~~
 
@@ -101,8 +92,6 @@ Python
        :ref:`core20 <the-python-plugin-core20>`
        :ref:`core18 <the-python-plugin-core18>`
 
-
-.. _supported-plugins-heading--other:
 
 Other languages
 ~~~~~~~~~~~~~~~
@@ -134,8 +123,6 @@ Other languages
        :ref:`core20 <the-rust-plugin-core20>`
        :ref:`core18 <the-rust-plugin-core18>`
 
-
-.. _supported-plugins-heading--build-tools:
 
 Build tools
 -----------

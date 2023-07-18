@@ -9,12 +9,7 @@ The ``hugepages-control`` interface allows controlling `HugePages <https://www.k
 
 .. note::
 
-          See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
-
---------------
-
-
-.. _the-hugepages-control-interface-heading--dev-details:
+   See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
 
 Developer details
 -----------------

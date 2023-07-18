@@ -12,8 +12,6 @@ To provide better audio sharing and input and output configuration, it’s recom
 However, raw access to ALSA devices using this interface can provide a slight performance advantage with input and output latency and avoid resampling which can reduce audio quality.
 
 
-.. _the-alsa-interface-heading--example:
-
 Example
 -------
 
@@ -27,13 +25,8 @@ To connect a snap to the ALSA interface, run the following command:
 
 .. note::
 
+   See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
 
-          See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
-
---------------
-
-
-.. _the-alsa-interface-heading--dev-details:
 
 Developer details
 -----------------
@@ -44,8 +37,6 @@ The ``alsa`` interface is not auto-connected, in part, because not all hardware 
 
 The *libasound2* library needs to be included in a snap’s ``stage-packages``, of the part which uses ALSA, either directly or through some other package which brings it in (or manually compiled).
 
-
-.. _the-alsa-interface-heading-code:
 
 Code examples
 ~~~~~~~~~~~~~

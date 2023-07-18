@@ -19,14 +19,6 @@ Supported build architectures are: **amd64**, **arm64**, **armhf**, **i386**, **
 
    ℹ See :ref:`Creating a snap <creating-a-snap>` for details on creating the metadata required to build a snap. For other ways to build a snap, see :ref:`Build options <build-options>`.
 
--  `Prerequisites <remote-build-heading--prerequisites_>`__
--  `Using remote build <remote-build-heading--using_>`__
--  `Monitor a build <remote-build-heading--monitor_>`__
-
---------------
-
-
-.. _remote-build-heading--prerequisites:
 
 Prerequisites
 -------------
@@ -53,8 +45,6 @@ If *architectures* is not defined within snapcraft.yaml, target architectures ca
 
 If no architecture is specified, remote build will default to ``amd64``. For more details on how snaps handle build and run architectures, see :ref:`Architectures <architectures>`.
 
-
-.. _remote-build-heading--using:
 
 Using remote build
 ------------------
@@ -124,8 +114,6 @@ If your build is interrupted for any reason, it can be resumed with the ``--reco
 
    snapcraft remote-build --recover
 
-
-.. _remote-build-heading--monitor:
 
 Monitor a build
 ---------------

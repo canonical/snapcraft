@@ -7,16 +7,6 @@ Using gdb and gdbserver
 
 The *gdb* debugging tool is widely used by developers to introspect the execution environment of an application, revealing both its code and data state at any point. Snaps can use gdb to debug both locally and remotely.
 
--  `Local debugging with gdb <using-gdb-and-gdbserver-heading--gdb_>`__
--  `Generate debug symbols <using-gdb-and-gdbserver-heading--debug-symbols_>`__
--  `Local debugging with gdbserver <using-gdb-and-gdbserver-heading--gdbserver_>`__
--  `Remote debugging with gdbserver <using-gdb-and-gdbserver-heading--gdbserver-remote_>`__
--  `Debugging with VS Code <using-gdb-and-gdbserver-heading--vscode_>`__
-
---------------
-
-
-.. _using-gdb-and-gdbserver-heading--gdb:
 
 Local debugging with gdb
 ------------------------
@@ -33,8 +23,6 @@ When GDB is instantiated in this way, it behaves just as it would were it called
 
    ℹ For general advice on fixing potential issues in running snaps, see :ref:`Debugging snaps <debugging-snaps>`. Guidance on using GDB is outside the scope of our documentation, but a good place to start is the `Sample GDB Session <https://sourceware.org/gdb/current/onlinedocs/gdb/Sample-Session.html#Sample-Session>`__ in the `official documentation <https://sourceware.org/gdb/current/onlinedocs/gdb/>`__.
 
-
-.. _using-gdb-and-gdbserver-heading--debug-symbols:
 
 Generate debug symbols
 ----------------------
@@ -77,8 +65,6 @@ After installing the snap and running GDB, the symbols will be located and the s
 See `Collecting debug symbols <https://forum.snapcraft.io/t/collecting-debug-symbols/7017>`__ for the forum discussion related to how snaps might bundle debug symbols.
 
 
-.. _using-gdb-and-gdbserver-heading--gdbserver:
-
 Local debugging with gdbserver
 ------------------------------
 
@@ -118,8 +104,6 @@ You can now access the GDB session from your favourite frontend, or from *gdb* i
    (gdb)
 
 
-.. _using-gdb-and-gdbserver-heading--gdbserver-remote:
-
 Remote debugging with gdbserver
 -------------------------------
 
@@ -149,8 +133,6 @@ After connecting to the session, you will need to issue several ``cont`` (contin
 
 From the above point, you can debug your application normally.
 
-
-.. _using-gdb-and-gdbserver-heading--vscode:
 
 Remote debugging with VS Code
 -----------------------------

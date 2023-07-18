@@ -9,13 +9,8 @@ The ``calendar-service`` interface enables communication with Evolution Data Ser
 
 .. note::
 
+   See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
 
-          See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
-
---------------
-
-
-.. _the-calendar-service-interface-heading--dev-details:
 
 Developer details
 -----------------

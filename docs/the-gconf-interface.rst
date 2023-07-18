@@ -11,13 +11,8 @@ This interface needs to be manually connected because *gconf* is a global databa
 
 .. note::
 
+   See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
 
-          See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
-
---------------
-
-
-.. _the-gconf-interface-heading--dev-details:
 
 Developer details
 -----------------

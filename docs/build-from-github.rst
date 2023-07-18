@@ -17,16 +17,6 @@ Supported build architectures are: **amd64** , **arm64** , **armhf** , **i386** 
 
    ℹ See :ref:`Creating a snap <creating-a-snap>` for details on creating the metadata required to build a snap. For other ways to build a snap, see :ref:`Build options <build-options>`.
 
--  `Prerequisites <build-from-github-heading--prerequisites_>`__
--  `Link to GitHub <build-from-github-heading--github_>`__
--  `Select a repository <build-from-github-heading--repo_>`__
--  `Monitor the build process <build-from-github-heading--monitor_>`__
--  `Unlink and disable GitHub builds <build-from-github-heading--unlink_>`__
-
---------------
-
-
-.. _build-from-github-heading--prerequisites:
 
 Prerequisites
 -------------
@@ -50,8 +40,6 @@ Build architectures can be defined within a snap’s :ref:`snapcraft.yaml <the-s
 A :ref:`snap base <base-snaps>` of ``core18`` is assumed by default, unless specified otherwise. If a snap’s base doesn’t support a specified architecture, it will not be built. If no architecture is specified, snaps for all base-compatible architectures will attempt to be built.
 
 
-.. _build-from-github-heading--github:
-
 Link to GitHub
 --------------
 
@@ -59,8 +47,6 @@ To link your snap’s GitHub repository to your snap developer account, make sur
 
 Select the target snap and open its ‘Builds’ tab in the web UI. Use the *GitHub login* button to connect to GitHub. You will be asked to authorise read and write access for webhook creation, which is the mechanism used to trigger builds. Your GitHub account is now connected.
 
-
-.. _build-from-github-heading--repo:
 
 Select a repository
 -------------------
@@ -78,9 +64,6 @@ Click on *Start building* to instantiate the build process and complete the link
 .. figure:: https://forum-snapcraft-io.s3.dualstack.us-east-1.amazonaws.com/original/2X/a/adcfaf6fb18ef99655535c31875f2a980e8a9ec5.png
    :alt: 352253a18ea8e99a914ce6697d83cddfc9d3dc89|648x146
 
-
-
-.. _build-from-github-heading--monitor:
 
 Monitor the build process
 -------------------------
@@ -105,8 +88,6 @@ When a build succeeds, it’s automatically released to the edge channel. The re
 
 See `Release management <https://snapcraft.io/docs/release-management>`__ for more details on how to promote and monitor release revisions and their channels.
 
-
-.. _build-from-github-heading--unlink:
 
 Unlink and disable GitHub builds
 --------------------------------

@@ -11,9 +11,6 @@ Outside of snaps, applications traditionally adopt the concept of users and grou
 
 Snap confinement prohibits a system’s users and groups from being used in this way within a snap but a *snap_daemon* user and group can alternatively be created within a snap to provide similar user and group level control outside of a snap’s confinement.
 
-
-.. _system-usernames-heading--snap_daemon:
-
 snap_daemon user and group
 --------------------------
 

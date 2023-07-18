@@ -21,8 +21,6 @@ See the `Portal API reference`_ for all supported portals.
    ⓘ Portals originated from the `Flatpak`_ project, but are now a common Linux desktop standard with support from GNOME, KDE and Snapcraft. They are even used outside of sandboxes to provide a standardised API to common desktop features such as `screenshots and screen casts on wayland <https://github.com/emersion/xdg-desktop-portal-wlr/wiki/FAQ>`__.
 
 
-.. _xdg-desktop-portals-heading--portal-vs-home:
-
 File chooser portal vs home interface
 -------------------------------------
 

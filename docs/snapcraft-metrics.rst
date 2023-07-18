@@ -9,22 +9,8 @@ The ``snapcraft metrics`` command is used to track installation and usage statis
 
 A selection of metrics are also visible from the `Snap Store <https://snapcraft.io/store>`__ web UI. See `Snap Store metrics <https://snapcraft.io/docs/snap-store-metrics>`__ for details.
 
-To ensure you have the correct and updated permissions to access *metrics*, we recommend using ``snapcraft logout`` and ``snapcraft login`` the first time this feature is used. See `Credentials <snapcraft-metrics-heading--credentials_>`__ for more details.
+To ensure you have the correct and updated permissions to access *metrics*, we recommend using ``snapcraft logout`` and ``snapcraft login`` the first time this feature is used. See :ref:`snapcraft-metrics-credentials` for more details.
 
--  `Usage <snapcraft-metrics-heading--usage_>`__
-
-   -  `Supported metrics <snapcraft-metrics-heading--supported_>`__
-
--  `Output format <snapcraft-metrics-heading--output_>`__
-
-   -  `JSON output <snapcraft-metrics-heading--json_>`__
-   -  `Table output <snapcraft-metrics-heading--table_>`__
-
--  .. rubric:: `Credentials <snapcraft-metrics-heading--credentials_>`__
-      :name: credentials
-
-
-.. _snapcraft-metrics-heading--usage:
 
 Usage
 -----
@@ -51,8 +37,6 @@ The *snapcraft metrics* command takes the following arguments:
 +-----------------------+-------------------+-------------------------------+--------------------------------------------------------------------------------------------------------+
 
 
-.. _snapcraft-metrics-heading--supported:
-
 Supported metrics
 ~~~~~~~~~~~~~~~~~
 
@@ -72,15 +56,11 @@ The following metrics (``<metric-name>``) are supported:
 Each metric has a query that includes a start and end date. The returned data, if available, will include all the days in-between. Weekly installed numbers still generated daily with the provided numbers being the averages for the 7 day window ending on the specified day.
 
 
-.. _snapcraft-metrics-heading--output:
-
 Output format
 -------------
 
 The *snapcraft metrics* command outputs either as JSON string or a table.
 
-
-.. _snapcraft-metrics-heading--json:
 
 JSON output
 ~~~~~~~~~~~
@@ -101,8 +81,6 @@ Example **daily_device_change** output:
 
 If the JSON object returned from the API is ``response``, *snapcraft* will output the pertinent data at ``response["metrics"][0]``. The relevant API documentation can be found on `dashboard.snapcraft.io <https://dashboard.snapcraft.io/docs/reference/v1/snap.html#the-metrics-response>`__.
 
-
-.. _snapcraft-metrics-heading--table:
 
 Table output
 ~~~~~~~~~~~~
@@ -230,9 +208,7 @@ Example **installed_base_by_version** output:
    2.5.0            28          28          16
 
 
-
-
-.. _snapcraft-metrics-heading--credentials:
+.. _snapcraft-metrics-credentials:
 
 Handling credentials
 --------------------

@@ -11,13 +11,8 @@ This interface is primarily intended to be used with :term:`Ubuntu Core`.
 
 .. note::
 
+   See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
 
-          See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
-
---------------
-
-
-.. _the-tee-interface-heading--dev-details:
 
 Developer details
 -----------------
@@ -27,6 +22,7 @@ Developer details
 :ref:`Super-privileged <super-privileged-interfaces>`: yes
 
 Intended for snaps needing to access the the TEE subsystem over ``/dev/tee[0-9]*``, ``/dev/teepriv[0-0]*`` or the Qualcomm equivalent *qseecom* (Qualcomm Secure Execution Environment Communicator) at ``/dev/qseecom``.
+
 
 Code examples
 -------------

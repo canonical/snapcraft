@@ -12,8 +12,6 @@ The revision number increments with each new upload. But this number is arbitrar
 Neither the revision number (nor its version) enforce an order of release. The local system will attempt to install whatever snap is recommended by the publisher in the channel being tracked.
 
 
-.. _revisions-heading--viewing:
-
 Viewing revision numbers
 ------------------------
 
@@ -40,8 +38,6 @@ The ``snap list`` command includes a column for each installed snap’s revision
    chromium     112.0    2424   latest/stable  canonical✓            -
    ffmpeg       4.3.1    1286   latest/stable  snapcrafters✪         -
 
-
-.. _revisions-heading--package:
 
 Revision package management
 ---------------------------
@@ -72,8 +68,6 @@ The revision number of the snap being operated upon will appear in the output du
 
 `Release management <https://snapcraft.io/docs/release-management>`__ details how a snap developer can publish or promote specific revisions of their snap.
 
-
-.. _revisions-heading--data-management:
 
 Data management
 ---------------
