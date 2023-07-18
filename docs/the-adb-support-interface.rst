@@ -8,7 +8,7 @@ The adb-support interface
 ``adb-support`` allows a snap to operating the Android Debug Bridge service, providing privileged access to an Android device.
 
 
-.. _the-adb-support-interface-heading--example:
+.. _the-adb-support-interface-example:
 
 Example
 -------
@@ -23,7 +23,7 @@ Example
 --------------
 
 
-.. _the-adb-support-interface-heading--dev-details:
+.. _the-adb-support-interface-dev-details:
 
 Developer details
 -----------------

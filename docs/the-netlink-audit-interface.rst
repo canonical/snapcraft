@@ -13,10 +13,8 @@ See also :ref:`netlink-driver <the-netlink-driver-interface>` and :ref:`netlink-
 
    See :ref:`Interface management <interface-management>` and :ref:`Supported interfaces <supported-interfaces>` for further details on how interfaces are used.
 
---------------
 
-
-.. _the-netlink-audit-interface-heading--dev-details:
+.. _the-netlink-audit-interface-dev-details:
 
 Developer details
 -----------------

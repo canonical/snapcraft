@@ -14,18 +14,12 @@ The *gnome-3-38* extension helps with the creation of snaps that use GTK 3, GNOM
 
 This extension provides many of the components needed for general desktop applications making it useful for a broader set of applications outside of those tailored for the GNOME desktop.
 
--  `How to use it <the-gnome-3-38-extension-heading--how_>`__: adding the necessary keywords to your snapcraft.yaml
--  `Interface connections <the-gnome-3-38-extension-heading--plugs_>`__: which interfaces are accessible from the extension
--  `Included packages <the-gnome-3-38-extension-heading--packages_>`__: a list of the packages the extension is build from and provides
--  `Environment variables <the-gnome-3-38-extension-heading--environment_>`__: variables used during build and snap runntime
--  `Layout set <the-gnome-3-38-extension-heading--layouts_>`__: layouts used by this extension to access files on the host
-
 ..
 
    ℹ Snapcraft extensions enable snap developers to easily incorporate a set of common requirements into a snap. See :ref:`Snapcraft extensions <snapcraft-extensions>` for further details.
 
 
-.. _the-gnome-3-38-extension-heading--how:
+.. _the-gnome-3-38-extension-how:
 
 How to use it
 -------------
@@ -43,7 +37,7 @@ This extension currently only works with the ``core20`` base snap (see :ref:`Bas
 See :ref:`GTK3 applications <gtk3-applications>` for a comprehensive overview of using extensions with GNOME applications.
 
 
-.. _the-gnome-3-38-extension-heading--plugs:
+.. _the-gnome-3-38-extension-plugs:
 
 Interface connections
 ---------------------
@@ -79,7 +73,7 @@ Your app may still need additional plugs, but you can expect the following plugs
 See :ref:`Adding interfaces <adding-interfaces>` for more details.
 
 
-.. _the-gnome-3-38-extension-heading--packages:
+.. _the-gnome-3-38-extension-packages:
 
 Included packages
 -----------------
@@ -93,7 +87,7 @@ It is common for GNOME applications to release a gnome-3-38 branch of their proj
 The **platform snap** takes the build snap and makes all of those libraries available to your snap at build time without needing to include the pieces of the build snap that are unnecessary at runtime (like compilers) in your final snap.
 
 
-.. _the-gnome-3-38-extension-heading--environment:
+.. _the-gnome-3-38-extension-environment:
 
 Environment variables
 ---------------------
@@ -131,7 +125,7 @@ The following environment is set when your application is run:
      SNAP_DESKTOP_RUNTIME: $SNAP/gnome-platform
 
 
-.. _the-gnome-3-38-extension-heading--layouts:
+.. _the-gnome-3-38-extension-layouts:
 
 Layouts set
 -----------

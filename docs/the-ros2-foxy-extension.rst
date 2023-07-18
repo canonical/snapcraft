@@ -12,7 +12,7 @@ This extension helps you snap ROS 2 applications for the `Foxy Fitzroy <https://
 How to use it
 -------------
 
-Add ``extensions: [ ros2-foxy ]`` to the application definition in your ``snapcraft.yaml`` file. See the `ROS 2 applications <https://snapcraft.io/docs/ros2-applications#the-ros2-foxy-extension-heading--core20>`__ documentation page for a complete tutorial on how to use this extension.
+Add ``extensions: [ ros2-foxy ]`` to the application definition in your ``snapcraft.yaml`` file. See the :ref:`ROS 2 deployment <ros-2-deployment-with-snaps-core20>` page for a complete tutorial on how to use this extension.
 
 .. code:: yaml
 
@@ -40,7 +40,7 @@ What it does for the run-time environment
 Further reading
 ---------------
 
--  For an example of this extension being used, see the *core20* section of the `ROS 2 applications <https://snapcraft.io/docs/ros2-applications#the-ros2-foxy-extension-heading--core20>`__ page.
+-  For an example of this extension being used, see the *core20* section of the :ref:`ROS 2 deployment <ros-2-deployment-with-snaps-core20>` page.
 -  For a complete picture of what this extension does, add it to your app definition and run ``snapcraft expand-extensions``.
 
 ..

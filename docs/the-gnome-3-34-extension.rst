@@ -9,18 +9,12 @@ The *gnome-3-34* extension helps with the creation of snaps that use GTK 3, GNOM
 
 This extension provides many of the components needed for general desktop applications making it useful for a broader set of applications outside of those tailored for the GNOME desktop.
 
--  `How to use it <the-gnome-3-34-extension-heading--how_>`__: adding the necessary keywords to your snapcraft.yaml
--  `Interface connections <the-gnome-3-34-extension-heading--plugs_>`__: which interfaces are accessible from the extension
--  `Included packages <the-gnome-3-34-extension-heading--packages_>`__: a list of the packages the extension is build from and provides
--  `Environment variables <the-gnome-3-34-extension-heading--environment_>`__: variables used during build and snap runntime
--  `Layout set <the-gnome-3-34-extension-heading--layouts_>`__: layouts used by this extension to access files on the host
-
 ..
 
    ℹ Snapcraft extensions enable snap developers to easily incorporate a set of common requirements into a snap. See :ref:`Snapcraft extensions <snapcraft-extensions>` for further details.
 
 
-.. _the-gnome-3-34-extension-heading--how:
+.. _the-gnome-3-34-extension-how:
 
 How to use it
 -------------
@@ -38,7 +32,7 @@ This extension currently only works with the ``core18`` base snap (see :ref:`Bas
 See :ref:`GTK3 applications <gtk3-applications>` for a comprehensive overview of using extensions with GNOME applications.
 
 
-.. _the-gnome-3-34-extension-heading--plugs:
+.. _the-gnome-3-34-extension-plugs:
 
 Interface connections
 ---------------------
@@ -74,7 +68,7 @@ Your app may still need additional plugs, but you can expect the following plugs
 See :ref:`Adding interfaces <adding-interfaces>` for more details.
 
 
-.. _the-gnome-3-34-extension-heading--packages:
+.. _the-gnome-3-34-extension-packages:
 
 Included packages
 -----------------
@@ -181,7 +175,7 @@ There are also several packages included from the Ubuntu 18.04 apt repository:
 - libegl-mesa0 
 
 
-.. _the-gnome-3-34-extension-heading--environment:
+.. _the-gnome-3-34-extension-environment:
 
 Environment variables
 ---------------------
@@ -217,7 +211,7 @@ The following environment is set when your application is run:
       - GTK_USE_PORTALS: 1
 
 
-.. _the-gnome-3-34-extension-heading--layouts:
+.. _the-gnome-3-34-extension-layouts:
 
 Layouts set
 -----------

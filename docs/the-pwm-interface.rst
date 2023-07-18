@@ -22,7 +22,7 @@ Use ``snap interface pwm`` to see which PWM devices are available on the system:
    [...]
 
 
-.. _the-pwm-interface-heading--example:
+.. _the-pwm-interface-example:
 
 Example
 -------
@@ -38,10 +38,8 @@ With an example snap application called *app* installed, the following command w
 
           See :ref:`interface-management` and :ref:`supported-interfaces` for further details on how interfaces are used.
 
---------------
 
-
-.. _the-pwm-interface-heading--dev-details:
+.. _the-pwm-interface-dev-details:
 
 Developer details
 -----------------
