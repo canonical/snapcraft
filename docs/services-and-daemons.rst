@@ -31,12 +31,18 @@ To define an executable as a daemon or service, add ``daemon: simple`` to its *a
        command: bin/os-release.sh
        daemon: simple
 
-The value for ``daemon:`` can be one of the following:
+The value for the ``daemon`` keyword can be one of the following:
 
--  **simple** Run for as along as the service is active - this is typically the default option.
--  **oneshot** Run once and exit after completion, notifying systemd. After completion, the daemon is still considered active and *running*.
--  **forking** The configured command calls ``fork()`` as part of its start-up and the parent process is then expected to exit when start-up is complete. This isn’t the recommended behaviour on a modern Linux system.
--  **notify** Assumes the command will send a signal to *systemd* to indicate its running state. Note this requires usage of the :ref:`daemon-notify interface <the-daemon-notify-interface>`.
+``simple``
+   Run for as along as the service is active. This is typically the default. option.
+``oneshot``
+   Run once and exit after completion, notifying systemd. After completion, the daemon is still considered active and *running*.
+``forking``
+   The configured command calls ``fork()`` as part of its start-up and the parent process is then expected to exit when start-up is complete. This is not the recommended behaviour on a modern Linux system.
+``notify``
+   Assumes that the command will send a signal to *systemd* to indicate its running state. Note this requires usage of the :ref:`daemon-notify interface <the-daemon-notify-interface>`.
+``dbus``
+    Assumes that the command will claim a D-Bus name to indicate its running state to *systemd*.
 
 In addition to the above types of daemon or service, the following can be set to help manage how a service is run, how it can be stopped, and what should happen after it stops:
 
@@ -57,3 +63,59 @@ In addition to the above types of daemon or service, the following can be set to
 - **watchdog-timeout** This value declares the service watchdog timeout. For watchdog to work, the application requires access to the *systemd* notification socket, which can be declared by listing a daemon-notify plug in the plugs section. Time duration units can be ``10ns``, ``10us``, ``10ms``, ``10s``, ``10m``.
 
 For further details, see :ref:`Snapcraft app and service metadata <snapcraft-app-and-service-metadata>`.
+
+
+Daemons and D-Bus
+-----------------
+
+Daemons can configured to interact with D-Bus in a number of ways.
+D-Bus can be used to indicate to *systemd* that a daemon is running, it can
+be used as the mechanism to activate a daemon, and it can be used generally
+to expose services to applications.
+
+D-Bus activation can only be used for services on the system bus.
+
+Daemon type
+~~~~~~~~~~~
+
+A daemon can be configured to use D-Bus to notify *systemd* that it is running
+by claiming a D-Bus name. This behaviour is enabled by setting the
+:ref:`daemon <snapcraft-yaml-reference-daemon>` keyword to a value of ``dbus``
+in the app metadata.
+
+This only specifies the type of notification that the daemon uses to inform
+*systemd* that it is running.
+
+Either the :ref:`bus-name <snapcraft-yaml-reference-bus-name>` keyword or
+:ref:`activates-on <snapcraft-yaml-reference-activates-on>` keyword must be
+used to define a bus name for this type of daemon. If both keywords are
+defined, the bus name takes precedence. If only the ``activates-on`` keyword
+is defined, the last name in its list of slots is used as the bus name.
+
+Daemons that use D-Bus are not required to set the ``daemon`` type to ``dbus``.
+They can use other methods to indicate to *systemd* that they are running and
+set the ``daemon`` type accordingly.
+
+Activation
+~~~~~~~~~~
+
+The :ref:`activates-on <snapcraft-yaml-reference-activates-on>` keyword is used
+to define a list of names that will be exposed via D-Bus. These names are
+automatically added to the slots for the snap.
+
+This provides a way for a daemon to be started on a D-Bus method call. When a
+method on any of the names is invoked, the daemon's
+:ref:`command <snapcraft-yaml-reference-command>` is run.
+
+
+General use
+~~~~~~~~~~~
+
+A daemon that needs to provide services to applications can be configured
+to use a bus name by setting its
+:ref:`bus-name <snapcraft-yaml-reference-bus-name>` keyword. This enables the
+system bus to be used for communication, as with regular system daemons.
+
+As noted above, the :ref:`daemon <snapcraft-yaml-reference-daemon>` keyword
+does not need to specify the ``dbus`` type for this use case, unless it is
+convenient to notify *systemd* about start-up by claiming a D-Bus name.

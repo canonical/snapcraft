@@ -43,16 +43,21 @@ The name exposed to run a program inside the snap.
 
 If ``<app-name>`` is the same as ``name``, the program will be invoked as ``app-name``. However, if they differ, the program will be exposed as ``<snap-name>.<app-name>``.
 
+.. _snapcraft-yaml-activates-on:
+
 apps.<app-name>.activates-on
 ----------------------------
 *optional*
 
-The names of slots the service exposes via D-Bus names that can be used to
-activate the application or service.
+A list of names that the snap exposes as slots that can be used to activate it
+via D-Bus. Each name is automatically added to the slots for the snap.
 
 **Type:** ``list[string]``
 
-Requires ``daemon`` to be set to ``"dbus"`` in app metadata. See also :ref:`snapcraft-yaml-after` and :ref:`services-and-daemons` for more details.
+This keyword is useful when creating services that are activated by other
+applications or services.
+
+See also :ref:`bus-name <snapcraft-yaml-bus-name>`, and :ref:`services-and-daemons` for more information.
 
 apps.<app-name>.adapter
 -----------------------
@@ -89,6 +94,8 @@ Lists the applications a daemon is to be started before.
 
 Requires ``daemon`` to be set in app metadata. See also :ref:`snapcraft-yaml-after` and :ref:`services-and-daemons` for more details.
 
+.. _snapcraft-yaml-bus-name:
+
 apps.<app-name>.bus-name
 ------------------------
 *optional*
@@ -97,7 +104,9 @@ The bus name that the application or service exposes via D-Bus.
 
 **Type:** ``string``
 
-Requires ``daemon`` to be set to ``"dbus"`` in app metadata. See also :ref:`snapcraft-yaml-after` and :ref:`services-and-daemons` for more details.
+See :ref:`services-and-daemons` for more information.
+
+.. _snapcraft-yaml-reference-command:
 
 apps.<app-name>.command
 -----------------------
@@ -135,6 +144,8 @@ An identifier to a desktop-id within an external appstream file.
 
 See :ref:`using-external-metadata` for more details.
 
+.. _snapcraft-yaml-reference-daemon:
+
 apps.<app-name>.daemon
 ----------------------
 Declares that ``<app-name>`` is a system daemon.
@@ -147,6 +158,9 @@ Can be one of the following:
 - ``oneshot``: the configured command will exit after completion
 - ``forking``: the configured command calls ``fork()`` as part of its start-up. The parent process is then expected to exit when start-up is complete
 - ``notify``: the command configured will send a signal to systemd to indicate that it's running.  See :ref:`services-and-daemons` for further details.
+- ``dbus``: the command will indicate that it is running when it obtains a bus
+  name, either using :ref:`bus-name <snapcraft-yaml-bus-name>` or
+  :ref:`activates-on <snapcraft-yaml-activates-on>`.
 
 apps.<app-name>.desktop
 -----------------------
