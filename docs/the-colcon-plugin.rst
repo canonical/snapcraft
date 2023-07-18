@@ -15,8 +15,6 @@ Plugin-specific features and syntax are dependent on which :ref:`base <base-snap
 
 This plugin uses the common plugin keywords as well as those for “sources”. For more information, see :ref:`Snapcraft parts metadata <snapcraft-parts-metadata>`.
 
-##
-
 
 .. _the-colcon-plugin-core22:
 
@@ -33,8 +31,6 @@ This plugin enables the following plugin-specific keywords on core22:
 -  **colcon-packages** (list of strings) List of colcon packages to build. If not specified, all packages in the workspace will be built. If set to an empty list (``[]``), no packages will be built, which could be useful if you only want ROS debs in the snap.
 -  **colcon-packages-ignore** (list of strings) List of packages for colcon to ignore.
 
-##
-
 
 .. _the-colcon-plugin-core20:
 
@@ -50,8 +46,6 @@ This plugin enables the following plugin-specific keywords on core20:
 -  **colcon-cmake-args** (list of strings) Arguments to pass to cmake projects. Note that any arguments here which match colcon arguments need to be prefixed with a space. This can be done by quoting each argument with a leading space.
 -  **colcon-packages** (list of strings) List of colcon packages to build. If not specified, all packages in the workspace will be built. If set to an empty list (``[]``), no packages will be built, which could be useful if you only want ROS debs in the snap.
 -  **colcon-packages-ignore** (list of strings) List of packages for colcon to ignore.
-
-##
 
 
 .. _the-colcon-plugin-core18:

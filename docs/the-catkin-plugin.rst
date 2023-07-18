@@ -14,8 +14,6 @@ Plugin-specific features and syntax are dependent on which :ref:`base <base-snap
 
 This plugin uses the common plugin keywords as well as those for “sources”. For more information, see :ref:`Snapcraft parts metadata <snapcraft-parts-metadata>`.
 
-##
-
 
 .. _the-catkin-plugin-core20:
 
@@ -33,8 +31,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
 -  **catkin-packages-ignore** (list of strings) List of catkin packages to ignore (i.e. not build or install). If not specified or set to an empty list ([]), no packages will be ignored.
 
 -  **catkin-cmake-args** (list of strings) Arguments to pass to cmake projects.
-
-##
 
 
 .. _the-catkin-plugin-core18:
