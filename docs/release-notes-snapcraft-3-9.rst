@@ -44,7 +44,7 @@ Additionally, false positives from snaps that rely on the ``content`` interface 
 Support for core20
 ~~~~~~~~~~~~~~~~~~
 
-The *core20* base snap (see `Base snaps </t/base-snaps/11198https://snapcraft.io/docs/base-snaps>`__) is now a first class citizen in Snapcraft.
+The *core20* base snap (see :ref:`base-snaps`) is now a first class citizen in Snapcraft.
 
 As core20 itself is still under development, plugin support will be added closer to its finalisation, and snaps built against its non-stable channel releases will be marked with a grade of *devel*.
 

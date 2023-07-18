@@ -7,7 +7,7 @@ Updating gadget boot assets
 
 A :ref:`gadget snap’s <gadget-snaps>` boot assets can be automatically updated when the snap is refreshed. It’s the responsibility of the gadget snap publisher to ensure the correctness and consistency of the update data, as outlined below.
 
--  the update process relies heavily on the information provided in `gadget.yaml </t/the-gadget-snap/696#gadget.yaml>`__ as it attempts to verify the internal consistency of the gadget description
+-  the update process relies heavily on the information provided in :ref:`gadget.yaml <gadget-snaps-gadget>` as it attempts to verify the internal consistency of the gadget description
 -  gadget and kernel snap versions are not coupled. This means updated boot assets must be able to boot the old and new kernels of a given gadget
 -  a device will reboot after boot assets have been updated
 

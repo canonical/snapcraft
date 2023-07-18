@@ -5,7 +5,7 @@
 How to set up classic confinement
 =================================
 
-Some snaps need to have access to system resources outside the scope allowed by strict confinement, and are unable to do this via the available interfaces. These snaps are configured to use classic confinement and will `need to be reviewed </t/process-for-reviewing-classic-confinement-snaps/1460>`__ before publication in the Snap Store.
+Some snaps need to have access to system resources outside the scope allowed by strict confinement, and are unable to do this via the available interfaces. These snaps are configured to use classic confinement and will :ref:`need to be reviewed <process-for-reviewing-classic-confinement-snaps>` before publication in the Snap Store.
 
 This guide shows how to enable classic confinement for a snap built with a plugin. The example project used in this guide can be found in the appropriate repository in the list below:
 
@@ -32,7 +32,7 @@ This will cause the snap to be built in a way that gives it access to system res
 Python: patch ctypes to load system libraries
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If your application uses `ctypes <https://docs.python.org/3/library/ctypes.html>`__ to access system libraries it will need to be bundled with a patched version of the module. To bundle ``ctypes``, include the relevant packages in the ``stage-packages`` list of packages. For the `core22 base </t/base-snaps>`__, the packages will be the following:
+If your application uses `ctypes <https://docs.python.org/3/library/ctypes.html>`__ to access system libraries it will need to be bundled with a patched version of the module. To bundle ``ctypes``, include the relevant packages in the ``stage-packages`` list of packages. For the :ref:`core22 base <base-snaps>`, the packages will be the following:
 
 .. code:: yaml
 
@@ -55,7 +55,7 @@ We need to run Snapcraft to build the snap with these changes to look for core P
 Use linters to identify problems
 --------------------------------
 
-Snapcraft uses `linters </t/snapcraft-linters>`__ to check for issues during builds. Linters can only be specified in snaps that use the `core22 base </t/base-snaps>`__. Warnings are still reported for snaps that use older bases.
+Snapcraft uses :ref:`linters <snapcraft-linters>` to check for issues during builds. Linters can only be specified in snaps that use the :ref:`core22 base <base-snaps>`. Warnings are still reported for snaps that use older bases.
 
 Run Snapcraft to build the snap. This may produce warnings like the following:
 
@@ -65,7 +65,7 @@ Run Snapcraft to build the snap. This may produce warnings like the following:
     - classic: usr/bin/classic-example: ELF interpreter should be set to '/snap/core22/current/lib64/ld-linux-x86-64.so.2'.
     - classic: usr/bin/classic-example: ELF rpath should be set to '/snap/core22/current/lib/x86_64-linux-gnu'.
 
-If there are many warnings about libraries you can disable the library linter so that only classic linter warnings are shown. See the `linters </t/snapcraft-linters>`__ documentation for details.
+If there are many warnings about libraries you can disable the library linter so that only classic linter warnings are shown. See the :ref:`linters <snapcraft-linters>` documentation for details.
 
 Fix linter warnings by patching ELF binaries
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

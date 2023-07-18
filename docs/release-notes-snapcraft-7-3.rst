@@ -12,7 +12,7 @@ For general details, including installation instructions, see `Snapcraft overvie
 Plugins
 -------
 
--  New `Flutter plugin </t/the-flutter-plugin/18746#release-notes-snapcraft-7-3-heading--core22>`__ with core22 support `#3952 <https://github.com/snapcore/snapcraft/pull/3952>`__
+-  New :ref:`Flutter plugin <the-flutter-plugin>` with core22 support `#3952 <https://github.com/snapcore/snapcraft/pull/3952>`__
 
 Extensions
 ----------

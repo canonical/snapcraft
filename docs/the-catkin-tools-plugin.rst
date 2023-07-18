@@ -40,4 +40,4 @@ This plugin enables the following plugin-specific keywords on core20:
 base: core|core18
 ~~~~~~~~~~~~~~~~~
 
-This plugin enables core|core18 properties of the `catkin plugin </t/the-catkin-plugin/8644#the-catkin-tools-plugin-core18>`__.
+This plugin enables core|core18 properties of the :ref:`catkin plugin <the-catkin-plugin>`.

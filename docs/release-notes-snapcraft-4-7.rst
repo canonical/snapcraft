@@ -44,7 +44,7 @@ See :ref:`Snapcraft and Extended Security Maintenance <snapcraft-and-extended-se
 Conda plugin
 ------------
 
-When using *core20*, the recently introduced `conda <h/t/the-conda-plugin/12530#release-notes-snapcraft-4-7-heading--core20>`__ plugin now supports more architectures, with the new ones being:
+When using *core20*, the recently introduced :ref:`conda plugin <the-conda-plugin>` now supports more architectures, with the new ones being:
 
 -  i386 (x86)
 -  armhf (armv7l)
