@@ -5,7 +5,7 @@
 Revisions
 =========
 
-A snap’s *revision* is a number assigned automatically by the :term:`Snap Store` with each snap upload, giving each snap binary a unique identity within, and across, its `channels <https://snapcraft.io/docs/channels>`__.
+A snap’s *revision* is a number assigned automatically by the :term:`Snap Store` with each snap upload, giving each snap binary a unique identity within, and across, its :term:`channels`.
 
 The revision number increments with each new upload. But this number is arbitrary, and only used to differentiate between uploads.
 

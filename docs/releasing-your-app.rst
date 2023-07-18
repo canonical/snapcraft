@@ -25,7 +25,7 @@ Return to the terminal and the location of your ``.snap`` file. You now need to 
 
    snapcraft login
 
-Next, upload the snap and release it into the `stable channel <https://snapcraft.io/docs/channels>`__:
+Next, upload the snap and release it into the stable :term:`channel`:
 
 .. code:: bash
 

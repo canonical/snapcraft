@@ -56,7 +56,7 @@ Once the first two steps are complete, the developer can upload the snap to the 
 Snap Store channels
 -------------------
 
-The Snap Store comes with a high level of release management flexibility, achieved by using multiple `channels <https://snapcraft.io/docs/channels>`__, which allow developers to publish their applications in a staged, controlled manner. The channels can be treated as a multi-dimensional version control. Each channel consists of three components:
+The Snap Store comes with a high level of release management flexibility, achieved by using multiple :term:`channels`, which allow developers to publish their applications in a staged, controlled manner. The channels can be treated as a multi-dimensional version control. Each channel consists of three components:
 
 <track>/<risk>/<branch>
 

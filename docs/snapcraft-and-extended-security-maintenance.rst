@@ -28,7 +28,7 @@ There will be no immediate impact to either Snapcraft developers or snap users. 
 
 If you’re building snaps locally or through your own CI/CD system:
 
-* Snapcraft now has two `tracks <https://snapcraft.io/docs/channels#snapcraft-and-extended-security-maintenance-heading--tracks>`__: ``4.x`` and ``latest`` Both tracks will be maintained in parallel until the release of Snapcraft 5, after which ``4.x`` will be maintained for ESM compatibility.
+* Snapcraft now has two :term:`tracks`: ``4.x`` and ``latest`` Both tracks will be maintained in parallel until the release of Snapcraft 5, after which ``4.x`` will be maintained for ESM compatibility.
 * cores will be relabelled:
 
 - ``core`` becomes *ESM base*

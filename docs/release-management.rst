@@ -97,5 +97,3 @@ The *Distribution* options set whether a snap can be installed in all territorie
 
 
 Activating either of the *Selected territories* fields will open a drop-down list of territories from which to choose from. More than one territory can be added.
-
-_snap-channels: https://snapcraft.io/docs/channels

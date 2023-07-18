@@ -36,7 +36,7 @@ From *devmode* to *strict*
 
 During the :ref:`build and testing phase <creating-snapcraft-yaml>` of snap development, it helps to have confinement set to ``devmode``, as shown in the example above. This is also the default when using the \`snapcraft init’ command to initialise a new project directory.
 
-A snap built with *devmode* can be :ref:`published and released <releasing-your-app>`, but not to its `stable channel <https://snapcraft.io/docs/channels>`__, and it will not appear in search results. To release to the stable channel, its confinement needs to be either ``strict`` (in the majority of cases), or ``classic`` when a manual exception to its confinement needs to be made
+A snap built with *devmode* can be :ref:`published and released <releasing-your-app>`, but not to its stable :term:`channel`, and it will not appear in search results. To release to the stable channel, its confinement needs to be either ``strict`` (in the majority of cases), or ``classic`` when a manual exception to its confinement needs to be made
 
 To confine your application, return to your snapcraft.yaml file and change the confinement value from ``devmode`` to ``strict``:
 

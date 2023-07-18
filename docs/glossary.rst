@@ -55,9 +55,10 @@ Terms and definitions
       See :term:`Dedicated Snap Store`.
 
    channel
+   channels
       Channels define which release of a snap is installed and tracked for updates. They consist of, and are subdivided by, tracks (``latest``, or developer defined, e.g ``1.0``), risk-levels (stable, candidate, beta and edge), and optional branches. The *tracking* value for an installed snap shows which channel is being installed and followed.
 
-      See `Channels <https://snapcraft.io/docs/channels>`__ for more details.
+      See `Channels <snap-channels_>`_ for more details.
 
    classic
       *Classic* is a snap confinement level that allows access to your system’s resources in much the same way traditional packages do. It’s used sparingly and only after a manual review.
@@ -222,6 +223,14 @@ Terms and definitions
 
       See :ref:`Revisions <revisions>` for further details.
 
+   risk
+   risk-level
+      A measure or estimation of the level of stability of a published
+      application. This may be based on the development branch of an
+      application's code base.
+
+      See `Risk-levels <snap-channels-risk_>`_ for more information.
+
    seeding
       When Ubuntu Core boots for the first time, the *seeding* process installs an initial set of snaps and runs their respective hooks.
 
@@ -291,10 +300,11 @@ Terms and definitions
 
       See :ref:`Snap confinement <snap-confinement>` for more details.
 
+   track
    tracks
       Tracks enable snap developers to publish multiple supported releases of their application under the same snap name. They are one of the levels of channel subdivision.
 
-      See `Tracks <https://snapcraft.io/docs/channels#glossary-heading--tracks>`__ for more details.
+      See `Tracks <snap-channels-tracks_>`_ for more details.
 
    Transitional interface
       A *transitional interface* is an :ref:`interface <interface-management>` that can be used by a trusted snap to access traditional Linux desktop environments that were not designed to integrate with :ref:`snap confinement <snap-confinement>`. These interfaces will become deprecated as replacement or modified technologies that enforce strong application isolation become available.

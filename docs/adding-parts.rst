@@ -34,7 +34,7 @@ The core of a typical part will commonly consist of the following metadata:
 -  **plugin** Used to simplify and accelerate your build on commonly used frameworks and platforms. A plugin will often add, and may require, its own additional metadata. See :ref:`Snapcraft plugins <snapcraft-plugins>` for more details. Examples: ``python``, ``go``, ``java``, ``cmake``, ``autotools``
 -  **source** The location of the file or files needed to build your part. It can refer to a directory tree, a compressed archive, or a revision control repository. Examples: ``.``, ``https://github.com/coderholic/pyradio.git``, ``gnu-hello.tar.gz``
 -  **build-packages** A list of the packages required to build your part. Package names are those used by the build host’s package manager, such as *apt* or *dnf*. Examples: ``[pkg-config,  libncursesw5-dev, sed ]``
--  **build-snaps** A list of the snaps required to build your part. Snap names can include `track and channel <https://snapcraft.io/docs/channels>`__ options (``<track>/<risk>/<branch>``). Examples: ``[go/1.16/stable,  kde-frameworks-5-core18-sdk]``
+-  **build-snaps** A list of the snaps required to build your part. Snap names can include :term:`track` and :term:`channel` options (``<track>/<risk>/<branch>``). Examples: ``[go/1.16/stable,  kde-frameworks-5-core18-sdk]``
 -  **stage-packages** A list of the packages required by your part to *run*. Package names are those used by the build host’s package manager, such as *apt* or *dnf*. Examples: ``[gnome-themes-standard, libncursesw5, dbus]``
 -  **stage-snaps** A list of the snaps required by your part to *run*. As with *build-snaps*, you can optionally add the `track and channel <snap-channels_>`_ of the snaps you wish to include. Examples: ``[ffmpeg-sdk-gplv3, codium/latest/stable]``
 
@@ -53,5 +53,3 @@ As per the `YAML specification`_, the members of a list in *snapcraft.yaml* can 
 For help on working out which packages you need for both building and staging your snap, take a look at :ref:`Build and staging dependencies <build-and-staging-dependencies>`, and see :ref:`Snapcraft parts metadata <snapcraft-parts-metadata>` for a complete list of supported *parts* keywords.
 
 Parts can also be sourced from shell scripts outside of the *snapcraft.yaml*. See :ref:`Scriptlets <override-build-steps>` for details.
-
-.. _snap-channels: https://snapcraft.io/docs/channels

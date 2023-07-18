@@ -106,7 +106,7 @@ Stability
 
 Multi-snap architecture will require additional testing to ensure that the multiple snaps are working well together, especially when updating the snaps.
 
-In case some snaps will no longer be compatible with each other, `channels <https://snapcraft.io/docs/channels>`__ could be used to clarify the compatibility between snaps.
+In case some snaps will no longer be compatible with each other, :term:`channels` could be used to clarify the compatibility between snaps.
 
 Moreover, Ubuntu Core’s `validation set <https://ubuntu.com/core/docs/reference/assertions/validation-set>`__ prevents incompatible software installation on a device.
 

@@ -8,7 +8,7 @@ Snapcraft overview
 `Snapcraft <https://snapcraft.io/snapcraft>`__ is a powerful and easy to use command line tool for building `snaps <https://snapcraft.io/docs/quickstart-guide>`__. It helps you to:
 
 - build and then publish your snaps on the `Snap store <https://snapcraft.io/store>`__
-- use `channels, tracks and branches <https://snapcraft.io/docs/channels>`__ to finely control updates and releases
+- use `channels, tracks and branches <snap-channels_>`_ to finely control updates and releases
 - build and debug snaps within a confined environment
 - update and iterate over new builds without rebuilding the environment
 - test and share your snaps locally

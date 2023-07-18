@@ -9,18 +9,7 @@ When building a snap and constructing a :ref:`part <adding-parts>`, you commonly
 
 How these dependencies are identified and added is covered below.
 
--  `Package types <build-and-staging-dependencies-package_>`__
--  `Package and snap names <build-and-staging-dependencies-package-names_>`__
--  `Identify missing packages <build-and-staging-dependencies-missing_>`__
-
-   -  `Building <build-and-staging-dependencies-missing-building_>`__
-   -  `Staging <build-and-staging-dependencies-missing-staging_>`__
-
--  `Removing stage package duplication <build-and-staging-dependencies-filtering_>`__
-
 For further help on solving build dependencies, see :ref:`Iterating over a build <iterating-over-a-build>` for build and testing best-practices and :ref:`Troubleshoot snap building <troubleshoot-snap-building>` for help resolving build errors.
-
---------------
 
 
 .. _build-and-staging-dependencies-package:
@@ -61,10 +50,8 @@ For staged snaps, the ``meta`` and ``snap`` directories from the snap will be av
 
 .. note::
 
-          See :ref:`Snapcraft package repositories <snapcraft-package-repositories>` for details on how to add *apt* repositories as sources for ``build-packages`` and ``stage-packages``, including those hosted on a PPA.
+   See :ref:`Snapcraft package repositories <snapcraft-package-repositories>` for details on how to add *apt* repositories as sources for ``build-packages`` and ``stage-packages``, including those hosted on a PPA.
 
-
-.. _build-and-staging-dependencies-package-names:
 
 Package and snap names
 ----------------------
@@ -77,18 +64,14 @@ It’s also feasible to have a build environment built on Fedora for example, us
 
 The required packages are likely to be identical to those needed to either build the project (``build-packages``) or install your project (``stage-packages``) natively. You’ll often find them listed in a project’s README.md, or alongside any build instructions.
 
-Snap names are identical to the names used to install the snap outside of the build environment, and those listed by the `Snap Store <https://snapcraft.io/store>`__. If a specific channel is required, the syntax is of the form ``<snap-name>/<channel>`` (see `Channels <https://snapcraft.io/docs/channels>`__ for more details on the syntax).
+Snap names are identical to the names used to install the snap outside of the build environment, and those listed by the `Snap Store <https://snapcraft.io/store>`__. If a specific channel is required, the syntax is of the form ``<snap-name>/<channel>`` (see `Channels <snap-channels_>`_ for more details on the syntax).
 
-
-.. _build-and-staging-dependencies-missing:
 
 Identifying missing packages
 ----------------------------
 
 Working out your project’s dependencies can be an iterative process, much like compiling a third-party package, with the process split into identifying the dependencies a snap needs to be built, and those required for running the resultant application.
 
-
-.. _build-and-staging-dependencies-missing-building:
 
 Building
 ~~~~~~~~
@@ -108,8 +91,6 @@ In most cases, the error will provide some indication of what needs to be instal
 
 If the package is unknown, it’s correct name can normally be found with a search from within the build environment, or via a search engine.
 
-
-.. _build-and-staging-dependencies-missing-staging:
 
 Staging
 ~~~~~~~
@@ -146,8 +127,6 @@ The following are the most common solutions for these kind of errors:
 
    -  Connect the snapd interface (manually for testing, or automatically for production).
 
-
-.. _build-and-staging-dependencies-filtering:
 
 Removing stage package duplication
 ----------------------------------

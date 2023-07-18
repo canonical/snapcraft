@@ -229,7 +229,7 @@ Publish the snap
 
 Finally, we are publishing our snap with the `snapcore/action-publish <https://github.com/snapcore/action-publish>`__ action. You will have to identify to the `snapstore <https://snapcraft.io/store>`__ in order to publish your snap. Here we refer to the secret ``STORE_LOGIN`` (set in the next section). The snap to upload is referred to by the output of the build job.
 
-Additionally, we want to release to different `risk levels <https://snapcraft.io/docs/channels#heading--risk-levels>`__ depending on the situation. If it’s a change on the ``main`` branch we would like to publish to the edge risk level, so edge always has the latest changes which may not be considered as stable. On the other hand, if we are on a tagged version, we would like to publish to the ``candidate`` risk level. After thorough testing, the maintainer can manually promote the snap to ``beta/stable``.
+Additionally, we want to release to different :term:`risk` levels depending on the situation. If it’s a change on the ``main`` branch we would like to publish to the edge risk level, so edge always has the latest changes which may not be considered as stable. On the other hand, if we are on a tagged version, we would like to publish to the ``candidate`` risk level. After thorough testing, the maintainer can manually promote the snap to ``beta/stable``.
 
 .. code:: yaml
 
@@ -270,7 +270,7 @@ To add the secret to the project, we will need to:
 
 We are all good to go now. The actions can be checked on the `Actions tab <https://github.com/Guillaumebeuzeboc/snapped_ros2_pkg/actions>`__ of the project. And the published snap can be seen on the `snapstore page <https://snapcraft.io/gbeuzeboc-snapped-ros2-pkg>`__.
 
-You can of course create a more complex release behaviour, making use of all the `channels <https://snapcraft.io/docs/channels>`__ features of the snapstore.
+You can of course create a more complex release behaviour, making use of all the :term:`channels` features of the snapstore.
 
 A Real world example
 --------------------

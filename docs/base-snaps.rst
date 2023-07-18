@@ -44,7 +44,7 @@ To specify *core22*, use the following
 
    base: core22
 
-Snapcraft no longer supports building snaps with the older *core* base. Snapcraft 4 needs to be used instead. Snapcraft 4 is still being supported and can be installed from Snapcraft’s *4.x* `track <https://snapcraft.io/docs/channels#base-snaps-heading--tracks>`__:
+Snapcraft no longer supports building snaps with the older *core* base. Snapcraft 4 needs to be used instead. Snapcraft 4 is still being supported and can be installed from Snapcraft’s *4.x* :term:`track`:
 
 ::
 

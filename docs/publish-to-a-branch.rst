@@ -5,7 +5,7 @@
 Publish to a branch
 ===================
 
-A branch is an optional finer subdivision of a `channel <https://snapcraft.io/docs/channels>`__ which allows for the creation of a temporary and short-lived sequence of snaps. They’re typically used by snap developers to push fixes or temporary experimental builds on-demand.
+A branch is an optional finer subdivision of a :term:`channel` which allows for the creation of a temporary and short-lived sequence of snaps. They’re typically used by snap developers to push fixes or temporary experimental builds on-demand.
 
 Branch names convey their purpose, such as ``fix-for-bug123``, but the name isn’t exposed in the normal way, such as with ``snap info``. Instead, they can only be installed by someone who knows the branch name, and this is usually only shared by the snap developer to test a specific fix or release.
 
@@ -15,7 +15,7 @@ After 30 days with no further updates, a branch will be closed automatically. Th
 Creating a branch
 -----------------
 
-To publish a built and tested snap to a new branch, the snap developer can use the same *snapcraft upload* process used to publish the snap, but with a full `channel description <https://snapcraft.io/docs/channels>`__ that includes track, risk-level and a new arbitrary branch name:
+To publish a built and tested snap to a new branch, the snap developer can use the same *snapcraft upload* process used to publish the snap, but with a full :term:`channel` description that includes track, risk-level and a new arbitrary branch name:
 
 .. code:: bash
 

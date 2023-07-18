@@ -1,3 +1,5 @@
+.. General links
+
 .. _AppStream: https://www.freedesktop.org/software/appstream/docs/
 .. _Canonical Documentation Style Guide: https://docs.ubuntu.com/styleguide/en
 .. _Canonical website: https://canonical.com/
@@ -11,11 +13,16 @@
 .. _reStructuredText style guide: https://canonical-documentation-with-sphinx-and-readthedocscom.readthedocs-hosted.com/style-guide/
 .. _ROS: https://www.ros.org/
 .. _setuptools: https://setuptools.readthedocs.io/en/latest/
-.. _`snap-channels`: https://snapcraft.io/docs/channels
-.. _`Snap Store desktop app`: https://snapcraft.io/snap-store
-.. _`Snap Store`: https://snapcraft.io/store
 .. _Sphinx reStructuredText Primer: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _`the Snapcraft forum`: https://forum.snapcraft.io
 .. _`Ubuntu Core`: https://ubuntu.com/core/
 .. _vscode: https://code.visualstudio.com/
 .. _`YAML specification`: https://yaml.org/spec/
+
+.. Snap documentation
+
+.. _`snap-channels`: https://snapcraft.io/docs/channels
+.. _`snap-channels-risk`: https://snapcraft.io/docs/channels#heading--risk-levels
+.. _`snap-channels-tracks`: https://snapcraft.io/docs/channels#heading--tracks
+.. _`Snap Store desktop app`: https://snapcraft.io/snap-store
+.. _`Snap Store`: https://snapcraft.io/store

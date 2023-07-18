@@ -24,7 +24,7 @@ Snaps are a tailored solution for robotics software management
 * **CI/CD integration**: The creation of snaps can be integrated into your CI pipeline, making the updates effortless.
 * **OTA and delta updates**: Snaps can update `automatically and transactionally <https://snapcraft.io/docs/keeping-snaps-up-to-date>`__, making sure the device is never broken.
 * **Multi-architecture**: Snaps come with a `multi-architecture feature <https://snapcraft.io/docs/architectures>`__, allowing you to build your snap package for multiple architectures.
-* **Managing updates**: Snaps can be `updated automatically or you can control the update <https://snapcraft.io/docs/keeping-snaps-up-to-date>`__ options (update hours, update holds, update history). It also comes with `multiple release channels <https://snapcraft.io/docs/channels>`__ for role-based access controls and application versioning.
+* **Managing updates**: Snaps can be `updated automatically or you can control the update <https://snapcraft.io/docs/keeping-snaps-up-to-date>`__ options (update hours, update holds, update history). It also comes with multiple release :term:`channels` for role-based access controls and application versioning.
 * **Reduce boot time**: You can configure a snap application as a daemon, so it starts automatically at boot.
 
 ROS deployment solution

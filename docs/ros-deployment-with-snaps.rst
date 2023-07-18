@@ -103,7 +103,7 @@ The base keyword defines a special kind of snap that provides a run-time environ
 Security model
 ~~~~~~~~~~~~~~
 
-To get started, we won’t confine this application. Unconfined applications, specified with ``devmode``, can only be released to the hidden `“edge” channel <https://snapcraft.io/docs/channels#ros-deployment-with-snaps-heading--risk-levels>`__.
+To get started, we won’t confine this application. Unconfined applications, specified with ``devmode``, can only be released to the hidden “edge” :term:`channel`.
 
 .. code:: yaml
 
@@ -291,7 +291,7 @@ The base keyword defines a special kind of snap that provides a run-time environ
 Security model
 ~~~~~~~~~~~~~~
 
-To get started, we won’t confine this application. Unconfined applications, specified with ``devmode``, can only be released to the `“edge” channel <https://snapcraft.io/docs/channels#ros-deployment-with-snaps-heading--risk-levels>`__.
+To get started, we won’t confine this application. Unconfined applications, specified with ``devmode``, can only be released to the “edge” :term:`channel`.
 
 .. code:: yaml
 
