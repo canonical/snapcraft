@@ -159,7 +159,7 @@ Build tools
        :ref:`core18 <the-qmake-plugin-core18>`
    * - :ref:`scons <the-scons-plugin>`
      - integrates projects that use the SCons construction tool
-     - core22core18
+     - core22 core18
    * - :ref:`waf <the-waf-plugin>`
      - integrate projects using the Waf build automation tool
      - core18

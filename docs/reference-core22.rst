@@ -4,13 +4,12 @@ core22
 .. toctree::
    :maxdepth: 1
 
-   the-dotnet-plugin
    the-ant-plugin
    the-autotools-plugin
    the-cmake-plugin
    the-colcon-plugin
    the-conda-plugin
-   the-crystal-plugin
+   the-dotnet-plugin
    the-dump-plugin
    the-flutter-plugin
    the-go-plugin

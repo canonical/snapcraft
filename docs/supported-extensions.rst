@@ -57,6 +57,12 @@ The *snapcraft extensions* command lists which extensions are supported by the i
 .. toctree::
    :hidden:
 
-   the-kde-neon-extension
    the-flutter-extension
+   the-gnome-3-28-extension
+   the-gnome-3-34-extension
+   the-gnome-3-38-extension
    the-gnome-extension
+   the-kde-neon-extension
+   the-ros-1-noetic-extension
+   the-ros2-foxy-extension
+   the-ros-2-humble-extension

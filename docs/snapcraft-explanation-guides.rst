@@ -49,6 +49,7 @@ Take a look at our *Reference section* when you need to know which interfaces ca
    network-interface
    parts-lifecycle
    snap-confinement
+   snapcraft-extensions
    snapcraft-filesets
    snapcraft-hook-support
    snapcraft-metrics
