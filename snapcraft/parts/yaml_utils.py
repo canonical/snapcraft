@@ -23,7 +23,8 @@ import yaml.error
 
 from snapcraft import errors, utils
 
-_LEGACY_BASES = {"core", "core18", "core20"}
+_ESM_BASES = {"core", "core18"}
+_LEGACY_BASES = {"core20"}
 
 
 def _check_duplicate_keys(node):
@@ -90,6 +91,8 @@ def load(filestream: TextIO) -> Dict[str, Any]:
 
         if build_base is None:
             raise errors.LegacyFallback("no base defined")
+        if build_base in _ESM_BASES:
+            raise errors.MaintenanceBase(build_base)
         if build_base in _LEGACY_BASES:
             raise errors.LegacyFallback(f"base is {build_base}")
     except yaml.error.YAMLError as err:
