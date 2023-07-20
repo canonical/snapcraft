@@ -24,7 +24,7 @@ polib==1.1.1
 progressbar==2.5
 psutil==5.9.4
 pydantic>=1.9.0
-pydantic-yaml==0.8.1
+pydantic-yaml==0.11.2
 pyelftools==0.29
 pylxd==2.3.1
 python-debian==0.1.49
