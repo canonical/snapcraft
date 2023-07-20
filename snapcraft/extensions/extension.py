@@ -39,9 +39,10 @@ class Extension(abc.ABC):
     """
 
     def __init__(
-        self, *, yaml_data: Dict[str, Any], arch: str, target_arch: str
+        self, *, name: str, yaml_data: Dict[str, Any], arch: str, target_arch: str
     ) -> None:
         """Create a new Extension."""
+        self.name = name
         self.yaml_data = yaml_data
         self.arch = arch
         self.target_arch = target_arch
