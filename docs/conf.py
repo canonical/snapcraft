@@ -30,7 +30,7 @@ ogp_image = "https://assets.ubuntu.com/v1/253da317-image-document-ubuntudocs.svg
 html_favicon = "sphinx-resources/.sphinx/_static/favicon.png"
 
 html_context = {
-    'product_page': 'https://snapcraft.io/docs',
+    'product_page': 'snapcraft.io/docs',
     'product_tag': '_static/tag.png',
     "discourse": "https://forum.snapcraft.io",
     "github_url": "https://github.com/canonical/snapcraft",
