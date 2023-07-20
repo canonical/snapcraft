@@ -1,5 +1,5 @@
-Snapcraft commands
-==================
+Command line interface
+======================
 
 .. Use a hidden table of contents to ensure that documentation is read.
 
