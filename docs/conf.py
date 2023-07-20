@@ -30,8 +30,8 @@ ogp_image = "https://assets.ubuntu.com/v1/253da317-image-document-ubuntudocs.svg
 html_favicon = "sphinx-resources/.sphinx/_static/favicon.png"
 
 html_context = {
-    'product_page': 'snapcraft.io/docs',
-    'product_tag': '_static/tag.png',
+    "product_page": "snapcraft.io/docs",
+    "product_tag": "_static/tag.png",
     "discourse": "https://forum.snapcraft.io",
     "github_url": "https://github.com/canonical/snapcraft",
     "github_version": "main",
@@ -150,14 +150,18 @@ html_theme_options = {
 
 html_static_path = ["sphinx-resources/.sphinx/_static"]
 html_css_files = [
-    'custom.css',
-    'header.css',
-    'github_issue_links.css',
+    "custom.css",
+    "header.css",
+    "github_issue_links.css",
 ]
 
-html_js_files = ['header-nav.js']
-if 'github_issues' in html_context and html_context['github_issues'] and not disable_feedback_button:
-    html_js_files.append('github_issue_links.js')
+html_js_files = ["header-nav.js"]
+if (
+    "github_issues" in html_context
+    and html_context["github_issues"]
+    and not disable_feedback_button
+):
+    html_js_files.append("github_issue_links.js")
 
 
 # Set up redirects (https://documatt.gitlab.io/sphinx-reredirects/usage.html)
