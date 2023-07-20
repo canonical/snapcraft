@@ -1,0 +1,1 @@
+- test_pip.py: correct typo “enviroment” consistently so things keep wo… by `@rpjday <https://github.com/rpjday>`__ in `#3916 <https://github.com/snapcore/snapcraft/pull/3916>`__

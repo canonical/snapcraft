@@ -89,7 +89,7 @@ The issues and features worked on for 3.3 can be seen on the `3.3 <https://bugs.
 -  many: support for “base: core” in snapcraft.yaml (`#2499 <https://github.com/snapcore/snapcraft/pull/2499>`__) (LP: #1819290)
 -  python plugin: graceful ret when no packages set (`#2498 <https://github.com/snapcore/snapcraft/pull/2498>`__) (LP: #1794216)
 -  many: support the use of build-aux/snap (`#2496 <https://github.com/snapcore/snapcraft/pull/2496>`__) (LP: #1805219)
--  nodejs pluging: support for type str bin entries (`#2501 <https://github.com/snapcore/snapcraft/pull/2501>`__) (LP: #1817553)
+-  nodejs plugin: support for type str bin entries (`#2501 <https://github.com/snapcore/snapcraft/pull/2501>`__) (LP: #1817553)
 -  store: support registering to a specific store (`#2479 <https://github.com/snapcore/snapcraft/pull/2479>`__) (LP: #1820107)
 -  meta: fix management of snap/local (`#2502 <https://github.com/snapcore/snapcraft/pull/2502>`__)
 -  tests: improve login pexpect errors
