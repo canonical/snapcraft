@@ -30,16 +30,12 @@ ogp_image = "https://assets.ubuntu.com/v1/253da317-image-document-ubuntudocs.svg
 html_favicon = "sphinx-resources/.sphinx/_static/favicon.png"
 
 html_context = {
-    # Change to the discourse instance you want to be able to link to
-    # (use an empty value if you don't want to link)
+    'product_page': 'https://snapcraft.io/docs',
+    'product_tag': '_static/tag.png',
     "discourse": "https://forum.snapcraft.io",
-    # Change to the GitHub info for your project
     "github_url": "https://github.com/canonical/snapcraft",
-    # Change to the branch for this version of the documentation
     "github_version": "main",
-    # Change to the folder that contains the documentation (usually "/" or "/docs/")
     "github_folder": "/docs/",
-    # Change to an empty value if your GitHub repo doesn't have issues enabled
     "github_issues": "enabled",
 }
 
@@ -77,6 +73,8 @@ source_suffix = {
 
 # Links to ignore when checking links
 linkcheck_ignore = ["http://127.0.0.1:8000"]
+
+disable_feedback_button = False
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -152,13 +150,14 @@ html_theme_options = {
 
 html_static_path = ["sphinx-resources/.sphinx/_static"]
 html_css_files = [
-    "custom.css",
-    "github_issue_links.css",
+    'custom.css',
+    'header.css',
+    'github_issue_links.css',
 ]
 
-html_js_files = []
-if "github_issues" in html_context and html_context["github_issues"]:
-    html_js_files.append("github_issue_links.js")
+html_js_files = ['header-nav.js']
+if 'github_issues' in html_context and html_context['github_issues'] and not disable_feedback_button:
+    html_js_files.append('github_issue_links.js')
 
 
 # Set up redirects (https://documatt.gitlab.io/sphinx-reredirects/usage.html)
