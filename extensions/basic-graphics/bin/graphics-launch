@@ -1,0 +1,40 @@
+#!/bin/sh
+set -e
+
+# '%GRAPHICS%' interface is required
+if ! snapctl is-connected %GRAPHICS%
+then
+  echo "ERROR: the %GRAPHICS% interface isn't connected."
+  echo "  Please install and connect a graphics userspace provider."
+  echo ""
+  echo "The default provider is %MESA%, you can install it and connect by issuing:"
+  echo "  sudo snap install %MESA%"
+  echo "  sudo snap connect ${SNAP_INSTANCE_NAME}:%GRAPHICS% %MESA%"
+  echo ""
+  echo "See https://mir-server.io/docs/the-%GRAPHICS%-snap-interface for more information."
+  exit 1
+fi
+
+# These interfaces may be optional (varies by snap)
+for PLUG in opengl wayland x11; do
+  if ! snapctl is-connected ${PLUG}
+  then
+    echo "WARNING: ${PLUG} interface not connected!"
+  fi
+done
+
+real_xdg_runtime_dir=$(dirname "${XDG_RUNTIME_DIR}")
+real_wayland=${real_xdg_runtime_dir}/${WAYLAND_DISPLAY:-wayland-0}
+
+[ -d "${real_xdg_runtime_dir}" ] || echo "WARNING: missing ${real_xdg_runtime_dir}, is a Wayland compositor running?"
+[ -O "${real_wayland}" ] || echo "WARNING: missing ${real_wayland}, is a Wayland compositor running?"
+
+if mkdir -p "$XDG_RUNTIME_DIR" -m 700; then
+  ln -sf "${real_wayland}" "$XDG_RUNTIME_DIR"
+  ln -sf "${real_wayland}.lock" "$XDG_RUNTIME_DIR"
+else
+  echo "WARNING: XDG_RUNTIME_DIR ($XDG_RUNTIME_DIR) missing, Wayland will not work"
+fi
+
+exec "${SNAP}/graphics/bin/%GRAPHICS%-provider-wrapper" "$@"
+

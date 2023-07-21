@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Dict, List, Type
 
 from snapcraft import errors
 
+from .basic_graphics import BasicGraphics
 from .gnome import GNOME
 from .kde_neon import KDENeon
 from .ros2_humble import ROS2HumbleExtension
@@ -33,6 +34,7 @@ if TYPE_CHECKING:
     ExtensionType = Type[Extension]
 
 _EXTENSIONS: Dict[str, "ExtensionType"] = {
+    "basic-graphics": BasicGraphics,
     "gnome": GNOME,
     "ros2-humble": ROS2HumbleExtension,
     "ros2-humble-ros-core": ROS2HumbleRosCoreExtension,

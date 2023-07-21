@@ -32,6 +32,7 @@ def test_command(emitter, command):
             """\
         Extension name          Supported bases
         ----------------------  ----------------------
+        basic-graphics          core22
         fake-extension          core22
         flutter-beta            core18
         flutter-dev             core18
@@ -70,6 +71,7 @@ def test_command_extension_dups(emitter, command):
             """\
         Extension name          Supported bases
         ----------------------  ----------------------
+        basic-graphics          core22
         flutter-beta            core18
         flutter-dev             core18
         flutter-master          core18

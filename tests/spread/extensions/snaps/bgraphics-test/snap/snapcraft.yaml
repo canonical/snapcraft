@@ -1,0 +1,62 @@
+name: bgraphics-test
+base: core22
+version: '0.1'
+summary: &_summary 'Test the snapcraft graphics extension'
+description: *_summary
+
+grade: stable
+confinement: strict
+
+parts:
+  staging:
+    plugin: nil
+    stage-packages:
+      - mesa-utils
+      - vulkan-tools
+
+apps:
+  eglinfo:
+    command: usr/bin/eglinfo
+    extensions:
+      - basic-graphics
+  es2info:
+    command: usr/bin/es2_info
+    extensions:
+      - basic-graphics
+  es2gears:
+    command: usr/bin/es2gears_wayland
+    extensions:
+      - basic-graphics
+  es2tri:
+    command: usr/bin/es2tri
+    extensions:
+      - basic-graphics
+  glxdemo:
+    command: usr/bin/glxdemo
+    extensions:
+      - basic-graphics
+  glxgears:
+    command: usr/bin/glxgears
+    extensions:
+      - basic-graphics
+  glxheads:
+    command: usr/bin/glxheads
+    extensions:
+      - basic-graphics
+  glxinfo:
+    command: usr/bin/glxinfo
+    extensions:
+      - basic-graphics
+  vkcube:
+    command: usr/bin/vkcube
+    extensions:
+      - basic-graphics
+  vkcubepp:
+    command: usr/bin/vkcubepp
+    extensions:
+      - basic-graphics
+  vulkaninfo:
+    command: usr/bin/vulkaninfo
+    extensions:
+      - basic-graphics
+

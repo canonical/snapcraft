@@ -1,0 +1,22 @@
+summary: Build and run a basic snap using the basic-graphics extensions
+systems:
+  - ubuntu-22.04
+  - ubuntu-22.04-64
+  - ubuntu-22.04-amd64
+environment:
+  SNAP_DIR: ../snaps/bgraphics-test
+prepare: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+execute: |
+  cd "$SNAP_DIR"
+  output="$(snapcraft pack)"
+  snap install --dangerous bgraphics-test*.snap
+  snap list mesa-core22
+
