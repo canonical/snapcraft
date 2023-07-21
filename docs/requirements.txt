@@ -38,6 +38,7 @@ simplejson==3.19.1
 snap-helpers==0.3.2
 spdx==2.5.1
 spdx-lookup==0.3.3
+sphinx-lint==0.6.7
 tabulate==0.8.10
 types-Deprecated==1.2.9
 typing_extensions
