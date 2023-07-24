@@ -57,7 +57,6 @@ Finally, for a better understanding of how Snapcraft works, and how it can be us
    snapcraft-authentication-options
    snapcraft-linters
    snapcraft-parts-metadata
-   snapcraft-plugins
    snapcraft-plugin-api
    snapcraft-release-notes
    snapcraft-top-level-metadata

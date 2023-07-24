@@ -56,6 +56,7 @@ Take a look at our *Reference section* when you need to know which interfaces ca
    snapcraft-hook-support
    snapcraft-metrics
    snapcraft-offline-mode
+   snapcraft-plugins
    troubleshoot-snap-building
    using-the-snapctl-tool
    explanation-robotics

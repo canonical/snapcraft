@@ -2,8 +2,8 @@
 
 .. _snapcraft-plugins:
 
-Snapcraft plugins
-=================
+Plugins
+=======
 
 Plugins are used by the *snapcraft* command to build a snap from *parts* defined within ``snapcraft.yaml``.
 
@@ -44,38 +44,3 @@ With Snapcraft 4.0, the help command is also base aware. To get help for a plugi
 
 For further details on specific plugins, see :ref:`Supported plugins <supported-plugins>`, and to create your own, see :ref:`Writing local plugins <writing-local-plugins>`.
 
-
-.. toctree::
-   :hidden:
-
-   the-ament-plugin
-   the-ant-plugin
-   the-autotools-plugin
-   the-catkin-plugin
-   the-catkin-tools-plugin
-   the-cmake-plugin
-   the-colcon-plugin
-   the-conda-plugin
-   the-crystal-plugin
-   the-dotnet-plugin
-   the-dump-plugin
-   the-flutter-plugin
-   the-godeps-plugin
-   the-go-plugin
-   the-gradle-plugin
-   the-gulp-plugin
-   the-kbuild-plugin
-   the-kernel-plugin
-   the-make-plugin
-   the-maven-plugin
-   the-meson-plugin
-   the-nil-plugin
-   the-nodejs-plugin
-   the-npm-plugin
-   the-plainbox-provider-plugin
-   the-python-plugin
-   the-qmake-plugin
-   the-ruby-plugin
-   the-rust-plugin
-   the-scons-plugin
-   the-waf-plugin
