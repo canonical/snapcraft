@@ -5,9 +5,14 @@
 Supported interfaces
 ====================
 
-Interfaces enable resources from one snap to be shared with another and with the system. For a snap to use an interface, its developer needs to have first defined its corresponding plugs and slots within a snap’s :ref:`snapcraft.yaml <creating-snapcraft-yaml>` file.
+:ref:`Interfaces <interfaces>` enable resources from one snap to be shared with
+another and with the system. For a snap to use an interface, its developer
+needs to have first defined its corresponding plugs and slots within a
+snap's :ref:`snapcraft.yaml <creating-snapcraft-yaml>` file.
 
-   ℹ For details on how to add an interface to your own snap, see :ref:`Snapcraft interfaces <adding-interfaces>`. For general usage details, see :ref:`Interface management <interface-management>`.
+.. note::
+
+   For details on how to add an interface to your own snap, see :ref:`Snapcraft interfaces <adding-interfaces>`. For general usage details, see :ref:`Interface management <interface-management>`.
 
 The table below lists currently supported interfaces, with links to further details for each interface.
 
