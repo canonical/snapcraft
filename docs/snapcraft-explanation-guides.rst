@@ -43,6 +43,7 @@ Take a look at our *Reference section* when you need to know which interfaces ca
    gadget-snaps
    games-interfaces
    hardware-io-interfaces
+   interfaces
    interface-hooks
    interface-management
    migrating-between-bases

@@ -13,16 +13,6 @@ An interface is most commonly used to enable a snap to access OpenGL acceleratio
 
 See :ref:`Supported interfaces <supported-interfaces>` for a comprehensive list of interfaces and what kind of access they permit.
 
--  `Using a GUI <interface-management-snap-store_>`__
--  `Listing interfaces <interface-management-listing_>`__
--  `Listing connections <interface-management-listing-connections_>`__
--  `Slots and plugs <interface-management-slots-plugs_>`__
--  `Automatic connections <interface-management-auto-connections_>`__
--  `Manual connections <interface-management-manual-connections_>`__
--  `Disconnect interfaces <interface-management-disconnect_>`__
-
---------------
-
 
 .. _interface-management-snap-store:
 
@@ -117,7 +107,7 @@ Adding ``--all`` to the *snap connections* command will list all interfaces, inc
 
 .. _interface-management-slots-plugs:
 
-Slots and plugs
+Plugs and slots
 ---------------
 
 An interface provides a level of access to resources, such as audio playback, as defined by a *slot*. One or more snaps can access this resource by connecting a corresponding *plug* to the slot.
