@@ -5,7 +5,7 @@
 Creating snapcraft.yaml
 =======================
 
-When you’ve collated an :ref:`application’s requirements <snapcraft-checklist>`, the next step in snap building is to generate the :ref:`snapcraft.yaml <the-snapcraft-yaml-schema>` file. This will be used by the ``snapcraft`` command to build your snap.
+When you’ve collated an :ref:`application’s requirements <snapcraft-checklist>`, the next step in snap building is to generate the :ref:`snapcraft.yaml <the-snapcraft-yaml-schema>` file. This will be used by the :command:`snapcraft` command to build your snap.
 
    ⓘ See :ref:`Snapcraft overview <snapcraft-overview>` if you don’t yet have *snapcraft* installed.
 
@@ -67,7 +67,7 @@ For all but the simplest snaps, a final and fully functional *snapcraft.yaml* is
 
 6. **Dry-run your build**
 
-   At this point, there should be enough metadata within *snapcraft.yaml* to successfully build a snap with the ``snapcraft`` command.
+   At this point, there should be enough metadata within *snapcraft.yaml* to successfully build a snap with the :command:`snapcraft` command.
 
    The resultant snap will lack important functionality, most notably :ref:`interfaces <interface-management>`, but testing a build at this point is a helpful milestone that verifies the integrity of your metadata, alongside that of your parts and build dependencies.
 

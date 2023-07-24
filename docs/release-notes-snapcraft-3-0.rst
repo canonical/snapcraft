@@ -87,7 +87,7 @@ The recording below shows how the original ``command``, defined in ``snapcraft.y
 Extensions
 ~~~~~~~~~~
 
-The architecture and framework has been cemented into the ``snapcraft`` tool to help *snapcraft.yaml* grow declarative\* functionality we’re calling *Extensions*. We have done this to avoid repetitive tasks, and to avoid snap builders needing deep knowledge of a target software stack.
+The architecture and framework has been cemented into the :command:`snapcraft` tool to help *snapcraft.yaml* grow declarative\* functionality we’re calling *Extensions*. We have done this to avoid repetitive tasks, and to avoid snap builders needing deep knowledge of a target software stack.
 
 Extensions have the unique property of being applied to ``snapcraft.yaml`` itself, where they can be expanded upon and, potentially, used in lieu of the extension itself. This would allow for project-specific modifications of the extension.
 

@@ -12,7 +12,7 @@ For this reason, it can be helpful to build the snap early, even before adding i
 Iterating over a build
 ----------------------
 
-When building a snap, run ``snapcraft --debug`` rather than ``snapcraft``.
+When building a snap, run :command:`snapcraft --debug` rather than :command:`snapcraft`.
 
 With ``--debug``, if snapcraft encounters an error it will open a shell within the virtualised build environment that snapcraft instantiates by default.
 

@@ -25,7 +25,7 @@ Desktop entry files in the ``snap/gui`` directory
 
 The desktop file and icon should be in the folder ``snap/gui/`` in the source folder for your snap. They should be named ``snap-name.desktop`` and ``snap-name.png`` where ``snap-name`` matches the ``name:`` entry in the ``snapcraft.yaml``.
 
-   ⓘ **Note:** When you run ``snapcraft``, the entire contents of ``snap/gui`` will be copied into the ``meta/gui/`` folder of the resulting snap.
+   ⓘ **Note:** When you run :command:`snapcraft`, the entire contents of ``snap/gui`` will be copied into the ``meta/gui/`` folder of the resulting snap.
 
 The ``Exec=`` line is used to specify which application to run when the user clicks on this desktop entry. It should point to the application in the ``apps:`` section of ``snapcraft.yaml``.
 
@@ -41,7 +41,7 @@ The ``Icon=`` line specifies the absolute path of the icon of the application. T
 
    Icon=${SNAP}/meta/gui/snapname.png
 
-Since ``snapcraft`` copies all the contents of the ``snap/gui/`` folder to ``meta/gui``, the absolute path of the icon in the installed snap will be ``${SNAP}/meta/gui/snapname.png``.
+Since :command:`snapcraft` copies all the contents of the ``snap/gui/`` folder to ``meta/gui``, the absolute path of the icon in the installed snap will be ``${SNAP}/meta/gui/snapname.png``.
 
 
 .. _desktop-files-desktop-key:

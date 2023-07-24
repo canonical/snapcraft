@@ -25,7 +25,7 @@ Type: ``dict``
 
 The name of the part building block.
 
-``<part-name``> represents the specific name of a building block which can be then referenced by the command-line tool (i.e.Â ``snapcraft``).
+``<part-name``> represents the specific name of a building block which can be then referenced by the command-line tool (i.e. :command:`snapcraft`).
 
 Keys for parts
 --------------

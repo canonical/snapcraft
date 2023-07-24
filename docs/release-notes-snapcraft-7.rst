@@ -60,7 +60,7 @@ To align with the other *craft* tools, the snapping process now uses the pack co
 
    snapcraft pack
 
-Running ``snapcraft`` with no arguments is still supported and defaults to packing.
+Running :command:`snapcraft` with no arguments is still supported and defaults to packing.
 
 Store operations with externally generated credentials
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

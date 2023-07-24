@@ -80,7 +80,7 @@ It is also necessary to specify which packages will supply the toolchain and lib
 Build the snap
 --------------
 
-The snap is built in the usual way, by running ``snapcraft`` in the project directory:
+The snap is built in the usual way, by running :command:`snapcraft` in the project directory:
 
 .. code:: bash
 

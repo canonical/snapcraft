@@ -151,7 +151,7 @@ In snap, an application is usually prefixed by the snap name so that the applica
 Building the snap
 ~~~~~~~~~~~~~~~~~
 
-After you’ve created the *snapcraft.yaml*, you can build the snap by simply executing the ``snapcraft`` command in the project directory:
+After you’ve created the *snapcraft.yaml*, you can build the snap by simply executing the :command:`snapcraft` command in the project directory:
 
 .. code:: bash
 
@@ -307,7 +307,7 @@ Parts define how to build your app and can be anything: programs, libraries, or 
 
 Snapcraft relies on well known and well established ROS tools such as, in this example, ``catkin``.
 
-**Note:** Often, ROS developers rely on the *devel* space of their ``catkin`` workspace. As a result, it’s easy to forget the importance of complete install rules, i.e. rules for installing every component of the package necessary to run, or every component necessary to use a given library. The ``catkin`` packages you’re building must have install rules, or else ``snapcraft`` won’t know which components to place into the snap. Make sure you install binaries, libraries, header files, launch files, etc.
+**Note:** Often, ROS developers rely on the *devel* space of their ``catkin`` workspace. As a result, it’s easy to forget the importance of complete install rules, i.e. rules for installing every component of the package necessary to run, or every component necessary to use a given library. The ``catkin`` packages you’re building must have install rules, or else :command:`snapcraft` won’t know which components to place into the snap. Make sure you install binaries, libraries, header files, launch files, etc.
 
 .. code:: yaml
 
@@ -343,7 +343,7 @@ In snap, an application is usually prefixed by the snap name so that the applica
 Building the snap
 ~~~~~~~~~~~~~~~~~
 
-After you’ve created the *snapcraft.yaml*, you can build the snap by simply executing the ``snapcraft`` command in the project directory:
+After you’ve created the *snapcraft.yaml*, you can build the snap by simply executing the :command:`snapcraft` command in the project directory:
 
 .. code:: bash
 
@@ -417,7 +417,7 @@ To share your snaps you need to publish them in the Snap Store. First, create an
 
 You’ll need to choose a unique “developer namespace” as part of the account creation process. This name will be visible by users and associated with your published snaps.
 
-Make sure the ``snapcraft`` command is authenticated using the email address attached to your Snap Store account:
+Make sure the :command:`snapcraft` command is authenticated using the email address attached to your Snap Store account:
 
 .. code:: bash
 
@@ -432,7 +432,7 @@ You can publish your own version of a snap, provided you do so under a name you 
 
    $ snapcraft register myrossnap
 
-Be sure to update the ``name:`` in your ``snapcraft.yaml`` to match this registered name, then run ``snapcraft`` again.
+Be sure to update the ``name:`` in your ``snapcraft.yaml`` to match this registered name, then run :command:`snapcraft` again.
 
 Upload your snap
 ~~~~~~~~~~~~~~~~

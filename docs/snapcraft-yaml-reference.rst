@@ -392,6 +392,8 @@ Sets the compression type for the snap.
 
 Can be ``xz`` or ``lzo`` . Defaults to ``xz`` when not specified. See :ref:`snapcraft-top-level-metadata-compression` for further details.
 
+.. _snapcraft-yaml-confinement:
+
 confinement
 -----------
 *optional*
@@ -537,7 +539,7 @@ The name of the part building block.
 
 **Type:** ``dict``
 
-``<part-name>`` represents the specific name of a building block which can be then referenced by the command line tool (i.e. ``snapcraft``).
+``<part-name>`` represents the specific name of a building block which can be then referenced by the command line tool (i.e. :command:`snapcraft`).
 
 parts.<part-name>.plugin
 ------------------------
