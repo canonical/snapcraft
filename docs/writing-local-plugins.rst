@@ -32,7 +32,7 @@ Now create a new snapcraft.yaml:
 
    $ snapcraft init
    Created snap/snapcraft.yaml.
-   Edit the file to your liking or run `snapcraft` to get started
+   Edit the file to your liking or run :command:`snapcraft` to get started
 
 Step 2: Create new plugin
 -------------------------

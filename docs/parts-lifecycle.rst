@@ -28,13 +28,13 @@ Finally, **snap** takes the entire contents of the ``prime`` directory and packs
 
 Each of these lifecycle steps can be run from the command line, and the command can be part specific or apply to all parts in a project.
 
-#. ``snapcraft pull [<part-name>]``
-#. ``snapcraft build [<part-name>]``
-#. ``snapcraft stage [<part-name>]``
-#. ``snapcraft prime [<part-name>]``
-#. ``snapcraft snap`` or ``snapcraft``
+#. :command:`snapcraft pull [<part-name>]`
+#. :command:`snapcraft build [<part-name>]`
+#. :command:`snapcraft stage [<part-name>]`
+#. :command:`snapcraft prime [<part-name>]`
+#. :command:`snapcraft snap` or :command:`snapcraft`
 
-Note that each command also executes the previous lifecycle steps, so ``snapcraft`` executes all the lifecycle steps chained together.
+Note that each command also executes the previous lifecycle steps, so :command:`snapcraft` executes all the lifecycle steps chained together.
 
 To access the part environment at any stage, add the ``--shell`` argument. For example, ``snapcraft prime --shell`` will run up to the *prime* step and open a shell. See :ref:`Iterating over a build <iterating-over-a-build>` for more details.
 
@@ -44,7 +44,7 @@ To access the part environment at any stage, add the ``--shell`` argument. For e
 Step dependencies
 ~~~~~~~~~~~~~~~~~
 
-Each lifecycle step depends on the completion of the previous step for that part, so to reach a desired step, all prior steps need to have successfully run. By default, ``snapcraft`` runs the same lifecycle step of all parts before moving to the next step. However, you can change this behavior using the ``after`` keyword in the definition of a part in ``snapcraft.yaml``. This creates a dependency chain from one part to another.
+Each lifecycle step depends on the completion of the previous step for that part, so to reach a desired step, all prior steps need to have successfully run. By default, :command:`snapcraft` runs the same lifecycle step of all parts before moving to the next step. However, you can change this behavior using the ``after`` keyword in the definition of a part in ``snapcraft.yaml``. This creates a dependency chain from one part to another.
 
 .. code:: yaml
 

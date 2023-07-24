@@ -248,7 +248,7 @@ To share your snaps you need to publish them in the Snap Store. First, create an
 
 You’ll need to choose a unique “developer namespace” as part of the account creation process. This name will be visible by users and associated with your published snaps.
 
-Make sure the ``snapcraft`` command is authenticated using the email address attached to your Snap Store account:
+Make sure the :command:`snapcraft` command is authenticated using the email address attached to your Snap Store account:
 
 .. code:: bash
 
@@ -263,7 +263,7 @@ You can publish your own version of a snap, provided you do so under a name you 
 
    $ snapcraft register mysnap
 
-Be sure to update the ``name:`` in your ``snapcraft.yaml`` to match this registered name, then run ``snapcraft`` again.
+Be sure to update the ``name:`` in your ``snapcraft.yaml`` to match this registered name, then run :command:`snapcraft` again.
 
 Upload your snap
 ~~~~~~~~~~~~~~~~

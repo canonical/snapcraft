@@ -82,7 +82,7 @@ Platform updates
 macOS
 ~~~~~
 
-When using ``snapcraft`` with Homebrew for the first time, if ``multipass`` is not found, the user will be prompted to install it before proceeding.
+When using :command:`snapcraft` with Homebrew for the first time, if :command:`multipass` is not found, the user will be prompted to install it before proceeding.
 
 Full list of changes
 --------------------

@@ -128,7 +128,7 @@ Snapcraft relies on well known and well established ROS tools such as, in this e
 
 **Note:** It is easy to forget the importance of complete install rules, i.e. rules for installing every component of the package necessary to run, or every component necessary to use a given library.
 
-The packages you’re building must have install rules, or else ``snapcraft`` won’t know which components to place into the snap. Make sure you install binaries, libraries, header files, launch files, etc.
+The packages you’re building must have install rules, or else :command:`snapcraft` won’t know which components to place into the snap. Make sure you install binaries, libraries, header files, launch files, etc.
 
 .. code:: yaml
 
@@ -575,7 +575,7 @@ To share your snaps you need to publish them in the Snap Store. First, create an
 
 You’ll need to choose a unique “developer namespace” as part of the account creation process. This name will be visible by users and associated with your published snaps.
 
-Make sure the ``snapcraft`` command is authenticated using the email address attached to your Snap Store account:
+Make sure the :command:`snapcraft` command is authenticated using the email address attached to your Snap Store account:
 
 .. code:: bash
 
@@ -590,7 +590,7 @@ You can publish your own version of a snap, provided you do so under a name you 
 
    $ snapcraft register myrossnap
 
-Be sure to update the ``name:`` in your ``snapcraft.yaml`` to match this registered name, then run ``snapcraft`` again.
+Be sure to update the ``name:`` in your ``snapcraft.yaml`` to match this registered name, then run :command:`snapcraft` again.
 
 Upload your snap
 ~~~~~~~~~~~~~~~~

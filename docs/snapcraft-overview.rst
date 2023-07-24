@@ -77,7 +77,7 @@ With ``--debug``, if snapcraft encounters an error it will automatically open a 
 
    ⓘ See :ref:`iterating over a build <iterating-over-a-build>` for more information about the ``--debug`` flag (and the related flags ``--shell`` and ``--shell-after``).
 
-Critically, you can update snapcraft.yaml *outside* of the build environment and run ``snapcraft`` *within* the build environment to incorporate any external changes and continue with the build. If there are no further errors, your snap will be built.
+Critically, you can update snapcraft.yaml *outside* of the build environment and run :command:`snapcraft` *within* the build environment to incorporate any external changes and continue with the build. If there are no further errors, your snap will be built.
 
    ⓘ See :ref:`Debugging building snaps <debugging-building-snaps>` for common problems and their solutions.
 

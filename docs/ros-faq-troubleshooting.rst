@@ -77,7 +77,7 @@ If you cannot find an answer to your question here, feel free to ask it on `the 
 
 -  Warning: *“This part is missing libraries that cannot be satisfied with any available stage-packages known to snapcraft”*.
 
-   -  Some libraries are build-time only dependencies, but are still reported as run-time dependencies by ``snapcraft``. This warning is a false positive and will be fixed soon in snapcraft. For instance, when snapping ``ros2-demo`` you might encounter:
+   -  Some libraries are build-time only dependencies, but are still reported as run-time dependencies by :command:`snapcraft`. This warning is a false positive and will be fixed soon in snapcraft. For instance, when snapping ``ros2-demo`` you might encounter:
 
       .. code:: bash
 
@@ -121,7 +121,7 @@ If you cannot find an answer to your question here, feel free to ask it on `the 
 
    ROS 2 communication library is trying to use the shared memory mechanism. Don’t worry, even if you see this error, the messages are going to be transmitted (just not through shared memory). If you want to use the shared memory of ROS 2 within snap, visit: :ref:`ros-2-shared-memory-in-snaps`
 
--  Calling ``snapcraft`` give the following error:
+-  Calling :command:`snapcraft` give the following error:
 
    .. code::
 

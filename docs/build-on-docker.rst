@@ -132,7 +132,7 @@ After either building or downloading the snapcraft Docker image, return to the r
 
 Repleace ``<IMAGE-NAME>`` with either the name of your manually built Docker image, ``mycustomimage:stable`` in our example above, or the downloaded image, such as ``snapcore/snapcraft:stable``.
 
-These options instruct Docker to map the current directory, your project root, to the ``/snapcraft_build`` directory inside the container, and then start the ``snapcraft`` command (the final command-line argument) from this same location inside the container.
+These options instruct Docker to map the current directory, your project root, to the ``/snapcraft_build`` directory inside the container, and then start the :command:`snapcraft` command (the final command-line argument) from this same location inside the container.
 
 When the snap build completes successfully, you will find a ``.snap`` file in the current directory. You can inspect its contents to ensure it contains all of your application’s assets:
 

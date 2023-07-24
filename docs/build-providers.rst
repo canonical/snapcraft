@@ -42,7 +42,7 @@ Snap configuration
 
 The snap configuration option mentioned in the sections above is a `feature of snapd <https://snapcraft.io/docs/configuration-in-snaps>`__.
 
-To set the provider, run ``snap set snapcraft provider=<provider-name>`` where ``<provider-name>`` can be ``lxd`` or ``multipass``.
+To set the provider, run ``snap set snapcraft provider=<provider-name>`` where ``<provider-name>`` can be :command:`lxd` or :command:`multipass`.
 
 To check the provider, run ``snap get snapcraft provider``.
 

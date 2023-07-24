@@ -46,7 +46,7 @@ Editing snapcraft.yaml, or the application itself, and rebuilding and re-install
 
 Here are a couple of approaches that can expedite the build process:
 
-1) Edit *snapcraft.yaml* outside of the Snapcraft container shell environment and run ``snapcraft`` within the shell to continue the build.
+1) Edit *snapcraft.yaml* outside of the Snapcraft container shell environment and run :command:`snapcraft` within the shell to continue the build.
 
    Run ``snapcraft --debug``, rather than ``snapcraft``, to open a shell in the container environment as soon as a build error occurs.
 
