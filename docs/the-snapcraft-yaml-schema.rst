@@ -7,7 +7,9 @@ The snapcraft.yaml schema
 
 The *snapcraft.yaml* file is the main entry point to create a snap through Snapcraft. It contains all the details the *snapcraft* command needs to build a snap.
 
-   ℹ See :ref:`Snapcraft checklist <snapcraft-checklist>` for an overview of the typical project details needed before creating *snapcraft.yaml*.
+.. note::
+
+   See :ref:`Snapcraft checklist <snapcraft-checklist>` for an overview of the typical project details needed before creating *snapcraft.yaml*.
 
 In general, snapcraft.yaml can be organised into three principle sections:
 
