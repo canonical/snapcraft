@@ -27,11 +27,16 @@ Although Snapcraft does not know about in-development features, it performs
 some checks to prevent accidental conflicts or unexpected behaviour as a result
 of using passthroughs.
 
-It forbids the definition of an option inside a passthrough if that option is also directly present in the target scope. It warns the developer about the
-options used in each passthrough, to remind the publisher that these options
-are not yet supported. Snapcraft may also report options that might already be
-supported, but it should not prevent these options from being passed through to
-``snap.yaml`` since the option may be defined in a way that is not yet understood by Snapcraft.
+* It forbids the definition of an option inside a passthrough if that option is
+  also directly present in the target scope.
+* It warns the developer about the options used in each passthrough, to remind
+  the publisher that these options are not yet supported.
+* It may also report options that might already be supported, but it should not
+  prevent these options from being passed through to ``snap.yaml`` since the
+  option may be defined in a way that is not yet understood by Snapcraft.
+
+Files using in-development features will need to be updated when those features
+become supported by Snapcraft.
 
 Examples
 --------
