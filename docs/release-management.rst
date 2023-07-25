@@ -5,7 +5,7 @@
 Release management
 ==================
 
-After a snap has been :ref:`created <creating-a-snap>` and :ref:`released <releasing-your-app>` to the `Snap Store <https://snapcraft.io/store>`__, its published revisions can be moved between `channels <snap-channels_>`_ from both the command line and from the :ref:`Snap Store web UI <using-the-snap-store>`.
+After a snap has been :ref:`created <creating-a-snap>` and :ref:`released <releasing-your-app>` to the `Snap Store <https://snapcraft.io/store>`__, its published revisions can be moved between :ref:`channels <channels>` from both the command line and from the :ref:`Snap Store web UI <using-the-snap-store>`.
 
 Moving a snap between channels helps to manage a user’s expectations in any trade-off between stability in the *stable* channel, and cutting edge features in the *edge* channel (as an arbitrary example). But its also a useful technique for beta testing, or for when a snap needs to revert to a previous revision.
 
@@ -74,7 +74,7 @@ You can also move earlier revisions back into a channel:
 
    $ snapcraft release mysnap 5 beta
 
-See `Channels <snap-channels_>`_ for more details on how channels, tracks and branches can be used, or :ref:`Publish to a branch <publish-to-a-branch>` for details on how snap developers can use branches to publish temporary snap releases.
+See :ref:`channels` for more details on how channels, tracks and branches can be used, or :ref:`Publish to a branch <publish-to-a-branch>` for details on how snap developers can use branches to publish temporary snap releases.
 
 
 .. _heading--distribution:

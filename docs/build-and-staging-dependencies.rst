@@ -64,7 +64,7 @@ It’s also feasible to have a build environment built on Fedora for example, us
 
 The required packages are likely to be identical to those needed to either build the project (``build-packages``) or install your project (``stage-packages``) natively. You’ll often find them listed in a project’s README.md, or alongside any build instructions.
 
-Snap names are identical to the names used to install the snap outside of the build environment, and those listed by the `Snap Store <https://snapcraft.io/store>`__. If a specific channel is required, the syntax is of the form ``<snap-name>/<channel>`` (see `Channels <snap-channels_>`_ for more details on the syntax).
+Snap names are identical to the names used to install the snap outside of the build environment, and those listed by the `Snap Store <https://snapcraft.io/store>`__. If a specific channel is required, the syntax is of the form ``<snap-name>/<channel>`` (see :ref:`channels` for more details on the syntax).
 
 
 Identifying missing packages

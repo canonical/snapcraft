@@ -58,7 +58,7 @@ Terms and definitions
    channels
       Channels define which release of a snap is installed and tracked for updates. They consist of, and are subdivided by, tracks (``latest``, or developer defined, e.g ``1.0``), risk-levels (stable, candidate, beta and edge), and optional branches. The *tracking* value for an installed snap shows which channel is being installed and followed.
 
-      See `Channels <snap-channels_>`_ for more details.
+      See :ref:`channels` for more details.
 
    classic
       *Classic* is a snap confinement level that allows access to your system’s resources in much the same way traditional packages do. It’s used sparingly and only after a manual review.
@@ -229,7 +229,7 @@ Terms and definitions
       application. This may be based on the development branch of an
       application's code base.
 
-      See `Risk-levels <snap-channels-risk_>`_ for more information.
+      See :ref:`channels-risk-levels` for more information.
 
    seeding
       When Ubuntu Core boots for the first time, the *seeding* process installs an initial set of snaps and runs their respective hooks.
@@ -304,7 +304,7 @@ Terms and definitions
    tracks
       Tracks enable snap developers to publish multiple supported releases of their application under the same snap name. They are one of the levels of channel subdivision.
 
-      See `Tracks <snap-channels-tracks_>`_ for more details.
+      See :ref:`channels-tracks` for more details.
 
    Transitional interface
       A *transitional interface* is an :ref:`interface <interface-management>` that can be used by a trusted snap to access traditional Linux desktop environments that were not designed to integrate with :ref:`snap confinement <snap-confinement>`. These interfaces will become deprecated as replacement or modified technologies that enforce strong application isolation become available.

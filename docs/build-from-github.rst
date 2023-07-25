@@ -11,7 +11,7 @@ There are two methods for building snaps on Canonical-hosted servers, and both a
 
 -  **Build from GitHub** This is a build service integrated into every publisher’s :ref:`Developer Account <create-a-developer-account>` on `snapcraft.io <https://snapcraft.io/>`__. It works by linking a snap’s GitHub repository with our Launchpad build service. See below for further details.
 
-With *Build from GitHub*, a snap is rebuilt whenever a change is merged into the main branch of its respective GitHub repository. When a build successfully completes, it’s automatically released to a snap’s `edge channel <snap-channels-risk_>`_.
+With *Build from GitHub*, a snap is rebuilt whenever a change is merged into the main branch of its respective GitHub repository. When a build successfully completes, it’s automatically released to a snap’s :ref:`edge channel <channels-risk-levels>`.
 
 Supported build architectures are: **amd64** , **arm64** , **armhf** , **i386** , **ppc64el** and **s390x** .
 

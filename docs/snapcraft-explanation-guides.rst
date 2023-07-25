@@ -36,6 +36,7 @@ Take a look at our *Reference section* when you need to know which interfaces ca
    :hidden:
 
    adding-interfaces
+   channels
    choosing-a-security-model
    classic-confinement
    data-locations

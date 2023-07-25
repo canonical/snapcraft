@@ -36,7 +36,7 @@ The core of a typical part will commonly consist of the following metadata:
 -  **build-packages** A list of the packages required to build your part. Package names are those used by the build host’s package manager, such as *apt* or *dnf*. Examples: ``[pkg-config,  libncursesw5-dev, sed ]``
 -  **build-snaps** A list of the snaps required to build your part. Snap names can include :term:`track` and :term:`channel` options (``<track>/<risk>/<branch>``). Examples: ``[go/1.16/stable,  kde-frameworks-5-core18-sdk]``
 -  **stage-packages** A list of the packages required by your part to *run*. Package names are those used by the build host’s package manager, such as *apt* or *dnf*. Examples: ``[gnome-themes-standard, libncursesw5, dbus]``
--  **stage-snaps** A list of the snaps required by your part to *run*. As with *build-snaps*, you can optionally add the `track and channel <snap-channels_>`_ of the snaps you wish to include. Examples: ``[ffmpeg-sdk-gplv3, codium/latest/stable]``
+-  **stage-snaps** A list of the snaps required by your part to *run*. As with *build-snaps*, you can optionally add the :ref:`track and channel <channels>` of the snaps you wish to include. Examples: ``[ffmpeg-sdk-gplv3, codium/latest/stable]``
 
 As per the `YAML specification`_, the members of a list in *snapcraft.yaml* can be formatted in either of the following ways:
 
