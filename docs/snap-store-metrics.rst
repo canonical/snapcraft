@@ -44,7 +44,7 @@ The default breakdown of active devices is by *version*, illustrated by the colo
 As with the count interval, the breakdown can be switched from *By version* to either *By OS* or *By channel* from its drop-down menu:
 
 -  **By OS**: view the number of active users on each Linux distribution over your selected time-frame. This can help you target integration issues that may be specific to popular distributions.
--  **By channel**: view how many installations are tracking each `channel <snap-channels_>`_ of your snap. Depending on how a snap uses channels, this can be useful to ascertain stability vs. cutting edge features for a snap’s user base.
+-  **By channel**: view how many installations are tracking each :ref:`channel <channels>` of your snap. Depending on how a snap uses channels, this can be useful to ascertain stability vs. cutting edge features for a snap’s user base.
 
 .. figure:: https://assets.ubuntu.com/v1/e2a6f31e-snap-weekly-devices.png
    :alt: Screenshot_20190731_155049|690x374
