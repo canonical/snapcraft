@@ -16,7 +16,7 @@ This release adds specific build environments for each snapcraft project you wor
 
 Snapcraft’s build environments leverage a snap architecture feature called :ref:`bases <base-snaps>`. At build time, the *snapcraft* tool ensures you are creating your applications inside an environment specifically tailored for the specified base.
 
-To make the transition to Snapcraft 3.0 easy, the entire functionality for this new tool behavior is triggered by making use of the ``base`` keyword in ``snapcraft.yaml``.
+To make the transition to Snapcraft 3.0 easy, the entire functionality for this new tool behavior is triggered by making use of the ``base`` keyword in :file:`snapcraft.yaml`.
 
 Snapcraft 3.0 also remains backwards compatible. This means you can omit the ``base`` keyword and continue working as you did previously until you are ready to move to a newer or different stack provided by a different *base*.
 
@@ -43,7 +43,7 @@ See :ref:`installing-snapcraft-macos` for further details.
 Features incompatible with bases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When using the ``base`` keyword in ``snapcraft.yaml`` the following (long deprecated) features become unavailable:
+When using the ``base`` keyword in :file:`snapcraft.yaml` the following (long deprecated) features become unavailable:
 
 -  *wiki parts*, and their quirks in the code base, that enabled specific corner cases, such as allowing ``/`` in parts.
 -  ``snapcraft cleanbuild`` and triggering builds with LXD in certain environment variables.
@@ -66,7 +66,7 @@ The following are new when using ``base``:
 License
 ~~~~~~~
 
-A snap’s license can now be defined using the new *license* keyword and a `SPDX 2.0 format <https://spdx.org/licenses/>`__ value within *snapcraft.yaml*.
+A snap’s license can now be defined using the new *license* keyword and a `SPDX 2.0 format <https://spdx.org/licenses/>`__ value within :file:`snapcraft.yaml`.
 
 Validation of the license syntax is done using ``snap pack`` schema validation to ensure consistency across the snap ecosystem.
 
@@ -77,7 +77,7 @@ When originally introduced, *wrappers* were useful when setting up the environme
 
 Although it is not the default today, the intention is to make the ``adapter`` value (``full``) the default behaviour. The advantage with this design is that when entering a shell through ``snap run --shell``, the environment would be properly loaded through use of ``command-chain`` entries in ``snap.yaml``.
 
-The recording below shows how the original ``command``, defined in ``snapcraft.yaml``, is still the ``command``\ that makes it to ``snap.yaml`` (and the ``command-chain`` feature is used instead):
+The recording below shows how the original ``command``, defined in :file:`snapcraft.yaml`, is still the ``command``\ that makes it to ``snap.yaml`` (and the ``command-chain`` feature is used instead):
 
 |image1|
 
@@ -87,20 +87,20 @@ The recording below shows how the original ``command``, defined in ``snapcraft.y
 Extensions
 ~~~~~~~~~~
 
-The architecture and framework has been cemented into the :command:`snapcraft` tool to help *snapcraft.yaml* grow declarative\* functionality we’re calling *Extensions*. We have done this to avoid repetitive tasks, and to avoid snap builders needing deep knowledge of a target software stack.
+The architecture and framework has been cemented into the :command:`snapcraft` tool to help :file:`snapcraft.yaml` grow declarative functionality we call *Extensions*. We have done this to avoid repetitive tasks, and to avoid snap builders needing deep knowledge of a target software stack.
 
-Extensions have the unique property of being applied to ``snapcraft.yaml`` itself, where they can be expanded upon and, potentially, used in lieu of the extension itself. This would allow for project-specific modifications of the extension.
+Extensions have the unique property of being applied to :file:`snapcraft.yaml` itself, where they can be expanded upon and, potentially, used in lieu of the extension itself. This would allow for project-specific modifications of the extension.
 
 You can interact with extensions using the following new commands:
 
 - ``list-extensions``, to view the available extensions.
 - ``extension``, to show information about the extension.
-- ``expand-extensions``, to display how the ``snapcraft.yaml`` will look like with the extensions applied.
+- ``expand-extensions``, to display how the :file:`snapcraft.yaml` file will look like with the extensions applied.
 
 Lifecycle cleaning
 ~~~~~~~~~~~~~~~~~~
 
-Prior to Snapcraft 3.0, you needed to manually clean any *part* that was found to be dirty due to modifications in the code itself, or because modifications had been made to the *part* definition in ``snapcraft.yaml``. This become an unnecessary burden for developers.
+Prior to Snapcraft 3.0, you needed to manually clean any *part* that was found to be dirty due to modifications in the code itself, or because modifications had been made to the *part* definition in :file:`snapcraft.yaml`. This become an unnecessary burden for developers.
 
 The default action for *snapcraft* to now rebuild parts, either by re-running a lifecycle step without cleaning, for plugins that allow for it (through their underlying architecture), or automatically cleaning and re-running the necessary lifecycle steps for that part.
 

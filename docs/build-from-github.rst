@@ -23,7 +23,7 @@ Prerequisites
 
 You will need a :ref:`Developer account <create-a-developer-account>` and accept that the source code for a prospective snap will be publicly accessible while on the build server. Projects also need to be hosted on a public `GitHub <https://github.com/>`__ repository.
 
-The GitHub repository must contain at least a :ref:`snapcraft.yaml <the-snapcraft-yaml-schema>` file, and the snap build from a clone of the repository. The snap name needs to be :ref:`registered <registering-your-app-name>` with the Snap Store, and the same name needs to be declared in the *snapcraft.yaml*.
+The GitHub repository must contain at least a :ref:`snapcraft.yaml <the-snapcraft-yaml-schema>` file, and the snap build from a clone of the repository. The snap name needs to be :ref:`registered <registering-your-app-name>` with the Snap Store, and the same name needs to be declared in the :file:`snapcraft.yaml`.
 
 Build architectures can be defined within a snap’s :ref:`snapcraft.yaml <the-snapcraft-yaml-schema>` using the :ref:`architectures <architectures>` keyword. To target all architectures, for example, use the following:
 
@@ -53,7 +53,7 @@ Select a repository
 
 With the GitHub account connected, the next step is to choose a repository.
 
-This is accomplished by using the two drop-down menus, first to choose an organisation and then to choose the repository itself. When a repository is selected it is scanned for an appropriate *snapcraft.yaml* configuration which, if detected, enables the *Start building* button:
+This is accomplished by using the two drop-down menus, first to choose an organisation and then to choose the repository itself. When a repository is selected it is scanned for an appropriate :file:`snapcraft.yaml` configuration which, if detected, enables the *Start building* button:
 
 .. figure:: https://forum-snapcraft-io.s3.dualstack.us-east-1.amazonaws.com/original/2X/b/bfc72bc1a38e19de984786d4163d27afc852fb49.png
    :alt: image|677x361

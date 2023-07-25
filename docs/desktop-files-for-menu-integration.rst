@@ -7,7 +7,7 @@ Desktop files for menu integration
 
 `Desktop entry files <https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#introduction>`__ are used to add an application to the `desktop menu <https://en.wikipedia.org/wiki/Start_menu>`__. These files specify the name and icon of your application, the `categories <https://specifications.freedesktop.org/menu-spec/latest/apa.html>`__ it belongs to, related search keywords and more. These files have the extension ``.desktop`` and follow the XDG Desktop Entry Specification version 1.1.
 
-   ⓘ **Note:** The application icon specified in the desktop entry will be used in the desktop menu and the dock, but *not* in the snap store and other graphical store frontends. The snap store uses the icon specified in :ref:`the icon field <snapcraft-top-level-metadata-icon>` in ``snapcraft.yaml``.
+   ⓘ **Note:** The application icon specified in the desktop entry will be used in the desktop menu and the dock, but *not* in the snap store and other graphical store frontends. The snap store uses the icon specified in :ref:`the icon field <snapcraft-top-level-metadata-icon>` in :file:`snapcraft.yaml` file.
 
 This documentation explains how to add these desktop files to your snap so that your application is automatically added to the desktop menu during installation.
 
@@ -23,17 +23,17 @@ There are three methods to tell snapcraft which desktop entry files to use.
 Desktop entry files in the ``snap/gui`` directory
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The desktop file and icon should be in the folder ``snap/gui/`` in the source folder for your snap. They should be named ``snap-name.desktop`` and ``snap-name.png`` where ``snap-name`` matches the ``name:`` entry in the ``snapcraft.yaml``.
+The desktop file and icon should be in the folder ``snap/gui/`` in the source folder for your snap. They should be named ``snap-name.desktop`` and ``snap-name.png`` where ``snap-name`` matches the ``name:`` entry in the :file:`snapcraft.yaml` file.
 
    ⓘ **Note:** When you run :command:`snapcraft`, the entire contents of ``snap/gui`` will be copied into the ``meta/gui/`` folder of the resulting snap.
 
-The ``Exec=`` line is used to specify which application to run when the user clicks on this desktop entry. It should point to the application in the ``apps:`` section of ``snapcraft.yaml``.
+The ``Exec=`` line is used to specify which application to run when the user clicks on this desktop entry. It should point to the application in the ``apps:`` section of :file:`snapcraft.yaml`.
 
 ::
 
    Exec=app-name
 
-Where ``app-name`` matches the name of the program in the ``apps:`` section of ``snapcraft.yaml`` or an approved alias. *Note that this is the same (case sensitive) name used to run the snapped application from the commandline.*
+Where ``app-name`` matches the name of the program in the ``apps:`` section of :file:`snapcraft.yaml` or an approved alias. *Note that this is the same (case sensitive) name used to run the snapped application from the commandline.*
 
 The ``Icon=`` line specifies the absolute path of the icon of the application. This icon will represent the application in the desktop menu and the dock. This path should point to the location of the icon *after the snap is installed*.
 

@@ -28,7 +28,7 @@ Ready to get started? By the end of this guide, you’ll understand how to make 
 Getting started
 ---------------
 
-Snaps are defined in a single YAML file placed in the root folder of your project. The following example shows the entire *snapcraft.yaml* file for an existing project, `Freeplane <https://github.com/snapcraft-docs/freeplane>`__. Don’t worry, we’ll break this down.
+Snaps are defined in a single YAML file placed in the root folder of your project. The following example shows the entire :file:`snapcraft.yaml` file for an existing project, `Freeplane <https://github.com/snapcraft-docs/freeplane>`__. Don’t worry, we’ll break this down.
 
 Using a few lines of yaml and the snapcraft tool, a Java application, it’s dependencies and the correct JRE can be packaged as a snap. We’ll break this down.
 
@@ -89,7 +89,7 @@ Using a few lines of yaml and the snapcraft tool, a Java application, it’s dep
 Metadata
 --------
 
-The ``snapcraft.yaml`` file starts with a small amount of human-readable metadata, which usually can be lifted from the GitHub description or project README.md. This data is used in the presentation of your app in the Snap Store.
+The :file:`snapcraft.yaml` file starts with a small amount of human-readable metadata, which usually can be lifted from the GitHub description or project README.md. This data is used in the presentation of your app in the Snap Store.
 
 .. code:: yaml
 
@@ -245,7 +245,7 @@ You can publish your own version of a snap, provided you do so under a name you 
 
    $ snapcraft register myjavasnap
 
-Be sure to update the ``name:`` in your ``snapcraft.yaml`` to match this registered name, then run :command:`snapcraft` again.
+Be sure to update the ``name:`` in your :file:`snapcraft.yaml` file to match this registered name, then run :command:`snapcraft` again.
 
 Upload your snap
 ----------------

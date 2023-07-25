@@ -7,7 +7,7 @@ Snapcraft checklist
 
 Before you can build a snap, you need to know a few attributes about your application.
 
-These attributes ensure a snap can be built and, via a 3-point checklist outlined below, help with the construction of the application’s *snapcraft.yaml*.
+These attributes ensure a snap can be built and, via a 3-point checklist outlined below, help with the construction of the application’s :file:`snapcraft.yaml`.
 
 Prerequisites
 -------------
@@ -46,7 +46,7 @@ Snapcraft uses :ref:`plugins <snapcraft-plugins>` to create the build environmen
 
 Many applications use a toolkit, such as `Qt <https://www.qt.io/>`__ or `GTK <https://www.gtk.org/>`__, to provide both functionality and better system integration.
 
-There are recipes for incorporating many popular toolkits into your snap, either by pasting pre-configured snippets into your snap’s *snapcraft.yaml*, or by using a new Snapcraft feature called :ref:`Extensions <snapcraft-extensions>`.
+There are recipes for incorporating many popular toolkits into your snap, either by pasting pre-configured snippets into your snap’s :file:`snapcraft.yaml` file, or by using a new Snapcraft feature called :ref:`Extensions <snapcraft-extensions>`.
 
 See :ref:`Desktop app support <desktop-applications>` for examples with toolkit and desktop integration.
 

@@ -89,7 +89,7 @@ In this example, the warnings about the ELF interpreter and rpath can be handled
 -  ``-Wl,-dynamic-linker=/snap/core22/current/lib64/ld-linux-x86-64.so.2``
 -  ``-Wl,-rpath=/snap/core22/current/lib/x86_64-linux-gnu``
 
-In an autotools project, if the ``LDFLAGS`` environment variable is used, the ``snapcraft.yaml`` file can be updated to pass these options to the ``autotools`` plugin, using the ``autotools-configure-parameters`` keyword for projects using the ``core20`` base or later:
+In an autotools project, if the ``LDFLAGS`` environment variable is used, the :file:`snapcraft.yaml` file can be updated to pass these options to the ``autotools`` plugin, using the ``autotools-configure-parameters`` keyword for projects using the ``core20`` base or later:
 
 .. code:: yaml
 
@@ -101,7 +101,7 @@ In an autotools project, if the ``LDFLAGS`` environment variable is used, the ``
 
 This will only be useful for projects where the ``LDFLAGS`` variable can be used to influence the build process.
 
-In a Makefile project, if the ``LDFLAGS`` environment variable is used, the ``snapcraft.yaml`` file can be updated to pass these options to the ``make`` plugin, like this:
+In a Makefile project, if the ``LDFLAGS`` environment variable is used, the :file:`snapcraft.yaml` file can be updated to pass these options to the ``make`` plugin, like this:
 
 .. code:: yaml
 

@@ -29,7 +29,7 @@ Next, install snapcraft:
 
    sudo apt install snapcraft
 
-Navigate to the project directory on your Windows host where the ``snapcraft.yaml`` file exists and run snapcraft.
+Navigate to the project directory on your Windows host where the :file:`snapcraft.yaml` file exists and run Snapcraft:
 
 .. code:: bash
 

@@ -65,7 +65,7 @@ You can find a complete example of a ROS 2 snap using the public shared memory i
 Private shared memory interface
 -------------------------------
 
-Snap is providing another interface called `private shared memory <https://snapcraft.io/blog/private-shared-memory-support-for-snaps>`__ that vastly simplifies shared memory support with snap. The `private shared memory <https://snapcraft.io/blog/private-shared-memory-support-for-snaps>`__ is a subset of the `shared memory interface <https://snapcraft.io/docs/shared-memory-interface>`__. Without modifying your software, all calls to ``/dev/shm`` are going to be bound to ``/dev/shm/snap.SNAP_NAME`` automatically. It can be activated by simply adding the plug to the ``snapcraft.yaml``:
+Snap is providing another interface called `private shared memory <https://snapcraft.io/blog/private-shared-memory-support-for-snaps>`__ that vastly simplifies shared memory support with snap. The `private shared memory <https://snapcraft.io/blog/private-shared-memory-support-for-snaps>`__ is a subset of the `shared memory interface <https://snapcraft.io/docs/shared-memory-interface>`__. Without modifying your software, all calls to ``/dev/shm`` are going to be bound to ``/dev/shm/snap.SNAP_NAME`` automatically. It can be activated by simply adding the plug to the :file:`snapcraft.yaml` file:
 
 ::
 
@@ -89,7 +89,7 @@ FastDDS offers two options to totally disable the shared memory feature; either 
 At compile-time
 ~~~~~~~~~~~~~~~
 
-FastDDS offers an option to compile without the shared memory feature by simply specifying a CMake variable: ``-DSHM_TRANSPORT_DEFAULT=OFF``. With this, no shared memory nor any associated files – ciao the error message. Adding the following FastDDS part to your ``snapcraft.yaml`` will disable FastDDS at compile time:
+FastDDS offers an option to compile without the shared memory feature by simply specifying a CMake variable: ``-DSHM_TRANSPORT_DEFAULT=OFF``. With this, no shared memory nor any associated files – ciao the error message. Adding the following FastDDS part to your :file:`snapcraft.yaml` file will disable FastDDS at compile time:
 
 ::
 
@@ -140,7 +140,7 @@ FastDDS also allows for providing a `configuration XML file <https://fast-dds.do
            </participant>
        </profiles>
 
-And then, you can add the proper ``part`` to place your profile and set the environment variable to your app in your ``snapcraft.yaml``:
+And then, you can add the proper ``part`` to place your profile and set the environment variable to your app in your :file:`snapcraft.yaml` file:
 
 ::
 

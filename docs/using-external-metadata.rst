@@ -5,7 +5,7 @@
 Using external metadata
 =======================
 
-To help avoid unnecessary duplication, and for convenience, Snapcraft can process and incorporate external metadata from within *snapcraft.yaml* by using ``parse-info`` within a :ref:`part <adding-parts>` and a corresponding ``adopt-info`` key.
+To help avoid unnecessary duplication, and for convenience, Snapcraft can process and incorporate external metadata from within :file:`snapcraft.yaml` by using ``parse-info`` within a :ref:`part <adding-parts>` and a corresponding ``adopt-info`` key.
 
 For example, the following ``snapcraft.yaml`` will parse a file called ``metadata-file``. Snapcraft will attempt to extract ``version``, ``summary`` and ``description`` metadata for the snap, all of which are mandatory:
 
@@ -30,7 +30,7 @@ An external metadata source can be one of the following:
 -  `AppStream <meta-appstream_>`__: a standard for software components
 -  `Scriptlets <meta-scriptlet_>`__: a *snapcraftctl*-driven command to generate ``version`` and ``grade``
 
-See below for details on incorporating each of the above into your *snapcraft.yaml*.
+See below for details on incorporating each of the above into your :file:`snapcraft.yaml` file.
 
 
 .. _using-external-metadata-meta-appstream:
@@ -115,7 +115,7 @@ Individual parts in your ``snapcraft.yaml`` can set the ``version`` and ``grade`
          snapcraftctl set-version "my-version"
          snapcraftctl set-grade "devel"
 
-See :ref:`Scriptlets <override-build-steps>` for more details on using scripting elements within *snapcraft.yaml*.
+See :ref:`Scriptlets <override-build-steps>` for more details on using scripting elements within :file:`snapcraft.yaml`.
 
 
 .. _using-external-metadata-setup-py:

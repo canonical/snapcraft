@@ -21,7 +21,7 @@ By default, snaps have an epoch of ‘0’. When a new version breaks data compa
 
    epoch: 1
 
-The revisions with the new epoch are invisible to users on the original ``epoch: 0``; conversely, the old epoch is invisible to new users who always get the latest epoch with a fresh installation. You can still push updates to users of the old epoch by specifying ``epoch: 0`` (or omitting the epoch) in its *snapcraft.yaml*, while pushing updates to the new version using ``epoch: 1``. It’s a little like having subchannels.
+The revisions with the new epoch are invisible to users on the original ``epoch: 0``; conversely, the old epoch is invisible to new users who always get the latest epoch with a fresh installation. You can still push updates to users of the old epoch by specifying ``epoch: 0`` (or omitting the epoch) in its :file:`snapcraft.yaml` file, while pushing updates to the new version using ``epoch: 1``. It’s a little like having subchannels.
 
 
 Migrating to a new epoch
@@ -31,11 +31,11 @@ Epochs alone track the format used but do not automatically migrate user data be
 
    ⓘ *snapd* does not track which users have accessed a snap, or whether a user’s home directory is still accessible, or even if a user’s home directory is located in ``/home/<user>``. Similarly, epochs cannot automatically safeguard migrating version-dependent data in ``$SNAP_COMMON`` because, if a refresh fails, there’s no guaranteed way to retrieve the old data; ``snap revert`` will not bring the data back
 
-Your own data migration strategy could use :ref:`hooks <supported-snap-hooks>` within your *snapcraft.yaml*, or rely on functionality within your application at run-time.
+Your own data migration strategy could use :ref:`hooks <supported-snap-hooks>` within your :file:`snapcraft.yaml` file, or rely on functionality within your application at run-time.
 
 When you have confidence in a migration process, you can then label the new epoch with an asterisk (*) to indicate its compatibility with old data versions.
 
-For example, to create a snap that says it knows how to read both epoch 0 data and epoch 1 data, but only write epoch 1 data, you add the following to your *snapcraft.yaml*:
+For example, to create a snap that says it knows how to read both epoch 0 data and epoch 1 data, but only write epoch 1 data, you add the following to your :file:`snapcraft.yaml` file:
 
 .. code:: yaml
 

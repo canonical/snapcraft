@@ -26,7 +26,7 @@ ROS 1 Extension
 
 The new ROS 1 :ref:`extension <snapcraft-extensions>` allows you to target ``core20`` with ROS 1 *Noetic Ninjemys*, the latest (and last) ROS 1 LTS that runs on Ubuntu 20.04 LTS (Focal Fossa).
 
-You can now build a ROS 1 application with a ``snapcraft.yaml`` as simple as:
+You can now build a ROS 1 application with a :file:`snapcraft.yaml` file as simple as:
 
 .. code:: yaml
 

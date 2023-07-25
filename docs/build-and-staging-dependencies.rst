@@ -17,7 +17,7 @@ For further help on solving build dependencies, see :ref:`Iterating over a build
 Package types
 -------------
 
-Build and staging dependencies are added to a snap’s :ref:`snapcraft.yaml <the-snapcraft-yaml-schema>` within a part definition. They can be added as standard packages for the chosen build environment, such as *deb* packages for Ubuntu, or as a cross-platform snap using the following *snapcraft.yaml* keywords:
+Build and staging dependencies are added to a snap’s :ref:`snapcraft.yaml <the-snapcraft-yaml-schema>` within a part definition. They can be added as standard packages for the chosen build environment, such as *deb* packages for Ubuntu, or as a cross-platform snap using the following :file:`snapcraft.yaml` keywords:
 
 For packages:
 
@@ -76,9 +76,9 @@ Working out your project’s dependencies can be an iterative process, much like
 Building
 ~~~~~~~~
 
-1. When you have a workable framework *snapcraft.yaml* for your snap, run ``snapcraft --debug`` until you hit an error
+1. When you have a workable framework :file:`snapcraft.yaml` for your snap, run ``snapcraft --debug`` until you hit an error
 2. If that error is a build dependency, use the *debug* interactive shell to work out which package is required
-3. add the package to your *snapcraft.yaml* and type *snapcraft* within the build environment to see if you have the same error
+3. add the package to your :file:`snapcraft.yaml` and type *snapcraft* within the build environment to see if you have the same error
 
 A typical missing build dependency may generate an error similar to the following:
 

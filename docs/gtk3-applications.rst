@@ -266,7 +266,7 @@ You can publish your own version of a snap, provided you do so under a name you 
 
    $ snapcraft register mysnap
 
-Be sure to update the ``name:`` in your ``snapcraft.yaml`` to match this registered name, then run :command:`snapcraft` again.
+Be sure to update the ``name:`` in your :file:`snapcraft.yaml` file to match this registered name, then run :command:`snapcraft` again.
 
 Upload your snap
 ~~~~~~~~~~~~~~~~

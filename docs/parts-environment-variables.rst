@@ -105,11 +105,11 @@ When building a part with bases ``core``, ``core18``, or ``core20``, the followi
 +------------------------------------+-------------------------------------------------------------------------------------------+
 | ``SNAPCRAFT_PARALLEL_BUILD_COUNT`` | the preferred number of jobs the project is to be built with                              |
 +------------------------------------+-------------------------------------------------------------------------------------------+
-| ``SNAPCRAFT_PROJECT_NAME``         | the snapcraft project name as set by ``name`` in ``snapcraft.yaml``                       |
+| ``SNAPCRAFT_PROJECT_NAME``         | the snapcraft project name as set by ``name`` in :file:`snapcraft.yaml`                   |
 +------------------------------------+-------------------------------------------------------------------------------------------+
-| ``SNAPCRAFT_PROJECT_VERSION``      | the snapcraft project version as set by ``snapcraft.yaml``                                |
+| ``SNAPCRAFT_PROJECT_VERSION``      | the snapcraft project version as set by :file:`snapcraft.yaml`                            |
 +------------------------------------+-------------------------------------------------------------------------------------------+
-| ``SNAPCRAFT_PROJECT_GRADE``        | the snapcraft project grade as set in ``snapcraft.yaml``                                  |
+| ``SNAPCRAFT_PROJECT_GRADE``        | the snapcraft project grade as set in :file:`snapcraft.yaml`                              |
 +------------------------------------+-------------------------------------------------------------------------------------------+
 | ``SNAPCRAFT_TARGET_ARCH``          | deb-style architecture that snap is being built for, e.g. “amd64”, “armhf”, “arm64”, etc. |
 +------------------------------------+-------------------------------------------------------------------------------------------+
@@ -122,23 +122,23 @@ core22
 
 When building a part with base ``core22``, the following *snapcraft* environment variables are set:
 
-+-------------------------------------------------------------------+-------------------------------------------------------------------------------------------+
-| ``CRAFT_ARCH_TRIPLET`` ``SNAPCRAFT_ARCH_TRIPLET``                 | the architecture triplet used for the selected base                                       |
-+-------------------------------------------------------------------+-------------------------------------------------------------------------------------------+
-| ``CRAFT_PARALLEL_BUILD_COUNT`` ``SNAPCRAFT_PARALLEL_BUILD_COUNT`` | the preferred number of jobs the project is to be built with                              |
-+-------------------------------------------------------------------+-------------------------------------------------------------------------------------------+
-| ``CRAFT_PROJECT_NAME`` ``SNAPCRAFT_PROJECT_NAME``                 | the snapcraft project name as set by ``name`` in ``snapcraft.yaml``                       |
-+-------------------------------------------------------------------+-------------------------------------------------------------------------------------------+
-| ``SNAPCRAFT_PROJECT_VERSION``                                     | the snapcraft project version as set by ``snapcraft.yaml``                                |
-+-------------------------------------------------------------------+-------------------------------------------------------------------------------------------+
-| ``SNAPCRAFT_PROJECT_GRADE``                                       | the snapcraft project grade as set in ``snapcraft.yaml``                                  |
-+-------------------------------------------------------------------+-------------------------------------------------------------------------------------------+
-| ``CRAFT_TARGET_ARCH`` ``SNAPCRAFT_TARGET_ARCH``                   | deb-style architecture that snap is being built for, e.g. “amd64”, “armhf”, “arm64”, etc. |
-+-------------------------------------------------------------------+-------------------------------------------------------------------------------------------+
-| ``CRAFT_PART_NAME``                                               | the part currently being processed, as set by the part’s name in ``snapcraft.yaml``       |
-+-------------------------------------------------------------------+-------------------------------------------------------------------------------------------+
-| ``CRAFT_STEP_NAME``                                               | the step currently being executed (i.e. ``PRIME``)                                        |
-+-------------------------------------------------------------------+-------------------------------------------------------------------------------------------+
++-------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
+| ``CRAFT_ARCH_TRIPLET`` ``SNAPCRAFT_ARCH_TRIPLET``                 | the architecture triplet used for the selected base                                                    |
++-------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
+| ``CRAFT_PARALLEL_BUILD_COUNT`` ``SNAPCRAFT_PARALLEL_BUILD_COUNT`` | the preferred number of jobs the project is to be built with                                           |
++-------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
+| ``CRAFT_PROJECT_NAME`` ``SNAPCRAFT_PROJECT_NAME``                 | the snapcraft project name as set by ``name`` in :file:`snapcraft.yaml`                                |
++-------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
+| ``SNAPCRAFT_PROJECT_VERSION``                                     | the snapcraft project version as set by :file:`snapcraft.yaml`                                         |
++-------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
+| ``SNAPCRAFT_PROJECT_GRADE``                                       | the snapcraft project grade as set in :file:`snapcraft.yaml`                                           |
++-------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
+| ``CRAFT_TARGET_ARCH`` ``SNAPCRAFT_TARGET_ARCH``                   | deb-style architecture that snap is being built for, e.g. “amd64”, “armhf”, “arm64”, etc.              |
++-------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
+| ``CRAFT_PART_NAME``                                               | the part currently being processed, as set by the part’s name in :file:`snapcraft.yaml`                |
++-------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
+| ``CRAFT_STEP_NAME``                                               | the step currently being executed (i.e. ``PRIME``)                                                     |
++-------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
 
 
 .. _parts-environment-variables-build-flags:

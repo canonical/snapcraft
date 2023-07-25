@@ -8,7 +8,7 @@ Join Snapcrafters
 What is Snapcrafters?
 ---------------------
 
-The *“Snapcrafters”* are a group of community contributors working to get snaps published by upstream projects, with install instructions on the project homepage and the ``snapcraft.yaml`` in the project code repository. `Snapcrafters collaborate via GitHub <https://github.com/snapcrafters>`__.
+The *“Snapcrafters”* are a group of community contributors working to get snaps published by upstream projects, with install instructions on the project homepage and the :file:`snapcraft.yaml` file in the project code repository. `Snapcrafters collaborate via GitHub <https://github.com/snapcrafters>`__.
 
 Why Snapcrafters?
 -----------------

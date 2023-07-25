@@ -7,7 +7,7 @@ Snapcraft parts metadata
 
 The main building blocks of a snap are *parts*. They are used to declare pieces of code that will be pulled into your snap package. The *parts* keys and values in :ref:`snapcraft.yaml <the-snapcraft-yaml-schema>` detail how parts are configured and built by the *snapcraft* command.
 
-   See :ref:`Snapcraft top-level metadata <snapcraft-top-level-metadata>` and :ref:`Snapcraft apps and services metadata <snapcraft-app-and-service-metadata>` for details on how apps and parts are configured within *snapcraft.yaml*.
+   See :ref:`Snapcraft top-level metadata <snapcraft-top-level-metadata>` and :ref:`Snapcraft apps and services metadata <snapcraft-app-and-service-metadata>` for details on how apps and parts are configured within :file:`snapcraft.yaml`.
 
 parts
 -----

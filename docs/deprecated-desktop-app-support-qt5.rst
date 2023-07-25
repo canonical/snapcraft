@@ -16,7 +16,7 @@ The `Snapcraft Desktop Helpers project <https://github.com/ubuntu/snapcraft-desk
 1. Add qt5 dependencies to your snap
 ------------------------------------
 
-Copy the definition of the ``desktop-qt5`` part from the `Snapcraft Desktop Helpers <https://github.com/ubuntu/snapcraft-desktop-helpers/blob/master/snapcraft.yaml>`__ ``snapcraft.yaml`` into your Snapcraft recipe, in the ``parts`` section. Change the ``source`` property of this part to ``https://github.com/ubuntu/snapcraft-desktop-helpers.git``.
+Copy the definition of the ``desktop-qt5`` part from the `Snapcraft Desktop Helpers <https://github.com/ubuntu/snapcraft-desktop-helpers/blob/master/snapcraft.yaml>`__ :file:`snapcraft.yaml` file into your Snapcraft recipe, in the ``parts`` section. Change the ``source`` property of this part to ``https://github.com/ubuntu/snapcraft-desktop-helpers.git``.
 
 .. code:: yaml
 
@@ -69,7 +69,7 @@ If you’re using the ``full`` adapter, insert the ``bin/desktop-launch`` launch
 
 Snapped Qt applications by default don’t use the UI theme of the operating system they are running on. You can make your snapped application adapt to most common UI themes using the ``gtk-common-themes`` content snap and the ``gtk3`` Qt Platform theme.
 
-Add the following ``qt5-gtk-platform`` part into the ``parts`` section of your ``snapcraft.yaml`` file.
+Add the following ``qt5-gtk-platform`` part into the ``parts`` section of your :file:`snapcraft.yaml` file.
 
 .. code:: yaml
 

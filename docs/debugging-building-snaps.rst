@@ -31,7 +31,7 @@ Sometimes when a snap is initially built, libraries are missing because they wer
 Staging Packages
 ~~~~~~~~~~~~~~~~
 
-It’s common to bundle required libraries in snaps using ``stage-packages`` in the ``snapcraft.yaml``. These are standard package names from the Ubuntu repository used by the base snap. For those unfamiliar with the naming of packages in the Ubuntu archive, the package search at https://packages.ubuntu.com/ can be an invaluable tool. It enables search for files (such as libraries) within packages in the archive. Just be sure to choose the Ubuntu version used by your base snap when searching.
+It’s common to bundle required libraries in snaps using ``stage-packages`` in the :file:`snapcraft.yaml` file. These are standard package names from the Ubuntu repository used by the base snap. For those unfamiliar with the naming of packages in the Ubuntu archive, the package search at https://packages.ubuntu.com/ can be an invaluable tool. It enables search for files (such as libraries) within packages in the archive. Just be sure to choose the Ubuntu version used by your base snap when searching.
 
 Don’t include ``glibc``/``libc6`` in your list of staged packages. Doing so is unnecessary as the base snap contains those libraries already, and bundling them into your snap can cause unexpected behaviour.
 
@@ -74,6 +74,6 @@ Typically the output will report on failed attempts to access system resources, 
 Iterating without rebuilding
 ----------------------------
 
-It can be time consuming to iterate over a snap via tweaking the ``snapcraft.yaml`` or application itself, then rebuild and re-install.
+It can be time consuming to iterate over a snap via tweaking the :file:`snapcraft.yaml` file or application itself, then rebuild and re-install.
 
 To speed a build up, see :ref:`Iterating over a build <iterating-over-a-build>` for build and testing best-practices.

@@ -159,7 +159,7 @@ The referenced directory is typically empty unless Nvidia proprietary drivers ar
 SNAP_NAME
 ~~~~~~~~~
 
-The name of the snap as specified in the ``snapcraft.yaml`` file.
+The name of the snap as specified in the :file:`snapcraft.yaml` file.
 
 Typical value: ``hello-world``
 
@@ -246,7 +246,7 @@ The final number there is ``$SNAP_REVISION``.
 SNAP_VERSION
 ~~~~~~~~~~~~
 
-The version string as specified in the ``snapcraft.yaml``
+The version string as specified in the :file:`snapcraft.yaml` file.
 
 Typical value ``6.3``
 

@@ -14,7 +14,7 @@ The filename of the executable is based on the name of the hook. If this file ex
 1. Using a project-wide ``snap/hooks`` directory
 ------------------------------------------------
 
-The hook executable can be placed in a directory called ``snap/hooks`` relative to where the :command:`snapcraft` command is executed. This will typically mean creating a *hooks* directory in the same directory that contains the *snapcraft.yaml* file for your project. The following, for example, shows the location of a configure hook executable:
+The hook executable can be placed in a directory called ``snap/hooks`` relative to where the :command:`snapcraft` command is executed. This will typically mean creating a *hooks* directory in the same directory that contains the :file:`snapcraft.yaml` file for your project. The following, for example, shows the location of a configure hook executable:
 
 ::
 

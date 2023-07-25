@@ -19,7 +19,7 @@ Extended build options
 
 **build-base**
 
-Prior to the release of Snapcraft 3.7, using the ``base`` keyword within ``snapcraft.yaml`` to specify a base type for a snap did not take into account the *creation* of bases. Instead, the ``name`` keyword was arbitrarily used to determine the build environment:
+Prior to the release of Snapcraft 3.7, using the ``base`` keyword within :file:`snapcraft.yaml` to specify a base type for a snap did not take into account the *creation* of bases. Instead, the ``name`` keyword was arbitrarily used to determine the build environment:
 
 .. code:: yaml
 
@@ -86,7 +86,7 @@ This is thanks to *snapd 2.39* supporting API snap retrieval, and is used to avo
 Improved missing file experience
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-After the :ref:`prime stage <parts-lifecycle>` has completed, and missing dependencies are detected, Snapcraft now lists these as *stage-packages*, rather than as a simple list, for inclusion in *snapcraft.yaml* to hopefully build a functioning snap.
+After the :ref:`prime stage <parts-lifecycle>` has completed, and missing dependencies are detected, Snapcraft now lists these as *stage-packages*, rather than as a simple list, for inclusion in :file:`snapcraft.yaml` to hopefully build a functioning snap.
 
 This will be extended in upcoming versions of Snapcraft to take into account plugs using the ``content`` interface.
 

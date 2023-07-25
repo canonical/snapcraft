@@ -19,7 +19,7 @@ There are a number of steps to enable cross-compilation for an autotools project
 3. Include packages to support cross-compilation.
 4. Handle linker warnings.
 
-It is useful to begin with a reminder of the syntax used to specify architectures in ``snapcraft.yaml`` files.
+It is useful to begin with a reminder of the syntax used to specify architectures in :file:`snapcraft.yaml` files.
 
 The architectures keyword
 -------------------------

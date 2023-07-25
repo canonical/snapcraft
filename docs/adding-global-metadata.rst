@@ -67,6 +67,6 @@ The following attributes should also be included:
 
    See :ref:`Snap confinement <snap-confinement>` for further details.
 
-For convenience, and to help avoid duplicating sources, external metadata such as :ref:`AppStream <meta-appstream>` can be imported into *snapcraft.yaml*. See :ref:`Using external metadata <using-external-metadata>` for further details.
+For convenience, and to help avoid duplicating sources, external metadata such as :ref:`AppStream <meta-appstream>` can be imported into :file:`snapcraft.yaml`. See :ref:`Using external metadata <using-external-metadata>` for further details.
 
 Two further global attribites are ``apps:`` and ``parts:``. These expand into separate sections that deal with how your snap is built and where its various resources are located. See :ref:`Adding parts <adding-parts>` for the next logical step in snap building.

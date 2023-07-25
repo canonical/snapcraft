@@ -39,7 +39,7 @@ If your application, like most games, does not use a common desktop toolkit, the
        after:
          - desktop-glib-only
 
-The next step is to copy the ``desktop-glib-only`` part from `the desktop helpers ``snapcraft.yaml`` <https://github.com/ubuntu/snapcraft-desktop-helpers/blob/master/snapcraft.yaml>`__ file.
+The next step is to copy the ``desktop-glib-only`` part from the :file:`snapcraft.yaml` file in the `desktop helpers`_ repository.
 
 .. code:: yaml
 
@@ -79,3 +79,5 @@ More information
 
 -  :ref:`Overview of snapcraft support for graphical applications and toolkits <desktop-applications>`
 -  See the `snapcraft.yaml for Xonotic <https://github.com/snapcrafters/xonotic/blob/master/snap/snapcraft.yaml>`__ for a more complete example.
+
+.. _`desktop helpers`: https://github.com/ubuntu/snapcraft-desktop-helpers/blob/master/snapcraft.yaml

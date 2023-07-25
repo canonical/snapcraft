@@ -61,9 +61,9 @@ For easier desktop integration, it also configures each application entry with t
 -  :ref:`wayland <the-wayland-interface>`
 -  :ref:`x11 <the-x11-interface>`
 
-To add the Gnome extension to an existing ``snapcraft.yaml``, add ``gnome-3-28`` to the ``apps`` entry that requires it.
+To add the Gnome extension to an existing :file:`snapcraft.yaml` file, add ``gnome-3-28`` to the ``apps`` entry that requires it.
 
-To see how it *extends* the ``snapcraft.yaml``, at the root of the project, run
+To see how it *extends* the :file:`snapcraft.yaml` file, at the root of the project, run
 
 .. code:: bash
 

@@ -19,7 +19,7 @@ However, if you are not associated with the project but want to help them create
 How to register the name
 ------------------------
 
-Make sure that the name you wish to register is the same as the ``name`` field in the ``snapcraft.yaml`` file of your snap. You’ll need to rebuild your snap after you changed the name, a quick process when only the snap name has changed.
+Make sure that the name you wish to register is the same as the ``name`` field in the :file:`snapcraft.yaml` file of your snap. You’ll need to rebuild your snap after you changed the name, a quick process when only the snap name has changed.
 
 If you are working with an Electron app, you will not have a snapcraft.yaml file. If your snap name differs from the ``name`` property in your package.json file, set the ``executableName`` property, `under the top-level linux key <https://www.electron.build/configuration/linux>`__, to your snap name.
 
