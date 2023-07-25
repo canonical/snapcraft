@@ -9,7 +9,7 @@ Snaps are *containerised* to ensure predictable application behaviour and to pro
 
 Containerisation is enforced at the system level, using Discretionary Access Controls (DAC), Mandatory Access Control (MAC) via AppArmor, Seccomp kernel system call filtering (which limits the system calls a process may use), and *cgroups* device access controls for hardware assignment.
 
-When :ref:`creating a snap <creating-a-snap>`, the extent of a snap’s containment is defined by the ``confinement`` keyword within its *snapcraft.yaml*:
+When :ref:`creating a snap <creating-a-snap>`, the extent of a snap’s containment is defined by the ``confinement`` keyword within its :file:`snapcraft.yaml` file:
 
 .. code:: yaml
 

@@ -43,8 +43,8 @@ Every snap package contains a ``meta/snap.yaml`` file that holds the basic metad
 
 Please take note of this important distinction:
 
--  **snap.yaml** lives inside every snap package, read by snapd
--  **snapcraft.yaml** contains instructions to create a snap package, read by the *snapcraft* command used to build snaps
+-  :file:`snap.yaml` lives inside every snap package, read by :command:`snapd`.
+-  :file:`snapcraft.yaml` contains instructions to create a snap package, read by the :command:`snapcraft` command used to build snaps.
 
 Most of the metadata supported by *snap.yaml* is optional. In fact, the simplest ``snap.yaml`` could contain as little as the following:
 

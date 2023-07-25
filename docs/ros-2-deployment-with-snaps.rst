@@ -44,7 +44,7 @@ Let us explore the differences between the different bases.
 core18
 ~~~~~~
 
-Snaps are defined in a single YAML file placed in the root folder of your project. The following example shows the entire *snapcraft.yaml* file for an example project, `ros2-talker-listener <https://github.com/snapcraft-docs/ros2-talker-listener>`__. Don’t worry, we’ll break this down.
+Snaps are defined in a single YAML file placed in the root folder of your project. The following example shows the entire :file:`snapcraft.yaml` file for an example project, `ros2-talker-listener <https://github.com/snapcraft-docs/ros2-talker-listener>`__. Don’t worry, we’ll break this down.
 
 .. code:: yaml
 
@@ -79,7 +79,7 @@ You can download the example repository with the following command:
 Metadata
 ~~~~~~~~
 
-The ``snapcraft.yaml`` file starts with a small amount of human-readable metadata, which usually can be lifted from the GitHub description or project README.md. This data is used in the `presentation of your app in the Snap Store <https://snapcraft.io/plotjuggler>`__.
+The :file:`snapcraft.yaml` file starts with a small amount of human-readable metadata, which usually can be lifted from the GitHub description or project README.md. This data is used in the `presentation of your app in the Snap Store <https://snapcraft.io/plotjuggler>`__.
 
 .. code:: yaml
 
@@ -161,7 +161,7 @@ In snap, an application is usually prefixed by the snap name so that the applica
 Building the snap
 ~~~~~~~~~~~~~~~~~
 
-After you’ve created the *snapcraft.yaml*, you can build the snap by simply executing the *snapcraft* command in the project directory:
+After you have created the :file:`snapcraft.yaml` file, you can build the snap by simply executing the :command:`snapcraft` command in the project directory:
 
 .. code:: bash
 
@@ -215,7 +215,7 @@ Once done developing your snap, you can easily clean up the build environment:
 core20
 ~~~~~~
 
-Snaps are defined in a single YAML file placed in the root folder of your project. The following example shows the entire *snapcraft.yaml* file for an example project, `ros2-talker-listener-core20 <https://github.com/snapcraft-docs/ros2-talker-listener-core20>`__. Don’t worry, we’ll break this down.
+Snaps are defined in a single YAML file placed in the root folder of your project. The following example shows the entire :file:`snapcraft.yaml` file for an example project, `ros2-talker-listener-core20 <https://github.com/snapcraft-docs/ros2-talker-listener-core20>`__. Don’t worry, we’ll break this down.
 
 .. code:: yaml
 
@@ -251,7 +251,7 @@ You can download the example repository with the following command:
 Metadata
 ~~~~~~~~
 
-The *snapcraft.yaml* file starts with a small amount of human-readable metadata, which usually can be adapted from the GitHub description or project ``README.md`` file. This data is used in the presentation of your app in the Snap Store (see e.g. `the PlotJuggler front page <https://snapcraft.io/plotjuggler>`__).
+The :file:`snapcraft.yaml` file starts with a small amount of human-readable metadata, which usually can be adapted from the GitHub description or project ``README.md`` file. This data is used in the presentation of your app in the Snap Store (see e.g. `the PlotJuggler front page <https://snapcraft.io/plotjuggler>`__).
 
 .. code:: yaml
 
@@ -340,7 +340,7 @@ In snap, an application is usually prefixed by the snap name so that the applica
 Building the snap
 ~~~~~~~~~~~~~~~~~
 
-After you’ve created the *snapcraft.yaml*, you can build the snap by simply executing the snapcraft command in the project directory:
+After you have created the :file:`snapcraft.yaml` file, you can build the snap by simply executing the :command:`snapcraft` command in the project directory:
 
 .. code:: bash
 
@@ -389,7 +389,7 @@ Once done developing your snap, you can easily clean up the build environment:
 core22
 ~~~~~~
 
-Snaps are defined in a single YAML file placed in the root folder of your project. The following example shows the entire *snapcraft.yaml* file for an example project, `ros2-talker-listener-core22 <https://github.com/snapcraft-docs/ros2-talker-listener-core22>`__. Don’t worry, we’ll break this down.
+Snaps are defined in a single YAML file placed in the root folder of your project. The following example shows the entire :file:`snapcraft.yaml` file for an example project, `ros2-talker-listener-core22 <https://github.com/snapcraft-docs/ros2-talker-listener-core22>`__. Don’t worry, we’ll break this down.
 
 .. code:: yaml
 
@@ -426,7 +426,7 @@ You can download the example repository with the following command:
 Metadata
 ~~~~~~~~
 
-The *snapcraft.yaml* file starts with a small amount of human-readable metadata, which usually can be lifted from the GitHub description or project README.md. This data is used in the presentation of your app in the Snap Store (see e.g. `PlotJuggler front page <https://snapcraft.io/plotjuggler>`__).
+The :file:`snapcraft.yaml` file starts with a small amount of human-readable metadata, which usually can be lifted from the GitHub description or project README.md. This data is used in the presentation of your app in the Snap Store (see e.g. `PlotJuggler front page <https://snapcraft.io/plotjuggler>`__).
 
 .. code:: yaml
 
@@ -520,11 +520,7 @@ In snap, an application is usually prefixed by the snap name so that the applica
 Building the snap
 ~~~~~~~~~~~~~~~~~
 
-After you’ve created the *snapcraft.yaml*, you can build the snap by simply executing the snapcraft command in the project directory:
-
-[note type=“caution” status=“Warning”] Due to a bug in the current version of Snapcraft, you will not be prompted to first install LXD if it’s not already installed, causing Snapcraft to hang indefinitely.
-
-To install and initialise LXD, run the following: ``sudo snap install lxd && sudo lxd init --auto`` [/note]
+After you have created the :file:`snapcraft.yaml`, you can build the snap by simply executing the :command:`snapcraft` command in the project directory.
 
 .. code:: bash
 
@@ -532,6 +528,16 @@ To install and initialise LXD, run the following: ``sudo snap install lxd && sud
    Launching instance...
    [...]
    Created snap package ros2-talker-listener_0.1_amd64.snap
+
+.. warning::
+
+   Some versions of Snapcraft will not prompt you to install LXD if it is not already installed, causing Snapcraft to hang indefinitely.
+
+   To install and initialise LXD, run the following:
+   
+   .. code::
+   
+      sudo snap install lxd && sudo lxd init --auto
 
 The resulting snap can be immediately installed. This requires the ``--dangerous`` flag because the snap is not signed by the Snap Store. Furthermore, the ``--devmode`` flag acknowledges that you are installing an unconfined application:
 
@@ -590,7 +596,7 @@ You can publish your own version of a snap, provided you do so under a name you 
 
    $ snapcraft register myrossnap
 
-Be sure to update the ``name:`` in your ``snapcraft.yaml`` to match this registered name, then run :command:`snapcraft` again.
+Be sure to update the ``name:`` in your :file:`snapcraft.yaml` file to match this registered name, then run :command:`snapcraft` again.
 
 Upload your snap
 ~~~~~~~~~~~~~~~~

@@ -28,7 +28,7 @@ The ``personal-files`` interface is typically used to provide read-only access t
 
 For distribution via the `Snap store <https://snapcraft.io/store>`__, consumers of this interface require an approved `snap declaration <https://snapcraft.io/docs/process-for-aliases-auto-connections-and-tracks>`__. For acceptance, you will need to make a descriptive interface reference, as used by ``snap connections|interfaces|connect|disconnect`` commands.
 
-For example, if a *foo* application is being packaged as a snap and its publisher wants the snap to import an existing configuration from ``~/.config/foo`` into ``$SNAP_USER_DATA/.config/foo`` (ie, ``$HOME/.config/foo`` within the snap’s runtime environment or ``~/snap/foo/<revision>/.config/foo``) on the host), the *snapcraft.yaml* could include the following:
+For example, if a *foo* application is being packaged as a snap and its publisher wants the snap to import an existing configuration from ``~/.config/foo`` into ``$SNAP_USER_DATA/.config/foo`` (ie, ``$HOME/.config/foo`` within the snap’s runtime environment or ``~/snap/foo/<revision>/.config/foo``) on the host), the :file:`snapcraft.yaml` file could include the following:
 
 .. code:: yaml
 

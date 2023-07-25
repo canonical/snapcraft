@@ -41,7 +41,7 @@ The *libasound2* library needs to be included in a snap’s ``stage-packages``, 
 Code examples
 ~~~~~~~~~~~~~
 
-The *snapcraft.yaml* for MuseScore includes an ALSA interface definition: `https://github.com/pachulo/musescore-snap/blob/master/snap/snapcraft.yaml <https://github.com/pachulo/musescore-snap/blob/9d328cb48679542180b257e32131bbf23ea8cba0/snap/snapcraft.yaml#L32>`__
+The :file:`snapcraft.yaml` for MuseScore includes an ALSA interface definition: `https://github.com/pachulo/musescore-snap/blob/master/snap/snapcraft.yaml <https://github.com/pachulo/musescore-snap/blob/9d328cb48679542180b257e32131bbf23ea8cba0/snap/snapcraft.yaml#L32>`__
 
 The source code for this interface is in the *snapd* repository: https://github.com/snapcore/snapd/blob/master/interfaces/builtin/alsa.go
 

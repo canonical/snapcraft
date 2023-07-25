@@ -28,7 +28,7 @@ Getting started
 
 Snaps are defined in a single YAML file placed in the root folder of your project. We’re going to an example template project, but we’ll show a more complex example later.
 
-The following shows the entire *snapcraft.yaml* file `super-cool-app <https://github.com/snapcraft-docs/super-cool-app>`__, our simple template project:
+The following shows the entire :file:`snapcraft.yaml` file `super-cool-app <https://github.com/snapcraft-docs/super-cool-app>`__, our simple template project:
 
 .. code:: yaml
 
@@ -59,7 +59,7 @@ Don’t worry, we’ll break this down.
 Metadata
 ~~~~~~~~
 
-The ``snapcraft.yaml`` file starts with a small amount of human-readable metadata, which usually can be lifted from the GitHub description or project README.md. This data is used in the presentation of your app in the Snap Store.
+The :file:`snapcraft.yaml` file starts with a small amount of human-readable metadata, which usually can be lifted from the GitHub description or project README.md. This data is used in the presentation of your app in the Snap Store.
 
 .. code:: yaml
 
@@ -117,7 +117,7 @@ Parts define what sources are needed to assemble your app. Parts can be anything
 
 In this case, we have one: the *super-cool-app* source code, which is going to be built using the :ref:`flutter <the-flutter-plugin>` plugin. Parts can retrieve data from local directories, remote git repositories, or tarballs, and the Flutter plugin performs all the tasks necessary to build the code.
 
-See :ref:`Environment variables <environment-variables>` for details on locations you can use from within *snapcraft.yaml*.
+See :ref:`Environment variables <environment-variables>` for details on locations you can use from within :file:`snapcraft.yaml`.
 
 Apps
 ~~~~
@@ -146,11 +146,11 @@ Building the snap
 
 First, make sure you’ve installed :ref:`Snapcraft <snapcraft-overview>` and create a new directory for your Flutter project.
 
-Inside that directory, type ``snapcraft init``. This creates an additional subdirectory, called ``snap``, and inside that creates a template *snapcraft.yaml* file.
+Inside that directory, type ``snapcraft init``. This creates an additional subdirectory, called ``snap``, and inside that creates a template :file:`snapcraft.yaml` file.
 
-Edit the created *snapcraft.yaml* to contain the Flutter example shown earlier.
+Edit the created :file:`snapcraft.yaml` to contain the Flutter example shown earlier.
 
-After you’ve created the *snapcraft.yaml*, you can build the snap by simply executing the *snapcraft* command in the project directory:
+After you’ve created the :file:`snapcraft.yaml`, you can build the snap by simply executing the :command:`snapcraft` command in the project directory:
 
 .. code:: bash
 

@@ -34,4 +34,4 @@ In addition a small set of ``stage-packages`` are typically required as modern O
          - libgl1
      ...
 
-Depending on how the game is built, and what libraries it already bundles, it may be necessary to add other ``stage-packages`` which cannot be guaranteed to be installed on the host. Modern versions of snapcraft will highlight the missing libraries as a pastable list which can be added to the existing ``snapcraft.yaml``.
+Depending on how the game is built, and what libraries it already bundles, it may be necessary to add other ``stage-packages`` which cannot be guaranteed to be installed on the host. Modern versions of snapcraft will highlight the missing libraries as a pastable list which can be added to the existing :file:`snapcraft.yaml` file.

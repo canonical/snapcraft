@@ -25,7 +25,7 @@ ROS 2 Foxy Fitzroy extension and updated colcon plugin
 
 Snapcraft 4.2 includes experimental support for Robot Operating System (ROS 2) `Foxy Fitzroy LTS <https://index.ros.org/doc/ros2/Releases/Release-Foxy-Fitzroy>`__ with a new :ref:`extension <the-ros2-foxy-extension>` and colcon plugin when used with :ref:`core20 <base-snaps>`.
 
-For example, ROS 2 applications can now be built with a ``snapcraft.yaml`` as simple as:
+For example, ROS 2 applications can now be built with a :file:`snapcraft.yaml` file as simple as:
 
 .. code:: yaml
 

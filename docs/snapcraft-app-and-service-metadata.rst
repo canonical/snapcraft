@@ -7,7 +7,7 @@ Snapcraft app and service metadata
 
 The *app* keys and values in :ref:`snapcraft.yaml <the-snapcraft-yaml-schema>` detail the applications and services that a snap wants to expose, including how they’re executed and which resources they can access.
 
-   See :ref:`Snapcraft top-level metadata <snapcraft-top-level-metadata>` and :ref:`Snapcraft parts metadata <snapcraft-parts-metadata>` for details on how apps and parts are configured within *snapcraft.yaml*.
+   See :ref:`Snapcraft top-level metadata <snapcraft-top-level-metadata>` and :ref:`Snapcraft parts metadata <snapcraft-parts-metadata>` for details on how apps and parts are configured within a :file:`snapcraft.yaml` file.
 
 apps
 ----

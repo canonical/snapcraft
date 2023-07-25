@@ -134,9 +134,9 @@ When a package name changes or is updated, it’s worth checking to make sure no
 Remote parts and Extensions
 ---------------------------
 
-In some snaps :ref:`remote parts <remote-reusable-parts>` may have been used to share configuration across multiple snaps and to reduce the local ``snapcraft.yaml`` complexity.
+In some snaps :ref:`remote parts <remote-reusable-parts>` may have been used to share configuration across multiple snaps and to reduce the local :file:`snapcraft.yaml` complexity.
 
-These parts are defined elsewhere, and would be incorporated at build time. This functionality is deprecated, so remote parts should be pasted directly into the ``snapcraft.yaml`` or referenced from their source repository.
+These parts are defined elsewhere, and would be incorporated at build time. This functionality is deprecated, so remote parts should be pasted directly into the :file:`snapcraft.yaml` file or referenced from their source repository.
 
 Example of pasted remote part: `Mr Rescue <https://github.com/snapcrafters/mrrescue/pull/6>`__
 
@@ -155,7 +155,7 @@ Example of pasted remote part: `Mr Rescue <https://github.com/snapcrafters/mrres
    +      stage-packages:
    +        - libglib2.0-bin
 
-Alternatively for some desktop applications it may be appropriate to switch to using an extension, which simplifies the ``snapcraft.yaml`` further. This is covered in :ref:`Snapcraft Extensions <snapcraft-extensions>`.
+Alternatively for some desktop applications it may be appropriate to switch to using an extension, which simplifies the :file:`snapcraft.yaml` file further. This is covered in :ref:`Snapcraft Extensions <snapcraft-extensions>`.
 
 Example migration to an Extension: `Xonotic <https://github.com/snapcrafters/xonotic/pull/6>`__
 

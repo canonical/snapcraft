@@ -18,7 +18,7 @@ For more details on how parts are built within the *snapcraft* environment, incl
 Defining a part
 ---------------
 
-The ``snapcraft init`` command creates the following *part* template in *snapcraft.yaml*:
+The ``snapcraft init`` command creates the following *part* template in :file:`snapcraft.yaml`:
 
 .. code:: yaml
 
@@ -38,7 +38,7 @@ The core of a typical part will commonly consist of the following metadata:
 -  **stage-packages** A list of the packages required by your part to *run*. Package names are those used by the build host’s package manager, such as *apt* or *dnf*. Examples: ``[gnome-themes-standard, libncursesw5, dbus]``
 -  **stage-snaps** A list of the snaps required by your part to *run*. As with *build-snaps*, you can optionally add the :ref:`track and channel <channels>` of the snaps you wish to include. Examples: ``[ffmpeg-sdk-gplv3, codium/latest/stable]``
 
-As per the `YAML specification`_, the members of a list in *snapcraft.yaml* can be formatted in either of the following ways:
+As per the `YAML specification`_, the members of a list in :file:`snapcraft.yaml` can be formatted in either of the following ways:
 
 .. code:: yaml
 
@@ -52,4 +52,4 @@ As per the `YAML specification`_, the members of a list in *snapcraft.yaml* can 
 
 For help on working out which packages you need for both building and staging your snap, take a look at :ref:`Build and staging dependencies <build-and-staging-dependencies>`, and see :ref:`Snapcraft parts metadata <snapcraft-parts-metadata>` for a complete list of supported *parts* keywords.
 
-Parts can also be sourced from shell scripts outside of the *snapcraft.yaml*. See :ref:`Scriptlets <override-build-steps>` for details.
+Parts can also be sourced from shell scripts outside of the :file:`snapcraft.yaml`. See :ref:`Scriptlets <override-build-steps>` for details.

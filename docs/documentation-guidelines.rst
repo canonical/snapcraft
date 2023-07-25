@@ -20,7 +20,7 @@ As `Voltaire <https://en.wikipedia.org/wiki/Voltaire>`__ wrote, “*Perfect is t
 Style and language
 ------------------
 
-One of our biggest challenges is accommodating an audience with a huge variation in experience, from beginners exploring the *snap* command, through snap creators experimenting with *snapcraft.yaml*, to experts harnessing the API and deploying snaps across thousands of IoT devices.
+One of our biggest challenges is accommodating an audience with a huge variation in experience, from beginners exploring the :command:`snap` command, through snap creators experimenting with :file:`snapcraft.yaml`, to experts harnessing the API and deploying snaps across thousands of IoT devices.
 
 Consequently, we try to:
 

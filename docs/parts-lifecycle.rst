@@ -7,7 +7,7 @@ Parts lifecycle
 
 Parts, alongside :ref:`plugins <snapcraft-plugins>`, are a key component in any :ref:`Snapcraft <snapcraft-overview>` project.
 
-See :ref:`Adding parts <adding-parts>` for a general overview of what parts are and how to use them and :ref:`Scriptlets <override-build-steps>` for details on how they can be scripted outside of *snapcraft.yaml*.
+See :ref:`Adding parts <adding-parts>` for a general overview of what parts are and how to use them and :ref:`Scriptlets <override-build-steps>` for details on how they can be scripted outside of :file:`snapcraft.yaml`.
 
 All parts within a project, by means of the logic encoded the plugins they’re using, all go through the same series of steps. Knowing these steps, and which directories are used for each step, can help when creating more advanced snaps, and when troubleshooting build issues.
 
@@ -44,7 +44,7 @@ To access the part environment at any stage, add the ``--shell`` argument. For e
 Step dependencies
 ~~~~~~~~~~~~~~~~~
 
-Each lifecycle step depends on the completion of the previous step for that part, so to reach a desired step, all prior steps need to have successfully run. By default, :command:`snapcraft` runs the same lifecycle step of all parts before moving to the next step. However, you can change this behavior using the ``after`` keyword in the definition of a part in ``snapcraft.yaml``. This creates a dependency chain from one part to another.
+Each lifecycle step depends on the completion of the previous step for that part, so to reach a desired step, all prior steps need to have successfully run. By default, :command:`snapcraft` runs the same lifecycle step of all parts before moving to the next step. However, you can change this behavior using the ``after`` keyword in the definition of a part in :file:`snapcraft.yaml`. This creates a dependency chain from one part to another.
 
 .. code:: yaml
 
@@ -64,7 +64,7 @@ Overriding a step
 
 Each plugin defines the default actions that happen during a step. This behavior can be changed in two ways.
 
--  By using ``override-<step-name>`` in ``snapcraft.yaml``. See :ref:`Overriding steps <override-build-steps>` for more details.
+-  By using ``override-<step-name>`` in :file:`snapcraft.yaml`. See :ref:`Overriding steps <override-build-steps>` for more details.
 -  By using a local plugin. This can inherit the parent plugin or scaffolding from the original. See :ref:`Local plugins <writing-local-plugins>` for more details.
 
 See :ref:`Parts environment variables <parts-environment-variables>` for a list of part-specific environment variables that can be accessed to help build a part.

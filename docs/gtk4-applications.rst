@@ -78,7 +78,7 @@ Snaps are defined in a single yaml file placed in the root of your project. The 
 Metadata
 ^^^^^^^^
 
-The ``snapcraft.yaml`` file starts with a small amount of human-readable metadata, which usually can be lifted from the GitHub description or project README.md. This data is used in the presentation of your app in the Snap Store.
+The :file:`snapcraft.yaml` file starts with a small amount of human-readable metadata, which usually can be lifted from the GitHub description or project README.md. This data is used in the presentation of your app in the Snap Store.
 
 .. code:: yaml
 
@@ -255,7 +255,7 @@ You can publish your own version of a snap, provided you do so under a name you 
 
    $ snapcraft register mysnap
 
-Be sure to update the ``name:`` in your ``snapcraft.yaml`` to match this registered name, then run :command:`snapcraft` again.
+Be sure to update the ``name:`` in your :file:`snapcraft.yaml` file to match this registered name, then run :command:`snapcraft` again.
 
 Upload your snap
 ~~~~~~~~~~~~~~~~

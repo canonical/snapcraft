@@ -38,7 +38,7 @@ Snaps often ship libraries that are already available in the base snap or connec
 
 You can remove those libraries manually by excluding them using the :ref:`snapcraft-yaml-reference-stage` or :ref:`snapcraft-yaml-reference-prime` keywords. This requires a lot of manual work, however, because you have to figure out which libraries are duplicated and exclude each one manually. An easier method is to use the following ``cleanup`` part, which automatically compares your snap with all the content snaps you specify and removes duplicate files.
 
-1. Add the following part to your ``snapcraft.yaml`` in the ``parts`` section.
+1. Add the following part to your :file:`snapcraft.yaml` file in the ``parts`` section.
 
    .. code:: yaml
 

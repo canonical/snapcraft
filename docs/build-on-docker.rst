@@ -7,10 +7,10 @@ Build on Docker
 
 :ref:`Snapcraft <snapcraft-overview>`, the snap-building tool, is designed to use `Multipass <https://community.ubuntu.com/t/installing-multipass-on-linux/8328>`__ and :ref:`bases <base-snaps>` to both simplify the build process and to confine the build environment within a virtual machine. This mostly removes the need to use Docker.
 
-However, Docker can still be used, and is particularly useful when you’re already using Docker within your build and test infrastructure. All you need is a working *snapcraft.yaml* (see :ref:`Creating a snap <creating-a-snap>` for more details).
+However, Docker can still be used, and is particularly useful when you’re already using Docker within your build and test infrastructure. All you need is a working :file:`snapcraft.yaml` (see :ref:`Creating a snap <creating-a-snap>` for more details).
 
 .. note::
-          ℹ Electron apps are built slightly differently, and do not use a ``snapcraft.yaml`` file. :ref:`Follow this guide <electron-apps>` to build a snap of an Electron app using electron-builder.
+          ℹ Electron apps are built slightly differently, and do not use a :file:`snapcraft.yaml` file. :ref:`Follow this guide <electron-apps>` to build a snap of an Electron app using electron-builder.
 
 To create a snap with Docker, first make sure you have `Docker installed <https://docs.docker.com/install/>`__. You can test that Docker is correctly set up with:
 
@@ -113,7 +113,7 @@ When the process has completed, you should be able to see the new image in the o
 Snaps without bases
 -------------------
 
-If your ``snapcraft.yaml`` has no ``base`` entry or ``base: core`` defined, you can simply pull down the latest snapcraft image:
+If your :file:`snapcraft.yaml` file has no ``base`` entry or ``base: core`` defined, you can simply pull down the latest snapcraft image:
 
 .. code:: bash
 

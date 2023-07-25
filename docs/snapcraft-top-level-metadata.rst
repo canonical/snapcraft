@@ -7,7 +7,7 @@ Snapcraft top-level metadata
 
 The top-level keys and values in :ref:`snapcraft.yaml <the-snapcraft-yaml-schema>` provide the snap build process, and the store, with the overarching details of a snap.
 
-   See :ref:`Snapcraft app metadata <snapcraft-app-and-service-metadata>` and :ref:`Snapcraft parts metadata <snapcraft-parts-metadata>` for details on how apps and parts are configured within *snapcraft.yaml*.
+   See :ref:`Snapcraft app metadata <snapcraft-app-and-service-metadata>` and :ref:`Snapcraft parts metadata <snapcraft-parts-metadata>` for details on how apps and parts are configured within :file:`snapcraft.yaml`.
 
 Top-level details include a snap’s name, version and description, alongside operational values such as its confinement level and supported architecture.
 
@@ -91,7 +91,7 @@ Snaps are compressed using *xz* data compression by default. This offers the opt
 
 However, there are certain types of snap, such as large desktop applications, that can benefit from using LZO compression. Snaps compressed with *lzo* are slightly larger but can decompress quicker, reducing the time it takes for freshly installed or refreshed snaps to launch.
 
-To specify *lzo* compression, set ``compression: lzo`` in your snap’s *snapcraft.yaml* and rebuild your snap, as shown in the following example:
+To specify *lzo* compression, set ``compression: lzo`` in your snap’s :file:`snapcraft.yaml` file and rebuild your snap, as shown in the following example:
 
 .. code:: yaml
 
@@ -375,7 +375,7 @@ Examples: ``'1'``, ``'1.2'``, ``'1.2.3'``, ``git`` (will be replaced by a ``git 
 Plugs and slots for an entire snap
 ----------------------------------
 
-Plugs and slots for an :ref:`interface <supported-interfaces>` are usually configured per-app or per-daemon within *snapcraft.yaml*. See :ref:`Snapcraft app metadata <snapcraft-app-and-service-metadata>` for more details. However, ``snapcraft.yaml`` also enables global *plugs* and *slots* configuration for an entire snap:
+Plugs and slots for an :ref:`interface <supported-interfaces>` are usually configured per-app or per-daemon within :file:`snapcraft.yaml`. See :ref:`Snapcraft app metadata <snapcraft-app-and-service-metadata>` for more details. However, ``snapcraft.yaml`` also enables global *plugs* and *slots* configuration for an entire snap:
 
 .. _snapcraft-top-level-metadata-plugs:
 

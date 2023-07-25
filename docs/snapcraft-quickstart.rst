@@ -11,7 +11,7 @@ The purpose of this how-to is to provide Linux developers, packagers, and users 
 
 -  an overview of the snap ecosystem
 -  a detailed explanation of the Snapcraft tool and its usage
--  the syntax and components of the build recipe for snaps (the *snapcraft.yaml* file)
+-  the syntax and components of the build recipe for snaps (the :file:`snapcraft.yaml` file)
 -  the process of uploading a built snap into the Snap Store
 
 Here’s what you need

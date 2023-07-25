@@ -5,7 +5,7 @@
 Basic snapcraft.yaml example
 ============================
 
-The following is a complete example *snapcraft.yaml* file taken from our :ref:`Python documentation <python-apps>`. It’s for an application called `yt-dlp <https://github.com/yt-dlp/yt-dlp>`__, a command line tool for parsing online videos.
+The following is a complete example :file:`snapcraft.yaml` file taken from our :ref:`Python documentation <python-apps>`. It’s for an application called `yt-dlp <https://github.com/yt-dlp/yt-dlp>`__, a command line tool for parsing online videos.
 
 We will look at each section of the code separately and learn what it does:
 

@@ -19,7 +19,7 @@ Snaps address these gaps, while building upon the work you’ve already done to 
 Getting started
 ---------------
 
-Snaps are defined in a single YAML file placed in the root folder of your project. The following example shows an entire *snapcraft.yaml* file based on the snap of an existing project, `yt-dlp <https://snapcraft.io/yt-dlp>`__. There are minor differences, such as the version definition and confinement level, but these can be easily changed after the snap is working. Don’t worry, we’ll break this down.
+Snaps are defined in a single YAML file placed in the root folder of your project. The following example shows an entire :file:`snapcraft.yaml` file based on the snap of an existing project, `yt-dlp <https://snapcraft.io/yt-dlp>`__. There are minor differences, such as the version definition and confinement level, but these can be easily changed after the snap is working. Don’t worry, we’ll break this down.
 
 .. code:: yaml
 
@@ -49,7 +49,7 @@ Snaps are defined in a single YAML file placed in the root folder of your projec
 Metadata
 ~~~~~~~~
 
-The ``snapcraft.yaml`` file starts with a small amount of human-readable metadata, which usually can be lifted from the GitHub description or project README.md. This data is used in the presentation of your app in the Snap Store.
+The :file:`snapcraft.yaml` file starts with a small amount of human-readable metadata, which usually can be lifted from the GitHub description or project README.md. This data is used in the presentation of your app in the Snap Store.
 
 .. code:: yaml
 
@@ -146,7 +146,7 @@ You can download the example repository with the following command:
 
    $ git clone https://github.com/degville/snap-yt-dlp.git
 
-After you’ve created the *snapcraft.yaml* (which already exists in the above repository), you can build the snap by simply executing the *snapcraft* command in the project directory:
+After you’ve created the :file:`snapcraft.yaml` (which already exists in the above repository), you can build the snap by simply executing the *snapcraft* command in the project directory:
 
 .. code:: bash
 
@@ -187,7 +187,7 @@ You can also clean up the build environment, although this will slow down the ne
 
    snapcraft clean
 
-By default, when you make a change to snapcraft.yaml, snapcraft only builds the parts that have changed. Cleaning a build, however, forces your snap to be rebuilt in a clean environment and will take longer.
+By default, when you make a change to :file:`snapcraft.yaml`, snapcraft only builds the parts that have changed. Cleaning a build, however, forces your snap to be rebuilt in a clean environment and will take longer.
 
 Publishing your snap
 --------------------
@@ -211,7 +211,7 @@ You can publish your own version of a snap, provided you do so under a name you 
 
    snapcraft register mypythonsnap
 
-Be sure to update the ``name:`` in your ``snapcraft.yaml`` to match this registered name, then run :command:`snapcraft` again.
+Be sure to update the ``name:`` in your :file:`snapcraft.yaml` file to match this registered name, then run :command:`snapcraft` again.
 
 Upload your snap
 ~~~~~~~~~~~~~~~~
@@ -222,6 +222,6 @@ Use snapcraft to push the snap to the Snap Store.
 
    snapcraft upload --release=edge mypythonsnap_*.snap
 
-If you’re happy with the result, you can commit the snapcraft.yaml to your GitHub repo and `turn on automatic builds <https://build.snapcraft.io>`__ so any further commits automatically get released to edge, without requiring you to manually build locally.
+If you’re happy with the result, you can commit the :file:`snapcraft.yaml` to your GitHub repo and `turn on automatic builds <https://build.snapcraft.io>`__ so any further commits automatically get released to edge, without requiring you to manually build locally.
 
 Congratulations! You’ve just built and published your first Python snap. For a more in-depth overview of the snap building process, see :ref:`Creating a snap <creating-a-snap>`.

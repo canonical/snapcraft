@@ -9,7 +9,7 @@ The *snapcraft.yaml* file is the main entry point to create a snap through Snapc
 
 .. note::
 
-   See :ref:`Snapcraft checklist <snapcraft-checklist>` for an overview of the typical project details needed before creating *snapcraft.yaml*.
+   See :ref:`Snapcraft checklist <snapcraft-checklist>` for an overview of the typical project details needed before creating :file:`snapcraft.yaml`.
 
 In general, snapcraft.yaml can be organised into three principle sections:
 

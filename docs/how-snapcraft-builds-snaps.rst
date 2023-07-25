@@ -31,11 +31,11 @@ The list of available global options and commands can be checked with:
 snapcraft.yaml
 --------------
 
-Snaps are created using a build recipe defined in a file called ``snapcraft.yaml``.
+Snaps are created using a build recipe defined in a file called :file:`snapcraft.yaml` file.
 
 When the snapcraft tool is executed on the command line, it will look for the file in the current project work directory, either in the top-level folder or the *f* sub-folder. If the file is found, snapcraft will then parse its contents and progress the build toward completion.
 
-``snapcraft.yaml`` is a configuration file written in the YAML language, with stanzas defining the application structure and behavior. When snapcraft runs and parses this file, it will use the declared information to build the snap. For developers more familiar with the traditional Linux build systems, the process is somewhat similar to the use of a Makefile or an RPM spec file.
+:file:`snapcraft.yaml` is a configuration file written in the YAML language, with stanzas defining the application structure and behavior. When snapcraft runs and parses this file, it will use the declared information to build the snap. For developers more familiar with the traditional Linux build systems, the process is somewhat similar to the use of a Makefile or an RPM spec file.
 
 You can create the snapcraft.yaml file manually in your project directory, or you can run the snapcraft init command, which will create a template file you can then populate with the required information.
 

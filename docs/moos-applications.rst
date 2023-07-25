@@ -32,7 +32,7 @@ Ready to get started? By the end of this guide, you’ll understand how to make 
 Getting started
 ---------------
 
-Snaps are defined in a single YAML file placed in the root folder of your project. The following shows the entire *snapcraft.yaml* file for an example `MOODDB project <https://github.com/snapcraft-docs/moos>`__. Don’t worry, we’ll break this down.
+Snaps are defined in a single YAML file placed in the root folder of your project. The following shows the entire :file:`snapcraft.yaml` file for an example `MOODDB project <https://github.com/snapcraft-docs/moos>`__. Don’t worry, we’ll break this down.
 
 .. code:: yaml
 
@@ -59,7 +59,7 @@ Snaps are defined in a single YAML file placed in the root folder of your projec
 Metadata
 ~~~~~~~~
 
-The ``snapcraft.yaml`` file starts with a small amount of human-readable metadata, which usually can be lifted from the GitHub description or project README.md. This data is used in the presentation of your app in the Snap Store.
+The :file:`snapcraft.yaml` file starts with a small amount of human-readable metadata, which usually can be lifted from the GitHub description or project README.md. This data is used in the presentation of your app in the Snap Store.
 
 .. code:: yaml
 
@@ -150,7 +150,7 @@ You can download the example repository with the following command:
 
    $ git clone https://github.com/snapcraft-docs/moos
 
-After you’ve created the *snapcraft.yaml*, you can build the snap by simply executing the *snapcraft* command in the project directory:
+After you’ve created the :file:`snapcraft.yaml` file, you can build the snap by simply executing the *snapcraft* command in the project directory:
 
 .. code:: bash
 
@@ -208,7 +208,7 @@ You can publish your own version of a snap, provided you do so under a name you 
 
    $ snapcraft register mymoossnap
 
-Be sure to update the ``name:`` in your ``snapcraft.yaml`` to match this registered name, then run :command:`snapcraft` again.
+Be sure to update the ``name:`` in your :file:`snapcraft.yaml` file to match this registered name, then run :command:`snapcraft` again.
 
 Upload your snap
 ~~~~~~~~~~~~~~~~

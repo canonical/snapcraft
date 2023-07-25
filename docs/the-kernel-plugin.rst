@@ -15,7 +15,7 @@ This plugin uses the common plugin keywords as well as those for “sources”. 
 
 The following kernel specific options are provided by this plugin:
 
--  **kernel-image-target** (yaml object, string or null for default target) The default target is *bzImage* and can be set to any specific target. For more complex cases where one would want to use the same *snapcraft.yaml* to target multiple architectures, a *yaml* object can be used. This yaml object would be a map of Debian architecture and kernel image build targets.
+-  **kernel-image-target** (yaml object, string or null for default target) The default target is *bzImage* and can be set to any specific target. For more complex cases where one would want to use the same :file:`snapcraft.yaml` file to target multiple architectures, a *yaml* object can be used. This yaml object would be a map of Debian architecture and kernel image build targets.
 
 -  **kernel-initrd-modules** (array of string) List of modules to include in *initrd*. **Note**: kernel snaps do not provide the core boot logic which comes from Ubuntu Core OS snap. Include all modules you need for mounting *rootfs* here.
 

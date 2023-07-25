@@ -81,7 +81,7 @@ Terms and definitions
       See :ref:`Base snaps <base-snaps>` for more details.
 
    core18
-      *core18* is a base snap built from `Ubuntu 18.04 LTS <http://releases.ubuntu.com/18.04/>`__. It’s the current standard base for snap building and is the recommended base for the majority of snaps. It’s what the :ref:`snapcraft init <snapcraft-overview-creating-snapcraft>` command includes when generating a new project’s template *snapcraft.yaml* .
+      *core18* is a base snap built from `Ubuntu 18.04 LTS <http://releases.ubuntu.com/18.04/>`__. It’s the current standard base for snap building and is the recommended base for the majority of snaps. It’s what the :ref:`snapcraft init <snapcraft-overview-creating-snapcraft>` command includes when generating a new project’s template :file:`snapcraft.yaml` file.
 
       See :ref:`Base snaps <base-snaps>` for more details.
 

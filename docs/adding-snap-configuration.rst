@@ -98,7 +98,7 @@ This kind of implementation can be split into 3 scripts:
 -  **default-configure hook script** calls the management functions on first install before services are started
 -  **configure hook script** calls the management functions on installation and changes
 
-The above scripts will also need to be linked to a snap’s **snapcraft.yaml**.
+The above scripts will also need to be linked to a snap’s :file:`snapcraft.yaml`.
 
 When a user changes the configuration of a snap, the :ref:`configure hook script <supported-snap-hooks-the-configure-hook>` is always executed. Through functions in the management script, this hook will typically validate the configuration and, for example, update environment variables or write to the necessary configuration files.
 

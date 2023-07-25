@@ -19,12 +19,12 @@ Support for ``base: core`` has been added.
 
 This enables you to take advantage of the many new Snapcraft 3 features while using 16.04 as a :ref:`base <base-snaps>`. Previously, you needed to use the 18.04 base.
 
-Alternate directory for *snapcraft.yaml*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Alternate directory for snapcraft.yaml
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``build-aux/snap`` is now supported as an alternative directory for *snapcraft.yaml* and its assets (i.e.; hooks, gui, …).
+``build-aux/snap`` is now supported as an alternative directory for :file:`snapcraft.yaml` and its assets (i.e.; hooks, gui, …).
 
-To avoid confusion, snapcraft now display what directory it is picking for assets, depending on where the *snapcraft.yaml* is found. It will only pick ``build-aux/snap`` for assets if the ``snapcraft.yaml`` is found in that path.
+To avoid confusion, snapcraft now display what directory it is picking for assets, depending on where the :file:`snapcraft.yaml` is found. It will only pick ``build-aux/snap`` for assets if the :file:`snapcraft.yaml` file is found in that path.
 
 String validation
 ~~~~~~~~~~~~~~~~~

@@ -28,7 +28,7 @@ If you cannot find an answer to your question here, feel free to ask it on `the 
 
    -  Exposing a ``roslaunch`` command from your snap will automatically launch a ``roscore`` if needed. The only reason to expose explicitly the roscore would be if you plan to start the ``roscore`` explicitly from your snap.
 
--  Where should my *snapcraft.yaml* file live?
+-  Where should my :file:`snapcraft.yaml` file live?
 
    -  Within the package:
 
@@ -57,7 +57,7 @@ If you cannot find an answer to your question here, feel free to ask it on `the 
 
 -  The command(s) ``rosrun`` and/or ``roslaunch`` are not available in my snap.
 
-   -  If this happens, it means that your ROS project does not define a runtime dependency on either ``rosrun`` nor ``roslaunch`` anywhere. You can fix this by declaring the dependency in the appropriate ROS *package.xml* file. Another option is to list either (or both) ROS packages as ``stage-packages`` in your *snapcraft.yaml*. The ROS packages for ``rosrun`` and ``roslaunch`` are respectively:
+   -  If this happens, it means that your ROS project does not define a runtime dependency on either ``rosrun`` nor ``roslaunch`` anywhere. You can fix this by declaring the dependency in the appropriate ROS *package.xml* file. Another option is to list either (or both) ROS packages as ``stage-packages`` in your :file:`snapcraft.yaml` file. The ROS packages for ``rosrun`` and ``roslaunch`` are respectively:
 
       -  ``ros-${ROS-DISTRO}-rosbash``
       -  ``ros-${ROS-DISTRO}-roslaunch``.

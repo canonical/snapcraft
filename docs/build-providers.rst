@@ -174,7 +174,7 @@ First, create and run a new container based on Ubuntu 22.04 LTS. Our example cal
 
    $ lxc launch ubuntu:22.04 mysnapcraft
 
-Copy your snap’s *snapcraft.yaml* to this new container:
+Copy your snap’s :file:`snapcraft.yaml` file to this new container:
 
 .. code:: bash
 

@@ -41,7 +41,7 @@ Let us explore the differences between core18 and core20.
 core18
 ~~~~~~
 
-Snaps are defined in a single YAML file placed in the root folder of your project. The following example shows the entire *snapcraft.yaml* file for an example project, `ros-talker-listener <https://github.com/snapcraft-docs/ros-talker-listener>`__. Don’t worry, we’ll break this down.
+Snaps are defined in a single YAML file placed in the root folder of your project. The following example shows the entire :file:`snapcraft.yaml` file for an example project, `ros-talker-listener <https://github.com/snapcraft-docs/ros-talker-listener>`__. Don’t worry, we’ll break this down.
 
 .. code:: yaml
 
@@ -151,7 +151,7 @@ In snap, an application is usually prefixed by the snap name so that the applica
 Building the snap
 ~~~~~~~~~~~~~~~~~
 
-After you’ve created the *snapcraft.yaml*, you can build the snap by simply executing the :command:`snapcraft` command in the project directory:
+After you have created the :file:`snapcraft.yaml` file, you can build the snap by simply executing the :command:`snapcraft` command in the project directory:
 
 .. code:: bash
 
@@ -261,7 +261,7 @@ You can download the example repository with the following command:
 Metadata
 ~~~~~~~~
 
-The *snapcraft.yaml* file starts with a small amount of human-readable metadata, which usually can be lifted from the GitHub description or project README.md. This data is used in the `presentation of your app in the Snap Store <https://snapcraft.io/plotjuggler>`__.
+The :file:`snapcraft.yaml` file starts with a small amount of human-readable metadata, which usually can be lifted from the GitHub description or project README.md. This data is used in the `presentation of your app in the Snap Store <https://snapcraft.io/plotjuggler>`__.
 
 .. code:: yaml
 
@@ -343,7 +343,7 @@ In snap, an application is usually prefixed by the snap name so that the applica
 Building the snap
 ~~~~~~~~~~~~~~~~~
 
-After you’ve created the *snapcraft.yaml*, you can build the snap by simply executing the :command:`snapcraft` command in the project directory:
+After you have created the :file:`snapcraft.yaml` file, you can build the snap by simply executing the :command:`snapcraft` command in the project directory:
 
 .. code:: bash
 

@@ -10,9 +10,9 @@ When :ref:`creating snapcraft.yaml <creating-snapcraft-yaml>` to build a new sna
 Exposing executable components
 ------------------------------
 
-A snap’s executable is exposed to the host system via the top-level ``apps`` section of *snapcraft.yaml*. Its name needs to correspond with part name responsible for staging the executable within your snap.
+A snap’s executable is exposed to the host system via the top-level ``apps`` section of :file:`snapcraft.yaml`. Its name needs to correspond with part name responsible for staging the executable within your snap.
 
-For example, here’s a complete *snapcraft.yaml* for a fully-functional snap:
+For example, here’s a complete :file:`snapcraft.yaml` file for a fully-functional snap:
 
 .. code:: yaml
 

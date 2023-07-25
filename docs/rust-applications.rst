@@ -28,7 +28,7 @@ Ready to get started? By the end of this guide, you’ll understand how to make 
 Getting started
 ---------------
 
-Snaps are defined in a single YAML file placed in the root folder of your project. The following example shows the entire *snapcraft.yaml* file for an existing project, `XSV <https://github.com/snapcraft-docs/xsv>`__, leveraging the existing ``Cargo.toml`` to satisfy runtime requirements. Don’t worry, we’ll break this down.
+Snaps are defined in a single YAML file placed in the root folder of your project. The following example shows the entire :file:`snapcraft.yaml` file for an existing project, `XSV <https://github.com/snapcraft-docs/xsv>`__, leveraging the existing ``Cargo.toml`` to satisfy runtime requirements. Don’t worry, we’ll break this down.
 
 .. code:: yaml
 
@@ -150,7 +150,7 @@ You can download the example repository with the following command:
 
    $ git clone https://github.com/snapcraft-docs/xsv
 
-After you’ve created the *snapcraft.yaml*, you can build the snap by executing the *snapcraft* command in the project directory:
+After you have created the :file:`snapcraft.yaml` file, you can build the snap by executing the :command:`snapcraft` command in the project directory:
 
 .. code:: bash
 

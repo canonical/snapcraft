@@ -16,7 +16,7 @@ When building a snap, run :command:`snapcraft --debug` rather than :command:`sna
 
 With ``--debug``, if snapcraft encounters an error it will open a shell within the virtualised build environment that snapcraft instantiates by default.
 
-This enables you to view logs within the environment, check the value of environment variables, locate missing binaries and install missing dependencies. You can even edit *snapcraft.yaml* outside of the shell, and then run *snapcraft* within, to continue the build.
+This enables you to view logs within the environment, check the value of environment variables, locate missing binaries and install missing dependencies. You can even edit :file:`snapcraft.yaml` outside of the shell, and then run *snapcraft* within, to continue the build.
 
 Build issues are linked to the stage that *snapcraft* is working through (see :ref:`Snapcraft lifecycle <parts-lifecycle>`) when it generates an error, and the most common problems associated with each step are outlined below.
 

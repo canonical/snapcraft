@@ -8,7 +8,7 @@ Release notes: Snapcraft 5.0
 Snapcraft 5.0 is a milestone release that marks the end of a significant development cycle while adding several new and important features, including:
 
 -  New *snapcraft metrics* command
--  Metadata links added to *snapcraft.yaml*
+-  Metadata links added to :file:`snapcraft.yaml`
 -  Removal of legacy code base
 
 For general details, including installation instructions, see `Snapcraft overview <https://snapcraft.io/docs/snapcraft-overview>`__, or take a look at `Snapcraft release notes <https://snapcraft.io/docs/snapcraft-release-notes>`__ for other *Snapcraft* releases.
@@ -20,10 +20,10 @@ The ``snapcraft metrics`` command can be used to track installation and usage st
 
 For further details, see :ref:`Snapcraft metrics <snapcraft-metrics>`.
 
-Metadata links added to *snapcraft.yaml*
-----------------------------------------
+Metadata links added to snapcraft.yaml
+--------------------------------------
 
-You can now add user-friendly bespoke links, such as a donation URL, a contact link, or for filing issues, to a snap’s *snapcraft.yaml*.
+You can now add user-friendly bespoke links, such as a donation URL, a contact link, or for filing issues, to a snap's :file:`snapcraft.yaml` file.
 
 These links are translated into a more *wire protocol* friendly syntax for ``snap.yaml`` which can then be consumed by the Snap Store to enhance your snap’s listing.
 
@@ -34,7 +34,7 @@ Removal of legacy code base
 
 For a long time, since the creation of :ref:`base snaps <base-snaps>`, Snapcraft has maintained two code bases inside the same product - when no base was detected, Snapcraft would re-execute itself into the old code base.
 
-The absence of a base in ``snapcraft.yaml`` triggered this behaviour for backwards compatibility, and this absence essentially meant building for an Ubuntu 16.04 target.
+The absence of a base in :file:`snapcraft.yaml` triggered this behaviour for backwards compatibility, and this absence essentially meant building for an Ubuntu 16.04 target.
 
 Ubuntu 16.04 is now in its ESM phase, and it’s support has been dropped from Snapcraft 5+. Publishers needing continued support for ``base: core`` can now use Snapcraft’s 4.x track which maintains the old Ubuntu 16.04 compatible code base.
 
