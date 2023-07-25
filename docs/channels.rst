@@ -83,8 +83,8 @@ command:
 
    snap install skype --channel=insider/stable
 
-A user who already has Skype installed can switch channel with the snap
-refresh command:
+A user who already has Skype installed can switch channel with the
+:command:`snap refresh` command:
 
 .. code:: bash
 
@@ -114,7 +114,7 @@ The risk-levels have the following meaning:
 **stable**
     For the vast majority of users running on production environments.
 
-    Releases at this risk level are as stable as they will ever get, according
+    Releases at this risk-level are as stable as they will ever get, according
     to the project's standards. Important software will only reach this stage
     once it is ready for production use and may be used in products. There is
     an implied promise to avoid any changes that would disrupt those usages.
@@ -214,9 +214,10 @@ be pushed on demand by snap developers to help with fixes or temporary
 experimentation.
 
 Branch names convey their purpose, such as ``fix-for-bug123``, but the name
-is not exposed in the normal way, such as with ``snap info``. Instead, they
-can only be installed by someone who knows the branch name, and this is
-usually only shared by the snap developer to test a specific fix or release.
+is not exposed in the normal way, such as with the ``snap info`` command.
+Instead, they can only be installed by someone who knows the branch name, and
+this is usually only shared by the snap developer to test a specific fix or
+release.
 
 After 30 days with no further updates, a branch will be closed automatically.
 The replacement snap will then be chosen as it would be with
