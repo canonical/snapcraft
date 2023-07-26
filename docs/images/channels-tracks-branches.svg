@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<svg xmlns="http://www.w3.org/2000/svg" height="360" width="480"
+     version="1.1" viewBox="0 0 480 360">
+
+<defs>
+<g id="outer-line">
+  <path d="M 0,0 l 480,0" stroke="black" fill="none" />
+</g>
+<g id="inner-line">
+  <path d="M 0,0 l 15,0" stroke="black" fill="none" stroke-dasharray="3,2" />
+  <path d="M 15,0 l 340,0" stroke="black" fill="none" />
+</g>
+</defs>
+
+<rect x="0" y="0" width="480" height="360" fill="#e0e0e0" />
+
+<rect x="0" y="10" width="480" height="180" fill="white" />
+<use href="#outer-line" x="0" y="10" />
+<use href="#outer-line" x="0" y="190" />
+<text x="25" y="35" font-family="Ubuntu" font-size="15" font-weight="bold"
+	  text-anchor="left" dominant-baseline="text-after-edge"
+      fill="black">latest</text>
+
+<use href="#inner-line" x="5" y="55" />
+<path d="M 357,55 l 10,-10 l 60,0 l 0,20 l -60,0 z" stroke="black" fill="none" />
+<text x="375" y="55" font-family="Ubuntu" font-size="15"
+	  text-anchor="left" dominant-baseline="middle"
+      fill="black">stable</text>
+
+<use href="#inner-line" x="5" y="90" />
+<path d="M 357,90 l 10,-10 l 85,0 l 0,20 l -85,0 z" stroke="black" fill="none" />
+<text x="375" y="90" font-family="Ubuntu" font-size="15"
+	  text-anchor="left" dominant-baseline="middle"
+      fill="black">candidate</text>
+
+<use href="#inner-line" x="5" y="125" />
+<path d="M 357,125 l 10,-10 l 55,0 l 0,20 l -55,0 z" stroke="black" fill="none" />
+<text x="375" y="125" font-family="Ubuntu" font-size="15"
+	  text-anchor="left" dominant-baseline="middle"
+      fill="black">beta</text>
+
+<use href="#inner-line" x="5" y="160" />
+<path d="M 357,160 l 10,-10 l 55,0 l 0,20 l -55,0 z" stroke="black" fill="none" />
+<text x="375" y="160" font-family="Ubuntu" font-size="15"
+	  text-anchor="left" dominant-baseline="middle"
+      fill="black">edge</text>
+</svg>
