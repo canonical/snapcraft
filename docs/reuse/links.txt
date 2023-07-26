@@ -3,6 +3,7 @@
 .. _AppStream: https://www.freedesktop.org/software/appstream/docs/
 .. _Canonical Documentation Style Guide: https://docs.ubuntu.com/styleguide/en
 .. _Canonical website: https://canonical.com/
+.. _core20: https://snapcraft.io/core20
 .. _`Create a brand account`: https://snapcraft.io/docs/t/creating-snap-store-brand-accounts/6271
 .. _`Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License`: https://creativecommons.org/licenses/by-nc-sa/3.0/
 .. _`Flutter UI toolkit`: https://flutter.dev/
@@ -16,6 +17,7 @@
 .. _Sphinx reStructuredText Primer: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _`the Snapcraft forum`: https://forum.snapcraft.io
 .. _`Ubuntu Core`: https://ubuntu.com/core/
+.. _`Ubuntu 20.04 LTS`: http://releases.ubuntu.com/20.04/
 .. _vscode: https://code.visualstudio.com/
 .. _`YAML specification`: https://yaml.org/spec/
 

@@ -40,9 +40,10 @@ Terms and definitions
       See `Assertions <https://snapcraft.io/docs/assertions>`__ for more details.
 
    base
+   base snap
       A base is a special kind of snap that provides a run-time environment with a minimal set of libraries that are common to most applications. They’re transparent to users, but they need to be considered, and specified, when building a snap.
 
-      See :ref:`Base snaps <base-snaps>` for more details.
+      See :ref:`base-snaps` for more details.
 
    branch
       A branch is an optional finer subdivision of a channel for a published snap that allows for the creation of a short-lived sequences of snaps that can be pushed on demand by snap developers to help with fixes or temporary experimentation.
