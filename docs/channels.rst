@@ -8,6 +8,10 @@ Channels
 Channels are an important snap concept. They define which release of a snap is
 installed and tracked for updates.
 
+.. figure:: images/channels-tracks-branches.svg
+   :align: center
+   :alt: The relationships between channels, tracks and branches
+
 A channel consists of, and is subdivided by, tracks, risk-levels and branches:
 
 * :ref:`channels-tracks` enable snap developers to publish multiple supported
