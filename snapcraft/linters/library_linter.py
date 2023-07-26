@@ -15,6 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Library linter implementation."""
+import glob
+import os
+import subprocess
 from pathlib import Path
 from typing import List, Set
 
@@ -101,6 +104,20 @@ class LibraryLinter(Linter):
 
         return issues
 
+    def _find_deb_package(self, library_name):
+        for path in glob.glob("/usr/lib/**", recursive=True):
+            if os.path.basename(path) == library_name:
+                try:
+                    output = subprocess.run(
+                        ["dpkg", "-S", path], check=False, stdout=subprocess.PIPE
+                    )
+                except:  # pylint: disable=bare-except
+                    return None
+                if output.returncode != 0:
+                    return None
+                return output.stdout.decode("utf-8").split(":")[0]
+        return None
+
     def _check_dependencies_satisfied(
         self,
         elf_file: ElfFile,
@@ -132,11 +149,16 @@ class LibraryLinter(Linter):
                 if path in dependency.parents:
                     break
             else:
+                deb_package = self._find_deb_package(dependency.name)
+                if deb_package is None:
+                    message = f"missing dependency {dependency.name!r}."
+                else:
+                    message = f"missing dependency {dependency.name!r} (provided by {deb_package})."
                 issue = LinterIssue(
                     name=self._name,
                     result=LinterResult.WARNING,
                     filename=str(elf_file.path),
-                    text=f"missing dependency {dependency.name!r}.",
+                    text=message,
                     url="https://snapcraft.io/docs/linters-library",
                 )
                 issues.append(issue)
