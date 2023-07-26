@@ -2,6 +2,7 @@
 
 .. _micro-howto-migrate-from-core20-to-core22:
 
+===========================================
 (micro) Howto migrate from core20 to core22
 ===========================================
 
