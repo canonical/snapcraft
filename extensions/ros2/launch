@@ -39,6 +39,9 @@ if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" ] || [ -d "$SNAP/opt/ros
 fi
 
 source_with_prefix "$SNAP/opt/ros/$ROS_DISTRO"
-source_with_prefix "$SNAP/opt/ros/snap"
+
+if [ -f "$SNAP/opt/ros/snap/local_setup.bash" ]; then
+  source_with_prefix "$SNAP/opt/ros/snap"
+fi
 
 exec "${original_args[@]}"
