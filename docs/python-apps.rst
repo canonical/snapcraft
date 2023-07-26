@@ -51,6 +51,8 @@ break this down in the following sections.
        plugin: python
        source: https://github.com/yt-dlp/yt-dlp.git
 
+.. _python-apps-metadata:
+
 Metadata
 ~~~~~~~~
 
@@ -138,26 +140,20 @@ we only need to use one part: the *yt-dlp* source code.
        plugin: python
        source: https://github.com/yt-dlp/yt-dlp.git
 
-The Python plugin can be used to build Python-based parts that are normally
-built using setuptools. It can also be used to build packages published on the
-Python Package Index (PyPI).
-
-Additionally, the plugin can install dependencies required for the build,
-either from a :file:`requirements.txt` file, or using :command:`pip` directly.
-
-This example project uses neither of these features, but they can be added to your own project with the ``python-requirement`` and ``python-packages`` keywords, described in the :ref:`Python plugin documentation <the-python-plugin>`.
+The ``plugin`` keyword is used to select a language or technology-specific
+plugin that knows how to perform the build steps for the project.
+In this example, the :ref:`Python plugin <the-python-plugin>` is used to
+automate the build of this Python-based project.
 
 The ``source`` keyword points to the source code of the Python project, which
-can be a local directory or remote Git repository. Note that **your Python project should be using setuptools** and you should be able to run ``python setup.py bdist_wheel`` without errors. If either of these are not true, please consult the `setuptools documentation <https://setuptools.readthedocs.io/en/latest/>`__.
-
-If you need additional packages, the ``stage-packages`` keyword simply lists any package dependencies needed to run your app. A corresponding ``build-packages`` keyword can also be used to specify packages only needed during the build phase.
-
-For more details on Python-specific metadata, see :ref:`The Python plugin <the-python-plugin>`.
+can be a local directory or remote Git repository. In this case, it refers to
+the main project repository.
 
 Apps
 ~~~~
 
-Apps are the commands you want to expose to users and any background services your application provides. Each key under ``apps`` is the command name that should be made available on users' systems.
+Apps are the commands you want to expose to users, and also the names of any
+background services your application provides. Each key under ``apps`` is the command name that should be made available on users' systems.
 
 The ``command`` specifies the path to the binary to be run. This is resolved relative to the root of your snap contents.
 
@@ -168,12 +164,16 @@ The ``command`` specifies the path to the binary to be run. This is resolved rel
        command: bin/yt-dlp
        plugs: [home, network, network-bind, removable-media]
 
-If your command name matches the snap ``name``, users will be able run the command directly. If the names differ, then apps are prefixed with the snap ``name`` (``yt-dlp.command-name``, for example). This is to avoid conflicting with apps defined by other installed snaps.
+If the command name matches the name of the snap specified in the top-level
+``name`` keyword (see :ref:`above <python-apps-metadata>`), the binary file
+will be given the same name as the snap, as in this example.
+If the names differ, the binary file name will be prefixed with the snap name
+to avoid naming conflicts between installed snaps. An example of this would be
+``yt-dlp.some-command``.
 
-You can request an alias on the `Snapcraft forum <https://snapcraft.io/docs/process-for-aliases-auto-connections-and-tracks>`__ if your command name and snap name do not match but you don't want your command prefixed. These aliases are set up automatically when your snap is installed from the Snap Store.
 
 Building the snap
-~~~~~~~~~~~~~~~~~
+-----------------
 
 You can download the example repository with the following command:
 
@@ -181,7 +181,9 @@ You can download the example repository with the following command:
 
    $ git clone https://github.com/degville/snap-yt-dlp.git
 
-After you've created the :file:`snapcraft.yaml` (which already exists in the above repository), you can build the snap by simply executing the *snapcraft* command in the project directory:
+After you have created the :file:`snapcraft.yaml` file (which already exists
+in the above repository), you can build the snap by simply executing the
+:command:`snapcraft` command in the project directory:
 
 .. code:: bash
 
@@ -224,41 +226,6 @@ You can also clean up the build environment, although this will slow down the ne
 
 By default, when you make a change to :file:`snapcraft.yaml`, snapcraft only builds the parts that have changed. Cleaning a build, however, forces your snap to be rebuilt in a clean environment and will take longer.
 
-Publishing your snap
---------------------
-
-To share your snaps you need to publish them in the Snap Store. First, create an account on `the dashboard <https://dashboard.snapcraft.io/dev/account/>`__. Here you can customise how your snaps are presented, review your uploads and control publishing.
-
-You'll need to choose a unique “developer namespace” as part of the account creation process. This name will be visible by users and associated with your published snaps.
-
-Make sure the :command:`snapcraft` command is authenticated using the email address attached to your Snap Store account:
-
-.. code:: bash
-
-   snapcraft login
-
-Reserve a name for your snap
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You can publish your own version of a snap, provided you do so under a name you have rights to. You can register a name on `dashboard.snapcraft.io <https://dashboard.snapcraft.io/register-snap/>`__, or by running the following command:
-
-.. code:: bash
-
-   snapcraft register mypythonsnap
-
-Be sure to update the ``name:`` in your :file:`snapcraft.yaml` file to match this registered name, then run :command:`snapcraft` again.
-
-Upload your snap
-~~~~~~~~~~~~~~~~
-
-Use snapcraft to push the snap to the Snap Store.
-
-.. code:: bash
-
-   snapcraft upload --release=edge mypythonsnap_*.snap
-
-If you're happy with the result, you can commit the :file:`snapcraft.yaml` to your GitHub repo and `turn on automatic builds <https://build.snapcraft.io>`__ so any further commits automatically get released to edge, without requiring you to manually build locally.
-
-Congratulations! You've just built and published your first Python snap. For a more in-depth overview of the snap building process, see :ref:`Creating a snap <creating-a-snap>`.
+.. include:: common/publishing-snap.rst
 
 .. _`yt-dlp`: https://snapcraft.io/yt-dlp

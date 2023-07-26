@@ -60,7 +60,9 @@ extensions = [
 
 myst_enable_extensions = ["substitution", "deflist"]
 
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "sphinx-resources"]
+# The common directory contains reusable content; sphinx-resources is used to
+# host a submodule containing Sphinx theming and configuration.
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "common", "sphinx-resources"]
 
 rst_epilog = """
 .. include:: /reuse/links.txt
