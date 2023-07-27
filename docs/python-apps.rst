@@ -21,10 +21,7 @@ Getting started
 ---------------
 
 The following example shows an entire :file:`snapcraft.yaml` file based on the
-snap of an existing project, `yt-dlp`_. There will be minor differences to the
-latest version of the project, such as the version definition and confinement
-level, but these can be changed after the snap is working. Don't worry, we'll
-break this down in the following sections.
+snap of an existing project, `yt-dlp`_:
 
 .. code:: yaml
 
@@ -51,15 +48,18 @@ break this down in the following sections.
        plugin: python
        source: https://github.com/yt-dlp/yt-dlp.git
 
-.. _python-apps-metadata:
+There will be minor differences to the latest version of the project, such
+as the version definition and confinement level, but these can be changed
+after the snap is working. Don't worry, we'll break this down in the
+following sections.
 
 Metadata
 ~~~~~~~~
 
 The :file:`snapcraft.yaml` file starts with a small amount of
 human-readable metadata, which is often already available in the project's
-own packaging metadata or project README.md. This data is used in the
-presentation of the application in the Snap Store.
+own packaging metadata or project :file:`README.md`. This data is used in
+the presentation of the application in the Snap Store.
 
 .. code:: yaml
 
@@ -93,8 +93,7 @@ alongside a minimal set of libraries that are common to most applications.
    base: core20
 
 In this example, `core20`_ is the current standard base for snap building and
-is based on `Ubuntu 20.04 LTS`_. See :ref:`Base snaps <base-snaps>` for more
-details.
+is based on `Ubuntu 20.04 LTS`_. See :ref:`base-snaps` for more details.
 
 Security model
 ~~~~~~~~~~~~~~
@@ -152,10 +151,12 @@ the main project repository.
 Apps
 ~~~~
 
-Apps are the commands you want to expose to users, and also the names of any
-background services your application provides. Each key under ``apps`` is the command name that should be made available on users' systems.
+Apps are the commands you want to provide to users, and also the names of any
+background services your application provides. Each key under ``apps`` is the
+command name that should be made available on users' systems.
 
-The ``command`` specifies the path to the binary to be run. This is resolved relative to the root of your snap contents.
+The ``command`` specifies the path to the binary to be run. This is resolved
+relative to the root of your snap contents.
 
 .. code:: yaml
 
@@ -165,8 +166,8 @@ The ``command`` specifies the path to the binary to be run. This is resolved rel
        plugs: [home, network, network-bind, removable-media]
 
 If the command name matches the name of the snap specified in the top-level
-``name`` keyword (see :ref:`above <python-apps-metadata>`), the binary file
-will be given the same name as the snap, as in this example.
+``name`` keyword (see `Metadata`_ above), the binary file will be given the
+same name as the snap, as in this example.
 If the names differ, the binary file name will be prefixed with the snap name
 to avoid naming conflicts between installed snaps. An example of this would be
 ``yt-dlp.some-command``.
@@ -200,7 +201,9 @@ in the above repository), you can build the snap by simply executing the
    Snapping |
    Snapped yt-dlp_0+git.9e6dc74-dirty_multi.snap
 
-The resulting snap can be installed locally. This requires the ``--dangerous`` flag because the snap is not signed by the Snap Store. The ``--devmode`` flag acknowledges that you are installing an unconfined application:
+The resulting snap can be installed locally. This requires the ``--dangerous``
+flag because the snap is not signed by the Snap Store. The ``--devmode`` flag
+acknowledges that you are installing an unconfined application:
 
 .. code:: bash
 
@@ -218,14 +221,22 @@ Removing the snap is simple too:
 
    sudo snap remove yt-dlp
 
-You can also clean up the build environment, although this will slow down the next initial build:
+You can also clean up the build environment, although this will slow down the
+next initial build:
 
 .. code:: bash
 
    snapcraft clean
 
-By default, when you make a change to :file:`snapcraft.yaml`, snapcraft only builds the parts that have changed. Cleaning a build, however, forces your snap to be rebuilt in a clean environment and will take longer.
+By default, when you make a change to :file:`snapcraft.yaml`, snapcraft only
+builds the parts that have changed. Cleaning a build, however, forces your snap
+to be rebuilt in a clean environment and will take longer.
 
+.. Potentially just refer the reader to another tutorial.
 .. include:: common/publishing-snap.rst
+
+Congratulations! You've just built and published your first Python snap.
+For a more in-depth overview of the snap building process, see
+:ref:`creating-a-snap`.
 
 .. _`yt-dlp`: https://snapcraft.io/yt-dlp
