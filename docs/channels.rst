@@ -8,9 +8,9 @@ Channels
 Channels are an important snap concept. They define which release of a snap is
 installed and tracked for updates.
 
-.. figure:: images/channels-tracks-branches.svg
+.. figure:: images/channels-tracks-risk-levels.svg
    :align: center
-   :alt: The relationships between channels, tracks and branches
+   :alt: The relationship between tracks and risk-levels
 
 A channel consists of, and is subdivided by, tracks, risk-levels and branches:
 
@@ -66,11 +66,11 @@ Tracks are listed in the *channels* section of the output from the
    $ snap info skype
    [...]
    channels:
-     stable:            8.28.0.41  (51) 148MB classic
-     candidate:         ↑
-     beta:              ↑
-     edge:              ↑
-     insider/stable:    8.30.76.41 (53) 151MB classic
+     latest/stable:     8.99.0.403   2023-07-03 (287) 189MB -
+     latest/candidate:  ↑
+     latest/beta:       ↑
+     latest/edge:       ↑
+     insider/stable:    8.100.76.203 2023-07-24 (288) 189MB -
      insider/candidate: ↑
      insider/beta:      ↑
      insider/edge:      ↑
@@ -216,6 +216,10 @@ A branch is an optional, fine-grained subdivision of a channel for a published
 snap that allows for the creation of short-lived sequences of snaps that can
 be pushed on demand by snap developers to help with fixes or temporary
 experimentation.
+
+.. figure:: images/channels-risk-levels-branches.svg
+   :align: center
+   :alt: The relationship between risk-levels and branches
 
 Branch names convey their purpose, such as ``fix-for-bug123``, but the name
 is not exposed in the normal way, such as with the ``snap info`` command.

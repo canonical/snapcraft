@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<svg xmlns="http://www.w3.org/2000/svg" height="340" width="480"
+     version="1.1" viewBox="0 0 480 340">
+
+<defs>
+<g id="outer-line">
+  <path d="M 0,0 l 15,0" stroke="black" fill="none" stroke-dasharray="3,2" />
+  <path d="M 15,0 l 355,0" stroke="black" fill="none" />
+</g>
+<g id="inner-line">
+  <path d="M 0,0 l 15,0" stroke="black" fill="none" stroke-dasharray="3,2" />
+  <path d="M 15,0 l 240,0" stroke="black" fill="none" />
+</g>
+<g id="branches">
+  <path d="M 0,0 c 20,0 5,45 25,60 c -20,15 -5,60 -25,60 " stroke="black" fill="none" />
+  <text x="35" y="60" font-family="Ubuntu" font-size="15"
+	    text-anchor="left" dominant-baseline="middle"
+        fill="black">branches</text>
+</g>
+</defs>
+
+<rect x="0" y="0" width="370" height="340" fill="#e0e0e0" />
+
+<g transform="translate(0,10)">
+  <rect x="0" y="0" width="480" height="320" fill="white" />
+  <use href="#outer-line" x="0" y="0" />
+  <use href="#outer-line" x="0" y="320" />
+  <text x="25" y="25" font-family="Ubuntu" font-size="15" font-weight="bold"
+	    text-anchor="left" dominant-baseline="text-after-edge"
+        fill="black">latest</text>
+
+  <use href="#inner-line" x="5" y="40" />
+  <path d="M 257,40 l 10,-10 l 60,0 l 0,20 l -60,0 z" stroke="black" fill="#fffff0" />
+  <text x="275" y="40" font-family="Ubuntu" font-size="15"
+	    text-anchor="left" dominant-baseline="middle"
+        fill="black">stable</text>
+
+  <use href="#inner-line" x="5" y="75" />
+  <path d="M 257,75 l 10,-10 l 85,0 l 0,20 l -85,0 z" stroke="black" fill="#fffff0" />
+  <text x="275" y="75" font-family="Ubuntu" font-size="15"
+	    text-anchor="left" dominant-baseline="middle"
+        fill="black">candidate</text>
+
+  <use href="#inner-line" x="5" y="110" />
+  <path d="M 257,110 l 10,-10 l 55,0 l 0,20 l -55,0 z" stroke="black" fill="#fffff0" />
+  <text x="275" y="110" font-family="Ubuntu" font-size="15"
+	    text-anchor="left" dominant-baseline="middle"
+        fill="black">beta</text>
+
+  <path d="M 120,110 c 40,0 40,50 80,50 l 60,0" stroke="black" fill="none" />
+  <path d="M 260,160 l 10,-10 l 80,0 l 0,20 l -80,0 z" stroke="black" fill="#fff0f0" />
+  <text x="275" y="160" font-family="Ubuntu" font-size="15"
+	    text-anchor="left" dominant-baseline="middle"
+        fill="black">task-1234</text>
+
+  <path d="M 75,110 c 60,00 60,90 115,90 l 90,0" stroke="black" fill="none" />
+  <path d="M 260,200 l 10,-10 l 70,0 l 0,20 l -70,0 z" stroke="black" fill="#fff0f0" />
+  <text x="275" y="200" font-family="Ubuntu" font-size="15"
+	    text-anchor="left" dominant-baseline="middle"
+        fill="black">fix-1536</text>
+
+  <path d="M 30,110 c 80,00 80,130 150,130 l 90,0" stroke="black" fill="none" />
+  <path d="M 260,240 l 10,-10 l 70,0 l 0,20 l -70,0 z" stroke="black" fill="#fff0f0" />
+  <text x="275" y="240" font-family="Ubuntu" font-size="15"
+	    text-anchor="left" dominant-baseline="middle"
+        fill="black">bug-464</text>
+
+  <use href="#inner-line" x="5" y="290" />
+  <path d="M 257,290 l 10,-10 l 55,0 l 0,20 l -55,0 z" stroke="black" fill="#fffff0" />
+  <text x="275" y="290" font-family="Ubuntu" font-size="15"
+	    text-anchor="left" dominant-baseline="middle"
+        fill="black">edge</text>
+
+  <use href="#branches" x="375" y="140" />
+</g>
+</svg>
