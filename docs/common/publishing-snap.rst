@@ -11,8 +11,8 @@ Make sure the :command:`snapcraft` command is authenticated using the email addr
 
    snapcraft login
 
-Reserve a name for your snap
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Reserve a name for the snap
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can publish your own version of a snap, provided you do so under a name you have rights to. You can register a name on `dashboard.snapcraft.io <https://dashboard.snapcraft.io/register-snap/>`__, or by running the following command:
 
@@ -22,8 +22,8 @@ You can publish your own version of a snap, provided you do so under a name you 
 
 Be sure to update the ``name:`` in your :file:`snapcraft.yaml` file to match this registered name, then run :command:`snapcraft` again.
 
-Upload your snap
-~~~~~~~~~~~~~~~~
+Upload the snap
+~~~~~~~~~~~~~~~
 
 Use snapcraft to push the snap to the Snap Store.
 
@@ -31,6 +31,4 @@ Use snapcraft to push the snap to the Snap Store.
 
    snapcraft upload --release=edge mypythonsnap_*.snap
 
-If you're happy with the result, you can commit the :file:`snapcraft.yaml` to your GitHub repo and `turn on automatic builds <https://build.snapcraft.io>`__ so any further commits automatically get released to edge, without requiring you to manually build locally.
-
-Congratulations! You've just built and published your first Python snap. For a more in-depth overview of the snap building process, see :ref:`Creating a snap <creating-a-snap>`.
+If you're happy with the result, you can commit the :file:`snapcraft.yaml` to a GitHub repo and `turn on automatic builds <https://build.snapcraft.io>`__ so any further commits automatically get released to edge, without requiring you to manually build locally.
