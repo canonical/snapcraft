@@ -58,7 +58,7 @@ Metadata
 
 The :file:`snapcraft.yaml` file starts with a small amount of
 human-readable metadata, which is often already available in the project's
-own packaging metadata or project :file:`README.md`. This data is used in
+own packaging metadata or project :file:`README.md` file. This data is used in
 the presentation of the application in the Snap Store.
 
 .. code:: yaml
@@ -92,8 +92,8 @@ alongside a minimal set of libraries that are common to most applications.
 
    base: core20
 
-In this example, `core20`_ is the current standard base for snap building and
-is based on `Ubuntu 20.04 LTS`_. See :ref:`base-snaps` for more details.
+In this example, `core20`_ is used as the base for snap building, and is based
+on `Ubuntu 20.04 LTS`_. See :ref:`base-snaps` for more details.
 
 Security model
 ~~~~~~~~~~~~~~
