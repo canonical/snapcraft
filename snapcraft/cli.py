@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -26,6 +26,7 @@ from typing import Any, Dict
 import craft_cli
 import craft_store
 from craft_cli import ArgumentParsingError, EmitterMode, ProvideHelpException, emit
+from craft_providers import ProviderError
 
 import snapcraft
 import snapcraft_legacy
@@ -289,6 +290,9 @@ def run():  # noqa: C901
         retcode = 1
     except craft_store.errors.CraftStoreError as err:
         _emit_error(craft_cli.errors.CraftError(f"craft-store error: {err}"))
+        retcode = 1
+    except ProviderError as err:
+        _emit_error(craft_cli.errors.CraftError(f"craft-providers error: {err}"))
         retcode = 1
     except errors.LinterError as err:
         emit.error(craft_cli.errors.CraftError(f"linter error: {err}"))
