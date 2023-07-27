@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
-<svg xmlns="http://www.w3.org/2000/svg" height="400" width="480"
-     version="1.1" viewBox="0 0 480 400">
+<svg xmlns="http://www.w3.org/2000/svg" height="370" width="480"
+     version="1.1" viewBox="0 0 480 370">
 
 <defs>
 <g id="outer-line">
@@ -19,16 +19,16 @@
         fill="black">risk-levels</text>
 </g>
 <g id="tracks">
-  <path d="M 0,-185 c 30,0 5,180 30,185 c -25,5 0,185 -30,185 " stroke="black" fill="none" />
+  <path d="M 0,-180 c 30,0 5,165 30,180 c -25,15 0,180 -30,180 " stroke="black" fill="none" />
   <text x="40" y="0" font-family="Ubuntu" font-size="15"
 	    text-anchor="left" dominant-baseline="middle"
         fill="black">tracks</text>
 </g>
 </defs>
 
-<rect x="0" y="0" width="270" height="400" fill="#e0e0e0" />
+<rect x="0" y="0" width="270" height="370" fill="#e0e0e0" />
 
-<g transform="translate(0,20)">
+<g transform="translate(0,10)">
   <rect x="0" y="0" width="480" height="170" fill="white" />
   <use href="#outer-line" x="0" y="0" />
   <use href="#outer-line" x="0" y="170" />
@@ -37,25 +37,25 @@
         fill="black">latest</text>
 
   <use href="#inner-line" x="5" y="40" />
-  <path d="M 157,40 l 10,-10 l 60,0 l 0,20 l -60,0 z" stroke="black" fill="none" />
+  <path d="M 157,40 l 10,-10 l 60,0 l 0,20 l -60,0 z" stroke="black" fill="#fffff0" />
   <text x="175" y="40" font-family="Ubuntu" font-size="15"
 	    text-anchor="left" dominant-baseline="middle"
         fill="black">stable</text>
 
   <use href="#inner-line" x="5" y="75" />
-  <path d="M 157,75 l 10,-10 l 85,0 l 0,20 l -85,0 z" stroke="black" fill="none" />
+  <path d="M 157,75 l 10,-10 l 85,0 l 0,20 l -85,0 z" stroke="black" fill="#fffff0" />
   <text x="175" y="75" font-family="Ubuntu" font-size="15"
 	    text-anchor="left" dominant-baseline="middle"
         fill="black">candidate</text>
 
   <use href="#inner-line" x="5" y="110" />
-  <path d="M 157,110 l 10,-10 l 55,0 l 0,20 l -55,0 z" stroke="black" fill="none" />
+  <path d="M 157,110 l 10,-10 l 55,0 l 0,20 l -55,0 z" stroke="black" fill="#fffff0" />
   <text x="175" y="110" font-family="Ubuntu" font-size="15"
 	    text-anchor="left" dominant-baseline="middle"
         fill="black">beta</text>
 
   <use href="#inner-line" x="5" y="145" />
-  <path d="M 157,145 l 10,-10 l 55,0 l 0,20 l -55,0 z" stroke="black" fill="none" />
+  <path d="M 157,145 l 10,-10 l 55,0 l 0,20 l -55,0 z" stroke="black" fill="#fffff0" />
   <text x="175" y="145" font-family="Ubuntu" font-size="15"
 	    text-anchor="left" dominant-baseline="middle"
         fill="black">edge</text>
@@ -63,7 +63,7 @@
   <use href="#risk-levels" x="280" y="10" />
 </g>
 
-<g transform="translate(0,210)">
+<g transform="translate(0,190)">
   <rect x="0" y="0" width="480" height="170" fill="white" />
   <use href="#outer-line" x="0" y="0" />
   <use href="#outer-line" x="0" y="170" />
@@ -72,25 +72,25 @@
         fill="black">7.x</text>
 
   <use href="#inner-line" x="5" y="40" />
-  <path d="M 157,40 l 10,-10 l 60,0 l 0,20 l -60,0 z" stroke="black" fill="none" />
+  <path d="M 157,40 l 10,-10 l 60,0 l 0,20 l -60,0 z" stroke="black" fill="#fffff0" />
   <text x="175" y="40" font-family="Ubuntu" font-size="15"
 	    text-anchor="left" dominant-baseline="middle"
         fill="black">stable</text>
 
   <use href="#inner-line" x="5" y="75" />
-  <path d="M 157,75 l 10,-10 l 85,0 l 0,20 l -85,0 z" stroke="black" fill="none" />
+  <path d="M 157,75 l 10,-10 l 85,0 l 0,20 l -85,0 z" stroke="black" fill="#fffff0" />
   <text x="175" y="75" font-family="Ubuntu" font-size="15"
 	    text-anchor="left" dominant-baseline="middle"
         fill="black">candidate</text>
 
   <use href="#inner-line" x="5" y="110" />
-  <path d="M 157,110 l 10,-10 l 55,0 l 0,20 l -55,0 z" stroke="black" fill="none" />
+  <path d="M 157,110 l 10,-10 l 55,0 l 0,20 l -55,0 z" stroke="black" fill="#fffff0" />
   <text x="175" y="110" font-family="Ubuntu" font-size="15"
 	    text-anchor="left" dominant-baseline="middle"
         fill="black">beta</text>
 
   <use href="#inner-line" x="5" y="145" />
-  <path d="M 157,145 l 10,-10 l 55,0 l 0,20 l -55,0 z" stroke="black" fill="none" />
+  <path d="M 157,145 l 10,-10 l 55,0 l 0,20 l -55,0 z" stroke="black" fill="#fffff0" />
   <text x="175" y="145" font-family="Ubuntu" font-size="15"
 	    text-anchor="left" dominant-baseline="middle"
         fill="black">edge</text>
@@ -98,5 +98,5 @@
   <use href="#risk-levels" x="280" y="10" />
 </g>
 
-<use href="#tracks" x="380" y="200" />
+<use href="#tracks" x="380" y="185" />
 </svg>
