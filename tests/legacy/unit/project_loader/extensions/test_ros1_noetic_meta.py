@@ -120,6 +120,19 @@ class TestClass:
 
         assert ros1_extension.part_snippet == {
             "build-environment": [{"ROS_VERSION": "1"}, {"ROS_DISTRO": "noetic"}],
+        }
+
+        assert ros1_extension.get_part_snippet(plugin_name="catkin") == {
+            "build-environment": [{"ROS_VERSION": "1"}, {"ROS_DISTRO": "noetic"}],
+            "ros-build-snaps": [meta_dev],
+            "ros-content-sharing-extension-cmake-args": [
+                f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{meta_dev}/current/usr"'
+            ],
+            "stage-packages": ["ros-noetic-ros-environment"],
+        }
+
+        assert ros1_extension.get_part_snippet(plugin_name="catkin-tools") == {
+            "build-environment": [{"ROS_VERSION": "1"}, {"ROS_DISTRO": "noetic"}],
             "ros-build-snaps": [meta_dev],
             "ros-content-sharing-extension-cmake-args": [
                 f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{meta_dev}/current/usr"'
