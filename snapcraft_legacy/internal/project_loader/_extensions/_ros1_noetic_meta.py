@@ -83,5 +83,5 @@ class RosNoeticMetaBase(RosNoeticExtension):
         # If the part uses a ROS plugin, return the extra bits containing ROS plugin specifics entries
         # If not, still return the base ROS plugin entries.
         if plugin_name in ["catkin", "catkin-tools", "colcon"]:
-            return self.part_snippet | self.part_snippet_extra
+            return {**self.part_snippet,**self.part_snippet_extra}
         return self.part_snippet
