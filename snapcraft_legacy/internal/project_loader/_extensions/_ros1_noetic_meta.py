@@ -62,13 +62,13 @@ class RosNoeticMetaBase(RosNoeticExtension):
                 }
         }
 
-        self.part_snippet["ros-content-sharing-extension-cmake-args"] = [
+        self.part_snippet_extra["ros-content-sharing-extension-cmake-args"] = [
             f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{self.ros_noetic_snaps.sdk}/current/usr"'
         ]
 
-        self.part_snippet["stage-packages"] = [f"ros-{self.ROS_DISTRO}-ros-environment"]
+        self.part_snippet_extra["stage-packages"] = [f"ros-{self.ROS_DISTRO}-ros-environment"]
 
-        self.part_snippet["ros-build-snaps"] = [self.ros_noetic_snaps.sdk]
+        self.part_snippet_extra["ros-build-snaps"] = [self.ros_noetic_snaps.sdk]
 
         python_paths = self.app_snippet["environment"]["PYTHONPATH"]
         new_python_paths = [
