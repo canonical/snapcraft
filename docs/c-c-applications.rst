@@ -144,7 +144,7 @@ The ``summary`` can not exceed 79 characters. You can use a chevron '>' in the
 Base
 ~~~~
 
-The base keyword declares which :term:`base snap` to use with your project.
+The base keyword declares which :term:`base snap` to use with the project.
 A base snap is a special kind of snap that provides a run-time environment
 alongside a minimal set of libraries that are common to most applications.
 
@@ -159,10 +159,8 @@ Security model
 ~~~~~~~~~~~~~~
 
 Snaps are containerised to ensure more predictable application behaviour and
-greater security. Unlike other container systems, the shape of this confinement
-can be changed through a set of interfaces. These are declarations that tell
-the system to give permission for specific tasks, such as accessing a webcam
-or binding to a network port.
+greater security. The general level of access a snap has to the user's system
+depends on its level of confinement.
 
 The next section of the :file:`snapcraft.yaml` file describes the level of
 :term:`confinement` applied to the running application:
@@ -190,13 +188,7 @@ Parts
 
 Parts define what sources are needed to build your application. Parts can be
 anything: programs, libraries, or other needed assets, but for this example,
-we only need to use one part: the DOSBox source release tarball.
-
-The ``plugin`` keyword is used to select a language or technology-specific
-plugin that knows how to perform the build steps for the project. In this
-example, the :ref:`autotools plugin <the-autotools-plugin>` is used to
-automate the build, using the standard :command:`configure` and :command:`make`
-tools to build the part.
+we only need to use one part for the DOSBox source release tarball:
 
 .. code:: yaml
 
@@ -213,6 +205,12 @@ tools to build the part.
          - libsdl-net1.2-dev
          - libsdl-sound1.2-dev
          - libasound2-dev
+
+The ``plugin`` keyword is used to select a language or technology-specific
+plugin that knows how to perform the build steps for the project. In this
+example, the :ref:`autotools plugin <the-autotools-plugin>` is used to
+automate the build, using the standard :command:`configure` and :command:`make`
+tools to build the part.
 
 Before building the part, the packages listed in the ``build-packages`` section
 need to be installed in the build environment. These are the tools and libraries
@@ -239,12 +237,9 @@ For more details on autotools-specific metadata, see :ref:`the-autotools-plugin`
 Apps
 ~~~~
 
-Apps are the commands you want to provide to users, and also the names of any
-background services your application provides. Each key under ``apps`` is the
-command name that should be made available on users' systems.
-
-The ``command`` specifies the path to the binary to be run. This is resolved
-relative to the root of your snap contents.
+Apps are the commands and services that the snap provides to users. Each key
+under ``apps`` is the name of a command or service that should be made
+available on users' systems.
 
 .. code:: yaml
 
@@ -254,6 +249,9 @@ relative to the root of your snap contents.
        environment:
          "LD_LIBRARY_PATH": "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pulseaudio"
          "DISABLE_WAYLAND": "1"
+
+The ``command`` specifies the path to the binary to be run. This is resolved
+relative to the root of the snap contents.
 
 If the command name matches the name of the snap specified in the top-level
 ``name`` keyword (see `Metadata`_ above), the binary file will be given the

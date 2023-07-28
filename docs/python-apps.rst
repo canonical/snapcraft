@@ -50,16 +50,16 @@ snap of an existing project, `yt-dlp`_:
 
 There will be minor differences to the latest version of the project, such
 as the version definition and confinement level, but these can be changed
-after the snap is working. Don't worry, we'll break this down in the
-following sections.
+after the snap is working. We'll break this file down into its components in
+the following sections.
 
 Metadata
 ~~~~~~~~
 
 The :file:`snapcraft.yaml` file starts with a small amount of
 human-readable metadata, which is often already available in the project's
-own packaging metadata or project :file:`README.md` file. This data is used in
-the presentation of the application in the Snap Store.
+own packaging metadata or :file:`README.md` file. This data is used in the
+presentation of the application in the Snap Store.
 
 .. code:: yaml
 
@@ -84,7 +84,7 @@ The ``summary`` can not exceed 79 characters. You can use a chevron '>' in the
 Base
 ~~~~
 
-The base keyword declares which :term:`base snap` to use with your project.
+The base keyword declares which :term:`base snap` to use with the project.
 A base snap is a special kind of snap that provides a run-time environment
 alongside a minimal set of libraries that are common to most applications.
 
@@ -99,10 +99,8 @@ Security model
 ~~~~~~~~~~~~~~
 
 Snaps are containerised to ensure more predictable application behaviour and
-greater security. Unlike other container systems, the shape of this confinement
-can be changed through a set of interfaces. These are declarations that tell
-the system to give permission for specific tasks, such as accessing a webcam
-or binding to a network port.
+greater security. The general level of access a snap has to the user's system
+depends on its level of confinement.
 
 The next section of the :file:`snapcraft.yaml` file describes the level of
 :term:`confinement` applied to the running application:
@@ -130,7 +128,7 @@ Parts
 
 Parts define what sources are needed to build your application. Parts can be
 anything: programs, libraries, or other needed assets, but for this example,
-we only need to use one part: the *yt-dlp* source code.
+we only need to use one part for the *yt-dlp* source code:
 
 .. code:: yaml
 
@@ -141,7 +139,7 @@ we only need to use one part: the *yt-dlp* source code.
 
 The ``plugin`` keyword is used to select a language or technology-specific
 plugin that knows how to perform the build steps for the project.
-In this example, the :ref:`Python plugin <the-python-plugin>` is used to
+In this example, the :ref:`python plugin <the-python-plugin>` is used to
 automate the build of this Python-based project.
 
 The ``source`` keyword points to the source code of the Python project, which
@@ -151,12 +149,9 @@ the main project repository.
 Apps
 ~~~~
 
-Apps are the commands you want to provide to users, and also the names of any
-background services your application provides. Each key under ``apps`` is the
-command name that should be made available on users' systems.
-
-The ``command`` specifies the path to the binary to be run. This is resolved
-relative to the root of your snap contents.
+Apps are the commands and services that the snap provides to users. Each key
+under ``apps`` is the name of a command or service that should be made
+available on users' systems.
 
 .. code:: yaml
 
@@ -165,6 +160,9 @@ relative to the root of your snap contents.
        command: bin/yt-dlp
        plugs: [home, network, network-bind, removable-media]
 
+The ``command`` specifies the path to the binary to be run. This is resolved
+relative to the root of the snap contents.
+
 If the command name matches the name of the snap specified in the top-level
 ``name`` keyword (see `Metadata`_ above), the binary file will be given the
 same name as the snap, as in this example.
@@ -172,6 +170,10 @@ If the names differ, the binary file name will be prefixed with the snap name
 to avoid naming conflicts between installed snaps. An example of this would be
 ``yt-dlp.some-command``.
 
+The confinement of the snap, which was defined in the `Security model`_ section
+above, can be changed through a set of :term:`interfaces`. In this example,
+the ``plugs`` keyword is used to specify the interfaces that the snap needs
+to access.
 
 Building the snap
 -----------------
