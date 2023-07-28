@@ -2,12 +2,13 @@
 
 function source_with_prefix() {
     export ROS_WORKSPACE_CURRENT_PREFIX="$1"
-    if [ ! -f "$ROS_WORKSPACE_CURRENT_PREFIX/local_setup.bash" ]; then
-      echo "error: $ROS_WORKSPACE_CURRENT_PREFIX/local_setup.bash not found"
+    SETUP_SCRIPT="$ROS_WORKSPACE_CURRENT_PREFIX/local_setup.bash"
+    if [ ! -f "$SETUP_SCRIPT" ]; then
+      echo "error: $SETUP_SCRIPT not found"
       exit 1
     fi
     # shellcheck disable=SC1090,SC1091
-    source "$ROS_WORKSPACE_CURRENT_PREFIX/local_setup.bash"
+    source "$SETUP_SCRIPT"
 }
 
 # Save off parameters, the sourced setup scripts may manipulate them.
