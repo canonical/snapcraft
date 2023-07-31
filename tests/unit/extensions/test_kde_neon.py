@@ -217,8 +217,8 @@ def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
             },
             {
                 "XDG_CONFIG_HOME": (
-                    "$CRAFT_STAGE/etc/xdg:/snap/kf5-5-108-qt-5-15-10-core22-sdk/current/etc/xdg"
-                    "/etc/xdg"
+                    "$CRAFT_STAGE/etc/xdg:/snap/kf5-5-108-qt-5-15-10-core22-sdk"
+                    "/current/etc/xdg:/etc/xdg${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}"
                 )
             },
             {
