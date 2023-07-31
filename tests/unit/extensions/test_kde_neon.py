@@ -53,7 +53,9 @@ def kde_neon_extension_with_default_build_snap_from_latest_edge():
         yaml_data={
             "base": "core22",
             "parts": {
-                "part1": {"build-snaps": ["kf5-5-108-qt-5-15-10-core22-sdk/latest/edge"]}
+                "part1": {
+                    "build-snaps": ["kf5-5-108-qt-5-15-10-core22-sdk/latest/edge"]
+                }
             },
         },
         arch="amd64",
