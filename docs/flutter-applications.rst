@@ -12,43 +12,42 @@ Snapcraft can be used to package and distribute Flutter applications in a
 way that enables convenient installation by users.
 
 The process of creating a snap for a Flutter application builds on standard
-Python packaging tools, making it possible to adapt or integrate an
-application's existing packaging into the snap building process.
-
-Snaps are defined in a single :file:`snapcraft.yaml` file placed in a
-:file:`snap` folder at the root of your project. This YAML file describes
-the application, its dependencies and how it should be built.
+Flutter development and packaging tools, making it possible to adapt or
+integrate an application's existing packaging into the snap building process.
 
 
 Getting started
 ---------------
 
-The following shows the entire :file:`snapcraft.yaml` file for a simple
-template project, `super-cool-app`_:
+Snaps are defined in a single :file:`snapcraft.yaml` file placed in a
+:file:`snap` folder at the root of your project. This YAML file describes
+the application, its dependencies and how it should be built.
+
+The following shows the relevant parts of the :file:`snapcraft.yaml` file for
+a simple template project, `my-flutter-app`_:
 
 .. code:: yaml
 
-   name: super-cool-app
-   version: git
-   summary: Super Cool App
-   description: Super Cool App that does everything!
+   name: my-flutter-app
+   version: '1.0'
+   summary: An example Flutter snap
+   description: |
+     An example showing how Flutter programs can be packaged as snaps.
+
+   base: core22
    confinement: strict
-   base: core18
    grade: stable
-   architectures:
-     - build-on: [ amd64 ]
-     - build-on: [ arm64 ]
 
    apps:
-     super-cool-app:
-       command: super_cool_app
-       extensions: [flutter-stable]
+     my-flutter-app:
+       command: my_flutter_app
+       extensions: [gnome]
 
    parts:
-     super-cool-app:
+     my-flutter-app:
        source: .
        plugin: flutter
-       flutter-target: lib/main.dart # The main entry-point file of the application
+       flutter-target: lib/main.dart
 
 We'll break this file down into its components in the following sections.
 
@@ -62,10 +61,11 @@ presentation of the application in the Snap Store.
 
 .. code:: yaml
 
-   name: super-cool-app
+   name: my-flutter-app
    version: '1.0'
-   summary: Super Cool App
-   description: Super Cool App that does everything!
+   summary: An example Flutter snap
+   description: |
+     An example showing how Flutter programs can be packaged as snaps.
 
 The ``name`` must be unique in the Snap Store. Valid snap names consist of lower-case alphanumeric characters and hyphens. They cannot be all numbers and they also cannot start or end with a hyphen.
 
@@ -83,10 +83,10 @@ alongside a minimal set of libraries that are common to most applications.
 
 .. code:: yaml
 
-   base: core18
+   base: core22
 
-In this example, `core18`_ is used as the base for snap building, and is based
-on `Ubuntu 18.04 LTS`_. See :ref:`Base snaps <base-snaps>` for more details.
+In this example, `core22`_ is used as the base for snap building, and is based
+on `Ubuntu 22.04 LTS`_. See :ref:`Base snaps <base-snaps>` for more details.
 
 Security model
 ~~~~~~~~~~~~~~
@@ -102,42 +102,39 @@ The next section of the :file:`snapcraft.yaml` file describes the level of
 
    confinement: strict
 
-It is best to start creating a snap with a confinement level that provides
-warnings for confinement issues instead of strictly applying confinement.
-This is done by specifying the ``devmode`` (developer mode) confinement value.
-When a snap is in devmode, runtime confinement violations will be allowed but
-reported. These can be reviewed by running :command:`journalctl -xe`.
+It is usually best to start creating a snap with a confinement level that
+provides warnings for confinement issues by specifying a ``confinement`` value of ``devmode``. In this example, the ``strict`` mode is used instead,
+indicating that run-time confinement issues should not occur.
 
-Because devmode is only intended for development, snaps must be set to strict
-confinement before they can be published as "stable" in the Snap Store.
-Once an application is working well in devmode, you can review confinement
-violations, add appropriate interfaces, and switch to strict confinement.
-
-In this example, strict confinement is already in use.
+Specifying strict confinement enables the ``grade`` of the snap to be marked
+as ``stable`` and published to a stable channel in the Snap Store.
 
 Parts
 ~~~~~
 
 Parts define what sources are needed to build your application. Parts can be
 anything: programs, libraries, or other needed assets, but for this example,
-we only need to use one part for the *super-cool-app* source code:
+we only need to use one part for the *my-flutter-app* source code:
 
 .. code:: yaml
 
    parts:
-     super-cool-app:
+     my-flutter-app:
+       source: .
        plugin: flutter
-       source: https://github.com/snapcraft-docs/super-cool-app
        flutter-target: lib/main.dart
+
+The ``source`` keyword points to the project source code, which can be a local
+directory or remote Git repository. In this case, it refers to the main project
+repository.
 
 The ``plugin`` keyword is used to select a language or technology-specific
 plugin that knows how to perform the build steps for the project.
 In this example, the :ref:`flutter plugin <the-flutter-plugin>` is used to
 build the project.
 
-The ``source`` keyword points to the project source code, which can be a local
-directory or remote Git repository. In this case, it refers to the main project
-repository.
+The ``flutter-target`` keyword is used to tell the plugin where the main
+application code is located in the project.
 
 Apps
 ~~~~
@@ -149,9 +146,9 @@ available on users' systems.
 .. code:: yaml
 
    apps:
-     super-cool-app:
-       command: super_cool_app
-       extensions: [flutter-stable]
+     my-flutter-app:
+       command: my_flutter_app
+       extensions: [gnome]
 
 The ``command`` specifies the path to the binary to be run. This is resolved
 relative to the root of the snap contents.
@@ -163,9 +160,11 @@ If the command name matches the name of the snap specified in the top-level
 same name as the snap, as in this example.
 If the names differ, the binary file name will be prefixed with the snap name
 to avoid naming conflicts between installed snaps. An example of this would be
-``super-cool-app.some-command``.
+``my-flutter-app.some-command``.
 
-The ``extensions`` keyword is used to incorporate Flutter's common set of requirements. See :ref:`snapcraft-extensions` for further details.
+The ``extensions`` keyword is used in this example to access GUI toolkit
+features that the application needs. See :ref:`snapcraft-extensions` for
+further details.
 
 Building the snap
 ~~~~~~~~~~~~~~~~~
@@ -177,53 +176,47 @@ Inside that directory, type :command:`snapcraft init`. This creates an additiona
 
 Edit the created :file:`snapcraft.yaml` to contain the Flutter example shown earlier.
 
-After you’ve created the :file:`snapcraft.yaml`, you can build the snap by simply executing the :command:`snapcraft` command in the project directory:
+After you've created the :file:`snapcraft.yaml`, you can build the snap by simply executing the :command:`snapcraft` command in the project directory:
 
 .. code:: bash
 
    $ snapcraft
-   Using 'snapcraft.yaml': Project assets will be searched for from the 'snap' directory.
-   Launching a VM.
-   Launched: snapcraft-super-cool-app
-   [...]
-   Pulling flutter-extension
-   [...]
-   Building super-cool-app
-   [...]
-   Staging flutter-extension
-   Staging gnome-3-28-extension
-   Staging super-cool-app
-   Priming flutter-extension
-   Priming gnome-3-28-extension
-   Priming super-cool-app
-   'grade' property not specified: defaulting to 'stable'.
-   Snapping |
-   Snapped super-cool-app_1.0_amd64.snap
+   Executed: pull gnome/sdk
+   Executed: pull my-flutter-app
+   Executed: build gnome/sdk
+   Executed: build my-flutter-app
+   Executed: stage gnome/sdk
+   Executed: stage my-flutter-app
+   Executed: prime gnome/sdk
+   Executed: prime my-flutter-app
+   Executed parts lifecycle
+   Generated snap metadata
+   Created snap package my-flutter-app_1.0_amd64.snap
 
-The build process may take some time as both Flutter and the Dart SDK from Flutter are downloaded and installed into the build environment, but they won’t be downloaded again with subsequent builds unless the environment is reset.
+The build process may take some time as both Flutter and the Dart SDK from Flutter are downloaded and installed into the build environment, but they won't be downloaded again with subsequent builds unless the environment is reset.
 
-The resulting snap can be installed locally. This requires the ``--dangerous`` flag because the snap is not signed by the Snap Store, or if you’re testing pre-confinement, the ``--devmode`` flag acknowledges that you are installing an unconfined application:
+The resulting snap can be installed locally. This requires the ``--dangerous`` flag because the snap is not signed by the Snap Store, or if you're testing pre-confinement, the ``--devmode`` flag acknowledges that you are installing an unconfined application:
 
 .. code:: bash
 
-   sudo snap install super-cool-app_1.0_amd64.snap --dangerous
+   sudo snap install my-flutter-app_1.0_amd64.snap --dangerous
 
 You can then try it out:
 
 .. code:: bash
 
-   super-cool-app
+   my-flutter-app
 
-.. figure:: https://assets.ubuntu.com/v1/f12e5af3-flutter_01.png
-   :alt: Running example Flutter application
+.. figure:: images/my-flutter-app.png
+   :alt: Running the example Flutter application
 
 
 Removing the snap is simple too:
 
 ::
 
-   sudo snap remove super-cool-app
+   sudo snap remove my-flutter-app
 
 You now have a snap you can deploy and upload to the `Snap Store <https://snapcraft.io/store>`__. See :ref:`Releasing your app <releasing-your-app>` for more details, and to get a deeper insight into the snap building process, start with the :ref:`Snapcraft checklist <snapcraft-checklist>`.
 
-.. _`super-cool-app`: https://github.com/snapcraft-docs/super-cool-app
+.. _`my-flutter-app`: https://github.com/snapcraft-docs/my-flutter-app

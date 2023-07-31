@@ -5,31 +5,22 @@
 Go applications
 ===============
 
-Go makes it easy to create a zip of your app that runs across Linux, without dependencies. However, end user discovery and update management remain a challenge. Snaps fill this gap, letting you distribute a Go app in an app store experience for end users.
+Snapcraft can be used to package and distribute Go applications in a way that
+enables convenient installation by users.
 
-Why are snaps good for Go projects?
------------------------------------
+The process of creating a snap for a Go application builds on standard
+Go packaging tools, making it possible to adapt or integrate an
+application's existing packaging into the snap building process.
 
-Installing Go applications often consists of downloading pre-built binaries (or running ``go get``). When distributed this way, getting updates is an exercise left to the reader. With snapcraft it’s just one command to produce a bundle that works anywhere and can be automatically updated.
-
-Here are some snap advantages that will benefit many Go projects:
-
--  **Snaps are easy to discover and install** Install with ``snap install mygoapp``, regardless of distribution.
--  **Snaps automatically update to the latest version** Four times a day, users’ systems will check for new versions and upgrade in the background.
--  **Extremely simple daemon creation** A single snap can provide multiple applications and services.
--  **Deliver assets with your snap** Include images and static web content inside the package.
-
-Build a snap in 20 minutes
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Ready to get started? By the end of this guide, you’ll understand how to make a snap of your Go app that can be published in the `Snap Store <https://snapcraft.io/store>`__, showcasing it to millions of Linux users.
-
-   ℹ For a brief overview of the snap creation process, including how to install *snapcraft* and how it’s used, see :ref:`Snapcraft overview <snapcraft-overview>`. For a more comprehensive breakdown of the steps involved, take a look at :ref:`Creating a snap <creating-a-snap>`.
 
 Getting started
 ---------------
 
-Snaps are defined in a single YAML file placed in the root folder of your project. The following example shows the entire :file:`snapcraft.yaml` file for an existing project, `Woke <https://github.com/degville/woke-snap>`__. Don’t worry, we’ll break this down.
+Snaps are defined in a single :file:`snapcraft.yaml` file placed in a
+:file:`snap` folder at the root of your project. This YAML file describes
+the application, its dependencies and how it should be built.
+
+The following example shows the entire :file:`snapcraft.yaml` file for an existing project, `Woke <https://github.com/degville/woke-snap>`__:
 
 .. code:: yaml
 
@@ -58,10 +49,15 @@ Snaps are defined in a single YAML file placed in the root folder of your projec
        source-type: git
        source: https://github.com/get-woke/woke
 
+We'll break this file down into its components in the following sections.
+
 Metadata
 ~~~~~~~~
 
-The :file:`snapcraft.yaml` file starts with a small amount of human-readable metadata, which usually can be lifted from the GitHub description or project README.md. This data is used in the presentation of your app in the Snap Store.
+The :file:`snapcraft.yaml` file starts with a small amount of
+human-readable metadata, which is often already available in the project's
+own packaging metadata or :file:`README.md` file. This data is used in the
+presentation of the application in the Snap Store.
 
 .. code:: yaml
 
@@ -84,37 +80,51 @@ The ``summary`` can not exceed 79 characters. You can use a chevron ‘>’ in t
 Base
 ~~~~
 
-The base keyword declares which *base snap* to use with your project. A base snap is a special kind of snap that provides a run-time environment alongside a minimal set of libraries that are common to most applications:
+The base keyword declares which :term:`base snap` to use with the project.
+A base snap is a special kind of snap that provides a run-time environment
+alongside a minimal set of libraries that are common to most applications.
 
 .. code:: yaml
 
    base: core20
 
-As used above, `core20 <https://snapcraft.io/core20>`__ is the current standard base for snap building and is based on `Ubuntu 20.04 LTS <http://releases.ubuntu.com/20.04/>`__.
-
-See :ref:`Base snaps <base-snaps>` for more details.
+In this example, `core20`_ is used as the base for snap building, and is based
+on `Ubuntu 20.04 LTS`_. See :ref:`base-snaps` for more details.
 
 Security model
 ~~~~~~~~~~~~~~
 
-The next section describes the level of confinement applied to your app.
+Snaps are containerised to ensure more predictable application behaviour and
+greater security. The general level of access a snap has to the user's system
+depends on its level of confinement.
+
+The next section of the :file:`snapcraft.yaml` file describes the level of
+:term:`confinement` applied to the running application:
 
 .. code:: yaml
 
    confinement: devmode
 
-Snaps are containerised to ensure more predictable application behaviour and greater security. Unlike other container systems, the shape of this confinement can be changed through a set of interfaces. These are declarations that tell the system to give permission for a specific task, such as accessing a webcam or binding to a network port.
+It is best to start creating a snap with a confinement level that provides
+warnings for confinement issues instead of strictly applying confinement.
+This is done by specifying the ``devmode`` (developer mode) confinement value.
+When a snap is in devmode, runtime confinement violations will be allowed but
+reported. These can be reviewed by running :command:`journalctl -xe`.
 
-It’s best to start a snap with the confinement in warning mode, rather than strictly applied. This is indicated through the ``devmode`` keyword. When a snap is in devmode, runtime confinement violations will be allowed but reported. These can be reviewed by running ``journalctl -xe``.
+Because devmode is only intended for development, snaps must be set to strict
+confinement before they can be published as "stable" in the Snap Store.
+Once an application is working well in devmode, you can review confinement
+violations, add appropriate interfaces, and switch to strict confinement.
 
-Because devmode is only intended for development, snaps must be set to strict confinement before they can be published as “stable” in the Snap Store. Once an app is working well in devmode, you can review confinement violations, add appropriate interfaces, and switch to strict confinement.
+The above example will also work if you change the confinement from ``devmode``
+to ``strict``, as you would before a release.
 
 Parts
 ~~~~~
 
-Parts define what sources are needed to assemble your app. Parts can be anything: programs, libraries, or other needed assets. In this case we have one: the *woke* source code. In other cases, these can point to local directories, remote git repositories, or tarballs.
-
-The Go plugin will build using the version of Go on the system running snapcraft.
+Parts define what sources are needed to build your application. Parts can be
+anything: programs, libraries, or other needed assets, but for this example,
+we only need to use one part for the *woke* source code:
 
 .. code:: yaml
 
@@ -124,14 +134,21 @@ The Go plugin will build using the version of Go on the system running snapcraft
        source-type: git
        source: https://github.com/get-woke/woke
 
-For more details on Go-specific metadata, see :ref:`The go plugin <the-go-plugin>`.
+The ``plugin`` keyword is used to select a language or technology-specific
+plugin that knows how to perform the build steps for the project.
+In this example, the :ref:`go plugin <the-go-plugin>` is used to
+automate the build of this project using the version of Go on the host system.
+
+The ``source`` keyword points to the source code of the project, which
+can be a local directory or remote Git repository. In this case, it refers to
+the main project repository.
 
 Apps
 ~~~~
 
-Apps are the commands and services exposed to end users. If your command name matches the snap ``name``, users will be able run the command directly. If the names differ, then apps are prefixed with the snap ``name`` (``woke.command-name``, for example). This is to avoid conflicting with apps defined by other installed snaps.
-
-If you don’t want your command prefixed you can request an alias for it on the `Snapcraft forum <https://snapcraft.io/docs/process-for-aliases-auto-connections-and-tracks>`__. These are set up automatically when your snap is installed from the Snap Store.
+Apps are the commands and services that the snap provides to users. Each key
+under ``apps`` is the name of a command or service that should be made
+available on users' systems.
 
 .. code:: yaml
 
@@ -141,7 +158,20 @@ If you don’t want your command prefixed you can request an alias for it on the
        plugs:
          - home
 
-If your application is intended to run as a service you simply add the line ``daemon: simple`` after the command keyword. This will automatically keep the service running on install, update, and reboot.
+The ``command`` specifies the path to the binary to be run. This is resolved
+relative to the root of the snap contents.
+
+If the command name matches the name of the snap specified in the top-level
+``name`` keyword (see `Metadata`_ above), the binary file will be given the
+same name as the snap, as in this example.
+If the names differ, the binary file name will be prefixed with the snap name
+to avoid naming conflicts between installed snaps. An example of this would be
+``woke.some-command``.
+
+The confinement of the snap, which was defined in the `Security model`_ section
+above, can be changed through a set of :term:`interfaces`. In this example,
+the ``plugs`` keyword is used to specify the interfaces that the snap needs
+to access.
 
 Building the snap
 ~~~~~~~~~~~~~~~~~
@@ -152,7 +182,9 @@ You can download the example repository with the following command:
 
    $ git clone https://github.com/degville/woke-snap
 
-After you’ve created the :file:`snapcraft.yaml` file, you can build the snap by simply executing the *snapcraft* command in the project directory:
+After you have created the :file:`snapcraft.yaml` file (which already exists
+in the above repository), you can build the snap by simply executing the
+:command:`snapcraft` command in the project directory:
 
 .. code:: bash
 
@@ -200,39 +232,7 @@ Removing the snap is simple too:
 
    $ sudo snap remove woke
 
-Publishing your snap
---------------------
-
-To share your snaps you need to publish them in the Snap Store. First, create an account on `the dashboard <https://dashboard.snapcraft.io/dev/account/>`__. Here you can customise how your snaps are presented, review your uploads and control publishing.
-
-You’ll need to choose a unique “developer namespace” as part of the account creation process. This name will be visible by users and associated with your published snaps.
-
-Make sure the :command:`snapcraft` command is authenticated using the email address attached to your Snap Store account:
-
-::
-
-   $ snapcraft login
-
-Reserve a name for your snap
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You can publish your own version of a snap, provided you do so under a name you have rights to. You can register a name on `dashboard.snapcraft.io <https://dashboard.snapcraft.io/register-snap/>`__, or by running the following command:
-
-::
-
-   $ snapcraft register mygosnap
-
-Be sure to update the ``name:`` in your :file:`snapcraft.yaml` file to match this registered name, then run :command:`snapcraft` again.
-
-Upload your snap
-~~~~~~~~~~~~~~~~
-
-Use snapcraft to push the snap to the Snap Store.
-
-::
-
-   $ snapcraft upload --release=edge mygosnap_*.snap
-
-If you’re happy with the result, you can commit the snapcraft.yaml to your GitHub repo and `turn on automatic builds <https://build.snapcraft.io>`__ so any further commits automatically get released to edge, without requiring you to manually build locally.
+.. Potentially just refer the reader to another tutorial.
+.. include:: common/publishing-snap.rst
 
 Congratulations! You’ve just built and published your first Go snap. For a more in-depth overview of the snap building process, see :ref:`Creating a snap <creating-a-snap>`.

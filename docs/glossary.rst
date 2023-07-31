@@ -126,6 +126,7 @@ Terms and definitions
       For more details, see :ref:`Supported snap hooks <supported-snap-hooks>`.
 
    interface
+   interfaces
       An interface enables resources from one snap to be shared with another and with the system. Interfaces require a connection, which is commonly made automatically, or manually with the ``snap connect`` command.
 
       For a snap to use an interface, its developer needs to have first defined its corresponding plugs and slots within a snap’s :ref:`snapcraft.yaml <creating-snapcraft-yaml>` file.

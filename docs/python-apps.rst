@@ -12,13 +12,13 @@ The process of creating a snap for a Python application builds on standard
 Python packaging tools, making it possible to adapt or integrate an
 application's existing packaging into the snap building process.
 
-Snaps are defined in a single :file:`snapcraft.yaml` file placed in a
-:file:`snap` folder at the root of your project. This YAML file describes
-the application, its dependencies and how it should be built.
-
 
 Getting started
 ---------------
+
+Snaps are defined in a single :file:`snapcraft.yaml` file placed in a
+:file:`snap` folder at the root of your project. This YAML file describes
+the application, its dependencies and how it should be built.
 
 The following example shows an entire :file:`snapcraft.yaml` file based on the
 snap of an existing project, `yt-dlp`_:
