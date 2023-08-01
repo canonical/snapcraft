@@ -458,7 +458,7 @@ def _make_initrd_cmd(
                     f'[ ! -d "{firmware_dir}" ]',
                     "&&",
                     f'echo -e "firmware directory {firmware_dir} does not exist, consider using'
-                    ' kernel-initrd-stage-firmware: true/false option"',
+                    ' initrd-stage-firmware: true/false option"',
                     "&&",
                     "exit 1",
                 ]
