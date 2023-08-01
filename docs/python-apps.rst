@@ -217,22 +217,8 @@ You can then try it out:
 
    yt-dlp -h
 
-Removing the snap is simple too:
-
-.. code:: bash
-
-   sudo snap remove yt-dlp
-
-You can also clean up the build environment, although this will slow down the
-next initial build:
-
-.. code:: bash
-
-   snapcraft clean
-
-By default, when you make a change to :file:`snapcraft.yaml`, snapcraft only
-builds the parts that have changed. Cleaning a build, however, forces your snap
-to be rebuilt in a clean environment and will take longer.
+.. |execname| replace:: yt-dlp
+.. include:: common/removing-cleaning-snap.rst
 
 .. Potentially just refer the reader to another tutorial.
 .. include:: common/publishing-snap.rst

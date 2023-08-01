@@ -6,6 +6,9 @@ import sys
 project_dir = pathlib.Path("..").resolve()
 sys.path.insert(0, str(project_dir.absolute()))
 
+extensions_dir = pathlib.Path(os.curdir) / "_extensions"
+sys.path.append(str(extensions_dir.absolute()))
+
 import snapcraft
 
 # Configuration file for the Sphinx documentation builder.
@@ -56,6 +59,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinxext.opengraph",
     "myst_parser",
+    "include_par",
 ]
 
 myst_enable_extensions = ["substitution", "deflist"]

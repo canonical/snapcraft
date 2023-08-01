@@ -305,20 +305,8 @@ You can then try it out:
 .. figure:: https://forum-snapcraft-io.s3.dualstack.us-east-1.amazonaws.com/optimized/2X/5/5e4a99e71254372ac1c2da5b758fe488029b9d0a_2_690x495.png
    :alt: Screenshot_20190613_152721|690x495
 
-
-Removing the snap is simple too:
-
-.. code:: bash
-
-   $  sudo snap remove dosbox
-
-You can clean up the build environment with the following command:
-
-.. code:: bash
-
-   $ snapcraft clean
-
-By default, when you make a change to snapcraft.yaml, snapcraft only builds the parts that have changed. Cleaning a build, however, forces your snap to be rebuilt in a clean environment and will take longer.
+.. |execname| replace:: dosbox
+.. include:: common/removing-cleaning-snap.rst
 
 .. Potentially just refer the reader to another tutorial.
 .. include:: common/publishing-snap.rst

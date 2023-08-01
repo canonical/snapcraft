@@ -150,8 +150,8 @@ available on users' systems.
        command: my_flutter_app
        extensions: [gnome]
 
-The ``command`` specifies the path to the binary to be run. This is resolved
-relative to the root of the snap contents.
+The ``command`` specifies the path to the application binary that the user
+can run. This is resolved relative to the root of the snap contents.
 
 If your command name matches the snap ``name``, users will be able run the command directly.
 
@@ -210,12 +210,11 @@ You can then try it out:
 .. figure:: images/my-flutter-app.png
    :alt: Running the example Flutter application
 
+.. |execname| replace:: my-flutter-app
+.. include:: common/removing-cleaning-snap.rst
 
-Removing the snap is simple too:
-
-::
-
-   sudo snap remove my-flutter-app
+.. Potentially just refer the reader to another tutorial.
+.. include:: common/publishing-snap.rst
 
 You now have a snap you can deploy and upload to the `Snap Store <https://snapcraft.io/store>`__. See :ref:`Releasing your app <releasing-your-app>` for more details, and to get a deeper insight into the snap building process, start with the :ref:`Snapcraft checklist <snapcraft-checklist>`.
 
