@@ -532,7 +532,7 @@ class TestPluginKernel:
                     None,
                     caplog.text.split(
                         "WARNING  snapcraft_legacy.plugins.v2._kernel_build:_kernel_build.py"
-                    ),  # XXX: use a better way to check log messages
+                    ),
                 )
             )
             # there should be 2 warning logs, one for missing configs, one for kernel module
