@@ -40,7 +40,6 @@ class Kernelv2PluginProperties:
     kernel_with_firmware: bool = True
     kernel_device_trees: [str] = None
     kernel_compiler: str = None
-    kernel_compiler_paths: [str] = None
     kernel_compiler_parameters: [str] = None
     kernel_enable_zfs_support: bool = False
     kernel_enable_perf: bool = False
@@ -66,7 +65,6 @@ class TestPluginKernel(TestCase):
         kernelwithfirmware=True,
         kerneldevicetrees=None,
         kernelcompiler=None,
-        kernelcompilerpaths=None,
         kernelcompilerparameters=None,
         kernelenablezfssupport=False,
         kernelenableperf=False,
@@ -83,7 +81,6 @@ class TestPluginKernel(TestCase):
             kernel_with_firmware = kernelwithfirmware
             kernel_device_trees = kerneldevicetrees
             kernel_compiler = kernelcompiler
-            kernel_compiler_paths = kernelcompilerpaths
             kernel_compiler_parameters = kernelcompilerparameters
             kernel_enable_zfs_support = kernelenablezfssupport
             kernel_enable_perf = kernelenableperf
@@ -153,13 +150,6 @@ class TestPluginKernel(TestCase):
                     "kernel-compiler": {
                         "type": "string",
                         "default": "",
-                    },
-                    "kernel-compiler-paths": {
-                        "type": "array",
-                        "minitems": 1,
-                        "uniqueItems": True,
-                        "items": {"type": "string"},
-                        "default": [],
                     },
                     "kernel-compiler-parameters": {
                         "type": "array",
@@ -266,7 +256,6 @@ class TestPluginKernel(TestCase):
         self.assertTrue(opt.kernel_with_firmware)
         self.assertEqual(opt.kernel_device_trees, None)
         self.assertEqual(opt.kernel_compiler, None)
-        self.assertEqual(opt.kernel_compiler_paths, None)
         self.assertEqual(opt.kernel_compiler_parameters, None)
         self.assertFalse(opt.kernel_enable_zfs_support)
         self.assertFalse(opt.kernel_enable_perf)
@@ -287,7 +276,6 @@ class TestPluginKernel(TestCase):
         self.assertTrue(opt.kernel_with_firmware)
         self.assertIs(opt.kernel_device_trees, None)
         self.assertIs(opt.kernel_compiler, None)
-        self.assertIs(opt.kernel_compiler_paths, None)
         self.assertIs(opt.kernel_compiler_parameters, None)
         self.assertFalse(opt.kernel_enable_zfs_support)
         self.assertFalse(opt.kernel_enable_perf)
@@ -311,7 +299,6 @@ class TestPluginKernel(TestCase):
         self.assertTrue(opt.kernel_with_firmware)
         self.assertIs(opt.kernel_device_trees, None)
         self.assertIs(opt.kernel_compiler, None)
-        self.assertIs(opt.kernel_compiler_paths, None)
         self.assertIs(opt.kernel_compiler_parameters, None)
         self.assertFalse(opt.kernel_enable_zfs_support)
         self.assertFalse(opt.kernel_enable_perf)
@@ -335,7 +322,6 @@ class TestPluginKernel(TestCase):
         self.assertTrue(opt.kernel_with_firmware)
         self.assertIs(opt.kernel_device_trees, None)
         self.assertIs(opt.kernel_compiler, None)
-        self.assertIs(opt.kernel_compiler_paths, None)
         self.assertIs(opt.kernel_compiler_parameters, None)
         self.assertFalse(opt.kernel_enable_zfs_support)
         self.assertFalse(opt.kernel_enable_perf)
@@ -356,9 +342,8 @@ class TestPluginKernel(TestCase):
             },
         )
 
-    def test_check_get_build_environment_compiler_paths_cross(self):
+    def test_check_get_build_environment_cross(self):
         plugin = self._setup_test(
-            kernelcompilerpaths=["gcc-11/bin"],
             kernelimagetarget={"arm64": "Image", "armhf": "Image.gz"},
             arch="armv7l",
         )
@@ -372,25 +357,6 @@ class TestPluginKernel(TestCase):
                 "DEB_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
                 "KERNEL_BUILD_ARCH_DIR": "${SNAPCRAFT_PART_BUILD}/arch/arm/boot",
                 "KERNEL_IMAGE_TARGET": "Image.gz",
-                "PATH": "${SNAPCRAFT_STAGE}/gcc-11/bin:${PATH}",
-            },
-        )
-
-    def test_check_get_build_environment_compiler_paths(self):
-        plugin = self._setup_test(
-            kernelcompilerpaths=["gcc-11/bin", "gcc-11/sbin"],
-        )
-        plugin._kernel_arch = "amd64"
-
-        self.assertEqual(
-            plugin.get_build_environment(),
-            {
-                "CROSS_COMPILE": "${SNAPCRAFT_ARCH_TRIPLET}-",
-                "ARCH": plugin._kernel_arch,
-                "DEB_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
-                "KERNEL_BUILD_ARCH_DIR": f"${{SNAPCRAFT_PART_BUILD}}/arch/{plugin._kernel_arch}/boot",
-                "KERNEL_IMAGE_TARGET": plugin.kernel_image_target,
-                "PATH": "${SNAPCRAFT_STAGE}/gcc-11/bin:${SNAPCRAFT_STAGE}/gcc-11/sbin:${PATH}",
             },
         )
 
