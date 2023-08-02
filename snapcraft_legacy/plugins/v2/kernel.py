@@ -82,77 +82,6 @@ The following kernel-specific options are provided by this plugin:
       (boolean; default: False)
       use this flag to build the perf binary
 
-    - kernel-initrd-modules:
-      (array of string; default: none)
-      list of modules to include in initrd.
-      Note that kernel snaps do not provide the core boot logic which comes from snappy
-      Ubuntu Core OS snap. Include all modules you need for mounting rootfs here.
-      If installed module(s) have any dependencies, those are automatically installed.
-      WARNING: Due to a bug in ubuntu-core-initramfs this option is same as
-      kernel-initrd-configured-modules, and all included modules are configured
-      to be autoloaded.
-
-    - kernel-initrd-configured-modules:
-      (array of string; default: none)
-      list of modules to be added to the initrd
-      /lib/modules-load.d/ubuntu-core-initramfs.conf config
-      to be automatically loaded.
-      Configured modules are automatically added to kernel-initrd-modules.
-      If module in question is not supported by the kernel, it is ignored.
-
-    - kernel-initrd-stage-firmware:
-      (boolean; default: False)
-      When building initrd, required firmware is automatically added based
-      on the included kernel modules. By default required firmware is searched
-      in the install directory of the current part. This flag allows used of firmware
-      from stage directory instead.
-
-    - kernel-initrd-firmware:
-      (array of string; default: none)
-      list of firmware files to be included in the initrd; these need to be
-      relative paths to stage directory.
-      <stage/part install dir>/firmware/* -> initrd:/lib/firmware/*
-
-    - kernel-initrd-compression:
-      (string; default: as defined in ubuntu-core-initrd(lz4)
-      initrd compression to use; the only supported values now are
-      'lz4', 'xz', 'gz', 'zstd'.
-
-    - kernel-initrd-compression-options:
-      Optional list of parameters to be passed to compressor used for initrd
-      (array of string): defaults are
-        gz:  -7
-        lz4: -9 -l
-        xz:  -7
-        zstd: -1 -T0
-
-    - kernel-initrd-overlay
-      (string; default: none)
-      Optional overlay to be applied to built initrd.
-      This option is designed to provide easy way to apply initrd overlay for
-      cases modifies initrd scripts for pre uc20 initrds.
-      Value is relative path, in stage directory. and related part needs to be
-      built before initrd part. During build it will be expanded to
-      ${SNAPCRAFT_STAGE}/{initrd-overlay}
-
-    - kernel-initrd-addons
-      (array of string; default: none)
-      Optional list of files to be added to the initrd.
-      Function is similar to kernel-initrd-overlay, only it works on per file
-      selection without a need to have overlay in dedicated directory.
-      This option is designed to provide easy way to add additional content
-      to initrd for cases like full disk encryption support, when device
-      specific hook needs to be added to the initrd.
-      Values are relative path from stage directory, so related part(s)
-      need to be built before kernel part.
-      During build it will be expanded to
-      ${SNAPCRAFT_STAGE}/{initrd-addon}
-      Default: none
-
-    - kernel-add-ppa
-      (boolean; default: True)
-      controls if the snappy-dev PPA should be added to the system
-
     - kernel-use-llvm
       (boolean or string to specify version suffix; default: False)
       Use the LLVM substitutes for the GNU binutils utilities. Set this to a
@@ -177,9 +106,6 @@ from snapcraft_legacy.project._project_options import ProjectOptions
 from . import _kernel_build
 
 logger = logging.getLogger(__name__)
-
-_SNAPD_SNAP_NAME = "snapd"
-_SNAPD_SNAP_FILE = "{snap_name}_{architecture}.snap"
 
 _default_kernel_image_target = {
     "amd64": "bzImage",
@@ -226,53 +152,6 @@ class KernelPlugin(PluginV2):
                     "items": {"type": "string"},
                     "default": [],
                 },
-                "kernel-initrd-modules": {
-                    "type": "array",
-                    "minitems": 1,
-                    "uniqueItems": True,
-                    "items": {"type": "string"},
-                    "default": [],
-                },
-                "kernel-initrd-configured-modules": {
-                    "type": "array",
-                    "minitems": 1,
-                    "uniqueItems": True,
-                    "items": {"type": "string"},
-                    "default": [],
-                },
-                "kernel-initrd-stage-firmware": {
-                    "type": "boolean",
-                    "default": False,
-                },
-                "kernel-initrd-firmware": {
-                    "type": "array",
-                    "minitems": 1,
-                    "uniqueItems": True,
-                    "items": {"type": "string"},
-                    "default": [],
-                },
-                "kernel-initrd-compression": {
-                    "type": "string",
-                    "enum": ["lz4", "xz", "gz", "zstd"],
-                },
-                "kernel-initrd-compression-options": {
-                    "type": "array",
-                    "minitems": 1,
-                    "uniqueItems": True,
-                    "items": {"type": "string"},
-                    "default": [],
-                },
-                "kernel-initrd-overlay": {
-                    "type": "string",
-                    "default": "",
-                },
-                "kernel-initrd-addons": {
-                    "type": "array",
-                    "minitems": 1,
-                    "uniqueItems": True,
-                    "items": {"type": "string"},
-                    "default": [],
-                },
                 "kernel-compiler": {
                     "type": "string",
                     "default": "",
@@ -298,10 +177,6 @@ class KernelPlugin(PluginV2):
                 "kernel-enable-perf": {
                     "type": "boolean",
                     "default": False,
-                },
-                "kernel-add-ppa": {
-                    "type": "boolean",
-                    "default": True,
                 },
                 "kernel-use-llvm": {
                     "oneOf": [{"type": "boolean"}, {"type": "string"}],
@@ -357,18 +232,10 @@ class KernelPlugin(PluginV2):
         self._set_kernel_targets()
         self._set_llvm()
 
-        # determine type of initrd
-        snapd_snap_file_name = _SNAPD_SNAP_FILE.format(
-            snap_name=_SNAPD_SNAP_NAME,
-            architecture=self._target_arch,
-        )
-
-        self._snapd_snap = os.path.join("${SNAPCRAFT_PART_BUILD}", snapd_snap_file_name)
-
     def _check_cross_compilation(self) -> None:
         if self._cross_building:
             self._make_cmd.append(f"ARCH={self._kernel_arch}")
-            self._make_cmd.append("CROSS_COMPILE=${SNAPCRAFT_ARCH_TRIPLET}-")
+            self._make_cmd.append("CROSS_COMPILE=${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}-")
 
     def _set_kernel_targets(self) -> None:
         if not self.options.kernel_image_target:
@@ -435,22 +302,10 @@ class KernelPlugin(PluginV2):
             "gcc",
             "cmake",
             "cryptsetup",
-            "dracut-core",
             "kmod",
             "kpartx",
             "systemd",
         }
-
-        # install correct initramfs compression tool
-        if (
-            not self.options.kernel_initrd_compression
-            or self.options.kernel_initrd_compression == "lz4"
-        ):
-            build_packages |= {"lz4"}
-        elif self.options.kernel_initrd_compression == "xz":
-            build_packages |= {"xz-utils"}
-        elif self.options.kernel_initrd_compression == "zstd":
-            build_packages |= {"zstd"}
 
         if self.options.kernel_enable_zfs_support:
             build_packages |= {
@@ -464,10 +319,6 @@ class KernelPlugin(PluginV2):
         # for cross build of zfs we also need libc6-dev:<target arch>
         if self.options.kernel_enable_zfs_support and self._cross_building:
             build_packages |= {f"libc6-dev:{self._target_arch}"}
-
-        # add snappy ppa to get correct initrd tools
-        if self.options.kernel_add_ppa:
-            _kernel_build.add_snappy_ppa(with_sudo=True)
 
         if self._llvm_version is not None:
             # Use the specified version suffix for the packages if it has been
@@ -487,10 +338,9 @@ class KernelPlugin(PluginV2):
         self._init_build_env()
 
         env = {
-            "CROSS_COMPILE": "${SNAPCRAFT_ARCH_TRIPLET}-",
+            "CROSS_COMPILE": "${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}-",
             "ARCH": self._kernel_arch,
             "DEB_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
-            "UC_INITRD_DEB": "${SNAPCRAFT_PART_BUILD}/ubuntu-core-initramfs",
             "KERNEL_BUILD_ARCH_DIR": f"${{SNAPCRAFT_PART_BUILD}}/arch/{self._kernel_arch}/boot",
             "KERNEL_IMAGE_TARGET": self.kernel_image_target,
         }
@@ -517,25 +367,12 @@ class KernelPlugin(PluginV2):
             make_targets=self._make_targets,
             make_install_targets=self._make_install_targets,
             target_arch=self._target_arch,
-            target_arch_triplet="${SNAPCRAFT_ARCH_TRIPLET}",
+            target_arch_triplet="${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}",
             config_file=self.options.kernel_kconfigfile,
             config_flavour=self.options.kernel_kconfigflavour,
             defconfig=self.options.kernel_kdefconfig,
             configs=self.options.kernel_kconfigs,
             device_trees=self.options.kernel_device_trees,
-            initrd_modules=self.options.kernel_initrd_modules,
-            configured_modules=self.options.kernel_initrd_configured_modules,
-            initrd_compression=self.options.kernel_initrd_compression,
-            initrd_compression_options=self.options.kernel_initrd_compression_options,
-            initrd_firmware=self.options.kernel_initrd_firmware,
-            initrd_addons=self.options.kernel_initrd_addons,
-            initrd_overlay=self.options.kernel_initrd_overlay,
-            initrd_stage_firmware=self.options.kernel_initrd_stage_firmware,
-            build_efi_image=False,
-            initrd_ko_use_workaround=True,
-            initrd_default_compression="lz4 -9 -l",
-            initrd_include_extra_modules_conf=False,
-            initrd_tool_pass_root=True,
             enable_zfs_support=self.options.kernel_enable_zfs_support,
             enable_perf=self.options.kernel_enable_perf,
             project_dir="${SNAPCRAFT_PROJECT_DIR}",

@@ -38,12 +38,10 @@ def get_plugins(core22: bool) -> dict[str, PluginType]:
         "colcon": ColconPlugin,
         "conda": CondaPlugin,
         "flutter": FlutterPlugin,
+        "kernel": KernelPlugin,
         "initrd": InitrdPlugin,
         "matter-sdk": MatterSdkPlugin,
     } | python_common.get_python_plugins()
-
-    if core22:
-        plugins["kernel"] = KernelPlugin
 
     return plugins
 
