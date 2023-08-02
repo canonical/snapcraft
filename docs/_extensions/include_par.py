@@ -43,7 +43,6 @@ class LiteralIncludeParam(LiteralInclude):
     """
 
     def run(self):
-        # type: () -> List[nodes.Node]
         document = self.state.document
 
         # Replace placeholders in options.
@@ -73,7 +72,7 @@ class LiteralIncludeParam(LiteralInclude):
         if subst_text[:1] != "|" or subst_text[-1:] != "|":
             return [
                 document.reporter.warning(
-                    "Argument should be a replacement/subsitution with the format "
+                    "Argument should be a replacement/substitution with the format "
                     "|<text>|",
                     line=self.lineno,
                 )
@@ -108,7 +107,6 @@ class CodeParam(CodeBlock):
     placeholder_re = re.compile("\\|([^|]+)\\|")
 
     def run(self):
-        # type: () -> List[nodes.Node]
         document = self.state.document
 
         # Find placeholders in the text and replace them with replacements
