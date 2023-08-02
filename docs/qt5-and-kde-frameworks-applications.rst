@@ -2,7 +2,7 @@
 
 .. _qt5-and-kde-frameworks-applications:
 
-Qt5 and KDE Frameworks Applications
+Qt5 and KDE Frameworks applications
 ===================================
 
 Why are snaps good for Qt5 and KDE Frameworks applications?

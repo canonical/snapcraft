@@ -2,7 +2,7 @@
 
 .. _gtk2-applications:
 
-GTK2 Applications
+GTK2 applications
 =================
 
 Why are snaps good for GTK+ 2 applications?

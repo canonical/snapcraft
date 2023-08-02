@@ -3,6 +3,9 @@
 .. _AppStream: https://www.freedesktop.org/software/appstream/docs/
 .. _Canonical Documentation Style Guide: https://docs.ubuntu.com/styleguide/en
 .. _Canonical website: https://canonical.com/
+.. _bare: https://snapcraft.io/bare
+.. _core: https://snapcraft.io/core
+.. _core16: https://snapcraft.io/core16
 .. _core18: https://snapcraft.io/core18
 .. _core20: https://snapcraft.io/core20
 .. _core22: https://snapcraft.io/core22
@@ -19,6 +22,7 @@
 .. _Sphinx reStructuredText Primer: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _`the Snapcraft forum`: https://forum.snapcraft.io
 .. _`Ubuntu Core`: https://ubuntu.com/core/
+.. _`Ubuntu 16.04 ESM`: http://releases.ubuntu.com/16.04/
 .. _`Ubuntu 18.04 LTS`: http://releases.ubuntu.com/18.04/
 .. _`Ubuntu 20.04 LTS`: http://releases.ubuntu.com/20.04/
 .. _`Ubuntu 22.04 LTS`: http://releases.ubuntu.com/22.04/

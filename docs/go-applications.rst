@@ -75,7 +75,7 @@ The ``name`` must be unique in the Snap Store. Valid snap names consist of lower
 
 By specifying ``git`` for the version, the current git tag or commit will be used as the version string. Versions carry no semantic meaning in snaps.
 
-The ``summary`` can not exceed 79 characters. You can use a chevron ‘>’ in the ``description`` key to declare a multi-line description.
+The ``summary`` cannot exceed 79 characters. You can use a chevron '>' in the ``description`` key to declare a multi-line description.
 
 Base
 ~~~~

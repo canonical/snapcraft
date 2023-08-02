@@ -2,8 +2,8 @@
 
 .. _electron-apps:
 
-Electron apps
-=============
+Electron applications
+=====================
 
 Distributing an Electron application for Linux that reached the widest possible audience was historically difficult. How applications are packaged and delivered varies from distribution to distribution. There was no built-in mechanism for notifying users of available updates.
 

@@ -2,8 +2,8 @@
 
 .. _net-apps:
 
-.NET apps
-=========
+.NET applications
+=================
 
 The .NET toolchain makes it easy for developers to build and publish applications. However, end user discovery and update management remain a challenge. Snap helps fill this gap by letting developers distribute applications and its updates in an app store experience for end users.
 

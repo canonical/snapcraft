@@ -43,4 +43,3 @@ With Snapcraft 4.0, the help command is also base aware. To get help for a plugi
    $ snapcraft help python --base core18
 
 For further details on specific plugins, see :ref:`Supported plugins <supported-plugins>`, and to create your own, see :ref:`Writing local plugins <writing-local-plugins>`.
-

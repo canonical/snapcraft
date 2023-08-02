@@ -181,6 +181,17 @@ Terms and definitions
 
       A platform snap cannot be installed directly by users. They are instead invoked by snap developers as the :ref:`default-provider <the-content-interface-default>` in a :ref:`content interface <the-content-interface>`.
 
+   plugin
+   plugins
+      Snapcraft uses :ref:`plugins <snapcraft-plugins>` to automate builds of
+      applications written using different programming languages and
+      development environments, using the build tools provided with those
+      technologies.
+
+      Examples include plugins for the :ref:`Python <the-python-plugin>` and
+      :ref:`Go <the-go-plugin>` plugins for languages, and the
+      :ref:`Meson <the-meson-plugin>` and :ref:`autotools <the-autotools-plugin>` plugins for build systems.
+
    preseeding
       When Ubuntu Core boots for the first time, a seeding process installs an initial set of snaps and runs their respective hooks.
 

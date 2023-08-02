@@ -119,7 +119,6 @@ human-readable metadata, which is often already available in the project's
 own packaging metadata or project :file:`README.md` file. This data is used in
 the presentation of the application in the Snap Store.
 
-
 .. code:: yaml
 
    name: dosbox
@@ -138,7 +137,7 @@ they also cannot start or end with a hyphen.
 By specifying ``git`` for the version, the current git tag or commit will be
 used as the version string. Versions carry no semantic meaning in snaps.
 
-The ``summary`` can not exceed 79 characters. You can use a chevron '>' in the
+The ``summary`` cannot exceed 79 characters. You can use a chevron '>' in the
 ``description`` key to declare a multi-line description.
 
 Base

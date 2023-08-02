@@ -1,16 +1,21 @@
-.. 6741.md
+.. 6739.md
 
-.. _python-apps:
+.. _pre-built-apps:
 
-Python applications
-===================
+Pre-built applications
+======================
 
-Snapcraft can be used to package and distribute Python applications in a
-way that enables convenient installation by users.
+Shipping a zip file or tarball of your application makes it easy for users to
+download and start using it without the need for you to package it for each
+Linux distribution.
 
-The process of creating a snap for a Python application builds on standard
-Python packaging tools, making it possible to adapt or integrate an
-application's existing packaging into the snap building process.
+However, this still requires that you provide instructions on installing the
+application's dependencies, and it requires that you provide a method for
+notifying users of available updates.
+
+Snapcraft can be used to package and distribute pre-built applications in a
+way that enables convenient installation by users while building on work you
+have already done as part of your application's release process.
 
 
 Getting started
@@ -21,37 +26,37 @@ Snaps are defined in a single :file:`snapcraft.yaml` file placed in a
 the application, its dependencies and how it should be built.
 
 The following example shows an entire :file:`snapcraft.yaml` file based on the
-snap of an existing project, `yt-dlp`_:
+snap of an existing project, `Geekbench 4`_:
 
 .. code:: yaml
 
-   name: yt-dlp
-   summary: A fork of youtube-dl with additional features and patches
+   name: geekbench4
+   version: 4.2.0
+   summary: Cross-Platform Benchmark
    description: |
-         Download and play videos on your local system. Runs from the command
-         line and with all the features and patches of youtube-dlc in addition
-         to the latest youtube-dl.
-   version: git
-   grade: stable
-   confinement: devmode
-   base: core20
-   architectures:
-     - build-on: [arm64, armhf, amd64]
+     Geekbench 4 measures your system's power and tells
+     you whether your computer is ready to roar. How
+     strong is your mobile device or desktop computer?
+     How will it perform when push comes to crunch?
+     These are the questions that Geekbench can answer.
 
-   apps:
-     yt-dlp:
-       command: bin/yt-dlp
-       plugs: [home, network, network-bind, removable-media]
+   confinement: devmode
+   base: core22
 
    parts:
-     yt-dlp:
-       plugin: python
-       source: https://github.com/yt-dlp/yt-dlp.git
+     geekbench4:
+       plugin: dump
+       source: https://cdn.geekbench.com/Geekbench-$SNAPCRAFT_PROJECT_VERSION-Linux.tar.gz
 
-There will be minor differences to the latest version of the project, such
-as the version definition and confinement level, but these can be changed
-after the snap is working. We'll break this file down into its components in
-the following sections.
+   apps:
+     geekbench4:
+       command: geekbench4
+
+   lint:
+     ignore:
+       - library
+
+We'll break this file down into its components in the following sections.
 
 Metadata
 ~~~~~~~~
@@ -63,20 +68,22 @@ presentation of the application in the Snap Store.
 
 .. code:: yaml
 
-   name: yt-dlp
-   summary: A fork of youtube-dl with additional features and patches
+   name: geekbench4
+   version: 4.2.0
+   summary: Cross-Platform Benchmark
    description: |
-         Download and play videos on your local system. Runs from the command
-         line and with all the features and patches of youtube-dlc in addition
-         to the latest youtube-dl.
-   version: git
+     Geekbench 4 measures your system's power and tells
+     you whether your computer is ready to roar. How
+     strong is your mobile device or desktop computer?
+     How will it perform when push comes to crunch?
+     These are the questions that Geekbench can answer.
 
 The ``name`` must be unique in the Snap Store. Valid snap names consist of
 lower-case alphanumeric characters and hyphens. They cannot be all numbers and
 they also cannot start or end with a hyphen.
 
-By specifying ``git`` for the version, the current git tag or commit will be
-used as the version string. Versions carry no semantic meaning in snaps.
+By value used for the ``version`` is the version number of the released
+software.
 
 The ``summary`` cannot exceed 79 characters. You can use a chevron '>' in the
 ``description`` key to declare a multi-line description.
@@ -90,10 +97,10 @@ alongside a minimal set of libraries that are common to most applications.
 
 .. code:: yaml
 
-   base: core20
+   base: core22
 
-In this example, `core20`_ is used as the base for snap building, and is based
-on `Ubuntu 20.04 LTS`_. See :ref:`base-snaps` for more details.
+In this example, `core22`_ is used as the base for snap building, and is based
+on `Ubuntu 22.04 LTS`_. See :ref:`base-snaps` for more details.
 
 Security model
 ~~~~~~~~~~~~~~
@@ -128,23 +135,28 @@ Parts
 
 Parts define what sources are needed to build your application. Parts can be
 anything: programs, libraries, or other needed assets, but for this example,
-we only need to use one part for the *yt-dlp* source code:
+we only need to use one part to handle the tarball containing the ``geekbench``
+binary file:
 
 .. code:: yaml
 
    parts:
-     yt-dlp:
-       plugin: python
-       source: https://github.com/yt-dlp/yt-dlp.git
+     geekbench4:
+       plugin: dump
+       source: https://cdn.geekbench.com/Geekbench-$SNAPCRAFT_PROJECT_VERSION-Linux.tar.gz
 
-The ``plugin`` keyword is used to select a language or technology-specific
-plugin that knows how to perform the build steps for the project.
-In this example, the :ref:`python plugin <the-python-plugin>` is used to
-automate the build of this Python-based project.
+The ``plugin`` keyword is normally used to select a language or
+technology-specific plugin that performs the build steps for the project.
+However, in this example, the :ref:`dump plugin <the-dump-plugin>` is used to
+unpack the file specified by the ``source`` keyword so that its contents can be
+included in the snap. The source can be a local or remote zip file, deb file,
+or tarball.
 
-The ``source`` keyword points to the source code of the Python project, which
-can be a local directory or remote Git repository. In this case, it refers to
-the main project repository.
+In this example we use the value of the ``SNAPCRAFT_PROJECT_VERSION`` environment
+variable to refer to the release tarball. This environment variable is derived
+from the value of the ``version`` keyword in the `Metadata`_ section, and using
+it in this section helps to keep information about the application version in
+one place.
 
 Apps
 ~~~~
@@ -156,9 +168,8 @@ available on users' systems.
 .. code:: yaml
 
    apps:
-     yt-dlp:
-       command: bin/yt-dlp
-       plugs: [home, network, network-bind, removable-media]
+     geekbench4:
+       command: geekbench4
 
 The ``command`` specifies the path to the binary to be run. This is resolved
 relative to the root of the snap contents.
@@ -168,12 +179,8 @@ If the command name matches the name of the snap specified in the top-level
 same name as the snap, as in this example.
 If the names differ, the binary file name will be prefixed with the snap name
 to avoid naming conflicts between installed snaps. An example of this would be
-``yt-dlp.some-command``.
+``geekbench4.some-command``.
 
-The confinement of the snap, which was defined in the `Security model`_ section
-above, can be changed through a set of :term:`interfaces`. In this example,
-the ``plugs`` keyword is used to specify the interfaces that the snap needs
-to access.
 
 Building the snap
 -----------------
@@ -182,7 +189,7 @@ You can download the example repository with the following command:
 
 .. code:: bash
 
-   $ git clone https://github.com/degville/snap-yt-dlp.git
+   $ git clone https://github.com/snapcraft-docs/geekbench4
 
 After you have created the :file:`snapcraft.yaml` file (which already exists
 in the above repository), you can build the snap by simply executing the
@@ -191,17 +198,13 @@ in the above repository), you can build the snap by simply executing the
 .. code:: bash
 
    $ snapcraft
-   Launching a container.
-   Waiting for container to be ready
-   [...]
-   Staging yt-dlp
-   + snapcraftctl stage
-   Priming yt-dlp
-   + snapcraftctl prime
-   Determining the version from the project repo (version: git).
-   The version has been set to '0+git.9e6dc74-dirty'
-   Snapping |
-   Snapped yt-dlp_0+git.9e6dc74-dirty_multi.snap
+   Executed: pull geekbench4
+   Executed: build geekbench4
+   Executed: stage geekbench4
+   Executed: prime geekbench4
+   Executed parts lifecycle
+   Generated snap metadata
+   Created snap package geekbench4_4.2.0_amd64.snap
 
 The resulting snap can be installed locally. This requires the ``--dangerous``
 flag because the snap is not signed by the Snap Store. The ``--devmode`` flag
@@ -209,22 +212,20 @@ acknowledges that you are installing an unconfined application:
 
 .. code:: bash
 
-   sudo snap install yt-dlp_0+git.*_multi.snap --devmode --dangerous
+   $ sudo snap install test-geekbench4_*.snap --devmode --dangerous
 
 You can then try it out:
 
 .. code:: bash
 
-   yt-dlp -h
+   $ test-geekbench4
 
-.. |execname| replace:: yt-dlp
+.. |execname| replace:: test-geekbench4
 .. include:: common/removing-cleaning-snap.rst
 
 .. Potentially just refer the reader to another tutorial.
 .. include:: common/publishing-snap.rst
 
-Congratulations! You've just built and published your first Python snap.
-For a more in-depth overview of the snap building process, see
-:ref:`creating-a-snap`.
+Congratulations! You've just built and published your first pre-built binary snap. For a more in-depth overview of the snap building process, see `Creating a snap </t/creating-a-snap/6799>`__.
 
-.. _`yt-dlp`: https://snapcraft.io/yt-dlp
+.. _`Geekbench 4`: https://github.com/snapcraft-docs/geekbench4

@@ -15,30 +15,31 @@ Supported base snaps
 
 There are currently five supported bases:
 
-- `core22 <https://snapcraft.io/core22>`__: the newest base, built from `Ubuntu 22.04 LTS <https://releases.ubuntu.com/22.04/>`__.
-- `core20 <https://snapcraft.io/core20>`__: built from `Ubuntu 20.04 LTS <https://releases.ubuntu.com/20.04/>`__.
-- `core18 <https://snapcraft.io/core18>`__: the previous standard base for snap building, based on `Ubuntu 18.04 LTS <http://releases.ubuntu.com/18.04/>`__.
-- `core <https://snapcraft.io/core>`__: based on `Ubuntu 16.04 ESM <http://releases.ubuntu.com/16.04/>`__, not to be confused with ``core16`` (see below).
-- `bare <https://snapcraft.io/bare>`__: an empty base that’s useful with fully statically linked snaps and when testing.
+- `core22`_: built from `Ubuntu 22.04 LTS`_.
+- `core20`_: built from `Ubuntu 20.04 LTS`_.
+- `core18`_: based on `Ubuntu 18.04 LTS`_.
+- `core`_: based on `Ubuntu 16.04 ESM`_, not to be confused with `core16`_ -- see below.
+- `bare`_: an empty base that is useful with fully statically linked snaps and when testing.
 
 Older releases of ``core`` were occasionally referred to as *core 16*, but ``core`` and ``core16`` are now two distinct packages.
 
-In most Ubuntu bases (except ``core``), *snapd* and its associated tools are provided by their relevant snaps. `core16 <https://snapcraft.io/core16>`__ should no longer be used. With no current stable release, its beta and candidate releases are classed as experimental, and packages previously using it should be moved to a more recent base.
+In most Ubuntu bases (except ``core``), *snapd* and its associated tools are provided by their relevant snaps.
 
-`core16 <https://snapcraft.io/core16>`__ development has been dropped. With no current stable release, its beta and candidate releases are classed as experimental. As with ``core18`` (and distinct from ``core``), it’s built without bundling *snapd* and its associated tools. In both ``core16``, ``core18`` and ``core20``, these are instead provided by their associated snaps.
+.. warning:: `core16`_ should no longer be used. With no current stable release, its beta and candidate releases are classed as experimental, and packages previously using it should be moved to a more recent base.
+
 
 Defining a base
 ---------------
 
 Bases are defined by adding the ``base:`` keyword to a snap’s :ref:`snapcraft.yaml <the-snapcraft-yaml-schema>` followed by the base name.
 
-For example, to specify core 18, use the following:
+For example, to specify ``core18``, use the following:
 
 .. code:: yaml
 
    base: core18
 
-To specify *core22*, use the following
+To specify ``core22``, use the following
 
 .. code:: yaml
 
@@ -46,7 +47,7 @@ To specify *core22*, use the following
 
 Snapcraft no longer supports building snaps with the older *core* base. Snapcraft 4 needs to be used instead. Snapcraft 4 is still being supported and can be installed from Snapcraft’s *4.x* :term:`track`:
 
-::
+.. code:: bash
 
    $ snap install snapcraft --channel 4.x
 
