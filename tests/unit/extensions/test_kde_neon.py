@@ -184,12 +184,6 @@ class TestGetPartSnippet:
                     )
                 },
                 {
-                    "XDG_CONFIG_HOME": (
-                        "$CRAFT_STAGE/etc/xdg:/snap/kf5-5-108-qt-5-15-10-core22-sdk"
-                        "/current/etc/xdg:/etc/xdg${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}"
-                    )
-                },
-                {
                     "SNAPCRAFT_CMAKE_ARGS": (
                         "-DCMAKE_FIND_ROOT_PATH="
                         "/snap/kf5-5-108-qt-5-15-10-core22-sdk/current"
@@ -213,12 +207,6 @@ def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
                 "XDG_DATA_DIRS": (
                     "$CRAFT_STAGE/usr/share:/snap/kf5-5-108-qt-5-15-10-core22-sdk"
                     "/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
-                )
-            },
-            {
-                "XDG_CONFIG_HOME": (
-                    "$CRAFT_STAGE/etc/xdg:/snap/kf5-5-108-qt-5-15-10-core22-sdk"
-                    "/current/etc/xdg:/etc/xdg${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}"
                 )
             },
             {

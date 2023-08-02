@@ -178,15 +178,6 @@ class KDENeon(Extension):
                     ),
                 },
                 {
-                    "XDG_CONFIG_HOME": prepend_to_env(
-                        "XDG_CONFIG_HOME",
-                        [
-                            f" $CRAFT_STAGE/etc/xdg:/snap/{sdk_snap}/current/etc/xdg",
-                            "/etc/xdg",
-                        ],
-                    ),
-                },
-                {
                     "SNAPCRAFT_CMAKE_ARGS": prepend_to_env(
                         "SNAPCRAFT_CMAKE_ARGS",
                         [
