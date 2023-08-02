@@ -63,12 +63,6 @@ The following kernel-specific options are provided by this plugin:
       Optional, define compiler to use, by default gcc compiler is used.
       Other permitted compilers: clang
 
-    - kernel-compiler-paths
-      (array of strings; default: none)
-      Optional, define the compiler path to be added to the PATH.
-      Path is relative to the stage directory.
-      Default value is empty.
-
     - kernel-compiler-parameters
       (array of string)
       Optional, define extra compiler parameters to be passed to the compiler.
@@ -155,13 +149,6 @@ class KernelPlugin(PluginV2):
                 "kernel-compiler": {
                     "type": "string",
                     "default": "",
-                },
-                "kernel-compiler-paths": {
-                    "type": "array",
-                    "minitems": 1,
-                    "uniqueItems": True,
-                    "items": {"type": "string"},
-                    "default": [],
                 },
                 "kernel-compiler-parameters": {
                     "type": "array",
@@ -337,26 +324,13 @@ class KernelPlugin(PluginV2):
         logger.info("Getting build env...")
         self._init_build_env()
 
-        env = {
+        return {
             "CROSS_COMPILE": "${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}-",
             "ARCH": self._kernel_arch,
             "DEB_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
             "KERNEL_BUILD_ARCH_DIR": f"${{SNAPCRAFT_PART_BUILD}}/arch/{self._kernel_arch}/boot",
             "KERNEL_IMAGE_TARGET": self.kernel_image_target,
         }
-
-        # check if there is custom path to be included
-        if self.options.kernel_compiler_paths:
-            custom_paths = [
-                os.path.join("${SNAPCRAFT_STAGE}", f)
-                for f in self.options.kernel_compiler_paths
-            ]
-            path = custom_paths + [
-                "${PATH}",
-            ]
-            env["PATH"] = ":".join(path)
-
-        return env
 
     @overrides
     def get_build_commands(self) -> List[str]:
