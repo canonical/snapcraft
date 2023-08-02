@@ -171,7 +171,7 @@ After you have created the :file:`snapcraft.yaml` file, or used the one provided
    ++ npm pack .
    ++ tail -1
    npm notice
-   npm notice   wethr@1.5.2
+   npm notice 📦 wethr@1.5.2
    npm notice === Tarball Contents ===
    npm notice 1.1kB  LICENSE
    npm notice 29.1kB demo.gif
@@ -217,7 +217,7 @@ You can then try it out:
 .. code:: bash
 
    $ wethr
-   London, GB: 17.04C 
+   London, GB: 17.04C 🌧
 
 Removing the snap is simple too:
 
