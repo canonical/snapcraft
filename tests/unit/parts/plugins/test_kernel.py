@@ -152,7 +152,6 @@ class TestPluginKernel:
         assert opt.kernel_with_firmware
         assert opt.kernel_device_trees is None
         assert opt.kernel_compiler is None
-        assert opt.kernel_compiler_paths is None
         assert opt.kernel_compiler_parameters is None
         assert not opt.kernel_enable_zfs_support
         assert not opt.kernel_enable_perf
@@ -176,7 +175,6 @@ class TestPluginKernel:
         assert opt.kernel_with_firmware
         assert opt.kernel_device_trees is None
         assert opt.kernel_compiler is None
-        assert opt.kernel_compiler_paths is None
         assert opt.kernel_compiler_parameters is None
         assert not opt.kernel_enable_zfs_support
         assert not opt.kernel_enable_perf
@@ -200,7 +198,6 @@ class TestPluginKernel:
         assert opt.kernel_with_firmware
         assert opt.kernel_device_trees is None
         assert opt.kernel_compiler is None
-        assert opt.kernel_compiler_paths is None
         assert opt.kernel_compiler_parameters is None
         assert not opt.kernel_enable_zfs_support
         assert not opt.kernel_enable_perf
@@ -224,7 +221,6 @@ class TestPluginKernel:
         assert opt.kernel_with_firmware
         assert opt.kernel_device_trees is None
         assert opt.kernel_compiler is None
-        assert opt.kernel_compiler_paths is None
         assert opt.kernel_compiler_parameters is None
         assert not opt.kernel_enable_zfs_support
         assert not opt.kernel_enable_perf
@@ -263,13 +259,10 @@ class TestPluginKernel:
             "KERNEL_IMAGE_TARGET": plugin.kernel_image_target,
         }
 
-    def test_check_get_build_environment_compiler_paths_cross(
-        self, setup_method_fixture, new_dir
-    ):
+    def test_check_get_build_environment_cross(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(
             new_dir,
             properties={
-                "kernel-compiler-paths": ["gcc-11/bin"],
                 "kernel-image-target": {"arm64": "Image", "armhf": "Image.gz"},
             },
             arch="armhf",
@@ -281,27 +274,6 @@ class TestPluginKernel:
             "DEB_ARCH": "${CRAFT_TARGET_ARCH}",
             "KERNEL_BUILD_ARCH_DIR": "${CRAFT_PART_BUILD}/arch/arm/boot",
             "KERNEL_IMAGE_TARGET": "Image.gz",
-            "PATH": "${CRAFT_STAGE}/gcc-11/bin:${PATH}",
-        }
-
-    def test_check_get_build_environment_compiler_paths(
-        self, setup_method_fixture, new_dir
-    ):
-        plugin = setup_method_fixture(
-            new_dir,
-            properties={
-                "kernel-compiler-paths": ["gcc-11/bin", "gcc-11/sbin"],
-            },
-        )
-        plugin._kernel_arch = "amd64"
-
-        assert plugin.get_build_environment() == {
-            "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET}-",
-            "ARCH": plugin._kernel_arch,
-            "DEB_ARCH": "${CRAFT_TARGET_ARCH}",
-            "KERNEL_BUILD_ARCH_DIR": f"${{CRAFT_PART_BUILD}}/arch/{plugin._kernel_arch}/boot",
-            "KERNEL_IMAGE_TARGET": plugin.kernel_image_target,
-            "PATH": "${CRAFT_STAGE}/gcc-11/bin:${CRAFT_STAGE}/gcc-11/sbin:${PATH}",
         }
 
     def test_check_get_build_command(self, setup_method_fixture, new_dir):
