@@ -17,6 +17,7 @@
 import abc
 import os
 import pathlib
+import re
 import subprocess
 import sys
 from typing import Dict, List, Set
@@ -24,9 +25,51 @@ from typing import Dict, List, Set
 import click
 from catkin_pkg import packages as catkin_packages
 
+from snapcraft_legacy.internal import errors
 from snapcraft_legacy.internal.repo import Repo
-from snapcraft_legacy.plugins.v1._ros.rosdep import _parse_rosdep_resolve_dependencies
 from snapcraft_legacy.plugins.v2 import PluginV2
+
+
+class RosdepUnexpectedResultError(errors.SnapcraftError):
+    fmt = (
+        "Received unexpected result from rosdep when trying to resolve "
+        "{dependency!r}:\n{output}"
+    )
+
+    def __init__(self, dependency, output):
+        super().__init__(dependency=dependency, output=output)
+
+
+def _parse_rosdep_resolve_dependencies(
+    dependency_name: str, output: str
+) -> Dict[str, Set[str]]:
+    # The output of rosdep follows the pattern:
+    #
+    #    #apt
+    #    package1
+    #    package2
+    #    #pip
+    #    pip-package1
+    #    pip-package2
+    #
+    # Split these out into a dict of dependency type -> dependencies.
+    delimiters = re.compile(r"\n|\s")
+    lines = delimiters.split(output)
+    dependencies: Dict[str, Set[str]] = {}
+    dependency_set = None
+    for line in lines:
+        line = line.strip()
+        if line.startswith("#"):
+            key = line.strip("# ")
+            dependencies[key] = set()
+            dependency_set = dependencies[key]
+        elif line:
+            if dependency_set is None:
+                raise RosdepUnexpectedResultError(dependency_name, output)
+            else:
+                dependency_set.add(line)
+
+    return dependencies
 
 
 class RosPlugin(PluginV2):

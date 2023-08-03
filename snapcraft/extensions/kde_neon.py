@@ -157,7 +157,7 @@ class KDENeon(Extension):
         }
 
     @overrides
-    def get_part_snippet(self) -> Dict[str, Any]:
+    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
         sdk_snap = self.kde_snaps.sdk
         cmake_args = self.ext_info.cmake_args
 

@@ -15,20 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from collections import ChainMap
 from os import path
-from typing import Set  # noqa: F401
-from typing import List
+from typing import Set
 
 import snapcraft_legacy
 from snapcraft_legacy.internal import elf, pluginhandler, repo
-from snapcraft_legacy.internal.pluginhandler._part_environment import (
-    get_snapcraft_global_environment,
-    get_snapcraft_part_directory_environment,
-)
 
 from . import errors, grammar_processing
-from ._env import build_env, build_env_for_stage, runtime_env
 
 logger = logging.getLogger(__name__)
 
@@ -214,52 +207,3 @@ class PartsConfig:
         self.all_parts.append(part)
 
         return part
-
-    def build_env_for_part(self, part, root_part=True) -> List[str]:
-        """Return a build env of all the part's dependencies."""
-
-        env = []  # type: List[str]
-        stagedir = self._project.stage_dir
-
-        if root_part:
-            # this has to come before any {}/usr/bin
-            env += part.env(part.part_install_dir)
-            env += runtime_env(part.part_install_dir, self._project.arch_triplet)
-            env += runtime_env(stagedir, self._project.arch_triplet)
-            env += build_env(
-                part.part_install_dir,
-                self._project.info.name,
-                self._project.arch_triplet,
-            )
-            env += build_env_for_stage(
-                stagedir, self._project.info.name, self._project.arch_triplet
-            )
-
-            global_env = get_snapcraft_global_environment(self._project)
-            part_env = get_snapcraft_part_directory_environment(part)
-
-            for variable, value in ChainMap(part_env, global_env).items():
-                env.append('{}="{}"'.format(variable, value))
-
-            # Finally, add the declared environment from the part.
-            # This is done only for the "root" part.
-            for be in part.build_environment:
-                env.extend([f'{k}="{v}"' for k, v in be.items()])
-        else:
-            env += part.env(stagedir)
-            env += runtime_env(stagedir, self._project.arch_triplet)
-
-        for dep_part in part.deps:
-            env += dep_part.env(stagedir)
-            env += self.build_env_for_part(dep_part, root_part=False)
-
-        # LP: #1767625
-        # Remove duplicates from using the same plugin in dependent parts.
-        seen = set()  # type: Set[str]
-        deduped_env = list()  # type: List[str]
-        for e in env:
-            if e not in seen:
-                deduped_env.append(e)
-                seen.add(e)
-
-        return deduped_env

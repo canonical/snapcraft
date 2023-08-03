@@ -128,6 +128,19 @@ def test_yaml_load_not_core22_base():
     assert str(raised.value) == "base is core20"
 
 
+def test_yaml_load_esm_base():
+    with pytest.raises(errors.MaintenanceBase):
+        yaml_utils.load(
+            io.StringIO(
+                dedent(
+                    """\
+            base: core
+    """
+                )
+            )
+        )
+
+
 def test_yaml_load_no_base():
     with pytest.raises(errors.LegacyFallback) as raised:
         yaml_utils.load(
