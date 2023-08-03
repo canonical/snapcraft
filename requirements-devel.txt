@@ -14,7 +14,7 @@ coverage==7.2.5
 craft-archives==1.1.3
 craft-cli==1.2.0
 craft-grammar==1.1.1
-craft-parts==1.19.6
+git+https://github.com/cmatsuoka/craft-parts@6a59b6f64c94bfb12a3d14b8c32ace2adf25983d
 craft-providers==1.10.1
 craft-store==2.4.0
 cryptography==40.0.2

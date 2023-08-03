@@ -102,7 +102,7 @@ install_requires = [
     "craft-archives",
     "craft-cli",
     "craft-grammar",
-    "craft-parts",
+    "craft-parts @ git+https://github.com/cmatsuoka/craft-parts@6a59b6f64c94bfb12a3d14b8c32ace2adf25983d",
     "craft-providers",
     "craft-store",
     "docutils<0.20",  # Frozen until we can update sphinx dependencies.
