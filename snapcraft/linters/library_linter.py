@@ -104,7 +104,7 @@ class LibraryLinter(Linter):
 
         return issues
 
-    def _find_deb_package(self, library_name):
+    def _find_deb_package(self, library_name: str) -> Optional[str]:
         for path in glob.glob("/usr/lib/**", recursive=True):
             if os.path.basename(path) == library_name:
                 try:
