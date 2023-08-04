@@ -111,9 +111,12 @@ class LibraryLinter(Linter):
                     output = subprocess.run(
                         ["dpkg", "-S", path], check=True, stdout=subprocess.PIPE
                     )
-                except:  # pylint: disable=bare-except
+                except subprocess.CalledProcessError:
                     # If the specified file doesn't belong to any package, the
                     # call will trigger an exception.
+                    return None
+                    # In case that dpkg isn't available
+                except FileNotFoundError:
                     return None
                 return output.stdout.decode("utf-8").split(":")[0]
         return None
