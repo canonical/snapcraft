@@ -6,7 +6,7 @@
             "type": "python",
             "request": "launch",
             "stopOnEntry": true,
-            "pythonPath": "${config.python.pythonPath}",
+            "python": "${config.python.pythonPath}",
             "program": "${file}",
             "cwd": "${workspaceRoot}",
             "debugOptions": [
@@ -20,7 +20,7 @@
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
-            "pythonPath": "${config.python.pythonPath}",
+            "python": "${config.python.pythonPath}",
             "program": "${workspaceRoot}/units.py",
             "cwd": "${workspaceRoot}",
             "debugOptions": [

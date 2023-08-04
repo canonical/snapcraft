@@ -27,7 +27,7 @@ from overrides import overrides
 from snapcraft.elf import ElfFile, SonameCache, elf_utils
 from snapcraft.elf import errors as elf_errors
 
-from .base import Linter, LinterIssue, LinterResult
+from .base import Linter, LinterIssue, LinterResult, Optional
 
 
 class LibraryLinter(Linter):
@@ -109,11 +109,11 @@ class LibraryLinter(Linter):
             if os.path.basename(path) == library_name:
                 try:
                     output = subprocess.run(
-                        ["dpkg", "-S", path], check=False, stdout=subprocess.PIPE
+                        ["dpkg", "-S", path], check=True, stdout=subprocess.PIPE
                     )
                 except:  # pylint: disable=bare-except
-                    return None
-                if output.returncode != 0:
+                    # If the specified file doesn't belong to any package, the
+                    # call will trigger an exception.
                     return None
                 return output.stdout.decode("utf-8").split(":")[0]
         return None
