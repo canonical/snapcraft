@@ -81,7 +81,7 @@ class SignBuildTestCase(FakeStoreCommandsBaseTestCase):
         self,
         mock_get_snap_data,
     ):
-        mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}
+        mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}, None
 
         raised = self.assertRaises(
             storeapi.errors.StoreBuildAssertionPermissionError,
@@ -104,7 +104,7 @@ class SignBuildTestCase(FakeStoreCommandsBaseTestCase):
         self,
         mock_get_snap_data,
     ):
-        mock_get_snap_data.return_value = {"name": "snap-test", "grade": "stable"}
+        mock_get_snap_data.return_value = {"name": "snap-test", "grade": "stable"}, None
 
         self.useFixture(
             fixtures.MockPatch("subprocess.check_output", return_value="[]".encode())
@@ -138,7 +138,7 @@ class SignBuildTestCase(FakeStoreCommandsBaseTestCase):
             "account_id": "abcd",
             "snaps": {"16": {"test-snap": {"snap-id": "snap-id"}}},
         }
-        mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}
+        mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}, None
         self.useFixture(
             fixtures.MockPatch(
                 "subprocess.check_output", return_value='[{"name": "default"}]'.encode()
@@ -172,7 +172,7 @@ class SignBuildTestCase(FakeStoreCommandsBaseTestCase):
             "account_keys": [{"public-key-sha3-384": "another_hash"}],
             "snaps": {"16": {"test-snap": {"snap-id": "snap-id"}}},
         }
-        mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}
+        mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}, None
         self.useFixture(
             fixtures.MockPatch(
                 "subprocess.check_output",
@@ -210,7 +210,7 @@ class SignBuildTestCase(FakeStoreCommandsBaseTestCase):
             "account_id": "abcd",
             "snaps": {"16": {"test-snap": {"snap-id": "snap-id"}}},
         }
-        mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}
+        mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}, None
         fake_check_output = fixtures.MockPatch(
             "subprocess.check_output",
             side_effect=mock_check_output,
@@ -253,7 +253,7 @@ class SignBuildTestCase(FakeStoreCommandsBaseTestCase):
             "account_keys": [{"public-key-sha3-384": "a_hash"}],
             "snaps": {"16": {"test-snap": {"snap-id": "snap-id"}}},
         }
-        mock_get_snap_data.return_value = {"name": "test-snap"}
+        mock_get_snap_data.return_value = {"name": "test-snap"}, None
         fake_check_output = fixtures.MockPatch(
             "subprocess.check_output", side_effect=mock_check_output
         )
@@ -301,7 +301,7 @@ class SignBuildTestCase(FakeStoreCommandsBaseTestCase):
             ],
             "snaps": {"16": {"test-snap": {"snap-id": "snap-id"}}},
         }
-        mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}
+        mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}, None
         fake_check_output = fixtures.MockPatch(
             "subprocess.check_output",
             side_effect=mock_check_output,
@@ -350,7 +350,7 @@ class SignBuildTestCase(FakeStoreCommandsBaseTestCase):
             "account_id": "abcd",
             "snaps": {"16": {"test-snap": {"snap-id": "snap-id"}}},
         }
-        mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}
+        mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}, None
 
         snap_build_path = self.snap_test.snap_path + "-build"
         with open(snap_build_path, "wb") as fd:
