@@ -24,7 +24,7 @@ from unittest.mock import ANY, Mock, PropertyMock, call
 import pytest
 from craft_cli import EmitterMode, emit
 from craft_parts import Action, Step, callbacks
-from craft_providers.bases.buildd import BuilddBaseAlias
+from craft_providers.bases.ubuntu import BuilddBaseAlias
 
 from snapcraft import errors
 from snapcraft.elf import ElfFile
@@ -1186,7 +1186,6 @@ def test_lifecycle_run_in_provider_default(
         project_name="mytest",
         project_path=ANY,
         base_configuration=mock_base_configuration,
-        build_base="22.04",
         instance_name="test-instance-name",
         allow_unstable=False,
     )
@@ -1310,7 +1309,6 @@ def test_lifecycle_run_in_provider_all_options(
         project_name="mytest",
         project_path=ANY,
         base_configuration=mock_base_configuration,
-        build_base="22.04",
         instance_name="test-instance-name",
         allow_unstable=False,
     )
@@ -1412,7 +1410,6 @@ def test_lifecycle_run_in_provider(
         project_name="mytest",
         project_path=ANY,
         base_configuration=mock_base_configuration,
-        build_base=BuilddBaseAlias.JAMMY.value,
         instance_name="test-instance-name",
         allow_unstable=False,
     )

@@ -5,7 +5,7 @@ requirements_fixups() {
 
   # Python apt library pinned to source.
   sed -i '/python-apt=*/d' "$req_file"
-  echo 'python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.1ubuntu0.20.04.1/python-apt_2.0.1ubuntu0.20.04.1.tar.xz; sys.platform == "linux"' >> "$req_file"
+  echo 'python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz; sys.platform == "linux"' >> "$req_file"
 
   # https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1635463
   sed -i '/pkg[-_]resources==0.0.0/d' "$req_file"

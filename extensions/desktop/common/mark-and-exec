@@ -1,7 +1,10 @@
 #!/bin/bash
-###############################
-# Mark update and exec binary #
-###############################
+###########################################################
+# Mark update and exec binary
+# This is not used with the gnome extension for
+# core22 and later, please see
+# https://github.com/snapcore/snapcraft-desktop-integration
+###########################################################
 
 # shellcheck disable=SC2154
 [ "$needs_update" = true ] && echo "SNAP_DESKTOP_LAST_REVISION=$SNAP_REVISION" > "$SNAP_USER_DATA/.last_revision"

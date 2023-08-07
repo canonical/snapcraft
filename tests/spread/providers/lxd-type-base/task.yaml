@@ -3,7 +3,7 @@ summary: Build a base snap using the snap-name as a base for the environment
 kill-timeout: 30m
 
 environment:
-  SNAP_DIR: ../snaps/core18-base
+  SNAP_DIR: ../snaps/core20-base
 
 restore: |
   cd "$SNAP_DIR"
@@ -22,6 +22,15 @@ execute: |
 
   snapcraft pull --use-lxd
 
-  /snap/bin/lxc start snapcraft-core18
-  /snap/bin/lxc exec snapcraft-core18 cat /etc/os-release | MATCH "VERSION_CODENAME=bionic"
-  /snap/bin/lxc stop snapcraft-core18
+  /snap/bin/lxc start snapcraft-core20
+  /snap/bin/lxc exec snapcraft-core20 cat /etc/os-release | MATCH "VERSION_CODENAME=focal"
+  
+  # Retry stopping, as on the Google runners this sometimes times out due to system load.
+  for _ in {1..4}; do
+    sleep 5
+    /snap/bin/lxc stop --timeout 60 snapcraft-core20 && break
+  done || (
+    # If the last stop failed, include the LXC logs in the output to establish why.
+    lxc info --show-log snapcraft-core20
+    exit 1
+  )

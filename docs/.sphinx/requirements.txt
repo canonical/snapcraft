@@ -8,4 +8,3 @@ sphinx-reredirects
 pyspelling
 sphinx-copybutton
 sphinx-pydantic
-sphinx-toolbox

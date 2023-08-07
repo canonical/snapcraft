@@ -86,7 +86,10 @@ def fake_extension():
         def get_app_snippet(self) -> Dict[str, Any]:
             return {"plugs": ["fake-plug"]}
 
-        def get_part_snippet(self) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+            if plugin_name == "catkin":
+                return {}
+
             return {"after": ["fake-extension/fake-part"]}
 
         def get_parts_snippet(self) -> Dict[str, Any]:
@@ -122,7 +125,7 @@ def fake_extension_extra():
         def get_app_snippet(self) -> Dict[str, Any]:
             return {"plugs": ["fake-plug", "fake-plug-extra"]}
 
-        def get_part_snippet(self) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
             return {"after": ["fake-extension-extra/fake-part"]}
 
         def get_parts_snippet(self) -> Dict[str, Any]:
@@ -156,7 +159,7 @@ def fake_extension_invalid_parts():
         def get_app_snippet(self) -> Dict[str, Any]:
             return {"plugs": ["fake-plug"]}
 
-        def get_part_snippet(self) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
             return {"after": ["fake-extension/fake-part"]}
 
         def get_parts_snippet(self) -> Dict[str, Any]:
@@ -192,7 +195,7 @@ def fake_extension_experimental():
         def get_app_snippet(self) -> Dict[str, Any]:
             return {}
 
-        def get_part_snippet(self) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
             return {}
 
         def get_parts_snippet(self) -> Dict[str, Any]:
@@ -228,7 +231,7 @@ def fake_extension_name_from_legacy():
         def get_app_snippet(self) -> Dict[str, Any]:
             return {"plugs": ["fake-plug", "fake-plug-extra"]}
 
-        def get_part_snippet(self) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
             return {"after": ["fake-extension-extra/fake-part"]}
 
         def get_parts_snippet(self) -> Dict[str, Any]:
@@ -344,7 +347,7 @@ def fake_provider(mock_instance):
             project_name: str,
             project_path: Path,
             base_configuration: Base,
-            build_base: str,
+            build_base: Optional[str] = None,
             instance_name: str,
             allow_unstable: bool = False,
         ):
