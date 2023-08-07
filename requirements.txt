@@ -51,7 +51,7 @@ python-dateutil==2.8.2
 python-debian==0.1.49
 pytz==2023.3
 pyxdg==0.28
-PyYAML==6.0
+PyYAML==6.0.1
 raven==6.10.0
 requests==2.30.0
 requests-toolbelt==1.0.0
