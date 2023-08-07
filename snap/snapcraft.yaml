@@ -117,7 +117,7 @@ parts:
       # Remove so the link can be recreated on re-builds
       rm -f "$TRIPLET_PATH/libsodium.so"
       ln -s "$LIBSODIUM" "$TRIPLET_PATH/libsodium.so"
-      $SNAPCRAFT_PROJECT_DIR/tools/snapcraft-override-build.sh
+      $SNAPCRAFT_PROJECT_DIR/snap/local/scripts/snapcraft-override-build.sh
 
   snapcraft:
     source: .
@@ -128,6 +128,8 @@ parts:
         - setuptools<66  # Limited to < 66 because we need `pkg_resources` and because `python-apt` doesn't build with the latest.
     requirements:
         - requirements.txt
+    constraints:
+        - constraints.txt
     organize:
         # Put snapcraftctl into its own directory that can be included in the PATH
         # without including other binaries.
