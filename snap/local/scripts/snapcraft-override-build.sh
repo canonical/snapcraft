@@ -9,7 +9,7 @@ PYTHON_PACKAGE_PATH="${SNAPCRAFT_PART_INSTALL}/usr/lib/python3.8/"
 
 # Apply patches
 echo "Patching ctypes..."
-patch -s -b "${PYTHON_PACKAGE_PATH}/ctypes/__init__.py" "${SNAPCRAFT_PROJECT_DIR}/patches/ctypes_init.diff"
+patch -s -b "${PYTHON_PACKAGE_PATH}/ctypes/__init__.py" "${SNAPCRAFT_PROJECT_DIR}/snap/local/patches/python/ctypes_init.diff"
 
 # Save patches to allow rebuilding
 mkdir -p patched/ctypes
