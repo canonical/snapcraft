@@ -224,20 +224,20 @@ class EnvironmentTest(ProjectLoaderBaseTest):
                         '{0}/stage/bin${{PATH:+:$PATH}}"'
                     ).format(self.path),
                     'PERL5LIB="{0}/stage/usr/share/perl5/"'.format(self.path),
+                    'SNAPCRAFT_ARCH_BUILD_FOR="{}"'.format(
+                        project_config.project.arch_build_for
+                    ),
                     'SNAPCRAFT_ARCH_BUILD_ON="{}"'.format(
                         project_config.project.arch_build_on
-                    ),
-                    'SNAPCRAFT_ARCH_RUN_ON="{}"'.format(
-                        project_config.project.arch_run_on
                     ),
                     'SNAPCRAFT_ARCH_TRIPLET="{}"'.format(
                         project_config.project.arch_triplet
                     ),
+                    'SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR="{}"'.format(
+                        project_config.project.arch_triplet_build_for
+                    ),
                     'SNAPCRAFT_ARCH_TRIPLET_BUILD_ON="{}"'.format(
                         project_config.project.arch_triplet_build_on
-                    ),
-                    'SNAPCRAFT_ARCH_TRIPLET_RUN_ON="{}"'.format(
-                        project_config.project.arch_triplet_run_on
                     ),
                     'SNAPCRAFT_CONTENT_DIRS=""',
                     'SNAPCRAFT_EXTENSIONS_DIR="{}"'.format(common.get_extensionsdir()),
@@ -609,8 +609,8 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             project_config.parts.build_env_for_part(part2), Contains('BAZ="QUX"')
         )
 
-    def test_no_run_on_arch(self):
-        """Run-on envvars should exist when the run-on arch can be determined."""
+    def test_no_build_for_arch(self):
+        """build-for envvars should exist when the build-for arch can be determined."""
         snapcraft_yaml = dedent(
             """\
             name: test
@@ -643,16 +643,16 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             in environment
         )
         assert (
-            f'SNAPCRAFT_ARCH_RUN_ON="{project_config.project.arch_run_on}"'
+            f'SNAPCRAFT_ARCH_BUILD_FOR="{project_config.project.arch_build_for}"'
             in environment
         )
         assert (
-            f'SNAPCRAFT_ARCH_TRIPLET_RUN_ON="{project_config.project.arch_triplet_run_on}"'
+            f'SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR="{project_config.project.arch_triplet_build_for}"'
             in environment
         )
 
-    def test_no_run_on_unknown_arch(self):
-        """Run-on envvars should not be defined for unknown run-on architectures."""
+    def test_no_build_for_unknown_arch(self):
+        """build-for envvars should not be defined for unknown build-for architectures."""
         snapcraft_yaml = dedent(
             """\
             name: test
@@ -685,16 +685,16 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             in environment
         )
         assert (
-            f'SNAPCRAFT_ARCH_RUN_ON="{project_config.project.arch_run_on}"'
+            f'SNAPCRAFT_ARCH_BUILD_FOR="{project_config.project.arch_build_for}"'
             not in environment
         )
         assert (
-            f'SNAPCRAFT_ARCH_TRIPLET_RUN_ON="{project_config.project.arch_triplet_run_on}"'
+            f'SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR="{project_config.project.arch_triplet_build_for}"'
             not in environment
         )
 
-    def test_no_run_on_multi_arch(self):
-        """Run-on envvars should not be defined for multi-arch builds."""
+    def test_no_build_for_multi_arch(self):
+        """build-for envvars should not be defined for multi-arch builds."""
         snapcraft_yaml = dedent(
             """\
             name: test
@@ -727,10 +727,10 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             in environment
         )
         assert (
-            f'SNAPCRAFT_ARCH_RUN_ON="{project_config.project.arch_run_on}"'
+            f'SNAPCRAFT_ARCH_BUILD_FOR="{project_config.project.arch_build_for}"'
             not in environment
         )
         assert (
-            f'SNAPCRAFT_ARCH_TRIPLET_RUN_ON="{project_config.project.arch_triplet_run_on}"'
+            f'SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR="{project_config.project.arch_triplet_build_for}"'
             not in environment
         )

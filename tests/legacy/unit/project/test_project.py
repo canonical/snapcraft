@@ -96,14 +96,14 @@ def test_get_snapcraft_started():
 
 
 @pytest.mark.parametrize(
-    ["architectures", "expected_run_on", "expected_run_on_triplet"],
+    ["architectures", "expected_build_for", "expected_build_for_triplet"],
     [
-        # implicitly defined run-on arch
+        # implicitly defined build-for arch
         (None, "arm64", "aarch64-linux-gnu"),
         (["arm64"], "arm64", "aarch64-linux-gnu"),
         ([{"build-on": "arm64"}], "arm64", "aarch64-linux-gnu"),
         ([{"build-on": ["arm64"]}], "arm64", "aarch64-linux-gnu"),
-        # explicitly defined run-on arch
+        # explicitly defined build-for arch
         ([{"build-on": "arm64", "run-on": "amd64"}], "amd64", "x86_64-linux-gnu"),
         ([{"build-on": ["arm64"], "run-on": ["amd64"]}], "amd64", "x86_64-linux-gnu"),
         (
@@ -122,20 +122,20 @@ def test_get_snapcraft_started():
             "amd64",
             "x86_64-linux-gnu",
         ),
-        # multi-arch builds - run-on arch cannot be determined
+        # multi-arch builds - build-for arch cannot be determined
         (["arm64", "amd64"], None, None),
         ([{"build-on": ["arm64", "amd64"]}], None, None),
         ([{"build-on": "arm64", "run-on": ["arm64", "amd64"]}], None, None),
         ([{"build-on": ["arm64"], "run-on": ["arm64", "amd64"]}], None, None),
-        # unknown run-on arch - run-on arch cannot be determined
+        # unknown build-for arch - build-for arch cannot be determined
         ([{"build-on": "arm64", "run-on": "bad-arch"}], None, None),
         ([{"build-on": ["arm64"], "run-on": ["bad-arch"]}], None, None),
     ],
 )
 def test_project_architectures(
-    architectures, expected_run_on, expected_run_on_triplet, mocker, tmp_path
+    architectures, expected_build_for, expected_build_for_triplet, mocker, tmp_path
 ):
-    """Verify build-on and run-on architectures are correctly determined."""
+    """Verify build-on and build-for architectures are correctly determined."""
     mocker.patch.object(sys, "platform", "linux")
     mocker.patch("platform.machine", return_value="aarch64")
     snapcraft_yaml = SnapcraftYaml(
@@ -150,8 +150,8 @@ def test_project_architectures(
 
     assert project.arch_build_on == "arm64"
     assert project.arch_triplet_build_on == "aarch64-linux-gnu"
-    assert project.arch_run_on == expected_run_on
-    assert project.arch_triplet_run_on == expected_run_on_triplet
+    assert project.arch_build_for == expected_build_for
+    assert project.arch_triplet_build_for == expected_build_for_triplet
 
 
 @pytest.mark.parametrize(
@@ -170,7 +170,7 @@ def test_project_architectures(
         ["arm64", {"build-on": "arm64"}],
         [{"build-on": None}],
         [{"build-on": {"build-on": "arm64"}}],
-        # missing build-on or run-on
+        # missing build-on or build-for
         [{"foo": "bar"}],
         [{"build-on": "arm64", "foo": "bar"}],
         [{"run-on": "arm64"}],
@@ -210,7 +210,7 @@ def test_project_architectures_bad_data(architectures, mocker, tmp_path):
     ],
 )
 def test_project_architectures_target_arch(architectures, mocker, tmp_path):
-    """When `target_deb_arch` is provided, it is always used for the run-on arch."""
+    """When `target_deb_arch` is provided, it is always used for the build-for arch."""
     mocker.patch.object(sys, "platform", "linux")
     mocker.patch("platform.machine", return_value="aarch64")
     snapcraft_yaml = SnapcraftYaml(
@@ -229,5 +229,5 @@ def test_project_architectures_target_arch(architectures, mocker, tmp_path):
 
     assert project.arch_build_on == "arm64"
     assert project.arch_triplet_build_on == "aarch64-linux-gnu"
-    assert project.arch_run_on == "riscv64"
-    assert project.arch_triplet_run_on == "riscv64-linux-gnu"
+    assert project.arch_build_for == "riscv64"
+    assert project.arch_triplet_build_for == "riscv64-linux-gnu"

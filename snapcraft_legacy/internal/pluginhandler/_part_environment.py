@@ -86,11 +86,11 @@ def get_snapcraft_global_environment(
         "SNAPCRAFT_TARGET_ARCH": project.target_arch,
         "SNAPCRAFT_CONTENT_DIRS": content_dirs_envvar,
     }
-    # run-on architecture may not be available
-    if project.arch_run_on:
-        environment["SNAPCRAFT_ARCH_RUN_ON"] = project.arch_run_on
-    if project.arch_triplet_run_on:
-        environment["SNAPCRAFT_ARCH_TRIPLET_RUN_ON"] = project.arch_triplet_run_on
+    # build-for arch is not defined for multi-arch builds or for unknown archs
+    if project.arch_build_for:
+        environment["SNAPCRAFT_ARCH_BUILD_FOR"] = project.arch_build_for
+    if project.arch_triplet_build_for:
+        environment["SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR"] = project.arch_triplet_build_for
     return environment
 
 
