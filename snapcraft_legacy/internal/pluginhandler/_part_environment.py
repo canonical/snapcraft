@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2020 Canonical Ltd
+# Copyright (C) 2020, 2023 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -71,7 +71,9 @@ def get_snapcraft_global_environment(
     else:
         content_dirs_envvar = ""
 
-    return {
+    environment = {
+        "SNAPCRAFT_ARCH_BUILD_ON": project.arch_build_on,
+        "SNAPCRAFT_ARCH_TRIPLET_BUILD_ON": project.arch_triplet_build_on,
         "SNAPCRAFT_ARCH_TRIPLET": project.arch_triplet,
         "SNAPCRAFT_EXTENSIONS_DIR": common.get_extensionsdir(),
         "SNAPCRAFT_PARALLEL_BUILD_COUNT": str(project.parallel_build_count),
@@ -84,6 +86,12 @@ def get_snapcraft_global_environment(
         "SNAPCRAFT_TARGET_ARCH": project.target_arch,
         "SNAPCRAFT_CONTENT_DIRS": content_dirs_envvar,
     }
+    # run-on architecture may not be available
+    if project.arch_run_on:
+        environment["SNAPCRAFT_ARCH_RUN_ON"] = project.arch_run_on
+    if project.arch_triplet_run_on:
+        environment["SNAPCRAFT_ARCH_TRIPLET_RUN_ON"] = project.arch_triplet_run_on
+    return environment
 
 
 def get_snapcraft_part_directory_environment(

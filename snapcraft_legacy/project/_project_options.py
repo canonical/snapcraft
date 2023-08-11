@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2019 Canonical Ltd
+# Copyright (C) 2016-2019, 2023 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,7 +19,7 @@ import multiprocessing
 import os
 import platform
 import sys
-from typing import Set
+from typing import Dict, List, Optional, Set, Union
 
 from snapcraft_legacy import file_utils
 from snapcraft_legacy.internal import common, errors, os_release
@@ -166,6 +166,10 @@ class ProjectOptions:
 
     @property
     def target_arch(self):
+        """Returns the debian architecture of the run-on/build-for platform when
+        cross-compiling. Returns the debian architecture of the build-on platform
+        when not cross-compiling.
+        """
         return self.__target_arch
 
     @property
@@ -194,10 +198,16 @@ class ProjectOptions:
 
     @property
     def arch_triplet(self):
+        """Returns the architecture triplet of the run-on platform when cross-compiling.
+        Otherwise returns the architecture triplet of the build-on platform.
+        """
         return self.__machine_info["triplet"]
 
     @property
     def deb_arch(self):
+        """Returns the debian architecture of the run-on platform when cross-compiling.
+        Otherwise returns the debian architecture of the build-on platform.
+        """
         return self.__machine_info["deb"]
 
     @property
@@ -206,6 +216,7 @@ class ProjectOptions:
 
     @property
     def host_deb_arch(self):
+        """Returns the debian architecture of the build-on platform."""
         return self.__host_info["deb"]
 
     @property
@@ -224,8 +235,134 @@ class ProjectOptions:
     def debug(self):
         return self._debug
 
+    @property
+    def arch_build_on(self) -> str:
+        """Returns the build-on architecture."""
+        return self.__host_info["deb"]
+
+    @property
+    def arch_triplet_build_on(self) -> str:
+        """Returns the build-on architecture."""
+        return self.__host_info["triplet"]
+
+    @property
+    def arch_run_on(self) -> str:
+        """Returns the run-on architecture."""
+        return self.__run_on_info["deb"] if self.__run_on_info else None
+
+    @property
+    def arch_triplet_run_on(self) -> str:
+        """Returns the run-on architecture."""
+        return self.__run_on_info["triplet"] if self.__run_on_info else None
+
+    def _set_run_on_info(
+        self, target_deb_arch: str, architectures: List[Union[str, Dict[str, str]]]
+    ) -> None:
+        """Set machine info for the run-on platform, if possible.
+
+        If `target_deb_arch` was provided for cross-compiling, then this architecture
+        is used for the run-on platform. If `target_deb_arch` was not provided, the
+        run-on platform will be determined from the architectures in the snapcraft.yaml.
+
+        The run-on architecture cannot be determined for multi-arch builds. These are
+        defined with a shorthand list `architectures: [arch1, arch2]` or when multiple
+        run-on architectures are provided `run-on: [arch1, arch2]`.
+
+        If no architectures are provided, the run-on platform will be set to the
+        build-on platform. Finally, if the run-on architecture could not be determined
+        then it will be set to None.
+
+        :param target_deb_arch: the target architecture when cross-compiling
+        :param architectures: the project's architecture data to process
+
+        :returns: a dictionary of information about the run-on architecture or None
+        """
+        self.__run_on_info = None
+
+        # if `target-arch` was provided, use it for the run-on arch
+        if target_deb_arch:
+            self.__run_on_info = _ARCH_TRANSLATIONS[self.__target_machine]
+        # if no architectures were provided, set run-on arch to the build-on arch
+        elif not architectures:
+            self.__run_on_info = self.__host_info
+        # else look for a run-on architecture from the snapcraft.yaml
+        else:
+            self.__run_on_info = self._process_architecture_data(architectures)
+
+        if self.__run_on_info:
+            logger.debug("Set run-on platform to %r", self.__run_on_info["deb"])
+        else:
+            logger.debug("Could not determine a run-on platform.")
+
+    def _process_architecture_data(
+        self, architectures: List[Union[str, Dict[str, str]]]
+    ) -> Optional[Dict[str, str]]:
+        """Process architecture data and attempt to determine the run-on architecture.
+
+        This occurs before the architecture data is fully validated, so this function
+        will not raise errors on invalid data. Instead, it will return None and let the
+        validators raise an error for the user later on.
+
+        :param architectures: the project's architecture data to process
+
+        :returns: a dictionary of information about the run-on architecture or None
+        """
+        # if not a list, the validator will raise an error later
+        if not isinstance(architectures, list):
+            return None
+
+        # if a list of strings was provided, then the architecture can be decoded
+        if isinstance(architectures[0], str):
+            return self._determine_run_on_architecture(architectures)
+
+        # otherwise, parse through the 'build-on' and 'run-on' fields
+        for item in architectures:
+            arch_build_on = item.get("build-on")
+            arch_run_on = item.get("run-on")
+            if arch_build_on and self.__host_info["deb"] in arch_build_on:
+                # run-on must be a scalar, not a multi-arch list
+                if arch_run_on:
+                    return self._determine_run_on_architecture(arch_run_on)
+                # if there is no run-on, try to use the build-on field
+                return self._determine_run_on_architecture(arch_build_on)
+        return None
+
+    def _determine_run_on_architecture(
+        self, architectures: Union[str, List[str]]
+    ) -> Optional[Dict[str, str]]:
+        """Determine the run-on architecture.
+
+        The run-on architecture can only be determined when a string or a single element
+        list is provided. The run-on arch must also be a valid architecture.
+
+        :param architectures: a single architecture or a list of architectures
+
+        :returns: a dictionary of information about the run-on architecture or None
+        """
+        if isinstance(architectures, list):
+            # convert single element list to string
+            if len(architectures) == 1:
+                architectures = architectures[0]
+            # lists of architectures cannot be decoded
+            else:
+                logger.debug("Cannot set run-on info for multi-arch build")
+                return None
+
+        try:
+            return _ARCH_TRANSLATIONS[_find_machine(architectures)]
+        except errors.SnapcraftEnvironmentError:
+            logger.debug(
+                "Cannot set run-on info from unknown architectures %r", architectures
+            )
+            return None
+
     def __init__(
-        self, target_deb_arch=None, debug=False, *, work_dir: str = None
+        self,
+        target_deb_arch=None,
+        debug=False,
+        *,
+        work_dir: str = None,
+        architectures = None,
     ) -> None:
 
         # Here for backwards compatibility.
@@ -244,6 +381,7 @@ class ProjectOptions:
         logger.debug("Prime dir {}".format(self._prime_dir))
 
         self._set_machine(target_deb_arch)
+        self._set_run_on_info(target_deb_arch, architectures)
 
     def _get_content_snaps(self) -> Set[str]:
         """Temporary shim for unit tests using ProjectOptions
