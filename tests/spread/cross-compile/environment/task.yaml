@@ -1,0 +1,28 @@
+summary: Test envvars related to architectures
+
+environment:
+  SNAP/build_for_single_arch: build-for-single-arch
+  SNAP/build_for_multi_arch: build-for-multi-arch
+  SNAP/build_for_unknown_arch: build-for-unknown-arch
+  SNAP/target_arch: target-arch
+
+restore: |
+  cd "./snaps/$SNAP"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "./snaps/$SNAP"
+
+  if [ "${SNAP}" == "target-arch" ]; then
+    snapcraft prime --destructive-mode --target-arch armhf --enable-experimental-target-arch
+  else
+    snapcraft prime --destructive-mode
+  fi
+  
+  while read -r expected_envvar; do
+    if ! grep -qF "$expected_envvar" prime/meta/snap.yaml; then
+      echo "Did not find '$expected_envvar' in 'prime/meta/snap.yaml'."
+      exit 1
+    fi
+  done < expected-env.txt
