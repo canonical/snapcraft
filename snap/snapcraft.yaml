@@ -123,7 +123,7 @@ parts:
 
       # Apply patches
       echo "Patching ctypes..."
-      patch -s -b "${PYTHON_PACKAGE_PATH}/${CTYPES_INIT}" "${SNAPCRAFT_PROJECT_DIR}/patches/ctypes_init.diff"
+      patch -s -b "${PYTHON_PACKAGE_PATH}/${CTYPES_INIT}" "${SNAPCRAFT_PROJECT_DIR}/snap/local/patches/python/ctypes_init.diff"
 
       # Save patches to allow rebuilding
       mkdir -p patched/ctypes
@@ -144,6 +144,8 @@ parts:
         # Limited to < 66 because we need `pkg_resources` and because `python-apt`
         # does not build with the latest.
         - setuptools<66
+    python-constraints:
+        - constraints.txt
     python-requirements:
         - requirements.txt
     organize:
