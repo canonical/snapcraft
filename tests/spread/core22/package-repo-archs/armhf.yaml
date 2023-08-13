@@ -1,0 +1,38 @@
+name: test-archs
+version: '1.0'
+summary: test package repos with different architectures
+description: test package repos with different architectures
+grade: stable
+confinement: strict
+base: core22
+architectures:
+  - build-on: amd64
+
+package-repositories:
+  # The repo that contains libpython3.11-minimal:armhf
+  - type: apt
+    formats: [deb]
+    architectures: [armhf]
+    components: [main]
+    suites: [jammy]
+    key-id: F23C5A6CF475977595C89F51BA6932366A755776
+    url: https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu
+  # Also add the armhf arch for the "ports" repo, to fetch python's deps. We
+  # need to do this because the default archives don't have armhf.
+  - type: apt
+    architectures: [ armhf ]
+    components: [ main ]
+    suites: [ jammy, jammy-security, jammy-updates ]
+    key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
+    url: http://ports.ubuntu.com/ubuntu-ports
+
+parts:
+  mypart:
+    plugin: nil
+    build-packages:
+      - file
+    stage-packages:
+      - libpython3.11-minimal:armhf
+    override-build: |
+      file ${CRAFT_PART_INSTALL}/usr/lib/arm-linux-gnueabihf/libssl.so.3 | grep "ARM"
+      craftctl default
