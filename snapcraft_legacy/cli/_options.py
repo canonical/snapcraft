@@ -191,7 +191,7 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         is_flag=True,
         help="Enable plugins that are experimental and not considered stable.",
         envvar="SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS",
-        supported_providers=["host", "lxd", "managed-host", "multipass"],
+        supported_providers=_ALL_PROVIDERS,
     ),
     dict(
         param_decls=["--enable-experimental-target-arch"],

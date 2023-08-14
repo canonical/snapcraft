@@ -57,6 +57,20 @@ def snap_file():
     )
 
 
+@pytest.fixture
+def snap_file_with_started_at():
+    return str(
+        (
+            pathlib.Path(unit.__file__)
+            / ".."
+            / ".."
+            / "legacy"
+            / "data"
+            / "test-snap-with-started-at.snap"
+        ).resolve()
+    )
+
+
 ##################
 # Upload Command #
 ##################
@@ -89,6 +103,40 @@ def test_default(
             snap_name="basic",
             upload_id="2ecbfac1-3448-4e7d-85a4-7919b999f120",
             built_at=None,
+            channels=None,
+            snap_file_size=4096,
+        )
+    ]
+    emitter.assert_message("Revision 10 created for 'basic'")
+
+
+@pytest.mark.usefixtures("memory_keyring")
+@pytest.mark.parametrize(
+    "command_class", (commands.StoreUploadCommand, commands.StoreLegacyPushCommand)
+)
+def test_built_at(
+    emitter,
+    fake_store_notify_upload,
+    fake_store_verify_upload,
+    snap_file_with_started_at,
+    command_class,
+):
+    cmd = command_class(None)
+
+    cmd.run(
+        argparse.Namespace(
+            snap_file=snap_file_with_started_at,
+            channels=None,
+        )
+    )
+
+    assert fake_store_verify_upload.mock_calls == [call(ANY, snap_name="basic")]
+    assert fake_store_notify_upload.mock_calls == [
+        call(
+            ANY,
+            snap_name="basic",
+            upload_id="2ecbfac1-3448-4e7d-85a4-7919b999f120",
+            built_at="2019-05-07T19:25:53.939041Z",
             channels=None,
             snap_file_size=4096,
         )
