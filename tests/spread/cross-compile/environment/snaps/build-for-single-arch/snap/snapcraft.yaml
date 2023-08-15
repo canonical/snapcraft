@@ -1,0 +1,23 @@
+name: build-for-single-arch
+base: core20
+version: '1.0'
+summary: test
+description: BUILD_ON envvars be evaluated when the build-on arch is a scalar.
+grade: stable
+confinement: strict
+
+architectures:
+  - build-on: amd64
+    run-on: armhf
+
+environment:
+  SNAPCRAFT_ARCH_TRIPLET: ${SNAPCRAFT_ARCH_TRIPLET}
+  SNAPCRAFT_ARCH_BUILD_FOR: ${SNAPCRAFT_ARCH_BUILD_FOR}
+  SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR: ${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}
+  SNAPCRAFT_ARCH_BUILD_ON: ${SNAPCRAFT_ARCH_BUILD_ON}
+  SNAPCRAFT_ARCH_TRIPLET_BUILD_ON: ${SNAPCRAFT_ARCH_TRIPLET_BUILD_ON}
+  SNAPCRAFT_TARGET_ARCH: ${SNAPCRAFT_TARGET_ARCH}
+
+parts:
+  my-part:
+    plugin: nil
