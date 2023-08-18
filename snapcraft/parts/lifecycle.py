@@ -255,6 +255,7 @@ def _run_command(
         not managed_mode
         and not parsed_args.destructive_mode
         and not os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "host"
+        or parsed_args.use_lxd
     ):
         if command_name == "clean" and not part_names:
             _clean_provider(project, parsed_args)
