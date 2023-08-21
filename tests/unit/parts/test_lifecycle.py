@@ -1371,7 +1371,7 @@ def test_lifecycle_run_in_provider_all_options(
     # build the expected command to be executed in the provider
     parts = ["test-part-1", "test-part-2"]
     output = "test-output"
-    manifest_build_information = "test-build-info"
+    manifest_image_information = "test-image-info"
     ua_token = "test-ua-token"
     http_proxy = "1.2.3.4"
     https_proxy = "5.6.7.8"
@@ -1386,8 +1386,8 @@ def test_lifecycle_run_in_provider_all_options(
             "--shell",
             "--shell-after",
             "--enable-manifest",
-            "--manifest-build-information",
-            manifest_build_information,
+            "--manifest-image-information",
+            manifest_image_information,
             "--build-for",
             "test-arch-2",
             "--ua-token",
@@ -1410,7 +1410,7 @@ def test_lifecycle_run_in_provider_all_options(
             use_lxd=False,
             provider=None,
             enable_manifest=True,
-            manifest_build_information=manifest_build_information,
+            manifest_image_information=manifest_image_information,
             bind_ssh=True,
             ua_token=ua_token,
             enable_experimental_ua_services=True,
