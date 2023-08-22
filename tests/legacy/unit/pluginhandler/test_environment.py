@@ -80,7 +80,7 @@ def test_implicit_build_for_arch(tmp_path):
 
 
 def test_no_build_for_unknown_arch(tmp_path):
-    """build-for envvars should not be defined for unknown build-for architectures."""
+    """build-for envvars should be `None` for unknown build-for architectures."""
     snapcraft_yaml = SnapcraftYaml(
         tmp_path,
         base="core20",
@@ -95,12 +95,12 @@ def test_no_build_for_unknown_arch(tmp_path):
     assert (
         environment["SNAPCRAFT_ARCH_TRIPLET_BUILD_ON"] == project.arch_triplet_build_on
     )
-    assert "SNAPCRAFT_ARCH_BUILD_FOR" not in environment
-    assert "SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR" not in environment
+    assert environment["SNAPCRAFT_ARCH_BUILD_FOR"] is None
+    assert environment["SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR"] is None
 
 
 def test_no_build_for_multi_arch(tmp_path):
-    """build-for envvars should not be defined for multi-arch builds."""
+    """build-for envvars should be `None` for multi-arch builds."""
     snapcraft_yaml = SnapcraftYaml(
         tmp_path,
         base="core20",
@@ -116,5 +116,5 @@ def test_no_build_for_multi_arch(tmp_path):
     assert (
         environment["SNAPCRAFT_ARCH_TRIPLET_BUILD_ON"] == project.arch_triplet_build_on
     )
-    assert "SNAPCRAFT_ARCH_BUILD_FOR" not in environment
-    assert "SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR" not in environment
+    assert environment["SNAPCRAFT_ARCH_BUILD_FOR"] is None
+    assert environment["SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR"] is None

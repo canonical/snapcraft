@@ -2,7 +2,7 @@ name: build-for-unknown-arch
 base: core20
 version: '1.0'
 summary: test
-description: BUILD_ON envvars should not be evaluated when the build-on arch is unknown.
+description: Only BUILD_ON envvars can be evaluated when the build-for arch is unknown.
 grade: stable
 confinement: strict
 
@@ -12,8 +12,6 @@ architectures:
 
 environment:
   SNAPCRAFT_ARCH_TRIPLET: ${SNAPCRAFT_ARCH_TRIPLET}
-  SNAPCRAFT_ARCH_BUILD_FOR: ${SNAPCRAFT_ARCH_BUILD_FOR}
-  SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR: ${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}
   SNAPCRAFT_ARCH_BUILD_ON: ${SNAPCRAFT_ARCH_BUILD_ON}
   SNAPCRAFT_ARCH_TRIPLET_BUILD_ON: ${SNAPCRAFT_ARCH_TRIPLET_BUILD_ON}
   SNAPCRAFT_TARGET_ARCH: ${SNAPCRAFT_TARGET_ARCH}
@@ -21,3 +19,8 @@ environment:
 parts:
   my-part:
     plugin: nil
+    override-pull:
+      echo ${SNAPCRAFT_ARCH_TRIPLET}
+      echo ${SNAPCRAFT_ARCH_BUILD_ON}
+      echo ${SNAPCRAFT_ARCH_TRIPLET_BUILD_ON}
+      echo ${SNAPCRAFT_TARGET_ARCH}
