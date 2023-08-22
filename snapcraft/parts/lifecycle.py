@@ -251,7 +251,7 @@ def _run_command(
                 permanent=True,
             )
 
-    if (
+    if parsed_args.use_lxd or (
         not managed_mode
         and not parsed_args.destructive_mode
         and not os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "host"
