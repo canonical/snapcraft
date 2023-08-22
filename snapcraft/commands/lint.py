@@ -23,7 +23,7 @@ import subprocess
 import tempfile
 import textwrap
 from contextlib import contextmanager
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Iterator, Optional
 
 from craft_cli import BaseCommand, emit
@@ -309,7 +309,7 @@ class LintCommand(BaseCommand):
         is_dangerous = not bool(assert_file)
 
         if assert_file:
-            ack_command = snap_cmd.formulate_ack_command(assert_file)
+            ack_command = snap_cmd.formulate_ack_command(PurePosixPath(assert_file))
             emit.progress(
                 f"Installing assertion file with {shlex.join(ack_command)!r}."
             )
@@ -327,7 +327,7 @@ class LintCommand(BaseCommand):
         install_command = snap_cmd.formulate_local_install_command(
             classic=bool(snap_metadata.confinement == "classic"),
             dangerous=is_dangerous,
-            snap_path=snap_file,
+            snap_path=PurePosixPath(snap_file),
         )
         if snap_metadata.grade == "devel":
             install_command.append("--devmode")
