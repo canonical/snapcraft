@@ -18,20 +18,20 @@ starcraft-hello = "starcraft:hello"
 [project.optional-dependencies]
 dev = [
     "build",
-    "coverage[toml]==7.2.7",
+    "coverage[toml]==7.3.0",
     "pytest==7.4.0",
     "pytest-cov==4.1.0",
     "pytest-mock==3.11.1",
 ]
 lint = [
-    "black==23.3.0",
+    "black==23.7.0",
     "codespell[toml]==2.2.5",
     "ruff==0.0.285",
     "yamllint==1.32.0"
 ]
 types = [
-    "mypy[reports]==1.4.1",
-    "pyright==1.1.316",
+    "mypy[reports]==1.5.1",
+    "pyright==1.1.323",
 ]
 docs = [
     "furo==2023.8.19",
