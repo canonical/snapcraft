@@ -251,7 +251,7 @@ def _run_command(
                 permanent=True,
             )
 
-    if (
+    if parsed_args.use_lxd or (
         not managed_mode
         and not parsed_args.destructive_mode
         and not os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "host"
@@ -506,9 +506,9 @@ def _run_in_provider(
 
     if getattr(parsed_args, "enable_manifest", False):
         cmd.append("--enable-manifest")
-    build_information = getattr(parsed_args, "manifest_build_information", None)
-    if build_information:
-        cmd.extend(["--manifest-build-information", build_information])
+    image_information = getattr(parsed_args, "manifest_image_information", None)
+    if image_information:
+        cmd.extend(["--manifest-image-information", image_information])
 
     cmd.append("--build-for")
     cmd.append(project.get_build_for())
