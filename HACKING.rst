@@ -86,6 +86,33 @@ You can also see all the environments by simply running ``tox list``
 Running ``tox run -m format`` and ``tox run -m lint`` before committing code is
 recommended.
 
+Code Style
+==========
+
+Commits
+#######
+
+Format your commits following the conventional_ commit style.
+
+Optionally, use the parens to scope to a particular component where
+applicable.
+
+See below for some examples of commit headings::
+
+    feat: inherit context from services
+    test: increase unit test stability
+    fix: check foo before running bar
+    feat(daemon): foo the bar correctly in the baz
+    test(daemon): ensure the foo bars correctly in the baz
+    fix(test): mock class Foo
+    ci(snap): upload the snap artefacts to Github
+    chore(deps): update go.mod dependencies
+
+
+Recommended prefixes are: ``fix:``, ``feat:``, ``build:``, ``chore:``, ``ci:``,
+``docs:``, ``style:``, ``refactor:``, ``perf:`` and ``test:``
+
+
 .. _Black: https://black.readthedocs.io
 .. _`Canonical contributor licence agreement`: http://www.ubuntu.com/legal/contributors/
 .. _deadsnakes: https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa
@@ -97,3 +124,4 @@ recommended.
 .. _ruff: https://github.com/charliermarsh/ruff
 .. _ShellCheck: https://www.shellcheck.net/
 .. _tox: https://tox.wiki
+.. _conventional: https://www.conventionalcommits.org/en/v1.0.0/#summary
