@@ -2,14 +2,8 @@ summary: Test envvars related to architectures
 
 environment:
   SNAP/build_for_multi_arch: build-for-multi-arch
-  SNAP/build_for_multi_arch_error: build-for-multi-arch-error
-  SNAP/build_for_multi_arch_triplet_error: build-for-multi-arch-triplet-error
-  SNAP/build_for_part_error: build-for-part-error
-  SNAP/build_for_part_triplet_error: build-for-part-triplet-error
   SNAP/build_for_single_arch: build-for-single-arch
   SNAP/build_for_unknown_arch: build-for-unknown-arch
-  SNAP/build_for_unknown_arch_error: build-for-unknown-arch-error
-  SNAP/build_for_unknown_arch_triplet_error: build-for-unknown-arch-triplet-error
   SNAP/target_arch: target-arch
 
 restore: |
@@ -20,25 +14,24 @@ restore: |
 execute: |
   cd "./snaps/$SNAP"
 
-  # test error scenarios
-  if [[ $SNAP == *error* ]]; then
-    if snapcraft --destructive-mode; then
-      echo "snapcraft did not fail but should have"
-      exit 1
-    fi
-    exit 0
-  fi
-
-  # test successful scenarios
   if [ "${SNAP}" == "target-arch" ]; then
     snapcraft prime --destructive-mode --target-arch armhf --enable-experimental-target-arch
   else
     snapcraft prime --destructive-mode
   fi
 
+  # verify variables were evaluated in the environment in the snap.yaml
   while read -r expected_envvar; do
     if ! grep -qF "$expected_envvar" prime/meta/snap.yaml; then
       echo "Did not find '$expected_envvar' in 'prime/meta/snap.yaml'."
+      exit 1
+    fi
+  done < expected-env.txt
+
+  # verify variables were evaluated inside a part's override script
+  while read -r expected_envvar; do
+    if ! grep -qF "$expected_envvar" prime/part-variables.txt; then
+      echo "Did not find '$expected_envvar' in 'prime/part-variables.txt'."
       exit 1
     fi
   done < expected-env.txt

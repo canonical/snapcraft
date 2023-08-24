@@ -77,22 +77,22 @@ def _validate_replacement(attr: str, replacement: str, value: Optional[str]) -> 
 
     :raises Exception: If a replacement cannot occur.
     """
+    # return early when there is a replacement value (this is the most common case)
+    if value is not None:
+        return
+
     project_variables = [
         "SNAPCRAFT_ARCH_BUILD_FOR",
         "SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR",
     ]
 
     # expand to shell syntax for variables (`$item` and `${item}`)
-    expanded_project_variables = (
-        [f"${item}" for item in project_variables ] +
-        [f"${{{item}}}" for item in project_variables]
-    )
+    expanded_project_variables = [
+        *(f"${item}" for item in project_variables ),
+        *(f"${{{item}}}" for item in project_variables),
+    ]
 
-    if (
-        replacement in attr
-        and replacement in expanded_project_variables
-        and value is None
-    ):
+    if replacement in attr and replacement in expanded_project_variables:
         raise VariableEvaluationError(
             variable=replacement,
             reason="the build-for architecture could not be determined"

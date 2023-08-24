@@ -1,0 +1,22 @@
+summary: Test failing scenarios for architecture envvars
+
+environment:
+  SNAP/build_for_multi_arch_error: build-for-multi-arch-error
+  SNAP/build_for_multi_arch_triplet_error: build-for-multi-arch-triplet-error
+  SNAP/build_for_part_error: build-for-part-error
+  SNAP/build_for_part_triplet_error: build-for-part-triplet-error
+  SNAP/build_for_unknown_arch_error: build-for-unknown-arch-error
+  SNAP/build_for_unknown_arch_triplet_error: build-for-unknown-arch-triplet-error
+
+restore: |
+  cd "./snaps/$SNAP"
+  snapcraft clean --destructive-mode
+  rm -f ./*.snap
+
+execute: |
+  cd "./snaps/$SNAP"
+
+  if snapcraft --destructive-mode; then
+    echo "snapcraft did not fail but should have"
+    exit 1
+  fi
