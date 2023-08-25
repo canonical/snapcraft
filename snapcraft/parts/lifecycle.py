@@ -377,7 +377,7 @@ def _run_lifecycle_and_pack(
             version=process_version(project.version),
             target_arch=project.get_build_for(),
         )
-        emit.message(f"Created snap package {snap_filename}")
+        emit.progress(f"Created snap package {snap_filename}", permanent=True)
 
 
 def _generate_metadata(

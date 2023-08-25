@@ -201,6 +201,7 @@ def get_dispatcher() -> craft_cli.Dispatcher:
         appname="snapcraft",
         greeting=f"Starting Snapcraft {__version__}",
         log_filepath=log_filepath,
+        streaming_brief=True,
     )
 
     return craft_cli.Dispatcher(
