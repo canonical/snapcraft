@@ -2,7 +2,7 @@ name: target-arch
 base: core20
 version: '1.0'
 summary: test
-description: use target-arch for build-for
+description: BUILD_ON and BUILD_FOR envvars can be evaluated when `--target-arch` is provided
 grade: stable
 confinement: strict
 
@@ -21,3 +21,12 @@ environment:
 parts:
   my-part:
     plugin: nil
+    override-build: |
+      cat << EOF >> $SNAPCRAFT_PART_INSTALL/part-variables.txt
+      SNAPCRAFT_ARCH_TRIPLET: ${SNAPCRAFT_ARCH_TRIPLET}
+      SNAPCRAFT_ARCH_BUILD_FOR: ${SNAPCRAFT_ARCH_BUILD_FOR}
+      SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR: ${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}
+      SNAPCRAFT_ARCH_BUILD_ON: ${SNAPCRAFT_ARCH_BUILD_ON}
+      SNAPCRAFT_ARCH_TRIPLET_BUILD_ON: ${SNAPCRAFT_ARCH_TRIPLET_BUILD_ON}
+      SNAPCRAFT_TARGET_ARCH: ${SNAPCRAFT_TARGET_ARCH}
+      EOF

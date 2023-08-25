@@ -71,8 +71,10 @@ def get_snapcraft_global_environment(
     else:
         content_dirs_envvar = ""
 
-    environment = {
+    return {
+        "SNAPCRAFT_ARCH_BUILD_FOR": project.arch_build_for,
         "SNAPCRAFT_ARCH_BUILD_ON": project.arch_build_on,
+        "SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR": project.arch_triplet_build_for,
         "SNAPCRAFT_ARCH_TRIPLET_BUILD_ON": project.arch_triplet_build_on,
         "SNAPCRAFT_ARCH_TRIPLET": project.arch_triplet,
         "SNAPCRAFT_EXTENSIONS_DIR": common.get_extensionsdir(),
@@ -86,12 +88,6 @@ def get_snapcraft_global_environment(
         "SNAPCRAFT_TARGET_ARCH": project.target_arch,
         "SNAPCRAFT_CONTENT_DIRS": content_dirs_envvar,
     }
-    # build-for arch is not defined for multi-arch builds or for unknown archs
-    if project.arch_build_for:
-        environment["SNAPCRAFT_ARCH_BUILD_FOR"] = project.arch_build_for
-    if project.arch_triplet_build_for:
-        environment["SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR"] = project.arch_triplet_build_for
-    return environment
 
 
 def get_snapcraft_part_directory_environment(
