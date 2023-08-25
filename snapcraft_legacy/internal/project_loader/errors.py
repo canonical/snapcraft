@@ -26,10 +26,13 @@ class ProjectLoaderError(snapcraft_legacy.internal.errors.SnapcraftError):
 
 class VariableEvaluationError(ProjectLoaderError):
 
-    fmt = "Cannot evaluate project variable {variable!r}: {reason}"
+    fmt = (
+        "Cannot evaluate project variable {variable!r}: {reason}\n"
+        "For more information, check out: {docs_url}"
+    )
 
-    def __init__(self, variable: str, reason: str) -> None:
-        super().__init__(variable=variable, reason=reason)
+    def __init__(self, variable: str, reason: str, docs_url: str) -> None:
+        super().__init__(variable=variable, reason=reason, docs_url=docs_url)
 
 
 class InvalidEpochError(ProjectLoaderError):

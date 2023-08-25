@@ -64,7 +64,7 @@ def replace_attr(
     return attr
 
 
-def _validate_replacement(attr: str, replacement: str, value: Optional[str]) -> None:
+def _validate_replacement(attr: str, variable: str, value: Optional[str]) -> None:
     """Validate if a replacement can occur for an attribute.
 
     Some replacement data cannot be used if it is not defined, such as the build-for
@@ -72,7 +72,7 @@ def _validate_replacement(attr: str, replacement: str, value: Optional[str]) -> 
     a validation error is raised.
 
     :param attr: String that may contain data to replace.
-    :param replacement: Project variable to replace.
+    :param variable: Project variable to replace.
     :param value: New value for replacement.
 
     :raises Exception: If a replacement cannot occur.
@@ -81,19 +81,20 @@ def _validate_replacement(attr: str, replacement: str, value: Optional[str]) -> 
     if value is not None:
         return
 
-    project_variables = [
+    variables_to_validate = [
         "SNAPCRAFT_ARCH_BUILD_FOR",
         "SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR",
     ]
 
     # expand to shell syntax for variables (`$item` and `${item}`)
-    expanded_project_variables = [
-        *(f"${item}" for item in project_variables ),
-        *(f"${{{item}}}" for item in project_variables),
-    ]
+    expanded_variables_to_validate = (
+        *(f"${item}" for item in variables_to_validate ),
+        *(f"${{{item}}}" for item in variables_to_validate),
+    )
 
-    if replacement in attr and replacement in expanded_project_variables:
+    if variable in attr and variable in expanded_variables_to_validate:
         raise VariableEvaluationError(
-            variable=replacement,
-            reason="the build-for architecture could not be determined"
+            variable=variable,
+            reason="the build-for architecture could not be determined",
+            docs_url="https://snapcraft.io/docs/architectures",
         )

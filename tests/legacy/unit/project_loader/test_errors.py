@@ -30,6 +30,11 @@ def test_SnapcraftProjectUnusedKeyAssetError():
 
 
 def test_variable_evaluation_error():
-    error = errors.VariableEvaluationError(variable="TEST_VARIABLE", reason="reason")
+    error = errors.VariableEvaluationError(
+        variable="TEST_VARIABLE", reason="reason", docs_url="www.example.com"
+    )
 
-    assert str(error) == "Cannot evaluate project variable 'TEST_VARIABLE': reason"
+    assert str(error) == (
+        "Cannot evaluate project variable 'TEST_VARIABLE': reason\n"
+        "For more information, check out: www.example.com"
+    )
