@@ -4,6 +4,7 @@ environment:
   SNAP_DIR/baseplugin: ../snaps/from-baseplugin
   SNAP_DIR/nilplugin: ../snaps/from-nilplugin
   SNAP_DIR/pluginv1: ../snaps/from-pluginv1
+  SNAP_DIR/sourceget: ../snaps/source-get
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
