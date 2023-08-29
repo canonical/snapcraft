@@ -22,7 +22,7 @@ from unittest.mock import call
 import pytest
 
 from snapcraft import cli
-from snapcraft.parts.lifecycle import _SNAP_PROJECT_FILES, apply_yaml, process_yaml
+from snapcraft.parts.yaml_utils import _SNAP_PROJECT_FILES, apply_yaml, process_yaml
 from snapcraft.projects import Project
 
 

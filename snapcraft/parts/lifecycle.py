@@ -20,7 +20,6 @@ import copy
 import os
 import shutil
 import subprocess
-from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
@@ -30,24 +29,19 @@ from craft_cli import emit
 from craft_parts import ProjectInfo, Step, StepInfo, callbacks
 from craft_providers import Executor
 
-from snapcraft import errors, extensions, linters, pack, providers, ua_manager, utils
+from snapcraft import errors, linters, pack, providers, ua_manager, utils
 from snapcraft.elf import Patcher, SonameCache, elf_utils
 from snapcraft.elf import errors as elf_errors
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import manifest, snap_yaml
-from snapcraft.projects import (
-    Architecture,
-    ArchitectureProject,
-    GrammarAwareProject,
-    Project,
-)
+from snapcraft.projects import Architecture, ArchitectureProject, Project
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_host_architecture,
     process_version,
 )
 
-from . import grammar, yaml_utils
+from . import yaml_utils
 from .parts import PartsLifecycle, launch_shell
 from .project_check import run_project_checks
 from .setup_assets import setup_assets
@@ -57,113 +51,7 @@ if TYPE_CHECKING:
     import argparse
 
 
-@dataclass
-class _SnapProject:
-    project_file: Path
-    assets_dir: Path = Path("snap")
-
-
-_SNAP_PROJECT_FILES = [
-    _SnapProject(project_file=Path("snapcraft.yaml")),
-    _SnapProject(project_file=Path("snap/snapcraft.yaml")),
-    _SnapProject(
-        project_file=Path("build-aux/snap/snapcraft.yaml"),
-        assets_dir=Path("build-aux/snap"),
-    ),
-    _SnapProject(project_file=Path(".snapcraft.yaml")),
-]
-
-_CORE_PART_KEYS = ["build-packages", "build-snaps"]
-_CORE_PART_NAME = "snapcraft/core"
 _EXPERIMENTAL_PLUGINS = ["kernel"]
-
-
-def get_snap_project() -> _SnapProject:
-    """Find the snapcraft.yaml to load.
-
-    :raises SnapcraftError: if the project yaml file cannot be found.
-    """
-    for snap_project in _SNAP_PROJECT_FILES:
-        if snap_project.project_file.exists():
-            return snap_project
-
-    raise errors.ProjectMissing()
-
-
-def apply_yaml(
-    yaml_data: Dict[str, Any], build_on: str, build_for: str
-) -> Dict[str, Any]:
-    """Apply Snapcraft logic to yaml_data.
-
-    Extensions are applied and advanced grammar is processed.
-    The architectures data is reduced to architectures in the current build plan.
-
-    :param yaml_data: The project YAML data.
-    :param build_on: Architecture the snap project will be built on.
-    :param build_for: Target architecture the snap project will be built to.
-
-    :return: A dictionary of yaml data with snapcraft logic applied.
-    """
-    # validate project grammar
-    GrammarAwareProject.validate_grammar(yaml_data)
-
-    # Special Snapcraft Part
-    core_part = {k: yaml_data.pop(k) for k in _CORE_PART_KEYS if k in yaml_data}
-    if core_part:
-        core_part["plugin"] = "nil"
-        yaml_data["parts"][_CORE_PART_NAME] = core_part
-
-    yaml_data = extensions.apply_extensions(
-        yaml_data, arch=build_on, target_arch=build_for
-    )
-
-    if "parts" in yaml_data:
-        yaml_data["parts"] = grammar.process_parts(
-            parts_yaml_data=yaml_data["parts"], arch=build_on, target_arch=build_for
-        )
-
-    # replace all architectures with the architectures in the current build plan
-    yaml_data["architectures"] = [Architecture(build_on=build_on, build_for=build_for)]
-
-    return yaml_data
-
-
-def process_yaml(project_file: Path) -> Dict[str, Any]:
-    """Process yaml data from file into a dictionary.
-
-    :param project_file: Path to project.
-
-    :raises SnapcraftError: if the project yaml file cannot be loaded.
-
-    :return: The processed YAML data.
-    """
-    try:
-        with open(project_file, encoding="utf-8") as yaml_file:
-            yaml_data = yaml_utils.load(yaml_file)
-    except OSError as err:
-        msg = err.strerror
-        if err.filename:
-            msg = f"{msg}: {err.filename!r}."
-        raise errors.SnapcraftError(msg) from err
-
-    return yaml_data
-
-
-def extract_parse_info(yaml_data: Dict[str, Any]) -> Dict[str, List[str]]:
-    """Remove parse-info data from parts.
-
-    :param yaml_data: The project YAML data.
-
-    :return: The extracted parse info for each part.
-    """
-    parse_info: Dict[str, List[str]] = {}
-
-    if "parts" in yaml_data:
-        for name, data in yaml_data["parts"].items():
-            if "parse-info" in data:
-                parse_info[name] = data.pop("parse-info")
-
-    return parse_info
 
 
 def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
@@ -175,8 +63,8 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     """
     emit.debug(f"command: {command_name}, arguments: {parsed_args}")
 
-    snap_project = get_snap_project()
-    yaml_data = process_yaml(snap_project.project_file)
+    snap_project = yaml_utils.get_snap_project()
+    yaml_data = yaml_utils.process_yaml(snap_project.project_file)
     start_time = datetime.now()
 
     if parsed_args.provider:
@@ -204,8 +92,8 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
 
     for build_on, build_for in build_plan:
         emit.verbose(f"Running on {build_on} for {build_for}")
-        yaml_data_for_arch = apply_yaml(yaml_data, build_on, build_for)
-        parse_info = extract_parse_info(yaml_data_for_arch)
+        yaml_data_for_arch = yaml_utils.apply_yaml(yaml_data, build_on, build_for)
+        parse_info = yaml_utils.extract_parse_info(yaml_data_for_arch)
         _expand_environment(
             yaml_data_for_arch,
             parallel_build_count=build_count,
@@ -453,7 +341,7 @@ def _generate_manifest(
     emit.progress("Generated snap manifest", permanent=True)
 
     # Also copy the original snapcraft.yaml
-    snap_project = get_snap_project()
+    snap_project = yaml_utils.get_snap_project()
     shutil.copy(snap_project.project_file, lifecycle.prime_dir / "snap")
 
 
