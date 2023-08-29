@@ -37,7 +37,7 @@ class LocalPlugin(PluginV1):
 
     def pull(self):
         super().pull()
-        x = snapcraft.sources.get
+        print(snapcraft.sources.get)
 
     def build(self):
         return self.run(["touch", "build-stamp"], self.installdir)
