@@ -34,7 +34,7 @@ from overrides import overrides
 
 from snapcraft import errors, linters, projects, providers
 from snapcraft.meta import snap_yaml
-from snapcraft.parts.lifecycle import apply_yaml, extract_parse_info, process_yaml
+from snapcraft.parts.yaml_utils import apply_yaml, extract_parse_info, process_yaml
 from snapcraft.utils import (
     get_host_architecture,
     get_managed_environment_home_path,

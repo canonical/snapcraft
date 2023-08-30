@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -25,7 +25,7 @@ from craft_cli.helptexts import HIDDEN
 from overrides import overrides
 
 from snapcraft.legacy_cli import run_legacy
-from snapcraft.parts.lifecycle import get_snap_project, process_yaml
+from snapcraft.parts.yaml_utils import get_snap_project, process_yaml
 from snapcraft.utils import confirm_with_user
 from snapcraft_legacy.internal.remote_build.errors import AcceptPublicUploadError
 

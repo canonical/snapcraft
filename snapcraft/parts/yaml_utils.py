@@ -16,15 +16,40 @@
 
 """YAML utilities for Snapcraft."""
 
-from typing import Any, Dict, TextIO
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List, TextIO
 
 import yaml
 import yaml.error
 
 from snapcraft import errors, utils
+from snapcraft.extensions import apply_extensions
+from snapcraft.projects import Architecture, GrammarAwareProject
 
+from . import grammar
+
+_CORE_PART_KEYS = ["build-packages", "build-snaps"]
+_CORE_PART_NAME = "snapcraft/core"
 _ESM_BASES = {"core", "core18"}
 _LEGACY_BASES = {"core20"}
+
+
+@dataclass
+class _SnapProject:
+    project_file: Path
+    assets_dir: Path = Path("snap")
+
+
+_SNAP_PROJECT_FILES = [
+    _SnapProject(project_file=Path("snapcraft.yaml")),
+    _SnapProject(project_file=Path("snap/snapcraft.yaml")),
+    _SnapProject(
+        project_file=Path("build-aux/snap/snapcraft.yaml"),
+        assets_dir=Path("build-aux/snap"),
+    ),
+    _SnapProject(project_file=Path(".snapcraft.yaml")),
+]
 
 
 def _check_duplicate_keys(node):
@@ -107,3 +132,89 @@ def load(filestream: TextIO) -> Dict[str, Any]:
         )
     except yaml.error.YAMLError as err:
         raise errors.SnapcraftError(f"snapcraft.yaml parsing error: {err!s}") from err
+
+
+def apply_yaml(
+    yaml_data: Dict[str, Any], build_on: str, build_for: str
+) -> Dict[str, Any]:
+    """Apply Snapcraft logic to yaml_data.
+
+    Extensions are applied and advanced grammar is processed.
+    The architectures data is reduced to architectures in the current build plan.
+
+    :param yaml_data: The project YAML data.
+    :param build_on: Architecture the snap project will be built on.
+    :param build_for: Target architecture the snap project will be built to.
+
+    :return: A dictionary of yaml data with snapcraft logic applied.
+    """
+    # validate project grammar
+    GrammarAwareProject.validate_grammar(yaml_data)
+
+    # Special Snapcraft Part
+    core_part = {k: yaml_data.pop(k) for k in _CORE_PART_KEYS if k in yaml_data}
+    if core_part:
+        core_part["plugin"] = "nil"
+        yaml_data["parts"][_CORE_PART_NAME] = core_part
+
+    yaml_data = apply_extensions(yaml_data, arch=build_on, target_arch=build_for)
+
+    if "parts" in yaml_data:
+        yaml_data["parts"] = grammar.process_parts(
+            parts_yaml_data=yaml_data["parts"], arch=build_on, target_arch=build_for
+        )
+
+    # replace all architectures with the architectures in the current build plan
+    yaml_data["architectures"] = [Architecture(build_on=build_on, build_for=build_for)]
+
+    return yaml_data
+
+
+def get_snap_project() -> _SnapProject:
+    """Find the snapcraft.yaml to load.
+
+    :raises SnapcraftError: if the project yaml file cannot be found.
+    """
+    for snap_project in _SNAP_PROJECT_FILES:
+        if snap_project.project_file.exists():
+            return snap_project
+
+    raise errors.ProjectMissing()
+
+
+def extract_parse_info(yaml_data: Dict[str, Any]) -> Dict[str, List[str]]:
+    """Remove parse-info data from parts.
+
+    :param yaml_data: The project YAML data.
+
+    :return: The extracted parse info for each part.
+    """
+    parse_info: Dict[str, List[str]] = {}
+
+    if "parts" in yaml_data:
+        for name, data in yaml_data["parts"].items():
+            if "parse-info" in data:
+                parse_info[name] = data.pop("parse-info")
+
+    return parse_info
+
+
+def process_yaml(project_file: Path) -> Dict[str, Any]:
+    """Process yaml data from file into a dictionary.
+
+    :param project_file: Path to project.
+
+    :raises SnapcraftError: if the project yaml file cannot be loaded.
+
+    :return: The processed YAML data.
+    """
+    try:
+        with open(project_file, encoding="utf-8") as yaml_file:
+            yaml_data = load(yaml_file)
+    except OSError as err:
+        msg = err.strerror
+        if err.filename:
+            msg = f"{msg}: {err.filename!r}."
+        raise errors.SnapcraftError(msg) from err
+
+    return yaml_data

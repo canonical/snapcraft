@@ -31,7 +31,7 @@ from snapcraft.elf import ElfFile
 from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts.plugins import KernelPlugin
 from snapcraft.parts.update_metadata import update_project_metadata
-from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Architecture, Project
+from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Project
 from snapcraft.utils import get_host_architecture
 
 _SNAPCRAFT_YAML_FILENAMES = [
@@ -1003,16 +1003,6 @@ def test_lifecycle_adopt_project_vars(snapcraft_yaml, new_dir):
     assert project.grade == "devel"
 
 
-def test_extract_parse_info():
-    yaml_data = {
-        "name": "foo",
-        "parts": {"p1": {"plugin": "nil", "parse-info": "foo/metadata.xml"}, "p2": {}},
-    }
-    parse_info = parts_lifecycle.extract_parse_info(yaml_data)
-    assert yaml_data == {"name": "foo", "parts": {"p1": {"plugin": "nil"}, "p2": {}}}
-    assert parse_info == {"p1": "foo/metadata.xml"}
-
-
 def test_check_experimental_plugins_disabled(snapcraft_yaml, mocker):
     mocker.patch("craft_parts.plugins.plugins._PLUGINS", {"kernel": KernelPlugin})
     project = Project.unmarshal(
@@ -1585,41 +1575,6 @@ def test_lifecycle_run_in_provider_devel_base(
         "Running snapcraft with a devel instance is for testing purposes only.",
         permanent=True,
     )
-
-
-@pytest.fixture
-def minimal_yaml_data():
-    return {
-        "name": "name",
-        "base": "core22",
-        "confinement": "strict",
-        "grade": "devel",
-        "version": "1.0",
-        "summary": "summary",
-        "description": "description",
-        "parts": {"nil": {}},
-    }
-
-
-@pytest.mark.parametrize("key", ("build-packages", "build-snaps"))
-@pytest.mark.parametrize("value", (["foo"], [{"on amd64": ["foo"]}]))
-def test_root_packages(minimal_yaml_data, key, value):
-    minimal_yaml_data[key] = value
-    arch = get_host_architecture()
-
-    assert parts_lifecycle.apply_yaml(
-        minimal_yaml_data, build_on=arch, build_for=arch
-    ) == {
-        "name": "name",
-        "base": "core22",
-        "confinement": "strict",
-        "grade": "devel",
-        "version": "1.0",
-        "summary": "summary",
-        "description": "description",
-        "architectures": [Architecture(build_on=arch, build_for=arch)],
-        "parts": {"nil": {}, "snapcraft/core": {"plugin": "nil", key: ["foo"]}},
-    }
 
 
 def test_get_build_plan_single_element_matching(snapcraft_yaml, mocker, new_dir):
