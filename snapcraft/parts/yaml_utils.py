@@ -129,7 +129,6 @@ def load(filestream: TextIO) -> Dict[str, Any]:
     :raises LegacyFallback: if the project's base is a legacy base.
     :raises MaintenanceBase: if the base is not supported.
     """
-
     build_base = get_base(filestream)
 
     if build_base is None:
