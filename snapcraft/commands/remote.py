@@ -24,8 +24,9 @@ from craft_cli import BaseCommand, emit
 from craft_cli.helptexts import HIDDEN
 from overrides import overrides
 
+from snapcraft.errors import MaintenanceBase, SnapcraftError
 from snapcraft.legacy_cli import run_legacy
-from snapcraft.parts.yaml_utils import get_snap_project, process_yaml
+from snapcraft.parts import yaml_utils
 from snapcraft.utils import confirm_with_user
 from snapcraft_legacy.internal.remote_build.errors import AcceptPublicUploadError
 
@@ -88,15 +89,55 @@ class RemoteBuildCommand(BaseCommand):
             help="acknowledge that uploaded code will be publicly available.",
         )
 
+    def _get_base(self) -> str:
+        """Get a valid base from the project's snapcraft.yaml.
+
+        :returns: The project's base.
+
+        :raises SnapcraftError: If the base is unknown or missing.
+        :raises MaintenanceBase: If the base is not supported
+        """
+        snapcraft_yaml = yaml_utils.get_snap_project().project_file
+
+        with open(snapcraft_yaml, encoding="utf-8") as file:
+            base = yaml_utils.get_base(file)
+
+        if base is None:
+            raise SnapcraftError(
+                f"Could not determine base from {str(snapcraft_yaml)!r}."
+            )
+
+        if base in yaml_utils.ESM_BASES:
+            raise MaintenanceBase(base)
+
+        if base not in yaml_utils.BASES:
+            raise SnapcraftError(f"Unknown base {base!r} in {str(snapcraft_yaml)!r}.")
+
+        return base
+
+    def _run_remote_build(self, base: str) -> None:
+        # bases newer than core22 must use the new remote-build
+        if base in yaml_utils.CURRENT_BASES - {"core22"}:
+            emit.debug(
+                "Using fallback remote-build because new remote-build is not available."
+            )
+            # TODO: use new remote-build code (#4323)
+            run_legacy()
+            return
+
+        emit.debug("Running fallback remote-build.")
+        run_legacy()
+
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args) -> None:
         if os.getenv("SUDO_USER") and os.geteuid() == 0:
             emit.message(
                 "Running with 'sudo' may cause permission errors and is discouraged."
             )
 
         emit.message(
-            "snapcraft remote-build is experimental and is subject to change - use with caution."
+            "snapcraft remote-build is experimental and is subject to change "
+            "- use with caution."
         )
 
         if parsed_args.build_on:
@@ -108,14 +149,5 @@ class RemoteBuildCommand(BaseCommand):
         ):
             raise AcceptPublicUploadError()
 
-        snap_project = get_snap_project()
-        # TODO proper core22 support would mean we need to load the project
-        # yaml_data = process_yaml(snap_project.project_file)
-        # for now, only log explicitly that we are falling back to legacy to
-        # remote build for core22
-        process_yaml(snap_project.project_file)
-
-        emit.debug(
-            "core22 not yet supported in new code base: re-executing into legacy for remote-build"
-        )
-        run_legacy()
+        base = self._get_base()
+        self._run_remote_build(base)
