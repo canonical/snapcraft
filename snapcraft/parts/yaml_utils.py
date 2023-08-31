@@ -18,7 +18,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, TextIO
+from typing import Any, Dict, List, Optional, TextIO
 
 import yaml
 import yaml.error
@@ -97,31 +97,46 @@ class _SafeLoader(yaml.SafeLoader):  # pylint: disable=too-many-ancestors
         )
 
 
-def load(filestream: TextIO) -> Dict[str, Any]:
-    """Load and parse a YAML-formatted file.
+def get_base(filestream: TextIO) -> Optional[str]:
+    """Get the effective base from a snapcraft.yaml file.
 
     :param filename: The YAML file to load.
 
-    :raises SnapcraftError: if loading didn't succeed.
-    :raises LegacyFallback: if the project's base is a legacy base.
+    :returns: Effective base of the project or None if the base cannot be determined.
+
+    :raises SnapcraftError: If the yaml could not be loaded.
     """
     try:
         data = yaml.safe_load(filestream)
-        build_base = utils.get_effective_base(
+        return utils.get_effective_base(
             base=data.get("base"),
             build_base=data.get("build-base"),
             project_type=data.get("type"),
             name=data.get("name"),
         )
-
-        if build_base is None:
-            raise errors.LegacyFallback("no base defined")
-        if build_base in _ESM_BASES:
-            raise errors.MaintenanceBase(build_base)
-        if build_base in _LEGACY_BASES:
-            raise errors.LegacyFallback(f"base is {build_base}")
     except yaml.error.YAMLError as err:
         raise errors.SnapcraftError(f"snapcraft.yaml parsing error: {err!s}") from err
+
+
+def load(filestream: TextIO) -> Dict[str, Any]:
+    """Load and parse a YAML-formatted file.
+
+    :param filename: The YAML file to load.
+
+    :returns: A dictionary of the yaml data.
+
+    :raises SnapcraftError: if loading didn't succeed.
+    :raises LegacyFallback: if the project's base is a legacy base.
+    :raises MaintenanceBase: if the base is not supported.
+    """
+    build_base = get_base(filestream)
+
+    if build_base is None:
+        raise errors.LegacyFallback("no base defined")
+    if build_base in _ESM_BASES:
+        raise errors.MaintenanceBase(build_base)
+    if build_base in _LEGACY_BASES:
+        raise errors.LegacyFallback(f"base is {build_base}")
 
     filestream.seek(0)
 
