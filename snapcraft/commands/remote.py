@@ -107,6 +107,8 @@ class RemoteBuildCommand(BaseCommand):
                 f"Could not determine base from {str(snapcraft_yaml)!r}."
             )
 
+        emit.debug(f"Got base {base!r} from {str(snapcraft_yaml)!r}.")
+
         if base in yaml_utils.ESM_BASES:
             raise MaintenanceBase(base)
 

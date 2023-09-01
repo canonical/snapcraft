@@ -152,8 +152,20 @@ def test_get_base(base, snapcraft_yaml, mock_run_remote_build):
     mock_run_remote_build.assert_called_once_with(base)
 
 
+@pytest.mark.usefixtures("mock_argv", "mock_confirm", "new_dir")
+def test_get_base_cannot_load_snapcraft_yaml(capsys):
+    """Raise an error if the snapcraft.yaml does not exist."""
+    cli.run()
+
+    _, err = capsys.readouterr()
+    assert (
+        "Could not find snap/snapcraft.yaml. "
+        "Are you sure you are in the right directory?" in err
+    )
+
+
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
-def test_get_base_unknown(capsys, snapcraft_yaml, mock_run_remote_build):
+def test_get_base_unknown(capsys, snapcraft_yaml):
     """Raise an error for unknown bases."""
     snapcraft_yaml(base="core10")
 
@@ -164,8 +176,8 @@ def test_get_base_unknown(capsys, snapcraft_yaml, mock_run_remote_build):
 
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
-def test_get_base_none(capsys, snapcraft_yaml, mock_run_remote_build):
-    """Raise an error if there is no base in the snapcraf.yaml."""
+def test_get_base_none(capsys, snapcraft_yaml):
+    """Raise an error if there is no base in the snapcraft.yaml."""
     snapcraft_yaml()
 
     cli.run()
@@ -176,7 +188,7 @@ def test_get_base_none(capsys, snapcraft_yaml, mock_run_remote_build):
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
 @pytest.mark.parametrize("base", ESM_BASES)
-def test_get_base_esm(base, capsys, snapcraft_yaml, mock_run_remote_build):
+def test_get_base_esm(base, capsys, snapcraft_yaml):
     """Raise an error if an ESM base is used."""
     snapcraft_yaml(base=base)
 
