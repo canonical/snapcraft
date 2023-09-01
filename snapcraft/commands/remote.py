@@ -94,7 +94,8 @@ class RemoteBuildCommand(BaseCommand):
 
         :returns: The project's base.
 
-        :raises SnapcraftError: If the base is unknown or missing.
+        :raises SnapcraftError: If the base is unknown or missing or if the
+        snapcraft.yaml cannot be loaded.
         :raises MaintenanceBase: If the base is not supported
         """
         snapcraft_yaml = yaml_utils.get_snap_project().project_file
