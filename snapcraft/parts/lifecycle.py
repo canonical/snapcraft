@@ -346,6 +346,9 @@ def _run_lifecycle_and_pack(
             step_name,
             shell=getattr(parsed_args, "shell", False),
             shell_after=getattr(parsed_args, "shell_after", False),
+            # Repriming needs to happen to take into account any changes to
+            # the actual target directory.
+            rerun_step=command_name == "try",
         )
 
     # Extract metadata and generate snap.yaml
