@@ -141,10 +141,14 @@ class PartsLifecycle:
         *,
         shell: bool = False,
         shell_after: bool = False,
+        rerun_step: bool = False,
     ) -> None:
         """Run the parts lifecycle.
 
         :param target_step: The final step to execute.
+        :param shell: Enter a shell instead of running step_name.
+        :param shell: Enter a shell after running step_name.
+        :param rerun_step: Force running step_name.
 
         :raises PartsLifecycleError: On error during lifecycle.
         :raises RuntimeError: On unexpected error.
@@ -171,6 +175,15 @@ class PartsLifecycle:
 
             with self._lcm.action_executor() as aex:
                 for action in actions:
+                    if action.step == target_step and rerun_step:
+                        action = craft_parts.Action(
+                            part_name=action.part_name,
+                            step=action.step,
+                            action_type=ActionType.RERUN,
+                            reason="forced rerun",
+                            project_vars=action.project_vars,
+                            properties=action.properties,
+                        )
                     message = _action_message(action)
                     emit.progress(f"Executing parts lifecycle: {message}")
                     with emit.open_stream("Executing action") as stream:
