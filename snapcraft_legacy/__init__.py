@@ -355,7 +355,6 @@ from snapcraft_legacy._store import (  # noqa
     download,
     gated,
     list_keys,
-    list_registered,
     login,
     register,
     register_key,
