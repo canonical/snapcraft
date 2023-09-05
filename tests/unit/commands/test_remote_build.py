@@ -42,10 +42,10 @@ def mock_confirm(mocker):
 
 
 @pytest.fixture()
-def mock_get_base(request, mocker):
+def mock_get_effective_base(request, mocker):
     """Mock loading a project with a specific base."""
     return mocker.patch(
-        "snapcraft.commands.remote.RemoteBuildCommand._get_base",
+        "snapcraft.commands.remote.RemoteBuildCommand._get_effective_base",
         return_value=request.param,
     )
 
@@ -67,8 +67,10 @@ def mock_run_legacy(mocker):
 #############
 
 
-@pytest.mark.parametrize("mock_get_base", CURRENT_BASES | LEGACY_BASES, indirect=True)
-@pytest.mark.usefixtures("mock_get_base", "mock_argv")
+@pytest.mark.parametrize(
+    "mock_get_effective_base", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures("mock_get_effective_base", "mock_argv")
 def test_command_user_confirms_upload(mock_confirm, mock_run_remote_build):
     """Run remote-build if the user confirms the upload prompt."""
     cli.run()
@@ -80,8 +82,10 @@ def test_command_user_confirms_upload(mock_confirm, mock_run_remote_build):
     mock_run_remote_build.assert_called_once()
 
 
-@pytest.mark.parametrize("mock_get_base", CURRENT_BASES | LEGACY_BASES, indirect=True)
-@pytest.mark.usefixtures("mock_get_base", "mock_argv")
+@pytest.mark.parametrize(
+    "mock_get_effective_base", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures("mock_get_effective_base", "mock_argv")
 def test_command_user_denies_upload(mock_confirm, mock_run_remote_build):
     """Raise an error if the user denies the upload prompt."""
     mock_confirm.return_value = False
@@ -96,8 +100,10 @@ def test_command_user_denies_upload(mock_confirm, mock_run_remote_build):
     mock_run_remote_build.assert_not_called()
 
 
-@pytest.mark.parametrize("mock_get_base", CURRENT_BASES | LEGACY_BASES, indirect=True)
-@pytest.mark.usefixtures("mock_get_base")
+@pytest.mark.parametrize(
+    "mock_get_effective_base", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures("mock_get_effective_base")
 def test_command_accept_upload(mock_confirm, mock_run_remote_build, mocker):
     """Do not prompt user if `--launchpad-accept-public-upload` is provided."""
     mocker.patch.object(
@@ -110,8 +116,10 @@ def test_command_accept_upload(mock_confirm, mock_run_remote_build, mocker):
     mock_run_remote_build.assert_called_once()
 
 
-@pytest.mark.parametrize("mock_get_base", CURRENT_BASES | LEGACY_BASES, indirect=True)
-@pytest.mark.usefixtures("mock_get_base", "mock_confirm")
+@pytest.mark.parametrize(
+    "mock_get_effective_base", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm")
 def test_command_build_on_warning(emitter, mocker, mock_run_remote_build):
     """Warn when `--build-on` is passed."""
     mocker.patch.object(
@@ -124,8 +132,12 @@ def test_command_build_on_warning(emitter, mocker, mock_run_remote_build):
     mock_run_remote_build.assert_called_once()
 
 
-@pytest.mark.parametrize("mock_get_base", CURRENT_BASES | LEGACY_BASES, indirect=True)
-@pytest.mark.usefixtures("mock_get_base", "mock_confirm", "fake_sudo", "mock_argv")
+@pytest.mark.parametrize(
+    "mock_get_effective_base", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures(
+    "mock_get_effective_base", "mock_confirm", "fake_sudo", "mock_argv"
+)
 def test_remote_build_sudo_warns(emitter, mock_run_remote_build):
     """Warn when snapcraft is run with sudo."""
     cli.run()
@@ -143,7 +155,7 @@ def test_remote_build_sudo_warns(emitter, mock_run_remote_build):
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
 @pytest.mark.parametrize("base", CURRENT_BASES | LEGACY_BASES)
-def test_get_base(base, snapcraft_yaml, mock_run_remote_build):
+def test_get_effective_base(base, snapcraft_yaml, mock_run_remote_build):
     """Get the base from a snapcraft.yaml file."""
     snapcraft_yaml(base=base)
 
@@ -152,8 +164,39 @@ def test_get_base(base, snapcraft_yaml, mock_run_remote_build):
     mock_run_remote_build.assert_called_once_with(base)
 
 
+@pytest.mark.usefixtures("mock_argv", "mock_confirm")
+@pytest.mark.parametrize(
+    ("base", "build_base"),
+    [
+        ("core24", "devel"),
+        ("core18", "core22"),
+        ("bare", "core22"),
+    ],
+)
+def test_get_effective_base_with_build_base(
+    base, build_base, snapcraft_yaml, mock_run_remote_build
+):
+    """The effective base should be the build-base, when provided."""
+    snapcraft_yaml(**{"base": base, "build-base": build_base})
+
+    cli.run()
+
+    mock_run_remote_build.assert_called_once_with(build_base)
+
+
+@pytest.mark.usefixtures("mock_argv", "mock_confirm")
+@pytest.mark.parametrize("base", CURRENT_BASES | LEGACY_BASES)
+def test_get_effective_base_type(base, snapcraft_yaml, mock_run_remote_build):
+    """The effective base should be the name when building a base."""
+    snapcraft_yaml(**{"base": base, "name": base, "type": "base"})
+
+    cli.run()
+
+    mock_run_remote_build.assert_called_once_with(base)
+
+
 @pytest.mark.usefixtures("mock_argv", "mock_confirm", "new_dir")
-def test_get_base_cannot_load_snapcraft_yaml(capsys):
+def test_get_effective_base_cannot_load_snapcraft_yaml(capsys):
     """Raise an error if the snapcraft.yaml does not exist."""
     cli.run()
 
@@ -165,7 +208,7 @@ def test_get_base_cannot_load_snapcraft_yaml(capsys):
 
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
-def test_get_base_unknown(capsys, snapcraft_yaml):
+def test_get_effective_base_unknown(capsys, snapcraft_yaml):
     """Raise an error for unknown bases."""
     snapcraft_yaml(base="core10")
 
@@ -176,7 +219,7 @@ def test_get_base_unknown(capsys, snapcraft_yaml):
 
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
-def test_get_base_none(capsys, snapcraft_yaml):
+def test_get_effective_base_none(capsys, snapcraft_yaml):
     """Raise an error if there is no base in the snapcraft.yaml."""
     snapcraft_yaml()
 
@@ -188,7 +231,7 @@ def test_get_base_none(capsys, snapcraft_yaml):
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
 @pytest.mark.parametrize("base", ESM_BASES)
-def test_get_base_esm(base, capsys, snapcraft_yaml):
+def test_get_effective_base_esm(base, capsys, snapcraft_yaml):
     """Raise an error if an ESM base is used."""
     snapcraft_yaml(base=base)
 
@@ -203,8 +246,10 @@ def test_get_base_esm(base, capsys, snapcraft_yaml):
 #######################
 
 
-@pytest.mark.parametrize("mock_get_base", CURRENT_BASES - {"core22"}, indirect=True)
-@pytest.mark.usefixtures("mock_get_base", "mock_confirm", "mock_argv")
+@pytest.mark.parametrize(
+    "mock_get_effective_base", CURRENT_BASES - {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
 def test_run_newer_than_core_22(emitter, mock_run_legacy):
     """Bases newer than core22 must use new remote-build."""
     cli.run()
@@ -216,8 +261,10 @@ def test_run_newer_than_core_22(emitter, mock_run_legacy):
     )
 
 
-@pytest.mark.parametrize("mock_get_base", LEGACY_BASES | {"core22"}, indirect=True)
-@pytest.mark.usefixtures("mock_get_base", "mock_confirm", "mock_argv")
+@pytest.mark.parametrize(
+    "mock_get_effective_base", LEGACY_BASES | {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
 def test_run_core22_and_older(emitter, mock_run_legacy):
     """core22 and older bases can use fallback remote-build."""
     cli.run()

@@ -89,10 +89,10 @@ class RemoteBuildCommand(BaseCommand):
             help="acknowledge that uploaded code will be publicly available.",
         )
 
-    def _get_base(self) -> str:
-        """Get a valid base from the project's snapcraft.yaml.
+    def _get_effective_base(self) -> str:
+        """Get a valid effective base from the project's snapcraft.yaml.
 
-        :returns: The project's base.
+        :returns: The project's effective base.
 
         :raises SnapcraftError: If the base is unknown or missing or if the
         snapcraft.yaml cannot be loaded.
@@ -152,5 +152,5 @@ class RemoteBuildCommand(BaseCommand):
         ):
             raise AcceptPublicUploadError()
 
-        base = self._get_base()
+        base = self._get_effective_base()
         self._run_remote_build(base)
