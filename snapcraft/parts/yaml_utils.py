@@ -31,8 +31,15 @@ from . import grammar
 
 _CORE_PART_KEYS = ["build-packages", "build-snaps"]
 _CORE_PART_NAME = "snapcraft/core"
-_ESM_BASES = {"core", "core18"}
-_LEGACY_BASES = {"core20"}
+
+# All bases recognized by snapcraft
+BASES = {"core", "core18", "core20", "core22", "devel"}
+# Bases no longer supported by the current version of snapcraft
+ESM_BASES = {"core", "core18"}
+# Bases handled by the legacy snapcraft codebase
+LEGACY_BASES = {"core20"}
+# Bases handled by the current snapcraft codebase
+CURRENT_BASES = BASES - ESM_BASES - LEGACY_BASES
 
 
 @dataclass
@@ -133,9 +140,9 @@ def load(filestream: TextIO) -> Dict[str, Any]:
 
     if build_base is None:
         raise errors.LegacyFallback("no base defined")
-    if build_base in _ESM_BASES:
+    if build_base in ESM_BASES:
         raise errors.MaintenanceBase(build_base)
-    if build_base in _LEGACY_BASES:
+    if build_base in LEGACY_BASES:
         raise errors.LegacyFallback(f"base is {build_base}")
 
     filestream.seek(0)
