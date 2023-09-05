@@ -147,7 +147,7 @@ class PartsLifecycle:
 
         :param target_step: The final step to execute.
         :param shell: Enter a shell instead of running step_name.
-        :param shell: Enter a shell after running step_name.
+        :param shell_after: Enter a shell after running step_name.
         :param rerun_step: Force running step_name.
 
         :raises PartsLifecycleError: On error during lifecycle.
