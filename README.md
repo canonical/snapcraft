@@ -1,4 +1,7 @@
-[![snapcraft](https://snapcraft.io/snapcraft/badge.svg)](https://snapcraft.io/snapcraft) [![Build Status][travis-image]][travis-url] [![Coverage Status][codecov-image]][codecov-url]
+[![snapcraft](https://snapcraft.io/snapcraft/badge.svg)](https://snapcraft.io/snapcraft)
+[![Build Status][travis-image]][travis-url]
+[![Documentation Status](https://readthedocs.com/projects/canonical-snapcraft/badge/?version=latest)](https://canonical-snapcraft.readthedocs-hosted.com/en/latest/?badge=latest)
+[![Coverage Status][codecov-image]][codecov-url]
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 
