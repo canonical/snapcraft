@@ -187,7 +187,9 @@ class Socket(ProjectModel):
                     f"{listen_stream!r} is not an integer between 1 and 65535 (inclusive)."
                 )
         elif isinstance(listen_stream, str):
-            if not re.match(r"^[A-Za-z0-9/._#:$-]*$", listen_stream):
+            if not listen_stream.startswith("@snap.") and not re.match(
+                r"^[A-Za-z0-9/._#:$-]*$", listen_stream
+            ):
                 raise ValueError(
                     f"{listen_stream!r} is not a valid socket path (e.g. /tmp/mysocket.sock)."
                 )
