@@ -3,32 +3,8 @@ name: Spread Tests
 on: [pull_request]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout snapcraft
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Build snapcraft snap
-        id: build-snapcraft
-        uses: snapcore/action-build@v1
-
-      - name: Upload snapcraft snap
-        uses: actions/upload-artifact@v3
-        with:
-          name: snap
-          path: ${{ steps.build-snapcraft.outputs.snap }}
-
-      - name: Verify snapcraft snap
-        run: |
-          sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
-
   integration-spread-tests:
     runs-on: self-hosted
-    needs: build
     strategy:
       # FIXME: enable fail-fast mode once spread can cancel an executing job.
       # Disable fail-fast mode as it doesn't function with spread. It seems
@@ -39,86 +15,24 @@ jobs:
       matrix:
         spread-jobs:
           - google:ubuntu-18.04-64
-          - google:ubuntu-20.04-64
-          - google:ubuntu-22.04-64
 
     steps:
-      - name: Checkout snapcraft
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          submodules: true
-
-      - name: Download snapcraft snap
-        uses: actions/download-artifact@v3
-        with:
-          name: snap
-          path: tests
-
-      - name: Run spread
-        env:
-          SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
-          UA_TOKEN: ${{ secrets.UA_TOKEN }}
-        run: spread ${{ matrix.spread-jobs }}
-
-      - name: Discard spread workers
+      - name: Try to get core dump from Flutter
         if: always()
         run: |
-          shopt -s nullglob
-          for r in .spread-reuse.*.yaml; do
-            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          sudo apt-get install gdb curl
+          cd /tmp/
+          mkdir flutter
+          cd flutter
+          curl -O https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.13.2-stable.tar.xz
+          tar xf flutter_linux_3.13.2-stable.tar.xz
+          export PATH="$PATH:`pwd`/flutter/bin"
+          ulimit -c unlimited
+          cat /proc/sys/kernel/core_pattern
+          flutter channel dev || true
+          shopts -s nullglob
+          for f in core*; do
+            gdb -ex 'frame apply all x/2i $pc' -ex 'exit' -quiet flutter/bin/cache/dart-sdk/bin/dart $f
           done
-
-  integration-spread-tests-store:
-    runs-on: self-hosted
-    needs: build
-    strategy:
-      # FIXME: enable fail-fast mode once spread can cancel an executing job.
-      # Disable fail-fast mode as it doesn't function with spread. It seems
-      # that cancelling tasks requires short, interruptible actions and
-      # interrupting spread, notably, does not work today. As such disable
-      # fail-fast while we tackle that problem upstream.
-      fail-fast: false
-
-    steps:
-      - name: Decision to Run
-        id: decisions
-        run: |
-          # Secrets cannot be used in conditionals, so this is our dance:
-          # https://github.com/actions/runner/issues/520
-          if [[ -n "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}" ]]; then
-            echo RUN=true >> $GITHUB_OUTPUT
-          else
-            echo RUN= >> $GITHUB_OUTPUT
-          fi
-
-      - if: steps.decisions.outputs.RUN == 'true'
-        name: Checkout snapcraft
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          submodules: true
-
-      - if: steps.decisions.outputs.RUN == 'true'
-        name: Download snapcraft snap
-        uses: actions/download-artifact@v3
-        with:
-          name: snap
-          path: tests
-
-      - if: steps.decisions.outputs.RUN == 'true'
-        name: Run spread
-        env:
-          SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
-          SNAPCRAFT_STORE_CREDENTIALS_STAGING: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}"
-          SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID }}"
-          SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY }}"
-        run: spread google:ubuntu-18.04-64:tests/spread/general/store
-
-      - name: Discard spread workers
-        if: always()
-        run: |
-          shopt -s nullglob
-          for r in .spread-reuse.*.yaml; do
-            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
-          done
+          cd ..
+          rm -rf flutter
