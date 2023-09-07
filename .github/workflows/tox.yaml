@@ -37,7 +37,10 @@ jobs:
           python -m pip install 'tox<5.0' tox-gh
           echo "::endgroup::"
           echo "::group::Create virtual environments for linting processes."
-          tox run -m lint --notest
+          tox run -m lint build-docs --notest
+          echo "::endgroup::"
+          echo "::group::Build docs."
+          tox run -e build-docs
           echo "::endgroup::"
           echo "::group::Wait for snap to complete"
           snap watch --last=install
