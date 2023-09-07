@@ -101,25 +101,28 @@ class RemoteBuildCommand(BaseCommand):
             help="acknowledge that uploaded code will be publicly available.",
         )
 
-    def _get_build_strategy(self) -> Optional[str]:
+    def _get_build_strategy(self) -> Optional[_Strategies]:
         """Get the build strategy from the envvar `SNAPCRAFT_REMOTE_BUILD_STRATEGY`.
 
-        :returns: A string of the strategy or None.
+        :returns: The strategy or None.
 
         :raises SnapcraftError: If the variable is set to an invalid value.
         """
-        all_strategies = {strategy.value for strategy in _Strategies}
-
         strategy = os.getenv(_STRATEGY_ENVVAR)
 
-        if strategy and strategy not in all_strategies:
+        if not strategy:
+            return None
+
+        try:
+            return _Strategies(strategy)
+        except ValueError as err:
+            valid_strategies = humanize_list(
+                (strategy.value for strategy in _Strategies), "and"
+            )
             raise SnapcraftError(
                 f"Unknown value {strategy!r} in environment variable "
-                f"{_STRATEGY_ENVVAR!r}. Valid values are "
-                f"{humanize_list(all_strategies, 'and')}."
-            )
-
-        return strategy
+                f"{_STRATEGY_ENVVAR!r}. Valid values are {valid_strategies}."
+            ) from err
 
     def _get_effective_base(self) -> str:
         """Get a valid effective base from the project's snapcraft.yaml.
@@ -162,7 +165,7 @@ class RemoteBuildCommand(BaseCommand):
 
         strategy = self._get_build_strategy()
 
-        if strategy == _Strategies.DISABLE_FALLBACK.value:
+        if strategy == _Strategies.DISABLE_FALLBACK:
             emit.debug(
                 f"Environment variable {_STRATEGY_ENVVAR!r} is "
                 f"{_Strategies.DISABLE_FALLBACK.value!r} but running fallback "
@@ -171,7 +174,7 @@ class RemoteBuildCommand(BaseCommand):
             run_legacy()
             return
 
-        if strategy == _Strategies.FORCE_FALLBACK.value:
+        if strategy == _Strategies.FORCE_FALLBACK:
             emit.debug(
                 "Running fallback remote-build because environment variable "
                 f"{_STRATEGY_ENVVAR!r} is {_Strategies.FORCE_FALLBACK.value!r}."
