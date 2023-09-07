@@ -271,3 +271,105 @@ def test_run_core22_and_older(emitter, mock_run_legacy):
 
     mock_run_legacy.assert_called_once()
     emitter.assert_debug("Running fallback remote-build.")
+
+
+@pytest.mark.parametrize(
+    "mock_get_effective_base", CURRENT_BASES - {"core22"}, indirect=True
+)
+@pytest.mark.parametrize(
+    "envvar", ["force-fallback", "disable-fallback", "badvalue", None]
+)
+@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+def test_run_envvar_newer_than_core22(envvar, emitter, mock_run_legacy, monkeypatch):
+    """Bases newer than core22 run new remote-build regardless of envvar."""
+    if envvar:
+        monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", envvar)
+    else:
+        monkeypatch.delenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", raising=False)
+
+    cli.run()
+
+    mock_run_legacy.assert_called_once()
+    emitter.assert_debug(
+        "Using fallback remote-build because new remote-build is not available."
+    )
+
+
+@pytest.mark.parametrize(
+    "mock_get_effective_base", LEGACY_BASES | {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+def test_run_envvar_disable_fallback(emitter, mock_run_legacy, monkeypatch):
+    """core22 and older bases run new remote-build if envvar is `disable-fallback`."""
+    monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "disable-fallback")
+
+    cli.run()
+
+    mock_run_legacy.assert_called_once()
+    emitter.assert_debug(
+        "Environment variable 'SNAPCRAFT_REMOTE_BUILD_STRATEGY' is 'disable-fallback' "
+        "but running fallback remote-build because new remote-build is not available."
+    )
+
+
+@pytest.mark.parametrize(
+    "mock_get_effective_base", LEGACY_BASES | {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+def test_run_envvar_force_fallback(emitter, mock_run_legacy, monkeypatch):
+    """core22 and older bases run legacy remote-build if envvar is `force-fallback`."""
+    monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "force-fallback")
+
+    cli.run()
+
+    mock_run_legacy.assert_called_once()
+    emitter.assert_debug(
+        "Running fallback remote-build because environment variable "
+        "'SNAPCRAFT_REMOTE_BUILD_STRATEGY' is 'force-fallback'."
+    )
+
+
+@pytest.mark.parametrize(
+    "mock_get_effective_base", LEGACY_BASES | {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+def test_run_envvar_force_fallback_unset(emitter, mock_run_legacy, monkeypatch):
+    """core22 and older bases run legacy remote-build if envvar is unset."""
+    monkeypatch.delenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", raising=False)
+
+    cli.run()
+
+    mock_run_legacy.assert_called_once()
+    emitter.assert_debug("Running fallback remote-build.")
+
+
+@pytest.mark.parametrize(
+    "mock_get_effective_base", LEGACY_BASES | {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+def test_run_envvar_force_fallback_empty(emitter, mock_run_legacy, monkeypatch):
+    """core22 and older bases run legacy remote-build if envvar is empty."""
+    monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "")
+
+    cli.run()
+
+    mock_run_legacy.assert_called_once()
+    emitter.assert_debug("Running fallback remote-build.")
+
+
+@pytest.mark.parametrize(
+    "mock_get_effective_base", LEGACY_BASES | {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+def test_run_envvar_invalid(capsys, emitter, mock_run_legacy, monkeypatch):
+    """core22 and older bases raise an error if the envvar is invalid."""
+    monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "badvalue")
+
+    cli.run()
+
+    _, err = capsys.readouterr()
+    assert (
+        "Unknown value 'badvalue' in environment variable "
+        "'SNAPCRAFT_REMOTE_BUILD_STRATEGY'. Valid values are 'disable-fallback' and "
+        "'force-fallback'."
+    ) in err
