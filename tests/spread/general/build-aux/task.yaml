@@ -1,7 +1,7 @@
 summary: Use build-aux for snapcraft assets
 
 # We currently only have core18 on a stable channel
-systems: [ubuntu-18*]
+systems: [ubuntu-20.04]
 
 environment:
   SNAPCRAFT_BUILD_INFO: on

@@ -5,10 +5,14 @@ description: passthrough-tests
 apps:
   test-cmd:
     command: test-cmd
+    command-chain:
+    - snap/command-chain/snapcraft-runner
     pt-test-app: pt-test-app
 architectures:
 - amd64
-base: core18
+assumes:
+- command-chain
+base: core20
 confinement: strict
 grade: devel
 hooks:

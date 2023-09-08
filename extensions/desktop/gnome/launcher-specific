@@ -1,7 +1,10 @@
 #!/bin/bash
-##############################
-# GTK launcher specific part #
-##############################
+###########################################################
+# GTK launcher specific part
+# This is not used with the gnome extension for
+# core22 and later, please see
+# https://github.com/snapcore/snapcraft-desktop-integration
+###########################################################
 
 # shellcheck disable=SC2154
 if [ "$wayland_available" = true ]; then

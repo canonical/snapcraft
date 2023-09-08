@@ -1,0 +1,7 @@
+.. _Canonical website: https://canonical.com/
+.. _reStructuredText style guide: https://canonical-documentation-with-sphinx-and-readthedocscom.readthedocs-hosted.com/style-guide/
+.. _Sphinx reStructuredText Primer: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
+.. _Canonical Documentation Style Guide: https://docs.ubuntu.com/styleguide/en
+.. _Read the Docs at Canonical: https://library.canonical.com/documentation/read-the-docs
+.. _How to publish documentation on Read the Docs: https://library.canonical.com/documentation/publish-on-read-the-docs
+.. _Example product documentation: https://canonical-example-product-documentation.readthedocs-hosted.com/

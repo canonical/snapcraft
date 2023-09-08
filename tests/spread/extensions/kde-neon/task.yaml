@@ -48,7 +48,7 @@ execute: |
   if [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
     snap list kde-frameworks-5-99-qt-5-15-7-core20
   elif [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
-    snap list kf5-5-105-qt-5-15-9-core22
+    snap list kf5-5-108-qt-5-15-10-core22
   fi
 
 

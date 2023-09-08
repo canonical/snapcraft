@@ -572,7 +572,7 @@ class _SnapPackaging:
                 self._prime_dir, self._project_config.project.arch_triplet
             )
             for e in runtime_env:
-                env.append(re.sub(self._prime_dir, "$SNAP", e))
+                env.append("export " + re.sub(self._prime_dir, "$SNAP", e))
 
         if all(
             [

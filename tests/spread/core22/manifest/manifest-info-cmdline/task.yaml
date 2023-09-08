@@ -9,6 +9,7 @@ restore: |
   rm -f ~/manifest_0.1_*.snap
 
 execute: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
   snapcraft --use-lxd --enable-manifest --manifest-image-information='{"test-var": "value"}'
 
   unsquashfs manifest_0.1_*.snap

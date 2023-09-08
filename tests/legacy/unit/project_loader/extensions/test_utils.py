@@ -15,8 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import textwrap
-from typing import Tuple
+from typing import Any, Dict, Tuple
 
+from overrides import overrides
 from testtools.matchers import Contains, Equals, Not
 
 import snapcraft_legacy.yaml_utils.errors
@@ -43,6 +44,7 @@ class ExtensionTestBase(ProjectLoaderBaseTest):
         self.useFixture(_daemon_extension_fixture())
         self.useFixture(_adopt_info_extension_fixture())
         self.useFixture(_invalid_extension_fixture())
+        self.useFixture(_plugin_aware_part_snippet_extension_fixture())
 
 
 class BasicExtensionTest(ExtensionTestBase):
@@ -54,7 +56,7 @@ class BasicExtensionTest(ExtensionTestBase):
                     version: "1"
                     summary: test
                     description: test
-                    base: core18
+                    base: core20
                     grade: stable
                     confinement: strict
 
@@ -104,7 +106,7 @@ class BasicExtensionTest(ExtensionTestBase):
                     version: "1"
                     summary: test
                     description: test
-                    base: core18
+                    base: core20
                     grade: stable
                     confinement: strict
 
@@ -157,7 +159,7 @@ class BasicExtensionTest(ExtensionTestBase):
                     version: "1"
                     summary: test
                     description: test
-                    base: core18
+                    base: core20
                     grade: stable
                     confinement: strict
 
@@ -209,7 +211,7 @@ class ExtensionOrderConsistencyTest(ExtensionTestBase):
                     version: "1"
                     summary: test
                     description: test
-                    base: core18
+                    base: core20
                     grade: stable
                     confinement: strict
 
@@ -248,7 +250,7 @@ class ExtensionMergeTest(ExtensionTestBase):
             version: "1"
             summary: test
             description: test
-            base: core18
+            base: core20
             grade: stable
             confinement: strict
 
@@ -327,6 +329,61 @@ class ExtensionMergeTest(ExtensionTestBase):
                     """
                 ),
                 "expected_part_definition": {"plugin": "nil", "prime": [], "stage": []},
+            }
+        )
+
+        self.run_test()
+
+    def test_plugin_aware_part_snippet1(self):
+        self.set_attributes(
+            {
+                "app_definition": textwrap.dedent(
+                    """\
+                    command: echo 'hello'
+                    extensions: [pluginextension]
+                    """
+                ),
+                "expected_app_definition": {
+                    "command": "echo 'hello'",
+                },
+                "part_definition": textwrap.dedent(
+                    """\
+                    plugin: catkin
+                    """
+                ),
+                "expected_part_definition": {
+                    "plugin": "catkin",
+                    "prime": [],
+                    "stage": [],
+                },
+            }
+        )
+
+        self.run_test()
+
+    def test_plugin_aware_part_snippet2(self):
+        self.set_attributes(
+            {
+                "app_definition": textwrap.dedent(
+                    """\
+                    command: echo 'hello'
+                    extensions: [pluginextension]
+                    """
+                ),
+                "expected_app_definition": {
+                    "command": "echo 'hello'",
+                },
+                "part_definition": textwrap.dedent(
+                    """\
+                    plugin: nil
+                    """
+                ),
+                "expected_part_definition": {
+                    "plugin": "nil",
+                    "build-environment": [{"FOO": "bar"}],
+                    "prime": [],
+                    "stage": [],
+                },
             }
         )
 
@@ -432,7 +489,7 @@ class ExtensionRootMergeTest(ExtensionTestBase):
             version: "1"
             summary: test
             description: test
-            base: core18
+            base: core20
             grade: stable
             confinement: strict
 
@@ -542,7 +599,7 @@ class InvalidExtensionTest(ExtensionTestBase):
                 description: test
                 grade: stable
                 confinement: strict
-                base: core18
+                base: core20
 
                 apps:
                     test-app:
@@ -574,7 +631,7 @@ class InvalidExtensionTest(ExtensionTestBase):
                 version: "1"
                 summary: test
                 description: test
-                base: core18
+                base: core20
                 grade: stable
                 confinement: strict
 
@@ -628,7 +685,7 @@ class InvalidExtensionTest(ExtensionTestBase):
                 version: "1"
                 summary: test
                 description: test
-                base: core18
+                base: core20
                 grade: stable
                 confinement: strict
 
@@ -712,7 +769,7 @@ class InvalidExtensionTest(ExtensionTestBase):
                 summary: test
                 description: test
                 grade: stable
-                base: core18
+                base: core20
 
                 apps:
                     test-app:
@@ -741,7 +798,7 @@ class InvalidExtensionTest(ExtensionTestBase):
                 description: test
                 grade: stable
                 confinement: unsupported
-                base: core18
+                base: core20
 
                 apps:
                     test-app:
@@ -763,7 +820,7 @@ def _environment_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core18",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -783,7 +840,7 @@ def _build_environment_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core18",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -809,7 +866,7 @@ def _build_environment2_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core18",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -831,11 +888,41 @@ def _build_environment2_extension_fixture():
     return fixture_setup.FakeExtension("buildenvironment2", ExtensionImpl)
 
 
+def _plugin_aware_part_snippet_extension_fixture():
+    class ExtensionImpl(Extension):
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core20",)
+
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
+        def __init__(self, extension_name, yaml_data):
+            super().__init__(extension_name=extension_name, yaml_data=yaml_data)
+            self.root_snippet = {}
+            self.app_snippet = {}
+            self.part_snippet = {
+                "build-environment": [
+                    {"FOO": "bar"},
+                ],
+            }
+            self.parts = {}
+
+        @overrides
+        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+            if plugin_name == "catkin":
+                return {}
+            return self.part_snippet
+
+    return fixture_setup.FakeExtension("pluginextension", ExtensionImpl)
+
+
 def _plug_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core18",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -852,7 +939,7 @@ def _plug2_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core18",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -869,7 +956,7 @@ def _daemon_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core18",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -886,7 +973,7 @@ def _adopt_info_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core18",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -903,7 +990,7 @@ def _invalid_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core18",)
+            return ("core20",)
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:

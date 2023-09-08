@@ -48,7 +48,7 @@ class ExtensionCombinationTest(ProjectLoaderBaseTest):
     )
 
     def test_extensions_all_combinations_validate(self):
-        common_bases = set(["core18", "core20"])
+        common_bases = set(["core20"])
 
         # Determine extension list given scenarios
         extension_names = list()

@@ -36,7 +36,7 @@ class LifecycleStatusTest(ProjectLoaderBaseTest):
             textwrap.dedent(
                 """\
                 name: my-snap-name
-                base: core18
+                base: core20
                 version: '1.0'
                 summary: summary
                 description: description

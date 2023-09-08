@@ -24,14 +24,14 @@ from unittest.mock import ANY, Mock, PropertyMock, call
 import pytest
 from craft_cli import EmitterMode, emit
 from craft_parts import Action, Step, callbacks
-from craft_providers.bases.buildd import BuilddBaseAlias
+from craft_providers.bases.ubuntu import BuilddBaseAlias
 
 from snapcraft import errors
 from snapcraft.elf import ElfFile
 from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts.plugins import KernelPlugin
 from snapcraft.parts.update_metadata import update_project_metadata
-from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Architecture, Project
+from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Project
 from snapcraft.utils import get_host_architecture
 
 _SNAPCRAFT_YAML_FILENAMES = [
@@ -338,11 +338,33 @@ def test_lifecycle_run_try_command(snapcraft_yaml, project_vars, new_dir, mocker
     ]
 
 
+@pytest.mark.parametrize("managed_mode", [True, False])
+@pytest.mark.parametrize("build_env", [None, "host", "multipass", "lxd", "other"])
 @pytest.mark.parametrize("cmd", ["pack", "snap"])
-def test_lifecycle_run_command_pack(cmd, snapcraft_yaml, project_vars, new_dir, mocker):
+def test_lifecycle_run_local_destructive_mode(
+    managed_mode,
+    build_env,
+    cmd,
+    snapcraft_yaml,
+    project_vars,
+    new_dir,
+    mocker,
+    monkeypatch,
+):
+    """Run the lifecycle locally when destructive_mode is True."""
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
+    mocker.patch("snapcraft.utils.is_managed_mode", return_value=managed_mode)
+    mocker.patch(
+        "snapcraft.utils.get_managed_environment_home_path",
+        return_value=new_dir / "home",
+    )
+    if build_env:
+        monkeypatch.setenv("SNAPCRAFT_BUILD_ENVIRONMENT", build_env)
+    else:
+        monkeypatch.delenv("SNAPCRAFT_BUILD_ENVIRONMENT", raising=False)
 
     parts_lifecycle._run_command(
         cmd,
@@ -365,12 +387,13 @@ def test_lifecycle_run_command_pack(cmd, snapcraft_yaml, project_vars, new_dir, 
         ),
     )
 
+    assert run_in_provider_mock.mock_calls == []
     assert run_mock.mock_calls == [
         call("prime", shell=False, shell_after=False, rerun_step=False)
     ]
     assert pack_mock.mock_calls[:1] == [
         call(
-            new_dir / "prime",
+            new_dir / "home/prime" if managed_mode else new_dir / "prime",
             output=None,
             compression="xz",
             name="mytest",
@@ -380,10 +403,20 @@ def test_lifecycle_run_command_pack(cmd, snapcraft_yaml, project_vars, new_dir, 
     ]
 
 
+@pytest.mark.parametrize("destructive_mode", [True, False])
+@pytest.mark.parametrize("build_env", [None, "host", "multipass", "lxd", "other"])
 @pytest.mark.parametrize("cmd", ["pack", "snap"])
-def test_lifecycle_pack_destructive_mode(
-    cmd, snapcraft_yaml, project_vars, new_dir, mocker
+def test_lifecycle_run_local_managed_mode(
+    destructive_mode,
+    build_env,
+    cmd,
+    snapcraft_yaml,
+    project_vars,
+    new_dir,
+    mocker,
+    monkeypatch,
 ):
+    """Run the lifecycle locally when managed_mode is True."""
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
@@ -393,6 +426,10 @@ def test_lifecycle_pack_destructive_mode(
         "snapcraft.utils.get_managed_environment_home_path",
         return_value=new_dir / "home",
     )
+    if build_env:
+        monkeypatch.setenv("SNAPCRAFT_BUILD_ENVIRONMENT", build_env)
+    else:
+        monkeypatch.delenv("SNAPCRAFT_BUILD_ENVIRONMENT", raising=False)
 
     parts_lifecycle._run_command(
         cmd,
@@ -406,7 +443,7 @@ def test_lifecycle_pack_destructive_mode(
             output=None,
             debug=False,
             enable_manifest=False,
-            destructive_mode=True,
+            destructive_mode=destructive_mode,
             shell=False,
             shell_after=False,
             use_lxd=False,
@@ -431,17 +468,30 @@ def test_lifecycle_pack_destructive_mode(
     ]
 
 
+@pytest.mark.parametrize("managed_mode", [True, False])
+@pytest.mark.parametrize("destructive_mode", [True, False])
 @pytest.mark.parametrize("cmd", ["pack", "snap"])
-def test_lifecycle_pack_managed(cmd, snapcraft_yaml, project_vars, new_dir, mocker):
+def test_lifecycle_run_local_build_env(
+    managed_mode,
+    destructive_mode,
+    cmd,
+    monkeypatch,
+    snapcraft_yaml,
+    project_vars,
+    new_dir,
+    mocker,
+):
+    """Run the lifecycle locally when the build environment is 'host'."""
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
-    mocker.patch("snapcraft.utils.is_managed_mode", return_value=True)
+    mocker.patch("snapcraft.utils.is_managed_mode", return_value=managed_mode)
     mocker.patch(
         "snapcraft.utils.get_managed_environment_home_path",
         return_value=new_dir / "home",
     )
+    monkeypatch.setenv("SNAPCRAFT_BUILD_ENVIRONMENT", "host")
 
     parts_lifecycle._run_command(
         cmd,
@@ -458,7 +508,7 @@ def test_lifecycle_pack_managed(cmd, snapcraft_yaml, project_vars, new_dir, mock
             build_for=None,
             enable_manifest=False,
             manifest_image_information=None,
-            destructive_mode=False,
+            destructive_mode=destructive_mode,
             shell=False,
             shell_after=False,
             use_lxd=False,
@@ -473,7 +523,7 @@ def test_lifecycle_pack_managed(cmd, snapcraft_yaml, project_vars, new_dir, mock
     ]
     assert pack_mock.mock_calls[:1] == [
         call(
-            new_dir / "home/prime",
+            new_dir / "home/prime" if managed_mode else new_dir / "prime",
             output=None,
             compression="xz",
             name="mytest",
@@ -483,12 +533,21 @@ def test_lifecycle_pack_managed(cmd, snapcraft_yaml, project_vars, new_dir, mock
     ]
 
 
+@pytest.mark.parametrize("build_env", [None, "lxd", "multipass", "other"])
 @pytest.mark.parametrize("cmd", ["pack", "snap"])
-def test_lifecycle_pack_not_managed(cmd, snapcraft_yaml, new_dir, mocker):
+def test_lifecycle_run_in_provider_by_default(
+    build_env, cmd, snapcraft_yaml, new_dir, mocker, monkeypatch
+):
+    """Run lifecycle in a provider when not in managed_mode, not in destructive_mode,
+    and the build environment is not 'host'."""
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     mocker.patch("snapcraft.utils.is_managed_mode", return_value=False)
+    if build_env:
+        monkeypatch.setenv("SNAPCRAFT_BUILD_ENVIRONMENT", build_env)
+    else:
+        monkeypatch.delenv("SNAPCRAFT_BUILD_ENVIRONMENT", raising=False)
 
     parts_lifecycle._run_command(
         cmd,
@@ -516,6 +575,78 @@ def test_lifecycle_pack_not_managed(cmd, snapcraft_yaml, new_dir, mocker):
                 output=None,
                 destructive_mode=False,
                 use_lxd=False,
+                parts=[],
+            ),
+        )
+    ]
+
+
+@pytest.mark.parametrize("managed_mode", [True, False])
+@pytest.mark.parametrize("destructive_mode", [True, False])
+@pytest.mark.parametrize("build_env", [None, "host", "lxd", "multipass", "other"])
+@pytest.mark.parametrize("cmd", ["pack", "snap"])
+def test_lifecycle_run_in_provider_use_lxd(
+    managed_mode,
+    destructive_mode,
+    build_env,
+    cmd,
+    mocker,
+    monkeypatch,
+    new_dir,
+    project_vars,
+    snapcraft_yaml,
+):
+    """Run the lifecycle in a provider when `use_lxd` is true."""
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
+    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch("snapcraft.pack.pack_snap")
+    mocker.patch(
+        "snapcraft.utils.get_managed_environment_home_path",
+        return_value=new_dir / "home",
+    )
+    mocker.patch("snapcraft.utils.is_managed_mode", return_value=managed_mode)
+    if build_env:
+        monkeypatch.setenv("SNAPCRAFT_BUILD_ENVIRONMENT", build_env)
+    else:
+        monkeypatch.delenv("SNAPCRAFT_BUILD_ENVIRONMENT", raising=False)
+
+    parts_lifecycle._run_command(
+        cmd,
+        project=project,
+        parse_info={},
+        assets_dir=Path(),
+        start_time=datetime.now(),
+        parallel_build_count=8,
+        parsed_args=argparse.Namespace(
+            directory=None,
+            output=None,
+            debug=False,
+            enable_manifest=False,
+            destructive_mode=destructive_mode,
+            shell=False,
+            shell_after=False,
+            use_lxd=True,
+            ua_token=None,
+            parts=[],
+        ),
+    )
+
+    assert run_mock.mock_calls == []
+    assert run_in_provider_mock.mock_calls == [
+        call(
+            project,
+            cmd,
+            argparse.Namespace(
+                directory=None,
+                output=None,
+                debug=False,
+                enable_manifest=False,
+                destructive_mode=destructive_mode,
+                shell=False,
+                shell_after=False,
+                use_lxd=True,
+                ua_token=None,
                 parts=[],
             ),
         )
@@ -912,16 +1043,6 @@ def test_lifecycle_adopt_project_vars(snapcraft_yaml, new_dir):
     assert project.grade == "devel"
 
 
-def test_extract_parse_info():
-    yaml_data = {
-        "name": "foo",
-        "parts": {"p1": {"plugin": "nil", "parse-info": "foo/metadata.xml"}, "p2": {}},
-    }
-    parse_info = parts_lifecycle.extract_parse_info(yaml_data)
-    assert yaml_data == {"name": "foo", "parts": {"p1": {"plugin": "nil"}, "p2": {}}}
-    assert parse_info == {"p1": "foo/metadata.xml"}
-
-
 def test_check_experimental_plugins_disabled(snapcraft_yaml, mocker):
     mocker.patch("craft_parts.plugins.plugins._PLUGINS", {"kernel": KernelPlugin})
     project = Project.unmarshal(
@@ -1226,7 +1347,6 @@ def test_lifecycle_run_in_provider_default(
         project_name="mytest",
         project_path=ANY,
         base_configuration=mock_base_configuration,
-        build_base="22.04",
         instance_name="test-instance-name",
         allow_unstable=False,
     )
@@ -1281,7 +1401,7 @@ def test_lifecycle_run_in_provider_all_options(
     # build the expected command to be executed in the provider
     parts = ["test-part-1", "test-part-2"]
     output = "test-output"
-    manifest_build_information = "test-build-info"
+    manifest_image_information = "test-image-info"
     ua_token = "test-ua-token"
     http_proxy = "1.2.3.4"
     https_proxy = "5.6.7.8"
@@ -1296,8 +1416,8 @@ def test_lifecycle_run_in_provider_all_options(
             "--shell",
             "--shell-after",
             "--enable-manifest",
-            "--manifest-build-information",
-            manifest_build_information,
+            "--manifest-image-information",
+            manifest_image_information,
             "--build-for",
             "test-arch-2",
             "--ua-token",
@@ -1320,7 +1440,7 @@ def test_lifecycle_run_in_provider_all_options(
             use_lxd=False,
             provider=None,
             enable_manifest=True,
-            manifest_build_information=manifest_build_information,
+            manifest_image_information=manifest_image_information,
             bind_ssh=True,
             ua_token=ua_token,
             enable_experimental_ua_services=True,
@@ -1350,7 +1470,6 @@ def test_lifecycle_run_in_provider_all_options(
         project_name="mytest",
         project_path=ANY,
         base_configuration=mock_base_configuration,
-        build_base="22.04",
         instance_name="test-instance-name",
         allow_unstable=False,
     )
@@ -1452,7 +1571,6 @@ def test_lifecycle_run_in_provider(
         project_name="mytest",
         project_path=ANY,
         base_configuration=mock_base_configuration,
-        build_base=BuilddBaseAlias.JAMMY.value,
         instance_name="test-instance-name",
         allow_unstable=False,
     )
@@ -1497,41 +1615,6 @@ def test_lifecycle_run_in_provider_devel_base(
         "Running snapcraft with a devel instance is for testing purposes only.",
         permanent=True,
     )
-
-
-@pytest.fixture
-def minimal_yaml_data():
-    return {
-        "name": "name",
-        "base": "core22",
-        "confinement": "strict",
-        "grade": "devel",
-        "version": "1.0",
-        "summary": "summary",
-        "description": "description",
-        "parts": {"nil": {}},
-    }
-
-
-@pytest.mark.parametrize("key", ("build-packages", "build-snaps"))
-@pytest.mark.parametrize("value", (["foo"], [{"on amd64": ["foo"]}]))
-def test_root_packages(minimal_yaml_data, key, value):
-    minimal_yaml_data[key] = value
-    arch = get_host_architecture()
-
-    assert parts_lifecycle.apply_yaml(
-        minimal_yaml_data, build_on=arch, build_for=arch
-    ) == {
-        "name": "name",
-        "base": "core22",
-        "confinement": "strict",
-        "grade": "devel",
-        "version": "1.0",
-        "summary": "summary",
-        "description": "description",
-        "architectures": [Architecture(build_on=arch, build_for=arch)],
-        "parts": {"nil": {}, "snapcraft/core": {"plugin": "nil", key: ["foo"]}},
-    }
 
 
 def test_get_build_plan_single_element_matching(snapcraft_yaml, mocker, new_dir):
@@ -1746,6 +1829,7 @@ def test_lifecycle_write_metadata(
     parsed_args = argparse.Namespace(
         debug=False,
         destructive_mode=True,
+        use_lxd=False,
         enable_manifest=True,
         ua_token=None,
         parts=[],
