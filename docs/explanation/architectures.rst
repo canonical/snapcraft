@@ -46,10 +46,10 @@ Consider the following ``snapcraft.yaml`` snippet:
 .. code-block:: yaml
 
   architectures:
-    - build-on: amd64
-      build-for: amd64
+    - build-on: [amd64]
+      build-for: [amd64]
     - build-on: [amd64, arm64]
-      build-for: arm64
+      build-for: [arm64]
 
 If snapcraft executes on an ``amd64`` machine, then it will create the
 following build plan:
@@ -62,6 +62,16 @@ following build plan:
 
 Two snap files will be created: ``my-snap_1.0_amd64.snap`` and
 ``my-snap_1.0_arm64.snap``.
+
+If snapcraft executes on an ``arm64`` machine, then it will create the
+following build plan:
+
+.. code-block:: text
+
+  Created build plan:
+    build-on: arm64 build-for: arm64
+
+One snap file will be created: ``my-snap_1.0_arm64.snap``.
 
 This build plan can be filtered with the environment variable
 ``SNAPCRAFT_BUILD_FOR=<arch>`` or the command-line argument
@@ -80,7 +90,7 @@ Destructive mode
 
 In destructive mode, all builds in the build plan occur in the same location.
 This can cause unintended consequences, such as parts not being re-built. For
-more information, see `this issue`_.
+more information, see `this issue <issue 4356_>`_.
 
 To workaround this, use ``--build-for`` or ``SNAPCRAFT_BUILD_FOR`` to build
 one snap at a time and run ``snapcraft clean --destructive-mode`` when changing
@@ -108,6 +118,18 @@ build the snap on all architectures
 If architectures are defined in the ``snapcraft.yaml``, then Launchpad will
 build the snap on all ``build-on`` architectures.
 
+When a snap can be built on multiple architectures, Launchpad can choose which
+``build-on`` platform to use. For example:
+
+.. code-block:: yaml
+
+  architectures:
+  - build-on: [amd64, arm64]
+    build-for: [ppc64el]
+
+Launchpad may build the snap on an ``amd64`` or ``arm64`` platform. This choice
+is controlled by Launchpad and cannot be influenced by the user.
+
 Architecture errors
 -------------------
 
@@ -124,7 +146,7 @@ Could not make build plan
 This ``core22`` error has two common causes.
 
 The first cause is that snapcraft is not able to create a build plan because
-the there are no build-on architectures matching the host's architecture.
+the there are no ``build-on`` architectures matching the host's architecture.
 To resolve this, build the snap on an architecture listed in the
 ``snapcraft.yaml`` or add the host architecture as a ``build-on`` value.
 
@@ -135,7 +157,7 @@ with brackets. For example:
 
   architectures:
     - build-on: amd64, arm64
-      build-for: arm64
+      build-for: [arm64]
 
 should be changed to:
 
@@ -143,10 +165,10 @@ should be changed to:
 
   architectures:
     - build-on: [amd64, arm64]
-      build-for: arm64
+      build-for: [arm64]
 
 The brackets are required for lists. This problem is described in
-more detail `here`_.
+more detail `here <issue 4340_>`_.
 
 Unsupported architectures in remote build
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -164,5 +186,5 @@ architectures supported by Launchpad.
 The second cause is the same :ref:`as above<build-plan-error>` - not enclosing
 a list of multiple architectures with brackets.
 
-.. _`here`: https://github.com/snapcore/snapcraft/issues/4340
-.. _`this issue`: https://github.com/snapcore/snapcraft/issues/4356
+.. _`issue 4340`: https://github.com/snapcore/snapcraft/issues/4340
+.. _`issue 4356`: https://github.com/snapcore/snapcraft/issues/4356

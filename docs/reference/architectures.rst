@@ -22,16 +22,13 @@ pairs with the following syntax:
       build-for: [<arch 4>]
       ...
 
-If the value is a single item, it can be simplified from a list to a scalar.
-For example:
+See :ref:`here<supported-architectures>` for a list of supported architectures.
 
-.. code-block:: yaml
+Data types
+""""""""""
 
-  architectures:
-    - build-on: [amd64]
-      build-for: [arm64]
-
-can be rewritten as:
+If the value is a single item, it can be written as a single element list or a
+scalar. For example:
 
 .. code-block:: yaml
 
@@ -39,17 +36,70 @@ can be rewritten as:
     - build-on: amd64
       build-for: arm64
 
-See :ref:`here<supported-architectures>` for a list of supported architectures.
+is equivalent to:
 
-``build-for: all`` can be used for snaps that can run on all architectures,
-like a snap that is a shell or python script. It cannot be combined with other
-architectures.
+.. code-block:: yaml
+
+  architectures:
+    - build-on: [amd64]
+      build-for: [arm64]
+
+.. note::
+
+  Using a list is the recommended syntax. Scalars are not recommended.
+
+``build-on``
+""""""""""""
+
+The ``build-on`` field is required and can contain multiple architectures.
+
+.. _reference-build-for:
+
+``build-for``
+"""""""""""""
+
+The ``build-for`` field is optional and should be a single element list. If it
+is not defined, the ``build-for`` will be set the ``build-on`` for each build
+in the :ref:`build plan<build-plans>`.
+
+``build-for: [all]`` is a special keyword to denote an architecture-independent
+snap. If the ``all`` keyword is used, no other ``build-on/build-for`` pairs can
+be defined. See :ref:`this page<how-to-arch-build-for-all>` to learn how to
+use the ``all`` keyword.
+
+``all`` cannot be used for ``build-on``.
+
+The same architecture cannot be defined in multiple ``build-for`` entries.
+
+Shorthand format
+""""""""""""""""
+
+As an alternative to the explicit format described above, a shorthand format
+can be used for simple ``build-on/build-for`` pairs. The following shorthand:
+
+.. code-block:: yaml
+
+  architectures: [amd64, arm64]
+
+is equivalent to:
+
+.. code-block:: yaml
+
+  architectures:
+    - build-on: [amd64]
+      build-for: [amd64]
+    - build-on: [arm64]
+      build-for: [arm64]
+
+The explicit and shorthand format cannot be mixed.
 
 core20
 ^^^^^^
 
 The above syntax and rules for ``core22`` apply for ``core20`` except that
-``run-on`` is used in place of ``build-for``.
+``run-on`` is used in place of ``build-for``. Additionally, ``core20`` supports
+multiple architectures in the ``run-on`` field, which will create
+multi-architecture snaps.
 
 Project variables
 -----------------
@@ -146,9 +196,9 @@ Supported by Launchpad
 
 The following architectures are supported by Launchpad for remote building.
 
+* amd64
 * arm64
 * armhf
-* amd64
 * ppc64el
 * s390x
 

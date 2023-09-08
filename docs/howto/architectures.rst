@@ -21,8 +21,8 @@ core22
 .. code-block:: yaml
 
   architectures:
-    - build-on: amd64
-      build-for: amd64
+    - build-on: [amd64]
+      build-for: [amd64]
 
 Building on ``amd64`` will produce one snap built for ``amd64``. Snapcraft will
 raise an error when building on another architecture.
@@ -33,7 +33,7 @@ following snippet snippet will produce the same result:
 .. code-block:: yaml
 
   architectures:
-    - build-on: amd64
+    - build-on: [amd64]
 
 The shorthand format will also produce the same result:
 
@@ -48,8 +48,8 @@ core20
 .. code-block:: yaml
 
   architectures:
-    - build-on: amd64
-      run-on: amd64
+    - build-on: [amd64]
+      run-on: [amd64]
 
 Building on ``amd64`` will produce one snap built for ``amd64``. Snapcraft will
 not raise an error when building on another architecture. Instead, it will
@@ -61,7 +61,7 @@ following snippet snippet will produce the same result:
 .. code-block:: yaml
 
   architectures:
-    - build-on: amd64
+    - build-on: [amd64]
 
 The shorthand format will also produce the same result:
 
@@ -79,10 +79,10 @@ core22
 .. code-block:: yaml
 
   architectures:
-    - build-on: amd64
-      build-for: amd64
-    - build-on: arm64
-      build-for: arm64
+    - build-on: [amd64]
+      build-for: [amd64]
+    - build-on: [arm64]
+      build-for: [arm64]
 
 Building on ``amd64`` will produce one snap for ``amd64``. Building on ``arm64``
 will produce one snap for ``arm64``. Snapcraft will raise an error when building
@@ -94,16 +94,14 @@ following snippet snippet will produce the same result:
 .. code-block:: yaml
 
   architectures:
-    - build-on: amd64
-    - build-on: arm64
+    - build-on: [amd64]
+    - build-on: [arm64]
 
 The shorthand format will also produce the same result:
 
 .. code-block:: yaml
 
-  architectures:
-    - amd64
-    - arm64
+  architectures: [amd64, arm64]
 
 core20
 ^^^^^^
@@ -111,10 +109,10 @@ core20
 .. code-block:: yaml
 
   architectures:
-    - build-on: amd64
-      run-on: amd64
-    - build-on: arm64
-      run-on: arm64
+    - build-on: [amd64]
+      run-on: [amd64]
+    - build-on: [arm64]
+      run-on: [arm64]
 
 Building on ``amd64`` will produce one snap built for ``amd64``. Building on
 ``arm64`` will produce one snap built for ``arm64``. Snapcraft will not raise
@@ -134,12 +132,17 @@ The shorthand format will also produce the same result:
 
 .. code-block:: yaml
 
-  architectures:
-    - amd64
-    - arm64
+  architectures: [amd64, arm64]
+
+.. _how-to-arch-build-for-all:
 
 How to create an architecture independent snap
 ----------------------------------------------
+
+``build-for: [all]`` is used for a snap that can run on all architectures, like
+a snap that is a shell or python script. It cannot be combined with other
+architectures. Click :ref:`here<reference-build-for>` for more information on
+the ``all`` keyword.
 
 core22
 ^^^^^^
@@ -147,8 +150,8 @@ core22
 .. code-block:: yaml
 
   architectures:
-    - build-on: amd64
-      build-for: all
+    - build-on: [amd64]
+      build-for: [all]
 
 core20
 ^^^^^^
@@ -156,8 +159,8 @@ core20
 .. code-block:: yaml
 
   architectures:
-    - build-on: amd64
-      run-on: all
+    - build-on: [amd64]
+      run-on: [all]
 
 How to create a cross-compiling snap
 ------------------------------------
@@ -168,8 +171,8 @@ core22
 .. code-block:: yaml
 
   architectures:
-    - build-on: amd64
-      build-for: arm64
+    - build-on: [amd64]
+      build-for: [arm64]
 
 Building on ``amd64`` will produce one snap built for ``arm64``. Snapcraft will
 raise an error when building on another architecture.
@@ -179,10 +182,10 @@ raise an error when building on another architecture.
 .. code-block:: yaml
 
   architectures:
-    - build-on: amd64
-      build-for: amd64
+    - build-on: [amd64]
+      build-for: [amd64]
     - build-on: [amd64, arm64]
-      build-for: arm64
+      build-for: [arm64]
 
 Building on ``amd64`` will produce two snaps, one built for ``amd64`` and one
 built for ``arm64``. Building on ``arm64`` will produce one snap built for
@@ -194,8 +197,8 @@ core20
 .. code-block:: yaml
 
   architectures:
-    - build-on: amd64
-      run-on: arm64
+    - build-on: [amd64]
+      run-on: [arm64]
 
 Building on ``amd64`` will produce one snap built for ``arm64``. Snapcraft will
 not raise an error when building on another architecture. Instead, it will
@@ -213,7 +216,8 @@ To use an ``i386`` package for an ``amd64`` snap, use the following
 .. code-block:: yaml
 
   architectures:
-    - build-on: amd64
+    - build-on: [amd64]
+      build-for: [amd64]
 
   package-repositories:
     - type: apt
@@ -229,6 +233,7 @@ To use an ``i386`` package for an ``amd64`` snap, use the following
       stage-packages:
         - libpython3.11-minimal:i386
 
-This is supported for related architectures. ``amd64`` and ``i386`` can stage
-packages for each other. ``arm64`` and ``armhf`` can also stage packages for
-each other.
+This is supported for related architectures. A snap built for ``amd64`` can
+stage ``i386`` packages and a snap built for ``i386`` can stage ``amd64``
+packages. Similarly, a snap built for ``arm64`` can stage ``armhf`` packages
+and a snap built for ``armhf`` can stage ``amd64`` packages.
