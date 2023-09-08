@@ -1084,7 +1084,9 @@ class TestAppValidation:
             assert project.apps is not None
             assert project.apps["app1"].command_chain == command_chain
 
-    @pytest.mark.parametrize("listen_stream", [1, 100, 65535, "/tmp/mysocket.sock"])
+    @pytest.mark.parametrize(
+        "listen_stream", [1, 100, 65535, "/tmp/mysocket.sock", "@snap.foo"]
+    )
     def test_app_sockets_valid_listen_stream(self, listen_stream, socket_yaml_data):
         data = socket_yaml_data(listen_stream=listen_stream)
 
@@ -1094,10 +1096,22 @@ class TestAppValidation:
         assert project.apps["app1"].sockets["socket1"].listen_stream == listen_stream
 
     @pytest.mark.parametrize("listen_stream", [-1, 0, 65536])
-    def test_app_sockets_invalid_listen_stream(self, listen_stream, socket_yaml_data):
+    def test_app_sockets_invalid_int_listen_stream(
+        self, listen_stream, socket_yaml_data
+    ):
         data = socket_yaml_data(listen_stream=listen_stream)
 
         error = f".*{listen_stream} is not an integer between 1 and 65535"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(data)
+
+    @pytest.mark.parametrize("listen_stream", ["@foo"])
+    def test_app_sockets_invalid_socket_listen_stream(
+        self, listen_stream, socket_yaml_data
+    ):
+        data = socket_yaml_data(listen_stream=listen_stream)
+
+        error = f".*{listen_stream!r} is not a valid socket path.*"
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(data)
 

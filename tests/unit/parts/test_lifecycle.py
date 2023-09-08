@@ -299,11 +299,43 @@ def test_lifecycle_run_command_step(
         parsed_args=parsed_args,
     )
 
-    call_args = {"shell": False, "shell_after": False}
+    call_args = {"shell": False, "shell_after": False, "rerun_step": False}
     if debug_shell:
         call_args[debug_shell] = True
 
     assert run_mock.mock_calls == [call(step, **call_args)]
+
+
+def test_lifecycle_run_try_command(snapcraft_yaml, project_vars, new_dir, mocker):
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch("snapcraft.meta.snap_yaml.write")
+    mocker.patch("snapcraft.pack.pack_snap")
+
+    parsed_args = argparse.Namespace(
+        debug=False,
+        destructive_mode=True,
+        enable_manifest=False,
+        shell=False,
+        shell_after=False,
+        use_lxd=False,
+        ua_token=None,
+        parts=[],
+    )
+
+    parts_lifecycle._run_command(
+        "try",
+        project=project,
+        parse_info={},
+        assets_dir=Path(),
+        start_time=datetime.now(),
+        parallel_build_count=8,
+        parsed_args=parsed_args,
+    )
+
+    assert run_mock.mock_calls == [
+        call("prime", shell=False, shell_after=False, rerun_step=True)
+    ]
 
 
 @pytest.mark.parametrize("managed_mode", [True, False])
@@ -356,7 +388,9 @@ def test_lifecycle_run_local_destructive_mode(
     )
 
     assert run_in_provider_mock.mock_calls == []
-    assert run_mock.mock_calls == [call("prime", shell=False, shell_after=False)]
+    assert run_mock.mock_calls == [
+        call("prime", shell=False, shell_after=False, rerun_step=False)
+    ]
     assert pack_mock.mock_calls[:1] == [
         call(
             new_dir / "home/prime" if managed_mode else new_dir / "prime",
@@ -419,7 +453,9 @@ def test_lifecycle_run_local_managed_mode(
     )
 
     assert run_in_provider_mock.mock_calls == []
-    assert run_mock.mock_calls == [call("prime", shell=False, shell_after=False)]
+    assert run_mock.mock_calls == [
+        call("prime", shell=False, shell_after=False, rerun_step=False)
+    ]
     assert pack_mock.mock_calls[:1] == [
         call(
             new_dir / "home/prime",
@@ -482,7 +518,9 @@ def test_lifecycle_run_local_build_env(
     )
 
     assert run_in_provider_mock.mock_calls == []
-    assert run_mock.mock_calls == [call("prime", shell=False, shell_after=False)]
+    assert run_mock.mock_calls == [
+        call("prime", shell=False, shell_after=False, rerun_step=False)
+    ]
     assert pack_mock.mock_calls[:1] == [
         call(
             new_dir / "home/prime" if managed_mode else new_dir / "prime",
@@ -656,7 +694,9 @@ def test_lifecycle_pack_metadata_error(cmd, snapcraft_yaml, new_dir, mocker):
     assert str(raised.value) == (
         "error setting grade: unexpected value; permitted: 'stable', 'devel'"
     )
-    assert run_mock.mock_calls == [call("prime", shell=False, shell_after=False)]
+    assert run_mock.mock_calls == [
+        call("prime", shell=False, shell_after=False, rerun_step=False)
+    ]
     assert pack_mock.mock_calls == []
 
 
