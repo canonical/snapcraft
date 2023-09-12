@@ -227,11 +227,11 @@ def _make_initrd_cmd(
     cmd_prepare_modules_feature.extend(
         [
             'echo "Configuring ubuntu-core-initramfs.conf with supported modules"',
-            'echo "If module is not included in initrd, do not include it"',
+            'echo "If module does not exist, do not include it"',
             "initramfs_conf_dir=${uc_initrd_feature_kernel_modules}/usr/lib/modules-load.d",
             "mkdir -p ${initramfs_conf_dir}",
             "initramfs_conf=${initramfs_conf_dir}/ubuntu-core-initramfs.conf",
-            'echo "# configures modules" > ${initramfs_conf}',
+            'echo "# configured modules" > ${initramfs_conf}',
             " ".join(
                 [
                     "for",
@@ -245,7 +245,7 @@ def _make_initrd_cmd(
                 [
                     "\tif [",
                     "-n",
-                    f'"$(modprobe -n -q --show-depends -d {install_dir} -S "${{KERNEL_RELEASE}}" ${{m}})"',
+                    f'"$(modprobe -n -q --show-depends -d {stage_dir} -S "${{KERNEL_RELEASE}}" ${{m}})"',
                     "]; then",
                 ]
             ),
