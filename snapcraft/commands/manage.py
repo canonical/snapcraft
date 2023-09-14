@@ -39,19 +39,19 @@ class StoreReleaseCommand(BaseCommand):
         <channels> is a comma-separated list of valid channels in the store.
 
         The <revision> must exist in the store; to see available revisions,
-        run `snapcraft list-revisions <name>`.
+        run ``snapcraft list-revisions <name>``.
 
         The channel map will be displayed after the operation takes place. To see
-        the status map at any other time run `snapcraft status <name>`.
+        the status map at any other time run ``snapcraft status <name>``.
 
-        The format for a channel is `[<track>/]<risk>[/<branch>]` where
+        The format for a channel is ``[<track>/]<risk>[/<branch>]`` where
 
             - <track> is used to have long-term release channels. It is implicitly
-              set to `latest`. If this snap requires one, it can be created by
+              set to ``latest``. If this snap requires one, it can be created by
               request by having a conversation on https://forum.snapcraft.io
               under the *store* category.
-            - <risk> is mandatory and must be one of `stable`, `candidate`, `beta`
-              or `edge`.
+            - <risk> is mandatory and must be one of ``stable``, ``candidate``, ``beta``
+              or ``edge``.
             - <branch> is optional and dynamically creates a channel with a
               specific expiration date.
 
