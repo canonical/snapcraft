@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018-2020 Canonical Ltd
+# Copyright (C) 2018-2020, 2023 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -47,8 +47,6 @@ class Project(ProjectOptions):
         else:
             work_dir = project_dir
 
-        super().__init__(target_deb_arch, debug, work_dir=work_dir)
-
         # This here check is mostly for backwards compatibility with the
         # rest of the code base.
         if snapcraft_yaml_file_path is None:
@@ -56,6 +54,13 @@ class Project(ProjectOptions):
 
         else:
             self.info = ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
+
+        super().__init__(
+            target_deb_arch,
+            debug,
+            work_dir=work_dir,
+            architectures=self.info.architectures if self.info else None
+        )
 
         self._is_managed_host = is_managed_host
         self._project_dir = project_dir

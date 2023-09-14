@@ -20,6 +20,9 @@ import os
 
 import pkg_resources
 
+# For legacy compatibility
+import snapcraft.sources  # noqa: F401
+
 
 def _get_version():
     if os.environ.get("SNAP_NAME") == "snapcraft":

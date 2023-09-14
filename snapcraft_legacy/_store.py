@@ -17,7 +17,6 @@
 import contextlib
 import json
 import logging
-import operator
 import os
 import re
 import subprocess
@@ -367,34 +366,6 @@ class StoreClientCLI(storeapi.StoreClient):
         store_id: Optional[str] = None,
     ) -> None:
         super().register(snap_name=snap_name, is_private=is_private, store_id=store_id)
-
-
-def list_registered():
-    account_info = StoreClientCLI().get_account_information()
-    snaps = [
-        (
-            name,
-            info["since"],
-            "private" if info["private"] else "public",
-            info["price"] or "-",
-            "-",
-        )
-        for name, info in account_info["snaps"].get(DEFAULT_SERIES, {}).items()
-        # Presenting only approved snap registrations, which means name
-        # disputes will be displayed/sorted some other way.
-        if info["status"] == "Approved"
-    ]
-
-    if not snaps:
-        echo.warning("There are no registered snaps.")
-        return
-
-    tabulated_snaps = tabulate(
-        sorted(snaps, key=operator.itemgetter(0)),
-        headers=["Name", "Since", "Visibility", "Price", "Notes"],
-        tablefmt="plain",
-    )
-    print(tabulated_snaps)
 
 
 def _get_usable_keys(name=None):

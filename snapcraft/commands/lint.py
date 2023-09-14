@@ -23,7 +23,7 @@ import subprocess
 import tempfile
 import textwrap
 from contextlib import contextmanager
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Iterator, Optional
 
 from craft_cli import BaseCommand, emit
@@ -34,7 +34,7 @@ from overrides import overrides
 
 from snapcraft import errors, linters, projects, providers
 from snapcraft.meta import snap_yaml
-from snapcraft.parts.lifecycle import apply_yaml, extract_parse_info, process_yaml
+from snapcraft.parts.yaml_utils import apply_yaml, extract_parse_info, process_yaml
 from snapcraft.utils import (
     get_host_architecture,
     get_managed_environment_home_path,
@@ -53,7 +53,7 @@ class LintCommand(BaseCommand):
 
         The snap is installed and linted inside a build environment. If an assertion
         file exists in the same directory as the snap file with the name
-        `<snap-name>.assert`, it will be used to install the snap in the instance.
+        ``<snap-name>.assert``, it will be used to install the snap in the instance.
         """
     )
 
@@ -309,7 +309,7 @@ class LintCommand(BaseCommand):
         is_dangerous = not bool(assert_file)
 
         if assert_file:
-            ack_command = snap_cmd.formulate_ack_command(assert_file)
+            ack_command = snap_cmd.formulate_ack_command(PurePosixPath(assert_file))
             emit.progress(
                 f"Installing assertion file with {shlex.join(ack_command)!r}."
             )
@@ -327,7 +327,7 @@ class LintCommand(BaseCommand):
         install_command = snap_cmd.formulate_local_install_command(
             classic=bool(snap_metadata.confinement == "classic"),
             dangerous=is_dangerous,
-            snap_path=snap_file,
+            snap_path=PurePosixPath(snap_file),
         )
         if snap_metadata.grade == "devel":
             install_command.append("--devmode")

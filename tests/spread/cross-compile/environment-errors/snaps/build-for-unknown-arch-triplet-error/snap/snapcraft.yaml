@@ -1,0 +1,18 @@
+name: build-for-unknown-arch-triplet-error
+base: core20
+version: '1.0'
+summary: test
+description: Using SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR should raise an error when the build-for arch is unknown.
+grade: stable
+confinement: strict
+
+architectures:
+  - build-on: amd64
+    run-on: badvalue
+
+environment:
+  SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR: ${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}
+
+parts:
+  my-part:
+    plugin: nil

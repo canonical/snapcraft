@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,20 +19,33 @@
 import argparse
 import os
 import textwrap
+from enum import Enum
+from typing import Optional
 
 from craft_cli import BaseCommand, emit
 from craft_cli.helptexts import HIDDEN
 from overrides import overrides
 
+from snapcraft.errors import MaintenanceBase, SnapcraftError
 from snapcraft.legacy_cli import run_legacy
-from snapcraft.parts.lifecycle import get_snap_project, process_yaml
-from snapcraft.utils import confirm_with_user
+from snapcraft.parts import yaml_utils
+from snapcraft.utils import confirm_with_user, humanize_list
 from snapcraft_legacy.internal.remote_build.errors import AcceptPublicUploadError
 
 _CONFIRMATION_PROMPT = (
     "All data sent to remote builders will be publicly available. "
     "Are you sure you want to continue?"
 )
+
+
+_STRATEGY_ENVVAR = "SNAPCRAFT_REMOTE_BUILD_STRATEGY"
+
+
+class _Strategies(Enum):
+    """Possible values of the build strategy."""
+
+    DISABLE_FALLBACK = "disable-fallback"
+    FORCE_FALLBACK = "force-fallback"
 
 
 class RemoteBuildCommand(BaseCommand):
@@ -88,15 +101,100 @@ class RemoteBuildCommand(BaseCommand):
             help="acknowledge that uploaded code will be publicly available.",
         )
 
+    def _get_build_strategy(self) -> Optional[_Strategies]:
+        """Get the build strategy from the envvar `SNAPCRAFT_REMOTE_BUILD_STRATEGY`.
+
+        :returns: The strategy or None.
+
+        :raises SnapcraftError: If the variable is set to an invalid value.
+        """
+        strategy = os.getenv(_STRATEGY_ENVVAR)
+
+        if not strategy:
+            return None
+
+        try:
+            return _Strategies(strategy)
+        except ValueError as err:
+            valid_strategies = humanize_list(
+                (strategy.value for strategy in _Strategies), "and"
+            )
+            raise SnapcraftError(
+                f"Unknown value {strategy!r} in environment variable "
+                f"{_STRATEGY_ENVVAR!r}. Valid values are {valid_strategies}."
+            ) from err
+
+    def _get_effective_base(self) -> str:
+        """Get a valid effective base from the project's snapcraft.yaml.
+
+        :returns: The project's effective base.
+
+        :raises SnapcraftError: If the base is unknown or missing or if the
+        snapcraft.yaml cannot be loaded.
+        :raises MaintenanceBase: If the base is not supported
+        """
+        snapcraft_yaml = yaml_utils.get_snap_project().project_file
+
+        with open(snapcraft_yaml, encoding="utf-8") as file:
+            base = yaml_utils.get_base(file)
+
+        if base is None:
+            raise SnapcraftError(
+                f"Could not determine base from {str(snapcraft_yaml)!r}."
+            )
+
+        emit.debug(f"Got base {base!r} from {str(snapcraft_yaml)!r}.")
+
+        if base in yaml_utils.ESM_BASES:
+            raise MaintenanceBase(base)
+
+        if base not in yaml_utils.BASES:
+            raise SnapcraftError(f"Unknown base {base!r} in {str(snapcraft_yaml)!r}.")
+
+        return base
+
+    def _run_remote_build(self, base: str) -> None:
+        # bases newer than core22 must use the new remote-build
+        if base in yaml_utils.CURRENT_BASES - {"core22"}:
+            emit.debug(
+                "Using fallback remote-build because new remote-build is not available."
+            )
+            # TODO: use new remote-build code (#4323)
+            run_legacy()
+            return
+
+        strategy = self._get_build_strategy()
+
+        if strategy == _Strategies.DISABLE_FALLBACK:
+            emit.debug(
+                f"Environment variable {_STRATEGY_ENVVAR!r} is "
+                f"{_Strategies.DISABLE_FALLBACK.value!r} but running fallback "
+                "remote-build because new remote-build is not available."
+            )
+            run_legacy()
+            return
+
+        if strategy == _Strategies.FORCE_FALLBACK:
+            emit.debug(
+                "Running fallback remote-build because environment variable "
+                f"{_STRATEGY_ENVVAR!r} is {_Strategies.FORCE_FALLBACK.value!r}."
+            )
+            run_legacy()
+            return
+
+        emit.debug("Running fallback remote-build.")
+        run_legacy()
+
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args) -> None:
         if os.getenv("SUDO_USER") and os.geteuid() == 0:
             emit.message(
                 "Running with 'sudo' may cause permission errors and is discouraged."
             )
 
         emit.message(
-            "snapcraft remote-build is experimental and is subject to change - use with caution."
+            "snapcraft remote-build is experimental and is subject to change "
+            "- use with caution."
         )
 
         if parsed_args.build_on:
@@ -108,14 +206,5 @@ class RemoteBuildCommand(BaseCommand):
         ):
             raise AcceptPublicUploadError()
 
-        snap_project = get_snap_project()
-        # TODO proper core22 support would mean we need to load the project
-        # yaml_data = process_yaml(snap_project.project_file)
-        # for now, only log explicitly that we are falling back to legacy to
-        # remote build for core22
-        process_yaml(snap_project.project_file)
-
-        emit.debug(
-            "core22 not yet supported in new code base: re-executing into legacy for remote-build"
-        )
-        run_legacy()
+        base = self._get_effective_base()
+        self._run_remote_build(base)
