@@ -53,7 +53,7 @@ class LintCommand(BaseCommand):
 
         The snap is installed and linted inside a build environment. If an assertion
         file exists in the same directory as the snap file with the name
-        `<snap-name>.assert`, it will be used to install the snap in the instance.
+        ``<snap-name>.assert``, it will be used to install the snap in the instance.
         """
     )
 

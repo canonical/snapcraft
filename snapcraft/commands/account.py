@@ -88,7 +88,7 @@ class StoreLoginCommand(BaseCommand):
             action="store_true",
             default=False,
             help=(
-                "Deprecated option to enable candid login. "
+                "(deprecated) Enable candid login. "
                 f"Set {store.constants.ENVIRONMENT_STORE_AUTH}=candid instead"
             ),
         )
@@ -179,7 +179,7 @@ class StoreExportLoginCommand(BaseCommand):
             action="store_true",
             default=False,
             help=(
-                "Deprecated option to enable candid login. "
+                "(deprecated) Enable candid login. "
                 f"Set {store.constants.ENVIRONMENT_STORE_AUTH}=candid instead"
             ),
         )
