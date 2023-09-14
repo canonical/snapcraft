@@ -162,8 +162,8 @@ core20
     - build-on: [amd64]
       run-on: [all]
 
-How to create a cross-compiling snap
-------------------------------------
+How to build a snap for a different architecture
+------------------------------------------------
 
 core22
 ^^^^^^
