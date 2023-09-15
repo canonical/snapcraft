@@ -21,8 +21,8 @@ execute: |
 
   # verify variables were evaluated inside a part's override script
   while read -r expected_envvar_part; do
-    if ! grep -q "$expected_envvar" prime/part-variables.txt; then
-      echo "Did not find '$expected_envvar' in 'prime/part-variables.txt'."
+    if ! grep -q "$expected_envvar_part" prime/part-variables.txt; then
+      echo "Did not find '$expected_envvar_part' in 'prime/part-variables.txt'."
       exit 1
     fi
   done < expected-env-part.txt
