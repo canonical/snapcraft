@@ -1,0 +1,10 @@
+SNAPCRAFT_PART_SRC_1: .*parts/my-part/src
+SNAPCRAFT_PART_SRC_2: .*parts/my-part/src
+SNAPCRAFT_PART_SRC_WORK_1: .*parts/my-part/src/foo
+SNAPCRAFT_PART_SRC_WORK_2: .*parts/my-part/src/foo
+SNAPCRAFT_ARCH_TRIPLET_1: x86_64-linux-gnu
+SNAPCRAFT_ARCH_TRIPLET_2: x86_64-linux-gnu
+SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR_1: arm-linux-gnueabihf
+SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR_2: arm-linux-gnueabihf
+SNAPCRAFT_ARCH_TRIPLET_BUILD_ON_1: x86_64-linux-gnu
+SNAPCRAFT_ARCH_TRIPLET_BUILD_ON_2: x86_64-linux-gnu

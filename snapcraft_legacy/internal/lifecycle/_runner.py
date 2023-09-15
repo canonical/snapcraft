@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2020 Canonical Ltd
+# Copyright (C) 2015-2020, 2023 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -161,6 +161,12 @@ def _replace_in_part(part):
     for key, value in part.plugin.options.__dict__.items():
         replacements = project_loader.environment_to_replacements(
             get_snapcraft_part_directory_environment(part)
+        )
+
+        # order is important - for example, `SNAPCRAFT_PART_SRC_WORK` should be
+        # evaluated before `SNAPCRAFT_PART_SRC` to avoid premature variable expansion
+        replacements = dict(
+            sorted(replacements.items(), key=lambda item: len(item[0]), reverse=True)
         )
 
         value = project_loader.replace_attr(value, replacements)

@@ -1,0 +1,28 @@
+summary: Test snapcraft project variables
+
+systems:
+  - ubuntu-20.04-64
+  - ubuntu-20.04-amd64
+
+restore: |
+  snapcraft clean --destructive-mode
+  rm -f ./*.snap
+
+execute: |
+  snapcraft prime --destructive-mode
+
+  # verify variables were evaluated in the environment in the snap.yaml
+  while read -r expected_envvar; do
+    if ! grep -q "$expected_envvar" prime/meta/snap.yaml; then
+      echo "Did not find '$expected_envvar' in 'prime/meta/snap.yaml'."
+      exit 1
+    fi
+  done < expected-env.txt
+
+  # verify variables were evaluated inside a part's override script
+  while read -r expected_envvar_part; do
+    if ! grep -q "$expected_envvar" prime/part-variables.txt; then
+      echo "Did not find '$expected_envvar' in 'prime/part-variables.txt'."
+      exit 1
+    fi
+  done < expected-env-part.txt
