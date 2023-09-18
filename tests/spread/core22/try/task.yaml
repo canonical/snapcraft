@@ -7,6 +7,9 @@ execute: |
   chmod a+w prime
   
   unset SNAPCRAFT_BUILD_ENVIRONMENT
+  # Prime first to regression test snapcore/snapcraft#4219
+  snapcraft prime --use-lxd
+  # Followed by the actual try
   snapcraft try --use-lxd
   
   find prime/meta/snap.yaml

@@ -80,9 +80,11 @@ class StoreUploadCommand(BaseCommand):
 
         client = store.StoreClientCLI()
 
-        snap_yaml = get_data_from_snap_file(snap_file)
+        snap_yaml, manifest_yaml = get_data_from_snap_file(snap_file)
         snap_name = snap_yaml["name"]
-        built_at = snap_yaml.get("snapcraft-started-at")
+        built_at = None
+        if manifest_yaml:
+            built_at = manifest_yaml.get("snapcraft-started-at")
 
         client.verify_upload(snap_name=snap_name)
 

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
+# Copyright (C) 2017-2018, 2023 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,6 +22,17 @@ import snapcraft_legacy.internal.errors
 class ProjectLoaderError(snapcraft_legacy.internal.errors.SnapcraftError):
 
     fmt = ""
+
+
+class VariableEvaluationError(ProjectLoaderError):
+
+    fmt = (
+        "Cannot evaluate project variable {variable!r}: {reason}\n"
+        "For more information, check out: {docs_url}"
+    )
+
+    def __init__(self, variable: str, reason: str, docs_url: str) -> None:
+        super().__init__(variable=variable, reason=reason, docs_url=docs_url)
 
 
 class InvalidEpochError(ProjectLoaderError):

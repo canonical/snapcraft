@@ -915,7 +915,15 @@
                                     "gnome-3-38",
                                     "kde-neon",
                                     "ros1-noetic",
-                                    "ros2-foxy"
+                                    "ros1-noetic-desktop",
+                                    "ros1-noetic-perception",
+                                    "ros1-noetic-robot",
+                                    "ros1-noetic-ros-base",
+                                    "ros1-noetic-ros-core",
+                                    "ros2-foxy",
+                                    "ros2-foxy-ros-base",
+                                    "ros2-foxy-ros-core",
+                                    "ros2-foxy-desktop"
                                 ]
                             }
                         }

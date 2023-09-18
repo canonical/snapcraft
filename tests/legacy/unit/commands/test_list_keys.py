@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2019 Canonical Ltd
+# Copyright (C) 2016-2023 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -59,16 +59,14 @@ class ListKeysCommandTestCase(FakeStoreCommandsBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
             result.output,
-            Contains(
+            Equals(
                 dedent(
-                    """\
-                Name     SHA3-384 fingerprint
-            *   default  {default_sha3_384}
-            -   another  {another_sha3_384}  (not registered)
-            """
-                ).format(
-                    default_sha3_384=get_sample_key("default")["sha3-384"],
-                    another_sha3_384=get_sample_key("another")["sha3-384"],
+                    f"""\
+                    The following keys are available on this system:
+                        Name     SHA3-384 fingerprint
+                    *   default  {get_sample_key("default")["sha3-384"]}
+                    -   another  {get_sample_key("another")["sha3-384"]}  (not registered)
+                    """
                 )
             ),
         )
@@ -95,10 +93,10 @@ class ListKeysCommandTestCase(FakeStoreCommandsBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
             result.output,
-            Contains(
+            Equals(
                 dedent(
                     """\
-                    No keys have been created on this system.  See 'snapcraft create-key --help' to create a key.
+                    No keys have been created on this system. See 'snapcraft create-key --help' to create a key.
                     The following SHA3-384 key fingerprints have been registered but are not available on this system:
                     - vdEeQvRxmZ26npJCFaGnl-VfGz0lU2jZZkWp_s7E-RxVCNtH2_mtjcxq2NkDKkIp
             """
@@ -132,8 +130,15 @@ class ListKeysCommandTestCase(FakeStoreCommandsBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
             result.output,
-            Contains(
-                "No keys have been registered. "
-                "See 'snapcraft register-key --help' to register a key."
+            Equals(
+                dedent(
+                    f"""\
+                    The following keys are available on this system:
+                        Name     SHA3-384 fingerprint
+                    -   default  {get_sample_key("default")["sha3-384"]}  (not registered)
+                    -   another  {get_sample_key("another")["sha3-384"]}  (not registered)
+                    No keys have been registered with this account. See 'snapcraft register-key --help' to register a key.
+                    """
+                )
             ),
         )

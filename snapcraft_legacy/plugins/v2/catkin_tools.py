@@ -33,6 +33,7 @@
 
 from typing import Any, Dict, List, Set
 
+from snapcraft_legacy.internal.repo.snaps import _get_parsed_snap
 from snapcraft_legacy.plugins.v2 import _ros
 
 
@@ -56,6 +57,19 @@ class CatkinToolsPlugin(_ros.RosPlugin):
                     "uniqueItems": True,
                     "items": {"type": "string"},
                 },
+                "ros-build-snaps": {
+                    "type": "array",
+                    "minItems": 0,
+                    "uniqueItems": True,
+                    "items": {"type": "string"},
+                    "default": [],
+                },
+                "ros-content-sharing-extension-cmake-args": {
+                    "type": "array",
+                    "minItems": 0,
+                    "items": {"type": "string"},
+                    "default": [],
+                },
             },
         }
 
@@ -63,6 +77,17 @@ class CatkinToolsPlugin(_ros.RosPlugin):
         return super().get_build_packages() | {
             "python3-catkin-tools",
         }
+
+    def _get_source_command(self, path: str) -> List[str]:
+        return [
+            f'if [ -f "{path}/opt/ros/${{ROS_DISTRO}}/setup.sh" ]; then',
+            'set -- --local "${_EXTEND_WS}"',
+            '_CATKIN_SETUP_DIR="{fpath}" . "{fpath}/setup.sh"'.format(
+                fpath=f"{path}/opt/ros/${{ROS_DISTRO}}"
+            ),
+            'if [ -z ${_EXTEND_WS} ]; then _EXTEND_WS="--extend"; fi',
+            "fi",
+        ]
 
     def _get_workspace_activation_commands(self) -> List[str]:
         """Return a list of commands to source a ROS workspace.
@@ -75,6 +100,28 @@ class CatkinToolsPlugin(_ros.RosPlugin):
         snapcraftctl can be used in the script to call out to snapcraft
         specific functionality.
         """
+
+        activation_commands = list()
+
+        # Source ROS ws in all build-snaps first
+        activation_commands.append("## Sourcing ROS ws in build snaps")
+        if self.options.ros_build_snaps:
+            for ros_build_snap in self.options.ros_build_snaps:
+                snap_name = _get_parsed_snap(ros_build_snap)[0]
+                activation_commands.extend(self._get_source_command(f"/snap/{snap_name}/current"))
+            activation_commands.append("")
+
+        # Source ROS ws in stage-snaps next
+        activation_commands.append("## Sourcing ROS ws in stage snaps")
+        activation_commands.extend(self._get_source_command("${SNAPCRAFT_PART_INSTALL}"))
+        activation_commands.append("")
+
+        # Finally source system's ROS ws
+        activation_commands.append("## Sourcing ROS ws in system")
+        activation_commands.extend(self._get_source_command(""))
+        activation_commands.append("")
+
+        return activation_commands
 
         # There are a number of unbound vars, disable flag
         # after saving current state to restore after.
@@ -119,9 +166,14 @@ class CatkinToolsPlugin(_ros.RosPlugin):
             '"${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}"',
         ]
 
-        if self.options.catkin_tools_cmake_args:
+        if self.options.catkin_tools_cmake_args or self.options.ros_content_sharing_extension_cmake_args:
+            cmake_args = []
+            if self.options.catkin_tools_cmake_args:
+                cmake_args.extend(self.options.catkin_tools_cmake_args)
+            if self.options.ros_content_sharing_extension_cmake_args:
+                cmake_args.extend(self.options.ros_content_sharing_extension_cmake_args)
             catkin_config_command.extend(
-                ["--cmake-args", *self.options.catkin_tools_cmake_args]
+                ["--cmake-args", *cmake_args]
             )
 
         commands.append(" ".join(catkin_config_command))

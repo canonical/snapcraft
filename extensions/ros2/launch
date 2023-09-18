@@ -2,18 +2,47 @@
 
 function source_with_prefix() {
     export ROS_WORKSPACE_CURRENT_PREFIX="$1"
-    if [ ! -f "$ROS_WORKSPACE_CURRENT_PREFIX/local_setup.bash" ]; then
-      echo "error: $ROS_WORKSPACE_CURRENT_PREFIX/local_setup.bash not found"
+    SETUP_SCRIPT="$ROS_WORKSPACE_CURRENT_PREFIX/local_setup.bash"
+    if [ ! -f "$SETUP_SCRIPT" ]; then
+      echo "error: $SETUP_SCRIPT not found"
       exit 1
     fi
     # shellcheck disable=SC1090,SC1091
-    source "$ROS_WORKSPACE_CURRENT_PREFIX/local_setup.bash"
+    source "$SETUP_SCRIPT"
 }
 
 # Save off parameters, the sourced setup scripts may manipulate them.
 original_args=("$@")
 
+if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" ]; then
+  source_with_prefix "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO"
+fi
+if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/snap" ]; then
+  source_with_prefix "$SNAP/opt/ros/underlay_ws/opt/ros/snap"
+fi
+if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" ] || [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/snap" ]; then
+
+  case "$SNAP_ARCH" in
+    "amd64") ARCH_TRIPLET='x86_64-linux-gnu'
+    ;;
+    "arm64") ARCH_TRIPLET="aarch64-linux-gnu"
+    ;;
+    "armhf") ARCH_TRIPLET="arm-linux-gnueabihf"
+    ;;
+    *)
+      echo "Unsupported architecture '$SNAP_ARCH' for this app build."
+      exit 1
+    ;;
+  esac
+
+  export PATH="$SNAP/opt/ros/underlay_ws/usr/bin:$PATH"
+  export LD_LIBRARY_PATH="$SNAP/opt/ros/underlay_ws/usr/lib:$SNAP/opt/ros/underlay_ws/usr/lib/$ARCH_TRIPLET:$LD_LIBRARY_PATH"
+fi
+
 source_with_prefix "$SNAP/opt/ros/$ROS_DISTRO"
-source_with_prefix "$SNAP/opt/ros/snap"
+
+if [ -f "$SNAP/opt/ros/snap/local_setup.bash" ]; then
+  source_with_prefix "$SNAP/opt/ros/snap"
+fi
 
 exec "${original_args[@]}"

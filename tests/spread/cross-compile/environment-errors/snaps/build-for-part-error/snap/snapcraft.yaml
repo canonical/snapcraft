@@ -1,0 +1,17 @@
+name: build-for-part-error
+base: core20
+version: '1.0'
+summary: test
+description: Using SNAPCRAFT_ARCH_BUILD_FOR inside a part definition should raise an error if the arch cannot be determined.
+grade: stable
+confinement: strict
+
+architectures:
+  - build-on: amd64
+    run-on: [amd64, armhf]
+
+parts:
+  my-part:
+    plugin: nil
+    override-pull:
+      echo ${SNAPCRAFT_ARCH_BUILD_FOR}

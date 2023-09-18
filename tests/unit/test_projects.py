@@ -257,16 +257,47 @@ class TestProjectValidation:
     @pytest.mark.parametrize(
         "version,error",
         [
-            ("1_0", "Snap versions consist of"),  # _ is an invalid character
-            ("1=1", "Snap versions consist of"),  # = is an invalid character
-            (".1", "Snap versions consist of"),  # cannot start with period
-            (":1", "Snap versions consist of"),  # cannot start with colon
-            ("+1", "Snap versions consist of"),  # cannot start with plus sign
-            ("~1", "Snap versions consist of"),  # cannot start with tilde
-            ("-1", "Snap versions consist of"),  # cannot start with hyphen
-            ("1.", "Snap versions consist of"),  # cannot end with period
-            ("1:", "Snap versions consist of"),  # cannot end with colon
-            ("1-", "Snap versions consist of"),  # cannot end with hyphen
+            (
+                "1_0",
+                "Invalid version '1_0': Snap versions consist of",
+            ),  # _ is an invalid character
+            (
+                "1=1",
+                "Invalid version '1=1': Snap versions consist of",
+            ),  # = is an invalid character
+            (
+                ".1",
+                "Invalid version '.1': Snap versions consist of",
+            ),  # cannot start with period
+            (
+                ":1",
+                "Invalid version ':1': Snap versions consist of",
+            ),  # cannot start with colon
+            (
+                "+1",
+                r"Invalid version '\+1': Snap versions consist of",
+            ),  # cannot start with plus sign
+            # escaping + from the regex string to match.
+            (
+                "~1",
+                "Invalid version '~1': Snap versions consist of",
+            ),  # cannot start with tilde
+            (
+                "-1",
+                "Invalid version '-1': Snap versions consist of",
+            ),  # cannot start with hyphen
+            (
+                "1.",
+                "Invalid version '1.': Snap versions consist of",
+            ),  # cannot end with period
+            (
+                "1:",
+                "Invalid version '1:': Snap versions consist of",
+            ),  # cannot end with colon
+            (
+                "1-",
+                "Invalid version '1-': Snap versions consist of",
+            ),  # cannot end with hyphen
             (
                 "123456789012345678901234567890123",
                 "ensure this value has at most 32 characters",
@@ -1053,7 +1084,9 @@ class TestAppValidation:
             assert project.apps is not None
             assert project.apps["app1"].command_chain == command_chain
 
-    @pytest.mark.parametrize("listen_stream", [1, 100, 65535, "/tmp/mysocket.sock"])
+    @pytest.mark.parametrize(
+        "listen_stream", [1, 100, 65535, "/tmp/mysocket.sock", "@snap.foo"]
+    )
     def test_app_sockets_valid_listen_stream(self, listen_stream, socket_yaml_data):
         data = socket_yaml_data(listen_stream=listen_stream)
 
@@ -1063,10 +1096,22 @@ class TestAppValidation:
         assert project.apps["app1"].sockets["socket1"].listen_stream == listen_stream
 
     @pytest.mark.parametrize("listen_stream", [-1, 0, 65536])
-    def test_app_sockets_invalid_listen_stream(self, listen_stream, socket_yaml_data):
+    def test_app_sockets_invalid_int_listen_stream(
+        self, listen_stream, socket_yaml_data
+    ):
         data = socket_yaml_data(listen_stream=listen_stream)
 
         error = f".*{listen_stream} is not an integer between 1 and 65535"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(data)
+
+    @pytest.mark.parametrize("listen_stream", ["@foo"])
+    def test_app_sockets_invalid_socket_listen_stream(
+        self, listen_stream, socket_yaml_data
+    ):
+        data = socket_yaml_data(listen_stream=listen_stream)
+
+        error = f".*{listen_stream!r} is not a valid socket path.*"
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(data)
 

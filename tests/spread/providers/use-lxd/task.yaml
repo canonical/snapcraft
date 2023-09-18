@@ -1,0 +1,29 @@
+summary: Test --use-lxd takes priority over environment variables
+systems:
+  - ubuntu-22.04*
+
+prepare: |
+  snapcraft init
+
+restore: |
+  rm -rf ./*.snap
+
+execute: |
+  export SNAPCRAFT_BUILD_ENVIRONMENT="host"
+
+  snapcraft pull --use-lxd
+
+  if [[ -d parts ]]; then
+    echo "snapcraft did not run inside a lxd instance"
+    exit 1
+  fi
+
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+  export SNAPCRAFT_MANAGED_MODE=1
+
+  snapcraft pull --use-lxd
+
+  if [[ -d parts ]]; then
+    echo "snapcraft did not run inside a lxd instance"
+    exit 1
+  fi

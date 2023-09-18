@@ -187,7 +187,9 @@ class Socket(ProjectModel):
                     f"{listen_stream!r} is not an integer between 1 and 65535 (inclusive)."
                 )
         elif isinstance(listen_stream, str):
-            if not re.match(r"^[A-Za-z0-9/._#:$-]*$", listen_stream):
+            if not listen_stream.startswith("@snap.") and not re.match(
+                r"^[A-Za-z0-9/._#:$-]*$", listen_stream
+            ):
                 raise ValueError(
                     f"{listen_stream!r} is not a valid socket path (e.g. /tmp/mysocket.sock)."
                 )
@@ -549,10 +551,10 @@ class Project(ProjectModel):
             r"^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$", version
         ):
             raise ValueError(
-                "Snap versions consist of upper- and lower-case alphanumeric characters, "
-                "as well as periods, colons, plus signs, tildes, and hyphens. They cannot "
-                "begin with a period, colon, plus sign, tilde, or hyphen. They cannot end "
-                "with a period, colon, or hyphen"
+                f"Invalid version '{version}': Snap versions consist of upper- and lower-case "
+                "alphanumeric characters, as well as periods, colons, plus signs, tildes, "
+                "and hyphens. They cannot begin with a period, colon, plus sign, tilde, or "
+                "hyphen. They cannot end with a period, colon, or hyphen"
             )
 
         return version

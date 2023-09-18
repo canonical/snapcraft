@@ -26,6 +26,9 @@ def test_get_extension_names():
     assert extensions.get_extension_names() == [
         "gnome",
         "ros2-humble",
+        "ros2-humble-ros-core",
+        "ros2-humble-ros-base",
+        "ros2-humble-desktop",
         "kde-neon",
         "fake-extension-experimental",
         "fake-extension-extra",
