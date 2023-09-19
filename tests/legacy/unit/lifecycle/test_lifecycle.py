@@ -120,8 +120,7 @@ class ExecutionTestCase(LifecycleTestBase):
 
         lifecycle.execute(steps.BUILD, project_config, part_names=["part1"])
 
-        with open(Path("parts/part1/install/part-variables.txt"), "r") as file:
-            data = file.read()
+        data = Path("parts/part1/install/part-variables.txt").read_text()
 
         self.assertThat(
             data,
