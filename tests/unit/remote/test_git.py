@@ -70,6 +70,18 @@ def test_init_repo(new_dir):
     assert repo.path == new_dir
 
 
+def test_init_existing_repo(new_dir):
+    """Initialize a GitRepo object in an existing git repository."""
+    # initialize a repo
+    GitRepo(new_dir)
+
+    # creating a new GitRepo object will not re-initialize the repo
+    repo = GitRepo(new_dir)
+
+    assert is_repo(new_dir)
+    assert repo.path == new_dir
+
+
 def test_init_repo_no_directory(new_dir):
     """Raise an error if the directory is missing."""
     with pytest.raises(FileNotFoundError) as raised:
