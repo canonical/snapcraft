@@ -19,7 +19,12 @@ import pytest
 
 from snapcraft import cli
 from snapcraft.parts.yaml_utils import CURRENT_BASES, ESM_BASES, LEGACY_BASES
+from snapcraft.remote import GitRepo
 from snapcraft_legacy.internal.remote_build.errors import AcceptPublicUploadError
+
+# remote-build control logic may check if the working dir is a git repo,
+# so execute all tests inside a test directory
+pytestmark = pytest.mark.usefixtures("new_dir")
 
 
 @pytest.fixture
@@ -195,7 +200,7 @@ def test_get_effective_base_type(base, snapcraft_yaml, mock_run_remote_build):
     mock_run_remote_build.assert_called_once_with(base)
 
 
-@pytest.mark.usefixtures("mock_argv", "mock_confirm", "new_dir")
+@pytest.mark.usefixtures("mock_argv", "mock_confirm")
 def test_get_effective_base_cannot_load_snapcraft_yaml(capsys):
     """Raise an error if the snapcraft.yaml does not exist."""
     cli.run()
@@ -373,3 +378,52 @@ def test_run_envvar_invalid(capsys, emitter, mock_run_legacy, monkeypatch):
         "'SNAPCRAFT_REMOTE_BUILD_STRATEGY'. Valid values are 'disable-fallback' and "
         "'force-fallback'."
     ) in err
+
+
+@pytest.mark.parametrize(
+    "mock_get_effective_base", LEGACY_BASES | {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+def test_run_in_repo(emitter, mock_run_legacy, new_dir):
+    """core22 and older bases run new remote-build if in a git repo."""
+    # initialize a git repo
+    GitRepo(new_dir)
+
+    cli.run()
+
+    # this should fail when new remote-build code is used (#4323)
+    mock_run_legacy.assert_called_once()
+    emitter.assert_debug(
+        "Project is in a git repository but running fallback remote-build "
+        "because new remote-build is not available."
+    )
+
+
+@pytest.mark.parametrize(
+    "mock_get_effective_base", LEGACY_BASES | {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+def test_run_not_in_repo(emitter, mock_run_legacy):
+    """core22 and older bases run legacy remote-build if not in a git repo."""
+    cli.run()
+
+    mock_run_legacy.assert_called_once()
+    emitter.assert_debug("Running fallback remote-build.")
+
+
+@pytest.mark.parametrize(
+    "mock_get_effective_base", CURRENT_BASES - {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+def test_run_in_repo_newer_than_core22(emitter, mock_run_legacy, monkeypatch, new_dir):
+    """Bases newer than core22 run new remote-build regardless of being in a repo."""
+    # initialize a git repo
+    GitRepo(new_dir)
+
+    cli.run()
+
+    # this should fail when new remote-build code is used (#4323)
+    mock_run_legacy.assert_called_once()
+    emitter.assert_debug(
+        "Using fallback remote-build because new remote-build is not available."
+    )
