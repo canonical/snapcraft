@@ -31,25 +31,36 @@ class RustPluginTest(TestCase):
             Equals(
                 {
                     "$schema": "http://json-schema.org/draft-04/schema#",
+                    "type": "object",
                     "additionalProperties": False,
                     "properties": {
-                        "rust-features": {
-                            "default": [],
-                            "items": {"type": "string"},
-                            "type": "array",
-                            "uniqueItems": True,
-                        },
                         "rust-path": {
-                            "default": ["."],
-                            "items": {"type": "string"},
-                            "maxItems": 1,
+                            "type": "array",
                             "minItems": 1,
+                            "uniqueItems": True,
+                            "items": {"type": "string"},
+                            "default": ["."],
+                        },
+                        "rust-features": {
                             "type": "array",
                             "uniqueItems": True,
+                            "items": {"type": "string"},
+                            "default": [],
+                        },
+                        "rust-channel": {
+                            "type": ["string", "null"],
+                            "default": None,
+                        },
+                        "rust-use-global-lto": {
+                            "type": "boolean",
+                            "default": False,
+                        },
+                        "rust-no-default-features": {
+                            "type": "boolean",
+                            "default": False,
                         },
                     },
                     "required": ["source"],
-                    "type": "object",
                 }
             ),
         )
@@ -57,7 +68,10 @@ class RustPluginTest(TestCase):
     def test_get_build_packages(self):
         plugin = RustPlugin(part_name="my-part", options=lambda: None)
 
-        self.assertThat(plugin.get_build_packages(), Equals({"curl", "gcc", "git"}))
+        self.assertThat(
+            plugin.get_build_packages(),
+            Equals({"curl", "gcc", "git", "pkg-config", "findutils"}),
+        )
 
     def test_get_build_environment(self):
         plugin = RustPlugin(part_name="my-part", options=lambda: None)
@@ -69,11 +83,51 @@ class RustPluginTest(TestCase):
 
     def test_get_build_commands(self):
         class Options:
-            rust_channel = ""
+            rust_channel = "stable"
             rust_path = ["."]
             rust_features = []
+            rust_no_default_features = True
+            rust_use_global_lto = False
 
         plugin = RustPlugin(part_name="my-part", options=Options())
+        plugin._check_rustup = lambda: True
+
+        self.assertThat(
+            plugin.get_build_commands(),
+            Equals(
+                [
+                    "rustup update stable",
+                    "rustup default stable",
+                    dedent(
+                        """\
+                    if cargo read-manifest --manifest-path "."/Cargo.toml > /dev/null; then
+                        cargo install -f --locked --path "." --root "${SNAPCRAFT_PART_INSTALL}" --no-default-features
+                        # remove the installation metadata
+                        rm -f "${SNAPCRAFT_PART_INSTALL}"/.crates{.toml,2.json}
+                    else
+                        # virtual workspace is a bit tricky,
+                        # we need to build the whole workspace and then copy the binaries ourselves
+                        pushd "."
+                        cargo build --workspace --release --no-default-features
+                        # install the final binaries
+                        find ./target/release -maxdepth 1 -executable -exec install -Dvm755 {} "${SNAPCRAFT_PART_INSTALL}" ';'
+                        popd
+                    fi"""
+                    ),
+                ]
+            ),
+        )
+
+    def test_get_install_command_with_features(self):
+        class Options:
+            rust_channel = "none"
+            rust_path = ["path"]
+            rust_features = ["my-feature", "your-feature"]
+            rust_no_default_features = False
+            rust_use_global_lto = False
+
+        plugin = RustPlugin(part_name="my-part", options=Options())
+        plugin._check_rustup = lambda: False
 
         self.assertThat(
             plugin.get_build_commands(),
@@ -81,28 +135,20 @@ class RustPluginTest(TestCase):
                 [
                     dedent(
                         """\
-                    if ! command -v rustup 2>/dev/null; then
-                        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path --profile=minimal
-                        export PATH="${HOME}/.cargo/bin:${PATH}"
-                    fi
-                        """
-                    ),
-                    'cargo install --locked --path . --root "${SNAPCRAFT_PART_INSTALL}" --force',
+                    if cargo read-manifest --manifest-path "path"/Cargo.toml > /dev/null; then
+                        cargo install -f --locked --path "path" --root "${SNAPCRAFT_PART_INSTALL}" --features 'my-feature your-feature'
+                        # remove the installation metadata
+                        rm -f "${SNAPCRAFT_PART_INSTALL}"/.crates{.toml,2.json}
+                    else
+                        # virtual workspace is a bit tricky,
+                        # we need to build the whole workspace and then copy the binaries ourselves
+                        pushd "path"
+                        cargo build --workspace --release --features 'my-feature your-feature'
+                        # install the final binaries
+                        find ./target/release -maxdepth 1 -executable -exec install -Dvm755 {} "${SNAPCRAFT_PART_INSTALL}" ';'
+                        popd
+                    fi"""
+                    )
                 ]
-            ),
-        )
-
-    def test_get_install_command_with_features(self):
-        class Options:
-            rust_channel = ""
-            rust_path = ["path"]
-            rust_features = ["my-feature", "your-feature"]
-
-        plugin = RustPlugin(part_name="my-part", options=Options())
-
-        self.assertThat(
-            plugin._get_install_command(),
-            Equals(
-                "cargo install --locked --path path --root \"${SNAPCRAFT_PART_INSTALL}\" --force --features 'my-feature your-feature'"
             ),
         )
