@@ -47,4 +47,4 @@ jobs:
           name: snap
       - name: Kernel plugin test
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/plugin/${{ matrix.type }}/kernel
+          spread google:ubuntu-22.04-64:tests/spread/plugins/${{ matrix.type }}/kernel
