@@ -20,6 +20,7 @@ import argparse
 import os
 import textwrap
 from enum import Enum
+from pathlib import Path
 from typing import Optional
 
 from craft_cli import BaseCommand, emit
@@ -29,6 +30,7 @@ from overrides import overrides
 from snapcraft.errors import MaintenanceBase, SnapcraftError
 from snapcraft.legacy_cli import run_legacy
 from snapcraft.parts import yaml_utils
+from snapcraft.remote import is_repo
 from snapcraft.utils import confirm_with_user, humanize_list
 from snapcraft_legacy.internal.remote_build.errors import AcceptPublicUploadError
 
@@ -178,6 +180,14 @@ class RemoteBuildCommand(BaseCommand):
             emit.debug(
                 "Running fallback remote-build because environment variable "
                 f"{_STRATEGY_ENVVAR!r} is {_Strategies.FORCE_FALLBACK.value!r}."
+            )
+            run_legacy()
+            return
+
+        if is_repo(Path().absolute()):
+            emit.debug(
+                "Project is in a git repository but running fallback remote-build "
+                "because new remote-build is not available."
             )
             run_legacy()
             return
