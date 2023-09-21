@@ -11,15 +11,14 @@ execute: |
 
   sed -n '/^Running linters/,/^Creating snap/p' < output.txt > linter_output.txt
 
-  # diff everything except the list of libraries
-  diff --ignore-matching-lines "^- library: lib" expected_linter_output.txt linter_output.txt
+  # verify libpng library warning is filtered
+  if grep -qF "libpng" linter_output.txt; then
+    echo "Error: Unused library warning for libpng was not filtered."
+    exit 1
+  fi
 
-  # `|| true` is used because grep will error if there is no output from the `diff` call
-  NUM_DIFFERENCES=$(diff expected_linter_output.txt linter_output.txt | grep --count "[<>]" || true)
-
-  # the list of unused libraries may change from time to time, so check the output is similar but not identical
-  if [[ $NUM_DIFFERENCES -gt 10 ]]; then
-    echo "Error: linter warnings are significantly different:"
-    diff --unified expected_linter_output.txt linter_output.txt
+  # verify ros2-humble library warnings are not filtered
+  if ! grep -q "^- library: .*: unused library 'opt/ros/.*'" linter_output.txt; then
+    echo "Error: Unused library warnings for ros2-humble libraries were filtered."
     exit 1
   fi
