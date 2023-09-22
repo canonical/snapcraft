@@ -71,7 +71,7 @@ pydocstyle==6.3.0
 pyelftools==0.29
 pyflakes==3.0.1
 pyftpdlib==1.5.7
-pygit2==1.13.0
+pygit2==1.6.1
 pylint==2.17.4
 pylint-fixme-info==1.0.3
 pylint-pytest==1.1.2

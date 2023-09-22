@@ -116,6 +116,8 @@ install_requires = [
     "overrides",
     "progressbar",
     "pyelftools",
+    # https://www.pygit2.org/install.html#version-numbers
+    "pygit2<1.7",
     "pymacaroons",
     "pyxdg",
     "pyyaml",

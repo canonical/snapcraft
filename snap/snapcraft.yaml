@@ -31,6 +31,7 @@ build-packages:
   - intltool
   - libapt-pkg-dev
   - libffi-dev
+  - libgit2-dev
   - libssl-dev
   - libsodium-dev
   - liblzma-dev
