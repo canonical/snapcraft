@@ -3,6 +3,7 @@ extend-exclude = '''
 /(
   | snapcraft_legacy
   | tools
+  | docs/sphinx-resources
 )/
 '''
 # Targeting future versions as well so we don't have black reformatting code
