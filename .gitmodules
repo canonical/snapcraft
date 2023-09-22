@@ -1,3 +1,6 @@
 [submodule "tests/spread/tools/snapd-testing-tools"]
 	path = tests/spread/tools/snapd-testing-tools
 	url = https://github.com/snapcore/snapd-testing-tools.git
+[submodule "docs/sphinx-resources"]
+	path = docs/sphinx-resources
+	url = https://github.com/canonical/sphinx-docs-starter-pack.git

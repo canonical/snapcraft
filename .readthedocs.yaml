@@ -4,6 +4,10 @@
 ---
 version: 2
 
+submodules:
+  include:
+    - docs/sphinx-resources
+
 build:
   os: ubuntu-22.04
   tools:
@@ -19,5 +23,5 @@ sphinx:
 
 python:
   install:
-    - requirements: docs/.sphinx/requirements.txt
     - requirements: docs/requirements.txt
+    - requirements: docs/sphinx-resources/.sphinx/requirements.txt

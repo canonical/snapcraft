@@ -3,11 +3,11 @@
 
 # You can set these variables from the command line, and also
 # from the environment for the first two.
-SPHINXOPTS    ?=
+SPHINXOPTS    ?= -q
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = .
 BUILDDIR      = _build
-VENV          = .sphinx/venv/bin/activate
+VENV          = sphinx-resources/.sphinx/venv/bin/activate
 
 
 # Put it first so that "make" without argument is like "make help".
@@ -16,8 +16,8 @@ help:
 
 install:
 	@echo "... setting up virtualenv"
-	python3 -m venv .sphinx/venv
-	. $(VENV); pip install --upgrade -r .sphinx/requirements.txt -r requirements.txt
+	python3 -m venv sphinx-resources/.sphinx/venv
+	. $(VENV); pip install --upgrade -r sphinx-resources/.sphinx/requirements.txt -r requirements.txt
 
 	@echo "\n" \
 		"--------------------------------------------------------------- \n" \
@@ -27,25 +27,36 @@ install:
                 "* clean built doc files: make clean-doc \n" \
                 "* clean full environment: make clean \n" \
 		"* check spelling: make spelling \n" \
+                "* check inclusive language: make woke \n" \
 		"--------------------------------------------------------------- \n"
 run:
-	. $(VENV); sphinx-autobuild -c . "$(SOURCEDIR)" "$(BUILDDIR)"
+	. $(VENV); sphinx-autobuild -c . -b html "$(SOURCEDIR)" "$(BUILDDIR)"
 
 html:
-	. $(VENV); $(SPHINXBUILD) -c . "$(SOURCEDIR)" "$(BUILDDIR)" -w .sphinx/warnings.txt
+	. $(VENV); $(SPHINXBUILD) -c . -b html "$(SOURCEDIR)" "$(BUILDDIR)" -w sphinx-resources/.sphinx/warnings.txt
+
+epub:
+	. $(VENV); $(SPHINXBUILD) -c . -b epub "$(SOURCEDIR)" "$(BUILDDIR)" -w sphinx-resources/.sphinx/warnings.txt
 
 serve:
 	cd "$(BUILDDIR)"; python3 -m http.server 8000
 
 clean: clean-doc
-	rm -rf .sphinx/venv
 	rm -rf reference/commands
+	rm -rf sphinx-resources/.sphinx/venv
 
 clean-doc:
 	git clean -fx "$(BUILDDIR)"
 
 spelling: html
-	. $(VENV) ; python3 -m pyspelling -c .sphinx/spellingcheck.yaml
+	. $(VENV) ; python3 -m pyspelling -c sphinx-resources/.sphinx/spellingcheck.yaml
+
+linkcheck:
+	. $(VENV) ; $(SPHINXBUILD) -c . -b linkcheck  "$(SOURCEDIR)" "$(BUILDDIR)"
+
+woke:
+	type woke >/dev/null 2>&1 || { snap install woke; exit 1; }
+	woke *.rst **/*.rst -c https://github.com/canonical-web-and-design/Inclusive-naming/raw/main/config.yml
 
 .PHONY: help Makefile
 
