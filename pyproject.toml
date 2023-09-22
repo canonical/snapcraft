@@ -39,6 +39,7 @@ extension-pkg-allow-list = [
     "lxml.etree",
     "pydantic",
     "pytest",
+    "pygit2",
 ]
 load-plugins = "pylint_fixme_info,pylint_pytest"
 

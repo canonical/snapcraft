@@ -351,6 +351,15 @@ class Config:
                 get_snapcraft_global_environment(self.project)
             )
 
+            # order is important - for example, `SNAPCRAFT_ARCH_TRIPLET_BUILD_{ON|FOR}`
+            # should be evaluated before `SNAPCRAFT_ARCH_TRIPLET` to avoid premature
+            # variable expansion
+            replacements = dict(
+                sorted(
+                    replacements.items(), key=lambda item: len(item[0]), reverse=True
+                )
+            )
+
             snapcraft_yaml[key] = replace_attr(snapcraft_yaml[key], replacements)
         return snapcraft_yaml
 

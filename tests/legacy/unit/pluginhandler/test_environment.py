@@ -31,7 +31,7 @@ def mock_platform(mocker):
     mocker.patch("platform.machine", return_value="aarch64")
 
 
-def test_no_build_for_arch(tmp_path):
+def test_build_for_arch(tmp_path):
     """build-for envvars should exist when the build-for arch can be determined."""
     snapcraft_yaml = SnapcraftYaml(
         tmp_path,
