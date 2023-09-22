@@ -31,7 +31,7 @@ html_favicon = "sphinx-resources/.sphinx/_static/favicon.png"
 
 html_context = {
     "discourse": "https://forum.snapcraft.io",
-    "github_url": "https://github.com/canonical/snapcraft",
+    "github_url": "https://github.com/snapcore/snapcraft",
     "github_version": "main",
     "github_folder": "/docs/",
     "github_issues": "enabled",
