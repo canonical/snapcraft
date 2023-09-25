@@ -31,7 +31,7 @@ jobs:
           sudo apt-get update
           echo "::endgroup::"
           echo "::group::apt-get install..."
-          sudo apt-get install --yes libapt-pkg-dev libyaml-dev xdelta3
+          sudo apt-get install --yes libapt-pkg-dev libgit2-dev libyaml-dev xdelta3
           echo "::endgroup::"
           echo "::group::pip install"
           python -m pip install 'tox<5.0' tox-gh
@@ -73,7 +73,7 @@ jobs:
           sudo apt-get update
           echo "::endgroup::"
           echo "::group::apt-get install..."
-          sudo apt-get install -y libapt-pkg-dev libyaml-dev xdelta3
+          sudo apt-get install -y libapt-pkg-dev libgit2-dev libyaml-dev xdelta3
           echo "::endgroup::"
           echo "::group::pip install"
           python -m pip install 'tox<5.0' tox-gh
