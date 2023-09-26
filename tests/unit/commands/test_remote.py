@@ -27,6 +27,12 @@ from snapcraft_legacy.internal.remote_build.errors import AcceptPublicUploadErro
 pytestmark = pytest.mark.usefixtures("new_dir")
 
 
+@pytest.fixture()
+def create_snapcraft_yaml(request, snapcraft_yaml):
+    """Create a snapcraft.yaml file with a particular base."""
+    snapcraft_yaml(base=request.param)
+
+
 @pytest.fixture
 def fake_sudo(monkeypatch):
     monkeypatch.setenv("SUDO_USER", "fake")
@@ -43,15 +49,6 @@ def mock_argv(mocker):
 def mock_confirm(mocker):
     return mocker.patch(
         "snapcraft.commands.remote.confirm_with_user", return_value=True
-    )
-
-
-@pytest.fixture()
-def mock_get_effective_base(request, mocker):
-    """Mock loading a project with a specific base."""
-    return mocker.patch(
-        "snapcraft.commands.remote.RemoteBuildCommand._get_effective_base",
-        return_value=request.param,
     )
 
 
@@ -73,9 +70,9 @@ def mock_run_legacy(mocker):
 
 
 @pytest.mark.parametrize(
-    "mock_get_effective_base", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
 )
-@pytest.mark.usefixtures("mock_get_effective_base", "mock_argv")
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_argv")
 def test_command_user_confirms_upload(mock_confirm, mock_run_remote_build):
     """Run remote-build if the user confirms the upload prompt."""
     cli.run()
@@ -88,9 +85,9 @@ def test_command_user_confirms_upload(mock_confirm, mock_run_remote_build):
 
 
 @pytest.mark.parametrize(
-    "mock_get_effective_base", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
 )
-@pytest.mark.usefixtures("mock_get_effective_base", "mock_argv")
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_argv")
 def test_command_user_denies_upload(mock_confirm, mock_run_remote_build):
     """Raise an error if the user denies the upload prompt."""
     mock_confirm.return_value = False
@@ -106,9 +103,9 @@ def test_command_user_denies_upload(mock_confirm, mock_run_remote_build):
 
 
 @pytest.mark.parametrize(
-    "mock_get_effective_base", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
 )
-@pytest.mark.usefixtures("mock_get_effective_base")
+@pytest.mark.usefixtures("create_snapcraft_yaml")
 def test_command_accept_upload(mock_confirm, mock_run_remote_build, mocker):
     """Do not prompt user if `--launchpad-accept-public-upload` is provided."""
     mocker.patch.object(
@@ -122,9 +119,9 @@ def test_command_accept_upload(mock_confirm, mock_run_remote_build, mocker):
 
 
 @pytest.mark.parametrize(
-    "mock_get_effective_base", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
 )
-@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm")
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm")
 def test_command_build_on_warning(emitter, mocker, mock_run_remote_build):
     """Warn when `--build-on` is passed."""
     mocker.patch.object(
@@ -138,10 +135,10 @@ def test_command_build_on_warning(emitter, mocker, mock_run_remote_build):
 
 
 @pytest.mark.parametrize(
-    "mock_get_effective_base", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
 )
 @pytest.mark.usefixtures(
-    "mock_get_effective_base", "mock_confirm", "fake_sudo", "mock_argv"
+    "create_snapcraft_yaml", "mock_confirm", "fake_sudo", "mock_argv"
 )
 def test_remote_build_sudo_warns(emitter, mock_run_remote_build):
     """Warn when snapcraft is run with sudo."""
@@ -252,9 +249,9 @@ def test_get_effective_base_esm(base, capsys, snapcraft_yaml):
 
 
 @pytest.mark.parametrize(
-    "mock_get_effective_base", CURRENT_BASES - {"core22"}, indirect=True
+    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
 )
-@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_newer_than_core_22(emitter, mock_run_legacy):
     """Bases newer than core22 must use new remote-build."""
     cli.run()
@@ -267,9 +264,9 @@ def test_run_newer_than_core_22(emitter, mock_run_legacy):
 
 
 @pytest.mark.parametrize(
-    "mock_get_effective_base", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
 )
-@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_core22_and_older(emitter, mock_run_legacy):
     """core22 and older bases can use fallback remote-build."""
     cli.run()
@@ -279,12 +276,12 @@ def test_run_core22_and_older(emitter, mock_run_legacy):
 
 
 @pytest.mark.parametrize(
-    "mock_get_effective_base", CURRENT_BASES - {"core22"}, indirect=True
+    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
 )
 @pytest.mark.parametrize(
     "envvar", ["force-fallback", "disable-fallback", "badvalue", None]
 )
-@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_envvar_newer_than_core22(envvar, emitter, mock_run_legacy, monkeypatch):
     """Bases newer than core22 run new remote-build regardless of envvar."""
     if envvar:
@@ -301,9 +298,9 @@ def test_run_envvar_newer_than_core22(envvar, emitter, mock_run_legacy, monkeypa
 
 
 @pytest.mark.parametrize(
-    "mock_get_effective_base", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
 )
-@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_envvar_disable_fallback(emitter, mock_run_legacy, monkeypatch):
     """core22 and older bases run new remote-build if envvar is `disable-fallback`."""
     monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "disable-fallback")
@@ -318,9 +315,9 @@ def test_run_envvar_disable_fallback(emitter, mock_run_legacy, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "mock_get_effective_base", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
 )
-@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_envvar_force_fallback(emitter, mock_run_legacy, monkeypatch):
     """core22 and older bases run legacy remote-build if envvar is `force-fallback`."""
     monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "force-fallback")
@@ -335,9 +332,9 @@ def test_run_envvar_force_fallback(emitter, mock_run_legacy, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "mock_get_effective_base", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
 )
-@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_envvar_force_fallback_unset(emitter, mock_run_legacy, monkeypatch):
     """core22 and older bases run legacy remote-build if envvar is unset."""
     monkeypatch.delenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", raising=False)
@@ -349,9 +346,9 @@ def test_run_envvar_force_fallback_unset(emitter, mock_run_legacy, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "mock_get_effective_base", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
 )
-@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_envvar_force_fallback_empty(emitter, mock_run_legacy, monkeypatch):
     """core22 and older bases run legacy remote-build if envvar is empty."""
     monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "")
@@ -363,9 +360,9 @@ def test_run_envvar_force_fallback_empty(emitter, mock_run_legacy, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "mock_get_effective_base", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
 )
-@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_envvar_invalid(capsys, emitter, mock_run_legacy, monkeypatch):
     """core22 and older bases raise an error if the envvar is invalid."""
     monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "badvalue")
@@ -381,9 +378,9 @@ def test_run_envvar_invalid(capsys, emitter, mock_run_legacy, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "mock_get_effective_base", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
 )
-@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_in_repo(emitter, mock_run_legacy, new_dir):
     """core22 and older bases run new remote-build if in a git repo."""
     # initialize a git repo
@@ -400,9 +397,9 @@ def test_run_in_repo(emitter, mock_run_legacy, new_dir):
 
 
 @pytest.mark.parametrize(
-    "mock_get_effective_base", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
 )
-@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_not_in_repo(emitter, mock_run_legacy):
     """core22 and older bases run legacy remote-build if not in a git repo."""
     cli.run()
@@ -412,9 +409,9 @@ def test_run_not_in_repo(emitter, mock_run_legacy):
 
 
 @pytest.mark.parametrize(
-    "mock_get_effective_base", CURRENT_BASES - {"core22"}, indirect=True
+    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
 )
-@pytest.mark.usefixtures("mock_get_effective_base", "mock_confirm", "mock_argv")
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_in_repo_newer_than_core22(emitter, mock_run_legacy, monkeypatch, new_dir):
     """Bases newer than core22 run new remote-build regardless of being in a repo."""
     # initialize a git repo
