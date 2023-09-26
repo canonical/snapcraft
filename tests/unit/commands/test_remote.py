@@ -53,9 +53,9 @@ def mock_confirm(mocker):
 
 
 @pytest.fixture()
-def mock_run_remote_build(mocker):
+def mock_run_new_or_fallback_remote_build(mocker):
     return mocker.patch(
-        "snapcraft.commands.remote.RemoteBuildCommand._run_remote_build"
+        "snapcraft.commands.remote.RemoteBuildCommand._run_new_or_fallback_remote_build"
     )
 
 
@@ -73,7 +73,9 @@ def mock_run_legacy(mocker):
     "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_argv")
-def test_command_user_confirms_upload(mock_confirm, mock_run_remote_build):
+def test_command_user_confirms_upload(
+    mock_confirm, mock_run_new_or_fallback_remote_build
+):
     """Run remote-build if the user confirms the upload prompt."""
     cli.run()
 
@@ -81,14 +83,16 @@ def test_command_user_confirms_upload(mock_confirm, mock_run_remote_build):
         "All data sent to remote builders will be publicly available. "
         "Are you sure you want to continue?"
     )
-    mock_run_remote_build.assert_called_once()
+    mock_run_new_or_fallback_remote_build.assert_called_once()
 
 
 @pytest.mark.parametrize(
     "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_argv")
-def test_command_user_denies_upload(mock_confirm, mock_run_remote_build):
+def test_command_user_denies_upload(
+    mock_confirm, mock_run_new_or_fallback_remote_build
+):
     """Raise an error if the user denies the upload prompt."""
     mock_confirm.return_value = False
 
@@ -99,14 +103,16 @@ def test_command_user_denies_upload(mock_confirm, mock_run_remote_build):
         "All data sent to remote builders will be publicly available. "
         "Are you sure you want to continue?"
     )
-    mock_run_remote_build.assert_not_called()
+    mock_run_new_or_fallback_remote_build.assert_not_called()
 
 
 @pytest.mark.parametrize(
     "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml")
-def test_command_accept_upload(mock_confirm, mock_run_remote_build, mocker):
+def test_command_accept_upload(
+    mock_confirm, mock_run_new_or_fallback_remote_build, mocker
+):
     """Do not prompt user if `--launchpad-accept-public-upload` is provided."""
     mocker.patch.object(
         sys, "argv", ["snapcraft", "remote-build", "--launchpad-accept-public-upload"]
@@ -115,14 +121,16 @@ def test_command_accept_upload(mock_confirm, mock_run_remote_build, mocker):
     cli.run()
 
     mock_confirm.assert_not_called()
-    mock_run_remote_build.assert_called_once()
+    mock_run_new_or_fallback_remote_build.assert_called_once()
 
 
 @pytest.mark.parametrize(
     "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm")
-def test_command_build_on_warning(emitter, mocker, mock_run_remote_build):
+def test_command_build_on_warning(
+    emitter, mocker, mock_run_new_or_fallback_remote_build
+):
     """Warn when `--build-on` is passed."""
     mocker.patch.object(
         sys, "argv", ["snapcraft", "remote-build", "--build-on", "arch"]
@@ -131,7 +139,7 @@ def test_command_build_on_warning(emitter, mocker, mock_run_remote_build):
     cli.run()
 
     emitter.assert_message("Use --build-for instead of --build-on")
-    mock_run_remote_build.assert_called_once()
+    mock_run_new_or_fallback_remote_build.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -140,14 +148,14 @@ def test_command_build_on_warning(emitter, mocker, mock_run_remote_build):
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml", "mock_confirm", "fake_sudo", "mock_argv"
 )
-def test_remote_build_sudo_warns(emitter, mock_run_remote_build):
+def test_remote_build_sudo_warns(emitter, mock_run_new_or_fallback_remote_build):
     """Warn when snapcraft is run with sudo."""
     cli.run()
 
     emitter.assert_message(
         "Running with 'sudo' may cause permission errors and is discouraged."
     )
-    mock_run_remote_build.assert_called_once()
+    mock_run_new_or_fallback_remote_build.assert_called_once()
 
 
 ################################
@@ -157,13 +165,15 @@ def test_remote_build_sudo_warns(emitter, mock_run_remote_build):
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
 @pytest.mark.parametrize("base", CURRENT_BASES | LEGACY_BASES)
-def test_get_effective_base(base, snapcraft_yaml, mock_run_remote_build):
+def test_get_effective_base(
+    base, snapcraft_yaml, mock_run_new_or_fallback_remote_build
+):
     """Get the base from a snapcraft.yaml file."""
     snapcraft_yaml(base=base)
 
     cli.run()
 
-    mock_run_remote_build.assert_called_once_with(base)
+    mock_run_new_or_fallback_remote_build.assert_called_once_with(base)
 
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
@@ -176,25 +186,27 @@ def test_get_effective_base(base, snapcraft_yaml, mock_run_remote_build):
     ],
 )
 def test_get_effective_base_with_build_base(
-    base, build_base, snapcraft_yaml, mock_run_remote_build
+    base, build_base, snapcraft_yaml, mock_run_new_or_fallback_remote_build
 ):
     """The effective base should be the build-base, when provided."""
     snapcraft_yaml(**{"base": base, "build-base": build_base})
 
     cli.run()
 
-    mock_run_remote_build.assert_called_once_with(build_base)
+    mock_run_new_or_fallback_remote_build.assert_called_once_with(build_base)
 
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
 @pytest.mark.parametrize("base", CURRENT_BASES | LEGACY_BASES)
-def test_get_effective_base_type(base, snapcraft_yaml, mock_run_remote_build):
+def test_get_effective_base_type(
+    base, snapcraft_yaml, mock_run_new_or_fallback_remote_build
+):
     """The effective base should be the name when building a base."""
     snapcraft_yaml(**{"base": base, "name": base, "type": "base"})
 
     cli.run()
 
-    mock_run_remote_build.assert_called_once_with(base)
+    mock_run_new_or_fallback_remote_build.assert_called_once_with(base)
 
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
