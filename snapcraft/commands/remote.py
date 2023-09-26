@@ -155,14 +155,18 @@ class RemoteBuildCommand(BaseCommand):
 
         return base
 
-    def _run_remote_build(self, base: str) -> None:
+    def _run_new_remote_build(self) -> None:
+        """Run new remote-build code."""
+        # TODO: use new remote-build code (#4323)
+        run_legacy()
+
+    def _run_new_or_fallback_remote_build(self, base: str) -> None:
         # bases newer than core22 must use the new remote-build
         if base in yaml_utils.CURRENT_BASES - {"core22"}:
             emit.debug(
                 "Using fallback remote-build because new remote-build is not available."
             )
-            # TODO: use new remote-build code (#4323)
-            run_legacy()
+            self._run_new_remote_build()
             return
 
         strategy = self._get_build_strategy()
@@ -173,7 +177,7 @@ class RemoteBuildCommand(BaseCommand):
                 f"{_Strategies.DISABLE_FALLBACK.value!r} but running fallback "
                 "remote-build because new remote-build is not available."
             )
-            run_legacy()
+            self._run_new_remote_build()
             return
 
         if strategy == _Strategies.FORCE_FALLBACK:
@@ -189,7 +193,7 @@ class RemoteBuildCommand(BaseCommand):
                 "Project is in a git repository but running fallback remote-build "
                 "because new remote-build is not available."
             )
-            run_legacy()
+            self._run_new_remote_build()
             return
 
         emit.debug("Running fallback remote-build.")
@@ -217,4 +221,4 @@ class RemoteBuildCommand(BaseCommand):
             raise AcceptPublicUploadError()
 
         base = self._get_effective_base()
-        self._run_remote_build(base)
+        self._run_new_or_fallback_remote_build(base)
