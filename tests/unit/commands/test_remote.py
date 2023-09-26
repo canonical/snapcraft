@@ -271,7 +271,7 @@ def test_run_newer_than_core_22(emitter, mock_run_legacy):
     # this should fail when new remote-build code is used (#4323)
     mock_run_legacy.assert_called_once()
     emitter.assert_debug(
-        "Using fallback remote-build because new remote-build is not available."
+        "Running fallback remote-build because new remote-build is not available."
     )
 
 
@@ -305,7 +305,7 @@ def test_run_envvar_newer_than_core22(envvar, emitter, mock_run_legacy, monkeypa
 
     mock_run_legacy.assert_called_once()
     emitter.assert_debug(
-        "Using fallback remote-build because new remote-build is not available."
+        "Running fallback remote-build because new remote-build is not available."
     )
 
 
@@ -321,8 +321,8 @@ def test_run_envvar_disable_fallback(emitter, mock_run_legacy, monkeypatch):
 
     mock_run_legacy.assert_called_once()
     emitter.assert_debug(
-        "Environment variable 'SNAPCRAFT_REMOTE_BUILD_STRATEGY' is 'disable-fallback' "
-        "but running fallback remote-build because new remote-build is not available."
+        "Running new remote-build because environment variable "
+        "'SNAPCRAFT_REMOTE_BUILD_STRATEGY' is 'disable-fallback'."
     )
 
 
@@ -403,8 +403,7 @@ def test_run_in_repo(emitter, mock_run_legacy, new_dir):
     # this should fail when new remote-build code is used (#4323)
     mock_run_legacy.assert_called_once()
     emitter.assert_debug(
-        "Project is in a git repository but running fallback remote-build "
-        "because new remote-build is not available."
+        "Running new remote-build because project is in a git repository."
     )
 
 
@@ -434,5 +433,5 @@ def test_run_in_repo_newer_than_core22(emitter, mock_run_legacy, monkeypatch, ne
     # this should fail when new remote-build code is used (#4323)
     mock_run_legacy.assert_called_once()
     emitter.assert_debug(
-        "Using fallback remote-build because new remote-build is not available."
+        "Running fallback remote-build because new remote-build is not available."
     )

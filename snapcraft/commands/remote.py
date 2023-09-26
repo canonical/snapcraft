@@ -158,14 +158,28 @@ class RemoteBuildCommand(BaseCommand):
     def _run_new_remote_build(self) -> None:
         """Run new remote-build code."""
         # TODO: use new remote-build code (#4323)
+        emit.debug(
+            "Running fallback remote-build because new remote-build is not available."
+        )
         run_legacy()
 
     def _run_new_or_fallback_remote_build(self, base: str) -> None:
+        """Run the new or fallback remote-build.
+
+        Three checks determine whether to run the new or fallback remote-build:
+        1. Base: snaps newer than core22 must use the new remote-build. Core22 and older
+           snaps may use the new or fallback remote-build.
+        2. Envvar: If the envvar "SNAPCRAFT_REMOTE_BUILD_STRATEGY" is "force-fallback",
+           the fallback remote-build is used. If it is "disable-fallback", the new
+           remote-build code is used.
+        3. Repo: If the project is in a git repository, the new remote-build is used.
+           Otherwise, the fallback remote-build is used.
+
+        :param base: The effective base of the project.
+        """
         # bases newer than core22 must use the new remote-build
         if base in yaml_utils.CURRENT_BASES - {"core22"}:
-            emit.debug(
-                "Using fallback remote-build because new remote-build is not available."
-            )
+            emit.debug("Running new remote-build because base is newer than core22.")
             self._run_new_remote_build()
             return
 
@@ -173,9 +187,8 @@ class RemoteBuildCommand(BaseCommand):
 
         if strategy == _Strategies.DISABLE_FALLBACK:
             emit.debug(
-                f"Environment variable {_STRATEGY_ENVVAR!r} is "
-                f"{_Strategies.DISABLE_FALLBACK.value!r} but running fallback "
-                "remote-build because new remote-build is not available."
+                "Running new remote-build because environment variable "
+                f"{_STRATEGY_ENVVAR!r} is {_Strategies.DISABLE_FALLBACK.value!r}."
             )
             self._run_new_remote_build()
             return
@@ -190,8 +203,7 @@ class RemoteBuildCommand(BaseCommand):
 
         if is_repo(Path().absolute()):
             emit.debug(
-                "Project is in a git repository but running fallback remote-build "
-                "because new remote-build is not available."
+                "Running new remote-build because project is in a git repository."
             )
             self._run_new_remote_build()
             return
@@ -200,7 +212,14 @@ class RemoteBuildCommand(BaseCommand):
         run_legacy()
 
     @overrides
-    def run(self, parsed_args) -> None:
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        """Run the remote-build command.
+
+        :param parsed_args: Snapcraft's argument namespace.
+
+        :raises AcceptPublicUploadError: If the user does not agree to upload data.
+        :raises SnapcraftError: If the project cannot be loaded and parsed.
+        """
         if os.getenv("SUDO_USER") and os.geteuid() == 0:
             emit.message(
                 "Running with 'sudo' may cause permission errors and is discouraged."
