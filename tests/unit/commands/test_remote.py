@@ -13,9 +13,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import sys
+from pathlib import Path
+from unittest.mock import call
 
 import pytest
+from yaml import safe_dump
 
 from snapcraft import cli
 from snapcraft.parts.yaml_utils import CURRENT_BASES, ESM_BASES, LEGACY_BASES
@@ -435,3 +439,121 @@ def test_run_in_repo_newer_than_core22(emitter, mock_run_legacy, monkeypatch, ne
     emitter.assert_debug(
         "Running fallback remote-build because new remote-build is not available."
     )
+
+
+##################
+# Build id tests #
+##################
+
+# The build-id is not currently used, so these unit tests test the log output.
+# When #4323 is complete, these tests can be rewritten to verify the build-id passed
+# to the new remote-build code.
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
+def test_build_id_provided(emitter, mock_run_legacy, mocker):
+    """Use the build id provided as an argument."""
+    mocker.patch.object(
+        sys, "argv", ["snapcraft", "remote-build", "--build-id", "test-build-id"]
+    )
+
+    cli.run()
+
+    emitter.assert_debug("Using build ID 'test-build-id' passed as a parameter.")
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
+def test_build_id_computed(emitter, mock_run_legacy):
+    """Compute the build id."""
+    cli.run()
+
+    # The create_snapcraft_yaml fixture uses the project name 'mytest'.
+    # Look for an md5 hash (a 32 character lowercase hex string).
+    emitter.assert_debug(
+        "Using computed build ID 'snapcraft-mytest-[0-9a-f]{32}'.", regex=True
+    )
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
+def test_build_id_computed_is_reproducible(emitter, mock_run_legacy):
+    """The build id should be the same when there are no changes to the directory."""
+    cli.run()
+    cli.run()
+
+    build_id = emitter.assert_debug(
+        "Using computed build ID 'snapcraft-mytest-[0-9a-f]{32}'.", regex=True
+    )
+    # an identical build-id should have been computed on both executions
+    assert emitter.interactions.count(call("debug", build_id)) == 2
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
+def test_build_id_computed_is_unique_file_modified(emitter, mock_run_legacy):
+    """The build id should change when a file is modified."""
+    Path("test1").write_text("Hello, World!", encoding="utf-8")
+    cli.run()
+    # adding a new file should change the build-id
+    Path("test2").write_text("Hello, World!", encoding="utf-8")
+    cli.run()
+
+    build_id = emitter.assert_debug(
+        "Using computed build ID 'snapcraft-mytest-[0-9a-f]{32}'.", regex=True
+    )
+    assert emitter.interactions.count(call("debug", build_id)) == 1
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
+def test_build_id_computed_is_unique_file_contents_modified(emitter, mock_run_legacy):
+    """The build id should change when the contents of a file is modified."""
+    Path("test").write_text("Hello, World!", encoding="utf-8")
+    cli.run()
+    # modifying the contents of a file should change the build-id
+    Path("test").write_text("Goodbye, World!", encoding="utf-8")
+    cli.run()
+
+    build_id = emitter.assert_debug(
+        "Using computed build ID 'snapcraft-mytest-[0-9a-f]{32}'.", regex=True
+    )
+    # the build-id should not be the same
+    assert emitter.interactions.count(call("debug", build_id)) == 1
+
+
+@pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
+@pytest.mark.usefixtures("mock_confirm", "mock_argv")
+def test_build_id_no_project_name(base, capsys, mock_run_legacy):
+    """Raise an error if there is no name in the snapcraft.yaml file."""
+    content = {
+        "base": base,
+        "version": "0.1",
+        "summary": "test",
+        "description": "test",
+        "grade": "stable",
+        "confinement": "strict",
+        "parts": {
+            "part1": {
+                "plugin": "nil",
+            }
+        },
+    }
+    yaml_path = Path("snapcraft.yaml")
+    yaml_path.write_text(safe_dump(content, indent=2), encoding="utf-8")
+
+    cli.run()
+
+    _, err = capsys.readouterr()
+    assert "Could not get project name from 'snapcraft.yaml'." in err

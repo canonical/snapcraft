@@ -20,8 +20,10 @@ import argparse
 import os
 import textwrap
 from enum import Enum
+from functools import partial
+from hashlib import md5
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from craft_cli import BaseCommand, emit
 from craft_cli.helptexts import HIDDEN
@@ -133,6 +135,7 @@ class RemoteBuildCommand(BaseCommand):
 
         # pylint: disable=attribute-defined-outside-init
         self._snapcraft_yaml = yaml_utils.get_snap_project().project_file
+        self._parsed_args = parsed_args
         base = self._get_effective_base()
         self._run_new_or_fallback_remote_build(base)
 
@@ -186,12 +189,15 @@ class RemoteBuildCommand(BaseCommand):
 
     def _run_new_remote_build(self) -> None:
         """Run new remote-build code."""
+        # the build-id will be passed to the new remote-build code as part of #4323
+        # pylint: disable-next=unused-variable
+        self._get_build_id()
+
         # TODO: use new remote-build code (#4323)
         emit.debug(
             "Running fallback remote-build because new remote-build is not available."
         )
         run_legacy()
-
 
     def _get_build_strategy(self) -> Optional[_Strategies]:
         """Get the build strategy from the envvar `SNAPCRAFT_REMOTE_BUILD_STRATEGY`.
@@ -243,3 +249,63 @@ class RemoteBuildCommand(BaseCommand):
             )
 
         return base
+
+    def _get_build_id(self) -> str:
+        """Get the build id for the project.
+
+        The build id is formatted as `snapcraft-<project-name>-<hash>`.
+        The hash is a hash of all files in the project directory.
+
+        :returns: The build id.
+
+        :raises SnapcraftError: If the snapcraft.yaml does not contain a 'name' keyword.
+        """
+        if self._parsed_args.build_id:
+            emit.debug(
+                f"Using build ID {self._parsed_args.build_id!r} passed as a parameter."
+            )
+            return self._parsed_args.build_id
+
+        with open(self._snapcraft_yaml, encoding="utf-8") as file:
+            data = yaml_utils.safe_load(file)
+
+        project_name = data.get("name")
+
+        if project_name:
+            emit.debug(
+                f"Using project name {project_name!r} from "
+                f"{str(self._snapcraft_yaml)!r}."
+            )
+        else:
+            raise SnapcraftError(
+                f"Could not get project name from {str(self._snapcraft_yaml)!r}."
+            )
+
+        project_hash = self._compute_hash()
+
+        build_id = f"snapcraft-{project_name}-{project_hash}"
+        emit.debug(f"Using computed build ID {build_id!r}.")
+        return build_id
+
+    def _compute_hash(self) -> str:
+        """Compute an md5 hash from the contents of the files in the current directory.
+
+        If a file or its contents within the directory are modified, then the hash
+        will be different.
+
+        :returns: A string containing the md5 hash.
+        """
+        # sort the list of files for reproducibility
+        files = sorted([file for file in Path().glob("**/*") if file.is_file()])
+        hashes: List[str] = []
+
+        for file_path in files:
+            md5_hash = md5()  # noqa: S324 (insecure-hash-function)
+            with open(file_path, "rb") as file:
+                # read files in chunks in case they are large
+                for block in iter(partial(file.read, 4096), b""):
+                    md5_hash.update(block)
+            hashes.append(md5_hash.hexdigest())
+
+        all_hashes = "".join(hashes).encode()
+        return md5(all_hashes).hexdigest()  # noqa: S324 (insecure-hash-function)
