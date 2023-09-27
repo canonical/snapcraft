@@ -17,8 +17,8 @@
 import pytest
 
 from snapcraft.extensions import qt_framework
-from snapcraft.extensions.qt_framework import _CONTENT_SNAP
 from snapcraft.extensions.extension import get_extensions_data_dir
+from snapcraft.extensions.qt_framework import _CONTENT_SNAP
 
 ############
 # Fixtures #
@@ -125,7 +125,7 @@ def test_get_app_snippet(qt_framework_extension):
 
 
 @pytest.mark.parametrize(fixture_variables, base_values)
-def test_get_root_snippet(qt_framework_extension, name, yaml_data, arch, target_arch):
+def test_get_root_snippet(qt_framework_extension, name, yaml_data):
     assert qt_framework_extension.get_root_snippet() == {
         "assumes": ["snapd2.43"],
         "compression": "lzo",
@@ -159,9 +159,7 @@ def test_get_root_snippet(qt_framework_extension, name, yaml_data, arch, target_
 
 
 @pytest.mark.parametrize(fixture_variables, builtin_stable_values)
-def test_get_root_snippet_with_external_sdk(
-    qt_framework_extension, name, yaml_data, arch, target_arch
-):
+def test_get_root_snippet_with_external_sdk(qt_framework_extension, name, yaml_data):
     assert qt_framework_extension.get_root_snippet() == {
         "assumes": ["snapd2.43"],
         "compression": "lzo",
@@ -216,7 +214,7 @@ def test_get_part_snippet(qt_framework_extension):
 
 
 @pytest.mark.parametrize(fixture_variables, builtin_stable_values)
-def test_get_parts_snippet(qt_framework_extension, name, yaml_data, arch, target_arch):
+def test_get_parts_snippet(qt_framework_extension, name):
     source = get_extensions_data_dir() / "desktop" / "command-chain"
 
     assert qt_framework_extension.get_parts_snippet() == {
@@ -229,9 +227,7 @@ def test_get_parts_snippet(qt_framework_extension, name, yaml_data, arch, target
 
 
 @pytest.mark.parametrize(fixture_variables, builtin_stable_values)
-def test_get_parts_snippet_with_external_sdk(
-    qt_framework_extension, name, yaml_data, arch, target_arch
-):
+def test_get_parts_snippet_with_external_sdk(qt_framework_extension, name):
     source = get_extensions_data_dir() / "desktop" / "command-chain"
 
     assert qt_framework_extension.get_parts_snippet() == {
@@ -245,7 +241,7 @@ def test_get_parts_snippet_with_external_sdk(
 
 @pytest.mark.parametrize(fixture_variables, builtin_edge_values)
 def test_get_parts_snippet_with_external_sdk_different_channel(
-    qt_framework_extension, name, yaml_data, arch, target_arch
+    qt_framework_extension, name
 ):
     source = get_extensions_data_dir() / "desktop" / "command-chain"
     assert qt_framework_extension.get_parts_snippet() == {
