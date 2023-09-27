@@ -43,7 +43,7 @@ execute: |
   # Verify content snap was installed for dependency checks.
   snap list gtk-common-themes
   if [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
-    snap list kf5-5-105-qt-5-15-9-core22
+    snap list kf5-5-108-qt-5-15-10-core22
   fi
 
   # Verify all dependencies were found.

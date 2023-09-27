@@ -1,17 +1,17 @@
 attrs==23.1.0
 catkin-pkg==0.5.2
-certifi==2023.5.7
+certifi==2023.7.22
 cffi==1.15.1
 chardet==5.1.0
 charset-normalizer==3.1.0
 click==8.1.3
-craft-archives==1.0.0
-craft-cli==1.2.0
+craft-archives==1.1.3
+craft-cli==2.1.0
 craft-grammar==1.1.1
-craft-parts==1.21.1
-craft-providers==1.13.0
+craft-parts==1.25.1
+craft-providers==1.15.0
 craft-store==2.4.0
-cryptography==40.0.2
+cryptography==41.0.4
 Deprecated==1.2.13
 distro==1.8.0
 docutils==0.19
@@ -42,6 +42,7 @@ pycparser==2.21
 pydantic==1.10.7
 pydantic-yaml==0.11.2
 pyelftools==0.29
+pygit2==1.13.0
 pylxd==2.3.1
 pymacaroons==0.13.0
 PyNaCl==1.5.0
@@ -51,7 +52,7 @@ python-dateutil==2.8.2
 python-debian==0.1.49
 pytz==2023.3
 pyxdg==0.28
-PyYAML==6.0
+PyYAML==6.0.1
 raven==6.10.0
 requests==2.31.0
 requests-toolbelt==1.0.0
@@ -71,4 +72,4 @@ wadllib==1.3.6
 wrapt==1.15.0
 ws4py==0.5.1
 zipp==3.15.0
-python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.1ubuntu0.20.04.1/python-apt_2.0.1ubuntu0.20.04.1.tar.xz; sys.platform == "linux"
+python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz; sys.platform == "linux"

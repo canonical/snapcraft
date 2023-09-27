@@ -266,6 +266,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "debhelper",
                 "fakeroot",
                 "gcc",
                 "cmake",
@@ -285,6 +286,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "debhelper",
                 "fakeroot",
                 "gcc",
                 "cmake",
@@ -304,6 +306,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "debhelper",
                 "fakeroot",
                 "gcc",
                 "cmake",
@@ -323,6 +326,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "debhelper",
                 "fakeroot",
                 "gcc",
                 "cmake",
@@ -347,6 +351,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "debhelper",
                 "fakeroot",
                 "gcc",
                 "cmake",
@@ -503,7 +508,6 @@ class TestPluginKernel(TestCase):
                 "ARCH": plugin._kernel_arch,
                 "DEB_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
                 "UC_INITRD_DEB": "${SNAPCRAFT_PART_BUILD}/ubuntu-core-initramfs",
-                "SNAPD_UNPACKED_SNAP": "${SNAPCRAFT_PART_BUILD}/unpacked_snapd",
                 "KERNEL_BUILD_ARCH_DIR": f"${{SNAPCRAFT_PART_BUILD}}/arch/{plugin._kernel_arch}/boot",
                 "KERNEL_IMAGE_TARGET": plugin.kernel_image_target,
             },
@@ -524,7 +528,6 @@ class TestPluginKernel(TestCase):
                 "ARCH": "arm",
                 "DEB_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
                 "UC_INITRD_DEB": "${SNAPCRAFT_PART_BUILD}/ubuntu-core-initramfs",
-                "SNAPD_UNPACKED_SNAP": "${SNAPCRAFT_PART_BUILD}/unpacked_snapd",
                 "KERNEL_BUILD_ARCH_DIR": "${SNAPCRAFT_PART_BUILD}/arch/arm/boot",
                 "KERNEL_IMAGE_TARGET": "Image.gz",
                 "PATH": "${SNAPCRAFT_STAGE}/gcc-11/bin:${PATH}",
@@ -544,7 +547,6 @@ class TestPluginKernel(TestCase):
                 "ARCH": plugin._kernel_arch,
                 "DEB_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
                 "UC_INITRD_DEB": "${SNAPCRAFT_PART_BUILD}/ubuntu-core-initramfs",
-                "SNAPD_UNPACKED_SNAP": "${SNAPCRAFT_PART_BUILD}/unpacked_snapd",
                 "KERNEL_BUILD_ARCH_DIR": f"${{SNAPCRAFT_PART_BUILD}}/arch/{plugin._kernel_arch}/boot",
                 "KERNEL_IMAGE_TARGET": plugin.kernel_image_target,
                 "PATH": "${SNAPCRAFT_STAGE}/gcc-11/bin:${SNAPCRAFT_STAGE}/gcc-11/sbin:${PATH}",
@@ -1005,6 +1007,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "debhelper",
                 "fakeroot",
                 "gcc",
                 "cmake",
@@ -1037,6 +1040,7 @@ class TestPluginKernel(TestCase):
             {
                 "bc",
                 "binutils",
+                "debhelper",
                 "fakeroot",
                 "gcc",
                 "cmake",
@@ -1237,8 +1241,8 @@ _get_snapd_cmd = [
         echo "Getting snapd deb for snap bootstrap..."
         # only download again if files does not exist, otherwise
         # assume we are re-running build
-        if [ ! -e ${{SNAPD_UNPACKED_SNAP}} ]; then
-        	download_snap_bootstrap {arch} ${{SNAPD_UNPACKED_SNAP}}
+        if [ ! -e ${{UC_INITRD_DEB}}/usr/lib/snapd ]; then
+        	download_snap_bootstrap {arch} ${{UC_INITRD_DEB}}
         fi
         """.format(
             arch=_DEB_ARCH_TRANSLATIONS[platform.machine()]
@@ -1252,8 +1256,8 @@ _get_snapd_armhf_cmd = [
         echo "Getting snapd deb for snap bootstrap..."
         # only download again if files does not exist, otherwise
         # assume we are re-running build
-        if [ ! -e ${{SNAPD_UNPACKED_SNAP}} ]; then
-        	download_snap_bootstrap {arch} ${{SNAPD_UNPACKED_SNAP}}
+        if [ ! -e ${{UC_INITRD_DEB}}/usr/lib/snapd ]; then
+        	download_snap_bootstrap {arch} ${{UC_INITRD_DEB}}
         fi
         """.format(
             arch="armhf"
@@ -1298,17 +1302,20 @@ _prepare_config_flavour_cmd = [
     "if [ ! -e ${SNAPCRAFT_PART_BUILD}/.config ]; then",
     textwrap.dedent(
         """	echo "Assembling Ubuntu config..."
-	branch=$(cut -d'.' -f 2- < ${KERNEL_SRC}/debian/debian.env)
-	baseconfigdir=${KERNEL_SRC}/debian.${branch}/config
-	archconfigdir=${KERNEL_SRC}/debian.${branch}/config/${DEB_ARCH}
-	ubuntuconfig=${baseconfigdir}/config.common.ubuntu
-	archconfig=${archconfigdir}/config.common.${DEB_ARCH}
-	flavourconfig=${archconfigdir}/config.flavour.raspi
-	cat ${ubuntuconfig} ${archconfig} ${flavourconfig} \
-> ${SNAPCRAFT_PART_BUILD}/.config 2>/dev/null || true
 	if [ -f ${KERNEL_SRC}/debian/rules ] && [ -x ${KERNEL_SRC}/debian/rules ]; then
+		# Generate Ubuntu kernel configs
+		pushd ${KERNEL_SRC}
+		fakeroot debian/rules clean genconfigs || true
+		popd
+
+		# Pick the right kernel .config for the target arch and flavour
+		ubuntuconfig=${KERNEL_SRC}/CONFIGS/${DEB_ARCH}-config.flavour.raspi
+		cat ${ubuntuconfig} > ${SNAPCRAFT_PART_BUILD}/.config
+
+		# Clean up kernel source directory
 		pushd ${KERNEL_SRC}
 		fakeroot debian/rules clean
+		rm -rf CONFIGS/
 		popd
 	fi"""
     ),
@@ -1662,12 +1669,12 @@ _prepare_ininird_features_cmd = [
     " ".join(
         [
             "link_files",
-            '"${SNAPD_UNPACKED_SNAP}" "usr/lib/snapd/snap-bootstrap"',
+            '"${UC_INITRD_DEB}" "usr/lib/snapd/snap-bootstrap"',
             '"${uc_initrd_feature_snap_bootstratp}"',
         ],
     ),
-    'link_files "${SNAPD_UNPACKED_SNAP}" "usr/lib/snapd/info" "${uc_initrd_feature_snap_bootstratp}"',
-    "cp ${SNAPD_UNPACKED_SNAP}/usr/lib/snapd/info ${SNAPCRAFT_PART_INSTALL}/snapd-info",
+    'link_files "${UC_INITRD_DEB}" "usr/lib/snapd/info" "${uc_initrd_feature_snap_bootstratp}"',
+    "cp ${UC_INITRD_DEB}/usr/lib/snapd/info ${SNAPCRAFT_PART_INSTALL}/snapd-info",
 ]
 
 _clean_old_initrd_cmd = [

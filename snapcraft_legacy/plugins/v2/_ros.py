@@ -27,6 +27,7 @@ from catkin_pkg import packages as catkin_packages
 
 from snapcraft_legacy.internal import errors
 from snapcraft_legacy.internal.repo import Repo
+from snapcraft_legacy.internal.repo.snaps import _get_parsed_snap
 from snapcraft_legacy.plugins.v2 import PluginV2
 
 
@@ -76,11 +77,12 @@ class RosPlugin(PluginV2):
     """Base class for ROS-related plugins. Not intended for use by end users."""
 
     def get_build_snaps(self) -> Set[str]:
-        return set()
+        return set(self.options.ros_build_snaps) if self.options.ros_build_snaps else set()
 
     def get_build_packages(self) -> Set[str]:
         return {
             "python3-rosdep",
+            "rospack-tools",
         }
 
     def get_build_environment(self) -> Dict[str, str]:
@@ -118,6 +120,41 @@ class RosPlugin(PluginV2):
         snapcraftctl can be used in the script to call out to snapcraft
         specific functionality.
         """
+
+    def _get_list_packages_commands(self) -> List[str]:
+
+        cmd = list()
+
+        # Clean up previously established list of packages in build snaps
+        cmd.append('rm -f "${SNAPCRAFT_PART_INSTALL}/.installed_packages.txt"')
+        cmd.append('rm -f "${SNAPCRAFT_PART_INSTALL}/.build_snaps.txt"')
+
+        if self.options.ros_build_snaps:
+            for ros_build_snap in self.options.ros_build_snaps:
+                snap_name = _get_parsed_snap(ros_build_snap)[0]
+                path = f"/snap/{snap_name}/current/opt/ros"
+                cmd.extend([
+                    # Retrieve the list of all ROS packages available in the build snap
+                    f"if [ -d {path} ]; then",
+                    f"ROS_PACKAGE_PATH={path} "
+                    'rospack list-names | (xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | '
+                    'awk "/#apt/{getline;print;}" >> "${SNAPCRAFT_PART_INSTALL}/.installed_packages.txt"',
+                    "fi",
+
+                    # Retrieve the list of all non-ROS packages available in the build snap
+                    f'if [ -d "{path}/${{ROS_DISTRO}}/" ]; then',
+                    f'rosdep keys --rosdistro "${{ROS_DISTRO}}" --from-paths "{path}/${{ROS_DISTRO}}" --ignore-packages-from-source '
+                    '| (xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+                    "fi",
+
+                    f'if [ -d "{path}/snap/" ]; then',
+                    f'rosdep keys --rosdistro "${{ROS_DISTRO}}" --from-paths "{path}/snap" --ignore-packages-from-source '
+                    '| (xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+                    "fi",
+                ])
+            cmd.append("")
+
+        return cmd
 
     def _get_stage_runtime_dependencies_commands(self) -> List[str]:
         env = dict(LANG="C.UTF-8", LC_ALL="C.UTF-8")
@@ -161,13 +198,35 @@ class RosPlugin(PluginV2):
 
     def get_build_commands(self) -> List[str]:
         return (
-            self._get_workspace_activation_commands()
-            + [
-                "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep init; fi",
+            [
+                "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
+                # Preserve http(s)_proxy env var in root for remote-build proxy since rosdep
+                # doesn't support proxy
+                # https://github.com/ros-infrastructure/rosdep/issues/271
+                "sudo --preserve-env=http_proxy,https_proxy rosdep init; fi",
                 'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
-                'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
+            ]
+            # There are a number of unbound vars, disable flag
+            # after saving current state to restore after.
+            + [
+                'state="$(set +o); set -$-"',
+                "set +u",
+                "",
             ]
             + self._get_workspace_activation_commands()
+            # Restore saved state
+            + ['eval "${state}"']
+            + self._get_list_packages_commands()
+            + [
+                'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
+            ]
+            + [
+                'state="$(set +o); set -$-"',
+                "set +u",
+                "",
+            ]
+            + self._get_workspace_activation_commands()
+            + ['eval "${state}"']
             + self._get_build_commands()
             + self._get_stage_runtime_dependencies_commands()
         )
@@ -176,6 +235,51 @@ class RosPlugin(PluginV2):
 @click.group()
 def plugin_cli():
     pass
+
+
+def get_installed_dependencies(installed_packages_path: str) -> Set[str]:
+    """Retrieve recursive apt dependencies of a given package list."""
+    if os.path.isfile(installed_packages_path):
+        try:
+            with open(installed_packages_path, "r") as f:
+                build_snap_packages = set(f.read().split())
+                package_dependencies = set()
+                for package in build_snap_packages:
+                    cmd = [
+                        "apt",
+                        "depends",
+                        "--recurse",
+                        "--no-recommends",
+                        "--no-suggests",
+                        "--no-conflicts",
+                        "--no-breaks",
+                        "--no-replaces",
+                        "--no-enhances",
+                        f"{package}",
+                    ]
+                    click.echo(f"Running {cmd!r}")
+                    try:
+                        proc = subprocess.run(
+                            cmd,
+                            check=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                            env=dict(PATH=os.environ["PATH"]),
+                        )
+                    except subprocess.CalledProcessError as error:
+                        click.echo(f"failed to run {cmd!r}: {error.output}")
+                    else:
+                        apt_dependency_regex = re.compile(r"^\w.*$")
+                        for line in proc.stdout.decode().strip().split("\n"):
+                            if apt_dependency_regex.match(line):
+                                package_dependencies.add(line)
+
+                build_snap_packages.update(package_dependencies)
+                click.echo(f"Will not fetch staged packages: {build_snap_packages!r}")
+                return build_snap_packages
+        except IOError:
+            pass
+    return set()
 
 
 @plugin_cli.command()
@@ -234,20 +338,25 @@ def stage_runtime_dependencies(
             if parsed:
                 click.echo(f"unhandled dependencies: {parsed!r}")
 
+    build_snap_packages = get_installed_dependencies(
+        part_install + "/.installed_packages.txt"
+    )
+
     if apt_packages:
         package_names = sorted(apt_packages)
         install_path = pathlib.Path(part_install)
         stage_packages_path = install_path.parent / "stage_packages"
 
         click.echo(f"Fetching stage packages: {package_names!r}")
-        Repo.fetch_stage_packages(
+        fetched_stage_packages = Repo.fetch_stage_packages(
             package_names=package_names,
             base="core20",
             stage_packages_path=stage_packages_path,
             target_arch=target_arch,
+            packages_filters=build_snap_packages,
         )
 
-        click.echo(f"Unpacking stage packages: {package_names!r}")
+        click.echo(f"Unpacking stage packages: {fetched_stage_packages!r}")
         Repo.unpack_stage_packages(
             stage_packages_path=stage_packages_path, install_path=install_path
         )

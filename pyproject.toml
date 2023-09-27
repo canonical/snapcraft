@@ -3,6 +3,7 @@ extend-exclude = '''
 /(
   | snapcraft_legacy
   | tools
+  | docs/sphinx-resources
 )/
 '''
 # Targeting future versions as well so we don't have black reformatting code
@@ -39,6 +40,7 @@ extension-pkg-allow-list = [
     "lxml.etree",
     "pydantic",
     "pytest",
+    "pygit2",
 ]
 load-plugins = "pylint_fixme_info,pylint_pytest"
 

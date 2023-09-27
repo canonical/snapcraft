@@ -26,7 +26,7 @@ from pydantic import Extra, ValidationError, validator
 from pydantic_yaml import YamlModel
 
 from snapcraft import errors
-from snapcraft.projects import App, Project
+from snapcraft.projects import App, Project, UniqueStrList
 from snapcraft.utils import get_ld_library_paths, process_version
 
 
@@ -176,6 +176,41 @@ class ContentSlot(_SnapMetadataModel):
         return content_dirs
 
 
+class Links(_SnapMetadataModel):
+    """Metadata links used in snaps."""
+
+    contact: Optional[UniqueStrList]
+    donation: Optional[UniqueStrList]
+    issues: Optional[UniqueStrList]
+    source_code: Optional[UniqueStrList]
+    website: Optional[UniqueStrList]
+
+    @staticmethod
+    def _normalize_value(
+        value: Optional[Union[str, UniqueStrList]]
+    ) -> Optional[List[str]]:
+        if isinstance(value, str):
+            value = [value]
+        return value
+
+    @classmethod
+    def from_project(cls, project: Project) -> "Links":
+        """Create Links from a Project."""
+        return cls(
+            contact=cls._normalize_value(project.contact),
+            donation=cls._normalize_value(project.donation),
+            issues=cls._normalize_value(project.issues),
+            source_code=cls._normalize_value(project.source_code),
+            website=cls._normalize_value(project.website),
+        )
+
+    def __bool__(self) -> bool:
+        """Return True if any of the Links attributes are set."""
+        return any(
+            [self.contact, self.donation, self.issues, self.source_code, self.website]
+        )
+
+
 class SnapMetadata(_SnapMetadataModel):
     """The snap.yaml model.
 
@@ -210,6 +245,7 @@ class SnapMetadata(_SnapMetadataModel):
     layout: Optional[Dict[str, Dict[str, str]]]
     system_usernames: Optional[Dict[str, Any]]
     provenance: Optional[str]
+    links: Optional[Links]
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "SnapMetadata":
@@ -397,11 +433,15 @@ def write(project: Project, prime_dir: Path, *, arch: str):
     # if arch is "all", do not include architecture-specific paths in the environment
     arch_triplet = None if arch == "all" else project.get_build_for_arch_triplet()
 
-    environment = _populate_environment(project.environment, prime_dir, arch_triplet)
+    environment = _populate_environment(
+        project.environment, prime_dir, arch_triplet, project.confinement
+    )
     version = process_version(project.version)
 
     # project provided assumes and computed assumes
     total_assumes = sorted(project.assumes + list(assumes))
+
+    links = Links.from_project(project)
 
     snap_metadata = SnapMetadata(
         name=project.name,
@@ -425,6 +465,7 @@ def write(project: Project, prime_dir: Path, *, arch: str):
         layout=project.layout,
         system_usernames=project.system_usernames,
         provenance=project.provenance,
+        links=links if links else None,
     )
     if project.passthrough:
         for name, value in project.passthrough.items():
@@ -454,39 +495,44 @@ def _populate_environment(
     environment: Optional[Dict[str, Optional[str]]],
     prime_dir: Path,
     arch_triplet: Optional[str],
-):
-    """Populate default app environmental variables.
+    confinement: str,
+) -> Optional[Dict[str, Optional[str]]]:
+    """Populate default app environment variables, LD_LIBRARY_PATH and PATH.
 
-    Three cases for LD_LIBRARY_PATH and PATH variables:
-        - If LD_LIBRARY_PATH or PATH are defined, keep user-defined values.
-        - If LD_LIBRARY_PATH or PATH are not defined, set to default values.
-        - If LD_LIBRARY_PATH or PATH are null, do not use default values.
+    Three cases for environment variables:
+      - If defined, keep user-defined value.
+      - If not defined, set to default value.
+      - If null, do not use default value.
 
     :param environment: Dictionary of environment variables from the project.
     :param prime_dir: The directory containing the content to be snapped.
     :param arch_triplet: Architecture triplet of the target arch. If None, the
     environment will not contain architecture-specific paths.
+    :param confinement: If classically confined, then no default values will be used.
+
+    :returns: Dictionary of environment variables or None if all envvars are null or
+    confinement is classic.
     """
     if environment is None:
+        if confinement == "classic":
+            return None
         return {
             "LD_LIBRARY_PATH": get_ld_library_paths(prime_dir, arch_triplet),
             "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         }
 
-    try:
-        if not environment["LD_LIBRARY_PATH"]:
-            environment.pop("LD_LIBRARY_PATH")
-    except KeyError:
+    # if LD_LIBRARY_PATH is not defined, use default value when not classic
+    if "LD_LIBRARY_PATH" not in environment and confinement != "classic":
         environment["LD_LIBRARY_PATH"] = get_ld_library_paths(prime_dir, arch_triplet)
+    # else if null, then remove from environment
+    elif "LD_LIBRARY_PATH" in environment and not environment["LD_LIBRARY_PATH"]:
+        del environment["LD_LIBRARY_PATH"]
 
-    try:
-        if not environment["PATH"]:
-            environment.pop("PATH")
-    except KeyError:
+    # if PATH is not defined, use default value when not classic
+    if "PATH" not in environment and confinement != "classic":
         environment["PATH"] = "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
+    # else if null, then remove from environment
+    elif "PATH" in environment and not environment["PATH"]:
+        del environment["PATH"]
 
-    if len(environment):
-        return environment
-
-    # if the environment only contained a null LD_LIBRARY_PATH and a null PATH, return None
-    return None
+    return environment if environment else None

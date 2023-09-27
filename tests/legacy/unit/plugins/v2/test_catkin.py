@@ -45,6 +45,19 @@ def test_schema():
                 "type": "array",
                 "uniqueItems": True,
             },
+            "ros-build-snaps": {
+                "default": [],
+                "items": {"type": "string"},
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": True,
+            },
+            "ros-content-sharing-extension-cmake-args": {
+                "type": "array",
+                "minItems": 0,
+                "items": {"type": "string"},
+                "default": [],
+            },
         },
         "type": "object",
     }
@@ -53,7 +66,27 @@ def test_schema():
 def test_get_build_packages():
     plugin = catkin.CatkinPlugin(part_name="my-part", options=lambda: None)
 
-    assert plugin.get_build_packages() == {"python3-rosdep", "ros-noetic-catkin"}
+    assert plugin.get_build_packages() == {
+        "python3-rosdep",
+        "ros-noetic-catkin",
+        "rospack-tools",
+    }
+
+
+def test_get_build_snaps():
+    class OptionsDefault:
+        ros_build_snaps = list()
+
+    plugin = catkin.CatkinPlugin(part_name="my-part", options=OptionsDefault())
+
+    assert plugin.get_build_snaps() == set()
+
+    class Options:
+        ros_build_snaps = ["Foo"]
+
+    plugin = catkin.CatkinPlugin(part_name="my-part", options=Options())
+
+    assert plugin.get_build_snaps() == {"Foo"}
 
 
 def test_get_build_environment():
@@ -75,6 +108,8 @@ def test_get_build_commands(monkeypatch):
         catkin_cmake_args = list()
         catkin_packages = list()
         catkin_packages_ignore = list()
+        ros_build_snaps = list()
+        ros_content_sharing_extension_cmake_args = list()
 
     plugin = catkin.CatkinPlugin(part_name="my-part", options=Options())
 
@@ -84,32 +119,51 @@ def test_get_build_commands(monkeypatch):
     monkeypatch.setattr(os, "environ", dict())
 
     assert plugin.get_build_commands() == [
+        "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
+        "sudo --preserve-env=http_proxy,https_proxy rosdep init; fi",
+        'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
         'state="$(set +o); set -$-"',
         "set +u",
+        "",
+        "## Sourcing ROS ws in build snaps",
+        "## Sourcing ROS ws in stage snaps",
         'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
-        "set -- --local",
+        'set -- --local "${_EXTEND_WS}"',
         '_CATKIN_SETUP_DIR="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh"',
-        "set -- --local --extend",
-        "else",
-        "set -- --local",
+        'if [ -z ${_EXTEND_WS} ]; then _EXTEND_WS="--extend"; fi',
         "fi",
-        '. /opt/ros/"${ROS_DISTRO}"/setup.sh',
+        "",
+        "## Sourcing ROS ws in system",
+        'if [ -f "/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
+        'set -- --local "${_EXTEND_WS}"',
+        '_CATKIN_SETUP_DIR="/opt/ros/${ROS_DISTRO}" . "/opt/ros/${ROS_DISTRO}/setup.sh"',
+        'if [ -z ${_EXTEND_WS} ]; then _EXTEND_WS="--extend"; fi',
+        "fi",
+        "",
         'eval "${state}"',
-        "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
-        "init; fi",
-        'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
+        'rm -f "${SNAPCRAFT_PART_INSTALL}/.installed_packages.txt"',
+        'rm -f "${SNAPCRAFT_PART_INSTALL}/.build_snaps.txt"',
         'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
         'state="$(set +o); set -$-"',
         "set +u",
+        "",
+        "## Sourcing ROS ws in build snaps",
+        "## Sourcing ROS ws in stage snaps",
         'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
-        "set -- --local",
+        'set -- --local "${_EXTEND_WS}"',
         '_CATKIN_SETUP_DIR="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh"',
-        "set -- --local --extend",
-        "else",
-        "set -- --local",
+        'if [ -z ${_EXTEND_WS} ]; then _EXTEND_WS="--extend"; fi',
         "fi",
-        '. /opt/ros/"${ROS_DISTRO}"/setup.sh',
+        "",
+        "## Sourcing ROS ws in system",
+        'if [ -f "/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
+        'set -- --local "${_EXTEND_WS}"',
+        '_CATKIN_SETUP_DIR="/opt/ros/${ROS_DISTRO}" . "/opt/ros/${ROS_DISTRO}/setup.sh"',
+        'if [ -z ${_EXTEND_WS} ]; then _EXTEND_WS="--extend"; fi',
+        "fi",
+        "",
         'eval "${state}"',
+        "## Build command",
         "catkin_make_isolated --install --merge "
         '--source-space "${SNAPCRAFT_PART_SRC_WORK}" --build-space "${SNAPCRAFT_PART_BUILD}" '
         '--install-space "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" '
@@ -126,6 +180,8 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         catkin_cmake_args = ["cmake", "args..."]
         catkin_packages = ["package1", "package2..."]
         catkin_packages_ignore = ["ipackage1", "ipackage2..."]
+        ros_build_snaps = ["foo"]
+        ros_content_sharing_extension_cmake_args = ["DCMAKE_EXNTENSION_ARGS", "bar"]
 
     plugin = catkin.CatkinPlugin(part_name="my-part", options=Options())
 
@@ -148,37 +204,87 @@ def test_get_build_commands_with_all_properties(monkeypatch):
     )
 
     assert plugin.get_build_commands() == [
+        "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
+        "sudo --preserve-env=http_proxy,https_proxy rosdep init; fi",
+        'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
         'state="$(set +o); set -$-"',
         "set +u",
-        'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
-        "set -- --local",
-        '_CATKIN_SETUP_DIR="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh"',
-        "set -- --local --extend",
-        "else",
-        "set -- --local",
+        "",
+        "## Sourcing ROS ws in build snaps",
+        'if [ -f "/snap/foo/current/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
+        'set -- --local "${_EXTEND_WS}"',
+        '_CATKIN_SETUP_DIR="/snap/foo/current/opt/ros/${ROS_DISTRO}" . "/snap/foo/current/opt/ros/${ROS_DISTRO}/setup.sh"',
+        'if [ -z ${_EXTEND_WS} ]; then _EXTEND_WS="--extend"; fi',
         "fi",
-        '. /opt/ros/"${ROS_DISTRO}"/setup.sh',
+        "",
+        "## Sourcing ROS ws in stage snaps",
+        'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
+        'set -- --local "${_EXTEND_WS}"',
+        '_CATKIN_SETUP_DIR="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh"',
+        'if [ -z ${_EXTEND_WS} ]; then _EXTEND_WS="--extend"; fi',
+        "fi",
+        "",
+        "## Sourcing ROS ws in system",
+        'if [ -f "/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
+        'set -- --local "${_EXTEND_WS}"',
+        '_CATKIN_SETUP_DIR="/opt/ros/${ROS_DISTRO}" . "/opt/ros/${ROS_DISTRO}/setup.sh"',
+        'if [ -z ${_EXTEND_WS} ]; then _EXTEND_WS="--extend"; fi',
+        "fi",
+        "",
         'eval "${state}"',
-        "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
-        "init; fi",
-        'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
+        'rm -f "${SNAPCRAFT_PART_INSTALL}/.installed_packages.txt"',
+        'rm -f "${SNAPCRAFT_PART_INSTALL}/.build_snaps.txt"',
+        "if [ -d /snap/foo/current/opt/ros ]; then",
+        "ROS_PACKAGE_PATH=/snap/foo/current/opt/ros rospack list-names | (xargs "
+        'rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | awk '
+        '"/#apt/{getline;print;}" >> '
+        '"${SNAPCRAFT_PART_INSTALL}/.installed_packages.txt"',
+        "fi",
+        'if [ -d "/snap/foo/current/opt/ros/${ROS_DISTRO}/" ]; then',
+        'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths '
+        '"/snap/foo/current/opt/ros/${ROS_DISTRO}" --ignore-packages-from-source | '
+        '(xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" '
+        '>> "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+        "fi",
+        'if [ -d "/snap/foo/current/opt/ros/snap/" ]; then',
+        'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths '
+        '"/snap/foo/current/opt/ros/snap" --ignore-packages-from-source | (xargs '
+        'rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> '
+        '"${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+        "fi",
+        "",
         'rosdep install --default-yes --ignore-packages-from-source --from-paths "${SNAPCRAFT_PART_SRC_WORK}"',
         'state="$(set +o); set -$-"',
         "set +u",
-        'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
-        "set -- --local",
-        '_CATKIN_SETUP_DIR="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh"',
-        "set -- --local --extend",
-        "else",
-        "set -- --local",
+        "",
+        "## Sourcing ROS ws in build snaps",
+        'if [ -f "/snap/foo/current/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
+        'set -- --local "${_EXTEND_WS}"',
+        '_CATKIN_SETUP_DIR="/snap/foo/current/opt/ros/${ROS_DISTRO}" . "/snap/foo/current/opt/ros/${ROS_DISTRO}/setup.sh"',
+        'if [ -z ${_EXTEND_WS} ]; then _EXTEND_WS="--extend"; fi',
         "fi",
-        '. /opt/ros/"${ROS_DISTRO}"/setup.sh',
+        "",
+        "## Sourcing ROS ws in stage snaps",
+        'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
+        'set -- --local "${_EXTEND_WS}"',
+        '_CATKIN_SETUP_DIR="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh"',
+        'if [ -z ${_EXTEND_WS} ]; then _EXTEND_WS="--extend"; fi',
+        "fi",
+        "",
+        "## Sourcing ROS ws in system",
+        'if [ -f "/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
+        'set -- --local "${_EXTEND_WS}"',
+        '_CATKIN_SETUP_DIR="/opt/ros/${ROS_DISTRO}" . "/opt/ros/${ROS_DISTRO}/setup.sh"',
+        'if [ -z ${_EXTEND_WS} ]; then _EXTEND_WS="--extend"; fi',
+        "fi",
+        "",
         'eval "${state}"',
+        "## Build command",
         "catkin_make_isolated --install --merge "
         '--source-space "${SNAPCRAFT_PART_SRC_WORK}" --build-space "${SNAPCRAFT_PART_BUILD}" '
         '--install-space "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" '
         '-j "${SNAPCRAFT_PARALLEL_BUILD_COUNT}" --pkg package1 package2... '
-        "--ignore-pkg ipackage1 ipackage2... --cmake-args cmake args...",
+        "--ignore-pkg ipackage1 ipackage2... --cmake-args cmake args... DCMAKE_EXNTENSION_ARGS bar",
         "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/bin:/test SNAP=TESTSNAP "
         "SNAP_ARCH=TESTARCH SNAP_NAME=TESTSNAPNAME SNAP_VERSION=TESTV1 "
         "http_proxy=http://foo https_proxy=https://bar "

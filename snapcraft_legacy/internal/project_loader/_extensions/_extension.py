@@ -63,6 +63,10 @@ class Extension(metaclass=abc.ABCMeta):
         self.part_snippet = dict()  # type: Dict[str, Any]
         self.parts = dict()  # type: Dict[str, Any]
 
+    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+        """Return the part snippet to apply to a part."""
+        return self.part_snippet
+
     def _sanity_check(self, *, extension_name: str, yaml_data: Dict[str, Any]) -> None:
         base = yaml_data.get("base")
 

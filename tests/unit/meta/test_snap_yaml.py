@@ -124,6 +124,111 @@ def test_assumes(simple_project, new_dir):
     )
 
 
+def test_links_scalars(simple_project, new_dir):
+    snap_yaml.write(
+        simple_project(
+            contact="me@acme.com",
+            issues="https://hubhub.com/issues",
+            donation="https://moneyfornothing.com",
+            source_code="https://closed.acme.com",
+            website="https://acme.com",
+        ),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    content = yaml_file.read_text()
+    assert content == textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        base: core22
+        apps:
+          app1:
+            command: bin/mytest
+        confinement: strict
+        grade: stable
+        environment:
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+        links:
+          contact:
+          - me@acme.com
+          donation:
+          - https://moneyfornothing.com
+          issues:
+          - https://hubhub.com/issues
+          source-code:
+          - https://closed.acme.com
+          website:
+          - https://acme.com
+        """
+    )
+
+
+def test_links_lists(simple_project, new_dir):
+    snap_yaml.write(
+        simple_project(
+            contact=[
+                "me@acme.com",
+                "you@acme.com",
+            ],
+            issues=[
+                "https://hubhub.com/issues",
+                "https://corner.com/issues",
+            ],
+            donation=["https://moneyfornothing.com", "https://prince.com"],
+            source_code="https://closed.acme.com",
+            website="https://acme.com",
+        ),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    content = yaml_file.read_text()
+    assert content == textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        base: core22
+        apps:
+          app1:
+            command: bin/mytest
+        confinement: strict
+        grade: stable
+        environment:
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+        links:
+          contact:
+          - me@acme.com
+          - you@acme.com
+          donation:
+          - https://moneyfornothing.com
+          - https://prince.com
+          issues:
+          - https://hubhub.com/issues
+          - https://corner.com/issues
+          source-code:
+          - https://closed.acme.com
+          website:
+          - https://acme.com
+        """
+    )
+
+
 @pytest.fixture
 def complex_project():
     snapcraft_yaml = textwrap.dedent(
@@ -593,6 +698,62 @@ def test_project_environment_ld_library_path_null(simple_project, new_dir):
     )
 
 
+@pytest.mark.parametrize(
+    "ld_library_path",
+    [{}, {"LD_LIBRARY_PATH": None}, {"LD_LIBRARY_PATH": "test-ld-library-path"}],
+)
+@pytest.mark.parametrize("path", [{}, {"PATH": None}, {"PATH": "test-path"}])
+@pytest.mark.parametrize(
+    "other_var", [{}, {"OTHER_VAR": None}, {"OTHER_VAR": "test-foo"}]
+)
+def test_project_environment_classic_confinement(
+    ld_library_path, path, other_var, simple_project, new_dir
+):
+    """Verify environment when confinement is classic."""
+    # create expected environment in meta/snap.yaml
+    environment = ld_library_path.update(path)
+    if environment:
+        expected_environment = "environment\n"
+        if ld_library_path:
+            expected_environment += f"  LD_LIBRARY_PATH: {ld_library_path}"
+        if path:
+            expected_environment += f"  PATH: {path}"
+        if other_var:
+            expected_environment += f"  OTHER_VAR: {other_var}"
+    else:
+        expected_environment = ""
+
+    snap_yaml.write(
+        simple_project(environment=environment, confinement="classic"),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    content = yaml_file.read_text()
+    assert (
+        content
+        == textwrap.dedent(
+            """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        base: core22
+        apps:
+          app1:
+            command: bin/mytest
+        confinement: classic
+        grade: stable
+        """
+        )
+        + expected_environment
+    )
+
+
 def test_version_git(simple_project, new_dir, mocker):
     """Version in projects with ``version:git`` must be correctly handled."""
     mocker.patch(
@@ -1025,3 +1186,60 @@ def test_architectures_all(simple_project, new_dir):
         "${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:"
         "$SNAP/lib:$SNAP/usr/lib\n"
     ) in content
+
+
+##############
+# Test Links #
+##############
+
+
+def test_links_for_scalars(simple_project):
+    project = simple_project(
+        contact="me@acme.com",
+        issues="https://hubhub.com/issues",
+        donation="https://moneyfornothing.com",
+        source_code="https://closed.acme.com",
+        website="https://acme.com",
+    )
+
+    links = snap_yaml.Links.from_project(project)
+
+    assert links.contact == [project.contact]
+    assert links.issues == [project.issues]
+    assert links.donation == [project.donation]
+    assert links.source_code == [project.source_code]
+    assert links.website == [project.website]
+
+    assert bool(links) is True
+
+
+def test_links_for_lists(simple_project):
+    project = simple_project(
+        contact=[
+            "me@acme.com",
+            "you@acme.com",
+        ],
+        issues=[
+            "https://hubhub.com/issues",
+            "https://corner.com/issues",
+        ],
+        donation=["https://moneyfornothing.com", "https://prince.com"],
+    )
+
+    links = snap_yaml.Links.from_project(project)
+
+    assert links.contact == project.contact
+    assert links.issues == project.issues
+    assert links.donation == project.donation
+    assert links.source_code is None
+    assert links.website is None
+
+    assert bool(links) is True
+
+
+def test_no_links(simple_project):
+    project = simple_project()
+
+    links = snap_yaml.Links.from_project(project)
+
+    assert bool(links) is False

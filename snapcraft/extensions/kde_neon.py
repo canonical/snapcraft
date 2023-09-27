@@ -25,7 +25,7 @@ from overrides import overrides
 
 from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
-_SDK_SNAP = {"core22": "kf5-5-105-qt-5-15-9-core22-sdk"}
+_SDK_SNAP = {"core22": "kf5-5-108-qt-5-15-10-core22-sdk"}
 
 
 @dataclasses.dataclass
@@ -157,7 +157,7 @@ class KDENeon(Extension):
         }
 
     @overrides
-    def get_part_snippet(self) -> Dict[str, Any]:
+    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
         sdk_snap = self.kde_snaps.sdk
         cmake_args = self.ext_info.cmake_args
 
@@ -174,36 +174,6 @@ class KDENeon(Extension):
                         [
                             f"$CRAFT_STAGE/usr/share:/snap/{sdk_snap}/current/usr/share",
                             "/usr/share",
-                        ],
-                    ),
-                },
-                {
-                    "LD_LIBRARY_PATH": prepend_to_env(
-                        "LD_LIBRARY_PATH",
-                        [
-                            f"/snap/{sdk_snap}/current/lib/$CRAFT_ARCH_TRIPLET",
-                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET",
-                            f"/snap/{sdk_snap}/current/usr/lib",
-                            f"/snap/{sdk_snap}/current/usr/lib/vala-current",
-                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
-                        ],
-                    ),
-                },
-                {
-                    "PKG_CONFIG_PATH": prepend_to_env(
-                        "PKG_CONFIG_PATH",
-                        [
-                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig",
-                            f"/snap/{sdk_snap}/current/usr/lib/pkgconfig",
-                            f"/snap/{sdk_snap}/current/usr/share/pkgconfig",
-                        ],
-                    ),
-                },
-                {
-                    "ACLOCAL_PATH": prepend_to_env(
-                        "ACLOCAL_PATH",
-                        [
-                            f"/snap/{sdk_snap}/current/usr/share/aclocal",
                         ],
                     ),
                 },

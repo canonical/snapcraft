@@ -1,7 +1,10 @@
 #!/bin/bash
-#################
-# Launcher init #
-#################
+###########################################################
+# Launcher init
+# This is not used with the gnome extension for
+# core22 and later, please see
+# https://github.com/snapcore/snapcraft-desktop-integration
+###########################################################
 
 # shellcheck disable=SC2034
 START=$(date +%s.%N)

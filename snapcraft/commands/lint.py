@@ -23,7 +23,7 @@ import subprocess
 import tempfile
 import textwrap
 from contextlib import contextmanager
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Iterator, Optional
 
 from craft_cli import BaseCommand, emit
@@ -32,10 +32,9 @@ from craft_providers.multipass import MultipassProvider
 from craft_providers.util import snap_cmd
 from overrides import overrides
 
-from snapcraft import linters, projects, providers
-from snapcraft.errors import LegacyFallback, SnapcraftError
+from snapcraft import errors, linters, projects, providers
 from snapcraft.meta import snap_yaml
-from snapcraft.parts.lifecycle import apply_yaml, extract_parse_info, process_yaml
+from snapcraft.parts.yaml_utils import apply_yaml, extract_parse_info, process_yaml
 from snapcraft.utils import (
     get_host_architecture,
     get_managed_environment_home_path,
@@ -54,7 +53,7 @@ class LintCommand(BaseCommand):
 
         The snap is installed and linted inside a build environment. If an assertion
         file exists in the same directory as the snap file with the name
-        `<snap-name>.assert`, it will be used to install the snap in the instance.
+        ``<snap-name>.assert``, it will be used to install the snap in the instance.
         """
     )
 
@@ -148,14 +147,14 @@ class LintCommand(BaseCommand):
         :param http_proxy: http proxy to add to environment
         :param https_proxy: https proxy to add to environment
 
-        :raises SnapcraftError: If `snapcraft lint` fails inside the instance.
+        :raises errors.SnapcraftError: If `snapcraft lint` fails inside the instance.
         """
         emit.progress("Checking build provider availability.")
 
         provider = providers.get_provider()
         if isinstance(provider, MultipassProvider):
             # blocked by https://github.com/canonical/craft-providers/issues/169
-            raise SnapcraftError(
+            raise errors.SnapcraftError(
                 "'snapcraft lint' is not supported with Multipass as the build provider"
             )
         providers.ensure_provider_is_available(provider)
@@ -198,7 +197,7 @@ class LintCommand(BaseCommand):
                 with emit.pause():
                     instance.execute_run(command, check=True)
             except subprocess.CalledProcessError as error:
-                raise SnapcraftError(
+                raise errors.SnapcraftError(
                     f"failed to execute {shlex.join(command)!r} in instance",
                 ) from error
             finally:
@@ -231,7 +230,7 @@ class LintCommand(BaseCommand):
 
         :yields: Path to the snap's unsquashed directory.
 
-        :raises SnapcraftError: If the snap fails to unsquash.
+        :raises errors.SnapcraftError: If the snap fails to unsquash.
         """
         snap_file = snap_file.resolve()
 
@@ -252,7 +251,7 @@ class LintCommand(BaseCommand):
             try:
                 subprocess.run(extract_command, capture_output=True, check=True)
             except subprocess.CalledProcessError as error:
-                raise SnapcraftError(
+                raise errors.SnapcraftError(
                     f"could not unsquash snap file {snap_file.name!r}"
                 ) from error
 
@@ -275,8 +274,8 @@ class LintCommand(BaseCommand):
         try:
             # process_yaml will not parse core, core18, and core20 snaps
             yaml_data = process_yaml(snapcraft_yaml_file)
-        except LegacyFallback as error:
-            raise SnapcraftError(
+        except (errors.LegacyFallback, errors.MaintenanceBase) as error:
+            raise errors.SnapcraftError(
                 "can not lint snap using a base older than core22"
             ) from error
 
@@ -305,12 +304,12 @@ class LintCommand(BaseCommand):
 
         :returns: Path to where snap was installed.
 
-        :raises SnapcraftError: If the snap cannot be installed.
+        :raises errors.SnapcraftError: If the snap cannot be installed.
         """
         is_dangerous = not bool(assert_file)
 
         if assert_file:
-            ack_command = snap_cmd.formulate_ack_command(assert_file)
+            ack_command = snap_cmd.formulate_ack_command(PurePosixPath(assert_file))
             emit.progress(
                 f"Installing assertion file with {shlex.join(ack_command)!r}."
             )
@@ -328,7 +327,7 @@ class LintCommand(BaseCommand):
         install_command = snap_cmd.formulate_local_install_command(
             classic=bool(snap_metadata.confinement == "classic"),
             dangerous=is_dangerous,
-            snap_path=snap_file,
+            snap_path=PurePosixPath(snap_file),
         )
         if snap_metadata.grade == "devel":
             install_command.append("--devmode")
@@ -338,7 +337,7 @@ class LintCommand(BaseCommand):
         try:
             subprocess.run(install_command, capture_output=True, check=True)
         except subprocess.CalledProcessError as error:
-            raise SnapcraftError(
+            raise errors.SnapcraftError(
                 f"could not install snap file {snap_file.name!r}"
             ) from error
 

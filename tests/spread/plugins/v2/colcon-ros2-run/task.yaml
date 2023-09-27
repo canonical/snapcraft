@@ -1,0 +1,38 @@
+summary: Build and run a basic colcon snap
+
+kill-timeout: 180m
+
+environment:
+  SNAP/catkin_ros2_run: colcon-ros2-talker-listener
+
+systems:
+  - ubuntu-20.04
+  - ubuntu-20.04-64
+  - ubuntu-20.04-amd64
+  - ubuntu-20.04-arm64
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "../snaps/$SNAP/snap/snapcraft.yaml"
+
+restore: |
+  cd "../snaps/$SNAP"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "../snaps/$SNAP"
+
+  # Build what and install the snap
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+
+  # Run the ROS system. By default this will never exit, but the snap supports
+  # an `exit_after_receive` parameter that, if true, will cause the system to
+  # shutdown after the listener has successfully received a message.
+  "$SNAP" exit_after_receive:=true | MATCH "I heard: 'Hello, world! 0'"

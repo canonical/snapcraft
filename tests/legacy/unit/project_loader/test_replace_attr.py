@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2018, 2023 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pytest
 from testtools.matchers import Equals
 
 from snapcraft_legacy.internal import project_loader
@@ -200,3 +201,71 @@ class VariableReplacementsTest(unit.TestCase):
             ),
             Equals(expected),
         )
+
+
+def test_validate_replacements():
+    """Verify replacements are successfully validated for SNAPCRAFT_ARCH_BUILD_FOR and
+    SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR."""
+    input_attr = {
+        "stage": [
+            "test/file",
+            "$EMPTY_VAR",
+            "$SNAPCRAFT_PROJECT_NAME",
+            "test/SNAPCRAFT_ARCH_BUILD_FOR/file",
+            "test/$SNAPCRAFT_ARCH_BUILD_FOR/file",
+            "test/${SNAPCRAFT_ARCH_BUILD_FOR}/file",
+            "test/SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR/file",
+            "test/$SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR/file",
+            "test/${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}/file",
+        ],
+    }
+    expected_attr = {
+        "stage": [
+            "test/file",
+            "None",
+            "project_name",
+            "test/SNAPCRAFT_ARCH_BUILD_FOR/file",
+            "test/arm64/file",
+            "test/arm64/file",
+            "test/SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR/file",
+            "test/aarch64-linux-gnu/file",
+            "test/aarch64-linux-gnu/file",
+        ]
+    }
+    replacements = project_loader.environment_to_replacements(
+        {
+            "SNAPCRAFT_ARCH_BUILD_FOR": "arm64",
+            "SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR": "aarch64-linux-gnu",
+            "SNAPCRAFT_PROJECT_NAME": "project_name",
+            # this variable will evaluate to 'None' because it is not validated
+            "EMPTY_VAR": None,
+        }
+    )
+
+    actual_attr = project_loader.replace_attr(input_attr, replacements)
+
+    assert actual_attr == expected_attr
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        "test/$SNAPCRAFT_ARCH_BUILD_FOR/file",
+        "test/${SNAPCRAFT_ARCH_BUILD_FOR}/file",
+        "test/$SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR/file",
+        "test/${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}/file",
+    ],
+)
+def test_validate_replacements_error(data):
+    """Raise an error when a replacement fails validation for SNAPCRAFT_ARCH_BUILD_FOR
+    and SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR."""
+    input_attr = {"stage": [data]}
+    replacements = project_loader.environment_to_replacements(
+        {
+            "SNAPCRAFT_ARCH_BUILD_FOR": None,
+            "SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR": None,
+        }
+    )
+
+    with pytest.raises(project_loader.errors.VariableEvaluationError):
+        project_loader.replace_attr(input_attr, replacements)

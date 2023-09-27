@@ -211,8 +211,8 @@ def _download_snap_bootstrap_cmd(target_arch: str) -> List[str]:
         echo "Getting snapd deb for snap bootstrap..."
         # only download again if files does not exist, otherwise
         # assume we are re-running build
-        if [ ! -e ${{SNAPD_UNPACKED_SNAP}} ]; then
-        	download_snap_bootstrap {arch} ${{SNAPD_UNPACKED_SNAP}}
+        if [ ! -e ${{UC_INITRD_DEB}}/usr/lib/snapd ]; then
+        	download_snap_bootstrap {arch} ${{UC_INITRD_DEB}}
         fi
         """.format(
             arch=target_arch
@@ -278,17 +278,20 @@ def _do_base_config_cmd(
         logger.info("Using ubuntu config flavour %s", config_flavour)
         conf_cmd = textwrap.dedent(
             """	echo "Assembling Ubuntu config..."
-	branch=$(cut -d'.' -f 2- < ${{KERNEL_SRC}}/debian/debian.env)
-	baseconfigdir=${{KERNEL_SRC}}/debian.${{branch}}/config
-	archconfigdir=${{KERNEL_SRC}}/debian.${{branch}}/config/${{DEB_ARCH}}
-	ubuntuconfig=${{baseconfigdir}}/config.common.ubuntu
-	archconfig=${{archconfigdir}}/config.common.${{DEB_ARCH}}
-	flavourconfig=${{archconfigdir}}/config.flavour.{config_flavour}
-	cat ${{ubuntuconfig}} ${{archconfig}} ${{flavourconfig}} \
-> {dest_dir}/.config 2>/dev/null || true
 	if [ -f ${{KERNEL_SRC}}/debian/rules ] && [ -x ${{KERNEL_SRC}}/debian/rules ]; then
+		# Generate Ubuntu kernel configs
+		pushd ${{KERNEL_SRC}}
+		fakeroot debian/rules clean genconfigs || true
+		popd
+
+		# Pick the right kernel .config for the target arch and flavour
+		ubuntuconfig=${{KERNEL_SRC}}/CONFIGS/${{DEB_ARCH}}-config.flavour.{config_flavour}
+		cat ${{ubuntuconfig}} > {dest_dir}/.config
+
+		# Clean up kernel source directory
 		pushd ${{KERNEL_SRC}}
 		fakeroot debian/rules clean
+		rm -rf CONFIGS/
 		popd
 	fi""".format(
                 config_flavour=config_flavour, dest_dir=dest_dir
@@ -709,7 +712,7 @@ def _make_initrd_cmd(
         " ".join(
             [
                 "link_files",
-                '"${SNAPD_UNPACKED_SNAP}"',
+                '"${UC_INITRD_DEB}"',
                 '"usr/lib/snapd/snap-bootstrap"',
                 '"${uc_initrd_feature_snap_bootstratp}"',
             ]
@@ -717,7 +720,7 @@ def _make_initrd_cmd(
         " ".join(
             [
                 "link_files",
-                '"${SNAPD_UNPACKED_SNAP}"',
+                '"${UC_INITRD_DEB}"',
                 '"usr/lib/snapd/info"',
                 '"${uc_initrd_feature_snap_bootstratp}"',
             ]
@@ -725,7 +728,7 @@ def _make_initrd_cmd(
         " ".join(
             [
                 "cp",
-                "${SNAPD_UNPACKED_SNAP}/usr/lib/snapd/info",
+                "${UC_INITRD_DEB}/usr/lib/snapd/info",
                 f"{install_dir}/snapd-info",
             ]
         ),

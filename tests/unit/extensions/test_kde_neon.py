@@ -38,7 +38,7 @@ def kde_neon_extension_with_build_snap():
             "base": "core22",
             "parts": {
                 "part1": {
-                    "build-snaps": ["kf5-5-105-qt-5-15-9-core22-sdk/latest/stable"]
+                    "build-snaps": ["kf5-5-108-qt-5-15-10-core22-sdk/latest/stable"]
                 }
             },
         },
@@ -53,7 +53,9 @@ def kde_neon_extension_with_default_build_snap_from_latest_edge():
         yaml_data={
             "base": "core22",
             "parts": {
-                "part1": {"build-snaps": ["kf5-5-105-qt-5-15-9-core22-sdk/latest/edge"]}
+                "part1": {
+                    "build-snaps": ["kf5-5-108-qt-5-15-10-core22-sdk/latest/edge"]
+                }
             },
         },
         arch="amd64",
@@ -109,10 +111,10 @@ def test_get_root_snippet(kde_neon_extension):
                 "target": "$SNAP/data-dir/sounds",
                 "default-provider": "gtk-common-themes",
             },
-            "kf5-5-105-qt-5-15-9-core22": {
-                "content": "kf5-5-105-qt-5-15-9-core22-all",
+            "kf5-5-108-qt-5-15-10-core22": {
+                "content": "kf5-5-108-qt-5-15-10-core22-all",
                 "interface": "content",
-                "default-provider": "kf5-5-105-qt-5-15-9-core22",
+                "default-provider": "kf5-5-108-qt-5-15-10-core22",
                 "target": "$SNAP/kf5",
             },
         },
@@ -143,10 +145,10 @@ def test_get_root_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
                 "target": "$SNAP/data-dir/sounds",
                 "default-provider": "gtk-common-themes",
             },
-            "kf5-5-105-qt-5-15-9-core22": {
-                "content": "kf5-5-105-qt-5-15-9-core22-all",
+            "kf5-5-108-qt-5-15-10-core22": {
+                "content": "kf5-5-108-qt-5-15-10-core22-all",
                 "interface": "content",
-                "default-provider": "kf5-5-105-qt-5-15-9-core22",
+                "default-provider": "kf5-5-108-qt-5-15-10-core22",
                 "target": "$SNAP/kf5",
             },
         },
@@ -168,57 +170,23 @@ class TestGetPartSnippet:
 
     @staticmethod
     def assert_get_part_snippet(kde_neon_instance):
-        assert kde_neon_instance.get_part_snippet() == {
+        assert kde_neon_instance.get_part_snippet(plugin_name="cmake") == {
             "build-environment": [
                 {
                     "PATH": (
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/usr/bin${PATH:+:$PATH}"
+                        "/snap/kf5-5-108-qt-5-15-10-core22-sdk/current/usr/bin${PATH:+:$PATH}"
                     )
                 },
                 {
                     "XDG_DATA_DIRS": (
-                        "$CRAFT_STAGE/usr/share:/snap/kf5-5-105-qt-5-15-9-core22-sdk"
+                        "$CRAFT_STAGE/usr/share:/snap/kf5-5-108-qt-5-15-10-core22-sdk"
                         "/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
                     )
                 },
                 {
-                    "LD_LIBRARY_PATH": ":".join(
-                        [
-                            "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                            "lib/$CRAFT_ARCH_TRIPLET",
-                            "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                            "usr/lib/$CRAFT_ARCH_TRIPLET",
-                            "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/usr/lib",
-                            "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                            "usr/lib/vala-current",
-                            "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                            "usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
-                        ]
-                    )
-                    + "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-                },
-                {
-                    "PKG_CONFIG_PATH": (
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                        "usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig:"
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                        "usr/lib/pkgconfig:"
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                        "usr/share/pkgconfig"
-                    )
-                    + "${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
-                },
-                {
-                    "ACLOCAL_PATH": (
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                        "usr/share/aclocal"
-                    )
-                    + "${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
-                },
-                {
                     "SNAPCRAFT_CMAKE_ARGS": (
                         "-DCMAKE_FIND_ROOT_PATH="
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current"
+                        "/snap/kf5-5-108-qt-5-15-10-core22-sdk/current"
                         "${SNAPCRAFT_CMAKE_ARGS:+:$SNAPCRAFT_CMAKE_ARGS}"
                     )
                 },
@@ -227,57 +195,24 @@ class TestGetPartSnippet:
 
 
 def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
-    assert kde_neon_extension_with_build_snap.get_part_snippet() == {
+    assert kde_neon_extension_with_build_snap.get_part_snippet(plugin_name="cmake") == {
         "build-environment": [
             {
                 "PATH": (
-                    "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
+                    "/snap/kf5-5-108-qt-5-15-10-core22-sdk/current/"
                     "usr/bin${PATH:+:$PATH}"
                 )
             },
             {
                 "XDG_DATA_DIRS": (
-                    "$CRAFT_STAGE/usr/share:/snap/kf5-5-105-qt-5-15-9-core22-sdk"
+                    "$CRAFT_STAGE/usr/share:/snap/kf5-5-108-qt-5-15-10-core22-sdk"
                     "/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
                 )
             },
             {
-                "LD_LIBRARY_PATH": ":".join(
-                    [
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                        "lib/$CRAFT_ARCH_TRIPLET",
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                        "usr/lib/$CRAFT_ARCH_TRIPLET",
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/usr/lib",
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                        "usr/lib/vala-current",
-                        "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                        "usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
-                    ]
-                )
-                + "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-            },
-            {
-                "PKG_CONFIG_PATH": (
-                    "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                    "usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig:"
-                    "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                    "usr/lib/pkgconfig:"
-                    "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/"
-                    "usr/share/pkgconfig"
-                )
-                + "${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
-            },
-            {
-                "ACLOCAL_PATH": (
-                    "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current/" "usr/share/aclocal"
-                )
-                + "${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
-            },
-            {
                 "SNAPCRAFT_CMAKE_ARGS": (
                     "-DCMAKE_FIND_ROOT_PATH="
-                    "/snap/kf5-5-105-qt-5-15-9-core22-sdk/current"
+                    "/snap/kf5-5-108-qt-5-15-10-core22-sdk/current"
                     "${SNAPCRAFT_CMAKE_ARGS:+:$SNAPCRAFT_CMAKE_ARGS}"
                 )
             },
@@ -292,8 +227,8 @@ def test_get_parts_snippet(kde_neon_extension):
         "kde-neon/sdk": {
             "source": str(source),
             "plugin": "make",
-            "make-parameters": ["PLATFORM_PLUG=kf5-5-105-qt-5-15-9-core22"],
-            "build-snaps": ["kf5-5-105-qt-5-15-9-core22-sdk"],
+            "make-parameters": ["PLATFORM_PLUG=kf5-5-108-qt-5-15-10-core22"],
+            "build-snaps": ["kf5-5-108-qt-5-15-10-core22-sdk"],
         }
     }
 
@@ -305,7 +240,7 @@ def test_get_parts_snippet_with_external_sdk(kde_neon_extension_with_build_snap)
         "kde-neon/sdk": {
             "source": str(source),
             "plugin": "make",
-            "make-parameters": ["PLATFORM_PLUG=kf5-5-105-qt-5-15-9-core22"],
+            "make-parameters": ["PLATFORM_PLUG=kf5-5-108-qt-5-15-10-core22"],
         }
     }
 
@@ -320,7 +255,7 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
             "kde-neon/sdk": {
                 "source": str(source),
                 "plugin": "make",
-                "make-parameters": ["PLATFORM_PLUG=kf5-5-105-qt-5-15-9-core22"],
+                "make-parameters": ["PLATFORM_PLUG=kf5-5-108-qt-5-15-10-core22"],
             }
         }
     )

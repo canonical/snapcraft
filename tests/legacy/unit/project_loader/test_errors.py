@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2020 Canonical Ltd
+# Copyright (C) 2020, 2023 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -27,3 +27,14 @@ def test_SnapcraftProjectUnusedKeyAssetError():
     assert error.get_brief() == "Found unused key asset 'foo'."
     assert error.get_details() == "All configured key assets must be utilized."
     assert error.get_resolution() == "Verify key usage and remove all unused keys."
+
+
+def test_variable_evaluation_error():
+    error = errors.VariableEvaluationError(
+        variable="TEST_VARIABLE", reason="reason", docs_url="www.example.com"
+    )
+
+    assert str(error) == (
+        "Cannot evaluate project variable 'TEST_VARIABLE': reason\n"
+        "For more information, check out: www.example.com"
+    )
