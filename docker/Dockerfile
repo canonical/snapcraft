@@ -36,7 +36,7 @@ FROM ubuntu:$UBUNTU
 COPY --from=builder /snap/core /snap/core
 COPY --from=builder /snap/core18 /snap/core18
 COPY --from=builder /snap/core20 /snap/core20
-COPY --from=builder /snap/core20 /snap/core22
+COPY --from=builder /snap/core22 /snap/core22
 COPY --from=builder /snap/snapcraft /snap/snapcraft
 COPY --from=builder /snap/bin/snapcraft /snap/bin/snapcraft
 
