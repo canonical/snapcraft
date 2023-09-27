@@ -17,68 +17,103 @@
 import pytest
 
 from snapcraft.extensions import qt_framework
+from snapcraft.extensions.qt_framework import _CONTENT_SNAP
 from snapcraft.extensions.extension import get_extensions_data_dir
-
-_EXTENSION_NAME = "qt6-5"
 
 ############
 # Fixtures #
 ############
 
+fixture_variables = "name,yaml_data,arch,target_arch"
+base_values = [
+    (
+        "qt6-5",
+        {"base": "core22", "parts": {}},
+        "amd64",
+        "amd64",
+    ),
+    (
+        "qt5-15",
+        {"base": "core22", "parts": {}},
+        "amd64",
+        "amd64",
+    ),
+]
 
-@pytest.fixture
-def qt_framework_extension():
-    return qt_framework.QTFramework(
-        name=_EXTENSION_NAME,
-        yaml_data={"base": "core22", "parts": {}},
-        arch="amd64",
-        target_arch="amd64",
-    )
-
-
-@pytest.fixture
-def qt_framework_extension_with_build_snap():
-    return qt_framework.QTFramework(
-        name=_EXTENSION_NAME,
-        yaml_data={
+builtin_stable_values = [
+    (
+        "qt6-5",
+        {
             "base": "core22",
             "parts": {"part1": {"build-snaps": ["qt-framework-sdk/6.5/stable"]}},
         },
-        arch="amd64",
-        target_arch="amd64",
-    )
+        "amd64",
+        "amd64",
+    ),
+    (
+        "qt5-15",
+        {
+            "base": "core22",
+            "parts": {"part1": {"build-snaps": ["qt-framework-sdk/5.15/stable"]}},
+        },
+        "amd64",
+        "amd64",
+    ),
+]
 
-
-@pytest.fixture
-def qt_framework_extension_with_default_build_snap_from_latest_edge():
-    return qt_framework.QTFramework(
-        name=_EXTENSION_NAME,
-        yaml_data={
+builtin_edge_values = [
+    (
+        "qt6-5",
+        {
             "base": "core22",
             "parts": {"part1": {"build-snaps": ["qt-framework-sdk/6.5/edge"]}},
         },
-        arch="amd64",
-        target_arch="amd64",
+        "amd64",
+        "amd64",
+    ),
+    (
+        "qt5-15",
+        {
+            "base": "core22",
+            "parts": {"part1": {"build-snaps": ["qt-framework-sdk/5.15/edge"]}},
+        },
+        "amd64",
+        "amd64",
+    ),
+]
+
+
+@pytest.fixture
+def qt_framework_extension(name, yaml_data, arch, target_arch):
+    return qt_framework.QTFramework(
+        name=name,
+        yaml_data=yaml_data,
+        arch=arch,
+        target_arch=target_arch,
     )
 
 
-###################
+#########################
 # QTFramework Extension #
-###################
+#########################
 
 
+@pytest.mark.parametrize(fixture_variables, base_values)
 def test_get_supported_bases(qt_framework_extension):
     assert qt_framework_extension.get_supported_bases() == ("core22",)
 
 
+@pytest.mark.parametrize(fixture_variables, base_values)
 def test_get_supported_confinement(qt_framework_extension):
     assert qt_framework_extension.get_supported_confinement() == ("strict", "devmode")
 
 
-def test_is_experimental():
-    assert qt_framework.QTFramework.is_experimental(base="core22") is False
+@pytest.mark.parametrize(fixture_variables, base_values)
+def test_is_experimental(qt_framework_extension):
+    assert qt_framework_extension.is_experimental(base="core22") is False
 
 
+@pytest.mark.parametrize(fixture_variables, base_values)
 def test_get_app_snippet(qt_framework_extension):
     assert qt_framework_extension.get_app_snippet() == {
         "command-chain": ["snap/command-chain/desktop-launch"],
@@ -89,7 +124,8 @@ def test_get_app_snippet(qt_framework_extension):
     }
 
 
-def test_get_root_snippet(qt_framework_extension):
+@pytest.mark.parametrize(fixture_variables, base_values)
+def test_get_root_snippet(qt_framework_extension, name, yaml_data, arch, target_arch):
     assert qt_framework_extension.get_root_snippet() == {
         "assumes": ["snapd2.43"],
         "compression": "lzo",
@@ -115,15 +151,18 @@ def test_get_root_snippet(qt_framework_extension):
             },
             "qt-framework": {
                 "interface": "content",
-                "default-provider": "qt-framework-6-5-core22",
+                "default-provider": _CONTENT_SNAP[name][yaml_data["base"]],
                 "target": "$SNAP/qt-framework",
             },
         },
     }
 
 
-def test_get_root_snippet_with_external_sdk(qt_framework_extension_with_build_snap):
-    assert qt_framework_extension_with_build_snap.get_root_snippet() == {
+@pytest.mark.parametrize(fixture_variables, builtin_stable_values)
+def test_get_root_snippet_with_external_sdk(
+    qt_framework_extension, name, yaml_data, arch, target_arch
+):
+    assert qt_framework_extension.get_root_snippet() == {
         "assumes": ["snapd2.43"],
         "compression": "lzo",
         "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/qt-framework"},
@@ -148,51 +187,16 @@ def test_get_root_snippet_with_external_sdk(qt_framework_extension_with_build_sn
             },
             "qt-framework": {
                 "interface": "content",
-                "default-provider": "qt-framework-6-5-core22",
+                "default-provider": _CONTENT_SNAP[name][yaml_data["base"]],
                 "target": "$SNAP/qt-framework",
             },
         },
     }
 
 
-class TestGetPartSnippet:
-    """Tests for QTFramework.get_part_snippet when using the default sdk snap name."""
-
-    def test_get_part_snippet(self, qt_framework_extension):
-        self.assert_get_part_snippet(qt_framework_extension)
-
-    def test_get_part_snippet_latest_edge(
-        self, qt_framework_extension_with_default_build_snap_from_latest_edge
-    ):
-        self.assert_get_part_snippet(
-            qt_framework_extension_with_default_build_snap_from_latest_edge
-        )
-
-    @staticmethod
-    def assert_get_part_snippet(qt_framework_instance):
-        assert qt_framework_instance.get_part_snippet(plugin_name="cmake") == {
-            "build-environment": [
-                {"PATH": "/snap/qt-framework-sdk/current/usr/bin${PATH:+:$PATH}"},
-                {
-                    "XDG_DATA_DIRS": "$CRAFT_STAGE/usr/share:"
-                    "/snap/qt-framework-sdk/current/usr/share:"
-                    "/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
-                },
-                {
-                    "SNAPCRAFT_CMAKE_ARGS": "-DCMAKE_FIND_ROOT_PATH=/snap/qt-framework-sdk/current:"
-                    "-DCMAKE_PREFIX_PATH=/snap/qt-framework-sdk/current/usr:"
-                    "-DZLIB_INCLUDE_DIR=/lib/x86_64-linux-gnu"
-                    "${SNAPCRAFT_CMAKE_ARGS:+:$SNAPCRAFT_CMAKE_ARGS}"
-                },
-            ],
-            "build-packages": ["libgl1-mesa-dev"],
-        }
-
-
-def test_get_part_snippet_with_external_sdk(qt_framework_extension_with_build_snap):
-    assert qt_framework_extension_with_build_snap.get_part_snippet(
-        plugin_name="cmake"
-    ) == {
+@pytest.mark.parametrize(fixture_variables, base_values)
+def test_get_part_snippet(qt_framework_extension):
+    assert qt_framework_extension.get_part_snippet(plugin_name="cmake") == {
         "build-environment": [
             {"PATH": "/snap/qt-framework-sdk/current/usr/bin${PATH:+:$PATH}"},
             {
@@ -211,24 +215,12 @@ def test_get_part_snippet_with_external_sdk(qt_framework_extension_with_build_sn
     }
 
 
-def test_get_parts_snippet(qt_framework_extension):
+@pytest.mark.parametrize(fixture_variables, builtin_stable_values)
+def test_get_parts_snippet(qt_framework_extension, name, yaml_data, arch, target_arch):
     source = get_extensions_data_dir() / "desktop" / "command-chain"
 
     assert qt_framework_extension.get_parts_snippet() == {
-        "qt6-5/sdk": {
-            "source": str(source),
-            "plugin": "make",
-            "make-parameters": ["PLATFORM_PLUG=qt-framework"],
-            "build-snaps": ["qt-framework-sdk/6.5/stable"],
-        }
-    }
-
-
-def test_get_parts_snippet_with_external_sdk(qt_framework_extension_with_build_snap):
-    source = get_extensions_data_dir() / "desktop" / "command-chain"
-
-    assert qt_framework_extension_with_build_snap.get_parts_snippet() == {
-        "qt6-5/sdk": {
+        f"{name}/sdk": {
             "source": str(source),
             "plugin": "make",
             "make-parameters": ["PLATFORM_PLUG=qt-framework"],
@@ -236,12 +228,28 @@ def test_get_parts_snippet_with_external_sdk(qt_framework_extension_with_build_s
     }
 
 
-def test_get_parts_snippet_with_external_sdk_different_channel(
-    qt_framework_extension_with_default_build_snap_from_latest_edge,
+@pytest.mark.parametrize(fixture_variables, builtin_stable_values)
+def test_get_parts_snippet_with_external_sdk(
+    qt_framework_extension, name, yaml_data, arch, target_arch
 ):
     source = get_extensions_data_dir() / "desktop" / "command-chain"
-    assert qt_framework_extension_with_default_build_snap_from_latest_edge.get_parts_snippet() == {
-        "qt6-5/sdk": {
+
+    assert qt_framework_extension.get_parts_snippet() == {
+        f"{name}/sdk": {
+            "source": str(source),
+            "plugin": "make",
+            "make-parameters": ["PLATFORM_PLUG=qt-framework"],
+        }
+    }
+
+
+@pytest.mark.parametrize(fixture_variables, builtin_edge_values)
+def test_get_parts_snippet_with_external_sdk_different_channel(
+    qt_framework_extension, name, yaml_data, arch, target_arch
+):
+    source = get_extensions_data_dir() / "desktop" / "command-chain"
+    assert qt_framework_extension.get_parts_snippet() == {
+        f"{name}/sdk": {
             "source": str(source),
             "plugin": "make",
             "make-parameters": ["PLATFORM_PLUG=qt-framework"],
