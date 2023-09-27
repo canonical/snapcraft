@@ -1,0 +1,51 @@
+summary: Build and run a basic qt 5.15 snap using extensions
+
+systems:
+  - ubuntu-22.04
+  - ubuntu-22.04-64
+  - ubuntu-22.04-amd64
+
+environment:
+  SNAP_DIR: ../snaps/qt5-15-hello
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "$SNAP_DIR"
+  output="$(snapcraft)"
+  snap install qt5-15-hello_*.snap --dangerous
+
+  [ "$(qt5-15-hello)" = "hello world" ]
+
+  # Verify that the extension command chain went through the proper setup procedure
+  snap_user_data="$HOME/snap/qt5-15-hello/current"
+  [ -d "$snap_user_data/.config" ]
+  [ -d "$snap_user_data/.local" ]
+  [ -f "$snap_user_data/.last_revision" ]
+  [ "$(cat "$snap_user_data/.last_revision")" = "SNAP_DESKTOP_LAST_REVISION=x1" ]
+
+
+  # Verify content snap was installed for dependency checks.
+  snap list gtk-common-themes
+  elif [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
+    snap list qt-framework-5-15-core22
+  fi
+
+
+  # Verify all dependencies were found.
+  if echo "$output" | grep -q "part is missing libraries"; then
+    echo "failed to find content snaps' libraries"
+    exit 1
+  fi
