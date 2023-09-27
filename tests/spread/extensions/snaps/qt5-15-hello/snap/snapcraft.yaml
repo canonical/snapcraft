@@ -1,0 +1,17 @@
+name: qt5-15-hello
+version: "1.0"
+summary: Test the kde-neon extension
+description: It simply prints a hello world
+
+grade: devel
+confinement: strict
+
+apps:
+  neon-hello:
+    command: usr/local/bin/hello
+    extensions: [qt5-15]
+
+parts:
+  hello:
+    plugin: cmake
+    source: .
