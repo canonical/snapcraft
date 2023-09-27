@@ -104,6 +104,19 @@ class _SafeLoader(yaml.SafeLoader):  # pylint: disable=too-many-ancestors
         )
 
 
+def safe_load(filestream: TextIO) -> Dict[str, Any]:
+    """Safe load and parse YAML-formatted file to a dictionary.
+
+    :returns: A dictionary containing the yaml data.
+
+    :raises SnapcraftError: if the file could not be loaded and parsed.
+    """
+    try:
+        return yaml.safe_load(filestream)
+    except yaml.error.YAMLError as err:
+        raise errors.SnapcraftError(f"snapcraft.yaml parsing error: {err!s}") from err
+
+
 def get_base(filestream: TextIO) -> Optional[str]:
     """Get the effective base from a snapcraft.yaml file.
 
@@ -113,16 +126,13 @@ def get_base(filestream: TextIO) -> Optional[str]:
 
     :raises SnapcraftError: If the yaml could not be loaded.
     """
-    try:
-        data = yaml.safe_load(filestream)
-        return utils.get_effective_base(
-            base=data.get("base"),
-            build_base=data.get("build-base"),
-            project_type=data.get("type"),
-            name=data.get("name"),
-        )
-    except yaml.error.YAMLError as err:
-        raise errors.SnapcraftError(f"snapcraft.yaml parsing error: {err!s}") from err
+    data = safe_load(filestream)
+    return utils.get_effective_base(
+        base=data.get("base"),
+        build_base=data.get("build-base"),
+        project_type=data.get("type"),
+        name=data.get("name"),
+    )
 
 
 def load(filestream: TextIO) -> Dict[str, Any]:
