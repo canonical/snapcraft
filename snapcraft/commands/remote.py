@@ -131,6 +131,8 @@ class RemoteBuildCommand(BaseCommand):
         ):
             raise AcceptPublicUploadError()
 
+        # pylint: disable=attribute-defined-outside-init
+        self._snapcraft_yaml = yaml_utils.get_snap_project().project_file
         base = self._get_effective_base()
         self._run_new_or_fallback_remote_build(base)
 
@@ -219,26 +221,25 @@ class RemoteBuildCommand(BaseCommand):
 
         :returns: The project's effective base.
 
-        :raises SnapcraftError: If the base is unknown or missing or if the
-        snapcraft.yaml cannot be loaded.
+        :raises SnapcraftError: If the base is unknown or missing.
         :raises MaintenanceBase: If the base is not supported
         """
-        snapcraft_yaml = yaml_utils.get_snap_project().project_file
-
-        with open(snapcraft_yaml, encoding="utf-8") as file:
+        with open(self._snapcraft_yaml, encoding="utf-8") as file:
             base = yaml_utils.get_base(file)
 
         if base is None:
             raise SnapcraftError(
-                f"Could not determine base from {str(snapcraft_yaml)!r}."
+                f"Could not determine base from {str(self._snapcraft_yaml)!r}."
             )
 
-        emit.debug(f"Got base {base!r} from {str(snapcraft_yaml)!r}.")
+        emit.debug(f"Got base {base!r} from {str(self._snapcraft_yaml)!r}.")
 
         if base in yaml_utils.ESM_BASES:
             raise MaintenanceBase(base)
 
         if base not in yaml_utils.BASES:
-            raise SnapcraftError(f"Unknown base {base!r} in {str(snapcraft_yaml)!r}.")
+            raise SnapcraftError(
+                f"Unknown base {base!r} in {str(self._snapcraft_yaml)!r}."
+            )
 
         return base

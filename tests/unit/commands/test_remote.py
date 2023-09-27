@@ -158,6 +158,18 @@ def test_remote_build_sudo_warns(emitter, mock_run_new_or_fallback_remote_build)
     mock_run_new_or_fallback_remote_build.assert_called_once()
 
 
+@pytest.mark.usefixtures("mock_argv", "mock_confirm")
+def test_cannot_load_snapcraft_yaml(capsys):
+    """Raise an error if the snapcraft.yaml does not exist."""
+    cli.run()
+
+    _, err = capsys.readouterr()
+    assert (
+        "Could not find snap/snapcraft.yaml. "
+        "Are you sure you are in the right directory?" in err
+    )
+
+
 ################################
 # Snapcraft project base tests #
 ################################
@@ -207,18 +219,6 @@ def test_get_effective_base_type(
     cli.run()
 
     mock_run_new_or_fallback_remote_build.assert_called_once_with(base)
-
-
-@pytest.mark.usefixtures("mock_argv", "mock_confirm")
-def test_get_effective_base_cannot_load_snapcraft_yaml(capsys):
-    """Raise an error if the snapcraft.yaml does not exist."""
-    cli.run()
-
-    _, err = capsys.readouterr()
-    assert (
-        "Could not find snap/snapcraft.yaml. "
-        "Are you sure you are in the right directory?" in err
-    )
 
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
