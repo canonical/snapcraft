@@ -19,6 +19,7 @@
 from functools import partial
 from hashlib import md5
 from pathlib import Path
+from typing import List
 
 
 def get_build_id(app_name: str, project_name: str, project_path: Path) -> str:
@@ -27,9 +28,11 @@ def get_build_id(app_name: str, project_name: str, project_path: Path) -> str:
     The build id is formatted as `snapcraft-<project-name>-<hash>`.
     The hash is a hash of all files in the project directory.
 
-    :returns: The build id.
+    :param app_name: Name of the application.
+    :param project_name: Name of the project.
+    :param project_path: Path of the project.
 
-    :raises SnapcraftError: If the snapcraft.yaml does not contain a 'name' keyword.
+    :returns: The build id.
     """
     project_hash = _compute_hash(project_path)
 
@@ -41,6 +44,9 @@ def _compute_hash(directory: Path) -> str:
 
     If a file or its contents within the directory are modified, then the hash
     will be different.
+
+    The hash may not be unique if the contents of one file are moved to another file
+    or if files are reorganized.
 
     :returns: A string containing the md5 hash.
 
@@ -57,14 +63,16 @@ def _compute_hash(directory: Path) -> str:
             "a directory."
         )
 
-    # sort the list of files for reproducibility
-    files = sorted([file for file in directory.glob("**/*") if file.is_file()])
-    md5_hash = md5()  # noqa: S324 (insecure-hash-function)
+    files = sorted([file for file in Path().glob("**/*") if file.is_file()])
+    hashes: List[str] = []
 
     for file_path in files:
+        md5_hash = md5()  # noqa: S324 (insecure-hash-function)
         with open(file_path, "rb") as file:
             # read files in chunks in case they are large
             for block in iter(partial(file.read, 4096), b""):
                 md5_hash.update(block)
+        hashes.append(md5_hash.hexdigest())
 
-    return md5_hash.hexdigest()
+    all_hashes = "".join(hashes).encode()
+    return md5(all_hashes).hexdigest()  # noqa: S324 (insecure-hash-function)
