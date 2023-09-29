@@ -13,9 +13,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Remote-build command tests."""
+
 import sys
+from pathlib import Path
 
 import pytest
+from yaml import safe_dump
 
 from snapcraft import cli
 from snapcraft.parts.yaml_utils import CURRENT_BASES, ESM_BASES, LEGACY_BASES
@@ -31,6 +36,12 @@ pytestmark = pytest.mark.usefixtures("new_dir")
 def create_snapcraft_yaml(request, snapcraft_yaml):
     """Create a snapcraft.yaml file with a particular base."""
     snapcraft_yaml(base=request.param)
+
+
+@pytest.fixture()
+def use_new_remote_build(monkeypatch):
+    """Fixture to force using the new remote-build code."""
+    monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "disable-fallback")
 
 
 @pytest.fixture
@@ -158,6 +169,18 @@ def test_remote_build_sudo_warns(emitter, mock_run_new_or_fallback_remote_build)
     mock_run_new_or_fallback_remote_build.assert_called_once()
 
 
+@pytest.mark.usefixtures("mock_argv", "mock_confirm")
+def test_cannot_load_snapcraft_yaml(capsys):
+    """Raise an error if the snapcraft.yaml does not exist."""
+    cli.run()
+
+    _, err = capsys.readouterr()
+    assert (
+        "Could not find snap/snapcraft.yaml. "
+        "Are you sure you are in the right directory?" in err
+    )
+
+
 ################################
 # Snapcraft project base tests #
 ################################
@@ -207,18 +230,6 @@ def test_get_effective_base_type(
     cli.run()
 
     mock_run_new_or_fallback_remote_build.assert_called_once_with(base)
-
-
-@pytest.mark.usefixtures("mock_argv", "mock_confirm")
-def test_get_effective_base_cannot_load_snapcraft_yaml(capsys):
-    """Raise an error if the snapcraft.yaml does not exist."""
-    cli.run()
-
-    _, err = capsys.readouterr()
-    assert (
-        "Could not find snap/snapcraft.yaml. "
-        "Are you sure you are in the right directory?" in err
-    )
 
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
@@ -435,3 +446,80 @@ def test_run_in_repo_newer_than_core22(emitter, mock_run_legacy, monkeypatch, ne
     emitter.assert_debug(
         "Running fallback remote-build because new remote-build is not available."
     )
+
+
+##################
+# Build id tests #
+##################
+
+# The build-id is not currently used, so these unit tests test the log output.
+# When #4323 is complete, these tests can be rewritten to verify the build-id passed
+# to the new remote-build code.
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml",
+    "mock_confirm",
+    "mock_argv",
+    "mock_run_legacy",
+    "use_new_remote_build",
+)
+def test_build_id_provided(emitter, mocker):
+    """Use the build id provided as an argument."""
+    mocker.patch.object(
+        sys, "argv", ["snapcraft", "remote-build", "--build-id", "test-build-id"]
+    )
+
+    cli.run()
+
+    emitter.assert_debug("Using build ID 'test-build-id' passed as a parameter.")
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml",
+    "mock_confirm",
+    "mock_argv",
+    "mock_run_legacy",
+    "use_new_remote_build",
+)
+def test_build_id_computed(emitter):
+    """Compute the build id."""
+    cli.run()
+
+    # The create_snapcraft_yaml fixture uses the project name 'mytest'.
+    # Look for an md5 hash (a 32 character lowercase hex string).
+    emitter.assert_debug(
+        "Using computed build ID 'snapcraft-mytest-[0-9a-f]{32}'.", regex=True
+    )
+
+
+@pytest.mark.parametrize("base", CURRENT_BASES | LEGACY_BASES)
+@pytest.mark.usefixtures("mock_confirm", "mock_argv", "use_new_remote_build")
+def test_build_id_no_project_name_error(base, capsys):
+    """Raise an error if there is no name in the snapcraft.yaml file."""
+    content = {
+        "base": base,
+        "version": "0.1",
+        "summary": "test",
+        "description": "test",
+        "grade": "stable",
+        "confinement": "strict",
+        "parts": {
+            "part1": {
+                "plugin": "nil",
+            }
+        },
+    }
+    yaml_path = Path("snapcraft.yaml")
+    yaml_path.write_text(safe_dump(content, indent=2), encoding="utf-8")
+
+    cli.run()
+
+    _, err = capsys.readouterr()
+    assert "Could not get project name from 'snapcraft.yaml'." in err

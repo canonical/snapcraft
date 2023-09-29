@@ -30,7 +30,7 @@ from overrides import overrides
 from snapcraft.errors import MaintenanceBase, SnapcraftError
 from snapcraft.legacy_cli import run_legacy
 from snapcraft.parts import yaml_utils
-from snapcraft.remote import is_repo
+from snapcraft.remote import get_build_id, is_repo
 from snapcraft.utils import confirm_with_user, humanize_list
 from snapcraft_legacy.internal.remote_build.errors import AcceptPublicUploadError
 
@@ -103,65 +103,40 @@ class RemoteBuildCommand(BaseCommand):
             help="acknowledge that uploaded code will be publicly available.",
         )
 
-    def _get_build_strategy(self) -> Optional[_Strategies]:
-        """Get the build strategy from the envvar `SNAPCRAFT_REMOTE_BUILD_STRATEGY`.
+    @overrides
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        """Run the remote-build command.
 
-        :returns: The strategy or None.
+        :param parsed_args: Snapcraft's argument namespace.
 
-        :raises SnapcraftError: If the variable is set to an invalid value.
+        :raises AcceptPublicUploadError: If the user does not agree to upload data.
+        :raises SnapcraftError: If the project cannot be loaded and parsed.
         """
-        strategy = os.getenv(_STRATEGY_ENVVAR)
-
-        if not strategy:
-            return None
-
-        try:
-            return _Strategies(strategy)
-        except ValueError as err:
-            valid_strategies = humanize_list(
-                (strategy.value for strategy in _Strategies), "and"
-            )
-            raise SnapcraftError(
-                f"Unknown value {strategy!r} in environment variable "
-                f"{_STRATEGY_ENVVAR!r}. Valid values are {valid_strategies}."
-            ) from err
-
-    def _get_effective_base(self) -> str:
-        """Get a valid effective base from the project's snapcraft.yaml.
-
-        :returns: The project's effective base.
-
-        :raises SnapcraftError: If the base is unknown or missing or if the
-        snapcraft.yaml cannot be loaded.
-        :raises MaintenanceBase: If the base is not supported
-        """
-        snapcraft_yaml = yaml_utils.get_snap_project().project_file
-
-        with open(snapcraft_yaml, encoding="utf-8") as file:
-            base = yaml_utils.get_base(file)
-
-        if base is None:
-            raise SnapcraftError(
-                f"Could not determine base from {str(snapcraft_yaml)!r}."
+        if os.getenv("SUDO_USER") and os.geteuid() == 0:
+            emit.message(
+                "Running with 'sudo' may cause permission errors and is discouraged."
             )
 
-        emit.debug(f"Got base {base!r} from {str(snapcraft_yaml)!r}.")
-
-        if base in yaml_utils.ESM_BASES:
-            raise MaintenanceBase(base)
-
-        if base not in yaml_utils.BASES:
-            raise SnapcraftError(f"Unknown base {base!r} in {str(snapcraft_yaml)!r}.")
-
-        return base
-
-    def _run_new_remote_build(self) -> None:
-        """Run new remote-build code."""
-        # TODO: use new remote-build code (#4323)
-        emit.debug(
-            "Running fallback remote-build because new remote-build is not available."
+        emit.message(
+            "snapcraft remote-build is experimental and is subject to change "
+            "- use with caution."
         )
-        run_legacy()
+
+        if parsed_args.build_on:
+            emit.message("Use --build-for instead of --build-on")
+            parsed_args.build_for = parsed_args.build_on
+
+        if not parsed_args.launchpad_accept_public_upload and not confirm_with_user(
+            _CONFIRMATION_PROMPT
+        ):
+            raise AcceptPublicUploadError()
+
+        # pylint: disable=attribute-defined-outside-init
+        self._snapcraft_yaml = yaml_utils.get_snap_project().project_file
+        self._parsed_args = parsed_args
+        # pylint: enable=attribute-defined-outside-init
+        base = self._get_effective_base()
+        self._run_new_or_fallback_remote_build(base)
 
     def _run_new_or_fallback_remote_build(self, base: str) -> None:
         """Run the new or fallback remote-build.
@@ -211,33 +186,96 @@ class RemoteBuildCommand(BaseCommand):
         emit.debug("Running fallback remote-build.")
         run_legacy()
 
-    @overrides
-    def run(self, parsed_args: argparse.Namespace) -> None:
-        """Run the remote-build command.
+    def _get_project_name(self) -> str:
+        """Get the project name from the project's snapcraft.yaml.
 
-        :param parsed_args: Snapcraft's argument namespace.
+        :returns: The project name.
 
-        :raises AcceptPublicUploadError: If the user does not agree to upload data.
-        :raises SnapcraftError: If the project cannot be loaded and parsed.
+        :raises SnapcraftError: If the snapcraft.yaml does not contain a 'name' keyword.
         """
-        if os.getenv("SUDO_USER") and os.geteuid() == 0:
-            emit.message(
-                "Running with 'sudo' may cause permission errors and is discouraged."
-            )
+        with open(self._snapcraft_yaml, encoding="utf-8") as file:
+            data = yaml_utils.safe_load(file)
 
-        emit.message(
-            "snapcraft remote-build is experimental and is subject to change "
-            "- use with caution."
+        project_name = data.get("name")
+
+        if project_name:
+            emit.debug(
+                f"Using project name {project_name!r} from "
+                f"{str(self._snapcraft_yaml)!r}."
+            )
+            return project_name
+
+        raise SnapcraftError(
+            f"Could not get project name from {str(self._snapcraft_yaml)!r}."
         )
 
-        if parsed_args.build_on:
-            emit.message("Use --build-for instead of --build-on")
-            parsed_args.build_for = parsed_args.build_on
+    def _run_new_remote_build(self) -> None:
+        """Run new remote-build code."""
+        # the build-id will be passed to the new remote-build code as part of #4323
+        if self._parsed_args.build_id:
+            build_id = self._parsed_args.build_id
+            emit.debug(f"Using build ID {build_id!r} passed as a parameter.")
+        else:
+            build_id = get_build_id(
+                app_name="snapcraft",
+                project_name=self._get_project_name(),
+                project_path=Path(),
+            )
+            emit.debug(f"Using computed build ID {build_id!r}.")
 
-        if not parsed_args.launchpad_accept_public_upload and not confirm_with_user(
-            _CONFIRMATION_PROMPT
-        ):
-            raise AcceptPublicUploadError()
+        # TODO: use new remote-build code (#4323)
+        emit.debug(
+            "Running fallback remote-build because new remote-build is not available."
+        )
+        run_legacy()
 
-        base = self._get_effective_base()
-        self._run_new_or_fallback_remote_build(base)
+    def _get_build_strategy(self) -> Optional[_Strategies]:
+        """Get the build strategy from the envvar `SNAPCRAFT_REMOTE_BUILD_STRATEGY`.
+
+        :returns: The strategy or None.
+
+        :raises SnapcraftError: If the variable is set to an invalid value.
+        """
+        strategy = os.getenv(_STRATEGY_ENVVAR)
+
+        if not strategy:
+            return None
+
+        try:
+            return _Strategies(strategy)
+        except ValueError as err:
+            valid_strategies = humanize_list(
+                (strategy.value for strategy in _Strategies), "and"
+            )
+            raise SnapcraftError(
+                f"Unknown value {strategy!r} in environment variable "
+                f"{_STRATEGY_ENVVAR!r}. Valid values are {valid_strategies}."
+            ) from err
+
+    def _get_effective_base(self) -> str:
+        """Get a valid effective base from the project's snapcraft.yaml.
+
+        :returns: The project's effective base.
+
+        :raises SnapcraftError: If the base is unknown or missing.
+        :raises MaintenanceBase: If the base is not supported
+        """
+        with open(self._snapcraft_yaml, encoding="utf-8") as file:
+            base = yaml_utils.get_base(file)
+
+        if base is None:
+            raise SnapcraftError(
+                f"Could not determine base from {str(self._snapcraft_yaml)!r}."
+            )
+
+        emit.debug(f"Got base {base!r} from {str(self._snapcraft_yaml)!r}.")
+
+        if base in yaml_utils.ESM_BASES:
+            raise MaintenanceBase(base)
+
+        if base not in yaml_utils.BASES:
+            raise SnapcraftError(
+                f"Unknown base {base!r} in {str(self._snapcraft_yaml)!r}."
+            )
+
+        return base
