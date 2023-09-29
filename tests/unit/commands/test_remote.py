@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Remote-build command tests."""
+
 import sys
 from pathlib import Path
-from unittest.mock import call
 
 import pytest
 from yaml import safe_dump
@@ -35,6 +36,12 @@ pytestmark = pytest.mark.usefixtures("new_dir")
 def create_snapcraft_yaml(request, snapcraft_yaml):
     """Create a snapcraft.yaml file with a particular base."""
     snapcraft_yaml(base=request.param)
+
+
+@pytest.fixture()
+def use_new_remote_build(monkeypatch):
+    """Fixture to force using the new remote-build code."""
+    monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "disable-fallback")
 
 
 @pytest.fixture
@@ -451,10 +458,16 @@ def test_run_in_repo_newer_than_core22(emitter, mock_run_legacy, monkeypatch, ne
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
 )
-@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
-def test_build_id_provided(emitter, mock_run_legacy, mocker):
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml",
+    "mock_confirm",
+    "mock_argv",
+    "mock_run_legacy",
+    "use_new_remote_build",
+)
+def test_build_id_provided(emitter, mocker):
     """Use the build id provided as an argument."""
     mocker.patch.object(
         sys, "argv", ["snapcraft", "remote-build", "--build-id", "test-build-id"]
@@ -466,10 +479,16 @@ def test_build_id_provided(emitter, mock_run_legacy, mocker):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
 )
-@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
-def test_build_id_computed(emitter, mock_run_legacy):
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml",
+    "mock_confirm",
+    "mock_argv",
+    "mock_run_legacy",
+    "use_new_remote_build",
+)
+def test_build_id_computed(emitter):
     """Compute the build id."""
     cli.run()
 
@@ -480,62 +499,9 @@ def test_build_id_computed(emitter, mock_run_legacy):
     )
 
 
-@pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
-)
-@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
-def test_build_id_computed_is_reproducible(emitter, mock_run_legacy):
-    """The build id should be the same when there are no changes to the directory."""
-    cli.run()
-    cli.run()
-
-    build_id = emitter.assert_debug(
-        "Using computed build ID 'snapcraft-mytest-[0-9a-f]{32}'.", regex=True
-    )
-    # an identical build-id should have been computed on both executions
-    assert emitter.interactions.count(call("debug", build_id)) == 2
-
-
-@pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
-)
-@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
-def test_build_id_computed_is_unique_file_modified(emitter, mock_run_legacy):
-    """The build id should change when a file is modified."""
-    Path("test1").write_text("Hello, World!", encoding="utf-8")
-    cli.run()
-    # adding a new file should change the build-id
-    Path("test2").write_text("Hello, World!", encoding="utf-8")
-    cli.run()
-
-    build_id = emitter.assert_debug(
-        "Using computed build ID 'snapcraft-mytest-[0-9a-f]{32}'.", regex=True
-    )
-    assert emitter.interactions.count(call("debug", build_id)) == 1
-
-
-@pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
-)
-@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
-def test_build_id_computed_is_unique_file_contents_modified(emitter, mock_run_legacy):
-    """The build id should change when the contents of a file is modified."""
-    Path("test").write_text("Hello, World!", encoding="utf-8")
-    cli.run()
-    # modifying the contents of a file should change the build-id
-    Path("test").write_text("Goodbye, World!", encoding="utf-8")
-    cli.run()
-
-    build_id = emitter.assert_debug(
-        "Using computed build ID 'snapcraft-mytest-[0-9a-f]{32}'.", regex=True
-    )
-    # the build-id should not be the same
-    assert emitter.interactions.count(call("debug", build_id)) == 1
-
-
-@pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
-@pytest.mark.usefixtures("mock_confirm", "mock_argv")
-def test_build_id_no_project_name(base, capsys, mock_run_legacy):
+@pytest.mark.parametrize("base", CURRENT_BASES | LEGACY_BASES)
+@pytest.mark.usefixtures("mock_confirm", "mock_argv", "use_new_remote_build")
+def test_build_id_no_project_name_error(base, capsys):
     """Raise an error if there is no name in the snapcraft.yaml file."""
     content = {
         "base": base,
