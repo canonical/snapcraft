@@ -1,13 +1,13 @@
 name: qt6-5-hello
 version: "1.0"
-summary: Test the kde-neon extension
+summary: Test the qt6-5 extension
 description: It simply prints a hello world
 
 grade: devel
 confinement: strict
 
 apps:
-  neon-hello:
+  qt6-5-hello:
     command: usr/local/bin/hello
     extensions: [qt6-5]
 
