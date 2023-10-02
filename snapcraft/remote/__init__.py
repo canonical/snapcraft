@@ -18,11 +18,12 @@
 
 from .errors import GitError, RemoteBuildError
 from .git import GitRepo, is_repo
-from .utils import get_build_id
+from .utils import get_build_id, rmtree
 
 __all__ = [
     "get_build_id",
     "is_repo",
+    "rmtree",
     "GitError",
     "GitRepo",
     "RemoteBuildError",
