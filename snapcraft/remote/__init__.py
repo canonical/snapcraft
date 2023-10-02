@@ -16,7 +16,12 @@
 
 """Remote-build and related utilities."""
 
-from .errors import GitError, RemoteBuildError
+from .errors import (
+    GitError,
+    LaunchpadHttpsError,
+    RemoteBuildError,
+    RemoteBuildTimeoutError,
+)
 from .git import GitRepo, is_repo
 from .utils import get_build_id, rmtree
 
@@ -26,5 +31,7 @@ __all__ = [
     "rmtree",
     "GitError",
     "GitRepo",
+    "LaunchpadHttpsError",
     "RemoteBuildError",
+    "RemoteBuildTimeoutError",
 ]
