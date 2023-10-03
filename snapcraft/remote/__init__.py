@@ -23,6 +23,7 @@ from .errors import (
     RemoteBuildTimeoutError,
 )
 from .git import GitRepo, is_repo
+from .launchpad import LaunchpadClient
 from .utils import get_build_id, rmtree
 
 __all__ = [
@@ -31,6 +32,7 @@ __all__ = [
     "rmtree",
     "GitError",
     "GitRepo",
+    "LaunchpadClient",
     "LaunchpadHttpsError",
     "RemoteBuildError",
     "RemoteBuildTimeoutError",
