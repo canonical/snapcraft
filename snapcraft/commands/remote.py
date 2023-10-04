@@ -30,9 +30,8 @@ from overrides import overrides
 from snapcraft.errors import MaintenanceBase, SnapcraftError
 from snapcraft.legacy_cli import run_legacy
 from snapcraft.parts import yaml_utils
-from snapcraft.remote import get_build_id, is_repo
+from snapcraft.remote import AcceptPublicUploadError, get_build_id, is_repo
 from snapcraft.utils import confirm_with_user, humanize_list
-from snapcraft_legacy.internal.remote_build.errors import AcceptPublicUploadError
 
 _CONFIRMATION_PROMPT = (
     "All data sent to remote builders will be publicly available. "

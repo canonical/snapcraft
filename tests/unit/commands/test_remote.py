@@ -24,8 +24,7 @@ from yaml import safe_dump
 
 from snapcraft import cli
 from snapcraft.parts.yaml_utils import CURRENT_BASES, ESM_BASES, LEGACY_BASES
-from snapcraft.remote import GitRepo
-from snapcraft_legacy.internal.remote_build.errors import AcceptPublicUploadError
+from snapcraft.remote import AcceptPublicUploadError, GitRepo
 
 # remote-build control logic may check if the working dir is a git repo,
 # so execute all tests inside a test directory

@@ -17,10 +17,12 @@
 """Remote-build and related utilities."""
 
 from .errors import (
+    AcceptPublicUploadError,
     GitError,
     LaunchpadHttpsError,
     RemoteBuildError,
     RemoteBuildTimeoutError,
+    UnsupportedArchitectureError,
 )
 from .git import GitRepo, is_repo
 from .launchpad import LaunchpadClient
@@ -31,11 +33,13 @@ __all__ = [
     "get_build_id",
     "is_repo",
     "rmtree",
+    "AcceptPublicUploadError",
     "GitError",
     "GitRepo",
     "LaunchpadClient",
     "LaunchpadHttpsError",
     "RemoteBuildError",
     "RemoteBuildTimeoutError",
+    "UnsupportedArchitectureError",
     "WorkTree",
 ]
