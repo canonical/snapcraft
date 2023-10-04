@@ -156,8 +156,11 @@ class GNOME(Extension):
                 }
             },
             "layout": {
-                "/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
-                    "bind": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
+                "/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
+                    "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
+                },
+                "/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.1": {
+                    "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.1"    
                 },
                 "/usr/share/xml/iso-codes": {
                     "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
