@@ -469,6 +469,13 @@ def test_run_in_repo_newer_than_core22(emitter, mock_run_legacy, monkeypatch, ne
     )
 
 
+######################
+# Architecture tests #
+######################
+
+# TODO: add unit tests once control logic is added
+
+
 ##################
 # Build id tests #
 ##################

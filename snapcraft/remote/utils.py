@@ -23,6 +23,26 @@ from hashlib import md5
 from pathlib import Path
 from typing import List
 
+from .errors import UnsupportedArchitectureError
+
+_SUPPORTED_ARCHS = ["amd64", "arm64", "armhf", "i386", "ppc64el", "s390x"]
+
+
+def validate_architectures(architectures: List[str]) -> None:
+    """Validate that architectures are supported for remote building.
+
+    :param architectures: list of architectures to Validate
+
+    :raises UnsupportedArchitectureError: if any architecture in the list in not
+    supported for remote building.
+    """
+    unsupported_archs = []
+    for arch in architectures:
+        if arch not in _SUPPORTED_ARCHS:
+            unsupported_archs.append(arch)
+    if unsupported_archs:
+        raise UnsupportedArchitectureError(architectures=unsupported_archs)
+
 
 def get_build_id(app_name: str, project_name: str, project_path: Path) -> str:
     """Get the build id for a project.

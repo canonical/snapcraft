@@ -21,7 +21,48 @@ from pathlib import Path
 
 import pytest
 
-from snapcraft.remote import get_build_id, rmtree
+from snapcraft.remote import (
+    UnsupportedArchitectureError,
+    get_build_id,
+    rmtree,
+    validate_architectures,
+)
+from snapcraft.remote.utils import _SUPPORTED_ARCHS
+
+###############################
+# validate architecture tests #
+###############################
+
+
+@pytest.mark.parametrize(("archs"), [["amd64"], _SUPPORTED_ARCHS])
+def test_validate_architectures(archs):
+    """Validate architectures."""
+    assert validate_architectures(archs) is None
+
+
+@pytest.mark.parametrize(
+    ("archs", "expected_archs"),
+    [
+        # invalid arch
+        (["unknown"], ["unknown"]),
+        # valid and invalid archs
+        (["amd64", "unknown"], ["unknown"]),
+        # multiple invalid archs
+        (["unknown1", "unknown2"], ["unknown1", "unknown2"]),
+        # multiple valid and invalid archs
+        (["unknown1", "unknown2"], ["unknown1", "unknown2"]),
+    ],
+)
+def test_validate_architectures_error(archs, expected_archs):
+    """Raise an error if an unsupported architecture is passed."""
+    with pytest.raises(UnsupportedArchitectureError) as raised:
+        validate_architectures(archs)
+
+    assert (
+        "The following architectures are not supported by the remote builder: "
+        f"{expected_archs}"
+    ) in str(raised.value)
+
 
 ##################
 # build id tests #

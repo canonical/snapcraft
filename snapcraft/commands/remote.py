@@ -21,7 +21,7 @@ import os
 import textwrap
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from craft_cli import BaseCommand, emit
 from craft_cli.helptexts import HIDDEN
@@ -31,7 +31,7 @@ from snapcraft.errors import MaintenanceBase, SnapcraftError
 from snapcraft.legacy_cli import run_legacy
 from snapcraft.parts import yaml_utils
 from snapcraft.remote import AcceptPublicUploadError, get_build_id, is_repo
-from snapcraft.utils import confirm_with_user, humanize_list
+from snapcraft.utils import confirm_with_user, get_host_architecture, humanize_list
 
 _CONFIRMATION_PROMPT = (
     "All data sent to remote builders will be publicly available. "
@@ -283,6 +283,56 @@ class RemoteBuildCommand(BaseCommand):
             )
 
         return base
+
+    def _get_project_architectures(self) -> List[str]:
+        """Get a list of build-on architectures from the project's snapcraft.yaml.
+
+        :returns: A list of architectures.
+        """
+        with open(self._snapcraft_yaml, encoding="utf-8") as file:
+            data = yaml_utils.safe_load(file)
+
+        project_archs = data.get("architectures")
+
+        archs = []
+        if project_archs:
+            for item in project_archs:
+                if "build-on" in item:
+                    new_arch = item["build-on"]
+                    if isinstance(new_arch, list):
+                        archs.extend(new_arch)
+                    else:
+                        archs.append(new_arch)
+
+        return archs
+
+    def _determine_architectures(self) -> List[str]:
+        """Determine architectures to build for.
+
+        The build architectures can be set via the `--build-on` parameter or determined
+        from the build-on architectures listed in the project's snapcraft.yaml.
+
+        :returns: A list of architectures.
+
+        :raises SnapcraftError: If `--build-on` was provided and architectures are
+        defined in the project's snapcraft.yaml.
+        """
+        project_architectures = self._get_project_architectures()
+        if project_architectures and self._parsed_args.build_for:
+            raise SnapcraftError(
+                "Cannot use `--build-on` because architectures are already defined in "
+                "the snapcraft.yaml."
+            )
+
+        if project_architectures:
+            archs = project_architectures
+        elif self._parsed_args.build_for:
+            archs = self._parsed_args.build_for
+        else:
+            # default to typical snapcraft behavior (build for host)
+            archs = [get_host_architecture()]
+
+        return archs
 
 
 def _get_esm_warning_for_base(base: str) -> str:
