@@ -51,7 +51,7 @@ class GNOME(Extension):
     - GTK3 Themes.
     - Common Icon Themes.
     - Common Sound Themes.
-    - The GNOME runtime libraries and utilities corresponding to 3.38.
+    - The GNOME runtime libraries and utilities corresponding to 3.38 to 45.
 
     For easier desktop integration, it also configures each application
     entry with these additional plugs:
@@ -147,6 +147,7 @@ class GNOME(Extension):
             "environment": {
                 "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
                 "GTK_USE_PORTAL": "1",
+                "GDK_DEBUG": "portals",
             },
             "hooks": {
                 "configure": {
