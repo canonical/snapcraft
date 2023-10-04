@@ -51,7 +51,7 @@ class GNOME(Extension):
     - GTK3 Themes.
     - Common Icon Themes.
     - Common Sound Themes.
-    - The GNOME runtime libraries and utilities corresponding to 3.38 to 45.
+    - The GNOME runtime libraries and utilities corresponding to versions from 3.38 to 45.
 
     For easier desktop integration, it also configures each application
     entry with these additional plugs:
