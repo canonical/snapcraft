@@ -1679,6 +1679,24 @@ class TestArchitecture:
             error.value
         )
 
+    @pytest.mark.parametrize(
+        "architectures",
+        [
+            "unknown",
+            {"build-on": ["unknown"]},
+            {"build-on": ["unknown"], "build-for": ["amd64"]},
+            {"build-on": ["amd64"], "build-for": ["unknown"]},
+        ],
+    )
+    def test_architecture_unsupported(self, architectures, project_yaml_data):
+        """Raise an error for unsupported architectures."""
+        data = project_yaml_data(architectures=[architectures])
+
+        with pytest.raises(errors.ProjectValidationError) as error:
+            Project.unmarshal(data)
+
+        assert "Architecture 'unknown' is not supported." in str(error.value)
+
     def test_project_get_build_on(self, project_yaml_data):
         """Test `get_build_on()` returns the build-on string."""
         data = project_yaml_data(
