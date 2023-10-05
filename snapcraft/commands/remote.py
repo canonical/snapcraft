@@ -30,7 +30,7 @@ from overrides import overrides
 from snapcraft.errors import MaintenanceBase, SnapcraftError
 from snapcraft.legacy_cli import run_legacy
 from snapcraft.parts import yaml_utils
-from snapcraft.remote import AcceptPublicUploadError, get_build_id, is_repo
+from snapcraft.remote import AcceptPublicUploadError, RemoteBuilder, is_repo
 from snapcraft.utils import confirm_with_user, get_host_architecture, humanize_list
 
 _CONFIRMATION_PROMPT = (
@@ -215,23 +215,48 @@ class RemoteBuildCommand(BaseCommand):
 
     def _run_new_remote_build(self) -> None:
         """Run new remote-build code."""
-        # the build-id will be passed to the new remote-build code as part of #4323
-        if self._parsed_args.build_id:
-            build_id = self._parsed_args.build_id
-            emit.debug(f"Using build ID {build_id!r} passed as a parameter.")
-        else:
-            build_id = get_build_id(
-                app_name="snapcraft",
-                project_name=self._get_project_name(),
-                project_path=Path(),
-            )
-            emit.debug(f"Using computed build ID {build_id!r}.")
-
-        # TODO: use new remote-build code (#4323)
-        emit.debug(
-            "Running fallback remote-build because new remote-build is not available."
+        emit.progress("Setting up launchpad environment.")
+        remote_builder = RemoteBuilder(
+            app_name="snapcraft",
+            build_id=self._parsed_args.build_id,
+            project_name=self._get_project_name(),
+            architectures=self._determine_architectures(),
+            project_dir=Path(),
         )
-        run_legacy()
+
+        if self._parsed_args.status:
+            remote_builder.print_status()
+            return
+
+        emit.progress("Looking for existing builds.")
+        has_outstanding_build = remote_builder.has_outstanding_build()
+        if self._parsed_args.recover and not has_outstanding_build:
+            emit.message("No build found.")
+            return
+
+        if has_outstanding_build:
+            emit.message("Found previously started build.")
+            remote_builder.print_status()
+
+            # If recovery specified, monitor build and exit.
+            if self._parsed_args.recover or confirm_with_user(
+                "Do you wish to recover this build?", default=True
+            ):
+                remote_builder.monitor_build()
+                remote_builder.clean_build()
+                return
+
+            # Otherwise clean running build before we start a new one.
+            emit.progress("Cleaning previously existing build.", permanent=True)
+            remote_builder.clean_build()
+
+        emit.message(
+            "If interrupted, resume with: 'snapcraft remote-build --recover "
+            f"--build-id {remote_builder.build_id}'."
+        )
+        remote_builder.start_build()
+        remote_builder.monitor_build()
+        remote_builder.clean_build()
 
     def _get_build_strategy(self) -> Optional[_Strategies]:
         """Get the build strategy from the envvar `SNAPCRAFT_REMOTE_BUILD_STRATEGY`.
