@@ -437,17 +437,6 @@ class LaunchpadClient:
             else:
                 logger.info("Fetched %s", file_name)
 
-    def _gitify_repository(self, repo_dir: Path) -> GitRepo:
-        """Git-ify source repository tree.
-
-        :return: Git handler instance to git repository.
-        """
-        repo = GitRepo(repo_dir)
-        if not repo.is_clean():
-            repo.add_all()
-            repo.commit()
-        return GitRepo
-
     def has_outstanding_build(self) -> bool:
         """Check if there is an existing build configured on Launchpad."""
         snap = self._get_snap()
@@ -455,7 +444,6 @@ class LaunchpadClient:
 
     def push_source_tree(self, repo_dir: Path) -> None:
         """Push source tree to Launchpad."""
-        git_handler = self._gitify_repository(repo_dir)
         lp_repo = self._create_git_repository(force=True)
         # This token will only be used once, immediately after issuing it,
         # so it can have a short expiry time.  It's not a problem if it
@@ -475,4 +463,5 @@ class LaunchpadClient:
 
         logger.info("Sending build data to Launchpad: %s", stripped_url)
 
-        git_handler.push_url(url, "main", "HEAD", token)
+        repo = GitRepo(repo_dir)
+        repo.push_url(url, "main", "HEAD", token)

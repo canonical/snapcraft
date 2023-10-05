@@ -445,29 +445,6 @@ def test_get_build_status(launchpad_client):
     }
 
 
-def test_git_repository_create_clean(mock_git_repo, launchpad_client):
-    mock_git_repo.return_value.is_clean.return_value = True
-    launchpad_client._gitify_repository(Path())
-
-    assert mock_git_repo.mock_calls == [
-        call(Path()),
-        call().is_clean(),
-    ]
-
-
-def test_git_repository_create_dirty(mock_git_repo, launchpad_client):
-    mock_git_repo.return_value.is_clean.return_value = False
-
-    launchpad_client._gitify_repository(Path())
-
-    assert mock_git_repo.mock_calls == [
-        call(Path()),
-        call().is_clean(),
-        call().add_all(),
-        call().commit(),
-    ]
-
-
 def test_push_source_tree(new_dir, mock_git_repo, launchpad_client):
     now = datetime.now(timezone.utc)
 
@@ -483,18 +460,19 @@ def test_push_source_tree(new_dir, mock_git_repo, launchpad_client):
 
     mock_git_repo.assert_has_calls(
         [
-            call.push_url(
+            call(Path()),
+            call().push_url(
                 "https://user:access-token@git.launchpad.net/~user/+git/id/",
                 "main",
                 "HEAD",
                 "access-token",
-            )
+            ),
         ]
     )
 
 
 def test_push_source_tree_error(new_dir, mock_git_repo, launchpad_client):
-    mock_git_repo.push_url.side_effect = errors.GitError("test error")
+    mock_git_repo.return_value.push_url.side_effect = errors.GitError("test error")
 
     with pytest.raises(errors.GitError):
         launchpad_client.push_source_tree(Path())
