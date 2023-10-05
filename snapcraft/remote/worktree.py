@@ -27,7 +27,7 @@ class WorkTree:
     def __init__(self, worktree_dir: Path) -> None:
         """Create remote-build WorkTree.
 
-        :param str worktree_dir: Directory to use for working tree.
+        :param worktree_dir: Directory to use for working tree.
         """
         # Working tree base directory.
         self._base_dir = worktree_dir

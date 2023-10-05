@@ -91,7 +91,7 @@ def rmtree(directory: Path) -> None:
     )
 
 
-def _remove_readonly(func, filepath):
+def _remove_readonly(func, filepath, _):
     """Shutil onerror function to make read-only files writable.
 
     Try setting file to writeable if error occurs during rmtree. Known to be required
@@ -100,5 +100,5 @@ def _remove_readonly(func, filepath):
 
     :param filepath: filepath to make writable
     """
-    filepath.chmod(stat.S_IWRITE)
+    Path(filepath).chmod(stat.S_IWRITE)
     func(filepath)

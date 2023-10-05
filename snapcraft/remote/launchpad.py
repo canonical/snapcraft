@@ -101,7 +101,7 @@ class LaunchpadClient:
         self._lp_name = build_id
         self._project_name = project_name
 
-        self._lp: Launchpad = self.login()
+        self._lp: Launchpad = self._login()
         self.user = self._lp.me.name
 
         self._deadline = deadline
@@ -191,7 +191,7 @@ class LaunchpadClient:
         try:
             return self._lp.load(url)
         except ConnectionResetError:
-            self._lp = self.login()
+            self._lp = self._login()
             return self._lp.load(url)
 
     def _wait_for_build_request_acceptance(self, build_request: Entry) -> None:
@@ -233,7 +233,7 @@ class LaunchpadClient:
         build_number = _get_url_basename(build_request.self_link)
         logger.debug("Build request accepted: %s", build_number)
 
-    def login(self) -> Launchpad:
+    def _login(self) -> Launchpad:
         """Login to launchpad."""
         try:
             return Launchpad.login_with(

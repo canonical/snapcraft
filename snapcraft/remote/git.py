@@ -17,7 +17,6 @@
 """Git repository class and helper utilities."""
 
 import logging
-import re
 from pathlib import Path
 from typing import Optional
 
@@ -168,7 +167,7 @@ class GitRepo:
 
         # hide secret tokens embedded in a url
         if token:
-            stripped_url = re.sub(token, "<token>", remote_url)
+            stripped_url = remote_url.replace(token, "<token>")
         else:
             stripped_url = remote_url
 
