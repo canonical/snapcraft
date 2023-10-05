@@ -24,6 +24,7 @@ import pytest
 from snapcraft.remote import (
     UnsupportedArchitectureError,
     get_build_id,
+    humanize_list,
     rmtree,
     validate_architectures,
 )
@@ -62,6 +63,46 @@ def test_validate_architectures_error(archs, expected_archs):
         "The following architectures are not supported by the remote builder: "
         f"{expected_archs}"
     ) in str(raised.value)
+
+
+#################
+# Humanize List #
+#################
+
+
+@pytest.mark.parametrize(
+    "items,conjunction,expected",
+    (
+        ([], "and", ""),
+        (["foo"], "and", "'foo'"),
+        (["foo", "bar"], "and", "'bar' and 'foo'"),
+        (["foo", "bar", "baz"], "and", "'bar', 'baz', and 'foo'"),
+        (["foo", "bar", "baz", "qux"], "and", "'bar', 'baz', 'foo', and 'qux'"),
+        ([], "or", ""),
+        (["foo"], "or", "'foo'"),
+        (["foo", "bar"], "or", "'bar' or 'foo'"),
+        (["foo", "bar", "baz"], "or", "'bar', 'baz', or 'foo'"),
+        (["foo", "bar", "baz", "qux"], "or", "'bar', 'baz', 'foo', or 'qux'"),
+    ),
+)
+def test_humanize_list(items, conjunction, expected):
+    """Test humanize_list."""
+    assert humanize_list(items, conjunction) == expected
+
+
+def test_humanize_list_sorted():
+    """Verify `sort` parameter."""
+    input_list = ["z", "a", "m test", "1"]
+
+    # unsorted list is in the same order as the original list
+    expected_list_unsorted = "'z', 'a', 'm test', and '1'"
+
+    # sorted list is sorted alphanumerically
+    expected_list_sorted = "'1', 'a', 'm test', and 'z'"
+
+    assert humanize_list(input_list, "and") == expected_list_sorted
+    assert humanize_list(input_list, "and", sort=True) == expected_list_sorted
+    assert humanize_list(input_list, "and", sort=False) == expected_list_unsorted
 
 
 ##################

@@ -26,11 +26,12 @@ from .errors import (
 )
 from .git import GitRepo, is_repo
 from .launchpad import LaunchpadClient
-from .utils import get_build_id, rmtree, validate_architectures
+from .utils import get_build_id, humanize_list, rmtree, validate_architectures
 from .worktree import WorkTree
 
 __all__ = [
     "get_build_id",
+    "humanize_list",
     "is_repo",
     "rmtree",
     "validate_architectures",

@@ -21,7 +21,7 @@ import stat
 from functools import partial
 from hashlib import md5
 from pathlib import Path
-from typing import List
+from typing import Iterable, List
 
 from .errors import UnsupportedArchitectureError
 
@@ -98,6 +98,39 @@ def _compute_hash(directory: Path) -> str:
 
     all_hashes = "".join(hashes).encode()
     return md5(all_hashes).hexdigest()  # noqa: S324 (insecure-hash-function)
+
+
+def humanize_list(
+    items: Iterable[str],
+    conjunction: str,
+    item_format: str = "{!r}",
+    sort: bool = True,
+) -> str:
+    """Format a list into a human-readable string.
+
+    :param items: list to humanize.
+    :param conjunction: the conjunction used to join the final element to
+                        the rest of the list (e.g. 'and').
+    :param item_format: format string to use per item.
+    :param sort: if true, sort the list.
+    """
+    if not items:
+        return ""
+
+    quoted_items = [item_format.format(item) for item in items]
+
+    if sort:
+        quoted_items = sorted(quoted_items)
+
+    if len(quoted_items) == 1:
+        return quoted_items[0]
+
+    humanized = ", ".join(quoted_items[:-1])
+
+    if len(quoted_items) > 2:
+        humanized += ","
+
+    return f"{humanized} {conjunction} {quoted_items[-1]}"
 
 
 def rmtree(directory: Path) -> None:
