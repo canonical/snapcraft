@@ -26,6 +26,7 @@ from .errors import (
 )
 from .git import GitRepo, is_repo
 from .launchpad import LaunchpadClient
+from .remote_builder import RemoteBuilder
 from .utils import get_build_id, humanize_list, rmtree, validate_architectures
 from .worktree import WorkTree
 
@@ -40,6 +41,7 @@ __all__ = [
     "GitRepo",
     "LaunchpadClient",
     "LaunchpadHttpsError",
+    "RemoteBuilder",
     "RemoteBuildError",
     "RemoteBuildTimeoutError",
     "UnsupportedArchitectureError",
