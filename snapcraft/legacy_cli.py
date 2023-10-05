@@ -25,7 +25,7 @@ import snapcraft
 import snapcraft_legacy
 from snapcraft_legacy.cli import legacy
 
-_LIB_NAMES = ("craft_parts", "craft_providers", "craft_store")
+_LIB_NAMES = ("craft_parts", "craft_providers", "craft_store", "snapcraft.remote")
 _ORIGINAL_LIB_NAME_LOG_LEVEL: Dict[str, int] = {}
 
 

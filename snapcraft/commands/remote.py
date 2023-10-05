@@ -242,20 +242,25 @@ class RemoteBuildCommand(BaseCommand):
             if self._parsed_args.recover or confirm_with_user(
                 "Do you wish to recover this build?", default=True
             ):
+                emit.progress("Building")
                 remote_builder.monitor_build()
+                emit.progress("Cleaning")
                 remote_builder.clean_build()
                 return
 
             # Otherwise clean running build before we start a new one.
-            emit.progress("Cleaning previously existing build.", permanent=True)
+            emit.progress("Cleaning previously existing build.")
             remote_builder.clean_build()
 
         emit.message(
             "If interrupted, resume with: 'snapcraft remote-build --recover "
             f"--build-id {remote_builder.build_id}'."
         )
+        emit.progress("Starting build")
         remote_builder.start_build()
+        emit.progress("Building")
         remote_builder.monitor_build()
+        emit.progress("Cleaning")
         remote_builder.clean_build()
 
     def _get_build_strategy(self) -> Optional[_Strategies]:

@@ -350,14 +350,16 @@ class LaunchpadClient:
             builds = self._get_builds(snap)
             pending = False
             timestamp = str(datetime.now())
-            logger.info("Build status as of %s:", timestamp)
+            status = f"Build status as of {timestamp}: "
             for build in builds:
                 state = build["buildstate"]
                 arch = build["arch_tag"]
-                logger.info("\tarch=%s\tstate=%s", arch, state)
+                status += f" {arch=} {state=}"
 
                 if _is_build_pending(build):
                     pending = True
+
+            logger.info(status)
 
             if pending is False:
                 break
