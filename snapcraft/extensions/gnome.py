@@ -147,7 +147,6 @@ class GNOME(Extension):
             "environment": {
                 "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
                 "GTK_USE_PORTAL": "1",
-                "GDK_DEBUG": "portals",
             },
             "hooks": {
                 "configure": {
