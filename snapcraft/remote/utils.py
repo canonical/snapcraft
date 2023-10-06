@@ -47,7 +47,7 @@ def validate_architectures(architectures: List[str]) -> None:
 def get_build_id(app_name: str, project_name: str, project_path: Path) -> str:
     """Get the build id for a project.
 
-    The build id is formatted as `snapcraft-<project-name>-<hash>`.
+    The build id is formatted as `<app_name>-<project-name>-<hash>`.
     The hash is a hash of all files in the project directory.
 
     :param app_name: Name of the application.

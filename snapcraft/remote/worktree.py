@@ -21,8 +21,8 @@ from shutil import copytree
 
 from xdg import BaseDirectory
 
-from snapcraft.remote import GitRepo
-from snapcraft.remote.utils import rmtree
+from .git import GitRepo
+from .utils import rmtree
 
 
 class WorkTree:

@@ -314,7 +314,7 @@ class RemoteBuildCommand(BaseCommand):
 
         return base
 
-    def _get_project_architectures(self) -> List[str]:
+    def _get_project_build_on_architectures(self) -> List[str]:
         """Get a list of build-on architectures from the project's snapcraft.yaml.
 
         :returns: A list of architectures.
@@ -347,11 +347,11 @@ class RemoteBuildCommand(BaseCommand):
         :raises SnapcraftError: If `--build-on` was provided and architectures are
         defined in the project's snapcraft.yaml.
         """
-        project_architectures = self._get_project_architectures()
+        project_architectures = self._get_project_build_on_architectures()
         if project_architectures and self._parsed_args.build_for:
             raise SnapcraftError(
                 "Cannot use `--build-on` because architectures are already defined in "
-                "the snapcraft.yaml."
+                "snapcraft.yaml."
             )
 
         if project_architectures:
