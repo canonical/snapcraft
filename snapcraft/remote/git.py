@@ -137,7 +137,7 @@ class GitRepo:
 
         :raises GitError: if the repo cannot be initialized
         """
-        logger.debug("Initializing git repository in {str(self.path)!r}")
+        logger.debug("Initializing git repository in %r", str(self.path))
 
         try:
             pygit2.init_repository(self.path)

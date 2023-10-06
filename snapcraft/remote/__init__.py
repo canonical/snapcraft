@@ -17,25 +17,33 @@
 """Remote-build and related utilities."""
 
 from .errors import (
+    AcceptPublicUploadError,
     GitError,
     LaunchpadHttpsError,
     RemoteBuildError,
     RemoteBuildTimeoutError,
+    UnsupportedArchitectureError,
 )
 from .git import GitRepo, is_repo
 from .launchpad import LaunchpadClient
-from .utils import get_build_id, rmtree
+from .remote_builder import RemoteBuilder
+from .utils import get_build_id, humanize_list, rmtree, validate_architectures
 from .worktree import WorkTree
 
 __all__ = [
     "get_build_id",
+    "humanize_list",
     "is_repo",
     "rmtree",
+    "validate_architectures",
+    "AcceptPublicUploadError",
     "GitError",
     "GitRepo",
     "LaunchpadClient",
     "LaunchpadHttpsError",
+    "RemoteBuilder",
     "RemoteBuildError",
     "RemoteBuildTimeoutError",
+    "UnsupportedArchitectureError",
     "WorkTree",
 ]

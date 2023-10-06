@@ -18,14 +18,14 @@
 
 import sys
 from pathlib import Path
+from unittest.mock import ANY, call
 
 import pytest
 from yaml import safe_dump
 
 from snapcraft import cli
 from snapcraft.parts.yaml_utils import CURRENT_BASES, ESM_BASES, LEGACY_BASES
-from snapcraft.remote import GitRepo
-from snapcraft_legacy.internal.remote_build.errors import AcceptPublicUploadError
+from snapcraft.remote import AcceptPublicUploadError, GitRepo
 
 # remote-build control logic may check if the working dir is a git repo,
 # so execute all tests inside a test directory
@@ -44,7 +44,7 @@ def use_new_remote_build(monkeypatch):
     monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "disable-fallback")
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_sudo(monkeypatch):
     monkeypatch.setenv("SUDO_USER", "fake")
     monkeypatch.setattr("os.geteuid", lambda: 0)
@@ -56,7 +56,7 @@ def mock_argv(mocker):
     return mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"])
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_confirm(mocker):
     return mocker.patch(
         "snapcraft.commands.remote.confirm_with_user", return_value=True
@@ -64,9 +64,23 @@ def mock_confirm(mocker):
 
 
 @pytest.fixture()
+def mock_remote_builder(mocker):
+    _mock_remote_builder = mocker.patch("snapcraft.commands.remote.RemoteBuilder")
+    _mock_remote_builder.return_value.has_outstanding_build.return_value = False
+    return _mock_remote_builder
+
+
+@pytest.fixture()
 def mock_run_new_or_fallback_remote_build(mocker):
     return mocker.patch(
         "snapcraft.commands.remote.RemoteBuildCommand._run_new_or_fallback_remote_build"
+    )
+
+
+@pytest.fixture()
+def mock_run_new_remote_build(mocker):
+    return mocker.patch(
+        "snapcraft.commands.remote.RemoteBuildCommand._run_new_remote_build"
     )
 
 
@@ -297,15 +311,12 @@ def test_get_effective_base_core18_esm_warning(
     "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
-def test_run_newer_than_core_22(emitter, mock_run_legacy):
+def test_run_newer_than_core_22(emitter, mock_run_new_remote_build):
     """Bases newer than core22 must use new remote-build."""
     cli.run()
 
-    # this should fail when new remote-build code is used (#4323)
-    mock_run_legacy.assert_called_once()
-    emitter.assert_debug(
-        "Running fallback remote-build because new remote-build is not available."
-    )
+    mock_run_new_remote_build.assert_called_once()
+    emitter.assert_debug("Running new remote-build because base is newer than core22.")
 
 
 @pytest.mark.parametrize(
@@ -327,7 +338,9 @@ def test_run_core22_and_older(emitter, mock_run_legacy):
     "envvar", ["force-fallback", "disable-fallback", "badvalue", None]
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
-def test_run_envvar_newer_than_core22(envvar, emitter, mock_run_legacy, monkeypatch):
+def test_run_envvar_newer_than_core22(
+    envvar, emitter, mock_run_new_remote_build, monkeypatch
+):
     """Bases newer than core22 run new remote-build regardless of envvar."""
     if envvar:
         monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", envvar)
@@ -336,23 +349,21 @@ def test_run_envvar_newer_than_core22(envvar, emitter, mock_run_legacy, monkeypa
 
     cli.run()
 
-    mock_run_legacy.assert_called_once()
-    emitter.assert_debug(
-        "Running fallback remote-build because new remote-build is not available."
-    )
+    mock_run_new_remote_build.assert_called_once()
+    emitter.assert_debug("Running new remote-build because base is newer than core22.")
 
 
 @pytest.mark.parametrize(
     "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
-def test_run_envvar_disable_fallback(emitter, mock_run_legacy, monkeypatch):
+def test_run_envvar_disable_fallback(emitter, mock_run_new_remote_build, monkeypatch):
     """core22 and older bases run new remote-build if envvar is `disable-fallback`."""
     monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "disable-fallback")
 
     cli.run()
 
-    mock_run_legacy.assert_called_once()
+    mock_run_new_remote_build.assert_called_once()
     emitter.assert_debug(
         "Running new remote-build because environment variable "
         "'SNAPCRAFT_REMOTE_BUILD_STRATEGY' is 'disable-fallback'."
@@ -426,15 +437,14 @@ def test_run_envvar_invalid(capsys, emitter, mock_run_legacy, monkeypatch):
     "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
-def test_run_in_repo(emitter, mock_run_legacy, new_dir):
+def test_run_in_repo(emitter, mock_run_new_remote_build, new_dir):
     """core22 and older bases run new remote-build if in a git repo."""
     # initialize a git repo
     GitRepo(new_dir)
 
     cli.run()
 
-    # this should fail when new remote-build code is used (#4323)
-    mock_run_legacy.assert_called_once()
+    mock_run_new_remote_build.assert_called_once()
     emitter.assert_debug(
         "Running new remote-build because project is in a git repository."
     )
@@ -456,68 +466,200 @@ def test_run_not_in_repo(emitter, mock_run_legacy):
     "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
-def test_run_in_repo_newer_than_core22(emitter, mock_run_legacy, monkeypatch, new_dir):
+def test_run_in_repo_newer_than_core22(
+    emitter, mock_run_new_remote_build, monkeypatch, new_dir
+):
     """Bases newer than core22 run new remote-build regardless of being in a repo."""
     # initialize a git repo
     GitRepo(new_dir)
 
     cli.run()
 
-    # this should fail when new remote-build code is used (#4323)
-    mock_run_legacy.assert_called_once()
-    emitter.assert_debug(
-        "Running fallback remote-build because new remote-build is not available."
+    mock_run_new_remote_build.assert_called_once()
+    emitter.assert_debug("Running new remote-build because base is newer than core22.")
+
+
+######################
+# Architecture tests #
+######################
+
+
+@pytest.mark.parametrize("base", CURRENT_BASES | LEGACY_BASES)
+@pytest.mark.parametrize(
+    ["archs", "expected_archs"],
+    [
+        # single arch as scalar
+        ([{"build-on": "arm64", "build-for": "arm64"}], ["arm64"]),
+        # single arch as list
+        ([{"build-on": ["arm64"], "build-for": ["arm64"]}], ["arm64"]),
+        # no build-for as scalar
+        ([{"build-on": "arm64"}], ["arm64"]),
+        # no build-for as list
+        ([{"build-on": ["arm64"]}], ["arm64"]),
+        # multiple archs as scalars
+        (
+            [
+                {"build-on": "amd64", "build-for": "amd64"},
+                {"build-on": "arm64", "build-for": "arm64"},
+            ],
+            ["amd64", "arm64"],
+        ),
+        # multiple archs as lists
+        (
+            [
+                {"build-on": ["amd64"], "build-for": ["amd64"]},
+                {"build-on": ["arm64"], "build-for": ["arm64"]},
+            ],
+            ["amd64", "arm64"],
+        ),
+        # multiple build-ons
+        (
+            [
+                {"build-on": ["amd64", "arm64"], "build-for": "amd64"},
+                {"build-on": ["armhf", "powerpc"], "build-for": "arm64"},
+            ],
+            ["amd64", "arm64", "armhf", "powerpc"],
+        ),
+    ],
+)
+@pytest.mark.usefixtures("mock_argv", "mock_confirm", "use_new_remote_build")
+def test_determine_architectures_from_snapcraft_yaml(
+    archs, expected_archs, base, snapcraft_yaml, mock_remote_builder
+):
+    """Parse `build-on` architectures from a snapcraft.yaml file."""
+    snapcraft_yaml(base=base, architectures=archs)
+
+    cli.run()
+
+    mock_remote_builder.assert_called_with(
+        app_name="snapcraft",
+        build_id=None,
+        project_name="mytest",
+        architectures=expected_archs,
+        project_dir=Path(),
     )
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml", "mock_argv", "mock_confirm", "use_new_remote_build"
+)
+def test_determine_architectures_host_arch(mocker, mock_remote_builder):
+    """Use host architecture if not defined in the snapcraft.yaml."""
+    mocker.patch(
+        "snapcraft.commands.remote.get_host_architecture", return_value="arm64"
+    )
+
+    cli.run()
+
+    mock_remote_builder.assert_called_with(
+        app_name="snapcraft",
+        build_id=None,
+        project_name="mytest",
+        architectures=["arm64"],
+        project_dir=Path(),
+    )
+
+
+@pytest.mark.parametrize(
+    ("args", "expected_archs"),
+    [
+        (["--build-for", "amd64"], ["amd64"]),
+        (["--build-for", "amd64", "arm64"], ["amd64", "arm64"]),
+        # launchpad will accept and ignore duplicates
+        (["--build-for", "amd64", "amd64"], ["amd64", "amd64"]),
+    ],
+)
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
+)
+def test_determine_architectures_provided_by_user(
+    args, expected_archs, mocker, mock_remote_builder
+):
+    """Use architectures provided by the user."""
+    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"] + args)
+
+    cli.run()
+
+    mock_remote_builder.assert_called_with(
+        app_name="snapcraft",
+        build_id=None,
+        project_name="mytest",
+        architectures=expected_archs,
+        project_dir=Path(),
+    )
+
+
+@pytest.mark.parametrize("base", CURRENT_BASES | LEGACY_BASES)
+@pytest.mark.usefixtures("mock_confirm", "use_new_remote_build")
+def test_determine_architectures_error(base, capsys, snapcraft_yaml, mocker):
+    """Error if `--build-for` is provided and archs are in the snapcraft.yaml."""
+    mocker.patch.object(
+        sys, "argv", ["snapcraft", "remote-build", "--build-for", "amd64"]
+    )
+    snapcraft_yaml(
+        base=base, architectures=[{"build-on": "arm64", "build-for": "arm64"}]
+    )
+
+    cli.run()
+
+    _, err = capsys.readouterr()
+    assert (
+        "Cannot use `--build-on` because architectures are already defined in "
+        "snapcraft.yaml."
+    ) in err
 
 
 ##################
 # Build id tests #
 ##################
 
-# The build-id is not currently used, so these unit tests test the log output.
-# When #4323 is complete, these tests can be rewritten to verify the build-id passed
-# to the new remote-build code.
-
 
 @pytest.mark.parametrize(
     "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
 )
 @pytest.mark.usefixtures(
-    "create_snapcraft_yaml",
-    "mock_confirm",
-    "mock_argv",
-    "mock_run_legacy",
-    "use_new_remote_build",
+    "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
 )
-def test_build_id_provided(emitter, mocker):
-    """Use the build id provided as an argument."""
+def test_build_id_provided(mocker, mock_remote_builder):
+    """Pass the build id provided as an argument."""
     mocker.patch.object(
         sys, "argv", ["snapcraft", "remote-build", "--build-id", "test-build-id"]
     )
 
     cli.run()
 
-    emitter.assert_debug("Using build ID 'test-build-id' passed as a parameter.")
+    mock_remote_builder.assert_called_with(
+        app_name="snapcraft",
+        build_id="test-build-id",
+        project_name="mytest",
+        architectures=ANY,
+        project_dir=Path(),
+    )
 
 
 @pytest.mark.parametrize(
     "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
 )
 @pytest.mark.usefixtures(
-    "create_snapcraft_yaml",
-    "mock_confirm",
-    "mock_argv",
-    "mock_run_legacy",
-    "use_new_remote_build",
+    "create_snapcraft_yaml", "mock_confirm", "mock_argv", "use_new_remote_build"
 )
-def test_build_id_computed(emitter):
-    """Compute the build id."""
+def test_build_id_not_provided(mock_remote_builder):
+    """Pass `None` for the build id if it is not provided as an argument."""
+
     cli.run()
 
-    # The create_snapcraft_yaml fixture uses the project name 'mytest'.
-    # Look for an md5 hash (a 32 character lowercase hex string).
-    emitter.assert_debug(
-        "Using computed build ID 'snapcraft-mytest-[0-9a-f]{32}'.", regex=True
+    mock_remote_builder.assert_called_with(
+        app_name="snapcraft",
+        build_id=None,
+        project_name="mytest",
+        architectures=ANY,
+        project_dir=Path(),
     )
 
 
@@ -545,3 +687,119 @@ def test_build_id_no_project_name_error(base, capsys):
 
     _, err = capsys.readouterr()
     assert "Could not get project name from 'snapcraft.yaml'." in err
+
+
+########################
+# Remote builder tests #
+########################
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
+)
+def test_status(mocker, mock_remote_builder):
+    """Print the status when `--status` is provided."""
+    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build", "--status"])
+
+    cli.run()
+
+    assert mock_remote_builder.mock_calls[-1] == call().print_status()
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml",
+    "mock_confirm",
+    "mock_remote_builder",
+    "use_new_remote_build",
+)
+def test_recover_no_build(emitter, mocker):
+    """Warn if no build is found when `--recover` is provided."""
+    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build", "--recover"])
+
+    cli.run()
+
+    emitter.assert_message("No build found.")
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
+)
+def test_recover_build(emitter, mocker, mock_remote_builder):
+    """Recover a build when `--recover` is provided."""
+    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build", "--recover"])
+    mock_remote_builder.return_value.has_outstanding_build.return_value = True
+
+    cli.run()
+
+    assert mock_remote_builder.mock_calls[-3:] == [
+        call().print_status(),
+        call().monitor_build(),
+        call().clean_build(),
+    ]
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml", "mock_argv", "mock_confirm", "use_new_remote_build"
+)
+def test_recover_build_user_confirms(emitter, mocker, mock_remote_builder):
+    """Recover a build when a user confirms."""
+    mock_remote_builder.return_value.has_outstanding_build.return_value = True
+
+    cli.run()
+
+    assert mock_remote_builder.mock_calls[-3:] == [
+        call().print_status(),
+        call().monitor_build(),
+        call().clean_build(),
+    ]
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_argv", "use_new_remote_build")
+def test_recover_build_user_denies(emitter, mocker, mock_remote_builder):
+    """Clean and start a new build when a user denies to recover an existing build."""
+    mocker.patch(
+        # confirm data upload, deny build recovery
+        "snapcraft.commands.remote.confirm_with_user",
+        side_effect=[True, False],
+    )
+    mock_remote_builder.return_value.has_outstanding_build.return_value = True
+
+    cli.run()
+
+    assert mock_remote_builder.mock_calls[-3:] == [
+        call().start_build(),
+        call().monitor_build(),
+        call().clean_build(),
+    ]
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml", "mock_argv", "mock_confirm", "use_new_remote_build"
+)
+def test_remote_build(emitter, mocker, mock_remote_builder):
+    """Clean and start a new build."""
+    cli.run()
+
+    assert mock_remote_builder.mock_calls[-3:] == [
+        call().start_build(),
+        call().monitor_build(),
+        call().clean_build(),
+    ]

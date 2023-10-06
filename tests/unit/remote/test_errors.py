@@ -59,3 +59,54 @@ def test_launchpad_https_error():
     assert error.details == (
         "Verify connectivity to https://api.launchpad.net and retry build."
     )
+
+
+def test_unsupported_architecture_error():
+    """Test UnsupportedArchitectureError."""
+    error = errors.UnsupportedArchitectureError(architectures=["amd64", "arm64"])
+
+    assert str(error) == (
+        "Architecture not supported by the remote builder.\nThe following "
+        "architectures are not supported by the remote builder: ['amd64', 'arm64'].\n"
+        "Please remove them from the architecture list and try again."
+    )
+    assert repr(error) == (
+        "UnsupportedArchitectureError(brief='Architecture not supported by the remote "
+        "builder.', details=\"The following architectures are not supported by the "
+        "remote builder: ['amd64', 'arm64'].\\nPlease remove them from the "
+        'architecture list and try again.")'
+    )
+
+    assert error.brief == "Architecture not supported by the remote builder."
+    assert error.details == (
+        "The following architectures are not supported by the remote builder: "
+        "['amd64', 'arm64'].\nPlease remove them from the architecture list and "
+        "try again."
+    )
+
+
+def test_accept_public_upload_error():
+    """Test AcceptPublicUploadError."""
+    error = errors.AcceptPublicUploadError()
+
+    assert str(error) == (
+        "Cannot upload data to build servers.\nRemote build needs explicit "
+        "acknowledgement that data sent to build servers is public.\n"
+        "In non-interactive runs, please use the option "
+        "`--launchpad-accept-public-upload`."
+    )
+    assert repr(error) == (
+        "AcceptPublicUploadError(brief='Cannot upload data to build servers.', "
+        "details='Remote build needs explicit acknowledgement that data sent to build "
+        "servers is public.\\n"
+        "In non-interactive runs, please use the option "
+        "`--launchpad-accept-public-upload`.')"
+    )
+
+    assert error.brief == "Cannot upload data to build servers."
+    assert error.details == (
+        "Remote build needs explicit acknowledgement that data sent to build servers "
+        "is public.\n"
+        "In non-interactive runs, please use the option "
+        "`--launchpad-accept-public-upload`."
+    )
