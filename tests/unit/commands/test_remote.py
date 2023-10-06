@@ -611,7 +611,7 @@ def test_determine_architectures_error(base, capsys, snapcraft_yaml, mocker):
     _, err = capsys.readouterr()
     assert (
         "Cannot use `--build-on` because architectures are already defined in "
-        "the snapcraft.yaml."
+        "snapcraft.yaml."
     ) in err
 
 
