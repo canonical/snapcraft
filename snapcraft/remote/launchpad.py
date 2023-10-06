@@ -162,8 +162,10 @@ class LaunchpadClient:
 
     def _get_builds_collection_entry(self, snap: Optional[Entry]) -> Optional[Entry]:
         logger.debug("Fetching builds collection information from Launchpad...")
-        url = snap.builds_collection_link  # type: ignore
-        return self._lp_load_url(cast(str, url))
+        if snap:
+            url = cast(str, snap.builds_collection_link)
+            return self._lp_load_url(url)
+        return None
 
     def _get_builds(self, snap: Optional[Entry]) -> List[Dict[str, Any]]:
         builds_collection = self._get_builds_collection_entry(snap)
