@@ -31,7 +31,7 @@ _SUPPORTED_ARCHS = ["amd64", "arm64", "armhf", "i386", "ppc64el", "s390x"]
 def validate_architectures(architectures: List[str]) -> None:
     """Validate that architectures are supported for remote building.
 
-    :param architectures: list of architectures to Validate
+    :param architectures: list of architectures to validate
 
     :raises UnsupportedArchitectureError: if any architecture in the list in not
     supported for remote building.
@@ -138,10 +138,7 @@ def rmtree(directory: Path) -> None:
 
     :param directory: Directory to remove.
     """
-    shutil.rmtree(
-        str(directory.resolve()),
-        onerror=_remove_readonly,  # type: ignore
-    )
+    shutil.rmtree(str(directory.resolve()), onerror=_remove_readonly)
 
 
 def _remove_readonly(func, filepath, _):
