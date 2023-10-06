@@ -138,6 +138,7 @@ class MaintenanceBase(SnapcraftError):
             resolution=resolution,
             docs_url="https://snapcraft.io/docs/base-snaps",
         )
+        self.base = base
 
 
 class StoreCredentialsUnauthorizedError(SnapcraftError):
