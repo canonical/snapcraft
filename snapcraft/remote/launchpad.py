@@ -23,7 +23,7 @@ import shutil
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, cast
 from urllib.parse import unquote, urlsplit
 
 import requests
@@ -102,7 +102,7 @@ class LaunchpadClient:
         self._project_name = project_name
 
         self._lp: Launchpad = self._login()
-        self.user = self._lp.me.name
+        self.user = self._lp.me.name  # type: ignore
 
         self._deadline = deadline
 
@@ -151,7 +151,7 @@ class LaunchpadClient:
         cache_dir.mkdir(mode=0o700, exist_ok=True)
         return cache_dir
 
-    def _fetch_artifacts(self, snap: Entry) -> None:
+    def _fetch_artifacts(self, snap: Optional[Entry]) -> None:
         """Fetch build arftifacts (logs and snaps)."""
         builds = self._get_builds(snap)
 
@@ -160,28 +160,30 @@ class LaunchpadClient:
             self._download_build_artifacts(build)
             self._download_log(build)
 
-    def _get_builds_collection_entry(self, snap: Entry) -> Optional[Entry]:
+    def _get_builds_collection_entry(self, snap: Optional[Entry]) -> Optional[Entry]:
         logger.debug("Fetching builds collection information from Launchpad...")
-        url = snap.builds_collection_link
-        return self._lp_load_url(url)
+        url = snap.builds_collection_link  # type: ignore
+        return self._lp_load_url(cast(str, url))
 
-    def _get_builds(self, snap: Entry) -> List[Dict[str, Any]]:
+    def _get_builds(self, snap: Optional[Entry]) -> List[Dict[str, Any]]:
         builds_collection = self._get_builds_collection_entry(snap)
         if builds_collection is None:
             return []
 
-        return builds_collection.entries
+        return cast(List[Dict[str, Any]], builds_collection.entries)
 
     def _get_snap(self) -> Optional[Entry]:
         try:
-            return self._lp.snaps.getByName(name=self._lp_name, owner=self._lp_owner)
-        except restfulclient.errors.NotFound:
+            return self._lp.snaps.getByName(  # type: ignore
+                name=self._lp_name, owner=self._lp_owner
+            )
+        except restfulclient.errors.NotFound:  # type: ignore
             return None
 
     def _issue_build_request(self, snap: Entry) -> Entry:
-        dist = self._lp.distributions["ubuntu"]
+        dist = self._lp.distributions["ubuntu"]  # type: ignore
         archive = dist.main_archive
-        return snap.requestBuilds(
+        return snap.requestBuilds(  # type: ignore
             archive=archive,
             pocket="Updates",
         )
@@ -214,7 +216,7 @@ class LaunchpadClient:
         if build_request.status == "Failed":
             # Build request failed.
             self.cleanup()
-            raise errors.RemoteBuildError(build_request.error_message)
+            raise errors.RemoteBuildError(cast(str, build_request.error_message))
 
         if build_request.status != "Completed":
             # Shouldn't end up here.
@@ -223,14 +225,14 @@ class LaunchpadClient:
                 f"Unknown builder error - reported status: {build_request.status}"
             )
 
-        if not build_request.builds.entries:
+        if not build_request.builds.entries:  # type: ignore
             # Shouldn't end up here either.
             self.cleanup()
             raise errors.RemoteBuildError(
                 "Unknown builder error - no build entries found."
             )
 
-        build_number = _get_url_basename(build_request.self_link)
+        build_number = _get_url_basename(cast(str, build_request.self_link))
         logger.debug("Build request accepted: %s", build_number)
 
     def _login(self) -> Launchpad:
@@ -274,14 +276,14 @@ class LaunchpadClient:
             self._lp_owner,
             self._lp_owner,
         )
-        return self._lp.git_repositories.new(
+        return self._lp.git_repositories.new(  # type: ignore
             name=self._lp_name, owner=self._lp_owner, target=self._lp_owner
         )
 
     def _delete_git_repository(self) -> None:
         """Delete git repository."""
         git_path = self.get_git_repo_path()
-        git_repo = self._lp.git_repositories.getByPath(path=git_path)
+        git_repo = self._lp.git_repositories.getByPath(path=git_path)  # type: ignore
 
         # git_repositories.getByPath returns None if git repo does not exist.
         if git_repo is None:
@@ -306,7 +308,7 @@ class LaunchpadClient:
             "url=https://launchpad.net/%s/+snap/%s", self._lp_owner, self._lp_name
         )
 
-        return self._lp.snaps.new(
+        return self._lp.snaps.new(  # type: ignore
             name=self._lp_name,
             owner=self._lp_owner,
             git_repository_url=git_url,
@@ -423,7 +425,7 @@ class LaunchpadClient:
     def _download_build_artifacts(self, build: Dict[str, Any]) -> None:
         arch = build["arch_tag"]
         snap_build = self._lp_load_url(build["self_link"])
-        urls = snap_build.getFileUrls()
+        urls = snap_build.getFileUrls()  # type: ignore
 
         if not urls:
             logger.error("Snap file not available for arch %r.", arch)
@@ -452,7 +454,7 @@ class LaunchpadClient:
         # expires before the build completes, or even before the push
         # completes.
         date_expires = datetime.now(timezone.utc) + timedelta(minutes=1)
-        token = lp_repo.issueAccessToken(
+        token = lp_repo.issueAccessToken(  # type: ignore
             description=f"{self._app_name} remote-build for {self._build_id}",
             scopes=["repository:push"],
             date_expires=date_expires.isoformat(),
