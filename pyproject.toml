@@ -48,7 +48,7 @@ load-plugins = "pylint_fixme_info,pylint_pytest"
 min-similarity-lines=10
 
 [tool.mypy]
-python_version = 3.8
+python_version = 3.10
 ignore_missing_imports = true
 follow_imports = "silent"
 exclude = [
@@ -74,7 +74,7 @@ exclude = [
     "tests/legacy",
     "tests/spread",
 ]
-pythonVersion = "3.8"
+pythonVersion = "3.10"
 
 [tool.pytest.ini_options]
 minversion = 7.0
