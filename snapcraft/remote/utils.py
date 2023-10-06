@@ -21,13 +21,33 @@ import stat
 from functools import partial
 from hashlib import md5
 from pathlib import Path
-from typing import List
+from typing import Iterable, List
+
+from .errors import UnsupportedArchitectureError
+
+_SUPPORTED_ARCHS = ["amd64", "arm64", "armhf", "i386", "ppc64el", "s390x"]
+
+
+def validate_architectures(architectures: List[str]) -> None:
+    """Validate that architectures are supported for remote building.
+
+    :param architectures: list of architectures to validate
+
+    :raises UnsupportedArchitectureError: if any architecture in the list in not
+    supported for remote building.
+    """
+    unsupported_archs = []
+    for arch in architectures:
+        if arch not in _SUPPORTED_ARCHS:
+            unsupported_archs.append(arch)
+    if unsupported_archs:
+        raise UnsupportedArchitectureError(architectures=unsupported_archs)
 
 
 def get_build_id(app_name: str, project_name: str, project_path: Path) -> str:
     """Get the build id for a project.
 
-    The build id is formatted as `snapcraft-<project-name>-<hash>`.
+    The build id is formatted as `<app_name>-<project-name>-<hash>`.
     The hash is a hash of all files in the project directory.
 
     :param app_name: Name of the application.
@@ -80,15 +100,45 @@ def _compute_hash(directory: Path) -> str:
     return md5(all_hashes).hexdigest()  # noqa: S324 (insecure-hash-function)
 
 
+def humanize_list(
+    items: Iterable[str],
+    conjunction: str,
+    item_format: str = "{!r}",
+    sort: bool = True,
+) -> str:
+    """Format a list into a human-readable string.
+
+    :param items: list to humanize.
+    :param conjunction: the conjunction used to join the final element to
+                        the rest of the list (e.g. 'and').
+    :param item_format: format string to use per item.
+    :param sort: if true, sort the list.
+    """
+    if not items:
+        return ""
+
+    quoted_items = [item_format.format(item) for item in items]
+
+    if sort:
+        quoted_items = sorted(quoted_items)
+
+    if len(quoted_items) == 1:
+        return quoted_items[0]
+
+    humanized = ", ".join(quoted_items[:-1])
+
+    if len(quoted_items) > 2:
+        humanized += ","
+
+    return f"{humanized} {conjunction} {quoted_items[-1]}"
+
+
 def rmtree(directory: Path) -> None:
     """Cross-platform rmtree implementation.
 
     :param directory: Directory to remove.
     """
-    shutil.rmtree(
-        str(directory.resolve()),
-        onerror=_remove_readonly,  # type: ignore
-    )
+    shutil.rmtree(str(directory.resolve()), onerror=_remove_readonly)
 
 
 def _remove_readonly(func, filepath, _):

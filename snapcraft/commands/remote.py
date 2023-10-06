@@ -21,7 +21,7 @@ import os
 import textwrap
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from craft_cli import BaseCommand, emit
 from craft_cli.helptexts import HIDDEN
@@ -30,9 +30,8 @@ from overrides import overrides
 from snapcraft.errors import MaintenanceBase, SnapcraftError
 from snapcraft.legacy_cli import run_legacy
 from snapcraft.parts import yaml_utils
-from snapcraft.remote import get_build_id, is_repo
-from snapcraft.utils import confirm_with_user, humanize_list
-from snapcraft_legacy.internal.remote_build.errors import AcceptPublicUploadError
+from snapcraft.remote import AcceptPublicUploadError, RemoteBuilder, is_repo
+from snapcraft.utils import confirm_with_user, get_host_architecture, humanize_list
 
 _CONFIRMATION_PROMPT = (
     "All data sent to remote builders will be publicly available. "
@@ -216,23 +215,53 @@ class RemoteBuildCommand(BaseCommand):
 
     def _run_new_remote_build(self) -> None:
         """Run new remote-build code."""
-        # the build-id will be passed to the new remote-build code as part of #4323
-        if self._parsed_args.build_id:
-            build_id = self._parsed_args.build_id
-            emit.debug(f"Using build ID {build_id!r} passed as a parameter.")
-        else:
-            build_id = get_build_id(
-                app_name="snapcraft",
-                project_name=self._get_project_name(),
-                project_path=Path(),
-            )
-            emit.debug(f"Using computed build ID {build_id!r}.")
-
-        # TODO: use new remote-build code (#4323)
-        emit.debug(
-            "Running fallback remote-build because new remote-build is not available."
+        emit.progress("Setting up launchpad environment.")
+        remote_builder = RemoteBuilder(
+            app_name="snapcraft",
+            build_id=self._parsed_args.build_id,
+            project_name=self._get_project_name(),
+            architectures=self._determine_architectures(),
+            project_dir=Path(),
         )
-        run_legacy()
+
+        if self._parsed_args.status:
+            remote_builder.print_status()
+            return
+
+        emit.progress("Looking for existing builds.")
+        has_outstanding_build = remote_builder.has_outstanding_build()
+        if self._parsed_args.recover and not has_outstanding_build:
+            emit.message("No build found.")
+            return
+
+        if has_outstanding_build:
+            emit.message("Found previously started build.")
+            remote_builder.print_status()
+
+            # If recovery specified, monitor build and exit.
+            if self._parsed_args.recover or confirm_with_user(
+                "Do you wish to recover this build?", default=True
+            ):
+                emit.progress("Building")
+                remote_builder.monitor_build()
+                emit.progress("Cleaning")
+                remote_builder.clean_build()
+                return
+
+            # Otherwise clean running build before we start a new one.
+            emit.progress("Cleaning previously existing build.")
+            remote_builder.clean_build()
+
+        emit.message(
+            "If interrupted, resume with: 'snapcraft remote-build --recover "
+            f"--build-id {remote_builder.build_id}'."
+        )
+        emit.progress("Starting build")
+        remote_builder.start_build()
+        emit.progress("Building")
+        remote_builder.monitor_build()
+        emit.progress("Cleaning")
+        remote_builder.clean_build()
 
     def _get_build_strategy(self) -> Optional[_Strategies]:
         """Get the build strategy from the envvar `SNAPCRAFT_REMOTE_BUILD_STRATEGY`.
@@ -284,6 +313,56 @@ class RemoteBuildCommand(BaseCommand):
             )
 
         return base
+
+    def _get_project_build_on_architectures(self) -> List[str]:
+        """Get a list of build-on architectures from the project's snapcraft.yaml.
+
+        :returns: A list of architectures.
+        """
+        with open(self._snapcraft_yaml, encoding="utf-8") as file:
+            data = yaml_utils.safe_load(file)
+
+        project_archs = data.get("architectures")
+
+        archs = []
+        if project_archs:
+            for item in project_archs:
+                if "build-on" in item:
+                    new_arch = item["build-on"]
+                    if isinstance(new_arch, list):
+                        archs.extend(new_arch)
+                    else:
+                        archs.append(new_arch)
+
+        return archs
+
+    def _determine_architectures(self) -> List[str]:
+        """Determine architectures to build for.
+
+        The build architectures can be set via the `--build-on` parameter or determined
+        from the build-on architectures listed in the project's snapcraft.yaml.
+
+        :returns: A list of architectures.
+
+        :raises SnapcraftError: If `--build-on` was provided and architectures are
+        defined in the project's snapcraft.yaml.
+        """
+        project_architectures = self._get_project_build_on_architectures()
+        if project_architectures and self._parsed_args.build_for:
+            raise SnapcraftError(
+                "Cannot use `--build-on` because architectures are already defined in "
+                "snapcraft.yaml."
+            )
+
+        if project_architectures:
+            archs = project_architectures
+        elif self._parsed_args.build_for:
+            archs = self._parsed_args.build_for
+        else:
+            # default to typical snapcraft behavior (build for host)
+            archs = [get_host_architecture()]
+
+        return archs
 
 
 def _get_esm_warning_for_base(base: str) -> str:

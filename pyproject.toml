@@ -53,8 +53,6 @@ ignore_missing_imports = true
 follow_imports = "silent"
 exclude = [
     "build",
-    # launchpadlib is not typed
-    "snapcraft/remote/launchpad.py",
     "snapcraft_legacy",
     "tests/spread",
     "tests/legacy",
@@ -67,13 +65,7 @@ plugins = [
 
 [tool.pyright]
 include = ["snapcraft", "tests"]
-exclude = [
-    "build",
-    # launchpadlib is not typed
-    "snapcraft/remote/launchpad.py",
-    "tests/legacy",
-    "tests/spread",
-]
+exclude = ["build", "tests/legacy", "tests/spread"]
 pythonVersion = "3.10"
 
 [tool.pytest.ini_options]
