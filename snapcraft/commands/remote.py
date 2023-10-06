@@ -135,7 +135,12 @@ class RemoteBuildCommand(BaseCommand):
         self._snapcraft_yaml = yaml_utils.get_snap_project().project_file
         self._parsed_args = parsed_args
         # pylint: enable=attribute-defined-outside-init
-        base = self._get_effective_base()
+        try:
+            base = self._get_effective_base()
+        except MaintenanceBase as base_err:
+            base = base_err.base
+            emit.progress(_get_esm_warning_for_base(base), permanent=True)
+
         self._run_new_or_fallback_remote_build(base)
 
     def _run_new_or_fallback_remote_build(self, base: str) -> None:
@@ -279,3 +284,22 @@ class RemoteBuildCommand(BaseCommand):
             )
 
         return base
+
+
+def _get_esm_warning_for_base(base: str) -> str:
+    """Return a warning appropriate for the base under ESM."""
+    channel: Optional[str] = None
+    match base:
+        case "core":
+            channel = "4.x"
+            version = "4"
+        case "core18":
+            channel = "7.x"
+            version = "7"
+        case _:
+            raise RuntimeError(f"Unmatched base {base!r}")
+
+    return (
+        f"WARNING: base {base!r} was last supported on Snapcraft {version} available "
+        f"on the {channel!r} channel."
+    )
