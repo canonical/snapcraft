@@ -19,6 +19,7 @@
 
 import re
 from pathlib import Path
+from unittest.mock import ANY
 
 import pygit2
 import pytest
@@ -356,6 +357,53 @@ def test_push_url_refspec_unknown_ref(new_dir):
         "Could not resolve reference 'bad-ref' for the git repository "
         f"in {str(new_dir)!r}."
     )
+
+
+@pytest.mark.parametrize(
+    ("url", "expected_url"),
+    [
+        # no-op if token is not in url
+        ("fake-url", "fake-url"),
+        # hide single occurrence of the token
+        ("fake-url/test-token", "fake-url/<token>"),
+        # hide multiple occurrences of the token
+        ("fake-url/test-token/test-token", "fake-url/<token>/<token>"),
+    ],
+)
+def test_push_url_hide_token(url, expected_url, mocker, new_dir):
+    """Hide the token in the log and error output."""
+    mock_logs = mocker.patch("logging.Logger.debug")
+
+    repo = GitRepo(new_dir)
+    (repo.path / "test-file").touch()
+    repo.add_all()
+    repo.commit()
+    expected_error_details = (
+        f"Could not push 'HEAD' to {expected_url!r} with refspec "
+        "'.*:refs/heads/test-branch' for the git repository "
+        f"in {str(new_dir)!r}."
+    )
+
+    with pytest.raises(GitError) as raised:
+        repo.push_url(
+            remote_url=url,
+            remote_branch="test-branch",
+            token="test-token",
+        )
+
+    # token should be hidden in the log output
+    mock_logs.assert_called_with(
+        # The last argument is the refspec `.*:refs/heads/test-branch`, which can only
+        # be asserted with regex. It is not relevant to this test, so `ANY` is used.
+        "Pushing %r to remote %r with refspec %r.",
+        "HEAD",
+        expected_url,
+        ANY,
+    )
+
+    # token should be hidden in the error message
+    assert raised.value.details is not None
+    assert re.match(expected_error_details, raised.value.details)
 
 
 def test_push_url_refspec_git_error(mocker, new_dir):

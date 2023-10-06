@@ -28,3 +28,34 @@ def test_git_error():
     )
     assert error.brief == "Git operation failed."
     assert error.details == "Error details."
+
+
+def test_remote_build_timeout_error():
+    """Test RemoteBuildTimeoutError."""
+    error = errors.RemoteBuildTimeoutError()
+
+    assert str(error) == "Remote build timed out."
+    assert (
+        repr(error)
+        == "RemoteBuildTimeoutError(brief='Remote build timed out.', details=None)"
+    )
+    assert error.brief == "Remote build timed out."
+
+
+def test_launchpad_https_error():
+    """Test LaunchpadHttpsError."""
+    error = errors.LaunchpadHttpsError()
+
+    assert str(error) == (
+        "Failed to connect to Launchpad API service.\n"
+        "Verify connectivity to https://api.launchpad.net and retry build."
+    )
+    assert repr(error) == (
+        "LaunchpadHttpsError(brief='Failed to connect to Launchpad API service.', "
+        "details='Verify connectivity to https://api.launchpad.net and retry build.')"
+    )
+
+    assert error.brief == "Failed to connect to Launchpad API service."
+    assert error.details == (
+        "Verify connectivity to https://api.launchpad.net and retry build."
+    )
