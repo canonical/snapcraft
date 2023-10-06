@@ -50,3 +50,22 @@ class GitError(RemoteBuildError):
         details = message
 
         super().__init__(brief=brief, details=details)
+
+
+class RemoteBuildTimeoutError(RemoteBuildError):
+    """Remote-build timed out."""
+
+    def __init__(self) -> None:
+        brief = "Remote build timed out."
+
+        super().__init__(brief=brief)
+
+
+class LaunchpadHttpsError(RemoteBuildError):
+    """Launchpad connectivity error."""
+
+    def __init__(self) -> None:
+        brief = "Failed to connect to Launchpad API service."
+        details = "Verify connectivity to https://api.launchpad.net and retry build."
+
+        super().__init__(brief=brief, details=details)

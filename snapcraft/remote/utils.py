@@ -16,6 +16,8 @@
 
 """Remote build utilities."""
 
+import shutil
+import stat
 from functools import partial
 from hashlib import md5
 from pathlib import Path
@@ -76,3 +78,27 @@ def _compute_hash(directory: Path) -> str:
 
     all_hashes = "".join(hashes).encode()
     return md5(all_hashes).hexdigest()  # noqa: S324 (insecure-hash-function)
+
+
+def rmtree(directory: Path) -> None:
+    """Cross-platform rmtree implementation.
+
+    :param directory: Directory to remove.
+    """
+    shutil.rmtree(
+        str(directory.resolve()),
+        onerror=_remove_readonly,  # type: ignore
+    )
+
+
+def _remove_readonly(func, filepath, _):
+    """Shutil onerror function to make read-only files writable.
+
+    Try setting file to writeable if error occurs during rmtree. Known to be required
+    on Windows where file is not writeable, but it is owned by the user (who can
+    set file permissions).
+
+    :param filepath: filepath to make writable
+    """
+    Path(filepath).chmod(stat.S_IWRITE)
+    func(filepath)

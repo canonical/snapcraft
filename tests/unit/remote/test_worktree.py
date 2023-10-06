@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright (C) 2023 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,28 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Remote-build and related utilities."""
+"""Unit tests for the worktree module."""
 
-from .errors import (
-    GitError,
-    LaunchpadHttpsError,
-    RemoteBuildError,
-    RemoteBuildTimeoutError,
-)
-from .git import GitRepo, is_repo
-from .launchpad import LaunchpadClient
-from .utils import get_build_id, rmtree
-from .worktree import WorkTree
+from pathlib import Path
 
-__all__ = [
-    "get_build_id",
-    "is_repo",
-    "rmtree",
-    "GitError",
-    "GitRepo",
-    "LaunchpadClient",
-    "LaunchpadHttpsError",
-    "RemoteBuildError",
-    "RemoteBuildTimeoutError",
-    "WorkTree",
-]
+from snapcraft.remote import WorkTree
+
+
+def test_worktree_init(new_dir):
+    """Test initialization of WorkTree."""
+    worktree = WorkTree(Path())
+
+    assert isinstance(worktree, WorkTree)

@@ -18,6 +18,7 @@
 
 import logging
 from pathlib import Path
+from typing import Optional
 
 import pygit2
 
@@ -145,27 +146,40 @@ class GitRepo:
                 f"Could not initialize a git repository in {str(self.path)!r}."
             ) from error
 
-    def push_url(self, remote_url: str, remote_branch: str, ref: str = "HEAD") -> None:
+    def push_url(
+        self,
+        remote_url: str,
+        remote_branch: str,
+        ref: str = "HEAD",
+        token: Optional[str] = None,
+    ) -> None:
         """Push a reference to a branch on a remote url.
 
         :param remote_url: the remote repo URL to push to
         :param remote_branch: the branch on the remote to push to
         :param ref: name of shorthand ref to push (i.e. a branch, tag, or `HEAD`)
+        :param token: token in the url to hide in logs and errors
 
         :raises GitError: if the ref cannot be resolved or pushed
         """
         resolved_ref = self._resolve_ref(ref)
         refspec = f"{resolved_ref}:refs/heads/{remote_branch}"
 
+        # hide secret tokens embedded in a url
+        if token:
+            stripped_url = remote_url.replace(token, "<token>")
+        else:
+            stripped_url = remote_url
+
         logger.debug(
-            "Pushing %r to remote %r with refspec %r.", ref, remote_url, refspec
+            "Pushing %r to remote %r with refspec %r.", ref, stripped_url, refspec
         )
 
         try:
             self._repo.remotes.create_anonymous(remote_url).push([refspec])
         except pygit2.GitError as error:
             raise GitError(
-                f"Could not push {ref!r} to {remote_url!r} with refspec {refspec!r} "
+                f"Could not push {ref!r} to {stripped_url!r} with refspec {refspec!r} "
                 f"for the git repository in {str(self.path)!r}."
             ) from error
 

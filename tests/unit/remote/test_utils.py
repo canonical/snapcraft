@@ -21,7 +21,11 @@ from pathlib import Path
 
 import pytest
 
-from snapcraft.remote import get_build_id
+from snapcraft.remote import get_build_id, rmtree
+
+##################
+# build id tests #
+##################
 
 
 @pytest.mark.usefixtures("new_dir")
@@ -103,3 +107,36 @@ def test_get_build_id_directory_is_not_a_directory_error():
         f"Could not compute hash because {str(Path('regular-file').absolute())} "
         "is not a directory."
     )
+
+
+################
+# rmtree tests #
+################
+
+
+@pytest.fixture()
+def stub_directory_tree(new_dir):
+    """Creates a tree of directories and files."""
+    root_dir = Path("root-dir")
+    (root_dir / "dir1/dir2").mkdir(parents=True, exist_ok=True)
+    (root_dir / "dir3").mkdir(parents=True, exist_ok=True)
+    (root_dir / "file1").touch()
+    (root_dir / "dir1/file2").touch()
+    (root_dir / "dir1/dir2/file3").touch()
+    return root_dir
+
+
+def test_rmtree(stub_directory_tree):
+    """Remove a directory tree."""
+    rmtree(stub_directory_tree)
+
+    assert not Path(stub_directory_tree).exists()
+
+
+def test_rmtree_readonly(stub_directory_tree):
+    """Remove a directory tree that contains a read-only file."""
+    (stub_directory_tree / "read-only-file").touch(mode=0o444)
+
+    rmtree(stub_directory_tree)
+
+    assert not Path(stub_directory_tree).exists()
