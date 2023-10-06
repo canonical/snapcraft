@@ -220,7 +220,7 @@ def test_get_effective_base_with_build_base(
 
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
-@pytest.mark.parametrize("base", CURRENT_BASES | LEGACY_BASES)
+@pytest.mark.parametrize("base", CURRENT_BASES | LEGACY_BASES | ESM_BASES)
 def test_get_effective_base_type(
     base, snapcraft_yaml, mock_run_new_or_fallback_remote_build
 ):
@@ -255,15 +255,37 @@ def test_get_effective_base_none(capsys, snapcraft_yaml):
 
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
-@pytest.mark.parametrize("base", ESM_BASES)
-def test_get_effective_base_esm(base, capsys, snapcraft_yaml):
-    """Raise an error if an ESM base is used."""
-    snapcraft_yaml(base=base)
+def test_get_effective_base_core_esm_warning(
+    emitter, snapcraft_yaml, mock_run_new_or_fallback_remote_build
+):
+    """Warn if core, an ESM base, is used."""
+    snapcraft_yaml(base="core")
 
     cli.run()
 
-    _, err = capsys.readouterr()
-    assert f"{base!r} is not supported on this version of Snapcraft." in err
+    mock_run_new_or_fallback_remote_build.assert_called_once_with("core")
+    emitter.assert_progress(
+        "WARNING: base 'core' was last supported on Snapcraft 4 available on the "
+        "'4.x' channel.",
+        permanent=True,
+    )
+
+
+@pytest.mark.usefixtures("mock_argv", "mock_confirm")
+def test_get_effective_base_core18_esm_warning(
+    emitter, snapcraft_yaml, mock_run_new_or_fallback_remote_build
+):
+    """Warn if core18, an ESM base, is used."""
+    snapcraft_yaml(base="core18")
+
+    cli.run()
+
+    mock_run_new_or_fallback_remote_build.assert_called_once_with("core18")
+    emitter.assert_progress(
+        "WARNING: base 'core18' was last supported on Snapcraft 7 available on the "
+        "'7.x' channel.",
+        permanent=True,
+    )
 
 
 #######################
