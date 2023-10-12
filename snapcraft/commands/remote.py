@@ -113,6 +113,10 @@ class RemoteBuildCommand(BaseCommand):
             default=0,
             metavar="<seconds>",
             help="Time in seconds to wait for launchpad to build.",
+        parser.add_argument(
+            "--exit-fail-any-failure",
+            action="store_true",
+            help="return 1 if any of the builds fail"
         )
 
     @overrides
@@ -123,6 +127,7 @@ class RemoteBuildCommand(BaseCommand):
 
         :raises AcceptPublicUploadError: If the user does not agree to upload data.
         :raises SnapcraftError: If the project cannot be loaded and parsed.
+        :raises SnapcraftError: If any build fails to complete.
         """
         if os.getenv("SUDO_USER") and os.geteuid() == 0:
             emit.message(
@@ -153,9 +158,18 @@ class RemoteBuildCommand(BaseCommand):
             base = base_err.base
             emit.progress(_get_esm_warning_for_base(base), permanent=True)
 
-        self._run_new_or_fallback_remote_build(base)
+        success = self._run_new_or_fallback_remote_build(base)
+        if not success:
+            if parsed_args.exit_fail_any_failure:
+                raise SnapcraftError("Some remote build failed to complete")
+            else:
+                emit.debug(
+                    "Some build failed to complete but "
+                    "--exit-fail-any-failure was not provided"
+                )
 
-    def _run_new_or_fallback_remote_build(self, base: str) -> None:
+
+    def _run_new_or_fallback_remote_build(self, base: str) -> bool:
         """Run the new or fallback remote-build.
 
         Three checks determine whether to run the new or fallback remote-build:
@@ -172,8 +186,7 @@ class RemoteBuildCommand(BaseCommand):
         # bases newer than core22 must use the new remote-build
         if base in yaml_utils.CURRENT_BASES - {"core22"}:
             emit.debug("Running new remote-build because base is newer than core22")
-            self._run_new_remote_build()
-            return
+            return self._run_new_remote_build()
 
         strategy = self._get_build_strategy()
 
@@ -182,8 +195,7 @@ class RemoteBuildCommand(BaseCommand):
                 "Running new remote-build because environment variable "
                 f"{_STRATEGY_ENVVAR!r} is {_Strategies.DISABLE_FALLBACK.value!r}"
             )
-            self._run_new_remote_build()
-            return
+            return self._run_new_remote_build()
 
         if strategy == _Strategies.FORCE_FALLBACK:
             emit.debug(
@@ -191,17 +203,17 @@ class RemoteBuildCommand(BaseCommand):
                 f"{_STRATEGY_ENVVAR!r} is {_Strategies.FORCE_FALLBACK.value!r}"
             )
             run_legacy()
-            return
+            return True # TODO: implement return of run_legacy
 
         if is_repo(Path().absolute()):
             emit.debug(
                 "Running new remote-build because project is in a git repository"
             )
-            self._run_new_remote_build()
-            return
+            return self._run_new_remote_build()
 
         emit.debug("Running fallback remote-build")
         run_legacy()
+        return True # TODO: implement return of run_legacy
 
     def _get_project_name(self) -> str:
         """Get the project name from the project's snapcraft.yaml.
@@ -226,7 +238,7 @@ class RemoteBuildCommand(BaseCommand):
             f"Could not get project name from {str(self._snapcraft_yaml)!r}."
         )
 
-    def _run_new_remote_build(self) -> None:
+    def _run_new_remote_build(self) -> bool:
         """Run new remote-build code."""
         emit.progress("Setting up launchpad environment")
         remote_builder = RemoteBuilder(
@@ -240,13 +252,14 @@ class RemoteBuildCommand(BaseCommand):
 
         if self._parsed_args.status:
             remote_builder.print_status()
-            return
+            return True
 
         emit.progress("Looking for existing build")
         has_outstanding_build = remote_builder.has_outstanding_build()
         if self._parsed_args.recover and not has_outstanding_build:
             emit.progress("No build found", permanent=True)
-            return
+            emit.message("No build found.")
+            return False
 
         if has_outstanding_build:
             emit.progress("Found existing build", permanent=True)
@@ -257,11 +270,11 @@ class RemoteBuildCommand(BaseCommand):
                 "Do you wish to recover this build?", default=True
             ):
                 emit.progress("Building")
-                remote_builder.monitor_build()
+                success = remote_builder.monitor_build()
                 emit.progress("Cleaning")
                 remote_builder.clean_build()
                 emit.progress("Build completed", permanent=True)
-                return
+                return success
 
             # Otherwise clean running build before we start a new one.
             emit.progress("Cleaning existing build")
@@ -277,10 +290,11 @@ class RemoteBuildCommand(BaseCommand):
         emit.progress("Starting build")
         remote_builder.start_build()
         emit.progress("Building")
-        remote_builder.monitor_build()
+        success = remote_builder.monitor_build()
         emit.progress("Cleaning")
         remote_builder.clean_build()
         emit.progress("Build completed", permanent=True)
+        return success
 
     def _get_build_strategy(self) -> Optional[_Strategies]:
         """Get the build strategy from the envvar `SNAPCRAFT_REMOTE_BUILD_STRATEGY`.
