@@ -113,10 +113,11 @@ class RemoteBuildCommand(BaseCommand):
             default=0,
             metavar="<seconds>",
             help="Time in seconds to wait for launchpad to build.",
+        )
         parser.add_argument(
-            "--exit-fail-any-failure",
+            "--allow-failure",
             action="store_true",
-            help="return 1 if any of the builds fail"
+            help="return 0 even when builds fail"
         )
 
     @overrides
@@ -160,13 +161,14 @@ class RemoteBuildCommand(BaseCommand):
 
         success = self._run_new_or_fallback_remote_build(base)
         if not success:
-            if parsed_args.exit_fail_any_failure:
-                raise SnapcraftError("Some remote build failed to complete")
-            else:
+            if parsed_args.allow_failure:
                 emit.debug(
                     "Some build failed to complete but "
-                    "--exit-fail-any-failure was not provided"
+                    "--allow-failure was provided"
                 )
+            else:
+                raise SnapcraftError("Some remote build failed to complete")
+
 
 
     def _run_new_or_fallback_remote_build(self, base: str) -> bool:
