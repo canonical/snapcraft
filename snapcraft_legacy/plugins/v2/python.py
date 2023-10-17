@@ -140,7 +140,9 @@ class PythonPlugin(PluginV2):
             requirements_cmd = f"pip install {constraints} -U {requirements}"
             build_commands.append(requirements_cmd)
 
-        build_commands.append(f"[ -f setup.py ] || [ -f pyproject.toml ] && pip install {constraints} -U .")
+        build_commands.append(
+            f"[ -f setup.py -o -f pyproject.toml ] && pip install {constraints} -U ."
+        )
 
         # Now fix shebangs.
         # TODO: replace with snapcraftctl once the two scripts are consolidated
