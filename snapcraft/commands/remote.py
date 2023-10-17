@@ -117,7 +117,8 @@ class RemoteBuildCommand(BaseCommand):
         parser.add_argument(
             "--allow-failure",
             action="store_true",
-            help="return 0 even when builds fail"
+            default=os.getenv("SNAPCRAFT_REMOTE_BUILD_ALLOW_FAILURE"),
+            help="return 0 even when builds fail",
         )
 
     @overrides
@@ -163,13 +164,10 @@ class RemoteBuildCommand(BaseCommand):
         if not success:
             if parsed_args.allow_failure:
                 emit.debug(
-                    "Some build failed to complete but "
-                    "--allow-failure was provided"
+                    "Some build failed to complete but --allow-failure was provided"
                 )
             else:
                 raise SnapcraftError("Some remote build failed to complete")
-
-
 
     def _run_new_or_fallback_remote_build(self, base: str) -> bool:
         """Run the new or fallback remote-build.
@@ -205,7 +203,7 @@ class RemoteBuildCommand(BaseCommand):
                 f"{_STRATEGY_ENVVAR!r} is {_Strategies.FORCE_FALLBACK.value!r}"
             )
             run_legacy()
-            return True # TODO: implement return of run_legacy
+            return True  # TODO: implement return of run_legacy
 
         if is_repo(Path().absolute()):
             emit.debug(
@@ -215,7 +213,7 @@ class RemoteBuildCommand(BaseCommand):
 
         emit.debug("Running fallback remote-build")
         run_legacy()
-        return True # TODO: implement return of run_legacy
+        return True  # TODO: implement return of run_legacy
 
     def _get_project_name(self) -> str:
         """Get the project name from the project's snapcraft.yaml.
