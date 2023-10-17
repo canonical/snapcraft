@@ -1,0 +1,76 @@
+summary: Build and run a basic ROS snap using meta-ros extension
+
+kill-timeout: 180m
+
+environment:
+
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
+
+  SNAP: catkin-tools-noetic-hello
+  SNAP_DIR: "../../plugins/v2/snaps/$SNAP"
+
+  INTERFACE: ros-noetic
+
+  META_SNAP/catkin_noetic_ros_core: ros-noetic-ros-core
+  EXTENSION/catkin_noetic_ros_core: ros1-noetic-ros-core
+
+  META_SNAP/catkin_noetic_ros_base: ros-noetic-ros-base
+  EXTENSION/catkin_noetic_ros_base: ros1-noetic-ros-base
+
+  META_SNAP/catkin_noetic_robot: ros-noetic-robot
+  EXTENSION/catkin_noetic_robot: ros1-noetic-robot
+
+  META_SNAP/catkin_noetic_desktop: ros-noetic-desktop
+  EXTENSION/catkin_noetic_desktop: ros1-noetic-desktop
+
+# The content snap required for the test to succeed is only
+# available on a subset of all the architectures this testbed
+# can run on.
+systems:
+  - ubuntu-20.04
+  - ubuntu-20.04-64
+  - ubuntu-20.04-amd64
+  - ubuntu-20.04-arm64
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+  # Overwrite the extension to test them all out of a single snap
+  sed -i "s|ros1-noetic|${EXTENSION}|" "$SNAP_DIR/snap/snapcraft.yaml"
+
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  create_dpkg_restore_point
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  dpkg_restore_point
+
+execute: |
+  cd "$SNAP_DIR"
+
+  # Build what we have and verify the snap runs as expected.
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+
+  # Check that the snap size is fairly small
+  # The non-content sharing snap is ~90M
+  SNAP_SIZE=$(find . -maxdepth 1 -mindepth 1 -name '*_1.0_*.snap' -exec ls -s {} + | cut -d " " -f1)
+  [ "100" -gt "$SNAP_SIZE" ]
+
+  # The default providing snap is installed automatically
+  # snap install "${META_SNAP}"
+
+  snap connect "${SNAP}:${INTERFACE}" "${META_SNAP}:${INTERFACE}"
+  [ "$($SNAP)" = "hello world" ]

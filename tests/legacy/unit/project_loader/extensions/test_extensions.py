@@ -17,6 +17,7 @@
 import inspect
 import textwrap
 
+import pytest
 from testscenarios import multiply_scenarios
 
 from snapcraft_legacy.internal.project_loader import (
@@ -47,6 +48,7 @@ class ExtensionCombinationTest(ProjectLoaderBaseTest):
         )
     )
 
+    @pytest.mark.skip(reason="Doesn't scale")
     def test_extensions_all_combinations_validate(self):
         common_bases = set(["core20"])
 

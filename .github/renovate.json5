@@ -1,0 +1,101 @@
+{
+  // Configuration file for RenovateBot: https://docs.renovatebot.com/configuration-options
+  extends: ["config:base"],
+  labels: ["dependencies"],  // For convenient searching in GitHub
+  pip_requirements: {
+    fileMatch: ["^tox.ini$", "(^|/)requirements([\\w-]*)\\.txt$"]
+  },
+   packageRules: [
+    {
+      // Automerge patches, pin changes and digest changes.
+      // Also groups these changes together.
+      groupName: "bugfixes",
+      excludePackagePrefixes: ["dev", "lint", "types"],
+      matchUpdateTypes: ["patch", "pin", "digest"],
+      prPriority: 3, // Patches should go first!
+      automerge: true
+    },
+    {
+      // Update all internal packages in one higher-priority PR
+      groupName: "internal packages",
+      matchPackagePrefixes: ["craft-", "snap-"],
+      matchLanguages: ["python"],
+      prPriority: 2
+    },
+    {
+      // GitHub Actions are higher priority to update than most dependencies.
+      groupName: "GitHub Actions",
+      matchManagers: ["github-actions"],
+      prPriority: 1,
+      automerge: true,
+    },
+    // Everything not in one of these rules gets priority 0 and falls here.
+    {
+      // Minor changes can be grouped and automerged for dev dependencies, but are also deprioritised.
+      groupName: "development dependencies (non-major)",
+      groupSlug: "dev-dependencies",
+      matchPackagePrefixes: [
+        "dev",
+        "lint",
+        "types"
+      ],
+      excludePackagePatterns: ["ruff"],
+      matchUpdateTypes: ["minor", "patch", "pin", "digest"],
+      prPriority: -1,
+      automerge: true
+    },
+    {
+      // Documentation related updates
+      groupName: "documentation dependencies",
+      groupSlug: "doc-dependencies",
+      matchPackageNames: ["Sphinx"],
+      matchPackagePatterns: ["^[Ss]phinx.*$", "^furo$"],
+      matchPackagePrefixes: ["docs"],
+    },
+    {
+      // Other major dependencies get deprioritised below minor dev dependencies.
+      matchUpdateTypes: ["major"],
+      prPriority: -2
+    },
+    {
+      // Major dev dependencies are stone last, but grouped.
+      groupName: "development dependencies (major versions)",
+      groupSlug: "dev-dependencies",
+      matchDepTypes: ["devDependencies"],
+      matchUpdateTypes: ["major"],
+      prPriority: -3
+    },
+    {
+      // Ruff is still unstable, so update it separately.
+      groupName: "ruff",
+      matchPackagePatterns: ["^(lint/)?ruff$"],
+      prPriority: -3
+    }
+  ],
+  regexManagers: [
+    {
+      // tox.ini can get updates too if we specify for each package.
+      fileMatch: ["tox.ini"],
+      depTypeTemplate: "devDependencies",
+      matchStrings: [
+        "# renovate: datasource=(?<datasource>\\S+)\n\\s+(?<depName>.*?)(\\[[\\w]*\\])*[=><]=?(?<currentValue>.*?)\n"
+      ]
+    },
+    {
+      // .pre-commit-config.yaml version updates
+      fileMatch: [".pre-commit-config.yaml"],
+      depTypeTemplate: "devDependencies",
+      matchStrings: [
+        "# renovate: datasource=(?<datasource>\\S+);\\s*depName=(?<depName>.*?)\n\s+rev: \"v?(?<currentValue>.*?)\""
+      ]
+    }
+  ],
+  timezone: "Etc/UTC",
+  automergeSchedule: ["every weekend"],
+  schedule: ["every weekend"],
+  prConcurrentLimit: 2, // No more than 2 open PRs at a time.
+  prCreation: "not-pending", // Wait until status checks have completed before raising the PR
+  prNotPendingHours: 4, // ...unless the status checks have been running for 4+ hours.
+  prHourlyLimit: 1, // No more than 1 PR per hour.
+  stabilityDays: 2 // Wait 2 days from release before updating.
+}

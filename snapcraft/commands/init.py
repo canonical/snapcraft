@@ -24,7 +24,7 @@ from craft_cli import BaseCommand, emit
 from overrides import overrides
 
 from snapcraft import errors
-from snapcraft.parts.lifecycle import get_snap_project
+from snapcraft.parts.yaml_utils import get_snap_project
 
 _TEMPLATE_YAML = dedent(
     """\

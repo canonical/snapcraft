@@ -25,6 +25,7 @@ import pytest
 import yaml
 from craft_providers import Executor, Provider
 from craft_providers.base import Base
+from overrides import override
 from pymacaroons import Caveat, Macaroon
 
 from snapcraft.extensions import extension, register, unregister
@@ -86,7 +87,10 @@ def fake_extension():
         def get_app_snippet(self) -> Dict[str, Any]:
             return {"plugs": ["fake-plug"]}
 
-        def get_part_snippet(self) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+            if plugin_name == "catkin":
+                return {}
+
             return {"after": ["fake-extension/fake-part"]}
 
         def get_parts_snippet(self) -> Dict[str, Any]:
@@ -122,7 +126,7 @@ def fake_extension_extra():
         def get_app_snippet(self) -> Dict[str, Any]:
             return {"plugs": ["fake-plug", "fake-plug-extra"]}
 
-        def get_part_snippet(self) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
             return {"after": ["fake-extension-extra/fake-part"]}
 
         def get_parts_snippet(self) -> Dict[str, Any]:
@@ -156,7 +160,7 @@ def fake_extension_invalid_parts():
         def get_app_snippet(self) -> Dict[str, Any]:
             return {"plugs": ["fake-plug"]}
 
-        def get_part_snippet(self) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
             return {"after": ["fake-extension/fake-part"]}
 
         def get_parts_snippet(self) -> Dict[str, Any]:
@@ -192,7 +196,7 @@ def fake_extension_experimental():
         def get_app_snippet(self) -> Dict[str, Any]:
             return {}
 
-        def get_part_snippet(self) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
             return {}
 
         def get_parts_snippet(self) -> Dict[str, Any]:
@@ -228,7 +232,7 @@ def fake_extension_name_from_legacy():
         def get_app_snippet(self) -> Dict[str, Any]:
             return {"plugs": ["fake-plug", "fake-plug-extra"]}
 
-        def get_part_snippet(self) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
             return {"after": ["fake-extension-extra/fake-part"]}
 
         def get_parts_snippet(self) -> Dict[str, Any]:
@@ -322,6 +326,16 @@ def fake_provider(mock_instance):
 
     class FakeProvider(Provider):
         """Fake provider."""
+
+        @property
+        @override
+        def name(self) -> str:
+            return "fake"
+
+        @property
+        @override
+        def install_recommendation(self) -> str:
+            return "uninstallable"
 
         def clean_project_environments(self, *, instance_name: str):
             pass

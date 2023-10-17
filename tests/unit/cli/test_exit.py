@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,6 +21,7 @@ from unittest.mock import call
 import craft_store.errors
 import pytest
 from craft_cli import CraftError
+from craft_providers import ProviderError
 
 from snapcraft import cli
 
@@ -48,6 +49,29 @@ def test_no_keyring_error(capsys, mocker):
     assert stderr[2].startswith(
         "For more information, check out: https://snapcraft.io/docs/snapcraft-authentication"
     )
+
+
+def test_craft_providers_error(capsys, mocker):
+    """Catch craft-providers errors."""
+    mocker.patch.object(sys, "argv", ["cmd", "pull"])
+    mocker.patch.object(sys.stdin, "isatty", return_value=True)
+    mocker.patch(
+        "snapcraft.commands.lifecycle.PullCommand.run",
+        side_effect=ProviderError(
+            brief="test brief",
+            details="test details",
+            resolution="test resolution",
+        ),
+    )
+
+    cli.run()
+
+    stderr = capsys.readouterr().err.splitlines()
+
+    # Simple verification that our expected message is being printed
+    assert stderr[0].startswith("craft-providers error: test brief")
+    assert stderr[1].startswith("test details")
+    assert stderr[2].startswith("test resolution")
 
 
 @pytest.mark.parametrize("is_managed,report_errors", [(True, False), (False, True)])

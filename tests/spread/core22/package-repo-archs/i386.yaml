@@ -1,0 +1,33 @@
+name: test-archs
+version: '1.0'
+summary: test package repos with different architectures
+description: test package repos with different architectures
+grade: stable
+confinement: strict
+base: core22
+architectures:
+  - build-on: amd64
+
+package-repositories:
+  # The repo that contains libpython3.11-minimal:i386
+  - type: apt
+    formats: [deb]
+    architectures: [i386]
+    components: [main]
+    suites: [jammy]
+    key-id: F23C5A6CF475977595C89F51BA6932366A755776
+    url: https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu
+  # We don't need to add the i386 architecture for the official archives,
+  # because the host building this (amd64) is compatible so Snapcraft will add
+  # the i386 platform "globally".
+
+parts:
+  mypart:
+    plugin: nil
+    build-packages:
+      - file
+    stage-packages:
+      - libpython3.11-minimal:i386
+    override-build: |
+      file ${CRAFT_PART_INSTALL}/usr/lib/i386-linux-gnu/libssl.so.3 | grep "ELF 32-bit"
+      craftctl default

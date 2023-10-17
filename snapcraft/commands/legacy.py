@@ -98,12 +98,12 @@ class StoreLegacyPromoteCommand(LegacyBaseCommand):
 
         Prior to releasing, visual confirmation shall be required.
 
-        The format for channels is `[<track>/]<risk>[/<branch>]` where
+        The format for channels is ``[<track>/]<risk>[/<branch>]`` where
 
         - <track> is used to support long-term release channels. It is
           implicitly set to the default.
-        - <risk> is mandatory and must be one of `stable`, `candidate`,
-          `beta` or `edge`.
+        - <risk> is mandatory and must be one of ``stable``, ``candidate``,
+          ``beta`` or ``edge``.
         - <branch> is optional and dynamically creates a channel with a
           specific expiration date. Branches are specifically designed
           to support short-term hot fixes.

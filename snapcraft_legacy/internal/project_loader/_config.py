@@ -23,7 +23,6 @@ import re
 from typing import List, Set
 
 import jsonschema
-from craft_archives.repo import apt_key_manager, apt_sources_manager
 
 from snapcraft_legacy import formatting_utils, project
 from snapcraft_legacy.internal import deprecations, repo, states, steps
@@ -31,6 +30,7 @@ from snapcraft_legacy.internal.meta.snap import Snap
 from snapcraft_legacy.internal.pluginhandler._part_environment import (
     get_snapcraft_global_environment,
 )
+from snapcraft_legacy.internal.repo import apt_key_manager, apt_sources_manager
 from snapcraft_legacy.project._schema import Validator
 
 from . import errors, grammar_processing, replace_attr
@@ -349,6 +349,15 @@ class Config:
 
             replacements = environment_to_replacements(
                 get_snapcraft_global_environment(self.project)
+            )
+
+            # order is important - for example, `SNAPCRAFT_ARCH_TRIPLET_BUILD_{ON|FOR}`
+            # should be evaluated before `SNAPCRAFT_ARCH_TRIPLET` to avoid premature
+            # variable expansion
+            replacements = dict(
+                sorted(
+                    replacements.items(), key=lambda item: len(item[0]), reverse=True
+                )
             )
 
             snapcraft_yaml[key] = replace_attr(snapcraft_yaml[key], replacements)

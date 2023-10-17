@@ -22,6 +22,7 @@ import pytest
 
 from snapcraft import errors
 from snapcraft.parts import yaml_utils
+from snapcraft.projects import Architecture
 
 
 def test_yaml_load():
@@ -128,6 +129,19 @@ def test_yaml_load_not_core22_base():
     assert str(raised.value) == "base is core20"
 
 
+def test_yaml_load_esm_base():
+    with pytest.raises(errors.MaintenanceBase):
+        yaml_utils.load(
+            io.StringIO(
+                dedent(
+                    """\
+            base: core
+    """
+                )
+            )
+        )
+
+
 def test_yaml_load_no_base():
     with pytest.raises(errors.LegacyFallback) as raised:
         yaml_utils.load(
@@ -141,3 +155,47 @@ def test_yaml_load_no_base():
         )
 
     assert str(raised.value) == "no base defined"
+
+
+def test_extract_parse_info():
+    yaml_data = {
+        "name": "foo",
+        "parts": {"p1": {"plugin": "nil", "parse-info": "foo/metadata.xml"}, "p2": {}},
+    }
+    parse_info = yaml_utils.extract_parse_info(yaml_data)
+    assert yaml_data == {"name": "foo", "parts": {"p1": {"plugin": "nil"}, "p2": {}}}
+    assert parse_info == {"p1": "foo/metadata.xml"}
+
+
+@pytest.fixture
+def minimal_yaml_data():
+    return {
+        "name": "name",
+        "base": "core22",
+        "confinement": "strict",
+        "grade": "devel",
+        "version": "1.0",
+        "summary": "summary",
+        "description": "description",
+        "parts": {"nil": {}},
+    }
+
+
+@pytest.mark.parametrize("key", ("build-packages", "build-snaps"))
+@pytest.mark.parametrize("value", (["foo"], [{"on amd64": ["foo"]}]))
+def test_apply_yaml_defines_root_packages(minimal_yaml_data, key, value):
+    minimal_yaml_data[key] = value
+
+    assert yaml_utils.apply_yaml(
+        minimal_yaml_data, build_on="amd64", build_for="amd64"
+    ) == {
+        "name": "name",
+        "base": "core22",
+        "confinement": "strict",
+        "grade": "devel",
+        "version": "1.0",
+        "summary": "summary",
+        "description": "description",
+        "architectures": [Architecture(build_on="amd64", build_for="amd64")],
+        "parts": {"nil": {}, "snapcraft/core": {"plugin": "nil", key: ["foo"]}},
+    }

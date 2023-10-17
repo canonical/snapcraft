@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2022 Canonical Ltd
+# Copyright 2016-2023 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,7 +17,6 @@
 import contextlib
 import json
 import logging
-import operator
 import os
 import re
 import subprocess
@@ -52,6 +51,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_data_from_snap_file(snap_path):
+    manifest_yaml = None
     with tempfile.TemporaryDirectory() as temp_dir:
         unsquashfs_path = get_snap_tool_path("unsquashfs")
         try:
@@ -61,9 +61,9 @@ def get_data_from_snap_file(snap_path):
                     "-d",
                     os.path.join(temp_dir, "squashfs-root"),
                     snap_path,
-                    "-e",
                     # cygwin unsquashfs on windows uses unix paths.
                     Path("meta", "snap.yaml").as_posix(),
+                    Path("snap", "manifest.yaml").as_posix(),
                 ]
             )
         except subprocess.CalledProcessError:
@@ -73,7 +73,12 @@ def get_data_from_snap_file(snap_path):
             os.path.join(temp_dir, "squashfs-root", "meta", "snap.yaml")
         ) as yaml_file:
             snap_yaml = yaml_utils.load(yaml_file)
-    return snap_yaml
+        manifest_path = Path(temp_dir, "squashfs-root", "snap", "manifest.yaml")
+        if manifest_path.exists():
+            with open(manifest_path) as manifest_yaml_file:
+                manifest_yaml = yaml_utils.load(manifest_yaml_file)
+
+    return snap_yaml, manifest_yaml
 
 
 @contextlib.contextmanager
@@ -363,34 +368,6 @@ class StoreClientCLI(storeapi.StoreClient):
         super().register(snap_name=snap_name, is_private=is_private, store_id=store_id)
 
 
-def list_registered():
-    account_info = StoreClientCLI().get_account_information()
-    snaps = [
-        (
-            name,
-            info["since"],
-            "private" if info["private"] else "public",
-            info["price"] or "-",
-            "-",
-        )
-        for name, info in account_info["snaps"].get(DEFAULT_SERIES, {}).items()
-        # Presenting only approved snap registrations, which means name
-        # disputes will be displayed/sorted some other way.
-        if info["status"] == "Approved"
-    ]
-
-    if not snaps:
-        echo.warning("There are no registered snaps.")
-        return
-
-    tabulated_snaps = tabulate(
-        sorted(snaps, key=operator.itemgetter(0)),
-        headers=["Name", "Since", "Visibility", "Price", "Notes"],
-        tablefmt="plain",
-    )
-    print(tabulated_snaps)
-
-
 def _get_usable_keys(name=None):
     snap_path = get_host_tool_path(command_name="snap", package_name="snapd")
     keys = json.loads(
@@ -435,11 +412,11 @@ def list_keys():
     """Lists keys available to sign assertions."""
     keys = list(_get_usable_keys())
     account_info = StoreClientCLI().get_account_information()
-    enabled_keys = {
+    enabled_keys = [
         account_key["public-key-sha3-384"]
         for account_key in account_info["account_keys"]
-    }
-    if keys and enabled_keys:
+    ]
+    if keys:
         tabulated_keys = tabulate(
             [
                 (
@@ -453,19 +430,29 @@ def list_keys():
             headers=["", "Name", "SHA3-384 fingerprint", ""],
             tablefmt="plain",
         )
-        print(tabulated_keys)
-    elif not keys and enabled_keys:
-        registered_keys = "\n".join([f"- {key}" for key in enabled_keys])
         print(
-            "No keys have been created on this system. "
-            " See 'snapcraft create-key --help' to create a key.\n"
-            "The following SHA3-384 key fingerprints have been registered "
-            f"but are not available on this system:\n{registered_keys}"
+            "The following keys are available on this system:"
         )
+        print(tabulated_keys)
     else:
         print(
-            "No keys have been registered."
-            " See 'snapcraft register-key --help' to register a key."
+            "No keys have been created on this system. "
+            "See 'snapcraft create-key --help' to create a key."
+        )
+    if enabled_keys:
+        local_hashes = {key["sha3-384"] for key in keys}
+        registered_keys = "\n".join(
+            (f"- {key}" for key in enabled_keys if key not in local_hashes)
+        )
+        if registered_keys:
+            print(
+                "The following SHA3-384 key fingerprints have been registered "
+                f"but are not available on this system:\n{registered_keys}"
+            )
+    else:
+        print(
+            "No keys have been registered with this account. "
+            "See 'snapcraft register-key --help' to register a key."
         )
 
 
@@ -574,7 +561,7 @@ def sign_build(snap_filename, key_name=None, local=False):
     if not os.path.exists(snap_filename):
         raise FileNotFoundError("The file {!r} does not exist.".format(snap_filename))
 
-    snap_yaml = get_data_from_snap_file(snap_filename)
+    snap_yaml, _ = get_data_from_snap_file(snap_filename)
     snap_name = snap_yaml["name"]
     grade = snap_yaml.get("grade", "stable")
 
@@ -625,7 +612,7 @@ def upload_metadata(snap_filename, force):
     logger.debug("Uploading metadata to the Store (force=%s)", force)
 
     # get the metadata from the snap
-    snap_yaml = get_data_from_snap_file(snap_filename)
+    snap_yaml, _ = get_data_from_snap_file(snap_filename)
     metadata = {
         "summary": snap_yaml["summary"],
         "description": snap_yaml["description"],
