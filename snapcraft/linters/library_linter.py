@@ -15,8 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Library linter implementation."""
-import glob
-import os
 import subprocess
 from pathlib import Path
 from typing import List, Set
@@ -109,7 +107,11 @@ class LibraryLinter(Linter):
             if path.name == library_name:
                 try:
                     output = subprocess.run(
-                        ["dpkg", "-S", path.absolute().as_posix()], check=True, stdout=subprocess.PIPE
+                        ["dpkg",
+                         "-S",
+                         path.absolute().as_posix()],
+                         check=True,
+                         stdout=subprocess.PIPE
                     )
                 except subprocess.CalledProcessError:
                     # If the specified file doesn't belong to any package, the
