@@ -108,8 +108,8 @@ class LibraryLinter(Linter):
                 try:
                     output = subprocess.run(
                         ["dpkg", "-S", path.absolute().as_posix()],
-                         check=True,
-                         stdout=subprocess.PIPE
+                        check=True,
+                        stdout=subprocess.PIPE
                     )
                 except subprocess.CalledProcessError:
                     # If the specified file doesn't belong to any package, the
