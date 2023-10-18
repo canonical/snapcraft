@@ -285,3 +285,19 @@ def test_is_library_path_directory(mocker):
     result = linter._is_library_path(path=Path("/test/dir"))
 
     assert not result
+
+def test_find_deb_package():
+    """Check that searching the .deb package for a library that is installed
+       in the system works as expected."""
+    linter = LibraryLinter(name="library", snap_metadata=Mock(), lint=None)
+    # /usr/lib/x86_64-linux-gnu/gconv/libCNS.so must be available,
+    # because it is part of libc6
+    result = linter._find_deb_package('libCNS.so')
+    assert result.startswith('libc6')
+
+def test_find_deb_package_no_available():
+    """Check that finding the .deb package for a library not installed works
+       as expected."""
+    linter = LibraryLinter(name="library", snap_metadata=Mock(), lint=None)
+    result = linter._find_deb_package('thisLibraryCantExistInALinuxSystemBecauseItWouldMakeNoSense.so')
+    assert not result
