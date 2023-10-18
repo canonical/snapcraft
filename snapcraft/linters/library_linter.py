@@ -107,9 +107,7 @@ class LibraryLinter(Linter):
             if path.name == library_name:
                 try:
                     output = subprocess.run(
-                        ["dpkg",
-                         "-S",
-                         path.absolute().as_posix()],
+                        ["dpkg", "-S", path.absolute().as_posix()],
                          check=True,
                          stdout=subprocess.PIPE
                     )
