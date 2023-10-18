@@ -361,7 +361,7 @@ class TestProjectValidation:
         else:
             error = ".*unexpected value; permitted: 'stable', 'devel'"
             with pytest.raises(pydantic.ValidationError, match=error):
-                project.grade = grade
+                project.grade = grade  # type: ignore
 
     def test_project_summary_valid(self, project_yaml_data):
         summary = "x" * 78
