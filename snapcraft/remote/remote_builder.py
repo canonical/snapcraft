@@ -104,7 +104,7 @@ class RemoteBuilder:
         """
         return self._lpc.has_outstanding_build()
 
-    def monitor_build(self) -> None:
+    def monitor_build(self) -> bool:
         """Monitor and periodically log the status of a remote build in Launchpad."""
         logger.info(
             "Building snap package for %s. This may take some time to finish.",
@@ -112,9 +112,10 @@ class RemoteBuilder:
         )
 
         logger.info("Building...")
-        self._lpc.monitor_build()
+        success = self._lpc.monitor_build()
 
         logger.info("Build complete.")
+        return success
 
     def clean_build(self) -> None:
         """Clean the cache and Launchpad build."""
