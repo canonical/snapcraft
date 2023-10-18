@@ -105,11 +105,11 @@ class LibraryLinter(Linter):
         return issues
 
     def _find_deb_package(self, library_name: str) -> Optional[str]:
-        for path in glob.glob("/usr/lib/**", recursive=True):
-            if os.path.basename(path) == library_name:
+        for path in Path("/usr/lib").glob("**/*"):
+            if path.name == library_name:
                 try:
                     output = subprocess.run(
-                        ["dpkg", "-S", path], check=True, stdout=subprocess.PIPE
+                        ["dpkg", "-S", path.absolute().as_posix()], check=True, stdout=subprocess.PIPE
                     )
                 except subprocess.CalledProcessError:
                     # If the specified file doesn't belong to any package, the
