@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "python_hello_pyproject"
+description = "A simple hello world in python"
+version = "0.0.1"
+
+[project.scripts]
+python-hello-pyproject = "pythonhellopyproject:main"
