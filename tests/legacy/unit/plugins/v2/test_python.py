@@ -113,7 +113,7 @@ def test_get_build_commands():
         == [
             '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} "${SNAPCRAFT_PART_INSTALL}"',
             'SNAPCRAFT_PYTHON_VENV_INTERP_PATH="${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"',
-            "[ -f setup.py ] && pip install  -U .",
+            "[ -f setup.py -o -f pyproject.toml ] && pip install  -U .",
         ]
         + _FIXUP_BUILD_COMMANDS
     )
@@ -134,7 +134,7 @@ def test_get_build_commands_with_all_properties():
             'SNAPCRAFT_PYTHON_VENV_INTERP_PATH="${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"',
             "pip install -c 'constraints.txt' -U pip 'some-pkg; sys_platform != '\"'\"'win32'\"'\"''",
             "pip install -c 'constraints.txt' -U -r 'requirements.txt'",
-            "[ -f setup.py ] && pip install -c 'constraints.txt' -U .",
+            "[ -f setup.py -o -f pyproject.toml ] && pip install -c 'constraints.txt' -U .",
         ]
         + _FIXUP_BUILD_COMMANDS
     )
