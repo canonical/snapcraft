@@ -16,6 +16,7 @@ environment:
   SNAP/python: python-hello
   SNAP/python_multiple_parts: python-hello-multiple-parts
   SNAP/python_multiple_parts_staged: python-hello-multiple-parts-staged
+  SNAP/python_pyproject: python-hello-pyproject
   SNAP/python_staged: python-hello-staged-python
   SNAP/python_with_stage_package_in_base: python-with-stage-package-in-base
   SNAP/python_with_python_package_dep: python-hello-with-python-package-dep
