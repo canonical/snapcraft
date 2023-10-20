@@ -38,7 +38,7 @@ def kde_neon_extension_with_build_snap():
             "base": "core22",
             "parts": {
                 "part1": {
-                    "build-snaps": ["kf5-5-110-qt-5-15-11-core22-sdk/latest/stable"]
+                    "build-snaps": ["kf5-5-108-qt-5-15-10-core22-sdk/latest/stable"]
                 }
             },
         },
