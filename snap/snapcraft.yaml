@@ -135,6 +135,16 @@ parts:
       sed -i "${SNAPCRAFT_PART_INSTALL}/usr/lib/python3.10/site.py" \
         -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
 
+  libgit2:
+    source: https://github.com/libgit2/libgit2/archive/refs/tags/v1.7.1.tar.gz
+    source-checksum: sha256/17d2b292f21be3892b704dddff29327b3564f96099a1c53b00edc23160c71327
+    plugin: cmake
+    cmake-parameters:
+      - -DCMAKE_INSTALL_PREFIX=/usr
+    build-attributes:
+      - enable-patchelf
+    prime:
+      - -usr/include
   snapcraft:
     source: .
     plugin: python
@@ -159,8 +169,8 @@ parts:
       - enable-patchelf
     build-environment:
         # Build PyNaCl from source since the wheel files interact
-        # strangely with classic snaps.
-        - "PIP_NO_BINARY": "PyNaCl"
+        # strangely with classic snaps. Well, build it all from source.
+        - "PIP_NO_BINARY": ":all"
         # Use base image's libsodium for PyNaCl.
         - "SODIUM_INSTALL": "system"
         - "CFLAGS": "$(pkg-config python-3.10 yaml-0.1 --cflags)"
@@ -176,4 +186,4 @@ parts:
 
         # The new implementation still requires this.
         ln -sf ../usr/bin/python3.10 $SNAPCRAFT_PART_INSTALL/bin/python3
-    after: [snapcraft-libs]
+    after: [snapcraft-libs, libgit2]

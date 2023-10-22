@@ -19,7 +19,7 @@
 It can be used for python projects where you would want to do:
 
     - import python modules with a requirements.txt
-    - build a python project that has a setup.py
+    - build a python project that has a setup.py or pyproject.toml file
     - install packages straight from pip
 
 This plugin uses the common plugin keywords as well as those for "sources".
@@ -140,7 +140,9 @@ class PythonPlugin(PluginV2):
             requirements_cmd = f"pip install {constraints} -U {requirements}"
             build_commands.append(requirements_cmd)
 
-        build_commands.append(f"[ -f setup.py ] && pip install {constraints} -U .")
+        build_commands.append(
+            f"[ -f setup.py -o -f pyproject.toml ] && pip install {constraints} -U ."
+        )
 
         # Now fix shebangs.
         # TODO: replace with snapcraftctl once the two scripts are consolidated

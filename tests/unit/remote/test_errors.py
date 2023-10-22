@@ -28,3 +28,85 @@ def test_git_error():
     )
     assert error.brief == "Git operation failed."
     assert error.details == "Error details."
+
+
+def test_remote_build_timeout_error():
+    """Test RemoteBuildTimeoutError."""
+    error = errors.RemoteBuildTimeoutError()
+
+    assert str(error) == "Remote build timed out."
+    assert (
+        repr(error)
+        == "RemoteBuildTimeoutError(brief='Remote build timed out.', details=None)"
+    )
+    assert error.brief == "Remote build timed out."
+
+
+def test_launchpad_https_error():
+    """Test LaunchpadHttpsError."""
+    error = errors.LaunchpadHttpsError()
+
+    assert str(error) == (
+        "Failed to connect to Launchpad API service.\n"
+        "Verify connectivity to https://api.launchpad.net and retry build."
+    )
+    assert repr(error) == (
+        "LaunchpadHttpsError(brief='Failed to connect to Launchpad API service.', "
+        "details='Verify connectivity to https://api.launchpad.net and retry build.')"
+    )
+
+    assert error.brief == "Failed to connect to Launchpad API service."
+    assert error.details == (
+        "Verify connectivity to https://api.launchpad.net and retry build."
+    )
+
+
+def test_unsupported_architecture_error():
+    """Test UnsupportedArchitectureError."""
+    error = errors.UnsupportedArchitectureError(architectures=["amd64", "arm64"])
+
+    assert str(error) == (
+        "Architecture not supported by the remote builder.\nThe following "
+        "architectures are not supported by the remote builder: ['amd64', 'arm64'].\n"
+        "Please remove them from the architecture list and try again."
+    )
+    assert repr(error) == (
+        "UnsupportedArchitectureError(brief='Architecture not supported by the remote "
+        "builder.', details=\"The following architectures are not supported by the "
+        "remote builder: ['amd64', 'arm64'].\\nPlease remove them from the "
+        'architecture list and try again.")'
+    )
+
+    assert error.brief == "Architecture not supported by the remote builder."
+    assert error.details == (
+        "The following architectures are not supported by the remote builder: "
+        "['amd64', 'arm64'].\nPlease remove them from the architecture list and "
+        "try again."
+    )
+
+
+def test_accept_public_upload_error():
+    """Test AcceptPublicUploadError."""
+    error = errors.AcceptPublicUploadError()
+
+    assert str(error) == (
+        "Cannot upload data to build servers.\nRemote build needs explicit "
+        "acknowledgement that data sent to build servers is public.\n"
+        "In non-interactive runs, please use the option "
+        "`--launchpad-accept-public-upload`."
+    )
+    assert repr(error) == (
+        "AcceptPublicUploadError(brief='Cannot upload data to build servers.', "
+        "details='Remote build needs explicit acknowledgement that data sent to build "
+        "servers is public.\\n"
+        "In non-interactive runs, please use the option "
+        "`--launchpad-accept-public-upload`.')"
+    )
+
+    assert error.brief == "Cannot upload data to build servers."
+    assert error.details == (
+        "Remote build needs explicit acknowledgement that data sent to build servers "
+        "is public.\n"
+        "In non-interactive runs, please use the option "
+        "`--launchpad-accept-public-upload`."
+    )

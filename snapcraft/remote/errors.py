@@ -17,7 +17,7 @@
 """Remote build errors."""
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional
 
 
 @dataclass(repr=True)
@@ -48,5 +48,53 @@ class GitError(RemoteBuildError):
         self.message = message
         brief = "Git operation failed."
         details = message
+
+        super().__init__(brief=brief, details=details)
+
+
+class RemoteBuildTimeoutError(RemoteBuildError):
+    """Remote-build timed out."""
+
+    def __init__(self) -> None:
+        brief = "Remote build timed out."
+
+        super().__init__(brief=brief)
+
+
+class LaunchpadHttpsError(RemoteBuildError):
+    """Launchpad connectivity error."""
+
+    def __init__(self) -> None:
+        brief = "Failed to connect to Launchpad API service."
+        details = "Verify connectivity to https://api.launchpad.net and retry build."
+
+        super().__init__(brief=brief, details=details)
+
+
+class UnsupportedArchitectureError(RemoteBuildError):
+    """Unsupported architecture error."""
+
+    def __init__(self, architectures: List[str]) -> None:
+        brief = "Architecture not supported by the remote builder."
+        details = (
+            "The following architectures are not supported by the remote builder: "
+            f"{architectures}.\nPlease remove them from the "
+            "architecture list and try again."
+        )
+
+        super().__init__(brief=brief, details=details)
+
+
+class AcceptPublicUploadError(RemoteBuildError):
+    """Accept public upload error."""
+
+    def __init__(self) -> None:
+        brief = "Cannot upload data to build servers."
+        details = (
+            "Remote build needs explicit acknowledgement that data sent to build "
+            "servers is public.\n"
+            "In non-interactive runs, please use the option "
+            "`--launchpad-accept-public-upload`."
+        )
 
         super().__init__(brief=brief, details=details)
