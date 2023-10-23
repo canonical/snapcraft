@@ -68,7 +68,7 @@ def process_parts(
     processor = GrammarProcessor(
         arch=arch,
         target_arch=target_arch,
-        checker=lambda x: x == x,  # pylint: disable=comparison-with-itself
+        checker=lambda x: x == x,  # pylint: disable=comparison-with-itself  # noqa PLR0124
     )
 
     for part_name in parts_yaml_data:
