@@ -25,6 +25,9 @@ select = [
     "E101",  # Mixed tabs and spaces. Ruff gets confused by tabs in multiline strings
     "W191",  # Indentation contains tabs - another Ruff false positive
 ]
+"tests/legacy/**.py" = [
+    "E721",  # Allowing type comparison
+]
 
 [mccabe]
 max-complexity = 10
