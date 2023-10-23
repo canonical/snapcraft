@@ -193,12 +193,32 @@ class LaunchpadClient:
         )
 
     def _lp_load_url(self, url: str) -> Entry:
-        """Load Launchpad url with a retry in case the connection is lost."""
-        try:
-            return self._lp.load(url)
-        except ConnectionResetError:
-            self._lp = self.login()
-            return self._lp.load(url)
+        """Load Launchpad url with an exponential backoff retry in case the connection is lost."""
+        max_retries = 5
+        base_delay = 1
+        retry_count = max_retries
+
+        while retry_count > 0:
+            try:
+                return self._lp.load(url)
+            except ConnectionError as conn_error:
+                logger.debug(
+                    "Connection error when loading the URL "
+                    "{!r} (retries left {})".format(url, retry_count)
+                )
+
+                if retry_count == 1:
+                    raise conn_error
+
+                self._lp = self.login()
+
+                delay = base_delay * (2 ** (max_retries - retry_count))
+                time.sleep(delay)
+
+                retry_count -= 1
+
+        # If the loop completes without returning, something went wrong.
+        raise Exception("Failed to load the URL after multiple retries.")
 
     def _wait_for_build_request_acceptance(
         self, build_request: Entry, timeout: int = 0
