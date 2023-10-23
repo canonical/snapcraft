@@ -93,7 +93,9 @@ def fake_tools(new_dir, monkeypatch):
     monkeypatch.setenv("PATH", f"{bin_path!s}:{os.getenv('PATH')}")
 
 
-def _fake_elffile_extract_attributes(self):  # pylint: disable=too-many-statements  # noqa: PLR0915
+def _fake_elffile_extract_attributes(  # noqa: PLR0915
+    self,
+):  # pylint: disable=too-many-statements
     """Mock method definition for ElfFile._extract_attributes()."""
     name = self.path.name
 

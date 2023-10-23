@@ -64,12 +64,12 @@ def process_parts(
     :param yaml_data: unprocessed snapcraft.yaml.
     :returns: process snapcraft.yaml.
     """
+
+    def self_check(x: Any) -> bool:
+        return x == x  # pylint: disable=comparison-with-itself  # noqa PLR0124
+
     # TODO: make checker optional in craft-grammar.
-    processor = GrammarProcessor(
-        arch=arch,
-        target_arch=target_arch,
-        checker=lambda x: x == x,  # pylint: disable=comparison-with-itself  # noqa PLR0124
-    )
+    processor = GrammarProcessor(arch=arch, target_arch=target_arch, checker=self_check)
 
     for part_name in parts_yaml_data:
         parts_yaml_data[part_name] = process_part(
