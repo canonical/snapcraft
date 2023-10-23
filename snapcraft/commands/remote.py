@@ -128,8 +128,8 @@ class RemoteBuildCommand(BaseCommand):
         :param parsed_args: Snapcraft's argument namespace.
 
         :raises AcceptPublicUploadError: If the user does not agree to upload data.
-        :raises SnapcraftError: If the project cannot be loaded and parsed.
-        :raises SnapcraftError: If any build fails to complete.
+        :raises SnapcraftError: If the project cannot be loaded and parsed or if any
+        build fails to complete.
         """
         if os.getenv("SUDO_USER") and os.geteuid() == 0:
             emit.message(
