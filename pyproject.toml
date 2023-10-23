@@ -150,6 +150,7 @@ ignore = [
     "C405", "C408", "C414",
     "Q000", # 2 single-quoted strings - probably accidental
     "RET504", "RET506",  # Return value related.
+    "PLR2004",  # Magic values - widely used
 
 ]
 
@@ -163,6 +164,9 @@ ignore = [
     "S105", # Allow Possible hardcoded password.
     "S106", # Allow Possible hardcoded password.
     "S108", # Allow Probable insecure usage of temporary file or directory.
+]
+"tests/unit/parts/plugins/test_kernel.py" = [
+    "E101",  # Mixed tabs and spaces. Ruff gets confused by tabs in multiline strings
 ]
 "__init__.py" = ["I001"]  # Imports in __init__ filesare allowed to be out of order
 
