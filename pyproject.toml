@@ -8,7 +8,7 @@ extend-exclude = '''
 '''
 # Targeting future versions as well so we don't have black reformatting code
 # en masse later.
-target_version = ["py38", "py310", "py311"]
+target_version = ["py310", "py311"]
 
 [tool.isort]
 # black-compatible isort configuration
@@ -75,6 +75,7 @@ addopts = ["--cov=snapcraft"]
 
 # Most of this ruff configuration comes from craft-parts
 [tool.ruff]
+target-version = "py310"
 line-length = 88
 extend-exclude = [
     "docs",
