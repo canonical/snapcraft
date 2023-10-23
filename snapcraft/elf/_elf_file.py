@@ -109,7 +109,7 @@ class _Library:
     :param soname_cache: The soname cache manager.
     """
 
-    def __init__(
+    def __init__(  # noqa PLR0913
         self,
         *,
         soname: str,

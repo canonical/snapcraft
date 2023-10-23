@@ -52,7 +52,7 @@ class PartsLifecycle:
     :raises PartsLifecycleError: On error initializing the parts lifecycle.
     """
 
-    def __init__(
+    def __init__(  # noqa PLR0913
         self,
         all_parts: Dict[str, Any],
         *,

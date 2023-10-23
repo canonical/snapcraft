@@ -112,7 +112,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
         )
 
 
-def _run_command(
+def _run_command(  # noqa PLR0913
     command_name: str,
     *,
     project: Project,
@@ -217,7 +217,7 @@ def _run_command(
         raise errors.SnapcraftError(str(err)) from err
 
 
-def _run_lifecycle_and_pack(
+def _run_lifecycle_and_pack(  # noqa PLR0913
     lifecycle: PartsLifecycle,
     *,
     command_name: str,

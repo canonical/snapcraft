@@ -153,6 +153,9 @@ ignore = [
     "RET504", "RET506",  # Return value related.
     "PLR2004",  # Magic values - widely used
     "PLC1901",  # Checking for empty string vs. falsey - many of these
+    "S603",  # Untrusted input for subprocess calls
+    "S604",  # shell=True parameter to a function
+    "S607",  # Partial executable path for subprocess calls
 ]
 
 [tool.ruff.pylint]
