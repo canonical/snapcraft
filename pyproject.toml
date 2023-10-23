@@ -152,7 +152,7 @@ ignore = [
     "Q000", # 2 single-quoted strings - probably accidental
     "RET504", "RET506",  # Return value related.
     "PLR2004",  # Magic values - widely used
-
+    "PLC1901",  # Checking for empty string vs. falsey - many of these
 ]
 
 [tool.ruff.pylint]
@@ -173,6 +173,7 @@ max-branches = 16
 ]
 "tests/unit/parts/plugins/test_kernel.py" = [
     "E101",  # Mixed tabs and spaces. Ruff gets confused by tabs in multiline strings
+    "W191",  # Indentation contains tabs - another Ruff false positive
 ]
 "__init__.py" = ["I001"]  # Imports in __init__ filesare allowed to be out of order
 

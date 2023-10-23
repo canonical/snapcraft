@@ -338,10 +338,10 @@ class ElfFile:
 
         version_required = ""
         for lib in self.needed.values():
-            for version in lib.versions:
-                if not version.startswith("GLIBC_"):
+            for _version in lib.versions:
+                if not _version.startswith("GLIBC_"):
                     continue
-                version = version[6:]
+                version = _version[6:]
                 # TODO: pkg_resources is deprecated in setuptools>66 (CRAFT-1598)
                 if parse_version(version) > parse_version(version_required):  # type: ignore
                     version_required = version

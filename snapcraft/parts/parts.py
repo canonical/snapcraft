@@ -177,7 +177,7 @@ class PartsLifecycle:
                 for action in actions:
                     # Workaround until canonical/craft-parts#540 is fixed
                     if action.step == target_step and rerun_step:
-                        action = craft_parts.Action(
+                        action = craft_parts.Action(  # noqa PLW2901
                             part_name=action.part_name,
                             step=action.step,
                             action_type=ActionType.RERUN,

@@ -68,7 +68,7 @@ def _parse_rosdep_resolve_dependencies(
     dependencies: Dict[str, Set[str]] = {}
     dependency_set = None
     for line in lines:
-        line = line.strip()
+        line = line.strip()  # noqa PLW2901
         if line.startswith("#"):
             key = line.strip("# ")
             dependencies[key] = set()
@@ -336,7 +336,7 @@ def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
         catkin_packages.find_packages(part_install).values(),
     )
     for pkg in catkin_packages.find_packages(part_src).values():
-        pkg = cast(catkin_pkg.package.Package, pkg)
+        pkg = cast(catkin_pkg.package.Package, pkg)  # noqa PLW2901
         # Evaluate the conditions of all dependencies
         pkg.evaluate_conditions(
             {
