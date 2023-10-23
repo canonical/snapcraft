@@ -317,7 +317,7 @@ def get_installed_dependencies(installed_packages_path: str) -> Set[str]:
 @click.option("--target-arch", envvar="CRAFT_TARGET_ARCH", required=True)
 @click.option("--stage-cache-dir", required=True)
 @click.option("--base", required=True)
-def stage_runtime_dependencies(
+def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
     part_src: str,
     part_install: str,
     ros_version: str,

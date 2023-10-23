@@ -368,7 +368,7 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
 
 
 # pylint: disable-next=too-many-branches, too-many-statements
-def _run_in_provider(
+def _run_in_provider(  # noqa PLR0915
     project: Project, command_name: str, parsed_args: "argparse.Namespace"
 ) -> None:
     """Pack image in provider instance."""
