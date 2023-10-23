@@ -847,8 +847,9 @@ def test_remote_build(emitter, mocker, mock_remote_builder):
     """Clean and start a new build."""
     cli.run()
 
-    assert mock_remote_builder.mock_calls[-3:] == [
+    assert mock_remote_builder.mock_calls[-4:] == [
         call().start_build(),
         call().monitor_build(),
         call().clean_build(),
+        call().monitor_build().__bool__(),
     ]
