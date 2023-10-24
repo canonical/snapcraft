@@ -65,8 +65,8 @@ def process_parts(
     :returns: process snapcraft.yaml.
     """
 
-    def self_check(x: Any) -> bool:
-        return x == x  # pylint: disable=comparison-with-itself  # noqa PLR0124
+    def self_check(value: Any) -> bool:
+        return value == value  # pylint: disable=comparison-with-itself  # noqa PLR0124
 
     # TODO: make checker optional in craft-grammar.
     processor = GrammarProcessor(arch=arch, target_arch=target_arch, checker=self_check)
