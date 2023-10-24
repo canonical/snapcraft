@@ -789,10 +789,11 @@ def test_recover_build(emitter, mocker, mock_remote_builder):
 
     cli.run()
 
-    assert mock_remote_builder.mock_calls[-3:] == [
+    assert mock_remote_builder.mock_calls[-4:] == [
         call().print_status(),
         call().monitor_build(),
         call().clean_build(),
+        call().monitor_build().__bool__(), # something is checking the output of monitor_build
     ]
 
 
@@ -808,10 +809,11 @@ def test_recover_build_user_confirms(emitter, mocker, mock_remote_builder):
 
     cli.run()
 
-    assert mock_remote_builder.mock_calls[-3:] == [
+    assert mock_remote_builder.mock_calls[-4:] == [
         call().print_status(),
         call().monitor_build(),
         call().clean_build(),
+        call().monitor_build().__bool__(), # something is checking the output of monitor_build
     ]
 
 
@@ -830,10 +832,11 @@ def test_recover_build_user_denies(emitter, mocker, mock_remote_builder):
 
     cli.run()
 
-    assert mock_remote_builder.mock_calls[-3:] == [
+    assert mock_remote_builder.mock_calls[-4:] == [
         call().start_build(),
         call().monitor_build(),
         call().clean_build(),
+        call().monitor_build().__bool__(), # something is checking the output of monitor_build
     ]
 
 
@@ -843,13 +846,33 @@ def test_recover_build_user_denies(emitter, mocker, mock_remote_builder):
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml", "mock_argv", "mock_confirm", "use_new_remote_build"
 )
-def test_remote_build(emitter, mocker, mock_remote_builder):
+def test_remote_build_ok(emitter, mocker, mock_remote_builder):
     """Clean and start a new build."""
-    cli.run()
+    mock_remote_builder().monitor_build.return_value = True
+    return_value = cli.run()
 
-    assert mock_remote_builder.mock_calls[-4:] == [
+    assert mock_remote_builder.mock_calls[-3:] == [
         call().start_build(),
         call().monitor_build(),
         call().clean_build(),
-        call().monitor_build().__bool__(),
     ]
+    assert return_value == 0
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml", "mock_argv", "mock_confirm", "use_new_remote_build"
+)
+def test_remote_build_failure(emitter, mocker, mock_remote_builder):
+    """Clean and start a new build."""
+    mock_remote_builder().monitor_build.return_value = False
+
+    return_value = cli.run()
+
+    assert mock_remote_builder.mock_calls[-3:] == [
+        call().start_build(),
+        call().monitor_build(),
+        call().clean_build(),
+    ]
+    assert return_value == 1
