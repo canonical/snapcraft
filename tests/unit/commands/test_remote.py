@@ -793,7 +793,9 @@ def test_recover_build(emitter, mocker, mock_remote_builder):
         call().print_status(),
         call().monitor_build(),
         call().clean_build(),
-        call().monitor_build().__bool__(), # something is checking the output of monitor_build
+        call()
+        .monitor_build()
+        .__bool__(),  # something is checking the output of monitor_build
     ]
 
 
@@ -813,7 +815,9 @@ def test_recover_build_user_confirms(emitter, mocker, mock_remote_builder):
         call().print_status(),
         call().monitor_build(),
         call().clean_build(),
-        call().monitor_build().__bool__(), # something is checking the output of monitor_build
+        call()
+        .monitor_build()
+        .__bool__(),  # something is checking the output of monitor_build
     ]
 
 
@@ -836,7 +840,9 @@ def test_recover_build_user_denies(emitter, mocker, mock_remote_builder):
         call().start_build(),
         call().monitor_build(),
         call().clean_build(),
-        call().monitor_build().__bool__(), # something is checking the output of monitor_build
+        call()
+        .monitor_build()
+        .__bool__(),  # something is checking the output of monitor_build
     ]
 
 
@@ -857,6 +863,7 @@ def test_remote_build_ok(emitter, mocker, mock_remote_builder):
         call().clean_build(),
     ]
     assert return_value == 0
+
 
 @pytest.mark.parametrize(
     "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
