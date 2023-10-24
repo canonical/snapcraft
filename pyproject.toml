@@ -77,7 +77,6 @@ addopts = ["--cov=snapcraft"]
 [tool.ruff]
 target-version = "py310"
 line-length = 88
-target-version = "py310"
 extend-exclude = [
     "docs",
     "__pycache__",
