@@ -785,17 +785,15 @@ def test_recover_no_build(emitter, mocker):
 def test_recover_build(emitter, mocker, mock_remote_builder):
     """Recover a build when `--recover` is provided."""
     mocker.patch.object(sys, "argv", ["snapcraft", "remote-build", "--recover"])
-    mock_remote_builder.return_value.has_outstanding_build.return_value = True
+    mock_remote_builder().monitor_build.return_value = True
+    mock_remote_builder().has_outstanding_build.return_value = True
 
     cli.run()
 
-    assert mock_remote_builder.mock_calls[-4:] == [
+    assert mock_remote_builder.mock_calls[-3:] == [
         call().print_status(),
         call().monitor_build(),
         call().clean_build(),
-        call()
-        .monitor_build()
-        .__bool__(),  # something is checking the output of monitor_build
     ]
 
 
@@ -807,17 +805,15 @@ def test_recover_build(emitter, mocker, mock_remote_builder):
 )
 def test_recover_build_user_confirms(emitter, mocker, mock_remote_builder):
     """Recover a build when a user confirms."""
-    mock_remote_builder.return_value.has_outstanding_build.return_value = True
+    mock_remote_builder().monitor_build.return_value = True
+    mock_remote_builder().has_outstanding_build.return_value = True
 
     cli.run()
 
-    assert mock_remote_builder.mock_calls[-4:] == [
+    assert mock_remote_builder.mock_calls[-3:] == [
         call().print_status(),
         call().monitor_build(),
         call().clean_build(),
-        call()
-        .monitor_build()
-        .__bool__(),  # something is checking the output of monitor_build
     ]
 
 
@@ -832,17 +828,15 @@ def test_recover_build_user_denies(emitter, mocker, mock_remote_builder):
         "snapcraft.commands.remote.confirm_with_user",
         side_effect=[True, False],
     )
-    mock_remote_builder.return_value.has_outstanding_build.return_value = True
+    mock_remote_builder().monitor_build.return_value = True
+    mock_remote_builder().has_outstanding_build.return_value = True
 
     cli.run()
 
-    assert mock_remote_builder.mock_calls[-4:] == [
+    assert mock_remote_builder.mock_calls[-3:] == [
         call().start_build(),
         call().monitor_build(),
         call().clean_build(),
-        call()
-        .monitor_build()
-        .__bool__(),  # something is checking the output of monitor_build
     ]
 
 
