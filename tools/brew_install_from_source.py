@@ -51,7 +51,7 @@ def download_snapcraft_source(dest_dir):
         os.environ.get("TRAVIS_PULL_REQUEST_BRANCH") or "master",
     )
     print("Downloading branch source from {}".format(branch_source))
-    urllib.request.urlretrieve(branch_source, dest_file)
+    urllib.request.urlretrieve(branch_source, dest_file)  # noqa S310
     return dest_file
 
 
@@ -68,7 +68,7 @@ def download_brew_formula(destination_path):
         "https://raw.githubusercontent.com/Homebrew/homebrew-core/master/"
         "Formula/snapcraft.rb"
     )
-    urllib.request.urlretrieve(brew_formula_url, destination_path)
+    urllib.request.urlretrieve(brew_formula_url, destination_path)  # noqa S310
 
 
 def patch_brew_formula_source(
