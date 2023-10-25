@@ -34,8 +34,10 @@ def determine_version():
         subprocess.run(
             ["git", "describe", "--always", "--long"],
             stdout=subprocess.PIPE,
+            check=False,
+            text=True,
         )
-        .stdout.decode()
+        .stdout
         .strip()
     )
 

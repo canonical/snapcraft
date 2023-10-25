@@ -166,9 +166,9 @@ class ContentSlot(_SnapMetadataModel):
         """Obtain the slot's content directories."""
         content_dirs: Set[Path] = set()
 
-        for path in self.read + self.write:
+        for path_ in self.read + self.write:
             # Strip leading "$SNAP" and "/".
-            path = re.sub(r"^\$SNAP", "", path)
+            path = re.sub(r"^\$SNAP", "", path_)
             path = re.sub(r"^/", "", path)
             path = re.sub(r"^./", "", path)
             content_dirs.add(installed_path / path)

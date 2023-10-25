@@ -79,9 +79,9 @@ class ListExtensionsCommand(BaseCommand, abc.ABC):
             )
 
         # Extensions from snapcraft_legacy.
-        for extension_name in supported_extension_names():
-            extension_class = find_extension(extension_name)
-            extension_name = extension_name.replace("_", "-")
+        for _extension_name in supported_extension_names():
+            extension_class = find_extension(_extension_name)
+            extension_name = _extension_name.replace("_", "-")
             extension_bases = list(extension_class.get_supported_bases())
             if extension_name in extension_presentation:
                 extension_presentation[extension_name].bases += extension_bases
