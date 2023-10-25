@@ -83,7 +83,7 @@ dev_requires = [
     "pytest-mock",
     "pytest-subprocess",
     "ruff~=0.1.1",
-    "tox>=4.5",
+    "tox~=4.11",
     "types-PyYAML",
     "types-requests",
     "types-setuptools",
