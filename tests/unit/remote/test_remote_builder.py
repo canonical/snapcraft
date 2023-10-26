@@ -52,6 +52,7 @@ def fake_remote_builder(new_dir, mock_launchpad_client, mock_worktree):
         project_name="test-project",
         architectures=["amd64"],
         project_dir=Path(),
+        timeout=0,
     )
 
 
@@ -63,6 +64,7 @@ def test_remote_builder_init(mock_launchpad_client, mock_worktree):
         project_name="test-project",
         architectures=["amd64"],
         project_dir=Path(),
+        timeout=10,
     )
 
     assert mock_launchpad_client.mock_calls == [
@@ -71,6 +73,7 @@ def test_remote_builder_init(mock_launchpad_client, mock_worktree):
             build_id="test-build-id",
             project_name="test-project",
             architectures=["amd64"],
+            timeout=10,
         )
     ]
     assert mock_worktree.mock_calls == [
@@ -87,6 +90,7 @@ def test_build_id_computed():
         project_name="test-project",
         architectures=["amd64"],
         project_dir=Path(),
+        timeout=0,
     )
 
     assert re.match("test-app-test-project-[0-9a-f]{32}", remote_builder.build_id)
@@ -101,6 +105,7 @@ def test_validate_architectures_supported(archs):
         project_name="test-project",
         architectures=archs,
         project_dir=Path(),
+        timeout=0,
     )
 
 
@@ -124,6 +129,7 @@ def test_validate_architectures_unsupported(archs):
             project_name="test-project",
             architectures=archs,
             project_dir=Path(),
+            timeout=0,
         )
 
 

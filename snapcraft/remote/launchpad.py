@@ -79,7 +79,14 @@ def _get_url_basename(url: str):
 
 
 class LaunchpadClient:
-    """Launchpad remote builder operations."""
+    """Launchpad remote builder operations.
+
+    :param app_name: Name of the application.
+    :param build_id: Unique identifier for the build.
+    :param project_name: Name of the project.
+    :param architectures: List of architectures to build on.
+    :param timeout: Time in seconds to wait for the build to complete.
+    """
 
     def __init__(
         self,
@@ -88,7 +95,7 @@ class LaunchpadClient:
         build_id: str,
         project_name: str,
         architectures: Sequence[str],
-        deadline: int = 0,
+        timeout: int = 0,
     ) -> None:
         self._app_name = app_name
 
@@ -104,7 +111,11 @@ class LaunchpadClient:
         self._lp: Launchpad = self._login()
         self.user = self._lp.me.name  # type: ignore
 
-        self._deadline = deadline
+        # calculate deadline from the timeout
+        if timeout > 0:
+            self._deadline = int(time.time()) + timeout
+        else:
+            self._deadline = 0
 
     @property
     def architectures(self) -> Sequence[str]:
@@ -199,7 +210,7 @@ class LaunchpadClient:
             return self._lp.load(url)
 
     def _wait_for_build_request_acceptance(self, build_request: Entry) -> None:
-        # Not be be confused with the actual build(s), this is
+        # Not to be confused with the actual build(s), this is
         # ensuring that Launchpad accepts the build request.
         while build_request.status == "Pending":
             # Check to see if we've run out of time.
