@@ -55,7 +55,13 @@ class RemoteBuildCommand(BaseCommand):
         option, followed by the build number informed when the remote
         build was originally dispatched. The current state of the
         remote build for each architecture can be checked using the
-        --status option."""
+        --status option.
+
+        To set a timeout on the remote-build command, use the option
+        ``--launchpad-timeout=<seconds>``. The timeout is local, so the build on
+        launchpad will continue even if the local instance of snapcraft is
+        interrupted or times out.
+        """
     )
 
     @overrides
@@ -86,6 +92,13 @@ class RemoteBuildCommand(BaseCommand):
             "--launchpad-accept-public-upload",
             action="store_true",
             help="acknowledge that uploaded code will be publicly available.",
+        )
+        parser.add_argument(
+            "--launchpad-timeout",
+            type=int,
+            default=0,
+            metavar="<seconds>",
+            help="Time in seconds to wait for launchpad to build.",
         )
 
     @overrides
