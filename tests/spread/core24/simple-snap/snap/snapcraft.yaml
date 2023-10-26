@@ -1,0 +1,25 @@
+name: simple-snap
+version: "1.0"
+summary: Build a simple confined snap
+description: |
+  Build a simple confined snap to test the build process.
+
+base: core24
+build-base: devel
+
+grade: devel
+confinement: strict
+
+apps:
+  hello:
+    command: bin/hello
+
+parts:
+  hello:
+    source: .
+    plugin: make
+    build-packages:
+      - gcc
+      - libc-dev
+      - libcurl4-openssl-dev
+    stage-packages: [libcurl4]

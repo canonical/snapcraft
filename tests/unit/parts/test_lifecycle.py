@@ -24,7 +24,7 @@ from unittest.mock import ANY, Mock, PropertyMock, call
 import pytest
 from craft_cli import EmitterMode, emit
 from craft_parts import Action, Step, callbacks
-from craft_providers.bases.buildd import BuilddBaseAlias
+from craft_providers.bases.ubuntu import BuilddBaseAlias
 
 from snapcraft import errors
 from snapcraft.elf import ElfFile

@@ -323,6 +323,16 @@ def fake_provider(mock_instance):
     class FakeProvider(Provider):
         """Fake provider."""
 
+        @property
+        def name(self) -> str:
+            """Name of the provider."""
+            return "fake"
+
+        @property
+        def install_recommendation(self) -> str:
+            """Recommended way to install the provider."""
+            return "snap"
+
         def clean_project_environments(self, *, instance_name: str):
             pass
 
