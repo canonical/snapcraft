@@ -199,7 +199,7 @@ class KernelPlugin(plugins.Plugin):
     def _check_cross_compilation(self) -> None:
         if self._cross_building:
             self._make_cmd.append(f"ARCH={self._kernel_arch}")
-            self._make_cmd.append("CROSS_COMPILE=${CRAFT_ARCH_TRIPLET}-")
+            self._make_cmd.append("CROSS_COMPILE=${CRAFT_ARCH_TRIPLET_BUILD_FOR}-")
 
     def _set_kernel_targets(self) -> None:
         if not self.options.kernel_image_target:
@@ -302,7 +302,7 @@ class KernelPlugin(plugins.Plugin):
         self._init_build_env()
 
         return {
-            "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET}-",
+            "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
             "ARCH": self._kernel_arch,
             "DEB_ARCH": "${CRAFT_TARGET_ARCH}",
             "KERNEL_BUILD_ARCH_DIR": f"${{CRAFT_PART_BUILD}}/arch/{self._kernel_arch}/boot",
@@ -318,7 +318,7 @@ class KernelPlugin(plugins.Plugin):
             make_targets=self._make_targets,
             make_install_targets=self._make_install_targets,
             target_arch=self._target_arch,
-            target_arch_triplet="${CRAFT_ARCH_TRIPLET}",
+            target_arch_triplet="${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
             config_file=self.options.kernel_kconfigfile,
             config_flavour=self.options.kernel_kconfigflavour,
             defconfig=self.options.kernel_kdefconfig,
