@@ -252,7 +252,7 @@ class TestPluginKernel:
         plugin._kernel_arch = "amd64"
 
         assert plugin.get_build_environment() == {
-            "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET}-",
+            "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
             "ARCH": plugin._kernel_arch,
             "DEB_ARCH": "${CRAFT_TARGET_ARCH}",
             "KERNEL_BUILD_ARCH_DIR": f"${{CRAFT_PART_BUILD}}/arch/{plugin._kernel_arch}/boot",
@@ -269,7 +269,7 @@ class TestPluginKernel:
         )
 
         assert plugin.get_build_environment() == {
-            "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET}-",
+            "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
             "ARCH": "arm",
             "DEB_ARCH": "${CRAFT_TARGET_ARCH}",
             "KERNEL_BUILD_ARCH_DIR": "${CRAFT_PART_BUILD}/arch/arm/boot",
@@ -849,7 +849,7 @@ _remake_old_config_armhf_cmd = [
     " ".join(
         [
             "bash -c 'yes \"\" || true' | make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD}",
-            "ARCH=arm CROSS_COMPILE=${CRAFT_ARCH_TRIPLET}-",
+            "ARCH=arm CROSS_COMPILE=${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
             "oldconfig",
         ],
     ),
@@ -914,7 +914,7 @@ _build_kernel_armhf_cmd = [
             "-C ${KERNEL_SRC}",
             "O=${CRAFT_PART_BUILD}",
             "ARCH=arm",
-            "CROSS_COMPILE=${CRAFT_ARCH_TRIPLET}-",
+            "CROSS_COMPILE=${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
             "Image.gz modules dtbs",
         ],
     ),
@@ -1044,7 +1044,7 @@ _install_kernel_armhf_cmd = [
             "-C ${KERNEL_SRC}",
             "O=${CRAFT_PART_BUILD}",
             "ARCH=arm",
-            "CROSS_COMPILE=${CRAFT_ARCH_TRIPLET}-",
+            "CROSS_COMPILE=${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
             "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
             "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
             "dtbs_install INSTALL_DTBS_PATH=${CRAFT_PART_INSTALL}/dtbs",
@@ -1112,7 +1112,7 @@ _build_zfs_cmd = [
         cd ${CRAFT_PART_BUILD}/zfs
         ./autogen.sh
         ./configure --with-linux=${KERNEL_SRC} --with-linux-obj=${CRAFT_PART_BUILD} \
---with-config=kernel --host=${CRAFT_ARCH_TRIPLET}
+--with-config=kernel --host=${CRAFT_ARCH_TRIPLET_BUILD_FOR}
         make -j$(nproc)
         make install DESTDIR=${CRAFT_PART_INSTALL}/zfs
         release_version="$(ls ${CRAFT_PART_INSTALL}/modules)"
@@ -1149,7 +1149,7 @@ _build_perf_armhf_cmd = [
             "-C ${KERNEL_SRC}",
             "O=${CRAFT_PART_BUILD}",
             "ARCH=arm",
-            "CROSS_COMPILE=${CRAFT_ARCH_TRIPLET}-",
+            "CROSS_COMPILE=${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
             '-C "${KERNEL_SRC}/tools/perf"',
             'O="${CRAFT_PART_BUILD}/tools/perf"',
         ],
