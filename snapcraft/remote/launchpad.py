@@ -146,7 +146,11 @@ class LaunchpadClient:
             return
 
         if int(time.time()) >= self._deadline:
-            raise errors.RemoteBuildTimeoutError()
+            raise errors.RemoteBuildTimeoutError(
+                recovery_command=(
+                    f"{self._app_name} remote-build --recover --build-id {self._build_id}"
+                )
+            )
 
     def _create_data_directory(self) -> Path:
         data_dir = Path(

@@ -398,7 +398,10 @@ def test_start_build_timeout_error(mock_login_with, mocker):
     with pytest.raises(errors.RemoteBuildTimeoutError) as raised:
         lpc.start_build()
 
-    assert str(raised.value) == "Remote build timed out."
+    assert str(raised.value) == (
+        "Remote build command timed out.\nBuild may still be running on Launchpad and "
+        "can be recovered with 'test-app remote-build --recover --build-id id'."
+    )
 
 
 def test_issue_build_request_defaults(launchpad_client):
@@ -490,7 +493,10 @@ def test_monitor_build_timeout_error(mock_login_with, mocker):
     with pytest.raises(errors.RemoteBuildTimeoutError) as raised:
         lpc.monitor_build(interval=0)
 
-    assert str(raised.value) == "Remote build timed out."
+    assert str(raised.value) == (
+        "Remote build command timed out.\nBuild may still be running on Launchpad and "
+        "can be recovered with 'test-app remote-build --recover --build-id id'."
+    )
 
 
 def test_get_build_status(launchpad_client):
