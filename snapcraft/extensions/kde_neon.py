@@ -25,7 +25,7 @@ from overrides import overrides
 
 from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
-_SDK_SNAP = {"core22": "kf5-5-110-qt-5-15-11-core22-sdk"}
+_SDK_SNAP = {"core22": "kf5-5-111-qt-5-15-11-core22-sdk"}
 
 
 @dataclasses.dataclass
