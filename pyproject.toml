@@ -48,7 +48,7 @@ load-plugins = "pylint_fixme_info,pylint_pytest"
 min-similarity-lines=10
 
 [tool.mypy]
-python_version = 3.10
+python_version = "3.10"
 ignore_missing_imports = true
 follow_imports = "silent"
 exclude = [
@@ -69,7 +69,7 @@ exclude = ["build", "tests/legacy", "tests/spread"]
 pythonVersion = "3.10"
 
 [tool.pytest.ini_options]
-minversion = 7.0
+minversion = "7.0"
 required_plugins = ["pytest-cov>=4.0", "pytest-mock>=3.10", "pytest-subprocess>=1.4"]
 addopts = ["--cov=snapcraft"]
 
