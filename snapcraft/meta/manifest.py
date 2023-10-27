@@ -67,7 +67,7 @@ class Manifest(YamlModel):
         alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
 
 
-def write(
+def write(  # noqa PLR0913
     project: Project,
     prime_dir: Path,
     *,

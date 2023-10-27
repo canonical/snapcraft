@@ -8,7 +8,7 @@ extend-exclude = '''
 '''
 # Targeting future versions as well so we don't have black reformatting code
 # en masse later.
-target_version = ["py38", "py310", "py311"]
+target_version = ["py310", "py311"]
 
 [tool.isort]
 # black-compatible isort configuration
@@ -75,6 +75,7 @@ addopts = ["--cov=snapcraft"]
 
 # Most of this ruff configuration comes from craft-parts
 [tool.ruff]
+target-version = "py310"
 line-length = 88
 extend-exclude = [
     "docs",
@@ -149,8 +150,16 @@ ignore = [
     "C405", "C408", "C414",
     "Q000", # 2 single-quoted strings - probably accidental
     "RET504", "RET506",  # Return value related.
-
+    "PLR2004",  # Magic values - widely used
+    "PLC1901",  # Checking for empty string vs. falsey - many of these
+    "S603",  # Untrusted input for subprocess calls
+    "S604",  # shell=True parameter to a function
+    "S607",  # Partial executable path for subprocess calls
 ]
+
+[tool.ruff.pylint]
+max-args = 6
+max-branches = 16
 
 [tool.ruff.per-file-ignores]
 "tests/**.py" = [
@@ -162,6 +171,11 @@ ignore = [
     "S105", # Allow Possible hardcoded password.
     "S106", # Allow Possible hardcoded password.
     "S108", # Allow Probable insecure usage of temporary file or directory.
+    "PLR0913",  # Allow many arguments to tests
+]
+"tests/unit/parts/plugins/test_kernel.py" = [
+    "E101",  # Mixed tabs and spaces. Ruff gets confused by tabs in multiline strings
+    "W191",  # Indentation contains tabs - another Ruff false positive
 ]
 "__init__.py" = ["I001"]  # Imports in __init__ filesare allowed to be out of order
 

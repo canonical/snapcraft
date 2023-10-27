@@ -1575,7 +1575,7 @@ class CommonIdTestCase(CreateBaseTestCase):
                source: .
                plugin: dump
                parse-info: ["1.metainfo.xml", "2.metainfo.xml"]
-            
+
            """
         )
 
