@@ -32,6 +32,7 @@ import snapcraft
 import snapcraft_legacy
 from snapcraft import __version__, errors, store, utils
 from snapcraft.parts import plugins
+from snapcraft.remote import RemoteBuildError
 from snapcraft_legacy.cli import legacy
 
 from . import commands
@@ -243,7 +244,8 @@ def _emit_error(error, cause=None):
     emit.error(error)
 
 
-def run():  # noqa: C901
+# pylint: disable-next=too-many-statements
+def run():  # noqa: C901 (complex-structure)
     """Run the CLI."""
     dispatcher = get_dispatcher()
     retcode = 1
@@ -298,6 +300,9 @@ def run():  # noqa: C901
     except errors.LinterError as err:
         emit.error(craft_cli.errors.CraftError(f"linter error: {err}"))
         retcode = err.exit_code
+    except RemoteBuildError as err:
+        emit.error(craft_cli.errors.CraftError(f"remote-build error: {err}"))
+        retcode = 1
     except errors.SnapcraftError as err:
         _emit_error(err)
         retcode = 1
