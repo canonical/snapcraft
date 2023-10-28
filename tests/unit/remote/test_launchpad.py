@@ -353,18 +353,55 @@ def test_start_build_error(mocker, launchpad_client):
     assert str(raised.value) == "snapcraft.yaml not found..."
 
 
-def test_start_build_error_timeout(mocker, launchpad_client):
+def test_start_build_deadline_not_reached(mock_login_with, mocker):
+    """Do not raise an error if the deadline has not been reached."""
+
+    def lp_refresh(self):
+        """Update the status from Pending to Completed when refreshed."""
+        self.status = "Completed"
+
+    mocker.patch(
+        "tests.unit.remote.test_launchpad.SnapImpl.requestBuilds",
+        return_value=SnapBuildReqImpl(status="Pending", error_message=""),
+    )
+    mocker.patch.object(SnapBuildReqImpl, "lp_refresh", lp_refresh)
+    mocker.patch("time.time", return_value=500)
+
+    lpc = LaunchpadClient(
+        app_name="test-app",
+        build_id="id",
+        project_name="test-project",
+        architectures=[],
+        timeout=100,
+    )
+
+    lpc.start_build()
+
+
+def test_start_build_timeout_error(mock_login_with, mocker):
+    """Raise an error if the build times out."""
     mocker.patch(
         "tests.unit.remote.test_launchpad.SnapImpl.requestBuilds",
         return_value=SnapBuildReqImpl(status="Pending", error_message=""),
     )
     mocker.patch("time.time", return_value=500)
-    launchpad_client._deadline = 499
+    lpc = LaunchpadClient(
+        app_name="test-app",
+        build_id="id",
+        project_name="test-project",
+        architectures=[],
+        timeout=100,
+    )
+    # advance 1 second past deadline
+    mocker.patch("time.time", return_value=601)
 
     with pytest.raises(errors.RemoteBuildTimeoutError) as raised:
-        launchpad_client.start_build()
+        lpc.start_build()
 
-    assert str(raised.value) == "Remote build timed out."
+    assert str(raised.value) == (
+        "Remote build command timed out.\nBuild may still be running on Launchpad and "
+        "can be recovered with 'test-app remote-build --recover --build-id id'."
+    )
 
 
 def test_issue_build_request_defaults(launchpad_client):
@@ -422,16 +459,44 @@ def test_monitor_build_error(mock_log, mock_download_file, mocker, launchpad_cli
     ]
 
 
-def test_monitor_build_error_timeout(mocker, launchpad_client):
+def test_monitor_build_deadline_not_reached(mock_login_with, mocker):
+    """Do not raise an error if the deadline has not been reached."""
+    mocker.patch("snapcraft.remote.LaunchpadClient._download_file")
+    lpc = LaunchpadClient(
+        app_name="test-app",
+        build_id="id",
+        project_name="test-project",
+        architectures=[],
+        timeout=100,
+    )
+
+    lpc.start_build()
+    lpc.monitor_build(interval=0)
+
+
+def test_monitor_build_timeout_error(mock_login_with, mocker):
+    """Raise an error if the build times out."""
     mocker.patch("snapcraft.remote.LaunchpadClient._download_file")
     mocker.patch("time.time", return_value=500)
-    launchpad_client._deadline = 499
-    launchpad_client.start_build()
+    lpc = LaunchpadClient(
+        app_name="test-app",
+        build_id="id",
+        project_name="test-project",
+        architectures=[],
+        timeout=100,
+    )
+    # advance 1 second past deadline
+    mocker.patch("time.time", return_value=601)
+
+    lpc.start_build()
 
     with pytest.raises(errors.RemoteBuildTimeoutError) as raised:
-        launchpad_client.monitor_build(interval=0)
+        lpc.monitor_build(interval=0)
 
-    assert str(raised.value) == "Remote build timed out."
+    assert str(raised.value) == (
+        "Remote build command timed out.\nBuild may still be running on Launchpad and "
+        "can be recovered with 'test-app remote-build --recover --build-id id'."
+    )
 
 
 def test_get_build_status(launchpad_client):
