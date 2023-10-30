@@ -195,6 +195,50 @@ def test_cannot_load_snapcraft_yaml(capsys):
     )
 
 
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build", "mock_argv"
+)
+def test_launchpad_timeout_default(mock_remote_builder):
+    """Use the default timeout `0` when `--launchpad-timeout` is not provided."""
+    cli.run()
+
+    mock_remote_builder.assert_called_with(
+        app_name="snapcraft",
+        build_id=None,
+        project_name="mytest",
+        architectures=ANY,
+        project_dir=Path(),
+        timeout=0,
+    )
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
+)
+def test_launchpad_timeout(mocker, mock_remote_builder):
+    """Pass the `--launchpad-timeout` to the remote builder."""
+    mocker.patch.object(
+        sys, "argv", ["snapcraft", "remote-build", "--launchpad-timeout", "100"]
+    )
+
+    cli.run()
+
+    mock_remote_builder.assert_called_with(
+        app_name="snapcraft",
+        build_id=None,
+        project_name="mytest",
+        architectures=ANY,
+        project_dir=Path(),
+        timeout=100,
+    )
+
+
 ################################
 # Snapcraft project base tests #
 ################################
@@ -537,6 +581,7 @@ def test_determine_architectures_from_snapcraft_yaml(
         project_name="mytest",
         architectures=expected_archs,
         project_dir=Path(),
+        timeout=0,
     )
 
 
@@ -560,6 +605,7 @@ def test_determine_architectures_host_arch(mocker, mock_remote_builder):
         project_name="mytest",
         architectures=["arm64"],
         project_dir=Path(),
+        timeout=0,
     )
 
 
@@ -592,6 +638,7 @@ def test_determine_architectures_provided_by_user(
         project_name="mytest",
         architectures=expected_archs,
         project_dir=Path(),
+        timeout=0,
     )
 
 
@@ -640,6 +687,7 @@ def test_build_id_provided(mocker, mock_remote_builder):
         project_name="mytest",
         architectures=ANY,
         project_dir=Path(),
+        timeout=0,
     )
 
 
@@ -660,6 +708,7 @@ def test_build_id_not_provided(mock_remote_builder):
         project_name="mytest",
         architectures=ANY,
         project_dir=Path(),
+        timeout=0,
     )
 
 

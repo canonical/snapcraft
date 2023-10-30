@@ -35,19 +35,21 @@ class RemoteBuilder:
     :param project_name: Name of the project.
     :param architectures: List of architectures to build on.
     :param project_dir: Path of the project.
+    :param timeout: Time in seconds to wait for the build to complete.
 
     :raises UnsupportedArchitectureError: if any architecture is not supported
     for remote building.
     :raises LaunchpadHttpsError: If a connection to Launchpad cannot be established.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 pylint: disable=too-many-arguments
         self,
         app_name: str,
         build_id: Optional[str],
         project_name: str,
         architectures: List[str],
         project_dir: Path,
+        timeout: int,
     ):
         self._app_name = app_name
         self._project_name = project_name
@@ -78,6 +80,7 @@ class RemoteBuilder:
             build_id=self._build_id,
             project_name=self._project_name,
             architectures=self._architectures,
+            timeout=timeout,
         )
 
     @property

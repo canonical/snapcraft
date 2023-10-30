@@ -32,14 +32,24 @@ def test_git_error():
 
 def test_remote_build_timeout_error():
     """Test RemoteBuildTimeoutError."""
-    error = errors.RemoteBuildTimeoutError()
-
-    assert str(error) == "Remote build timed out."
-    assert (
-        repr(error)
-        == "RemoteBuildTimeoutError(brief='Remote build timed out.', details=None)"
+    error = errors.RemoteBuildTimeoutError(
+        recovery_command="craftapp remote-build --recover --build-id test-id"
     )
-    assert error.brief == "Remote build timed out."
+
+    assert str(error) == (
+        "Remote build command timed out.\nBuild may still be running on Launchpad and "
+        "can be recovered with 'craftapp remote-build --recover --build-id test-id'."
+    )
+    assert repr(error) == (
+        "RemoteBuildTimeoutError(brief='Remote build command timed out.', "
+        'details="Build may still be running on Launchpad and can be recovered with '
+        "'craftapp remote-build --recover --build-id test-id'.\")"
+    )
+    assert error.brief == "Remote build command timed out."
+    assert error.details == (
+        "Build may still be running on Launchpad and can be recovered with "
+        "'craftapp remote-build --recover --build-id test-id'."
+    )
 
 
 def test_launchpad_https_error():
