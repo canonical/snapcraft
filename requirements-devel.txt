@@ -95,7 +95,7 @@ raven==6.10.0
 requests==2.31.0
 requests-toolbelt==1.0.0
 requests-unixsocket==0.3.0
-ruff==0.0.220
+ruff==0.1.1
 SecretStorage==3.3.3
 simplejson==3.19.1
 six==1.16.0
