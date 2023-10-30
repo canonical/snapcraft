@@ -55,10 +55,14 @@ class GitError(RemoteBuildError):
 class RemoteBuildTimeoutError(RemoteBuildError):
     """Remote-build timed out."""
 
-    def __init__(self) -> None:
-        brief = "Remote build timed out."
+    def __init__(self, recovery_command: str) -> None:
+        brief = "Remote build command timed out."
+        details = (
+            "Build may still be running on Launchpad and can be recovered "
+            f"with {recovery_command!r}."
+        )
 
-        super().__init__(brief=brief)
+        super().__init__(brief=brief, details=details)
 
 
 class LaunchpadHttpsError(RemoteBuildError):
