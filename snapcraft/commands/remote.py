@@ -171,7 +171,7 @@ class RemoteBuildCommand(BaseCommand):
         """
         # bases newer than core22 must use the new remote-build
         if base in yaml_utils.CURRENT_BASES - {"core22"}:
-            emit.debug("Running new remote-build because base is newer than core22.")
+            emit.debug("Running new remote-build because base is newer than core22")
             self._run_new_remote_build()
             return
 
@@ -180,7 +180,7 @@ class RemoteBuildCommand(BaseCommand):
         if strategy == _Strategies.DISABLE_FALLBACK:
             emit.debug(
                 "Running new remote-build because environment variable "
-                f"{_STRATEGY_ENVVAR!r} is {_Strategies.DISABLE_FALLBACK.value!r}."
+                f"{_STRATEGY_ENVVAR!r} is {_Strategies.DISABLE_FALLBACK.value!r}"
             )
             self._run_new_remote_build()
             return
@@ -188,19 +188,19 @@ class RemoteBuildCommand(BaseCommand):
         if strategy == _Strategies.FORCE_FALLBACK:
             emit.debug(
                 "Running fallback remote-build because environment variable "
-                f"{_STRATEGY_ENVVAR!r} is {_Strategies.FORCE_FALLBACK.value!r}."
+                f"{_STRATEGY_ENVVAR!r} is {_Strategies.FORCE_FALLBACK.value!r}"
             )
             run_legacy()
             return
 
         if is_repo(Path().absolute()):
             emit.debug(
-                "Running new remote-build because project is in a git repository."
+                "Running new remote-build because project is in a git repository"
             )
             self._run_new_remote_build()
             return
 
-        emit.debug("Running fallback remote-build.")
+        emit.debug("Running fallback remote-build")
         run_legacy()
 
     def _get_project_name(self) -> str:
@@ -218,7 +218,7 @@ class RemoteBuildCommand(BaseCommand):
         if project_name:
             emit.debug(
                 f"Using project name {project_name!r} from "
-                f"{str(self._snapcraft_yaml)!r}."
+                f"{str(self._snapcraft_yaml)!r}"
             )
             return project_name
 
@@ -228,7 +228,7 @@ class RemoteBuildCommand(BaseCommand):
 
     def _run_new_remote_build(self) -> None:
         """Run new remote-build code."""
-        emit.progress("Setting up launchpad environment.")
+        emit.progress("Setting up launchpad environment")
         remote_builder = RemoteBuilder(
             app_name="snapcraft",
             build_id=self._parsed_args.build_id,
@@ -242,14 +242,14 @@ class RemoteBuildCommand(BaseCommand):
             remote_builder.print_status()
             return
 
-        emit.progress("Looking for existing builds.")
+        emit.progress("Looking for existing build")
         has_outstanding_build = remote_builder.has_outstanding_build()
         if self._parsed_args.recover and not has_outstanding_build:
-            emit.message("No build found.")
+            emit.progress("No build found", permanent=True)
             return
 
         if has_outstanding_build:
-            emit.message("Found previously started build.")
+            emit.progress("Found existing build", permanent=True)
             remote_builder.print_status()
 
             # If recovery specified, monitor build and exit.
@@ -260,15 +260,19 @@ class RemoteBuildCommand(BaseCommand):
                 remote_builder.monitor_build()
                 emit.progress("Cleaning")
                 remote_builder.clean_build()
+                emit.progress("Build completed", permanent=True)
                 return
 
             # Otherwise clean running build before we start a new one.
-            emit.progress("Cleaning previously existing build.")
+            emit.progress("Cleaning existing build")
             remote_builder.clean_build()
+        else:
+            emit.progress("No existing build found", permanent=True)
 
-        emit.message(
+        emit.progress(
             "If interrupted, resume with: 'snapcraft remote-build --recover "
-            f"--build-id {remote_builder.build_id}'."
+            f"--build-id {remote_builder.build_id}'",
+            permanent=True,
         )
         emit.progress("Starting build")
         remote_builder.start_build()
@@ -276,6 +280,7 @@ class RemoteBuildCommand(BaseCommand):
         remote_builder.monitor_build()
         emit.progress("Cleaning")
         remote_builder.clean_build()
+        emit.progress("Build completed", permanent=True)
 
     def _get_build_strategy(self) -> Optional[_Strategies]:
         """Get the build strategy from the envvar `SNAPCRAFT_REMOTE_BUILD_STRATEGY`.
@@ -316,7 +321,7 @@ class RemoteBuildCommand(BaseCommand):
                 f"Could not determine base from {str(self._snapcraft_yaml)!r}."
             )
 
-        emit.debug(f"Got base {base!r} from {str(self._snapcraft_yaml)!r}.")
+        emit.debug(f"Got base {base!r} from {str(self._snapcraft_yaml)!r}")
 
         if base in yaml_utils.ESM_BASES:
             raise MaintenanceBase(base)
