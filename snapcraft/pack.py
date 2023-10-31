@@ -35,10 +35,13 @@ def _verify_snap(directory: Path) -> None:
             universal_newlines=True,
         )
     except subprocess.CalledProcessError as err:
-        msg = f"Cannot pack snap file: {err!s}"
+        stderr = None
         if err.stderr:
-            msg += f" ({err.stderr.strip()!s})"
-        raise errors.SnapcraftError(msg)
+            stderr = err.stderr.strip()
+            msg = f"Cannot pack snap: {stderr!s}"
+        else:
+            msg = "Cannot pack snap"
+        raise errors.SnapcraftError(msg, details=f"{err!s}") from err
 
 
 def _get_directory(output: Optional[str]) -> Path:
@@ -135,10 +138,11 @@ def pack_snap(
             command, capture_output=True, check=True, universal_newlines=True
         )
     except subprocess.CalledProcessError as err:
-        msg = f"Cannot pack snap file: {err!s}"
+        msg = f"{err!s}"
+        details = None
         if err.stderr:
-            msg += f" ({err.stderr.strip()!s})"
-        raise errors.SnapcraftError(msg)
+            details = err.stderr.strip()
+        raise errors.SnapcraftError(msg, details=details) from err
 
     snap_filename = Path(str(proc.stdout).partition(":")[2].strip()).name
     return snap_filename
