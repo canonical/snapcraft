@@ -67,7 +67,8 @@ backends:
           # SPREAD_SYSTEM has the following format here 'ubuntu-XX.YY-64' and gets
           # translated to an image XX.YY.
           image=$(echo $SPREAD_SYSTEM | sed -e 's/ubuntu-\(.*\)-64/\1/')
-          instance_name="spread-${image}"
+          spread_name=$(echo ${image} | sed -e 's/\.//g')
+          instance_name="spread-${spread_name}"
       fi
 
       if [ -z "${image}" ]; then
@@ -96,7 +97,8 @@ backends:
           # SPREAD_SYSTEM has the following format here 'ubuntu-XX.YY-64' and gets
           # translated to an image XX.YY.
           image=$(echo $SPREAD_SYSTEM | sed -e 's/ubuntu-\(.*\)-64/\1/')
-          instance_name="spread-${image}"
+          spread_name=$(echo ${image} | sed -e 's/\.//g')
+          instance_name="spread-${spread_name}"
       fi
 
       if [ -z "${image}" ]; then
@@ -227,6 +229,8 @@ prepare: |
   install_snapcraft
 
   pushd /snapcraft
+  git config --global user.email "you@example.com"
+  git config --global user.name "Your Name"
   git init
   git add .
   git commit -m "Testing Commit"
@@ -282,6 +286,11 @@ suites:
    systems:
      - ubuntu-22.04*
 
+ tests/spread/core24/:
+   summary: core24 tests
+   systems:
+     - ubuntu-22.04*
+
  # General, core suite
  tests/spread/general/:
    summary: tests of snapcraft core functionality
@@ -299,6 +308,11 @@ suites:
 
  tests/spread/general/hooks/:
    summary: tests of snapcraft hook functionality
+
+ tests/spread/core-devel/:
+   summary: tests of devel base snaps
+   environment:
+     SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
  # General, core suite
  tests/spread/cross-compile/:

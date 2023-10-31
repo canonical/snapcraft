@@ -1,0 +1,19 @@
+summary: Test basic build for devel base
+
+environment:
+  SNAPCRAFT_BUILD_ENVIRONMENT: ""
+
+restore: |
+  cd "./snap"
+  snapcraft clean
+  rm -f ./*.snap
+  snap remove build-base-devel
+
+execute: |
+  cd "./snap"
+
+  snapcraft pack
+
+  snap install --dangerous ./*.snap
+
+  grep -i "devel" /snap/build-base-devel/current/etc/os-release || { echo "Devel image not found" ; exit 1; }
