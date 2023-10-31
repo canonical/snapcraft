@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Library linter implementation."""
+import re
+import subprocess
 from pathlib import Path
 from typing import List, Set
 
@@ -24,11 +26,15 @@ from overrides import overrides
 from snapcraft.elf import ElfFile, SonameCache, elf_utils
 from snapcraft.elf import errors as elf_errors
 
-from .base import Linter, LinterIssue, LinterResult
+from .base import Linter, LinterIssue, LinterResult, Optional
 
 
 class LibraryLinter(Linter):
     """Linter for dynamic library availability in snap."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._ld_config_cache: dict[str, Path] = {}
 
     @staticmethod
     def get_categories() -> List[str]:
@@ -51,6 +57,8 @@ class LibraryLinter(Linter):
         soname_cache = SonameCache()
         all_libraries: Set[Path] = set()
         used_libraries: Set[Path] = set()
+
+        self._generate_ld_config_cache()
 
         for elf_file in elf_files:
             # Skip linting files listed in the ignore list for the main "library"
@@ -101,6 +109,54 @@ class LibraryLinter(Linter):
 
         return issues
 
+    def _generate_ld_config_cache(self) -> None:
+        """Generate a cache of ldconfig output that maps library names to paths."""
+        # Match lines like:
+        # libcurl.so.4 (libc6,x86-64) => /lib/x86_64-linux-gnu/libcurl.so.4
+        # Ignored any architecture in it, may be a problem in the future?
+        ld_regex = re.compile(r"^\s*(\S+)\s+\(.*\)\s+=>\s+(\S+)$")
+
+        try:
+            output = subprocess.run(
+                ["ldconfig", "-N", "-p"],
+                check=True,
+                stdout=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError:
+            return
+
+        for line in output.stdout.decode("UTF-8").splitlines():
+            match = ld_regex.match(line)
+            if match:
+                self._ld_config_cache[match.group(1)] = Path(match.group(2))
+
+    def _find_deb_package(self, library_name: str) -> Optional[str]:
+        """Find the deb package that provides a library.
+
+        :param library_name: The filename of the library to find.
+
+        :returns: the corresponding deb package name, or None if the library
+        is not provided by any system package.
+        """
+        if library_name in self._ld_config_cache:
+            # Must be resolved to an absolute path for dpkg to find it
+            library_absolute_path = self._ld_config_cache[library_name].resolve()
+            try:
+                output = subprocess.run(
+                    ["dpkg", "-S", library_absolute_path.as_posix()],
+                    check=True,
+                    stdout=subprocess.PIPE,
+                )
+            except subprocess.CalledProcessError:
+                # If the specified file doesn't belong to any package, the
+                # call will trigger an exception.
+                return None
+            except FileNotFoundError:
+                # In case that dpkg isn't available
+                return None
+            return output.stdout.decode("UTF-8").split(":", maxsplit=1)[0]
+        return None
+
     def _check_dependencies_satisfied(
         self,
         elf_file: ElfFile,
@@ -132,11 +188,15 @@ class LibraryLinter(Linter):
                 if path in dependency.parents:
                     break
             else:
+                deb_package = self._find_deb_package(dependency.name)
+                message = f"missing dependency {dependency.name!r}."
+                if deb_package:
+                    message += f" (provided by '{deb_package}')"
                 issue = LinterIssue(
                     name=self._name,
                     result=LinterResult.WARNING,
                     filename=str(elf_file.path),
-                    text=f"missing dependency {dependency.name!r}.",
+                    text=message,
                     url="https://snapcraft.io/docs/linters-library",
                 )
                 issues.append(issue)
