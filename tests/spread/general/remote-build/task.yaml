@@ -1,0 +1,30 @@
+summary: Test the remote builder
+manual: true
+kill-timeout: 180m
+systems:
+  - -ubuntu-22.04
+  - -ubuntu-22.04-64
+  - -ubuntu-22.04-amd64
+
+environment:
+  LAUNCHPAD_TOKEN: "$(HOST: echo ${LAUNCHPAD_TOKEN})"
+  STRATEGY/DISABLE_FALLBACK: "disable-fallback"
+  STRATEGY/FORCE_FALLBACK: "force-fallback"
+
+prepare: |
+  if [[ -z "$LAUNCHPAD_TOKEN" ]]; then
+    echo "No credentials set in env LAUNCHPAD_TOKEN"
+    exit 1
+  fi
+
+  snapcraft init
+  mkdir -p ~/.local/share/snapcraft/provider/launchpad/
+  echo -e "$LAUNCHPAD_TOKEN" >> ~/.local/share/snapcraft/provider/launchpad/credentials
+
+restore: |
+  rm -f ./*.snap ./*.txt
+
+execute: |
+  export SNAPCRAFT_REMOTE_BUILD_STRATEGY="$STRATEGY"
+
+  snapcraft remote-build --launchpad-accept-public-upload
