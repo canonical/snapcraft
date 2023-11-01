@@ -224,7 +224,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
         )
 
 
-def _run_command(
+def _run_command(  # pylint: disable=too-many-branches, too-many-statements
     command_name: str,
     *,
     project: Project,
@@ -322,6 +322,11 @@ def _run_command(
             emit.progress(msg, permanent=True)
             launch_shell()
         raise errors.SnapcraftError(msg) from err
+    except errors.SnapcraftError as err:
+        if parsed_args.debug:
+            emit.progress(str(err), permanent=True)
+            launch_shell()
+        raise
     except Exception as err:
         if parsed_args.debug:
             emit.progress(str(err), permanent=True)
@@ -578,7 +583,8 @@ def _run_in_provider(
         except subprocess.CalledProcessError as err:
             raise errors.SnapcraftError(
                 f"Failed to execute {command_name} in instance.",
-                details=(
+                details=err.stderr.strip() if err.stderr else None,
+                resolution=(
                     "Run the same command again with --debug to shell into "
                     "the environment if you wish to introspect this failure."
                 ),
