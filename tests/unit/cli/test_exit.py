@@ -24,6 +24,7 @@ from craft_cli import CraftError
 from craft_providers import ProviderError
 
 from snapcraft import cli
+from snapcraft.remote import RemoteBuildError
 
 
 def test_no_keyring_error(capsys, mocker):
@@ -72,6 +73,24 @@ def test_craft_providers_error(capsys, mocker):
     assert stderr[0].startswith("craft-providers error: test brief")
     assert stderr[1].startswith("test details")
     assert stderr[2].startswith("test resolution")
+
+
+def test_remote_build_error(capsys, mocker):
+    """Catch remote-build errors."""
+    mocker.patch.object(sys, "argv", ["cmd", "pull"])
+    mocker.patch.object(sys.stdin, "isatty", return_value=True)
+    mocker.patch(
+        "snapcraft.commands.lifecycle.PullCommand.run",
+        side_effect=RemoteBuildError(brief="test brief", details="test details"),
+    )
+
+    cli.run()
+
+    stderr = capsys.readouterr().err.splitlines()
+
+    # Simple verification that our expected message is being printed
+    assert stderr[0].startswith("remote-build error: test brief")
+    assert stderr[1].startswith("test details")
 
 
 @pytest.mark.parametrize("is_managed,report_errors", [(True, False), (False, True)])
