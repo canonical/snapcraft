@@ -10,7 +10,7 @@
       // Automerge patches, pin changes and digest changes.
       // Also groups these changes together.
       groupName: "bugfixes",
-      excludePackagePrefixes: ["dev", "lint", "types"],
+      excludePackagePrefixes: ["lint", "types"],
       matchUpdateTypes: ["patch", "pin", "digest"],
       prPriority: 3, // Patches should go first!
       automerge: true
@@ -23,13 +23,18 @@
       prPriority: 2
     },
     {
-      // GitHub Actions are higher priority to update than most dependencies.
+      // GitHub Actions are higher priority to update than most dependencies since they don't tend to break things.
       groupName: "GitHub Actions",
       matchManagers: ["github-actions"],
       prPriority: 1,
       automerge: true,
     },
     // Everything not in one of these rules gets priority 0 and falls here.
+    {
+      //Do all pydantic-related updates together
+      groupName: "pydantic etc.",
+      matchPackagePatterns: ["^pydantic"],
+    },
     {
       // Minor changes can be grouped and automerged for dev dependencies, but are also deprioritised.
       groupName: "development dependencies (non-major)",
@@ -47,8 +52,8 @@
       // Documentation related updates
       groupName: "documentation dependencies",
       groupSlug: "doc-dependencies",
-      matchPackageNames: ["Sphinx"],
-      matchPackagePatterns: ["^[Ss]phinx.*$", "^furo$"],
+      matchPackageNames: ["Sphinx", "furo"],
+      matchPackagePatterns: ["[Ss]phinx.*$"],
       matchPackagePrefixes: ["docs"],
     },
     {
@@ -84,12 +89,12 @@
     }
   ],
   timezone: "Etc/UTC",
-  automergeSchedule: ["every weekend"],
   schedule: ["every weekend"],
   prConcurrentLimit: 2, // No more than 2 open PRs at a time.
   branchConcurrentLimit: 20, // No more than 20 open branches at a time.
   prCreation: "not-pending", // Wait until status checks have completed before raising the PR
   prNotPendingHours: 4, // ...unless the status checks have been running for 4+ hours.
   prHourlyLimit: 1, // No more than 1 PR per hour.
-  stabilityDays: 2 // Wait 2 days from release before updating.
+  stabilityDays: 2, // Wait 2 days from release before updating.
+  automergeStrategy: "squash" // Squash & rebase when auto-merging.
 }
