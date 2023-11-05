@@ -39,7 +39,6 @@
         "lint",
         "types"
       ],
-      excludePackagePatterns: ["ruff"],
       matchUpdateTypes: ["minor", "patch", "pin", "digest"],
       prPriority: -1,
       automerge: true
@@ -63,12 +62,6 @@
       groupSlug: "dev-dependencies",
       matchDepTypes: ["devDependencies"],
       matchUpdateTypes: ["major"],
-      prPriority: -3
-    },
-    {
-      // Ruff is still unstable, so update it separately.
-      groupName: "ruff",
-      matchPackagePatterns: ["^(lint/)?ruff$"],
       prPriority: -3
     }
   ],
