@@ -35,13 +35,13 @@ jobs:
           python -m pip install tox
           echo "::endgroup::"
           echo "::group::Create virtual environments for linting processes."
-          tox run -m lint --notest
+          tox run --colored yes -m lint --notest
           echo "::endgroup::"
           echo "::group::Wait for snap to complete"
           snap watch --last=install
           echo "::endgroup::"
       - name: Run Linters
-        run: tox run --skip-pkg-install --no-list-dependencies -m lint
+        run: tox run --skip-pkg-install --no-list-dependencies --colored yes -m lint
   unit:
     strategy:
       matrix:
@@ -67,9 +67,9 @@ jobs:
           echo "::endgroup::"
           mkdir -p results
       - name: Setup Tox environments
-        run: tox run -m tests --notest
+        run: tox run --colored yes -m tests --notest
       - name: Test with tox
-        run: tox run --skip-pkg-install --no-list-dependencies --result-json results/tox-${{ matrix.platform }}.json -m unit-tests
+        run: tox run --skip-pkg-install --no-list-dependencies --result-json results/tox-${{ matrix.platform }}.json --colored yes -m unit-tests
         env:
           PYTEST_ADDOPTS: "--no-header -vv -rN"
       - name: Upload code coverage
@@ -108,9 +108,9 @@ jobs:
           echo "::endgroup::"
           mkdir -p results
       - name: Setup Tox environments
-        run: tox run -m tests --notest
+        run: tox run --colored yes -m tests --notest
       - name: Test with tox
-        run: tox run --skip-pkg-install --no-list-dependencies --result-json results/tox-${{ matrix.platform }}.json -m integration-tests
+        run: tox run --skip-pkg-install --no-list-dependencies --result-json results/tox-${{ matrix.platform }}.json --colored yes -m integration-tests
         env:
           PYTEST_ADDOPTS: "--no-header -vv -rN"
       - name: Upload test results

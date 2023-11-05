@@ -27,9 +27,9 @@ jobs:
       - name: Install Tox
         run: pip install tox
       - name: Lint documentation
-        run: tox run -e lint-docs
+        run: tox run --colored yes -e lint-docs
       - name: Build documentation
-        run: tox run -e build-docs
+        run: tox run --colored yes -e build-docs
       - name: Upload documentation
         uses: actions/upload-artifact@v3
         with:
