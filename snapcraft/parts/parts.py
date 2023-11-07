@@ -172,7 +172,6 @@ class PartsLifecycle:
 
             self._install_package_repositories()
 
-            emit.progress("Initialising lifecycle")
             with self._lcm.action_executor() as aex:
                 for action in actions:
                     # Workaround until canonical/craft-parts#540 is fixed
@@ -186,14 +185,12 @@ class PartsLifecycle:
                             properties=action.properties,
                         )
                     message = _get_parts_action_message(action)
-                    emit.progress(message)
                     with emit.open_stream(message) as stream:
                         aex.execute(action, stdout=stream, stderr=stream)
 
             if shell_after:
                 launch_shell()
 
-            emit.progress("Executed parts lifecycle", permanent=True)
         except RuntimeError as err:
             raise RuntimeError(f"Parts processing internal error: {err}") from err
         except OSError as err:
