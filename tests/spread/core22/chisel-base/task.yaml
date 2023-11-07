@@ -1,0 +1,12 @@
+summary: Build a simple snap
+
+environment:
+  SNAPCRAFT_BUILD_ENVIRONMENT: ""
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  snapcraft pack
+  snap install core2x_*.snap --dangerous
