@@ -10,3 +10,8 @@ restore: |
 execute: |
   snapcraft pack
   snap install core2x_*.snap --dangerous
+
+  # verify that the chisel packages made it to the base
+  [ -d /snap/core2x/current/bin ] || exit 1
+  [ -d /snap/core2x/current/lib ] || exit 1
+  [ -d /snap/core2x/current/var ] || exit 1
