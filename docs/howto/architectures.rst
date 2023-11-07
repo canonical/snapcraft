@@ -35,13 +35,6 @@ following snippet snippet will produce the same result:
   architectures:
     - build-on: [amd64]
 
-The shorthand format will also produce the same result:
-
-.. code-block:: yaml
-
-  architectures:
-    - amd64
-
 core20
 ^^^^^^
 
@@ -96,12 +89,6 @@ following snippet snippet will produce the same result:
   architectures:
     - build-on: [amd64]
     - build-on: [arm64]
-
-The shorthand format will also produce the same result:
-
-.. code-block:: yaml
-
-  architectures: [amd64, arm64]
 
 core20
 ^^^^^^
