@@ -335,9 +335,11 @@ class LaunchpadClient:
 
     def monitor_build(
         self, interval: int = _LP_POLL_INTERVAL, timeout: int = 0
-    ) -> None:
+    ) -> bool:
         """Check build progress, and download artifacts when ready."""
         snap = self._get_snap()
+
+        end_build_states = {}
 
         while True:
             # Check to see if we've run out of time.
@@ -351,6 +353,7 @@ class LaunchpadClient:
                 state = build["buildstate"]
                 arch = build["arch_tag"]
                 logger.info(f"\tarch={arch}\tstate={state}")
+                end_build_states[arch] = state
 
                 if _is_build_pending(build):
                     pending = True
@@ -362,6 +365,7 @@ class LaunchpadClient:
 
         # Build is complete - download build artifacts.
         self._fetch_artifacts(snap)
+        return all(x.strip() == "Successfully built" for x in end_build_states.values())
 
     def get_build_status(self) -> Dict[str, str]:
         """Get status of builds."""

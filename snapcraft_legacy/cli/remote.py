@@ -21,7 +21,11 @@ import click
 from xdg import BaseDirectory
 
 from snapcraft_legacy.formatting_utils import humanize_list
-from snapcraft_legacy.internal.remote_build import LaunchpadClient, WorkTree, errors
+from snapcraft_legacy.internal.remote_build import (
+    LaunchpadClient,
+    WorkTree,
+    errors,
+)
 from snapcraft_legacy.project import Project
 
 from . import echo
@@ -155,20 +159,19 @@ def remote_build(
 
     if status:
         _print_status(lp)
-        return
+        return True
 
     has_outstanding_build = lp.has_outstanding_build()
     if recover and not has_outstanding_build:
         echo.info("No build found.")
-        return
+        return False
     elif has_outstanding_build:
         echo.info("Found previously started build.")
         _print_status(lp)
 
         # If recovery specified, monitor build and exit.
         if recover or echo.confirm("Do you wish to recover this build?", default=True):
-            _monitor_build(lp)
-            return
+            return _monitor_build(lp)
 
         # Otherwise clean running build before we start a new one.
         _clean_build(lp)
@@ -180,7 +183,7 @@ def remote_build(
         package_all_sources=package_all_sources,
     )
 
-    _monitor_build(lp)
+    return _monitor_build(lp)
 
 
 def _clean_build(lp: LaunchpadClient):
@@ -199,7 +202,11 @@ def _print_status(lp: LaunchpadClient):
 
 
 def _start_build(
-    *, lp: LaunchpadClient, project: Project, build_id: str, package_all_sources: bool
+    *,
+    lp: LaunchpadClient,
+    project: Project,
+    build_id: str,
+    package_all_sources: bool,
 ) -> None:
     # Pull/update sources for project.
     worktree_dir = BaseDirectory.save_data_path("snapcraft", "remote-build", build_id)
@@ -220,10 +227,12 @@ def _monitor_build(lp: LaunchpadClient) -> None:
         f"Building snap package for {target_list}. This may take some time to finish."
     )
 
-    lp.monitor_build()
+    success = lp.monitor_build()
 
     echo.info("Build complete.")
     lp.cleanup()
+
+    return success
 
 
 def _check_supported_architectures(archs: List[str]) -> None:
