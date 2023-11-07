@@ -21,11 +21,7 @@ import click
 from xdg import BaseDirectory
 
 from snapcraft_legacy.formatting_utils import humanize_list
-from snapcraft_legacy.internal.remote_build import (
-    LaunchpadClient,
-    WorkTree,
-    errors,
-)
+from snapcraft_legacy.internal.remote_build import LaunchpadClient, WorkTree, errors
 from snapcraft_legacy.project import Project
 
 from . import echo
