@@ -202,8 +202,7 @@ class RemoteBuildCommand(BaseCommand):
                 "Running fallback remote-build because environment variable "
                 f"{_STRATEGY_ENVVAR!r} is {_Strategies.FORCE_FALLBACK.value!r}"
             )
-            run_legacy()
-            return True  # TODO: implement return of run_legacy
+            return run_legacy()
 
         if is_repo(Path().absolute()):
             emit.debug(
@@ -212,8 +211,7 @@ class RemoteBuildCommand(BaseCommand):
             return self._run_new_remote_build()
 
         emit.debug("Running fallback remote-build")
-        run_legacy()
-        return True  # TODO: implement return of run_legacy
+        return run_legacy()
 
     def _get_project_name(self) -> str:
         """Get the project name from the project's snapcraft.yaml.
