@@ -26,7 +26,7 @@ from pydantic import Extra, ValidationError, validator
 from pydantic_yaml import YamlModel
 
 from snapcraft import errors
-from snapcraft.projects import App, Project, UniqueStrList
+from snapcraft.projects import App, SnapcraftProject, UniqueStrList
 from snapcraft.utils import get_ld_library_paths, process_version
 
 
@@ -194,7 +194,7 @@ class Links(_SnapMetadataModel):
         return value
 
     @classmethod
-    def from_project(cls, project: Project) -> "Links":
+    def from_project(cls, project: SnapcraftProject) -> "Links":
         """Create Links from a Project."""
         return cls(
             contact=cls._normalize_value(project.contact),
@@ -410,7 +410,7 @@ def _get_grade(grade: Optional[str], build_base: Optional[str]) -> str:
     return grade
 
 
-def write(project: Project, prime_dir: Path, *, arch: str):
+def write(project: SnapcraftProject, prime_dir: Path, *, arch: str):
     """Create a snap.yaml file.
 
     :param project: Snapcraft project.

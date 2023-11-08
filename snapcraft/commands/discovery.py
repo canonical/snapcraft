@@ -31,7 +31,7 @@ from snapcraft.parts.yaml_utils import (
     get_snap_project,
     process_yaml,
 )
-from snapcraft.projects import Project
+from snapcraft.projects import SnapcraftProject
 from snapcraft.utils import get_host_architecture
 
 if TYPE_CHECKING:
@@ -80,7 +80,7 @@ class ListPluginsCommand(BaseCommand, abc.ABC):
                 # determine the base
                 extract_parse_info(yaml_data_for_arch)
 
-                project = Project.unmarshal(yaml_data_for_arch)
+                project = SnapcraftProject.unmarshal(yaml_data_for_arch)
                 base = project.get_effective_base()
                 message = (
                     f"Displaying plugins available to the current base {base!r} project"

@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Optional
 from pydantic_yaml import YamlModel
 
 from snapcraft import __version__, errors, os_release, utils
-from snapcraft.projects import Project
+from snapcraft.projects import SnapcraftProject
 
 
 class Manifest(YamlModel):
@@ -68,7 +68,7 @@ class Manifest(YamlModel):
 
 
 def write(  # noqa PLR0913
-    project: Project,
+    project: SnapcraftProject,
     prime_dir: Path,
     *,
     arch: str,

@@ -22,7 +22,7 @@ import yaml
 
 from snapcraft import errors
 from snapcraft.parts.project_check import run_project_checks
-from snapcraft.projects import Project
+from snapcraft.projects import SnapcraftProject
 
 
 @pytest.fixture
@@ -48,7 +48,7 @@ def snapcraft_yaml(new_dir):
 
 
 def test_no_snap_dir(emitter, snapcraft_yaml):
-    project = Project.unmarshal(snapcraft_yaml)
+    project = SnapcraftProject.unmarshal(snapcraft_yaml)
     run_project_checks(project, assets_dir=Path("snap"))
     emitter.assert_interactions([])
 
@@ -72,7 +72,7 @@ def test_icon(new_dir):
     )
 
     yaml_data = yaml.safe_load(content)
-    project = Project.unmarshal(yaml_data)
+    project = SnapcraftProject.unmarshal(yaml_data)
 
     # Test without icon raises error
     with pytest.raises(errors.SnapcraftError) as raised:
@@ -86,7 +86,7 @@ def test_icon(new_dir):
 
 
 def test_accepted_artifacts(new_dir, emitter, snapcraft_yaml):
-    project = Project.unmarshal(snapcraft_yaml)
+    project = SnapcraftProject.unmarshal(snapcraft_yaml)
     assets_dir = Path("snap")
 
     file_assets = [
@@ -114,7 +114,7 @@ def test_accepted_artifacts(new_dir, emitter, snapcraft_yaml):
 
 
 def test_unexpected_things(new_dir, emitter, snapcraft_yaml):
-    project = Project.unmarshal(snapcraft_yaml)
+    project = SnapcraftProject.unmarshal(snapcraft_yaml)
     assets_dir = Path("snap")
 
     file_assets = [

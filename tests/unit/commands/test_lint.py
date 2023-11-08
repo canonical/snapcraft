@@ -29,7 +29,7 @@ from snapcraft import cli
 from snapcraft.commands.lint import LintCommand
 from snapcraft.errors import SnapcraftError
 from snapcraft.meta.snap_yaml import SnapMetadata
-from snapcraft.projects import Lint, Project
+from snapcraft.projects import Lint, SnapcraftProject
 
 
 @pytest.fixture
@@ -70,7 +70,7 @@ def fake_snapcraft_project():
         "summary": "test summary",
         "parts": {"part1": {"plugin": "nil"}},
     }
-    return Project.unmarshal(data)
+    return SnapcraftProject.unmarshal(data)
 
 
 @pytest.fixture
@@ -851,7 +851,7 @@ def test_load_project_complex(mocker, tmp_path):
         )
 
     result = LintCommand(None)._load_project(snapcraft_yaml_file=snap_file)
-    assert result == Project.unmarshal(
+    assert result == SnapcraftProject.unmarshal(
         {
             "name": "test-name",
             "base": "core22",

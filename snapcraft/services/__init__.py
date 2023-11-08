@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,11 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Main entry point."""
+"""Snapcraft services."""
 
-import sys
+from snapcraft.services.lifecycle import SnapcraftLifecycleService
+from snapcraft.services.package import SnapcraftPackageService
+# from snapcraft.services.provider import SnapcraftProviderService
+from snapcraft.services.service_factory import SnapcraftServiceFactory
 
-from snapcraft import cli, application
-
-# sys.exit(cli.run())
-application.main()
+__all__ = [
+    "SnapcraftLifecycleService",
+    "SnapcraftPackageService",
+    # "SnapcraftProviderService",
+    "SnapcraftServiceFactory",
+]

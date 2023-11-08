@@ -27,6 +27,7 @@ from craft_cli import BaseCommand, emit
 from craft_cli.helptexts import HIDDEN
 from overrides import overrides
 
+import snapcraft.const
 from snapcraft.errors import MaintenanceBase, SnapcraftError
 from snapcraft.legacy_cli import run_legacy
 from snapcraft.parts import yaml_utils
@@ -170,7 +171,7 @@ class RemoteBuildCommand(BaseCommand):
         :param base: The effective base of the project.
         """
         # bases newer than core22 must use the new remote-build
-        if base in yaml_utils.CURRENT_BASES - {"core22"}:
+        if base in snapcraft.const.CURRENT_BASES - {"core22"}:
             emit.debug("Running new remote-build because base is newer than core22")
             self._run_new_remote_build()
             return
@@ -323,10 +324,10 @@ class RemoteBuildCommand(BaseCommand):
 
         emit.debug(f"Got base {base!r} from {str(self._snapcraft_yaml)!r}")
 
-        if base in yaml_utils.ESM_BASES:
+        if base in snapcraft.const.ESM_BASES:
             raise MaintenanceBase(base)
 
-        if base not in yaml_utils.BASES:
+        if base not in snapcraft.const.BASES:
             raise SnapcraftError(
                 f"Unknown base {base!r} in {str(self._snapcraft_yaml)!r}."
             )

@@ -257,7 +257,7 @@ class LintCommand(BaseCommand):
 
             yield Path(temp_dir)
 
-    def _load_project(self, snapcraft_yaml_file: Path) -> Optional[projects.Project]:
+    def _load_project(self, snapcraft_yaml_file: Path) -> Optional[projects.SnapcraftProject]:
         """Load a snapcraft Project from a snapcraft.yaml, if present.
 
         The snapcraft.yaml exist for snaps built with the `--enable-manifest` parameter.
@@ -284,7 +284,7 @@ class LintCommand(BaseCommand):
         yaml_data_for_arch = apply_yaml(yaml_data, arch, arch)
         # discard parse-info - it is not needed
         extract_parse_info(yaml_data_for_arch)
-        project = projects.Project.unmarshal(yaml_data_for_arch)
+        project = projects.SnapcraftProject.unmarshal(yaml_data_for_arch)
         return project
 
     def _install_snap(
@@ -343,7 +343,7 @@ class LintCommand(BaseCommand):
 
         return Path("/snap") / snap_metadata.name / "current"
 
-    def _load_lint_filters(self, project: Optional[projects.Project]) -> projects.Lint:
+    def _load_lint_filters(self, project: Optional[projects.SnapcraftProject]) -> projects.Lint:
         """Load lint filters from a Project and disable the classic linter.
 
         :param project: Project from the snap file, if present.

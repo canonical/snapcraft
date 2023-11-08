@@ -38,7 +38,7 @@ class PartGrammarProcessor:
     >>> processor = PartGrammarProcessor(
     ...    plugin=plugin,
     ...    properties={},
-    ...    project=snapcraft_legacy.project.Project(),
+    ...    project=snapcraft_legacy.project.SnapcraftProject(),
     ...    repo=repo)
     >>> processor.get_stage_packages()
     {'foo'}
@@ -54,7 +54,7 @@ class PartGrammarProcessor:
     >>> processor = PartGrammarProcessor(
     ...    plugin=plugin,
     ...    properties={},
-    ...    project=snapcraft_legacy.project.Project(),
+    ...    project=snapcraft_legacy.project.SnapcraftProject(),
     ...    repo=repo)
     >>> processor.get_build_packages()
     {'foo'}
@@ -67,7 +67,7 @@ class PartGrammarProcessor:
     >>> processor = PartGrammarProcessor(
     ...    plugin=plugin,
     ...    properties=plugin.properties,
-    ...    project=snapcraft_legacy.project.Project(),
+    ...    project=snapcraft_legacy.project.SnapcraftProject(),
     ...    repo=None)
     >>> processor.get_source()
     'foo'

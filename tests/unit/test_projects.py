@@ -26,7 +26,7 @@ from snapcraft.projects import (
     ContentPlug,
     GrammarAwareProject,
     Hook,
-    Project,
+    SnapcraftProject,
 )
 from snapcraft.utils import get_host_architecture
 
@@ -75,7 +75,7 @@ class TestProjectDefaults:
     """Ensure unspecified items have the correct default value."""
 
     def test_project_defaults(self, project_yaml_data):
-        project = Project.unmarshal(project_yaml_data())
+        project = SnapcraftProject.unmarshal(project_yaml_data())
 
         assert project.build_base == project.base
         assert project.compression == "xz"
@@ -109,7 +109,7 @@ class TestProjectDefaults:
 
     def test_app_defaults(self, project_yaml_data):
         data = project_yaml_data(apps={"app1": {"command": "/bin/true"}})
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert project.apps is not None
 
         app = project.apps["app1"]
@@ -151,7 +151,7 @@ class TestProjectValidation:
         data.pop(field)
         error = f"field {field!r} required in top-level configuration"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize(
         "snap_type,requires_base",
@@ -170,9 +170,9 @@ class TestProjectValidation:
         if requires_base:
             error = "Snap base must be declared when type is not"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
         else:
-            project = Project.unmarshal(data)
+            project = SnapcraftProject.unmarshal(data)
             assert project.base is None
 
     def test_mandatory_adoptable_fields_definition(self):
@@ -188,20 +188,20 @@ class TestProjectValidation:
         data.pop(field)
         error = f"Snap {field} is required if not using adopt-info"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize("field", MANDATORY_ADOPTABLE_FIELDS)
     def test_adoptable_field_not_required(self, field, project_yaml_data):
         data = project_yaml_data()
         data.pop(field)
         data["adopt-info"] = "part1"
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert getattr(project, field) is None
 
     @pytest.mark.parametrize("field", MANDATORY_ADOPTABLE_FIELDS)
     def test_adoptable_field_assignment(self, field, project_yaml_data):
         data = project_yaml_data()
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         setattr(project, field, None)
 
     @pytest.mark.parametrize(
@@ -215,7 +215,7 @@ class TestProjectValidation:
         ],
     )
     def test_project_name_valid(self, name, project_yaml_data):
-        project = Project.unmarshal(project_yaml_data(name=name))
+        project = SnapcraftProject.unmarshal(project_yaml_data(name=name))
         assert project.name == name
 
     @pytest.mark.parametrize(
@@ -236,7 +236,7 @@ class TestProjectValidation:
     )
     def test_project_name_invalid(self, name, error, project_yaml_data):
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(name=name))
+            SnapcraftProject.unmarshal(project_yaml_data(name=name))
 
     @pytest.mark.parametrize(
         "version",
@@ -251,7 +251,7 @@ class TestProjectValidation:
         ],
     )
     def test_project_version_valid(self, version, project_yaml_data):
-        project = Project.unmarshal(project_yaml_data(version=version))
+        project = SnapcraftProject.unmarshal(project_yaml_data(version=version))
         assert project.version == version
 
     @pytest.mark.parametrize(
@@ -306,7 +306,7 @@ class TestProjectValidation:
     )
     def test_project_version_invalid(self, version, error, project_yaml_data):
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(version=version))
+            SnapcraftProject.unmarshal(project_yaml_data(version=version))
 
     @pytest.mark.parametrize(
         "snap_type",
@@ -318,12 +318,12 @@ class TestProjectValidation:
             data.pop("base")
 
         if snap_type != "_invalid":
-            project = Project.unmarshal(data)
+            project = SnapcraftProject.unmarshal(data)
             assert project.type == snap_type
         else:
             error = ".*unexpected value; permitted: 'app', 'base', 'gadget', 'kernel', 'snapd'"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize(
         "confinement", ["strict", "devmode", "classic", "_invalid"]
@@ -332,30 +332,30 @@ class TestProjectValidation:
         data = project_yaml_data(confinement=confinement)
 
         if confinement != "_invalid":
-            project = Project.unmarshal(data)
+            project = SnapcraftProject.unmarshal(data)
             assert project.confinement == confinement
         else:
             error = ".*unexpected value; permitted: 'classic', 'devmode', 'strict'"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize("grade", ["devel", "stable", "_invalid"])
     def test_project_grade(self, grade, project_yaml_data):
         data = project_yaml_data(grade=grade)
 
         if grade != "_invalid":
-            project = Project.unmarshal(data)
+            project = SnapcraftProject.unmarshal(data)
             assert project.grade == grade
         else:
             error = ".*unexpected value; permitted: 'stable', 'devel'"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize("grade", ["devel", "stable", "_invalid"])
     def test_project_grade_assignment(self, grade, project_yaml_data):
         data = project_yaml_data()
 
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         if grade != "_invalid":
             project.grade = grade
         else:
@@ -365,14 +365,14 @@ class TestProjectValidation:
 
     def test_project_summary_valid(self, project_yaml_data):
         summary = "x" * 78
-        project = Project.unmarshal(project_yaml_data(summary=summary))
+        project = SnapcraftProject.unmarshal(project_yaml_data(summary=summary))
         assert project.summary == summary
 
     def test_project_summary_invalid(self, project_yaml_data):
         summary = "x" * 79
         error = "ensure this value has at most 78 characters"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(summary=summary))
+            SnapcraftProject.unmarshal(project_yaml_data(summary=summary))
 
     @pytest.mark.parametrize(
         "epoch",
@@ -385,7 +385,7 @@ class TestProjectValidation:
         ],
     )
     def test_project_epoch_valid(self, epoch, project_yaml_data):
-        project = Project.unmarshal(project_yaml_data(epoch=epoch))
+        project = SnapcraftProject.unmarshal(project_yaml_data(epoch=epoch))
         assert project.epoch == epoch
 
     @pytest.mark.parametrize(
@@ -403,7 +403,7 @@ class TestProjectValidation:
     def test_project_epoch_invalid(self, epoch, project_yaml_data):
         error = "Epoch is a positive integer followed by an optional asterisk"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(epoch=epoch))
+            SnapcraftProject.unmarshal(project_yaml_data(epoch=epoch))
 
     def test_project_package_repository(self, project_yaml_data):
         repos = [
@@ -417,7 +417,7 @@ class TestProjectValidation:
                 "key-id": "ABCDE12345" * 4,
             },
         ]
-        project = Project.unmarshal(project_yaml_data(package_repositories=repos))
+        project = SnapcraftProject.unmarshal(project_yaml_data(package_repositories=repos))
         assert project.package_repositories == repos
 
     def test_project_package_repository_missing_fields(self, project_yaml_data):
@@ -428,7 +428,7 @@ class TestProjectValidation:
         ]
         error = r".*- field 'url' required .*\n- field 'key-id' required"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(package_repositories=repos))
+            SnapcraftProject.unmarshal(project_yaml_data(package_repositories=repos))
 
     def test_project_package_repository_extra_fields(self, project_yaml_data):
         repos = [
@@ -439,7 +439,7 @@ class TestProjectValidation:
         ]
         error = r".*- extra field 'extra' not permitted"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(package_repositories=repos))
+            SnapcraftProject.unmarshal(project_yaml_data(package_repositories=repos))
 
     @pytest.mark.parametrize(
         "environment",
@@ -449,7 +449,7 @@ class TestProjectValidation:
         ],
     )
     def test_project_environment_valid(self, environment, project_yaml_data):
-        project = Project.unmarshal(project_yaml_data(environment=environment))
+        project = SnapcraftProject.unmarshal(project_yaml_data(environment=environment))
         for variable in environment:
             assert variable in project.environment
 
@@ -464,7 +464,7 @@ class TestProjectValidation:
     def test_project_environment_invalid(self, environment, project_yaml_data):
         error = ".*value is not a valid dict"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(environment=environment))
+            SnapcraftProject.unmarshal(project_yaml_data(environment=environment))
 
     @pytest.mark.parametrize(
         "plugs",
@@ -475,7 +475,7 @@ class TestProjectValidation:
         ],
     )
     def test_project_plugs_valid(self, plugs, project_yaml_data):
-        project = Project.unmarshal(project_yaml_data(plugs=plugs))
+        project = SnapcraftProject.unmarshal(project_yaml_data(plugs=plugs))
         assert project.plugs == plugs
 
     @pytest.mark.parametrize(
@@ -489,7 +489,7 @@ class TestProjectValidation:
     def test_project_plugs_invalid(self, plugs, project_yaml_data):
         error = ".*value is not a valid dict"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(plugs=plugs))
+            SnapcraftProject.unmarshal(project_yaml_data(plugs=plugs))
 
     def test_project_content_plugs_valid(self, project_yaml_data):
         content_plug_data = {
@@ -502,7 +502,7 @@ class TestProjectValidation:
         }
         content_plug = ContentPlug(**content_plug_data["content-interface"])
 
-        project = Project.unmarshal(project_yaml_data(plugs=content_plug_data))
+        project = SnapcraftProject.unmarshal(project_yaml_data(plugs=content_plug_data))
         assert project.plugs is not None
         assert project.plugs["content-interface"] == content_plug
 
@@ -517,7 +517,7 @@ class TestProjectValidation:
         error = ".*'content-interface' must have a 'target' parameter"
 
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(plugs=content_plug))
+            SnapcraftProject.unmarshal(project_yaml_data(plugs=content_plug))
 
     def test_project_get_content_snaps(self, project_yaml_data):
         content_plug_data = {
@@ -529,7 +529,7 @@ class TestProjectValidation:
             }
         }
 
-        project = Project.unmarshal(project_yaml_data(plugs=content_plug_data))
+        project = SnapcraftProject.unmarshal(project_yaml_data(plugs=content_plug_data))
         assert project.get_content_snaps() == ["test-provider"]
 
     def test_project_default_provider_with_channel(self, project_yaml_data):
@@ -548,11 +548,11 @@ class TestProjectValidation:
         )
 
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(plugs=content_plug_data))
+            SnapcraftProject.unmarshal(project_yaml_data(plugs=content_plug_data))
 
     @pytest.mark.parametrize("decl_type", ["symlink", "bind", "bind-file", "type"])
     def test_project_layout(self, decl_type, project_yaml_data):
-        project = Project.unmarshal(
+        project = SnapcraftProject.unmarshal(
             project_yaml_data(layout={"foo": {decl_type: "bar"}})
         )
         assert project.layout is not None
@@ -564,7 +564,7 @@ class TestProjectValidation:
             "- unexpected value; permitted: 'symlink', 'bind', 'bind-file', 'type'"
         )
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(layout={"foo": {"invalid": "bar"}}))
+            SnapcraftProject.unmarshal(project_yaml_data(layout={"foo": {"invalid": "bar"}}))
 
     @pytest.mark.parametrize(
         "slots",
@@ -580,12 +580,12 @@ class TestProjectValidation:
         ],
     )
     def test_slot_valid(self, slots, project_yaml_data):
-        project = Project.unmarshal(project_yaml_data(slots=slots))
+        project = SnapcraftProject.unmarshal(project_yaml_data(slots=slots))
         assert project.slots == slots
 
     def test_project_build_base_devel_grade_devel(self, project_yaml_data):
         """When build_base is `devel`, the grade must be `devel`."""
-        project = Project.unmarshal(
+        project = SnapcraftProject.unmarshal(
             project_yaml_data(build_base="devel", grade="devel")
         )
 
@@ -597,7 +597,7 @@ class TestProjectValidation:
         data = project_yaml_data(build_base=build_base)
         data.pop("grade")
 
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
 
         assert project.build_base == build_base
         assert not project.grade
@@ -610,11 +610,11 @@ class TestProjectValidation:
         )
 
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(build_base="devel", grade="stable"))
+            SnapcraftProject.unmarshal(project_yaml_data(build_base="devel", grade="stable"))
 
     def test_project_global_plugs_warning(self, project_yaml_data, emitter):
         data = project_yaml_data(plugs={"desktop": None, "desktop-legacy": None})
-        Project.unmarshal(data)
+        SnapcraftProject.unmarshal(data)
         expected_message = (
             "Warning: implicit plug assignment in 'desktop' and 'desktop-legacy'. "
             "Plugs should be assigned to the app to which they apply, and not "
@@ -626,7 +626,7 @@ class TestProjectValidation:
 
     def test_project_global_slots_warning(self, project_yaml_data, emitter):
         data = project_yaml_data(slots={"home": None, "removable-media": None})
-        Project.unmarshal(data)
+        SnapcraftProject.unmarshal(data)
         expected_message = (
             "Warning: implicit slot assignment in 'home' and 'removable-media'. "
             "Slots should be assigned to the app to which they apply, and not "
@@ -658,7 +658,7 @@ class TestHookValidation:
     )
     def test_project_hooks_valid(self, hooks, project_yaml_data):
         configure_hook_data = Hook(**hooks["configure"])
-        project = Project.unmarshal(project_yaml_data(hooks=hooks))
+        project = SnapcraftProject.unmarshal(project_yaml_data(hooks=hooks))
 
         assert project.hooks is not None
         assert project.hooks["configure"] == configure_hook_data
@@ -668,7 +668,7 @@ class TestHookValidation:
         error = "'_invalid!' is not a valid command chain"
 
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(hooks=hook))
+            SnapcraftProject.unmarshal(project_yaml_data(hooks=hook))
 
     @pytest.mark.parametrize(
         "environment",
@@ -683,14 +683,14 @@ class TestHookValidation:
 
         error = ".*value is not a valid dict"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(hooks=hooks))
+            SnapcraftProject.unmarshal(project_yaml_data(hooks=hooks))
 
     def test_project_hooks_plugs_empty(self, project_yaml_data):
         hook = {"configure": {"plugs": []}}
         error = ".*'plugs' field cannot be empty"
 
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(hooks=hook))
+            SnapcraftProject.unmarshal(project_yaml_data(hooks=hook))
 
 
 class TestAppValidation:
@@ -698,7 +698,7 @@ class TestAppValidation:
 
     def test_app_command(self, app_yaml_data):
         data = app_yaml_data(command="test-command")
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].command == "test-command"
 
@@ -710,17 +710,17 @@ class TestAppValidation:
         data = app_yaml_data(autostart=autostart)
 
         if autostart != "_invalid":
-            project = Project.unmarshal(data)
+            project = SnapcraftProject.unmarshal(data)
             assert project.apps is not None
             assert project.apps["app1"].autostart == autostart
         else:
             error = ".*'_invalid' is not a valid desktop file name"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
 
     def test_app_common_id(self, app_yaml_data):
         data = app_yaml_data(common_id="test-common-id")
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].common_id == "test-common-id"
 
@@ -732,29 +732,29 @@ class TestAppValidation:
         data = app_yaml_data(bus_name=bus_name)
 
         if bus_name != "_invalid!":
-            project = Project.unmarshal(data)
+            project = SnapcraftProject.unmarshal(data)
             assert project.apps is not None
             assert project.apps["app1"].bus_name == bus_name
         else:
             error = ".*'_invalid!' is not a valid bus name"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
 
     def test_app_completer(self, app_yaml_data):
         data = app_yaml_data(completer="test-completer")
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].completer == "test-completer"
 
     def test_app_stop_command(self, app_yaml_data):
         data = app_yaml_data(stop_command="test-stop-command")
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].stop_command == "test-stop-command"
 
     def test_app_post_stop_command(self, app_yaml_data):
         data = app_yaml_data(post_stop_command="test-post-stop-command")
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].post_stop_command == "test-post-stop-command"
 
@@ -763,7 +763,7 @@ class TestAppValidation:
     )
     def test_app_start_timeout_valid(self, start_timeout, app_yaml_data):
         data = app_yaml_data(start_timeout=start_timeout)
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].start_timeout == start_timeout
 
@@ -776,14 +776,14 @@ class TestAppValidation:
 
         error = f".*'{start_timeout}' is not a valid time value"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize(
         "stop_timeout", ["10", "10ns", "10us", "10ms", "10s", "10m"]
     )
     def test_app_stop_timeout_valid(self, stop_timeout, app_yaml_data):
         data = app_yaml_data(stop_timeout=stop_timeout)
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].stop_timeout == stop_timeout
 
@@ -796,14 +796,14 @@ class TestAppValidation:
 
         error = f".*'{stop_timeout}' is not a valid time value"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize(
         "watchdog_timeout", ["10", "10ns", "10us", "10ms", "10s", "10m"]
     )
     def test_app_watchdog_timeout_valid(self, watchdog_timeout, app_yaml_data):
         data = app_yaml_data(watchdog_timeout=watchdog_timeout)
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].watchdog_timeout == watchdog_timeout
 
@@ -816,11 +816,11 @@ class TestAppValidation:
 
         error = f".*'{watchdog_timeout}' is not a valid time value"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
     def test_app_reload_command(self, app_yaml_data):
         data = app_yaml_data(reload_command="test-reload-command")
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].reload_command == "test-reload-command"
 
@@ -829,7 +829,7 @@ class TestAppValidation:
     )
     def test_app_restart_delay_valid(self, restart_delay, app_yaml_data):
         data = app_yaml_data(restart_delay=restart_delay)
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].restart_delay == restart_delay
 
@@ -842,11 +842,11 @@ class TestAppValidation:
 
         error = f".*'{restart_delay}' is not a valid time value"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
     def test_app_timer(self, app_yaml_data):
         data = app_yaml_data(timer="test-timer")
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].timer == "test-timer"
 
@@ -858,13 +858,13 @@ class TestAppValidation:
         data = app_yaml_data(daemon=daemon)
 
         if daemon != "_invalid":
-            project = Project.unmarshal(data)
+            project = SnapcraftProject.unmarshal(data)
             assert project.apps is not None
             assert project.apps["app1"].daemon == daemon
         else:
             error = ".*unexpected value; permitted: 'simple', 'forking', 'oneshot'"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize(
         "after",
@@ -879,9 +879,9 @@ class TestAppValidation:
         if after == "i am a string":
             error = ".*value is not a valid list"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
         else:
-            project = Project.unmarshal(data)
+            project = SnapcraftProject.unmarshal(data)
             assert project.apps is not None
             assert project.apps["app1"].after == after
 
@@ -890,7 +890,7 @@ class TestAppValidation:
 
         error = ".*duplicate entries in 'after' not permitted"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize(
         "before",
@@ -905,9 +905,9 @@ class TestAppValidation:
         if before == "i am a string":
             error = ".*value is not a valid list"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
         else:
-            project = Project.unmarshal(data)
+            project = SnapcraftProject.unmarshal(data)
             assert project.apps is not None
             assert project.apps["app1"].before == before
 
@@ -916,20 +916,20 @@ class TestAppValidation:
 
         error = ".*duplicate entries in 'before' not permitted"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize("refresh_mode", ["endure", "restart", "_invalid"])
     def test_app_refresh_mode(self, refresh_mode, app_yaml_data):
         data = app_yaml_data(refresh_mode=refresh_mode)
 
         if refresh_mode != "_invalid":
-            project = Project.unmarshal(data)
+            project = SnapcraftProject.unmarshal(data)
             assert project.apps is not None
             assert project.apps["app1"].refresh_mode == refresh_mode
         else:
             error = ".*unexpected value; permitted: 'endure', 'restart'"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize(
         "stop_mode",
@@ -951,13 +951,13 @@ class TestAppValidation:
         data = app_yaml_data(stop_mode=stop_mode)
 
         if stop_mode != "_invalid":
-            project = Project.unmarshal(data)
+            project = SnapcraftProject.unmarshal(data)
             assert project.apps is not None
             assert project.apps["app1"].stop_mode == stop_mode
         else:
             error = ".*unexpected value; permitted: 'sigterm', 'sigterm-all', 'sighup'"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize(
         "restart_condition",
@@ -976,31 +976,31 @@ class TestAppValidation:
         data = app_yaml_data(restart_condition=restart_condition)
 
         if restart_condition != "_invalid":
-            project = Project.unmarshal(data)
+            project = SnapcraftProject.unmarshal(data)
             assert project.apps is not None
             assert project.apps["app1"].restart_condition == restart_condition
         else:
             error = ".*unexpected value; permitted: 'on-success', 'on-failure', 'on-abnormal'"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize("install_mode", ["enable", "disable", "_invalid"])
     def test_app_install_mode(self, install_mode, app_yaml_data):
         data = app_yaml_data(install_mode=install_mode)
 
         if install_mode != "_invalid":
-            project = Project.unmarshal(data)
+            project = SnapcraftProject.unmarshal(data)
             assert project.apps is not None
             assert project.apps["app1"].install_mode == install_mode
         else:
             error = ".*unexpected value; permitted: 'enable', 'disable'"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
 
     def test_app_valid_aliases(self, app_yaml_data):
         data = app_yaml_data(aliases=["i", "am", "a", "list"])
 
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].aliases == ["i", "am", "a", "list"]
 
@@ -1017,18 +1017,18 @@ class TestAppValidation:
         if isinstance(aliases, list):
             error = f".*'{aliases[0]}' is not a valid alias"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
         else:
             error = ".*value is not a valid list"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
 
     def test_app_duplicate_aliases(self, app_yaml_data):
         data = app_yaml_data(aliases=["duplicate", "duplicate"])
 
         error = ".*duplicate entries in 'aliases' not permitted"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize(
         "environment",
@@ -1039,7 +1039,7 @@ class TestAppValidation:
     )
     def test_app_environment_valid(self, environment, app_yaml_data):
         data = app_yaml_data(environment=environment)
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert project.apps is not None
         for variable in environment:
             assert variable in project.apps["app1"].environment
@@ -1057,7 +1057,7 @@ class TestAppValidation:
 
         error = ".*value is not a valid dict"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize(
         "command_chain",
@@ -1074,13 +1074,13 @@ class TestAppValidation:
         if command_chain == "i am a string":
             error = ".*value is not a valid list"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
         elif command_chain == ["_invalid!"]:
             error = f".*'{command_chain[0]}' is not a valid command chain"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
         else:
-            project = Project.unmarshal(data)
+            project = SnapcraftProject.unmarshal(data)
             assert project.apps is not None
             assert project.apps["app1"].command_chain == command_chain
 
@@ -1090,7 +1090,7 @@ class TestAppValidation:
     def test_app_sockets_valid_listen_stream(self, listen_stream, socket_yaml_data):
         data = socket_yaml_data(listen_stream=listen_stream)
 
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].sockets is not None
         assert project.apps["app1"].sockets["socket1"].listen_stream == listen_stream
@@ -1103,7 +1103,7 @@ class TestAppValidation:
 
         error = f".*{listen_stream} is not an integer between 1 and 65535"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize("listen_stream", ["@foo"])
     def test_app_sockets_invalid_socket_listen_stream(
@@ -1113,28 +1113,28 @@ class TestAppValidation:
 
         error = f".*{listen_stream!r} is not a valid socket path.*"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
     def test_app_sockets_missing_listen_stream(self, socket_yaml_data):
         data = socket_yaml_data()
 
         error = ".*field 'listen-stream' required"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize("socket_mode", [1, "_invalid"])
     def test_app_sockets_valid_socket_mode(self, socket_mode, socket_yaml_data):
         data = socket_yaml_data(listen_stream="test", socket_mode=socket_mode)
 
         if socket_mode != "_invalid":
-            project = Project.unmarshal(data)
+            project = SnapcraftProject.unmarshal(data)
             assert project.apps is not None
             assert project.apps["app1"].sockets is not None
             assert project.apps["app1"].sockets["socket1"].socket_mode == socket_mode
         else:
             error = ".*value is not a valid integer"
             with pytest.raises(errors.ProjectValidationError, match=error):
-                Project.unmarshal(data)
+                SnapcraftProject.unmarshal(data)
 
     @pytest.mark.parametrize(
         "system_username",
@@ -1150,7 +1150,7 @@ class TestAppValidation:
         ],
     )
     def test_project_system_usernames_valid(self, system_username, project_yaml_data):
-        project = Project.unmarshal(project_yaml_data(system_usernames=system_username))
+        project = SnapcraftProject.unmarshal(project_yaml_data(system_usernames=system_username))
         assert project.system_usernames == system_username
 
     @pytest.mark.parametrize(
@@ -1163,11 +1163,11 @@ class TestAppValidation:
     def test_project_system_usernames_invalid(self, system_username, project_yaml_data):
         error = "- value is not a valid dict"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(system_usernames=system_username))
+            SnapcraftProject.unmarshal(project_yaml_data(system_usernames=system_username))
 
     def test_project_provenance(self, project_yaml_data):
         """Verify provenance is parsed."""
-        project = Project.unmarshal(project_yaml_data(provenance="test-provenance-1"))
+        project = SnapcraftProject.unmarshal(project_yaml_data(provenance="test-provenance-1"))
         assert project.provenance == "test-provenance-1"
 
     @pytest.mark.parametrize("provenance", ["invalid$", "invalid_invalid"])
@@ -1175,7 +1175,7 @@ class TestAppValidation:
         """Verify invalid provenance values raises an error."""
         error = "provenance must consist of alphanumeric characters and/or hyphens."
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(provenance=provenance))
+            SnapcraftProject.unmarshal(project_yaml_data(provenance=provenance))
 
 
 class TestGrammarValidation:
@@ -1309,7 +1309,7 @@ class TestGrammarValidation:
 
 
 def test_get_snap_project_with_base(snapcraft_yaml):
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
 
     assert project.get_extra_build_snaps() == ["core22"]
 
@@ -1340,7 +1340,7 @@ def test_get_snap_project_with_content_plugs(snapcraft_yaml, new_dir):
         },
     }
 
-    project = Project(**yaml_data)
+    project = SnapcraftProject(**yaml_data)
 
     assert project.get_extra_build_snaps() == [
         "core22",
@@ -1379,7 +1379,7 @@ def test_get_snap_project_with_content_plugs_does_not_add_extension(
         },
     }
 
-    project = Project(**yaml_data)
+    project = SnapcraftProject(**yaml_data)
 
     assert project.get_extra_build_snaps() == [
         "core22",
@@ -1393,7 +1393,7 @@ class TestArchitecture:
     def test_architecture_valid_list_of_strings(self, project_yaml_data):
         """Architectures can be defined as a list of strings (shorthand notation)."""
         data = project_yaml_data(architectures=["amd64", "armhf"])
-        architectures = Project.unmarshal(data).architectures
+        architectures = SnapcraftProject.unmarshal(data).architectures
 
         assert isinstance(architectures[0], Architecture)
         assert isinstance(architectures[1], Architecture)
@@ -1410,7 +1410,7 @@ class TestArchitecture:
                 {"build-on": "armhf", "build-for": "armhf"},
             ]
         )
-        architectures = Project.unmarshal(data).architectures
+        architectures = SnapcraftProject.unmarshal(data).architectures
 
         assert isinstance(architectures[0], Architecture)
         assert isinstance(architectures[1], Architecture)
@@ -1427,7 +1427,7 @@ class TestArchitecture:
                 {"build-on": ["armhf"], "build-for": ["armhf"]},
             ]
         )
-        architectures = Project.unmarshal(data).architectures
+        architectures = SnapcraftProject.unmarshal(data).architectures
 
         assert isinstance(architectures[0], Architecture)
         assert isinstance(architectures[1], Architecture)
@@ -1441,7 +1441,7 @@ class TestArchitecture:
         data = project_yaml_data(architectures="amd64")
 
         with pytest.raises(errors.ProjectValidationError) as error:
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
         assert "value is not a valid list" in str(error.value)
 
@@ -1452,7 +1452,7 @@ class TestArchitecture:
                 {"build-on": ["amd64", "armhf"], "build-for": ["amd64"]},
             ]
         )
-        architectures = Project.unmarshal(data).architectures
+        architectures = SnapcraftProject.unmarshal(data).architectures
 
         assert isinstance(architectures[0], Architecture)
         assert architectures[0].build_on == ["amd64", "armhf"]
@@ -1465,7 +1465,7 @@ class TestArchitecture:
                 {"build-on": ["arm64"]},
             ]
         )
-        architectures = Project.unmarshal(data).architectures
+        architectures = SnapcraftProject.unmarshal(data).architectures
 
         assert isinstance(architectures[0], Architecture)
         assert architectures[0].build_on == ["arm64"]
@@ -1484,7 +1484,7 @@ class TestArchitecture:
         )
 
         with pytest.raises(errors.ProjectValidationError) as error:
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
         assert "extra field 'bad-property' not permitted" in str(error.value)
 
@@ -1493,7 +1493,7 @@ class TestArchitecture:
         data = project_yaml_data(architectures=[{"build-for": ["amd64"]}])
 
         with pytest.raises(errors.ProjectValidationError) as error:
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
         assert "field 'build-on' required" in str(error.value)
 
@@ -1507,7 +1507,7 @@ class TestArchitecture:
         )
 
         with pytest.raises(errors.ProjectValidationError) as error:
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
         assert "'all' cannot be used for 'build-on'" in str(error.value)
 
@@ -1518,7 +1518,7 @@ class TestArchitecture:
         )
 
         with pytest.raises(errors.ProjectValidationError) as error:
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
         assert "only one architecture can be defined for 'build-for'" in str(
             error.value
@@ -1529,7 +1529,7 @@ class TestArchitecture:
         data = project_yaml_data(architectures=[{"build-on": ["amd64", "armhf"]}])
 
         with pytest.raises(errors.ProjectValidationError) as error:
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
         assert "only one architecture can be defined for 'build-for'" in str(
             error.value
@@ -1544,7 +1544,7 @@ class TestArchitecture:
         )
 
         with pytest.raises(errors.ProjectValidationError) as error:
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
         assert "'all' cannot be used for 'build-on'" in str(error.value)
 
@@ -1557,7 +1557,7 @@ class TestArchitecture:
         )
 
         with pytest.raises(errors.ProjectValidationError) as error:
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
         assert "'all' cannot be used for 'build-on'" in str(error.value)
 
@@ -1572,7 +1572,7 @@ class TestArchitecture:
         )
 
         with pytest.raises(errors.ProjectValidationError) as error:
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
         assert "'all' cannot be used for 'build-on'" in str(error.value)
 
@@ -1583,7 +1583,7 @@ class TestArchitecture:
                 {"build-on": ["amd64"], "build-for": ["all"]},
             ]
         )
-        architectures = Project.unmarshal(data).architectures
+        architectures = SnapcraftProject.unmarshal(data).architectures
 
         assert isinstance(architectures[0], Architecture)
         assert architectures[0].build_on == ["amd64"]
@@ -1599,7 +1599,7 @@ class TestArchitecture:
         )
 
         with pytest.raises(errors.ProjectValidationError) as error:
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
         assert "'all' cannot be used for 'build-on'" in str(error.value)
 
@@ -1615,7 +1615,7 @@ class TestArchitecture:
         )
 
         with pytest.raises(errors.ProjectValidationError) as error:
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
         assert (
             "one of the items has 'all' in 'build-for', but there are"
@@ -1633,7 +1633,7 @@ class TestArchitecture:
         )
 
         with pytest.raises(errors.ProjectValidationError) as error:
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
         assert "'all' cannot be used for 'build-on'" in str(error.value)
 
@@ -1647,7 +1647,7 @@ class TestArchitecture:
         )
 
         with pytest.raises(errors.ProjectValidationError) as error:
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
         assert (
             "one of the items has 'all' in 'build-for', but there are"
@@ -1664,7 +1664,7 @@ class TestArchitecture:
             ]
         )
 
-        architectures = Project.unmarshal(data).architectures
+        architectures = SnapcraftProject.unmarshal(data).architectures
 
         assert isinstance(architectures[0], Architecture)
         assert architectures[0].build_on == ["amd64"]
@@ -1683,7 +1683,7 @@ class TestArchitecture:
         )
 
         with pytest.raises(errors.ProjectValidationError) as error:
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
         assert "multiple items will build snaps that claim to run on amd64" in str(
             error.value
@@ -1704,7 +1704,7 @@ class TestArchitecture:
         )
 
         with pytest.raises(errors.ProjectValidationError) as error:
-            Project.unmarshal(data)
+            SnapcraftProject.unmarshal(data)
 
         assert "multiple items will build snaps that claim to run on amd64" in str(
             error.value
@@ -1717,7 +1717,7 @@ class TestArchitecture:
                 {"build-on": ["arm64"], "build-for": ["armhf"]},
             ]
         )
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert project.get_build_on() == "arm64"
 
     def test_project_get_build_for(self, project_yaml_data):
@@ -1727,7 +1727,7 @@ class TestArchitecture:
                 {"build-on": ["arm64"], "build-for": ["armhf"]},
             ]
         )
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         assert project.get_build_for() == "armhf"
 
     def test_project_get_build_for_arch_triplet(self, project_yaml_data):
@@ -1738,7 +1738,7 @@ class TestArchitecture:
             ]
         )
 
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         arch_triplet = project.get_build_for_arch_triplet()
 
         assert arch_triplet == "arm-linux-gnueabihf"
@@ -1751,7 +1751,7 @@ class TestArchitecture:
             ]
         )
 
-        project = Project.unmarshal(data)
+        project = SnapcraftProject.unmarshal(data)
         arch_triplet = project.get_build_for_arch_triplet()
 
         assert not arch_triplet

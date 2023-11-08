@@ -63,7 +63,7 @@ def test_classic_linter(mocker, new_dir, confinement, stage_libc, text):
         "parts": {},
     }
 
-    project = projects.Project.unmarshal(yaml_data)
+    project = projects.SnapcraftProject.unmarshal(yaml_data)
     snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
 
     issues = linters.run_linters(new_dir, lint=None)
@@ -125,7 +125,7 @@ def test_classic_linter_filter(mocker, new_dir):
         "parts": {},
     }
 
-    project = projects.Project.unmarshal(yaml_data)
+    project = projects.SnapcraftProject.unmarshal(yaml_data)
     snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
 
     issues = linters.run_linters(

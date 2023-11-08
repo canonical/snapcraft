@@ -24,13 +24,13 @@ from craft_cli import emit
 
 from snapcraft import errors
 from snapcraft.meta import ExtractedMetadata
-from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Project
+from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, SnapcraftProject
 
 _VALID_ICON_EXTENSIONS: Final[List[str]] = ["png", "svg"]
 
 
 def update_project_metadata(
-    project: Project,
+    project: SnapcraftProject,
     *,
     project_vars: Dict[str, str],
     metadata_list: List[ExtractedMetadata],
@@ -84,7 +84,7 @@ def update_project_metadata(
             )
 
 
-def _update_project_variables(project: Project, project_vars: Dict[str, str]):
+def _update_project_variables(project: SnapcraftProject, project_vars: Dict[str, str]):
     """Update project fields with values set during lifecycle processing."""
     try:
         if project_vars["version"]:
@@ -97,7 +97,7 @@ def _update_project_variables(project: Project, project_vars: Dict[str, str]):
 
 
 def _update_project_icon(
-    project: Project,
+    project: SnapcraftProject,
     *,
     metadata: ExtractedMetadata,
     assets_dir: Path,
@@ -119,7 +119,7 @@ def _update_project_icon(
 
 
 def _update_project_app_desktop_file(
-    project: Project, *, metadata: ExtractedMetadata, assets_dir: Path, prime_dir: Path
+    project: SnapcraftProject, *, metadata: ExtractedMetadata, assets_dir: Path, prime_dir: Path
 ) -> None:
     """Look for desktop files and update project.
 

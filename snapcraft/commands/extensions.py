@@ -33,7 +33,7 @@ from snapcraft.parts.yaml_utils import (
     get_snap_project,
     process_yaml,
 )
-from snapcraft.projects import Project
+from snapcraft.projects import SnapcraftProject
 from snapcraft.utils import get_host_architecture
 from snapcraft_legacy.internal.project_loader import (
     find_extension,
@@ -135,5 +135,5 @@ class ExpandExtensionsCommand(BaseCommand, abc.ABC):
         # not part of the Project model
         extract_parse_info(yaml_data_for_arch)
 
-        Project.unmarshal(yaml_data_for_arch)
+        SnapcraftProject.unmarshal(yaml_data_for_arch)
         emit.message(yaml.safe_dump(yaml_data_for_arch, indent=4, sort_keys=False))

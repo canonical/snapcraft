@@ -23,7 +23,7 @@ import yaml
 
 from snapcraft.meta import snap_yaml
 from snapcraft.meta.snap_yaml import ContentPlug, ContentSlot, SnapMetadata
-from snapcraft.projects import Project
+from snapcraft.projects import SnapcraftProject
 
 
 def _override_data(to_dict, from_dict):
@@ -59,7 +59,7 @@ def simple_project():
             },
         }
         _override_data(snapcraft_config, kwargs)
-        return Project.unmarshal(snapcraft_config)
+        return SnapcraftProject.unmarshal(snapcraft_config)
 
     yield _simple_project
 
@@ -348,7 +348,7 @@ def complex_project():
         """
     )
     data = yaml.safe_load(snapcraft_yaml)
-    yield Project.unmarshal(data)
+    yield SnapcraftProject.unmarshal(data)
 
 
 def test_complex_snap_yaml(complex_project, new_dir):

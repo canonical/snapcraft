@@ -164,7 +164,7 @@ class TestLinterRun:
             "parts": {},
         }
 
-        project = projects.Project.unmarshal(yaml_data)
+        project = projects.SnapcraftProject.unmarshal(yaml_data)
         snap_yaml.write(
             project,
             prime_dir=Path(new_dir),
@@ -193,7 +193,7 @@ class TestLinterRun:
             "parts": {},
         }
 
-        project = projects.Project.unmarshal(yaml_data)
+        project = projects.SnapcraftProject.unmarshal(yaml_data)
         snap_yaml.write(
             project,
             prime_dir=Path(new_dir),
@@ -218,7 +218,7 @@ class TestLinterRun:
             "parts": {},
         }
 
-        project = projects.Project.unmarshal(yaml_data)
+        project = projects.SnapcraftProject.unmarshal(yaml_data)
         snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
 
         lint = projects.Lint(ignore=["test-1", "test-2"])

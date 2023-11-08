@@ -1,6 +1,7 @@
 name: snapcraft
 base: core22
 summary: easily create snaps
+version: meh
 description: |
     Snapcraft aims to make upstream developers' lives easier and as such is not
     a single toolset, but instead is a collection of tools that enable the
@@ -66,7 +67,7 @@ parts:
     override-pull: |
       ${SNAP}/libexec/snapcraft/craftctl default
 
-      if [ "${CRAFT_TARGET_ARCH}" = "riscv64" ]; then
+      if [ "${CRAFT_ARCH_BUILD_FOR}" = "riscv64" ]; then
         git am "${CRAFT_PROJECT_DIR}/snap/local/patches/patchelf/0001-Always-use-the-ET_DYN-codepath-avoiding-shifting-loa.patch"
         git am "${CRAFT_PROJECT_DIR}/snap/local/patches/patchelf/0002-Fix-rewriteSectionsLibrary-to-not-assume-the-base-ad.patch"
       fi

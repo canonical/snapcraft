@@ -29,7 +29,7 @@ class GlobalGrammarProcessor:
     >>> from snapcraft_legacy import repo
     >>> processor = GlobalGrammarProcessor(
     ...    properties={'build-packages': [{'try': ['hello']}]},
-    ...    project=snapcraft_legacy.project.Project())
+    ...    project=snapcraft_legacy.project.SnapcraftProject())
     >>> processor.get_build_packages()
     {'hello'}
     """

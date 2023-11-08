@@ -22,7 +22,7 @@ import pytest
 
 from snapcraft.meta import ExtractedMetadata
 from snapcraft.parts.update_metadata import update_project_metadata
-from snapcraft.projects import App, Project
+from snapcraft.projects import App, SnapcraftProject
 
 
 @pytest.fixture
@@ -83,7 +83,7 @@ def _project_app(data: Dict[str, Any]) -> App:
 
 
 def test_update_project_metadata(project_yaml_data, appstream_file, new_dir):
-    project = Project.unmarshal(project_yaml_data({"adopt-info": "part"}))
+    project = SnapcraftProject.unmarshal(project_yaml_data({"adopt-info": "part"}))
     metadata = ExtractedMetadata(
         common_id="common.id",
         title="title",
@@ -167,7 +167,7 @@ def test_update_project_metadata_fields(
         "parts": {},
         **project_entries,
     }
-    project = Project(**yaml_data)
+    project = SnapcraftProject(**yaml_data)
     metadata = ExtractedMetadata(
         version="4.5.6",
         summary="metadata summary",
@@ -234,7 +234,7 @@ def test_update_project_metadata_multiple(
         "parts": {},
         **project_entries,
     }
-    project = Project(**yaml_data)
+    project = SnapcraftProject(**yaml_data)
     metadata1 = ExtractedMetadata(version="4.5.6")
     metadata2 = ExtractedMetadata(
         summary="metadata summary", description="metadata description"
@@ -299,7 +299,7 @@ def test_update_project_metadata_icon(
     yaml_data = project_yaml_data(
         {"version": "1.0", "adopt-info": "part", "parts": {}, **project_entries}
     )
-    project = Project(**yaml_data)
+    project = SnapcraftProject(**yaml_data)
     metadata = ExtractedMetadata(icon="metadata_icon.png")
 
     # create icon file
@@ -418,7 +418,7 @@ def test_update_project_metadata_desktop(
     yaml_data = project_yaml_data(
         {"version": "1.0", "adopt-info": "part", "parts": {}, **project_entries}
     )
-    project = Project(**yaml_data)
+    project = SnapcraftProject(**yaml_data)
     metadata = ExtractedMetadata(
         common_id="test.id", desktop_file_paths=["metadata/foo.desktop"]
     )
@@ -461,7 +461,7 @@ def test_update_project_metadata_desktop_multiple(project_yaml_data, new_dir):
             },
         }
     )
-    project = Project(**yaml_data)
+    project = SnapcraftProject(**yaml_data)
     metadata = ExtractedMetadata(
         common_id="test.id",
         desktop_file_paths=["metadata/foo.desktop", "metadata/bar.desktop"],
@@ -504,7 +504,7 @@ def test_update_project_metadata_multiple_apps(project_yaml_data, new_dir):
             },
         }
     )
-    project = Project(**yaml_data)
+    project = SnapcraftProject(**yaml_data)
     metadata1 = ExtractedMetadata(
         common_id="foo.id",
         desktop_file_paths=["metadata/foo.desktop"],
@@ -542,7 +542,7 @@ def test_update_project_metadata_desktop_no_apps(project_yaml_data, new_dir):
             "parts": {},
         }
     )
-    project = Project(**yaml_data)
+    project = SnapcraftProject(**yaml_data)
     metadata = ExtractedMetadata(
         common_id="test.id",
         desktop_file_paths=["metadata/foo.desktop", "metadata/bar.desktop"],

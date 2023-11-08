@@ -24,7 +24,7 @@ import pytest
 from yaml import safe_dump
 
 from snapcraft import cli
-from snapcraft.parts.yaml_utils import CURRENT_BASES, ESM_BASES, LEGACY_BASES
+from snapcraft.const import ESM_BASES, LEGACY_BASES, CURRENT_BASES
 from snapcraft.remote import GitRepo
 
 # remote-build control logic may check if the working dir is a git repo,

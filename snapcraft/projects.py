@@ -17,17 +17,22 @@
 """Project file definition and helpers."""
 
 import re
+import warnings
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
 
 import pydantic
+from craft_application import models
+from craft_application.models import BuildInfo
 from craft_archives import repo
 from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from pydantic import PrivateAttr, conlist, constr
 
-from snapcraft import parts, utils
+from snapcraft import parts, utils, errors
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
+from snapcraft.const import ESM_BASES, LEGACY_BASES, CURRENT_BASES
+from snapcraft.parts import lifecycle
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_effective_base,
@@ -403,7 +408,7 @@ class ContentPlug(ProjectModel):
 MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
 
-class Project(ProjectModel):
+class SnapcraftProject(models.Project):
     """Snapcraft project definition.
 
     See https://snapcraft.io/docs/snapcraft-yaml-reference
@@ -412,26 +417,27 @@ class Project(ProjectModel):
     - system-usernames
     """
 
-    name: ProjectName
-    title: Optional[ProjectTitle]
-    base: Optional[str]
+    # name: models.ProjectName
+    # title: Optional[models.ProjectTitle]
+    # base: Optional[str]
     build_base: Optional[str]
     compression: Literal["lzo", "xz"] = "xz"
-    version: Optional[ProjectVersion]
-    contact: Optional[Union[str, UniqueStrList]]
+    # TODO: ensure we have a test for version being retrieved using adopt-info
+    version: Optional[models.VersionStr]
+    # contact: Optional[Union[str, models.UniqueStrList]]
     donation: Optional[Union[str, UniqueStrList]]
-    issues: Optional[Union[str, UniqueStrList]]
+    # issues: Optional[Union[str, models.UniqueStrList]]
     source_code: Optional[str]
     website: Optional[str]
-    summary: Optional[ProjectSummary]
-    description: Optional[str]
+    # summary: Optional[models.SummaryStr]
+    # description: Optional[str]
     type: Optional[Literal["app", "base", "gadget", "kernel", "snapd"]]
     icon: Optional[str]
     confinement: Literal["classic", "devmode", "strict"]
     layout: Optional[
         Dict[str, Dict[Literal["symlink", "bind", "bind-file", "type"], str]]
     ]
-    license: Optional[str]
+    # license: Optional[str]
     grade: Optional[Literal["stable", "devel"]]
     architectures: List[Union[str, Architecture]] = [get_host_architecture()]
     assumes: UniqueStrList = []
@@ -442,7 +448,7 @@ class Project(ProjectModel):
     plugs: Optional[Dict[str, Union[ContentPlug, Any]]]
     slots: Optional[Dict[str, Any]]
     lint: Optional[Lint]
-    parts: Dict[str, Any]  # parts are handled by craft-parts
+    # parts: Dict[str, Any]  # parts are handled by craft-parts
     epoch: Optional[str]
     adopt_info: Optional[str]
     system_usernames: Optional[Dict[str, Any]]
@@ -521,6 +527,25 @@ class Project(ProjectModel):
             )
         return values
 
+    @pydantic.root_validator(pre=True)
+    def _validate_base_supported(cls, values):
+        effective_base = get_effective_base(
+            base=values.get("base"),
+            build_base=values.get("build-base"),
+            project_type=values.get("type"),
+            name=values.get("name"),
+        )
+        if effective_base in ESM_BASES:
+            raise errors.MaintenanceBase(effective_base)
+        if effective_base in LEGACY_BASES:
+            raise errors.LegacyFallback(f"base is {effective_base}")
+        if effective_base is None:
+            raise errors.LegacyFallback("no base defined")
+        if values.get("type") != "base" and effective_base not in CURRENT_BASES:
+            warnings.warn("Not a supported base - I hope you know what you're doing!")
+
+        return values
+
     @pydantic.validator("name")
     @classmethod
     def _validate_name(cls, name):
@@ -541,11 +566,12 @@ class Project(ProjectModel):
 
         return name
 
-    @pydantic.validator("version")
-    @classmethod
+    @pydantic.validator("version", pre=True)
     def _validate_version(cls, version, values):
-        if not version and "adopt_info" not in values:
-            raise ValueError("Version must be declared if not adopting metadata")
+        if not version:
+            if "adopt_info" not in values:
+                raise ValueError("Version must be declared if not adopting metadata")
+            return "adopt-info"
 
         if version and not re.match(
             r"^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$", version
@@ -626,7 +652,7 @@ class Project(ProjectModel):
         return provenance
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "Project":
+    def unmarshal(cls, data: Dict[str, Any]) -> "SnapcraftProject":
         """Create and populate a new ``Project`` object from dictionary data.
 
         The unmarshal method validates entries in the input dictionary, populating
@@ -642,7 +668,7 @@ class Project(ProjectModel):
             raise TypeError("Project data is not a dictionary")
 
         try:
-            project = Project(**data)
+            project = SnapcraftProject(**data)
         except pydantic.ValidationError as err:
             raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
 
@@ -731,6 +757,12 @@ class Project(ProjectModel):
             return get_arch_triplet(convert_architecture_deb_to_platform(arch))
 
         return None
+
+    def get_build_plan(self) -> List[BuildInfo]:
+        """Get the build plan for this project."""
+        # TODO: CALLAHAAAAAAAAAAN!
+
+
 
 
 class _GrammarAwareModel(pydantic.BaseModel):

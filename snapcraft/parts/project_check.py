@@ -23,7 +23,7 @@ from pathlib import Path
 from craft_cli import emit
 
 from snapcraft import errors
-from snapcraft.projects import Project
+from snapcraft.projects import SnapcraftProject
 
 _EXPECTED_SNAP_DIR_PATTERNS = {
     re.compile(r"^snapcraft.yaml$"),
@@ -36,7 +36,7 @@ _EXPECTED_SNAP_DIR_PATTERNS = {
 }
 
 
-def run_project_checks(project: Project, *, assets_dir: Path) -> None:
+def run_project_checks(project: SnapcraftProject, *, assets_dir: Path) -> None:
     """Execute consistency checks for project and project files.
 
     The checks done here are meant to be light, and not rely on the

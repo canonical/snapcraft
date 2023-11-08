@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Snapcraft commands."""
+import craft_application
 
 from .account import (
     StoreExportLoginCommand,
@@ -71,6 +72,7 @@ from .status import (
 from .upload import StoreLegacyPushCommand, StoreUploadCommand
 from .validation_sets import StoreEditValidationSetsCommand
 from .version import VersionCommand
+
 
 __all__ = [
     "BuildCommand",

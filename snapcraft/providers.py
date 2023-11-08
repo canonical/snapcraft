@@ -169,7 +169,7 @@ def get_base_configuration(
     http_proxy: Optional[str] = None,
     https_proxy: Optional[str] = None,
 ) -> bases.BuilddBase:
-    """Create a BuilddBase configuration for rockcraft."""
+    """Create a BuilddBase configuration for snapcraft."""
     environment = get_command_environment(
         http_proxy=http_proxy, https_proxy=https_proxy
     )

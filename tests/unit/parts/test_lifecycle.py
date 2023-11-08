@@ -31,7 +31,7 @@ from snapcraft.elf import ElfFile
 from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts.plugins import KernelPlugin
 from snapcraft.parts.update_metadata import update_project_metadata
-from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Project
+from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, SnapcraftProject
 from snapcraft.utils import get_host_architecture
 
 _SNAPCRAFT_YAML_FILENAMES = [
@@ -131,7 +131,7 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
         ),
     )
 
-    project = Project.unmarshal(yaml_data)
+    project = SnapcraftProject.unmarshal(yaml_data)
 
     if filename == "build-aux/snap/snapcraft.yaml":
         assets_dir = Path("build-aux/snap")
@@ -270,7 +270,7 @@ def test_lifecycle_run_ua_services_without_experimental_flag(
 def test_lifecycle_run_command_step(
     cmd, step, debug_shell, snapcraft_yaml, project_vars, new_dir, mocker
 ):
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     mocker.patch("snapcraft.meta.snap_yaml.write")
     mocker.patch("snapcraft.pack.pack_snap")
@@ -307,7 +307,7 @@ def test_lifecycle_run_command_step(
 
 
 def test_lifecycle_run_try_command(snapcraft_yaml, project_vars, new_dir, mocker):
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     mocker.patch("snapcraft.meta.snap_yaml.write")
     mocker.patch("snapcraft.pack.pack_snap")
@@ -352,7 +352,7 @@ def test_lifecycle_run_local_destructive_mode(
     monkeypatch,
 ):
     """Run the lifecycle locally when destructive_mode is True."""
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
@@ -417,7 +417,7 @@ def test_lifecycle_run_local_managed_mode(
     monkeypatch,
 ):
     """Run the lifecycle locally when managed_mode is True."""
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
@@ -482,7 +482,7 @@ def test_lifecycle_run_local_build_env(
     mocker,
 ):
     """Run the lifecycle locally when the build environment is 'host'."""
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
@@ -540,7 +540,7 @@ def test_lifecycle_run_in_provider_by_default(
 ):
     """Run lifecycle in a provider when not in managed_mode, not in destructive_mode,
     and the build environment is not 'host'."""
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     mocker.patch("snapcraft.utils.is_managed_mode", return_value=False)
@@ -597,7 +597,7 @@ def test_lifecycle_run_in_provider_use_lxd(
     snapcraft_yaml,
 ):
     """Run the lifecycle in a provider when `use_lxd` is true."""
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     mocker.patch("snapcraft.pack.pack_snap")
@@ -655,7 +655,7 @@ def test_lifecycle_run_in_provider_use_lxd(
 
 @pytest.mark.parametrize("cmd", ["pack", "snap"])
 def test_lifecycle_pack_metadata_error(cmd, snapcraft_yaml, new_dir, mocker):
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
     mocker.patch("snapcraft.utils.is_managed_mode", return_value=True)
     mocker.patch(
@@ -706,7 +706,7 @@ def test_lifecycle_metadata_empty(field, snapcraft_yaml, new_dir):
     yaml_data = snapcraft_yaml(base="core22")
     yaml_data.pop(field)
     yaml_data["adopt-info"] = "part"
-    project = Project.unmarshal(yaml_data)
+    project = SnapcraftProject.unmarshal(yaml_data)
 
     with pytest.raises(errors.SnapcraftError) as raised:
         update_project_metadata(
@@ -724,7 +724,7 @@ def test_lifecycle_run_command_clean(
     snapcraft_yaml, project_vars, new_dir, mocker, mock_get_instance_name
 ):
     """Clean provider project when called without parts."""
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     clean_mock = mocker.patch(
         "snapcraft.providers.LXDProvider.clean_project_environments"
     )
@@ -752,7 +752,7 @@ def test_lifecycle_clean_destructive_mode(
     snapcraft_yaml, project_vars, new_dir, mocker
 ):
     """Clean local project if called in destructive mode."""
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     clean_mock = mocker.patch("snapcraft.parts.PartsLifecycle.clean")
 
     parts_lifecycle._run_command(
@@ -776,7 +776,7 @@ def test_lifecycle_clean_destructive_mode(
 
 def test_lifecycle_clean_part_names(snapcraft_yaml, project_vars, new_dir, mocker):
     """Clean project inside provider if called with part names."""
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
 
     parts_lifecycle._run_command(
@@ -814,7 +814,7 @@ def test_lifecycle_clean_part_names_destructive_mode(
     snapcraft_yaml, project_vars, new_dir, mocker
 ):
     """Clean local project if called in destructive mode."""
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     clean_mock = mocker.patch("snapcraft.parts.PartsLifecycle.clean")
 
     parts_lifecycle._run_command(
@@ -837,7 +837,7 @@ def test_lifecycle_clean_part_names_destructive_mode(
 
 
 def test_lifecycle_clean_managed(snapcraft_yaml, project_vars, new_dir, mocker):
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     run_in_provider_mock = mocker.patch("snapcraft.parts.lifecycle._run_in_provider")
     clean_mock = mocker.patch("snapcraft.parts.PartsLifecycle.clean")
     mocker.patch("snapcraft.utils.is_managed_mode", return_value=True)
@@ -871,7 +871,7 @@ def test_lifecycle_debug_shell(snapcraft_yaml, cmd, new_dir, mocker):
     """Adoptable fields shouldn't be empty after adoption."""
     mocker.patch("craft_parts.executor.Executor.execute", side_effect=Exception)
     mock_shell = mocker.patch("snapcraft.parts.lifecycle.launch_shell")
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
 
     with pytest.raises(errors.SnapcraftError):
         parts_lifecycle._run_command(
@@ -903,7 +903,7 @@ def test_lifecycle_post_lifecycle_debug_shell(snapcraft_yaml, new_dir, mocker):
     mocker.patch("snapcraft.pack.pack_snap", side_effect=Exception)
     mocker.patch("snapcraft.meta.snap_yaml.write")
     mock_shell = mocker.patch("snapcraft.parts.lifecycle.launch_shell")
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
 
     with pytest.raises(errors.SnapcraftError):
         parts_lifecycle._run_command(
@@ -948,7 +948,7 @@ def test_lifecycle_shell(snapcraft_yaml, cmd, expected_last_step, new_dir, mocke
 
     mocker.patch("craft_parts.executor.Executor.execute", new=_fake_execute)
     mock_shell = mocker.patch("subprocess.run")
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
 
     parts_lifecycle._run_command(
         cmd,
@@ -996,7 +996,7 @@ def test_lifecycle_shell_after(
 
     mocker.patch("craft_parts.executor.Executor.execute", new=_fake_execute)
     mock_shell = mocker.patch("subprocess.run")
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
 
     parts_lifecycle._run_command(
         cmd,
@@ -1029,7 +1029,7 @@ def test_lifecycle_adopt_project_vars(snapcraft_yaml, new_dir):
     yaml_data.pop("version")
     yaml_data.pop("grade")
     yaml_data["adopt-info"] = "part"
-    project = Project.unmarshal(yaml_data)
+    project = SnapcraftProject.unmarshal(yaml_data)
 
     update_project_metadata(
         project,
@@ -1045,7 +1045,7 @@ def test_lifecycle_adopt_project_vars(snapcraft_yaml, new_dir):
 
 def test_check_experimental_plugins_disabled(snapcraft_yaml, mocker):
     mocker.patch("craft_parts.plugins.plugins._PLUGINS", {"kernel": KernelPlugin})
-    project = Project.unmarshal(
+    project = SnapcraftProject.unmarshal(
         snapcraft_yaml(base="core22", parts={"foo": {"plugin": "kernel"}})
     )
     with pytest.raises(errors.SnapcraftError) as raised:
@@ -1057,7 +1057,7 @@ def test_check_experimental_plugins_disabled(snapcraft_yaml, mocker):
 
 def test_check_experimental_plugins_enabled(snapcraft_yaml, mocker):
     mocker.patch("craft_parts.plugins.plugins._PLUGINS", {"kernel": KernelPlugin})
-    project = Project.unmarshal(
+    project = SnapcraftProject.unmarshal(
         snapcraft_yaml(base="core22", parts={"foo": {"plugin": "kernel"}})
     )
     parts_lifecycle._check_experimental_plugins(project, True)
@@ -1065,7 +1065,7 @@ def test_check_experimental_plugins_enabled(snapcraft_yaml, mocker):
 
 def test_get_snap_project_no_base(snapcraft_yaml, new_dir):
     with pytest.raises(errors.ProjectValidationError) as raised:
-        Project.unmarshal(snapcraft_yaml(base=None))
+        SnapcraftProject.unmarshal(snapcraft_yaml(base=None))
 
     assert str(raised.value) == (
         "Bad snapcraft.yaml content:\n"
@@ -1317,7 +1317,7 @@ def test_lifecycle_run_in_provider_default(
         "test-arch-2",
     ]
 
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     parts_lifecycle._run_in_provider(
         project=project,
         command_name="test",
@@ -1429,7 +1429,7 @@ def test_lifecycle_run_in_provider_all_options(
     # set emitter mode
     emit.set_mode(emit_mode)
 
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     parts_lifecycle._run_in_provider(
         project=project,
         command_name="test",
@@ -1502,7 +1502,7 @@ def test_lifecycle_run_in_provider_try(
     mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
     mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
 
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     parts_lifecycle._run_in_provider(
         project=project,
         command_name="try",
@@ -1554,7 +1554,7 @@ def test_lifecycle_run_in_provider(
     mocker.patch("snapcraft.projects.Project.get_build_on")
     mocker.patch("snapcraft.projects.Project.get_build_for")
 
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     parts_lifecycle._run_in_provider(
         project=project,
         command_name="test",
@@ -1598,7 +1598,7 @@ def test_lifecycle_run_in_provider_devel_base(
     mocker.patch("snapcraft.projects.Project.get_build_on")
     mocker.patch("snapcraft.projects.Project.get_build_for")
 
-    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(base="core22"))
     parts_lifecycle._run_in_provider(
         project=project,
         command_name="test",
@@ -1777,7 +1777,7 @@ def test_patch_elf(snapcraft_yaml, mocker, new_dir):
             }
         },
     }
-    project = Project.unmarshal(snapcraft_yaml(**yaml_data))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(**yaml_data))
 
     parts_lifecycle._run_command(
         "pack",
@@ -1820,7 +1820,7 @@ def test_lifecycle_write_metadata(
         "base": "core22",
         "architectures": [{"build-on": "amd64", "build-for": build_for}],
     }
-    project = Project.unmarshal(snapcraft_yaml(**yaml_data))
+    project = SnapcraftProject.unmarshal(snapcraft_yaml(**yaml_data))
     mocker.patch("snapcraft.parts.PartsLifecycle.run")
     mocker.patch("snapcraft.pack.pack_snap")
     mock_write_metadata = mocker.patch("snapcraft.meta.snap_yaml.write")

@@ -23,7 +23,7 @@ import pytest
 
 from snapcraft import cli
 from snapcraft.parts.yaml_utils import _SNAP_PROJECT_FILES, apply_yaml, process_yaml
-from snapcraft.projects import Project
+from snapcraft.projects import SnapcraftProject
 
 
 @pytest.fixture(autouse=True)
@@ -40,8 +40,8 @@ def test_init_default(emitter, new_dir):
     assert snapcraft_yaml.exists()
     # unmarshal the snapcraft.yaml to verify its contents
     data = apply_yaml(process_yaml(snapcraft_yaml), "amd64", "amd64")
-    project = Project.unmarshal(data)
-    assert project == Project.unmarshal(
+    project = SnapcraftProject.unmarshal(data)
+    assert project == SnapcraftProject.unmarshal(
         {
             "name": "my-snap-name",
             "base": "core22",

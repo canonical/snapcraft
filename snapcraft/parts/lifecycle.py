@@ -34,7 +34,7 @@ from snapcraft.elf import Patcher, SonameCache, elf_utils
 from snapcraft.elf import errors as elf_errors
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import manifest, snap_yaml
-from snapcraft.projects import Architecture, ArchitectureProject, Project
+from snapcraft.projects import Architecture, ArchitectureProject, SnapcraftProject
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_host_architecture,
@@ -99,7 +99,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
             parallel_build_count=build_count,
             target_arch=build_for,
         )
-        project = Project.unmarshal(yaml_data_for_arch)
+        project = SnapcraftProject.unmarshal(yaml_data_for_arch)
 
         _run_command(
             command_name,
@@ -115,7 +115,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
 def _run_command(  # noqa PLR0913 # pylint: disable=too-many-branches, too-many-statements
     command_name: str,
     *,
-    project: Project,
+    project: SnapcraftProject,
     parse_info: Dict[str, List[str]],
     assets_dir: Path,
     start_time: datetime,
@@ -227,7 +227,7 @@ def _run_lifecycle_and_pack(  # noqa PLR0913
     *,
     command_name: str,
     step_name: str,
-    project: Project,
+    project: SnapcraftProject,
     project_dir: Path,
     assets_dir: Path,
     start_time: datetime,
@@ -278,7 +278,7 @@ def _run_lifecycle_and_pack(  # noqa PLR0913
 
 def _generate_metadata(
     *,
-    project: Project,
+    project: SnapcraftProject,
     lifecycle: PartsLifecycle,
     project_dir: Path,
     assets_dir: Path,
@@ -319,7 +319,7 @@ def _generate_metadata(
 
 
 def _generate_manifest(
-    project: Project,
+    project: SnapcraftProject,
     *,
     lifecycle: PartsLifecycle,
     start_time: datetime,
@@ -353,7 +353,7 @@ def _generate_manifest(
     shutil.copy(snap_project.project_file, lifecycle.prime_dir / "snap")
 
 
-def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None:
+def _clean_provider(project: SnapcraftProject, parsed_args: "argparse.Namespace") -> None:
     """Clean the provider environment.
 
     :param project: The project to clean.
@@ -374,7 +374,7 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
 
 # pylint: disable-next=too-many-branches, too-many-statements
 def _run_in_provider(  # noqa PLR0915
-    project: Project, command_name: str, parsed_args: "argparse.Namespace"
+    project: SnapcraftProject, command_name: str, parsed_args: "argparse.Namespace"
 ) -> None:
     """Pack image in provider instance."""
     emit.debug("Checking build provider availability")
@@ -499,6 +499,7 @@ def _set_global_environment(info: ProjectInfo) -> None:
             "SNAPCRAFT_TARGET_ARCH": info.target_arch,
             "SNAPCRAFT_PARALLEL_BUILD_COUNT": str(info.parallel_build_count),
             "SNAPCRAFT_PROJECT_VERSION": info.get_project_var("version", raw_read=True),
+            # TODO: Uncomment this
             "SNAPCRAFT_PROJECT_GRADE": info.get_project_var("grade", raw_read=True),
             "SNAPCRAFT_PROJECT_DIR": str(info.project_dir),
             "SNAPCRAFT_PROJECT_NAME": str(info.project_name),
@@ -509,7 +510,7 @@ def _set_global_environment(info: ProjectInfo) -> None:
 
 
 def _check_experimental_plugins(
-    project: Project, enable_experimental_plugins: bool
+    project: SnapcraftProject, enable_experimental_plugins: bool
 ) -> None:
     """Ensure the experimental plugin flag is enabled to use unstable plugins."""
     for name, part in project.parts.items():
