@@ -335,6 +335,7 @@ class TestPluginInitrd:
                 "initrd-overlay": "my-overlay",
                 "initrd-compression": "gz",
                 "initrd-build-efi-image": "true",
+                "initrd-kernel-image-target": "Image"
             },
         )
 
@@ -981,7 +982,7 @@ _create_efi_image_cmd = [
             "--initrd",
             "${CRAFT_PART_INSTALL}/initrd.img",
             "--kernel",
-            "${CRAFT_PART_INSTALL}/${KERNEL_IMAGE_TARGET}",
+            "${CRAFT_STAGE}/Image",
             "--output",
             "${CRAFT_PART_INSTALL}/kernel.efi",
         ],
