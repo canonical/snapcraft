@@ -508,15 +508,21 @@ _link_files_fnc = [
     )
 ]
 
+_parts_source_dir = "${SNAPCRAFT_PART_SRC}"
+
 _download_initrd_fnc = [
     textwrap.dedent(
         """
         # Helper to download code initrd deb package
-        # 1: arch, 2: output dir
+        # 1: arch, 2: output dir 3: source dir
         download_core_initrd() {
-        	apt-get download ubuntu-core-initramfs:${1}
-        	# unpack dep to the target dir
-        	dpkg -x ubuntu-core-initramfs_*.deb ${2}
+            # skip download if file already exist
+            if ! ls ${3}/ubuntu-core-initramfs_*.deb 1> /dev/null 2>&1; then
+                apt-get download ubuntu-core-initramfs:${1}
+                mv ubuntu-core-initramfs_*.deb ${3}
+            fi
+            # unpack dep to the target dir
+            dpkg -x ${3}/ubuntu-core-initramfs_*.deb ${2}
         }
         """
     )
@@ -528,10 +534,11 @@ _get_initrd_cmd = [
         echo "Getting ubuntu-core-initrd...."
         # only download u-c-initrd deb if needed
         if [ ! -e ${{UC_INITRD_DEB}} ]; then
-        	download_core_initrd {arch} ${{UC_INITRD_DEB}}
+            download_core_initrd {arch} ${{UC_INITRD_DEB}} {parts_source_dir}
         fi
         """.format(
-            arch=_DEB_ARCH_TRANSLATIONS[platform.machine()]
+            arch=_DEB_ARCH_TRANSLATIONS[platform.machine()],
+            parts_source_dir=_parts_source_dir,
         )
     )
 ]
@@ -543,10 +550,10 @@ _get_initrd_armhf_cmd = [
         echo "Getting ubuntu-core-initrd...."
         # only download u-c-initrd deb if needed
         if [ ! -e ${{UC_INITRD_DEB}} ]; then
-        	download_core_initrd {arch} ${{UC_INITRD_DEB}}
+            download_core_initrd {arch} ${{UC_INITRD_DEB}} {parts_source_dir}
         fi
         """.format(
-            arch="armhf"
+            arch="armhf", parts_source_dir=_parts_source_dir
         )
     )
 ]
@@ -555,11 +562,15 @@ _download_snapd_fnc = [
     textwrap.dedent(
         """
         # Helper to download snap-bootstrap from snapd deb package
-        # 1: arch, 2: output dir
+        # 1: arch, 2: output dir 3: source dir
         download_snap_bootstrap() {
-        	apt-get download snapd:${1}
-        	# unpack dep to the target dir
-        	dpkg -x snapd_*.deb ${2}
+            # skip download if file already exist
+            if ! ls ${3}/snapd_*.deb 1> /dev/null 2>&1; then
+                apt-get download snapd:${1}
+                mv snapd_*.deb ${3}
+            fi
+            # unpack dep to the target dir
+            dpkg -x ${3}/snapd_*.deb ${2}
         }
         """
     )
@@ -572,10 +583,11 @@ _get_snapd_cmd = [
         # only download again if files does not exist, otherwise
         # assume we are re-running build
         if [ ! -e ${{UC_INITRD_DEB}}/usr/lib/snapd ]; then
-        	download_snap_bootstrap {arch} ${{UC_INITRD_DEB}}
+            download_snap_bootstrap {arch} ${{UC_INITRD_DEB}} {parts_source_dir}
         fi
         """.format(
-            arch=_DEB_ARCH_TRANSLATIONS[platform.machine()]
+            arch=_DEB_ARCH_TRANSLATIONS[platform.machine()],
+            parts_source_dir=_parts_source_dir,
         )
     )
 ]
@@ -587,10 +599,10 @@ _get_snapd_armhf_cmd = [
         # only download again if files does not exist, otherwise
         # assume we are re-running build
         if [ ! -e ${{UC_INITRD_DEB}}/usr/lib/snapd ]; then
-        	download_snap_bootstrap {arch} ${{UC_INITRD_DEB}}
+            download_snap_bootstrap {arch} ${{UC_INITRD_DEB}} {parts_source_dir}
         fi
         """.format(
-            arch="armhf"
+            arch="armhf", parts_source_dir=_parts_source_dir
         )
     )
 ]
