@@ -53,6 +53,8 @@ class SnapcraftLifecycleService(LifecycleService):
             package_repositories=project.package_repositories or [],
             project_name=project.name,
             project_vars=project_vars,
+            project_base=project.base,
+            confinement=project.confinement,
         )
 
         super().setup()

@@ -32,7 +32,7 @@ from snapcraft import parts, utils, errors
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
 from snapcraft.const import ESM_BASES, LEGACY_BASES, CURRENT_BASES
-from snapcraft.parts import lifecycle
+# from snapcraft.parts import lifecycle
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_effective_base,
