@@ -103,25 +103,29 @@ def _download_core_initrd_fnc_cmd() -> List[str]:
     cmd = textwrap.dedent(
         """
         # Helper to download code initrd deb package
-        # 1: arch, 2: output dir
+        # 1: arch, 2: output dir 3: source dir
         download_core_initrd() {
-        	apt-get download ubuntu-core-initramfs:${1}
-        	# unpack dep to the target dir
-        	dpkg -x ubuntu-core-initramfs_*.deb ${2}
+            # skip download if file already exist
+            if ! ls ${3}/ubuntu-core-initramfs_*.deb 1> /dev/null 2>&1; then
+                apt-get download ubuntu-core-initramfs:${1}
+                mv ubuntu-core-initramfs_*.deb ${3}
+            fi
+            # unpack dep to the target dir
+            dpkg -x ${3}/ubuntu-core-initramfs_*.deb ${2}
         }
         """
     )
     return [cmd]
 
 
-def _download_generic_initrd_cmd(target_arch: str) -> List[str]:
+def _download_generic_initrd_cmd(target_arch: str, source_dir: str) -> List[str]:
     """Download Ubuntu Core initrd deb."""
     cmd = textwrap.dedent(
         f"""
         echo "Getting ubuntu-core-initrd...."
         # only download u-c-initrd deb if needed
         if [ ! -e ${{UC_INITRD_DEB}} ]; then
-            download_core_initrd {target_arch} ${{UC_INITRD_DEB}}
+            download_core_initrd {target_arch} ${{UC_INITRD_DEB}} {source_dir}
         fi
         """
     )
@@ -133,18 +137,22 @@ def _download_snap_bootstrap_fnc_cmd() -> List[str]:
     cmd = textwrap.dedent(
         """
         # Helper to download snap-bootstrap from snapd deb package
-        # 1: arch, 2: output dir
+        # 1: arch, 2: output dir 3: source dir
         download_snap_bootstrap() {
-        	apt-get download snapd:${1}
-        	# unpack dep to the target dir
-        	dpkg -x snapd_*.deb ${2}
+            # skip download if file already exist
+            if ! ls ${3}/snapd_*.deb 1> /dev/null 2>&1; then
+                apt-get download snapd:${1}
+                mv snapd_*.deb ${3}
+            fi
+            # unpack dep to the target dir
+            dpkg -x ${3}/snapd_*.deb ${2}
         }
         """
     )
     return [cmd]
 
 
-def _download_snap_bootstrap_cmd(target_arch: str) -> List[str]:
+def _download_snap_bootstrap_cmd(target_arch: str, source_dir: str) -> List[str]:
     """Download snap-bootstrap deb."""
     cmd = textwrap.dedent(
         f"""
@@ -152,7 +160,7 @@ def _download_snap_bootstrap_cmd(target_arch: str) -> List[str]:
         # only download again if files does not exist, otherwise
         # assume we are re-running build
         if [ ! -e ${{UC_INITRD_DEB}}/usr/lib/snapd ]; then
-            download_snap_bootstrap {target_arch} ${{UC_INITRD_DEB}}
+            download_snap_bootstrap {target_arch} ${{UC_INITRD_DEB}} {source_dir}
         fi
         """
     )
@@ -570,6 +578,7 @@ def get_build_commands(
     initrd_default_compression: str,
     initrd_include_extra_modules_conf: bool,
     initrd_tool_pass_root: bool,
+    source_dir: str,
     install_dir: str,
     stage_dir: str,
 ) -> List[str]:
@@ -584,11 +593,11 @@ def get_build_commands(
         "",
         *_download_core_initrd_fnc_cmd(),
         "",
-        *_download_generic_initrd_cmd(target_arch=target_arch),
+        *_download_generic_initrd_cmd(target_arch=target_arch, source_dir=source_dir),
         "",
         *_download_snap_bootstrap_fnc_cmd(),
         "",
-        *_download_snap_bootstrap_cmd(target_arch=target_arch),
+        *_download_snap_bootstrap_cmd(target_arch=target_arch, source_dir=source_dir),
         "",
         *_get_initrd_install_command(
             initrd_compression=initrd_compression,
