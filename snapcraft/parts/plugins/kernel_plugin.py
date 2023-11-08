@@ -100,9 +100,8 @@ logger = logging.getLogger(__name__)
 
 default_kernel_image_target = {
     "amd64": "bzImage",
-    "i386": "bzImage",
     "armhf": "zImage",
-    "arm64": "Image.gz",
+    "arm64": "Image",
     "powerpc": "uImage",
     "ppc64el": "vmlinux.strip",
     "s390x": "bzImage",
