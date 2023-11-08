@@ -116,8 +116,7 @@ from overrides import overrides
 from typing_extensions import Self
 
 from snapcraft.parts.plugins import kernel_plugin
-from snapcraft_legacy.plugins.v2 import _initrd_build
-from snapcraft_legacy.plugins.v2 import _kernel_build
+from snapcraft_legacy.plugins.v2 import _initrd_build, _kernel_build
 
 logger = logging.getLogger(__name__)
 
@@ -174,11 +173,15 @@ class InitrdPlugin(plugins.Plugin):
         target_arch = self._part_info.target_arch
         self._deb_arch = _kernel_build.get_deb_architecture(target_arch)
         if not self.options.initrd_kernel_image_target:
-            self.kernel_image_target = kernel_plugin.default_kernel_image_target[self._deb_arch]
+            self.kernel_image_target = kernel_plugin.default_kernel_image_target[
+                self._deb_arch
+            ]
         elif isinstance(self.options.initrd_kernel_image_target, str):
             self.kernel_image_target = self.options.initrd_kernel_image_target
         elif self._deb_arch in self.options.initrd_kernel_image_target:
-            self.kernel_image_target = self.options.initrd_kernel_image_target[self._deb_arch]
+            self.kernel_image_target = self.options.initrd_kernel_image_target[
+                self._deb_arch
+            ]
 
     @overrides
     def get_build_snaps(self) -> Set[str]:
@@ -241,6 +244,7 @@ class InitrdPlugin(plugins.Plugin):
             initrd_default_compression="zstd -1 -T0",
             initrd_include_extra_modules_conf=True,
             initrd_tool_pass_root=False,
+            source_dir="${CRAFT_PART_SRC}",
             install_dir="${CRAFT_PART_INSTALL}",
             stage_dir="${CRAFT_STAGE}",
         )
