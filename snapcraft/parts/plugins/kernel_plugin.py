@@ -98,7 +98,7 @@ from snapcraft_legacy.plugins.v2 import _kernel_build
 
 logger = logging.getLogger(__name__)
 
-_default_kernel_image_target = {
+default_kernel_image_target = {
     "amd64": "bzImage",
     "i386": "bzImage",
     "armhf": "zImage",
@@ -203,7 +203,7 @@ class KernelPlugin(plugins.Plugin):
 
     def _set_kernel_targets(self) -> None:
         if not self.options.kernel_image_target:
-            self.kernel_image_target = _default_kernel_image_target[self._deb_arch]
+            self.kernel_image_target = default_kernel_image_target[self._deb_arch]
         elif isinstance(self.options.kernel_image_target, str):
             self.kernel_image_target = self.options.kernel_image_target
         elif self._deb_arch in self.options.kernel_image_target:
