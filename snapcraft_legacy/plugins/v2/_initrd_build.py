@@ -545,6 +545,7 @@ def _make_initrd_cmd(
                     ],
                 ),
                 f"ln $(ls {install_dir}/kernel.efi*) {install_dir}/kernel.efi",
+                f"rm {install_dir}/initrd.img*",
             ],
         )
 
