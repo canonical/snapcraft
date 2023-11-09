@@ -138,22 +138,22 @@ class InitrdPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     @root_validator
     @classmethod
     def validate_pluging_options(cls, values):
-        """If initrd-compression-options is defined, so has to be initrd-compression."""
+        """Validate use of initrd-compression-options initrd_kernel_image_target."""
+        # If initrd-compression-options is defined, so has to be initrd-compression.
         if values.get("initrd_compression_options") and not values.get(
             "initrd_compression"
         ):
             raise ValueError(
                 "initrd-compression-options requires also initrd-compression to be defined."
             )
-        """If initrd-kernel-image-target is defined, it has to be string or dictionary."""
+
+        # If initrd-kernel-image-target is defined, it has to be string or dictionary
         if values.get("initrd_kernel_image_target"):
             if not isinstance(values.get("initrd_kernel_image_target"), str):
                 if not isinstance(values.get("initrd_kernel_image_target"), dict):
                     raise ValueError(
                         f'initrd_kernel-image-target is in invalid format(type{type(values.get("initrd_kernel_image_target"))}). It should be either string or dictionary.'
                     )
-
-        return values
 
         return values
 

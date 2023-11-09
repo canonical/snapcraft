@@ -57,40 +57,40 @@ def _link_files_fnc_cmd() -> List[str]:
         # link files, accept wild cards
         # 1: reference dir, 2: file(s) including wild cards, 3: dst dir
         link_files() {
-        	if [ "${2}" = "*" ]; then
-        		for f in $(ls ${1})
-        		do
-        			link_files "${1}" "${f}" "${3}"
-        		done
-        		return 0
-        	fi
-        	if [ -d "${1}/${2}" ]; then
-        		for f in $(ls ${1}/${2})
-        		do
-        			link_files "${1}" "${2}/${f}" "${3}"
-        		done
-        		return 0
-        	fi
+            if [ "${2}" = "*" ]; then
+                for f in $(ls ${1})
+                do
+                    link_files "${1}" "${f}" "${3}"
+                done
+                return 0
+            fi
+            if [ -d "${1}/${2}" ]; then
+                for f in $(ls ${1}/${2})
+                do
+                    link_files "${1}" "${2}/${f}" "${3}"
+                done
+                return 0
+            fi
 
-        	local found=""
-        	for f in $(ls ${1}/${2})
-        	do
-        		if [[ -L "${f}" ]]; then
-        			local rel_path=$( realpath --no-symlinks --relative-to=${1} ${f} )
-        		else
-        			local rel_path=$( realpath -se --relative-to=${1} ${f} )
-        		fi
-        		local dir_path=$(dirname ${rel_path})
-        		mkdir -p ${3}/${dir_path}
-        		echo "installing ${f} to ${3}/${dir_path}"
-        		ln -f ${f} ${3}/${dir_path}
-        		found="yes"
-        	done
-        	if [ "yes" = "${found}" ]; then
-        		return 0
-        	else
-        		return 1
-        	fi
+            local found=""
+            for f in $(ls ${1}/${2})
+            do
+                if [[ -L "${f}" ]]; then
+                    local rel_path=$( realpath --no-symlinks --relative-to=${1} ${f} )
+                else
+                    local rel_path=$( realpath -se --relative-to=${1} ${f} )
+                fi
+                local dir_path=$(dirname ${rel_path})
+                mkdir -p ${3}/${dir_path}
+                echo "installing ${f} to ${3}/${dir_path}"
+                ln -f ${f} ${3}/${dir_path}
+                found="yes"
+            done
+            if [ "yes" = "${found}" ]; then
+                return 0
+            else
+                return 1
+            fi
         }
         """
     )
@@ -662,7 +662,7 @@ def _get_initrd_install_command(
     install_dir: str,
     stage_dir: str,
 ) -> List[str]:
- 
+
     return [
         'echo "building initramfs..."',
         "",
