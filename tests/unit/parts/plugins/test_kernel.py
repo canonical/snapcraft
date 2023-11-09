@@ -144,15 +144,10 @@ class TestPluginKernel:
         )
         opt = plugin.options
 
-        assert opt.kernel_kdefconfig == ["defconfig"]
-        assert opt.kernel_kconfigfile is None
-        assert opt.kernel_kconfigflavour is None
+        assert opt.kernel_kdefconfig is None
+        assert opt.kernel_kconfigflavour == "generic"  # default value
         assert opt.kernel_kconfigs is None
         assert opt.kernel_image_target == "bzImage"
-        assert opt.kernel_with_firmware
-        assert opt.kernel_device_trees is None
-        assert opt.kernel_compiler is None
-        assert opt.kernel_compiler_parameters is None
         assert not opt.kernel_enable_zfs_support
         assert not opt.kernel_enable_perf
 
@@ -162,20 +157,14 @@ class TestPluginKernel:
             properties={
                 "kernel-kdefconfig": ["snappy_defconfig"],
                 "kernel-image-target": "Image",
-                "kernel-with-firmware": True,
             },
         )
         opt = plugin.options
 
         assert opt.kernel_kdefconfig == ["snappy_defconfig"]
-        assert opt.kernel_kconfigfile is None
-        assert opt.kernel_kconfigflavour is None
+        assert opt.kernel_kconfigflavour == "generic"  # default value
         assert opt.kernel_kconfigs is None
         assert opt.kernel_image_target == "Image"
-        assert opt.kernel_with_firmware
-        assert opt.kernel_device_trees is None
-        assert opt.kernel_compiler is None
-        assert opt.kernel_compiler_parameters is None
         assert not opt.kernel_enable_zfs_support
         assert not opt.kernel_enable_perf
 
@@ -185,43 +174,14 @@ class TestPluginKernel:
             properties={
                 "kernel-kdefconfig": ["snappy_defconfig"],
                 "kernel-image-target": {"arm64": "Image", "armhf": "Image.gz"},
-                "kernel-with-firmware": True,
             },
         )
         opt = plugin.options
 
         assert opt.kernel_kdefconfig == ["snappy_defconfig"]
-        assert opt.kernel_kconfigfile is None
-        assert opt.kernel_kconfigflavour is None
+        assert opt.kernel_kconfigflavour == "generic"  # default value
         assert opt.kernel_kconfigs is None
         assert opt.kernel_image_target == {"arm64": "Image", "armhf": "Image.gz"}
-        assert opt.kernel_with_firmware
-        assert opt.kernel_device_trees is None
-        assert opt.kernel_compiler is None
-        assert opt.kernel_compiler_parameters is None
-        assert not opt.kernel_enable_zfs_support
-        assert not opt.kernel_enable_perf
-
-    def test_check_configuration_konfig_file(self, setup_method_fixture, new_dir):
-        plugin = setup_method_fixture(
-            new_dir,
-            properties={
-                "kernel-kconfigfile": "arch/arm64/configs/snappy_defconfig",
-                "kernel-with-firmware": True,
-                "kernel-kconfigs": ["CONFIG_DEBUG_INFO=n", "CONFIG_DM_CRYPT=y"],
-            },
-        )
-        opt = plugin.options
-
-        assert opt.kernel_kdefconfig == ["defconfig"]
-        assert opt.kernel_kconfigfile == "arch/arm64/configs/snappy_defconfig"
-        assert opt.kernel_kconfigflavour is None
-        assert opt.kernel_kconfigs == ["CONFIG_DEBUG_INFO=n", "CONFIG_DM_CRYPT=y"]
-        assert opt.kernel_image_target is None
-        assert opt.kernel_with_firmware
-        assert opt.kernel_device_trees is None
-        assert opt.kernel_compiler is None
-        assert opt.kernel_compiler_parameters is None
         assert not opt.kernel_enable_zfs_support
         assert not opt.kernel_enable_perf
 
@@ -285,7 +245,37 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _determine_kernel_src)
         assert not _is_sub_array(build_commands, _clone_zfs_cmd)
         assert _is_sub_array(build_commands, _clean_old_build_cmd)
-        assert _is_sub_array(build_commands, _prepare_config_cmd)
+        assert _is_sub_array(build_commands, _prepare_config_flavour_generic_cmd)
+        assert _is_sub_array(build_commands, _remake_old_config_cmd)
+        assert _check_config in build_commands
+        if platform.machine() == "x86_64":
+            assert _is_sub_array(build_commands, _build_kernel_x86_cmd)
+            assert _is_sub_array(build_commands, _install_kernel_x86_cmd)
+        else:
+            assert _is_sub_array(build_commands, _build_kernel_cmd)
+            assert _is_sub_array(build_commands, _install_kernel_dtbs_cmd)
+
+        assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
+        assert _is_sub_array(build_commands, _install_config_cmd)
+        assert not _is_sub_array(build_commands, _build_zfs_cmd)
+        assert not _is_sub_array(build_commands, _build_perf_cmd)
+        assert _is_sub_array(build_commands, _finalize_install_cmd)
+
+    def test_check_get_build_command_kdeconfig(self, setup_method_fixture, new_dir):
+        plugin = setup_method_fixture(
+            new_dir,
+            properties={
+                "kernel-kdefconfig": ["snappy_defconfig"],
+            },
+        )
+
+        # we need to get build environment
+        plugin.get_build_environment()
+        build_commands = plugin.get_build_commands()
+        assert _is_sub_array(build_commands, _determine_kernel_src)
+        assert not _is_sub_array(build_commands, _clone_zfs_cmd)
+        assert _is_sub_array(build_commands, _clean_old_build_cmd)
+        assert _is_sub_array(build_commands, _prepare_config_flavour_generic_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_cmd)
         assert _check_config in build_commands
         if platform.machine() == "x86_64":
@@ -301,82 +291,6 @@ class TestPluginKernel:
         assert not _is_sub_array(build_commands, _build_perf_cmd)
         assert _is_sub_array(build_commands, _finalize_install_cmd)
 
-    def test_check_get_build_command_defconfig_configs_no_firmware_lz4(
-        self, setup_method_fixture, new_dir
-    ):
-        plugin = setup_method_fixture(
-            new_dir,
-            properties={
-                "kernel-kconfigfile": "arch/arm64/configs/snappy_defconfig",
-                "kernel-compiler": "clang",
-                "kernel-compiler-parameters": ["-arch", "arm64"],
-                "kernel-image-target": "Image",
-                "kernel-with-firmware": False,
-                "kernel-kconfigs": ["CONFIG_DEBUG_INFO=n", "CONFIG_DM_CRYPT=y"],
-            },
-        )
-
-        # we need to get build environment
-        plugin.get_build_environment()
-        build_commands = plugin.get_build_commands()
-        assert _is_sub_array(build_commands, _determine_kernel_src)
-        assert not _is_sub_array(build_commands, _clone_zfs_cmd)
-        assert _is_sub_array(build_commands, _clean_old_build_cmd)
-        assert _is_sub_array(build_commands, _prepare_config_defconfig_cmd)
-        assert _is_sub_array(build_commands, _prepare_config_extra_config_cmd)
-        assert _is_sub_array(build_commands, _remake_old_config_clang_cmd)
-        assert _check_config in build_commands
-        if platform.machine() == "x86_64":
-            assert _is_sub_array(build_commands, _build_kernel_clang_image_x86_cmd)
-            assert _is_sub_array(
-                build_commands, _install_kernel_no_firmware_clang_x86_cmd
-            )
-        else:
-            assert _is_sub_array(build_commands, _build_kernel_clang_image_cmd)
-            assert _is_sub_array(build_commands, _install_kernel_no_firmware_clang_cmd)
-
-        assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
-        assert _is_sub_array(build_commands, _install_config_cmd)
-        assert not _is_sub_array(build_commands, _build_zfs_cmd)
-        assert not _is_sub_array(build_commands, _build_perf_cmd)
-        assert _is_sub_array(build_commands, _finalize_install_cmd)
-
-    def test_check_get_build_command_unknown_compiler(
-        self, setup_method_fixture, new_dir, caplog
-    ):
-        plugin = setup_method_fixture(
-            new_dir,
-            properties={
-                "kernel-compiler": "my-gcc",
-            },
-        )
-
-        # we need to get build environment
-        plugin.get_build_environment()
-        with caplog.at_level(logging.INFO):
-            build_commands = plugin.get_build_commands()
-
-        assert "Only other 'supported' compiler is clang" in caplog.text
-        assert "hopefully you know what you are doing" in caplog.text
-        assert _is_sub_array(build_commands, _determine_kernel_src)
-        assert not _is_sub_array(build_commands, _clone_zfs_cmd)
-        assert _is_sub_array(build_commands, _clean_old_build_cmd)
-        assert _is_sub_array(build_commands, _prepare_config_custom_cc_cmd)
-        assert _is_sub_array(build_commands, _remake_old_config_custom_cc_cmd)
-        assert _check_config in build_commands
-        if platform.machine() == "x86_64":
-            assert _is_sub_array(build_commands, _build_kernel_x86_custom_cc_cmd)
-            assert _is_sub_array(build_commands, _install_kernel_x86_custom_cc_cmd)
-        else:
-            assert _is_sub_array(build_commands, _build_kernel_custom_cc_cmd)
-            assert _is_sub_array(build_commands, _install_kernel_custom_cc_cmd)
-
-        assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
-        assert _is_sub_array(build_commands, _install_config_cmd)
-        assert not _is_sub_array(build_commands, _build_zfs_cmd)
-        assert not _is_sub_array(build_commands, _build_perf_cmd)
-        assert _is_sub_array(build_commands, _finalize_install_cmd)
-
     def test_check_get_build_command_config_flavour_configs(
         self, setup_method_fixture, new_dir
     ):
@@ -385,8 +299,6 @@ class TestPluginKernel:
             properties={
                 "kernel-kconfigflavour": "raspi",
                 "kernel-kconfigs": ["CONFIG_DEBUG_INFO=n", "CONFIG_DM_CRYPT=y"],
-                "kernel-device-trees": ["pi3", "pi3b", "pi4", "pi/cm3", "pi/cm4"],
-                "kernel-with-firmware": False,
                 "kernel-enable-zfs-support": True,
                 "kernel-enable-perf": True,
             },
@@ -398,18 +310,18 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _determine_kernel_src)
         assert _is_sub_array(build_commands, _clone_zfs_cmd)
         assert _is_sub_array(build_commands, _clean_old_build_cmd)
-        assert _is_sub_array(build_commands, _prepare_config_flavour_cmd)
+        assert _is_sub_array(build_commands, _prepare_config_flavour_raspi_cmd)
         assert _is_sub_array(build_commands, _prepare_config_extra_config_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_cmd)
         assert _check_config in build_commands
         if platform.machine() == "x86_64":
-            assert _is_sub_array(build_commands, _build_kernel_dtbs_x86_cmd)
+            assert _is_sub_array(build_commands, _build_kernel_x86_cmd)
+            assert _is_sub_array(build_commands, _install_kernel_x86_cmd)
         else:
-            assert _is_sub_array(build_commands, _build_kernel_dtbs_cmd)
+            assert _is_sub_array(build_commands, _build_kernel_cmd)
+            assert _is_sub_array(build_commands, _install_kernel_dtbs_cmd)
 
-        assert _is_sub_array(build_commands, _install_kernel_no_dtbs_no_firmware_cmd)
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
-        assert _is_sub_array(build_commands, _install_dtbs_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert _is_sub_array(build_commands, _build_zfs_cmd)
         assert _is_sub_array(build_commands, _build_perf_cmd)
@@ -434,14 +346,13 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _determine_kernel_src)
         assert _is_sub_array(build_commands, _clone_zfs_cmd)
         assert _is_sub_array(build_commands, _clean_old_build_cmd)
-        assert _is_sub_array(build_commands, _prepare_config_flavour_cmd)
+        assert _is_sub_array(build_commands, _prepare_config_flavour_raspi_cmd)
         assert _is_sub_array(build_commands, _prepare_config_extra_config_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_armhf_cmd)
         assert _check_config in build_commands
         assert _is_sub_array(build_commands, _build_kernel_armhf_cmd)
         assert _is_sub_array(build_commands, _install_kernel_armhf_cmd)
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
-        assert not _is_sub_array(build_commands, _install_dtbs_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert _is_sub_array(build_commands, _build_zfs_cmd)
         assert _is_sub_array(build_commands, _build_perf_armhf_cmd)
@@ -479,7 +390,7 @@ class TestPluginKernel:
             )
             config_file.flush()
             with caplog.at_level(logging.WARNING):
-                check_new_config(config_path=config_file.name, initrd_modules=[])
+                check_new_config(config_path=config_file.name)
             assert caplog.text == ""
 
     def test_check_new_config_missing(self, setup_method_fixture, new_dir, caplog):
@@ -498,7 +409,7 @@ class TestPluginKernel:
             )
             config_file.flush()
             with caplog.at_level(logging.WARNING):
-                check_new_config(config_path=config_file.name, initrd_modules=[])
+                check_new_config(config_path=config_file.name)
             logs = list(
                 filter(
                     None,
@@ -518,7 +429,7 @@ class TestPluginKernel:
             )
             assert "**** WARNING **** WARNING **** WARNING **** WARNING ****" in logs[1]
             assert "adding\nthe corresponding module to initrd:" in logs[1]
-            assert "CONFIG_SQUASHFS" in logs[1]
+            assert "missing options:\nCONFIG_SQUASHFS\n" in logs[1]
 
     def test_check_new_config_squash_module_missing(
         self, setup_method_fixture, new_dir, caplog
@@ -538,7 +449,7 @@ class TestPluginKernel:
             )
             config_file.flush()
             with caplog.at_level(logging.WARNING):
-                check_new_config(config_path=config_file.name, initrd_modules=[])
+                check_new_config(config_path=config_file.name)
             # there should be 1 warning log for missing module in initrd
             logs = list(
                 filter(
@@ -552,31 +463,6 @@ class TestPluginKernel:
             assert "**** WARNING **** WARNING **** WARNING **** WARNING ****" in logs[0]
             assert "adding\nthe corresponding module to initrd:" in logs[0]
             assert "CONFIG_SQUASHFS" in logs[0]
-
-    def test_check_new_config_squash_module(
-        self, setup_method_fixture, new_dir, caplog
-    ):
-        # create test config
-        with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8") as config_file:
-            config_file.write(
-                "".join(
-                    [
-                        x + "\n"
-                        for x in _BUUILT_IN_BASE
-                        + _SECCOMP_BUILD_IN
-                        + _SQUASHFS_AS_MODULE
-                        + _SQUASHFS_LZO_BUILT_IN
-                    ]
-                )
-            )
-            config_file.flush()
-            with caplog.at_level(logging.WARNING):
-                check_new_config(
-                    config_path=config_file.name, initrd_modules=["squashfs"]
-                )
-
-            # there should be no warnings
-            assert caplog.text == ""
 
     def test_external_check_new_config(self, setup_method_fixture):
         # create test config
@@ -601,7 +487,6 @@ class TestPluginKernel:
                     plugin_path,
                     "check_new_config",
                     config_file.name,
-                    "squashfs",
                 ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
@@ -609,90 +494,16 @@ class TestPluginKernel:
             )
 
             out = proc.stdout.decode()
-            assert out == "Checking created config...\n"
+            assert "Checking created config...\n" in out
 
     def test_check_new_config_squash_missing_file(self, setup_method_fixture, new_dir):
         # run with invalid file
         e = ""
         try:
-            check_new_config(config_path="wrong/file", initrd_modules=["suashfs"])
+            check_new_config(config_path="wrong/file")
         except FileNotFoundError as err:
             e = err.strerror
         assert e == "No such file or directory"
-
-    def test_use_llvm(self, setup_method_fixture, new_dir):
-        plugin = setup_method_fixture(
-            new_dir,
-            properties={
-                "kernel-use-llvm": True,
-            },
-        )
-        assert plugin._llvm_version == "1"
-        assert plugin.get_build_packages() == {
-            "bc",
-            "binutils",
-            "debhelper",
-            "fakeroot",
-            "gcc",
-            "cmake",
-            "cryptsetup",
-            "kmod",
-            "kpartx",
-            "lld",
-            "llvm",
-            "systemd",
-        }
-        plugin.get_build_environment()
-        cmd = plugin.get_build_commands()
-        targets = f"{plugin.kernel_image_target} modules"
-        if plugin._kernel_arch in ("arm", "arm64", "riscv64"):
-            targets += " dtbs"
-        assert (
-            f'make -j$(nproc) -C ${{KERNEL_SRC}} O=${{CRAFT_PART_BUILD}} LLVM="1" {targets}'
-            in cmd
-        )
-
-    def test_use_llvm_specific_version(self, setup_method_fixture, new_dir):
-        version = "-10"
-        plugin = setup_method_fixture(
-            new_dir,
-            properties={
-                "kernel-use-llvm": version,
-            },
-        )
-        assert plugin._llvm_version == version
-        assert plugin.get_build_packages() == {
-            "bc",
-            "binutils",
-            "debhelper",
-            "fakeroot",
-            "gcc",
-            "cmake",
-            "cryptsetup",
-            "kmod",
-            "kpartx",
-            f"lld{version}",
-            f"llvm{version}",
-            "systemd",
-        }
-        plugin.get_build_environment()
-        cmd = plugin.get_build_commands()
-        targets = f"{plugin.kernel_image_target} modules"
-        if plugin._kernel_arch in ("arm", "arm64", "riscv64"):
-            targets += " dtbs"
-        assert (
-            f'make -j$(nproc) -C ${{KERNEL_SRC}} O=${{CRAFT_PART_BUILD}} LLVM="{version}" {targets}'
-            in cmd
-        )
-
-    def test_bad_llvm_version(self, setup_method_fixture, new_dir):
-        with pytest.raises(ValueError):
-            setup_method_fixture(
-                new_dir,
-                properties={
-                    "kernel-use-llvm": "-badsuffix",
-                },
-            )
 
 
 def subprocess_callback_function(process):
@@ -774,21 +585,31 @@ _prepare_config_cmd = [
     "fi",
 ]
 
-_prepare_config_custom_cc_cmd = [
+_prepare_config_flavour_generic_cmd = [
     'echo "Preparing config..."',
     "if [ ! -e ${CRAFT_PART_BUILD}/.config ]; then",
-    '\tmake -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} CC="my-gcc" defconfig',
+    textwrap.dedent(
+        """	echo "Assembling Ubuntu config..."
+	if [ -f ${KERNEL_SRC}/debian/rules ] && [ -x ${KERNEL_SRC}/debian/rules ]; then
+		# Generate Ubuntu kernel configs
+		pushd ${KERNEL_SRC}
+		fakeroot debian/rules clean genconfigs || true
+		popd
+
+		# Pick the right kernel .config for the target arch and flavour
+		ubuntuconfig=${KERNEL_SRC}/CONFIGS/${DEB_ARCH}-config.flavour.generic
+		cat ${ubuntuconfig} > ${CRAFT_PART_BUILD}/.config
+
+		# Clean up kernel source directory
+		pushd ${KERNEL_SRC}
+		fakeroot debian/rules clean
+		rm -rf CONFIGS/
+		popd
+	fi"""
+    ),
     "fi",
 ]
-
-_prepare_config_defconfig_cmd = [
-    'echo "Preparing config..."',
-    "if [ ! -e ${CRAFT_PART_BUILD}/.config ]; then",
-    "\tcp arch/arm64/configs/snappy_defconfig ${CRAFT_PART_BUILD}/.config",
-    "fi",
-]
-
-_prepare_config_flavour_cmd = [
+_prepare_config_flavour_raspi_cmd = [
     'echo "Preparing config..."',
     "if [ ! -e ${CRAFT_PART_BUILD}/.config ]; then",
     textwrap.dedent(
@@ -826,24 +647,6 @@ _remake_old_config_cmd = [
     "bash -c 'yes \"\" || true' | make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} oldconfig",
 ]
 
-_remake_old_config_custom_cc_cmd = [
-    'echo "Remaking oldconfig...."',
-    "bash -c 'yes \"\" || true'"
-    ' | make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} CC="my-gcc" oldconfig',
-]
-
-_remake_old_config_clang_cmd = [
-    'echo "Remaking oldconfig...."',
-    " ".join(
-        [
-            "bash -c 'yes \"\" || true' | make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD}",
-            'CC="clang"',
-            "-arch arm64",
-            "oldconfig",
-        ],
-    ),
-]
-
 _remake_old_config_armhf_cmd = [
     'echo "Remaking oldconfig...."',
     " ".join(
@@ -866,45 +669,11 @@ _check_config = " ".join(
 )
 
 _build_kernel_cmd = [
-    "make -j$(nproc) -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} Image.gz modules dtbs",
+    "make -j$(nproc) -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} Image modules dtbs",
 ]
 
 _build_kernel_x86_cmd = [
     "make -j$(nproc) -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} bzImage modules",
-]
-
-_build_kernel_custom_cc_cmd = [
-    'make -j$(nproc) -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} CC="my-gcc" Image.gz modules dtbs',
-]
-
-_build_kernel_x86_custom_cc_cmd = [
-    'make -j$(nproc) -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} CC="my-gcc" bzImage modules',
-]
-
-_build_kernel_clang_image_cmd = [
-    " ".join(
-        [
-            "make -j$(nproc)",
-            "-C ${KERNEL_SRC}",
-            "O=${CRAFT_PART_BUILD}",
-            'CC="clang"',
-            "-arch arm64",
-            "Image modules dtbs",
-        ],
-    ),
-]
-
-_build_kernel_clang_image_x86_cmd = [
-    " ".join(
-        [
-            "make -j$(nproc)",
-            "-C ${KERNEL_SRC}",
-            "O=${CRAFT_PART_BUILD}",
-            'CC="clang"',
-            "-arch arm64",
-            "Image modules",
-        ],
-    ),
 ]
 
 _build_kernel_armhf_cmd = [
@@ -920,28 +689,6 @@ _build_kernel_armhf_cmd = [
     ),
 ]
 
-_build_kernel_dtbs_cmd = [
-    " ".join(
-        [
-            "make -j$(nproc)",
-            "-C ${KERNEL_SRC}",
-            "O=${CRAFT_PART_BUILD}",
-            "Image.gz modules pi3.dtb pi3b.dtb pi4.dtb pi/cm3.dtb pi/cm4.dtb",
-        ],
-    ),
-]
-
-_build_kernel_dtbs_x86_cmd = [
-    " ".join(
-        [
-            "make -j$(nproc)",
-            "-C ${KERNEL_SRC}",
-            "O=${CRAFT_PART_BUILD}",
-            "bzImage modules pi3.dtb pi3b.dtb pi4.dtb pi/cm3.dtb pi/cm4.dtb",
-        ],
-    ),
-]
-
 _install_kernel_cmd = [
     " ".join(
         [
@@ -950,7 +697,6 @@ _install_kernel_cmd = [
             "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
             "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
             "dtbs_install INSTALL_DTBS_PATH=${CRAFT_PART_INSTALL}/dtbs",
-            "firmware_install INSTALL_FW_PATH=${CRAFT_PART_INSTALL}/lib/firmware",
         ],
     ),
 ]
@@ -962,76 +708,18 @@ _install_kernel_x86_cmd = [
             "O=${CRAFT_PART_BUILD}",
             "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
             "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
-            "firmware_install INSTALL_FW_PATH=${CRAFT_PART_INSTALL}/lib/firmware",
         ],
     ),
 ]
 
-_install_kernel_custom_cc_cmd = [
+_install_kernel_dtbs_cmd = [
     " ".join(
         [
             "make -j$(nproc) -C ${KERNEL_SRC}",
             "O=${CRAFT_PART_BUILD}",
-            'CC="my-gcc"',
             "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
             "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
             "dtbs_install INSTALL_DTBS_PATH=${CRAFT_PART_INSTALL}/dtbs",
-            "firmware_install INSTALL_FW_PATH=${CRAFT_PART_INSTALL}/lib/firmware",
-        ],
-    ),
-]
-
-_install_kernel_x86_custom_cc_cmd = [
-    " ".join(
-        [
-            "make -j$(nproc) -C ${KERNEL_SRC}",
-            "O=${CRAFT_PART_BUILD}",
-            'CC="my-gcc"',
-            "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
-            "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
-            "firmware_install INSTALL_FW_PATH=${CRAFT_PART_INSTALL}/lib/firmware",
-        ],
-    ),
-]
-
-_install_kernel_no_dtbs_no_firmware_cmd = [
-    " ".join(
-        [
-            "make -j$(nproc) -C ${KERNEL_SRC}",
-            "O=${CRAFT_PART_BUILD}",
-            "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
-            "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
-        ],
-    ),
-]
-
-_install_kernel_no_firmware_clang_cmd = [
-    " ".join(
-        [
-            "make",
-            "-j$(nproc)",
-            "-C ${KERNEL_SRC}",
-            "O=${CRAFT_PART_BUILD}",
-            'CC="clang"',
-            "-arch arm64",
-            "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
-            "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
-            "dtbs_install INSTALL_DTBS_PATH=${CRAFT_PART_INSTALL}/dtbs",
-        ],
-    ),
-]
-
-_install_kernel_no_firmware_clang_x86_cmd = [
-    " ".join(
-        [
-            "make",
-            "-j$(nproc)",
-            "-C ${KERNEL_SRC}",
-            "O=${CRAFT_PART_BUILD}",
-            'CC="clang"',
-            "-arch arm64",
-            "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
-            "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
         ],
     ),
 ]
@@ -1048,23 +736,12 @@ _install_kernel_armhf_cmd = [
             "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
             "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
             "dtbs_install INSTALL_DTBS_PATH=${CRAFT_PART_INSTALL}/dtbs",
-            "firmware_install INSTALL_FW_PATH=${CRAFT_PART_INSTALL}/lib/firmware",
         ],
     ),
 ]
 
 _parse_kernel_release_cmd = [
     "KERNEL_RELEASE=$(cat ${CRAFT_PART_BUILD}/include/config/kernel.release)",
-]
-
-_install_dtbs_cmd = [
-    'echo "Copying custom dtbs..."',
-    "mkdir -p ${CRAFT_PART_INSTALL}/dtbs",
-    "ln -f ${KERNEL_BUILD_ARCH_DIR}/dts/pi3.dtb ${CRAFT_PART_INSTALL}/dtbs/pi3.dtb",
-    "ln -f ${KERNEL_BUILD_ARCH_DIR}/dts/pi3b.dtb ${CRAFT_PART_INSTALL}/dtbs/pi3b.dtb",
-    "ln -f ${KERNEL_BUILD_ARCH_DIR}/dts/pi4.dtb ${CRAFT_PART_INSTALL}/dtbs/pi4.dtb",
-    "ln -f ${KERNEL_BUILD_ARCH_DIR}/dts/pi/cm3.dtb ${CRAFT_PART_INSTALL}/dtbs/cm3.dtb",
-    "ln -f ${KERNEL_BUILD_ARCH_DIR}/dts/pi/cm4.dtb ${CRAFT_PART_INSTALL}/dtbs/cm4.dtb",
 ]
 
 _install_config_cmd = [
