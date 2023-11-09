@@ -25,6 +25,8 @@ jobs:
       - name: Enable ssh access
         uses: mxschmitt/action-tmate@v3
         if: ${{ inputs.enable_ssh_access }}
+        with:
+          limit-access-to-actor: true
       - name: Check renovate config
         run: renovate-config-validator .github/renovate.json5
       - name: Renovate dry-run

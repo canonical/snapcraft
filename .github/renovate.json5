@@ -7,6 +7,26 @@
   },
    packageRules: [
     {
+      // Internal package minor patch updates get top priority, with auto-merging
+      groupName: "internal package patch releases",
+      matchPackagePatterns: ["^craft-.*"],
+      matchUpdateTypes: ["minor", "patch", "pin", "digest"],
+      prPriority: 10,
+      automerge: true,
+      minimumReleaseAge: "0 seconds",
+      schedule: ["at any time"],
+    },
+    {
+      // Same as above, but for hotfix branches, only for patch, and without auto-merging.
+      groupName: "internal package patch releases (hotfix)",
+      matchPackagePatterns: ["^craft-.*"],
+      matchUpdateTypes: ["patch", "pin", "digest"],
+      prPriority: 10,
+      minimumReleaseAge: "0 seconds",
+      schedule: ["at any time"],
+      matchBaseBranches: ["/^hotfix/.*/"],  // All hotfix branches
+    },
+    {
       // Automerge patches, pin changes and digest changes.
       // Also groups these changes together.
       groupName: "bugfixes",
