@@ -997,4 +997,5 @@ _create_efi_image_cmd = [
         ],
     ),
     "ln $(ls ${CRAFT_PART_INSTALL}/kernel.efi*) ${CRAFT_PART_INSTALL}/kernel.efi",
+    "rm ${CRAFT_PART_INSTALL}/initrd.img*",
 ]
