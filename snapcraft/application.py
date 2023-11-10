@@ -28,7 +28,7 @@ from craft_application import Application, AppMetadata, util
 from craft_cli import emit
 from overrides import override
 
-from snapcraft import services, cli, utils, projects, errors
+from snapcraft import services, cli, utils, projects, errors, commands
 from snapcraft.commands import app_lifecycle
 from snapcraft.parts import yaml_utils
 

@@ -18,20 +18,23 @@
 
 import re
 import warnings
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union, cast
 
+import craft_providers.bases
 import pydantic
 from craft_application import models
 from craft_application.models import BuildInfo
 from craft_archives import repo
 from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
+from craft_providers import bases
 from pydantic import PrivateAttr, conlist, constr
 
 from snapcraft import parts, utils, errors
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
 from snapcraft.const import ESM_BASES, LEGACY_BASES, CURRENT_BASES
+from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 # from snapcraft.parts import lifecycle
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
@@ -760,9 +763,31 @@ class SnapcraftProject(models.Project):
 
     def get_build_plan(self) -> List[BuildInfo]:
         """Get the build plan for this project."""
-        # TODO: CALLAHAAAAAAAAAAN!
+        build_plan: List[BuildInfo] = []
 
+        architectures = cast(List[Architecture], self.architectures)
 
+        for arch in architectures:
+            # build_for will be a single element list
+            build_for = arch.build_for[0]
+
+            # TODO: figure out when to filter `all`
+            if build_for == "all":
+                build_for = get_host_architecture()
+
+            # build on will be a list of archs
+            for build_on in arch.build_on:
+                base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[self.get_effective_base()]
+                build_plan.append(
+                    BuildInfo(
+                        platform=f"ubuntu@{base.value}",
+                        build_on=build_on,
+                        build_for=build_for,
+                        base=bases.BaseName("ubuntu", base.value),
+                    )
+                )
+
+        return build_plan
 
 
 class _GrammarAwareModel(pydantic.BaseModel):
