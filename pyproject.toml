@@ -180,6 +180,7 @@ select = [  # Base linting rule selections.
     "Q",  # Consistent quotations
     "RSE",  # Errors on pytest raises.
     "RET",  # Simpler logic after return, raise, continue or break
+    "SLF",  # Prevent accessing private class members.
     "SIM",  # Code simplification
     "TCH004",  # Remove imports from type-checking guard blocks if used at runtime
     "TCH005",  # Delete empty type-checking blocks
@@ -250,6 +251,7 @@ classmethod-decorators = ["pydantic.validator"]
     "S103", # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
     "S108", # Allow Probable insecure usage of temporary file or directory
     "PLR0913",  # Allow many arguments for test functions
+    "SLF",  # Allow accessing private members in tests
 ]
 # isort leaves init files alone by default, this makes ruff ignore them too.
 "__init__.py" = ["I001"]
