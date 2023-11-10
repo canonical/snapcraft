@@ -2,6 +2,9 @@ name: CI
 
 on: 
   pull_request:
+  push:
+    branches:
+      - "feature/**"
 
 jobs:
   publish:
@@ -38,11 +41,22 @@ jobs:
           # Make sure it is installable.
           sudo snap install --dangerous --classic ${{ steps.build.outputs.snap }}
 
-      - if: steps.decisions.outputs.PUBLISH == 'true' && github.event_name == 'pull_request'
-        # Use this until snapcore/action-publish#27 it is merged.
-        uses: sergiusens/action-publish@master
+      - name: Get branch name
+        id: vars
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]
+          then
+            echo "branch=pr-${{ github.event.number }}" >> "$GITHUB_OUTPUT"
+          else
+            branch=$(echo ${GITHUB_REF#refs/*/} | sed -e 's|feature/\(.*\)|\1|')
+            echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish feature branch to edge/${{ steps.vars.outputs.branch }}
+        if: steps.decisions.outputs.PUBLISH == 'true'
+        uses: snapcore/action-publish@v1
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         with:
-          snap: ${{ steps.build.outputs.snap }}
-          release: edge/pr-${{ github.event.number }}
+          snap: ${{ steps.snapcraft.outputs.snap }}
+          release: edge/${{ steps.vars.outputs.branch }}
