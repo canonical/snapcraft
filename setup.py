@@ -116,6 +116,9 @@ install_requires = [
     "overrides",
     "progressbar",
     "pyelftools",
+    # Pygit2 and libgit2 need to match versions.
+    # Further info: https://www.pygit2.org/install.html#version-numbers
+    "pygit2~=1.13.0",
     "pymacaroons",
     "pyxdg",
     "pyyaml",
