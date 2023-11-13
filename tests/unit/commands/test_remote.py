@@ -25,7 +25,7 @@ from yaml import safe_dump
 
 from snapcraft import cli
 from snapcraft.parts.yaml_utils import CURRENT_BASES, ESM_BASES, LEGACY_BASES
-from snapcraft.remote import AcceptPublicUploadError, GitRepo
+from snapcraft.remote import GitRepo
 
 # remote-build control logic may check if the working dir is a git repo,
 # so execute all tests inside a test directory
@@ -116,19 +116,19 @@ def test_command_user_confirms_upload(
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_argv")
 def test_command_user_denies_upload(
-    mock_confirm, mock_run_new_or_fallback_remote_build
+    capsys, mock_confirm, mock_run_new_or_fallback_remote_build
 ):
     """Raise an error if the user denies the upload prompt."""
     mock_confirm.return_value = False
 
-    with pytest.raises(AcceptPublicUploadError):
-        cli.run()
+    cli.run()
 
-    mock_confirm.assert_called_once_with(
-        "All data sent to remote builders will be publicly available. "
-        "Are you sure you want to continue?"
-    )
-    mock_run_new_or_fallback_remote_build.assert_not_called()
+    _, err = capsys.readouterr()
+    assert (
+        "Cannot upload data to build servers.\n"
+        "Remote build needs explicit acknowledgement "
+        "that data sent to build servers is public."
+    ) in err
 
 
 @pytest.mark.parametrize(
@@ -360,7 +360,7 @@ def test_run_newer_than_core_22(emitter, mock_run_new_remote_build):
     cli.run()
 
     mock_run_new_remote_build.assert_called_once()
-    emitter.assert_debug("Running new remote-build because base is newer than core22.")
+    emitter.assert_debug("Running new remote-build because base is newer than core22")
 
 
 @pytest.mark.parametrize(
@@ -372,7 +372,7 @@ def test_run_core22_and_older(emitter, mock_run_legacy):
     cli.run()
 
     mock_run_legacy.assert_called_once()
-    emitter.assert_debug("Running fallback remote-build.")
+    emitter.assert_debug("Running fallback remote-build")
 
 
 @pytest.mark.parametrize(
@@ -394,7 +394,7 @@ def test_run_envvar_newer_than_core22(
     cli.run()
 
     mock_run_new_remote_build.assert_called_once()
-    emitter.assert_debug("Running new remote-build because base is newer than core22.")
+    emitter.assert_debug("Running new remote-build because base is newer than core22")
 
 
 @pytest.mark.parametrize(
@@ -410,7 +410,7 @@ def test_run_envvar_disable_fallback(emitter, mock_run_new_remote_build, monkeyp
     mock_run_new_remote_build.assert_called_once()
     emitter.assert_debug(
         "Running new remote-build because environment variable "
-        "'SNAPCRAFT_REMOTE_BUILD_STRATEGY' is 'disable-fallback'."
+        "'SNAPCRAFT_REMOTE_BUILD_STRATEGY' is 'disable-fallback'"
     )
 
 
@@ -427,7 +427,7 @@ def test_run_envvar_force_fallback(emitter, mock_run_legacy, monkeypatch):
     mock_run_legacy.assert_called_once()
     emitter.assert_debug(
         "Running fallback remote-build because environment variable "
-        "'SNAPCRAFT_REMOTE_BUILD_STRATEGY' is 'force-fallback'."
+        "'SNAPCRAFT_REMOTE_BUILD_STRATEGY' is 'force-fallback'"
     )
 
 
@@ -442,7 +442,7 @@ def test_run_envvar_force_fallback_unset(emitter, mock_run_legacy, monkeypatch):
     cli.run()
 
     mock_run_legacy.assert_called_once()
-    emitter.assert_debug("Running fallback remote-build.")
+    emitter.assert_debug("Running fallback remote-build")
 
 
 @pytest.mark.parametrize(
@@ -456,7 +456,7 @@ def test_run_envvar_force_fallback_empty(emitter, mock_run_legacy, monkeypatch):
     cli.run()
 
     mock_run_legacy.assert_called_once()
-    emitter.assert_debug("Running fallback remote-build.")
+    emitter.assert_debug("Running fallback remote-build")
 
 
 @pytest.mark.parametrize(
@@ -473,7 +473,7 @@ def test_run_envvar_invalid(capsys, emitter, mock_run_legacy, monkeypatch):
     assert (
         "Unknown value 'badvalue' in environment variable "
         "'SNAPCRAFT_REMOTE_BUILD_STRATEGY'. Valid values are 'disable-fallback' and "
-        "'force-fallback'."
+        "'force-fallback'"
     ) in err
 
 
@@ -490,7 +490,7 @@ def test_run_in_repo(emitter, mock_run_new_remote_build, new_dir):
 
     mock_run_new_remote_build.assert_called_once()
     emitter.assert_debug(
-        "Running new remote-build because project is in a git repository."
+        "Running new remote-build because project is in a git repository"
     )
 
 
@@ -503,7 +503,7 @@ def test_run_not_in_repo(emitter, mock_run_legacy):
     cli.run()
 
     mock_run_legacy.assert_called_once()
-    emitter.assert_debug("Running fallback remote-build.")
+    emitter.assert_debug("Running fallback remote-build")
 
 
 @pytest.mark.parametrize(
@@ -520,7 +520,7 @@ def test_run_in_repo_newer_than_core22(
     cli.run()
 
     mock_run_new_remote_build.assert_called_once()
-    emitter.assert_debug("Running new remote-build because base is newer than core22.")
+    emitter.assert_debug("Running new remote-build because base is newer than core22")
 
 
 ######################
@@ -773,7 +773,7 @@ def test_recover_no_build(emitter, mocker):
 
     cli.run()
 
-    emitter.assert_message("No build found.")
+    emitter.assert_progress("No build found", permanent=True)
 
 
 @pytest.mark.parametrize(

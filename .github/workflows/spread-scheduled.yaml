@@ -3,7 +3,6 @@ on:
   schedule:
     # At 03:00 on Wednesday and Sunday.
     - cron: "0 3 * * WED,SUN"
-
   workflow_dispatch:
 
 jobs:
@@ -51,3 +50,29 @@ jobs:
       - name: Kernel plugin test
         run: |
           spread google:ubuntu-22.04-64:tests/spread/plugins/${{ matrix.type }}/kernel
+
+  remote-build:
+    runs-on: self-hosted
+    needs: [snap-build]
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Cleanup job workspace
+        run: |
+          rm -rf "${{ github.workspace }}"
+          mkdir "${{ github.workspace }}"
+      - name: Checkout snapcraft
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: true
+      - name: Download snap artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: snap
+          path: tests
+      - name: remote-build test
+        env:
+          LAUNCHPAD_TOKEN: "${{ secrets.LAUNCHPAD_TOKEN }}"
+        run: |
+          spread google:ubuntu-20.04-64:tests/spread/general/remote-build

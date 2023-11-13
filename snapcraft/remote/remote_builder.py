@@ -121,7 +121,6 @@ class RemoteBuilder:
         logger.info("Cleaning existing builds and artefacts.")
         self._lpc.cleanup()
         self._worktree.clean_cache()
-        logger.info("Done.")
 
     def start_build(self) -> None:
         """Start a build in Launchpad.

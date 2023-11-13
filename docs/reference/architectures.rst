@@ -71,11 +71,20 @@ use the ``all`` keyword.
 
 The same architecture cannot be defined in multiple ``build-for`` entries.
 
+core20
+^^^^^^
+
+The above syntax and rules for ``core22`` apply for ``core20`` except that
+``run-on`` is used in place of ``build-for``. Additionally, ``core20`` supports
+multiple architectures in the ``run-on`` field, which will create
+multi-architecture snaps.
+
 Shorthand format
 """"""""""""""""
 
-As an alternative to the explicit format described above, a shorthand format
-can be used for simple ``build-on/build-for`` pairs. The following shorthand:
+As an alternative to the explicit format described above, ``core20`` snaps
+support a shorthand format can be used for simple ``build-on/run-on``
+pairs. The following shorthand:
 
 .. code-block:: yaml
 
@@ -87,19 +96,12 @@ is equivalent to:
 
   architectures:
     - build-on: [amd64]
-      build-for: [amd64]
+      run-on: [amd64]
     - build-on: [arm64]
-      build-for: [arm64]
+      run-on: [arm64]
 
 The explicit and shorthand format cannot be mixed.
 
-core20
-^^^^^^
-
-The above syntax and rules for ``core22`` apply for ``core20`` except that
-``run-on`` is used in place of ``build-for``. Additionally, ``core20`` supports
-multiple architectures in the ``run-on`` field, which will create
-multi-architecture snaps.
 
 Project variables
 -----------------

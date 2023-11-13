@@ -187,3 +187,12 @@ parts:
         # The new implementation still requires this.
         ln -sf ../usr/bin/python3.10 $SNAPCRAFT_PART_INSTALL/bin/python3
     after: [snapcraft-libs, libgit2]
+
+  chisel:
+    plugin: go
+    source: https://github.com/canonical/chisel.git
+    source-commit: bd27f8700cd7d2a6b4e0df6b10c3761c83a70485
+    build-snaps:
+      - go/1.18/stable
+    organize:
+      bin/chisel: libexec/snapcraft/chisel

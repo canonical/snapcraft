@@ -170,7 +170,7 @@ class LaunchpadClient:
         """Fetch build arftifacts (logs and snaps)."""
         builds = self._get_builds(snap)
 
-        logger.debug("Downloading artifacts...")
+        logger.info("Downloading artifacts...")
         for build in builds:
             self._download_build_artifacts(build)
             self._download_log(build)
@@ -220,7 +220,7 @@ class LaunchpadClient:
             # Check to see if we've run out of time.
             self._check_timeout_deadline()
 
-            logger.debug("Waiting on Launchpad build request...")
+            logger.info("Waiting on Launchpad build request...")
             logger.debug(
                 "status=%s error=%s", build_request.status, build_request.error_message
             )
@@ -250,7 +250,7 @@ class LaunchpadClient:
             )
 
         build_number = _get_url_basename(cast(str, build_request.self_link))
-        logger.debug("Build request accepted: %s", build_number)
+        logger.info("Build request accepted: %s", build_number)
 
     def _login(self) -> Launchpad:
         """Login to launchpad."""
@@ -287,7 +287,7 @@ class LaunchpadClient:
         if force:
             self._delete_git_repository()
 
-        logger.debug(
+        logger.info(
             "creating git repo: name=%s, owner=%s, target=%s",
             self._lp_name,
             self._lp_owner,
@@ -306,7 +306,7 @@ class LaunchpadClient:
         if git_repo is None:
             return
 
-        logger.debug("Deleting source repository from Launchpad...")
+        logger.info("Deleting source repository from Launchpad...")
         git_repo.lp_delete()
 
     def _create_snap(self, force=False) -> Entry:
@@ -320,7 +320,7 @@ class LaunchpadClient:
         if self._lp_processors:
             optional_kwargs["processors"] = self._lp_processors
 
-        logger.debug("Registering snap job on Launchpad...")
+        logger.info("Registering snap job on Launchpad...")
         logger.debug(
             "url=https://launchpad.net/%s/+snap/%s", self._lp_owner, self._lp_name
         )
@@ -342,7 +342,7 @@ class LaunchpadClient:
         if snap is None:
             return
 
-        logger.debug("Removing snap job from Launchpad...")
+        logger.info("Removing snap job from Launchpad...")
         snap.lp_delete()
 
     def cleanup(self) -> None:
@@ -354,7 +354,7 @@ class LaunchpadClient:
         """Start build with specified timeout (time.time() in seconds)."""
         snap = self._create_snap(force=True)
 
-        logger.debug("Issuing build request on Launchpad...")
+        logger.info("Issuing build request on Launchpad...")
         build_request = self._issue_build_request(snap)
         self._wait_for_build_request_acceptance(build_request)
 
@@ -368,17 +368,16 @@ class LaunchpadClient:
 
             builds = self._get_builds(snap)
             pending = False
-            timestamp = str(datetime.now())
-            status = f"Build status as of {timestamp}: "
+            statuses = []
             for build in builds:
                 state = build["buildstate"]
                 arch = build["arch_tag"]
-                status += f" {arch=} {state=}"
+                statuses.append(f"{arch}: {state}")
 
                 if _is_build_pending(build):
                     pending = True
 
-            logger.info(status)
+            logger.info(", ".join(statuses))
 
             if pending is False:
                 break
@@ -426,7 +425,7 @@ class LaunchpadClient:
 
     def _download_file(self, *, url: str, dst: str, gunzip: bool = False) -> None:
         # TODO: consolidate with, and use indicators.download_requests_stream
-        logger.debug("Downloading: %s", url)
+        logger.info("Downloading: %s", url)
         try:
             with requests.get(url, stream=True, timeout=3600) as response:
                 # Wrap response with gzipfile if gunzip is requested.

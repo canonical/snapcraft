@@ -1,0 +1,16 @@
+summary: Build a simple snap
+
+environment:
+  SNAPCRAFT_BUILD_ENVIRONMENT: ""
+
+restore: |
+  snap remove simple-snap
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "./snap"
+  snapcraft pack
+  snap install --edge core24
+  snap install --dangerous ./*.snap
+  /snap/bin/simple-snap.hello
