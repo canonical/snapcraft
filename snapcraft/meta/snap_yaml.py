@@ -25,8 +25,7 @@ from craft_cli import emit
 from pydantic import Extra, ValidationError, validator
 from pydantic_yaml import YamlModel
 
-from snapcraft import errors
-from snapcraft.projects import App, Project, UniqueStrList
+from snapcraft import errors, models
 from snapcraft.utils import get_ld_library_paths, process_version
 
 
@@ -179,22 +178,22 @@ class ContentSlot(_SnapMetadataModel):
 class Links(_SnapMetadataModel):
     """Metadata links used in snaps."""
 
-    contact: Optional[UniqueStrList]
-    donation: Optional[UniqueStrList]
-    issues: Optional[UniqueStrList]
-    source_code: Optional[UniqueStrList]
-    website: Optional[UniqueStrList]
+    contact: Optional[models.UniqueStrList]
+    donation: Optional[models.UniqueStrList]
+    issues: Optional[models.UniqueStrList]
+    source_code: Optional[models.UniqueStrList]
+    website: Optional[models.UniqueStrList]
 
     @staticmethod
     def _normalize_value(
-        value: Optional[Union[str, UniqueStrList]]
+        value: Optional[Union[str, models.UniqueStrList]]
     ) -> Optional[List[str]]:
         if isinstance(value, str):
             value = [value]
         return value
 
     @classmethod
-    def from_project(cls, project: Project) -> "Links":
+    def from_project(cls, project: models.Project) -> "Links":
         """Create Links from a Project."""
         return cls(
             contact=cls._normalize_value(project.contact),
@@ -338,7 +337,7 @@ def read(prime_dir: Path) -> SnapMetadata:
     return SnapMetadata.unmarshal(data)
 
 
-def _create_snap_app(app: App, assumes: Set[str]) -> SnapApp:
+def _create_snap_app(app: models.App, assumes: Set[str]) -> SnapApp:
     app_sockets: Dict[str, Socket] = {}
     if app.sockets:
         for socket_name, socket in app.sockets.items():
@@ -410,7 +409,7 @@ def _get_grade(grade: Optional[str], build_base: Optional[str]) -> str:
     return grade
 
 
-def write(project: Project, prime_dir: Path, *, arch: str):
+def write(project: models.Project, prime_dir: Path, *, arch: str):
     """Create a snap.yaml file.
 
     :param project: Snapcraft project.
