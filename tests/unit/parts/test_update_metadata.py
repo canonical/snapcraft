@@ -21,8 +21,8 @@ from typing import Any, Dict
 import pytest
 
 from snapcraft.meta import ExtractedMetadata
+from snapcraft.models import App, Project
 from snapcraft.parts.update_metadata import update_project_metadata
-from snapcraft.projects import App, Project
 
 
 @pytest.fixture

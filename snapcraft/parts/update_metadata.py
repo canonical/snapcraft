@@ -24,7 +24,7 @@ from craft_cli import emit
 
 from snapcraft import errors
 from snapcraft.meta import ExtractedMetadata
-from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Project
+from snapcraft.models import MANDATORY_ADOPTABLE_FIELDS, Project
 
 _VALID_ICON_EXTENSIONS: Final[List[str]] = ["png", "svg"]
 

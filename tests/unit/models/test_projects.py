@@ -20,7 +20,7 @@ import pydantic
 import pytest
 
 from snapcraft import errors
-from snapcraft.projects import (
+from snapcraft.models import (
     MANDATORY_ADOPTABLE_FIELDS,
     Architecture,
     ContentPlug,
