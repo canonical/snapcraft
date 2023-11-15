@@ -99,6 +99,8 @@ if sys.platform == "win32":
 install_requires = [
     "attrs",
     "click",
+    # "craft-application~=1.0",
+    "craft-application@git+https://github.com/canonical/craft-application@aml/1.1-candidate",
     "craft-archives",
     "craft-cli",
     "craft-grammar",
@@ -174,7 +176,7 @@ setup(
     entry_points=dict(
         console_scripts=[
             "snapcraft_legacy = snapcraft_legacy.cli.__main__:run",
-            "snapcraft = snapcraft.cli:run",
+            "snapcraft = snapcraft.application:main",
         ]
     ),
     data_files=(

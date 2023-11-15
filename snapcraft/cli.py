@@ -192,19 +192,6 @@ def get_dispatcher() -> craft_cli.Dispatcher:
         _ORIGINAL_LIB_NAME_LOG_LEVEL[lib_name] = logger.level
         logger.setLevel(logging.DEBUG)
 
-    if utils.is_managed_mode():
-        log_filepath = utils.get_managed_environment_log_path()
-    else:
-        log_filepath = None
-
-    emit.init(
-        mode=get_verbosity(),
-        appname="snapcraft",
-        greeting=f"Starting Snapcraft {__version__}",
-        log_filepath=log_filepath,
-        streaming_brief=True,
-    )
-
     return craft_cli.Dispatcher(
         "snapcraft",
         COMMAND_GROUPS,

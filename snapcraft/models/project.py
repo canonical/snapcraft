@@ -17,36 +17,26 @@
 """Project file definition and helpers."""
 
 import re
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union, cast
 
 import pydantic
+from craft_application import models
+from craft_application.models import BuildInfo
 from craft_archives import repo
 from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
+from craft_providers import bases
 from pydantic import PrivateAttr, conlist, constr
 
 from snapcraft import parts, utils
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
+from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_effective_base,
     get_host_architecture,
 )
-
-
-class ProjectModel(pydantic.BaseModel):
-    """Base model for snapcraft project classes."""
-
-    class Config:  # pylint: disable=too-few-public-methods
-        """Pydantic model configuration."""
-
-        validate_assignment = True
-        extra = "forbid"
-        allow_mutation = True  # project is updated with adopted metadata
-        allow_population_by_field_name = True
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
-
 
 # A workaround for mypy false positives
 # see https://github.com/samuelcolvin/pydantic/issues/975#issuecomment-551147305
@@ -172,7 +162,7 @@ def _validate_architectures_all_keyword(architectures):
             )
 
 
-class Socket(ProjectModel):
+class Socket(models.CraftBaseModel):
     """Snapcraft app socket definition."""
 
     listen_stream: Union[int, str]
@@ -197,7 +187,7 @@ class Socket(ProjectModel):
         return listen_stream
 
 
-class Lint(ProjectModel):
+class Lint(models.CraftBaseModel):
     """Linter configuration.
 
     :ivar ignore: A list describing which files should have issues ignored for given linters.
@@ -249,7 +239,7 @@ class Lint(ProjectModel):
         return self._lint_ignores[linter_name]
 
 
-class App(ProjectModel):
+class App(models.CraftBaseModel):
     """Snapcraft project app definition."""
 
     command: str
@@ -353,7 +343,7 @@ class App(ProjectModel):
         return aliases
 
 
-class Hook(ProjectModel):
+class Hook(models.CraftBaseModel):
     """Snapcraft project hook definition."""
 
     command_chain: Optional[List[str]]
@@ -374,14 +364,14 @@ class Hook(ProjectModel):
         return plugs
 
 
-class Architecture(ProjectModel, extra=pydantic.Extra.forbid):
+class Architecture(models.CraftBaseModel, extra=pydantic.Extra.forbid):
     """Snapcraft project architecture definition."""
 
     build_on: Union[str, UniqueStrList]
     build_for: Optional[Union[str, UniqueStrList]]
 
 
-class ContentPlug(ProjectModel):
+class ContentPlug(models.CraftBaseModel):
     """Snapcraft project content plug definition."""
 
     content: Optional[str]
@@ -403,7 +393,7 @@ class ContentPlug(ProjectModel):
 MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
 
-class Project(ProjectModel):
+class Project(models.Project):
     """Snapcraft project definition.
 
     See https://snapcraft.io/docs/snapcraft-yaml-reference
@@ -412,26 +402,27 @@ class Project(ProjectModel):
     - system-usernames
     """
 
-    name: ProjectName
-    title: Optional[ProjectTitle]
-    base: Optional[str]
+    name: ProjectName  # type: ignore[assignment]  # This is more general than craft-application
+    # title: Optional[models.ProjectTitle]
+    # base: Optional[str]
     build_base: Optional[str]
     compression: Literal["lzo", "xz"] = "xz"
-    version: Optional[ProjectVersion]
-    contact: Optional[Union[str, UniqueStrList]]
+    # TODO: ensure we have a test for version being retrieved using adopt-info
+    version: Optional[ProjectVersion]  # type: ignore[assignment]
+    # contact: Optional[Union[str, models.UniqueStrList]]
     donation: Optional[Union[str, UniqueStrList]]
-    issues: Optional[Union[str, UniqueStrList]]
-    source_code: Optional[str]
+    # issues: Optional[Union[str, models.UniqueStrList]]
+    source_code: Optional[str]  # type: ignore[assignment]
     website: Optional[str]
-    summary: Optional[ProjectSummary]
-    description: Optional[str]
+    # summary: Optional[models.SummaryStr]
+    # description: Optional[str]
     type: Optional[Literal["app", "base", "gadget", "kernel", "snapd"]]
     icon: Optional[str]
     confinement: Literal["classic", "devmode", "strict"]
     layout: Optional[
         Dict[str, Dict[Literal["symlink", "bind", "bind-file", "type"], str]]
     ]
-    license: Optional[str]
+    # license: Optional[str]
     grade: Optional[Literal["stable", "devel"]]
     architectures: List[Union[str, Architecture]] = [get_host_architecture()]
     assumes: UniqueStrList = []
@@ -442,7 +433,7 @@ class Project(ProjectModel):
     plugs: Optional[Dict[str, Union[ContentPlug, Any]]]
     slots: Optional[Dict[str, Any]]
     lint: Optional[Lint]
-    parts: Dict[str, Any]  # parts are handled by craft-parts
+    # parts: Dict[str, Any]  # parts are handled by craft-parts
     epoch: Optional[str]
     adopt_info: Optional[str]
     system_usernames: Optional[Dict[str, Any]]
@@ -732,6 +723,34 @@ class Project(ProjectModel):
 
         return None
 
+    def get_build_plan(self) -> List[BuildInfo]:
+        """Get the build plan for this project."""
+        build_plan: List[BuildInfo] = []
+
+        architectures = cast(List[Architecture], self.architectures)
+
+        for arch in architectures:
+            # build_for will be a single element list
+            build_for = cast(list, arch.build_for)[0]
+
+            # TODO: figure out when to filter `all`
+            if build_for == "all":
+                build_for = get_host_architecture()
+
+            # build on will be a list of archs
+            for build_on in arch.build_on:
+                base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[self.get_effective_base()]
+                build_plan.append(
+                    BuildInfo(
+                        platform=f"ubuntu@{base.value}",
+                        build_on=build_on,
+                        build_for=build_for,
+                        base=bases.BaseName("ubuntu", base.value),
+                    )
+                )
+
+        return build_plan
+
 
 class _GrammarAwareModel(pydantic.BaseModel):
     class Config:
@@ -767,7 +786,7 @@ class GrammarAwareProject(_GrammarAwareModel):
             raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
 
 
-class ArchitectureProject(ProjectModel, extra=pydantic.Extra.ignore):
+class ArchitectureProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
     """Project definition containing only architecture data."""
 
     architectures: List[Union[str, Architecture]] = [get_host_architecture()]
