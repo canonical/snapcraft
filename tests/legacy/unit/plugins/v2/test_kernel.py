@@ -746,7 +746,7 @@ _finalize_install_cmd = [
         # but snapd expects modules/ and firmware/
         mv ${SNAPCRAFT_PART_INSTALL}/lib/modules ${SNAPCRAFT_PART_INSTALL}/
         # remove symlinks modules/*/build and modules/*/source
-        rm -f ${SNAPCRAFT_PART_INSTALL}/modules/*/build ${SNAPCRAFT_PART_INSTALL}/modules/*/source
+        rm -rf ${SNAPCRAFT_PART_INSTALL}/modules/*/build ${SNAPCRAFT_PART_INSTALL}/modules/*/source
         # if there is firmware dir, move it to snap root
         # this could have been from stage packages or from kernel build
         [ -d ${SNAPCRAFT_PART_INSTALL}/lib/firmware ] && mv ${SNAPCRAFT_PART_INSTALL}/lib/firmware ${SNAPCRAFT_PART_INSTALL}
