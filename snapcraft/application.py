@@ -24,6 +24,7 @@ import os
 import pathlib
 from typing import Any, cast
 
+import craft_cli
 from craft_application import AppConfig, Application, AppMetadata, commands, util
 from craft_cli import emit
 from overrides import override
@@ -105,10 +106,23 @@ class Snapcraft(Application):
         super()._configure_services(platform, build_for)
 
     @property
-    def command_groups(self):
+    def command_groups(self) -> list[craft_cli.CommandGroup]:
         """Short-circuit the standard command groups for now."""
-        # TODO: Remove this once we've got lifecycle commands and version migrated.
-        return self._command_groups
+        # TODO: Remove this once we've got lifecycle commands migrated.
+        other_commands = commands.get_other_command_group()
+
+        merged: dict[str, list[type[craft_cli.BaseCommand]]] = {}
+        all_groups = [other_commands, *self._command_groups]
+
+        # Merge the default command groups with those provided by the application,
+        # so that we don't get multiple groups with the same name.
+        for group in all_groups:
+            merged.setdefault(group.name, []).extend(group.commands)
+
+        return [
+            craft_cli.CommandGroup(name, commands_)
+            for name, commands_ in merged.items()
+        ]
 
     def run(self) -> None:
         """Fall back to the old snapcraft entrypoint."""
@@ -224,7 +238,6 @@ def main() -> int:
     app.add_command_group(
         "Other",
         [
-            unimplemented.Version,
             unimplemented.Lint,
             unimplemented.Init,
         ],

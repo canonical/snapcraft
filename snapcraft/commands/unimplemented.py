@@ -209,9 +209,5 @@ class EditValidationSets(UnimplementedMixin, commands.StoreEditValidationSetsCom
     pass
 
 
-class Version(UnimplementedMixin, commands.VersionCommand):
-    pass
-
-
 class RemoteBuild(UnimplementedMixin, commands.RemoteBuildCommand):
     pass

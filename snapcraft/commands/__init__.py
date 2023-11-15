@@ -70,7 +70,6 @@ from .status import (
 )
 from .upload import StoreLegacyPushCommand, StoreUploadCommand
 from .validation_sets import StoreEditValidationSetsCommand
-from .version import VersionCommand
 
 __all__ = [
     "BuildCommand",
@@ -118,5 +117,4 @@ __all__ = [
     "StoreUploadCommand",
     "StoreWhoAmICommand",
     "TryCommand",
-    "VersionCommand",
 ]
