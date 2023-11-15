@@ -507,7 +507,7 @@ def _arrange_install_dir_cmd(install_dir: str) -> List[str]:
             # but snapd expects modules/ and firmware/
             mv {install_dir}/lib/modules {install_dir}/
             # remove symlinks modules/*/build and modules/*/source
-            rm -f {install_dir}/modules/*/build {install_dir}/modules/*/source
+            rm -rf {install_dir}/modules/*/build {install_dir}/modules/*/source
             # if there is firmware dir, move it to snap root
             # this could have been from stage packages or from kernel build
             [ -d {install_dir}/lib/firmware ] && mv {install_dir}/lib/firmware {install_dir}
