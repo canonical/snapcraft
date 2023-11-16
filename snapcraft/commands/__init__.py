@@ -44,7 +44,6 @@ from .legacy import (
 )
 from .lifecycle import (
     BuildCommand,
-    CleanCommand,
     PackCommand,
     PrimeCommand,
     PullCommand,
@@ -73,7 +72,6 @@ from .validation_sets import StoreEditValidationSetsCommand
 
 __all__ = [
     "BuildCommand",
-    "CleanCommand",
     "ExpandExtensionsCommand",
     "ExtensionsCommand",
     "InitCommand",

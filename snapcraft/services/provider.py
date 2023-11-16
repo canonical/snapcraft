@@ -13,17 +13,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Snapcraft Provider service."""
+from craft_application import services
+from overrides import override
 
-"""Snapcraft services."""
 
-from snapcraft.services.lifecycle import Lifecycle
-from snapcraft.services.package import Package
-from snapcraft.services.provider import Provider
-from snapcraft.services.service_factory import SnapcraftServiceFactory
+class Provider(services.ProviderService):
+    """Provider service for snapcraft."""
 
-__all__ = [
-    "Lifecycle",
-    "Package",
-    "Provider",
-    "SnapcraftServiceFactory",
-]
+    @override
+    def setup(self) -> None:
+        """Configure the provider for snapcraft"""
+        super().setup()
+        # Required for adding apt repositories.
+        self.packages.extend(("gpg", "dirmngr"))

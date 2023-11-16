@@ -117,31 +117,7 @@ class Validate(UnimplementedMixin, commands.StoreLegacyValidateCommand):
     pass
 
 
-class Build(UnimplementedMixin, commands.BuildCommand):
-    pass
-
-
-class Clean(UnimplementedMixin, commands.CleanCommand):
-    pass
-
-
-class Pack(UnimplementedMixin, commands.PackCommand):
-    pass
-
-
-class Prime(UnimplementedMixin, commands.PrimeCommand):
-    pass
-
-
-class Pull(UnimplementedMixin, commands.PullCommand):
-    pass
-
-
 class Snap(UnimplementedMixin, commands.SnapCommand):
-    pass
-
-
-class Stage(UnimplementedMixin, commands.StageCommand):
     pass
 
 

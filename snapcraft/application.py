@@ -19,12 +19,12 @@
 from __future__ import annotations
 
 import dataclasses
-import logging
+import functools
+from datetime import datetime
 import os
 import pathlib
 from typing import Any, cast
 
-import craft_cli
 from craft_application import AppConfig, Application, AppMetadata, commands, util
 from craft_cli import emit
 from overrides import override
@@ -36,11 +36,14 @@ from snapcraft.parts import yaml_utils
 
 @dataclasses.dataclass()
 class SnapcraftConfig(AppConfig):
-    """Snapcraft-specific application configuration."""
+    """Snapcraft-specific application runtime configuration."""
 
     project_dir: pathlib.Path = pathlib.Path.cwd()
     assets_dir: pathlib.Path = pathlib.Path.cwd() / "snap"
     build_for: str = util.get_host_architecture()
+    start_time: datetime = datetime.now().astimezone()
+    ua_token: str | None = None
+    parse_info: dict[str, list[str]] = dataclasses.field(default_factory=dict)
 
 
 APP_METADATA = AppMetadata(
@@ -71,7 +74,7 @@ class Snapcraft(Application):
         finally:
             os.chdir(old_cwd)
 
-        self._assets_dir = assets_dir
+        self.config.assets_dir = assets_dir
         return project_path
 
     def _project_vars(self, yaml_data: dict[str, Any]) -> dict[str, str]:
@@ -88,6 +91,8 @@ class Snapcraft(Application):
         # Apply craft-grammar (this runs in the manager and in managed mode)
         yaml_data = yaml_utils.apply_yaml(yaml_data, host_arch, self.config.build_for)
 
+        self.config.parse_info = yaml_utils.extract_parse_info(yaml_data)
+
         # TODO: Fill info from adopt-info, etc.
 
         return yaml_data
@@ -97,70 +102,49 @@ class Snapcraft(Application):
         if build_for is None:
             build_for = util.get_host_architecture()
 
-        self.services.set_kwargs("image", work_dir=self._work_dir, build_for=build_for)
+        super()._configure_services(platform, build_for)
+
         self.services.set_kwargs(
             "package",
             platform=platform,
             build_for=build_for,
         )
-        super()._configure_services(platform, build_for)
+        self.services.set_kwargs(
+            "lifecycle",
+            cache_dir=self.cache_dir,
+            work_dir=self._work_dir,
+            build_for=build_for,
+            config=self.config,
+            # Passed to the lifecycle manager
+        )
 
-    @property
-    def command_groups(self) -> list[craft_cli.CommandGroup]:
-        """Short-circuit the standard command groups for now."""
-        # TODO: Remove this once we've got lifecycle commands migrated.
-        other_commands = commands.get_other_command_group()
 
-        merged: dict[str, list[type[craft_cli.BaseCommand]]] = {}
-        all_groups = [other_commands, *self._command_groups]
-
-        # Merge the default command groups with those provided by the application,
-        # so that we don't get multiple groups with the same name.
-        for group in all_groups:
-            merged.setdefault(group.name, []).extend(group.commands)
-
-        return [
-            craft_cli.CommandGroup(name, commands_)
-            for name, commands_ in merged.items()
-        ]
-
-    def run(self) -> None:
-        """Fall back to the old snapcraft entrypoint."""
-        self._get_dispatcher()
-        raise errors.ClassicFallback()
+    @override
+    def configure(self, global_args: dict[str, Any]) -> None:
+        """Configure snapcraft."""
+        emit.debug("Configuring craft-application based snapcraft...")
+        super().configure(global_args)
+        commands.lifecycle.LifecyclePartsCommand.register_parser_filler(
+            command_modifiers.fill_lifecycle_parser  # type: ignore
+        )
+        commands.lifecycle.LifecyclePartsCommand.register_prologue(
+            functools.partial(  # type: ignore
+                command_modifiers.lifecycle_prologue, get_project=self.get_project
+            )
+        )
 
 
 def main() -> int:
     """Run craft-application based charmcraft with classic fallback."""
-    for lib_name in (
-        "craft_parts",
-        "craft_providers",
-        "craft_store",
-        "snapcraft.remote",
-    ):
-        logger = logging.getLogger(lib_name)
-        logger.setLevel(logging.DEBUG)
+    util.setup_loggers(["snapcraft.remote"])
 
     charmcraft_services = services.SnapcraftServiceFactory(app=APP_METADATA)
-
-    commands.lifecycle.LifecyclePartsCommand.register_parser_filler(
-        command_modifiers.fill_lifecycle_parser
-    )
-    commands.lifecycle.LifecyclePartsCommand.register_prologue(
-        command_modifiers.lifecycle_prologue
-    )
 
     app = Snapcraft(app=APP_METADATA, services=charmcraft_services)
 
     app.add_command_group(
         "Lifecycle",
         [
-            unimplemented.Clean,
-            unimplemented.Pull,
-            unimplemented.Build,
-            unimplemented.Stage,
-            unimplemented.Prime,
-            unimplemented.Pack,
             unimplemented.RemoteBuild,
             unimplemented.Snap,  # Hidden (legacy compatibility)
             unimplemented.Plugins,

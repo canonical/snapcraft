@@ -34,3 +34,4 @@ class SnapcraftServiceFactory(ServiceFactory):
     # These are overrides of default ServiceFactory services
     LifecycleClass: type[services.Lifecycle] = services.Lifecycle
     PackageClass: type[services.Package] = services.Package
+    ProviderClass: type[services.Provider] = services.Provider

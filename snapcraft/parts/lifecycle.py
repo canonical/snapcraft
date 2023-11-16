@@ -22,7 +22,7 @@ import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Callable, Optional
 
 import craft_parts
 from craft_cli import emit
@@ -309,28 +309,31 @@ def _generate_metadata(
     emit.progress("Generated snap metadata", permanent=True)
 
     if parsed_args.enable_manifest:
-        _generate_manifest(
+        emit.progress("Generating snap manifest...")
+        generate_manifest(
             project,
-            lifecycle=lifecycle,
             start_time=start_time,
-            parsed_args=parsed_args,
+            image_information=parsed_args.manifest_image_information or "{}",
+            get_pull_assets=lifecycle.get_part_pull_assets,
+            prime_dir=lifecycle.prime_dir,
+            primed_stage_packages=lifecycle.get_primed_stage_packages(),
         )
+        emit.progress("Generated snap manifest", permanent=True)
 
 
-def _generate_manifest(
+def generate_manifest(
     project: models.Project,
     *,
-    lifecycle: PartsLifecycle,
     start_time: datetime,
-    parsed_args: "argparse.Namespace",
+    image_information: str,
+    get_pull_assets: Callable[..., Optional[Dict[str, Any]]],
+    prime_dir: Path,
+    primed_stage_packages: List[str]
 ) -> None:
     """Create and populate the manifest file."""
-    emit.progress("Generating snap manifest...")
-    image_information = parsed_args.manifest_image_information or "{}"
-
     parts = copy.deepcopy(project.parts)
     for name, part in parts.items():
-        assets = lifecycle.get_part_pull_assets(part_name=name)
+        assets = get_pull_assets(part_name=name)
         if assets:
             part["stage-packages"] = assets.get("stage-packages", []) or []
         for key in ("stage", "prime", "stage-packages", "build-packages"):
@@ -338,18 +341,16 @@ def _generate_manifest(
 
     manifest.write(
         project,
-        lifecycle.prime_dir,
+        prime_dir,
         arch=project.get_build_for(),
         parts=parts,
         start_time=start_time,
         image_information=image_information,
-        primed_stage_packages=lifecycle.get_primed_stage_packages(),
+        primed_stage_packages=primed_stage_packages,
     )
-    emit.progress("Generated snap manifest", permanent=True)
-
     # Also copy the original snapcraft.yaml
     snap_project = yaml_utils.get_snap_project()
-    shutil.copy(snap_project.project_file, lifecycle.prime_dir / "snap")
+    shutil.copy(snap_project.project_file, prime_dir / "snap")
 
 
 def _clean_provider(project: models.Project, parsed_args: "argparse.Namespace") -> None:

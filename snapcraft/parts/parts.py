@@ -18,7 +18,7 @@
 
 import pathlib
 import subprocess
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Iterable
 
 import craft_parts
 from craft_archives import repo
@@ -249,28 +249,8 @@ class PartsLifecycle:
 
         dirs = ProjectDirs(work_dir=self._work_dir)
         part = Part(self._adopt_info, {}, project_dirs=dirs)
-        locations = (
-            part.part_src_dir,
-            part.part_build_dir,
-            part.part_install_dir,
-        )
-        metadata_list: List[ExtractedMetadata] = []
 
-        for metadata_file in self._parse_info[self._adopt_info]:
-            emit.trace(f"extract metadata: parse info from {metadata_file}")
-
-            for location in locations:
-                if pathlib.Path(location, metadata_file.lstrip("/")).is_file():
-                    metadata = extract_metadata(metadata_file, workdir=str(location))
-                    if metadata:
-                        metadata_list.append(metadata)
-                        break
-
-                    emit.progress(
-                        f"No metadata extracted from {metadata_file}", permanent=True
-                    )
-
-        return metadata_list
+        return get_metadata_from_part(part, self._parse_info[self._adopt_info])
 
     def get_primed_stage_packages(self) -> List[str]:
         """Obtain the list of primed stage packages from all parts."""
@@ -286,6 +266,25 @@ class PartsLifecycle:
     def get_part_pull_assets(self, *, part_name: str) -> Optional[Dict[str, Any]]:
         """Obtain the pull state assets."""
         return self._lcm.get_pull_assets(part_name=part_name)
+
+
+def get_metadata_from_part(part: Part, files: list[str]) -> List[ExtractedMetadata]:
+    """Generate the metadata from a part."""
+    locations = (part.part_src_dir, part.part_build_dir, part.part_install_dir)
+    metadata_list = []
+    for metadata_file in files:
+        emit.trace(f"extract metadata: parse info from {metadata_file}")
+
+        for location in locations:
+            if pathlib.Path(location, metadata_file.lstrip("/")).is_file():
+                metadata = extract_metadata(metadata_file, workdir=str(location))
+                if metadata:
+                    metadata_list.append(metadata)
+                else:
+                    emit.progress(
+                        f"No metadata extracted from {metadata_file}", permanent=True
+                    )
+    return metadata_list
 
 
 def launch_shell(*, cwd: Optional[pathlib.Path] = None) -> None:

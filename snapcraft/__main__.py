@@ -18,6 +18,6 @@
 
 import sys
 
-from snapcraft import cli
+from snapcraft import application
 
-sys.exit(cli.run())
+sys.exit(application.main())

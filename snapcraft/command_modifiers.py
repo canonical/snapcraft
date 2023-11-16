@@ -16,12 +16,13 @@
 """Callbacks used to modify craft-application commands."""
 import argparse
 import os
-from typing import Any
+from typing import Any, Callable
 
 import craft_cli
 from craft_application import commands
+from craft_cli import emit
 
-from snapcraft import utils
+from snapcraft import utils, errors, models, pack
 
 
 def fill_lifecycle_parser(
@@ -89,6 +90,7 @@ def fill_lifecycle_parser(
 def lifecycle_prologue(
     command: commands.base.ExtensibleCommand,  # pylint: disable=unused-argument
     parsed_args: argparse.Namespace,
+    get_project: Callable[[], models.Project],
     **kwargs: Any,  # noqa: ANN401  # pylint: disable=unused-argument
 ) -> None:
     """General prologue for any lifecycle command in Snapcraft."""
@@ -96,3 +98,49 @@ def lifecycle_prologue(
         raise craft_cli.ArgumentParsingError(
             "--destructive-mode cannot be used with --use-lxd"
         )
+    if parsed_args.ua_token and not parsed_args.enable_experimental_ua_services:
+        raise errors.SnapcraftError(
+            "Using UA services requires --enable-experimental-ua-services."
+        )
+    if get_project().ua_services and not parsed_args.ua_token:
+        raise errors.SnapcraftError(
+            "UA services require a UA token to be specified."
+        )
+    if getattr(parsed_args, "enable_manifest", False):
+        command.services.lifecycle.enable_manifest(parsed_args.manifest_image_information)
+
+
+def fill_pack_parser(
+    command: commands.ExtensibleCommand,  # pylint: disable=unused-argument
+    parser: argparse.ArgumentParser,
+) -> None:
+    """Callback for adding the directory argument to pack."""
+    parser.add_argument(
+        "directory",
+        metavar="directory",
+        type=str,
+        nargs="?",
+        default=None,
+        help="Directory to pack",
+    )
+
+
+def pack_prologue(
+    command: commands.base.ExtensibleCommand,
+    parsed_args: argparse.Namespace,
+    get_project: Callable[[], models.Project],
+    **kwargs: Any,  # noqa: ANN401  # pylint: disable=unused-argument
+) -> None:
+    """Modify the pack command for snapcraft."""
+    if parsed_args.directory:
+        snap_filename = pack.pack_snap(
+            parsed_args.directory, output=parsed_args.output
+        )
+        emit.message(f"Created snap package {snap_filename}")
+        # If there's a directory passed, we want to entirely ignore the main
+        # run of the pack command.
+        command._run = _no_op
+
+
+def _no_op(*args, **kwargs) -> None:
+    """Do nothing"""

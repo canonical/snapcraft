@@ -21,6 +21,7 @@ import argparse
 import os
 import textwrap
 
+from craft_application.commands.lifecycle import PackCommand, LifecyclePartsCommand
 from craft_cli import BaseCommand, emit
 from overrides import overrides
 
@@ -138,134 +139,7 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
         parts_lifecycle.run(self.name, parsed_args)
 
 
-class _LifecycleStepCommand(_LifecycleCommand):
-    """Lifecycle step commands."""
-
-    @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
-        super().fill_parser(parser)
-        parser.add_argument(
-            "parts",
-            metavar="part-name",
-            type=str,
-            nargs="*",
-            help="Optional list of parts to process",
-        )
-
-        group = parser.add_mutually_exclusive_group()
-        group.add_argument(
-            "--shell",
-            action="store_true",
-            help="Shell into the environment in lieu of the step to run.",
-        )
-        group.add_argument(
-            "--shell-after",
-            action="store_true",
-            help="Shell into the environment after the step has run.",
-        )
-
-
-class PullCommand(_LifecycleStepCommand):
-    """Pull parts."""
-
-    name = "pull"
-    help_msg = "Download or retrieve artifacts defined for a part"
-    overview = textwrap.dedent(
-        """
-        Download or retrieve artifacts defined for a part. If part names
-        are specified, only those parts will be pulled; otherwise, all parts
-        will be pulled.
-        """
-    )
-
-
-class BuildCommand(_LifecycleStepCommand):
-    """Build parts."""
-
-    name = "build"
-    help_msg = "Build artifacts defined for a part"
-    overview = textwrap.dedent(
-        """
-        Build artifacts defined for a part. If part names are specified, only
-        those parts will be built; otherwise, all parts will be built.
-        """
-    )
-
-
-class StageCommand(_LifecycleStepCommand):
-    """Stage parts."""
-
-    name = "stage"
-    help_msg = "Stage built artifacts into a common staging area"
-    overview = textwrap.dedent(
-        """
-        Stage built artifacts into a common staging area. If part names are
-        specified, only those parts will be staged. By default, all parts
-        will be staged.
-        """
-    )
-
-
-class PrimeCommand(_LifecycleStepCommand):
-    """Prime parts."""
-
-    name = "prime"
-    help_msg = "Prime artifacts defined for a part"
-    overview = textwrap.dedent(
-        """
-        Prepare the final payload to be packed as a snap, performing additional
-        processing and adding metadata files. If part names are specified, only
-        those parts will be primed. By default, all parts will be primed.
-        """
-    )
-
-
-class PackCommand(_LifecycleCommand):
-    """Pack the final snap payload."""
-
-    name = "pack"
-    help_msg = "Create the snap package"
-    overview = textwrap.dedent(
-        """
-        Process parts and create a snap file containing the project payload
-        with the provided metadata. If a directory is specified, pack its
-        contents instead.
-        """
-    )
-
-    @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
-        """Add arguments specific to the pack command."""
-        super().fill_parser(parser)
-        parser.add_argument(
-            "directory",
-            metavar="directory",
-            type=str,
-            nargs="?",
-            default=None,
-            help="Directory to pack",
-        )
-        parser.add_argument(
-            "-o",
-            "--output",
-            metavar="filename",
-            type=str,
-            help="Path to the resulting snap",
-        )
-
-    @overrides
-    def run(self, parsed_args):
-        """Run the command."""
-        if parsed_args.directory:
-            snap_filename = pack.pack_snap(
-                parsed_args.directory, output=parsed_args.output
-            )
-            emit.message(f"Created snap package {snap_filename}")
-        else:
-            super().run(parsed_args)
-
-
-class SnapCommand(_LifecycleCommand):
+class SnapCommand(PackCommand):
     """Legacy command to pack the final snap payload."""
 
     name = "snap"
@@ -276,31 +150,6 @@ class SnapCommand(_LifecycleCommand):
         Process parts and create a snap file containing the project payload
         with the provided metadata. This command is deprecated in favour
         of the newer 'pack' command.
-        """
-    )
-
-    @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
-        """Add arguments specific to the pack command."""
-        super().fill_parser(parser)
-        parser.add_argument(
-            "-o",
-            "--output",
-            metavar="filename",
-            type=str,
-            help="Path to the resulting snap",
-        )
-
-
-class CleanCommand(_LifecycleStepCommand):
-    """Remove part assets."""
-
-    name = "clean"
-    help_msg = "Remove a part's assets"
-    overview = textwrap.dedent(
-        """
-        Clean up artifacts belonging to parts. If no parts are specified,
-        remove the managed snap packing environment (VM or container).
         """
     )
 
