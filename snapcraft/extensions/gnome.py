@@ -155,8 +155,11 @@ class GNOME(Extension):
                 }
             },
             "layout": {
-                "/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
-                    "bind": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
+                "/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
+                    "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
+                },
+                "/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.1": {
+                    "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.1"
                 },
                 "/usr/share/xml/iso-codes": {
                     "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
@@ -239,6 +242,15 @@ class GNOME(Extension):
                             "/gobject-introspection",
                         ],
                     ),
+                },
+                {
+                    "GI_TYPELIB_PATH": prepend_to_env(
+                        "GI_TYPELIB_PATH",
+                        [
+                            f"/snap/{sdk_snap}/current/usr/lib/girepository-1.0",
+                            f"/snap/{sdk_snap}/usr/lib/$CRAFT_ARCH_TRIPLET/girepository-1.0",
+                        ],
+                    )
                 },
             ],
         }
