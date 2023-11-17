@@ -251,6 +251,7 @@ classmethod-decorators = ["pydantic.validator"]
     "S103", # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
     "S108", # Allow Probable insecure usage of temporary file or directory
     "PLR0913",  # Allow many arguments for test functions
+    "PLR2004",  # Allow magic values in tests
     "SLF",  # Allow accessing private members in tests
 ]
 # isort leaves init files alone by default, this makes ruff ignore them too.
