@@ -202,6 +202,7 @@ The following architectures are supported by Launchpad for remote building.
 * arm64
 * armhf
 * ppc64el
+* riscv64
 * s390x
 
 Environment variables and command line arguments
