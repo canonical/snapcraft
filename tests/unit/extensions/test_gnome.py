@@ -93,8 +93,11 @@ def test_get_root_snippet(gnome_extension):
             }
         },
         "layout": {
-            "/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
-                "bind": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
+            "/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
+                "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
+            },
+            "/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.1": {
+                "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.1"
             },
             "/usr/share/xml/iso-codes": {
                 "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
@@ -141,8 +144,11 @@ def test_get_root_snippet_with_external_sdk(gnome_extension_with_build_snap):
             }
         },
         "layout": {
-            "/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
-                "bind": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
+            "/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
+                "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
+            },
+            "/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.1": {
+                "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.1"
             },
             "/usr/share/xml/iso-codes": {
                 "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
@@ -249,6 +255,15 @@ class TestGetPartSnippet:
                     )
                     + "${PYTHONPATH:+:$PYTHONPATH}"
                 },
+                {
+                    "GI_TYPELIB_PATH": ":".join(
+                        [
+                            "/snap/gnome-42-2204-sdk/current/usr/lib/girepository-1.0",
+                            "/snap/gnome-42-2204-sdk/usr/lib/$CRAFT_ARCH_TRIPLET/girepository-1.0",
+                        ]
+                    )
+                    + "${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
+                },
             ]
         }
 
@@ -311,6 +326,15 @@ def test_get_part_snippet_with_external_sdk(gnome_extension_with_build_snap):
                     ]
                 )
                 + "${PYTHONPATH:+:$PYTHONPATH}"
+            },
+            {
+                "GI_TYPELIB_PATH": ":".join(
+                    [
+                        "/snap/gnome-44-2204-sdk/current/usr/lib/girepository-1.0",
+                        "/snap/gnome-44-2204-sdk/usr/lib/$CRAFT_ARCH_TRIPLET/girepository-1.0",
+                    ]
+                )
+                + "${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
             },
         ]
     }
