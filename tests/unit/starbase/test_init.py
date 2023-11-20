@@ -40,5 +40,5 @@ def test_hello_people(mocker):
         [
             mock.call("Hello *craft team!"),
             mock.call("Hello people!"),
-        ]
+        ],
     )

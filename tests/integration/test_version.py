@@ -31,7 +31,10 @@ def _repo_has_version_tag() -> bool:
         "*[^0-9.]*",
     ]
     output = subprocess.run(
-        git_describe_command, check=True, capture_output=True, text=True
+        git_describe_command,
+        check=True,
+        capture_output=True,
+        text=True,
     ).stdout.rstrip("\n")
 
     # match on 'X.Y.Z-<commits since tag>-g<hash>'
@@ -39,7 +42,8 @@ def _repo_has_version_tag() -> bool:
 
 
 @pytest.mark.skipif(
-    _repo_has_version_tag(), reason="Skipping because project was versioned from a tag."
+    _repo_has_version_tag(),
+    reason="Skipping because project was versioned from a tag.",
 )
 def test_version_without_tags(project_main_module):
     """Validate version format when no valid tag are present."""

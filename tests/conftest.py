@@ -31,6 +31,6 @@ def project_main_module() -> types.ModuleType:
         main_module = starcraft
     except ImportError:
         pytest.fail(
-            "Failed to import the project's main module: check if it needs updating"
+            "Failed to import the project's main module: check if it needs updating",
         )
     return main_module

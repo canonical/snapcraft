@@ -166,40 +166,8 @@ select = [  # Base linting rule selections.
     "UP",  # Pyupgrade - note that some of are excluded below due to Python versions
     "YTT",  # flake8-2020: Misuse of `sys.version` and `sys.version_info`
     "ANN",  # Type annotations.
-    "BLE",  # Do not catch blind exceptions
-    "FBT",  # Disallow boolean positional arguments (make them keyword-only)
-    "B0",  # Common mistakes and typos.
-    "A",  # Shadowing built-ins.
-    "C4", # Encourage comprehensions, which tend to be faster than alternatives.
-    "T10",  # Don't call the debugger in production code
-    "ISC",  # Implicit string concatenation that can cause subtle issues
-    "ICN",  # Only use common conventions for import aliases.
-    "INP",  # Implicit namespace packages
-    "PYI",  # Linting for type stubs.
-    "PT",  # Pytest
-    "Q",  # Consistent quotations
-    "RSE",  # Errors on pytest raises.
-    "RET",  # Simpler logic after return, raise, continue or break
-    "SLF",  # Prevent accessing private class members.
-    "SIM",  # Code simplification
-    "TCH004",  # Remove imports from type-checking guard blocks if used at runtime
-    "TCH005",  # Delete empty type-checking blocks
-    "ARG",  # Unused arguments
-    "PTH",  # Migrate to pathlib
-    "ERA",  # Don't check in commented out code
-    "PGH",  # Pygrep hooks
-    "PL",  # Pylint
-    "TRY",  # Cleaner try/except,
-]
-extend-select = [
-    # Pyupgrade: https://github.com/charliermarsh/ruff#pyupgrade-up
-    "UP00", "UP01", "UP02", "UP030", "UP032", "UP033",
-    # "UP034",  # Very new, not yet enabled in ruff 0.0.227
-    # Annotations: https://github.com/charliermarsh/ruff#flake8-annotations-ann
-    "ANN0",  # Type annotations for arguments other than `self` and `cls`
-    "ANN2",  # Return type annotations
-    "B026",  # Keyword arguments must come after starred arguments
-    # flake8-bandit: security testing. https://github.com/charliermarsh/ruff#flake8-bandit-s
+    "ASYNC",  # Catching blocking calls in async functions
+    # flake8-bandit: security testing. https://docs.astral.sh/ruff/rules/#flake8-bandit-s
     # https://bandit.readthedocs.io/en/latest/plugins/index.html#complete-test-plugin-listing
     "S101", "S102",  # assert or exec
     "S103", "S108",  # File permissions and tempfiles - use #noqa to silence when appropriate.
@@ -208,13 +176,55 @@ extend-select = [
     "S110",  # try-except-pass (use contextlib.suppress instead)
     "S113",  # Requests calls without timeouts
     "S3",  # Serialising, deserialising, hashing, crypto, etc.
-    "S506",  # Unsafe YAML load
-    "S508", "S509",  # Insecure SNMP
+    "S5",  # Unsafe cryptography or YAML loading.
+    "S602",  # Subprocess call with shell=true
     "S701",  # jinja2 templates without autoescape
+    "BLE",  # Do not catch blind exceptions
+    "FBT",  # Disallow boolean positional arguments (make them keyword-only)
+    "B0",  # Common mistakes and typos.
+    "A",  # Shadowing built-ins.
+    "COM",  # Trailing commas
+    "C4", # Encourage comprehensions, which tend to be faster than alternatives.
+    "T10",  # Don't call the debugger in production code
+    "ISC",  # Implicit string concatenation that can cause subtle issues
+    "ICN",  # Only use common conventions for import aliases.
+    "INP",  # Implicit namespace packages
+    # flake8-pie: miscellaneous linters (enabled individually because they're not really related)
+    "PIE790",  # Unnecessary pass statement
+    "PIE794",  # Multiple definitions of class field
+    "PIE796",  # Duplicate value in an enum (reasonable to noqa for backwards compatibility)
+    "PIE804",  # Don't use a dict with unnecessary kwargs
+    "PIE807",  # prefer `list` over `lambda: []`
+    "PIE810",  # Use a tuple rather than multiple calls. E.g. `mystr.startswith(("Hi", "Hello"))`
+    "PYI",  # Linting for type stubs.
+    "PT",  # Pytest
+    "Q",  # Consistent quotations
+    "RSE",  # Errors on pytest raises.
+    "RET",  # Simpler logic after return, raise, continue or break
+    "SLF",  # Prevent accessing private class members.
+    "SIM",  # Code simplification
+    "TID",  # Tidy imports
+    # The team have chosen to only use type-checking blocks when necessary to prevent circular imports.
+    # As such, the only enabled type-checking checks are those that warn of an import that needs to be
+    # removed from a type-checking block.
+    "TCH004",  # Remove imports from type-checking guard blocks if used at runtime
+    "TCH005",  # Delete empty type-checking blocks
+    "ARG",  # Unused arguments
+    "PTH",  # Migrate to pathlib
+    "FIX",  # All TODOs, FIXMEs, etc. should be turned into issues instead.
+    "ERA",  # Don't check in commented out code
+    "PGH",  # Pygrep hooks
+    "PL",  # Pylint
+    "TRY",  # Cleaner try/except,
+    "FLY",  # Detect things that would be better as f-strings.
+    "PERF",  # Catch things that can slow down the application like unnecessary casts to list.
     "RUF001", "RUF002", "RUF003",  # Ambiguous unicode characters
     "RUF005",  # Encourages unpacking rather than concatenation
     "RUF008",  # Do not use mutable default values for dataclass attributes
+    "RUF011",  # Don't use static keys in dict comprehensions.
+    "RUF013",  # Prohibit implicit Optionals (PEP 484)
     "RUF100",  # #noqa directive that doesn't flag anything
+    "RUF200",  # If ruff fails to parse pyproject.toml...
 ]
 ignore = [
     "ANN10",  # Type annotations for `self` and `cls`
@@ -241,18 +251,21 @@ max-args = 8
 
 [tool.ruff.pep8-naming]
 # Allow Pydantic's `@validator` decorator to trigger class method treatment.
-classmethod-decorators = ["pydantic.validator"]
+classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
 
 [tool.ruff.per-file-ignores]
 "tests/**.py" = [  # Some things we want for the moin project are unnecessary in tests.
     "D",  # Ignore docstring rules in tests
-    "ANN", # Ignore type annotations in tests
+    "ANN",  # Ignore type annotations in tests
+    "ARG",  # Allow unused arguments in tests (e.g. for fake functions/methods/classes)
     "S101",  # Allow assertions in tests
     "S103", # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
     "S108", # Allow Probable insecure usage of temporary file or directory
-    "PLR0913",  # Allow many arguments for test functions
+    "PLR0913",  # Allow many arguments for test functions (useful if we need many fixtures)
     "PLR2004",  # Allow magic values in tests
-    "SLF",  # Allow accessing private members in tests
+    "SLF",  # Allow accessing private members from tests.
 ]
-# isort leaves init files alone by default, this makes ruff ignore them too.
-"__init__.py" = ["I001"]
+"__init__.py" = [
+    "I001",  # isort leaves init files alone by default, this makes ruff ignore them too.
+    "F401",  # Allows unused imports in __init__ files.
+]
