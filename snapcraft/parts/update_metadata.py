@@ -137,7 +137,7 @@ def _update_project_app_desktop_file(
             return
 
         if project.apps[app_name].desktop:
-            emit.debug("app {app_name!r} already declares a desktop file")
+            emit.debug(f"app {app_name!r} already declares a desktop file")
             return
 
         emit.debug(
