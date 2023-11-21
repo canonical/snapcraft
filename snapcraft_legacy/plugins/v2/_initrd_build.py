@@ -611,7 +611,8 @@ def get_build_commands(
             kernel_image_target=kernel_image_target,
             initrd_ko_use_workaround=initrd_ko_use_workaround,
             initrd_default_compression=initrd_default_compression,
-            initrd_include_extra_modules_conf=initrd_include_extra_modules_conf,
+            initrd_include_extra_modules_conf=initrd_include_extra_modules_conf
+            and (bool(initrd_modules) or bool(initrd_configured_modules)),
             initrd_tool_pass_root=initrd_tool_pass_root,
             install_dir=install_dir,
             stage_dir=stage_dir,
