@@ -244,6 +244,7 @@ class TestPluginInitrd:
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
+        assert not _is_sub_array(build_commands, _initrd_tool_cp_modules_conf_cmd)
         assert _is_sub_array(build_commands, _create_inird_cmd)
 
     def test_check_get_build_command_defconfig_configs_no_firmware_lz4(
@@ -287,6 +288,7 @@ class TestPluginInitrd:
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert _is_sub_array(build_commands, _update_initrd_compression_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_cp_modules_conf_cmd)
         assert _is_sub_array(build_commands, _create_inird_stage_firmware_cmd)
 
     def test_check_get_build_command_unknown_compiler(
@@ -322,6 +324,7 @@ class TestPluginInitrd:
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
+        assert not _is_sub_array(build_commands, _initrd_tool_cp_modules_conf_cmd)
         assert _is_sub_array(build_commands, _create_inird_cmd)
 
     def test_check_get_build_command_config_flavour_configs(
@@ -362,6 +365,7 @@ class TestPluginInitrd:
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert _is_sub_array(build_commands, _update_initrd_compression_gz_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_cp_modules_conf_cmd)
         assert _is_sub_array(build_commands, _create_inird_cmd)
         assert _is_sub_array(build_commands, _create_efi_image_cmd)
 
@@ -399,6 +403,7 @@ class TestPluginInitrd:
         assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_cp_modules_conf_cmd)
         assert _is_sub_array(build_commands, _create_inird_cmd)
 
     @pytest.mark.parametrize("arch", ["aarch64", "armv7l", "riscv64", "x86_64"])
@@ -927,6 +932,9 @@ _initrd_tool_workaroud_cmd = [
         ],
     ),
     "done",
+]
+
+_initrd_tool_cp_modules_conf_cmd = [
     " ".join(
         [
             "cp",
