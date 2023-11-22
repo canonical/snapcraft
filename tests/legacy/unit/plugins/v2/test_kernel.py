@@ -50,8 +50,8 @@ class TestPluginKernel(TestCase):
 
     def _setup_test(
         self,
-        kernelkdefconfig=["defconfig"],
-        kernelkconfigflavour=None,
+        kernelkdefconfig=None,
+        kernelkconfigflavour="generic",
         kernelkconfigs=None,
         kernelimagetarget="Image.gz",
         kernelenablezfssupport=False,
@@ -101,7 +101,7 @@ class TestPluginKernel(TestCase):
                         "type": "array",
                         "default": [],
                     },
-                    "kernel-kconfigflavour": {"type": "string", "default": "defconfig"},
+                    "kernel-kconfigflavour": {"type": "string", "default": "generic"},
                     "kernel-kconfigs": {
                         "type": "array",
                         "minitems": 1,
@@ -211,8 +211,8 @@ class TestPluginKernel(TestCase):
         plugin = self._setup_test()
         opt = plugin.options
 
-        self.assertEqual(opt.kernel_kdefconfig, ["defconfig"])
-        self.assertEqual(opt.kernel_kconfigflavour, None)
+        self.assertEqual(opt.kernel_kdefconfig, None)
+        self.assertEqual(opt.kernel_kconfigflavour, "generic")
         self.assertEqual(opt.kernel_kconfigs, None)
         self.assertEqual(opt.kernel_image_target, "Image.gz")
         self.assertFalse(opt.kernel_enable_zfs_support)
@@ -226,7 +226,7 @@ class TestPluginKernel(TestCase):
         opt = plugin.options
 
         self.assertEqual(opt.kernel_kdefconfig, ["snappy_defconfig"])
-        self.assertIs(opt.kernel_kconfigflavour, None)
+        self.assertIs(opt.kernel_kconfigflavour, "generic")
         self.assertIs(opt.kernel_kconfigs, None)
         self.assertEqual(opt.kernel_image_target, "Image")
         self.assertFalse(opt.kernel_enable_zfs_support)
@@ -240,7 +240,7 @@ class TestPluginKernel(TestCase):
         opt = plugin.options
 
         self.assertEqual(opt.kernel_kdefconfig, ["snappy_defconfig"])
-        self.assertIs(opt.kernel_kconfigflavour, None)
+        self.assertIs(opt.kernel_kconfigflavour, "generic")
         self.assertIs(opt.kernel_kconfigs, None)
         self.assertEqual(
             opt.kernel_image_target, {"arm64": "Image", "armhf": "Image.gz"}
@@ -290,7 +290,34 @@ class TestPluginKernel(TestCase):
         assert _is_sub_array(build_commands, _determine_kernel_src)
         assert not _is_sub_array(build_commands, _clone_zfs_cmd)
         assert _is_sub_array(build_commands, _clean_old_build_cmd)
-        assert _is_sub_array(build_commands, _prepare_config_cmd)
+        assert _is_sub_array(build_commands, _prepare_config_flavour_generic_cmd)
+        assert _is_sub_array(build_commands, _remake_old_config_cmd)
+        assert _check_config in build_commands
+        if platform.machine() == "x86_64":
+            assert _is_sub_array(build_commands, _build_kernel_x86_cmd)
+            assert _is_sub_array(build_commands, _install_kernel_x86_cmd)
+        else:
+            assert _is_sub_array(build_commands, _build_kernel_cmd)
+            assert _is_sub_array(build_commands, _install_kernel_cmd)
+
+        assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
+        assert _is_sub_array(build_commands, _install_config_cmd)
+        assert not _is_sub_array(build_commands, _build_zfs_cmd)
+        assert not _is_sub_array(build_commands, _build_perf_cmd)
+        assert _is_sub_array(build_commands, _finalize_install_cmd)
+
+    def test_check_get_build_command_kdeconfig(self):
+        plugin = self._setup_test(
+            kernelkdefconfig=["snappy_defconfig"],
+        )
+
+        # we need to get build environment
+        plugin.get_build_environment()
+        build_commands = plugin.get_build_commands()
+        assert _is_sub_array(build_commands, _determine_kernel_src)
+        assert not _is_sub_array(build_commands, _clone_zfs_cmd)
+        assert _is_sub_array(build_commands, _clean_old_build_cmd)
+        assert _is_sub_array(build_commands, _prepare_snappy_config_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_cmd)
         assert _check_config in build_commands
         if platform.machine() == "x86_64":
@@ -320,7 +347,7 @@ class TestPluginKernel(TestCase):
         assert _is_sub_array(build_commands, _determine_kernel_src)
         assert _is_sub_array(build_commands, _clone_zfs_cmd)
         assert _is_sub_array(build_commands, _clean_old_build_cmd)
-        assert _is_sub_array(build_commands, _prepare_config_flavour_cmd)
+        assert _is_sub_array(build_commands, _prepare_config_flavour_raspi_cmd)
         assert _is_sub_array(build_commands, _prepare_config_extra_config_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_cmd)
         assert _check_config in build_commands
@@ -353,7 +380,7 @@ class TestPluginKernel(TestCase):
         assert _is_sub_array(build_commands, _determine_kernel_src)
         assert _is_sub_array(build_commands, _clone_zfs_cmd)
         assert _is_sub_array(build_commands, _clean_old_build_cmd)
-        assert _is_sub_array(build_commands, _prepare_config_flavour_cmd)
+        assert _is_sub_array(build_commands, _prepare_config_flavour_raspi_cmd)
         assert _is_sub_array(build_commands, _prepare_config_extra_config_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_armhf_cmd)
         assert _check_config in build_commands
@@ -582,23 +609,14 @@ _clean_old_build_cmd = [
         """
     )
 ]
-
-
-_prepare_config_cmd = [
+_prepare_snappy_config_cmd = [
     'echo "Preparing config..."',
     "if [ ! -e ${SNAPCRAFT_PART_BUILD}/.config ]; then",
-    "\tmake -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} defconfig",
+    "\tmake -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} snappy_defconfig",
     "fi",
 ]
 
-_prepare_config_custom_cc_cmd = [
-    'echo "Preparing config..."',
-    "if [ ! -e ${SNAPCRAFT_PART_BUILD}/.config ]; then",
-    '\tmake -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} CC="my-gcc" defconfig',
-    "fi",
-]
-
-_prepare_config_flavour_cmd = [
+_prepare_config_flavour_raspi_cmd = [
     'echo "Preparing config..."',
     "if [ ! -e ${SNAPCRAFT_PART_BUILD}/.config ]; then",
     textwrap.dedent(
@@ -611,6 +629,31 @@ _prepare_config_flavour_cmd = [
 
 		# Pick the right kernel .config for the target arch and flavour
 		ubuntuconfig=${KERNEL_SRC}/CONFIGS/${DEB_ARCH}-config.flavour.raspi
+		cat ${ubuntuconfig} > ${SNAPCRAFT_PART_BUILD}/.config
+
+		# Clean up kernel source directory
+		pushd ${KERNEL_SRC}
+		fakeroot debian/rules clean
+		rm -rf CONFIGS/
+		popd
+	fi"""
+    ),
+    "fi",
+]
+
+_prepare_config_flavour_generic_cmd = [
+    'echo "Preparing config..."',
+    "if [ ! -e ${SNAPCRAFT_PART_BUILD}/.config ]; then",
+    textwrap.dedent(
+        """	echo "Assembling Ubuntu config..."
+	if [ -f ${KERNEL_SRC}/debian/rules ] && [ -x ${KERNEL_SRC}/debian/rules ]; then
+		# Generate Ubuntu kernel configs
+		pushd ${KERNEL_SRC}
+		fakeroot debian/rules clean genconfigs || true
+		popd
+
+		# Pick the right kernel .config for the target arch and flavour
+		ubuntuconfig=${KERNEL_SRC}/CONFIGS/${DEB_ARCH}-config.flavour.generic
 		cat ${ubuntuconfig} > ${SNAPCRAFT_PART_BUILD}/.config
 
 		# Clean up kernel source directory
