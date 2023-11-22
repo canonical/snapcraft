@@ -271,7 +271,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _determine_kernel_src)
         assert not _is_sub_array(build_commands, _clone_zfs_cmd)
         assert _is_sub_array(build_commands, _clean_old_build_cmd)
-        assert _is_sub_array(build_commands, _prepare_config_flavour_generic_cmd)
+        assert _is_sub_array(build_commands, _prepare_snappy_config_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_cmd)
         assert _check_config in build_commands
         if platform.machine() == "x86_64":
@@ -576,10 +576,10 @@ _clean_old_build_cmd = [
     )
 ]
 
-_prepare_config_cmd = [
+_prepare_snappy_config_cmd = [
     'echo "Preparing config..."',
     "if [ ! -e ${CRAFT_PART_BUILD}/.config ]; then",
-    "\tmake -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} defconfig",
+    "\tmake -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} snappy_defconfig",
     "fi",
 ]
 
