@@ -283,7 +283,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _determine_kernel_src)
         assert not _is_sub_array(build_commands, _clone_zfs_cmd)
         assert _is_sub_array(build_commands, _clean_old_build_cmd)
-        assert _is_sub_array(build_commands, _prepare_config_flavour_generic_cmd)
+        assert _is_sub_array(build_commands, _prepare_snappy_config_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_cmd)
         assert _check_config in build_commands
         if platform.machine() == "x86_64":
@@ -384,7 +384,12 @@ class TestPluginKernel:
 
         assert str(error.value) == "unknown deb architecture"
 
-    def test_check_new_config_good(self, setup_method_fixture, new_dir, caplog):
+    def test_check_new_config_good(
+        self,
+        setup_method_fixture,  # pylint: disable=unused-argument
+        new_dir,  # pylint: disable=unused-argument
+        caplog,
+    ):
         # create test config
         with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8") as config_file:
             config_file.write(
@@ -403,7 +408,12 @@ class TestPluginKernel:
                 check_new_config(config_path=config_file.name)
             assert caplog.text == ""
 
-    def test_check_new_config_missing(self, setup_method_fixture, new_dir, caplog):
+    def test_check_new_config_missing(
+        self,
+        setup_method_fixture,  # pylint: disable=unused-argument
+        new_dir,  # pylint: disable=unused-argument
+        caplog,
+    ):
         # create test config
         with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8") as config_file:
             config_file.write(
@@ -442,7 +452,10 @@ class TestPluginKernel:
             assert "missing options:\nCONFIG_SQUASHFS\n" in logs[1]
 
     def test_check_new_config_squash_module_missing(
-        self, setup_method_fixture, new_dir, caplog
+        self,
+        setup_method_fixture,  # pylint: disable=unused-argument
+        new_dir,  # pylint: disable=unused-argument
+        caplog,
     ):
         # create test config
         with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8") as config_file:
@@ -474,7 +487,9 @@ class TestPluginKernel:
             assert "adding\nthe corresponding module to initrd:" in logs[0]
             assert "CONFIG_SQUASHFS" in logs[0]
 
-    def test_external_check_new_config(self, setup_method_fixture):
+    def test_external_check_new_config(
+        self, setup_method_fixture  # pylint: disable=unused-argument
+    ):
         # create test config
         with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8") as config_file:
             config_file.write(
@@ -506,7 +521,11 @@ class TestPluginKernel:
             out = proc.stdout.decode()
             assert "Checking created config...\n" in out
 
-    def test_check_new_config_squash_missing_file(self, setup_method_fixture, new_dir):
+    def test_check_new_config_squash_missing_file(
+        self,
+        setup_method_fixture,  # pylint: disable=unused-argument
+        new_dir,  # pylint: disable=unused-argument
+    ):
         # run with invalid file
         e = ""
         try:
@@ -588,10 +607,10 @@ _clean_old_build_cmd = [
     )
 ]
 
-_prepare_config_cmd = [
+_prepare_snappy_config_cmd = [
     'echo "Preparing config..."',
     "if [ ! -e ${CRAFT_PART_BUILD}/.config ]; then",
-    "\tmake -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} defconfig",
+    "\tmake -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} snappy_defconfig",
     "fi",
 ]
 
