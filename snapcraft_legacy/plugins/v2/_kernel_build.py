@@ -129,7 +129,12 @@ def _do_base_config_cmd(
 
     # if kconfigflavour is provided, assemble the ubuntu.flavour config
     # otherwise use defconfig to seed the base config
-    if config_flavour:
+    if defconfig:
+        logger.info("Using defconfig: %s", defconfig)
+        make_cmd = make_cmd.copy()
+        make_cmd[1] = "-j1"  # FIXME: make this more robust
+        cmd.append(f"\t{' '.join(make_cmd + defconfig)}")
+    else:
         logger.info("Using ubuntu config flavour %s", config_flavour)
         conf_cmd = textwrap.dedent(
             """	echo "Assembling Ubuntu config..."
@@ -151,10 +156,6 @@ def _do_base_config_cmd(
 	fi""".format(config_flavour=config_flavour, dest_dir=dest_dir)
         )
         cmd.extend([conf_cmd])
-    else:
-        make_cmd = make_cmd.copy()
-        make_cmd[1] = "-j1"  # FIXME: make this more robust
-        cmd.append(f"\t{' '.join(make_cmd + defconfig)}")
 
     cmd.append("fi")
 
