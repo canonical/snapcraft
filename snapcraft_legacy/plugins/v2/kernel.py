@@ -92,7 +92,7 @@ class KernelPlugin(PluginV2):
             "additionalProperties": False,
             "properties": {
                 "kernel-kdefconfig": {"type": "array", "default": []},
-                "kernel-kconfigflavour": {"type": "string", "default": "defconfig"},
+                "kernel-kconfigflavour": {"type": "string", "default": "generic"},
                 "kernel-kconfigs": {
                     "type": "array",
                     "minitems": 1,
