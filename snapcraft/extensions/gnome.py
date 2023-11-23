@@ -248,7 +248,7 @@ class GNOME(Extension):
                         "GI_TYPELIB_PATH",
                         [
                             f"/snap/{sdk_snap}/current/usr/lib/girepository-1.0",
-                            f"/snap/{sdk_snap}/usr/lib/$CRAFT_ARCH_TRIPLET/girepository-1.0",
+                            f"/snap/{sdk_snap}/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0",
                         ],
                     )
                 },
