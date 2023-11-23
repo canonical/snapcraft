@@ -331,7 +331,7 @@ def test_get_part_snippet_with_external_sdk(gnome_extension_with_build_snap):
                 "GI_TYPELIB_PATH": ":".join(
                     [
                         "/snap/gnome-44-2204-sdk/current/usr/lib/girepository-1.0",
-                        "/snap/gnome-44-2204-sdk/usr/lib/$CRAFT_ARCH_TRIPLET/girepository-1.0",
+                        "/snap/gnome-44-2204-sdk/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0",
                     ]
                 )
                 + "${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
