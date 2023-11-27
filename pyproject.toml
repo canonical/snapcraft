@@ -19,19 +19,19 @@ starcraft-hello = "starcraft:hello"
 dev = [
     "build",
     "coverage[toml]==7.3.2",
-    "pytest==7.4.2",
+    "pytest==7.4.3",
     "pytest-cov==4.1.0",
     "pytest-mock==3.12.0",
 ]
 lint = [
-    "black==23.10.0",
+    "black==23.11.0",
     "codespell[toml]==2.2.6",
-    "ruff==0.1.1",
-    "yamllint==1.32.0"
+    "ruff==0.1.6",
+    "yamllint==1.33.0"
 ]
 types = [
-    "mypy[reports]==1.6.1",
-    "pyright==1.1.332",
+    "mypy[reports]==1.7.1",
+    "pyright==1.1.337",
 ]
 docs = [
     "furo==2023.9.10",
