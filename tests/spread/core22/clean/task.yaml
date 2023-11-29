@@ -37,7 +37,7 @@ execute: |
   grep "Staging part1" < output.txt
   grep "Skipping stage for part2 (already ran)" < output.txt
   grep "Priming part1" < output.txt
-  grep "Skip prime for part2 (already ran)" < output.txt
+  grep "Skipping prime for part2 (already ran)" < output.txt
 
   snapcraft clean
   if lxc --project=snapcraft list | grep snapcraft-clean; then

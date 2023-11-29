@@ -27,7 +27,7 @@ from snapcraft_legacy.project import Project
 from . import echo
 from ._options import PromptOption, get_project
 
-_SUPPORTED_ARCHS = ["amd64", "arm64", "armhf", "i386", "ppc64el", "s390x"]
+_SUPPORTED_ARCHS = ["amd64", "arm64", "armhf", "i386", "ppc64el", "riscv64", "s390x"]
 
 
 @click.group()
@@ -113,7 +113,7 @@ def remote_build(
     Examples:
         snapcraft remote-build
         snapcraft remote-build --build-on=amd64
-        snapcraft remote-build --build-on=amd64,arm64,armhf,i386,ppc64el,s390x
+        snapcraft remote-build --build-on=amd64,arm64,armhf,i386,ppc64el,riscv64,s390x
         snapcraft remote-build --recover
         snapcraft remote-build --recover --build-id snapcraft-my-snap-b98a6bd3
         snapcraft remote-build --status
