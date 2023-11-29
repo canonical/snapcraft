@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Unimplemented commands that should be sent to  instead."""
+"""Unimplemented commands that should be sent to snapcraft's cli handler instead."""
 
 import argparse
 from typing import final

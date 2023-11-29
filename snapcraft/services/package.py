@@ -37,7 +37,9 @@ class Package(PackageService):
         :returns: A list of paths to created packages.
         """
         # TODO
-        return []
+        raise NotImplementedError(
+            "Packing using the package service not yet implemented."
+        )
 
     @override
     def write_metadata(self, path: pathlib.Path) -> None:
@@ -46,6 +48,7 @@ class Package(PackageService):
         :param path: The path to the prime directory.
         """
         # TODO
+        raise NotImplementedError("Writing metadata not yet implemented.")
 
     @property
     def metadata(self) -> models.BaseMetadata:

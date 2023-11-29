@@ -14,10 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 import pydantic
 import pytest
+from craft_application.models import UniqueStrList
 
 from snapcraft import errors
 from snapcraft.models import (
@@ -100,7 +101,8 @@ class TestProjectDefaults:
         assert project.adopt_info is None
         assert project.architectures == [
             Architecture(
-                build_on=[get_host_architecture()], build_for=[get_host_architecture()]
+                build_on=cast(UniqueStrList, [get_host_architecture()]),
+                build_for=cast(UniqueStrList, [get_host_architecture()]),
             )
         ]
         assert project.ua_services is None

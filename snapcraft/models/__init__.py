@@ -26,7 +26,6 @@ from .project import (
     Lint,
     Project,
     Socket,
-    UniqueStrList,
 )
 
 __all__ = [
@@ -40,5 +39,4 @@ __all__ = [
     "Lint",
     "Project",
     "Socket",
-    "UniqueStrList",
 ]

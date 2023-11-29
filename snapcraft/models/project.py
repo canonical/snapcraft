@@ -17,15 +17,15 @@
 """Project file definition and helpers."""
 
 import re
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union, cast
 
 import pydantic
 from craft_application import models
-from craft_application.models import BuildInfo
+from craft_application.models import BuildInfo, UniqueStrList
 from craft_archives import repo
 from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
-from pydantic import PrivateAttr, conlist, constr
+from pydantic import PrivateAttr, constr
 
 from snapcraft import parts, utils
 from snapcraft.elf.elf_utils import get_arch_triplet
@@ -41,16 +41,10 @@ from snapcraft.utils import (
 # fmt: off
 if TYPE_CHECKING:
     ProjectName = str
-    ProjectSummary = str
-    ProjectTitle = str
     ProjectVersion = str
-    UniqueStrList = List[str]
 else:
     ProjectName = constr(max_length=40)
-    ProjectSummary = constr(max_length=78)
-    ProjectTitle = constr(max_length=40)
     ProjectVersion = constr(max_length=32, strict=True)
-    UniqueStrList = conlist(str, unique_items=True)
 # fmt: on
 
 
@@ -122,7 +116,8 @@ def _expand_architectures(architectures):
         # convert strings into Architecture objects
         if isinstance(architecture, str):
             architectures[index] = Architecture(
-                build_on=[architecture], build_for=[architecture]
+                build_on=cast(UniqueStrList, [architecture]),
+                build_for=cast(UniqueStrList, [architecture]),
             )
         elif isinstance(architecture, Architecture):
             # convert strings to lists
@@ -255,8 +250,8 @@ class App(models.CraftBaseModel):
     restart_delay: Optional[str]
     timer: Optional[str]
     daemon: Optional[Literal["simple", "forking", "oneshot", "notify", "dbus"]]
-    after: UniqueStrList = []
-    before: UniqueStrList = []
+    after: UniqueStrList = cast(UniqueStrList, [])
+    before: UniqueStrList = cast(UniqueStrList, [])
     refresh_mode: Optional[Literal["endure", "restart"]]
     stop_mode: Optional[
         Literal[
@@ -405,6 +400,7 @@ class Project(models.Project):
     build_base: Optional[str]
     compression: Literal["lzo", "xz"] = "xz"
     # TODO: ensure we have a test for version being retrieved using adopt-info
+    # snapcraft's `version` is more general than craft-application
     version: Optional[ProjectVersion]  # type: ignore[assignment]
     donation: Optional[Union[str, UniqueStrList]]
     # snapcraft's `source_code` is more general than craft-application
@@ -418,7 +414,7 @@ class Project(models.Project):
     ]
     grade: Optional[Literal["stable", "devel"]]
     architectures: List[Union[str, Architecture]] = [get_host_architecture()]
-    assumes: UniqueStrList = []
+    assumes: UniqueStrList = cast(UniqueStrList, [])
     package_repositories: List[Dict[str, Any]] = []  # handled by repo
     hooks: Optional[Dict[str, Hook]]
     passthrough: Optional[Dict[str, Any]]

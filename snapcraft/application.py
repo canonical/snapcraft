@@ -18,7 +18,6 @@
 
 from __future__ import annotations
 
-import logging
 import os
 import signal
 import sys
@@ -138,14 +137,9 @@ class Snapcraft(Application):
 
 def main() -> int:
     """Run craft-application based snapcraft with classic fallback."""
-    for lib_name in (
-        "craft_parts",
-        "craft_providers",
-        "craft_store",
-        "snapcraft.remote",
-    ):
-        logger = logging.getLogger(lib_name)
-        logger.setLevel(logging.DEBUG)
+    util.setup_loggers(
+        "craft_parts", "craft_providers", "craft_store", "snapcraft.remote"
+    )
 
     snapcraft_services = services.SnapcraftServiceFactory(app=APP_METADATA)
 

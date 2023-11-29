@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Set, Union, cast
 
 import yaml
+from craft_application.models import UniqueStrList
 from craft_cli import emit
 from pydantic import Extra, ValidationError, validator
 from pydantic_yaml import YamlModel
@@ -178,18 +179,18 @@ class ContentSlot(_SnapMetadataModel):
 class Links(_SnapMetadataModel):
     """Metadata links used in snaps."""
 
-    contact: Optional[models.UniqueStrList]
-    donation: Optional[models.UniqueStrList]
-    issues: Optional[models.UniqueStrList]
-    source_code: Optional[models.UniqueStrList]
-    website: Optional[models.UniqueStrList]
+    contact: Optional[UniqueStrList]
+    donation: Optional[UniqueStrList]
+    issues: Optional[UniqueStrList]
+    source_code: Optional[UniqueStrList]
+    website: Optional[UniqueStrList]
 
     @staticmethod
     def _normalize_value(
-        value: Optional[Union[str, models.UniqueStrList]]
-    ) -> Optional[List[str]]:
+        value: Optional[Union[str, UniqueStrList]]
+    ) -> Optional[UniqueStrList]:
         if isinstance(value, str):
-            value = [value]
+            value = cast(UniqueStrList, [value])
         return value
 
     @classmethod

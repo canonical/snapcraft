@@ -99,7 +99,7 @@ if sys.platform == "win32":
 install_requires = [
     "attrs",
     "click",
-    "craft-application@git+https://github.com/canonical/craft-application@main",
+    "craft-application",
     "craft-archives",
     "craft-cli",
     "craft-grammar",
