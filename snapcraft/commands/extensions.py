@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -27,7 +27,7 @@ from overrides import overrides
 from pydantic import BaseModel
 
 from snapcraft import extensions
-from snapcraft.parts.lifecycle import (
+from snapcraft.parts.yaml_utils import (
     apply_yaml,
     extract_parse_info,
     get_snap_project,
@@ -79,9 +79,9 @@ class ListExtensionsCommand(BaseCommand, abc.ABC):
             )
 
         # Extensions from snapcraft_legacy.
-        for extension_name in supported_extension_names():
-            extension_class = find_extension(extension_name)
-            extension_name = extension_name.replace("_", "-")
+        for _extension_name in supported_extension_names():
+            extension_class = find_extension(_extension_name)
+            extension_name = _extension_name.replace("_", "-")
             extension_bases = list(extension_class.get_supported_bases())
             if extension_name in extension_presentation:
                 extension_presentation[extension_name].bases += extension_bases

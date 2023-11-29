@@ -47,7 +47,7 @@ classifiers = [
     "Natural Language :: English",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.10",
     "Topic :: Software Development :: Build Tools",
     "Topic :: System :: Software Distribution",
 ]
@@ -82,7 +82,7 @@ dev_requires = [
     "pytest-cov",
     "pytest-mock",
     "pytest-subprocess",
-    "ruff==0.0.220",
+    "ruff~=0.1.1",
     "tox>=4.5",
     "types-PyYAML",
     "types-requests",
@@ -153,7 +153,7 @@ if sys.platform == "linux":
 if ubuntu:
     install_requires += [
         "catkin-pkg",
-        "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.0ubuntu0.20.04.6/python-apt_2.0.0ubuntu0.20.04.6.tar.xz",
+        "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz",
         "python-debian",
     ]
 

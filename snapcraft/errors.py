@@ -16,6 +16,8 @@
 
 """Snapcraft error definitions."""
 
+from typing import Optional
+
 from craft_cli import CraftError
 
 
@@ -115,6 +117,28 @@ class ProjectMissing(SnapcraftError):
 
 class LegacyFallback(Exception):
     """Fall back to legacy snapcraft implementation."""
+
+
+class MaintenanceBase(SnapcraftError):
+    """Error for bases under ESM and no longer supported in this release."""
+
+    def __init__(self, base: str) -> None:
+        channel: Optional[str] = None
+        if base == "core":
+            channel = "4.x"
+        elif base == "core18":
+            channel = "7.x"
+
+        resolution: Optional[str] = None
+        if channel:
+            resolution = f"Install from or refresh to the {channel!r} channel."
+
+        super().__init__(
+            f"{base!r} is not supported on this version of Snapcraft.",
+            resolution=resolution,
+            docs_url="https://snapcraft.io/docs/base-snaps",
+        )
+        self.base = base
 
 
 class StoreCredentialsUnauthorizedError(SnapcraftError):

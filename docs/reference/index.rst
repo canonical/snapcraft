@@ -6,6 +6,9 @@ Reference
 .. toctree::
    :maxdepth: 1
 
+   architectures
+   commands
+
 Indices and tables
 ==================
 

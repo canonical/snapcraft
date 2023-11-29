@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2020 Canonical Ltd
+# Copyright (C) 2015-2020, 2023 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,6 +17,7 @@
 import logging
 import os
 import textwrap
+from pathlib import Path
 from unittest import mock
 
 import fixtures
@@ -84,11 +85,55 @@ class ExecutionTestCase(LifecycleTestBase):
             )
         )
 
-        lifecycle.execute(steps.PULL, project_config, part_names=["part2"])
+        lifecycle.execute(steps.BUILD, project_config, part_names=["part2"])
 
         self.assertThat(
             self.fake_logger.output,
             Contains("'part2' has dependencies that need to be staged: part1"),
+        )
+
+    @mock.patch("snapcraft_legacy.repo.snaps.install_snaps")
+    def test_part_directory_variable_order(self, mock_install_build_snaps):
+        """The largest replacements should occur first.
+
+        $SNAPCRAFT_PART_SRC_WORK should be replaced before $SNAPCRAFT_PART_SRC
+        """
+        part_src = Path("parts/part1/src").absolute()
+        project_config = self.make_snapcraft_project(
+            textwrap.dedent(
+                """\
+                parts:
+                  part1:
+                    plugin: nil
+                    source: .
+                    source-subdir: foo/
+                    override-build: |
+                        cat << EOF >> $SNAPCRAFT_PART_INSTALL/part-variables.txt
+                        SNAPCRAFT_PART_SRC: $SNAPCRAFT_PART_SRC
+                        SNAPCRAFT_PART_SRC: ${SNAPCRAFT_PART_SRC}
+                        SNAPCRAFT_PART_SRC_WORK: $SNAPCRAFT_PART_SRC_WORK
+                        SNAPCRAFT_PART_SRC_WORK: ${SNAPCRAFT_PART_SRC_WORK}
+                        EOF
+                """
+            )
+        )
+
+        lifecycle.execute(steps.BUILD, project_config, part_names=["part1"])
+
+        data = Path("parts/part1/install/part-variables.txt").read_text()
+
+        self.assertThat(
+            data,
+            Equals(
+                textwrap.dedent(
+                    f"""\
+                    SNAPCRAFT_PART_SRC: {str(part_src)}
+                    SNAPCRAFT_PART_SRC: {str(part_src)}
+                    SNAPCRAFT_PART_SRC_WORK: {str(part_src)}/foo/
+                    SNAPCRAFT_PART_SRC_WORK: {str(part_src)}/foo/
+                    """
+                )
+            ),
         )
 
     @mock.patch("snapcraft_legacy.repo.snaps.install_snaps")
@@ -272,14 +317,12 @@ class ExecutionTestCase(LifecycleTestBase):
             Equals("The 'bar' and 'foo' project options appear to have changed.\n"),
         )
 
-    @mock.patch.object(snapcraft_legacy.BasePlugin, "enable_cross_compilation")
     @mock.patch("snapcraft_legacy.repo.Repo.install_build_packages")
     @mock.patch("snapcraft_legacy.repo.snaps.install_snaps")
     def test_pull_is_dirty_if_target_arch_changes(
         self,
         mock_install_build_snaps,
         mock_install_build_packages,
-        mock_enable_cross_compilation,
     ):
         # Set the option to error on dirty/outdated steps
         with snapcraft_legacy.config.CLIConfig() as cli_config:
@@ -436,7 +479,7 @@ class RecordSnapcraftYamlTestCase(LifecycleTestBase):
         expected = textwrap.dedent(
             """\
             name: test
-            base: core18
+            base: core20
             version: "1.0"
             summary: test
             description: test

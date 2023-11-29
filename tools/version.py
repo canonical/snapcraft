@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import fileinput
+import os
 import pathlib
 import subprocess
 import sys
@@ -32,12 +33,16 @@ def determine_version():
     desc = (
         subprocess.run(
             ["git", "describe", "--always", "--long"],
-            check=True,
             stdout=subprocess.PIPE,
+            check=False,
+            text=True,
         )
-        .stdout.decode()
+        .stdout
         .strip()
     )
+
+    if not desc:
+        return os.environ.get("SNAP_VERSION", "0.0.0+devel")
 
     split_desc = desc.split("-")
     assert (

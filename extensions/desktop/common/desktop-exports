@@ -1,7 +1,10 @@
 #!/bin/bash
-###############################################
-# Launcher common exports for any desktop app #
-###############################################
+###########################################################
+# Launcher common exports for any desktop app
+# This is not used with the gnome extension for
+# core22 and later, please see
+# https://github.com/snapcore/snapcraft-desktop-integration
+###########################################################
 
 # Note: We avoid using `eval` because we don't want to expand variable names
 #       in paths. For example: LD_LIBRARY_PATH paths might contain `$LIB`.
@@ -304,9 +307,6 @@ function make_user_fontconfig {
       echo "  <dir>${data_dirs_array[$i]}/fonts</dir>"
     fi
   done
-  # fix font render for modified fonts, that discussed on Snapcraft Forum:
-  # https://forum.snapcraft.io/t/snap-package-cannot-read-fonts-conf/16657
-  echo '  <include ignore_missing="yes">/etc/fonts/conf.d</include>'
   echo '  <include ignore_missing="yes">conf.d</include>'
   # We need to include a user-writable cachedir first to support
   # caching of per-user fonts.

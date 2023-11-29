@@ -25,7 +25,7 @@ from overrides import overrides
 
 from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
-_SDK_SNAP = {"core22": "kf5-5-105-qt-5-15-9-core22-sdk"}
+_SDK_SNAP = {"core22": "kf5-5-108-qt-5-15-10-core22-sdk"}
 
 
 @dataclasses.dataclass
@@ -157,7 +157,7 @@ class KDENeon(Extension):
         }
 
     @overrides
-    def get_part_snippet(self) -> Dict[str, Any]:
+    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
         sdk_snap = self.kde_snaps.sdk
         cmake_args = self.ext_info.cmake_args
 

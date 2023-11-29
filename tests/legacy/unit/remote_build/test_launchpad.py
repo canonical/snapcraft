@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import textwrap
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 
 import fixtures
@@ -452,16 +453,28 @@ class LaunchpadTestCase(unit.TestCase):
     def test_push_source_tree(self):
         source_testdir = self.useFixture(TestDir())
         repo_dir = source_testdir.path
+        now = datetime.now(timezone.utc)
 
-        self.lpc.push_source_tree(repo_dir)
+        with mock.patch(
+            "snapcraft_legacy.internal.remote_build._launchpad.datetime"
+        ) as mock_datetime:
+            mock_datetime.now = lambda tz: now
+            self.lpc.push_source_tree(repo_dir)
 
-        self.mock_git_class.assert_has_calls == [
-            mock.call(
-                "https://user:access-token@git.launchpad.net/~user/+git/id/",
-                "HEAD:master",
-                force=True,
-            )
-        ]
+        self.lpc._lp.git_repositories._git.issueAccessToken_mock.assert_called_once_with(
+            description="snapcraft remote-build for id",
+            scopes=["repository:push"],
+            date_expires=(now + timedelta(minutes=1)).isoformat(),
+        )
+        self.mock_git_class.assert_has_calls(
+            [
+                mock.call().push(
+                    "https://user:access-token@git.launchpad.net/~user/+git/id/",
+                    "HEAD:master",
+                    force=True,
+                )
+            ]
+        )
 
     def test_push_source_tree_error(self):
         self.mock_git_class.return_value.push.side_effect = (

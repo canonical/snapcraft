@@ -7,7 +7,7 @@ environment:
   TIMESTAMP_SERVICE: http://timestamp.digicert.com
 
   matrix:
-  - PYTHON: C:\Python38-x64
+  - PYTHON: C:\Python310-x64
 
 cache:
 - '%LOCALAPPDATA%\pip\Cache\http'

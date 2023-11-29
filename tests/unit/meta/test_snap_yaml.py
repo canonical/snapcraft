@@ -698,6 +698,62 @@ def test_project_environment_ld_library_path_null(simple_project, new_dir):
     )
 
 
+@pytest.mark.parametrize(
+    "ld_library_path",
+    [{}, {"LD_LIBRARY_PATH": None}, {"LD_LIBRARY_PATH": "test-ld-library-path"}],
+)
+@pytest.mark.parametrize("path", [{}, {"PATH": None}, {"PATH": "test-path"}])
+@pytest.mark.parametrize(
+    "other_var", [{}, {"OTHER_VAR": None}, {"OTHER_VAR": "test-foo"}]
+)
+def test_project_environment_classic_confinement(
+    ld_library_path, path, other_var, simple_project, new_dir
+):
+    """Verify environment when confinement is classic."""
+    # create expected environment in meta/snap.yaml
+    environment = ld_library_path.update(path)
+    if environment:
+        expected_environment = "environment\n"
+        if ld_library_path:
+            expected_environment += f"  LD_LIBRARY_PATH: {ld_library_path}"
+        if path:
+            expected_environment += f"  PATH: {path}"
+        if other_var:
+            expected_environment += f"  OTHER_VAR: {other_var}"
+    else:
+        expected_environment = ""
+
+    snap_yaml.write(
+        simple_project(environment=environment, confinement="classic"),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    content = yaml_file.read_text()
+    assert (
+        content
+        == textwrap.dedent(
+            """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        base: core22
+        apps:
+          app1:
+            command: bin/mytest
+        confinement: classic
+        grade: stable
+        """
+        )
+        + expected_environment
+    )
+
+
 def test_version_git(simple_project, new_dir, mocker):
     """Version in projects with ``version:git`` must be correctly handled."""
     mocker.patch(

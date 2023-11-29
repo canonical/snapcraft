@@ -109,7 +109,7 @@ class _Library:
     :param soname_cache: The soname cache manager.
     """
 
-    def __init__(
+    def __init__(  # noqa PLR0913
         self,
         *,
         soname: str,
@@ -322,7 +322,9 @@ class ElfFile:
         """Determine if the linker will work given the required glibc version."""
         version_required = self.get_required_glibc()
         # TODO: pkg_resources is deprecated in setuptools>66 (CRAFT-1598)
-        is_compatible = parse_version(version_required) <= parse_version(linker_version)
+        parsed_version_required = parse_version(version_required)  # type: ignore
+        parsed_linker_version = parse_version(linker_version)  # type: ignore
+        is_compatible = parsed_version_required <= parsed_linker_version
         emit.debug(
             f"Check if linker {linker_version!r} works with GLIBC_{version_required} "
             f"required by {str(self.path)!r}: {is_compatible}"
@@ -336,12 +338,12 @@ class ElfFile:
 
         version_required = ""
         for lib in self.needed.values():
-            for version in lib.versions:
-                if not version.startswith("GLIBC_"):
+            for _version in lib.versions:
+                if not _version.startswith("GLIBC_"):
                     continue
-                version = version[6:]
+                version = _version[6:]
                 # TODO: pkg_resources is deprecated in setuptools>66 (CRAFT-1598)
-                if parse_version(version) > parse_version(version_required):
+                if parse_version(version) > parse_version(version_required):  # type: ignore
                     version_required = version
 
         self._required_glibc = version_required

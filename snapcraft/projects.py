@@ -566,10 +566,10 @@ class Project(ProjectModel):
             r"^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$", version
         ):
             raise ValueError(
-                "Snap versions consist of upper- and lower-case alphanumeric characters, "
-                "as well as periods, colons, plus signs, tildes, and hyphens. They cannot "
-                "begin with a period, colon, plus sign, tilde, or hyphen. They cannot end "
-                "with a period, colon, or hyphen"
+                f"Invalid version '{version}': Snap versions consist of upper- and lower-case "
+                "alphanumeric characters, as well as periods, colons, plus signs, tildes, "
+                "and hyphens. They cannot begin with a period, colon, plus sign, tilde, or "
+                "hyphen. They cannot end with a period, colon, or hyphen"
             )
 
         return version

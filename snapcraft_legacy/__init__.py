@@ -342,7 +342,6 @@ from snapcraft_legacy.internal import repo  # noqa isort:skip
 
 # For backwards compatibility with external plugins.
 import snapcraft_legacy._legacy_loader  # noqa isort:skip
-from snapcraft_legacy.plugins.v1 import PluginV1 as BasePlugin  # noqa isort:skip
 from snapcraft_legacy import common  # noqa
 from snapcraft_legacy import extractors  # noqa
 from snapcraft_legacy import file_utils  # noqa
@@ -356,7 +355,6 @@ from snapcraft_legacy._store import (  # noqa
     download,
     gated,
     list_keys,
-    list_registered,
     login,
     register,
     register_key,

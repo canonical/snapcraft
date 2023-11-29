@@ -1,0 +1,28 @@
+name: build-for-multi-arch
+base: core20
+version: '1.0'
+summary: test
+description: Only BUILD_ON envvars can be evaluated for multi-arch builds.
+grade: stable
+confinement: strict
+
+architectures:
+  - build-on: amd64
+    run-on: [amd64, armhf]
+
+environment:
+  SNAPCRAFT_ARCH_TRIPLET: ${SNAPCRAFT_ARCH_TRIPLET}
+  SNAPCRAFT_ARCH_BUILD_ON: ${SNAPCRAFT_ARCH_BUILD_ON}
+  SNAPCRAFT_ARCH_TRIPLET_BUILD_ON: ${SNAPCRAFT_ARCH_TRIPLET_BUILD_ON}
+  SNAPCRAFT_TARGET_ARCH: ${SNAPCRAFT_TARGET_ARCH}
+
+parts:
+  my-part:
+    plugin: nil
+    override-build: |
+      cat << EOF >> $SNAPCRAFT_PART_INSTALL/part-variables.txt
+      SNAPCRAFT_ARCH_TRIPLET: ${SNAPCRAFT_ARCH_TRIPLET}
+      SNAPCRAFT_ARCH_BUILD_ON: ${SNAPCRAFT_ARCH_BUILD_ON}
+      SNAPCRAFT_ARCH_TRIPLET_BUILD_ON: ${SNAPCRAFT_ARCH_TRIPLET_BUILD_ON}
+      SNAPCRAFT_TARGET_ARCH: ${SNAPCRAFT_TARGET_ARCH}
+      EOF

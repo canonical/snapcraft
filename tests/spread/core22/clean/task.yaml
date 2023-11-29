@@ -30,14 +30,14 @@ execute: |
 
   snapcraft pack 2>&1 | tee output.txt
 
-  grep "Executing parts lifecycle: pull part1" < output.txt
-  grep "Executing parts lifecycle: skip pull part2 (already ran)" < output.txt
-  grep "Executing parts lifecycle: build part1" < output.txt
-  grep "Executing parts lifecycle: skip build part2 (already ran)" < output.txt
-  grep "Executing parts lifecycle: stage part1" < output.txt
-  grep "Executing parts lifecycle: skip stage part2 (already ran)" < output.txt
-  grep "Executing parts lifecycle: prime part1" < output.txt
-  grep "Executing parts lifecycle: skip prime part2 (already ran)" < output.txt
+  grep "Pulling part1" < output.txt
+  grep "Skipping pull for part2 (already ran)" < output.txt
+  grep "Building part1" < output.txt
+  grep "Skipping build for part2 (already ran)" < output.txt
+  grep "Staging part1" < output.txt
+  grep "Skipping stage for part2 (already ran)" < output.txt
+  grep "Priming part1" < output.txt
+  grep "Skipping prime for part2 (already ran)" < output.txt
 
   snapcraft clean
   if lxc --project=snapcraft list | grep snapcraft-clean; then

@@ -72,17 +72,16 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
         )
 
     def test_print_module_help_for_valid_plugin_with_base(self):
-        for base in ("core18", "core20"):
-            result = self.run_command(["help", "nil", "--base", base])
+        result = self.run_command(["help", "nil", "--base", "core20"])
 
-            expected = f"Displaying help for the 'nil' plugin for {base!r}."
-            output = result.output[: len(expected)]
-            self.expectThat(
-                output,
-                Equals(expected),
-                "The help message does not start with {!r} but with "
-                "{!r} instead".format(expected, output),
-            )
+        expected = "Displaying help for the 'nil' plugin for 'core20'."
+        output = result.output[: len(expected)]
+        self.expectThat(
+            output,
+            Equals(expected),
+            "The help message does not start with {!r} but with "
+            "{!r} instead".format(expected, output),
+        )
 
     def test_print_module_help_for_valid_plugin_snapcraft_yaml(self):
         self.useFixture(
@@ -92,10 +91,10 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
                 parts={"part1": {"source": ".", "plugin": "nil"}},
             )
         )
-        result = self.run_command(["help", "python", "--base", "core18"])
+        result = self.run_command(["help", "python", "--base", "core20"])
 
         expected = (
-            "Displaying help for the 'python' plugin for 'core18'.\n\n"
+            "Displaying help for the 'python' plugin for 'core20'.\n\n"
             "The python plugin can be used for"
         )
         output = result.output[: len(expected)]
@@ -107,9 +106,9 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
         )
 
     def test_print_module_named_with_dashes_help_for_valid_plugin(self):
-        result = self.run_command(["help", "plainbox-provider", "--base", "core18"])
+        result = self.run_command(["help", "catkin-tools", "--base", "core20"])
 
-        expected = "Displaying help for the 'plainbox-provider' plugin for 'core18'."
+        expected = "Displaying help for the 'catkin-tools' plugin for 'core20'."
         self.assertThat(result.output, StartsWith(expected))
 
     def test_show_module_help_with_devel_for_valid_plugin(self):

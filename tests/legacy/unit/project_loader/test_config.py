@@ -31,7 +31,7 @@ class VariableExpansionTest(LoadPartBaseTest):
             dedent(
                 """\
             name: test
-            base: core18
+            base: core20
             version: "1.0"
             version-script: echo $SNAPCRAFT_PROJECT_VERSION-$SNAPCRAFT_PROJECT_GRADE
             summary: test
@@ -55,7 +55,7 @@ class VariableExpansionTest(LoadPartBaseTest):
             dedent(
                 """\
             name: test
-            base: core18
+            base: core20
             version: "1"
             summary: test
             description: test
@@ -102,7 +102,7 @@ class VariableExpansionTest(LoadPartBaseTest):
             dedent(
                 """\
             name: project-name
-            base: core18
+            base: core20
             version: "1"
             summary: test
             description: test
@@ -129,6 +129,50 @@ class VariableExpansionTest(LoadPartBaseTest):
             },
         )
 
+    def test_replace_snapcraft_variables_order(self):
+        """The largest replacements should occur first.
+
+        $SNAPCRAFT_ARCH_TRIPLET_BUILD_{ON|FOR} should be replaced before
+        $SNAPCRAFT_ARCH_TRIPLET.
+        """
+        project_config = self.make_snapcraft_project(
+            dedent(
+                """\
+            name: project-name
+            base: core20
+            version: "1"
+            summary: test
+            description: test
+            confinement: strict
+            environment:
+              SNAPCRAFT_ARCH_TRIPLET: ${SNAPCRAFT_ARCH_TRIPLET}
+              SNAPCRAFT_ARCH_BUILD_FOR: ${SNAPCRAFT_ARCH_BUILD_FOR}
+              SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR: ${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}
+              SNAPCRAFT_ARCH_BUILD_ON: ${SNAPCRAFT_ARCH_BUILD_ON}
+              SNAPCRAFT_ARCH_TRIPLET_BUILD_ON: ${SNAPCRAFT_ARCH_TRIPLET_BUILD_ON}
+              SNAPCRAFT_TARGET_ARCH: ${SNAPCRAFT_TARGET_ARCH}
+
+            parts:
+              test:
+                plugin: nil
+            """
+            )
+        )
+
+        self.assertThat(
+            project_config.data["environment"],
+            Equals(
+                {
+                    "SNAPCRAFT_ARCH_BUILD_FOR": "amd64",
+                    "SNAPCRAFT_ARCH_BUILD_ON": "amd64",
+                    "SNAPCRAFT_ARCH_TRIPLET": "x86_64-linux-gnu",
+                    "SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR": "x86_64-linux-gnu",
+                    "SNAPCRAFT_ARCH_TRIPLET_BUILD_ON": "x86_64-linux-gnu",
+                    "SNAPCRAFT_TARGET_ARCH": "amd64",
+                }
+            ),
+        )
+
 
 class DependenciesTest(ProjectLoaderBaseTest):
     def setUp(self):
@@ -139,7 +183,7 @@ class DependenciesTest(ProjectLoaderBaseTest):
                 dedent(
                     """\
             name: test
-            base: core18
+            base: core20
             version: "1"
             summary: test
             description: test
@@ -212,7 +256,7 @@ class DependenciesTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
-            base: core18
+            base: core20
             version: "1"
             summary: test
             description: test

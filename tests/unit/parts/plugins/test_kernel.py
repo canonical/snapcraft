@@ -27,7 +27,7 @@ import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
 from pydantic import ValidationError
 
-from snapcraft.parts.plugins.kernel import KernelPlugin
+from snapcraft.parts.plugins import KernelPlugin
 from snapcraft_legacy.plugins.v2._kernel_build import check_new_config
 
 
@@ -1401,17 +1401,20 @@ _prepare_config_flavour_cmd = [
     "if [ ! -e ${CRAFT_PART_BUILD}/.config ]; then",
     textwrap.dedent(
         """	echo "Assembling Ubuntu config..."
-	branch=$(cut -d'.' -f 2- < ${KERNEL_SRC}/debian/debian.env)
-	baseconfigdir=${KERNEL_SRC}/debian.${branch}/config
-	archconfigdir=${KERNEL_SRC}/debian.${branch}/config/${DEB_ARCH}
-	ubuntuconfig=${baseconfigdir}/config.common.ubuntu
-	archconfig=${archconfigdir}/config.common.${DEB_ARCH}
-	flavourconfig=${archconfigdir}/config.flavour.raspi
-	cat ${ubuntuconfig} ${archconfig} ${flavourconfig} \
-> ${CRAFT_PART_BUILD}/.config 2>/dev/null || true
 	if [ -f ${KERNEL_SRC}/debian/rules ] && [ -x ${KERNEL_SRC}/debian/rules ]; then
+		# Generate Ubuntu kernel configs
+		pushd ${KERNEL_SRC}
+		fakeroot debian/rules clean genconfigs || true
+		popd
+
+		# Pick the right kernel .config for the target arch and flavour
+		ubuntuconfig=${KERNEL_SRC}/CONFIGS/${DEB_ARCH}-config.flavour.raspi
+		cat ${ubuntuconfig} > ${CRAFT_PART_BUILD}/.config
+
+		# Clean up kernel source directory
 		pushd ${KERNEL_SRC}
 		fakeroot debian/rules clean
+		rm -rf CONFIGS/
 		popd
 	fi"""
     ),

@@ -17,6 +17,7 @@
 import contextlib
 import logging
 import os
+import pathlib
 import stat
 import textwrap
 from unittest.mock import patch
@@ -49,13 +50,13 @@ class CreateBaseTestCase(unit.TestCase):
         self.config_data = {
             "architectures": [{"build-on": "all", "run-on": "amd64"}],
             "name": "my-package",
-            "base": "core18",
+            "base": "core20",
             "version": "1.0",
             "description": "my description",
             "summary": "my summary",
             "confinement": "devmode",
             "environment": {"GLOBAL": "y"},
-            "parts": {"test-part": {"plugin": "nil"}},
+            "parts": {"test-part": {"source": ".", "plugin": "dump"}},
         }
 
         self.snapcraft_yaml_file_path = os.path.join("snap", "snapcraft.yaml")
@@ -80,6 +81,7 @@ class CreateBaseTestCase(unit.TestCase):
         self.snap_yaml = os.path.join(self.meta_dir, "snap.yaml")
 
         self.config = project_loader.load_config(project=self.project)
+
         if build:
             for part in self.config.parts.all_parts:
                 part.pull()
@@ -107,7 +109,7 @@ class CreateTestCase(CreateBaseTestCase):
             "environment": {"GLOBAL": "y"},
             "summary": "my summary",
             "name": "my-package",
-            "base": "core18",
+            "base": "core20",
             "version": "1.0",
         }
 
@@ -126,7 +128,7 @@ class CreateTestCase(CreateBaseTestCase):
             "environment": {"GLOBAL": "y"},
             "summary": "my summary",
             "name": "my-package",
-            "base": "core18",
+            "base": "core20",
             "version": "1.0",
         }
 
@@ -378,87 +380,32 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertThat(y["apps"]["app"].get("command-chain"), Equals(None))
 
 
-class StopModeTestCase(CreateBaseTestCase):
-    stop_modes = [
-        "sigterm",
-        "sigterm-all",
-        "sighup",
-        "sighup-all",
-        "sigusr1",
-        "sigusr1-all",
-        "sigusr2",
-        "sigusr2-all",
-        "sigint",
-        "sigint-all",
-    ]
-
-    def test_valid(self):
-        for mode in self.stop_modes:
-            self.config_data["apps"] = {
-                "app1": {"command": "sh", "daemon": "simple", "stop-mode": mode}
-            }
-
-            y = self.generate_meta_yaml()
-
-            self.expectThat(y["apps"]["app1"]["stop-mode"], Equals(mode))
-
-
-class RefreshModeTestCase(CreateBaseTestCase):
-    refresh_modes = ["endure", "restart"]
-
-    def test_valid(self):
-        for refresh_mode in self.refresh_modes:
-            self.config_data["apps"] = {
-                "app1": {
-                    "command": "sh",
-                    "daemon": "simple",
-                    "refresh-mode": refresh_mode,
-                }
-            }
-
-            y = self.generate_meta_yaml()
-
-            self.expectThat(y["apps"]["app1"]["refresh-mode"], Equals(refresh_mode))
-
-
-class BeforeAndAfterTest(CreateBaseTestCase):
-    def test_before_valid(self):
-        self.config_data["apps"] = {
-            "app-before": {"command": "sh", "daemon": "simple"},
-            "app": {"command": "sh", "daemon": "simple", "before": ["app-before"]},
-        }
-
-        y = self.generate_meta_yaml()
-
-        self.assertThat(y["apps"]["app"]["before"], Equals(["app-before"]))
-
-    def test_after_valid(self):
-        self.config_data["apps"] = {
-            "app-after": {"command": "sh", "daemon": "simple"},
-            "app": {"command": "sh", "daemon": "simple", "after": ["app-after"]},
-        }
-
-        y = self.generate_meta_yaml()
-
-        self.assertThat(y["apps"]["app"]["after"], Equals(["app-after"]))
-
-
 class PassthroughBaseTestCase(CreateBaseTestCase):
     def setUp(self):
         super().setUp()
 
         self.config_data = {
             "name": "my-package",
-            "base": "core18",
+            "base": "core20",
             "version": "1.0",
             "grade": "stable",
             "description": "my description",
             "summary": "my summary",
-            "parts": {"test-part": {"plugin": "nil"}},
+            "parts": {"test-part": {"source": ".", "plugin": "dump"}},
         }
 
 
 class PassthroughErrorTestCase(PassthroughBaseTestCase):
+    def setUp(self):
+        super().setUp()
+
+        # Create echo command
+        echo_path = "echo"
+        with open(echo_path, "w") as echo_command:
+            print("#/bin/sh", file=echo_command)
+            print("echo $@", file=echo_command)
+        os.chmod(echo_path, 0o755)
+
     def test_ambiguous_key_fails(self):
         self.config_data["confinement"] = "devmode"
         self.config_data["passthrough"] = {"confinement": "next-generation"}
@@ -476,7 +423,9 @@ class PassthroughErrorTestCase(PassthroughBaseTestCase):
             }
         }
         raised = self.assertRaises(
-            meta_errors.AmbiguousPassthroughKeyError, self.generate_meta_yaml
+            meta_errors.AmbiguousPassthroughKeyError,
+            self.generate_meta_yaml,
+            build=True,
         )
         self.assertThat(raised.keys, Equals("'daemon'"))
 
@@ -501,7 +450,8 @@ class PassthroughErrorTestCase(PassthroughBaseTestCase):
         self.config_data["hooks"] = {
             "foo": {"plugs": ["network"], "passthrough": {"foo": "bar", "spam": "eggs"}}
         }
-        self.generate_meta_yaml()
+
+        self.generate_meta_yaml(build=True)
 
         output_lines = fake_logger.output.splitlines()
         self.assertThat(
@@ -625,6 +575,16 @@ class PassthroughPropagateTestCase(PassthroughBaseTestCase):
         self.useFixture(fake_logger)
 
         self.config_data.update(snippet)
+
+        # Create echo command
+        echo_path = pathlib.Path("prime", "echo")
+        if not echo_path.exists():
+            echo_path.parent.mkdir()
+            with echo_path.open("w") as echo_command:
+                print("#/bin/sh", file=echo_command)
+                print("echo $@", file=echo_command)
+            echo_path.chmod(0o755)
+
         y = self.generate_meta_yaml()
         if section:
             y = y[section][name]
@@ -653,7 +613,7 @@ class CreateMetadataFromSourceBaseTestCase(CreateBaseTestCase):
         super().setUp()
         self.config_data = {
             "name": "test-name",
-            "base": "core18",
+            "base": "core20",
             "version": "test-version",
             "summary": "test-summary",
             "description": "test-description",
@@ -669,6 +629,12 @@ class CreateMetadataFromSourceBaseTestCase(CreateBaseTestCase):
         }
         # Create metadata file
         open("test-metadata-file", "w").close()
+
+        # Create echo command
+        with open("echo", "w") as echo_command:
+            print("#/bin/sh", file=echo_command)
+            print("echo $@", file=echo_command)
+        os.chmod("echo", 0o755)
 
 
 class CreateMetadataFromSourceTestCase(CreateMetadataFromSourceBaseTestCase):
@@ -936,7 +902,7 @@ class ScriptletsMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
         del self.config_data["parts"]["test-part"]["parse-info"]
         self.config_data["parts"]["test-part"][
             "override-prime"
-        ] = "snapcraftctl {} {}".format(setter, value)
+        ] = "snapcraftctl {} {}\nsnapcraftctl prime".format(setter, value)
 
         generated = self.generate_meta_yaml(build=True)
 
@@ -952,7 +918,7 @@ class ScriptletsMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
         del self.config_data["parts"]["test-part"]["parse-info"]
         self.config_data["parts"]["test-part"][
             "override-prime"
-        ] = "snapcraftctl {} {}".format(setter, value)
+        ] = "snapcraftctl {} {}\nsnapcraftctl prime".format(setter, value)
 
         generated = self.generate_meta_yaml(build=True)
 
@@ -1001,6 +967,15 @@ class ScriptletsMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
             return extractors.ExtractedMetadata(**{keyword: "extracted-value"})
 
         self.useFixture(fixture_setup.FakeMetadataExtractor("fake", _fake_extractor))
+
+        # Create echo command
+        echo_path = pathlib.Path("echo")
+        if not echo_path.exists():
+            echo_path.parent.mkdir()
+            with echo_path.open("w") as echo_command:
+                print("#/bin/sh", file=echo_command)
+                print("echo $@", file=echo_command)
+            echo_path.chmod(0o755)
 
         generated = self.generate_meta_yaml(build=True)
 
@@ -1230,10 +1205,7 @@ class GenerateHookWrappersTestCase(CreateBaseTestCase):
                 ),
             )
 
-    @patch("snapcraft_legacy.internal.project_loader._config.Config.snap_env")
-    def test_generated_hook_wrappers_include_environment(self, mock_snap_env):
-        mock_snap_env.return_value = ["PATH={}/foo".format(self.prime_dir)]
-
+    def test_generated_hook_wrappers_include_environment(self):
         # Set up the prime directory to contain a hook in snap/hooks as well as
         # one in meta/hooks
         snap_hook = os.path.join(self.prime_dir, "snap", "hooks", "snap-hook")
@@ -1264,7 +1236,7 @@ class GenerateHookWrappersTestCase(CreateBaseTestCase):
         expected = textwrap.dedent(
             """\
             #!/bin/sh
-            export PATH=$SNAP/foo
+            export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin${PATH:+:$PATH}"
             export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
             exec "$SNAP/snap/hooks/snap-hook" "$@"
         """
@@ -1556,6 +1528,14 @@ class CommonIdTestCase(CreateBaseTestCase):
 
         self.create_metadata_file("part", "1.metainfo.xml", "test.id.1")
         self.create_metadata_file("part", "2.metainfo.xml", "test.id.2")
+        self.create_echo_file("part")
+
+    def create_echo_file(self, part):
+        echo_path = os.path.join("parts", part, "src", "echo")
+        with open(echo_path, "w") as echo_file:
+            print("#!/bin/sh", file=echo_file)
+            print("echo $@", file=echo_file)
+        os.chmod(echo_path, 0o755)
 
     def create_metadata_file(self, part, name, common_id):
         # Create metadata files
@@ -1579,7 +1559,7 @@ class CommonIdTestCase(CreateBaseTestCase):
         yaml = textwrap.dedent(
             """\
            name: test
-           base: core18
+           base: core20
            version: "1.0"
            summary: test
            description: test
@@ -1592,13 +1572,16 @@ class CommonIdTestCase(CreateBaseTestCase):
                common-id: {common_id}
            parts:
              part:
-               plugin: nil
+               source: .
+               plugin: dump
                parse-info: ["1.metainfo.xml", "2.metainfo.xml"]
+
            """
         )
 
         yaml_path = self.make_snapcraft_yaml(yaml.format(common_id=common_id))
         project = Project(snapcraft_yaml_file_path=yaml_path)
+
         return project_loader.load_config(project)
 
     def test_common_id(self):

@@ -38,6 +38,7 @@
 
 from typing import Any, Dict, List, Set
 
+from snapcraft_legacy.internal.repo.snaps import _get_parsed_snap
 from snapcraft_legacy.plugins.v2 import _ros
 
 
@@ -68,11 +69,35 @@ class CatkinPlugin(_ros.RosPlugin):
                     "items": {"type": "string"},
                     "default": [],
                 },
+                "ros-build-snaps": {
+                    "type": "array",
+                    "minItems": 0,
+                    "uniqueItems": True,
+                    "items": {"type": "string"},
+                    "default": [],
+                },
+                "ros-content-sharing-extension-cmake-args": {
+                    "type": "array",
+                    "minItems": 0,
+                    "items": {"type": "string"},
+                    "default": [],
+                },
             },
         }
 
     def get_build_packages(self) -> Set[str]:
         return super().get_build_packages() | {"ros-noetic-catkin"}
+
+    def _get_source_command(self, path: str) -> List[str]:
+        return [
+            f'if [ -f "{path}/opt/ros/${{ROS_DISTRO}}/setup.sh" ]; then',
+            'set -- --local "${_EXTEND_WS}"',
+            '_CATKIN_SETUP_DIR="{fpath}" . "{fpath}/setup.sh"'.format(
+                fpath=f"{path}/opt/ros/${{ROS_DISTRO}}"
+            ),
+            'if [ -z ${_EXTEND_WS} ]; then _EXTEND_WS="--extend"; fi',
+            "fi",
+        ]
 
     def _get_workspace_activation_commands(self) -> List[str]:
         """Return a list of commands to source a ROS workspace.
@@ -86,26 +111,31 @@ class CatkinPlugin(_ros.RosPlugin):
         specific functionality.
         """
 
-        # There are a number of unbound vars, disable flag
-        # after saving current state to restore after.
-        return [
-            'state="$(set +o); set -$-"',
-            "set +u",
-            'if [ -f "${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/setup.sh" ]; then',
-            "set -- --local",
-            '_CATKIN_SETUP_DIR="{path}" . "{path}/setup.sh"'.format(
-                path="${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}"
-            ),
-            "set -- --local --extend",
-            "else",
-            "set -- --local",
-            "fi",
-            '. /opt/ros/"${ROS_DISTRO}"/setup.sh',
-            'eval "${state}"',
-        ]
+        activation_commands = list()
+
+        # Source ROS ws in all build-snaps first
+        activation_commands.append("## Sourcing ROS ws in build snaps")
+        if self.options.ros_build_snaps:
+            for ros_build_snap in self.options.ros_build_snaps:
+                snap_name = _get_parsed_snap(ros_build_snap)[0]
+                activation_commands.extend(self._get_source_command(f"/snap/{snap_name}/current"))
+            activation_commands.append("")
+
+        # Source ROS ws in stage-snaps next
+        activation_commands.append("## Sourcing ROS ws in stage snaps")
+        activation_commands.extend(self._get_source_command("${SNAPCRAFT_PART_INSTALL}"))
+        activation_commands.append("")
+
+        # Finally source system's ROS ws
+        activation_commands.append("## Sourcing ROS ws in system")
+        activation_commands.extend(self._get_source_command(""))
+        activation_commands.append("")
+
+        return activation_commands
 
     def _get_build_commands(self) -> List[str]:
-        cmd = [
+
+        build_command = [
             "catkin_make_isolated",
             "--install",
             "--merge",
@@ -120,12 +150,14 @@ class CatkinPlugin(_ros.RosPlugin):
         ]
 
         if self.options.catkin_packages:
-            cmd.extend(["--pkg", *self.options.catkin_packages])
+            build_command.extend(["--pkg", *self.options.catkin_packages])
 
         if self.options.catkin_packages_ignore:
-            cmd.extend(["--ignore-pkg", *self.options.catkin_packages_ignore])
+            build_command.extend(["--ignore-pkg", *self.options.catkin_packages_ignore])
 
-        if self.options.catkin_cmake_args:
-            cmd.extend(["--cmake-args", *self.options.catkin_cmake_args])
+        if self.options.catkin_cmake_args or self.options.ros_content_sharing_extension_cmake_args:
+            build_command.append("--cmake-args")
+            build_command.extend(self.options.catkin_cmake_args)
+            build_command.extend(self.options.ros_content_sharing_extension_cmake_args)
 
-        return [" ".join(cmd)]
+        return (["## Build command", " ".join(build_command)])

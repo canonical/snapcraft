@@ -154,7 +154,7 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
         cls.CONFIG_PATH.write_text(config_content)
 
     @overrides
-    def __init__(
+    def __init__(  # noqa PLR0913
         self,
         *,
         base_url: str,

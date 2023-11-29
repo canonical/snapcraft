@@ -25,7 +25,7 @@ import snapcraft
 import snapcraft_legacy
 from snapcraft_legacy.cli import legacy
 
-_LIB_NAMES = ("craft_parts", "craft_providers", "craft_store")
+_LIB_NAMES = ("craft_parts", "craft_providers", "craft_store", "snapcraft.remote")
 _ORIGINAL_LIB_NAME_LOG_LEVEL: Dict[str, int] = {}
 
 
@@ -36,7 +36,6 @@ def run_legacy(err: Optional[Exception] = None):
         logger = logging.getLogger(lib_name)
         logger.setLevel(_ORIGINAL_LIB_NAME_LOG_LEVEL[lib_name])
 
-    snapcraft.BasePlugin = snapcraft_legacy.BasePlugin  # type: ignore
     snapcraft.ProjectOptions = snapcraft_legacy.ProjectOptions  # type: ignore
 
     # Legacy does not use craft-cli
