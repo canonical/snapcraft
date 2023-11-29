@@ -193,7 +193,7 @@ class StepOutdatedError(SnapcraftException):
 
 
 class SnapcraftEnvironmentError(SnapcraftException):
-    """DEPRECATED: Too generic, create (or re-use) a tailored one."""
+    """DEPRECATED: Too generic, create (or reuse) a tailored one."""
 
     # FIXME This exception is too generic.
     # https://bugs.launchpad.net/snapcraft/+bug/1734231
