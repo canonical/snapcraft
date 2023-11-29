@@ -17,9 +17,10 @@
 """External metadata helpers."""
 
 from pathlib import Path
-from typing import Dict, Final, List
+from typing import Dict, Final, List, cast
 
 import pydantic
+from craft_application.models import ProjectTitle, SummaryStr, VersionStr
 from craft_cli import emit
 
 from snapcraft import errors
@@ -52,16 +53,16 @@ def update_project_metadata(
     for metadata in metadata_list:
         # Data specified in the project yaml has precedence over extracted data
         if metadata.title and not project.title:
-            project.title = metadata.title
+            project.title = cast(ProjectTitle, metadata.title)
 
         if metadata.summary and not project.summary:
-            project.summary = metadata.summary
+            project.summary = cast(SummaryStr, metadata.summary)
 
         if metadata.description and not project.description:
             project.description = metadata.description
 
         if metadata.version and not project.version:
-            project.version = metadata.version
+            project.version = cast(VersionStr, metadata.version)
 
         if metadata.grade and not project.grade:
             project.grade = metadata.grade  # type: ignore
