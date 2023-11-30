@@ -346,6 +346,42 @@ def test_push_url_branch(new_dir):
     assert blob.name == "test-file"
 
 
+def test_push_tags(new_dir):
+    """Verify that tags are push by trying to ref them from the remote."""
+    # create a local repo and make a commit
+    Path("local-repo").mkdir()
+    repo = GitRepo(Path("local-repo"))
+    (repo.path / "test-file").touch()
+    repo.add_all()
+    commit = repo.commit()
+    tag = "tag1"
+    repo._repo.create_reference(f"refs/tags/{tag}", commit)
+    # create a bare remote repo
+    Path("remote-repo").mkdir()
+    remote = pygit2.init_repository(Path("remote-repo"), True)
+
+    repo.push_url(
+        remote_url=f"file://{str(Path('remote-repo').absolute())}",
+        remote_branch="test-branch",
+        push_tags=True,
+    )
+
+    # verify commit through tag in remote (the `isinstance` checks are to satsify pyright)
+    commit = remote.revparse_single(tag)
+    assert isinstance(commit, pygit2.Commit)
+    assert commit.message == "auto commit"
+    assert commit.committer.name == "auto commit"
+    assert commit.committer.email == "auto commit"
+    # verify tree in remote
+    tree = commit.tree
+    assert isinstance(tree, pygit2.Tree)
+    assert len(tree) == 1
+    # verify contents of tree in remote
+    blob = tree[0]
+    assert isinstance(blob, pygit2.Blob)
+    assert blob.name == "test-file"
+
+
 def test_push_url_refspec_unknown_ref(new_dir):
     """Raise an error for an unknown refspec."""
     repo = GitRepo(new_dir)

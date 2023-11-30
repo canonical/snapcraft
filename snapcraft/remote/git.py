@@ -88,10 +88,12 @@ class GitRepo:
                 f"Could not add changes for the git repository in {str(self.path)!r}."
             ) from error
 
-    def commit(self, message: str = "auto commit") -> None:
+    def commit(self, message: str = "auto commit") -> str:
         """Commit changes to the repo.
 
         :param message: the commit message
+
+        :returns: object ID of the commit as str
 
         :raises GitError: if the commit could not be created
         """
@@ -110,7 +112,9 @@ class GitRepo:
         target = [] if self._repo.head_is_unborn else [self._repo.head.target]
 
         try:
-            self._repo.create_commit("HEAD", author, author, message, tree, target)
+            return str(
+                self._repo.create_commit("HEAD", author, author, message, tree, target)
+            )
         except pygit2.GitError as error:
             raise GitError(
                 "Could not create a commit for the git repository "
@@ -152,6 +156,7 @@ class GitRepo:
         remote_branch: str,
         ref: str = "HEAD",
         token: Optional[str] = None,
+        push_tags: bool = False,
     ) -> None:
         """Push a reference to a branch on a remote url.
 
@@ -159,6 +164,7 @@ class GitRepo:
         :param remote_branch: the branch on the remote to push to
         :param ref: name of shorthand ref to push (i.e. a branch, tag, or `HEAD`)
         :param token: token in the url to hide in logs and errors
+        :param push_tags: if true, push all tags to URL (similar to `git push --tags`)
 
         :raises GitError: if the ref cannot be resolved or pushed
         """
@@ -175,12 +181,21 @@ class GitRepo:
             "Pushing %r to remote %r with refspec %r.", ref, stripped_url, refspec
         )
 
+        # Create a list of tags to push
+        if push_tags:
+            tag_refs = [
+                t.name
+                for t in self._repo.references.iterator(pygit2.GIT_REFERENCES_TAGS)
+            ]
+        else:
+            tag_refs = []
         try:
-            self._repo.remotes.create_anonymous(remote_url).push([refspec])
+            self._repo.remotes.create_anonymous(remote_url).push([refspec] + tag_refs)
         except pygit2.GitError as error:
             raise GitError(
                 f"Could not push {ref!r} to {stripped_url!r} with refspec {refspec!r} "
-                f"for the git repository in {str(self.path)!r}."
+                f"for the git repository in {str(self.path)!r}: "
+                f"{error!s}"
             ) from error
 
     def _resolve_ref(self, ref: str) -> str:
