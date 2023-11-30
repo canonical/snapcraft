@@ -21,7 +21,7 @@ from unittest.mock import MagicMock, call
 import pytest
 from overrides import overrides
 
-from snapcraft import linters, projects
+from snapcraft import linters, models
 from snapcraft.linters.base import Linter, LinterResult
 from snapcraft.linters.linters import _ignore_matching_filenames
 from snapcraft.meta import snap_yaml
@@ -164,7 +164,7 @@ class TestLinterRun:
             "parts": {},
         }
 
-        project = projects.Project.unmarshal(yaml_data)
+        project = models.Project.unmarshal(yaml_data)
         snap_yaml.write(
             project,
             prime_dir=Path(new_dir),
@@ -193,14 +193,14 @@ class TestLinterRun:
             "parts": {},
         }
 
-        project = projects.Project.unmarshal(yaml_data)
+        project = models.Project.unmarshal(yaml_data)
         snap_yaml.write(
             project,
             prime_dir=Path(new_dir),
             arch="amd64",
         )
 
-        lint = projects.Lint(ignore=["test"])
+        lint = models.Lint(ignore=["test"])
         issues = linters.run_linters(new_dir, lint=lint)
         assert issues == []
 
@@ -218,15 +218,15 @@ class TestLinterRun:
             "parts": {},
         }
 
-        project = projects.Project.unmarshal(yaml_data)
+        project = models.Project.unmarshal(yaml_data)
         snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
 
-        lint = projects.Lint(ignore=["test-1", "test-2"])
+        lint = models.Lint(ignore=["test-1", "test-2"])
         issues = linters.run_linters(new_dir, lint=lint)
         assert issues == []
 
     def test_ignore_matching_filenames(self, linter_issue):
-        lint = projects.Lint(ignore=[{"test": ["foo*", "some/dir/*"]}])
+        lint = models.Lint(ignore=[{"test": ["foo*", "some/dir/*"]}])
         issues = [
             linter_issue(filename="foo.txt", result=LinterResult.WARNING),
             linter_issue(filename="bar.txt", result=LinterResult.WARNING),
@@ -245,7 +245,7 @@ class TestLinterRun:
 
 def test_base_linter_is_file_ignored():
     """Test the base Linter class' ignore mechanism with categories."""
-    lint = projects.Lint(
+    lint = models.Lint(
         ignore=[
             {"test": ["test-path"]},
             {"test-1": ["test-1-path"]},

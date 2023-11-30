@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,10 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Main entry point."""
+"""Snapcraft Service Factory."""
 
-import sys
+from __future__ import annotations
 
-from snapcraft import application
+from dataclasses import dataclass
 
-sys.exit(application.main())
+from craft_application import ServiceFactory
+
+from snapcraft import models, services
+
+
+@dataclass
+class SnapcraftServiceFactory(ServiceFactory):
+    """Snapcraft-specific Service Factory."""
+
+    project: models.Project | None = None
+
+    # These are overrides of default ServiceFactory services
+    PackageClass: type[services.Package] = services.Package

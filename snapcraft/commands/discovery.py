@@ -24,14 +24,13 @@ from craft_cli import BaseCommand, emit
 from craft_parts.plugins import get_registered_plugins
 from overrides import overrides
 
-from snapcraft import errors
+from snapcraft import errors, models
 from snapcraft.parts.yaml_utils import (
     apply_yaml,
     extract_parse_info,
     get_snap_project,
     process_yaml,
 )
-from snapcraft.projects import Project
 from snapcraft.utils import get_host_architecture
 
 if TYPE_CHECKING:
@@ -80,7 +79,7 @@ class ListPluginsCommand(BaseCommand, abc.ABC):
                 # determine the base
                 extract_parse_info(yaml_data_for_arch)
 
-                project = Project.unmarshal(yaml_data_for_arch)
+                project = models.Project.unmarshal(yaml_data_for_arch)
                 base = project.get_effective_base()
                 message = (
                     f"Displaying plugins available to the current base {base!r} project"
