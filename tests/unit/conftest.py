@@ -335,7 +335,7 @@ def fake_provider(mock_instance):
         @property
         @override
         def install_recommendation(self) -> str:
-            return "uninstallable"
+            return "snap"
 
         def clean_project_environments(self, *, instance_name: str):
             pass
