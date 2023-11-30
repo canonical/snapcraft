@@ -21,6 +21,10 @@ from typing import Optional
 from craft_cli import CraftError
 
 
+class ClassicFallback(Exception):
+    """Temporary class to fall back to non craft-application launcher."""
+
+
 class SnapcraftError(CraftError):
     """Failure in a Snapcraft operation."""
 

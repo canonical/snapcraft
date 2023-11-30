@@ -17,13 +17,15 @@
 """Project file definition and helpers."""
 
 import re
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union, cast
 
 import pydantic
+from craft_application import models
+from craft_application.models import BuildInfo, UniqueStrList
 from craft_archives import repo
 from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
-from pydantic import PrivateAttr, conlist, constr
+from pydantic import PrivateAttr, constr
 
 from snapcraft import parts, utils
 from snapcraft.elf.elf_utils import get_arch_triplet
@@ -36,35 +38,15 @@ from snapcraft.utils import (
     is_architecture_supported,
 )
 
-
-class ProjectModel(pydantic.BaseModel):
-    """Base model for snapcraft project classes."""
-
-    class Config:  # pylint: disable=too-few-public-methods
-        """Pydantic model configuration."""
-
-        validate_assignment = True
-        extra = "forbid"
-        allow_mutation = True  # project is updated with adopted metadata
-        allow_population_by_field_name = True
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
-
-
 # A workaround for mypy false positives
 # see https://github.com/samuelcolvin/pydantic/issues/975#issuecomment-551147305
 # fmt: off
 if TYPE_CHECKING:
     ProjectName = str
-    ProjectSummary = str
-    ProjectTitle = str
     ProjectVersion = str
-    UniqueStrList = List[str]
 else:
     ProjectName = constr(max_length=40)
-    ProjectSummary = constr(max_length=78)
-    ProjectTitle = constr(max_length=40)
     ProjectVersion = constr(max_length=32, strict=True)
-    UniqueStrList = conlist(str, unique_items=True)
 # fmt: on
 
 
@@ -149,7 +131,8 @@ def _expand_architectures(architectures):
         # convert strings into Architecture objects
         if isinstance(architecture, str):
             architectures[index] = Architecture(
-                build_on=[architecture], build_for=[architecture]
+                build_on=cast(UniqueStrList, [architecture]),
+                build_for=cast(UniqueStrList, [architecture]),
             )
         elif isinstance(architecture, Architecture):
             # convert strings to lists
@@ -187,7 +170,7 @@ def _validate_architectures_all_keyword(architectures):
             )
 
 
-class Socket(ProjectModel):
+class Socket(models.CraftBaseModel):
     """Snapcraft app socket definition."""
 
     listen_stream: Union[int, str]
@@ -212,7 +195,7 @@ class Socket(ProjectModel):
         return listen_stream
 
 
-class Lint(ProjectModel):
+class Lint(models.CraftBaseModel):
     """Linter configuration.
 
     :ivar ignore: A list describing which files should have issues ignored for given linters.
@@ -264,7 +247,7 @@ class Lint(ProjectModel):
         return self._lint_ignores[linter_name]
 
 
-class App(ProjectModel):
+class App(models.CraftBaseModel):
     """Snapcraft project app definition."""
 
     command: str
@@ -282,8 +265,8 @@ class App(ProjectModel):
     restart_delay: Optional[str]
     timer: Optional[str]
     daemon: Optional[Literal["simple", "forking", "oneshot", "notify", "dbus"]]
-    after: UniqueStrList = []
-    before: UniqueStrList = []
+    after: UniqueStrList = cast(UniqueStrList, [])
+    before: UniqueStrList = cast(UniqueStrList, [])
     refresh_mode: Optional[Literal["endure", "restart"]]
     stop_mode: Optional[
         Literal[
@@ -368,7 +351,7 @@ class App(ProjectModel):
         return aliases
 
 
-class Hook(ProjectModel):
+class Hook(models.CraftBaseModel):
     """Snapcraft project hook definition."""
 
     command_chain: Optional[List[str]]
@@ -389,14 +372,14 @@ class Hook(ProjectModel):
         return plugs
 
 
-class Architecture(ProjectModel, extra=pydantic.Extra.forbid):
+class Architecture(models.CraftBaseModel, extra=pydantic.Extra.forbid):
     """Snapcraft project architecture definition."""
 
     build_on: Union[str, UniqueStrList]
     build_for: Optional[Union[str, UniqueStrList]]
 
 
-class ContentPlug(ProjectModel):
+class ContentPlug(models.CraftBaseModel):
     """Snapcraft project content plug definition."""
 
     content: Optional[str]
@@ -418,7 +401,7 @@ class ContentPlug(ProjectModel):
 MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
 
-class Project(ProjectModel):
+class Project(models.Project):
     """Snapcraft project definition.
 
     See https://snapcraft.io/docs/snapcraft-yaml-reference
@@ -427,29 +410,26 @@ class Project(ProjectModel):
     - system-usernames
     """
 
-    name: ProjectName
-    title: Optional[ProjectTitle]
-    base: Optional[str]
+    # snapcraft's `name` is more general than craft-application
+    name: ProjectName  # type: ignore[assignment]
     build_base: Optional[str]
     compression: Literal["lzo", "xz"] = "xz"
-    version: Optional[ProjectVersion]
-    contact: Optional[Union[str, UniqueStrList]]
+    # TODO: ensure we have a test for version being retrieved using adopt-info
+    # snapcraft's `version` is more general than craft-application
+    version: Optional[ProjectVersion]  # type: ignore[assignment]
     donation: Optional[Union[str, UniqueStrList]]
-    issues: Optional[Union[str, UniqueStrList]]
-    source_code: Optional[str]
+    # snapcraft's `source_code` is more general than craft-application
+    source_code: Optional[str]  # type: ignore[assignment]
     website: Optional[str]
-    summary: Optional[ProjectSummary]
-    description: Optional[str]
     type: Optional[Literal["app", "base", "gadget", "kernel", "snapd"]]
     icon: Optional[str]
     confinement: Literal["classic", "devmode", "strict"]
     layout: Optional[
         Dict[str, Dict[Literal["symlink", "bind", "bind-file", "type"], str]]
     ]
-    license: Optional[str]
     grade: Optional[Literal["stable", "devel"]]
     architectures: List[Union[str, Architecture]] = [get_host_architecture()]
-    assumes: UniqueStrList = []
+    assumes: UniqueStrList = cast(UniqueStrList, [])
     package_repositories: List[Dict[str, Any]] = []  # handled by repo
     hooks: Optional[Dict[str, Hook]]
     passthrough: Optional[Dict[str, Any]]
@@ -457,7 +437,6 @@ class Project(ProjectModel):
     plugs: Optional[Dict[str, Union[ContentPlug, Any]]]
     slots: Optional[Dict[str, Any]]
     lint: Optional[Lint]
-    parts: Dict[str, Any]  # parts are handled by craft-parts
     epoch: Optional[str]
     adopt_info: Optional[str]
     system_usernames: Optional[Dict[str, Any]]
@@ -756,6 +735,11 @@ class Project(ProjectModel):
 
         return None
 
+    def get_build_plan(self) -> List[BuildInfo]:
+        """Get the build plan for this project."""
+        # TODO
+        raise NotImplementedError("Not implemented yet!")
+
 
 class _GrammarAwareModel(pydantic.BaseModel):
     class Config:
@@ -791,7 +775,7 @@ class GrammarAwareProject(_GrammarAwareModel):
             raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
 
 
-class ArchitectureProject(ProjectModel, extra=pydantic.Extra.ignore):
+class ArchitectureProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
     """Project definition containing only architecture data."""
 
     architectures: List[Union[str, Architecture]] = [get_host_architecture()]

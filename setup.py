@@ -97,6 +97,7 @@ install_requires = [
     "attrs",
     "catkin-pkg; sys_platform == 'linux'",
     "click",
+    "craft-application",
     "craft-archives",
     "craft-cli",
     "craft-grammar",
@@ -154,7 +155,7 @@ setup(
     entry_points=dict(
         console_scripts=[
             "snapcraft_legacy = snapcraft_legacy.cli.__main__:run",
-            "snapcraft = snapcraft.cli:run",
+            "snapcraft = snapcraft.application:main",
         ]
     ),
     data_files=(

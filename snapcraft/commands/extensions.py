@@ -26,14 +26,13 @@ from craft_cli import BaseCommand, emit
 from overrides import overrides
 from pydantic import BaseModel
 
-from snapcraft import extensions
+from snapcraft import extensions, models
 from snapcraft.parts.yaml_utils import (
     apply_yaml,
     extract_parse_info,
     get_snap_project,
     process_yaml,
 )
-from snapcraft.projects import Project
 from snapcraft.utils import get_host_architecture
 from snapcraft_legacy.internal.project_loader import (
     find_extension,
@@ -135,5 +134,5 @@ class ExpandExtensionsCommand(BaseCommand, abc.ABC):
         # not part of the Project model
         extract_parse_info(yaml_data_for_arch)
 
-        Project.unmarshal(yaml_data_for_arch)
+        models.Project.unmarshal(yaml_data_for_arch)
         emit.message(yaml.safe_dump(yaml_data_for_arch, indent=4, sort_keys=False))

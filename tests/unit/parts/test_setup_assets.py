@@ -22,7 +22,7 @@ from unittest.mock import call
 
 import pytest
 
-from snapcraft import errors
+from snapcraft import errors, models
 from snapcraft.parts import setup_assets as parts_setup_assets
 from snapcraft.parts.setup_assets import (
     _create_hook_wrappers,
@@ -32,7 +32,6 @@ from snapcraft.parts.setup_assets import (
     _write_hook_wrapper,
     setup_assets,
 )
-from snapcraft.projects import Project
 
 
 @pytest.fixture
@@ -89,7 +88,7 @@ def kernel_yaml_file(new_dir):
 
 
 def test_gadget(yaml_data, gadget_yaml_file, new_dir):
-    project = Project.unmarshal(
+    project = models.Project.unmarshal(
         yaml_data(
             {
                 "type": "gadget",
@@ -113,7 +112,7 @@ def test_gadget(yaml_data, gadget_yaml_file, new_dir):
 
 
 def test_gadget_missing(yaml_data, new_dir):
-    project = Project.unmarshal(
+    project = models.Project.unmarshal(
         yaml_data(
             {
                 "type": "gadget",
@@ -136,7 +135,7 @@ def test_gadget_missing(yaml_data, new_dir):
 
 
 def test_kernel(yaml_data, kernel_yaml_file, new_dir):
-    project = Project.unmarshal(
+    project = models.Project.unmarshal(
         {
             "name": "custom-kernel",
             "type": "kernel",
@@ -161,7 +160,7 @@ def test_kernel(yaml_data, kernel_yaml_file, new_dir):
 
 
 def test_kernel_missing(yaml_data, new_dir):
-    project = Project.unmarshal(
+    project = models.Project.unmarshal(
         {
             "name": "custom-kernel",
             "type": "kernel",
@@ -225,7 +224,7 @@ class TestSetupAssets:
         Path("prime/usr/share/icons/my-icon.svg").touch()
 
         # define project
-        project = Project.unmarshal(
+        project = models.Project.unmarshal(
             yaml_data(
                 {
                     "adopt-info": "part",
@@ -270,7 +269,7 @@ class TestSetupAssets:
         Path("snap/gui/icon.svg").touch()
 
         # define project
-        project = Project.unmarshal(
+        project = models.Project.unmarshal(
             yaml_data(
                 {
                     "adopt-info": "part",
@@ -319,7 +318,7 @@ class TestSetupAssets:
         Path("snap/gui").mkdir()
 
         # define project
-        project = Project.unmarshal(yaml_data({"adopt-info": "part"}))
+        project = models.Project.unmarshal(yaml_data({"adopt-info": "part"}))
 
         # setting up assets does not crash
         setup_assets(
@@ -337,7 +336,7 @@ class TestSetupAssets:
 
         # define project
         # pylint: disable=line-too-long
-        project = Project.unmarshal(
+        project = models.Project.unmarshal(
             yaml_data(
                 {
                     "adopt-info": "part",
@@ -388,7 +387,7 @@ class TestCommandChain:
     """Command chain items are valid."""
 
     def test_setup_assets_app_command_chain_error(self, yaml_data, new_dir):
-        project = Project.unmarshal(
+        project = models.Project.unmarshal(
             yaml_data(
                 {
                     "adopt-info": "part1",
@@ -417,7 +416,7 @@ class TestCommandChain:
 
     def test_setup_assets_hook_command_chain_error(self, yaml_data, new_dir):
         # define project
-        project = Project.unmarshal(
+        project = models.Project.unmarshal(
             yaml_data(
                 {
                     "adopt-info": "part1",
