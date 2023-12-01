@@ -185,7 +185,8 @@ class PartsLifecycle:
                             properties=action.properties,
                         )
                     message = _get_parts_action_message(action)
-                    with emit.open_stream(message) as stream:
+                    emit.progress(message)
+                    with emit.open_stream() as stream:
                         aex.execute(action, stdout=stream, stderr=stream)
 
             if shell_after:
