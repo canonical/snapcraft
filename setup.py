@@ -74,6 +74,7 @@ dev_requires = [
     "pycodestyle",
     "pydocstyle",
     "pyftpdlib",
+    "pyinstaller; sys_platform == 'win32'",
     "pylint",
     "pylint-fixme-info",
     "pylint-pytest",
@@ -93,11 +94,9 @@ dev_requires = [
     "yamllint",
 ]
 
-if sys.platform == "win32":
-    dev_requires.append("pyinstaller")
-
 install_requires = [
     "attrs",
+    "catkin-pkg; sys_platform == 'linux'",
     "click",
     "craft-archives",
     "craft-cli",
@@ -119,7 +118,10 @@ install_requires = [
     # Pygit2 and libgit2 need to match versions.
     # Further info: https://www.pygit2.org/install.html#version-numbers
     "pygit2~=1.13.0",
+    "pylxd; sys_platform == 'linux'",
     "pymacaroons",
+    "python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz ; sys_platform == 'linux'",
+    "python-debian; sys_platform == 'linux'",
     "pyxdg",
     "pyyaml",
     "raven",
@@ -136,29 +138,6 @@ install_requires = [
     "typing-extensions",
     "urllib3<2",  # requests-unixsocket does not yet work with urllib3 v2.0+
 ]
-
-try:
-    ubuntu = bool(
-        re.search(
-            r"^ID(?:_LIKE)?=.*\bubuntu\b.*$",
-            open("/etc/os-release").read(),
-            re.MULTILINE,
-        )
-    )
-except FileNotFoundError:
-    ubuntu = False
-
-if sys.platform == "linux":
-    install_requires += [
-        "pylxd",
-    ]
-
-if ubuntu:
-    install_requires += [
-        "catkin-pkg",
-        "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz",
-        "python-debian",
-    ]
 
 extras_requires = {
     "dev": dev_requires,
@@ -185,6 +164,7 @@ setup(
         + recursive_data_files("keyrings", "share/snapcraft")
         + recursive_data_files("extensions", "share/snapcraft")
     ),
+    python_requires=">=3.10",
     install_requires=install_requires,
     extras_require=extras_requires,
     test_suite="tests.unit",
