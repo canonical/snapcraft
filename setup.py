@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import re
 import sys
 
 from setuptools import find_namespace_packages, setup
@@ -113,6 +112,7 @@ install_requires = [
     "macaroonbakery",
     "mypy-extensions",
     "overrides",
+    "packaging",
     "progressbar",
     "pyelftools",
     # Pygit2 and libgit2 need to match versions.
@@ -128,8 +128,6 @@ install_requires = [
     "requests-toolbelt",
     "requests-unixsocket",
     "requests",
-    # pin setuptools<66 (CRAFT-1598)
-    "setuptools<66",
     "simplejson",
     "snap-helpers",
     "tabulate",
