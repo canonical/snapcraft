@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: conventional commits
-        uses: webiny/action-conventional-commits@v1.1.0
+        uses: webiny/action-conventional-commits@v1.2.0
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
