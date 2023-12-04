@@ -73,7 +73,7 @@ class Hook:
 
         # Would normally get caught/handled by schema validation.
         for command in self.command_chain:
-            if not re.match("^[A-Za-z0-9/._#:$-]*$", command):
+            if not re.match("^[A-Za-z0-9/._#:$-=]*$", command):
                 raise HookValidationError(
                     hook_name=self.hook_name,
                     message=f"{command!r} is not a valid command-chain command.",

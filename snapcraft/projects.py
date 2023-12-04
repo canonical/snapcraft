@@ -72,11 +72,11 @@ def _validate_command_chain(command_chains: Optional[List[str]]) -> Optional[Lis
     """Validate command_chain."""
     if command_chains is not None:
         for command_chain in command_chains:
-            if not re.match(r"^[A-Za-z0-9/._#:$-]*$", command_chain):
+            if not re.match(r"^[A-Za-z0-9/._#:$-=]*$", command_chain):
                 raise ValueError(
                     f"{command_chain!r} is not a valid command chain. Command chain entries must "
                     "be strings, and can only use ASCII alphanumeric characters and the following "
-                    "special characters: / . _ # : $ -"
+                    "special characters: / . _ # : $ - ="
                 )
     return command_chains
 

@@ -857,7 +857,7 @@
                             "type": "array",
                             "items": {
                                 "type": "string",
-                                "pattern": "^[A-Za-z0-9/._#:$-]*$",
+                                "pattern": "^[A-Za-z0-9/._#:$-=]*$",
                                 "validation-failure": "{.instance!r} is not a valid command-chain entry. Command chain entries must be strings, and can only use ASCII alphanumeric characters and the following special characters: / . _ # : $ -"
                             }
                         },
@@ -944,7 +944,7 @@
                             "type": "array",
                             "items": {
                                 "type": "string",
-                                "pattern": "^[A-Za-z0-9/._#:$-]*$",
+                                "pattern": "^[A-Za-z0-9/._#:$-=]*$",
                                 "validation-failure": "{.instance!r} is not a valid command-chain entry. Command chain entries must be strings, and can only use ASCII alphanumeric characters and the following special characters: / . _ # : $ -"
                             }
                         },
