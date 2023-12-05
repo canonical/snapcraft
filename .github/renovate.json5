@@ -3,7 +3,7 @@
   extends: ["config:base"],
   labels: ["dependencies"],  // For convenient searching in GitHub
   pip_requirements: {
-    fileMatch: ["^tox.ini$", "(^|/)requirements([\\w-]*)\\.txt$"]
+    fileMatch: ["^tox.ini$", "(^|/)requirements([\\w-]*)\\.txt$", "^.pre-commit-config.yaml$"]
   },
    packageRules: [
     {
