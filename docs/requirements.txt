@@ -22,6 +22,7 @@ overrides==7.3.1
 platformdirs==3.5.0
 polib==1.1.1
 progressbar==2.5
+protobuf==3.20.3
 psutil==5.9.6
 pydantic==1.10.13
 pydantic-yaml==0.11.2
