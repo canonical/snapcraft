@@ -159,7 +159,7 @@ def remote_build(
 
     has_outstanding_build = lp.has_outstanding_build()
     if recover and not has_outstanding_build:
-        echo.info("No build found.")
+        echo.info("No build task(s) found.")
         return
     elif has_outstanding_build:
         echo.info("Found previously started build.")
@@ -195,7 +195,7 @@ def _print_status(lp: LaunchpadClient):
         for arch, status in build_status.items():
             echo.info(f"Build status for arch {arch}: {status}")
     else:
-        echo.info("No build found.")
+        echo.info("No build task(s) found.")
 
 
 def _start_build(
@@ -220,10 +220,11 @@ def _monitor_build(lp: LaunchpadClient) -> None:
         f"Building snap package for {target_list}. This may take some time to finish."
     )
 
-    lp.monitor_build()
-
-    echo.info("Build complete.")
-    lp.cleanup()
+    try:
+        lp.monitor_build()
+    finally:
+        echo.info("Build task(s) complete.")
+        lp.cleanup()
 
 
 def _check_supported_architectures(archs: List[str]) -> None:

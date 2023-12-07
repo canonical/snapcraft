@@ -21,6 +21,7 @@ from .errors import (
     GitError,
     LaunchpadHttpsError,
     RemoteBuildError,
+    RemoteBuildFailedError,
     RemoteBuildTimeoutError,
     UnsupportedArchitectureError,
 )
@@ -43,6 +44,7 @@ __all__ = [
     "LaunchpadHttpsError",
     "RemoteBuilder",
     "RemoteBuildError",
+    "RemoteBuildFailedError",
     "RemoteBuildTimeoutError",
     "UnsupportedArchitectureError",
     "WorkTree",
