@@ -28,7 +28,7 @@ from ._ros2_humble_meta import ROS2HumbleMetaBase, ROS2HumbleSnaps
 class ROS2HumbleRosCoreExtension(ROS2HumbleMetaBase):
     """Drives ROS 2 build and runtime environment for snap using content-sharing."""
 
-    @functools.cached_property
+    @functools.cached_property  # type: ignore[reportIncompatibleMethodOverride]
     @overrides
     def ros2_humble_snaps(self) -> ROS2HumbleSnaps:
         return ROS2HumbleSnaps(
