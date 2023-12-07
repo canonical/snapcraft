@@ -375,7 +375,7 @@ def test_login_otp(fake_client):
                 status_code=requests.codes.unauthorized,  # pylint: disable=no-member
                 content=json.dumps(
                     {"error_list": [{"message": "2fa", "code": "twofactor-required"}]}
-                ),
+                ).encode(),
             )
         ),
         None,
@@ -488,10 +488,10 @@ def test_login_from_401_request(fake_client):
                             }
                         ]
                     }
-                ),
+                ).encode(),
             )
         ),
-        FakeResponse(status_code=200, content="text"),
+        FakeResponse(status_code=200, content="text".encode()),
     ]
 
     client.StoreClientCLI().request("GET", "http://url.com/path")
@@ -536,7 +536,7 @@ def test_login_from_401_request_with_env_credentials(monkeypatch, fake_client):
                             }
                         ]
                     }
-                ),
+                ).encode(),
             )
         ),
     ]
@@ -570,7 +570,7 @@ def test_login_from_401_request_with_legacy_credentials(mocker, legacy_config_pa
                                 }
                             ]
                         }
-                    ),
+                    ).encode(),
                 )
             ),
         ],
@@ -660,7 +660,7 @@ def test_get_names(fake_client):
                     }
                 }
             },
-        ),
+        ).encode(),
     )
 
     assert client.StoreClientCLI().get_names() == [
@@ -749,7 +749,7 @@ def test_close(fake_client, monkeypatch):
 
 def test_get_channel_map(fake_client, channel_map_payload):
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(channel_map_payload)
+        status_code=200, content=json.dumps(channel_map_payload).encode()
     )
     channel_map = client.StoreClientCLI().get_channel_map(
         snap_name="test-snap",
@@ -792,15 +792,18 @@ def test_verify_upload(fake_client):
 def test_notify_upload(fake_client):
     fake_client.request.side_effect = [
         FakeResponse(
-            status_code=200, content=json.dumps({"status_details_url": "https://track"})
+            status_code=200,
+            content=json.dumps({"status_details_url": "https://track"}).encode(),
         ),
         FakeResponse(
             status_code=200,
-            content=json.dumps({"code": "processing", "processed": False}),
+            content=json.dumps({"code": "processing", "processed": False}).encode(),
         ),
         FakeResponse(
             status_code=200,
-            content=json.dumps({"code": "done", "processed": True, "revision": 42}),
+            content=json.dumps(
+                {"code": "done", "processed": True, "revision": 42}
+            ).encode(),
         ),
     ]
 
@@ -834,15 +837,18 @@ def test_notify_upload(fake_client):
 def test_notify_upload_built_at(fake_client):
     fake_client.request.side_effect = [
         FakeResponse(
-            status_code=200, content=json.dumps({"status_details_url": "https://track"})
+            status_code=200,
+            content=json.dumps({"status_details_url": "https://track"}).encode(),
         ),
         FakeResponse(
             status_code=200,
-            content=json.dumps({"code": "processing", "processed": False}),
+            content=json.dumps({"code": "processing", "processed": False}).encode(),
         ),
         FakeResponse(
             status_code=200,
-            content=json.dumps({"code": "done", "processed": True, "revision": 42}),
+            content=json.dumps(
+                {"code": "done", "processed": True, "revision": 42}
+            ).encode(),
         ),
     ]
 
@@ -877,15 +883,18 @@ def test_notify_upload_built_at(fake_client):
 def test_notify_upload_channels(fake_client):
     fake_client.request.side_effect = [
         FakeResponse(
-            status_code=200, content=json.dumps({"status_details_url": "https://track"})
+            status_code=200,
+            content=json.dumps({"status_details_url": "https://track"}).encode(),
         ),
         FakeResponse(
             status_code=200,
-            content=json.dumps({"code": "processing", "processed": False}),
+            content=json.dumps({"code": "processing", "processed": False}).encode(),
         ),
         FakeResponse(
             status_code=200,
-            content=json.dumps({"code": "done", "processed": True, "revision": 42}),
+            content=json.dumps(
+                {"code": "done", "processed": True, "revision": 42}
+            ).encode(),
         ),
     ]
 
@@ -920,17 +929,18 @@ def test_notify_upload_channels(fake_client):
 def test_notify_upload_error(fake_client):
     fake_client.request.side_effect = [
         FakeResponse(
-            status_code=200, content=json.dumps({"status_details_url": "https://track"})
+            status_code=200,
+            content=json.dumps({"status_details_url": "https://track"}).encode(),
         ),
         FakeResponse(
             status_code=200,
-            content=json.dumps({"code": "processing", "processed": False}),
+            content=json.dumps({"code": "processing", "processed": False}).encode(),
         ),
         FakeResponse(
             status_code=200,
             content=json.dumps(
                 {"code": "done", "processed": True, "errors": [{"message": "bad-snap"}]}
-            ),
+            ).encode(),
         ),
     ]
 
@@ -975,7 +985,7 @@ def test_notify_upload_error(fake_client):
 
 def test_list_revisions(fake_client, list_revisions_payload):
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(list_revisions_payload)
+        status_code=200, content=json.dumps(list_revisions_payload).encode()
     )
     channel_map = client.StoreClientCLI().list_revisions(
         snap_name="test-snap",
@@ -1047,10 +1057,13 @@ def test_on_prem_notify_revision_release_unsupported(on_prem_client):
 def test_on_prem_notify_revision_approved(on_prem_client, fake_client_request, emitter):
     fake_client_request.side_effect = [
         FakeResponse(
-            content=json.dumps({"revisions": [{"status": "progress"}]}), status_code=200
+            content=json.dumps({"revisions": [{"status": "progress"}]}).encode(),
+            status_code=200,
         ),
         FakeResponse(
-            content=json.dumps({"revisions": [{"status": "approved", "revision": 2}]}),
+            content=json.dumps(
+                {"revisions": [{"status": "approved", "revision": 2}]}
+            ).encode(),
             status_code=200,
         ),
     ]
@@ -1073,7 +1086,8 @@ def test_on_prem_notify_revision_approved(on_prem_client, fake_client_request, e
 def test_on_prem_notify_revision_rejected(on_prem_client, fake_client_request):
     fake_client_request.side_effect = [
         FakeResponse(
-            content=json.dumps({"revisions": [{"status": "progress"}]}), status_code=200
+            content=json.dumps({"revisions": [{"status": "progress"}]}).encode(),
+            status_code=200,
         ),
         FakeResponse(
             content=json.dumps(
@@ -1087,7 +1101,7 @@ def test_on_prem_notify_revision_rejected(on_prem_client, fake_client_request):
                         }
                     ]
                 }
-            ),
+            ).encode(),
             status_code=200,
         ),
     ]
@@ -1164,7 +1178,7 @@ def test_on_prem_get_channel_map(
     channel_map_payload["package"] = channel_map_payload.pop("snap")
 
     fake_client_request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(channel_map_payload)
+        status_code=200, content=json.dumps(channel_map_payload).encode()
     )
     channel_map = on_prem_client.get_channel_map(
         snap_name="test-snap",
@@ -1184,7 +1198,7 @@ def test_on_prem_list_revisions(
     on_prem_client, fake_client_request, list_revisions_payload
 ):
     fake_client_request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(list_revisions_payload)
+        status_code=200, content=json.dumps(list_revisions_payload).encode()
     )
     channel_map = client.StoreClientCLI().list_revisions(
         snap_name="test-snap",
