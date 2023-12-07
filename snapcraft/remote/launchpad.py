@@ -169,11 +169,20 @@ class LaunchpadClient:
     def _fetch_artifacts(self, snap: Optional[Entry]) -> None:
         """Fetch build arftifacts (logs and snaps)."""
         builds = self._get_builds(snap)
+        error_list: list[str] = []
 
         logger.info("Downloading artifacts...")
         for build in builds:
             self._download_build_artifacts(build)
-            self._download_log(build)
+            try:
+                self._download_log(build)
+            except errors.RemoteBuildFailedError as error:
+                error_list.append(str(error.details))
+
+        if error_list:
+            raise errors.RemoteBuildFailedError(
+                details="\n".join(error_list),
+            )
 
     def _get_builds_collection_entry(self, snap: Optional[Entry]) -> Optional[Entry]:
         logger.debug("Fetching builds collection information from Launchpad...")
@@ -422,6 +431,7 @@ class LaunchpadClient:
 
         if _is_build_status_failure(build):
             logger.error("Build failed for arch %r.", arch)
+            raise errors.RemoteBuildFailedError(f"Build failed for arch {arch}.")
 
     def _download_file(self, *, url: str, dst: str, gunzip: bool = False) -> None:
         # TODO: consolidate with, and use indicators.download_requests_stream

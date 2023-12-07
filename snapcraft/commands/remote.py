@@ -257,17 +257,19 @@ class RemoteBuildCommand(BaseCommand):
                 "Do you wish to recover this build?", default=True
             ):
                 emit.progress("Building")
-                remote_builder.monitor_build()
-                emit.progress("Cleaning")
-                remote_builder.clean_build()
-                emit.progress("Build completed", permanent=True)
+                try:
+                    remote_builder.monitor_build()
+                finally:
+                    emit.progress("Cleaning")
+                    remote_builder.clean_build()
+                    emit.progress("Build task(s) completed", permanent=True)
                 return
 
             # Otherwise clean running build before we start a new one.
             emit.progress("Cleaning existing build")
             remote_builder.clean_build()
         else:
-            emit.progress("No existing build found", permanent=True)
+            emit.progress("No existing build task(s) found", permanent=True)
 
         emit.progress(
             "If interrupted, resume with: 'snapcraft remote-build --recover "
@@ -277,10 +279,12 @@ class RemoteBuildCommand(BaseCommand):
         emit.progress("Starting build")
         remote_builder.start_build()
         emit.progress("Building")
-        remote_builder.monitor_build()
-        emit.progress("Cleaning")
-        remote_builder.clean_build()
-        emit.progress("Build completed", permanent=True)
+        try:
+            remote_builder.monitor_build()
+        finally:
+            emit.progress("Cleaning")
+            remote_builder.clean_build()
+            emit.progress("Build task(s) completed", permanent=True)
 
     def _get_build_strategy(self) -> Optional[_Strategies]:
         """Get the build strategy from the envvar `SNAPCRAFT_REMOTE_BUILD_STRATEGY`.

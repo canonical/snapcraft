@@ -119,7 +119,7 @@ class RemoteBuildTests(CommandBaseTestCase):
 
         self.mock_lc.start_build.assert_not_called()
         self.assertThat(result.exit_code, Equals(0))
-        mock_echo.info.assert_called_with("No build found.")
+        mock_echo.info.assert_called_with("No build task(s) found.")
         mock_echo.confirm.assert_not_called()
 
     @mock.patch("snapcraft_legacy.cli.remote.echo")
@@ -128,7 +128,7 @@ class RemoteBuildTests(CommandBaseTestCase):
 
         self.mock_lc.start_build.assert_not_called()
         self.assertThat(result.exit_code, Equals(0))
-        mock_echo.info.assert_called_with("No build found.")
+        mock_echo.info.assert_called_with("No build task(s) found.")
         mock_echo.confirm.assert_not_called()
 
     @mock.patch("snapcraft_legacy.cli.remote.echo")

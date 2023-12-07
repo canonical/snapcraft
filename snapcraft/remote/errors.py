@@ -102,3 +102,16 @@ class AcceptPublicUploadError(RemoteBuildError):
         )
 
         super().__init__(brief=brief, details=details)
+
+
+class RemoteBuildFailedError(RemoteBuildError):
+    """Remote build failed.
+
+    :param brief: Brief description of error.
+    :param details: Detailed information.
+    """
+
+    def __init__(self, details: str) -> None:
+        brief = "Remote build failed."
+
+        super().__init__(brief=brief, details=details)
