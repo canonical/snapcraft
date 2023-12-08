@@ -257,7 +257,7 @@ def test_edit_validation_sets_with_errors_to_amend(
                 status_code=requests.codes.bad_request,  # pylint: disable=no-member
                 content=json.dumps(
                     {"error_list": [{"message": "bad assertion", "code": "no snap"}]}
-                ),
+                ).encode(),
             )
         ),
         validation_sets_payload.assertions[0],
@@ -313,7 +313,7 @@ def test_edit_validation_sets_with_errors_not_amended(
                 status_code=requests.codes.bad_request,  # pylint: disable=no-member
                 content=json.dumps(
                     {"error_list": [{"message": "bad assertion", "code": "no snap"}]}
-                ),
+                ).encode(),
             )
         )
     )
