@@ -31,13 +31,17 @@ restore: |
   rm -f ./*.snap
 
 execute: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  prime_dir="$(get_prime_dir)"
+
   cd "${SNAP}"
 
   if [ -f expected-symlink ]; then
     snapcraft prime
-    ls -l prime/bin
-    [ -x prime/bin/hello ]
-    [ "$(readlink prime/bin/python3)" == "$(cat expected-symlink)" ]
+    ls -l "${prime_dir}/bin"
+    [ -x "${prime_dir}/bin/hello" ]
+    [ "$(readlink "${prime_dir}/bin/python3")" == "$(cat expected-symlink)" ]
   else
     snapcraft prime 2>&1 | MATCH "No suitable Python interpreter found, giving up."
   fi 

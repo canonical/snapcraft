@@ -41,13 +41,18 @@ def setup_method_fixture():
         # Ensure that the PPA is not added so we don't cause side-effects
         properties["kernel-add-ppa"] = kernel_add_ppa
 
-        part = Part("kernel", {})
+        part = Part("kernel", {}, partitions=["default"])
 
         if arch is None:
-            project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
+            project_info = ProjectInfo(
+                application_name="test", cache_dir=new_dir, partitions=["default"]
+            )
         else:
             project_info = ProjectInfo(
-                application_name="test", cache_dir=new_dir, arch=arch
+                application_name="test",
+                cache_dir=new_dir,
+                arch=arch,
+                partitions=["default"],
             )
 
         part_info = PartInfo(project_info=project_info, part=part)

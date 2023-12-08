@@ -486,7 +486,7 @@ def _expose_prime(project_path: Path, instance: Executor):
     host_prime.mkdir(exist_ok=True)
 
     managed_root = utils.get_managed_environment_home_path()
-    dirs = craft_parts.ProjectDirs(work_dir=managed_root)
+    dirs = craft_parts.ProjectDirs(work_dir=managed_root, partitions=["default"])
 
     instance.mount(host_source=project_path / "prime", target=dirs.prime_dir)
 
@@ -612,7 +612,7 @@ def _expand_environment(
     if target_arch == "all":
         target_arch = get_host_architecture()
 
-    dirs = craft_parts.ProjectDirs(work_dir=work_dir)
+    dirs = craft_parts.ProjectDirs(work_dir=work_dir, partitions=["default"])
     info = craft_parts.ProjectInfo(
         application_name="snapcraft",  # not used in environment expansion
         cache_dir=Path(),  # not used in environment expansion
@@ -621,6 +621,7 @@ def _expand_environment(
         project_name=snapcraft_yaml.get("name", ""),
         project_dirs=dirs,
         project_vars=project_vars,
+        partitions=["default"],
     )
     _set_global_environment(info)
 

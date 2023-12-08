@@ -26,8 +26,8 @@ execute: |
   arch_triplet="$(dpkg-architecture -q DEB_HOST_MULTIARCH)"
 
   # Verify typical strict binary has an untouched rpath
-  patchelf --print-interpreter prime/bin/hello-strict | MATCH "^/lib.*ld.*.so.*"
-  rpath="$(patchelf --print-rpath prime/bin/hello-strict)"
+  patchelf --print-interpreter prime/default/bin/hello-strict | MATCH "^/lib.*ld.*.so.*"
+  rpath="$(patchelf --print-rpath prime/default/bin/hello-strict)"
   if [[ -n "${rpath}" ]]; then
      echo "found rpath on strict binary: ${rpath}"
      exit 1
@@ -38,10 +38,10 @@ execute: |
   RPATH_ORIGIN_MATCH="^\\\$ORIGIN/../fake-lib:/snap/$base/current/lib/$arch_triplet"
 
   # Verify binary rpath patching with existing rpath
-  patchelf --print-interpreter prime/bin/hello-strict-existing-rpath | MATCH "^/snap/$base/current/lib.*ld.*.so.*"
-  patchelf --print-rpath prime/bin/hello-strict-existing-rpath | MATCH "${RPATH_ORIGIN_MATCH}"
+  patchelf --print-interpreter prime/default/bin/hello-strict-existing-rpath | MATCH "^/snap/$base/current/lib.*ld.*.so.*"
+  patchelf --print-rpath prime/default/bin/hello-strict-existing-rpath | MATCH "${RPATH_ORIGIN_MATCH}"
 
   # Verify binary rpath patching without existing rpath
-  patchelf --print-interpreter prime/bin/hello-strict-enable-patchelf | MATCH "^/snap/$base/current/lib.*ld.*.so.*"
-  patchelf --print-rpath prime/bin/hello-strict-enable-patchelf | MATCH "${RPATH_MATCH}"
+  patchelf --print-interpreter prime/default/bin/hello-strict-enable-patchelf | MATCH "^/snap/$base/current/lib.*ld.*.so.*"
+  patchelf --print-rpath prime/default/bin/hello-strict-enable-patchelf | MATCH "${RPATH_MATCH}"
 

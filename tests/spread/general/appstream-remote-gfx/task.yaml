@@ -29,19 +29,19 @@ execute: |
       expected_snap_yaml="$PWD/../../appstream-remote-gfx/expected_snap.yaml"
   fi
 
-  if ! diff -U10 prime/meta/snap.yaml "$expected_snap_yaml"; then
+  if ! diff -U10 prime/default/meta/snap.yaml "$expected_snap_yaml"; then
       echo "The formatting for snap.yaml is incorrect"
       exit 1
   fi
 
   expected_desktop="$PWD/../../appstream-remote-gfx/expected_appstream-desktop.desktop"
 
-  if ! diff -U10 prime/meta/gui/appstream-desktop.desktop "$expected_desktop"; then
+  if ! diff -U10 prime/default/meta/gui/appstream-desktop.desktop "$expected_desktop"; then
       echo "The formatting for appstream-desktop.desktop is incorrect"
       exit 1
   fi
 
-  if [ ! -f prime/meta/gui/icon.png ]; then
+  if [ ! -f prime/default/meta/gui/icon.png ]; then
       echo "Failed to fetch remote icon."
       exit 1
   fi

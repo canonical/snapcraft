@@ -46,10 +46,13 @@ def setup_method_fixture():
             properties = {}
         properties["source"] = "."
         plugin_properties = colcon.ColconPlugin.properties_class.unmarshal(properties)
-        part = Part("foo", {})
+        part = Part("foo", {}, partitions=["default"])
 
         project_info = ProjectInfo(
-            application_name="test", base="core22", cache_dir=new_dir
+            application_name="test",
+            base="core22",
+            cache_dir=new_dir,
+            partitions=["default"],
         )
         project_info._parallel_build_count = 42
 

@@ -40,9 +40,9 @@ execute: |
 
   # Build the snap and verify that only package1 was included
   snapcraft
-  [ -d parts/test-part/install/opt/ros/snap/lib/package1 ]
-  [ ! -d parts/test-part/install/opt/ros/snap/lib/package2 ]
-  [ ! -d parts/test-part/install/opt/ros/snap/lib/package3 ]
+  [ -d parts/test-part/install/default/opt/ros/snap/lib/package1 ]
+  [ ! -d parts/test-part/install/default/opt/ros/snap/lib/package2 ]
+  [ ! -d parts/test-part/install/default/opt/ros/snap/lib/package3 ]
 
   snap install "${SNAP}"_1.0_*.snap --dangerous
   [ "$($SNAP)" = "I am package1" ]

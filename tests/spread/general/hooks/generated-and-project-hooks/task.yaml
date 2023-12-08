@@ -16,17 +16,21 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  prime_dir="$(get_prime_dir)"
+
   snapcraft --destructive-mode
 
   # verify hooks were staged
-  if [[ ! -f prime/meta/hooks/configure ]] && [[ ! -f prime/meta/hooks/install ]]; then
-      echo "no hook found in prime/meta/hooks/"
+  if [[ ! -f "${prime_dir}/meta/hooks/configure" ]] && [[ ! -f "${prime_dir}/meta/hooks/install" ]]; then
+      echo "no hook found in ${prime_dir}/meta/hooks/"
       exit 1
   fi
 
   # verify hooks can execute
-  if ! prime/snap/hooks/install | grep "I am a project install hook" && \
-     ! prime/snap/hooks/configure | grep "I am a project configure hook"; then
+  if ! "${prime_dir}/snap/hooks/install" | grep "I am a project install hook" && \
+     ! "${prime_dir}/snap/hooks/configure" | grep "I am a project configure hook"; then
     echo "Unexpected content in hook"
     exit 1
   fi

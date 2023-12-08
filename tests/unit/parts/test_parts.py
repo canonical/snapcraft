@@ -54,7 +54,7 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
         target_arch="amd64",
     )
     lifecycle.run(step_name)
-    assert lifecycle.prime_dir == Path(new_dir, "prime")
+    assert lifecycle.prime_dir == Path(new_dir, "prime/default")
     assert lifecycle.prime_dir.is_dir()
     assert lcm_spy.mock_calls == [
         call(
@@ -73,6 +73,7 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
             project_vars={"version": "1", "grade": "stable"},
             confinement="strict",
             project_base="core22",
+            partitions=["default"],
         )
     ]
 
@@ -366,5 +367,6 @@ def test_parts_lifecycle_run_with_all_architecture(mocker, parts_data, new_dir):
             project_vars={"version": "1", "grade": "stable"},
             project_base="core22",
             confinement="strict",
+            partitions=["default"],
         )
     ]

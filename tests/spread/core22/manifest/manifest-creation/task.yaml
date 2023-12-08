@@ -16,9 +16,9 @@ execute: |
   $CMD
 
   test -f manifest_0.1_*.snap
-  test -f prime/snap/manifest.yaml
-  test "$(grep -c -- '^ *- hello=[0-9]' prime/snap/manifest.yaml)" -eq 2
-  cmp snap/snapcraft.yaml prime/snap/snapcraft.yaml
+  test -f prime/default/snap/manifest.yaml
+  test "$(grep -c -- '^ *- hello=[0-9]' prime/default/snap/manifest.yaml)" -eq 2
+  cmp snap/snapcraft.yaml prime/default/snap/snapcraft.yaml
 
   cp manifest_0.1_*.snap ~
   review-tools.snap-review ~/manifest_0.1_*.snap

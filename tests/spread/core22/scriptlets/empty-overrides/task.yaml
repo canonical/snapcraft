@@ -5,9 +5,9 @@ restore: |
 
 execute: |
   snapcraft prime --destructive-mode
-  test -d prime
+  test -d prime/default
 
-  if [ -f prime/foo.bar ]; then
+  if [ -f prime/default/foo.bar ]; then
       echo "prime directory should be empty"
       false
   fi

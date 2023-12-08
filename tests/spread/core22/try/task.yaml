@@ -12,8 +12,8 @@ execute: |
   # Followed by the actual try
   snapcraft try --use-lxd
   
-  find prime/meta/snap.yaml
-  find prime/usr/bin/hello
+  find prime/default/meta/snap.yaml
+  find prime/default/usr/bin/hello
   
   snap try prime
   hello-try | MATCH "Hello, world"

@@ -25,9 +25,12 @@ from snapcraft.parts.plugins import FlutterPlugin
 def part_info(new_dir):
     yield PartInfo(
         project_info=ProjectInfo(
-            application_name="test", project_name="test-snap", cache_dir=new_dir
+            application_name="test",
+            project_name="test-snap",
+            cache_dir=new_dir,
+            partitions=["default"],
         ),
-        part=Part("my-part", {}),
+        part=Part("my-part", {}, partitions=["default"]),
     )
 
 

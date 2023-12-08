@@ -25,7 +25,7 @@ execute: |
 
   snapcraft prime --destructive-mode
 
-  if ! diff -U10 prime/meta/snap.yaml expected_snap.yaml; then
+  if ! diff -U10 prime/default/meta/snap.yaml expected_snap.yaml; then
       echo "The formatting for snap.yaml is incorrect"
       exit 1
   fi

@@ -35,9 +35,11 @@ execute: |
       "^CRAFT_PART_SRC_WORK=${root}/parts/hello/src$" \
       "^CRAFT_PART_BUILD=${root}/parts/hello/build$" \
       "^CRAFT_PART_BUILD_WORK=${root}/parts/hello/build$" \
-      "^CRAFT_PART_INSTALL=${root}/parts/hello/install$" \
-      "^CRAFT_STAGE=${root}/stage$" \
-      "^CRAFT_PRIME=${root}/prime$"; do
+      "^CRAFT_PART_INSTALL=${root}/parts/hello/install/default$" \
+      "^CRAFT_STAGE=${root}/stage/default$" \
+      "^CRAFT_PRIME=${root}/prime/default$" \
+      "^CRAFT_DEFAULT_STAGE=${root}/stage/default$" \
+      "^CRAFT_DEFAULT_PRIME=${root}/prime/default$"; do
       grep -q "$exp" < "$file"
     done
   }

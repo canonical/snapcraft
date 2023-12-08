@@ -24,7 +24,7 @@ execute: |
   # also test in destructive mode
   snapcraft --destructive-mode
 
-  grep '^  test-var: value' prime/snap/manifest.yaml
+  grep '^  test-var: value' prime/default/snap/manifest.yaml
 
   cp manifest_0.1_*.snap ~
   review-tools.snap-review ~/manifest_0.1_*.snap

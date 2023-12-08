@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Optional, Set
 import craft_parts
 from craft_archives import repo
 from craft_cli import emit
-from craft_parts import Action, ActionType, Part, ProjectDirs, Step
+from craft_parts import Action, ActionType, Features, Part, ProjectDirs, Step
 from craft_parts.packages import Repository
 from xdg import BaseDirectory  # type: ignore
 
@@ -39,6 +39,9 @@ _LIFECYCLE_STEPS = {
     "stage": Step.STAGE,
     "prime": Step.PRIME,
 }
+
+# Enable the craft-parts features that we use
+Features(enable_partitions=True)
 
 
 class PartsLifecycle:
@@ -109,6 +112,7 @@ class PartsLifecycle:
                 # custom arguments
                 project_base=project_base,
                 confinement=confinement,
+                partitions=["default"],
             )
         except craft_parts.PartsError as err:
             raise errors.PartsLifecycleError(str(err)) from err
@@ -244,8 +248,8 @@ class PartsLifecycle:
         if self._adopt_info is None or self._adopt_info not in self._parse_info:
             return []
 
-        dirs = ProjectDirs(work_dir=self._work_dir)
-        part = Part(self._adopt_info, {}, project_dirs=dirs)
+        dirs = ProjectDirs(work_dir=self._work_dir, partitions=["default"])
+        part = Part(self._adopt_info, {}, project_dirs=dirs, partitions=["default"])
         locations = (
             part.part_src_dir,
             part.part_build_dir,

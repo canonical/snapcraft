@@ -24,16 +24,20 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  prime_dir="$(get_prime_dir)"
+
   snapcraft snap --destructive-mode
 
   # Verify that the hook is there
-  if [ ! -f prime/meta/hooks/install ]; then
+  if [ ! -f "${prime_dir}/meta/hooks/install" ]; then
       echo "Stub hook missing"
       exit 1
   fi
   
   # Verify stub hook content
-  hook_content=$(cat prime/meta/hooks/install)
+  hook_content=$(cat "${prime_dir}/meta/hooks/install")
   if [ "${hook_content}" != "#!/bin/true" ]; then
       echo "Unexpected hook content:"
       echo "${hook_content}"

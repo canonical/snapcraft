@@ -25,9 +25,13 @@ restore: |
   rm -rf expected_snap.yaml
 
 execute: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  prime_dir="$(get_prime_dir)"
+
   snapcraft prime
 
-  if ! diff prime/meta/snap.yaml expected_snap.yaml; then
+  if ! diff "${prime_dir}/meta/snap.yaml" expected_snap.yaml; then
       echo "The formatting for snap.yaml is incorrect"
       exit 1
   fi

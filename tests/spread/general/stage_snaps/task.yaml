@@ -20,16 +20,20 @@ restore: |
   rm -rf test-snap
 
 execute: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  stage_dir="$(get_stage_dir)"
+
   cd test-snap
 
   snapcraft stage
 
-  if [ ! -f stage/meta.hello/snap.yaml ]; then
+  if [ ! -f "${stage_dir}/meta.hello/snap.yaml" ]; then
       echo "Missing expected stage-snaps payload from hello"
       exit 1
   fi
 
-  if grep black snap/snapcraft.yaml && [ ! -f stage/meta.black/snap.yaml ]; then
+  if grep black snap/snapcraft.yaml && [ ! -f "${stage_dir}/meta.black/snap.yaml" ]; then
       echo "Missing expected stage-snaps payload from black"
       exit 1
   fi

@@ -79,3 +79,29 @@ restore_yaml()
     # Restoration only really works for git committed snapcraft.yaml's
     git checkout "$snapcraft_yaml_path"
 }
+
+get_stage_dir()
+{
+    if [[ "$SPREAD_SYSTEM" =~ ubuntu-24.04 ]]; then
+        echo "stage/default"
+    elif [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
+        echo "stage/default"
+    elif [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
+        echo "stage"
+    else
+        exit 1
+    fi
+}
+
+get_prime_dir()
+{
+    if [[ "$SPREAD_SYSTEM" =~ ubuntu-24.04 ]]; then
+        echo "prime/default"
+    elif [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
+        echo "prime/default"
+    elif [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
+        echo "prime"
+    else
+        exit 1
+    fi
+}

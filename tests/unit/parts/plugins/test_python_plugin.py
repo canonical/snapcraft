@@ -32,8 +32,9 @@ def part_info(new_dir):
             confinement="strict",
             project_base="core22",
             cache_dir=new_dir,
+            partitions=["default"],
         ),
-        part=Part("my-part", {}),
+        part=Part("my-part", {}, partitions=["default"]),
     )
 
 
@@ -55,26 +56,26 @@ def test_get_build_environment(plugin, new_dir):
     assert plugin.get_build_environment() == {
         "PARTS_PYTHON_INTERPRETER": "python3",
         "PARTS_PYTHON_VENV_ARGS": "",
-        "PATH": f"{str(new_dir)}/parts/my-part/install/bin:${{PATH}}",
+        "PATH": f"{str(new_dir)}/parts/my-part/install/default/bin:${{PATH}}",
     }
 
 
 def test_get_build_commands(plugin, new_dir):
     # pylint: disable=line-too-long
     assert plugin.get_build_commands() == [
-        f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/my-part/install"',
-        f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/my-part/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        f"{new_dir}/parts/my-part/install/bin/pip install  -U pip setuptools wheel",
-        f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/my-part/install/bin/pip install  -U .",
-        f'find "{new_dir}/parts/my-part/install" -type f -executable -print0 | xargs -0 \\\n'
+        f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/my-part/install/default"',
+        f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/my-part/install/default/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+        f"{new_dir}/parts/my-part/install/default/bin/pip install  -U pip setuptools wheel",
+        f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/my-part/install/default/bin/pip install  -U .",
+        f'find "{new_dir}/parts/my-part/install/default" -type f -executable -print0 | xargs -0 \\\n'
         '    sed -i "1 s|^#\\!${PARTS_PYTHON_VENV_INTERP_PATH}.*$|#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}|"\n',
         dedent(
             f"""\
             # look for a provisioned python interpreter
             opts_state="$(set +o|grep errexit)"
             set +e
-            install_dir="{new_dir}/parts/my-part/install/usr/bin"
-            stage_dir="{new_dir}/stage/usr/bin"
+            install_dir="{new_dir}/parts/my-part/install/default/usr/bin"
+            stage_dir="{new_dir}/stage/default/usr/bin"
 
             # look for the right Python version - if the venv was created with python3.10,
             # look for python3.10
@@ -85,10 +86,10 @@ def test_get_build_commands(plugin, new_dir):
             if [ -n "$payload_python" ]; then
                 # We found a provisioned interpreter, use it.
                 echo Found interpreter in payload: \\"${{payload_python}}\\"
-                installed_python="${{payload_python##{new_dir}/parts/my-part/install}}"
+                installed_python="${{payload_python##{new_dir}/parts/my-part/install/default}}"
                 if [ "$installed_python" = "$payload_python" ]; then
                     # Found a staged interpreter.
-                    symlink_target="..${{payload_python##{new_dir}/stage}}"
+                    symlink_target="..${{payload_python##{new_dir}/stage/default}}"
                 else
                     # The interpreter was installed but not staged yet.
                     symlink_target="..$installed_python"
@@ -135,8 +136,9 @@ def test_get_system_python_interpreter(confinement, interpreter, new_dir):
             confinement=confinement,
             project_base="core22",
             cache_dir=new_dir,
+            partitions=["default"],
         ),
-        part=Part("my-part", {}),
+        part=Part("my-part", {}, partitions=["default"]),
     )
     properties = PythonPlugin.properties_class.unmarshal({"source": "."})
     plugin = PythonPlugin(properties=properties, part_info=part_info)
@@ -162,8 +164,9 @@ def test_get_system_python_interpreter_base_bare(confinement, interpreter, new_d
             confinement=confinement,
             project_base="bare",
             cache_dir=new_dir,
+            partitions=["default"],
         ),
-        part=Part("my-part", {}),
+        part=Part("my-part", {}, partitions=["default"]),
     )
     properties = PythonPlugin.properties_class.unmarshal({"source": "."})
     plugin = PythonPlugin(properties=properties, part_info=part_info)

@@ -1,8 +1,5 @@
 summary: Metadata links transformation from snapcraft.yaml to snap.yaml
 
-environment:
-  SNAP_YAML: prime/meta/snap.yaml
-
 prepare: |
   snap install yq
 
@@ -19,6 +16,10 @@ restore: |
   restore_yaml snapcraft.yaml
 
 execute: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  SNAP_YAML="$(get_prime_dir)/meta/snap.yaml"
+
   # Create a snap to trigger `snap pack`.
   snapcraft
 

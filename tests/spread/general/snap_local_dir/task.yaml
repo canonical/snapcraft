@@ -24,6 +24,10 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  stage_dir="$(get_stage_dir)"
+
   compare_dir_contents()
   {
       find "$1" ! -path "$1" -printf '%P\n' | sort > found.txt
@@ -41,4 +45,5 @@ execute: |
 
   # Verify that the parts can now be staged, and end up as expected
   snapcraft stage | MATCH -v "unsupported"
-  [ -z "$(compare_dir_contents stage expected_stage.txt)" ]
+
+  [ -z "$(compare_dir_contents "${stage_dir}" expected_stage.txt)" ]

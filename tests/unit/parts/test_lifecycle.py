@@ -365,6 +365,10 @@ def test_lifecycle_run_local_destructive_mode(
         monkeypatch.setenv("SNAPCRAFT_BUILD_ENVIRONMENT", build_env)
     else:
         monkeypatch.delenv("SNAPCRAFT_BUILD_ENVIRONMENT", raising=False)
+    if managed_mode:
+        expected_pack_dir = new_dir / "home/prime/default"
+    else:
+        expected_pack_dir = new_dir / "prime/default"
 
     parts_lifecycle._run_command(
         cmd,
@@ -391,9 +395,10 @@ def test_lifecycle_run_local_destructive_mode(
     assert run_mock.mock_calls == [
         call("prime", shell=False, shell_after=False, rerun_step=False)
     ]
+
     assert pack_mock.mock_calls[:1] == [
         call(
-            new_dir / "home/prime" if managed_mode else new_dir / "prime",
+            expected_pack_dir,
             output=None,
             compression="xz",
             name="mytest",
@@ -458,7 +463,7 @@ def test_lifecycle_run_local_managed_mode(
     ]
     assert pack_mock.mock_calls[:1] == [
         call(
-            new_dir / "home/prime",
+            new_dir / "home/prime/default",
             output=None,
             compression="xz",
             name="mytest",
@@ -492,6 +497,10 @@ def test_lifecycle_run_local_build_env(
         return_value=new_dir / "home",
     )
     monkeypatch.setenv("SNAPCRAFT_BUILD_ENVIRONMENT", "host")
+    if managed_mode:
+        expected_pack_dir = new_dir / "home/prime/default"
+    else:
+        expected_pack_dir = new_dir / "prime/default"
 
     parts_lifecycle._run_command(
         cmd,
@@ -523,7 +532,7 @@ def test_lifecycle_run_local_build_env(
     ]
     assert pack_mock.mock_calls[:1] == [
         call(
-            new_dir / "home/prime" if managed_mode else new_dir / "prime",
+            expected_pack_dir,
             output=None,
             compression="xz",
             name="mytest",
@@ -1112,8 +1121,8 @@ def test_expand_environment(new_dir, mocker):
         "field6": "arm64",
         "field8": "arm64",
         "dirs": {
-            "field9": [f"{new_dir}/stage", f"{new_dir}/stage"],
-            "field10": [f"{new_dir}/prime", f"{new_dir}/prime"],
+            "field9": [f"{new_dir}/stage/default", f"{new_dir}/stage/default"],
+            "field10": [f"{new_dir}/prime/default", f"{new_dir}/prime/default"],
             "field11": [f"{new_dir}", f"{new_dir}"],
         },
         "field12": ["8", "8"],
@@ -1171,9 +1180,9 @@ def test_lifecycle_run_expand_snapcraft_vars(new_dir, mocker):
         ),
     )
 
-    assert Path(new_dir / "prime/usr/aarch64-linux-gnu/foo").is_file()
+    assert Path(new_dir / "prime/default/usr/aarch64-linux-gnu/foo").is_file()
 
-    meta_yaml = Path(new_dir / "prime/meta/snap.yaml").read_text()
+    meta_yaml = Path(new_dir / "prime/default/meta/snap.yaml").read_text()
     assert "command: usr/aarch64-linux-gnu/foo" in meta_yaml
 
 
@@ -1228,9 +1237,9 @@ def test_lifecycle_run_expand_craft_vars(new_dir, mocker):
         ),
     )
 
-    assert Path(new_dir / "prime/usr/aarch64-linux-gnu/foo").is_file()
+    assert Path(new_dir / "prime/default/usr/aarch64-linux-gnu/foo").is_file()
 
-    meta_yaml = Path(new_dir / "prime/meta/snap.yaml").read_text()
+    meta_yaml = Path(new_dir / "prime/default/meta/snap.yaml").read_text()
     assert "command: usr/aarch64-linux-gnu/foo" in meta_yaml
 
 
@@ -1254,9 +1263,9 @@ def test_lifecycle_run_permission_denied(new_dir):
     yaml_path = Path("snapcraft.yaml")
     yaml_path.write_text(content)
 
-    Path("prime/meta/").mkdir(parents=True)
-    Path("prime/meta/snap.yaml").touch()
-    Path("prime/meta/snap.yaml").chmod(0o000)
+    Path("prime/default/meta/").mkdir(parents=True)
+    Path("prime/default/meta/snap.yaml").touch()
+    Path("prime/default/meta/snap.yaml").chmod(0o000)
 
     with pytest.raises(errors.FilePermissionError) as raised:
         parts_lifecycle.run(
@@ -1276,7 +1285,9 @@ def test_lifecycle_run_permission_denied(new_dir):
         )
 
     error = raised.value
-    assert str(error) == f"Permission denied in file {new_dir!s}/prime/meta/snap.yaml"
+    assert str(error) == (
+        f"Permission denied in file {new_dir!s}/prime/default/meta/snap.yaml"
+    )
     assert error.resolution == (
         "Make sure the file is part of the current project "
         "and its permissions and ownership are correct."
@@ -1527,7 +1538,9 @@ def test_lifecycle_run_in_provider_try(
     # is mounted, and _then_ the command is run in the instance.
     mock_instance.assert_has_calls(
         [
-            call.mount(host_source=tmp_path / "prime", target=Path("/root/prime")),
+            call.mount(
+                host_source=tmp_path / "prime", target=Path("/root/prime/default")
+            ),
             call.execute_run(expected_command, check=True, cwd=Path("/root/project")),
         ],
         any_order=False,
@@ -1847,12 +1860,12 @@ def test_lifecycle_write_metadata(
     )
 
     assert mock_write_metadata.mock_calls == [
-        call(project, new_dir / "prime", arch=build_for)
+        call(project, new_dir / "prime/default", arch=build_for)
     ]
     assert mock_write_manifest.mock_calls == [
         call(
             project,
-            new_dir / "prime",
+            new_dir / "prime/default",
             arch=build_for,
             parts=mocker.ANY,
             start_time=mocker.ANY,
