@@ -127,6 +127,24 @@ def get_host_architecture():
     )
 
 
+def is_architecture_supported(architecture: str) -> bool:
+    """Check if an debian-syntax architecture is supported.
+
+    :param architecture: architecture to check
+
+    :returns: True if the architecture is supported by snapcraft.
+    """
+    return architecture in list(_ARCH_TRANSLATIONS_DEB_TO_PLATFORM)
+
+
+def get_supported_architectures() -> List[str]:
+    """Get a list of architectures supported by snapcraft.
+
+    :returns: A list of architectures.
+    """
+    return list(_ARCH_TRANSLATIONS_DEB_TO_PLATFORM.keys())
+
+
 def convert_architecture_deb_to_platform(architecture: str) -> str:
     """Convert an architecture from deb/snap syntax to platform syntax.
 

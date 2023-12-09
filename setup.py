@@ -60,19 +60,19 @@ else:
     scripts = []
 
 dev_requires = [
-    "black==23.1.0",
-    "codespell[toml]==2.2.4",
+    "black",
+    "codespell[toml]",
     "coverage[toml]",
     "pyflakes",
     "fixtures",
-    "isort==5.11.4",
+    "isort",
     "mccabe",
     "mypy",
     "testscenarios",
     "pexpect",
     "pip",
     "pycodestyle",
-    "pydocstyle==6.2.3",
+    "pydocstyle",
     "pyftpdlib",
     "pylint",
     "pylint-fixme-info",
@@ -82,7 +82,7 @@ dev_requires = [
     "pytest-cov",
     "pytest-mock",
     "pytest-subprocess",
-    "ruff~=0.1.1",
+    "ruff",
     "tox>=4.5",
     "types-PyYAML",
     "types-requests",
@@ -90,7 +90,7 @@ dev_requires = [
     "types-simplejson",
     "types-tabulate",
     "types-toml",
-    "yamllint==1.29.0",
+    "yamllint",
 ]
 
 if sys.platform == "win32":
@@ -116,6 +116,9 @@ install_requires = [
     "overrides",
     "progressbar",
     "pyelftools",
+    # Pygit2 and libgit2 need to match versions.
+    # Further info: https://www.pygit2.org/install.html#version-numbers
+    "pygit2~=1.13.0",
     "pymacaroons",
     "pyxdg",
     "pyyaml",

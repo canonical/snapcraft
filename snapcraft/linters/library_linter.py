@@ -214,7 +214,7 @@ class LibraryLinter(Linter):
         issues: List[LinterIssue] = []
         unused_libraries = all_libraries - used_libraries
 
-        # sort libraries so the results are ordered in a determistic way
+        # sort libraries so the results are ordered in a deterministic way
         for library_path in sorted(unused_libraries):
             try:
                 # Resolving symlinks to a library will change the path from relative

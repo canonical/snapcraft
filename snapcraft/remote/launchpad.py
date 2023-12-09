@@ -484,4 +484,4 @@ class LaunchpadClient:
         logger.info("Sending build data to Launchpad: %s", stripped_url)
 
         repo = GitRepo(repo_dir)
-        repo.push_url(url, "main", "HEAD", token)
+        repo.push_url(url, "main", "HEAD", token, push_tags=True)

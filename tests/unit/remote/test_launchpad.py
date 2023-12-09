@@ -531,6 +531,7 @@ def test_push_source_tree(new_dir, mock_git_repo, launchpad_client):
                 "main",
                 "HEAD",
                 "access-token",
+                push_tags=True,
             ),
         ]
     )

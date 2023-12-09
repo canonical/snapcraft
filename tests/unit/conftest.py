@@ -335,7 +335,7 @@ def fake_provider(mock_instance):
         @property
         @override
         def install_recommendation(self) -> str:
-            return "uninstallable"
+            return "snap"
 
         def clean_project_environments(self, *, instance_name: str):
             pass
@@ -348,7 +348,9 @@ def fake_provider(mock_instance):
         def is_provider_installed(cls) -> bool:
             return True
 
-        def create_environment(self, *, instance_name: str):
+        def create_environment(  # type: ignore[reportIncompatibleMethodOverride]
+            self, *, instance_name: str
+        ):
             yield mock_instance
 
         @contextlib.contextmanager
