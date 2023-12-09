@@ -111,10 +111,10 @@ def test_get_root_snippet(kde_neon_extension):
                 "target": "$SNAP/data-dir/sounds",
                 "default-provider": "gtk-common-themes",
             },
-            "kf5-5-111-qt-5-15-11-core22": {
-                "content": "kf5-5-111-qt-5-15-11-core22-all",
+            "kf5-5-108-qt-5-15-10-core22": {
+                "content": "kf5-5-108-qt-5-15-10-core22-all",
                 "interface": "content",
-                "default-provider": "kf5-5-111-qt-5-15-11-core22",
+                "default-provider": "kf5-5-108-qt-5-15-10-core22",
                 "target": "$SNAP/kf5",
             },
         },
@@ -174,19 +174,19 @@ class TestGetPartSnippet:
             "build-environment": [
                 {
                     "PATH": (
-                        "/snap/kf5-5-111-qt-5-15-11-core22-sdk/current/usr/bin${PATH:+:$PATH}"
+                        "/snap/kf5-5-108-qt-5-15-10-core22-sdk/current/usr/bin${PATH:+:$PATH}"
                     )
                 },
                 {
                     "XDG_DATA_DIRS": (
-                        "$CRAFT_STAGE/usr/share:/snap/kf5-5-111-qt-5-15-11-core22-sdk"
+                        "$CRAFT_STAGE/usr/share:/snap/kf5-5-108-qt-5-15-10-core22-sdk"
                         "/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
                     )
                 },
                 {
                     "SNAPCRAFT_CMAKE_ARGS": (
                         "-DCMAKE_FIND_ROOT_PATH="
-                        "/snap/kf5-5-111-qt-5-15-11-core22-sdk/current"
+                        "/snap/kf5-5-108-qt-5-15-10-core22-sdk/current"
                         "${SNAPCRAFT_CMAKE_ARGS:+:$SNAPCRAFT_CMAKE_ARGS}"
                     )
                 },
@@ -199,20 +199,20 @@ def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
         "build-environment": [
             {
                 "PATH": (
-                    "/snap/kf5-5-111-qt-5-15-11-core22-sdk/current/"
+                    "/snap/kf5-5-108-qt-5-15-10-core22-sdk/current/"
                     "usr/bin${PATH:+:$PATH}"
                 )
             },
             {
                 "XDG_DATA_DIRS": (
-                    "$CRAFT_STAGE/usr/share:/snap/kf5-5-111-qt-5-15-11-core22-sdk"
+                    "$CRAFT_STAGE/usr/share:/snap/kf5-5-108-qt-5-15-10-core22-sdk"
                     "/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
                 )
             },
             {
                 "SNAPCRAFT_CMAKE_ARGS": (
                     "-DCMAKE_FIND_ROOT_PATH="
-                    "/snap/kf5-5-111-qt-5-15-11-core22-sdk/current"
+                    "/snap/kf5-5-108-qt-5-15-10-core22-sdk/current"
                     "${SNAPCRAFT_CMAKE_ARGS:+:$SNAPCRAFT_CMAKE_ARGS}"
                 )
             },
@@ -227,8 +227,8 @@ def test_get_parts_snippet(kde_neon_extension):
         "kde-neon/sdk": {
             "source": str(source),
             "plugin": "make",
-            "make-parameters": ["PLATFORM_PLUG=kf5-5-111-qt-5-15-11-core22"],
-            "build-snaps": ["kf5-5-111-qt-5-15-11-core22-sdk"],
+            "make-parameters": ["PLATFORM_PLUG=kf5-5-108-qt-5-15-10-core22"],
+            "build-snaps": ["kf5-5-108-qt-5-15-10-core22-sdk"],
         }
     }
 
