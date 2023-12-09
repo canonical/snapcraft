@@ -111,10 +111,10 @@ def test_get_root_snippet(kde_neon_extension):
                 "target": "$SNAP/data-dir/sounds",
                 "default-provider": "gtk-common-themes",
             },
-            "kf5-5-108-qt-5-15-10-core22": {
-                "content": "kf5-5-108-qt-5-15-10-core22-all",
+            "kf5-5-111-qt-5-15-11": {
+                "content": "kf5-5-111-qt-5-15-11-core22-all",
                 "interface": "content",
-                "default-provider": "kf5-5-108-qt-5-15-10-core22",
+                "default-provider": "kf5-5-111-qt-5-15-11-core22",
                 "target": "$SNAP/kf5",
             },
         },
@@ -240,7 +240,7 @@ def test_get_parts_snippet_with_external_sdk(kde_neon_extension_with_build_snap)
         "kde-neon/sdk": {
             "source": str(source),
             "plugin": "make",
-            "make-parameters": ["PLATFORM_PLUG=kf5-5-111-qt-5-15-11-core22"],
+            "make-parameters": ["PLATFORM_PLUG=kf5-5-108-qt-5-15-10-core22"],
         }
     }
 
