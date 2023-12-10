@@ -111,7 +111,7 @@ def test_get_root_snippet(kde_neon_extension):
                 "target": "$SNAP/data-dir/sounds",
                 "default-provider": "gtk-common-themes",
             },
-            "kf5-5-111-qt-5-15-11": {
+            "kf5-5-111-qt-5-15-11-core22": {
                 "content": "kf5-5-111-qt-5-15-11-core22-all",
                 "interface": "content",
                 "default-provider": "kf5-5-111-qt-5-15-11-core22",
