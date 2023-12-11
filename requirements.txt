@@ -18,7 +18,7 @@ docutils==0.19
 gnupg==2.3.1
 httplib2==0.22.0
 idna==3.6
-importlib-metadata==6.8.0
+importlib-metadata==7.0.0
 jaraco.classes==3.3.0
 jeepney==0.8.0
 jsonschema==2.5.1
