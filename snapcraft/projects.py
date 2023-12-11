@@ -187,6 +187,26 @@ def _validate_architectures_all_keyword(architectures):
             )
 
 
+def _validate_version_name(version: str, model_name: str) -> None:
+    """Validate a version complies to the naming convention.
+
+    :param version: version string to validate
+    :param model_name: name of the model that contains the version
+
+    :raises ValueError: if the version contains invalid characters
+    """
+    if version and not re.match(
+        r"^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$", version
+    ):
+        raise ValueError(
+            f"Invalid version '{version}': {model_name.title()} versions consist of "
+            "upper- and lower-case alphanumeric characters, as well as periods, colons, "
+            "plus signs, tildes, and hyphens. They cannot begin with a period, colon, "
+            "plus sign, tilde, or hyphen. They cannot end with a period, colon, or "
+            "hyphen"
+        )
+
+
 class Socket(ProjectModel):
     """Snapcraft app socket definition."""
 
@@ -562,15 +582,7 @@ class Project(ProjectModel):
         if not version and "adopt_info" not in values:
             raise ValueError("Version must be declared if not adopting metadata")
 
-        if version and not re.match(
-            r"^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$", version
-        ):
-            raise ValueError(
-                f"Invalid version '{version}': Snap versions consist of upper- and lower-case "
-                "alphanumeric characters, as well as periods, colons, plus signs, tildes, "
-                "and hyphens. They cannot begin with a period, colon, plus sign, tilde, or "
-                "hyphen. They cannot end with a period, colon, or hyphen"
-            )
+        _validate_version_name(version, "Snap")
 
         return version
 
