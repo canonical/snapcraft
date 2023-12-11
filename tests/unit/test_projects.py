@@ -1947,3 +1947,18 @@ class TestComponents:
 
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(project_yaml_data(components=component))
+
+    def test_get_component_names(self, project_yaml_data, stub_component_data):
+        components = {"foo": stub_component_data, "bar": stub_component_data}
+        project = Project.unmarshal(project_yaml_data(components=components))
+
+        component_names = project.get_component_names()
+
+        assert component_names == ["foo", "bar"]
+
+    def test_get_components_names_none(self, project_yaml_data):
+        project = Project.unmarshal(project_yaml_data())
+
+        component_names = project.get_component_names()
+
+        assert component_names is None

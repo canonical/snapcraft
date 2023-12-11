@@ -804,6 +804,13 @@ class Project(ProjectModel):
 
         return None
 
+    def get_component_names(self) -> Optional[List[str]]:
+        """Get the component names.
+
+        :returns: A list of component names for the project.
+        """
+        return list(self.components.keys()) if self.components else None
+
 
 class _GrammarAwareModel(pydantic.BaseModel):
     class Config:
