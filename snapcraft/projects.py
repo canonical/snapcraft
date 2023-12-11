@@ -446,6 +446,9 @@ class Component(ProjectModel):
     @pydantic.validator("version")
     @classmethod
     def _validate_version(cls, version):
+        if version == "":
+            raise ValueError("Component version cannot be an empty string.")
+
         if version:
             _validate_version_name(version, "Component")
 

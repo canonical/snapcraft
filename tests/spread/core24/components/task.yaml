@@ -7,4 +7,5 @@ restore: |
 execute: |
   cd "./snap"
 
+  # ensure snapcraft can parse the components model in the snapcraft.yaml
   snapcraft pack --destructive-mode

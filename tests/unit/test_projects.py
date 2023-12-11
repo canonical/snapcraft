@@ -248,7 +248,7 @@ class TestProjectValidation:
             "git",
             "1~",
             "1+",
-            "12345678901234567890123456789012",
+            "x" * 32,
         ],
     )
     def test_project_version_valid(self, version, project_yaml_data):
@@ -258,51 +258,61 @@ class TestProjectValidation:
     @pytest.mark.parametrize(
         "version,error",
         [
-            (
+            pytest.param(
                 "1_0",
                 "Invalid version '1_0': Snap versions consist of",
-            ),  # _ is an invalid character
-            (
+                id="'_' in version",
+            ),
+            pytest.param(
                 "1=1",
                 "Invalid version '1=1': Snap versions consist of",
-            ),  # = is an invalid character
-            (
+                id="'=' in version",
+            ),
+            pytest.param(
                 ".1",
                 "Invalid version '.1': Snap versions consist of",
-            ),  # cannot start with period
-            (
+                id="cannot start with '.'",
+            ),
+            pytest.param(
                 ":1",
                 "Invalid version ':1': Snap versions consist of",
-            ),  # cannot start with colon
-            (
+                id="cannot start with ':'",
+            ),
+            pytest.param(
                 "+1",
                 r"Invalid version '\+1': Snap versions consist of",
-            ),  # cannot start with plus sign
-            # escaping + from the regex string to match.
-            (
+                id="cannot start with '+'",
+            ),
+            pytest.param(
                 "~1",
                 "Invalid version '~1': Snap versions consist of",
-            ),  # cannot start with tilde
-            (
+                id="cannot start with '~'",
+            ),
+            pytest.param(
                 "-1",
                 "Invalid version '-1': Snap versions consist of",
-            ),  # cannot start with hyphen
-            (
+                id="cannot start with '-'",
+            ),
+            pytest.param(
                 "1.",
                 "Invalid version '1.': Snap versions consist of",
-            ),  # cannot end with period
-            (
+                id="cannot end with '.'",
+            ),
+            pytest.param(
                 "1:",
                 "Invalid version '1:': Snap versions consist of",
-            ),  # cannot end with colon
-            (
+                id="cannot end with ':'",
+            ),
+            pytest.param(
                 "1-",
                 "Invalid version '1-': Snap versions consist of",
-            ),  # cannot end with hyphen
-            (
-                "123456789012345678901234567890123",
+                id="cannot end with '-'",
+            ),
+            pytest.param(
+                "1" * 33,
                 "ensure this value has at most 32 characters",
-            ),  # too large
+                id="too large",
+            ),
         ],
     )
     def test_project_version_invalid(self, version, error, project_yaml_data):
@@ -1875,7 +1885,7 @@ class TestComponents:
             "git",
             "1~",
             "1+",
-            "12345678901234567890123456789012",
+            "x" * 32,
         ],
     )
     def test_component_version_valid(
@@ -1892,51 +1902,66 @@ class TestComponents:
     @pytest.mark.parametrize(
         "version,error",
         [
-            (
+            pytest.param(
                 "1_0",
                 "Invalid version '1_0': Component versions consist of",
-            ),  # _ is an invalid character
-            (
+                id="'_' in version",
+            ),
+            pytest.param(
                 "1=1",
                 "Invalid version '1=1': Component versions consist of",
-            ),  # = is an invalid character
-            (
+                id="'=' in version",
+            ),
+            pytest.param(
                 ".1",
                 "Invalid version '.1': Component versions consist of",
-            ),  # cannot start with period
-            (
+                id="cannot start with '.'",
+            ),
+            pytest.param(
                 ":1",
                 "Invalid version ':1': Component versions consist of",
-            ),  # cannot start with colon
-            (
+                id="cannot start with ':'",
+            ),
+            pytest.param(
                 "+1",
                 r"Invalid version '\+1': Component versions consist of",
-            ),  # cannot start with plus sign
-            # escaping + from the regex string to match.
-            (
+                id="cannot start with '+'",
+            ),
+            pytest.param(
                 "~1",
                 "Invalid version '~1': Component versions consist of",
-            ),  # cannot start with tilde
-            (
+                id="cannot start with '~'",
+            ),
+            pytest.param(
                 "-1",
                 "Invalid version '-1': Component versions consist of",
-            ),  # cannot start with hyphen
-            (
+                id="cannot start with '-'",
+            ),
+            pytest.param(
                 "1.",
                 "Invalid version '1.': Component versions consist of",
-            ),  # cannot end with period
-            (
+                id="cannot end with '.'",
+            ),
+            pytest.param(
                 "1:",
                 "Invalid version '1:': Component versions consist of",
-            ),  # cannot end with colon
-            (
+                id="cannot end with ':'",
+            ),
+            pytest.param(
                 "1-",
                 "Invalid version '1-': Component versions consist of",
-            ),  # cannot end with hyphen
-            (
-                "123456789012345678901234567890123",
+                id="cannot end with '-'",
+            ),
+            pytest.param(
+                "x" * 33,
                 "ensure this value has at most 32 characters",
-            ),  # too large
+                id="too large",
+            ),
+            pytest.param(
+                "",
+                "Component version cannot be an empty string",
+                id="empty string",
+            ),
         ],
     )
     def test_project_version_invalid(

@@ -24,7 +24,6 @@ components:
     type: test
     summary: Hello World
     description: Hello World
-    version: "1.0"
 
 parts:
   hello:
