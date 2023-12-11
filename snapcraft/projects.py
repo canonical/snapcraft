@@ -187,6 +187,26 @@ def _validate_architectures_all_keyword(architectures):
             )
 
 
+def _validate_version_name(version: str, model_name: str) -> None:
+    """Validate a version complies to the naming convention.
+
+    :param version: version string to validate
+    :param model_name: name of the model that contains the version
+
+    :raises ValueError: if the version contains invalid characters
+    """
+    if version and not re.match(
+        r"^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$", version
+    ):
+        raise ValueError(
+            f"Invalid version '{version}': {model_name.title()} versions consist of "
+            "upper- and lower-case alphanumeric characters, as well as periods, colons, "
+            "plus signs, tildes, and hyphens. They cannot begin with a period, colon, "
+            "plus sign, tilde, or hyphen. They cannot end with a period, colon, or "
+            "hyphen"
+        )
+
+
 class Socket(ProjectModel):
     """Snapcraft app socket definition."""
 
@@ -415,6 +435,26 @@ class ContentPlug(ProjectModel):
         return default_provider
 
 
+class Component(ProjectModel):
+    """Snapcraft component definition."""
+
+    summary: ProjectSummary
+    description: str
+    type: Literal["test"]
+    version: Optional[ProjectVersion]
+
+    @pydantic.validator("version")
+    @classmethod
+    def _validate_version(cls, version):
+        if version == "":
+            raise ValueError("Component version cannot be an empty string.")
+
+        if version:
+            _validate_version_name(version, "Component")
+
+        return version
+
+
 MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
 
@@ -466,6 +506,7 @@ class Project(ProjectModel):
     build_snaps: Optional[GrammarStrList]
     ua_services: Optional[UniqueStrList]
     provenance: Optional[str]
+    components: Optional[Dict[ProjectName, Component]]
 
     @pydantic.validator("plugs")
     @classmethod
@@ -556,21 +597,40 @@ class Project(ProjectModel):
 
         return name
 
+    @pydantic.validator("components")
+    @classmethod
+    def _validate_components(cls, components):
+        for component_name in components.keys():
+            cls._validate_component_name(component_name)
+
+        return components
+
+    @classmethod
+    def _validate_component_name(cls, name):
+        """Validate component names."""
+        if not re.fullmatch(r"[a-z-]*[a-z][a-z-]*", name):
+            raise ValueError(
+                "Component names can only use ASCII lowercase letters and hyphens"
+            )
+
+        if name.startswith("-"):
+            raise ValueError("Component names cannot start with a hyphen")
+
+        if name.endswith("-"):
+            raise ValueError("Component names cannot end with a hyphen")
+
+        if "--" in name:
+            raise ValueError("Component names cannot have two hyphens in a row")
+
+        return name
+
     @pydantic.validator("version")
     @classmethod
     def _validate_version(cls, version, values):
         if not version and "adopt_info" not in values:
             raise ValueError("Version must be declared if not adopting metadata")
 
-        if version and not re.match(
-            r"^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$", version
-        ):
-            raise ValueError(
-                f"Invalid version '{version}': Snap versions consist of upper- and lower-case "
-                "alphanumeric characters, as well as periods, colons, plus signs, tildes, "
-                "and hyphens. They cannot begin with a period, colon, plus sign, tilde, or "
-                "hyphen. They cannot end with a period, colon, or hyphen"
-            )
+        _validate_version_name(version, "Snap")
 
         return version
 
@@ -746,6 +806,13 @@ class Project(ProjectModel):
             return get_arch_triplet(convert_architecture_deb_to_platform(arch))
 
         return None
+
+    def get_component_names(self) -> Optional[List[str]]:
+        """Get the component names.
+
+        :returns: A list of component names for the project.
+        """
+        return list(self.components.keys()) if self.components else None
 
 
 class _GrammarAwareModel(pydantic.BaseModel):
