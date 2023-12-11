@@ -1,0 +1,10 @@
+summary: Build a snap with components
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "./snap"
+
+  snapcraft pack --destructive-mode
