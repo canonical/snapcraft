@@ -435,6 +435,23 @@ class ContentPlug(ProjectModel):
         return default_provider
 
 
+class Component(ProjectModel):
+    """Snapcraft component definition."""
+
+    summary: ProjectSummary
+    description: str
+    type: Literal["test"]
+    version: Optional[ProjectVersion]
+
+    @pydantic.validator("version")
+    @classmethod
+    def _validate_version(cls, version):
+        if version:
+            _validate_version_name(version, "Component")
+
+        return version
+
+
 MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
 
@@ -486,6 +503,7 @@ class Project(ProjectModel):
     build_snaps: Optional[GrammarStrList]
     ua_services: Optional[UniqueStrList]
     provenance: Optional[str]
+    components: Optional[Dict[ProjectName, Component]]
 
     @pydantic.validator("plugs")
     @classmethod
@@ -573,6 +591,33 @@ class Project(ProjectModel):
 
         if "--" in name:
             raise ValueError("Snap names cannot have two hyphens in a row")
+
+        return name
+
+    @pydantic.validator("components")
+    @classmethod
+    def _validate_components(cls, components):
+        for component_name in components.keys():
+            cls._validate_component_name(component_name)
+
+        return components
+
+    @classmethod
+    def _validate_component_name(cls, name):
+        """Validate component names."""
+        if not re.fullmatch(r"[a-z-]*[a-z][a-z-]*", name):
+            raise ValueError(
+                "Component names can only use ASCII lowercase letters and hyphens"
+            )
+
+        if name.startswith("-"):
+            raise ValueError("Component names cannot start with a hyphen")
+
+        if name.endswith("-"):
+            raise ValueError("Component names cannot end with a hyphen")
+
+        if "--" in name:
+            raise ValueError("Component names cannot have two hyphens in a row")
 
         return name
 
