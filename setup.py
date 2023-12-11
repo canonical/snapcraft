@@ -102,7 +102,7 @@ install_requires = [
     "craft-archives",
     "craft-cli",
     "craft-grammar",
-    "craft-parts",
+    "craft-parts @ git+https://github.com/canonical/craft-parts@feature/namespaced-partitions-patch#egg=craft-parts",
     "craft-providers",
     "craft-store",
     "docutils<0.20",  # Frozen until we can update sphinx dependencies.

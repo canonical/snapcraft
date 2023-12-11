@@ -36,6 +36,8 @@ from snapcraft.utils import (
     is_architecture_supported,
 )
 
+# pylint: disable=too-many-lines
+
 
 class ProjectModel(pydantic.BaseModel):
     """Base model for snapcraft project classes."""
@@ -813,6 +815,17 @@ class Project(ProjectModel):
         :returns: A list of component names for the project.
         """
         return list(self.components.keys()) if self.components else None
+
+    def get_partitions(self) -> Optional[List[str]]:
+        """Get a list of partitions based on the project's components.
+
+        :returns: A list of partitions formatted as ['default', 'component/<name>', ...]
+        or None if no components are defined.
+        """
+        if component_names := self.get_component_names():
+            return ["default", *[f"component/{name}" for name in component_names]]
+
+        return None
 
 
 class _GrammarAwareModel(pydantic.BaseModel):

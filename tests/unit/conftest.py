@@ -23,6 +23,7 @@ from unittest.mock import Mock
 
 import pytest
 import yaml
+from craft_parts import Features
 from craft_providers import Executor, Provider
 from craft_providers.base import Base
 from overrides import override
@@ -367,3 +368,13 @@ def fake_provider(mock_instance):
             yield mock_instance
 
     return FakeProvider()
+
+
+@pytest.fixture()
+def enable_partitions_feature():
+    """Resets the partitions feature in craft-parts."""
+    assert Features().enable_partitions is False
+    Features.reset()
+    Features(enable_partitions=True)
+    yield
+    Features.reset()
