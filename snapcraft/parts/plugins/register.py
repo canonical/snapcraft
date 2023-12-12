@@ -30,6 +30,7 @@ def register() -> None:
     """Register Snapcraft plugins."""
     craft_parts.plugins.register({"colcon": ColconPlugin})
     craft_parts.plugins.register({"conda": CondaPlugin})
-    craft_parts.plugins.register({"matter": MatterPlugin})
+    craft_parts.plugins.register({"flutter": FlutterPlugin})
     craft_parts.plugins.register({"python": PythonPlugin})
     craft_parts.plugins.register({"kernel": KernelPlugin})
+    craft_parts.plugins.register({"matter": MatterPlugin})

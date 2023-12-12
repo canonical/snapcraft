@@ -124,14 +124,24 @@ class MatterPlugin(plugins.Plugin):
                 ]
             )
 
+        """Clone Matter repository if not present"""
         commands.extend(
             [
-                f"if [ ! -d matter ]; then git clone --depth 1 -b v1.2.0.1 {MATTER_REPO} matter; fi",
-                "cd matter || echo 'skip clone'",
-                f"scripts/checkout_submodules.py --shallow --platform linux",
-                f"set +u && source scripts/activate.sh && set -u",
+                f"if [ ! -d matter ]; then git clone --depth 1 -b v1.2.0.1 {MATTER_REPO} matter && cd matter; "
+                f"else cd matter || echo 'skip clone'; fi"
+            ]
+        )
+
+        """Checkout submodules for Linux platform"""
+        commands.extend(["scripts/checkout_submodules.py --shallow --platform linux"])
+
+        """Bootstrapping script for building Matter SDK and setting up the environment"""
+        commands.extend(["set +u && source setup/bootstrap.sh && set -u"])
+
+        commands.extend(
+            [
                 "cp -vr ./* $CRAFT_PART_INSTALL/",
-                "echo 'Cloned Matter repository and activated submodules'",
+                "echo 'Cloned Matter repository and built Matter SDK'",
             ]
         )
 
