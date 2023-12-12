@@ -246,7 +246,17 @@ ignore = [
 [tool.ruff.flake8-annotations]
 allow-star-arg-any = true
 
-[tool.ruf.lint.pylint]
+[tool.ruff.lint.pydocstyle]
+ignore-decorators = [  # Functions with these decorators don't have to have docstrings.
+    "typing.overload",  # Default configuration
+    # The next four are all variations on override, so child classes don't have to repeat parent classes' docstrings.
+    "overrides.override",
+    "overrides.overrides",
+    "typing.override",
+    "typing_extensions.override",
+]
+
+[tool.ruff.lint.pylint]
 max-args = 8
 
 [tool.ruff.pep8-naming]
