@@ -209,15 +209,16 @@ class GitRepo:
                 if git_proc.stderr:
                     os.set_blocking(git_proc.stderr.fileno(), False)
 
+                git_stdout: str
+                git_stderr: str
+
                 while git_proc.poll() is None:
                     if git_proc.stdout:
-                        git_stdout: str = git_proc.stdout.readline()
-                        if git_stdout:
-                            logger.info(git_stdout.strip())
+                        while git_stdout := git_proc.stdout.readline():
+                            logger.info(git_stdout.rstrip())
                     if git_proc.stderr:
-                        git_stderr: str = git_proc.stderr.readline()
-                        if git_stderr:
-                            logger.error(git_stderr.strip())
+                        while git_stderr := git_proc.stderr.readline():
+                            logger.error(git_stderr.rstrip())
                     # avoid too much looping, but not too slow to display progress
                     time.sleep(0.01)
 
@@ -226,10 +227,10 @@ class GitRepo:
             if git_proc:
                 if git_proc.stdout:
                     for git_stdout in git_proc.stdout.readlines():
-                        logger.info(git_stdout.strip())
+                        logger.info(git_stdout.rstrip())
                 if git_proc.stderr:
                     for git_stderr in git_proc.stderr.readlines():
-                        logger.error(git_stderr.strip())
+                        logger.error(git_stderr.rstrip())
 
             raise GitError(
                 f"Could not push {ref!r} to {stripped_url!r} with refspec {refspec!r} "
