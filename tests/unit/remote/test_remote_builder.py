@@ -157,7 +157,7 @@ def test_print_status_no_build_found(mock_log, fake_remote_builder):
     """Print the status of a remote build."""
     fake_remote_builder.print_status()
 
-    assert mock_log.mock_calls == [call("No build found.")]
+    assert mock_log.mock_calls == [call("No build task(s) found.")]
 
 
 @pytest.mark.parametrize("has_builds", (True, False))

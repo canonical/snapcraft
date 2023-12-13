@@ -95,7 +95,7 @@ class RemoteBuilder:
             for arch, status in build_status.items():
                 logger.info("Build status for arch %s: %s", arch, status)
         else:
-            logger.info("No build found.")
+            logger.info("No build task(s) found.")
 
     def has_outstanding_build(self) -> bool:
         """Check if there is an existing build on Launchpad.
@@ -112,9 +112,10 @@ class RemoteBuilder:
         )
 
         logger.info("Building...")
-        self._lpc.monitor_build()
-
-        logger.info("Build complete.")
+        try:
+            self._lpc.monitor_build()
+        finally:
+            logger.info("Build task(s) complete.")
 
     def clean_build(self) -> None:
         """Clean the cache and Launchpad build."""
