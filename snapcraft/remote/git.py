@@ -186,6 +186,7 @@ class GitRepo:
 
         # temporarily call git directly due to libgit2 bug that unable to push
         # large repos using https. See https://github.com/libgit2/libgit2/issues/6385
+        # and https://github.com/snapcore/snapcraft/issues/4478
         cmd: list[str] = ["git", "push", remote_url, refspec, "--progress"]
         if push_tags:
             cmd.append("--tags")
@@ -200,7 +201,9 @@ class GitRepo:
                 stderr=subprocess.PIPE,
                 universal_newlines=True,
             ) as git_proc:
-                # do not block on reading from the pipes (not working on Windows)
+                # do not block on reading from the pipes
+                # (has no effect on Windows until Python 3.12, so the readline() method is
+                # blocking on Windows but git will still proceed)
                 if git_proc.stdout:
                     os.set_blocking(git_proc.stdout.fileno(), False)
                 if git_proc.stderr:
