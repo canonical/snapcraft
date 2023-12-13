@@ -155,6 +155,7 @@ parts:
         - constraints.txt
     python-requirements:
         - requirements.txt
+        - requirements-jammy.txt
     organize:
         # Put snapcraftctl and craftctl into its own directory that can be included in the PATH
         # without including other binaries.

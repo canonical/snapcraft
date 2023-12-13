@@ -3,18 +3,11 @@
 requirements_fixups() {
   req_file="$1"
 
-  # Python apt library pinned to source.
+  # Python apt library included in a separate requirements file.
   sed -i '/python-apt=*/d' "$req_file"
-  echo 'python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz; sys.platform == "linux"' >> "$req_file"
 
   # https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1635463
   sed -i '/pkg[-_]resources==0.0.0/d' "$req_file"
-
-  # Pinned pyinstaller for windows.
-  if [[ "$req_file" == "requirements-devel.txt" ]]; then
-      sed -i '/pyinstaller/d' "$req_file"
-      echo 'pyinstaller==5.13.1; sys.platform == "win32"' >> "$req_file"
-  fi
 }
 
 venv_dir="$(mktemp -d)"

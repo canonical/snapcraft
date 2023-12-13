@@ -73,7 +73,7 @@ dev_requires = [
     "pycodestyle",
     "pydocstyle",
     "pyftpdlib",
-    "pyinstaller; sys_platform == 'win32'",
+    "pyinstaller==4.10; sys_platform == 'win32'",
     "pylint<3",
     "pylint-fixme-info",
     "pylint-pytest",
@@ -120,8 +120,6 @@ install_requires = [
     "pygit2~=1.13.0",
     "pylxd; sys_platform == 'linux'",
     "pymacaroons",
-    "python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz ; sys_platform == 'linux'",
-    "python-debian; sys_platform == 'linux'",
     "pyxdg",
     "pyyaml",
     "raven",
@@ -137,8 +135,14 @@ install_requires = [
     "urllib3<2",  # requests-unixsocket does not yet work with urllib3 v2.0+
 ]
 
+apt_requires = [
+    "python-apt>=2.4.0 ; sys_platform == 'linux'",
+    "python-debian; sys_platform == 'linux'",
+]
+
 extras_requires = {
     "dev": dev_requires,
+    "apt": apt_requires,
 }
 
 setup(

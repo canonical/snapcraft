@@ -356,4 +356,5 @@ include:
   - tests/
   - requirements.txt
   - requirements-devel.txt
+  - requirements-jammy.txt
   - runtests.sh
