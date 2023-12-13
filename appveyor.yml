@@ -27,7 +27,7 @@ build_script:
 - cmd: |
     echo "Building snapcraft.exe..."
     venv\Scripts\activate.bat
-    pyinstaller.exe --copy-metadata lazr.restfulclient --onefile snapcraft.spec
+    pyinstaller.exe snapcraft.spec
     venv\Scripts\deactivate.bat
 
     echo "Test signing snapcraft.exe..."
