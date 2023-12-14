@@ -44,9 +44,7 @@ class MatterPluginProperties(plugins.PluginProperties, plugins.PluginModel):
         :raise pydantic.ValidationError: If validation fails.
         """
         plugin_data = plugins.extract_plugin_properties(
-            data,
-            plugin_name="matter",
-            # required=["matter_tag", "matter_zap_tag"]
+            data, plugin_name="matter", required=["matter_tag", "matter_zap_tag"]
         )
         return cls(**plugin_data)
 
