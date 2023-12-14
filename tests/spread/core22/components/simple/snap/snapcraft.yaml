@@ -15,15 +15,11 @@ apps:
     command: bin/hello
 
 components:
-  foo:
+  man-pages:
     type: test
     summary: Hello World
     description: Hello World
     version: "1.0"
-  bar:
-    type: test
-    summary: Hello World
-    description: Hello World
 
 parts:
   hello:
@@ -34,3 +30,5 @@ parts:
       - libc-dev
       - libcurl4-openssl-dev
     stage-packages: [libcurl4]
+    organize:
+      (default)/usr/share/man: (component/man-pages)

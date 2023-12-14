@@ -251,6 +251,11 @@ suites:
      - ubuntu-22.04-s390x
      - ubuntu-22.04-ppc64el
 
+ tests/spread/core22/components/:
+   summary: core22 component tests
+   systems:
+     - ubuntu-22.04*
+
  tests/spread/core22/environment/:
    summary: core22 environment tests
    systems:

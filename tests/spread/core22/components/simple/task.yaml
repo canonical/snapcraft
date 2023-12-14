@@ -1,0 +1,23 @@
+summary: Build a snap with components
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "./snap"
+
+  snapcraft pack --destructive-mode
+
+  # assert contents of default partition
+  if [[ ! -e "prime/default/bin/hello" ]]; then
+    echo "Expected file to exist but is does not exist."
+    exit 1
+  fi
+
+  # assert contents of component/man-pages
+  if [[ ! -d "prime/component/man-pages/man1" ]]; then
+    echo "Expected directory to exist but is does not exist."
+    exit 1
+  fi
+

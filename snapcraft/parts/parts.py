@@ -49,10 +49,12 @@ class PartsLifecycle:
     :param assets_dir: The directory containing project assets.
     :param adopt_info: The name of the part containing metadata do adopt.
     :param extra_build_snaps: A list of additional build snaps to install.
+    :param partitions: A list of partitions for the project.
 
     :raises PartsLifecycleError: On error initializing the parts lifecycle.
     """
 
+    # pylint: disable-next=too-many-locals
     def __init__(  # noqa PLR0913
         self,
         all_parts: Dict[str, Any],
@@ -72,6 +74,7 @@ class PartsLifecycle:
         extra_build_snaps: Optional[List[str]] = None,
         target_arch: str,
         track_stage_packages: bool,
+        partitions: Optional[List[str]],
     ):
         self._work_dir = work_dir
         self._assets_dir = assets_dir
@@ -80,6 +83,7 @@ class PartsLifecycle:
         self._adopt_info = adopt_info
         self._parse_info = parse_info
         self._all_part_names = [*all_parts]
+        self._partitions = partitions
 
         emit.progress("Initializing parts lifecycle")
 
@@ -109,6 +113,7 @@ class PartsLifecycle:
                 # custom arguments
                 project_base=project_base,
                 confinement=confinement,
+                partitions=self._partitions,
             )
         except craft_parts.PartsError as err:
             raise errors.PartsLifecycleError(str(err)) from err
@@ -244,8 +249,10 @@ class PartsLifecycle:
         if self._adopt_info is None or self._adopt_info not in self._parse_info:
             return []
 
-        dirs = ProjectDirs(work_dir=self._work_dir)
-        part = Part(self._adopt_info, {}, project_dirs=dirs)
+        dirs = ProjectDirs(work_dir=self._work_dir, partitions=self._partitions)
+        part = Part(
+            self._adopt_info, {}, project_dirs=dirs, partitions=self._partitions
+        )
         locations = (
             part.part_src_dir,
             part.part_build_dir,

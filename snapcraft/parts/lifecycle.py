@@ -22,11 +22,11 @@ import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import craft_parts
 from craft_cli import emit
-from craft_parts import ProjectInfo, Step, StepInfo, callbacks
+from craft_parts import Features, ProjectInfo, Step, StepInfo, callbacks
 from craft_providers import Executor
 
 from snapcraft import errors, linters, pack, providers, ua_manager, utils
@@ -34,7 +34,12 @@ from snapcraft.elf import Patcher, SonameCache, elf_utils
 from snapcraft.elf import errors as elf_errors
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import manifest, snap_yaml
-from snapcraft.projects import Architecture, ArchitectureProject, Project
+from snapcraft.projects import (
+    Architecture,
+    ArchitectureProject,
+    ComponentProject,
+    Project,
+)
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_host_architecture,
@@ -90,6 +95,8 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
 
     build_count = utils.get_parallel_build_count()
 
+    partitions = _validate_and_get_partitions(yaml_data)
+
     for build_on, build_for in build_plan:
         emit.verbose(f"Running on {build_on} for {build_for}")
         yaml_data_for_arch = yaml_utils.apply_yaml(yaml_data, build_on, build_for)
@@ -98,6 +105,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
             yaml_data_for_arch,
             parallel_build_count=build_count,
             target_arch=build_for,
+            partitions=partitions,
         )
         project = Project.unmarshal(yaml_data_for_arch)
 
@@ -180,6 +188,7 @@ def _run_command(  # noqa PLR0913 # pylint: disable=too-many-branches, too-many-
         extra_build_snaps=project.get_extra_build_snaps(),
         target_arch=project.get_build_for(),
         track_stage_packages=track_stage_packages,
+        partitions=project.get_partitions(),
     )
 
     if command_name == "clean":
@@ -464,7 +473,7 @@ def _run_in_provider(  # noqa PLR0915
             )
             with emit.pause():
                 if command_name == "try":
-                    _expose_prime(project_path, instance)
+                    _expose_prime(project_path, instance, project.get_partitions())
                 # run snapcraft inside the instance
                 instance.execute_run(cmd, check=True, cwd=output_dir)
         except subprocess.CalledProcessError as err:
@@ -480,13 +489,20 @@ def _run_in_provider(  # noqa PLR0915
             providers.capture_logs_from_instance(instance)
 
 
-def _expose_prime(project_path: Path, instance: Executor):
-    """Expose the instance's prime directory in ``project_path`` on the host."""
+def _expose_prime(
+    project_path: Path, instance: Executor, partitions: Optional[List[str]]
+):
+    """Expose the instance's prime directory in ``project_path`` on the host.
+
+    :param project_path: path of the project
+    :param instance: instance with the prime directory to expose
+    :param partitions: A list of partitions for the project.
+    """
     host_prime = project_path / "prime"
     host_prime.mkdir(exist_ok=True)
 
     managed_root = utils.get_managed_environment_home_path()
-    dirs = craft_parts.ProjectDirs(work_dir=managed_root)
+    dirs = craft_parts.ProjectDirs(work_dir=managed_root, partitions=partitions)
 
     instance.mount(host_source=project_path / "prime", target=dirs.prime_dir)
 
@@ -506,6 +522,38 @@ def _set_global_environment(info: ProjectInfo) -> None:
             "SNAPCRAFT_PRIME": str(info.prime_dir),
         }
     )
+
+    if info.partitions:
+        info.global_environment.update(_get_environment_for_partitions(info))
+
+
+def _get_environment_for_partitions(info: ProjectInfo) -> Dict[str, str]:
+    """Get environment variables related to partitions.
+
+    Assumes the partition feature is enabled and partitions are defined.
+
+    :param info: The project information.
+
+    :returns: A dictionary contain environment variables for partitions.
+    """
+    environment: Dict[str, str] = {}
+
+    if not info.partitions:
+        raise ValueError("Project does not contain any partitions.")
+
+    for partition in info.partitions:
+        formatted_partition = partition.upper().translate(
+            {ord("-"): "_", ord("/"): "_"}
+        )
+
+        environment[f"SNAPCRAFT_{formatted_partition}_STAGE"] = str(
+            info.get_stage_dir(partition=partition)
+        )
+        environment[f"SNAPCRAFT_{formatted_partition}_PRIME"] = str(
+            info.get_prime_dir(partition=partition)
+        )
+
+    return environment
 
 
 def _check_experimental_plugins(
@@ -592,12 +640,19 @@ def _patch_elf(step_info: StepInfo) -> bool:
 
 
 def _expand_environment(
-    snapcraft_yaml: Dict[str, Any], *, parallel_build_count: int, target_arch: str
+    snapcraft_yaml: Dict[str, Any],
+    *,
+    parallel_build_count: int,
+    target_arch: str,
+    partitions: Optional[List[str]],
 ) -> None:
     """Expand global variables in the provided dictionary values.
 
     :param snapcraft_yaml: A dictionary containing the contents of the
         snapcraft.yaml project file.
+    :param parallel_build_count: The maximum number of concurrent jobs.
+    :param target_arch: The target architecture of the project.
+    :param partitions: A list of partitions for the project.
     """
     if utils.is_managed_mode():
         work_dir = utils.get_managed_environment_home_path()
@@ -612,7 +667,7 @@ def _expand_environment(
     if target_arch == "all":
         target_arch = get_host_architecture()
 
-    dirs = craft_parts.ProjectDirs(work_dir=work_dir)
+    dirs = craft_parts.ProjectDirs(work_dir=work_dir, partitions=partitions)
     info = craft_parts.ProjectInfo(
         application_name="snapcraft",  # not used in environment expansion
         cache_dir=Path(),  # not used in environment expansion
@@ -621,6 +676,7 @@ def _expand_environment(
         project_name=snapcraft_yaml.get("name", ""),
         project_dirs=dirs,
         project_vars=project_vars,
+        partitions=partitions,
     )
     _set_global_environment(info)
 
@@ -676,3 +732,28 @@ def get_build_plan(
         emit.trace(log_output)
 
     return build_plan
+
+
+def _validate_and_get_partitions(yaml_data: Dict[str, Any]) -> Optional[List[str]]:
+    """Validate partitions support, enable the feature, and get a list of partitions.
+
+    :param yaml_data: The project's YAML data.
+
+    :returns: A list of partitions containing the default partition and a partition for
+    each component in the project or None if no components are defined.
+
+    :raises SnapcraftError: If components are defined in the project but not supported.
+    """
+    project = ComponentProject.unmarshal(yaml_data)
+
+    if project.components:
+        if Features().enable_partitions:
+            emit.debug("Not enabling partitions because feature is already enabled")
+        else:
+            emit.debug("Enabling partitions")
+            Features.reset()
+            Features(enable_partitions=True)
+
+        return project.get_partitions()
+
+    return None

@@ -1,0 +1,45 @@
+summary: Test scriptlets variables on core22 with components
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  check_vars() {
+    file="$1"
+    root="$(pwd)"
+    echo "==== $file ===="
+    sort "$file"
+    for exp in \
+      "CRAFT_PART_SRC=${root}/parts/hello/src$" \
+      "CRAFT_PART_SRC_WORK=${root}/parts/hello/src$" \
+      "CRAFT_PART_BUILD=${root}/parts/hello/build$" \
+      "CRAFT_PART_BUILD_WORK=${root}/parts/hello/build$" \
+      "CRAFT_PART_INSTALL=${root}/parts/hello/install/default$" \
+      "CRAFT_STAGE=${root}/stage/default$" \
+      "CRAFT_DEFAULT_STAGE=${root}/stage/default$" \
+      "CRAFT_COMPONENT_FOO_STAGE=${root}/stage/component/foo$" \
+      "CRAFT_COMPONENT_BAR_BAZ_STAGE=${root}/stage/component/bar-baz$" \
+      "CRAFT_PRIME=${root}/prime/default$" \
+      "CRAFT_DEFAULT_PRIME=${root}/prime/default$" \
+      "CRAFT_COMPONENT_FOO_PRIME=${root}/prime/component/foo$" \
+      "CRAFT_COMPONENT_BAR_BAZ_PRIME=${root}/prime/component/bar-baz$"
+    do
+      # check CRAFT_* variables
+      grep -q "^${exp}" < "$file"
+      # check SNAPCRAFT_* variables
+      grep -q "^SNAP${exp}" < "$file"
+    done
+  }
+
+  snapcraft pull
+  check_vars pull.txt
+
+  snapcraft build
+  check_vars build.txt
+
+  snapcraft stage
+  check_vars stage.txt
+
+  snapcraft prime
+  check_vars prime.txt

@@ -22,6 +22,7 @@ import pytest
 
 from snapcraft import errors
 from snapcraft.parts import PartsLifecycle
+from snapcraft.parts.yaml_utils import CURRENT_BASES
 
 
 @pytest.fixture
@@ -52,6 +53,7 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
         extra_build_snaps=["core22"],
         track_stage_packages=True,
         target_arch="amd64",
+        partitions=None,
     )
     lifecycle.run(step_name)
     assert lifecycle.prime_dir == Path(new_dir, "prime")
@@ -73,8 +75,47 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
             project_vars={"version": "1", "grade": "stable"},
             confinement="strict",
             project_base="core22",
+            partitions=None,
         )
     ]
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+@pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
+@pytest.mark.parametrize("step_name", ["pull", "build", "stage", "prime"])
+def test_parts_lifecycle_run_with_components(
+    mocker, base, parts_data, step_name, new_dir, emitter
+):
+    """Verify usage of the partitions feature."""
+    lcm_spy = mocker.spy(craft_parts, "LifecycleManager")
+    lifecycle = PartsLifecycle(
+        parts_data,
+        work_dir=new_dir,
+        assets_dir=new_dir,
+        base=base,
+        project_base=base,
+        confinement="strict",
+        parallel_build_count=8,
+        part_names=[],
+        package_repositories=[],
+        adopt_info=None,
+        project_name="test-project",
+        parse_info={},
+        project_vars={"version": "1", "grade": "stable"},
+        extra_build_snaps=None,
+        track_stage_packages=True,
+        target_arch="amd64",
+        partitions=["default", "component/foo", "component/bar"],
+    )
+    lifecycle.run(step_name)
+    assert lifecycle.prime_dir == Path(new_dir, "prime/default")
+    assert lifecycle.prime_dir.is_dir()
+    assert lcm_spy.call_args[1]["partitions"] == [
+        "default",
+        "component/foo",
+        "component/bar",
+    ]
+    assert craft_parts.Features().enable_partitions
 
 
 def test_parts_lifecycle_run_bad_step(parts_data, new_dir):
@@ -94,6 +135,7 @@ def test_parts_lifecycle_run_bad_step(parts_data, new_dir):
         project_vars={"version": "1", "grade": "stable"},
         target_arch="amd64",
         track_stage_packages=True,
+        partitions=None,
     )
     with pytest.raises(RuntimeError) as raised:
         lifecycle.run("invalid")
@@ -117,6 +159,7 @@ def test_parts_lifecycle_run_internal_error(parts_data, new_dir, mocker):
         project_vars={"version": "1", "grade": "stable"},
         target_arch="amd64",
         track_stage_packages=True,
+        partitions=None,
     )
     mocker.patch("craft_parts.LifecycleManager.plan", side_effect=RuntimeError("crash"))
     with pytest.raises(RuntimeError) as raised:
@@ -141,6 +184,7 @@ def test_parts_lifecycle_run_parts_error(new_dir):
         project_vars={"version": "1", "grade": "stable"},
         target_arch="amd64",
         track_stage_packages=True,
+        partitions=None,
     )
     with pytest.raises(errors.PartsLifecycleError) as raised:
         lifecycle.run("prime")
@@ -166,6 +210,7 @@ def test_parts_lifecycle_clean(parts_data, new_dir, emitter):
         project_vars={"version": "1", "grade": "stable"},
         target_arch="amd64",
         track_stage_packages=True,
+        partitions=None,
     )
     lifecycle.clean(part_names=None)
     emitter.assert_progress("Cleaning all parts")
@@ -188,6 +233,7 @@ def test_parts_lifecycle_clean_parts(parts_data, new_dir, emitter):
         project_vars={"version": "1", "grade": "stable"},
         target_arch="amd64",
         track_stage_packages=True,
+        partitions=None,
     )
     lifecycle.clean(part_names=["p1"])
     emitter.assert_progress("Cleaning parts: p1")
@@ -240,6 +286,7 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_not_installed
         extra_build_snaps=["core22"],
         track_stage_packages=True,
         target_arch="amd64",
+        partitions=None,
     )
 
     parts_lifecycle._install_package_repositories()
@@ -295,6 +342,7 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_installed(
         extra_build_snaps=["core22"],
         track_stage_packages=True,
         target_arch="amd64",
+        partitions=None,
     )
 
     parts_lifecycle._install_package_repositories()
@@ -320,6 +368,7 @@ def test_parts_lifecycle_bad_architecture(parts_data, new_dir):
             project_name="test-project",
             project_vars={"version": "1", "grade": "stable"},
             target_arch="bad-arch",
+            partitions=None,
         )
 
     assert str(raised.value) == "Architecture 'bad-arch' is not supported."
@@ -346,6 +395,7 @@ def test_parts_lifecycle_run_with_all_architecture(mocker, parts_data, new_dir):
         project_name="test-project",
         project_vars={"version": "1", "grade": "stable"},
         target_arch="amd64",
+        partitions=None,
     )
     lifecycle.run("prime")
 
@@ -366,5 +416,6 @@ def test_parts_lifecycle_run_with_all_architecture(mocker, parts_data, new_dir):
             project_vars={"version": "1", "grade": "stable"},
             project_base="core22",
             confinement="strict",
+            partitions=None,
         )
     ]
