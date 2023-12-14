@@ -30,7 +30,12 @@ from overrides import overrides
 from snapcraft.errors import MaintenanceBase, SnapcraftError
 from snapcraft.legacy_cli import run_legacy
 from snapcraft.parts import yaml_utils
-from snapcraft.remote import AcceptPublicUploadError, RemoteBuilder, is_repo
+from snapcraft.remote import (
+    AcceptPublicUploadError,
+    RemoteBuilder,
+    is_repo,
+    is_shallow_repo,
+)
 from snapcraft.utils import confirm_with_user, get_host_architecture, humanize_list
 
 _CONFIRMATION_PROMPT = (
@@ -193,7 +198,27 @@ class RemoteBuildCommand(BaseCommand):
             run_legacy()
             return
 
-        if is_repo(Path().absolute()):
+        current_path = Path().absolute()
+
+        if is_shallow_repo(current_path):
+            emit.debug("Current git repository is shallow cloned.")
+            base = self._get_effective_base()
+            if base in ["core20", "core22"]:
+                emit.progress(
+                    "Remote build for shallow clones is deprecated "
+                    "and will be removed in core24",
+                    permanent=True,
+                )
+                emit.progress("Fallback to legacy remote-build", permanent=True)
+                run_legacy()
+                return
+
+            raise SnapcraftError(
+                "remote-build for shallow clones is not supported "
+                f"for bases newer than core22, current base is {base}"
+            )
+
+        if is_repo(current_path):
             emit.debug(
                 "Running new remote-build because project is in a git repository"
             )
@@ -228,6 +253,11 @@ class RemoteBuildCommand(BaseCommand):
 
     def _run_new_remote_build(self) -> None:
         """Run new remote-build code."""
+        if is_shallow_repo(Path().absolute()):
+            raise SnapcraftError(
+                "remote-build for shallow clones is not supported "
+                "for bases newer than core22"
+            )
         emit.progress("Setting up launchpad environment")
         remote_builder = RemoteBuilder(
             app_name="snapcraft",

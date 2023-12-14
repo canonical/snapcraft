@@ -50,6 +50,22 @@ def is_repo(path: Path) -> bool:
         ) from error
 
 
+def is_shallow_repo(path: Path) -> bool:
+    """Check if a directory is a shallow cloned git repo.
+
+    :param path: filepath to check
+
+    :returns: True if path is a shallow cloned git repo.
+
+    :raises GitError: if git fails while checking for a repository
+    """
+    if is_repo(path):
+        repo = pygit2.Repository(path)
+        return repo.is_shallow
+
+    return False
+
+
 class GitRepo:
     """Git repository class."""
 

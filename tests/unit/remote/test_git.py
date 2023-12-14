@@ -18,13 +18,14 @@
 """Tests for the pygit2 wrapper class."""
 
 import re
+import subprocess
 from pathlib import Path
 from unittest.mock import ANY
 
 import pygit2
 import pytest
 
-from snapcraft.remote import GitError, GitRepo, is_repo
+from snapcraft.remote import GitError, GitRepo, is_repo, is_shallow_repo
 
 
 def test_is_repo(new_dir):
@@ -37,6 +38,42 @@ def test_is_repo(new_dir):
 def test_is_not_repo(new_dir):
     """Check if a directory is not a repo."""
     assert not is_repo(new_dir)
+
+
+def test_is_shallow_repo(new_dir):
+    """Check if directory is a shallow cloned repo."""
+    root_path = Path(new_dir)
+    git_normal_path = root_path / "normal"
+    git_normal_path.mkdir()
+    git_shallow_path = root_path / "shallow"
+
+    repo_normal = GitRepo(git_normal_path)
+    (repo_normal.path / "1").write_text("1")
+    repo_normal.add_all()
+    repo_normal.commit("1")
+
+    (repo_normal.path / "2").write_text("2")
+    repo_normal.add_all()
+    repo_normal.commit("2")
+
+    (repo_normal.path / "3").write_text("3")
+    repo_normal.add_all()
+    repo_normal.commit("3")
+
+    # pygit2 does not support shallow cloning, so we use git directly
+    subprocess.run(
+        [
+            "git",
+            "clone",
+            "--depth",
+            "1",
+            "file://" + str(git_normal_path.absolute()),
+            str(git_shallow_path.absolute()),
+        ],
+        check=True,
+    )
+
+    assert is_shallow_repo(git_shallow_path)
 
 
 def test_is_repo_path_only(new_dir):
