@@ -136,8 +136,32 @@ class MatterPlugin(plugins.Plugin):
         """Checkout submodules for Linux platform"""
         commands.extend(["scripts/checkout_submodules.py --shallow --platform linux"])
 
-        """Bootstrapping script for building Matter SDK and setting up the environment"""
-        commands.extend(["set +u && source setup/bootstrap.sh && set -u"])
+        """Bootstrapping script for building Matter SDK with minimal "build" requirements and setting up the environment"""
+        commands.extend(
+            ["set +u && source setup/bootstrap.sh --platform build && set -u"]
+        )
+
+        """ 
+        The project writes its data to /tmp which isn't persisted.
+
+        Setting TMPDIR env var when running the app isn't sufficient as 
+        chip_[config,counter,factory,kvs].ini still get written under /tmp.
+        The chip-tool currently has no way of overriding the default paths to
+        storage and security config files.
+
+        Snap does not allow bind mounting a persistent directory on /tmp, 
+        so we need to replace it in the source with another path, e.g. /mnt.
+        See the top-level layout definition which bind mounts a persisted
+        directory within the confined snap space on /mnt.
+        """
+        """Replace storage paths"""
+        commands.extend(
+            ["sed -i 's/\/tmp/\/mnt/g' src/platform/Linux/CHIPLinuxStorage.h"]
+        )
+        """Replace key-value store path"""
+        commands.extend(
+            ["sed -i 's/\/tmp/\/mnt/g' src/platform/Linux/CHIPPlatformConfig.h"]
+        )
 
         commands.extend(
             [
