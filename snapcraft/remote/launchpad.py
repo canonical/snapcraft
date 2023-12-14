@@ -475,11 +475,9 @@ class LaunchpadClient:
     def push_source_tree(self, repo_dir: Path) -> None:
         """Push source tree to Launchpad."""
         lp_repo = self._create_git_repository(force=True)
-        # This token will only be used once, immediately after issuing it,
-        # so it can have a short expiry time.  It's not a problem if it
-        # expires before the build completes, or even before the push
-        # completes.
-        date_expires = datetime.now(timezone.utc) + timedelta(minutes=1)
+        # This token will be used multiple times, so we don't want it to
+        # expire too soon. Especially if the git push takes a long time.
+        date_expires = datetime.now(timezone.utc) + timedelta(minutes=60)
         token = lp_repo.issueAccessToken(  # type: ignore
             description=f"{self._app_name} remote-build for {self._build_id}",
             scopes=["repository:push"],
