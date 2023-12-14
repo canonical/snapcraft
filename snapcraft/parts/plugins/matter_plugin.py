@@ -17,7 +17,7 @@
 """The matter plugin."""
 import os
 
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Set, cast
 
 from craft_parts import infos, plugins
 from overrides import overrides
@@ -29,8 +29,8 @@ MATTER_REPO = "https://github.com/project-chip/connectedhomeip.git"
 class MatterPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     """The part properties used by the matter plugin."""
 
-    # matter_branch: str
-    # zap_version: str
+    matter_tag: str
+    matter_zap_tag: str
 
     @classmethod
     @overrides
@@ -46,7 +46,7 @@ class MatterPluginProperties(plugins.PluginProperties, plugins.PluginModel):
         plugin_data = plugins.extract_plugin_properties(
             data,
             plugin_name="matter",
-            # required=["matter_branch", "zap_version"]
+            # required=["matter_tag", "matter_zap_tag"]
         )
         return cls(**plugin_data)
 
@@ -58,10 +58,10 @@ class MatterPlugin(plugins.Plugin):
     For more information check the 'plugins' topic.
 
     Additionally, this plugin uses the following plugin-specific keywords:
-        - matter-branch
+        - matter-tag
           (str, no default)
           The matter branch to use for the build.
-        - zap-version
+        - matter-zap-tag
           (str, no default)
           The zap version to use for the build.
     """
@@ -113,12 +113,13 @@ class MatterPlugin(plugins.Plugin):
 
     @overrides
     def get_build_commands(self) -> List[str]:
+        options = cast(MatterPluginProperties, self._options)
         commands = []
 
         if self.snap_arch == "arm64":
             commands.extend(
                 [
-                    f"wget --no-verbose https://github.com/project-chip/zap/releases/download/v2023.11.13/zap-linux-{self.snap_arch}.zip",
+                    f"wget --no-verbose https://github.com/project-chip/zap/releases/download/{options.matter_zap_tag}/zap-linux-{self.snap_arch}.zip",
                     f"unzip -o zap-linux-{self.snap_arch}.zip",
                     "echo 'export ZAP_INSTALL_PATH=$PWD'",
                 ]
@@ -127,7 +128,7 @@ class MatterPlugin(plugins.Plugin):
         """Clone Matter repository if not present"""
         commands.extend(
             [
-                f"if [ ! -d matter ]; then git clone --depth 1 -b v1.2.0.1 {MATTER_REPO} matter && cd matter; "
+                f"if [ ! -d matter ]; then git clone --depth 1 -b {options.matter_tag} {MATTER_REPO} matter && cd matter; "
                 f"else cd matter || echo 'skip clone'; fi"
             ]
         )
