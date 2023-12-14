@@ -559,8 +559,8 @@ def test_run_in_shallow_repo(emitter, mock_run_legacy, new_dir):
             "clone",
             "--depth",
             "1",
-            "file://" + str(git_normal_path.absolute()),
-            str(git_shallow_path.absolute()),
+            git_normal_path.absolute().as_uri(),
+            git_shallow_path.absolute().as_posix(),
         ],
         check=True,
     )
@@ -606,8 +606,8 @@ def test_run_in_shallow_repo_unsupported(emitter, new_dir, mock_remote_builder):
             "clone",
             "--depth",
             "1",
-            "file://" + str(git_normal_path.absolute()),
-            str(git_shallow_path.absolute()),
+            git_normal_path.absolute().as_uri(),
+            git_shallow_path.absolute().as_posix(),
         ],
         check=True,
     )

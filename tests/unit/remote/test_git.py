@@ -67,8 +67,8 @@ def test_is_shallow_repo(new_dir):
             "clone",
             "--depth",
             "1",
-            "file://" + str(git_normal_path.absolute()),
-            str(git_shallow_path.absolute()),
+            git_normal_path.absolute().as_uri(),
+            git_shallow_path.absolute().as_posix(),
         ],
         check=True,
     )
