@@ -744,7 +744,6 @@ def _validate_and_get_partitions(yaml_data: Dict[str, Any]) -> Optional[List[str
 
     :raises SnapcraftError: If components are defined in the project but not supported.
     """
-    yaml_utils.extract_parse_info(yaml_data)
     project = ComponentProject.unmarshal(yaml_data)
 
     if project.components:
