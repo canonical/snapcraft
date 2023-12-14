@@ -1,0 +1,50 @@
+name: snap-with-components
+version: "1.0"
+summary: Build a snap with components
+description: |
+  Build a snap with components and exercise the `organize`, `stage`, `prime` keywords.
+
+  The snap should contain `file1-new` and `file2-new`.
+  The `bar-baz` component should contain `file3`.
+
+base: core24
+build-base: devel
+
+grade: devel
+confinement: strict
+
+
+components:
+  bar-baz:
+    type: test
+    summary: Hello World
+    description: Hello World
+    version: "1.0"
+
+parts:
+  test-part:
+    source: .
+    plugin: nil
+    override-build: |
+      # create file1, file2, ..., file5
+      for i in {1..5}; do
+        touch ${CRAFT_PART_INSTALL}/"file$i"
+      done
+      craftctl default
+    organize:
+      # implicitly use the default partition
+      file1: file1-new
+
+      # explicitly use the default partition
+      (default)/file2: (default)/file2-new
+
+      # move to another partition
+      file3: (component/bar-baz)/file3
+      (default)/file4: (component/bar-baz)/file4
+
+    stage:
+      # exclude a file in the default partition
+      - -(default)/file5
+    prime:
+      # exclude a file in a partitionk
+      - -(component/bar-baz)/file4

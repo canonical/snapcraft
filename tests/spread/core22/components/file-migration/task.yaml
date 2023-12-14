@@ -1,0 +1,40 @@
+summary: Test file migratation with components
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "./snap"
+
+  snapcraft pack --destructive-mode
+
+  # assert file1-new and file2-new are in the default partition
+  if [[ ! -e "prime/default/file1-new" ]] || \
+    [[ ! -e "prime/default/file2-new" ]]; then
+    echo "Expected file to exist but is does not exist."
+    exit 1
+  fi
+
+  # assert other files do not exist in the default partition
+  if [[ -e "prime/default/file3" ]] || \
+    [[ -e "prime/default/file4" ]] || \
+    [[ -e "prime/default/file5" ]]; then
+    echo "Expected file not to exist but is does exist."
+    exit 1
+  fi
+
+  # assert file3 is in the component
+  if [[ ! -e "prime/component/foo-bar/file3" ]]; then
+    echo "Expected file to exist but is does not exist."
+    exit 1
+  fi
+
+  # assert other files do not exist in the component
+  if [[ -e "prime/component/foo-bar/file1-new" ]] || \
+    [[ -e "prime/component/foo-bar/file2-new" ]] || \
+    [[ -e "prime/component/foo-bar/file4" ]] || \
+    [[ -e "prime/component/foo-bar/file5" ]]; then
+    echo "Expected file to exist but is does not exist."
+    exit 1
+  fi

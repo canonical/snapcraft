@@ -209,6 +209,37 @@ def _validate_version_name(version: str, model_name: str) -> None:
         )
 
 
+def _validate_component_name(name: str) -> None:
+    """Validate a component name."""
+    if not re.fullmatch(r"[a-z-]*[a-z][a-z-]*", name):
+        raise ValueError(
+            "Component names can only use ASCII lowercase letters and hyphens"
+        )
+
+    if name.startswith("-"):
+        raise ValueError("Component names cannot start with a hyphen")
+
+    if name.endswith("-"):
+        raise ValueError("Component names cannot end with a hyphen")
+
+    if "--" in name:
+        raise ValueError("Component names cannot have two hyphens in a row")
+
+
+def _get_partitions_from_components(
+    components_data: Optional[Dict[str, Any]]
+) -> Optional[List[str]]:
+    """Get a list of partitions based on the project's components.
+
+    :returns: A list of partitions formatted as ['default', 'component/<name>', ...]
+    or None if no components are defined.
+    """
+    if components_data:
+        return ["default", *[f"component/{name}" for name in components_data.keys()]]
+
+    return None
+
+
 class Socket(ProjectModel):
     """Snapcraft app socket definition."""
 
@@ -602,29 +633,11 @@ class Project(ProjectModel):
     @pydantic.validator("components")
     @classmethod
     def _validate_components(cls, components):
+        """Validate component names."""
         for component_name in components.keys():
-            cls._validate_component_name(component_name)
+            _validate_component_name(component_name)
 
         return components
-
-    @classmethod
-    def _validate_component_name(cls, name):
-        """Validate component names."""
-        if not re.fullmatch(r"[a-z-]*[a-z][a-z-]*", name):
-            raise ValueError(
-                "Component names can only use ASCII lowercase letters and hyphens"
-            )
-
-        if name.startswith("-"):
-            raise ValueError("Component names cannot start with a hyphen")
-
-        if name.endswith("-"):
-            raise ValueError("Component names cannot end with a hyphen")
-
-        if "--" in name:
-            raise ValueError("Component names cannot have two hyphens in a row")
-
-        return name
 
     @pydantic.validator("version")
     @classmethod
@@ -809,23 +822,13 @@ class Project(ProjectModel):
 
         return None
 
-    def get_component_names(self) -> Optional[List[str]]:
-        """Get the component names.
-
-        :returns: A list of component names for the project.
-        """
-        return list(self.components.keys()) if self.components else None
-
     def get_partitions(self) -> Optional[List[str]]:
         """Get a list of partitions based on the project's components.
 
         :returns: A list of partitions formatted as ['default', 'component/<name>', ...]
         or None if no components are defined.
         """
-        if component_names := self.get_component_names():
-            return ["default", *[f"component/{name}" for name in component_names]]
-
-        return None
+        return _get_partitions_from_components(self.components)
 
 
 class _GrammarAwareModel(pydantic.BaseModel):
@@ -875,7 +878,7 @@ class ArchitectureProject(ProjectModel, extra=pydantic.Extra.ignore):
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "ArchitectureProject":
-        """Create and populate a new ``Project`` object from dictionary data.
+        """Create and populate a new ``ArchitectureProject`` object from dictionary data.
 
         The unmarshal method validates entries in the input dictionary, populating
         the corresponding fields in the data object.
@@ -895,6 +898,52 @@ class ArchitectureProject(ProjectModel, extra=pydantic.Extra.ignore):
             raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
 
         return architectures
+
+
+class ComponentProject(ProjectModel, extra=pydantic.Extra.ignore):
+    """Project definition containing only component data."""
+
+    components: Optional[Dict[ProjectName, Component]]
+
+    @pydantic.validator("components")
+    @classmethod
+    def _validate_components(cls, components):
+        """Validate component names."""
+        for component_name in components.keys():
+            _validate_component_name(component_name)
+
+        return components
+
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]) -> "ComponentProject":
+        """Create and populate a new ``ComponentProject`` object from dictionary data.
+
+        The unmarshal method validates entries in the input dictionary, populating
+        the corresponding fields in the data object.
+
+        :param data: The dictionary data to unmarshal.
+
+        :return: The newly created object.
+
+        :raise TypeError: If data is not a dictionary.
+        """
+        if not isinstance(data, dict):
+            raise TypeError("Project data is not a dictionary")
+
+        try:
+            components = ComponentProject(**data)
+        except pydantic.ValidationError as err:
+            raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
+
+        return components
+
+    def get_partitions(self) -> Optional[List[str]]:
+        """Get a list of partitions based on the project's components.
+
+        :returns: A list of partitions formatted as ['default', 'component/<name>', ...]
+        or None if no components are defined.
+        """
+        return _get_partitions_from_components(self.components)
 
 
 def _format_pydantic_errors(errors, *, file_name: str = "snapcraft.yaml"):

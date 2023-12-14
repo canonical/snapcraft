@@ -23,6 +23,7 @@ from snapcraft import errors
 from snapcraft.projects import (
     MANDATORY_ADOPTABLE_FIELDS,
     Architecture,
+    ComponentProject,
     ContentPlug,
     GrammarAwareProject,
     Hook,
@@ -1786,6 +1787,7 @@ class TestArchitecture:
         assert not arch_triplet
 
 
+@pytest.mark.parametrize("project", [ComponentProject, Project])
 class TestComponents:
     """Validate components."""
 
@@ -1798,38 +1800,44 @@ class TestComponents:
             "version": "1.0",
         }
 
-    def test_components_valid(self, project_yaml_data, stub_component_data):
+    def test_components_valid(self, project, project_yaml_data, stub_component_data):
         components = {"foo": stub_component_data, "bar": stub_component_data}
 
-        project = Project.unmarshal(project_yaml_data(components=components))
+        test_project = project.unmarshal(project_yaml_data(components=components))
 
-        assert project.components == components
+        assert test_project.components == components
 
-    def test_component_type_valid(self, project_yaml_data, stub_component_data):
+    def test_component_type_valid(
+        self, project, project_yaml_data, stub_component_data
+    ):
         component = {"foo": stub_component_data}
         component["foo"]["type"] = "test"
 
-        project = Project.unmarshal(project_yaml_data(components=component))
+        test_project = project.unmarshal(project_yaml_data(components=component))
 
-        assert project.components
-        assert project.components["foo"].type == "test"
+        assert test_project.components
+        assert test_project.components["foo"].type == "test"
 
-    def test_component_type_invalid(self, project_yaml_data, stub_component_data):
+    def test_component_type_invalid(
+        self, project, project_yaml_data, stub_component_data
+    ):
         component = {"foo": stub_component_data}
         component["foo"]["type"] = "invalid"
         error = ".*unexpected value; permitted: 'test'"
 
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(components=component))
+            project.unmarshal(project_yaml_data(components=component))
 
     @pytest.mark.parametrize("name", ["name", "name-with-dashes", "x" * 40])
-    def test_component_name_valid(self, name, project_yaml_data, stub_component_data):
+    def test_component_name_valid(
+        self, project, name, project_yaml_data, stub_component_data
+    ):
         component = {name: stub_component_data}
 
-        project = Project.unmarshal(project_yaml_data(components=component))
+        test_project = project.unmarshal(project_yaml_data(components=component))
 
-        assert project.components
-        assert list(project.components.keys()) == [name]
+        assert test_project.components
+        assert list(test_project.components.keys()) == [name]
 
     @pytest.mark.parametrize(
         "name,error",
@@ -1851,30 +1859,34 @@ class TestComponents:
         ],
     )
     def test_component_name_invalid(
-        self, name, error, project_yaml_data, stub_component_data
+        self, project, name, error, project_yaml_data, stub_component_data
     ):
         component = {name: stub_component_data}
 
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(components=component))
+            project.unmarshal(project_yaml_data(components=component))
 
-    def test_component_summary_valid(self, project_yaml_data, stub_component_data):
+    def test_component_summary_valid(
+        self, project, project_yaml_data, stub_component_data
+    ):
         component = {"foo": stub_component_data}
         summary = "x" * 78
         component["foo"]["summary"] = summary
 
-        project = Project.unmarshal(project_yaml_data(components=component))
+        test_project = project.unmarshal(project_yaml_data(components=component))
 
-        assert project.components
-        assert project.components["foo"].summary == summary
+        assert test_project.components
+        assert test_project.components["foo"].summary == summary
 
-    def test_component_summary_invalid(self, project_yaml_data, stub_component_data):
+    def test_component_summary_invalid(
+        self, project, project_yaml_data, stub_component_data
+    ):
         component = {"foo": stub_component_data}
         component["foo"]["summary"] = "x" * 79
 
         error = "ensure this value has at most 78 characters"
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(components=component))
+            project.unmarshal(project_yaml_data(components=component))
 
     @pytest.mark.parametrize(
         "version",
@@ -1889,15 +1901,15 @@ class TestComponents:
         ],
     )
     def test_component_version_valid(
-        self, version, project_yaml_data, stub_component_data
+        self, project, version, project_yaml_data, stub_component_data
     ):
         component = {"foo": stub_component_data}
         component["foo"]["version"] = version
 
-        project = Project.unmarshal(project_yaml_data(components=component))
+        test_project = project.unmarshal(project_yaml_data(components=component))
 
-        assert project.components
-        assert project.components["foo"].version == version
+        assert test_project.components
+        assert test_project.components["foo"].version == version
 
     @pytest.mark.parametrize(
         "version,error",
@@ -1965,40 +1977,25 @@ class TestComponents:
         ],
     )
     def test_project_version_invalid(
-        self, version, error, project_yaml_data, stub_component_data
+        self, project, version, error, project_yaml_data, stub_component_data
     ):
         component = {"foo": stub_component_data}
         component["foo"]["version"] = version
 
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(components=component))
+            project.unmarshal(project_yaml_data(components=component))
 
-    def test_get_component_names(self, project_yaml_data, stub_component_data):
+    def test_get_partitions(self, project, project_yaml_data, stub_component_data):
         components = {"foo": stub_component_data, "bar-baz": stub_component_data}
-        project = Project.unmarshal(project_yaml_data(components=components))
+        test_project = project.unmarshal(project_yaml_data(components=components))
 
-        component_names = project.get_component_names()
-
-        assert component_names == ["foo", "bar-baz"]
-
-    def test_get_components_names_none(self, project_yaml_data):
-        project = Project.unmarshal(project_yaml_data())
-
-        component_names = project.get_component_names()
-
-        assert component_names is None
-
-    def test_get_partitions(self, project_yaml_data, stub_component_data):
-        components = {"foo": stub_component_data, "bar-baz": stub_component_data}
-        project = Project.unmarshal(project_yaml_data(components=components))
-
-        component_names = project.get_partitions()
+        component_names = test_project.get_partitions()
 
         assert component_names == ["default", "component/foo", "component/bar-baz"]
 
-    def test_get_partitions_none(self, project_yaml_data):
-        project = Project.unmarshal(project_yaml_data())
+    def test_get_partitions_none(self, project, project_yaml_data):
+        test_project = project.unmarshal(project_yaml_data())
 
-        component_names = project.get_partitions()
+        component_names = test_project.get_partitions()
 
         assert component_names is None

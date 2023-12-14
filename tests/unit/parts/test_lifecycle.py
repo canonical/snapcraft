@@ -31,7 +31,6 @@ from snapcraft.elf import ElfFile
 from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts.plugins import KernelPlugin
 from snapcraft.parts.update_metadata import update_project_metadata
-from snapcraft.parts.yaml_utils import CURRENT_BASES
 from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Project
 from snapcraft.utils import get_host_architecture
 
@@ -176,13 +175,11 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
-@pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
 def test_lifecycle_run_with_components(
-    base, new_dir, snapcraft_yaml, mocker, stub_component_data
+    new_dir, snapcraft_yaml, mocker, stub_component_data
 ):
     """Use partitions when components are defined."""
-    # grade must be `devel` when using the `devel` base
-    yaml_data = snapcraft_yaml(base=base, grade="devel", components=stub_component_data)
+    yaml_data = snapcraft_yaml(base="core22", components=stub_component_data)
 
     mock_run_command = mocker.patch("snapcraft.parts.lifecycle._run_command")
     mock_expand_env = mocker.patch("snapcraft.parts.lifecycle._expand_environment")
@@ -229,11 +226,9 @@ def test_lifecycle_run_with_components(
     assert Features().enable_partitions is True
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
-def test_lifecycle_run_no_components(base, new_dir, snapcraft_yaml, mocker):
+def test_lifecycle_run_no_components(new_dir, snapcraft_yaml, mocker):
     """Do not use partitions when components are not defined."""
-    # grade must be `devel` when using the `devel` base
-    yaml_data = snapcraft_yaml(base=base, grade="devel")
+    yaml_data = snapcraft_yaml(base="core22")
 
     mock_run_command = mocker.patch("snapcraft.parts.lifecycle._run_command")
     mock_expand_env = mocker.patch("snapcraft.parts.lifecycle._expand_environment")
@@ -275,30 +270,6 @@ def test_lifecycle_run_no_components(base, new_dir, snapcraft_yaml, mocker):
         )
     ]
     assert Features().enable_partitions is False
-
-
-@pytest.mark.usefixtures("enable_partitions_feature")
-def test_lifecycle_run_with_components_unsupported_base(
-    new_dir, snapcraft_yaml, mocker, stub_component_data
-):
-    """Raise an error if components are defined but the base is unsupported."""
-    snapcraft_yaml(base="core22", components=stub_component_data)
-
-    mocker.patch("snapcraft.utils.get_parallel_build_count", return_value=5)
-
-    with pytest.raises(errors.SnapcraftError) as raised:
-        parts_lifecycle.run(
-            "pull",
-            argparse.Namespace(
-                parts=["part1"],
-                destructive_mode=True,
-                use_lxd=False,
-                provider=None,
-                build_for=None,
-            ),
-        )
-
-    assert str(raised.value) == "Components are not supported for base 'core22'."
 
 
 @pytest.mark.parametrize(

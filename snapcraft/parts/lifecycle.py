@@ -34,11 +34,15 @@ from snapcraft.elf import Patcher, SonameCache, elf_utils
 from snapcraft.elf import errors as elf_errors
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import manifest, snap_yaml
-from snapcraft.projects import Architecture, ArchitectureProject, Project
+from snapcraft.projects import (
+    Architecture,
+    ArchitectureProject,
+    ComponentProject,
+    Project,
+)
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_host_architecture,
-    humanize_list,
     process_version,
 )
 
@@ -47,7 +51,6 @@ from .parts import PartsLifecycle, launch_shell
 from .project_check import run_project_checks
 from .setup_assets import setup_assets
 from .update_metadata import update_project_metadata
-from .yaml_utils import CURRENT_BASES
 
 if TYPE_CHECKING:
     import argparse
@@ -742,21 +745,9 @@ def _validate_and_get_partitions(yaml_data: Dict[str, Any]) -> Optional[List[str
     :raises SnapcraftError: If components are defined in the project but not supported.
     """
     yaml_utils.extract_parse_info(yaml_data)
-    project = Project.unmarshal(yaml_data)
-    base = project.get_effective_base()
+    project = ComponentProject.unmarshal(yaml_data)
 
     if project.components:
-        supported_bases = CURRENT_BASES - {"core22"}
-
-        if base not in supported_bases:
-            raise errors.SnapcraftError(
-                message=f"Components are not supported for base {base!r}.",
-                resolution=(
-                    "To use components, use a supported base. Supported bases are "
-                    f"{humanize_list(supported_bases, 'and')}"
-                ),
-            )
-
         if Features().enable_partitions:
             emit.debug("Not enabling partitions because feature is already enabled")
         else:
