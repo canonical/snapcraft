@@ -17,7 +17,7 @@
 import logging
 from typing import List, Union
 
-import pkg_resources
+from packaging import version
 
 from snapcraft_legacy.storeapi import metrics as metrics_module
 
@@ -64,7 +64,10 @@ def convert_metrics_to_table(
     # Sort series sensibly, using a version sort.
     def key_as_version(series):
         """Key series as versions, if possible."""
-        return pkg_resources.parse_version(series.name)
+        try:
+            return version.parse(series.name)
+        except version.InvalidVersion:
+            return version.Version("0.0")
 
     series = sorted(results.series, key=key_as_version)
 

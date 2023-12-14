@@ -10,10 +10,6 @@ requirements_fixups() {
   # https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1635463
   sed -i '/pkg[-_]resources==0.0.0/d' "$req_file"
 
-  # Keep setuptools < 66
-  sed -i '/^setuptools/d' "$req_file"
-  echo 'setuptools<66' >> "$req_file"
-
   # Pinned pyinstaller for windows.
   if [[ "$req_file" == "requirements-devel.txt" ]]; then
       sed -i '/pyinstaller/d' "$req_file"
