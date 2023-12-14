@@ -319,8 +319,7 @@ of the choice of plugin.
 """
 
 from collections import OrderedDict  # noqa
-
-import pkg_resources  # noqa
+from importlib import metadata
 
 
 def _get_version():
@@ -329,9 +328,9 @@ def _get_version():
     if _os.environ.get("SNAP_NAME") == "snapcraft":
         return _os.environ["SNAP_VERSION"]
     try:
-        return pkg_resources.require("snapcraft")[0].version
-    except pkg_resources.DistributionNotFound:
-        return "devel"
+        return metadata.version("snapcraft")
+    except metadata.PackageNotFoundError:
+        return "0.0.0+devel"
 
 
 # Set this early so that the circular imports aren't too painful
