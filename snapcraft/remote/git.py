@@ -17,6 +17,9 @@
 """Git repository class and helper utilities."""
 
 import logging
+import os
+import subprocess
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -150,7 +153,7 @@ class GitRepo:
                 f"Could not initialize a git repository in {str(self.path)!r}."
             ) from error
 
-    def push_url(
+    def push_url(  # pylint: disable=too-many-branches
         self,
         remote_url: str,
         remote_branch: str,
@@ -181,22 +184,69 @@ class GitRepo:
             "Pushing %r to remote %r with refspec %r.", ref, stripped_url, refspec
         )
 
-        # Create a list of tags to push
+        # temporarily call git directly due to libgit2 bug that unable to push
+        # large repos using https. See https://github.com/libgit2/libgit2/issues/6385
+        # and https://github.com/snapcore/snapcraft/issues/4478
+        cmd: list[str] = ["git", "push", remote_url, refspec, "--progress"]
         if push_tags:
-            tag_refs = [
-                t.name
-                for t in self._repo.references.iterator(pygit2.GIT_REFERENCES_TAGS)
-            ]
-        else:
-            tag_refs = []
+            cmd.append("--tags")
+
+        git_proc: Optional[subprocess.Popen] = None
         try:
-            self._repo.remotes.create_anonymous(remote_url).push([refspec] + tag_refs)
-        except pygit2.GitError as error:
+            with subprocess.Popen(
+                cmd,
+                cwd=str(self.path),
+                bufsize=1,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+            ) as git_proc:
+                # do not block on reading from the pipes
+                # (has no effect on Windows until Python 3.12, so the readline() method is
+                # blocking on Windows but git will still proceed)
+                if git_proc.stdout:
+                    os.set_blocking(git_proc.stdout.fileno(), False)
+                if git_proc.stderr:
+                    os.set_blocking(git_proc.stderr.fileno(), False)
+
+                git_stdout: str
+                git_stderr: str
+
+                while git_proc.poll() is None:
+                    if git_proc.stdout:
+                        while git_stdout := git_proc.stdout.readline():
+                            logger.info(git_stdout.rstrip())
+                    if git_proc.stderr:
+                        while git_stderr := git_proc.stderr.readline():
+                            logger.error(git_stderr.rstrip())
+                    # avoid too much looping, but not too slow to display progress
+                    time.sleep(0.01)
+
+        except subprocess.SubprocessError as error:
+            # logging the remaining output
+            if git_proc:
+                if git_proc.stdout:
+                    for git_stdout in git_proc.stdout.readlines():
+                        logger.info(git_stdout.rstrip())
+                if git_proc.stderr:
+                    for git_stderr in git_proc.stderr.readlines():
+                        logger.error(git_stderr.rstrip())
+
             raise GitError(
                 f"Could not push {ref!r} to {stripped_url!r} with refspec {refspec!r} "
                 f"for the git repository in {str(self.path)!r}: "
                 f"{error!s}"
             ) from error
+
+        if git_proc:
+            git_proc.wait()
+            if git_proc.returncode == 0:
+                return
+
+        raise GitError(
+            f"Could not push {ref!r} to {stripped_url!r} with refspec {refspec!r} "
+            f"for the git repository in {str(self.path)!r}."
+        )
 
     def _resolve_ref(self, ref: str) -> str:
         """Get a full reference name for a shorthand ref.
