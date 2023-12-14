@@ -25,16 +25,16 @@ execute: |
   fi
 
   # assert file3 is in the component
-  if [[ ! -e "prime/component/foo-bar/file3" ]]; then
+  if [[ ! -e "prime/component/bar-baz/file3" ]]; then
     echo "Expected file to exist but is does not exist."
     exit 1
   fi
 
   # assert other files do not exist in the component
-  if [[ -e "prime/component/foo-bar/file1-new" ]] || \
-    [[ -e "prime/component/foo-bar/file2-new" ]] || \
-    [[ -e "prime/component/foo-bar/file4" ]] || \
-    [[ -e "prime/component/foo-bar/file5" ]]; then
+  if [[ -e "prime/component/bar-baz/file1-new" ]] || \
+    [[ -e "prime/component/bar-baz/file2-new" ]] || \
+    [[ -e "prime/component/bar-baz/file4" ]] || \
+    [[ -e "prime/component/bar-baz/file5" ]]; then
     echo "Expected file to exist but is does not exist."
     exit 1
   fi
