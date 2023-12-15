@@ -531,7 +531,7 @@ def test_run_in_repo_newer_than_core22(
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_in_shallow_repo(emitter, mock_run_legacy, new_dir):
-    """core22 and older bases run new remote-build if in a git repo."""
+    """core22 and older bases fall back to legacy remote-build if in a shallow git repo."""
     root_path = Path(new_dir)
     git_normal_path = root_path / "normal"
     git_normal_path.mkdir()
@@ -580,7 +580,7 @@ def test_run_in_shallow_repo(emitter, mock_run_legacy, new_dir):
     "create_snapcraft_yaml", "mock_confirm", "mock_argv", "use_new_remote_build"
 )
 def test_run_in_shallow_repo_unsupported(capsys, new_dir):
-    """core22 and older bases run new remote-build if in a git repo."""
+    """devel / core24 and newer bases run new remote-build in a shallow git repo."""
     root_path = Path(new_dir)
     git_normal_path = root_path / "normal"
     git_normal_path.mkdir()

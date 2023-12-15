@@ -82,7 +82,7 @@ def check_git_repo_for_remote_build(path: Path) -> None:
 
     :param path: filepath to check
 
-    :raises GitError: if incompatible git repo is found
+    :raises SnapcraftError: if incompatible git repo is found
     """
     git_type = get_git_repo_type(path.absolute())
 
