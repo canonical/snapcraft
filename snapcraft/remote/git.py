@@ -20,14 +20,25 @@ import logging
 import os
 import subprocess
 import time
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 
 import pygit2
 
+from snapcraft.errors import SnapcraftError
+
 from .errors import GitError
 
 logger = logging.getLogger(__name__)
+
+
+class GitType(Enum):
+    """Type of git repository."""
+
+    INVALID = 0
+    NORMAL = 1
+    SHALLOW = 2
 
 
 def is_repo(path: Path) -> bool:
@@ -50,20 +61,39 @@ def is_repo(path: Path) -> bool:
         ) from error
 
 
-def is_shallow_repo(path: Path) -> bool:
-    """Check if a directory is a shallow cloned git repo.
+def get_git_repo_type(path: Path) -> GitType:
+    """Check if a directory is a git repo and return the type.
 
     :param path: filepath to check
 
-    :returns: True if path is a shallow cloned git repo.
-
-    :raises GitError: if git fails while checking for a repository
+    :returns: GitType
     """
     if is_repo(path):
         repo = pygit2.Repository(path)
-        return repo.is_shallow
+        if repo.is_shallow:
+            return GitType.SHALLOW
+        return GitType.NORMAL
 
-    return False
+    return GitType.INVALID
+
+
+def check_git_repo_for_remote_build(path: Path) -> None:
+    """Check if a directory meets the requirements of doing remote builds.
+
+    :param path: filepath to check
+
+    :raises GitError: if incompatible git repo is found
+    """
+    git_type = get_git_repo_type(path.absolute())
+
+    if git_type == GitType.INVALID:
+        raise SnapcraftError(f"Could not find a git repository in {str(path)!r}")
+
+    if git_type == GitType.SHALLOW:
+        raise SnapcraftError(
+            "Remote build for shallow cloned git repos are no longer supported "
+            "for core24 and beyond."
+        )
 
 
 class GitRepo:

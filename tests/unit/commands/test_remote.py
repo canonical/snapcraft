@@ -375,7 +375,7 @@ def test_run_core22_and_older(emitter, mock_run_legacy):
     cli.run()
 
     mock_run_legacy.assert_called_once()
-    emitter.assert_debug("Running fallback remote-build")
+    emitter.assert_progress("Running fallback remote-build", permanent=True)
 
 
 @pytest.mark.parametrize(
@@ -445,7 +445,7 @@ def test_run_envvar_force_fallback_unset(emitter, mock_run_legacy, monkeypatch):
     cli.run()
 
     mock_run_legacy.assert_called_once()
-    emitter.assert_debug("Running fallback remote-build")
+    emitter.assert_progress("Running fallback remote-build", permanent=True)
 
 
 @pytest.mark.parametrize(
@@ -459,7 +459,7 @@ def test_run_envvar_force_fallback_empty(emitter, mock_run_legacy, monkeypatch):
     cli.run()
 
     mock_run_legacy.assert_called_once()
-    emitter.assert_debug("Running fallback remote-build")
+    emitter.assert_progress("Running fallback remote-build", permanent=True)
 
 
 @pytest.mark.parametrize(
@@ -506,7 +506,7 @@ def test_run_not_in_repo(emitter, mock_run_legacy):
     cli.run()
 
     mock_run_legacy.assert_called_once()
-    emitter.assert_debug("Running fallback remote-build")
+    emitter.assert_progress("Running fallback remote-build", permanent=True)
 
 
 @pytest.mark.parametrize(
@@ -570,14 +570,16 @@ def test_run_in_shallow_repo(emitter, mock_run_legacy, new_dir):
 
     mock_run_legacy.assert_called_once()
     emitter.assert_debug("Current git repository is shallow cloned.")
-    emitter.assert_progress("Fallback to legacy remote-build", permanent=True)
+    emitter.assert_progress("Running fallback remote-build", permanent=True)
 
 
-@pytest.mark.parametrize("create_snapcraft_yaml", {"devel"}, indirect=True)
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
+)
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml", "mock_confirm", "mock_argv", "use_new_remote_build"
 )
-def test_run_in_shallow_repo_unsupported(emitter, new_dir, mock_remote_builder):
+def test_run_in_shallow_repo_unsupported(capsys, new_dir):
     """core22 and older bases run new remote-build if in a git repo."""
     root_path = Path(new_dir)
     git_normal_path = root_path / "normal"
@@ -617,8 +619,9 @@ def test_run_in_shallow_repo_unsupported(emitter, new_dir, mock_remote_builder):
     # no exception because run() catches it
     ret = cli.run()
     assert ret != 0
+    _, err = capsys.readouterr()
 
-    mock_remote_builder.assert_not_called()
+    assert "Remote build for shallow cloned git repos are no longer supported" in err
 
 
 ######################

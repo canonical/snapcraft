@@ -25,22 +25,30 @@ from .errors import (
     RemoteBuildTimeoutError,
     UnsupportedArchitectureError,
 )
-from .git import GitRepo, is_repo, is_shallow_repo
+from .git import (
+    GitRepo,
+    GitType,
+    check_git_repo_for_remote_build,
+    get_git_repo_type,
+    is_repo,
+)
 from .launchpad import LaunchpadClient
 from .remote_builder import RemoteBuilder
 from .utils import get_build_id, humanize_list, rmtree, validate_architectures
 from .worktree import WorkTree
 
 __all__ = [
+    "check_git_repo_for_remote_build",
     "get_build_id",
+    "get_git_repo_type",
     "humanize_list",
     "is_repo",
-    "is_shallow_repo",
     "rmtree",
     "validate_architectures",
     "AcceptPublicUploadError",
     "GitError",
     "GitRepo",
+    "GitType",
     "LaunchpadClient",
     "LaunchpadHttpsError",
     "RemoteBuilder",
