@@ -216,7 +216,7 @@ class RemoteBuildCommand(BaseCommand):
             )
             # fall-through to legacy remote-build
 
-        emit.progress("Running fallback remote-build", permanent=True)
+        emit.debug("Running fallback remote-build")
         run_legacy()
 
     def _get_project_name(self) -> str:

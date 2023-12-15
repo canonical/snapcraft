@@ -25,11 +25,11 @@ from unittest.mock import ANY
 import pygit2
 import pytest
 
-from snapcraft.errors import SnapcraftError
 from snapcraft.remote import (
     GitError,
     GitRepo,
     GitType,
+    RemoteBuildInvalidGitRepoError,
     check_git_repo_for_remote_build,
     get_git_repo_type,
     is_repo,
@@ -537,7 +537,9 @@ def test_push_url_push_error(new_dir):
 
 def test_check_git_repo_for_remote_build_invalid(new_dir):
     """Check if directory is an invalid repo."""
-    with pytest.raises(SnapcraftError, match="Could not find a git repository in"):
+    with pytest.raises(
+        RemoteBuildInvalidGitRepoError, match="Could not find a git repository in"
+    ):
         check_git_repo_for_remote_build(new_dir)
 
 
@@ -581,7 +583,7 @@ def test_check_git_repo_for_remote_build_shallow(new_dir):
     )
 
     with pytest.raises(
-        SnapcraftError,
+        RemoteBuildInvalidGitRepoError,
         match="Remote build for shallow cloned git repos are no longer supported",
     ):
         check_git_repo_for_remote_build(git_shallow_path)

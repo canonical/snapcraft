@@ -375,7 +375,7 @@ def test_run_core22_and_older(emitter, mock_run_legacy):
     cli.run()
 
     mock_run_legacy.assert_called_once()
-    emitter.assert_progress("Running fallback remote-build", permanent=True)
+    emitter.assert_debug("Running fallback remote-build")
 
 
 @pytest.mark.parametrize(
@@ -445,7 +445,7 @@ def test_run_envvar_force_fallback_unset(emitter, mock_run_legacy, monkeypatch):
     cli.run()
 
     mock_run_legacy.assert_called_once()
-    emitter.assert_progress("Running fallback remote-build", permanent=True)
+    emitter.assert_debug("Running fallback remote-build")
 
 
 @pytest.mark.parametrize(
@@ -459,7 +459,7 @@ def test_run_envvar_force_fallback_empty(emitter, mock_run_legacy, monkeypatch):
     cli.run()
 
     mock_run_legacy.assert_called_once()
-    emitter.assert_progress("Running fallback remote-build", permanent=True)
+    emitter.assert_debug("Running fallback remote-build")
 
 
 @pytest.mark.parametrize(
@@ -506,7 +506,7 @@ def test_run_not_in_repo(emitter, mock_run_legacy):
     cli.run()
 
     mock_run_legacy.assert_called_once()
-    emitter.assert_progress("Running fallback remote-build", permanent=True)
+    emitter.assert_debug("Running fallback remote-build")
 
 
 @pytest.mark.parametrize(
@@ -570,7 +570,7 @@ def test_run_in_shallow_repo(emitter, mock_run_legacy, new_dir):
 
     mock_run_legacy.assert_called_once()
     emitter.assert_debug("Current git repository is shallow cloned.")
-    emitter.assert_progress("Running fallback remote-build", permanent=True)
+    emitter.assert_debug("Running fallback remote-build")
 
 
 @pytest.mark.parametrize(
