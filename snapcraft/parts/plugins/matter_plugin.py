@@ -29,8 +29,8 @@ MATTER_REPO = "https://github.com/project-chip/connectedhomeip.git"
 class MatterPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     """The part properties used by the matter plugin."""
 
-    matter_tag: str
-    matter_zap_tag: str
+    matter_sdk_version: str
+    matter_zap_version: str
 
     @classmethod
     @overrides
@@ -44,7 +44,7 @@ class MatterPluginProperties(plugins.PluginProperties, plugins.PluginModel):
         :raise pydantic.ValidationError: If validation fails.
         """
         plugin_data = plugins.extract_plugin_properties(
-            data, plugin_name="matter", required=["matter_tag", "matter_zap_tag"]
+            data, plugin_name="matter", required=["matter_sdk_version", "matter_zap_version"]
         )
         return cls(**plugin_data)
 
@@ -56,10 +56,10 @@ class MatterPlugin(plugins.Plugin):
     For more information check the 'plugins' topic.
 
     Additionally, this plugin uses the following plugin-specific keywords:
-        - matter-tag
+        - matter-sdk-version
           (str, no default)
-          The matter branch to use for the build.
-        - matter-zap-tag
+          The matter SDK version to use for the build.
+        - matter-zap-version
           (str, no default)
           The zap version to use for the build.
     """
@@ -87,7 +87,6 @@ class MatterPlugin(plugins.Plugin):
             "git",
             "cmake",
             "ninja-build",
-            "unzip",
             "libssl-dev",
             "libdbus-1-dev",
             "libglib2.0-dev",
@@ -117,27 +116,23 @@ class MatterPlugin(plugins.Plugin):
         if self.snap_arch == "arm64":
             commands.extend(
                 [
-                    f"wget --no-verbose https://github.com/project-chip/zap/releases/download/{options.matter_zap_tag}/zap-linux-{self.snap_arch}.zip",
+                    f"wget --no-verbose https://github.com/project-chip/zap/releases/download/"
+                    f"{options.matter_zap_version}/zap-linux-{self.snap_arch}.zip",
                     f"unzip -o zap-linux-{self.snap_arch}.zip",
                     "echo 'export ZAP_INSTALL_PATH=$PWD'",
                 ]
             )
 
-        """Clone Matter repository if not present"""
+        # Clone Matter repository if not present
         commands.extend(
             [
-                f"if [ ! -d matter ]; then git clone --depth 1 -b {options.matter_tag} {MATTER_REPO} matter && cd matter; "
-                f"else cd matter || echo 'skip clone'; fi"
+                f"if [ ! -d matter ]; then git clone --depth 1 -b {options.matter_sdk_version} "
+                f"{MATTER_REPO} matter && cd matter; else cd matter || echo 'skip clone'; fi"
             ]
         )
 
-        """Checkout submodules for Linux platform"""
+        # Checkout submodules for Linux platform
         commands.extend(["scripts/checkout_submodules.py --shallow --platform linux"])
-
-        """Bootstrapping script for building Matter SDK with minimal "build" requirements and setting up the environment"""
-        commands.extend(
-            ["set +u && source setup/bootstrap.sh --platform build && set -u"]
-        )
 
         """ 
         The project writes its data to /tmp which isn't persisted.
@@ -154,11 +149,18 @@ class MatterPlugin(plugins.Plugin):
         """
         """Replace storage paths"""
         commands.extend(
-            ["sed -i 's/\/tmp/\/mnt/g' src/platform/Linux/CHIPLinuxStorage.h"]
+            [
+                r"sed -i 's/\/tmp/\/mnt/g' src/platform/Linux/CHIPLinuxStorage.h",
+                r"sed -i 's/\/tmp/\/mnt/g' src/platform/Linux/CHIPPlatformConfig.h",
+            ]
         )
-        """Replace key-value store path"""
+
+        """
+        Bootstrapping script for building Matter SDK with minimal "build" requirements 
+        and setting up the environment
+        """
         commands.extend(
-            ["sed -i 's/\/tmp/\/mnt/g' src/platform/Linux/CHIPPlatformConfig.h"]
+            ["set +u && source setup/bootstrap.sh --platform build && set -u"]
         )
 
         commands.extend(
