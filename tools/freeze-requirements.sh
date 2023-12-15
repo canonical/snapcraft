@@ -13,7 +13,7 @@ requirements_fixups() {
   # Pinned pyinstaller for windows.
   if [[ "$req_file" == "requirements-devel.txt" ]]; then
       sed -i '/pyinstaller/d' "$req_file"
-      echo 'pyinstaller==4.10; sys.platform == "win32"' >> "$req_file"
+      echo 'pyinstaller==5.13.1; sys.platform == "win32"' >> "$req_file"
   fi
 }
 
