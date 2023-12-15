@@ -20,14 +20,23 @@ import logging
 import os
 import subprocess
 import time
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 
 import pygit2
 
-from .errors import GitError
+from .errors import GitError, RemoteBuildInvalidGitRepoError
 
 logger = logging.getLogger(__name__)
+
+
+class GitType(Enum):
+    """Type of git repository."""
+
+    INVALID = 0
+    NORMAL = 1
+    SHALLOW = 2
 
 
 def is_repo(path: Path) -> bool:
@@ -48,6 +57,42 @@ def is_repo(path: Path) -> bool:
         raise GitError(
             f"Could not check for git repository in {str(path)!r}."
         ) from error
+
+
+def get_git_repo_type(path: Path) -> GitType:
+    """Check if a directory is a git repo and return the type.
+
+    :param path: filepath to check
+
+    :returns: GitType
+    """
+    if is_repo(path):
+        repo = pygit2.Repository(path)
+        if repo.is_shallow:
+            return GitType.SHALLOW
+        return GitType.NORMAL
+
+    return GitType.INVALID
+
+
+def check_git_repo_for_remote_build(path: Path) -> None:
+    """Check if a directory meets the requirements of doing remote builds.
+
+    :param path: filepath to check
+
+    :raises RemoteBuildInvalidGitRepoError: if incompatible git repo is found
+    """
+    git_type = get_git_repo_type(path.absolute())
+
+    if git_type == GitType.INVALID:
+        raise RemoteBuildInvalidGitRepoError(
+            f"Could not find a git repository in {str(path)!r}"
+        )
+
+    if git_type == GitType.SHALLOW:
+        raise RemoteBuildInvalidGitRepoError(
+            "Remote build for shallow cloned git repos are no longer supported"
+        )
 
 
 class GitRepo:

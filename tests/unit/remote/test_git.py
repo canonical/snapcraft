@@ -18,13 +18,22 @@
 """Tests for the pygit2 wrapper class."""
 
 import re
+import subprocess
 from pathlib import Path
 from unittest.mock import ANY
 
 import pygit2
 import pytest
 
-from snapcraft.remote import GitError, GitRepo, is_repo
+from snapcraft.remote import (
+    GitError,
+    GitRepo,
+    GitType,
+    RemoteBuildInvalidGitRepoError,
+    check_git_repo_for_remote_build,
+    get_git_repo_type,
+    is_repo,
+)
 
 
 def test_is_repo(new_dir):
@@ -37,6 +46,54 @@ def test_is_repo(new_dir):
 def test_is_not_repo(new_dir):
     """Check if a directory is not a repo."""
     assert not is_repo(new_dir)
+
+
+def test_git_repo_type_invalid(new_dir):
+    """Check if directory is an invalid repo."""
+    assert get_git_repo_type(new_dir) == GitType.INVALID
+
+
+def test_git_repo_type_normal(new_dir):
+    """Check if directory is a repo."""
+    GitRepo(new_dir)
+
+    assert get_git_repo_type(new_dir) == GitType.NORMAL
+
+
+def test_git_repo_type_shallow(new_dir):
+    """Check if directory is a shallow cloned repo."""
+    root_path = Path(new_dir)
+    git_normal_path = root_path / "normal"
+    git_normal_path.mkdir()
+    git_shallow_path = root_path / "shallow"
+
+    repo_normal = GitRepo(git_normal_path)
+    (repo_normal.path / "1").write_text("1")
+    repo_normal.add_all()
+    repo_normal.commit("1")
+
+    (repo_normal.path / "2").write_text("2")
+    repo_normal.add_all()
+    repo_normal.commit("2")
+
+    (repo_normal.path / "3").write_text("3")
+    repo_normal.add_all()
+    repo_normal.commit("3")
+
+    # pygit2 does not support shallow cloning, so we use git directly
+    subprocess.run(
+        [
+            "git",
+            "clone",
+            "--depth",
+            "1",
+            git_normal_path.absolute().as_uri(),
+            git_shallow_path.absolute().as_posix(),
+        ],
+        check=True,
+    )
+
+    assert get_git_repo_type(git_shallow_path) == GitType.SHALLOW
 
 
 def test_is_repo_path_only(new_dir):
@@ -476,3 +533,57 @@ def test_push_url_push_error(new_dir):
 
     assert raised.value.details is not None
     assert re.match(expected_error_details, raised.value.details)
+
+
+def test_check_git_repo_for_remote_build_invalid(new_dir):
+    """Check if directory is an invalid repo."""
+    with pytest.raises(
+        RemoteBuildInvalidGitRepoError, match="Could not find a git repository in"
+    ):
+        check_git_repo_for_remote_build(new_dir)
+
+
+def test_check_git_repo_for_remote_build_normal(new_dir):
+    """Check if directory is a repo."""
+    GitRepo(new_dir)
+    check_git_repo_for_remote_build(new_dir)
+
+
+def test_check_git_repo_for_remote_build_shallow(new_dir):
+    """Check if directory is a shallow cloned repo."""
+    root_path = Path(new_dir)
+    git_normal_path = root_path / "normal"
+    git_normal_path.mkdir()
+    git_shallow_path = root_path / "shallow"
+
+    repo_normal = GitRepo(git_normal_path)
+    (repo_normal.path / "1").write_text("1")
+    repo_normal.add_all()
+    repo_normal.commit("1")
+
+    (repo_normal.path / "2").write_text("2")
+    repo_normal.add_all()
+    repo_normal.commit("2")
+
+    (repo_normal.path / "3").write_text("3")
+    repo_normal.add_all()
+    repo_normal.commit("3")
+
+    # pygit2 does not support shallow cloning, so we use git directly
+    subprocess.run(
+        [
+            "git",
+            "clone",
+            "--depth",
+            "1",
+            git_normal_path.absolute().as_uri(),
+            git_shallow_path.absolute().as_posix(),
+        ],
+        check=True,
+    )
+
+    with pytest.raises(
+        RemoteBuildInvalidGitRepoError,
+        match="Remote build for shallow cloned git repos are no longer supported",
+    ):
+        check_git_repo_for_remote_build(git_shallow_path)

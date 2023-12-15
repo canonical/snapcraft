@@ -20,6 +20,7 @@ import logging
 from pathlib import Path
 from typing import List, Optional
 
+from .git import check_git_repo_for_remote_build
 from .launchpad import LaunchpadClient
 from .utils import get_build_id, humanize_list, validate_architectures
 from .worktree import WorkTree
@@ -54,6 +55,8 @@ class RemoteBuilder:
         self._app_name = app_name
         self._project_name = project_name
         self._project_dir = project_dir
+
+        check_git_repo_for_remote_build(self._project_dir)
 
         if build_id:
             self._build_id = build_id

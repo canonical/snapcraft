@@ -115,3 +115,16 @@ class RemoteBuildFailedError(RemoteBuildError):
         brief = "Remote build failed."
 
         super().__init__(brief=brief, details=details)
+
+
+class RemoteBuildInvalidGitRepoError(RemoteBuildError):
+    """The Git repository is invalid for remote build.
+
+    :param brief: Brief description of error.
+    :param details: Detailed information.
+    """
+
+    def __init__(self, details: str) -> None:
+        brief = "The Git repository is invalid for remote build."
+
+        super().__init__(brief=brief, details=details)

@@ -30,7 +30,12 @@ from overrides import overrides
 from snapcraft.errors import MaintenanceBase, SnapcraftError
 from snapcraft.legacy_cli import run_legacy
 from snapcraft.parts import yaml_utils
-from snapcraft.remote import AcceptPublicUploadError, RemoteBuilder, is_repo
+from snapcraft.remote import (
+    AcceptPublicUploadError,
+    GitType,
+    RemoteBuilder,
+    get_git_repo_type,
+)
 from snapcraft.utils import confirm_with_user, get_host_architecture, humanize_list
 
 _CONFIRMATION_PROMPT = (
@@ -193,12 +198,23 @@ class RemoteBuildCommand(BaseCommand):
             run_legacy()
             return
 
-        if is_repo(Path().absolute()):
+        git_type = get_git_repo_type(Path().absolute())
+
+        if git_type == GitType.NORMAL:
             emit.debug(
                 "Running new remote-build because project is in a git repository"
             )
             self._run_new_remote_build()
             return
+
+        if git_type == GitType.SHALLOW:
+            emit.debug("Current git repository is shallow cloned.")
+            emit.progress(
+                "Remote build for shallow clones is deprecated "
+                "and will be removed in core24",
+                permanent=True,
+            )
+            # fall-through to legacy remote-build
 
         emit.debug("Running fallback remote-build")
         run_legacy()
