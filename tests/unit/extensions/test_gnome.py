@@ -93,10 +93,10 @@ def test_get_root_snippet(gnome_extension):
             }
         },
         "layout": {
-            "/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
+            "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0": {
                 "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0"
             },
-            "/usr/lib/$CRAFT_ARCH_TRIPLET/webkit2gtk-4.1": {
+            "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1": {
                 "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1"
             },
             "/usr/share/xml/iso-codes": {
@@ -208,19 +208,19 @@ class TestGetPartSnippet:
                 {
                     "LD_LIBRARY_PATH": ":".join(
                         [
-                            "/snap/gnome-42-2204-sdk/current/lib/$CRAFT_ARCH_TRIPLET",
-                            "/snap/gnome-42-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET",
+                            "/snap/gnome-42-2204-sdk/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR",
+                            "/snap/gnome-42-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR",
                             "/snap/gnome-42-2204-sdk/current/usr/lib",
                             "/snap/gnome-42-2204-sdk/current/usr/lib/vala-current",
                             "/snap/gnome-42-2204-sdk/current/usr/lib/"
-                            "$CRAFT_ARCH_TRIPLET/pulseaudio",
+                            "$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio",
                         ]
                     )
                     + "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
                 },
                 {
                     "PKG_CONFIG_PATH": (
-                        "/snap/gnome-42-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig:"
+                        "/snap/gnome-42-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:"
                         "/snap/gnome-42-2204-sdk/current/usr/lib/pkgconfig:"
                         "/snap/gnome-42-2204-sdk/current/usr/share/pkgconfig"
                         "${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
@@ -234,7 +234,7 @@ class TestGetPartSnippet:
                 },
                 {
                     "GDK_PIXBUF_MODULE_FILE": (
-                        "/snap/gnome-42-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET"
+                        "/snap/gnome-42-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR"
                         "/gdk-pixbuf-current/loaders.cache"
                     )
                 },
@@ -249,7 +249,7 @@ class TestGetPartSnippet:
                         [
                             "/snap/gnome-42-2204-sdk/current/usr/lib/python3.10",
                             "/snap/gnome-42-2204-sdk/current/usr/lib/python3/dist-packages",
-                            "/snap/gnome-42-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET"
+                            "/snap/gnome-42-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR"
                             "/gobject-introspection",
                         ]
                     )
@@ -281,18 +281,18 @@ def test_get_part_snippet_with_external_sdk(gnome_extension_with_build_snap):
             {
                 "LD_LIBRARY_PATH": ":".join(
                     [
-                        "/snap/gnome-44-2204-sdk/current/lib/$CRAFT_ARCH_TRIPLET",
-                        "/snap/gnome-44-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET",
+                        "/snap/gnome-44-2204-sdk/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR",
+                        "/snap/gnome-44-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR",
                         "/snap/gnome-44-2204-sdk/current/usr/lib",
                         "/snap/gnome-44-2204-sdk/current/usr/lib/vala-current",
-                        "/snap/gnome-44-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
+                        "/snap/gnome-44-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio",
                     ]
                 )
                 + "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
             },
             {
                 "PKG_CONFIG_PATH": (
-                    "/snap/gnome-44-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig:"
+                    "/snap/gnome-44-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:"
                     "/snap/gnome-44-2204-sdk/current/usr/lib/pkgconfig:"
                     "/snap/gnome-44-2204-sdk/current/usr/share/pkgconfig"
                     "${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
@@ -306,7 +306,7 @@ def test_get_part_snippet_with_external_sdk(gnome_extension_with_build_snap):
             },
             {
                 "GDK_PIXBUF_MODULE_FILE": (
-                    "/snap/gnome-44-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET"
+                    "/snap/gnome-44-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR"
                     "/gdk-pixbuf-current/loaders.cache"
                 )
             },
@@ -321,7 +321,7 @@ def test_get_part_snippet_with_external_sdk(gnome_extension_with_build_snap):
                     [
                         "/snap/gnome-44-2204-sdk/current/usr/lib/python3.10",
                         "/snap/gnome-44-2204-sdk/current/usr/lib/python3/dist-packages",
-                        "/snap/gnome-44-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET"
+                        "/snap/gnome-44-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR"
                         "/gobject-introspection",
                     ]
                 )
