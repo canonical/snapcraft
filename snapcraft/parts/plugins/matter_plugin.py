@@ -16,14 +16,13 @@
 
 """The matter plugin."""
 import os
-
 from typing import Any, Dict, List, Set, cast
 
 from craft_parts import infos, plugins
 from overrides import overrides
 
+# The repository where the matter SDK resides.
 MATTER_REPO = "https://github.com/project-chip/connectedhomeip.git"
-"""The repository where the matter SDK resides."""
 
 
 class MatterPluginProperties(plugins.PluginProperties, plugins.PluginModel):
@@ -44,7 +43,9 @@ class MatterPluginProperties(plugins.PluginProperties, plugins.PluginModel):
         :raise pydantic.ValidationError: If validation fails.
         """
         plugin_data = plugins.extract_plugin_properties(
-            data, plugin_name="matter", required=["matter_sdk_version", "matter_zap_version"]
+            data,
+            plugin_name="matter",
+            required=["matter_sdk_version", "matter_zap_version"],
         )
         return cls(**plugin_data)
 
@@ -80,24 +81,24 @@ class MatterPlugin(plugins.Plugin):
     @overrides
     def get_build_packages(self) -> Set[str]:
         return {
-            "wget",
-            "unzip",
             "clang",
-            "pkg-config",
-            "git",
             "cmake",
-            "ninja-build",
-            "libssl-dev",
-            "libdbus-1-dev",
-            "libglib2.0-dev",
+            "generate-ninja",
+            "git",
             "libavahi-client-dev",
-            "python3-venv",
+            "libcairo2-dev",
+            "libdbus-1-dev",
+            "libgirepository1.0-dev",
+            "libglib2.0-dev",
+            "libreadline-dev",
+            "libssl-dev",
+            "ninja-build",
+            "pkg-config",
             "python3-dev",
             "python3-pip",
-            "libgirepository1.0-dev",
-            "libcairo2-dev",
-            "libreadline-dev",
-            "generate-ninja",
+            "python3-venv",
+            "unzip",
+            "wget",
         }
 
     @overrides
@@ -126,28 +127,33 @@ class MatterPlugin(plugins.Plugin):
         # Clone Matter repository if not present
         commands.extend(
             [
-                f"if [ ! -d matter ]; then git clone --depth 1 -b {options.matter_sdk_version} "
-                f"{MATTER_REPO} matter && cd matter; else cd matter || echo 'skip clone'; fi"
+                "if [ ! -d matter ]; then",
+                f"    git clone --depth 1 -b {options.matter_sdk_version} {MATTER_REPO} matter;",
+                "else",
+                "    echo 'Matter repository already exists, skip clone';",
+                "fi",
+                "cd matter;",
             ]
         )
 
         # Checkout submodules for Linux platform
         commands.extend(["scripts/checkout_submodules.py --shallow --platform linux"])
 
-        """ 
+        """
         The project writes its data to /tmp which isn't persisted.
 
-        Setting TMPDIR env var when running the app isn't sufficient as 
-        chip_[config,counter,factory,kvs].ini still get written under /tmp.
-        The chip-tool currently has no way of overriding the default paths to
-        storage and security config files.
+        Setting TMPDIR env var when running the app isn't sufficient as
+         chip_[config,counter,factory,kvs].ini still get written under /tmp.
+         The chip-tool currently has no way of overriding the default paths to
+         storage and security config files.
 
-        Snap does not allow bind mounting a persistent directory on /tmp, 
-        so we need to replace it in the source with another path, e.g. /mnt.
-        See the top-level layout definition which bind mounts a persisted
-        directory within the confined snap space on /mnt.
+        Snap does not allow bind mounting a persistent directory on /tmp,
+         so we need to replace it in the source with another path, e.g. /mnt.
+         See the top-level layout definition which bind mounts a persisted
+         directory within the confined snap space on /mnt.
         """
-        """Replace storage paths"""
+
+        # Replace storage paths
         commands.extend(
             [
                 r"sed -i 's/\/tmp/\/mnt/g' src/platform/Linux/CHIPLinuxStorage.h",
@@ -156,18 +162,13 @@ class MatterPlugin(plugins.Plugin):
         )
 
         """
-        Bootstrapping script for building Matter SDK with minimal "build" requirements 
-        and setting up the environment
+        Bootstrapping script for building Matter SDK with minimal "build" requirements
+         and setting up the environment.
         """
         commands.extend(
             ["set +u && source setup/bootstrap.sh --platform build && set -u"]
         )
 
-        commands.extend(
-            [
-                "cp -vr ./* $CRAFT_PART_INSTALL/",
-                "echo 'Cloned Matter repository and built Matter SDK'",
-            ]
-        )
+        commands.extend(["echo 'Built Matter SDK'"])
 
         return commands
