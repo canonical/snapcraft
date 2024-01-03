@@ -1985,6 +1985,21 @@ class TestComponents:
         with pytest.raises(errors.ProjectValidationError, match=error):
             project.unmarshal(project_yaml_data(components=component))
 
+    def test_get_component_names(self, project, project_yaml_data, stub_component_data):
+        components = {"foo": stub_component_data, "bar-baz": stub_component_data}
+        test_project = project.unmarshal(project_yaml_data(components=components))
+
+        component_names = test_project.get_component_names()
+
+        assert component_names == ["foo", "bar-baz"]
+
+    def test_get_component_names_none(self, project, project_yaml_data):
+        test_project = project.unmarshal(project_yaml_data())
+
+        component_names = test_project.get_component_names()
+
+        assert component_names is None
+
     def test_get_partitions(self, project, project_yaml_data, stub_component_data):
         components = {"foo": stub_component_data, "bar-baz": stub_component_data}
         test_project = project.unmarshal(project_yaml_data(components=components))
