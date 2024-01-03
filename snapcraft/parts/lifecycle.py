@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -33,7 +33,7 @@ from snapcraft import errors, linters, pack, providers, ua_manager, utils
 from snapcraft.elf import Patcher, SonameCache, elf_utils
 from snapcraft.elf import errors as elf_errors
 from snapcraft.linters import LinterStatus
-from snapcraft.meta import manifest, snap_yaml
+from snapcraft.meta import component_yaml, manifest, snap_yaml
 from snapcraft.projects import (
     Architecture,
     ArchitectureProject,
@@ -317,6 +317,16 @@ def _generate_metadata(
     emit.progress("Generating snap metadata...")
     snap_yaml.write(project, lifecycle.prime_dir, arch=project.get_build_for())
     emit.progress("Generated snap metadata", permanent=True)
+
+    if components := project.get_component_names():
+        emit.progress("Generating component metadata...")
+        for component in components:
+            component_yaml.write(
+                project=project,
+                component_name=component,
+                component_prime_dir=lifecycle.get_prime_dir_for_component(component),
+            )
+        emit.progress("Generated component metadata", permanent=True)
 
     if parsed_args.enable_manifest:
         _generate_manifest(
