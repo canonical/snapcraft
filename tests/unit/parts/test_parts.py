@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -81,10 +81,10 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
-@pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
+@pytest.mark.parametrize("base", CURRENT_BASES)
 @pytest.mark.parametrize("step_name", ["pull", "build", "stage", "prime"])
 def test_parts_lifecycle_run_with_components(
-    mocker, base, parts_data, step_name, new_dir, emitter
+    mocker, base, parts_data, step_name, new_dir
 ):
     """Verify usage of the partitions feature."""
     lcm_spy = mocker.spy(craft_parts, "LifecycleManager")

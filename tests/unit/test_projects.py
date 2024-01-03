@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -1989,13 +1989,13 @@ class TestComponents:
         components = {"foo": stub_component_data, "bar-baz": stub_component_data}
         test_project = project.unmarshal(project_yaml_data(components=components))
 
-        component_names = test_project.get_partitions()
+        partitions = test_project.get_partitions()
 
-        assert component_names == ["default", "component/foo", "component/bar-baz"]
+        assert partitions == ["default", "component/foo", "component/bar-baz"]
 
     def test_get_partitions_none(self, project, project_yaml_data):
         test_project = project.unmarshal(project_yaml_data())
 
-        component_names = test_project.get_partitions()
+        partitions = test_project.get_partitions()
 
-        assert component_names is None
+        assert partitions is None
