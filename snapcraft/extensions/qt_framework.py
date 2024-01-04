@@ -152,7 +152,7 @@ class QTFramework(Extension):
                     "target": "$SNAP/data-dir/sounds",
                     "default-provider": "gtk-common-themes",
                 },
-                "qt-framework": {
+                self.qt_snaps.content: {
                     "interface": "content",
                     "default-provider": self.qt_snaps.content,
                     "target": "$SNAP/qt-framework",
