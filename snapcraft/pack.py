@@ -90,6 +90,32 @@ def _get_filename(
     return None
 
 
+def _pack(command: List[Union[str, Path]]) -> str:
+    """Pack a directory with `snap pack` as a snap or component.
+
+    :param command: `snap pack` command to execute
+
+    :returns: The filename of the packed snap or component.
+
+    :raises SnapcraftError: If the directory cannot be packed.
+    """
+    emit.debug(f"Pack command: {command}")
+
+    try:
+        proc = subprocess.run(
+            command, capture_output=True, check=True, universal_newlines=True
+        )
+    except subprocess.CalledProcessError as err:
+        msg = f"{err!s}"
+        details = None
+        if err.stderr:
+            details = err.stderr.strip()
+        raise errors.SnapcraftError(msg, details=details) from err
+
+    filename = Path(str(proc.stdout).partition(":")[2].strip()).name
+    return filename
+
+
 def pack_snap(
     directory: Path,
     *,
@@ -137,17 +163,4 @@ def pack_snap(
     command.append(_get_directory(output))
 
     emit.progress("Creating snap package...")
-    emit.debug(f"Pack command: {command}")
-    try:
-        proc = subprocess.run(
-            command, capture_output=True, check=True, universal_newlines=True
-        )
-    except subprocess.CalledProcessError as err:
-        msg = f"{err!s}"
-        details = None
-        if err.stderr:
-            details = err.stderr.strip()
-        raise errors.SnapcraftError(msg, details=details) from err
-
-    snap_filename = Path(str(proc.stdout).partition(":")[2].strip()).name
-    return snap_filename
+    return _pack(command)
