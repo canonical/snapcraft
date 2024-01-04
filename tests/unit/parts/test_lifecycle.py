@@ -2066,3 +2066,101 @@ def test_lifecycle_write_component_metadata(
             component_prime_dir=new_dir / "prime/component/bar-baz",
         ),
     ]
+
+
+@pytest.mark.usefixtures("enable_partitions_feature", "project_vars")
+@pytest.mark.parametrize("step", ["pack", "snap"])
+def test_lifecycle_pack_components(
+    step, snapcraft_yaml, new_dir, mocker, stub_component_data
+):
+    """Pack components as part of the lifecycle."""
+    yaml_data = snapcraft_yaml(base="core22", components=stub_component_data)
+    project = Project.unmarshal(snapcraft_yaml(**yaml_data))
+    mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch("snapcraft.meta.component_yaml.write")
+    mocker.patch("snapcraft.pack.pack_snap")
+    mock_pack = mocker.patch("snapcraft.pack.pack_component")
+
+    parsed_args = argparse.Namespace(
+        debug=False,
+        destructive_mode=True,
+        use_lxd=False,
+        enable_manifest=True,
+        ua_token=None,
+        parts=[],
+        manifest_image_information=None,
+        output=None,
+    )
+
+    parts_lifecycle._run_command(
+        step,
+        project=project,
+        parse_info={},
+        assets_dir=Path(),
+        start_time=datetime.now(),
+        parallel_build_count=8,
+        parsed_args=parsed_args,
+    )
+
+    assert mock_pack.mock_calls == [
+        call(
+            directory=new_dir / "prime/component/foo",
+            compression="xz",
+            output_dir=new_dir,
+        ),
+        call(
+            directory=new_dir / "prime/component/bar-baz",
+            compression="xz",
+            output_dir=new_dir,
+        ),
+    ]
+
+
+@pytest.mark.usefixtures("enable_partitions_feature", "project_vars")
+@pytest.mark.parametrize("step", ["pack", "snap"])
+@pytest.mark.parametrize("output", ["dir", "dir/file"])
+def test_lifecycle_pack_components_with_output(
+    output, step, snapcraft_yaml, new_dir, mocker, stub_component_data
+):
+    """Pack components when `--output` is passed with a directory or filename."""
+    Path(new_dir / "dir").mkdir()
+    yaml_data = snapcraft_yaml(base="core22", components=stub_component_data)
+    project = Project.unmarshal(snapcraft_yaml(**yaml_data))
+    mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch("snapcraft.meta.component_yaml.write")
+    mocker.patch("snapcraft.pack.pack_snap")
+    mock_pack = mocker.patch("snapcraft.pack.pack_component")
+
+    parsed_args = argparse.Namespace(
+        debug=False,
+        destructive_mode=True,
+        use_lxd=False,
+        enable_manifest=True,
+        ua_token=None,
+        parts=[],
+        manifest_image_information=None,
+        output=output,
+    )
+
+    parts_lifecycle._run_command(
+        step,
+        project=project,
+        parse_info={},
+        assets_dir=Path(),
+        start_time=datetime.now(),
+        parallel_build_count=8,
+        parsed_args=parsed_args,
+    )
+
+    assert mock_pack.mock_calls == [
+        call(
+            directory=new_dir / "prime/component/foo",
+            compression="xz",
+            output_dir=new_dir / "dir",
+        ),
+        call(
+            directory=new_dir / "prime/component/bar-baz",
+            compression="xz",
+            output_dir=new_dir / "dir",
+        ),
+    ]

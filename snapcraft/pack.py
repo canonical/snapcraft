@@ -116,6 +116,38 @@ def _pack(command: List[Union[str, Path]]) -> str:
     return filename
 
 
+def pack_component(
+    directory: Path, output_dir: Path, compression: Optional[str] = None
+) -> str:
+    """Pack a directory containing component data.
+
+    Calls `snap pack <options> <component-dir> <output-dir>`.
+
+    Requires snapd to be installed from the `latest/edge` channel.
+
+    :param directory: Directory to pack.
+    :param compression: Compression type to use, None for default.
+    :param output_dir: Directory to output component to.
+
+    :returns: The filename of the packed component.
+
+    :raises SnapcraftError: If the component cannot be packed.
+    """
+    command: List[Union[str, Path]] = ["snap", "pack"]
+    if compression:
+        command.extend(["--compression", compression])
+    command.extend([directory, output_dir])
+
+    try:
+        return _pack(command)
+    except errors.SnapcraftError as err:
+        err.resolution = (
+            "Packing components is experimental and requires `snapd` "
+            "to be installed from the `latest/edge` channel."
+        )
+        raise
+
+
 def pack_snap(
     directory: Path,
     *,
