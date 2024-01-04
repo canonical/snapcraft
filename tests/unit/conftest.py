@@ -354,7 +354,7 @@ def fake_provider(mock_instance):
             project_name: str,
             project_path: Path,
             base_configuration: Base,
-            build_base: str,
+            build_base: Optional[str] = None,
             instance_name: str,
             allow_unstable: bool = False,
         ):
