@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -101,6 +101,8 @@ def pack_snap(
 ) -> str:
     """Pack snap contents with `snap pack`.
 
+    Calls `snap pack <options> <snap-dir> <output-dir>`.
+
     `output` may either be a directory, a file path, or just a file name.
       - directory: write snap to directory with default snap name
       - file path: write snap to specified directory with specified snap name
@@ -115,13 +117,16 @@ def pack_snap(
     :param name: Name of snap project.
     :param version: Version of snap project.
     :param target_arch: Target architecture the snap project is built to.
+
+    :returns: The filename of the packed snap.
+
+    :raises SnapcraftError: If the directory cannot be packed.
     """
     emit.debug(f"pack_snap: output={output!r}, compression={compression!r}")
 
     # TODO remove workaround once LP: #1950465 is fixed
     _verify_snap(directory)
 
-    # create command formatted as `snap pack <options> <snap-dir> <output-dir>`
     command: List[Union[str, Path]] = ["snap", "pack"]
     output_file = _get_filename(output, name, version, target_arch)
     if output_file is not None:
