@@ -81,9 +81,9 @@ jobs:
           files: coverage*.xml
       - name: Upload test results
         if: success() || failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.platform }}
+          name: unit-test-results-${{ matrix.platform }}
           path: results/
   integration:
     strategy:
@@ -117,7 +117,7 @@ jobs:
           PYTEST_ADDOPTS: "--no-header -vv -rN"
       - name: Upload test results
         if: success() || failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.platform }}
+          name: integration-test-results-${{ matrix.platform }}
           path: results/

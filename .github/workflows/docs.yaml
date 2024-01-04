@@ -31,7 +31,7 @@ jobs:
       - name: Build documentation
         run: tox run --colored yes -e build-docs
       - name: Upload documentation
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: docs
           path: docs/_build/
