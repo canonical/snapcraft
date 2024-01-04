@@ -1998,7 +1998,7 @@ class TestComponents:
 
         component_names = test_project.get_component_names()
 
-        assert component_names is None
+        assert component_names == []
 
     def test_get_partitions(self, project, project_yaml_data, stub_component_data):
         components = {"foo": stub_component_data, "bar-baz": stub_component_data}

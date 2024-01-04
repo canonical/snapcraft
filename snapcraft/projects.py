@@ -822,12 +822,12 @@ class Project(ProjectModel):
 
         return None
 
-    def get_component_names(self) -> Optional[List[str]]:
+    def get_component_names(self) -> List[str]:
         """Get a list of component names.
 
-        :returns: A list of component names or None if no components are defined.
+        :returns: A list of component names.
         """
-        return list(self.components.keys()) if self.components else None
+        return list(self.components.keys()) if self.components else []
 
     def get_partitions(self) -> Optional[List[str]]:
         """Get a list of partitions based on the project's components.
@@ -944,12 +944,12 @@ class ComponentProject(ProjectModel, extra=pydantic.Extra.ignore):
 
         return components
 
-    def get_component_names(self) -> Optional[List[str]]:
+    def get_component_names(self) -> List[str]:
         """Get a list of component names.
 
-        :returns: A list of component names or None if no components are defined.
+        :returns: A list of component names.
         """
-        return list(self.components.keys()) if self.components else None
+        return list(self.components.keys()) if self.components else []
 
     def get_partitions(self) -> Optional[List[str]]:
         """Get a list of partitions based on the project's components.
