@@ -88,6 +88,12 @@
       matchDepTypes: ["devDependencies"],
       matchUpdateTypes: ["major"],
       prPriority: -3
+    },
+    {
+      // Pyright makes regular breaking changes in patch releases, so we separate these
+      // and do them independently.
+      matchPackageNames: ["pyright"],
+      prPriority: -4
     }
   ],
   regexManagers: [
