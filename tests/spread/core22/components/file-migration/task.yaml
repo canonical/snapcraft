@@ -3,6 +3,11 @@ summary: Test file migratation with components
 restore: |
   snapcraft clean
   rm -f ./*.snap
+  snap revert snapd
+
+prepare: |
+  # `snap pack` for components is only supported in the `latest/edge` channel
+  snap refresh snapd --channel=latest/edge
 
 execute: |
   cd "./snap"
