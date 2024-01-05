@@ -74,7 +74,7 @@ dev_requires = [
     "pydocstyle",
     "pyftpdlib",
     "pyinstaller; sys_platform == 'win32'",
-    "pylint",
+    "pylint<3",
     "pylint-fixme-info",
     "pylint-pytest",
     "pyramid",
