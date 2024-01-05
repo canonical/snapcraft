@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -117,6 +117,25 @@ class PartsLifecycle:
             )
         except craft_parts.PartsError as err:
             raise errors.PartsLifecycleError(str(err)) from err
+
+    def get_prime_dir_for_component(self, component: str) -> pathlib.Path:
+        """Get the prime directory path for a component.
+
+        :param component: Name of the component to get the prime directory for.
+
+        :returns: The component's prime directory.
+
+        :raises SnapcraftError: If the component does not exist.
+        """
+        try:
+            return self._lcm.project_info.get_prime_dir(
+                partition=f"component/{component}"
+            )
+        except ValueError as err:
+            raise errors.SnapcraftError(
+                f"Could not get prime directory for component {component!r} "
+                "because it does not exist."
+            ) from err
 
     @property
     def prime_dir(self) -> pathlib.Path:

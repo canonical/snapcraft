@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -1985,17 +1985,32 @@ class TestComponents:
         with pytest.raises(errors.ProjectValidationError, match=error):
             project.unmarshal(project_yaml_data(components=component))
 
+    def test_get_component_names(self, project, project_yaml_data, stub_component_data):
+        components = {"foo": stub_component_data, "bar-baz": stub_component_data}
+        test_project = project.unmarshal(project_yaml_data(components=components))
+
+        component_names = test_project.get_component_names()
+
+        assert component_names == ["foo", "bar-baz"]
+
+    def test_get_component_names_none(self, project, project_yaml_data):
+        test_project = project.unmarshal(project_yaml_data())
+
+        component_names = test_project.get_component_names()
+
+        assert component_names == []
+
     def test_get_partitions(self, project, project_yaml_data, stub_component_data):
         components = {"foo": stub_component_data, "bar-baz": stub_component_data}
         test_project = project.unmarshal(project_yaml_data(components=components))
 
-        component_names = test_project.get_partitions()
+        partitions = test_project.get_partitions()
 
-        assert component_names == ["default", "component/foo", "component/bar-baz"]
+        assert partitions == ["default", "component/foo", "component/bar-baz"]
 
     def test_get_partitions_none(self, project, project_yaml_data):
         test_project = project.unmarshal(project_yaml_data())
 
-        component_names = test_project.get_partitions()
+        partitions = test_project.get_partitions()
 
-        assert component_names is None
+        assert partitions is None

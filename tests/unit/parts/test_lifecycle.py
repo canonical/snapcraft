@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -2020,4 +2020,49 @@ def test_lifecycle_write_metadata(
             image_information="{}",
             primed_stage_packages=[],
         )
+    ]
+
+
+@pytest.mark.usefixtures("enable_partitions_feature", "project_vars")
+def test_lifecycle_write_component_metadata(
+    snapcraft_yaml, new_dir, mocker, stub_component_data
+):
+    """Component metadata should be written during the lifecycle."""
+    yaml_data = snapcraft_yaml(base="core22", components=stub_component_data)
+    project = Project.unmarshal(snapcraft_yaml(**yaml_data))
+    mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch("snapcraft.pack.pack_snap")
+    mock_write = mocker.patch("snapcraft.meta.component_yaml.write")
+
+    parsed_args = argparse.Namespace(
+        debug=False,
+        destructive_mode=True,
+        use_lxd=False,
+        enable_manifest=True,
+        ua_token=None,
+        parts=[],
+        manifest_image_information=None,
+    )
+
+    parts_lifecycle._run_command(
+        "prime",
+        project=project,
+        parse_info={},
+        assets_dir=Path(),
+        start_time=datetime.now(),
+        parallel_build_count=8,
+        parsed_args=parsed_args,
+    )
+
+    assert mock_write.mock_calls == [
+        call(
+            project=project,
+            component_name="foo",
+            component_prime_dir=new_dir / "prime/component/foo",
+        ),
+        call(
+            project=project,
+            component_name="bar-baz",
+            component_prime_dir=new_dir / "prime/component/bar-baz",
+        ),
     ]

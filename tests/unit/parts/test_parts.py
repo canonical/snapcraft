@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -81,10 +81,10 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
-@pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
+@pytest.mark.parametrize("base", CURRENT_BASES)
 @pytest.mark.parametrize("step_name", ["pull", "build", "stage", "prime"])
 def test_parts_lifecycle_run_with_components(
-    mocker, base, parts_data, step_name, new_dir, emitter
+    mocker, base, parts_data, step_name, new_dir
 ):
     """Verify usage of the partitions feature."""
     lcm_spy = mocker.spy(craft_parts, "LifecycleManager")
@@ -108,14 +108,88 @@ def test_parts_lifecycle_run_with_components(
         partitions=["default", "component/foo", "component/bar"],
     )
     lifecycle.run(step_name)
+
     assert lifecycle.prime_dir == Path(new_dir, "prime/default")
     assert lifecycle.prime_dir.is_dir()
+    assert lifecycle.get_prime_dir_for_component(component="foo") == Path(
+        new_dir, "prime/component/foo"
+    )
+    assert lifecycle.get_prime_dir_for_component(component="foo").is_dir()
+    assert lifecycle.get_prime_dir_for_component(component="bar") == Path(
+        new_dir, "prime/component/bar"
+    )
+    assert lifecycle.get_prime_dir_for_component(component="bar").is_dir()
     assert lcm_spy.call_args[1]["partitions"] == [
         "default",
         "component/foo",
         "component/bar",
     ]
     assert craft_parts.Features().enable_partitions
+
+
+@pytest.mark.parametrize("base", CURRENT_BASES)
+def test_parts_lifecycle_get_prime_dir_no_components(base, parts_data, new_dir):
+    """Raise an error when getting the prime directory and no components are defined."""
+    lifecycle = PartsLifecycle(
+        parts_data,
+        work_dir=new_dir,
+        assets_dir=new_dir,
+        base=base,
+        project_base=base,
+        confinement="strict",
+        parallel_build_count=8,
+        part_names=[],
+        package_repositories=[],
+        adopt_info=None,
+        project_name="test-project",
+        parse_info={},
+        project_vars={"version": "1", "grade": "stable"},
+        extra_build_snaps=None,
+        track_stage_packages=True,
+        target_arch="amd64",
+        partitions=None,
+    )
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        lifecycle.get_prime_dir_for_component("bad")
+
+    assert str(raised.value) == (
+        "Could not get prime directory for component 'bad' because it does not exist."
+    )
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+@pytest.mark.parametrize("base", CURRENT_BASES)
+def test_parts_lifecycle_get_prime_dir_non_existent_component(
+    base, parts_data, new_dir
+):
+    """Raise an error when getting the prime directory of a non-existent component."""
+    lifecycle = PartsLifecycle(
+        parts_data,
+        work_dir=new_dir,
+        assets_dir=new_dir,
+        base=base,
+        project_base=base,
+        confinement="strict",
+        parallel_build_count=8,
+        part_names=[],
+        package_repositories=[],
+        adopt_info=None,
+        project_name="test-project",
+        parse_info={},
+        project_vars={"version": "1", "grade": "stable"},
+        extra_build_snaps=None,
+        track_stage_packages=True,
+        target_arch="amd64",
+        partitions=["default", "component/foo", "component/bar"],
+    )
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        lifecycle.get_prime_dir_for_component("bad")
+
+    assert str(raised.value) == (
+        "Could not get prime directory for component 'bad' because it does not exist."
+    )
 
 
 def test_parts_lifecycle_run_bad_step(parts_data, new_dir):

@@ -21,3 +21,8 @@ execute: |
     exit 1
   fi
 
+  # assert contents of component metadata
+  if ! diff prime/component/man-pages/meta/component.yaml expected-man-pages-component.yaml; then
+    echo "Metadata for the man-pages component is incorrect."
+    exit 1
+  fi
