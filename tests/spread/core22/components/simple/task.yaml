@@ -2,7 +2,7 @@ summary: Build a snap with components
 
 restore: |
   snapcraft clean
-  rm -f ./*.snap
+  rm -f ./*.snap ./*.comp
   snap revert snapd
 
 prepare: |

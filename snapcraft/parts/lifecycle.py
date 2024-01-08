@@ -285,14 +285,12 @@ def _run_lifecycle_and_pack(  # noqa PLR0913
         emit.progress(f"Created snap package {snap_filename}", permanent=True)
 
         if project.components:
-            _pack_components(lifecycle, project, parsed_args)
+            _pack_components(lifecycle, project, parsed_args.output)
 
 
 def _pack_components(
-    lifecycle: PartsLifecycle,
-    project: Project,
-    parsed_args: "argparse.Namespace",
-):
+    lifecycle: PartsLifecycle, project: Project, output: Optional[str]
+) -> None:
     """Pack components.
 
     `--output` can be used to set the output directory, the name of the snap, or both.
@@ -303,16 +301,15 @@ def _pack_components(
 
     :param lifecycle: The part lifecycle.
     :param project: The snapcraft project.
-    :param parsed_args: Snapcraft's argument namespace.
+    :param output: Output filepath of snap.
     """
     emit.progress("Creating component packages...")
 
-    if parsed_args.output:
-        output = Path(parsed_args.output)
-        if output.is_dir():
-            output_dir = output.resolve()
+    if output:
+        if Path(output).is_dir():
+            output_dir = Path(output).resolve()
         else:
-            output_dir = output.parent.resolve()
+            output_dir = Path(output).parent.resolve()
     else:
         output_dir = Path.cwd()
 
