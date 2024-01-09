@@ -284,6 +284,44 @@ def _run_lifecycle_and_pack(  # noqa PLR0913
         )
         emit.progress(f"Created snap package {snap_filename}", permanent=True)
 
+        if project.components:
+            _pack_components(lifecycle, project, parsed_args.output)
+
+
+def _pack_components(
+    lifecycle: PartsLifecycle, project: Project, output: Optional[str]
+) -> None:
+    """Pack components.
+
+    `--output` can be used to set the output directory, the name of the snap, or both.
+
+    If `output` is a directory, output components in the output directory.
+    If `output` is a filename, output components in the parent directory.
+    If `output` is not provided, output components in the cwd.
+
+    :param lifecycle: The part lifecycle.
+    :param project: The snapcraft project.
+    :param output: Output filepath of snap.
+    """
+    emit.progress("Creating component packages...")
+
+    if output:
+        if Path(output).is_dir():
+            output_dir = Path(output).resolve()
+        else:
+            output_dir = Path(output).parent.resolve()
+    else:
+        output_dir = Path.cwd()
+
+    for component in project.get_component_names():
+        filename = pack.pack_component(
+            directory=lifecycle.get_prime_dir_for_component(component),
+            compression=project.compression,
+            output_dir=output_dir,
+        )
+        emit.verbose(f"Packed component {component!r} to {filename!r}.")
+    emit.progress("Created component packages", permanent=True)
+
 
 def _generate_metadata(
     *,

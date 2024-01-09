@@ -2,11 +2,16 @@ summary: Build a snap with components
 
 restore: |
   snapcraft clean
-  rm -f ./*.snap
+  rm -f ./*.snap ./*.comp
+  snap revert snapd
+
+prepare: |
+  # `snap pack` for components is only supported in the `latest/edge` channel
+  snap refresh snapd --channel=latest/edge
 
 execute: |
   cd "./snap"
-
+  
   snapcraft pack --destructive-mode
 
   # assert contents of default partition
@@ -15,14 +20,22 @@ execute: |
     exit 1
   fi
 
+  # assert component was packed
+  component_file="snap-with-components+man-pages_1.0.comp"
+  if [[ ! -e "${component_file}" ]]; then
+    echo "Expected component to exist but is does not exist."
+    exit 1
+  fi
+
   # assert contents of component/man-pages
-  if [[ ! -d "prime/component/man-pages/man1" ]]; then
+  unsquashfs "$component_file"
+  if [[ ! -d "squashfs-root/man1" ]]; then
     echo "Expected directory to exist but is does not exist."
     exit 1
   fi
 
   # assert contents of component metadata
-  if ! diff prime/component/man-pages/meta/component.yaml expected-man-pages-component.yaml; then
+  if ! diff squashfs-root/meta/component.yaml expected-man-pages-component.yaml; then
     echo "Metadata for the man-pages component is incorrect."
     exit 1
   fi

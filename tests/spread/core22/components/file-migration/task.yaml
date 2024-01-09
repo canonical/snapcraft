@@ -2,39 +2,46 @@ summary: Test file migratation with components
 
 restore: |
   snapcraft clean
-  rm -f ./*.snap
+  rm -rf ./*.snap ./*.comp
+  snap revert snapd
+
+prepare: |
+  # `snap pack` for components is only supported in the `latest/edge` channel
+  snap refresh snapd --channel=latest/edge
 
 execute: |
   cd "./snap"
 
   snapcraft pack --destructive-mode
 
-  # assert file1-new and file2-new are in the default partition
-  if [[ ! -e "prime/default/file1-new" ]] || \
-    [[ ! -e "prime/default/file2-new" ]]; then
+  # assert file1-new and file2-new are in the snap
+  unsquashfs -dest "snap-contents" "snap-with-components_1.0_amd64.snap"
+  if [[ ! -e "snap-contents/file1-new" ]] || \
+    [[ ! -e "snap-contents/file2-new" ]]; then
     echo "Expected file to exist but is does not exist."
     exit 1
   fi
 
-  # assert other files do not exist in the default partition
-  if [[ -e "prime/default/file3" ]] || \
-    [[ -e "prime/default/file4" ]] || \
-    [[ -e "prime/default/file5" ]]; then
+  # assert other files do not exist in the snap
+  if [[ -e "snap-contents/file3" ]] || \
+    [[ -e "snap-contents/file4" ]] || \
+    [[ -e "snap-contents/file5" ]]; then
     echo "Expected file not to exist but is does exist."
     exit 1
   fi
 
   # assert file3 is in the component
-  if [[ ! -e "prime/component/bar-baz/file3" ]]; then
+  unsquashfs -dest "component-contents" "snap-with-components+bar-baz_1.0.comp"
+  if [[ ! -e "component-contents/file3" ]]; then
     echo "Expected file to exist but is does not exist."
     exit 1
   fi
 
   # assert other files do not exist in the component
-  if [[ -e "prime/component/bar-baz/file1-new" ]] || \
-    [[ -e "prime/component/bar-baz/file2-new" ]] || \
-    [[ -e "prime/component/bar-baz/file4" ]] || \
-    [[ -e "prime/component/bar-baz/file5" ]]; then
+  if [[ -e "component-contents/file1-new" ]] || \
+    [[ -e "component-contents/file2-new" ]] || \
+    [[ -e "component-contents/file4" ]] || \
+    [[ -e "component-contents/file5" ]]; then
     echo "Expected file to exist but is does not exist."
     exit 1
   fi
