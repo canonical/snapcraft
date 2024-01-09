@@ -199,7 +199,12 @@ class ColconPlugin(_ros.RosPlugin):
         if self.options.colcon_packages:
             build_command.extend(["--packages-select", *self.options.colcon_packages])
 
-        if self.options.colcon_cmake_args:
+        # compile in release only if user did not set the build type in cmake-args
+        if not any("-DCMAKE_BUILD_TYPE=" in s for s in self.options.colcon_cmake_args):
+            build_command.extend(["--cmake-args", "-DCMAKE_BUILD_TYPE=Release",
+                *self.options.colcon_cmake_args
+                ])
+        elif len(self.options.colcon_cmake_args)>0:
             build_command.extend(["--cmake-args", *self.options.colcon_cmake_args])
 
         if self.options.colcon_ament_cmake_args:
