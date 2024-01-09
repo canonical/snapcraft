@@ -1,12 +1,8 @@
 name: snap-with-components
 version: "1.0"
 summary: Build a snap with components
-description: |
-  Build a snap with components to test components.
-
-base: core24
-build-base: devel
-
+description: Build a snap with components to test components.
+base: core22
 grade: devel
 confinement: strict
 
@@ -15,7 +11,7 @@ apps:
     command: bin/hello
 
 components:
-  man-pages:
+  share:
     type: test
     summary: Hello World
     description: Hello World
@@ -31,4 +27,4 @@ parts:
       - libcurl4-openssl-dev
     stage-packages: [libcurl4]
     organize:
-      (default)/usr/share/man: (component/man-pages)
+      (default)/usr/share: (component/share)/usr/share

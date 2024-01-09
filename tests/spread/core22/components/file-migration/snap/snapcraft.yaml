@@ -6,13 +6,9 @@ description: |
 
   The snap should contain `file1-new` and `file2-new`.
   The `bar-baz` component should contain `file3`.
-
-base: core24
-build-base: devel
-
+base: core22
 grade: devel
 confinement: strict
-
 
 components:
   bar-baz:

@@ -3,39 +3,37 @@ summary: Build a snap with components
 restore: |
   snapcraft clean
   rm -f ./*.snap ./*.comp
-  snap revert snapd
-
-prepare: |
-  # `snap pack` for components is only supported in the `latest/edge` channel
-  snap refresh snapd --channel=latest/edge
 
 execute: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
   cd "./snap"
   
-  snapcraft pack --destructive-mode
+  snapcraft pack --use-lxd
 
   # assert contents of default partition
-  if [[ ! -e "prime/default/bin/hello" ]]; then
+  unsquashfs -dest "snap-contents" "snap-with-components_1.0_amd64.snap"
+  if [[ ! -e "snap-contents/bin/hello" ]]; then
     echo "Expected file to exist but is does not exist."
     exit 1
   fi
 
   # assert component was packed
-  component_file="snap-with-components+man-pages_1.0.comp"
+  component_file="snap-with-components+share_1.0.comp"
   if [[ ! -e "${component_file}" ]]; then
     echo "Expected component to exist but is does not exist."
     exit 1
   fi
 
-  # assert contents of component/man-pages
-  unsquashfs "$component_file"
-  if [[ ! -d "squashfs-root/man1" ]]; then
+  # assert contents of component/share
+  unsquashfs -dest "component-contents" "${component_file}"
+  if [[ ! -d "component-contents/usr/share" ]]; then
     echo "Expected directory to exist but is does not exist."
     exit 1
   fi
 
   # assert contents of component metadata
-  if ! diff squashfs-root/meta/component.yaml expected-man-pages-component.yaml; then
-    echo "Metadata for the man-pages component is incorrect."
+  if ! diff component-contents/meta/component.yaml expected-component.yaml; then
+    echo "Metadata for the share component is incorrect."
     exit 1
   fi

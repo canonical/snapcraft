@@ -5,6 +5,8 @@ restore: |
   rm -f ./*.snap
 
 execute: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
   check_vars() {
     file="$1"
     root="$(pwd)"
@@ -32,14 +34,14 @@ execute: |
     done
   }
 
-  snapcraft pull
+  snapcraft pull --destructive-mode
   check_vars pull.txt
 
-  snapcraft build
+  snapcraft build --destructive-mode
   check_vars build.txt
 
-  snapcraft stage
+  snapcraft stage --destructive-mode
   check_vars stage.txt
 
-  snapcraft prime
+  snapcraft prime --destructive-mode
   check_vars prime.txt
