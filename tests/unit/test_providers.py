@@ -210,10 +210,13 @@ def test_get_base_configuration(
 
     mock_buildd_base.assert_called_with(
         alias=alias,
-        compatibility_tag="snapcraft-buildd-base-v0.0",
+        compatibility_tag="snapcraft-buildd-base-v0.1",
         environment="test-env",
         hostname="test-instance-name",
-        snaps=[Snap(name="test-snap-name", channel="test-channel", classic=True)],
+        snaps=[
+            Snap(name="snapd", channel="latest/edge", classic=True),
+            Snap(name="test-snap-name", channel="test-channel", classic=True),
+        ],
         packages=["gnupg", "dirmngr", "git"],
     )
 
@@ -256,7 +259,10 @@ def test_get_base_configuration_snap_channel(
         compatibility_tag=ANY,
         environment=ANY,
         hostname=ANY,
-        snaps=[Snap(name="snapcraft", channel=snap_channel, classic=True)],
+        snaps=[
+            Snap(name="snapd", channel="latest/edge", classic=True),
+            Snap(name="snapcraft", channel=snap_channel, classic=True),
+        ],
         packages=ANY,
     )
 
@@ -290,7 +296,10 @@ def test_get_base_configuration_snap_instance_name_default(
         compatibility_tag=ANY,
         environment=ANY,
         hostname=ANY,
-        snaps=[Snap(name="snapcraft", channel=None, classic=True)],
+        snaps=[
+            Snap(name="snapd", channel="latest/edge", classic=True),
+            Snap(name="snapcraft", channel=None, classic=True),
+        ],
         packages=ANY,
     )
 
@@ -324,7 +333,10 @@ def test_get_base_configuration_snap_instance_name_not_running_as_snap(
         compatibility_tag=ANY,
         environment=ANY,
         hostname=ANY,
-        snaps=[Snap(name="snapcraft", channel=None, classic=True)],
+        snaps=[
+            Snap(name="snapd", channel="latest/edge", classic=True),
+            Snap(name="snapcraft", channel=None, classic=True),
+        ],
         packages=ANY,
     )
 
