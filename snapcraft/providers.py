@@ -196,15 +196,20 @@ def get_base_configuration(
 
     return bases.BuilddBase(
         alias=alias,
-        compatibility_tag=f"snapcraft-{bases.BuilddBase.compatibility_tag}.0",
+        compatibility_tag=f"snapcraft-{bases.BuilddBase.compatibility_tag}.1",
         environment=environment,
         hostname=instance_name,
         snaps=[
             Snap(
+                name="snapd",
+                channel="latest/edge",
+                classic=True,
+            ),
+            Snap(
                 name=snap_name,
                 channel=snap_channel,
                 classic=True,
-            )
+            ),
         ],
         # Requirement for apt gpg and version:git
         packages=["gnupg", "dirmngr", "git"],

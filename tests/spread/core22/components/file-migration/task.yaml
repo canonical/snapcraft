@@ -2,17 +2,14 @@ summary: Test file migratation with components
 
 restore: |
   snapcraft clean
-  rm -rf ./*.snap ./*.comp
-  snap revert snapd
-
-prepare: |
-  # `snap pack` for components is only supported in the `latest/edge` channel
-  snap refresh snapd --channel=latest/edge
+  rm -f ./*.snap ./*.comp
 
 execute: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
   cd "./snap"
 
-  snapcraft pack --destructive-mode
+  snapcraft pack --use-lxd
 
   # assert file1-new and file2-new are in the snap
   unsquashfs -dest "snap-contents" "snap-with-components_1.0_amd64.snap"
