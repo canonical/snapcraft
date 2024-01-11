@@ -216,6 +216,7 @@ class TestPluginColconPlugin:
             "colcon build "
             '--base-paths "${CRAFT_PART_SRC_WORK}" --build-base "${CRAFT_PART_BUILD}" '
             '--merge-install --install-base "${CRAFT_PART_INSTALL}/opt/ros/snap" '
+            "--cmake-args -DCMAKE_BUILD_TYPE=Release "
             '--parallel-workers "${CRAFT_PARALLEL_BUILD_COUNT}"',
             "## Post build command",
             'if [ -f "${CRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE ]; then',
@@ -352,7 +353,147 @@ class TestPluginColconPlugin:
             '--base-paths "${CRAFT_PART_SRC_WORK}" --build-base "${CRAFT_PART_BUILD}" '
             '--merge-install --install-base "${CRAFT_PART_INSTALL}/opt/ros/snap" '
             "--packages-ignore ipackage1 ipackage2... --packages-select package1 "
-            "package2... --cmake-args cmake args... "
+            "package2... --cmake-args -DCMAKE_BUILD_TYPE=Release cmake args... "
+            "--ament-cmake-args ament args... --catkin-cmake-args catkin "
+            'args... --parallel-workers "${CRAFT_PARALLEL_BUILD_COUNT}"',
+            "## Post build command",
+            'if [ -f "${CRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE ]; then',
+            'rm "${CRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE',
+            "fi",
+            "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/bin:/test SNAP=TESTSNAP "
+            "SNAP_ARCH=TESTARCH SNAP_NAME=TESTSNAPNAME SNAP_VERSION=TESTV1 "
+            "http_proxy=http://foo https_proxy=https://bar "
+            "/test/python3 -I /test/_ros.py "
+            'stage-runtime-dependencies --part-src "${CRAFT_PART_SRC_WORK}" '
+            '--part-install "${CRAFT_PART_INSTALL}" '
+            '--ros-version "${ROS_VERSION}" --ros-distro "${ROS_DISTRO}" '
+            '--target-arch "${CRAFT_TARGET_ARCH}" '
+            f"--stage-cache-dir {new_dir} --base core22",
+        ]
+
+    def test_get_build_commands_with_cmake_debug(
+        self, setup_method_fixture, new_dir, monkeypatch
+    ):
+        # pylint: disable=line-too-long
+        plugin = setup_method_fixture(
+            new_dir,
+            properties={
+                "source": ".",
+                "colcon-ament-cmake-args": ["ament", "args..."],
+                "colcon-catkin-cmake-args": ["catkin", "args..."],
+                "colcon-cmake-args": ["-DCMAKE_BUILD_TYPE=Debug", "args..."],
+                "colcon-packages": ["package1", "package2..."],
+                "colcon-packages-ignore": ["ipackage1", "ipackage2..."],
+                "colcon-ros-build-snaps": ["foo"],
+            },
+        )
+
+        monkeypatch.setattr(sys, "path", ["", "/test"])
+        monkeypatch.setattr(sys, "executable", "/test/python3")
+        monkeypatch.setattr(_ros, "__file__", "/test/_ros.py")
+        monkeypatch.setattr(
+            os,
+            "environ",
+            {
+                "FOO": "baR",
+                "PATH": "/bin:/test",
+                "SNAP": "TESTSNAP",
+                "SNAP_ARCH": "TESTARCH",
+                "SNAP_NAME": "TESTSNAPNAME",
+                "SNAP_VERSION": "TESTV1",
+                "http_proxy": "http://foo",
+                "https_proxy": "https://bar",
+            },
+        )
+
+        assert plugin.get_build_commands() == [
+            "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
+            "sudo --preserve-env=http_proxy,https_proxy rosdep init; fi",
+            'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
+            'state="$(set +o); set -$-"',
+            "set +u",
+            "",
+            "## Sourcing ROS ws in build snaps",
+            'if [ -f "/snap/foo/current/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
+            'AMENT_CURRENT_PREFIX="/snap/foo/current/opt/ros/${ROS_DISTRO}" . "/snap/foo/current/opt/ros/${ROS_DISTRO}/local_setup.sh"',
+            "fi",
+            'if [ -f "/snap/foo/current/opt/ros/snap/local_setup.sh" ]; then',
+            'COLCON_CURRENT_PREFIX="/snap/foo/current/opt/ros/snap" . "/snap/foo/current/opt/ros/snap/local_setup.sh"',
+            "fi",
+            "",
+            "## Sourcing ROS ws in stage snaps",
+            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
+            'AMENT_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh"',
+            "fi",
+            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/local_setup.sh" ]; then',
+            'COLCON_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/snap" . "${CRAFT_PART_INSTALL}/opt/ros/snap/local_setup.sh"',
+            "fi",
+            "",
+            "## Sourcing ROS ws in system",
+            'if [ -f "/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
+            'AMENT_CURRENT_PREFIX="/opt/ros/${ROS_DISTRO}" . "/opt/ros/${ROS_DISTRO}/local_setup.sh"',
+            "fi",
+            'if [ -f "/opt/ros/snap/local_setup.sh" ]; then',
+            'COLCON_CURRENT_PREFIX="/opt/ros/snap" . "/opt/ros/snap/local_setup.sh"',
+            "fi",
+            "",
+            'eval "${state}"',
+            'rm -f "${CRAFT_PART_INSTALL}/.installed_packages.txt"',
+            'rm -f "${CRAFT_PART_INSTALL}/.build_snaps.txt"',
+            "if [ -d /snap/foo/current/opt/ros ]; then",
+            "ROS_PACKAGE_PATH=/snap/foo/current/opt/ros rospack list-names | (xargs "
+            'rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | awk '
+            '"/#apt/{getline;print;}" >> '
+            '"${CRAFT_PART_INSTALL}/.installed_packages.txt"',
+            "fi",
+            'if [ -d "/snap/foo/current/opt/ros/${ROS_DISTRO}/" ]; then',
+            'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths '
+            '"/snap/foo/current/opt/ros/${ROS_DISTRO}" --ignore-packages-from-source | '
+            '(xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" '
+            '>> "${CRAFT_PART_INSTALL}"/.installed_packages.txt',
+            "fi",
+            'if [ -d "/snap/foo/current/opt/ros/snap/" ]; then',
+            'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths '
+            '"/snap/foo/current/opt/ros/snap" --ignore-packages-from-source | (xargs '
+            'rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> '
+            '"${CRAFT_PART_INSTALL}"/.installed_packages.txt',
+            "fi",
+            "",
+            'rosdep install --default-yes --ignore-packages-from-source --from-paths "${CRAFT_PART_SRC_WORK}"',
+            'state="$(set +o); set -$-"',
+            "set +u",
+            "",
+            "## Sourcing ROS ws in build snaps",
+            'if [ -f "/snap/foo/current/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
+            'AMENT_CURRENT_PREFIX="/snap/foo/current/opt/ros/${ROS_DISTRO}" . "/snap/foo/current/opt/ros/${ROS_DISTRO}/local_setup.sh"',
+            "fi",
+            'if [ -f "/snap/foo/current/opt/ros/snap/local_setup.sh" ]; then',
+            'COLCON_CURRENT_PREFIX="/snap/foo/current/opt/ros/snap" . "/snap/foo/current/opt/ros/snap/local_setup.sh"',
+            "fi",
+            "",
+            "## Sourcing ROS ws in stage snaps",
+            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
+            'AMENT_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}" . "${CRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}/local_setup.sh"',
+            "fi",
+            'if [ -f "${CRAFT_PART_INSTALL}/opt/ros/snap/local_setup.sh" ]; then',
+            'COLCON_CURRENT_PREFIX="${CRAFT_PART_INSTALL}/opt/ros/snap" . "${CRAFT_PART_INSTALL}/opt/ros/snap/local_setup.sh"',
+            "fi",
+            "",
+            "## Sourcing ROS ws in system",
+            'if [ -f "/opt/ros/${ROS_DISTRO}/local_setup.sh" ]; then',
+            'AMENT_CURRENT_PREFIX="/opt/ros/${ROS_DISTRO}" . "/opt/ros/${ROS_DISTRO}/local_setup.sh"',
+            "fi",
+            'if [ -f "/opt/ros/snap/local_setup.sh" ]; then',
+            'COLCON_CURRENT_PREFIX="/opt/ros/snap" . "/opt/ros/snap/local_setup.sh"',
+            "fi",
+            "",
+            'eval "${state}"',
+            "## Build command",
+            "colcon build "
+            '--base-paths "${CRAFT_PART_SRC_WORK}" --build-base "${CRAFT_PART_BUILD}" '
+            '--merge-install --install-base "${CRAFT_PART_INSTALL}/opt/ros/snap" '
+            "--packages-ignore ipackage1 ipackage2... --packages-select package1 "
+            "package2... --cmake-args -DCMAKE_BUILD_TYPE=Debug args... "
             "--ament-cmake-args ament args... --catkin-cmake-args catkin "
             'args... --parallel-workers "${CRAFT_PARALLEL_BUILD_COUNT}"',
             "## Post build command",
