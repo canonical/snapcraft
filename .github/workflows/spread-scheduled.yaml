@@ -56,6 +56,10 @@ jobs:
     needs: [snap-build]
     strategy:
       fail-fast: false
+      matrix:
+        system:
+          - ubuntu-20.04-64
+          - fedora-39-64
     steps:
       - name: Cleanup job workspace
         run: |
@@ -75,4 +79,4 @@ jobs:
         env:
           LAUNCHPAD_TOKEN: "${{ secrets.LAUNCHPAD_TOKEN }}"
         run: |
-          spread google:ubuntu-20.04-64:tests/spread/general/remote-build
+          spread google:${{ matrix.system }}:tests/spread/general/remote-build
