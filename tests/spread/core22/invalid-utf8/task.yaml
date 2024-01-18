@@ -1,0 +1,8 @@
+summary: Handle invalid utf-8 text during the build
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  snapcraft pack -v 2>&1 | MATCH ":: hi � bye"
