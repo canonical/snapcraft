@@ -172,24 +172,6 @@ prepare: |
     exit 1
   fi
 
-  # This unfortunately cannot be extracted into a standalone script since this
-  # portion of of YAML runs before the source code has been fetched.
-
-  # 'apt-get update' is hanging on security.ubuntu.com with IPv6. Prefer IPv4 over
-  # IPv6
-  cat <<EOF > gai.conf
-  precedence  ::1/128       50
-  precedence  ::/0          40
-  precedence  2002::/16     30
-  precedence ::/96          20
-  precedence ::ffff:0:0/96 100
-  EOF
-  if ! mv gai.conf /etc/gai.conf; then
-      echo "/etc/gai.conf is not writable, ubuntu-core system? apt-get update won't"
-      echo "be affected in that case"
-      rm -f gai.conf
-  fi
-
   # Now run 'apt-get update', but don't show output unless it fails. The logs are
   # long enough as it is.
   tempfile="$(mktemp)"
