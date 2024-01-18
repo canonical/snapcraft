@@ -1,10 +1,6 @@
 summary: Test the remote builder
 manual: true
 kill-timeout: 180m
-systems:
-  - -ubuntu-22.04
-  - -ubuntu-22.04-64
-  - -ubuntu-22.04-amd64
 
 environment:
   LAUNCHPAD_TOKEN: "$(HOST: echo ${LAUNCHPAD_TOKEN})"
