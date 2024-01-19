@@ -17,7 +17,7 @@ jobs:
         uses: snapcore/action-build@v1
 
       - name: Upload snapcraft snap
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: snap
           path: ${{ steps.build-snapcraft.outputs.snap }}
