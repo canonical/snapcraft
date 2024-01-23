@@ -621,7 +621,10 @@ def test_run_in_shallow_repo_unsupported(capsys, new_dir):
     assert ret != 0
     _, err = capsys.readouterr()
 
-    assert "Remote build for shallow cloned git repos are no longer supported" in err
+    assert (
+        "Remote builds are not supported for projects in shallowly cloned "
+        "git repositories."
+    ) in err
 
 
 ######################

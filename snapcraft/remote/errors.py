@@ -107,7 +107,6 @@ class AcceptPublicUploadError(RemoteBuildError):
 class RemoteBuildFailedError(RemoteBuildError):
     """Remote build failed.
 
-    :param brief: Brief description of error.
     :param details: Detailed information.
     """
 
@@ -120,7 +119,6 @@ class RemoteBuildFailedError(RemoteBuildError):
 class RemoteBuildInvalidGitRepoError(RemoteBuildError):
     """The Git repository is invalid for remote build.
 
-    :param brief: Brief description of error.
     :param details: Detailed information.
     """
 
