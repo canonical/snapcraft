@@ -594,7 +594,7 @@ class Project(ProjectModel):
     @pydantic.validator("base", always=True)
     @classmethod
     def _validate_base(cls, base, values):
-        """Not allowed to use unsable base without devel build-base."""
+        """Not allowed to use unstable base without devel build-base."""
         if values.get("base") == "core24" and values.get("build_base") != "devel":
             raise ValueError("build-base must be 'devel' when base is 'core24'")
 
