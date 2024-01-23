@@ -79,7 +79,7 @@ export SNAP_LAUNCHER_ARCH_TRIPLET="$ARCH"
 if ! grep -qs "^\s*confinement:\s*classic\s*" "$SNAP/meta/snap.yaml"; then
   if [ -f "$SNAP/lib/$ARCH/bindtextdomain.so" ]; then
     export LD_PRELOAD="$LD_PRELOAD:$SNAP/\$LIB/bindtextdomain.so"
-  elif [ -f "$SNAP/gnome-platform/lib/$ARCH/bindtextdomain.so" ]; then
+  elif [ -f "$SNAP/gnome-platform/lib/$ARCH/bindtextdomain.so" ] && ! grep -qs "^\s*default-provider:\s*wine-platform-runtime*" "$SNAP/meta/snap.yaml"; then
     export LD_PRELOAD="$LD_PRELOAD:$SNAP/gnome-platform/\$LIB/bindtextdomain.so"
   fi
 fi
