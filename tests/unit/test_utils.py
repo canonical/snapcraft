@@ -118,6 +118,8 @@ def test_strtobool_value_error(value: str):
         (None, None, "other", "name", None),
         ("base", "build_base", "other", "name", "build_base"),
         ("base", None, "other", "name", "base"),
+        ("base", "devel", "other", "name", "base"),
+        ("base", "devel", "base", "name", "devel"),
     ],
 )
 def test_get_effective_base(base, build_base, project_type, name, expected_base):
