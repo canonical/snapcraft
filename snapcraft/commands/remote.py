@@ -93,15 +93,15 @@ class RemoteBuildCommand(BaseCommand):
         )
         parser.add_argument(
             "--build-on",
+            type=lambda arg: [arch.strip() for arch in arg.split(",")],
             metavar="arch",
-            nargs="+",
             help=HIDDEN,
         )
         parser.add_argument(
             "--build-for",
+            type=lambda arg: [arch.strip() for arch in arg.split(",")],
             metavar="arch",
-            nargs="+",
-            help="architecture to build for",
+            help="comma-separated list of architectures to build for",
         )
         parser.add_argument(
             "--build-id", metavar="build-id", help="specific build id to retrieve"

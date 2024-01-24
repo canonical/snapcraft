@@ -747,13 +747,18 @@ def test_determine_architectures_host_arch(mocker, mock_remote_builder):
     )
 
 
+@pytest.mark.parametrize("build_flag", ["--build-for", "--build-on"])
 @pytest.mark.parametrize(
-    ("args", "expected_archs"),
+    ("archs", "expected_archs"),
     [
-        (["--build-for", "amd64"], ["amd64"]),
-        (["--build-for", "amd64", "arm64"], ["amd64", "arm64"]),
+        ("amd64", ["amd64"]),
+        ("amd64,arm64", ["amd64", "arm64"]),
+        ("amd64, arm64", ["amd64", "arm64"]),
+        ("amd64,arm64 ", ["amd64", "arm64"]),
+        ("amd64,arm64,armhf", ["amd64", "arm64", "armhf"]),
+        (" amd64 , arm64 , armhf ", ["amd64", "arm64", "armhf"]),
         # launchpad will accept and ignore duplicates
-        (["--build-for", "amd64", "amd64"], ["amd64", "amd64"]),
+        (" amd64 , arm64 , arm64 ", ["amd64", "arm64", "arm64"]),
     ],
 )
 @pytest.mark.parametrize(
@@ -763,10 +768,10 @@ def test_determine_architectures_host_arch(mocker, mock_remote_builder):
     "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
 )
 def test_determine_architectures_provided_by_user(
-    args, expected_archs, mocker, mock_remote_builder
+    build_flag, archs, expected_archs, mocker, mock_remote_builder
 ):
     """Use architectures provided by the user."""
-    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"] + args)
+    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build", build_flag, archs])
 
     cli.run()
 
