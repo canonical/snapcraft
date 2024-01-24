@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -91,14 +91,13 @@ class RemoteBuildCommand(BaseCommand):
         parser.add_argument(
             "--status", action="store_true", help="display remote build status"
         )
-        parser_target = parser.add_mutually_exclusive_group()
-        parser_target.add_argument(
+        parser.add_argument(
             "--build-on",
             metavar="arch",
             nargs="+",
             help=HIDDEN,
         )
-        parser_target.add_argument(
+        parser.add_argument(
             "--build-for",
             metavar="arch",
             nargs="+",
@@ -141,7 +140,6 @@ class RemoteBuildCommand(BaseCommand):
 
         if parsed_args.build_on:
             emit.message("Use --build-for instead of --build-on")
-            parsed_args.build_for = parsed_args.build_on
 
         if not parsed_args.launchpad_accept_public_upload and not confirm_with_user(
             _CONFIRMATION_PROMPT
@@ -381,11 +379,24 @@ class RemoteBuildCommand(BaseCommand):
         The build architectures can be set via the `--build-on` parameter or determined
         from the build-on architectures listed in the project's snapcraft.yaml.
 
+        To retain backwards compatibility, `--build-for` can also be used to
+        set the architectures.
+
         :returns: A list of architectures.
 
         :raises SnapcraftError: If `--build-on` was provided and architectures are
         defined in the project's snapcraft.yaml.
+        :raises SnapcraftError: If `--build-on` and `--build-for` are both provided.
         """
+        # argparse's `add_mutually_exclusive_group()` cannot be used because
+        # ArgumentParsingErrors executes the legacy remote-builder before this module
+        # can decide if the project is allowed to use the legacy remote-builder
+        if self._parsed_args.build_on and self._parsed_args.build_for:
+            raise SnapcraftError(
+                # use the same error as argparse produces for consistency
+                "Error: argument --build-for: not allowed with argument --build-on"
+            )
+
         project_architectures = self._get_project_build_on_architectures()
         if project_architectures and self._parsed_args.build_for:
             raise SnapcraftError(
@@ -395,6 +406,8 @@ class RemoteBuildCommand(BaseCommand):
 
         if project_architectures:
             archs = project_architectures
+        elif self._parsed_args.build_on:
+            archs = self._parsed_args.build_on
         elif self._parsed_args.build_for:
             archs = self._parsed_args.build_for
         else:
