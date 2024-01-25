@@ -1,0 +1,17 @@
+name: qt6-6-hello
+version: "1.0"
+summary: Test the qt6-6 extension
+description: It simply prints a hello world
+
+grade: devel
+confinement: strict
+
+apps:
+  qt6-6-hello:
+    command: usr/local/bin/hello
+    extensions: [qt6-6]
+
+parts:
+  hello:
+    plugin: cmake
+    source: .

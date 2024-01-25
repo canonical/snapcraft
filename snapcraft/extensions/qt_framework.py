@@ -26,6 +26,7 @@ from .extension import Extension, get_extensions_data_dir, prepend_to_env
 _SDK_SNAP = {"core22": "qt-framework-sdk"}
 
 _CONTENT_SNAP = {
+    "qt6-6": {"core22": "qt-framework-6-6-core22"},
     "qt6-5": {"core22": "qt-framework-6-5-core22"},
     "qt5-15": {"core22": "qt-framework-5-15-core22"},
 }
