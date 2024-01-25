@@ -30,6 +30,7 @@ def test_get_extension_names():
         "ros2-humble-ros-base",
         "ros2-humble-desktop",
         "kde-neon",
+        "qt6-6",
         "qt6-5",
         "qt5-15",
         "fake-extension-experimental",

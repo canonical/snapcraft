@@ -40,6 +40,7 @@ _EXTENSIONS: Dict[str, "ExtensionType"] = {
     "ros2-humble-ros-base": ROS2HumbleRosBaseExtension,
     "ros2-humble-desktop": ROS2HumbleDesktopExtension,
     "kde-neon": KDENeon,
+    "qt6-6": QTFramework,
     "qt6-5": QTFramework,
     "qt5-15": QTFramework,
 }
