@@ -42,7 +42,7 @@ SNAPCRAFT_BASE_TO_PROVIDER_BASE = {
     "core18": bases.BuilddBaseAlias.BIONIC,
     "core20": bases.BuilddBaseAlias.FOCAL,
     "core22": bases.BuilddBaseAlias.JAMMY,
-    "devel": bases.BuilddBaseAlias.NOBLE,
+    "core24": bases.BuilddBaseAlias.NOBLE,
 }
 
 # TODO: move to a package data file for shellcheck and syntax highlighting
