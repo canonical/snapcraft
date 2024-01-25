@@ -538,7 +538,11 @@ def test_push_url_push_error(new_dir):
 def test_check_git_repo_for_remote_build_invalid(new_dir):
     """Check if directory is an invalid repo."""
     with pytest.raises(
-        RemoteBuildInvalidGitRepoError, match="Could not find a git repository in"
+        RemoteBuildInvalidGitRepoError,
+        match=(
+            f"Could not find a git repository in {str(new_dir.absolute())!r}. "
+            "The project must be in the top-level of a git repository."
+        ),
     ):
         check_git_repo_for_remote_build(new_dir)
 
@@ -584,6 +588,9 @@ def test_check_git_repo_for_remote_build_shallow(new_dir):
 
     with pytest.raises(
         RemoteBuildInvalidGitRepoError,
-        match="Remote build for shallow cloned git repos are no longer supported",
+        match=(
+            "Remote builds are not supported for projects in shallowly cloned "
+            "git repositories."
+        ),
     ):
         check_git_repo_for_remote_build(git_shallow_path)

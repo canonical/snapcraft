@@ -301,7 +301,12 @@ def run():  # noqa: C901 (complex-structure)
         emit.error(craft_cli.errors.CraftError(f"linter error: {err}"))
         retcode = err.exit_code
     except RemoteBuildError as err:
-        emit.error(craft_cli.errors.CraftError(f"remote-build error: {err}"))
+        emit.error(
+            craft_cli.errors.CraftError(
+                message=f"remote-build error: {err}",
+                docs_url="https://snapcraft.io/docs/remote-build",
+            )
+        )
         retcode = 1
     except errors.SnapcraftError as err:
         _emit_error(err)
