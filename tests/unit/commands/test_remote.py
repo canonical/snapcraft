@@ -753,6 +753,44 @@ def test_determine_architectures_host_arch(mocker, mock_remote_builder):
     [
         ("amd64", ["amd64"]),
         ("amd64,arm64", ["amd64", "arm64"]),
+        ("amd64,amd64,arm64 ", ["amd64", "amd64", "arm64"]),
+    ],
+)
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
+)
+def test_determine_architectures_provided_by_user_duplicate_arguments(
+    build_flag, archs, expected_archs, mocker, mock_remote_builder
+):
+    """Argparse should only consider the last argument provided for build flags."""
+    mocker.patch.object(
+        sys,
+        "argv",
+        # `--build-{for|on} armhf` should get silently ignored by argparse
+        ["snapcraft", "remote-build", build_flag, "armhf", build_flag, archs],
+    )
+
+    cli.run()
+
+    mock_remote_builder.assert_called_with(
+        app_name="snapcraft",
+        build_id=None,
+        project_name="mytest",
+        architectures=expected_archs,
+        project_dir=Path(),
+        timeout=0,
+    )
+
+
+@pytest.mark.parametrize("build_flag", ["--build-for", "--build-on"])
+@pytest.mark.parametrize(
+    ("archs", "expected_archs"),
+    [
+        ("amd64", ["amd64"]),
+        ("amd64,arm64", ["amd64", "arm64"]),
         ("amd64, arm64", ["amd64", "arm64"]),
         ("amd64,arm64 ", ["amd64", "arm64"]),
         ("amd64,arm64,armhf", ["amd64", "arm64", "armhf"]),
