@@ -1,0 +1,51 @@
+name: matter-lighting
+summary: Matter plugin test
+description: An lighting application to test the matter plugin.
+version: "1.0"
+
+base: core22
+
+grade: stable
+build-base: core22
+confinement: strict
+
+layout:
+  /mnt:
+    bind: $SNAP_COMMON/mnt
+
+apps:
+  matter-lighting:
+    daemon: simple
+    command: bin/lighting-app
+    install-mode: disable
+    plugs:
+      - network
+      - network-bind
+      - bluez
+      - avahi-control
+
+parts:
+  matter-sdk:
+    plugin: matter-sdk
+    matter-sdk-version: "1536ca20c5917578ca40ce509400e97b52751788" # use this commit with ptpython version fix; needs to be updated once matter sdk have a stable release
+    matter-sdk-zap-version: "v2023.11.13"
+
+  lighting:
+    plugin: nil
+    after: [matter-sdk]
+    build-environment:
+      - MATTER_SDK_ENV: ../../matter-sdk/build/matter_sdk_env
+    override-build: |
+      # Source the Matter SDK environment variables
+      source $MATTER_SDK_ENV
+
+      # Build the lighting app for snapcraft spread testing purposes
+      cd ../../matter-sdk/build/examples/lighting-app/linux
+      gn gen out/build
+      ninja -C out/build
+      
+      ldd out/build/chip-lighting-app
+      
+      mkdir -p $CRAFT_PART_INSTALL/bin
+      cp out/build/chip-lighting-app $CRAFT_PART_INSTALL/bin/lighting-app   
+    

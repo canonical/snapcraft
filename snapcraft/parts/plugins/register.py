@@ -22,7 +22,7 @@ from .colcon_plugin import ColconPlugin
 from .conda_plugin import CondaPlugin
 from .flutter_plugin import FlutterPlugin
 from .kernel_plugin import KernelPlugin
-from .matter_plugin import MatterPlugin
+from .matter_sdk_plugin import MatterSdkPlugin
 from .python_plugin import PythonPlugin
 
 
@@ -33,4 +33,4 @@ def register() -> None:
     craft_parts.plugins.register({"flutter": FlutterPlugin})
     craft_parts.plugins.register({"python": PythonPlugin})
     craft_parts.plugins.register({"kernel": KernelPlugin})
-    craft_parts.plugins.register({"matter": MatterPlugin})
+    craft_parts.plugins.register({"matter-sdk": MatterSdkPlugin})

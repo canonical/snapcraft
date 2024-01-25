@@ -1,0 +1,51 @@
+summary: Craft Parts matter SDK plugin test
+manual: true
+kill-timeout: 180m
+
+systems:
+  - ubuntu-22.04-64
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP/snap/snapcraft.yaml"
+
+restore: |
+  cd "$SNAP"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "$SNAP"
+
+  # Build and install the snap
+  snapcraft
+  snap install "${SNAP}"*.snap --dangerous
+
+  start_time=$(date +"%Y-%m-%d %H:%M:%S")
+  snap start matter-lighting
+
+  # Check if storage path replacement from /tmp to SNAP_COMMON/mnt works
+  for file in /tmp/chip_*; do
+    if [ -e "$file" ]; then
+      echo "Error: $file should not exist."
+      exit 1
+    fi
+  done
+
+  if [ ! -e "${SNAP_COMMON/mnt/chip_*}" ]; then
+    echo "Error: ${SNAP_COMMON}/mnt/chip_* does not exist."
+    exit 1
+  fi
+
+  # Check if server initialization is complete for matter-lighting
+  if ! journalctl --since "$start_time" | grep matter-lighting | grep "CHIP:SVR: Server initialization complete"; then
+    echo "Error: matter-lighting initialization failed."
+    exit 1
+  fi
+  
+  
