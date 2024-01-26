@@ -151,3 +151,12 @@ class LaunchpadHttpsError(SnapcraftException):
 
     def get_resolution(self) -> str:
         return "Verify connectivity to https://api.launchpad.net and retry build."
+
+class RemoteBuildFailedError(RemoteBuildBaseError):
+    """Remote build failed."""
+
+    fmt: str
+
+    def __init__(self, builder_error: str) -> None:
+        super().__init__(builder_error=builder_error)
+        self.fmt = builder_error

@@ -16,6 +16,9 @@
 
 """Remote-build command tests."""
 
+import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 from unittest.mock import ANY, call
@@ -274,7 +277,10 @@ def test_get_effective_base_with_build_base(
 
     cli.run()
 
-    mock_run_new_or_fallback_remote_build.assert_called_once_with(build_base)
+    if build_base == "devel":
+        mock_run_new_or_fallback_remote_build.assert_called_once_with(base)
+    else:
+        mock_run_new_or_fallback_remote_build.assert_called_once_with(build_base)
 
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
@@ -521,6 +527,104 @@ def test_run_in_repo_newer_than_core22(
 
     mock_run_new_remote_build.assert_called_once()
     emitter.assert_debug("Running new remote-build because base is newer than core22")
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
+def test_run_in_shallow_repo(emitter, mock_run_legacy, new_dir):
+    """core22 and older bases fall back to legacy remote-build if in a shallow git repo."""
+    root_path = Path(new_dir)
+    git_normal_path = root_path / "normal"
+    git_normal_path.mkdir()
+    git_shallow_path = root_path / "shallow"
+
+    shutil.move(root_path / "snap", git_normal_path)
+
+    repo_normal = GitRepo(git_normal_path)
+    (repo_normal.path / "1").write_text("1")
+    repo_normal.add_all()
+    repo_normal.commit("1")
+
+    (repo_normal.path / "2").write_text("2")
+    repo_normal.add_all()
+    repo_normal.commit("2")
+
+    (repo_normal.path / "3").write_text("3")
+    repo_normal.add_all()
+    repo_normal.commit("3")
+
+    # pygit2 does not support shallow cloning, so we use git directly
+    subprocess.run(
+        [
+            "git",
+            "clone",
+            "--depth",
+            "1",
+            git_normal_path.absolute().as_uri(),
+            git_shallow_path.absolute().as_posix(),
+        ],
+        check=True,
+    )
+
+    os.chdir(git_shallow_path)
+    cli.run()
+
+    mock_run_legacy.assert_called_once()
+    emitter.assert_debug("Current git repository is shallow cloned.")
+    emitter.assert_debug("Running fallback remote-build")
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml", "mock_confirm", "mock_argv", "use_new_remote_build"
+)
+def test_run_in_shallow_repo_unsupported(capsys, new_dir):
+    """devel / core24 and newer bases run new remote-build in a shallow git repo."""
+    root_path = Path(new_dir)
+    git_normal_path = root_path / "normal"
+    git_normal_path.mkdir()
+    git_shallow_path = root_path / "shallow"
+
+    shutil.move(root_path / "snap", git_normal_path)
+
+    repo_normal = GitRepo(git_normal_path)
+    (repo_normal.path / "1").write_text("1")
+    repo_normal.add_all()
+    repo_normal.commit("1")
+
+    (repo_normal.path / "2").write_text("2")
+    repo_normal.add_all()
+    repo_normal.commit("2")
+
+    (repo_normal.path / "3").write_text("3")
+    repo_normal.add_all()
+    repo_normal.commit("3")
+
+    # pygit2 does not support shallow cloning, so we use git directly
+    subprocess.run(
+        [
+            "git",
+            "clone",
+            "--depth",
+            "1",
+            git_normal_path.absolute().as_uri(),
+            git_shallow_path.absolute().as_posix(),
+        ],
+        check=True,
+    )
+
+    os.chdir(git_shallow_path)
+
+    # no exception because run() catches it
+    ret = cli.run()
+    assert ret != 0
+    _, err = capsys.readouterr()
+
+    assert "Remote build for shallow cloned git repos are no longer supported" in err
 
 
 ######################

@@ -330,6 +330,27 @@ class LaunchpadTestCase(unit.TestCase):
 
     @mock.patch("snapcraft_legacy.internal.remote_build.LaunchpadClient._download_file")
     def test_monitor_build(self, mock_download_file):
+        self.lp.rbi.builds.entries = [
+            SnapBuildEntryImpl(
+                arch_tag="i386",
+                buildstate="Successfully built",
+                self_link="http://build_self_link_1",
+                build_log_url="url_for/build_log_file_1",
+            ),
+            SnapBuildEntryImpl(
+                arch_tag="amd64",
+                buildstate="Successfully built",
+                self_link="http://build_self_link_2",
+                build_log_url="url_for/build_log_file_2",
+            ),
+            SnapBuildEntryImpl(
+                arch_tag="arm64",
+                buildstate="Successfully built",
+                self_link="http://build_self_link_2",
+                build_log_url=None,
+            ),
+        ]
+
         open("test_i386.txt", "w").close()
         open("test_i386.1.txt", "w").close()
 
@@ -370,7 +391,12 @@ class LaunchpadTestCase(unit.TestCase):
     @mock.patch("logging.Logger.error")
     def test_monitor_build_error(self, mock_log, mock_urls, mock_download_file):
         self.lpc.start_build()
-        self.lpc.monitor_build(interval=0)
+        raised = self.assertRaises(
+            errors.RemoteBuildFailedError, self.lpc.monitor_build, interval=0
+        )
+        assert str(raised) == (
+            "Build failed for arch amd64.\n" "Build failed for arch arm64."
+        )
         mock_download_file.assert_has_calls(
             [
                 mock.call(
@@ -415,6 +441,26 @@ class LaunchpadTestCase(unit.TestCase):
                     "i386": "Successfully built",
                 }
             ),
+        )
+
+    def test_build_failed(self):
+        self.lpc.start_build()
+        build_status = self.lpc.get_build_status()
+        self.assertThat(
+            build_status,
+            Equals(
+                {
+                    "amd64": "Failed to build",
+                    "arm64": "Failed to build",
+                    "i386": "Successfully built",
+                }
+            ),
+        )
+        raised = self.assertRaises(
+            errors.RemoteBuildFailedError, self.lpc.monitor_build, interval=0
+        )
+        assert str(raised) == (
+            "Build failed for arch amd64.\n" "Build failed for arch arm64."
         )
 
     def _make_snapcraft_project(self):

@@ -418,7 +418,27 @@ def test_issue_build_request_defaults(launchpad_client):
 
 
 @patch("snapcraft.remote.LaunchpadClient._download_file")
-def test_monitor_build(mock_download_file, new_dir, launchpad_client):
+def test_monitor_build(mock_download_file, mock_login_with, new_dir, launchpad_client):
+    mock_login_with._mock_return_value.rbi.builds.entries = [
+        SnapBuildEntryImpl(
+            arch_tag="i386",
+            buildstate="Successfully built",
+            self_link="http://build_self_link_1",
+            build_log_url="url_for/build_log_file_1",
+        ),
+        SnapBuildEntryImpl(
+            arch_tag="amd64",
+            buildstate="Successfully built",
+            self_link="http://build_self_link_2",
+            build_log_url="url_for/build_log_file_2",
+        ),
+        SnapBuildEntryImpl(
+            arch_tag="arm64",
+            buildstate="Successfully built",
+            self_link="http://build_self_link_2",
+            build_log_url=None,
+        ),
+    ]
     Path("test-project_i386.txt", encoding="utf-8").touch()
     Path("test-project_i386.1.txt", encoding="utf-8").touch()
 
@@ -443,7 +463,10 @@ def test_monitor_build_error(mock_log, mock_download_file, mocker, launchpad_cli
         "tests.unit.remote.test_launchpad.BuildImpl.getFileUrls", return_value=[]
     )
     launchpad_client.start_build()
-    launchpad_client.monitor_build(interval=0)
+    with pytest.raises(
+        errors.RemoteBuildFailedError, match="Build failed for arch amd64."
+    ):
+        launchpad_client.monitor_build(interval=0)
 
     assert mock_download_file.mock_calls == [
         call(url="url_for/build_log_file_1", dst="test-project_i386.txt", gunzip=True),
@@ -471,7 +494,11 @@ def test_monitor_build_deadline_not_reached(mock_login_with, mocker):
     )
 
     lpc.start_build()
-    lpc.monitor_build(interval=0)
+    # should raise build failed error, not timeout error
+    with pytest.raises(
+        errors.RemoteBuildFailedError, match="Build failed for arch amd64."
+    ):
+        lpc.monitor_build(interval=0)
 
 
 def test_monitor_build_timeout_error(mock_login_with, mocker):
@@ -520,7 +547,7 @@ def test_push_source_tree(new_dir, mock_git_repo, launchpad_client):
     launchpad_client._lp.git_repositories._git.issueAccessToken_mock.assert_called_once_with(
         description="test-app remote-build for id",
         scopes=["repository:push"],
-        date_expires=(now + timedelta(minutes=1)).isoformat(),
+        date_expires=(now + timedelta(minutes=60)).isoformat(),
     )
 
     mock_git_repo.assert_has_calls(

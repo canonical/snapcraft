@@ -169,11 +169,20 @@ class LaunchpadClient:
     def _fetch_artifacts(self, snap: Optional[Entry]) -> None:
         """Fetch build arftifacts (logs and snaps)."""
         builds = self._get_builds(snap)
+        error_list: list[str] = []
 
         logger.info("Downloading artifacts...")
         for build in builds:
             self._download_build_artifacts(build)
-            self._download_log(build)
+            try:
+                self._download_log(build)
+            except errors.RemoteBuildFailedError as error:
+                error_list.append(str(error.details))
+
+        if error_list:
+            raise errors.RemoteBuildFailedError(
+                details="\n".join(error_list),
+            )
 
     def _get_builds_collection_entry(self, snap: Optional[Entry]) -> Optional[Entry]:
         logger.debug("Fetching builds collection information from Launchpad...")
@@ -422,6 +431,7 @@ class LaunchpadClient:
 
         if _is_build_status_failure(build):
             logger.error("Build failed for arch %r.", arch)
+            raise errors.RemoteBuildFailedError(f"Build failed for arch {arch}.")
 
     def _download_file(self, *, url: str, dst: str, gunzip: bool = False) -> None:
         # TODO: consolidate with, and use indicators.download_requests_stream
@@ -465,11 +475,9 @@ class LaunchpadClient:
     def push_source_tree(self, repo_dir: Path) -> None:
         """Push source tree to Launchpad."""
         lp_repo = self._create_git_repository(force=True)
-        # This token will only be used once, immediately after issuing it,
-        # so it can have a short expiry time.  It's not a problem if it
-        # expires before the build completes, or even before the push
-        # completes.
-        date_expires = datetime.now(timezone.utc) + timedelta(minutes=1)
+        # This token will be used multiple times, so we don't want it to
+        # expire too soon. Especially if the git push takes a long time.
+        date_expires = datetime.now(timezone.utc) + timedelta(minutes=60)
         token = lp_repo.issueAccessToken(  # type: ignore
             description=f"{self._app_name} remote-build for {self._build_id}",
             scopes=["repository:push"],
