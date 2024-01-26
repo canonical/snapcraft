@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -150,6 +150,43 @@ def test_command_accept_upload(
 
     mock_confirm.assert_not_called()
     mock_run_new_or_fallback_remote_build.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
+)
+def test_command_new_build_arguments_mutually_exclusive(capsys, mocker):
+    """`--build-for` and `--build-on` are mutually exclusive in the new remote-build."""
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["snapcraft", "remote-build", "--build-on", "amd64", "--build-for", "arm64"],
+    )
+
+    cli.run()
+
+    _, err = capsys.readouterr()
+    assert "Error: argument --build-for: not allowed with argument --build-on" in err
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm")
+def test_command_legacy_build_arguments_not_mutually_exclusive(mocker, mock_run_legacy):
+    """`--build-for` and `--build-on` are not mutually exclusive for legacy."""
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["snapcraft", "remote-build", "--build-on", "amd64", "--build-for", "arm64"],
+    )
+
+    cli.run()
+
+    mock_run_legacy.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -716,13 +753,56 @@ def test_determine_architectures_host_arch(mocker, mock_remote_builder):
     )
 
 
+@pytest.mark.parametrize("build_flag", ["--build-for", "--build-on"])
 @pytest.mark.parametrize(
-    ("args", "expected_archs"),
+    ("archs", "expected_archs"),
     [
-        (["--build-for", "amd64"], ["amd64"]),
-        (["--build-for", "amd64", "arm64"], ["amd64", "arm64"]),
+        ("amd64", ["amd64"]),
+        ("amd64,arm64", ["amd64", "arm64"]),
+        ("amd64,amd64,arm64 ", ["amd64", "amd64", "arm64"]),
+    ],
+)
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
+)
+def test_determine_architectures_provided_by_user_duplicate_arguments(
+    build_flag, archs, expected_archs, mocker, mock_remote_builder
+):
+    """Argparse should only consider the last argument provided for build flags."""
+    mocker.patch.object(
+        sys,
+        "argv",
+        # `--build-{for|on} armhf` should get silently ignored by argparse
+        ["snapcraft", "remote-build", build_flag, "armhf", build_flag, archs],
+    )
+
+    cli.run()
+
+    mock_remote_builder.assert_called_with(
+        app_name="snapcraft",
+        build_id=None,
+        project_name="mytest",
+        architectures=expected_archs,
+        project_dir=Path(),
+        timeout=0,
+    )
+
+
+@pytest.mark.parametrize("build_flag", ["--build-for", "--build-on"])
+@pytest.mark.parametrize(
+    ("archs", "expected_archs"),
+    [
+        ("amd64", ["amd64"]),
+        ("amd64,arm64", ["amd64", "arm64"]),
+        ("amd64, arm64", ["amd64", "arm64"]),
+        ("amd64,arm64 ", ["amd64", "arm64"]),
+        ("amd64,arm64,armhf", ["amd64", "arm64", "armhf"]),
+        (" amd64 , arm64 , armhf ", ["amd64", "arm64", "armhf"]),
         # launchpad will accept and ignore duplicates
-        (["--build-for", "amd64", "amd64"], ["amd64", "amd64"]),
+        (" amd64 , arm64 , arm64 ", ["amd64", "arm64", "arm64"]),
     ],
 )
 @pytest.mark.parametrize(
@@ -732,10 +812,10 @@ def test_determine_architectures_host_arch(mocker, mock_remote_builder):
     "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
 )
 def test_determine_architectures_provided_by_user(
-    args, expected_archs, mocker, mock_remote_builder
+    build_flag, archs, expected_archs, mocker, mock_remote_builder
 ):
     """Use architectures provided by the user."""
-    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"] + args)
+    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build", build_flag, archs])
 
     cli.run()
 
