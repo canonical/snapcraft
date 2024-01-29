@@ -29,7 +29,9 @@ from snapcraft import models, services
 class SnapcraftServiceFactory(ServiceFactory):
     """Snapcraft-specific Service Factory."""
 
-    project: models.Project | None = None
+    project: models.Project | None = None  # type: ignore[reportIncompatibleVariableOverride]
 
     # These are overrides of default ServiceFactory services
-    PackageClass: type[services.Package] = services.Package
+    PackageClass: type[services.Package] = (  # type: ignore[reportIncompatibleVariableOverride]
+        services.Package
+    )
