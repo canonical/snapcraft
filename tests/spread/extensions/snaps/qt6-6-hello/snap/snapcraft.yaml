@@ -3,6 +3,7 @@ version: "1.0"
 summary: Test the qt6-6 extension
 description: It simply prints a hello world
 
+base: core22
 grade: devel
 confinement: strict
 
