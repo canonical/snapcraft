@@ -1360,15 +1360,20 @@ class StagePackagesTestCase(unit.TestCase):
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_OFFLINE", "True"))
         part = self.load_part("offline-test", plugin_name="nil")
 
-        with patch(
-            "snapcraft_legacy.internal.pluginhandler.PluginHandler._fetch_stage_packages"
-        ) as fetch_stage_packages, patch(
-            "snapcraft_legacy.internal.pluginhandler.PluginHandler._fetch_stage_snaps"
-        ) as fetch_stage_snaps, patch(
-            "snapcraft_legacy.internal.pluginhandler.PluginHandler._unpack_stage_packages"
-        ) as unpack_stage_packages, patch(
-            "snapcraft_legacy.internal.pluginhandler.PluginHandler._unpack_stage_snaps"
-        ) as unpack_stage_snaps:
+        with (
+            patch(
+                "snapcraft_legacy.internal.pluginhandler.PluginHandler._fetch_stage_packages"
+            ) as fetch_stage_packages,
+            patch(
+                "snapcraft_legacy.internal.pluginhandler.PluginHandler._fetch_stage_snaps"
+            ) as fetch_stage_snaps,
+            patch(
+                "snapcraft_legacy.internal.pluginhandler.PluginHandler._unpack_stage_packages"
+            ) as unpack_stage_packages,
+            patch(
+                "snapcraft_legacy.internal.pluginhandler.PluginHandler._unpack_stage_snaps"
+            ) as unpack_stage_snaps,
+        ):
             part.prepare_pull()
 
         assert fetch_stage_packages.mock_calls == []

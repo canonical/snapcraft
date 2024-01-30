@@ -1,6 +1,6 @@
 astroid==2.15.8
 attrs==23.2.0
-black==23.12.1
+black==24.1.1
 cachetools==5.3.2
 catkin-pkg==1.0.0
 certifi==2023.11.17
