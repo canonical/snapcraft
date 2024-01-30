@@ -3,6 +3,7 @@ version: "1.0"
 summary: Test the qt5-15 extension
 description: It simply prints a hello world
 
+base: core22
 grade: devel
 confinement: strict
 
