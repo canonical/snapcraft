@@ -1,4 +1,4 @@
-summary: Build and run a basic qt 6.5 snap using extensions
+summary: Build and run a basic qt 6.6 snap using extensions
 
 systems:
   - ubuntu-22.04
