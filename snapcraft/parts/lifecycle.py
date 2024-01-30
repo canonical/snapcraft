@@ -432,7 +432,7 @@ def _run_in_provider(  # noqa PLR0915
     snapcraft_base = project.get_effective_base()
     build_base = providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE[snapcraft_base]
 
-    if snapcraft_base == "devel":
+    if snapcraft_base in ("devel", "core24"):
         emit.progress(
             "Running snapcraft with a devel instance is for testing purposes only.",
             permanent=True,

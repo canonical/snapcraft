@@ -547,7 +547,7 @@ def test_push_source_tree(new_dir, mock_git_repo, launchpad_client):
     launchpad_client._lp.git_repositories._git.issueAccessToken_mock.assert_called_once_with(
         description="test-app remote-build for id",
         scopes=["repository:push"],
-        date_expires=(now + timedelta(minutes=1)).isoformat(),
+        date_expires=(now + timedelta(minutes=60)).isoformat(),
     )
 
     mock_git_repo.assert_has_calls(
