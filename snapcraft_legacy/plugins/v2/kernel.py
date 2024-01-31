@@ -84,6 +84,8 @@ _default_kernel_image_target = {
 
 
 class KernelPlugin(PluginV2):
+    """Plugin class implementing kernel build functionality"""
+
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:
         return {
@@ -116,7 +118,7 @@ class KernelPlugin(PluginV2):
         }
 
     def __init__(self, *, part_name: str, options) -> None:
-        super().__init__(part_name=str, options=options)
+        super().__init__(part_name=part_name, options=options)
         self.name = part_name
         self.options = options
 
@@ -227,7 +229,6 @@ class KernelPlugin(PluginV2):
             make_cmd=self._make_cmd.copy(),
             make_targets=self._make_targets,
             make_install_targets=self._make_install_targets,
-            target_arch=self._target_arch,
             target_arch_triplet="${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}",
             config_flavour=self.options.kernel_kconfigflavour,
             defconfig=self.options.kernel_kdefconfig,
@@ -252,6 +253,7 @@ def _get_target_architecture() -> str:
     # As work around check if we are cross building, to know what is
     # target arch
     target_arch = None
+    # pylint: disable=invalid-name
     for i in range(1, len(sys.argv)):
         if sys.argv[i].startswith("--target-arch="):
             target_arch = sys.argv[i].split("=")[1]
@@ -263,5 +265,5 @@ def _get_target_architecture() -> str:
         # as for native build it's reported correctly
         target_arch = ProjectOptions().deb_arch
 
-    logger.info(f"Target architecture: {target_arch}")
+    logger.info("Target architecture: %s", target_arch)
     return target_arch
