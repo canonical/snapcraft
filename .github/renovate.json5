@@ -92,7 +92,7 @@
     {
       // Pyright makes regular breaking changes in patch releases, so we separate these
       // and do them independently.
-      matchPackageNames: ["pyright"],
+      matchPackageNames: ["pyright", "types/pyright"],
       prPriority: -4
     }
   ],

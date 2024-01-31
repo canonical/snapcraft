@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Basic Starcraft package demo unit tests."""
+# pyright: reportFunctionMemberAccess=false
 from unittest import mock
 
 import starcraft
