@@ -106,7 +106,7 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
 
 
 class KernelPlugin(plugins.Plugin):
-    """Plugin for the kernel snap build."""
+    """Plugin class implementing kernel build functionality."""
 
     properties_class = KernelPluginProperties
 
@@ -168,11 +168,13 @@ class KernelPlugin(plugins.Plugin):
             )
 
     @overrides
-    def get_build_snaps(self) -> set[str]:
+    def get_build_snaps(self) -> set[str]:  # pylint: disable=missing-function-docstring
         return set()
 
     @overrides
-    def get_build_packages(self) -> set[str]:
+    def get_build_packages(
+        self,
+    ) -> set[str]:  # pylint: disable=missing-function-docstring
         build_packages = {
             "bc",
             "binutils",
@@ -206,7 +208,9 @@ class KernelPlugin(plugins.Plugin):
         return build_packages
 
     @overrides
-    def get_build_environment(self) -> dict[str, str]:
+    def get_build_environment(
+        self,
+    ) -> dict[str, str]:  # pylint: disable=missing-function-docstring
         logger.info("Getting build env...")
         self._init_build_env()
 
@@ -219,13 +223,14 @@ class KernelPlugin(plugins.Plugin):
         }
 
     @overrides
-    def get_build_commands(self) -> list[str]:
+    def get_build_commands(
+        self,
+    ) -> list[str]:  # pylint: disable=missing-function-docstring
         logger.info("Getting build commands...")
         return _kernel_build.get_build_commands(
             make_cmd=self._make_cmd.copy(),
             make_targets=self._make_targets,
             make_install_targets=self._make_install_targets,
-            target_arch=self._target_arch,
             target_arch_triplet="${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
             config_flavour=self.options.kernel_kconfigflavour,
             defconfig=self.options.kernel_kdefconfig,
