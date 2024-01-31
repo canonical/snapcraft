@@ -110,7 +110,7 @@
       fileMatch: [".pre-commit-config.yaml"],
       depTypeTemplate: "devDependencies",
       matchStrings: [
-        "# renovate: datasource=(?<datasource>\\S+);\\s*depName=(?<depName>.*?)\n\s+rev: \"v?(?<currentValue>.*?)\""
+        "# renovate: datasource=(?<datasource>\\S+);\\s*depName=(?<depName>.*?)\n\\s+rev: \"v?(?<currentValue>.*?)\""
       ]
     }
   ],
