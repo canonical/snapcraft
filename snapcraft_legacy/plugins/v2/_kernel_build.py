@@ -121,8 +121,8 @@ def _clean_old_build_cmd(dest_dir: str) -> List[str]:
 
 def _do_base_config_cmd(
     make_cmd: List[str],
-    config_flavour: Optional[str],
-    defconfig: List[str],
+    config_flavour: str,
+    defconfig: Optional[List[str]],
     dest_dir: str,
 ) -> List[str]:
     # if the parts build dir already contains a .config file, use it
@@ -141,7 +141,7 @@ def _do_base_config_cmd(
     else:
         logger.info("Using ubuntu config flavour %s", config_flavour)
         conf_cmd = textwrap.dedent(
-            """	echo "Assembling Ubuntu config..."
+            f"""	echo "Assembling Ubuntu config..."
 	if [ -f ${{KERNEL_SRC}}/debian/rules ] && [ -x ${{KERNEL_SRC}}/debian/rules ]; then
 		# Generate Ubuntu kernel configs
 		pushd ${{KERNEL_SRC}}
@@ -157,9 +157,7 @@ def _do_base_config_cmd(
 		fakeroot debian/rules clean
 		rm -rf CONFIGS/
 		popd
-	fi""".format(
-                config_flavour=config_flavour, dest_dir=dest_dir
-            )
+	fi"""
         )
         cmd.extend([conf_cmd])
 
@@ -202,8 +200,8 @@ def _do_remake_config_cmd(make_cmd: List[str]) -> List[str]:
 
 def _get_configure_command(
     make_cmd: List[str],
-    config_flavour: Optional[str],
-    defconfig: List[str],
+    config_flavour: str,
+    defconfig: Optional[List[str]],
     configs: Optional[List[str]],
     dest_dir: str,
 ) -> List[str]:
@@ -390,9 +388,8 @@ def get_build_commands(
     make_cmd: List[str],
     make_targets: List[str],
     make_install_targets: List[str],
-    target_arch: str,
     target_arch_triplet: str,
-    config_flavour: Optional[str],
+    config_flavour: str,
     defconfig: Optional[List[str]],
     configs: Optional[List[str]],
     enable_zfs_support: bool,
@@ -402,6 +399,7 @@ def get_build_commands(
     build_dir: str,
     install_dir: str,
 ) -> List[str]:
+    """Get build command"""
     # kernel source can be either CRAFT_PART_SRC or CRAFT_PROJECT_DIR
     return [
         f"[ -d {source_dir}/kernel ] && KERNEL_SRC={source_dir} || KERNEL_SRC={project_dir}",
@@ -460,6 +458,7 @@ def _parse_kernel_release_cmd(build_dir: str) -> List[str]:
         'echo "Parsing created kernel release..."',
         f"KERNEL_RELEASE=$(cat {build_dir}/include/config/kernel.release)",
     ]
+
 
 def _copy_vmlinuz_cmd(install_dir: str) -> List[str]:
     """Install kernel image."""
@@ -533,7 +532,6 @@ def _get_post_install_cmd(
     ]
 
 
-
 def _get_install_command(
     make_cmd: List[str],
     make_install_targets: List[str],
@@ -565,6 +563,7 @@ def _get_install_command(
     cmd.extend(_arrange_install_dir_cmd(install_dir=install_dir))
 
     return cmd
+
 
 ### Utilities
 
@@ -601,6 +600,7 @@ def get_deb_architecture(target_arch: str) -> str:
         return "amd64"
 
     raise ValueError("unknown deb architecture")
+
 
 if __name__ == "__main__":
     globals()[sys.argv[1]](sys.argv[2])
