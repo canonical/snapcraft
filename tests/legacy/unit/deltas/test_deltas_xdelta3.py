@@ -60,9 +60,10 @@ class XDelta3TestCase(unit.TestCase):
         self.source_file = os.path.join(scratchdir, "source-snap")
         self.target_file = os.path.join(scratchdir, "target-snap")
         # source snap is completely random:
-        with open(self.source_file, "wb") as source, open(
-            self.target_file, "wb"
-        ) as target:
+        with (
+            open(self.source_file, "wb") as source,
+            open(self.target_file, "wb") as target,
+        ):
             for i in range(0, snap_size, 1024):
                 block = os.urandom(1024)
                 source.write(block)
