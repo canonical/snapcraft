@@ -121,7 +121,7 @@ class KernelPluginProperties(plugins.PluginProperties, plugins.PluginModel):
 
 
 class KernelPlugin(plugins.Plugin):
-    """Plugin for the kernel snap build."""
+    """Plugin class implementing kernel build functionality."""
 
     properties_class = KernelPluginProperties
 
@@ -236,7 +236,6 @@ class KernelPlugin(plugins.Plugin):
             make_cmd=self._make_cmd.copy(),
             make_targets=self._make_targets,
             make_install_targets=self._make_install_targets,
-            target_arch=self._target_arch,
             target_arch_triplet="${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
             config_flavour=self.options.kernel_kconfigflavour,
             defconfig=self.options.kernel_kdefconfig,

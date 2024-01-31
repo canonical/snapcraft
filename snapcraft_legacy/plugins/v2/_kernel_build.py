@@ -141,7 +141,7 @@ def _do_base_config_cmd(
     else:
         logger.info("Using ubuntu config flavour %s", config_flavour)
         conf_cmd = textwrap.dedent(
-            """	echo "Assembling Ubuntu config..."
+           f"""	echo "Assembling Ubuntu config..."
 	if [ -f ${{KERNEL_SRC}}/debian/rules ] && [ -x ${{KERNEL_SRC}}/debian/rules ]; then
 		# Generate Ubuntu kernel configs
 		pushd ${{KERNEL_SRC}}
@@ -157,9 +157,7 @@ def _do_base_config_cmd(
 		fakeroot debian/rules clean
 		rm -rf CONFIGS/
 		popd
-	fi""".format(
-                config_flavour=config_flavour, dest_dir=dest_dir
-            )
+	fi"""
         )
         cmd.extend([conf_cmd])
 
@@ -390,7 +388,6 @@ def get_build_commands(
     make_cmd: List[str],
     make_targets: List[str],
     make_install_targets: List[str],
-    target_arch: str,
     target_arch_triplet: str,
     config_flavour: Optional[str],
     defconfig: Optional[List[str]],
@@ -402,6 +399,7 @@ def get_build_commands(
     build_dir: str,
     install_dir: str,
 ) -> List[str]:
+    """Get build command"""
     # kernel source can be either CRAFT_PART_SRC or CRAFT_PROJECT_DIR
     return [
         f"[ -d {source_dir}/kernel ] && KERNEL_SRC={source_dir} || KERNEL_SRC={project_dir}",
