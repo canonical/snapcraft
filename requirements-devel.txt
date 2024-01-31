@@ -1,6 +1,6 @@
 astroid==2.15.8
 attrs==23.2.0
-black==23.12.1
+black==24.1.1
 cachetools==5.3.2
 catkin-pkg==1.0.0
 certifi==2023.11.17
@@ -80,6 +80,7 @@ pyparsing==3.1.1
 pyproject-api==1.6.1
 pyramid==2.0.2
 pyRFC3339==1.1
+pyright==1.1.349
 pytest==7.4.4
 pytest-cov==4.1.0
 pytest-mock==3.12.0
