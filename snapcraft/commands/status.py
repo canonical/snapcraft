@@ -193,10 +193,10 @@ def _get_channel_lines_for_channel(  # noqa: C901  # pylint: disable=too-many-lo
     channel_info = snap_channel_map.get_channel_info(channel_name)
 
     try:
-        progressive_mapped_channel: Optional[
-            MappedChannel
-        ] = snap_channel_map.get_mapped_channel(
-            channel_name=channel_name, architecture=architecture, progressive=True
+        progressive_mapped_channel: Optional[MappedChannel] = (
+            snap_channel_map.get_mapped_channel(
+                channel_name=channel_name, architecture=architecture, progressive=True
+            )
         )
     except ValueError:
         progressive_mapped_channel = None
@@ -266,9 +266,11 @@ def _get_channel_lines_for_channel(  # noqa: C901  # pylint: disable=too-many-lo
                 revision=None,
                 channel_info=channel_info,
                 hint=current_tick,
-                progress_string=_HINTS.NO_PROGRESS
-                if current_tick == _HINTS.CLOSED
-                else progress_string,
+                progress_string=(
+                    _HINTS.NO_PROGRESS
+                    if current_tick == _HINTS.CLOSED
+                    else progress_string
+                ),
             )
         )
 
