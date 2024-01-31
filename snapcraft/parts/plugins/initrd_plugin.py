@@ -22,16 +22,6 @@ The following initramfs-specific options are provided by this plugin:
       Optional, true if we want to create an EFI image.
       Default: false
 
-    - initrd-kernel-image-target
-      Optional, and only required if initrd-build-efi-image is set
-      (yaml object, string or null for default target)
-      the default target is bzImage and can be set to any specific
-      target.
-      For more complex cases where one would want to use
-      the same snapcraft.yaml to target multiple architectures a
-      yaml object can be used. This yaml object would be a map of
-      debian architecture and kernel image build targets.
-
     - initrd-modules:
       (array of string; default: none)
       list of modules to include in initrd.
@@ -113,7 +103,6 @@ from craft_parts import infos, plugins
 from overrides import overrides
 from pydantic import root_validator
 
-from snapcraft.parts.plugins import kernel_plugin
 from snapcraft_legacy.plugins.v2 import _initrd_build, _kernel_build
 
 logger = logging.getLogger(__name__)
@@ -123,7 +112,6 @@ class InitrdPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     """The part properties used by the Initrd plugin."""
 
     initrd_build_efi_image: bool = False
-    initrd_kernel_image_target: Any
     initrd_modules: Optional[List[str]]
     initrd_configured_modules: Optional[List[str]]
     initrd_stage_firmware: bool = False
@@ -138,7 +126,7 @@ class InitrdPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     @root_validator
     @classmethod
     def validate_pluging_options(cls, values):
-        """Validate use of initrd-compression-options initrd_kernel_image_target."""
+        """Validate use of initrd-compression-options."""
         # If initrd-compression-options is defined, so has to be initrd-compression.
         if values.get("initrd_compression_options") and not values.get(
             "initrd_compression"
@@ -146,14 +134,6 @@ class InitrdPluginProperties(plugins.PluginProperties, plugins.PluginModel):
             raise ValueError(
                 "initrd-compression-options requires also initrd-compression to be defined."
             )
-
-        # If initrd-kernel-image-target is defined, it has to be string or dictionary
-        if values.get("initrd_kernel_image_target"):
-            if not isinstance(values.get("initrd_kernel_image_target"), str):
-                if not isinstance(values.get("initrd_kernel_image_target"), dict):
-                    raise ValueError(
-                        f'initrd_kernel-image-target is in invalid format(type{type(values.get("initrd_kernel_image_target"))}). It should be either string or dictionary.'
-                    )
 
         return values
 
@@ -186,16 +166,6 @@ class InitrdPlugin(plugins.Plugin):
         self._target_arch = self._part_info.target_arch
         target_arch = self._part_info.target_arch
         self._deb_arch = _kernel_build.get_deb_architecture(target_arch)
-        if not self.options.initrd_kernel_image_target:
-            self.kernel_image_target = kernel_plugin.default_kernel_image_target[
-                self._deb_arch
-            ]
-        elif isinstance(self.options.initrd_kernel_image_target, str):
-            self.kernel_image_target = self.options.initrd_kernel_image_target
-        elif self._deb_arch in self.options.initrd_kernel_image_target:
-            self.kernel_image_target = self.options.initrd_kernel_image_target[
-                self._deb_arch
-            ]
 
     @overrides
     def get_build_snaps(self) -> Set[str]:
@@ -253,7 +223,6 @@ class InitrdPlugin(plugins.Plugin):
             initrd_overlay=self.options.initrd_overlay,
             initrd_stage_firmware=self.options.initrd_stage_firmware,
             build_efi_image=self.options.initrd_build_efi_image,
-            kernel_image_target=self.kernel_image_target,
             initrd_ko_use_workaround=False,
             initrd_default_compression="zstd -1 -T0",
             initrd_include_extra_modules_conf=True,
