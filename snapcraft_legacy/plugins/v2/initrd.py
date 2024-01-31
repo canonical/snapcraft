@@ -231,7 +231,6 @@ class InitrdPlugin(PluginV2):
             initrd_overlay=self.options.initrd_overlay,
             initrd_stage_firmware=self.options.initrd_stage_firmware,
             build_efi_image=False,
-            kernel_image_target="",
             initrd_ko_use_workaround=True,
             initrd_default_compression="lz4 -9 -l",
             initrd_include_extra_modules_conf=False,
