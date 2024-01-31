@@ -422,9 +422,9 @@ class ValidationSetsTestCase(StoreTestCase):
     def _fake_sign(self, build_assertion: validation_sets.BuildAssertion) -> bytes:
         # Fake sign.
         assertion_json = build_assertion.marshal()
-        assertion_json[
-            "sign-key-sha3-384"
-        ] = "XSignXKeyXHashXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        assertion_json["sign-key-sha3-384"] = (
+            "XSignXKeyXHashXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        )
         return (json.dumps(assertion_json) + "\n\nSIGNED").encode()
 
     def test_post_valid_assertion(self):
