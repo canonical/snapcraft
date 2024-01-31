@@ -465,14 +465,10 @@ def _copy_vmlinuz_cmd(install_dir: str) -> List[str]:
     """Install kernel image."""
     cmd = [
         'echo "Copying kernel image..."',
-        # if kernel already exists, replace it, we are probably re-running
+        # if kernel.img already exists, replace it, we are probably re-running
         # build
         f"[ -e {install_dir}/kernel.img ] && rm -rf {install_dir}/kernel.img",
-        (
-            "ln -f ${KERNEL_BUILD_ARCH_DIR}/${KERNEL_IMAGE_TARGET} "
-            f"{install_dir}/${{KERNEL_IMAGE_TARGET}}-${{KERNEL_RELEASE}}"
-        ),
-        f"ln -f ${{KERNEL_BUILD_ARCH_DIR}}/${{KERNEL_IMAGE_TARGET}} {install_dir}/kernel.img",
+        f"mv ${{KERNEL_BUILD_ARCH_DIR}}/${{KERNEL_IMAGE_TARGET}} {install_dir}/kernel.img",
     ]
     return cmd
 
