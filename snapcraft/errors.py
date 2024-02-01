@@ -21,8 +21,13 @@ from typing import Optional
 from craft_cli import CraftError
 
 
-class ClassicFallback(Exception):
-    """Temporary class to fall back to non craft-application launcher."""
+class ClassicFallback(BaseException):
+    """Temporary class to fall back to non craft-application launcher.
+
+    Note that it inherits from BaseException so that it passes through
+    craft-application, is caught by Snapcraft itself and then redirected to
+    non-core24 codepaths.
+    """
 
 
 class SnapcraftError(CraftError):

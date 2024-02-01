@@ -19,8 +19,10 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import signal
 import sys
+from typing import Any
 
 import craft_cli
 from craft_application import Application, AppMetadata, util
@@ -41,6 +43,11 @@ APP_METADATA = AppMetadata(
 class Snapcraft(Application):
     """Snapcraft application definition."""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Whether we know that we should use the core24-based codepath.
+        self._known_core24 = False
+
     @override
     def _configure_services(self, platform: str | None, build_for: str | None) -> None:
         if build_for is None:
@@ -55,10 +62,22 @@ class Snapcraft(Application):
         # TODO: Remove this once we've got lifecycle commands and version migrated.
         return self._command_groups
 
-    def run(self) -> int:
-        """Fall back to the old snapcraft entrypoint."""
-        self._get_dispatcher()
-        raise errors.ClassicFallback()
+    def _resolve_project_path(self, project_dir: pathlib.Path | None) -> pathlib.Path:
+        """Overridden to handle the two possible locations for snapcraft.yaml."""
+        if project_dir is None:
+            project_dir = pathlib.Path.cwd()
+
+        try:
+            return super()._resolve_project_path(project_dir / "snap")
+        except FileNotFoundError:
+            return super()._resolve_project_path(project_dir)
+
+    @property
+    def app_config(self) -> dict[str, Any]:
+        """Overridden to add "core" knowledge to the config."""
+        config = super().app_config
+        config["core24"] = self._known_core24
+        return config
 
     @override
     def _get_dispatcher(self) -> craft_cli.Dispatcher:
@@ -68,6 +87,7 @@ class Snapcraft(Application):
 
         :returns: A ready-to-run Dispatcher object
         """
+        # pylint: disable=too-many-statements
         # Set the logging level to DEBUG for all craft-libraries. This is OK even if
         # the specific application doesn't use a specific library, the call does not
         # import the package.
@@ -80,6 +100,26 @@ class Snapcraft(Application):
             log_filepath=self.log_path,
             streaming_brief=True,
         )
+
+        # Handle "multiplexing" of Snapcraft "codebases" depending on the
+        # project's base (if any). Here, we handle the case where there *is*
+        # a project and it's core24, which means it should definitely fall into
+        # the craft-application-based flow.
+        try:
+            existing_project = self._resolve_project_path(None)
+        except FileNotFoundError:
+            # No project file - don't know if we should use core24 code or not.
+            pass
+        else:
+            with existing_project.open() as file:
+                yaml_data = util.safe_yaml_load(file)
+            base = yaml_data.get("base")
+            build_base = yaml_data.get("build-base")
+            if "core24" in (base, build_base) or build_base == "devel":
+                # We know for sure that we're handling a core24 project
+                self._known_core24 = True
+            else:
+                raise errors.ClassicFallback()
 
         dispatcher = craft_cli.Dispatcher(
             self.app.name,

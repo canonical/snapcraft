@@ -21,7 +21,7 @@ from typing import final
 
 from snapcraft import commands, errors
 
-# pylint: disable=missing-class-docstring
+# pylint: disable=missing-class-docstring,unused-argument
 
 
 class UnimplementedMixin:
@@ -33,7 +33,25 @@ class UnimplementedMixin:
     @final
     def run(self, parsed_args: argparse.Namespace) -> None:
         """Execute a command's functionality."""
+        if self.config["core24"]:  # type: ignore[attr-defined]
+            # We know that this is a core24 project, but the actual command has
+            # not yet been ported.
+            command_name = self.name  # type: ignore[attr-defined]
+            raise RuntimeError(
+                f'"{command_name}" command is not implemented for core24!'
+            )
+
+        # Fallback to the codepaths for non-core24-code.
         raise errors.ClassicFallback()
+
+    def run_managed(
+        self,
+        parsed_args: argparse.Namespace,  # noqa: ARG002 (the unused argument is for subclasses)
+    ) -> bool:
+        """Overridden to always return False, for now."""
+        return False
+
+    always_load_project: bool = False
 
 
 class ExportLogin(
