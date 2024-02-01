@@ -21,7 +21,7 @@ from typing import Optional
 from craft_cli import CraftError
 
 
-class ClassicFallback(Exception):
+class ClassicFallback(BaseException):
     """Temporary class to fall back to non craft-application launcher."""
 
 

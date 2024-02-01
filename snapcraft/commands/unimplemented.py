@@ -33,7 +33,18 @@ class UnimplementedMixin:
     @final
     def run(self, parsed_args: argparse.Namespace) -> None:
         """Execute a command's functionality."""
-        raise errors.ClassicFallback()
+        if self.config["core24"]:
+            raise RuntimeError(f'"{self.name}" command is not implemented for core24!')
+        else:
+            raise errors.ClassicFallback()
+
+    def run_managed(
+        self,
+        parsed_args: argparse.Namespace,  # noqa: ARG002 (the unused argument is for subclasses)
+    ) -> bool:
+        return False
+
+    always_load_project: bool = False
 
 
 class ExportLogin(

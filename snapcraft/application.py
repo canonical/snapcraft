@@ -19,8 +19,10 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import signal
 import sys
+from typing import Any
 
 import craft_cli
 from craft_application import Application, AppMetadata, util
@@ -55,10 +57,27 @@ class Snapcraft(Application):
         # TODO: Remove this once we've got lifecycle commands and version migrated.
         return self._command_groups
 
-    def run(self) -> int:
-        """Fall back to the old snapcraft entrypoint."""
-        self._get_dispatcher()
-        raise errors.ClassicFallback()
+    def _resolve_project_path(self, project_dir: pathlib.Path | None) -> pathlib.Path:
+        """Overridden to handle the two"""
+        if project_dir is None:
+            project_dir = pathlib.Path.cwd()
+
+        try:
+            return super()._resolve_project_path(project_dir / "snap")
+        except FileNotFoundError:
+            return super()._resolve_project_path(project_dir)
+
+    @property
+    def app_config(self) -> dict[str, Any]:
+        """Get the configuration passed to dispatcher.load_command().
+
+        This can generally be left as-is. It's strongly recommended that if you are
+        overriding it, you begin with ``config = super().app_config`` and update the
+        dictionary from there.
+        """
+        config = super().app_config
+        config["core24"] = self._known_core24
+        return config
 
     @override
     def _get_dispatcher(self) -> craft_cli.Dispatcher:
@@ -80,6 +99,18 @@ class Snapcraft(Application):
             log_filepath=self.log_path,
             streaming_brief=True,
         )
+
+        try:
+            existing_project = self._resolve_project_path(None)
+        except FileNotFoundError:
+            self._known_core24 = False
+        else:
+            with existing_project.open() as file:
+                yaml_data = util.safe_yaml_load(file)
+            if yaml_data.get("base") != "core24":
+                raise errors.ClassicFallback()
+            else:
+                self._known_core24 = True
 
         dispatcher = craft_cli.Dispatcher(
             self.app.name,
