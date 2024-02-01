@@ -25,6 +25,6 @@ repos:
       - id: black
   - repo: https://github.com/adrienverge/yamllint.git
     # renovate: datasource=pypi;depName=yamllint
-    rev: "v1.31.0"
+    rev: "v1.33.0"
     hooks:
       - id: yamllint
