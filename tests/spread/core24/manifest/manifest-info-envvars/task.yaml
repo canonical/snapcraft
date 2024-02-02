@@ -1,0 +1,30 @@
+summary: Test manifest file creation
+
+prepare: |
+  snap install review-tools
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+  rm -f ~/manifest_0.1_*.snap
+
+execute: |
+  export SNAPCRAFT_BUILD_INFO=1
+  export SNAPCRAFT_IMAGE_INFO='{"test-var": "value"}'
+  snapcraft --use-lxd
+
+  unsquashfs manifest_0.1_*.snap
+  grep '^  test-var: value' squashfs-root/snap/manifest.yaml
+  rm -Rf squashfs-root
+
+  cp manifest_0.1_*.snap ~
+  review-tools.snap-review ~/manifest_0.1_*.snap
+  rm ~/manifest_0.1_*.snap
+
+  # also test in destructive mode
+  snapcraft --destructive-mode
+
+  grep '^  test-var: value' prime/snap/manifest.yaml
+
+  cp manifest_0.1_*.snap ~
+  review-tools.snap-review ~/manifest_0.1_*.snap

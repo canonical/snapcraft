@@ -1,0 +1,18 @@
+name: paths-one-null
+version: '1'
+summary: test
+description: |
+  Setting either LD_LIBRARY_PATH or PATH to null should
+  cause that variable to be excluded, while other
+  variables are still handled.
+architectures:
+- amd64
+base: core22
+apps:
+  paths-one-null:
+    command: usr/bin/hello
+confinement: strict
+grade: devel
+environment:
+  PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+  TEST_VARIABLE: test-1

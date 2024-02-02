@@ -1,0 +1,41 @@
+summary: Build and run a Python-based core22 classic snap
+
+# To ensure the patchelf fixes are correct, we run this test on focal systems.
+systems:
+  - ubuntu-20.04
+  - ubuntu-20.04-64
+  - ubuntu-20.04-amd64
+  - ubuntu-20.04-arm64
+  - ubuntu-20.04-armhf
+  - ubuntu-20.04-s390x
+  - ubuntu-20.04-ppc64el
+
+prepare: |
+  # Clone the snapcraft-docs/python-ctypes-example
+  git clone https://github.com/snapcraft-docs/python-ctypes-example.git
+  cd python-ctypes-example
+  # A known "good" commit from "main" at the time of writing this test
+  git checkout 31939ef68d8c383b9202f2588a704b3271bae009
+
+  # Replace the existing snap command with a call to the provisioned python3
+  sed -i 's|command: bin/test-ctypes.py|command: bin/python3|' snap/snapcraft.yaml
+
+execute: |
+  cd python-ctypes-example
+
+  # Build the core22 snap
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+  snapcraft --use-lxd
+
+  # Install the new snap
+  sudo snap install --classic --dangerous example-python-ctypes*.snap
+
+  # Run the snap's command; success means patchelf correctly linked the Python
+  # interpreter to core22's libc. Failure would output things like:
+  # version `GLIBC_2.35' not found (required by /snap/example-python-ctypes/x1/bin/python3)
+  example-python-ctypes -c "import ctypes; print(ctypes.__file__)" | MATCH "/snap/example-python-ctypes/"
+
+restore: |
+  cd python-ctypes-example
+  snapcraft clean
+  rm -f ./*.snap

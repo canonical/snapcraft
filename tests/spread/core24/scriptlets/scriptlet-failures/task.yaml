@@ -1,0 +1,11 @@
+summary: Validate scriptlet failures
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  snapcraft_log="$(snapcraft build 2>&1 || true)"
+
+  echo "${snapcraft_log}" | NOMATCH "^should have failed set-version"
+  echo "${snapcraft_log}" | NOMATCH "^should have failed build"

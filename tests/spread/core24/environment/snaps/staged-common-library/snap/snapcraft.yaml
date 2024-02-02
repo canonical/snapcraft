@@ -1,0 +1,20 @@
+name: staged-common-library
+version: "1"
+summary: test
+description: |
+  Staging a standard library causes common library paths
+  to be included in the LD_LIBRARY_PATH environmental variable.
+grade: devel
+confinement: strict
+base: core22
+
+apps:
+  staged-common-library:
+    command: test-cmd
+
+parts:
+  hello:
+    plugin: dump
+    source: .
+    stage-packages:
+      - libc6

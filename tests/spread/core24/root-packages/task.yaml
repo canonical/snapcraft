@@ -1,0 +1,17 @@
+summary: Test build-snaps and build-packages at the root
+
+restore: |
+  snapcraft clean --destructive-mode
+
+execute: |
+  snapcraft pull snapcraft/core --destructive-mode
+
+  if ! snap list hello; then
+    echo hello snap was not installed
+    exit 1
+  fi
+  
+  if ! dpkg -V hello; then
+    echo hello deb was not installed
+    exit 1
+  fi

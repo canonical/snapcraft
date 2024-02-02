@@ -1,0 +1,12 @@
+name: test-snap
+base: core22
+version: '0.1'
+summary: test snap
+description: test snap
+grade: stable
+confinement: strict
+parts:
+  test-part:
+    plugin: nil
+    override-build: touch $CRAFT_PART_INSTALL/foo.bar
+    override-prime: ''
