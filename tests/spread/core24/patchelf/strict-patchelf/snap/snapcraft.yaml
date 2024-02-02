@@ -1,0 +1,41 @@
+name: strict-patchelf
+version: "0.1"
+summary: Build a strictly confined snap
+description: |
+  Build a strictly confined snap to test ELF patching
+base: core22
+
+grade: devel
+confinement: strict
+
+parts:
+  hello:
+    source: .
+    plugin: make
+    build-packages:
+      - gcc
+      - libcurl4-openssl-dev
+  hello-existing-rpath:
+    source: .
+    plugin: make
+    build-packages:
+      - gcc
+      - libcurl4-openssl-dev
+      - patchelf
+    build-attributes:
+      - enable-patchelf
+    override-build: |
+      snapcraftctl build
+      mv $CRAFT_PART_INSTALL/bin/hello-strict $CRAFT_PART_INSTALL/bin/hello-strict-existing-rpath
+      patchelf --force-rpath --set-rpath "\$ORIGIN/../fake-lib" $CRAFT_PART_INSTALL/bin/hello-strict-existing-rpath
+  hello-enable-patchelf:
+    source: .
+    plugin: make
+    build-packages:
+      - gcc
+      - libcurl4-openssl-dev
+    build-attributes:
+      - enable-patchelf
+    override-build: |
+      snapcraftctl build
+      mv $CRAFT_PART_INSTALL/bin/hello-strict $CRAFT_PART_INSTALL/bin/hello-strict-enable-patchelf

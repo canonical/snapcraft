@@ -1,0 +1,57 @@
+summary: Build snaps that test the build-on/build-for architecture logic in snapcraft.
+
+environment:
+  SNAP/arg_match: arg-match
+  SNAP/arg_no_match: arg-no-match
+  SNAP/build_for_all: build-for-all
+  SNAP/build_on_no_match: build-on-no-match
+  SNAP/env_var_match: env-var-match
+  SNAP/env_var_no_match: env-var-no-match
+  SNAP/multiple_build_for: multiple-build-for
+  SNAP/single_arch: single-arch
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "./snaps/$SNAP/snap/snapcraft.yaml"
+
+restore: |
+  cd "./snaps/$SNAP"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "./snaps/$SNAP"
+
+  # if the environmental variable file exists, then call snapcraft with the environmental variables
+  if [[ -e "environmental-variables.txt" ]]; then
+    # shellcheck disable=SC2046
+    eval $(cat "environmental-variables.txt") snapcraft pack --destructive-mode
+  # if the arguments variable file exists, then call snapcraft with the arguments
+  elif [[ -e "arguments.txt" ]]; then
+    # shellcheck disable=SC2046
+    eval snapcraft pack --destructive-mode $(cat "arguments.txt") 
+  # otherwise, just call `snapcraft pack`
+  else
+    snapcraft pack --destructive-mode
+  fi
+
+  # confirm the snaps with the expected architectures were built
+  while read -r expected_snap; do
+    if [[ ! -e $expected_snap ]]; then
+      echo "Could not find snap '$expected_snap'"
+      exit 1
+    fi
+  done < "expected-snaps.txt"
+
+  # confirm no other snaps were built
+  expected_number_of_snaps=$(wc -l < "expected-snaps.txt")
+  actual_number_of_snaps=$(find . -wholename "./*.snap" | wc -l)
+  if [[ $expected_number_of_snaps -ne $actual_number_of_snaps ]]; then
+    echo "Expected $expected_number_of_snaps to be built, but $actual_number_of_snaps were built."
+    exit 1
+  fi

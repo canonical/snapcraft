@@ -1,0 +1,14 @@
+name: clean-i-am-40-characters-long-xxxxxxxxxx
+version: '1.0'
+summary: test
+description: test
+grade: stable
+confinement: strict
+base: core22
+
+parts:
+  part1:
+    plugin: nil
+
+  part2:
+    plugin: nil

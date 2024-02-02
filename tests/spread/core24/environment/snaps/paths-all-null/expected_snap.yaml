@@ -1,0 +1,16 @@
+name: paths-all-null
+version: '1'
+summary: test
+description: |
+  Setting PATH and LD_LIBRARY_PATH to null and
+  not using other environmental variables should
+  cause the environment field to not be included
+  in the resulting snap.yaml.
+architectures:
+- amd64
+base: core22
+apps:
+  paths-all-null:
+    command: usr/bin/hello
+confinement: strict
+grade: devel

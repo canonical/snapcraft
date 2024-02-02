@@ -1,0 +1,17 @@
+name: hello-try
+base: core22
+version: '0.1'
+summary: snapcraft try spread test
+description: snapcraft try spread test
+
+grade: stable
+confinement: strict
+
+apps:
+  hello-try:
+    command: usr/bin/hello
+
+parts:
+  hello-part:
+    plugin: nil
+    stage-packages: ["hello"]

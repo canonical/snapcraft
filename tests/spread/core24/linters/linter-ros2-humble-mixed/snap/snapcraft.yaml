@@ -1,0 +1,32 @@
+name: linter-ros2-humble-mixed
+version: "1.0"
+summary: hello world
+description: |
+  Check linter warnings when using the ros2-humble extension with additional
+  user-provided lint ignores.
+
+grade: stable
+confinement: strict
+base: core22
+
+apps:
+  linter-ros2-humble:
+    command: usr/bin/hello
+    extensions: [ros2-humble]
+
+parts:
+  hello:
+    plugin: nil
+    stage-packages: [ros-humble-ros2run, hello]
+
+  unused-lib:
+    plugin: nil
+    stage-packages: [libpng16-16]
+
+# Currently this declaration overrides the "unused-library" lint ignore provided
+# by the ros2-humble extension, so it's expected that many ros-related warnings
+# are generated.
+lint:
+  ignore:
+    - unused-library:
+      - usr/lib/*/libpng16.so*

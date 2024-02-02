@@ -1,0 +1,19 @@
+summary: Test using package-repositories with different architectures on core22
+
+environment:
+  SNAP_ARCH/i386: i386
+  SNAP_ARCH/armhf: armhf
+  SNAPCRAFT_BUILD_ENVIRONMENT: ""
+
+restore: |
+  snapcraft clean
+
+execute: |
+  # The task works by copying one of the arch-specific yaml files as
+  # "snapcraft.yaml", and then building it.
+  rm -rf snap/
+  mkdir snap
+  cp "$SNAP_ARCH".yaml snap/snapcraft.yaml
+
+  # The part's build script does the checking.
+  snapcraft build --verbose --use-lxd

@@ -1,0 +1,20 @@
+name: plugs-warn
+base: core22
+version: '0.1'
+summary: Check warnings for top-level enabling of slots and plugs
+description: Check warnings for top-level enabling of slots and plugs.
+
+grade: stable
+confinement: strict
+
+plugs:
+  desktop:
+  desktop-legacy:
+
+slots:
+  network:
+  opengl:
+
+parts:
+  my-part:
+    plugin: nil

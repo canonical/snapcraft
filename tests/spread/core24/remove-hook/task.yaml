@@ -1,0 +1,50 @@
+summary: Verify snapcraft remove hook deletes base images and instances
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snap/snapcraft.yaml"
+
+restore: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+  # reinstall snapcraft
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/prepare.sh"
+  install_snapcraft
+
+execute: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  # create a base instance by running snapcraft
+  snapcraft pull --use-lxd --verbosity=trace
+
+  # verify base instance was created
+  instances="$(lxc list --project=snapcraft --format=csv --columns="n")"
+  if [[ ! " ${instances[*]} " =~ base-instance-snapcraft-.* ]]; then
+    echo "base instance was not created"
+    exit 1
+  fi
+
+  # previous version of snapcraft used base images, so manually create a base image
+  # to confirm it also gets deleted
+  lxc image copy --project=snapcraft craft-com.ubuntu.cloud-buildd:core22 local: --alias=snapshot-craft-com.ubuntu.cloud-buildd-core22-snapcraft-buildd-base-v0.0
+
+  # trigger the remove hook
+  snap remove snapcraft
+
+  # confirm base instance was deleted
+  instances="$(lxc list --project=snapcraft --format=csv --columns="n")"
+  if [[ " ${instances[*]} " =~ base-instance-snapcraft-.* ]]; then
+    echo "base instance was not deleted by the remove hook"
+    exit 1
+  fi
+
+  # confirm base image was deleted
+  images="$(lxc image list --project=snapcraft --format=csv --columns=l)"
+  if [[ " ${images[*]} " =~ snapshot-.* ]]; then
+    echo "base image was not deleted by the remove hook"
+    exit 1
+  fi

@@ -1,0 +1,17 @@
+name: library-unused
+base: core22
+version: '0.1'
+summary: Raise linter warnings for unused libraries.
+description: spread test
+
+grade: devel
+confinement: strict
+
+parts:
+  my-part:
+    plugin: nil
+    source: src
+    stage-packages:
+      - libpng16-16
+    override-build:
+      gcc -o $CRAFT_PART_INSTALL/linter-test test.c
