@@ -4,7 +4,8 @@ summary: test
 description: Defining LD_LIBRARY_PATH or PATH should override default values.
 architectures:
 - amd64
-base: core22
+base: core24
+build-base: devel
 apps:
   paths-user-defined:
     command: usr/bin/hello

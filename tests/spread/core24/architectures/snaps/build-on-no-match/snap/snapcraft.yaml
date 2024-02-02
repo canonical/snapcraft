@@ -6,7 +6,8 @@ description: |
   no snaps should be built.
 grade: devel
 confinement: strict
-base: core22
+base: core24
+build-base: devel
 architectures:
   - build-on: arm64
     build-for: arm64

@@ -6,7 +6,8 @@ description: |
   most important story about your snap. Keep it under 100 words though,
   we live in tweetspace and your description wants to look good in the snap
   store.
-base: core22
+base: core24
+build-base: devel
 
 grade: devel
 confinement: devmode

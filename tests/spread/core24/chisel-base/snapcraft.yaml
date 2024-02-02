@@ -1,7 +1,7 @@
 name: core2x
 type: base
-build-base: core22
-summary: base using chisel from core22 assets
+build-base: devel
+summary: base using chisel from core24 assets
 description: |
   Test creating a base using a stable release of chisel
 version: 0+git

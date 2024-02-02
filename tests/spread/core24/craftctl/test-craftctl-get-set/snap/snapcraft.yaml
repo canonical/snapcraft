@@ -3,7 +3,8 @@ summary: test
 description: test
 grade: devel
 confinement: strict
-base: core22
+base: core24
+build-base: devel
 adopt-info: hello
 
 apps:

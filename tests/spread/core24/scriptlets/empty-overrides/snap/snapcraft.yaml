@@ -1,9 +1,10 @@
 name: test-snap
-base: core22
+base: core24
+build-base: devel
 version: '0.1'
 summary: test snap
 description: test snap
-grade: stable
+grade: devel
 confinement: strict
 parts:
   test-part:

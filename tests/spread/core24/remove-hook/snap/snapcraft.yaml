@@ -1,9 +1,10 @@
 name: remove-hook
-base: core22
+base: core24
+build-base: devel
 version: '1.0'
 summary: 'remove-hook'
 description: Verify remove hook works.
-grade: stable
+grade: devel
 confinement: strict
 
 parts:

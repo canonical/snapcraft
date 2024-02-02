@@ -1,5 +1,6 @@
 name: package-cutoff
-base: core22
+base: core24
+build-base: devel
 version: '1.0'
 summary: 'test'
 description: test

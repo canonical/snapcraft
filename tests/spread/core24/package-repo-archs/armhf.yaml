@@ -2,9 +2,10 @@ name: test-archs
 version: '1.0'
 summary: test package repos with different architectures
 description: test package repos with different architectures
-grade: stable
+grade: devel
 confinement: strict
-base: core22
+base: core24
+build-base: devel
 architectures:
   - build-on: amd64
 

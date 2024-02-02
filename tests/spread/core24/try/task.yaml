@@ -1,4 +1,4 @@
-summary: Test "snapcraft try" in core22
+summary: Test "snapcraft try" in core24
 
 execute: |
   # TODO if we let `snapcraft try` create the dir, we get a permission error

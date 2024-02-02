@@ -1,4 +1,4 @@
-summary: Test scriptlets variables on core22
+summary: Test scriptlets variables on core24
 
 environment:
   SNAP/test_variables: test-variables
@@ -22,7 +22,7 @@ execute: |
 
   check_vars() {
     file="$1"
-    root="/snapcraft/tests/spread/core22/environment/snaps/test-variables"
+    root="/snapcraft/tests/spread/core24/environment/snaps/test-variables"
     echo "==== $file ===="
     cat "$file"
     for exp in \

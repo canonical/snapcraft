@@ -2,9 +2,10 @@ name: test-multi-keys
 version: '1.0'
 summary: test
 description: test installing a package repository with an asset file with multiple keys
-grade: stable
+grade: devel
 confinement: strict
-base: core22
+base: core24
+build-base: devel
 
 parts:
   test-ppa:

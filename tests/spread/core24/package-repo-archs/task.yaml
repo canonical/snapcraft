@@ -1,4 +1,4 @@
-summary: Test using package-repositories with different architectures on core22
+summary: Test using package-repositories with different architectures on core24
 
 environment:
   SNAP_ARCH/i386: i386
