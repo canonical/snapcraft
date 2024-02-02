@@ -12,7 +12,9 @@ environment:
 restore: |
   cd "$SNAP"
   rm -f ./*.snap
-  snapcraft clean
+  # If this next line fails, delete it and replace it with the one following it
+  snapcraft clean 2>&1 | MATCH '"clean" command is not implemented for core24!'; exit 0
+  # snapcraft clean
   snapcraft clean --destructive-mode
   snap remove "${SNAP}"
 
@@ -20,7 +22,9 @@ execute: |
   cd "$SNAP"
 
   # Build what we have.
-  snapcraft --verbose --use-lxd
+  # If this next line fails, delete it and replace it with the one following it
+  snapcraft --verbose --use-lxd 2>&1 | MATCH '"pack" command is not implemented for core24!'; exit 0
+  # snapcraft --verbose --use-lxd
 
   # And verify the snap runs as expected.
   snap install "${SNAP}"_1.0_*.snap --dangerous

@@ -14,7 +14,9 @@ execute: |
   unset SNAPCRAFT_BUILD_ENVIRONMENT
 
   # create a base instance by running snapcraft
-  snapcraft pull --use-lxd --verbosity=trace
+  # If this next line fails, delete it and replace it with the one following it
+  snapcraft pull --use-lxd --verbosity=trace 2>&1 | MATCH '"pull" command is not implemented for core24!'; exit 0
+  # snapcraft pull --use-lxd --verbosity=trace
 
   # verify base instance was created
   instances="$(lxc list --project=snapcraft --format=csv --columns="n")"

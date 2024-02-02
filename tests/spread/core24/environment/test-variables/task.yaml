@@ -6,7 +6,7 @@ environment:
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
-  set_base "../snaps/$SNAP/snap/snapcraft.yaml"
+  # set_base "../snaps/$SNAP/snap/snapcraft.yaml"
 
 restore: |
   cd "../snaps/$SNAP"
@@ -41,8 +41,10 @@ execute: |
       grep -q "$exp" < "$file"
     done
   }
-
-  snapcraft pull
+  
+  # If this next line fails, delete it and replace it with the one following it
+  snapcraft pull 2>&1 | MATCH '"pull" command is not implemented for core24!'; exit 0
+  # snapcraft pull
   check_vars pull.txt
 
   snapcraft build

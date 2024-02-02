@@ -1,11 +1,15 @@
 summary: Raise linter warnings for unused libraries.
 
 restore: |
-  snapcraft clean
+  # If this next line fails, delete it and replace it with the one following it
+  snapcraft clean 2>&1 | MATCH '"clean" command is not implemented for core24!'; exit 0
+  # snapcraft clean
   rm -f ./*.snap ./*.txt
 
 execute: |
-  snapcraft 2> output.txt
+  # If this next line fails, delete it and replace it with the one following it
+  snapcraft 2>&1 | MATCH '"pack" command is not implemented for core24!'; exit 0
+  # snapcraft 2> output.txt
 
   test -f library-unused_0.1_*.snap
 

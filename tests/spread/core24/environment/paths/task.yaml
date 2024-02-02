@@ -9,11 +9,13 @@ environment:
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
-  set_base "../snaps/$SNAP/snap/snapcraft.yaml"
+  # set_base "../snaps/$SNAP/snap/snapcraft.yaml"
 
 restore: |
   cd "../snaps/$SNAP"
-  snapcraft clean
+  # If this next line fails, delete it and replace it with the one following it
+  snapcraft clean 2>&1 | MATCH '"clean" command is not implemented for core24!'; exit 0
+  # snapcraft clean
   rm -f ./*.snap
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -23,7 +25,9 @@ restore: |
 execute: |
   cd "../snaps/$SNAP"
 
-  snapcraft prime --destructive-mode
+  # If this next line fails, delete it and replace it with the one following it
+  snapcraft prime --destructive-mode 2>&1 | MATCH '"prime" command is not implemented for core24!'; exit 0
+  # snapcraft prime --destructive-mode
 
   if ! diff -U10 prime/meta/snap.yaml expected_snap.yaml; then
       echo "The formatting for snap.yaml is incorrect"

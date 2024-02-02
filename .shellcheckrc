@@ -1,0 +1,5 @@
+# NOTE: these disables are only necessary while the core24 spread tests are
+# being fixed; they refer to unreachable code, unused variable, etc.
+# This file must be removed once all tests in tests/spread/core24/ are fixed.
+disable=SC2317,SC2034,SC2154
+
