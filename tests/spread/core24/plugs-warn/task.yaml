@@ -1,9 +1,13 @@
 summary: Check warnings for top-level enabling of slots and plugs
 
 restore: |
-  snapcraft clean --destructive-mode
+  # If this next line fails, delete it and replace it with the one following it
+  snapcraft clean --destructive-mode 2>&1 | MATCH '"clean" command is not implemented for core24!'; exit 0
+  # snapcraft clean --destructive-mode
   rm -f ./*.snap
 
 execute: |
   expected_output=$(< expected_output.txt)
-  snapcraft pull -v --destructive-mode | MATCH "$expected_output"
+  # If this next line fails, delete it and replace it with the one following it
+  snapcraft pull -v --destructive-mode 2>&1 | MATCH '"pull" command is not implemented for core24!'; exit 0
+  # snapcraft pull -v --destructive-mode | MATCH "$expected_output"

@@ -4,11 +4,15 @@ environment:
   SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
 restore: |
-  snapcraft clean
+  # If this next line fails, delete it and replace it with the one following it
+  snapcraft clean 2>&1 | MATCH '"clean" command is not implemented for core24!'; exit 0
+  # snapcraft clean
   rm -f ./*.snap
 
 execute: |
-  snapcraft pack
+  # If this next line fails, delete it and replace it with the one following it
+  snapcraft pack 2>&1 | MATCH '"pack" command is not implemented for core24!'; exit 0
+  # snapcraft pack
   snap install core2x_*.snap --dangerous
 
   # verify that the chisel packages made it to the base
