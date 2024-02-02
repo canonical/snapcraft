@@ -2,9 +2,10 @@ name: clean-i-am-40-characters-long-xxxxxxxxxx
 version: '1.0'
 summary: test
 description: test
-grade: stable
+grade: devel
 confinement: strict
-base: core22
+base: core24
+build-base: devel
 
 parts:
   part1:

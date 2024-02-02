@@ -1,4 +1,4 @@
-summary: Test various package-repository configurations on core22
+summary: Test various package-repository configurations on core24
 
 environment:
   SNAP/test_apt_key_fingerprint: test-apt-key-fingerprint

@@ -5,7 +5,8 @@ description: |
   Test building of `build-for: all`
 grade: devel
 confinement: strict
-base: core22
+base: core24
+build-base: devel
 architectures:
   - build-on: amd64
     build-for: all

@@ -7,7 +7,8 @@ description: |
   variables are still handled.
 architectures:
 - amd64
-base: core22
+base: core24
+build-base: devel
 apps:
   paths-one-null:
     command: usr/bin/hello

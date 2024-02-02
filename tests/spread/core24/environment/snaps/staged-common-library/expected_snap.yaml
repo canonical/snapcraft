@@ -6,7 +6,8 @@ description: |
   to be included in the LD_LIBRARY_PATH environmental variable.
 architectures:
 - amd64
-base: core22
+base: core24
+build-base: devel
 apps:
   staged-common-library:
     command: test-cmd

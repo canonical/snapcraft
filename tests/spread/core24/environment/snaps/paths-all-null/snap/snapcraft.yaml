@@ -8,7 +8,8 @@ description: |
   in the resulting snap.yaml.
 grade: devel
 confinement: strict
-base: core22
+base: core24
+build-base: devel
 
 environment:
   LD_LIBRARY_PATH: null

@@ -1,4 +1,4 @@
-summary: Test clean commands on core22
+summary: Test clean commands on core24
 
 environment:
   SNAP/clean: clean

@@ -5,9 +5,10 @@ description: |
   Check linter warnings when using the ros2-humble extension with additional
   user-provided lint ignores.
 
-grade: stable
+grade: devel
 confinement: strict
-base: core22
+base: core24
+build-base: devel
 
 apps:
   linter-ros2-humble:
