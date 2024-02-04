@@ -1,3 +1,17 @@
+list_snapcraft_parts() {
+    # first get intend
+    #  find first line after 'parts:.*' ignoring comments and empty lines
+    #  this is first part name, determine used indent from it
+    local indent=$(sed 's/\(.*\)#.*/\1/ ; /^[[:space:]]*$/d' ${1} | sed -n '/parts:.*/{n;p}' | sed 's/\([[:space:]]\+\).*/\1/')
+    # parse file in stages
+    #  print all line after 'parts:.*' ignoring comments and empty lines
+    #  stop at first line not starting with white space
+    #  only print lines starting with indent followed by non white space
+    sed 's/\(.*\)#.*/\1/ ; /^[[:space:]]*$/d ; 1,/parts:.*/d' ${1} | \
+        sed -n '/^[^[:space:]]/q;p' | \
+        sed -e 's/'"${indent}"'\(.*\):/\1/ ; /^[[:space:]]/d'
+}
+
 _snapcraft()
 {
     local cur prev opts
@@ -6,7 +20,7 @@ _snapcraft()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="help init list-plugins plugins login logout export-login list-keys keys create-key register-key register registered list-registered push release clean cleanbuild pull build sign-build stage prime snap update define search gated validate history status close enable-ci expand-extensions extension extensions list-extensions"
+    opts="help init list-plugins plugins login logout export-login list-keys keys create-key register-key register registered list-registered push release clean cleanbuild pull build sign-build stage prime pack update define search gated validate history status close enable-ci expand-extensions extension extensions list-extensions --target-arch --build-for --debug --shell --shell-after ---provider -h --help --verbose"
 
     case "$prev" in
     help)
@@ -14,7 +28,7 @@ _snapcraft()
         COMPREPLY=( $(compgen -W "$plugins" -- $cur))
         return 0
         ;;
-    snap)
+    pack)
         _filedir -d
         return 0
         ;;
@@ -24,6 +38,26 @@ _snapcraft()
         ;;
     enable-ci)
         COMREPLY=( travis )
+        return 0
+        ;;
+    --target-arch | --build-for)
+        arch_options="arm64 armhf amd64 riscv64"
+        COMPREPLY=( $(compgen -W "$arch_options" -- $cur))
+        return 0
+        ;;
+    build | clean | pull | stage | prime)
+        # first find snapcraft.yaml
+        for sy in snapcraft.yaml snap/snapcraft.yaml build-aux/snapcraft.yaml build-aux/snap/snapcraft.yaml
+        do
+            if [ -e ${sy} ]; then
+                snapcraft_yaml="${sy}"
+                break
+            fi
+        done
+        if [ -n "${snapcraft_yaml}" ]; then
+            parts_options=$(list_snapcraft_parts ${snapcraft_yaml})
+            COMPREPLY=( $(compgen -W "$parts_options" -- $cur))
+        fi
         return 0
         ;;
     *)
