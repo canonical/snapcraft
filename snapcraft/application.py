@@ -24,6 +24,7 @@ import signal
 import sys
 from typing import Any
 
+import craft_application.commands as craft_app_commands
 import craft_cli
 from craft_application import Application, AppMetadata, util
 from craft_cli import emit
@@ -193,7 +194,7 @@ def main() -> int:
             unimplemented.Build,
             unimplemented.Stage,
             unimplemented.Prime,
-            unimplemented.Pack,
+            craft_app_commands.lifecycle.PackCommand,
             unimplemented.RemoteBuild,
             unimplemented.Snap,  # Hidden (legacy compatibility)
             unimplemented.Plugins,
