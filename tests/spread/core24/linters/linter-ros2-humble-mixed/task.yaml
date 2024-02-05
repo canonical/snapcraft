@@ -1,9 +1,7 @@
 summary: Check linter warnings ros2-humble extension plus user ignores.
 
 restore: |
-  # If this next line fails, delete it and replace it with the one following it
-  snapcraft clean 2>&1 | MATCH '"clean" command is not implemented for core24!'; exit 0
-  # snapcraft clean
+  snapcraft clean
   rm -f ./*.snap ./*.txt
 
 execute: |

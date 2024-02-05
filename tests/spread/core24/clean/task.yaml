@@ -24,9 +24,7 @@ execute: |
   # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
   unset SNAPCRAFT_BUILD_ENVIRONMENT
 
-  # If this next line fails, delete it and replace it with the one following it
-  snapcraft pack 2>&1 | MATCH '"pack" command is not implemented for core24!'; exit 0
-  # snapcraft pack
+  snapcraft pack
   snapcraft clean part1
   lxc --project=snapcraft list | grep snapcraft-clean
 

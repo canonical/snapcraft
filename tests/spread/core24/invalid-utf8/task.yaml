@@ -1,12 +1,8 @@
 summary: Handle invalid utf-8 text during the build
 
 restore: |
-  # If this next line fails, delete it and replace it with the one following it
-  snapcraft clean 2>&1 | MATCH '"clean" command is not implemented for core24!'; exit 0
-  # snapcraft clean
+  snapcraft clean
   rm -f ./*.snap
 
 execute: |
-  # If this next line fails, delete it and replace it with the one following it
-  snapcraft pack -v 2>&1 | MATCH '"pack" command is not implemented for core24!'; exit 0
-  # snapcraft pack -v 2>&1 | MATCH ":: hi � bye"
+  snapcraft pack -v 2>&1 | MATCH ":: hi � bye"
