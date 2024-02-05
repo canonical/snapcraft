@@ -182,7 +182,10 @@ Examples include:
 * type changes
 * accommodating a developer-facing deprecation warning
 * many *small* fixes for an existing PR
-* merge commits (``chore(merge):``)
+* merge commits (``chore(merge): '<branch1>' into '<branch2>'``)
+
+  * the remote name should not be included (i.e. use ``'main'``
+    instead of ``'origin/main'``)
 
 Choosing the right type
 """""""""""""""""""""""
