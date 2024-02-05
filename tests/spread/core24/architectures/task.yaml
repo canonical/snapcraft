@@ -17,9 +17,7 @@ prepare: |
 
 restore: |
   cd "./snaps/$SNAP"
-  # If this next line fails, delete it and replace it with the one following it
-  snapcraft clean 2>&1 | MATCH '"clean" command is not implemented for core24!'; exit 0
-  # snapcraft clean
+  snapcraft clean
   rm -f ./*.snap
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -38,16 +36,11 @@ execute: |
     eval $(cat "environmental-variables.txt") snapcraft pack --destructive-mode
   # if the arguments variable file exists, then call snapcraft with the arguments
   elif [[ -e "arguments.txt" ]]; then
-    # If this next line fails, delete it and replace it with the one following it
-    # shellcheck disable=SC2046
-    snapcraft pack --destructive-mode $(cat "arguments.txt") 2>&1 | MATCH '"pack" command is not implemented for core24!'; exit 0
     # shellcheck disable=SC2046
     eval snapcraft pack --destructive-mode $(cat "arguments.txt")
   # otherwise, just call `snapcraft pack`
   else
-    # If this next line fails, delete it and replace it with the one following it
-    snapcraft pack --destructive-mode 2>&1 | MATCH '"pack" command is not implemented for core24!'; exit 0
-    # snapcraft pack --destructive-mode
+    snapcraft pack --destructive-mode
   fi
 
   # confirm the snaps with the expected architectures were built
