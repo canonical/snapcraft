@@ -15,37 +15,41 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Create snap.yaml metadata file."""
+from __future__ import annotations
 
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Set, Union, cast
 
+import pydantic
 import yaml
-from craft_application.models import UniqueStrList
+from craft_application.models import BaseMetadata, constraints
 from craft_cli import emit
-from pydantic import Extra, ValidationError, validator
-from pydantic_yaml import YamlModel
+from pydantic import ValidationError, validator
+from typing_extensions import override
 
 from snapcraft import errors, models
 from snapcraft.utils import get_ld_library_paths, process_version
 
 
-class _SnapMetadataModel(YamlModel):
-    class Config:  # pylint: disable=too-few-public-methods
-        """Pydantic model configuration."""
+class SnapcraftMetadata(BaseMetadata):
+    """Snapcraft-specific metadata base model."""
 
-        allow_population_by_field_name = True
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+    def marshal(self) -> dict[str, str | list[str] | dict[str, Any]]:
+        """Convert to a dictionary."""
+        return self.dict(
+            by_alias=True, exclude_unset=True, exclude_none=True, exclude_defaults=True
+        )
 
 
-class Socket(_SnapMetadataModel):
+class Socket(SnapcraftMetadata):
     """snap.yaml app socket entry."""
 
     listen_stream: Union[int, str]
     socket_mode: Optional[int]
 
 
-class SnapApp(_SnapMetadataModel):
+class SnapApp(SnapcraftMetadata):
     """Snap.yaml app entry.
 
     This is currently a partial implementation, see
@@ -54,11 +58,6 @@ class SnapApp(_SnapMetadataModel):
     TODO: implement desktop (CRAFT-804)
     TODO: implement extensions (CRAFT-805)
     """
-
-    class Config:  # type: ignore[reportIncompatibleVariableOverride]
-        """Pydantic model configuration."""
-
-        extra = Extra.allow
 
     command: str
     autostart: Optional[str]
@@ -90,8 +89,14 @@ class SnapApp(_SnapMetadataModel):
     activates_on: Optional[List[str]]
 
 
-class ContentPlug(_SnapMetadataModel):
+class ContentPlug(SnapcraftMetadata):  # type: ignore # (pydantic plugin is crashing)
     """Content plug definition in the snap metadata."""
+
+    @override
+    class Config(BaseMetadata.Config):
+        """Allow extra parameters in content plugs."""
+
+        extra = pydantic.Extra.ignore
 
     interface: Literal["content"]
     target: str
@@ -141,7 +146,7 @@ class ContentPlug(_SnapMetadataModel):
         return self.default_provider
 
 
-class ContentSlot(_SnapMetadataModel):
+class ContentSlot(SnapcraftMetadata):
     """Content slot definition in the snap metadata."""
 
     interface: Literal["content"]
@@ -176,22 +181,25 @@ class ContentSlot(_SnapMetadataModel):
         return content_dirs
 
 
-class Links(_SnapMetadataModel):
+class Links(SnapcraftMetadata):
     """Metadata links used in snaps."""
 
-    contact: Optional[UniqueStrList]
-    donation: Optional[UniqueStrList]
-    issues: Optional[UniqueStrList]
-    source_code: Optional[UniqueStrList]
-    website: Optional[UniqueStrList]
+    contact: Optional[constraints.UniqueStrList]
+    donation: Optional[constraints.UniqueStrList]
+    issues: Optional[constraints.UniqueStrList]
+    source_code: Optional[constraints.UniqueStrList]
+    website: Optional[constraints.UniqueStrList]
 
     @staticmethod
     def _normalize_value(
-        value: Optional[Union[str, UniqueStrList]]
-    ) -> Optional[UniqueStrList]:
+        value: str | constraints.UniqueStrList | None,
+    ) -> constraints.UniqueStrList | None:
+        result: constraints.UniqueStrList | None
         if isinstance(value, str):
-            value = cast(UniqueStrList, [value])
-        return value
+            result = cast(constraints.UniqueStrList, [value])
+        else:
+            result = value
+        return result
 
     @classmethod
     def from_project(cls, project: models.Project) -> "Links":
@@ -211,17 +219,12 @@ class Links(_SnapMetadataModel):
         )
 
 
-class SnapMetadata(_SnapMetadataModel):
+class SnapMetadata(SnapcraftMetadata):
     """The snap.yaml model.
 
     This is currently a partial implementation, see
     https://snapcraft.io/docs/snap-format for details.
     """
-
-    class Config:  # type: ignore[reportIncompatibleVariableOverride]
-        """Pydantic model configuration."""
-
-        extra = Extra.allow
 
     name: str
     title: Optional[str]
@@ -410,16 +413,15 @@ def _get_grade(grade: Optional[str], build_base: Optional[str]) -> str:
     return grade
 
 
-def write(project: models.Project, prime_dir: Path, *, arch: str):
-    """Create a snap.yaml file.
+def get_metadata_from_project(
+    project: models.Project, prime_dir: Path, *, arch: str
+) -> SnapMetadata:
+    """Get a SnapMetadata object from a project.
 
     :param project: Snapcraft project.
     :param prime_dir: The directory containing the content to be snapped.
     :param arch: Target architecture the snap project is built to.
     """
-    meta_dir = prime_dir / "meta"
-    meta_dir.mkdir(parents=True, exist_ok=True)
-
     assumes: Set[str] = set()
 
     snap_apps: Dict[str, SnapApp] = {}
@@ -471,17 +473,22 @@ def write(project: models.Project, prime_dir: Path, *, arch: str):
         for name, value in project.passthrough.items():
             setattr(snap_metadata, name, value)
 
-    yaml.add_representer(str, _repr_str, Dumper=yaml.SafeDumper)
-    yaml_data = snap_metadata.yaml(
-        by_alias=True,
-        exclude_none=True,
-        allow_unicode=True,
-        sort_keys=False,
-        width=1000,
-    )
+    return snap_metadata
 
-    snap_yaml = meta_dir / "snap.yaml"
-    snap_yaml.write_text(yaml_data)
+
+def write(project: models.Project, prime_dir: Path, *, arch: str):
+    """Create a snap.yaml file.
+
+    :param project: Snapcraft project.
+    :param prime_dir: The directory containing the content to be snapped.
+    :param arch: Target architecture the snap project is built to.
+    """
+    snap_metadata = get_metadata_from_project(project, prime_dir, arch=arch)
+
+    meta_dir = prime_dir / "meta"
+    meta_dir.mkdir(parents=True, exist_ok=True)
+
+    snap_metadata.to_yaml_file(meta_dir / "snap.yaml")
 
 
 def _repr_str(dumper, data):
