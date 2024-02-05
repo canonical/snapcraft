@@ -26,7 +26,7 @@ dev = [
 lint = [
     "black==24.1.1",
     "codespell[toml]==2.2.6",
-    "ruff==0.1.14",
+    "ruff==0.2.0",
     "yamllint==1.33.0"
 ]
 types = [
