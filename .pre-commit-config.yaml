@@ -13,18 +13,18 @@ repos:
       - id: fix-byte-order-marker
       - id: mixed-line-ending
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    # renovate: datasource=pypi;depName=ruff
+    # renovate: datasource=pypi;depName=lint/ruff
     rev: "v0.1.15"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
   - repo: https://github.com/psf/black
-    # renovate: datasource=pypi;depName=black
+    # renovate: datasource=pypi;depName=lint/black
     rev: "24.1.1"
     hooks:
       - id: black
   - repo: https://github.com/adrienverge/yamllint.git
-    # renovate: datasource=pypi;depName=yamllint
+    # renovate: datasource=pypi;depName=lint/yamllint
     rev: "v1.33.0"
     hooks:
       - id: yamllint
