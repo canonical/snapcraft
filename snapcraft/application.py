@@ -189,7 +189,7 @@ def main() -> int:
     app.add_command_group(
         "Lifecycle",
         [
-            unimplemented.Clean,
+            craft_app_commands.lifecycle.CleanCommand,
             unimplemented.Pull,
             unimplemented.Build,
             unimplemented.Stage,
