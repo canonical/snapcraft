@@ -30,7 +30,9 @@ class ROS2HumbleRosCoreExtension(ROS2HumbleMetaBase):
 
     @functools.cached_property
     @overrides
-    def ros2_humble_snaps(self) -> ROS2HumbleSnaps:
+    def ros2_humble_snaps(  # type: ignore[reportIncompatibleMethodOverride]
+        self,
+    ) -> ROS2HumbleSnaps:
         return ROS2HumbleSnaps(
             sdk="ros-humble-ros-core-dev",
             content="ros-humble-ros-core",

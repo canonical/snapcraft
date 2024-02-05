@@ -312,7 +312,7 @@ class SnapInjector:
         """
         Initialize a SnapInjector instance.
 
-        :param str registry_filepath: path to where recordings of previusly installed
+        :param str registry_filepath: path to where recordings of previously installed
                                       revisions of a snap can be queried and recorded.
         :param runner: a callable which can run commands in the build environment.
         :param file_pusher: a callable that can push file from the host into the build

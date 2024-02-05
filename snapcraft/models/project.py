@@ -34,6 +34,8 @@ from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_effective_base,
     get_host_architecture,
+    get_supported_architectures,
+    is_architecture_supported,
 )
 
 # A workaround for mypy false positives
@@ -100,6 +102,19 @@ def _validate_architectures(architectures):
                         f"multiple items will build snaps that claim to run on {architecture}"
                     )
                 unique_build_fors.add(architecture)
+
+    # validate architectures are supported
+    if len(architectures):
+        for element in architectures:
+            for arch in element.build_for + element.build_on:
+                if arch != "all" and not is_architecture_supported(arch):
+                    supported_archs = utils.humanize_list(
+                        get_supported_architectures(), "and"
+                    )
+                    raise ValueError(
+                        f"Architecture {arch!r} is not supported. Supported "
+                        f"architectures are {supported_archs}."
+                    )
 
     return architectures
 
@@ -554,6 +569,15 @@ class Project(models.Project):
         if values.get("build_base") == "devel" and values.get("grade") == "stable":
             raise ValueError("grade must be 'devel' when build-base is 'devel'")
         return values
+
+    @pydantic.validator("base", always=True)
+    @classmethod
+    def _validate_base(cls, base, values):
+        """Not allowed to use unstable base without devel build-base."""
+        if values.get("base") == "core24" and values.get("build_base") != "devel":
+            raise ValueError("build-base must be 'devel' when base is 'core24'")
+
+        return base
 
     @pydantic.validator("build_base", always=True)
     @classmethod

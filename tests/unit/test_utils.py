@@ -118,6 +118,8 @@ def test_strtobool_value_error(value: str):
         (None, None, "other", "name", None),
         ("base", "build_base", "other", "name", "build_base"),
         ("base", None, "other", "name", "base"),
+        ("base", "devel", "other", "name", "base"),
+        ("base", "devel", "base", "name", "devel"),
     ],
 )
 def test_get_effective_base(base, build_base, project_type, name, expected_base):
@@ -476,6 +478,38 @@ def test_process_version_git(mocker):
     )
 
     assert utils.process_version("git") == "1.2.3-dirty"
+
+
+###########################
+# Supported architectures #
+###########################
+
+
+@pytest.mark.parametrize("arch", utils.get_supported_architectures())
+def test_is_architecture_supported(arch):
+    """Supported architectures should return true."""
+    assert utils.is_architecture_supported(arch)
+
+
+def test_is_architecture_not_supported():
+    """Unsupported architectures should return false."""
+    assert not utils.is_architecture_supported("unknown")
+
+
+def get_supported_architectures():
+    """Validate list of supported architectures."""
+    supported_archs = utils.get_supported_architectures()
+
+    assert supported_archs == [
+        "arm64",
+        "armhf",
+        "i386",
+        "powerpc",
+        "ppc64el",
+        "amd64",
+        "s390x",
+        "riscv64",
+    ]
 
 
 #########################

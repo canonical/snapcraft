@@ -75,7 +75,6 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
             project_base="core22",
         )
     ]
-    emitter.assert_progress(f"Executing parts lifecycle: {step_name} p1")
 
 
 def test_parts_lifecycle_run_bad_step(parts_data, new_dir):

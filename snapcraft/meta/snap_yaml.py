@@ -55,7 +55,7 @@ class SnapApp(_SnapMetadataModel):
     TODO: implement extensions (CRAFT-805)
     """
 
-    class Config:
+    class Config:  # type: ignore[reportIncompatibleVariableOverride]
         """Pydantic model configuration."""
 
         extra = Extra.allow
@@ -218,7 +218,7 @@ class SnapMetadata(_SnapMetadataModel):
     https://snapcraft.io/docs/snap-format for details.
     """
 
-    class Config:
+    class Config:  # type: ignore[reportIncompatibleVariableOverride]
         """Pydantic model configuration."""
 
         extra = Extra.allow

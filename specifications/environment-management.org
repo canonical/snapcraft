@@ -52,7 +52,7 @@ their lifecycle.
 
 ** Creation
 
-Snapcraft shall re-use a previously instantiated =build-instance= for
+Snapcraft shall reuse a previously instantiated =build-instance= for
 =project-instance=, if available for the configured provider.
 
 If no matching =build-instance= exists for the configured provider,

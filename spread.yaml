@@ -57,6 +57,10 @@ backends:
           storage: 12G
           workers: 6
 
+      - fedora-39-64:
+          workers: 2
+          manual: true
+
   multipass:
     type: adhoc
     allocate: |
@@ -172,45 +176,30 @@ prepare: |
     exit 1
   fi
 
-  # This unfortunately cannot be extracted into a standalone script since this
-  # portion of of YAML runs before the source code has been fetched.
-
-  # 'apt-get update' is hanging on security.ubuntu.com with IPv6. Prefer IPv4 over
-  # IPv6
-  cat <<EOF > gai.conf
-  precedence  ::1/128       50
-  precedence  ::/0          40
-  precedence  2002::/16     30
-  precedence ::/96          20
-  precedence ::ffff:0:0/96 100
-  EOF
-  if ! mv gai.conf /etc/gai.conf; then
-      echo "/etc/gai.conf is not writable, ubuntu-core system? apt-get update won't"
-      echo "be affected in that case"
-      rm -f gai.conf
-  fi
-
   # Now run 'apt-get update', but don't show output unless it fails. The logs are
   # long enough as it is.
-  tempfile="$(mktemp)"
-  if ! apt-get update > "$tempfile" 2>&1; then
-      cat "$tempfile"
-      exit 1
+  if os.query is-ubuntu; then
+    tempfile="$(mktemp)"
+    if ! apt-get update > "$tempfile" 2>&1; then
+        cat "$tempfile"
+        exit 1
+    fi
   fi
 
-  apt-get install -y snapd
-  snap install snapd
+  tests.pkgs install snapd
+
   snap wait system seed.loaded
 
-  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
-      # Remove lxd and lxd-client deb packages as our implementation (pylxd) does not
-      # nicely handle the snap and deb being installed at the same time.
-      apt-get remove --purge --yes lxd lxd-client
-  fi
+    # The /snap directory does not exist in some environments
+  [ ! -d /snap ] && ln -s /var/lib/snapd/snap /snap
 
-  install_lxd
-  # Add the ubuntu user to the lxd group.
-  adduser ubuntu lxd
+  # older linux releases have separate packages for lxd and lxc (lxd-client)
+  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+    tests.pkgs remove lxd lxd-client
+  else
+    tests.pkgs remove lxd
+  fi
+  snap install lxd --channel=latest/stable
 
   # Hold snap refreshes for 24h.
   snap set system refresh.hold="$(date --date=tomorrow +%Y-%m-%dT%H:%M:%S%:z)"
@@ -221,10 +210,8 @@ prepare: |
       journalctl -xe
   fi
 
-  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
-      /snap/bin/lxd waitready --timeout=30
-      /snap/bin/lxd init --auto
-  fi
+  /snap/bin/lxd waitready --timeout=30
+  /snap/bin/lxd init --auto
 
   install_snapcraft
 

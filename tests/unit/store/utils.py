@@ -28,7 +28,7 @@ class FakeResponse(requests.Response):
 
     @property
     def content(self):
-        return self._content
+        return self._content or b""
 
     @property
     def ok(self):
@@ -38,9 +38,13 @@ class FakeResponse(requests.Response):
         return json.loads(self._content)  # type: ignore
 
     @property
-    def reason(self):
-        return self._content
+    def reason(self):  # type: ignore[reportIncompatibleVariableOverride]
+        if self._content:
+            return self._content.decode()
+        return ""
 
     @property
     def text(self):
-        return self.content
+        if self._content:
+            return self._content.decode()
+        return ""
