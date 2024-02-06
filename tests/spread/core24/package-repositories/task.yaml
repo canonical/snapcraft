@@ -21,7 +21,7 @@ execute: |
 
   # Build what we have.
   # If this next line fails, delete it and replace it with the one following it
-  snapcraft --verbose --use-lxd 2>&1 | MATCH '"pack" command is not implemented for core24!'; exit 0
+  snapcraft --verbose --use-lxd 2>&1 | MATCH 'unrecognized arguments: --use-lxd'; exit 0
   # snapcraft --verbose --use-lxd
 
   # And verify the snap runs as expected.

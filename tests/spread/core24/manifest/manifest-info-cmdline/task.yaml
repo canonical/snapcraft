@@ -11,7 +11,7 @@ restore: |
 execute: |
   unset SNAPCRAFT_BUILD_ENVIRONMENT
   # If this next line fails, delete it and replace it with the one following it
-  snapcraft --use-lxd --enable-manifest --manifest-image-information='{"test-var": "value"}' 2>&1 | MATCH '"pack" command is not implemented for core24!'; exit 0
+  snapcraft --use-lxd --enable-manifest --manifest-image-information='{"test-var": "value"}' 2>&1 | MATCH "unrecognized arguments: --use-lxd --enable-manifest"; exit 0
   # snapcraft --use-lxd --enable-manifest --manifest-image-information='{"test-var": "value"}'
 
   unsquashfs manifest_0.1_*.snap
