@@ -156,10 +156,16 @@ class GNOME(Extension):
             },
             "layout": {
                 "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0": {
-                    "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0"
+                    "bind": (
+                        "$SNAP/gnome-platform/usr/lib/"
+                        "$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0"
+                    )
                 },
                 "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1": {
-                    "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1"
+                    "bind": (
+                        "$SNAP/gnome-platform/usr/lib/"
+                        "$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1"
+                    )
                 },
                 "/usr/share/xml/iso-codes": {
                     "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
@@ -196,7 +202,10 @@ class GNOME(Extension):
                             f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR",
                             f"/snap/{sdk_snap}/current/usr/lib",
                             f"/snap/{sdk_snap}/current/usr/lib/vala-current",
-                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio",
+                            (
+                                f"/snap/{sdk_snap}/current/usr/lib/"
+                                "$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio"
+                            ),
                         ],
                     ),
                 },
@@ -204,7 +213,10 @@ class GNOME(Extension):
                     "PKG_CONFIG_PATH": prepend_to_env(
                         "PKG_CONFIG_PATH",
                         [
-                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig",
+                            (
+                                f"/snap/{sdk_snap}/current/usr/lib/"
+                                "$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig"
+                            ),
                             f"/snap/{sdk_snap}/current/usr/lib/pkgconfig",
                             f"/snap/{sdk_snap}/current/usr/share/pkgconfig",
                         ],
@@ -248,7 +260,10 @@ class GNOME(Extension):
                         "GI_TYPELIB_PATH",
                         [
                             f"/snap/{sdk_snap}/current/usr/lib/girepository-1.0",
-                            f"/snap/{sdk_snap}/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0",
+                            (
+                                f"/snap/{sdk_snap}/usr/lib/"
+                                "$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0"
+                            ),
                         ],
                     )
                 },

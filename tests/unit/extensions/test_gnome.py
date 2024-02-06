@@ -220,7 +220,8 @@ class TestGetPartSnippet:
                 },
                 {
                     "PKG_CONFIG_PATH": (
-                        "/snap/gnome-42-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:"
+                        "/snap/gnome-42-2204-sdk/current/usr/lib/"
+                        "$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:"
                         "/snap/gnome-42-2204-sdk/current/usr/lib/pkgconfig:"
                         "/snap/gnome-42-2204-sdk/current/usr/share/pkgconfig"
                         "${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
@@ -259,7 +260,10 @@ class TestGetPartSnippet:
                     "GI_TYPELIB_PATH": ":".join(
                         [
                             "/snap/gnome-42-2204-sdk/current/usr/lib/girepository-1.0",
-                            "/snap/gnome-42-2204-sdk/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0",
+                            (
+                                "/snap/gnome-42-2204-sdk/usr/lib/"
+                                "$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0"
+                            ),
                         ]
                     )
                     + "${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
@@ -285,14 +289,18 @@ def test_get_part_snippet_with_external_sdk(gnome_extension_with_build_snap):
                         "/snap/gnome-44-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR",
                         "/snap/gnome-44-2204-sdk/current/usr/lib",
                         "/snap/gnome-44-2204-sdk/current/usr/lib/vala-current",
-                        "/snap/gnome-44-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio",
+                        (
+                            "/snap/gnome-44-2204-sdk/current/usr/lib/"
+                            "$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio"
+                        ),
                     ]
                 )
                 + "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
             },
             {
                 "PKG_CONFIG_PATH": (
-                    "/snap/gnome-44-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:"
+                    "/snap/gnome-44-2204-sdk/current/usr/lib/"
+                    "$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:"
                     "/snap/gnome-44-2204-sdk/current/usr/lib/pkgconfig:"
                     "/snap/gnome-44-2204-sdk/current/usr/share/pkgconfig"
                     "${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
@@ -331,7 +339,10 @@ def test_get_part_snippet_with_external_sdk(gnome_extension_with_build_snap):
                 "GI_TYPELIB_PATH": ":".join(
                     [
                         "/snap/gnome-44-2204-sdk/current/usr/lib/girepository-1.0",
-                        "/snap/gnome-44-2204-sdk/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0",
+                        (
+                            "/snap/gnome-44-2204-sdk/usr/lib/"
+                            "$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0"
+                        ),
                     ]
                 )
                 + "${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
