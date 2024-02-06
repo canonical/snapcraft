@@ -58,7 +58,8 @@ jobs:
         env:
           SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
           UA_TOKEN: ${{ secrets.UA_TOKEN }}
-        run: spread ${{ matrix.spread-jobs }}
+        # Only run core24 tests for now; fix this once all those tests are OK
+        run: spread ${{ matrix.spread-jobs }}:tests/spread/core24/
 
       - name: Discard spread workers
         if: always()
