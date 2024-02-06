@@ -1,10 +1,6 @@
 summary: Test the remote builder
 manual: true
 kill-timeout: 180m
-systems:
-  - -ubuntu-22.04
-  - -ubuntu-22.04-64
-  - -ubuntu-22.04-amd64
 
 environment:
   LAUNCHPAD_TOKEN: "$(HOST: echo ${LAUNCHPAD_TOKEN})"
@@ -18,11 +14,20 @@ prepare: |
   fi
 
   snapcraft init
+
+  # Commit the project
+  git config --global --add safe.directory "$PWD"
+  git add snap/snapcraft.yaml
+  git commit -m "Initial Commit"
+
+  # Setup launchpad token
   mkdir -p ~/.local/share/snapcraft/provider/launchpad/
   echo -e "$LAUNCHPAD_TOKEN" >> ~/.local/share/snapcraft/provider/launchpad/credentials
 
 restore: |
   rm -f ./*.snap ./*.txt
+
+  rm -rf snap .git
 
 execute: |
   export SNAPCRAFT_REMOTE_BUILD_STRATEGY="$STRATEGY"

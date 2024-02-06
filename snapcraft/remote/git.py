@@ -24,7 +24,24 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional
 
-import pygit2
+# Cannot catch the pygit2 error here raised by the global use of
+# pygit2.Settings on import. We would ideally use pygit2.Settings
+# for this
+try:
+    import pygit2
+except Exception:  # pylint: disable=broad-exception-caught
+    # This environment comes from ssl.get_default_verify_paths
+    _old_env = os.getenv("SSL_CERT_DIR")
+    # Needs updating when the base changes for Snapcraft
+    os.environ["SSL_CERT_DIR"] = "/snap/core22/current/etc/ssl/certs"
+    import pygit2
+
+    # Restore the environment in case Snapcraft shells out and the environment
+    # that was setup is required.
+    if _old_env is not None:
+        os.environ["SSL_CERT_DIR"] = _old_env
+    else:
+        del os.environ["SSL_CERT_DIR"]
 
 from .errors import GitError, RemoteBuildInvalidGitRepoError
 

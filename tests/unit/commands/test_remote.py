@@ -277,7 +277,10 @@ def test_get_effective_base_with_build_base(
 
     cli.run()
 
-    mock_run_new_or_fallback_remote_build.assert_called_once_with(build_base)
+    if build_base == "devel":
+        mock_run_new_or_fallback_remote_build.assert_called_once_with(base)
+    else:
+        mock_run_new_or_fallback_remote_build.assert_called_once_with(build_base)
 
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
