@@ -108,9 +108,10 @@
     {
       // .pre-commit-config.yaml version updates
       fileMatch: [".pre-commit-config.yaml"],
-      depTypeTemplate: "devDependencies",
+      datasourceTemplate: "pypi",
+      depTypeTemplate: "lint",
       matchStrings: [
-        "# renovate: datasource=(?<datasource>\\S+);\\s*depName=(?<depName>.*?)\n\\s+rev: \"v?(?<currentValue>.*?)\""
+        "- repo: .*/<(?<depName>\\S+)\\s*\\n\\s*rev:\s+\"?v?(?<currentValue>\\S*)\"?",
       ]
     }
   ],
