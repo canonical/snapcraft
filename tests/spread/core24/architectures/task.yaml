@@ -29,9 +29,6 @@ execute: |
 
   # if the environmental variable file exists, then call snapcraft with the environmental variables
   if [[ -e "environmental-variables.txt" ]]; then
-    # If this next line fails, delete it and replace it with the one following it
-    # shellcheck disable=SC2046
-    eval $(cat "environmental-variables.txt") snapcraft pack --destructive-mode 2>&1 | MATCH '"pack" command is not implemented for core24!'; exit 0
     # shellcheck disable=SC2046
     eval $(cat "environmental-variables.txt") snapcraft pack --destructive-mode
   # if the arguments variable file exists, then call snapcraft with the arguments
