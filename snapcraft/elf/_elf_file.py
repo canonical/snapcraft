@@ -260,11 +260,13 @@ class ElfFile:
 
                 for tag in section.iter_tags():
                     if tag.entry.d_tag == "DT_NEEDED":
-                        needed = tag.needed  # pyright: ignore[reportGeneralTypeIssues]
+                        needed = (
+                            tag.needed  # pyright: ignore[reportAttributeAccessIssue]
+                        )
                         self.needed[needed] = _NeededLibrary(name=needed)
                     elif tag.entry.d_tag == "DT_SONAME":
                         self.soname = (
-                            tag.soname  # pyright: ignore[reportGeneralTypeIssues]
+                            tag.soname  # pyright: ignore[reportAttributeAccessIssue]
                         )
 
             for segment in elf_file.iter_segments():
