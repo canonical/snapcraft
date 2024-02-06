@@ -1828,7 +1828,9 @@ class TestComponents:
         with pytest.raises(errors.ProjectValidationError, match=error):
             project.unmarshal(project_yaml_data(components=component))
 
-    @pytest.mark.parametrize("name", ["name", "name-with-dashes", "x" * 40])
+    @pytest.mark.parametrize(
+        "name", ["name", "name-with-dashes", "x" * 40, "foo-snap-bar"]
+    )
     def test_component_name_valid(
         self, project, name, project_yaml_data, stub_component_data
     ):
@@ -1842,6 +1844,14 @@ class TestComponents:
     @pytest.mark.parametrize(
         "name,error",
         [
+            (
+                "snap-",
+                "Component names cannot start with the reserved namespace 'snap-'"
+            ),
+            (
+                "snap-foo",
+                "Component names cannot start with the reserved namespace 'snap-'"
+            ),
             ("123456", "Component names can only use"),
             ("name-ends-with-digits-0123", "Component names can only use"),
             ("456-name-starts-with-digits", "Component names can only use"),
