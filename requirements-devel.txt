@@ -18,7 +18,7 @@ craft-grammar==1.1.2
 craft-parts==1.26.1
 craft-providers==1.22.0
 craft-store==2.6.0
-cryptography==41.0.7
+cryptography==42.0.0
 Deprecated==1.2.14
 dill==0.3.7
 distlib==0.3.8
