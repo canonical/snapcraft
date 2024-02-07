@@ -1811,6 +1811,73 @@ def test_patch_elf(snapcraft_yaml, mocker, new_dir):
     ]
 
 
+def test_patch_elf_with_override_prime(snapcraft_yaml, mocker, new_dir, emitter):
+    """Patch binaries with `enable-patchelf`` and override-prime defined"""
+    run_patchelf_mock = mocker.patch("snapcraft.elf._patcher.Patcher._run_patchelf")
+    shutil.copy("/bin/true", "elf.bin")
+    callbacks.register_post_step(parts_lifecycle._patch_elf, step_list=[Step.PRIME])
+
+    mocker.patch(
+        "snapcraft.elf.elf_utils.get_dynamic_linker",
+        return_value="/snap/core22/current/lib64/ld-linux-x86-64.so.2",
+    )
+    mocker.patch(
+        "snapcraft.elf._patcher.Patcher.get_proposed_rpath",
+        return_value=["/snap/core22/current/lib/x86_64-linux-gnu"],
+    )
+    mocker.patch("snapcraft.elf._patcher.Patcher.get_current_rpath", return_value=[])
+
+    # don't load dependencies in a unit test
+    mocker.patch.object(ElfFile, "load_dependencies")
+
+    yaml_data = {
+        "base": "core22",
+        "confinement": "classic",
+        "parts": {
+            "p1": {
+                "plugin": "dump",
+                "source": ".",
+                "build-attributes": ["enable-patchelf"],
+                "override-prime": "craftctl default",
+            }
+        },
+    }
+    project = Project.unmarshal(snapcraft_yaml(**yaml_data))
+
+    parts_lifecycle._run_command(
+        "pack",
+        project=project,
+        parse_info={},
+        assets_dir=Path(),
+        start_time=datetime.now(),
+        parallel_build_count=1,
+        parsed_args=argparse.Namespace(
+            directory=None,
+            output=None,
+            debug=False,
+            destructive_mode=True,
+            shell=False,
+            shell_after=False,
+            use_lxd=False,
+            enable_manifest=False,
+            ua_token=None,
+            parts=["p1"],
+        ),
+    )
+
+    # Simple verification that our expected message is being printed
+    emitter.assert_progress(
+        "Warning: 'enable-patchelf' feature will not apply to files primed "
+        "by parts that use the 'override-prime' keyword. It's not possible "
+        "to track file changes in the prime directory.",
+        permanent=True,
+    )
+
+    # TODO: This is not working as expected, the patchelf should be called once
+    # craft-parts fixed the issue with the override-prime
+    run_patchelf_mock.assert_not_called()
+
+
 @pytest.mark.parametrize("build_for", ["amd64", "arm64", "all"])
 def test_lifecycle_write_metadata(
     build_for, snapcraft_yaml, project_vars, new_dir, mocker
