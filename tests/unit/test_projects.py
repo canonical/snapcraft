@@ -1846,11 +1846,11 @@ class TestComponents:
         [
             (
                 "snap-",
-                "Component names cannot start with the reserved namespace 'snap-'"
+                "Component names cannot start with the reserved namespace 'snap-'",
             ),
             (
                 "snap-foo",
-                "Component names cannot start with the reserved namespace 'snap-'"
+                "Component names cannot start with the reserved namespace 'snap-'",
             ),
             ("123456", "Component names can only use"),
             ("name-ends-with-digits-0123", "Component names can only use"),
