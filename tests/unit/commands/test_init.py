@@ -22,8 +22,8 @@ from unittest.mock import call
 import pytest
 
 from snapcraft import cli
+from snapcraft.models.project import Project
 from snapcraft.parts.yaml_utils import _SNAP_PROJECT_FILES, apply_yaml, process_yaml
-from snapcraft.projects import Project
 
 
 @pytest.fixture(autouse=True)

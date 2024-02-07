@@ -27,14 +27,13 @@ from typing import List, Optional
 import requests
 from craft_cli import emit
 
-from snapcraft import errors
-from snapcraft.projects import Project
+from snapcraft import errors, models
 
 from .desktop_file import DesktopFile
 
 
 def setup_assets(
-    project: Project, *, assets_dir: Path, project_dir: Path, prime_dir: Path
+    project: models.Project, *, assets_dir: Path, project_dir: Path, prime_dir: Path
 ) -> None:
     """Copy assets to the appropriate locations in the snap filesystem.
 
