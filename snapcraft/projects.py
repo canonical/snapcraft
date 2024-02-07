@@ -216,6 +216,11 @@ def _validate_component_name(name: str) -> None:
             "Component names can only use ASCII lowercase letters and hyphens"
         )
 
+    if name.startswith("snap-"):
+        raise ValueError(
+            "Component names cannot start with the reserved namespace 'snap-'"
+        )
+
     if name.startswith("-"):
         raise ValueError("Component names cannot start with a hyphen")
 
