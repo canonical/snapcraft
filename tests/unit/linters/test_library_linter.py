@@ -20,7 +20,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from snapcraft import linters, projects
+from snapcraft import linters, models
 from snapcraft.elf import _elf_file, elf_utils
 from snapcraft.linters.base import LinterIssue, LinterResult
 from snapcraft.linters.library_linter import LibraryLinter
@@ -53,7 +53,7 @@ def test_library_linter_missing_library(mocker, new_dir):
         "parts": {},
     }
 
-    project = projects.Project.unmarshal(yaml_data)
+    project = models.Project.unmarshal(yaml_data)
     snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
 
     issues = linters.run_linters(new_dir, lint=None)
@@ -108,7 +108,7 @@ def test_library_linter_unused_library(mocker, new_dir):
         "parts": {},
     }
 
-    project = projects.Project.unmarshal(yaml_data)
+    project = models.Project.unmarshal(yaml_data)
     snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
 
     issues = linters.run_linters(new_dir, lint=None)
@@ -149,11 +149,11 @@ def test_library_linter_filter_missing_library(mocker, new_dir, filter_name):
         "parts": {},
     }
 
-    project = projects.Project.unmarshal(yaml_data)
+    project = models.Project.unmarshal(yaml_data)
     snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
 
     issues = linters.run_linters(
-        new_dir, lint=projects.Lint(ignore=[{filter_name: ["elf.*"]}])
+        new_dir, lint=models.Lint(ignore=[{filter_name: ["elf.*"]}])
     )
     assert issues == []
 
@@ -194,11 +194,11 @@ def test_library_linter_filter_unused_library(mocker, new_dir, filter_name):
         "parts": {},
     }
 
-    project = projects.Project.unmarshal(yaml_data)
+    project = models.Project.unmarshal(yaml_data)
     snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
 
     issues = linters.run_linters(
-        new_dir, lint=projects.Lint(ignore=[{filter_name: ["lib/libfoo.*"]}])
+        new_dir, lint=models.Lint(ignore=[{filter_name: ["lib/libfoo.*"]}])
     )
     assert issues == []
 
@@ -231,13 +231,13 @@ def test_library_linter_mixed_filters(mocker, new_dir):
         "parts": {},
     }
 
-    project = projects.Project.unmarshal(yaml_data)
+    project = models.Project.unmarshal(yaml_data)
     snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
 
     # lib/libfoo.so is an *unused* library, but here we filter out *missing* library
     # issues for this path.
     issues = linters.run_linters(
-        new_dir, lint=projects.Lint(ignore=[{"missing-library": ["lib/libfoo.*"]}])
+        new_dir, lint=models.Lint(ignore=[{"missing-library": ["lib/libfoo.*"]}])
     )
     # The "unused library" issue must be generated.
     assert issues == [

@@ -26,7 +26,7 @@ from typing import Dict, List, Optional, Type
 
 from craft_cli import emit
 
-from snapcraft import projects
+from snapcraft import models
 from snapcraft.meta import snap_yaml
 
 from .base import Linter, LinterIssue, LinterResult
@@ -111,7 +111,7 @@ def _update_status(status: LinterStatus, result: LinterResult) -> LinterStatus:
     return status
 
 
-def run_linters(location: Path, *, lint: Optional[projects.Lint]) -> List[LinterIssue]:
+def run_linters(location: Path, *, lint: Optional[models.Lint]) -> List[LinterIssue]:
     """Run all the defined linters.
 
     :param location: The root of the snap payload subtree to run linters on.
@@ -149,7 +149,7 @@ def run_linters(location: Path, *, lint: Optional[projects.Lint]) -> List[Linter
 
 
 def _ignore_matching_filenames(
-    issues: List[LinterIssue], *, lint: Optional[projects.Lint]
+    issues: List[LinterIssue], *, lint: Optional[models.Lint]
 ) -> None:
     """Mark any remaining filename match as ignored."""
     if lint is None:
