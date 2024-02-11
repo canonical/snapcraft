@@ -16,3 +16,7 @@ parts:
   hello:
     plugin: cmake
     source: .
+    build-packages:
+      - libglib2.0-0
+      - libdouble-conversion3
+      - libb2-1
