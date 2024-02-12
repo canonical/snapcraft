@@ -41,7 +41,7 @@ _snapcraft()
         return 0
         ;;
     --target-arch | --build-for)
-        arch_options="arm64 armhf amd64 riscv64"
+        arch_options="arm64 armhf amd64 i386 ppc64el riscv64 s390x"
         COMPREPLY=( $(compgen -W "$arch_options" -- $cur))
         return 0
         ;;
