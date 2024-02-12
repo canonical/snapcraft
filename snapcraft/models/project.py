@@ -22,13 +22,12 @@ from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Uni
 import pydantic
 from craft_application import models
 from craft_application.models import BuildInfo, UniqueStrList
-from craft_archives import repo
 from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from craft_providers import bases
 from pydantic import PrivateAttr, constr
 
-from snapcraft import parts, utils
+from snapcraft import utils
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
@@ -432,7 +431,7 @@ class Project(models.Project):
     grade: Optional[Literal["stable", "devel"]]
     architectures: List[Union[str, Architecture]] = [get_host_architecture()]
     assumes: UniqueStrList = cast(UniqueStrList, [])
-    package_repositories: List[Dict[str, Any]] = []  # handled by repo
+    package_repositories: Optional[List[Dict[str, Any]]]
     hooks: Optional[Dict[str, Hook]]
     passthrough: Optional[Dict[str, Any]]
     apps: Optional[Dict[str, App]]
@@ -588,20 +587,6 @@ class Project(models.Project):
         if not build_base:
             build_base = values.get("base")
         return build_base
-
-    @pydantic.validator("package_repositories", each_item=True)
-    @classmethod
-    def _validate_package_repositories(cls, item):
-        """Ensure package-repositories format is correct."""
-        repo.validate_repository(item)
-        return item
-
-    @pydantic.validator("parts", each_item=True)
-    @classmethod
-    def _validate_parts(cls, item):
-        """Verify each part (craft-parts will re-validate this)."""
-        parts.validate_part(item)
-        return item
 
     @pydantic.validator("epoch")
     @classmethod

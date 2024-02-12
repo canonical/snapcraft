@@ -88,20 +88,6 @@ class Snapcraft(Application):
 
         :returns: A ready-to-run Dispatcher object
         """
-        # pylint: disable=too-many-statements
-        # Set the logging level to DEBUG for all craft-libraries. This is OK even if
-        # the specific application doesn't use a specific library, the call does not
-        # import the package.
-        util.setup_loggers(*self._cli_loggers)
-
-        craft_cli.emit.init(
-            mode=craft_cli.EmitterMode.BRIEF,
-            appname=self.app.name,
-            greeting=f"Starting {self.app.name}",
-            log_filepath=self.log_path,
-            streaming_brief=True,
-        )
-
         # Handle "multiplexing" of Snapcraft "codebases" depending on the
         # project's base (if any). Here, we handle the case where there *is*
         # a project and it's core24, which means it should definitely fall into
@@ -178,13 +164,13 @@ class Snapcraft(Application):
 
 def main() -> int:
     """Run craft-application based snapcraft with classic fallback."""
-    util.setup_loggers(
-        "craft_parts", "craft_providers", "craft_store", "snapcraft.remote"
-    )
-
     snapcraft_services = services.SnapcraftServiceFactory(app=APP_METADATA)
 
-    app = Snapcraft(app=APP_METADATA, services=snapcraft_services)
+    app = Snapcraft(
+        app=APP_METADATA,
+        services=snapcraft_services,
+        extra_loggers={"snapcraft.remote"},
+    )
 
     app.add_command_group(
         "Lifecycle",

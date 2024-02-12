@@ -89,7 +89,7 @@ class TestProjectDefaults:
         assert project.icon is None
         assert project.layout is None
         assert project.license is None
-        assert project.package_repositories == []
+        assert project.package_repositories is None
         assert project.assumes == []
         assert project.hooks is None
         assert project.passthrough is None
