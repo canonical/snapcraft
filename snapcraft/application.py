@@ -22,21 +22,60 @@ import os
 import pathlib
 import signal
 import sys
-from typing import Any
+from typing import Any, List, cast
 
 import craft_application.commands as craft_app_commands
+import craft_application.models
 import craft_cli
 from craft_application import Application, AppMetadata, util
+from craft_application.models import BuildInfo
 from craft_cli import emit
+from craft_providers import bases
 from overrides import override
 
 from snapcraft import cli, errors, models, services
 from snapcraft.commands import unimplemented
+from snapcraft.models import Architecture
+from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
+from snapcraft.utils import get_host_architecture
+
+
+class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
+
+    def get_build_plan(self) -> List[BuildInfo]:
+        """Get the build plan for this project."""
+        build_plan: List[BuildInfo] = []
+
+        architectures = cast(List[Architecture], self.architectures)
+
+        for arch in architectures:
+            # build_for will be a single element list
+            build_for = cast(list, arch.build_for)[0]
+
+            # TODO: figure out when to filter `all`
+            if build_for == "all":
+                build_for = get_host_architecture()
+
+            # build on will be a list of archs
+            for build_on in arch.build_on:
+                base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[self.get_effective_base()]
+                build_plan.append(
+                    BuildInfo(
+                        platform=f"ubuntu@{base.value}",
+                        build_on=build_on,
+                        build_for=build_for,
+                        base=bases.BaseName("ubuntu", base.value),
+                    )
+                )
+
+        return build_plan
+
 
 APP_METADATA = AppMetadata(
     name="snapcraft",
     summary="Package, distribute, and update snaps for Linux and IoT",
     ProjectClass=models.Project,
+    BuildPlannerClass=SnapcraftBuildPlanner,
     source_ignore_patterns=["*.snap"],
 )
 
