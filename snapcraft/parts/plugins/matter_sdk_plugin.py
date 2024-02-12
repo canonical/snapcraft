@@ -84,17 +84,6 @@ class MatterSdkPlugin(plugins.Plugin):
         options = cast(MatterSdkPluginProperties, self._options)
         commands = []
 
-        if self.snap_arch == "arm64":
-            commands.extend(
-                [
-                    f"wget --no-verbose {ZAP_REPO}/releases/download/"
-                    f"{options.matter_sdk_zap_version}/zap-linux-{self.snap_arch}.zip",
-                    f"unzip -o zap-linux-{self.snap_arch}.zip -d zap",
-                    'set -a && echo "ZAP_INSTALL_PATH=$PWD/zap" >> matter_sdk_env && set +a',
-                    "echo 'ZAP_INSTALL_PATH environment variable exported to matter_sdk_env file'",
-                ]
-            )
-
         # Clone Matter SDK repository
         commands.extend(
             [
@@ -178,14 +167,8 @@ class MatterSdkPlugin(plugins.Plugin):
         # Compare and output pigweed related environment variables to matter_sdk_env env file
         commands.extend(
             [
-                "set -a",
-                'echo "PATH=$PATH" >> matter_sdk_env',
-                'env | grep "^PW_" >> matter_sdk_env',
-                'echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> matter_sdk_env',
-                'echo "CIPD_CACHE_DIR=$CIPD_CACHE_DIR" >> matter_sdk_env',
-                "set +a",
-                "echo 'pigweed related environment variables differences exported",
-                "to matter_sdk_env file'",
+                'echo "export PATH=$PATH" >> matter_sdk_env',
+                "echo 'environment variable PATH has been exported to matter_sdk_env file'",
             ]
         )
 

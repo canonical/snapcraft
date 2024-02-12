@@ -46,17 +46,6 @@ def test_get_pull_commands(part_info):
 
     expected_commands = []
 
-    if plugin.snap_arch == "arm64":
-        expected_commands.extend(
-            [
-                f"wget --no-verbose {ZAP_REPO}/releases/download/"
-                f"{zap_version}/zap-linux-{plugin.snap_arch}.zip",
-                f"unzip -o zap-linux-{plugin.snap_arch}.zip -d zap",
-                'set -a && echo "ZAP_INSTALL_PATH=$PWD/zap" >> matter_sdk_env && set +a',
-                "echo 'ZAP_INSTALL_PATH environment variable exported to matter_sdk_env file'",
-            ]
-        )
-
     expected_commands.extend(
         [
             "if [ ! -d matter ]; then",
@@ -143,14 +132,8 @@ def test_get_build_commands(part_info):
 
     expected_commands.extend(
         [
-            "set -a",
-            'echo "PATH=$PATH" >> matter_sdk_env',
-            'env | grep "^PW_" >> matter_sdk_env',
-            'echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> matter_sdk_env',
-            'echo "CIPD_CACHE_DIR=$CIPD_CACHE_DIR" >> matter_sdk_env',
-            "set +a",
-            "echo 'pigweed related environment variables differences exported",
-            "to matter_sdk_env file'",
+            'echo "export PATH=$PATH" >> matter_sdk_env',
+            "echo 'environment variable PATH has been exported to matter_sdk_env file'",
         ]
     )
 
