@@ -1,5 +1,5 @@
 list_snapcraft_parts() {
-    # first get intend
+    # first get indentation
     #  find first line after 'parts:.*' ignoring comments and empty lines
     #  this is first part name, determine used indent from it
     local indent=$(sed 's/\(.*\)#.*/\1/ ; /^[[:space:]]*$/d' ${1} | sed -n '/parts:.*/{n;p}' | sed 's/\([[:space:]]\+\).*/\1/')
