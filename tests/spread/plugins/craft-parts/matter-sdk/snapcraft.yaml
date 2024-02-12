@@ -28,7 +28,6 @@ parts:
   matter-sdk:
     plugin: matter-sdk
     matter-sdk-version: "1536ca20c5917578ca40ce509400e97b52751788" # use this commit with ptpython version fix; needs to be updated once matter sdk have a stable release
-    matter-sdk-zap-version: "v2023.11.13"
 
   lighting:
     plugin: nil

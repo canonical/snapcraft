@@ -23,14 +23,11 @@ from overrides import overrides
 
 # The repository where the matter SDK resides.
 MATTER_SDK_REPO = "https://github.com/project-chip/connectedhomeip"
-ZAP_REPO = "https://github.com/project-chip/zap"
-
 
 class MatterSdkPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     """The part properties used by the matter SDK plugin."""
 
     matter_sdk_version: str
-    matter_sdk_zap_version: str
 
     @classmethod
     @overrides
@@ -46,7 +43,7 @@ class MatterSdkPluginProperties(plugins.PluginProperties, plugins.PluginModel):
         plugin_data = plugins.extract_plugin_properties(
             data,
             plugin_name="matter-sdk",
-            required=["matter_sdk_version", "matter_sdk_zap_version"],
+            required="matter_sdk_version",
         )
         return cls(**plugin_data)
 
@@ -61,9 +58,6 @@ class MatterSdkPlugin(plugins.Plugin):
         - matter-sdk-version
           (str, no default)
           The matter SDK version to use for the build.
-        - matter-sdk-zap-version
-          (str, no default)
-          The zap version to use for the build.
     """
 
     properties_class = MatterSdkPluginProperties

@@ -22,8 +22,6 @@ from snapcraft.parts.plugins import MatterSdkPlugin
 
 # The repository where the matter SDK resides.
 MATTER_SDK_REPO = "https://github.com/project-chip/connectedhomeip"
-ZAP_REPO = "https://github.com/project-chip/zap"
-
 
 @pytest.fixture(autouse=True)
 def part_info(new_dir):
@@ -37,12 +35,11 @@ def part_info(new_dir):
 
 def test_get_pull_commands(part_info):
     properties = MatterSdkPlugin.properties_class.unmarshal(
-        {"matter-sdk-version": "master", "matter-sdk-zap-version": "v2023.11.13"}
+        {"matter-sdk-version": "master"}
     )
     plugin = MatterSdkPlugin(properties=properties, part_info=part_info)
 
     sdk_version = properties.matter_sdk_version  # type: ignore
-    zap_version = properties.matter_sdk_zap_version  # type: ignore
 
     expected_commands = []
 
@@ -68,7 +65,7 @@ def test_get_pull_commands(part_info):
 
 def test_get_build_snaps(part_info):
     properties = MatterSdkPlugin.properties_class.unmarshal(
-        {"matter-sdk-version": "master", "matter-sdk-zap-version": "v2023.11.13"}
+        {"matter-sdk-version": "master"}
     )
     plugin = MatterSdkPlugin(properties=properties, part_info=part_info)
     assert plugin.get_build_snaps() == set()
@@ -76,7 +73,7 @@ def test_get_build_snaps(part_info):
 
 def test_get_build_packages(part_info):
     properties = MatterSdkPlugin.properties_class.unmarshal(
-        {"matter-sdk-version": "master", "matter-sdk-zap-version": "v2023.11.13"}
+        {"matter-sdk-version": "master"}
     )
     plugin = MatterSdkPlugin(properties=properties, part_info=part_info)
     assert plugin.get_build_packages() == {
@@ -103,7 +100,7 @@ def test_get_build_packages(part_info):
 
 def test_get_build_environment(part_info):
     properties = MatterSdkPlugin.properties_class.unmarshal(
-        {"matter-sdk-version": "master", "matter-sdk-zap-version": "v2023.11.13"}
+        {"matter-sdk-version": "master"}
     )
     plugin = MatterSdkPlugin(properties=properties, part_info=part_info)
 
@@ -112,7 +109,7 @@ def test_get_build_environment(part_info):
 
 def test_get_build_commands(part_info):
     properties = MatterSdkPlugin.properties_class.unmarshal(
-        {"matter-sdk-version": "master", "matter-sdk-zap-version": "v2023.11.13"}
+        {"matter-sdk-version": "master"}
     )
     plugin = MatterSdkPlugin(properties=properties, part_info=part_info)
 
