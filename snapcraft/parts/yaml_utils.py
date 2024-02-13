@@ -25,7 +25,7 @@ import yaml.error
 
 from snapcraft import errors, utils
 from snapcraft.extensions import apply_extensions
-from snapcraft.projects import Architecture, GrammarAwareProject
+from snapcraft.models import Architecture, GrammarAwareProject
 
 from . import grammar
 
