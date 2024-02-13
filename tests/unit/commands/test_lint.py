@@ -25,11 +25,10 @@ import pytest
 from craft_providers.bases import BuilddBaseAlias
 from craft_providers.multipass import MultipassProvider
 
-from snapcraft import cli
+from snapcraft import cli, models
 from snapcraft.commands.lint import LintCommand
 from snapcraft.errors import SnapcraftError
 from snapcraft.meta.snap_yaml import SnapMetadata
-from snapcraft.projects import Lint, Project
 
 
 @pytest.fixture
@@ -70,7 +69,7 @@ def fake_snapcraft_project():
         "summary": "test summary",
         "parts": {"part1": {"plugin": "nil"}},
     }
-    return Project.unmarshal(data)
+    return models.Project.unmarshal(data)
 
 
 @pytest.fixture
@@ -393,7 +392,7 @@ def test_lint_managed_mode(
     cli.run()
 
     mock_run_linters.assert_called_once_with(
-        lint=Lint(ignore=["classic"]),
+        lint=models.Lint(ignore=["classic"]),
         location=Path("/snap/test/current"),
     )
     mock_report.assert_called_once_with(
@@ -449,7 +448,7 @@ def test_lint_managed_mode_without_snapcraft_yaml(
     cli.run()
 
     mock_run_linters.assert_called_once_with(
-        lint=Lint(ignore=["classic"]),
+        lint=models.Lint(ignore=["classic"]),
         location=Path("/snap/test/current"),
     )
     mock_report.assert_called_once_with(
@@ -602,7 +601,7 @@ def test_lint_managed_mode_assert(
     cli.run()
 
     mock_run_linters.assert_called_once_with(
-        lint=Lint(ignore=["classic"]),
+        lint=models.Lint(ignore=["classic"]),
         location=Path("/snap/test/current"),
     )
     mock_report.assert_called_once_with(
@@ -666,7 +665,7 @@ def test_lint_managed_mode_assert_error(
     cli.run()
 
     mock_run_linters.assert_called_once_with(
-        lint=Lint(ignore=["classic"]),
+        lint=models.Lint(ignore=["classic"]),
         location=Path("/snap/test/current"),
     )
     mock_report.assert_called_once_with(
@@ -699,30 +698,30 @@ def test_lint_managed_mode_assert_error(
     ["project_lint", "expected_lint"],
     [
         (
-            Lint(ignore=[]),
-            Lint(ignore=["classic"]),
+            models.Lint(ignore=[]),
+            models.Lint(ignore=["classic"]),
         ),
         (
-            Lint(ignore=["library"]),
-            Lint(ignore=["library", "classic"]),
+            models.Lint(ignore=["library"]),
+            models.Lint(ignore=["library", "classic"]),
         ),
         (
-            Lint(ignore=["library", "classic"]),
-            Lint(ignore=["library", "classic"]),
+            models.Lint(ignore=["library", "classic"]),
+            models.Lint(ignore=["library", "classic"]),
         ),
         (
-            Lint(ignore=[{"classic": ["bin/test1", "bin/test2"]}]),
-            Lint(ignore=["classic"]),
+            models.Lint(ignore=[{"classic": ["bin/test1", "bin/test2"]}]),
+            models.Lint(ignore=["classic"]),
         ),
         (
-            Lint(ignore=["library", {"classic": ["bin/test1", "bin/test2"]}]),
-            Lint(ignore=["library", "classic"]),
+            models.Lint(ignore=["library", {"classic": ["bin/test1", "bin/test2"]}]),
+            models.Lint(ignore=["library", "classic"]),
         ),
         (
-            Lint(
+            models.Lint(
                 ignore=["library", "classic", {"classic": ["bin/test1", "bin/test2"]}]
             ),
-            Lint(ignore=["library", "classic"]),
+            models.Lint(ignore=["library", "classic"]),
         ),
     ],
 )
@@ -851,7 +850,7 @@ def test_load_project_complex(mocker, tmp_path):
         )
 
     result = LintCommand(None)._load_project(snapcraft_yaml_file=snap_file)
-    assert result == Project.unmarshal(
+    assert result == models.Project.unmarshal(
         {
             "name": "test-name",
             "base": "core22",

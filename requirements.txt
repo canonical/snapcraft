@@ -5,6 +5,7 @@ cffi==1.16.0
 chardet==5.2.0
 charset-normalizer==3.3.2
 click==8.1.7
+craft-application==1.2.1
 craft-archives==1.1.3
 craft-cli==2.5.1
 craft-grammar==1.1.2

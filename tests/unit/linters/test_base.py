@@ -18,7 +18,7 @@ import textwrap
 import pytest
 import yaml
 
-from snapcraft import projects
+from snapcraft import models
 from snapcraft.linters.base import LinterResult
 
 
@@ -83,7 +83,7 @@ def lint_ignore_data():
 
 
 def test_lint_all_ignored(lint_ignore_data):
-    lint = projects.Lint(**lint_ignore_data)
+    lint = models.Lint(**lint_ignore_data)
 
     assert lint.all_ignored("linter1")
     assert not lint.all_ignored("linter2")
@@ -91,7 +91,7 @@ def test_lint_all_ignored(lint_ignore_data):
 
 
 def test_lint_ignored_files(lint_ignore_data):
-    lint = projects.Lint(**lint_ignore_data)
+    lint = models.Lint(**lint_ignore_data)
 
     assert lint.ignored_files("linter1") == ["*"]
     assert lint.ignored_files("linter2") == ["file1", "/lib/file2*"]

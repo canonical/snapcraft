@@ -21,8 +21,8 @@ from textwrap import dedent
 import pytest
 
 from snapcraft import errors
+from snapcraft.models import Architecture
 from snapcraft.parts import yaml_utils
-from snapcraft.projects import Architecture
 
 
 def test_yaml_load():

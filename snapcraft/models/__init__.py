@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,11 +13,30 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Data models for snapcraft."""
 
-"""Main entry point."""
+from .project import (
+    MANDATORY_ADOPTABLE_FIELDS,
+    App,
+    Architecture,
+    ArchitectureProject,
+    ContentPlug,
+    GrammarAwareProject,
+    Hook,
+    Lint,
+    Project,
+    Socket,
+)
 
-import sys
-
-from snapcraft import application
-
-sys.exit(application.main())
+__all__ = [
+    "MANDATORY_ADOPTABLE_FIELDS",
+    "App",
+    "Architecture",
+    "ArchitectureProject",
+    "ContentPlug",
+    "GrammarAwareProject",
+    "Hook",
+    "Lint",
+    "Project",
+    "Socket",
+]

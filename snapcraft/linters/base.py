@@ -25,8 +25,7 @@ from typing import TYPE_CHECKING, List, Literal, Optional, Union
 import pydantic
 from craft_cli import emit
 
-from snapcraft import projects
-from snapcraft.elf import ElfFile
+from snapcraft import elf, models
 
 if TYPE_CHECKING:
     from snapcraft.meta.snap_yaml import SnapMetadata
@@ -91,11 +90,11 @@ class Linter(abc.ABC):
         self,
         name: str,
         snap_metadata: "SnapMetadata",
-        lint: Optional[projects.Lint],
+        lint: Optional[models.Lint],
     ):
         self._name = name
         self._snap_metadata = snap_metadata
-        self._lint = lint or projects.Lint(ignore=[])
+        self._lint = lint or models.Lint(ignore=[])
 
     @abc.abstractmethod
     def run(self) -> List[LinterIssue]:
@@ -105,7 +104,7 @@ class Linter(abc.ABC):
         """
 
     def _is_file_ignored(
-        self, filepath: Union[ElfFile, Path], category: str = ""
+        self, filepath: Union[elf.ElfFile, Path], category: str = ""
     ) -> bool:
         """Check if the file name matches an ignored file pattern.
 
@@ -121,7 +120,7 @@ class Linter(abc.ABC):
             # No "extend()" because we don't want to affect the original list.
             ignored_files = ignored_files + self._lint.ignored_files(category)
 
-        if isinstance(filepath, ElfFile):
+        if isinstance(filepath, elf.ElfFile):
             path = filepath.path
         else:
             path = filepath
