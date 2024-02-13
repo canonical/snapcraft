@@ -29,7 +29,8 @@ execute: |
   # Build the core24 snap
   unset SNAPCRAFT_BUILD_ENVIRONMENT
   # If this next line fails, delete it and replace it with the one following it
-  snapcraft --use-lxd 2>&1 | MATCH '"pack" command is not implemented for core24!'; exit 0
+  snapcraft --use-lxd 2>&1 | MATCH 'unrecognized arguments: --use-lxd'; exit 0
+  # snapcraft --use-lxd 2>&1 | MATCH '"pack" command is not implemented for core24!'; exit 0
   # snapcraft --use-lxd
 
   # Install the new snap
