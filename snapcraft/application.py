@@ -225,10 +225,10 @@ def main() -> int:
         "Lifecycle",
         [
             craft_app_commands.lifecycle.CleanCommand,
-            unimplemented.Pull,
-            unimplemented.Build,
-            unimplemented.Stage,
-            unimplemented.Prime,
+            craft_app_commands.lifecycle.PullCommand,
+            craft_app_commands.lifecycle.BuildCommand,
+            craft_app_commands.lifecycle.StageCommand,
+            craft_app_commands.lifecycle.PrimeCommand,
             craft_app_commands.lifecycle.PackCommand,
             unimplemented.RemoteBuild,
             unimplemented.Snap,  # Hidden (legacy compatibility)
