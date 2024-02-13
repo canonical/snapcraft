@@ -37,16 +37,17 @@ from snapcraft import cli, errors, models, services
 from snapcraft.commands import unimplemented
 from snapcraft.models import Architecture
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
-from snapcraft.utils import get_host_architecture
+from snapcraft.utils import get_effective_base, get_host_architecture
 
 
 class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
+    """A project model that creates build plans."""
 
     def get_build_plan(self) -> List[BuildInfo]:
         """Get the build plan for this project."""
         build_plan: List[BuildInfo] = []
 
-        architectures = cast(List[Architecture], self.architectures)
+        architectures = cast(List[Architecture], getattr(self, "architectures", []))
 
         for arch in architectures:
             # build_for will be a single element list
@@ -58,7 +59,16 @@ class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
 
             # build on will be a list of archs
             for build_on in arch.build_on:
-                base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[self.get_effective_base()]
+                base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
+                    str(
+                        get_effective_base(
+                            base=getattr(self, "base", None),
+                            build_base=getattr(self, "build_base", None),
+                            name=getattr(self, "name", None),
+                            project_type=getattr(self, "type", None),
+                        )
+                    )
+                ]
                 build_plan.append(
                     BuildInfo(
                         platform=f"ubuntu@{base.value}",
