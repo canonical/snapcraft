@@ -19,10 +19,10 @@ from pathlib import Path
 
 import pytest
 
+from snapcraft import models
 from snapcraft.errors import SnapcraftError
 from snapcraft.meta import component_yaml
 from snapcraft.meta.component_yaml import ComponentMetadata
-from snapcraft.projects import Project
 
 
 @pytest.fixture
@@ -76,7 +76,7 @@ def test_unmarshal_component():
 
 def test_write_component_yaml(stub_project_data, new_dir):
     """Write a component.yaml file from a project."""
-    project = Project.unmarshal(stub_project_data)
+    project = models.Project.unmarshal(stub_project_data)
     yaml_file = Path("meta/component.yaml")
 
     component_yaml.write(
@@ -98,7 +98,7 @@ def test_write_component_yaml(stub_project_data, new_dir):
 def test_write_component_no_components(stub_project_data, new_dir):
     """Raise an error if no components are defined."""
     stub_project_data.pop("components")
-    project = Project.unmarshal(stub_project_data)
+    project = models.Project.unmarshal(stub_project_data)
 
     with pytest.raises(SnapcraftError) as raised:
         component_yaml.write(
@@ -110,7 +110,7 @@ def test_write_component_no_components(stub_project_data, new_dir):
 
 def test_write_component_non_existent(stub_project_data, new_dir):
     """Raise an error if the component does not exist."""
-    project = Project.unmarshal(stub_project_data)
+    project = models.Project.unmarshal(stub_project_data)
 
     with pytest.raises(SnapcraftError) as raised:
         component_yaml.write(project, component_name="bad", component_prime_dir=new_dir)

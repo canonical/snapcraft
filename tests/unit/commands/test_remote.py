@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,6 +16,9 @@
 
 """Remote-build command tests."""
 
+import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 from unittest.mock import ANY, call
@@ -152,6 +155,43 @@ def test_command_accept_upload(
 @pytest.mark.parametrize(
     "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
 )
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
+)
+def test_command_new_build_arguments_mutually_exclusive(capsys, mocker):
+    """`--build-for` and `--build-on` are mutually exclusive in the new remote-build."""
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["snapcraft", "remote-build", "--build-on", "amd64", "--build-for", "arm64"],
+    )
+
+    cli.run()
+
+    _, err = capsys.readouterr()
+    assert "Error: argument --build-for: not allowed with argument --build-on" in err
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm")
+def test_command_legacy_build_arguments_not_mutually_exclusive(mocker, mock_run_legacy):
+    """`--build-for` and `--build-on` are not mutually exclusive for legacy."""
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["snapcraft", "remote-build", "--build-on", "amd64", "--build-for", "arm64"],
+    )
+
+    cli.run()
+
+    mock_run_legacy.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm")
 def test_command_build_on_warning(
     emitter, mocker, mock_run_new_or_fallback_remote_build
@@ -274,7 +314,10 @@ def test_get_effective_base_with_build_base(
 
     cli.run()
 
-    mock_run_new_or_fallback_remote_build.assert_called_once_with(build_base)
+    if build_base == "devel":
+        mock_run_new_or_fallback_remote_build.assert_called_once_with(base)
+    else:
+        mock_run_new_or_fallback_remote_build.assert_called_once_with(build_base)
 
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
@@ -523,6 +566,107 @@ def test_run_in_repo_newer_than_core22(
     emitter.assert_debug("Running new remote-build because base is newer than core22")
 
 
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
+def test_run_in_shallow_repo(emitter, mock_run_legacy, new_dir):
+    """core22 and older bases fall back to legacy remote-build if in a shallow git repo."""
+    root_path = Path(new_dir)
+    git_normal_path = root_path / "normal"
+    git_normal_path.mkdir()
+    git_shallow_path = root_path / "shallow"
+
+    shutil.move(root_path / "snap", git_normal_path)
+
+    repo_normal = GitRepo(git_normal_path)
+    (repo_normal.path / "1").write_text("1")
+    repo_normal.add_all()
+    repo_normal.commit("1")
+
+    (repo_normal.path / "2").write_text("2")
+    repo_normal.add_all()
+    repo_normal.commit("2")
+
+    (repo_normal.path / "3").write_text("3")
+    repo_normal.add_all()
+    repo_normal.commit("3")
+
+    # pygit2 does not support shallow cloning, so we use git directly
+    subprocess.run(
+        [
+            "git",
+            "clone",
+            "--depth",
+            "1",
+            git_normal_path.absolute().as_uri(),
+            git_shallow_path.absolute().as_posix(),
+        ],
+        check=True,
+    )
+
+    os.chdir(git_shallow_path)
+    cli.run()
+
+    mock_run_legacy.assert_called_once()
+    emitter.assert_debug("Current git repository is shallow cloned.")
+    emitter.assert_debug("Running fallback remote-build")
+
+
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml", "mock_confirm", "mock_argv", "use_new_remote_build"
+)
+def test_run_in_shallow_repo_unsupported(capsys, new_dir):
+    """devel / core24 and newer bases run new remote-build in a shallow git repo."""
+    root_path = Path(new_dir)
+    git_normal_path = root_path / "normal"
+    git_normal_path.mkdir()
+    git_shallow_path = root_path / "shallow"
+
+    shutil.move(root_path / "snap", git_normal_path)
+
+    repo_normal = GitRepo(git_normal_path)
+    (repo_normal.path / "1").write_text("1")
+    repo_normal.add_all()
+    repo_normal.commit("1")
+
+    (repo_normal.path / "2").write_text("2")
+    repo_normal.add_all()
+    repo_normal.commit("2")
+
+    (repo_normal.path / "3").write_text("3")
+    repo_normal.add_all()
+    repo_normal.commit("3")
+
+    # pygit2 does not support shallow cloning, so we use git directly
+    subprocess.run(
+        [
+            "git",
+            "clone",
+            "--depth",
+            "1",
+            git_normal_path.absolute().as_uri(),
+            git_shallow_path.absolute().as_posix(),
+        ],
+        check=True,
+    )
+
+    os.chdir(git_shallow_path)
+
+    # no exception because run() catches it
+    ret = cli.run()
+    assert ret != 0
+    _, err = capsys.readouterr()
+
+    assert (
+        "Remote builds are not supported for projects in shallowly cloned "
+        "git repositories."
+    ) in err
+
+
 ######################
 # Architecture tests #
 ######################
@@ -609,13 +753,56 @@ def test_determine_architectures_host_arch(mocker, mock_remote_builder):
     )
 
 
+@pytest.mark.parametrize("build_flag", ["--build-for", "--build-on"])
 @pytest.mark.parametrize(
-    ("args", "expected_archs"),
+    ("archs", "expected_archs"),
     [
-        (["--build-for", "amd64"], ["amd64"]),
-        (["--build-for", "amd64", "arm64"], ["amd64", "arm64"]),
+        ("amd64", ["amd64"]),
+        ("amd64,arm64", ["amd64", "arm64"]),
+        ("amd64,amd64,arm64 ", ["amd64", "amd64", "arm64"]),
+    ],
+)
+@pytest.mark.parametrize(
+    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+)
+@pytest.mark.usefixtures(
+    "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
+)
+def test_determine_architectures_provided_by_user_duplicate_arguments(
+    build_flag, archs, expected_archs, mocker, mock_remote_builder
+):
+    """Argparse should only consider the last argument provided for build flags."""
+    mocker.patch.object(
+        sys,
+        "argv",
+        # `--build-{for|on} armhf` should get silently ignored by argparse
+        ["snapcraft", "remote-build", build_flag, "armhf", build_flag, archs],
+    )
+
+    cli.run()
+
+    mock_remote_builder.assert_called_with(
+        app_name="snapcraft",
+        build_id=None,
+        project_name="mytest",
+        architectures=expected_archs,
+        project_dir=Path(),
+        timeout=0,
+    )
+
+
+@pytest.mark.parametrize("build_flag", ["--build-for", "--build-on"])
+@pytest.mark.parametrize(
+    ("archs", "expected_archs"),
+    [
+        ("amd64", ["amd64"]),
+        ("amd64,arm64", ["amd64", "arm64"]),
+        ("amd64, arm64", ["amd64", "arm64"]),
+        ("amd64,arm64 ", ["amd64", "arm64"]),
+        ("amd64,arm64,armhf", ["amd64", "arm64", "armhf"]),
+        (" amd64 , arm64 , armhf ", ["amd64", "arm64", "armhf"]),
         # launchpad will accept and ignore duplicates
-        (["--build-for", "amd64", "amd64"], ["amd64", "amd64"]),
+        (" amd64 , arm64 , arm64 ", ["amd64", "arm64", "arm64"]),
     ],
 )
 @pytest.mark.parametrize(
@@ -625,10 +812,10 @@ def test_determine_architectures_host_arch(mocker, mock_remote_builder):
     "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
 )
 def test_determine_architectures_provided_by_user(
-    args, expected_archs, mocker, mock_remote_builder
+    build_flag, archs, expected_archs, mocker, mock_remote_builder
 ):
     """Use architectures provided by the user."""
-    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"] + args)
+    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build", build_flag, archs])
 
     cli.run()
 

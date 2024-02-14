@@ -27,7 +27,7 @@ import tempfile
 from textwrap import dedent
 from typing import Any, Dict, Optional, Sequence
 
-import pkg_resources
+from packaging.version import parse as parse_version
 from xdg import BaseDirectory
 
 import snapcraft_legacy
@@ -311,9 +311,7 @@ class Provider(abc.ABC):
                 f"Project base changed from {provider_base!r} to {build_base!r}, cleaning first."
             )
             return True
-        elif pkg_resources.parse_version(
-            snapcraft_legacy._get_version()
-        ) < pkg_resources.parse_version(built_by):
+        elif parse_version(snapcraft_legacy._get_version()) < parse_version(built_by):
             self.echoer.warning(
                 f"Build environment was created with newer snapcraft version {built_by!r}, cleaning first."
             )
