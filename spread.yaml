@@ -64,15 +64,16 @@ backends:
   multipass:
     type: adhoc
     allocate: |
+      multipass_count=$(flock -x .spread_multipass -c 'COUNT=$(cat .spread_multipass); echo $(($COUNT + 1)) | tee .spread_multipass')
       if [ "$SPREAD_SYSTEM" = "ubuntu-24.04-64" ]; then
           image="daily:devel"
-          instance_name=spread-devel
+          instance_name="spread-devel-${multipass_count}"
       else
           # SPREAD_SYSTEM has the following format here 'ubuntu-XX.YY-64' and gets
           # translated to an image XX.YY.
           image=$(echo $SPREAD_SYSTEM | sed -e 's/ubuntu-\(.*\)-64/\1/')
           spread_name=$(echo ${image} | sed -e 's/\.//g')
-          instance_name="spread-${spread_name}"
+          instance_name="spread-${spread_name}-${multipass_count}"
       fi
 
       if [ -z "${image}" ]; then
@@ -88,28 +89,22 @@ backends:
         sudo sh -c "echo root:ubuntu | sudo chpasswd"
       multipass exec "$instance_name" -- \
         sudo sh -c \
-        "sed -i /etc/ssh/sshd_config -e 's/^PasswordAuthentication.*/PasswordAuthentication yes/' -e 's/^#PermitRootLogin.*/PermitRootLogin yes/'"
+        "if [ -d /etc/ssh/sshd_config.d/ ]
+        then
+          echo 'PasswordAuthentication yes' > /etc/ssh/sshd_config.d/10-custom.conf
+          echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config.d/10-custom.conf 
+        else
+          sed -i /etc/ssh/sshd_config -E -e 's/^#?PasswordAuthentication.*/PasswordAuthentication yes/' -e 's/^#?PermitRootLogin.*/PermitRootLogin yes/'
+        fi"
       multipass exec "$instance_name" -- \
         sudo systemctl restart ssh
 
-      ADDRESS "$ip:22"
+      ADDRESS "$ip"
     discard: |
-      if [ "$SPREAD_SYSTEM" = "ubuntu-24.04-64" ]; then
-          image="daily:devel"
-          instance_name=spread-devel
-      else
-          # SPREAD_SYSTEM has the following format here 'ubuntu-XX.YY-64' and gets
-          # translated to an image XX.YY.
-          image=$(echo $SPREAD_SYSTEM | sed -e 's/ubuntu-\(.*\)-64/\1/')
-          spread_name=$(echo ${image} | sed -e 's/\.//g')
-          instance_name="spread-${spread_name}"
+      instance_name=$(multipass list --format csv | grep ",${SPREAD_SYSTEM_ADDRESS}," | cut -f1 -d\,)
+      if [[ ! -z "$instance_name" ]]; then
+        multipass delete --purge "${instance_name}"
       fi
-
-      if [ -z "${image}" ]; then
-        FATAL "$SPREAD_SYSTEM is not supported!"
-      fi
-
-      multipass delete --purge "$instance_name"
     systems:
       - ubuntu-20.04-64:
           workers: 1
