@@ -17,5 +17,5 @@ execute: |
 
   # The part's build script does the checking.
   # If this next line fails, delete it and replace it with the one following it
-  snapcraft build --verbose --use-lxd 2>&1 | MATCH '"build" command is not implemented for core24!'; exit 0
+  snapcraft build --verbose --use-lxd 2>&1 | MATCH 'Error: unrecognized arguments: --use-lxd'; exit 0
   # snapcraft build --verbose --use-lxd
