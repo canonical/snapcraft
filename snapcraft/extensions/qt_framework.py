@@ -200,6 +200,16 @@ class QTFramework(Extension):
             ],
             "build-packages": [
                 "libgl1-mesa-dev",
+                "libpcre2-16-0",
+                "libglib2.0-0",
+                "libdouble-conversion3",
+                "libb2-1",
+            ],
+            "stage-packages": [
+                "libpcre2-16-0",
+                "libglib2.0-0",
+                "libdouble-conversion3",
+                "libb2-1",
             ],
         }
 
