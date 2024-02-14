@@ -151,9 +151,6 @@ parts:
     python-packages:
         - wheel
         - pip
-        # Limited to < 66 because we need `pkg_resources` and because `python-apt`
-        # does not build with the latest.
-        - setuptools<66
     python-constraints:
         - constraints.txt
     python-requirements:

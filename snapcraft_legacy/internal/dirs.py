@@ -49,7 +49,7 @@ def _find_windows_data_dir(topdir):
     # > c:\program files\python37\share\snapcraft
 
     # Handle Option (a).
-    if topdir.startswith(site.USER_BASE):
+    if site.USER_BASE and topdir.startswith(site.USER_BASE):
         data_dir = os.path.join(site.USER_BASE, "share", "snapcraft")
         if os.path.exists(data_dir):
             return data_dir

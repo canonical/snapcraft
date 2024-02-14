@@ -17,8 +17,7 @@
 """Publish your app for Linux users for desktop, cloud, and IoT."""
 
 import os
-
-import pkg_resources
+from importlib import metadata
 
 # For legacy compatibility
 import snapcraft.sources  # noqa: F401
@@ -28,9 +27,9 @@ def _get_version():
     if os.environ.get("SNAP_NAME") == "snapcraft":
         return os.environ["SNAP_VERSION"]
     try:
-        return pkg_resources.require("snapcraft")[0].version
-    except pkg_resources.DistributionNotFound:
-        return "devel"
+        return metadata.version("snapcraft")
+    except metadata.PackageNotFoundError:
+        return "0.0.0+devel"
 
 
 __version__ = _get_version()

@@ -1,0 +1,12 @@
+name: invalid-utf8
+base: core22
+summary: a project that echos invalid utf-8 text
+description: a project that echos invalid utf-8 text
+version: "1.0"
+confinement: strict
+
+parts:
+  my-part:
+    plugin: nil
+    override-build: |
+      echo -e "hi \x96 bye"

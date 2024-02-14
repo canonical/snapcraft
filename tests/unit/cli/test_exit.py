@@ -24,7 +24,7 @@ from craft_cli import CraftError
 from craft_providers import ProviderError
 
 from snapcraft import cli
-from snapcraft.remote import RemoteBuildError
+from snapcraft.remote import RemoteBuildError, RemoteBuildFailedError
 
 
 def test_no_keyring_error(capsys, mocker):
@@ -102,3 +102,24 @@ def test_emit_error(emitter, mocker, is_managed, report_errors):
     cli._emit_error(my_error)
 
     assert my_error.logpath_report == report_errors
+
+
+def test_remote_build_failed(capsys, mocker):
+    """Catch remote-build failed errors."""
+    mocker.patch.object(sys, "argv", ["cmd", "remote-build"])
+    mocker.patch.object(sys.stdin, "isatty", return_value=True)
+    mocker.patch(
+        "snapcraft.commands.remote.RemoteBuildCommand.run",
+        side_effect=RemoteBuildFailedError(
+            details="Build failed for arch amd64.\nBuild failed for arch arm64."
+        ),
+    )
+
+    cli.run()
+
+    stderr = capsys.readouterr().err.splitlines()
+
+    # Simple verification that our expected message is being printed
+    assert stderr[0].startswith("remote-build error: Remote build failed.")
+    assert stderr[1].startswith("Build failed for arch amd64.")
+    assert stderr[2].startswith("Build failed for arch arm64.")

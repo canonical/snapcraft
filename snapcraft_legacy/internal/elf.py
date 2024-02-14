@@ -28,7 +28,7 @@ from typing import Dict, FrozenSet, List, Optional, Sequence, Set, Tuple, Union
 import elftools.common.exceptions
 import elftools.elf.elffile
 from elftools.construct import ConstructError
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 
 from snapcraft_legacy import file_utils
 from snapcraft_legacy.internal import common, errors, repo
@@ -466,7 +466,9 @@ class ElfFile:
                 if not version.startswith("GLIBC_"):
                     continue
                 version = version[6:]
-                if parse_version(version) > parse_version(version_required):
+                if not version_required or parse_version(version) > parse_version(
+                    version_required
+                ):
                     version_required = version
 
         self._required_glibc = version_required

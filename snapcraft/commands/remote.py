@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -30,7 +30,12 @@ from overrides import overrides
 from snapcraft.errors import MaintenanceBase, SnapcraftError
 from snapcraft.legacy_cli import run_legacy
 from snapcraft.parts import yaml_utils
-from snapcraft.remote import AcceptPublicUploadError, RemoteBuilder, is_repo
+from snapcraft.remote import (
+    AcceptPublicUploadError,
+    GitType,
+    RemoteBuilder,
+    get_git_repo_type,
+)
 from snapcraft.utils import confirm_with_user, get_host_architecture, humanize_list
 
 _CONFIRMATION_PROMPT = (
@@ -86,18 +91,17 @@ class RemoteBuildCommand(BaseCommand):
         parser.add_argument(
             "--status", action="store_true", help="display remote build status"
         )
-        parser_target = parser.add_mutually_exclusive_group()
-        parser_target.add_argument(
+        parser.add_argument(
             "--build-on",
+            type=lambda arg: [arch.strip() for arch in arg.split(",")],
             metavar="arch",
-            nargs="+",
             help=HIDDEN,
         )
-        parser_target.add_argument(
+        parser.add_argument(
             "--build-for",
+            type=lambda arg: [arch.strip() for arch in arg.split(",")],
             metavar="arch",
-            nargs="+",
-            help="architecture to build for",
+            help="comma-separated list of architectures to build for",
         )
         parser.add_argument(
             "--build-id", metavar="build-id", help="specific build id to retrieve"
@@ -136,7 +140,6 @@ class RemoteBuildCommand(BaseCommand):
 
         if parsed_args.build_on:
             emit.message("Use --build-for instead of --build-on")
-            parsed_args.build_for = parsed_args.build_on
 
         if not parsed_args.launchpad_accept_public_upload and not confirm_with_user(
             _CONFIRMATION_PROMPT
@@ -193,12 +196,23 @@ class RemoteBuildCommand(BaseCommand):
             run_legacy()
             return
 
-        if is_repo(Path().absolute()):
+        git_type = get_git_repo_type(Path().absolute())
+
+        if git_type == GitType.NORMAL:
             emit.debug(
                 "Running new remote-build because project is in a git repository"
             )
             self._run_new_remote_build()
             return
+
+        if git_type == GitType.SHALLOW:
+            emit.debug("Current git repository is shallow cloned.")
+            emit.progress(
+                "Remote build for shallow clones is deprecated "
+                "and will be removed in core24",
+                permanent=True,
+            )
+            # fall-through to legacy remote-build
 
         emit.debug("Running fallback remote-build")
         run_legacy()
@@ -257,17 +271,19 @@ class RemoteBuildCommand(BaseCommand):
                 "Do you wish to recover this build?", default=True
             ):
                 emit.progress("Building")
-                remote_builder.monitor_build()
-                emit.progress("Cleaning")
-                remote_builder.clean_build()
-                emit.progress("Build completed", permanent=True)
+                try:
+                    remote_builder.monitor_build()
+                finally:
+                    emit.progress("Cleaning")
+                    remote_builder.clean_build()
+                    emit.progress("Build task(s) completed", permanent=True)
                 return
 
             # Otherwise clean running build before we start a new one.
             emit.progress("Cleaning existing build")
             remote_builder.clean_build()
         else:
-            emit.progress("No existing build found", permanent=True)
+            emit.progress("No existing build task(s) found", permanent=True)
 
         emit.progress(
             "If interrupted, resume with: 'snapcraft remote-build --recover "
@@ -277,10 +293,12 @@ class RemoteBuildCommand(BaseCommand):
         emit.progress("Starting build")
         remote_builder.start_build()
         emit.progress("Building")
-        remote_builder.monitor_build()
-        emit.progress("Cleaning")
-        remote_builder.clean_build()
-        emit.progress("Build completed", permanent=True)
+        try:
+            remote_builder.monitor_build()
+        finally:
+            emit.progress("Cleaning")
+            remote_builder.clean_build()
+            emit.progress("Build task(s) completed", permanent=True)
 
     def _get_build_strategy(self) -> Optional[_Strategies]:
         """Get the build strategy from the envvar `SNAPCRAFT_REMOTE_BUILD_STRATEGY`.
@@ -361,11 +379,24 @@ class RemoteBuildCommand(BaseCommand):
         The build architectures can be set via the `--build-on` parameter or determined
         from the build-on architectures listed in the project's snapcraft.yaml.
 
+        To retain backwards compatibility, `--build-for` can also be used to
+        set the architectures.
+
         :returns: A list of architectures.
 
         :raises SnapcraftError: If `--build-on` was provided and architectures are
         defined in the project's snapcraft.yaml.
+        :raises SnapcraftError: If `--build-on` and `--build-for` are both provided.
         """
+        # argparse's `add_mutually_exclusive_group()` cannot be used because
+        # ArgumentParsingErrors executes the legacy remote-builder before this module
+        # can decide if the project is allowed to use the legacy remote-builder
+        if self._parsed_args.build_on and self._parsed_args.build_for:
+            raise SnapcraftError(
+                # use the same error as argparse produces for consistency
+                "Error: argument --build-for: not allowed with argument --build-on"
+            )
+
         project_architectures = self._get_project_build_on_architectures()
         if project_architectures and self._parsed_args.build_for:
             raise SnapcraftError(
@@ -375,6 +406,8 @@ class RemoteBuildCommand(BaseCommand):
 
         if project_architectures:
             archs = project_architectures
+        elif self._parsed_args.build_on:
+            archs = self._parsed_args.build_on
         elif self._parsed_args.build_for:
             archs = self._parsed_args.build_for
         else:
