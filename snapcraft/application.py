@@ -22,21 +22,70 @@ import os
 import pathlib
 import signal
 import sys
-from typing import Any
+from typing import Any, List, cast
 
 import craft_application.commands as craft_app_commands
+import craft_application.models
 import craft_cli
 from craft_application import Application, AppMetadata, util
+from craft_application.models import BuildInfo
 from craft_cli import emit
+from craft_providers import bases
 from overrides import override
 
 from snapcraft import cli, errors, models, services
 from snapcraft.commands import unimplemented
+from snapcraft.models import Architecture
+from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
+from snapcraft.utils import get_effective_base, get_host_architecture
+
+
+class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
+    """A project model that creates build plans."""
+
+    def get_build_plan(self) -> List[BuildInfo]:
+        """Get the build plan for this project."""
+        build_plan: List[BuildInfo] = []
+
+        architectures = cast(List[Architecture], getattr(self, "architectures", []))
+
+        for arch in architectures:
+            # build_for will be a single element list
+            build_for = cast(list, arch.build_for)[0]
+
+            # TODO: figure out when to filter `all`
+            if build_for == "all":
+                build_for = get_host_architecture()
+
+            # build on will be a list of archs
+            for build_on in arch.build_on:
+                base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
+                    str(
+                        get_effective_base(
+                            base=getattr(self, "base", None),
+                            build_base=getattr(self, "build_base", None),
+                            name=getattr(self, "name", None),
+                            project_type=getattr(self, "type", None),
+                        )
+                    )
+                ]
+                build_plan.append(
+                    BuildInfo(
+                        platform=f"ubuntu@{base.value}",
+                        build_on=build_on,
+                        build_for=build_for,
+                        base=bases.BaseName("ubuntu", base.value),
+                    )
+                )
+
+        return build_plan
+
 
 APP_METADATA = AppMetadata(
     name="snapcraft",
     summary="Package, distribute, and update snaps for Linux and IoT",
     ProjectClass=models.Project,
+    BuildPlannerClass=SnapcraftBuildPlanner,
     source_ignore_patterns=["*.snap"],
 )
 
@@ -88,20 +137,6 @@ class Snapcraft(Application):
 
         :returns: A ready-to-run Dispatcher object
         """
-        # pylint: disable=too-many-statements
-        # Set the logging level to DEBUG for all craft-libraries. This is OK even if
-        # the specific application doesn't use a specific library, the call does not
-        # import the package.
-        util.setup_loggers(*self._cli_loggers)
-
-        craft_cli.emit.init(
-            mode=craft_cli.EmitterMode.BRIEF,
-            appname=self.app.name,
-            greeting=f"Starting {self.app.name}",
-            log_filepath=self.log_path,
-            streaming_brief=True,
-        )
-
         # Handle "multiplexing" of Snapcraft "codebases" depending on the
         # project's base (if any). Here, we handle the case where there *is*
         # a project and it's core24, which means it should definitely fall into
@@ -178,13 +213,13 @@ class Snapcraft(Application):
 
 def main() -> int:
     """Run craft-application based snapcraft with classic fallback."""
-    util.setup_loggers(
-        "craft_parts", "craft_providers", "craft_store", "snapcraft.remote"
-    )
-
     snapcraft_services = services.SnapcraftServiceFactory(app=APP_METADATA)
 
-    app = Snapcraft(app=APP_METADATA, services=snapcraft_services)
+    app = Snapcraft(
+        app=APP_METADATA,
+        services=snapcraft_services,
+        extra_loggers={"snapcraft.remote"},
+    )
 
     app.add_command_group(
         "Lifecycle",
