@@ -155,8 +155,17 @@ class GNOME(Extension):
                 }
             },
             "layout": {
-                "/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
-                    "bind": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
+                "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0": {
+                    "bind": (
+                        "$SNAP/gnome-platform/usr/lib/"
+                        "$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0"
+                    )
+                },
+                "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1": {
+                    "bind": (
+                        "$SNAP/gnome-platform/usr/lib/"
+                        "$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1"
+                    )
                 },
                 "/usr/share/xml/iso-codes": {
                     "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
@@ -189,11 +198,14 @@ class GNOME(Extension):
                     "LD_LIBRARY_PATH": prepend_to_env(
                         "LD_LIBRARY_PATH",
                         [
-                            f"/snap/{sdk_snap}/current/lib/$CRAFT_ARCH_TRIPLET",
-                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET",
+                            f"/snap/{sdk_snap}/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR",
+                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR",
                             f"/snap/{sdk_snap}/current/usr/lib",
                             f"/snap/{sdk_snap}/current/usr/lib/vala-current",
-                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET/pulseaudio",
+                            (
+                                f"/snap/{sdk_snap}/current/usr/lib/"
+                                "$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio"
+                            ),
                         ],
                     ),
                 },
@@ -201,7 +213,10 @@ class GNOME(Extension):
                     "PKG_CONFIG_PATH": prepend_to_env(
                         "PKG_CONFIG_PATH",
                         [
-                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig",
+                            (
+                                f"/snap/{sdk_snap}/current/usr/lib/"
+                                "$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig"
+                            ),
                             f"/snap/{sdk_snap}/current/usr/lib/pkgconfig",
                             f"/snap/{sdk_snap}/current/usr/share/pkgconfig",
                         ],
@@ -217,7 +232,7 @@ class GNOME(Extension):
                 },
                 {
                     "GDK_PIXBUF_MODULE_FILE": (
-                        f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET"
+                        f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR"
                         "/gdk-pixbuf-current/loaders.cache"
                     ),
                 },
@@ -235,10 +250,22 @@ class GNOME(Extension):
                         [
                             f"/snap/{sdk_snap}/current/usr/lib/python3.10",
                             f"/snap/{sdk_snap}/current/usr/lib/python3/dist-packages",
-                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET"
+                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR"
                             "/gobject-introspection",
                         ],
                     ),
+                },
+                {
+                    "GI_TYPELIB_PATH": prepend_to_env(
+                        "GI_TYPELIB_PATH",
+                        [
+                            f"/snap/{sdk_snap}/current/usr/lib/girepository-1.0",
+                            (
+                                f"/snap/{sdk_snap}/usr/lib/"
+                                "$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0"
+                            ),
+                        ],
+                    )
                 },
             ],
         }
