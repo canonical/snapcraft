@@ -367,3 +367,63 @@ def fake_provider(mock_instance):
             yield mock_instance
 
     return FakeProvider()
+
+
+@pytest.fixture()
+def extra_project_params():
+    """Configuration fixture for the Project used by the default services."""
+    return {"confinement": "devmode"}
+
+
+# The factory setup from CraftApplication is imported at the fixture level.
+# pylint: disable=import-outside-toplevel
+
+
+@pytest.fixture()
+def default_project(extra_project_params):
+    from craft_application.models import SummaryStr, VersionStr
+
+    from snapcraft.models.project import Project
+
+    parts = extra_project_params.pop("parts", {})
+
+    return Project(
+        name="default",
+        version=VersionStr("1.0"),
+        summary=SummaryStr("default project"),
+        description="default project",
+        base="core24",
+        build_base="devel",
+        parts=parts,
+        license="MIT",
+        **extra_project_params,
+    )
+
+
+@pytest.fixture()
+def default_factory(default_project):
+    from snapcraft.application import APP_METADATA
+    from snapcraft.services import SnapcraftServiceFactory
+
+    factory = SnapcraftServiceFactory(
+        app=APP_METADATA,
+        project=default_project,
+    )
+    return factory
+
+
+@pytest.fixture()
+def package_service(default_project, default_factory):
+    from snapcraft.application import APP_METADATA
+    from snapcraft.services import Package
+
+    return Package(
+        app=APP_METADATA,
+        project=default_project,
+        services=default_factory,
+        platform="amd64",
+        build_for="amd64",
+    )
+
+
+# pylint: enable=import-outside-toplevel

@@ -16,5 +16,12 @@
 
 """Snap metadata definitions and helpers."""
 
-from .extracted_metadata import ExtractedMetadata  # noqa: F401
-from .metadata import extract_metadata  # noqa: F401
+from .extracted_metadata import ExtractedMetadata
+from .metadata import extract_metadata
+from .snap_yaml import SnapMetadata
+
+__all__ = [
+    "extract_metadata",
+    "ExtractedMetadata",
+    "SnapMetadata",
+]

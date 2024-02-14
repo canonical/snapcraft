@@ -235,7 +235,6 @@ class SnapMetadata(SnapcraftMetadata):
     type: Optional[str]
     architectures: List[str]
     base: Optional[str]
-    build_base: Optional[str]
     assumes: Optional[List[str]]
     epoch: Optional[str]
     apps: Optional[Dict[str, SnapApp]]
