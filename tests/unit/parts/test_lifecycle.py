@@ -28,10 +28,10 @@ from craft_providers.bases.ubuntu import BuilddBaseAlias
 
 from snapcraft import errors
 from snapcraft.elf import ElfFile
+from snapcraft.models import MANDATORY_ADOPTABLE_FIELDS, Project
 from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts.plugins import KernelPlugin
 from snapcraft.parts.update_metadata import update_project_metadata
-from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Project
 from snapcraft.utils import get_host_architecture
 
 _SNAPCRAFT_YAML_FILENAMES = [
@@ -1306,8 +1306,12 @@ def test_lifecycle_run_in_provider_default(
     mock_prepare_instance = mocker.patch(
         "snapcraft.parts.lifecycle.providers.prepare_instance"
     )
-    mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
-    mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
+    mocker.patch(
+        "snapcraft.models.project.Project.get_build_on", return_value="test-arch-1"
+    )
+    mocker.patch(
+        "snapcraft.models.project.Project.get_build_for", return_value="test-arch-2"
+    )
 
     expected_command = [
         "snapcraft",
@@ -1395,8 +1399,12 @@ def test_lifecycle_run_in_provider_all_options(
     mock_prepare_instance = mocker.patch(
         "snapcraft.parts.lifecycle.providers.prepare_instance"
     )
-    mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
-    mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
+    mocker.patch(
+        "snapcraft.models.project.Project.get_build_on", return_value="test-arch-1"
+    )
+    mocker.patch(
+        "snapcraft.models.project.Project.get_build_for", return_value="test-arch-2"
+    )
 
     # build the expected command to be executed in the provider
     parts = ["test-part-1", "test-part-2"]
@@ -1499,8 +1507,12 @@ def test_lifecycle_run_in_provider_try(
     mocker.patch("snapcraft.parts.lifecycle.providers.capture_logs_from_instance")
     mocker.patch("snapcraft.parts.lifecycle.providers.ensure_provider_is_available")
     mocker.patch("snapcraft.parts.lifecycle.providers.prepare_instance")
-    mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
-    mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
+    mocker.patch(
+        "snapcraft.models.project.Project.get_build_on", return_value="test-arch-1"
+    )
+    mocker.patch(
+        "snapcraft.models.project.Project.get_build_for", return_value="test-arch-2"
+    )
 
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     parts_lifecycle._run_in_provider(
@@ -1551,8 +1563,8 @@ def test_lifecycle_run_in_provider(
     mocker.patch("snapcraft.parts.lifecycle.providers.capture_logs_from_instance")
     mocker.patch("snapcraft.parts.lifecycle.providers.ensure_provider_is_available")
     mocker.patch("snapcraft.parts.lifecycle.providers.prepare_instance")
-    mocker.patch("snapcraft.projects.Project.get_build_on")
-    mocker.patch("snapcraft.projects.Project.get_build_for")
+    mocker.patch("snapcraft.models.project.Project.get_build_on")
+    mocker.patch("snapcraft.models.project.Project.get_build_for")
 
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     parts_lifecycle._run_in_provider(
@@ -1586,7 +1598,9 @@ def test_lifecycle_run_in_provider_devel_base(
     tmp_path,
 ):
     """Verify the `devel` base is handled properly when launching an instance."""
-    mocker.patch("snapcraft.projects.Project.get_effective_base", return_value="devel")
+    mocker.patch(
+        "snapcraft.models.project.Project.get_effective_base", return_value="devel"
+    )
     mock_base_configuration = Mock()
     mocker.patch(
         "snapcraft.parts.lifecycle.providers.get_base_configuration",
@@ -1595,8 +1609,8 @@ def test_lifecycle_run_in_provider_devel_base(
     mocker.patch("snapcraft.parts.lifecycle.providers.capture_logs_from_instance")
     mocker.patch("snapcraft.parts.lifecycle.providers.ensure_provider_is_available")
     mocker.patch("snapcraft.parts.lifecycle.providers.prepare_instance")
-    mocker.patch("snapcraft.projects.Project.get_build_on")
-    mocker.patch("snapcraft.projects.Project.get_build_for")
+    mocker.patch("snapcraft.models.project.Project.get_build_on")
+    mocker.patch("snapcraft.models.project.Project.get_build_for")
 
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     parts_lifecycle._run_in_provider(
@@ -1809,6 +1823,73 @@ def test_patch_elf(snapcraft_yaml, mocker, new_dir):
             elf_file_path=new_dir / "prime/elf.bin",
         )
     ]
+
+
+def test_patch_elf_with_override_prime(snapcraft_yaml, mocker, new_dir, emitter):
+    """Patch binaries with `enable-patchelf`` and override-prime defined"""
+    run_patchelf_mock = mocker.patch("snapcraft.elf._patcher.Patcher._run_patchelf")
+    shutil.copy("/bin/true", "elf.bin")
+    callbacks.register_post_step(parts_lifecycle._patch_elf, step_list=[Step.PRIME])
+
+    mocker.patch(
+        "snapcraft.elf.elf_utils.get_dynamic_linker",
+        return_value="/snap/core22/current/lib64/ld-linux-x86-64.so.2",
+    )
+    mocker.patch(
+        "snapcraft.elf._patcher.Patcher.get_proposed_rpath",
+        return_value=["/snap/core22/current/lib/x86_64-linux-gnu"],
+    )
+    mocker.patch("snapcraft.elf._patcher.Patcher.get_current_rpath", return_value=[])
+
+    # don't load dependencies in a unit test
+    mocker.patch.object(ElfFile, "load_dependencies")
+
+    yaml_data = {
+        "base": "core22",
+        "confinement": "classic",
+        "parts": {
+            "p1": {
+                "plugin": "dump",
+                "source": ".",
+                "build-attributes": ["enable-patchelf"],
+                "override-prime": "craftctl default",
+            }
+        },
+    }
+    project = Project.unmarshal(snapcraft_yaml(**yaml_data))
+
+    parts_lifecycle._run_command(
+        "pack",
+        project=project,
+        parse_info={},
+        assets_dir=Path(),
+        start_time=datetime.now(),
+        parallel_build_count=1,
+        parsed_args=argparse.Namespace(
+            directory=None,
+            output=None,
+            debug=False,
+            destructive_mode=True,
+            shell=False,
+            shell_after=False,
+            use_lxd=False,
+            enable_manifest=False,
+            ua_token=None,
+            parts=["p1"],
+        ),
+    )
+
+    # Simple verification that our expected message is being printed
+    emitter.assert_progress(
+        "Warning: 'enable-patchelf' feature will not apply to files primed "
+        "by parts that use the 'override-prime' keyword. It's not possible "
+        "to track file changes in the prime directory.",
+        permanent=True,
+    )
+
+    # TODO: This is not working as expected, the patchelf should be called once
+    # craft-parts fixed the issue with the override-prime
+    run_patchelf_mock.assert_not_called()
 
 
 @pytest.mark.parametrize("build_for", ["amd64", "arm64", "all"])

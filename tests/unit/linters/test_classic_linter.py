@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from snapcraft import linters, projects
+from snapcraft import linters, models
 from snapcraft.elf import elf_utils
 from snapcraft.linters.base import LinterIssue, LinterResult
 from snapcraft.linters.classic_linter import ClassicLinter
@@ -63,7 +63,7 @@ def test_classic_linter(mocker, new_dir, confinement, stage_libc, text):
         "parts": {},
     }
 
-    project = projects.Project.unmarshal(yaml_data)
+    project = models.Project.unmarshal(yaml_data)
     snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
 
     issues = linters.run_linters(new_dir, lint=None)
@@ -125,11 +125,11 @@ def test_classic_linter_filter(mocker, new_dir):
         "parts": {},
     }
 
-    project = projects.Project.unmarshal(yaml_data)
+    project = models.Project.unmarshal(yaml_data)
     snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
 
     issues = linters.run_linters(
-        new_dir, lint=projects.Lint(ignore=[{"classic": ["elf.*"]}])
+        new_dir, lint=models.Lint(ignore=[{"classic": ["elf.*"]}])
     )
     assert issues == [
         LinterIssue(
