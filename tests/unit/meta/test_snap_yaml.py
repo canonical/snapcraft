@@ -23,7 +23,7 @@ import yaml
 
 from snapcraft.meta import snap_yaml
 from snapcraft.meta.snap_yaml import ContentPlug, ContentSlot, SnapMetadata
-from snapcraft.projects import Project
+from snapcraft.models import Project
 
 
 def _override_data(to_dict, from_dict):

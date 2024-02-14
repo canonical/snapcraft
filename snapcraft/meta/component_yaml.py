@@ -24,7 +24,7 @@ from pydantic import Extra
 from pydantic_yaml import YamlModel
 
 from snapcraft.errors import SnapcraftError
-from snapcraft.projects import Project
+from snapcraft.models import Project
 
 
 class ComponentMetadata(YamlModel):
