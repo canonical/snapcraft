@@ -23,7 +23,7 @@ from typing import Any, Dict, List, Literal, Optional, Set, Union, cast
 
 import pydantic
 import yaml
-from craft_application.models import BaseMetadata, constraints
+from craft_application.models import BaseMetadata, SummaryStr, constraints
 from craft_cli import emit
 from pydantic import ValidationError, validator
 from typing_extensions import override
@@ -229,7 +229,7 @@ class SnapMetadata(SnapcraftMetadata):
     name: str
     title: Optional[str]
     version: str
-    summary: str
+    summary: SummaryStr
     description: str
     license: Optional[str]
     type: Optional[str]
@@ -244,7 +244,9 @@ class SnapMetadata(SnapcraftMetadata):
     plugs: Optional[Dict[str, Any]]
     slots: Optional[Dict[str, Any]]
     hooks: Optional[Dict[str, Any]]
-    layout: Optional[Dict[str, Dict[str, str]]]
+    layout: Optional[
+        Dict[str, Dict[Literal["symlink", "bind", "bind-file", "type"], str]]
+    ]
     system_usernames: Optional[Dict[str, Any]]
     provenance: Optional[str]
     links: Optional[Links]
@@ -448,8 +450,8 @@ def get_metadata_from_project(
         name=project.name,
         title=project.title,
         version=version,
-        summary=project.summary,
-        description=project.description,  # type: ignore
+        summary=cast(SummaryStr, project.summary),
+        description=cast(str, project.description),
         license=project.license,
         type=project.type,
         architectures=[arch],

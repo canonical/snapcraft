@@ -18,6 +18,8 @@
 
 from pathlib import Path
 
+from craft_application.models import SummaryStr
+
 from snapcraft import linters, meta, pack
 
 
@@ -49,7 +51,7 @@ def test_metadata(package_service, default_factory, new_dir):
         name="default",
         title=None,
         version="1.0",
-        summary="default project",
+        summary=SummaryStr("default project"),
         description="default project",
         license="MIT",
         type=None,
