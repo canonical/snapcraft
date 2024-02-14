@@ -23,9 +23,7 @@ restore: |
 execute: |
   cd "../snaps/$SNAP"
 
-  # If this next line fails, delete it and replace it with the one following it
-  snapcraft prime --destructive-mode 2>&1 | MATCH '"prime" command is not implemented for core24!'; exit 0
-  # snapcraft prime --destructive-mode
+  snapcraft prime --destructive-mode
 
   if ! diff -U10 prime/meta/snap.yaml expected_snap.yaml; then
       echo "The formatting for snap.yaml is incorrect"

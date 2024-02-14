@@ -1,12 +1,9 @@
 summary: Build a strict snap and validate elf patching
 
 prepare: |
-  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
-  # set_base "snap/snapcraft.yaml"
-
   apt-get install patchelf dpkg-dev -y
   apt-mark auto patchelf dpkg-dev
+
 restore: |
   snapcraft clean
   rm -f ./*.snap
@@ -16,14 +13,7 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
-  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
-  base="$(get_base)"
-
-  cat snap/snapcraft.yaml
-  # If this next line fails, delete it and replace it with the one following it
-  snapcraft prime 2>&1 | MATCH '"prime" command is not implemented for core24!'; exit 0
-  # snapcraft prime
+  snapcraft prime
 
   arch_triplet="$(dpkg-architecture -q DEB_HOST_MULTIARCH)"
 
