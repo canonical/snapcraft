@@ -233,7 +233,19 @@ def test_get_part_snippet(qt_framework_extension):
                 "${SNAPCRAFT_CMAKE_ARGS:+:$SNAPCRAFT_CMAKE_ARGS}"
             },
         ],
-        "build-packages": ["libgl1-mesa-dev"],
+        "build-packages": [
+            "libgl1-mesa-dev",
+            "libpcre2-16-0",
+            "libglib2.0-0",
+            "libdouble-conversion3",
+            "libb2-1",
+        ],
+        "stage-packages": [
+            "libpcre2-16-0",
+            "libglib2.0-0",
+            "libdouble-conversion3",
+            "libb2-1",
+        ],
     }
 
 
