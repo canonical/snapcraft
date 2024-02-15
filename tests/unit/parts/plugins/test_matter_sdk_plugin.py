@@ -122,15 +122,31 @@ def test_get_build_commands(part_info):
         ]
     )
 
+    expected_commands.extend(["OLD_PATH=$PATH"])
+
     expected_commands.extend(
         ["set +u && source scripts/setup/bootstrap.sh --platform build && set -u"]
     )
+
     expected_commands.extend(["echo 'Built Matter SDK'"])
 
     expected_commands.extend(
         [
-            'echo "export PATH=$PATH" >> matter_sdk_env',
-            "echo 'environment variable PATH has been exported to matter_sdk_env file'",
+            'IFS=: read -r -a OLD_PATH_ARRAY <<< "$OLD_PATH"',
+            'IFS=: read -r -a NEW_PATH_ARRAY <<< "$PATH"',
+            "declare -a DIFFERENCE=()",
+            'for element in "${NEW_PATH_ARRAY[@]}"; do',
+            '    if [[ ! " ${OLD_PATH_ARRAY[@]} " =~ " $element " ]]; then',
+            '        DIFFERENCE+=("$element")',
+            "    fi",
+            "done",
+            'MATTER_SDK_PATH=$(IFS=:; echo "${DIFFERENCE[*]}")',
+        ]
+    )
+
+    expected_commands.extend(
+        [
+            'echo "export PATH=$MATTER_SDK_PATH:\\$PATH" >> matter-sdk-env.sh',
         ]
     )
 

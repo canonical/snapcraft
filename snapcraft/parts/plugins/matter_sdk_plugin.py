@@ -150,6 +150,9 @@ class MatterSdkPlugin(plugins.Plugin):
             ]
         )
 
+        # Store the initial value of PATH before executing the bootstrap script
+        commands.extend(["OLD_PATH=$PATH"])
+
         # Bootstrapping script for building Matter SDK with minimal "build" requirements
         # and setting up the environment.
         commands.extend(
@@ -158,11 +161,26 @@ class MatterSdkPlugin(plugins.Plugin):
 
         commands.extend(["echo 'Built Matter SDK'"])
 
-        # Compare and output pigweed related environment variables to matter_sdk_env env file
+        # Compare the difference between the original PATH and the modified PATH
         commands.extend(
             [
-                'echo "export PATH=$PATH" >> matter_sdk_env',
-                "echo 'environment variable PATH has been exported to matter_sdk_env file'",
+                'IFS=: read -r -a OLD_PATH_ARRAY <<< "$OLD_PATH"',
+                'IFS=: read -r -a NEW_PATH_ARRAY <<< "$PATH"',
+                "declare -a DIFFERENCE=()",
+                'for element in "${NEW_PATH_ARRAY[@]}"; do',
+                '    if [[ ! " ${OLD_PATH_ARRAY[@]} " =~ " $element " ]]; then',
+                '        DIFFERENCE+=("$element")',
+                "    fi",
+                "done",
+                'MATTER_SDK_PATH=$(IFS=:; echo "${DIFFERENCE[*]}")',
+            ]
+        )
+
+        # Prepend the Matter SDK related PATH to the beginning of the PATH environment variable
+        # and save it to the matter-sdk-env.sh file
+        commands.extend(
+            [
+                'echo "export PATH=$MATTER_SDK_PATH:\\$PATH" >> matter-sdk-env.sh',
             ]
         )
 
