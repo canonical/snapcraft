@@ -185,6 +185,19 @@ def _run_command(  # noqa PLR0913 # pylint: disable=too-many-branches, too-many-
         lifecycle.clean(part_names=part_names)
         return
 
+    # patchelf relies on known file list to work properly, but override-prime
+    # parts don't have the list yet, and we can't track changes in the prime.
+    for _part in getattr(project, "parts", {}).values():
+        if "enable-patchelf" in _part.get("build-attributes", []) and _part.get(
+            "override-prime", None
+        ):
+            emit.progress(
+                "Warning: 'enable-patchelf' feature will not apply to files primed "
+                "by parts that use the 'override-prime' keyword. It's not possible "
+                "to track file changes in the prime directory.",
+                permanent=True,
+            )
+
     try:
         _run_lifecycle_and_pack(
             lifecycle,
