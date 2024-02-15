@@ -103,12 +103,14 @@ def check_git_repo_for_remote_build(path: Path) -> None:
 
     if git_type == GitType.INVALID:
         raise RemoteBuildInvalidGitRepoError(
-            f"Could not find a git repository in {str(path)!r}"
+            f"Could not find a git repository in {str(path.absolute())!r}. "
+            "The project must be in the top-level of a git repository."
         )
 
     if git_type == GitType.SHALLOW:
         raise RemoteBuildInvalidGitRepoError(
-            "Remote build for shallow cloned git repos are no longer supported"
+            "Remote builds are not supported for projects in shallowly cloned "
+            "git repositories."
         )
 
 

@@ -900,9 +900,9 @@ class ScriptletsMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
             del self.config_data[keyword]
 
         del self.config_data["parts"]["test-part"]["parse-info"]
-        self.config_data["parts"]["test-part"][
-            "override-prime"
-        ] = "snapcraftctl {} {}\nsnapcraftctl prime".format(setter, value)
+        self.config_data["parts"]["test-part"]["override-prime"] = (
+            "snapcraftctl {} {}\nsnapcraftctl prime".format(setter, value)
+        )
 
         generated = self.generate_meta_yaml(build=True)
 
@@ -916,9 +916,9 @@ class ScriptletsMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
         self.useFixture(fake_logger)
 
         del self.config_data["parts"]["test-part"]["parse-info"]
-        self.config_data["parts"]["test-part"][
-            "override-prime"
-        ] = "snapcraftctl {} {}\nsnapcraftctl prime".format(setter, value)
+        self.config_data["parts"]["test-part"]["override-prime"] = (
+            "snapcraftctl {} {}\nsnapcraftctl prime".format(setter, value)
+        )
 
         generated = self.generate_meta_yaml(build=True)
 
@@ -940,9 +940,9 @@ class ScriptletsMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
         with contextlib.suppress(KeyError):
             del self.config_data[keyword]
 
-        self.config_data["parts"]["test-part"][
-            "override-build"
-        ] = "snapcraftctl build && snapcraftctl {} {}".format(setter, value)
+        self.config_data["parts"]["test-part"]["override-build"] = (
+            "snapcraftctl build && snapcraftctl {} {}".format(setter, value)
+        )
 
         def _fake_extractor(file_path, workdir):
             return extractors.ExtractedMetadata(**{keyword: "extracted-value"})
@@ -959,9 +959,9 @@ class ScriptletsMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
         with contextlib.suppress(KeyError):
             del self.config_data[keyword]
 
-        self.config_data["parts"]["test-part"][
-            "override-pull"
-        ] = "snapcraftctl {} {} && snapcraftctl pull".format(setter, value)
+        self.config_data["parts"]["test-part"]["override-pull"] = (
+            "snapcraftctl {} {} && snapcraftctl pull".format(setter, value)
+        )
 
         def _fake_extractor(file_path, workdir):
             return extractors.ExtractedMetadata(**{keyword: "extracted-value"})
