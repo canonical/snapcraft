@@ -19,11 +19,17 @@ from textwrap import dedent
 
 import pytest
 
-from snapcraft.commands import ExtensionsCommand, ListExtensionsCommand
+import snapcraft.commands.core22
 
 
 @pytest.mark.usefixtures("fake_extension")
-@pytest.mark.parametrize("command", [ListExtensionsCommand, ExtensionsCommand])
+@pytest.mark.parametrize(
+    "command",
+    [
+        snapcraft.commands.core22.ListExtensionsCommand,
+        snapcraft.commands.core22.ExtensionsCommand,
+    ],
+)
 def test_command(emitter, command):
     cmd = command(None)
     cmd.run(Namespace())
@@ -61,7 +67,13 @@ def test_command(emitter, command):
 
 
 @pytest.mark.usefixtures("fake_extension_name_from_legacy")
-@pytest.mark.parametrize("command", [ListExtensionsCommand, ExtensionsCommand])
+@pytest.mark.parametrize(
+    "command",
+    [
+        snapcraft.commands.core22.ListExtensionsCommand,
+        snapcraft.commands.core22.ExtensionsCommand,
+    ],
+)
 def test_command_extension_dups(emitter, command):
     cmd = command(None)
     cmd.run(Namespace())

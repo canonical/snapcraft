@@ -20,7 +20,7 @@ from textwrap import dedent
 
 import pytest
 
-from snapcraft.commands import ExpandExtensionsCommand
+import snapcraft.commands.core22
 
 
 @pytest.mark.usefixtures("fake_extension")
@@ -52,7 +52,7 @@ def test_expand_extensions_simple(new_dir, emitter):
             file=yaml_file,
         )
 
-    cmd = ExpandExtensionsCommand(None)
+    cmd = snapcraft.commands.core22.ExpandExtensionsCommand(None)
     cmd.run(Namespace())
     emitter.assert_message(
         dedent(
@@ -91,7 +91,8 @@ def test_expand_extensions_complex(new_dir, emitter, mocker):
     """
     # mock for advanced grammar parsing (i.e. `on amd64:`)
     mocker.patch(
-        "snapcraft.commands.extensions.get_host_architecture", return_value="amd64"
+        "snapcraft.commands.core22.extensions.get_host_architecture",
+        return_value="amd64",
     )
     with Path("snapcraft.yaml").open("w") as yaml_file:
         print(
@@ -127,7 +128,7 @@ def test_expand_extensions_complex(new_dir, emitter, mocker):
             file=yaml_file,
         )
 
-    cmd = ExpandExtensionsCommand(None)
+    cmd = snapcraft.commands.core22.ExpandExtensionsCommand(None)
     cmd.run(Namespace())
     emitter.assert_message(
         dedent(

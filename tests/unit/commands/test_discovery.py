@@ -30,7 +30,7 @@ from snapcraft import commands, errors
 @pytest.fixture(autouse=True)
 def fake_registered_plugins(mocker):
     fake_plugins = mocker.patch(
-        "snapcraft.commands.discovery.get_registered_plugins",
+        "snapcraft.commands.core22.discovery.get_registered_plugins",
         autospec=True,
         return_value={
             "bar": craft_parts.plugins.Plugin,
@@ -47,7 +47,7 @@ def fake_registered_plugins(mocker):
 
 @pytest.mark.usefixtures("new_dir")
 def test_registered_plugins_default(emitter):
-    cmd = commands.ListPluginsCommand(None)
+    cmd = commands.core22.ListPluginsCommand(None)
 
     cmd.run(argparse.Namespace(base=None))
 
@@ -65,7 +65,7 @@ def test_registered_plugins_default(emitter):
 def test_registered_plugins_project(emitter, snapcraft_yaml):
     snapcraft_yaml(base="core22")
 
-    cmd = commands.ListPluginsCommand(None)
+    cmd = commands.core22.ListPluginsCommand(None)
 
     cmd.run(argparse.Namespace(base=None))
 
@@ -83,7 +83,7 @@ def test_registered_plugins_project(emitter, snapcraft_yaml):
 def test_registered_plugins_base_option(emitter, snapcraft_yaml):
     snapcraft_yaml(base="core20")
 
-    cmd = commands.ListPluginsCommand(None)
+    cmd = commands.core22.ListPluginsCommand(None)
 
     cmd.run(argparse.Namespace(base="core22"))
 
@@ -101,7 +101,7 @@ def test_registered_plugins_base_option(emitter, snapcraft_yaml):
 def test_registered_plugins_legacy_project(emitter, snapcraft_yaml):
     snapcraft_yaml(base="core20")
 
-    cmd = commands.ListPluginsCommand(None)
+    cmd = commands.core22.ListPluginsCommand(None)
 
     with pytest.raises(errors.LegacyFallback):
         cmd.run(argparse.Namespace(base=None))

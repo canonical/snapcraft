@@ -62,13 +62,15 @@ def mock_argv(mocker):
 @pytest.fixture()
 def mock_confirm(mocker):
     return mocker.patch(
-        "snapcraft.commands.remote.confirm_with_user", return_value=True
+        "snapcraft.commands.core22.remote.confirm_with_user", return_value=True
     )
 
 
 @pytest.fixture()
 def mock_remote_builder(mocker):
-    _mock_remote_builder = mocker.patch("snapcraft.commands.remote.RemoteBuilder")
+    _mock_remote_builder = mocker.patch(
+        "snapcraft.commands.core22.remote.RemoteBuilder"
+    )
     _mock_remote_builder.return_value.has_outstanding_build.return_value = False
     return _mock_remote_builder
 
@@ -76,20 +78,20 @@ def mock_remote_builder(mocker):
 @pytest.fixture()
 def mock_run_new_or_fallback_remote_build(mocker):
     return mocker.patch(
-        "snapcraft.commands.remote.RemoteBuildCommand._run_new_or_fallback_remote_build"
+        "snapcraft.commands.core22.remote.RemoteBuildCommand._run_new_or_fallback_remote_build"
     )
 
 
 @pytest.fixture()
 def mock_run_new_remote_build(mocker):
     return mocker.patch(
-        "snapcraft.commands.remote.RemoteBuildCommand._run_new_remote_build"
+        "snapcraft.commands.core22.remote.RemoteBuildCommand._run_new_remote_build"
     )
 
 
 @pytest.fixture()
 def mock_run_legacy(mocker):
-    return mocker.patch("snapcraft.commands.remote.run_legacy")
+    return mocker.patch("snapcraft.commands.core22.remote.run_legacy")
 
 
 #############
@@ -738,7 +740,7 @@ def test_determine_architectures_from_snapcraft_yaml(
 def test_determine_architectures_host_arch(mocker, mock_remote_builder):
     """Use host architecture if not defined in the snapcraft.yaml."""
     mocker.patch(
-        "snapcraft.commands.remote.get_host_architecture", return_value="arm64"
+        "snapcraft.commands.core22.remote.get_host_architecture", return_value="arm64"
     )
 
     cli.run()
@@ -1010,7 +1012,7 @@ def test_recover_build_user_denies(emitter, mocker, mock_remote_builder):
     """Clean and start a new build when a user denies to recover an existing build."""
     mocker.patch(
         # confirm data upload, deny build recovery
-        "snapcraft.commands.remote.confirm_with_user",
+        "snapcraft.commands.core22.remote.confirm_with_user",
         side_effect=[True, False],
     )
     mock_remote_builder.return_value.has_outstanding_build.return_value = True

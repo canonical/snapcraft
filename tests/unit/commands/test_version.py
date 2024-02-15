@@ -17,7 +17,7 @@
 from argparse import Namespace
 
 from snapcraft import __version__
-from snapcraft.commands.version import VersionCommand
+from snapcraft.commands.core22.version import VersionCommand
 
 
 def test_version_command(emitter):

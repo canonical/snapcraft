@@ -45,7 +45,7 @@ def fake_store_login(mocker):
 
 @pytest.mark.usefixtures("memory_keyring")
 def test_login(emitter, fake_store_login):
-    cmd = commands.StoreLoginCommand(None)
+    cmd = commands.core22.StoreLoginCommand(None)
 
     cmd.run(argparse.Namespace(login_with=None, experimental_login=False))
 
@@ -63,7 +63,7 @@ def test_login_with_file(emitter, mocker, legacy_config_path):
     )
     legacy_config_path.write_text("secretb64")
 
-    cmd = commands.StoreLoginCommand(None)
+    cmd = commands.core22.StoreLoginCommand(None)
 
     cmd.run(
         argparse.Namespace(login_with=str(legacy_config_path), experimental_login=False)
@@ -78,7 +78,7 @@ def test_login_with_file(emitter, mocker, legacy_config_path):
 
 
 def test_login_with_experimental_fails():
-    cmd = commands.StoreLoginCommand(None)
+    cmd = commands.core22.StoreLoginCommand(None)
 
     with pytest.raises(craft_cli.errors.ArgumentParsingError) as raised:
         cmd.run(argparse.Namespace(login_with=None, experimental_login=True))
@@ -94,7 +94,7 @@ def test_login_with_experimental_fails():
 
 
 def test_export_login(emitter, fake_store_login):
-    cmd = commands.StoreExportLoginCommand(None)
+    cmd = commands.core22.StoreExportLoginCommand(None)
 
     cmd.run(
         argparse.Namespace(
@@ -119,7 +119,7 @@ def test_export_login(emitter, fake_store_login):
 
 
 def test_export_login_file(new_dir, emitter, fake_store_login):
-    cmd = commands.StoreExportLoginCommand(None)
+    cmd = commands.core22.StoreExportLoginCommand(None)
 
     cmd.run(
         argparse.Namespace(
@@ -147,7 +147,7 @@ def test_export_login_file(new_dir, emitter, fake_store_login):
 
 
 def test_export_login_with_params(emitter, fake_store_login):
-    cmd = commands.StoreExportLoginCommand(None)
+    cmd = commands.core22.StoreExportLoginCommand(None)
 
     cmd.run(
         argparse.Namespace(
@@ -178,7 +178,7 @@ def test_export_login_with_params(emitter, fake_store_login):
 def test_export_login_with_candid(emitter, fake_store_login, monkeypatch):
     monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "candid")
 
-    cmd = commands.StoreExportLoginCommand(None)
+    cmd = commands.core22.StoreExportLoginCommand(None)
 
     cmd.run(
         argparse.Namespace(
@@ -208,7 +208,7 @@ def test_export_login_with_candid(emitter, fake_store_login, monkeypatch):
 
 
 def test_export_login_with_experimental_fails():
-    cmd = commands.StoreExportLoginCommand(None)
+    cmd = commands.core22.StoreExportLoginCommand(None)
 
     with pytest.raises(craft_cli.errors.ArgumentParsingError) as raised:
         cmd.run(
@@ -238,7 +238,7 @@ def test_who(emitter, fake_client):
         "expires": "2023-04-22T21:48:57.000",
     }
 
-    cmd = commands.StoreWhoAmICommand(None)
+    cmd = commands.core22.StoreWhoAmICommand(None)
 
     cmd.run(argparse.Namespace())
 
@@ -263,7 +263,7 @@ def test_who_with_attenuations(emitter, fake_client):
         "expires": "2023-04-22T21:48:57.000",
     }
 
-    cmd = commands.StoreWhoAmICommand(None)
+    cmd = commands.core22.StoreWhoAmICommand(None)
 
     cmd.run(argparse.Namespace())
 
@@ -285,7 +285,7 @@ def test_who_no_expires(emitter, fake_client):
         "account": {"email": "user@acme.org", "id": "id", "username": "user"},
     }
 
-    cmd = commands.StoreWhoAmICommand(None)
+    cmd = commands.core22.StoreWhoAmICommand(None)
 
     cmd.run(argparse.Namespace())
 
@@ -308,7 +308,7 @@ def test_who_no_expires(emitter, fake_client):
 
 
 def test_logout(emitter, fake_client):
-    cmd = commands.StoreLogoutCommand(None)
+    cmd = commands.core22.StoreLogoutCommand(None)
 
     cmd.run(argparse.Namespace())
 
