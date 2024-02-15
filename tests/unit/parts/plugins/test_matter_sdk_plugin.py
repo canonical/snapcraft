@@ -133,21 +133,13 @@ def test_get_build_commands(part_info):
 
     expected_commands.extend(
         [
-            'IFS=: read -r -a OLD_PATH_ARRAY <<< "$OLD_PATH"',
-            'IFS=: read -r -a NEW_PATH_ARRAY <<< "$PATH"',
-            "declare -a DIFFERENCE=()",
-            'for element in "${NEW_PATH_ARRAY[@]}"; do',
-            '    if [[ ! " ${OLD_PATH_ARRAY[@]} " =~ " $element " ]]; then',
-            '        DIFFERENCE+=("$element")',
-            "    fi",
-            "done",
-            'MATTER_SDK_PATH=$(IFS=:; echo "${DIFFERENCE[*]}")',
+            'MATTER_SDK_PATHS="${PATH%$OLD_PATH}"',
         ]
     )
 
     expected_commands.extend(
         [
-            'echo "export PATH=$MATTER_SDK_PATH:\\$PATH" >> matter-sdk-env.sh',
+            'echo "export PATH=$MATTER_SDK_PATHS:\\$PATH" >> matter-sdk-env.sh',
         ]
     )
 

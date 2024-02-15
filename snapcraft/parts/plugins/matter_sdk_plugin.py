@@ -165,15 +165,7 @@ class MatterSdkPlugin(plugins.Plugin):
         # Compare the difference between the original PATH and the modified PATH
         commands.extend(
             [
-                'IFS=: read -r -a OLD_PATH_ARRAY <<< "$OLD_PATH"',
-                'IFS=: read -r -a NEW_PATH_ARRAY <<< "$PATH"',
-                "declare -a DIFFERENCE=()",
-                'for element in "${NEW_PATH_ARRAY[@]}"; do',
-                '    if [[ ! " ${OLD_PATH_ARRAY[@]} " =~ " $element " ]]; then',
-                '        DIFFERENCE+=("$element")',
-                "    fi",
-                "done",
-                'MATTER_SDK_PATH=$(IFS=:; echo "${DIFFERENCE[*]}")',
+                'MATTER_SDK_PATHS="${PATH%$OLD_PATH}"',
             ]
         )
 
@@ -181,7 +173,7 @@ class MatterSdkPlugin(plugins.Plugin):
         # and save it to the matter-sdk-env.sh file
         commands.extend(
             [
-                'echo "export PATH=$MATTER_SDK_PATH:\\$PATH" >> matter-sdk-env.sh',
+                'echo "export PATH=$MATTER_SDK_PATHS:\\$PATH" >> matter-sdk-env.sh',
             ]
         )
 
