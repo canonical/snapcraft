@@ -32,11 +32,9 @@ parts:
   lighting:
     plugin: nil
     after: [matter-sdk]
-    build-environment:
-      - MATTER_SDK_ENV: ../../matter-sdk/build/matter_sdk_env
     override-build: |
       # Source the Matter SDK environment variables
-      source $MATTER_SDK_ENV
+      source ../../matter-sdk/build/matter-sdk-env.sh
 
       # Build the lighting app for snapcraft spread testing purposes
       cd ../../matter-sdk/build/examples/lighting-app/linux

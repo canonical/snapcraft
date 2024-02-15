@@ -23,6 +23,7 @@ from snapcraft.parts.plugins import MatterSdkPlugin
 # The repository where the matter SDK resides.
 MATTER_SDK_REPO = "https://github.com/project-chip/connectedhomeip"
 
+
 @pytest.fixture(autouse=True)
 def part_info(new_dir):
     yield PartInfo(

@@ -24,6 +24,7 @@ from overrides import overrides
 # The repository where the matter SDK resides.
 MATTER_SDK_REPO = "https://github.com/project-chip/connectedhomeip"
 
+
 class MatterSdkPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     """The part properties used by the matter SDK plugin."""
 
@@ -43,7 +44,7 @@ class MatterSdkPluginProperties(plugins.PluginProperties, plugins.PluginModel):
         plugin_data = plugins.extract_plugin_properties(
             data,
             plugin_name="matter-sdk",
-            required="matter_sdk_version",
+            required=["matter_sdk_version"],
         )
         return cls(**plugin_data)
 
