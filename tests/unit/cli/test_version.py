@@ -23,7 +23,9 @@ from snapcraft import __version__, cli
 
 def test_version_command(mocker):
     mocker.patch.object(sys, "argv", ["cmd", "version"])
-    mock_version_cmd = mocker.patch("snapcraft.commands.version.VersionCommand.run")
+    mock_version_cmd = mocker.patch(
+        "snapcraft.commands.core22.version.VersionCommand.run"
+    )
     cli.run()
     assert mock_version_cmd.mock_calls == [call(argparse.Namespace())]
 
