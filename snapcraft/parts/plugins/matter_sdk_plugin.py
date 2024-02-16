@@ -173,7 +173,7 @@ class MatterSdkPlugin(plugins.Plugin):
         # and save it to the matter-sdk-env.sh file
         commands.extend(
             [
-                'echo "export PATH=$MATTER_SDK_PATHS:\\$PATH" >> matter-sdk-env.sh',
+                'echo "export PATH=$MATTER_SDK_PATHS\\$PATH" >> matter-sdk-env.sh',
             ]
         )
 

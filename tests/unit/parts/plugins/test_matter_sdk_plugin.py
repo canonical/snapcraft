@@ -139,7 +139,7 @@ def test_get_build_commands(part_info):
 
     expected_commands.extend(
         [
-            'echo "export PATH=$MATTER_SDK_PATHS:\\$PATH" >> matter-sdk-env.sh',
+            'echo "export PATH=$MATTER_SDK_PATHS\\$PATH" >> matter-sdk-env.sh',
         ]
     )
 
