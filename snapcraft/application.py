@@ -164,7 +164,7 @@ class Snapcraft(Application):
             extra_global_args=self._global_arguments,
             # TODO: craft-application should allow setting the default command without
             # overriding `_get_dispatcher()`
-            default_command=unimplemented.Pack,
+            default_command=craft_app_commands.lifecycle.PackCommand,
         )
 
         try:
