@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -27,6 +27,7 @@ from typing import Any, List, cast
 import craft_application.commands as craft_app_commands
 import craft_application.models
 import craft_cli
+import pydantic
 from craft_application import Application, AppMetadata, util
 from craft_application.models import BuildInfo
 from craft_cli import emit
@@ -36,6 +37,7 @@ from overrides import override
 from snapcraft import cli, errors, models, services
 from snapcraft.commands import unimplemented
 from snapcraft.models import Architecture
+from snapcraft.models.project import validate_architectures
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import get_effective_base, get_host_architecture
 
@@ -43,29 +45,43 @@ from snapcraft.utils import get_effective_base, get_host_architecture
 class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
     """A project model that creates build plans."""
 
+    architectures: List[Architecture] = pydantic.Field(
+        default_factory=lambda: [get_host_architecture()]
+    )
+    base: str | None = None
+    build_base: str | None = None
+    name: str | None = None
+    project_type: str | None = None
+
+    @pydantic.validator("architectures", always=True, pre=True)
+    def _validate_architecture_data(cls, architectures: list[str | Architecture]):
+        """Validate architecture data.
+
+        Most importantly, converts architecture strings into Architecture objects.
+        """
+        return validate_architectures(architectures)
+
     def get_build_plan(self) -> List[BuildInfo]:
         """Get the build plan for this project."""
         build_plan: List[BuildInfo] = []
 
-        architectures = cast(List[Architecture], getattr(self, "architectures", []))
-
-        for arch in architectures:
+        for arch in self.architectures:
             # build_for will be a single element list
-            build_for = cast(list, arch.build_for)[0]
+            build_for = cast(list[str], arch.build_for)[0]
 
             # TODO: figure out when to filter `all`
             if build_for == "all":
                 build_for = get_host_architecture()
 
             # build on will be a list of archs
-            for build_on in arch.build_on:
+            for build_on in cast(list[str], arch.build_on):
                 base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
                     str(
                         get_effective_base(
-                            base=getattr(self, "base", None),
-                            build_base=getattr(self, "build_base", None),
-                            name=getattr(self, "name", None),
-                            project_type=getattr(self, "type", None),
+                            base=self.base,
+                            build_base=self.build_base,
+                            name=self.name,
+                            project_type=self.project_type,
                         )
                     )
                 ]
