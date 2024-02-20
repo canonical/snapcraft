@@ -64,7 +64,7 @@ def _validate_command_chain(command_chains: Optional[List[str]]) -> Optional[Lis
     return command_chains
 
 
-def _validate_architectures(architectures):
+def validate_architectures(architectures):
     """Expand and validate architecture data.
 
     Validation includes:
@@ -603,7 +603,7 @@ class Project(models.Project):
     @classmethod
     def _validate_architecture_data(cls, architectures):
         """Validate architecture data."""
-        return _validate_architectures(architectures)
+        return validate_architectures(architectures)
 
     @pydantic.validator("provenance")
     @classmethod
@@ -794,7 +794,7 @@ class ArchitectureProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
     @classmethod
     def _validate_architecture_data(cls, architectures):
         """Validate architecture data."""
-        return _validate_architectures(architectures)
+        return validate_architectures(architectures)
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "ArchitectureProject":

@@ -25,8 +25,8 @@ from snapcraft import linters, meta, pack
 
 def test_pack(package_service, default_factory, mocker):
     mock_pack_snap = mocker.patch.object(pack, "pack_snap")
-    mock_linters_run = mocker.patch.object(linters, "run_linters")
-    mock_linters_report = mocker.patch.object(linters, "report")
+    mocker.patch.object(linters, "run_linters")
+    mocker.patch.object(linters, "report")
 
     package_service.pack(prime_dir=Path("prime"), dest=Path())
 
