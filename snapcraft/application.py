@@ -70,8 +70,10 @@ class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
         for arch in self.architectures:
             # build_for will be a single element list
             if isinstance(arch, Architecture):
+                build_on = arch.build_on
                 build_for = cast(list[str], arch.build_for)[0]
             else:
+                build_on = arch
                 build_for = arch
 
             # TODO: figure out when to filter `all`
@@ -79,7 +81,7 @@ class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
                 build_for = get_host_architecture()
 
             # build on will be a list of archs
-            for build_on in cast(list[str], arch.build_on):
+            for build_on in cast(list[str], build_on):
                 base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
                     str(
                         get_effective_base(

@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit tests for application classes."""
+from typing import cast
 
 import pytest
 from craft_providers import bases
@@ -51,10 +52,11 @@ def test_build_planner_success_default_architecture(base, expected_base):
 
     actual = planner.get_build_plan()
 
+    archs = cast(list[Architecture], planner.architectures)
     for build_info in actual:
         assert build_info.base == expected_base
-        assert [build_info.build_for] in [a.build_for for a in planner.architectures]
-        assert [build_info.build_on] in [a.build_on for a in planner.architectures]
+        assert [build_info.build_for] in [a.build_for for a in archs]
+        assert [build_info.build_on] in [a.build_on for a in archs]
         assert build_info.platform == f"{expected_base.name}@{expected_base.version}"
 
 
@@ -76,10 +78,11 @@ def test_build_planner_success_base_only(architectures, base, expected_base):
 
     actual = planner.get_build_plan()
 
+    archs = cast(list[Architecture], planner.architectures)
     for build_info in actual:
         assert build_info.base == expected_base
-        assert [build_info.build_for] in [a.build_for for a in planner.architectures]
-        assert [build_info.build_on] in [a.build_on for a in planner.architectures]
+        assert [build_info.build_for] in [a.build_for for a in archs]
+        assert [build_info.build_on] in [a.build_on for a in archs]
         assert build_info.platform == f"{expected_base.name}@{expected_base.version}"
 
 
@@ -105,10 +108,11 @@ def test_build_planner_success_build_base(
 
     actual = planner.get_build_plan()
 
+    archs = cast(list[Architecture], planner.architectures)
     for build_info in actual:
         assert build_info.base == expected_base
-        assert [build_info.build_for] in [a.build_for for a in planner.architectures]
-        assert [build_info.build_on] in [a.build_on for a in planner.architectures]
+        assert [build_info.build_for] in [a.build_for for a in archs]
+        assert [build_info.build_on] in [a.build_on for a in archs]
         assert build_info.platform == f"{expected_base.name}@{expected_base.version}"
 
 
@@ -121,9 +125,7 @@ def test_build_planner_success_build_base(
         ("core24", bases.BaseName("ubuntu", "24.04")),
     ],
 )
-def test_build_planner_success_architecture_all(
-    base, build_base, expected_base
-):
+def test_build_planner_success_architecture_all(base, build_base, expected_base):
     data = {
         "architectures": [{"build-on": ["amd64"], "build-for": "all"}],
         "base": base,
@@ -134,9 +136,10 @@ def test_build_planner_success_architecture_all(
 
     actual = planner.get_build_plan()
 
+    architectures = cast(list[Architecture], planner.architectures)
     for build_info in actual:
         assert build_info.base == expected_base
-        assert [build_info.build_on] in [a.build_on for a in planner.architectures]
+        assert [build_info.build_on] in [a.build_on for a in architectures]
         assert build_info.platform == f"{expected_base.name}@{expected_base.version}"
 
-    assert "all" not in [a.build_on for a in planner.architectures]
+    assert "all" not in [a.build_on for a in architectures]
