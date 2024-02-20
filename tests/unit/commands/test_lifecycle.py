@@ -19,7 +19,7 @@ from unittest.mock import call
 
 import pytest
 
-from snapcraft.commands.lifecycle import (
+from snapcraft.commands.core22.lifecycle import (
     BuildCommand,
     CleanCommand,
     PackCommand,

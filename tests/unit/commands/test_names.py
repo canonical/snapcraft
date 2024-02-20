@@ -60,7 +60,7 @@ def fake_store_get_names(mocker):
 def test_register_default(emitter, fake_confirmation_prompt, fake_store_register):
     fake_confirmation_prompt.return_value = True
 
-    cmd = commands.StoreRegisterCommand(None)
+    cmd = commands.core22.StoreRegisterCommand(None)
 
     cmd.run(
         argparse.Namespace(
@@ -95,7 +95,7 @@ def test_register_default(emitter, fake_confirmation_prompt, fake_store_register
 
 @pytest.mark.usefixtures("memory_keyring")
 def test_register_yes(emitter, fake_store_register):
-    cmd = commands.StoreRegisterCommand(None)
+    cmd = commands.core22.StoreRegisterCommand(None)
 
     cmd.run(
         argparse.Namespace(
@@ -111,7 +111,7 @@ def test_register_yes(emitter, fake_store_register):
 
 @pytest.mark.usefixtures("memory_keyring")
 def test_register_no(emitter, fake_confirmation_prompt, fake_store_register):
-    cmd = commands.StoreRegisterCommand(None)
+    cmd = commands.core22.StoreRegisterCommand(None)
 
     cmd.run(
         argparse.Namespace(
@@ -144,7 +144,7 @@ def test_register_no(emitter, fake_confirmation_prompt, fake_store_register):
 
 @pytest.mark.usefixtures("memory_keyring", "fake_confirmation_prompt")
 def test_register_private(emitter, fake_store_register):
-    cmd = commands.StoreRegisterCommand(None)
+    cmd = commands.core22.StoreRegisterCommand(None)
 
     cmd.run(
         argparse.Namespace(
@@ -171,7 +171,7 @@ def test_register_private(emitter, fake_store_register):
 
 @pytest.mark.usefixtures("memory_keyring")
 def test_register_store_id(emitter, fake_store_register):
-    cmd = commands.StoreRegisterCommand(None)
+    cmd = commands.core22.StoreRegisterCommand(None)
 
     cmd.run(
         argparse.Namespace(
@@ -193,9 +193,9 @@ def test_register_store_id(emitter, fake_store_register):
 @pytest.mark.parametrize(
     "command_class",
     [
-        commands.StoreNamesCommand,
-        commands.StoreLegacyListCommand,
-        commands.StoreLegacyListRegisteredCommand,
+        commands.core22.StoreNamesCommand,
+        commands.legacy.StoreLegacyListCommand,
+        commands.legacy.StoreLegacyListRegisteredCommand,
     ],
 )
 @pytest.mark.usefixtures("memory_keyring")

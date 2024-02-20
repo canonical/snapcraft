@@ -55,264 +55,276 @@ class UnimplementedMixin:
 
 
 class ExportLogin(
-    UnimplementedMixin, commands.StoreExportLoginCommand
+    UnimplementedMixin, commands.core22.StoreExportLoginCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Login(
-    UnimplementedMixin, commands.StoreLoginCommand
+    UnimplementedMixin, commands.core22.StoreLoginCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Logout(
-    UnimplementedMixin, commands.StoreLogoutCommand
+    UnimplementedMixin, commands.core22.StoreLogoutCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Whoami(
-    UnimplementedMixin, commands.StoreWhoAmICommand
+    UnimplementedMixin, commands.core22.StoreWhoAmICommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class ListPlugins(
-    UnimplementedMixin, commands.ListPluginsCommand
+    UnimplementedMixin, commands.core22.ListPluginsCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Plugins(
-    UnimplementedMixin, commands.PluginsCommand
+    UnimplementedMixin, commands.core22.PluginsCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class ExpandExtensions(
-    UnimplementedMixin, commands.ExpandExtensionsCommand
+    UnimplementedMixin, commands.core22.ExpandExtensionsCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class ListExtensions(
-    UnimplementedMixin, commands.ListExtensionsCommand
+    UnimplementedMixin, commands.core22.ListExtensionsCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Extensions(
-    UnimplementedMixin, commands.ExtensionsCommand
+    UnimplementedMixin, commands.core22.ExtensionsCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
-class Init(UnimplementedMixin, commands.InitCommand):  # noqa: D101 (missing docstring)
+class Init(
+    UnimplementedMixin, commands.core22.InitCommand
+):  # noqa: D101 (missing docstring)
     pass
 
 
 class CreateKey(
-    UnimplementedMixin, commands.StoreLegacyCreateKeyCommand
+    UnimplementedMixin, commands.legacy.StoreLegacyCreateKeyCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Gated(
-    UnimplementedMixin, commands.StoreLegacyGatedCommand
+    UnimplementedMixin, commands.legacy.StoreLegacyGatedCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class ListKeys(
-    UnimplementedMixin, commands.StoreLegacyListKeysCommand
+    UnimplementedMixin, commands.legacy.StoreLegacyListKeysCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class ListValidationSets(
-    UnimplementedMixin, commands.StoreLegacyListValidationSetsCommand
+    UnimplementedMixin, commands.legacy.StoreLegacyListValidationSetsCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Metrics(
-    UnimplementedMixin, commands.StoreLegacyMetricsCommand
+    UnimplementedMixin, commands.legacy.StoreLegacyMetricsCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Promote(
-    UnimplementedMixin, commands.StoreLegacyPromoteCommand
+    UnimplementedMixin, commands.legacy.StoreLegacyPromoteCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class RegisterKey(
-    UnimplementedMixin, commands.StoreLegacyRegisterKeyCommand
+    UnimplementedMixin, commands.legacy.StoreLegacyRegisterKeyCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class SetDefaultTrack(
-    UnimplementedMixin, commands.StoreLegacySetDefaultTrackCommand
+    UnimplementedMixin, commands.legacy.StoreLegacySetDefaultTrackCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class SignBuild(
-    UnimplementedMixin, commands.StoreLegacySignBuildCommand
+    UnimplementedMixin, commands.legacy.StoreLegacySignBuildCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class UploadMetadata(
-    UnimplementedMixin, commands.StoreLegacyUploadMetadataCommand
+    UnimplementedMixin, commands.legacy.StoreLegacyUploadMetadataCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Validate(
-    UnimplementedMixin, commands.StoreLegacyValidateCommand
+    UnimplementedMixin, commands.legacy.StoreLegacyValidateCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Build(
-    UnimplementedMixin, commands.BuildCommand
+    UnimplementedMixin, commands.core22.BuildCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Clean(
-    UnimplementedMixin, commands.CleanCommand
+    UnimplementedMixin, commands.core22.CleanCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
-class Pack(UnimplementedMixin, commands.PackCommand):  # noqa: D101 (missing docstring)
+class Pack(
+    UnimplementedMixin, commands.core22.PackCommand
+):  # noqa: D101 (missing docstring)
     pass
 
 
 class Prime(
-    UnimplementedMixin, commands.PrimeCommand
+    UnimplementedMixin, commands.core22.PrimeCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
-class Pull(UnimplementedMixin, commands.PullCommand):  # noqa: D101 (missing docstring)
+class Pull(
+    UnimplementedMixin, commands.core22.PullCommand
+):  # noqa: D101 (missing docstring)
     pass
 
 
-class Snap(UnimplementedMixin, commands.SnapCommand):  # noqa: D101 (missing docstring)
+class Snap(
+    UnimplementedMixin, commands.core22.SnapCommand
+):  # noqa: D101 (missing docstring)
     pass
 
 
 class Stage(
-    UnimplementedMixin, commands.StageCommand
+    UnimplementedMixin, commands.core22.StageCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
-class Try(UnimplementedMixin, commands.TryCommand):  # noqa: D101 (missing docstring)
+class Try(
+    UnimplementedMixin, commands.core22.TryCommand
+):  # noqa: D101 (missing docstring)
     pass
 
 
-class Lint(UnimplementedMixin, commands.LintCommand):  # noqa: D101 (missing docstring)
+class Lint(
+    UnimplementedMixin, commands.core22.LintCommand
+):  # noqa: D101 (missing docstring)
     pass
 
 
 class Close(
-    UnimplementedMixin, commands.StoreCloseCommand
+    UnimplementedMixin, commands.core22.StoreCloseCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Release(
-    UnimplementedMixin, commands.StoreReleaseCommand
+    UnimplementedMixin, commands.core22.StoreReleaseCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class List(
-    UnimplementedMixin, commands.StoreLegacyListCommand
+    UnimplementedMixin, commands.legacy.StoreLegacyListCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class ListRegistered(
-    UnimplementedMixin, commands.StoreLegacyListRegisteredCommand
+    UnimplementedMixin, commands.legacy.StoreLegacyListRegisteredCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Names(
-    UnimplementedMixin, commands.StoreNamesCommand
+    UnimplementedMixin, commands.core22.StoreNamesCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Register(
-    UnimplementedMixin, commands.StoreRegisterCommand
+    UnimplementedMixin, commands.core22.StoreRegisterCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class ListRevisions(
-    UnimplementedMixin, commands.StoreListRevisionsCommand
+    UnimplementedMixin, commands.core22.StoreListRevisionsCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class ListTracks(
-    UnimplementedMixin, commands.StoreListTracksCommand
+    UnimplementedMixin, commands.core22.StoreListTracksCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Revisions(
-    UnimplementedMixin, commands.StoreRevisionsCommand
+    UnimplementedMixin, commands.core22.StoreRevisionsCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Status(
-    UnimplementedMixin, commands.StoreStatusCommand
+    UnimplementedMixin, commands.core22.StoreStatusCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Tracks(
-    UnimplementedMixin, commands.StoreTracksCommand
+    UnimplementedMixin, commands.core22.StoreTracksCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Push(
-    UnimplementedMixin, commands.StoreLegacyPushCommand
+    UnimplementedMixin, commands.legacy.StoreLegacyPushCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Upload(
-    UnimplementedMixin, commands.StoreUploadCommand
+    UnimplementedMixin, commands.core22.StoreUploadCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class EditValidationSets(
-    UnimplementedMixin, commands.StoreEditValidationSetsCommand
+    UnimplementedMixin, commands.core22.StoreEditValidationSetsCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class Version(
-    UnimplementedMixin, commands.VersionCommand
+    UnimplementedMixin, commands.core22.VersionCommand
 ):  # noqa: D101 (missing docstring)
     pass
 
 
 class RemoteBuild(
-    UnimplementedMixin, commands.RemoteBuildCommand
+    UnimplementedMixin, commands.core22.RemoteBuildCommand
 ):  # noqa: D101 (missing docstring)
     pass
