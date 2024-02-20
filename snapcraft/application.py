@@ -45,7 +45,7 @@ from snapcraft.utils import get_effective_base, get_host_architecture
 class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
     """A project model that creates build plans."""
 
-    architectures: List[Architecture] = pydantic.Field(
+    architectures: List[str | Architecture] = pydantic.Field(
         default_factory=lambda: [get_host_architecture()]
     )
     base: str | None = None
@@ -69,7 +69,10 @@ class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
 
         for arch in self.architectures:
             # build_for will be a single element list
-            build_for = cast(list[str], arch.build_for)[0]
+            if isinstance(arch, Architecture):
+                build_for = cast(list[str], arch.build_for)[0]
+            else:
+                build_for = arch
 
             # TODO: figure out when to filter `all`
             if build_for == "all":
