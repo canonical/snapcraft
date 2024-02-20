@@ -53,10 +53,10 @@ class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
     name: str | None = None
     project_type: str | None = None
 
-    @pydantic.validator("architectures", always=True, pre=True)
-    def _validate_architecture_data(
+    @pydantic.validator("architectures", always=True)
+    def _validate_architecture_data(  # pylint: disable=no-self-argument
         cls, architectures: list[str | Architecture]
-    ):  # pylint: disable=no-self-argument
+    ) -> list[Architecture]:
         """Validate architecture data.
 
         Most importantly, converts architecture strings into Architecture objects.
