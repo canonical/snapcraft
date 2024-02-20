@@ -500,7 +500,9 @@ class Project(models.Project):
     def _validate_adoptable_fields(cls, values):
         for field in MANDATORY_ADOPTABLE_FIELDS:
             if field not in values and "adopt-info" not in values:
-                raise ValueError(f"Snap {field} is required if not using adopt-info")
+                raise ValueError(
+                    f"Required field '{field}' is not set and 'adopt-info' not used."
+                )
         return values
 
     @pydantic.root_validator(pre=True)
