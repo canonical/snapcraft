@@ -110,3 +110,33 @@ def test_build_planner_success_build_base(
         assert [build_info.build_for] in [a.build_for for a in planner.architectures]
         assert [build_info.build_on] in [a.build_on for a in planner.architectures]
         assert build_info.platform == f"{expected_base.name}@{expected_base.version}"
+
+
+@pytest.mark.parametrize("base", ["core20", "core22", "core24"])
+@pytest.mark.parametrize(
+    ("build_base", "expected_base"),
+    [
+        ("core20", bases.BaseName("ubuntu", "20.04")),
+        ("core22", bases.BaseName("ubuntu", "22.04")),
+        ("core24", bases.BaseName("ubuntu", "24.04")),
+    ],
+)
+def test_build_planner_success_architecture_all(
+    base, build_base, expected_base
+):
+    data = {
+        "architectures": [{"build-on": ["amd64"], "build-for": "all"}],
+        "base": base,
+        "build-base": build_base,
+    }
+
+    planner = application.SnapcraftBuildPlanner.parse_obj(data)
+
+    actual = planner.get_build_plan()
+
+    for build_info in actual:
+        assert build_info.base == expected_base
+        assert [build_info.build_on] in [a.build_on for a in planner.architectures]
+        assert build_info.platform == f"{expected_base.name}@{expected_base.version}"
+
+    assert "all" not in [a.build_on for a in planner.architectures]
