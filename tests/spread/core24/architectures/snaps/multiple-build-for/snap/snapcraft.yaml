@@ -2,8 +2,7 @@ name: multiple-build-for
 version: "1.0"
 summary: test
 description: |
-  Building on amd64 should produce 2 snaps,
-  one snap for amd64 and one snap for arm64.
+  Building on amd64 would match two snaps, so the "naked" build should fail.
 grade: devel
 confinement: strict
 base: core24
