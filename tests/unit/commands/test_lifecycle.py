@@ -20,6 +20,8 @@ from unittest.mock import call
 import pytest
 
 import snapcraft.commands.core22.lifecycle as core22_lifecycle
+from snapcraft.application import APP_METADATA
+from snapcraft.commands import lifecycle
 
 
 @pytest.mark.parametrize(
@@ -88,3 +90,17 @@ def test_core22_pack_command_with_directory(mocker):
     cmd.run(argparse.Namespace(directory=".", output=None, compression=None))
     assert lifecycle_run_mock.mock_calls == []
     assert pack_mock.mock_calls[0] == call(".", output=None)
+
+
+def test_snap_command_fallback(tmp_path, emitter, mocker, fake_services):
+    """Test that the snap command is falling back to the pack command."""
+    parsed_args = argparse.Namespace(parts=[], output=tmp_path)
+    mock_pack = mocker.patch("craft_application.commands.lifecycle.PackCommand._run")
+    cmd = lifecycle.SnapCommand({"app": APP_METADATA, "services": fake_services})
+    cmd.run(parsed_args=parsed_args)
+    mock_pack.assert_called_once()
+    emitter.assert_progress(
+        "Warning: the 'snap' command is deprecated and will be removed "
+        "in a future release of Snapcraft. Please use 'pack' instead.",
+        permanent=True,
+    )

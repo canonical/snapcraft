@@ -17,8 +17,10 @@
 """Snapcraft commands."""
 
 from . import core22, legacy
+from .lifecycle import SnapCommand
 
 __all__ = [
     "core22",
     "legacy",
+    "SnapCommand",
 ]
