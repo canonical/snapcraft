@@ -20,7 +20,8 @@ from pathlib import Path
 
 from craft_application.models import SummaryStr
 
-from snapcraft import linters, meta, pack
+from snapcraft import linters, meta, pack, services
+from snapcraft.application import APP_METADATA
 
 
 def test_pack(package_service, default_factory, mocker):
@@ -40,6 +41,24 @@ def test_pack(package_service, default_factory, mocker):
         output=".",
         target_arch="amd64",
     )
+
+
+def test_pack_target_arch(default_project, default_factory, mocker):
+    mock_pack_snap = mocker.patch.object(pack, "pack_snap")
+    mocker.patch.object(linters, "run_linters")
+    mocker.patch.object(linters, "report")
+
+    package_service = services.Package(
+        app=APP_METADATA,
+        project=default_project,
+        services=default_factory,
+        platform="amd64",
+        build_for="s390x",
+    )
+
+    package_service.pack(prime_dir=Path("prime"), dest=Path())
+
+    assert mock_pack_snap.call_args.kwargs["target_arch"] == "s390x"
 
 
 def test_metadata(package_service, default_factory, default_build_plan, new_dir):
