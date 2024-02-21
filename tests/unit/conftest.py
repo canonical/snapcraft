@@ -414,7 +414,22 @@ def default_factory(default_project):
 
 
 @pytest.fixture()
-def lifecycle_service(default_project, default_factory, tmp_path):
+def default_build_plan():
+    from craft_application.models import BuildInfo
+    from craft_providers import bases
+
+    return [
+        BuildInfo(
+            platform="generic-x86-64",
+            build_on="amd64",
+            build_for="amd64",
+            base=bases.BaseName("ubuntu", "24.04"),
+        )
+    ]
+
+
+@pytest.fixture()
+def lifecycle_service(default_project, default_factory, default_build_plan, tmp_path):
     from snapcraft.application import APP_METADATA
     from snapcraft.services import Lifecycle
 
@@ -424,7 +439,7 @@ def lifecycle_service(default_project, default_factory, tmp_path):
         services=default_factory,
         work_dir=tmp_path / "work",
         cache_dir=tmp_path / "cache",
-        build_for="amd64",
+        build_plan=default_build_plan,
     )
 
 

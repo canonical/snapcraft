@@ -42,9 +42,12 @@ def test_pack(package_service, default_factory, mocker):
     )
 
 
-def test_metadata(package_service, default_factory, new_dir):
+def test_metadata(package_service, default_factory, default_build_plan, new_dir):
     default_factory.set_kwargs(
-        "lifecycle", work_dir=Path("work"), cache_dir=new_dir, build_for="amd64"
+        "lifecycle",
+        work_dir=Path("work"),
+        cache_dir=new_dir,
+        build_plan=default_build_plan,
     )
 
     assert package_service.metadata == meta.SnapMetadata(
