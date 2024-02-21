@@ -3,11 +3,6 @@ summary: Test snap file creation
 environment:
   SNAP/package_cutoff: package-cutoff
 
-prepare: |
-  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
-  # set_base "$SNAP/snap/snapcraft.yaml"
-
 restore: |
   cd "$SNAP"
   rm -f ./*.snap
@@ -19,7 +14,5 @@ restore: |
 
 execute: |
   cd "$SNAP"
-  # If this next line fails, delete it and replace it with the one following it
-  snapcraft 2>&1 | MATCH 'parts list the same file with different contents or permissions'; exit 0
-  # snapcraft 2>&1 | tee progress.txt 
-  grep "Created snap package ${SNAP}_1.0_amd64.snap" progress.txt
+  snapcraft 2>&1 | tee progress.txt
+  grep "Packed ${SNAP}_1.0_amd64.snap" progress.txt
