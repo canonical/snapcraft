@@ -24,5 +24,4 @@ Lint warnings:
 - classic: lib/x86_64-linux-gnu/libutil.so.1: ELF rpath should be set to '$ORIGIN'. (https://snapcraft.io/docs/linters-classic)
 - classic: usr/bin/hello: ELF interpreter should be set to '/snap/classic-linter-test/current/lib64/ld-linux-x86-64.so.2'. (https://snapcraft.io/docs/linters-classic)
 - classic: usr/bin/hello: ELF rpath should be set to '$ORIGIN/../../lib/x86_64-linux-gnu'. (https://snapcraft.io/docs/linters-classic)
-- classic: usr/lib/x86_64-linux-gnu/audit/sotruss-lib.so: ELF rpath should be set to '$ORIGIN/../../../../lib/x86_64-linux-gnu'. (https://snapcraft.io/docs/linters-classic)
 Creating snap package...
