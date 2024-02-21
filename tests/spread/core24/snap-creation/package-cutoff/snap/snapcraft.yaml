@@ -7,6 +7,11 @@ description: test
 grade: devel
 confinement: devmode
 
+# The parts defined here will be in conflict if the package-cutoff is not working;
+# Without the cutoff, part-1's staging of libpng16-16 will pull in libc6, which
+# will create a directory called "lib64/". part-2's python plugin will also create
+# "lib64", but as a symlink to "lib". The regular directory and the symlink will
+# then be in conflict and the build will fail.
 parts:
   part-1:
     source: .
