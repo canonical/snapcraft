@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit tests for application classes."""
-from typing import cast
 import os
+from typing import cast
 
 import pytest
 from craft_providers import bases
@@ -145,6 +145,7 @@ def test_build_planner_success_architecture_all(base, build_base, expected_base)
 
     assert "all" not in [a.build_on for a in architectures]
 
+
 @pytest.mark.parametrize("new_envvar", {"CRAFT_BUILD_FOR", "CRAFT_BUILD_ENVIRONMENT"})
 def test_application_map_build_on_env_var(monkeypatch, new_envvar):
     """Test that instantiating the Snapcraft application class will set the value of the
@@ -157,7 +158,7 @@ def test_application_map_build_on_env_var(monkeypatch, new_envvar):
     assert os.getenv(new_envvar) is None
 
     snapcraft_services = services.SnapcraftServiceFactory(app=application.APP_METADATA)
-    app = application.Snapcraft(app=application.APP_METADATA, services=snapcraft_services)
+    application.Snapcraft(app=application.APP_METADATA, services=snapcraft_services)
 
     assert os.getenv(new_envvar) == env_val
     assert os.getenv(old_envvar) == env_val

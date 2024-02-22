@@ -121,13 +121,16 @@ class Snapcraft(Application):
         # Whether we know that we should use the core24-based codepath.
         self._known_core24 = False
 
-        env_vars = {ev: "SNAP" + ev for ev in {"CRAFT_BUILD_FOR", "CRAFT_BUILD_ENVIRONMENT"}}
+        env_vars = {
+            ev: "SNAP" + ev for ev in ("CRAFT_BUILD_FOR", "CRAFT_BUILD_ENVIRONMENT")
+        }
         for new_envvar, old_envvar in env_vars.items():
             if env_val := os.getenv(old_envvar):
                 os.environ[new_envvar] = env_val
-                craft_cli.emit.debug(f"Mapped envvar {old_envvar!s} to {new_envvar!s} "
-                        "(value: '{env_val!s}')")
-
+                craft_cli.emit.debug(
+                    f"Mapped envvar {old_envvar!s} to {new_envvar!s} "
+                    "(value: '{env_val!s}')"
+                )
 
     @override
     def _configure_services(self, platform: str | None, build_for: str | None) -> None:
