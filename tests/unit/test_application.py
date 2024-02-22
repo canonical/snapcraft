@@ -15,11 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit tests for application classes."""
 from typing import cast
+import os
 
 import pytest
 from craft_providers import bases
 
-from snapcraft import application
+from snapcraft import application, services
 from snapcraft.models.project import Architecture
 
 
@@ -143,3 +144,20 @@ def test_build_planner_success_architecture_all(base, build_base, expected_base)
         assert build_info.platform == f"{expected_base.name}@{expected_base.version}"
 
     assert "all" not in [a.build_on for a in architectures]
+
+@pytest.mark.parametrize("new_envvar", {"CRAFT_BUILD_FOR", "CRAFT_BUILD_ENVIRONMENT"})
+def test_application_map_build_on_env_var(monkeypatch, new_envvar):
+    """Test that instantiating the Snapcraft application class will set the value of the
+    SNAPCRAFT_* environment variables to CRAFT_*.
+    """
+    old_envvar = "SNAP" + new_envvar
+    env_val = "woop"
+
+    monkeypatch.setenv(old_envvar, env_val)
+    assert os.getenv(new_envvar) is None
+
+    snapcraft_services = services.SnapcraftServiceFactory(app=application.APP_METADATA)
+    app = application.Snapcraft(app=application.APP_METADATA, services=snapcraft_services)
+
+    assert os.getenv(new_envvar) == env_val
+    assert os.getenv(old_envvar) == env_val
