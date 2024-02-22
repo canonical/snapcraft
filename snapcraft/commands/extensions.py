@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,16 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Snapcraft commands."""
+"""Extension commands for core24 (forwarded to the shared core22 implementation)."""
 
-from . import core22, legacy
-from .extensions import ExpandExtensions, ListExtensions
-from .lifecycle import SnapCommand
+from craft_application.commands import AppCommand
 
-__all__ = [
-    "core22",
-    "legacy",
-    "SnapCommand",
-    "ExpandExtensions",
-    "ListExtensions",
-]
+from snapcraft.commands import core22
+
+
+class ExpandExtensions(AppCommand, core22.ExpandExtensionsCommand):
+    """core24 command to expand extensions."""
+
+
+class ListExtensions(AppCommand, core22.ListExtensionsCommand):
+    """core24 command to list extensions."""
