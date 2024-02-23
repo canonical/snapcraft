@@ -129,10 +129,6 @@ class Snapcraft(Application):
         for craft_var, snapcraft_var in MAPPED_ENV_VARS.items():
             if env_val := os.getenv(snapcraft_var):
                 os.environ[craft_var] = env_val
-                craft_cli.emit.debug(
-                    f"Mapped envvar {snapcraft_var!s} to {craft_var!s} "
-                    "(value: '{env_val!s}')"
-                )
 
     @override
     def _configure_services(self, platform: str | None, build_for: str | None) -> None:
