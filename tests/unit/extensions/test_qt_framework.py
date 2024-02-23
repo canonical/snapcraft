@@ -249,41 +249,23 @@ def test_get_part_snippet(qt_framework_extension):
     }
 
 
-@pytest.mark.parametrize(fixture_variables, builtin_stable_values)
+@pytest.mark.parametrize(fixture_variables, base_values)
 def test_get_parts_snippet(qt_framework_extension, name):
-    source = get_extensions_data_dir() / "desktop" / "command-chain"
+    sdk_snap = qt_framework_extension.qt_snaps.sdk["snap"]
+    sdk_channel = qt_framework_extension.qt_snaps.sdk["channel"]
 
     assert qt_framework_extension.get_parts_snippet() == {
-        f"{name}/sdk": {
-            "source": str(source),
-            "plugin": "make",
-            "make-parameters": ["PLATFORM_PLUG=qt-framework"],
-        }
+        f"{name}/sdk": {"plugin": "nil", "stage-snaps": [f"{sdk_snap}/{sdk_channel}"]}
     }
 
 
 @pytest.mark.parametrize(fixture_variables, builtin_stable_values)
 def test_get_parts_snippet_with_external_sdk(qt_framework_extension, name):
-    source = get_extensions_data_dir() / "desktop" / "command-chain"
-
-    assert qt_framework_extension.get_parts_snippet() == {
-        f"{name}/sdk": {
-            "source": str(source),
-            "plugin": "make",
-            "make-parameters": ["PLATFORM_PLUG=qt-framework"],
-        }
-    }
+    assert qt_framework_extension.get_parts_snippet() == None
 
 
 @pytest.mark.parametrize(fixture_variables, builtin_edge_values)
 def test_get_parts_snippet_with_external_sdk_different_channel(
     qt_framework_extension, name
 ):
-    source = get_extensions_data_dir() / "desktop" / "command-chain"
-    assert qt_framework_extension.get_parts_snippet() == {
-        f"{name}/sdk": {
-            "source": str(source),
-            "plugin": "make",
-            "make-parameters": ["PLATFORM_PLUG=qt-framework"],
-        }
-    }
+    assert qt_framework_extension.get_parts_snippet() == None
