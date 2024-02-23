@@ -128,6 +128,10 @@ class Snapcraft(Application):
             build_for = util.get_host_architecture()
 
         self.services.set_kwargs("package", platform=platform, build_for=build_for)
+
+        project_path = self._resolve_project_path(None)
+        self.services.set_kwargs("lifecycle", project_path=project_path)
+
         super()._configure_services(platform, build_for)
 
     @property
@@ -144,8 +148,11 @@ class Snapcraft(Application):
         try:
             return super()._resolve_project_path(project_dir / "snap")
         except FileNotFoundError:
-            return super()._resolve_project_path(project_dir)
-
+            try:
+                return super()._resolve_project_path(project_dir)
+            except FileNotFoundError:
+                return super()._resolve_project_path(project_dir / "build-aux" / "snap")
+         
     @property
     def app_config(self) -> dict[str, Any]:
         """Overridden to add "core" knowledge to the config."""

@@ -1,7 +1,6 @@
 summary: Test manifest file creation
 
 environment:
-  CMD/cmdline: snapcraft --enable-manifest
   CMD/envvars: env SNAPCRAFT_BUILD_INFO=y snapcraft
 
 prepare: |
@@ -13,9 +12,7 @@ restore: |
   rm -f ~/manifest_0.1_*.snap
 
 execute: |
-  # If this next line fails, delete it and replace it with the one following it
-  $CMD 2>&1 | MATCH 'unrecognized arguments: --enable-manifest'; exit 0
-  # $CMD
+  $CMD
 
   test -f manifest_0.1_*.snap
   test -f prime/snap/manifest.yaml
