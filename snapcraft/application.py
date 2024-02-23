@@ -124,11 +124,11 @@ class Snapcraft(Application):
         env_vars = {
             ev: "SNAP" + ev for ev in ("CRAFT_BUILD_FOR", "CRAFT_BUILD_ENVIRONMENT")
         }
-        for new_envvar, old_envvar in env_vars.items():
-            if env_val := os.getenv(old_envvar):
-                os.environ[new_envvar] = env_val
+        for craft_var, snapcraft_var in env_vars.items():
+            if env_val := os.getenv(snapcraft_var):
+                os.environ[craft_var] = env_val
                 craft_cli.emit.debug(
-                    f"Mapped envvar {old_envvar!s} to {new_envvar!s} "
+                    f"Mapped envvar {snapcraft_var!s} to {craft_var!s} "
                     "(value: '{env_val!s}')"
                 )
 
