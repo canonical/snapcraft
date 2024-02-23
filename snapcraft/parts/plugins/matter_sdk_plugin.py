@@ -82,12 +82,10 @@ class MatterSdkPlugin(plugins.Plugin):
         # Clone Matter SDK repository
         commands.extend(
             [
-                "if [ ! -d matter ]; then",
                 "    git init",
                 f"   git remote add origin {MATTER_SDK_REPO}",
                 f"   git fetch --depth 1 origin {options.matter_sdk_version}",
                 "    git checkout FETCH_HEAD",
-                "fi",
             ]
         )
 

@@ -43,12 +43,10 @@ def test_get_pull_commands(part_info):
     sdk_version = properties.matter_sdk_version  # type: ignore
 
     expected_commands = [
-        "if [ ! -d matter ]; then",
         "    git init",
         f"   git remote add origin {MATTER_SDK_REPO}",
         f"   git fetch --depth 1 origin {sdk_version}",
         "    git checkout FETCH_HEAD",
-        "fi",
         "scripts/checkout_submodules.py --shallow --platform linux",
     ]
 
