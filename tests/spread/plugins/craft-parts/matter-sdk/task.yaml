@@ -24,7 +24,7 @@ execute: |
 
   # Build and install the snap
   snapcraft
-  snap install "${SNAP}"*.snap --dangerous
+  snap install "${SNAP}*.snap" --dangerous
 
   start_time=$(date +"%Y-%m-%d %H:%M:%S")
   snap start matter-lighting

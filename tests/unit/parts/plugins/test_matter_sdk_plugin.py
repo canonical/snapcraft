@@ -42,24 +42,15 @@ def test_get_pull_commands(part_info):
 
     sdk_version = properties.matter_sdk_version  # type: ignore
 
-    expected_commands = []
-
-    expected_commands.extend(
-        [
-            "if [ ! -d matter ]; then",
-            "    git init",
-            f"   git remote add origin {MATTER_SDK_REPO}",
-            f"   git fetch --depth 1 origin {sdk_version}",
-            "    git checkout FETCH_HEAD",
-            "fi",
-        ]
-    )
-
-    expected_commands.extend(
-        [
-            "scripts/checkout_submodules.py --shallow --platform linux",
-        ]
-    )
+    expected_commands = [
+        "if [ ! -d matter ]; then",
+        "    git init",
+        f"   git remote add origin {MATTER_SDK_REPO}",
+        f"   git fetch --depth 1 origin {sdk_version}",
+        "    git checkout FETCH_HEAD",
+        "fi",
+        "scripts/checkout_submodules.py --shallow --platform linux",
+    ]
 
     assert plugin.get_pull_commands() == expected_commands
 
@@ -114,33 +105,14 @@ def test_get_build_commands(part_info):
     )
     plugin = MatterSdkPlugin(properties=properties, part_info=part_info)
 
-    expected_commands = []
-
-    expected_commands.extend(
-        [
-            r"sed -i 's/\/tmp/\/mnt/g' src/platform/Linux/CHIPLinuxStorage.h",
-            r"sed -i 's/\/tmp/\/mnt/g' src/platform/Linux/CHIPPlatformConfig.h",
-        ]
-    )
-
-    expected_commands.extend(["OLD_PATH=$PATH"])
-
-    expected_commands.extend(
-        ["set +u && source scripts/setup/bootstrap.sh --platform build && set -u"]
-    )
-
-    expected_commands.extend(["echo 'Built Matter SDK'"])
-
-    expected_commands.extend(
-        [
-            'MATTER_SDK_PATHS="${PATH%$OLD_PATH}"',
-        ]
-    )
-
-    expected_commands.extend(
-        [
-            'echo "export PATH=$MATTER_SDK_PATHS\\$PATH" >> matter-sdk-env.sh',
-        ]
-    )
+    expected_commands = [
+        r"sed -i 's/\/tmp/\/mnt/g' src/platform/Linux/CHIPLinuxStorage.h",
+        r"sed -i 's/\/tmp/\/mnt/g' src/platform/Linux/CHIPPlatformConfig.h",
+        "OLD_PATH=$PATH",
+        "set +u && source scripts/setup/bootstrap.sh --platform build && set -u",
+        "echo 'Built Matter SDK'",
+        'MATTER_SDK_PATHS="${PATH%$OLD_PATH}"',
+        'echo "export PATH=$MATTER_SDK_PATHS\\$PATH" >> matter-sdk-env.sh',
+    ]
 
     assert plugin.get_build_commands() == expected_commands
