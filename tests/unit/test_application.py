@@ -166,7 +166,7 @@ def test_application_map_build_on_env_var(monkeypatch, env_vars):
     assert os.getenv(craft_var) == env_val
     assert os.getenv(snapcraft_var) == env_val
 
-    
+
 @pytest.fixture()
 def extension_source(default_project):
     source = default_project.marshal()
