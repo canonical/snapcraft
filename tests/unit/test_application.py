@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit tests for application classes."""
-import os
 import json
+import os
 from textwrap import dedent
 from typing import cast
 
