@@ -113,6 +113,11 @@ APP_METADATA = AppMetadata(
 )
 
 
+MAPPED_ENV_VARS = {
+    ev: "SNAP" + ev for ev in ("CRAFT_BUILD_FOR", "CRAFT_BUILD_ENVIRONMENT")
+}
+
+
 class Snapcraft(Application):
     """Snapcraft application definition."""
 
@@ -121,10 +126,7 @@ class Snapcraft(Application):
         # Whether we know that we should use the core24-based codepath.
         self._known_core24 = False
 
-        env_vars = {
-            ev: "SNAP" + ev for ev in ("CRAFT_BUILD_FOR", "CRAFT_BUILD_ENVIRONMENT")
-        }
-        for craft_var, snapcraft_var in env_vars.items():
+        for craft_var, snapcraft_var in MAPPED_ENV_VARS.items():
             if env_val := os.getenv(snapcraft_var):
                 os.environ[craft_var] = env_val
                 craft_cli.emit.debug(

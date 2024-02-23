@@ -146,12 +146,13 @@ def test_build_planner_success_architecture_all(base, build_base, expected_base)
     assert "all" not in [a.build_on for a in architectures]
 
 
-@pytest.mark.parametrize("craft_var", {"CRAFT_BUILD_FOR", "CRAFT_BUILD_ENVIRONMENT"})
-def test_application_map_build_on_env_var(monkeypatch, craft_var):
+@pytest.mark.parametrize("env_vars", application.MAPPED_ENV_VARS.items())
+def test_application_map_build_on_env_var(monkeypatch, env_vars):
     """Test that instantiating the Snapcraft application class will set the value of the
     SNAPCRAFT_* environment variables to CRAFT_*.
     """
-    snapcraft_var = "SNAP" + craft_var
+    craft_var = env_vars[0]
+    snapcraft_var = env_vars[1]
     env_val = "woop"
 
     monkeypatch.setenv(snapcraft_var, env_val)
