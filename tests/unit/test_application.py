@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit tests for application classes."""
 import os
+import json
+from textwrap import dedent
 from typing import cast
 
 import pytest
@@ -163,3 +165,69 @@ def test_application_map_build_on_env_var(monkeypatch, env_vars):
 
     assert os.getenv(craft_var) == env_val
     assert os.getenv(snapcraft_var) == env_val
+
+    
+@pytest.fixture()
+def extension_source(default_project):
+    source = default_project.marshal()
+    source["confinement"] = "strict"
+    source["apps"] = {
+        "app1": {
+            "command": "app1",
+            "extensions": ["fake-extension"],
+        }
+    }
+    return source
+
+
+@pytest.mark.usefixtures("fake_extension")
+def test_application_expand_extensions(emitter, monkeypatch, extension_source, new_dir):
+    monkeypatch.setenv("CRAFT_DEBUG", "1")
+
+    (new_dir / "snap").mkdir()
+    (new_dir / "snap/snapcraft.yaml").write_text(json.dumps(extension_source))
+
+    monkeypatch.setattr("sys.argv", ["snapcraft", "expand-extensions"])
+    application.main()
+    emitter.assert_message(
+        dedent(
+            """\
+            name: default
+            version: '1.0'
+            summary: default project
+            description: default project
+            base: core24
+            build-base: devel
+            license: MIT
+            parts:
+                fake-extension/fake-part:
+                    plugin: nil
+            confinement: strict
+            grade: devel
+            apps:
+                app1:
+                    command: app1
+                    plugs:
+                    - fake-plug
+        """
+        )
+    )
+
+
+@pytest.mark.usefixtures("fake_extension")
+def test_application_build_with_extensions(monkeypatch, extension_source, new_dir):
+    """Test that extensions are correctly applied in regular builds."""
+    monkeypatch.setenv("CRAFT_DEBUG", "1")
+
+    (new_dir / "snap").mkdir()
+    (new_dir / "snap/snapcraft.yaml").write_text(json.dumps(extension_source))
+
+    # Calling a lifecycle command will create a Project. Creating a Project
+    # without applying the extensions will fail because the "extensions" field
+    # will still be present on the yaml data, so it's enough to run "pull".
+    monkeypatch.setattr("sys.argv", ["snapcraft", "pull", "--destructive-mode"])
+    app = application.create_app()
+    app.run()
+
+    project = app.get_project()
+    assert "fake-extension/fake-part" in project.parts

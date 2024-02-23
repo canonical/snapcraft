@@ -71,7 +71,7 @@ def fake_extension():
 
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core22",)
+            return ("core22", "core24")
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -394,6 +394,7 @@ def default_project(extra_project_params):
         description="default project",
         base="core24",
         build_base="devel",
+        grade="devel",
         parts=parts,
         license="MIT",
         **extra_project_params,
@@ -442,3 +443,14 @@ def package_service(default_project, default_factory):
 
 
 # pylint: enable=import-outside-toplevel
+
+
+@pytest.fixture()
+def fake_services(default_factory, lifecycle_service, package_service):
+    lifecycle_service.setup()
+    default_factory.lifecycle = lifecycle_service
+
+    package_service.setup()
+    default_factory.package = package_service
+
+    return default_factory
