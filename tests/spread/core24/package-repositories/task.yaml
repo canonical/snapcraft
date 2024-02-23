@@ -20,9 +20,7 @@ execute: |
   cd "$SNAP"
 
   # Build what we have.
-  # If this next line fails, delete it and replace it with the one following it
-  snapcraft --verbose --use-lxd 2>&1 | MATCH 'unrecognized arguments: --use-lxd'; exit 0
-  # snapcraft --verbose --use-lxd
+  snapcraft --verbose
 
   # And verify the snap runs as expected.
   snap install "${SNAP}"_1.0_*.snap --dangerous
