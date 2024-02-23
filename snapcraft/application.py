@@ -34,6 +34,7 @@ from craft_cli import emit
 from craft_providers import bases
 from overrides import override
 
+import snapcraft.commands
 from snapcraft import cli, errors, models, services
 from snapcraft.commands import unimplemented
 from snapcraft.models import Architecture
@@ -253,8 +254,8 @@ def main() -> int:
             craft_app_commands.lifecycle.StageCommand,
             craft_app_commands.lifecycle.PrimeCommand,
             craft_app_commands.lifecycle.PackCommand,
+            snapcraft.commands.lifecycle.SnapCommand,  # Hidden (legacy compatibility)
             unimplemented.RemoteBuild,
-            unimplemented.Snap,  # Hidden (legacy compatibility)
             unimplemented.Plugins,
             unimplemented.ListPlugins,
             unimplemented.Try,

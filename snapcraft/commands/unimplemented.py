@@ -180,48 +180,6 @@ class Validate(
     pass
 
 
-class Build(
-    UnimplementedMixin, commands.core22.BuildCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Clean(
-    UnimplementedMixin, commands.core22.CleanCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Pack(
-    UnimplementedMixin, commands.core22.PackCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Prime(
-    UnimplementedMixin, commands.core22.PrimeCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Pull(
-    UnimplementedMixin, commands.core22.PullCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Snap(
-    UnimplementedMixin, commands.core22.SnapCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Stage(
-    UnimplementedMixin, commands.core22.StageCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
 class Try(
     UnimplementedMixin, commands.core22.TryCommand
 ):  # noqa: D101 (missing docstring)

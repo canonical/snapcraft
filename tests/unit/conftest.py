@@ -442,3 +442,14 @@ def package_service(default_project, default_factory):
 
 
 # pylint: enable=import-outside-toplevel
+
+
+@pytest.fixture()
+def fake_services(default_factory, lifecycle_service, package_service):
+    lifecycle_service.setup()
+    default_factory.lifecycle = lifecycle_service
+
+    package_service.setup()
+    default_factory.package = package_service
+
+    return default_factory

@@ -19,30 +19,23 @@ from unittest.mock import call
 
 import pytest
 
-from snapcraft.commands.core22.lifecycle import (
-    BuildCommand,
-    CleanCommand,
-    PackCommand,
-    PrimeCommand,
-    PullCommand,
-    SnapCommand,
-    StageCommand,
-    TryCommand,
-)
+import snapcraft.commands.core22.lifecycle as core22_lifecycle
+from snapcraft.application import APP_METADATA
+from snapcraft.commands import lifecycle
 
 
 @pytest.mark.parametrize(
     "cmd_name,cmd_class",
     [
-        ("pull", PullCommand),
-        ("build", BuildCommand),
-        ("stage", StageCommand),
-        ("prime", PrimeCommand),
-        ("clean", CleanCommand),
-        ("try", TryCommand),
+        ("pull", core22_lifecycle.PullCommand),
+        ("build", core22_lifecycle.BuildCommand),
+        ("stage", core22_lifecycle.StageCommand),
+        ("prime", core22_lifecycle.PrimeCommand),
+        ("clean", core22_lifecycle.CleanCommand),
+        ("try", core22_lifecycle.TryCommand),
     ],
 )
-def test_lifecycle_command(cmd_name, cmd_class, mocker):
+def test_core22_lifecycle_command(cmd_name, cmd_class, mocker):
     lifecycle_run_mock = mocker.patch("snapcraft.parts.lifecycle.run")
     cmd = cmd_class(None)
     cmd.run(argparse.Namespace(parts=["part1", "part2"]))
@@ -54,11 +47,11 @@ def test_lifecycle_command(cmd_name, cmd_class, mocker):
 @pytest.mark.parametrize(
     "cmd_name,cmd_class",
     [
-        ("pack", PackCommand),
-        ("snap", SnapCommand),
+        ("pack", core22_lifecycle.PackCommand),
+        ("snap", core22_lifecycle.SnapCommand),
     ],
 )
-def test_pack_command(mocker, cmd_name, cmd_class):
+def test_core22_pack_command(mocker, cmd_name, cmd_class):
     lifecycle_run_mock = mocker.patch("snapcraft.parts.lifecycle.run")
     cmd = cmd_class(None)
     cmd.run(argparse.Namespace(directory=None, output=None, compression=None))
@@ -72,11 +65,11 @@ def test_pack_command(mocker, cmd_name, cmd_class):
 @pytest.mark.parametrize(
     "cmd_name,cmd_class",
     [
-        ("pack", PackCommand),
-        ("snap", SnapCommand),
+        ("pack", core22_lifecycle.PackCommand),
+        ("snap", core22_lifecycle.SnapCommand),
     ],
 )
-def test_pack_command_with_output(mocker, cmd_name, cmd_class):
+def test_core22_pack_command_with_output(mocker, cmd_name, cmd_class):
     lifecycle_run_mock = mocker.patch("snapcraft.parts.lifecycle.run")
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
     cmd = cmd_class(None)
@@ -90,10 +83,24 @@ def test_pack_command_with_output(mocker, cmd_name, cmd_class):
     assert pack_mock.mock_calls == []
 
 
-def test_pack_command_with_directory(mocker):
+def test_core22_pack_command_with_directory(mocker):
     lifecycle_run_mock = mocker.patch("snapcraft.parts.lifecycle.run")
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
-    cmd = PackCommand(None)
+    cmd = core22_lifecycle.PackCommand(None)
     cmd.run(argparse.Namespace(directory=".", output=None, compression=None))
     assert lifecycle_run_mock.mock_calls == []
     assert pack_mock.mock_calls[0] == call(".", output=None)
+
+
+def test_snap_command_fallback(tmp_path, emitter, mocker, fake_services):
+    """Test that the snap command is falling back to the pack command."""
+    parsed_args = argparse.Namespace(parts=[], output=tmp_path)
+    mock_pack = mocker.patch("craft_application.commands.lifecycle.PackCommand._run")
+    cmd = lifecycle.SnapCommand({"app": APP_METADATA, "services": fake_services})
+    cmd.run(parsed_args=parsed_args)
+    mock_pack.assert_called_once()
+    emitter.assert_progress(
+        "Warning: the 'snap' command is deprecated and will be removed "
+        "in a future release of Snapcraft. Please use 'pack' instead.",
+        permanent=True,
+    )
