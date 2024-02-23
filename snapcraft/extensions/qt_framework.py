@@ -215,24 +215,17 @@ class QTFramework(Extension):
 
     @overrides
     def get_parts_snippet(self) -> Dict[str, Any]:
-        source = get_extensions_data_dir() / "desktop" / "command-chain"
         sdk_snap = self.qt_snaps.sdk["snap"]
         sdk_channel = self.qt_snaps.sdk["channel"]
 
         if self.qt_snaps.builtin:
-            return {
-                f"{self.name}/sdk": {
-                    "source": str(source),
-                    "plugin": "make",
-                    "make-parameters": ["PLATFORM_PLUG=qt-framework"],
-                    "build-snaps": [f"{sdk_snap}/{sdk_channel}"],
-                },
-            }
+            return None
 
         return {
             f"{self.name}/sdk": {
-                "source": str(source),
-                "plugin": "make",
-                "make-parameters": ["PLATFORM_PLUG=qt-framework"],
+                "plugin": "nil",
+                "build-snaps": [
+                    f"{sdk_snap}/{sdk_channel}",
+                ],
             },
         }
