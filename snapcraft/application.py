@@ -34,9 +34,9 @@ from craft_cli import emit
 from craft_providers import bases
 from overrides import override
 
-import snapcraft.commands
-from snapcraft import cli, errors, models, services
+from snapcraft import cli, commands, errors, models, services
 from snapcraft.commands import unimplemented
+from snapcraft.extensions import apply_extensions
 from snapcraft.models import Architecture
 from snapcraft.models.project import validate_architectures
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
@@ -156,6 +156,14 @@ class Snapcraft(Application):
         return config
 
     @override
+    def _extra_yaml_transform(
+        self, yaml_data: dict[str, Any], *, build_on: str, build_for: str | None
+    ) -> dict[str, Any]:
+        arch = build_on
+        target_arch = build_for if build_for else get_host_architecture()
+        return apply_extensions(yaml_data, arch=arch, target_arch=target_arch)
+
+    @override
     def _get_dispatcher(self) -> craft_cli.Dispatcher:
         """Configure this application. Should be called by the run method.
 
@@ -237,8 +245,8 @@ class Snapcraft(Application):
         return dispatcher
 
 
-def main() -> int:
-    """Run craft-application based snapcraft with classic fallback."""
+def create_app() -> Snapcraft:
+    """Create a Snapcraft application with the proper commands."""
     snapcraft_services = services.SnapcraftServiceFactory(app=APP_METADATA)
 
     app = Snapcraft(
@@ -256,7 +264,7 @@ def main() -> int:
             craft_app_commands.lifecycle.StageCommand,
             craft_app_commands.lifecycle.PrimeCommand,
             craft_app_commands.lifecycle.PackCommand,
-            snapcraft.commands.lifecycle.SnapCommand,  # Hidden (legacy compatibility)
+            commands.SnapCommand,  # Hidden (legacy compatibility)
             unimplemented.RemoteBuild,
             unimplemented.Plugins,
             unimplemented.ListPlugins,
@@ -266,9 +274,8 @@ def main() -> int:
     app.add_command_group(
         "Extensions",
         [
-            unimplemented.ListExtensions,
-            unimplemented.Extensions,
-            unimplemented.ExpandExtensions,
+            commands.ListExtensions,
+            commands.ExpandExtensions,
         ],
     )
     app.add_command_group(
@@ -338,6 +345,13 @@ def main() -> int:
             unimplemented.Init,
         ],
     )
+
+    return app
+
+
+def main() -> int:
+    """Run craft-application based snapcraft with classic fallback."""
+    app = create_app()
 
     try:
         return app.run()

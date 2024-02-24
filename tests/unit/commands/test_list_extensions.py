@@ -28,6 +28,7 @@ import snapcraft.commands.core22
     [
         snapcraft.commands.core22.ListExtensionsCommand,
         snapcraft.commands.core22.ExtensionsCommand,
+        snapcraft.commands.ListExtensions,
     ],
 )
 def test_command(emitter, command):
@@ -38,7 +39,7 @@ def test_command(emitter, command):
             """\
         Extension name          Supported bases
         ----------------------  ----------------------
-        fake-extension          core22
+        fake-extension          core22, core24
         flutter-beta            core18
         flutter-dev             core18
         flutter-master          core18
@@ -72,6 +73,7 @@ def test_command(emitter, command):
     [
         snapcraft.commands.core22.ListExtensionsCommand,
         snapcraft.commands.core22.ExtensionsCommand,
+        snapcraft.commands.ListExtensions,
     ],
 )
 def test_command_extension_dups(emitter, command):

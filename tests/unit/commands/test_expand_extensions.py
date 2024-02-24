@@ -15,28 +15,55 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from argparse import Namespace
+from dataclasses import dataclass
 from pathlib import Path
 from textwrap import dedent
 
 import pytest
 
-import snapcraft.commands.core22
+from snapcraft import commands
+
+
+@dataclass
+class CoreData:
+    """Dataclass containing base info for a given core."""
+
+    base: str
+    build_base: str
+    grade: str
+    command_class: type
+
+
+VALID_CORE_DATA = {
+    "core22": CoreData(
+        "core22", "core22", "stable", commands.core22.ExpandExtensionsCommand
+    ),
+    "core24": CoreData("core24", "devel", "devel", commands.ExpandExtensions),
+}
+
+
+@pytest.fixture(params=VALID_CORE_DATA.keys())
+def valid_core_data(request) -> CoreData:
+    """Fixture that provides valid base, build-base and grade values for each
+    coreXX base."""
+    return VALID_CORE_DATA[request.param]
 
 
 @pytest.mark.usefixtures("fake_extension")
-def test_expand_extensions_simple(new_dir, emitter):
+def test_expand_extensions_simple(new_dir, emitter, valid_core_data):
     """Expand an extension for a simple snapcraft.yaml file."""
     with Path("snapcraft.yaml").open("w") as yaml_file:
         print(
             dedent(
-                """\
+                f"""\
             name: test-name
             version: "0.1"
             summary: testing extensions
             description: expand a fake extension
-            base: core22
+            base: {valid_core_data.base}
+            build-base: {valid_core_data.build_base}
             confinement: strict
-            grade: stable
+            grade: {valid_core_data.grade}
 
             apps:
                 app1:
@@ -52,18 +79,19 @@ def test_expand_extensions_simple(new_dir, emitter):
             file=yaml_file,
         )
 
-    cmd = snapcraft.commands.core22.ExpandExtensionsCommand(None)
+    cmd = valid_core_data.command_class(None)
     cmd.run(Namespace())
     emitter.assert_message(
         dedent(
-            """\
+            f"""\
         name: test-name
         version: '0.1'
         summary: testing extensions
         description: expand a fake extension
-        base: core22
+        base: {valid_core_data.base}
+        build-base: {valid_core_data.build_base}
         confinement: strict
-        grade: stable
+        grade: {valid_core_data.grade}
         apps:
             app1:
                 command: app1
@@ -84,7 +112,7 @@ def test_expand_extensions_simple(new_dir, emitter):
 
 
 @pytest.mark.usefixtures("fake_extension")
-def test_expand_extensions_complex(new_dir, emitter, mocker):
+def test_expand_extensions_complex(new_dir, emitter, mocker, valid_core_data):
     """Expand an extension for a complex snapcraft.yaml file.
 
     This includes parse-info, architectures, and advanced grammar.
@@ -97,14 +125,15 @@ def test_expand_extensions_complex(new_dir, emitter, mocker):
     with Path("snapcraft.yaml").open("w") as yaml_file:
         print(
             dedent(
-                """\
+                f"""\
                 name: test-name
                 version: "0.1"
                 summary: testing extensions
                 description: expand a fake extension
-                base: core22
+                base: {valid_core_data.base}
+                build-base: {valid_core_data.build_base}
                 confinement: strict
-                grade: stable
+                grade: {valid_core_data.grade}
                 architectures: [amd64, arm64, armhf]
 
                 apps:
@@ -128,18 +157,19 @@ def test_expand_extensions_complex(new_dir, emitter, mocker):
             file=yaml_file,
         )
 
-    cmd = snapcraft.commands.core22.ExpandExtensionsCommand(None)
+    cmd = valid_core_data.command_class(None)
     cmd.run(Namespace())
     emitter.assert_message(
         dedent(
-            """\
+            f"""\
             name: test-name
             version: '0.1'
             summary: testing extensions
             description: expand a fake extension
-            base: core22
+            base: {valid_core_data.base}
+            build-base: {valid_core_data.build_base}
             confinement: strict
-            grade: stable
+            grade: {valid_core_data.grade}
             apps:
                 app1:
                     command: app1
