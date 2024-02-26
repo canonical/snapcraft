@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from craft_application import AppMetadata, LifecycleService, ServiceFactory
+from craft_application.models import BuildInfo
 from craft_cli import emit
 from craft_parts import StepInfo
 from overrides import overrides
@@ -42,7 +43,7 @@ class Lifecycle(LifecycleService):
         project: models.Project,
         work_dir: Path | str,
         cache_dir: Path | str,
-        build_for: str,
+        build_plan: list[BuildInfo],
         project_path: Path,
         **lifecycle_kwargs: Any,  # noqa: ANN401 - eventually used in an Any
     ) -> None:
@@ -52,7 +53,7 @@ class Lifecycle(LifecycleService):
             project=project,
             work_dir=work_dir,
             cache_dir=cache_dir,
-            build_for=build_for,
+            build_plan=build_plan,
             **lifecycle_kwargs,
         )
         self._project_path = project_path

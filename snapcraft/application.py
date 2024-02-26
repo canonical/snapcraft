@@ -145,7 +145,7 @@ class Snapcraft(Application):
             "lifecycle",
             cache_dir=self.cache_dir,
             work_dir=self._work_dir,
-            build_for=build_for,
+            build_plan=self._build_plan,
             project_path=self._resolve_project_path(None),
         )
 
