@@ -51,10 +51,22 @@ class TestAppstreamData:
             ("name", {}, "title", "test-title", "test-title"),
             ("project_license", {}, "license", "test-license", "test-license"),
             ("update_contact", {}, "contact", "test-contact", "test-contact"),
-            ("url", {"type": 'homepage'}, "website", "test-website", ["test-website"]),
-            ("url", {"type": 'bugtracker'}, "issues", "test-issues", ["test-issues"]),
-            ("url", {"type": 'donation'}, "donation", "test-donation", ["test-donation"]),
-            ("url", {"type": 'vcs-browser'}, "source_code", "test-source", ["test-source"]),        
+            ("url", {"type": "homepage"}, "website", "test-website", ["test-website"]),
+            ("url", {"type": "bugtracker"}, "issues", "test-issues", ["test-issues"]),
+            (
+                "url",
+                {"type": "donation"},
+                "donation",
+                "test-donation",
+                ["test-donation"],
+            ),
+            (
+                "url",
+                {"type": "vcs-browser"},
+                "source_code",
+                "test-source",
+                ["test-source"],
+            ),
         ],
     )
     def test_entries(self, file_extension, key, attributes, param_name, value, expect):

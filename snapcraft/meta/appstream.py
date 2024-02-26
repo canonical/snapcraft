@@ -102,11 +102,12 @@ def extract(relpath: str, *, workdir: str) -> Optional[ExtractedMetadata]:
     version = _get_latest_release_from_nodes(dom.findall("releases/release"))
     license = _get_value_from_xml_element(dom, "project_license")
     contact = _get_value_from_xml_element(dom, "update_contact")
-    issues = _get_urls_from_xml_element(dom.findall('url'), "bugtracker")
-    donation = _get_urls_from_xml_element(dom.findall('url'), "donation")
-    website = _get_urls_from_xml_element(dom.findall('url'), "homepage")
-    source_code = _get_urls_from_xml_element(dom.findall('url'), "vcs-browser")
-    
+
+    issues = _get_urls_from_xml_element(dom.findall("url"), "bugtracker")
+    donation = _get_urls_from_xml_element(dom.findall("url"), "donation")
+    website = _get_urls_from_xml_element(dom.findall("url"), "homepage")
+    source_code = _get_urls_from_xml_element(dom.findall("url"), "vcs-browser")
+
     desktop_file_paths = []
     desktop_file_ids = _get_desktop_file_ids_from_nodes(dom.findall("launchable"))
     # if there are no launchables, use the appstream id to take into
@@ -172,16 +173,18 @@ def _get_value_from_xml_element(tree, key) -> Optional[str]:
         return "\n".join([n.strip() for n in node.text.splitlines()]).strip()
     return None
 
+
 def _get_urls_from_xml_element(nodes, type) -> Optional[List[str]]:
     urls = {}
     for url in nodes:
         if url is not None and url.text:
-            url_type = url.get('type')
+            url_type = url.get("type")
             url_value = url.text
             urls.setdefault(url_type, []).append(url_value)
     if type in urls.keys():
         return urls[type]
     return None
+
 
 def _get_latest_release_from_nodes(nodes) -> Optional[str]:
     for node in nodes:
