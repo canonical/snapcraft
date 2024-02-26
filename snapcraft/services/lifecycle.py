@@ -100,7 +100,7 @@ class Lifecycle(LifecycleService):
         manifest.write(
             project,
             self.prime_dir,
-            arch=self._build_for,
+            arch=utils.get_host_architecture(),
             parts=parts,
             start_time=self._start_time,
             image_information=image_information,
