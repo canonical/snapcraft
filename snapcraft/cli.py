@@ -30,7 +30,7 @@ from craft_providers import ProviderError
 
 import snapcraft
 import snapcraft_legacy
-from snapcraft import __version__, errors, store, utils
+from snapcraft import errors, store, utils
 from snapcraft.parts import plugins
 from snapcraft.remote import RemoteBuildError
 from snapcraft_legacy.cli import legacy
@@ -125,7 +125,6 @@ COMMAND_GROUPS = [
     craft_cli.CommandGroup(
         "Other",
         [
-            commands.core22.VersionCommand,
             commands.core22.LintCommand,
             commands.core22.InitCommand,
         ],
@@ -204,17 +203,14 @@ def get_dispatcher() -> craft_cli.Dispatcher:
 def _run_dispatcher(
     dispatcher: craft_cli.Dispatcher, global_args: Dict[str, Any]
 ) -> None:
-    if global_args.get("version"):
-        emit.message(f"snapcraft {__version__}")
-    else:
-        if global_args.get("trace"):
-            emit.message(
-                "Options -t and --trace are deprecated, use --verbosity=debug instead."
-            )
-            emit.set_mode(EmitterMode.DEBUG)
+    if global_args.get("trace"):
+        emit.message(
+            "Options -t and --trace are deprecated, use --verbosity=debug instead."
+        )
+        emit.set_mode(EmitterMode.DEBUG)
 
-        dispatcher.load_command(None)
-        dispatcher.run()
+    dispatcher.load_command(None)
+    dispatcher.run()
     emit.ended_ok()
 
 

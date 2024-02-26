@@ -18,25 +18,31 @@ import argparse
 import sys
 from unittest.mock import call
 
-from snapcraft import __version__, cli
+from snapcraft import __version__, application
 
 
 def test_version_command(mocker):
     mocker.patch.object(sys, "argv", ["cmd", "version"])
+    app = application.create_app()
     mock_version_cmd = mocker.patch(
-        "snapcraft.commands.core22.version.VersionCommand.run"
+        "craft_application.commands.other.VersionCommand.run"
     )
-    cli.run()
-    assert mock_version_cmd.mock_calls == [call(argparse.Namespace())]
+    app.run()
+    assert mock_version_cmd.mock_calls == [
+        call(argparse.Namespace()),
+        call().__bool__(),  # pylint: disable=unnecessary-dunder-call
+    ]
 
 
 def test_version_argument(mocker, emitter):
     mocker.patch.object(sys, "argv", ["cmd", "--version"])
-    cli.run()
+    app = application.create_app()
+    app.run()
     emitter.assert_message(f"snapcraft {__version__}")
 
 
 def test_version_argument_with_command(mocker, emitter):
     mocker.patch.object(sys, "argv", ["cmd", "--version", "version"])
-    cli.run()
+    app = application.create_app()
+    app.run()
     emitter.assert_message(f"snapcraft {__version__}")
