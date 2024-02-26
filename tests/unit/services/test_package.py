@@ -42,9 +42,16 @@ def test_pack(package_service, default_factory, mocker):
     )
 
 
-def test_metadata(package_service, default_factory, new_dir):
+def test_metadata(package_service, default_factory, snapcraft_yaml, new_dir):
+    project_path = new_dir / "snapcraft.yhml"
+    snapcraft_yaml(filename=project_path)
+
     default_factory.set_kwargs(
-        "lifecycle", work_dir=Path("work"), cache_dir=new_dir, build_for="amd64"
+        "lifecycle",
+        work_dir=Path("work"),
+        cache_dir=new_dir,
+        build_for="amd64",
+        project_path=project_path,
     )
 
     assert package_service.metadata == meta.SnapMetadata(

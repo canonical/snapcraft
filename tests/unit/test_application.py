@@ -219,8 +219,9 @@ def test_application_build_with_extensions(monkeypatch, extension_source, new_di
     """Test that extensions are correctly applied in regular builds."""
     monkeypatch.setenv("CRAFT_DEBUG", "1")
 
+    project_path = new_dir / "snap/snapcraft.yaml"
     (new_dir / "snap").mkdir()
-    (new_dir / "snap/snapcraft.yaml").write_text(json.dumps(extension_source))
+    project_path.write_text(json.dumps(extension_source))
 
     # Calling a lifecycle command will create a Project. Creating a Project
     # without applying the extensions will fail because the "extensions" field

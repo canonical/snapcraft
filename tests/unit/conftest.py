@@ -414,9 +414,12 @@ def default_factory(default_project):
 
 
 @pytest.fixture()
-def lifecycle_service(default_project, default_factory, tmp_path):
+def lifecycle_service(default_project, default_factory, snapcraft_yaml, tmp_path):
     from snapcraft.application import APP_METADATA
     from snapcraft.services import Lifecycle
+
+    file_path = tmp_path / "snapcraft.yaml"
+    snapcraft_yaml(filename=file_path)
 
     return Lifecycle(
         app=APP_METADATA,
@@ -425,6 +428,7 @@ def lifecycle_service(default_project, default_factory, tmp_path):
         work_dir=tmp_path / "work",
         cache_dir=tmp_path / "cache",
         build_for="amd64",
+        project_path=file_path,
     )
 
 
