@@ -15,25 +15,31 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Snapcraft Lifecycle Service."""
 
-import datetime
+import copy
+import os
+import shutil
+from datetime import datetime
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
-from craft_application import LifecycleService
+from craft_application import AppMetadata, LifecycleService, ServiceFactory
+from craft_cli import emit
+from craft_parts import StepInfo
 from overrides import overrides
 
-from snapcraft import models
+from snapcraft import models, utils
+from snapcraft.meta import manifest
 
 
 class Lifecycle(LifecycleService):
     """Snapcraft specialization of the Lifecycle Service."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 (too many arguments)
         self,
         app: AppMetadata,
         services: ServiceFactory,
         *,
-        project: Project,
+        project: models.Project,
         work_dir: Path | str,
         cache_dir: Path | str,
         build_for: str,
@@ -70,12 +76,7 @@ class Lifecycle(LifecycleService):
     def post_prime(self, step_info: StepInfo) -> bool:
         enable_manifest = utils.strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n"))
         if enable_manifest:
-            _generate_manifest(
-                self.project,
-                lifecycle=lifecycle,
-                start_time=self._start_time,
-                prime_dir=self.prime_dir,
-            )
+            self._generate_manifest()
         return super().post_prime(step_info)
 
     def _generate_manifest(self) -> None:
@@ -84,7 +85,9 @@ class Lifecycle(LifecycleService):
         image_information = os.getenv("SNAPCRAFT_IMAGE_INFO", "{}")
         primed_stage_packages: set[str] = set()
 
-        parts = copy.deepcopy(self.project.parts)
+        project = cast(models.Project, self._project)
+
+        parts = copy.deepcopy(project.parts)
         for name, part in parts.items():
             assets = self.get_pull_assets(part_name=name)
             if assets:
@@ -97,15 +100,15 @@ class Lifecycle(LifecycleService):
                 primed_stage_packages |= set(stage_packages)
 
         manifest.write(
-            self.project,
+            project,
             self.prime_dir,
-            arch=self.build_for,
+            arch=self._build_for,
             parts=parts,
             start_time=self._start_time,
             image_information=image_information,
-            primed_stage_packages=_get_all_primed_stage_packages(),
+            primed_stage_packages=list(primed_stage_packages),
         )
         emit.progress("Generated snap manifest", permanent=True)
 
         # Also copy the original snapcraft.yaml
-        shutil.copy(self._project_path, lifecycle.prime_dir / "snap")
+        shutil.copy(self._project_path, self.prime_dir / "snap")
