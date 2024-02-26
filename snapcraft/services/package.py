@@ -74,7 +74,7 @@ class Package(PackageService):
                     compression=self._project.compression,
                     name=self._project.name,
                     version=process_version(self._project.version),
-                    target_arch=self._project.get_build_for(),
+                    target_arch=self._build_for,
                 )
             )
         ]
