@@ -111,6 +111,8 @@ APP_METADATA = AppMetadata(
     ProjectClass=models.Project,
     BuildPlannerClass=SnapcraftBuildPlanner,
     source_ignore_patterns=["*.snap"],
+    project_variables=["version", "grade"],
+    mandatory_adoptable_fields=["version", "summary", "description"],
 )
 
 

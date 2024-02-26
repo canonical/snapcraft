@@ -188,7 +188,7 @@ class TestProjectValidation:
     def test_adoptable_fields(self, field, project_yaml_data):
         data = project_yaml_data()
         data.pop(field)
-        error = f"Snap {field} is required if not using adopt-info"
+        error = f"Required field '{field}' is not set and 'adopt-info' not used."
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(data)
 
@@ -203,6 +203,7 @@ class TestProjectValidation:
     @pytest.mark.parametrize("field", MANDATORY_ADOPTABLE_FIELDS)
     def test_adoptable_field_assignment(self, field, project_yaml_data):
         data = project_yaml_data()
+        data["adopt-info"] = "part1"
         project = Project.unmarshal(data)
         setattr(project, field, None)
 
