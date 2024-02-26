@@ -146,9 +146,8 @@ class Snapcraft(Application):
             cache_dir=self.cache_dir,
             work_dir=self._work_dir,
             build_for=build_for,
-            project_path=self._resolve_project_path(None)
+            project_path=self._resolve_project_path(None),
         )
-
 
     @property
     def command_groups(self):
@@ -168,7 +167,7 @@ class Snapcraft(Application):
                 return super()._resolve_project_path(project_dir)
             except FileNotFoundError:
                 return super()._resolve_project_path(project_dir / "build-aux" / "snap")
-         
+
     @property
     def app_config(self) -> dict[str, Any]:
         """Overridden to add "core" knowledge to the config."""

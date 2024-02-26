@@ -56,6 +56,7 @@ class Lifecycle(LifecycleService):
             **lifecycle_kwargs,
         )
         self._project_path = project_path
+        self._start_time = datetime.now()
 
     @overrides
     def setup(self) -> None:
@@ -67,9 +68,6 @@ class Lifecycle(LifecycleService):
             base=project.get_effective_base(),
             extra_build_snaps=project.get_extra_build_snaps(),
         )
-
-        self._start_time = datetime.now()
-
         super().setup()
 
     @overrides
