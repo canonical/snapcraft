@@ -415,8 +415,6 @@ class Project(models.Project):
     name: ProjectName  # type: ignore[assignment]
     build_base: Optional[str]
     compression: Literal["lzo", "xz"] = "xz"
-    # TODO: ensure we have a test for version being retrieved using adopt-info
-    # snapcraft's `version` is more general than craft-application
     version: Optional[ProjectVersion]  # type: ignore[assignment]
     donation: Optional[Union[str, UniqueStrList]]
     # snapcraft's `source_code` is more general than craft-application
@@ -502,7 +500,9 @@ class Project(models.Project):
     def _validate_adoptable_fields(cls, values):
         for field in MANDATORY_ADOPTABLE_FIELDS:
             if field not in values and "adopt-info" not in values:
-                raise ValueError(f"Snap {field} is required if not using adopt-info")
+                raise ValueError(
+                    f"Required field '{field}' is not set and 'adopt-info' not used."
+                )
         return values
 
     @pydantic.root_validator(pre=True)
