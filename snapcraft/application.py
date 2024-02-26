@@ -197,6 +197,8 @@ class Snapcraft(Application):
             if "core24" in (base, build_base) or build_base == "devel":
                 # We know for sure that we're handling a core24 project
                 self._known_core24 = True
+            elif any(arg in ("version", "--version", "-V") for arg in sys.argv):
+                pass
             else:
                 raise errors.ClassicFallback()
 
@@ -214,18 +216,12 @@ class Snapcraft(Application):
             craft_cli.emit.trace("pre-parsing arguments...")
             # Workaround for the fact that craft_cli requires a command.
             # https://github.com/canonical/craft-cli/issues/141
-            if "--version" in sys.argv or "-V" in sys.argv:
-                try:
-                    global_args = dispatcher.pre_parse_args(["pull", *sys.argv[1:]])
-                except craft_cli.ArgumentParsingError:
-                    global_args = dispatcher.pre_parse_args(sys.argv[1:])
+            if any(arg in ("--version", "-V") for arg in sys.argv) and (
+                "version" not in sys.argv
+            ):
+                global_args = dispatcher.pre_parse_args(["version", *sys.argv[1:]])
             else:
                 global_args = dispatcher.pre_parse_args(sys.argv[1:])
-
-            if global_args.get("version"):
-                craft_cli.emit.ended_ok()
-                print(f"{self.app.name} {self.app.version}")
-                sys.exit(0)
         except craft_cli.ProvideHelpException as err:
             print(err, file=sys.stderr)  # to stderr, as argparse normally does
             craft_cli.emit.ended_ok()
@@ -348,8 +344,8 @@ def create_app() -> Snapcraft:
     )
     app.add_command_group(
         "Other",
-        [
-            unimplemented.Version,
+        list(craft_app_commands.get_other_command_group().commands)
+        + [
             unimplemented.Lint,
             unimplemented.Init,
         ],
