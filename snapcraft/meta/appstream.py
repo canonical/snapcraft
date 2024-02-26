@@ -106,7 +106,7 @@ def extract(relpath: str, *, workdir: str) -> Optional[ExtractedMetadata]:
     issues = _get_urls_from_xml_element(dom.findall("url"), "bugtracker")
     donation = _get_urls_from_xml_element(dom.findall("url"), "donation")
     website = _get_urls_from_xml_element(dom.findall("url"), "homepage")
-    source_code = _get_urls_from_xml_element(dom.findall("url"), "vcs-browser")
+    source_code = _get_urls_from_xml_element(dom.findall("url"), "vcs-browser")[0]
 
     desktop_file_paths = []
     desktop_file_ids = _get_desktop_file_ids_from_nodes(dom.findall("launchable"))
