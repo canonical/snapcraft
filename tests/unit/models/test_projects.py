@@ -29,6 +29,7 @@ from snapcraft.models import (
     Hook,
     Project,
 )
+from snapcraft.models.project import root_packages_transform
 from snapcraft.utils import get_host_architecture
 
 
@@ -1782,3 +1783,20 @@ class TestArchitecture:
         arch_triplet = project.get_build_for_arch_triplet()
 
         assert not arch_triplet
+
+
+class TestProjectTransform:
+    """Test Transform the Project."""
+
+    def test_root_packages_transform(self, project_yaml_data):
+        """Test transforming the project."""
+        data = project_yaml_data()
+        data["build-packages"] = ["pkg1", "pkg2"]
+        data["build-snaps"] = ["snap3", "snap4"]
+
+        data_transformed = root_packages_transform(data)
+
+        project = Project.unmarshal(data_transformed)
+
+        assert project.parts["snapcraft/core"]["build-packages"] == ["pkg1", "pkg2"]
+        assert project.parts["snapcraft/core"]["build-snaps"] == ["snap3", "snap4"]

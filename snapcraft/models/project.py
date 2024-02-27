@@ -16,6 +16,7 @@
 
 """Project file definition and helpers."""
 
+import copy
 import re
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union, cast
 
@@ -169,6 +170,32 @@ def _validate_architectures_all_keyword(architectures):
                 f" {len(architectures)} items: upon release they will conflict."
                 "'all' should only be used if there is a single item"
             )
+
+
+def root_packages_transform(yaml_data: dict[str, Any]) -> dict[str, Any]:
+    """Support Root Packages in Snapcraft.
+
+    This allows the user to use "build-packages" and "build-snaps"
+    at the root level of the snapcraft.yaml file.
+    """
+    if "build-packages" not in yaml_data and "build-snaps" not in yaml_data:
+        return yaml_data
+
+    yaml_data = copy.deepcopy(yaml_data)
+    yaml_data.setdefault("parts", {})
+    yaml_data["parts"]["snapcraft/core"] = {"plugin": "nil"}
+
+    if "build-packages" in yaml_data:
+        yaml_data["parts"]["snapcraft/core"]["build-packages"] = yaml_data.pop(
+            "build-packages"
+        )
+
+    if "build-snaps" in yaml_data:
+        yaml_data["parts"]["snapcraft/core"]["build-snaps"] = yaml_data.pop(
+            "build-snaps"
+        )
+
+    return yaml_data
 
 
 class Socket(models.CraftBaseModel):
