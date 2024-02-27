@@ -65,7 +65,7 @@ class TestAppstreamData:
                 {"type": "vcs-browser"},
                 "source_code",
                 "test-source",
-                ["test-source"],
+                "test-source",
             ),
         ],
     )
@@ -694,7 +694,7 @@ class TestAppstreamContent:
         assert metadata.website == ["https://johnfactotum.github.io/foliate/"]
         assert metadata.issues == ["https://github.com/johnfactotum/foliate/issues"]
         assert metadata.donation == ["https://www.buymeacoffee.com/johnfactotum"]
-        assert metadata.source_code == ["https://github.com/johnfactotum/foliate"]
+        assert metadata.source_code == "https://github.com/johnfactotum/foliate"
 
     def test_appstream_parse_error(self):
         file_name = "snapcraft_legacy.appdata.xml"
