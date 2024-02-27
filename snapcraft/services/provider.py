@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,17 +13,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Snapcraft Lifecycle Service."""
 
-"""Snapcraft services."""
+import os
 
-from snapcraft.services.lifecycle import Lifecycle
-from snapcraft.services.package import Package
-from snapcraft.services.provider import Provider
-from snapcraft.services.service_factory import SnapcraftServiceFactory
+from craft_application import ProviderService
+from overrides import overrides
 
-__all__ = [
-    "Lifecycle",
-    "Package",
-    "Provider",
-    "SnapcraftServiceFactory",
-]
+
+class Provider(ProviderService):
+    """Snapcraft specialization of the Lifecycle Service."""
+
+    @overrides
+    def setup(self) -> None:
+        if build_info := os.getenv("SNAPCRAFT_BUILD_INFO"):
+            self.environment["SNAPCRAFT_BUILD_INFO"] = build_info
+        if image_info := os.getenv("SNAPCRAFT_IMAGE_INFO"):
+            self.environment["SNAPCRAFT_IMAGE_INFO"] = image_info

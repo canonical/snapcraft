@@ -25,7 +25,6 @@ from typing import Any, cast
 from craft_application import AppMetadata, LifecycleService, ServiceFactory
 from craft_application.models import BuildInfo
 from craft_cli import emit
-from craft_parts import StepInfo
 from overrides import overrides
 
 from snapcraft import models, utils
@@ -72,11 +71,12 @@ class Lifecycle(LifecycleService):
         super().setup()
 
     @overrides
-    def post_prime(self, step_info: StepInfo) -> bool:
+    def run(self, step_name: str | None, part_names: list[str] | None = None) -> None:
+        super().run(step_name, part_names)
+
         enable_manifest = utils.strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n"))
         if enable_manifest:
             self._generate_manifest()
-        return super().post_prime(step_info)
 
     def _generate_manifest(self) -> None:
         """Create and populate the manifest file."""
