@@ -172,7 +172,7 @@ def _validate_architectures_all_keyword(architectures):
             )
 
 
-def root_packages_transform(yaml_data: dict[str, Any]) -> dict[str, Any]:
+def apply_root_packages_transform(yaml_data: dict[str, Any]) -> dict[str, Any]:
     """Support Root Packages in Snapcraft.
 
     This allows the user to use "build-packages" and "build-snaps"

@@ -29,7 +29,7 @@ from snapcraft.models import (
     Hook,
     Project,
 )
-from snapcraft.models.project import root_packages_transform
+from snapcraft.models.project import apply_root_packages_transform
 from snapcraft.utils import get_host_architecture
 
 
@@ -1794,9 +1794,21 @@ class TestProjectTransform:
         data["build-packages"] = ["pkg1", "pkg2"]
         data["build-snaps"] = ["snap3", "snap4"]
 
-        data_transformed = root_packages_transform(data)
+        data_transformed = apply_root_packages_transform(data)
 
         project = Project.unmarshal(data_transformed)
 
         assert project.parts["snapcraft/core"]["build-packages"] == ["pkg1", "pkg2"]
         assert project.parts["snapcraft/core"]["build-snaps"] == ["snap3", "snap4"]
+
+    def test_root_packages_transform_no_affect(self, project_yaml_data):
+        """Test transforming the project without root packages."""
+        data = project_yaml_data()
+
+        data_transformed = apply_root_packages_transform(data)
+
+        project = Project.unmarshal(data_transformed)
+
+        assert project.build_packages is None
+        assert project.build_snaps is None
+        assert "snapcraft/core" not in project.parts
