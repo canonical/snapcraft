@@ -172,11 +172,13 @@ def _validate_architectures_all_keyword(architectures):
             )
 
 
-def apply_root_packages_transform(yaml_data: dict[str, Any]) -> dict[str, Any]:
-    """Support Root Packages in Snapcraft.
+def apply_root_packages(yaml_data: dict[str, Any]) -> dict[str, Any]:
+    """Create a new part with root level attributes.
 
-    This allows the user to use "build-packages" and "build-snaps"
-    at the root level of the snapcraft.yaml file.
+    Root level attributes such as build-packages and build-snaps
+    are known to Snapcraft but not Craft Parts. Create a new part
+    "snapcraft/core" with these attributes and apply it to the
+    current yaml_data.
     """
     if "build-packages" not in yaml_data and "build-snaps" not in yaml_data:
         return yaml_data
