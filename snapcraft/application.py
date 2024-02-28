@@ -129,6 +129,11 @@ class Snapcraft(Application):
         # Whether we know that we should use the core24-based codepath.
         self._known_core24 = False
 
+        try:
+            self._project_path: pathlib.Path | None = self._resolve_project_path(None)
+        except FileNotFoundError:
+            self._project_path = None
+
         for craft_var, snapcraft_var in MAPPED_ENV_VARS.items():
             if env_val := os.getenv(snapcraft_var):
                 os.environ[craft_var] = env_val
@@ -146,7 +151,7 @@ class Snapcraft(Application):
             cache_dir=self.cache_dir,
             work_dir=self._work_dir,
             build_plan=self._build_plan,
-            project_path=self._resolve_project_path(None),
+            project_path=self._project_path,
         )
 
     @property
@@ -195,13 +200,8 @@ class Snapcraft(Application):
         # project's base (if any). Here, we handle the case where there *is*
         # a project and it's core24, which means it should definitely fall into
         # the craft-application-based flow.
-        try:
-            existing_project = self._resolve_project_path(None)
-        except FileNotFoundError:
-            # No project file - don't know if we should use core24 code or not.
-            pass
-        else:
-            with existing_project.open() as file:
+        if self._project_path:
+            with self._project_path.open() as file:
                 yaml_data = util.safe_yaml_load(file)
             base = yaml_data.get("base")
             build_base = yaml_data.get("build-base")
