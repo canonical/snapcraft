@@ -375,7 +375,7 @@ class LintCommand(BaseCommand):
             )
             emit.verbose(
                 "To include 'snapcraft.yaml' in a snap file, use the parameter "
-                "'--enable-manifest' when building the snap."
+                "'--enable-manifest' when building the snap. (Deprecated)"
             )
 
         return lint_config

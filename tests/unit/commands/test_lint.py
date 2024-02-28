@@ -478,7 +478,7 @@ def test_lint_managed_mode_without_snapcraft_yaml(
             call(
                 "verbose",
                 "To include 'snapcraft.yaml' in a snap file, use the parameter "
-                "'--enable-manifest' when building the snap.",
+                "'--enable-manifest' when building the snap. (Deprecated)",
             ),
         ]
     )

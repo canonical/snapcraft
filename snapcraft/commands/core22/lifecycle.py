@@ -53,14 +53,14 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             "--enable-manifest",
             action="store_true",
             default=utils.strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n")),
-            help="Generate snap manifest",
+            help="Generate snap manifest (Deprecated)",
         )
         parser.add_argument(
             "--manifest-image-information",
             type=str,
             metavar="image-info",
             default=os.getenv("SNAPCRAFT_IMAGE_INFO"),
-            help="Set snap manifest image-info",
+            help="Set snap manifest image-info (Deprecated)",
         )
         parser.add_argument(
             "--bind-ssh",
