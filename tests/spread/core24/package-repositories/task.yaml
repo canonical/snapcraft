@@ -9,6 +9,15 @@ environment:
   SNAP/test_multi_keys: test-multi-keys
   SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
+prepare: |
+  # Workaround to be able to test the snaps
+  if snap install core24; then
+    echo Remove this workaround
+    exit 1
+  else
+    snap install core24 --edge
+  fi
+
 restore: |
   cd "$SNAP"
   rm -f ./*.snap
