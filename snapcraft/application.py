@@ -52,7 +52,7 @@ class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
     base: str | None = None
     build_base: str | None = None
     name: str | None = None
-    project_type: str | None = None
+    project_type: str | None = pydantic.Field(default=None, alias="type")
 
     @pydantic.validator("architectures", always=True)
     def _validate_architecture_data(  # pylint: disable=no-self-argument
