@@ -21,7 +21,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from overrides import overrides
 
-from .extension import Extension, get_extensions_data_dir, prepend_to_env
+from .extension import Extension, prepend_to_env
 
 _SDK_SNAP = {"core22": "qt-framework-sdk"}
 
@@ -219,7 +219,7 @@ class QTFramework(Extension):
         sdk_channel = self.qt_snaps.sdk["channel"]
 
         if self.qt_snaps.builtin:
-            return None
+            return {}
 
         return {
             f"{self.name}/sdk": {
