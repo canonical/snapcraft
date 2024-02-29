@@ -123,7 +123,8 @@ def test_write_metadata(
 
     package_service.write_metadata(new_dir)
 
-    assert (new_dir / "meta" / "snap.yaml").read_text() == dedent(
+    meta_dir = new_dir / "meta"
+    assert (meta_dir / "snap.yaml").read_text() == dedent(
         """\
         name: default
         version: '1.0'
@@ -176,3 +177,154 @@ def test_write_metadata_with_manifest(
     assert manifest.name == snap_yaml["name"]
     assert manifest.grade == snap_yaml["grade"]
     assert manifest.architectures == snap_yaml["architectures"]
+
+
+@pytest.fixture(params=["snap", "build-aux/snap"])
+def project_hooks_dir(new_dir, request):
+    hooks_dir = new_dir / request.param / "hooks"
+    hooks_dir.mkdir(parents=True)
+    yield hooks_dir
+
+
+def test_write_metadata_with_project_hooks(
+    package_service, default_factory, default_build_plan, new_dir, project_hooks_dir
+):
+    default_factory.set_kwargs(
+        "lifecycle",
+        work_dir=Path("work"),
+        cache_dir=new_dir,
+        build_plan=default_build_plan,
+    )
+    # Create some hooks
+    (project_hooks_dir / "configure").write_text("configure_hook")
+    (project_hooks_dir / "install").write_text("install_hook")
+
+    prime_dir = new_dir / "prime"
+    meta_dir = prime_dir / "meta"
+
+    package_service.write_metadata(prime_dir)
+
+    assert (meta_dir / "snap.yaml").read_text() == dedent(
+        """\
+        name: default
+        version: '1.0'
+        summary: default project
+        description: default project
+        license: MIT
+        architectures:
+        - amd64
+        base: core24
+        confinement: devmode
+        grade: devel
+        environment:
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+    """
+    )
+
+    assert (meta_dir / "hooks").exists()
+    # Ensure the hook is the one we provided in the project
+    # and not a wrapped hook.
+    assert (meta_dir / "hooks" / "configure").exists()
+    assert (meta_dir / "hooks" / "configure").read_text() == "configure_hook"
+    assert (meta_dir / "hooks" / "install").exists()
+    assert (meta_dir / "hooks" / "install").read_text() == "install_hook"
+
+
+def test_write_metadata_with_built_hooks(
+    package_service,
+    default_factory,
+    default_build_plan,
+    new_dir,
+):
+    default_factory.set_kwargs(
+        "lifecycle",
+        work_dir=Path("work"),
+        cache_dir=new_dir,
+        build_plan=default_build_plan,
+    )
+    # Create some hooks
+    prime_dir = new_dir / "prime"
+    built_hooks_dir = prime_dir / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "configure").write_text("configure_hook")
+    (built_hooks_dir / "install").write_text("install_hook")
+
+    package_service.write_metadata(prime_dir)
+
+    meta_dir = prime_dir / "meta"
+    assert (meta_dir / "snap.yaml").read_text() == dedent(
+        """\
+        name: default
+        version: '1.0'
+        summary: default project
+        description: default project
+        license: MIT
+        architectures:
+        - amd64
+        base: core24
+        confinement: devmode
+        grade: devel
+        environment:
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+    """
+    )
+
+    assert (meta_dir / "hooks").exists()
+    # Ensure the hook is the one we provided in the project
+    # and not a wrapped hook.
+    assert (meta_dir / "hooks" / "configure").exists()
+    assert (meta_dir / "hooks" / "configure").read_text() == "configure_hook"
+    assert (meta_dir / "hooks" / "install").exists()
+    assert (meta_dir / "hooks" / "install").read_text() == "install_hook"
+
+
+def test_write_metadata_with_project_gui(
+    package_service,
+    default_factory,
+    default_build_plan,
+    new_dir,
+):
+    default_factory.set_kwargs(
+        "lifecycle",
+        work_dir=Path("work"),
+        cache_dir=new_dir,
+        build_plan=default_build_plan,
+    )
+    # Create some gui
+    project_gui_dir = new_dir / "snap" / "gui"
+    project_gui_dir.mkdir(parents=True)
+    (project_gui_dir / "default.default.desktop").write_text("desktop_file")
+    (project_gui_dir / "icon.png").write_text("package_png_icon")
+
+    prime_dir = new_dir / "prime"
+    meta_dir = prime_dir / "meta"
+
+    package_service.write_metadata(prime_dir)
+
+    assert (meta_dir / "snap.yaml").read_text() == dedent(
+        """\
+        name: default
+        version: '1.0'
+        summary: default project
+        description: default project
+        license: MIT
+        architectures:
+        - amd64
+        base: core24
+        confinement: devmode
+        grade: devel
+        environment:
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+    """
+    )
+
+    assert (meta_dir / "gui").exists()
+    # Ensure the hook is the one we provided in the project
+    # and not a wrapped hook.
+    assert (meta_dir / "gui" / "default.default.desktop").exists()
+    assert (meta_dir / "gui" / "default.default.desktop").read_text() == "desktop_file"
+    assert (meta_dir / "gui" / "icon.png").exists()
+    assert (meta_dir / "gui" / "icon.png").read_text() == "package_png_icon"
