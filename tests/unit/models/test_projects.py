@@ -29,6 +29,7 @@ from snapcraft.models import (
     Hook,
     Project,
 )
+from snapcraft.models.project import apply_root_packages
 from snapcraft.utils import get_host_architecture
 
 
@@ -1782,3 +1783,32 @@ class TestArchitecture:
         arch_triplet = project.get_build_for_arch_triplet()
 
         assert not arch_triplet
+
+
+class TestApplyRootPackages:
+    """Test Transform the Project."""
+
+    def test_apply_root_packages(self, project_yaml_data):
+        """Test creating a part with root level build-packages and build-snaps."""
+        data = project_yaml_data()
+        data["build-packages"] = ["pkg1", "pkg2"]
+        data["build-snaps"] = ["snap3", "snap4"]
+
+        data_transformed = apply_root_packages(data)
+
+        project = Project.unmarshal(data_transformed)
+
+        assert project.parts["snapcraft/core"]["build-packages"] == ["pkg1", "pkg2"]
+        assert project.parts["snapcraft/core"]["build-snaps"] == ["snap3", "snap4"]
+
+    def test_root_packages_transform_no_affect(self, project_yaml_data):
+        """Test that nothing is applied if there are not build-packages or build-snaps."""
+        data = project_yaml_data()
+
+        data_transformed = apply_root_packages(data)
+
+        project = Project.unmarshal(data_transformed)
+
+        assert project.build_packages is None
+        assert project.build_snaps is None
+        assert "snapcraft/core" not in project.parts
