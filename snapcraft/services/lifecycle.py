@@ -107,7 +107,7 @@ class Lifecycle(LifecycleService):
             image_information=image_information,
             primed_stage_packages=list(primed_stage_packages),
         )
-        emit.progress("Generated snap manifest", permanent=True)
+        emit.progress("Generated snap manifest")
 
         # Also copy the original snapcraft.yaml
         if self._project_path:
