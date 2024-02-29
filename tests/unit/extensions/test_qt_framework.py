@@ -17,7 +17,6 @@
 import pytest
 
 from snapcraft.extensions import qt_framework
-from snapcraft.extensions.extension import get_extensions_data_dir
 from snapcraft.extensions.qt_framework import _CONTENT_SNAP
 
 ############
@@ -261,11 +260,11 @@ def test_get_parts_snippet(qt_framework_extension, name):
 
 @pytest.mark.parametrize(fixture_variables, builtin_stable_values)
 def test_get_parts_snippet_with_external_sdk(qt_framework_extension, name):
-    assert qt_framework_extension.get_parts_snippet() == None
+    assert qt_framework_extension.get_parts_snippet() == {}
 
 
 @pytest.mark.parametrize(fixture_variables, builtin_edge_values)
 def test_get_parts_snippet_with_external_sdk_different_channel(
     qt_framework_extension, name
 ):
-    assert qt_framework_extension.get_parts_snippet() == None
+    assert qt_framework_extension.get_parts_snippet() == {}
