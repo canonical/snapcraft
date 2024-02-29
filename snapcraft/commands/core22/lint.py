@@ -373,9 +373,5 @@ class LintCommand(BaseCommand):
                 "Not loading lint filters from 'snapcraft.yaml' because the file "
                 "does not exist inside the snap file."
             )
-            emit.verbose(
-                "To include 'snapcraft.yaml' in a snap file, use the parameter "
-                "'--enable-manifest' when building the snap. (Deprecated)"
-            )
 
         return lint_config
