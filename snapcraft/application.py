@@ -38,7 +38,7 @@ from snapcraft import cli, commands, errors, models, services
 from snapcraft.commands import unimplemented
 from snapcraft.extensions import apply_extensions
 from snapcraft.models import Architecture
-from snapcraft.models.project import validate_architectures
+from snapcraft.models.project import apply_root_packages, validate_architectures
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import get_effective_base, get_host_architecture
 
@@ -52,7 +52,7 @@ class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
     base: str | None = None
     build_base: str | None = None
     name: str | None = None
-    project_type: str | None = None
+    project_type: str | None = pydantic.Field(default=None, alias="type")
 
     @pydantic.validator("architectures", always=True)
     def _validate_architecture_data(  # pylint: disable=no-self-argument
@@ -170,7 +170,8 @@ class Snapcraft(Application):
     ) -> dict[str, Any]:
         arch = build_on
         target_arch = build_for if build_for else get_host_architecture()
-        return apply_extensions(yaml_data, arch=arch, target_arch=target_arch)
+        new_yaml_data = apply_extensions(yaml_data, arch=arch, target_arch=target_arch)
+        return apply_root_packages(new_yaml_data)
 
     @override
     def _get_dispatcher(self) -> craft_cli.Dispatcher:
