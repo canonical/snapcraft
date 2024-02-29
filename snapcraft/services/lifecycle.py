@@ -43,7 +43,7 @@ class Lifecycle(LifecycleService):
         work_dir: Path | str,
         cache_dir: Path | str,
         build_plan: list[BuildInfo],
-        project_path: Path | None,
+        project_path: Path,
         **lifecycle_kwargs: Any,  # noqa: ANN401 - eventually used in an Any
     ) -> None:
         super().__init__(
@@ -113,5 +113,4 @@ class Lifecycle(LifecycleService):
         emit.progress("Generated snap manifest")
 
         # Also copy the original snapcraft.yaml
-        if self._project_path:
-            shutil.copy(self._project_path, self.prime_dir / "snap")
+        shutil.copy(self._project_path, self.prime_dir / "snap")
