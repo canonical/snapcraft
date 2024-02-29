@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
 from unittest.mock import call
 
 import pytest
@@ -283,11 +282,22 @@ def test_pack_snap_use_output_name_over_name_version_arch(mocker, new_dir):
     ]
 
 
-def test_pack_snap_error(mocker, new_dir):
-    mocker.patch("subprocess.run", side_effect=subprocess.CalledProcessError(42, "cmd"))
+def test_pack_snap_error(mocker, new_dir, fake_process):
+    fake_process.register_subprocess(
+        ["snap", "pack", "--check-skeleton", str(new_dir)],
+        stdout=b"xxxx",
+        stderr=b'error: cannot validate snap "pack-error": '
+        b'invalid definition of application "pack-error": '
+        b"app description field 'command' contains illegal "
+        b"\"pack-error foo=bar\" (legal: '^[A-Za-z0-9/. _#:$-]*$')",
+        returncode=1,
+    )
     with pytest.raises(errors.SnapcraftError) as raised:
         pack.pack_snap(new_dir, output=str(new_dir))
 
     assert str(raised.value) == (
-        "Cannot pack snap file: Command 'cmd' returned non-zero exit status 42."
+        """Cannot pack snap: error: cannot validate snap "pack-error": """
+        """invalid definition of application "pack-error": """
+        """app description field 'command' contains illegal "pack-error foo=bar" """
+        """(legal: '^[A-Za-z0-9/. _#:$-]*$')"""
     )

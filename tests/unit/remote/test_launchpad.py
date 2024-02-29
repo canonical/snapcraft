@@ -353,18 +353,55 @@ def test_start_build_error(mocker, launchpad_client):
     assert str(raised.value) == "snapcraft.yaml not found..."
 
 
-def test_start_build_error_timeout(mocker, launchpad_client):
+def test_start_build_deadline_not_reached(mock_login_with, mocker):
+    """Do not raise an error if the deadline has not been reached."""
+
+    def lp_refresh(self):
+        """Update the status from Pending to Completed when refreshed."""
+        self.status = "Completed"
+
+    mocker.patch(
+        "tests.unit.remote.test_launchpad.SnapImpl.requestBuilds",
+        return_value=SnapBuildReqImpl(status="Pending", error_message=""),
+    )
+    mocker.patch.object(SnapBuildReqImpl, "lp_refresh", lp_refresh)
+    mocker.patch("time.time", return_value=500)
+
+    lpc = LaunchpadClient(
+        app_name="test-app",
+        build_id="id",
+        project_name="test-project",
+        architectures=[],
+        timeout=100,
+    )
+
+    lpc.start_build()
+
+
+def test_start_build_timeout_error(mock_login_with, mocker):
+    """Raise an error if the build times out."""
     mocker.patch(
         "tests.unit.remote.test_launchpad.SnapImpl.requestBuilds",
         return_value=SnapBuildReqImpl(status="Pending", error_message=""),
     )
     mocker.patch("time.time", return_value=500)
-    launchpad_client._deadline = 499
+    lpc = LaunchpadClient(
+        app_name="test-app",
+        build_id="id",
+        project_name="test-project",
+        architectures=[],
+        timeout=100,
+    )
+    # advance 1 second past deadline
+    mocker.patch("time.time", return_value=601)
 
     with pytest.raises(errors.RemoteBuildTimeoutError) as raised:
-        launchpad_client.start_build()
+        lpc.start_build()
 
-    assert str(raised.value) == "Remote build timed out."
+    assert str(raised.value) == (
+        "Remote build command timed out.\nBuild may still be running on Launchpad and "
+        "can be recovered with 'test-app remote-build --recover --build-id id'."
+    )
 
 
 def test_issue_build_request_defaults(launchpad_client):
@@ -381,7 +418,27 @@ def test_issue_build_request_defaults(launchpad_client):
 
 
 @patch("snapcraft.remote.LaunchpadClient._download_file")
-def test_monitor_build(mock_download_file, new_dir, launchpad_client):
+def test_monitor_build(mock_download_file, mock_login_with, new_dir, launchpad_client):
+    mock_login_with._mock_return_value.rbi.builds.entries = [
+        SnapBuildEntryImpl(
+            arch_tag="i386",
+            buildstate="Successfully built",
+            self_link="http://build_self_link_1",
+            build_log_url="url_for/build_log_file_1",
+        ),
+        SnapBuildEntryImpl(
+            arch_tag="amd64",
+            buildstate="Successfully built",
+            self_link="http://build_self_link_2",
+            build_log_url="url_for/build_log_file_2",
+        ),
+        SnapBuildEntryImpl(
+            arch_tag="arm64",
+            buildstate="Successfully built",
+            self_link="http://build_self_link_2",
+            build_log_url=None,
+        ),
+    ]
     Path("test-project_i386.txt", encoding="utf-8").touch()
     Path("test-project_i386.1.txt", encoding="utf-8").touch()
 
@@ -406,7 +463,10 @@ def test_monitor_build_error(mock_log, mock_download_file, mocker, launchpad_cli
         "tests.unit.remote.test_launchpad.BuildImpl.getFileUrls", return_value=[]
     )
     launchpad_client.start_build()
-    launchpad_client.monitor_build(interval=0)
+    with pytest.raises(
+        errors.RemoteBuildFailedError, match="Build failed for arch amd64."
+    ):
+        launchpad_client.monitor_build(interval=0)
 
     assert mock_download_file.mock_calls == [
         call(url="url_for/build_log_file_1", dst="test-project_i386.txt", gunzip=True),
@@ -422,16 +482,48 @@ def test_monitor_build_error(mock_log, mock_download_file, mocker, launchpad_cli
     ]
 
 
-def test_monitor_build_error_timeout(mocker, launchpad_client):
+def test_monitor_build_deadline_not_reached(mock_login_with, mocker):
+    """Do not raise an error if the deadline has not been reached."""
+    mocker.patch("snapcraft.remote.LaunchpadClient._download_file")
+    lpc = LaunchpadClient(
+        app_name="test-app",
+        build_id="id",
+        project_name="test-project",
+        architectures=[],
+        timeout=100,
+    )
+
+    lpc.start_build()
+    # should raise build failed error, not timeout error
+    with pytest.raises(
+        errors.RemoteBuildFailedError, match="Build failed for arch amd64."
+    ):
+        lpc.monitor_build(interval=0)
+
+
+def test_monitor_build_timeout_error(mock_login_with, mocker):
+    """Raise an error if the build times out."""
     mocker.patch("snapcraft.remote.LaunchpadClient._download_file")
     mocker.patch("time.time", return_value=500)
-    launchpad_client._deadline = 499
-    launchpad_client.start_build()
+    lpc = LaunchpadClient(
+        app_name="test-app",
+        build_id="id",
+        project_name="test-project",
+        architectures=[],
+        timeout=100,
+    )
+    # advance 1 second past deadline
+    mocker.patch("time.time", return_value=601)
+
+    lpc.start_build()
 
     with pytest.raises(errors.RemoteBuildTimeoutError) as raised:
-        launchpad_client.monitor_build(interval=0)
+        lpc.monitor_build(interval=0)
 
-    assert str(raised.value) == "Remote build timed out."
+    assert str(raised.value) == (
+        "Remote build command timed out.\nBuild may still be running on Launchpad and "
+        "can be recovered with 'test-app remote-build --recover --build-id id'."
+    )
 
 
 def test_get_build_status(launchpad_client):
@@ -455,7 +547,7 @@ def test_push_source_tree(new_dir, mock_git_repo, launchpad_client):
     launchpad_client._lp.git_repositories._git.issueAccessToken_mock.assert_called_once_with(
         description="test-app remote-build for id",
         scopes=["repository:push"],
-        date_expires=(now + timedelta(minutes=1)).isoformat(),
+        date_expires=(now + timedelta(minutes=60)).isoformat(),
     )
 
     mock_git_repo.assert_has_calls(
@@ -466,6 +558,7 @@ def test_push_source_tree(new_dir, mock_git_repo, launchpad_client):
                 "main",
                 "HEAD",
                 "access-token",
+                push_tags=True,
             ),
         ]
     )

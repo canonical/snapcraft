@@ -20,6 +20,7 @@ import logging
 from pathlib import Path
 from typing import List, Optional
 
+from .git import check_git_repo_for_remote_build
 from .launchpad import LaunchpadClient
 from .utils import get_build_id, humanize_list, validate_architectures
 from .worktree import WorkTree
@@ -35,23 +36,27 @@ class RemoteBuilder:
     :param project_name: Name of the project.
     :param architectures: List of architectures to build on.
     :param project_dir: Path of the project.
+    :param timeout: Time in seconds to wait for the build to complete.
 
     :raises UnsupportedArchitectureError: if any architecture is not supported
     for remote building.
     :raises LaunchpadHttpsError: If a connection to Launchpad cannot be established.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 pylint: disable=too-many-arguments
         self,
         app_name: str,
         build_id: Optional[str],
         project_name: str,
         architectures: List[str],
         project_dir: Path,
+        timeout: int,
     ):
         self._app_name = app_name
         self._project_name = project_name
         self._project_dir = project_dir
+
+        check_git_repo_for_remote_build(self._project_dir)
 
         if build_id:
             self._build_id = build_id
@@ -78,6 +83,7 @@ class RemoteBuilder:
             build_id=self._build_id,
             project_name=self._project_name,
             architectures=self._architectures,
+            timeout=timeout,
         )
 
     @property
@@ -92,7 +98,7 @@ class RemoteBuilder:
             for arch, status in build_status.items():
                 logger.info("Build status for arch %s: %s", arch, status)
         else:
-            logger.info("No build found.")
+            logger.info("No build task(s) found.")
 
     def has_outstanding_build(self) -> bool:
         """Check if there is an existing build on Launchpad.
@@ -109,16 +115,16 @@ class RemoteBuilder:
         )
 
         logger.info("Building...")
-        self._lpc.monitor_build()
-
-        logger.info("Build complete.")
+        try:
+            self._lpc.monitor_build()
+        finally:
+            logger.info("Build task(s) complete.")
 
     def clean_build(self) -> None:
         """Clean the cache and Launchpad build."""
         logger.info("Cleaning existing builds and artefacts.")
         self._lpc.cleanup()
         self._worktree.clean_cache()
-        logger.info("Done.")
 
     def start_build(self) -> None:
         """Start a build in Launchpad.

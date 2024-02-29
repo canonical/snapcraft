@@ -159,7 +159,7 @@ The following kernel-specific options are provided by this plugin:
       string (e.g. "-12") to use a specific version of the LLVM utilities.
 
 This plugin support cross compilation, for which plugin expects
-the build-environment is comfigured accordingly and has foreign architectures
+the build-environment is configured accordingly and has foreign architectures
 setup accordingly.
 """
 

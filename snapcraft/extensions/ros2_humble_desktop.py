@@ -30,7 +30,9 @@ class ROS2HumbleDesktopExtension(ROS2HumbleMetaBase):
 
     @functools.cached_property
     @overrides
-    def ros2_humble_snaps(self) -> ROS2HumbleSnaps:
+    def ros2_humble_snaps(  # type: ignore[reportIncompatibleMethodOverride]
+        self,
+    ) -> ROS2HumbleSnaps:
         return ROS2HumbleSnaps(
             sdk="ros-humble-desktop-dev",
             content="ros-humble-desktop",

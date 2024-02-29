@@ -10,7 +10,7 @@ fi
 
 # Create the container.
 if ! lxc info snapcraft-dev >/dev/null 2>&1; then
-    lxc init ubuntu:20.04 snapcraft-dev
+    lxc init ubuntu:22.04 snapcraft-dev
 fi
 if ! lxc config get snapcraft-dev raw.idmap | grep -q "both $UID 1000"; then
     lxc config set snapcraft-dev raw.idmap "both $UID 1000"

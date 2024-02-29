@@ -79,7 +79,14 @@ def _get_url_basename(url: str):
 
 
 class LaunchpadClient:
-    """Launchpad remote builder operations."""
+    """Launchpad remote builder operations.
+
+    :param app_name: Name of the application.
+    :param build_id: Unique identifier for the build.
+    :param project_name: Name of the project.
+    :param architectures: List of architectures to build on.
+    :param timeout: Time in seconds to wait for the build to complete.
+    """
 
     def __init__(
         self,
@@ -88,7 +95,7 @@ class LaunchpadClient:
         build_id: str,
         project_name: str,
         architectures: Sequence[str],
-        deadline: int = 0,
+        timeout: int = 0,
     ) -> None:
         self._app_name = app_name
 
@@ -104,7 +111,11 @@ class LaunchpadClient:
         self._lp: Launchpad = self._login()
         self.user = self._lp.me.name  # type: ignore
 
-        self._deadline = deadline
+        # calculate deadline from the timeout
+        if timeout > 0:
+            self._deadline = int(time.time()) + timeout
+        else:
+            self._deadline = 0
 
     @property
     def architectures(self) -> Sequence[str]:
@@ -135,7 +146,11 @@ class LaunchpadClient:
             return
 
         if int(time.time()) >= self._deadline:
-            raise errors.RemoteBuildTimeoutError()
+            raise errors.RemoteBuildTimeoutError(
+                recovery_command=(
+                    f"{self._app_name} remote-build --recover --build-id {self._build_id}"
+                )
+            )
 
     def _create_data_directory(self) -> Path:
         data_dir = Path(
@@ -154,11 +169,20 @@ class LaunchpadClient:
     def _fetch_artifacts(self, snap: Optional[Entry]) -> None:
         """Fetch build arftifacts (logs and snaps)."""
         builds = self._get_builds(snap)
+        error_list: list[str] = []
 
-        logger.debug("Downloading artifacts...")
+        logger.info("Downloading artifacts...")
         for build in builds:
             self._download_build_artifacts(build)
-            self._download_log(build)
+            try:
+                self._download_log(build)
+            except errors.RemoteBuildFailedError as error:
+                error_list.append(str(error.details))
+
+        if error_list:
+            raise errors.RemoteBuildFailedError(
+                details="\n".join(error_list),
+            )
 
     def _get_builds_collection_entry(self, snap: Optional[Entry]) -> Optional[Entry]:
         logger.debug("Fetching builds collection information from Launchpad...")
@@ -199,13 +223,13 @@ class LaunchpadClient:
             return self._lp.load(url)
 
     def _wait_for_build_request_acceptance(self, build_request: Entry) -> None:
-        # Not be be confused with the actual build(s), this is
+        # Not to be confused with the actual build(s), this is
         # ensuring that Launchpad accepts the build request.
         while build_request.status == "Pending":
             # Check to see if we've run out of time.
             self._check_timeout_deadline()
 
-            logger.debug("Waiting on Launchpad build request...")
+            logger.info("Waiting on Launchpad build request...")
             logger.debug(
                 "status=%s error=%s", build_request.status, build_request.error_message
             )
@@ -235,7 +259,7 @@ class LaunchpadClient:
             )
 
         build_number = _get_url_basename(cast(str, build_request.self_link))
-        logger.debug("Build request accepted: %s", build_number)
+        logger.info("Build request accepted: %s", build_number)
 
     def _login(self) -> Launchpad:
         """Login to launchpad."""
@@ -272,7 +296,7 @@ class LaunchpadClient:
         if force:
             self._delete_git_repository()
 
-        logger.debug(
+        logger.info(
             "creating git repo: name=%s, owner=%s, target=%s",
             self._lp_name,
             self._lp_owner,
@@ -291,7 +315,7 @@ class LaunchpadClient:
         if git_repo is None:
             return
 
-        logger.debug("Deleting source repository from Launchpad...")
+        logger.info("Deleting source repository from Launchpad...")
         git_repo.lp_delete()
 
     def _create_snap(self, force=False) -> Entry:
@@ -305,7 +329,7 @@ class LaunchpadClient:
         if self._lp_processors:
             optional_kwargs["processors"] = self._lp_processors
 
-        logger.debug("Registering snap job on Launchpad...")
+        logger.info("Registering snap job on Launchpad...")
         logger.debug(
             "url=https://launchpad.net/%s/+snap/%s", self._lp_owner, self._lp_name
         )
@@ -327,7 +351,7 @@ class LaunchpadClient:
         if snap is None:
             return
 
-        logger.debug("Removing snap job from Launchpad...")
+        logger.info("Removing snap job from Launchpad...")
         snap.lp_delete()
 
     def cleanup(self) -> None:
@@ -339,7 +363,7 @@ class LaunchpadClient:
         """Start build with specified timeout (time.time() in seconds)."""
         snap = self._create_snap(force=True)
 
-        logger.debug("Issuing build request on Launchpad...")
+        logger.info("Issuing build request on Launchpad...")
         build_request = self._issue_build_request(snap)
         self._wait_for_build_request_acceptance(build_request)
 
@@ -353,17 +377,16 @@ class LaunchpadClient:
 
             builds = self._get_builds(snap)
             pending = False
-            timestamp = str(datetime.now())
-            status = f"Build status as of {timestamp}: "
+            statuses = []
             for build in builds:
                 state = build["buildstate"]
                 arch = build["arch_tag"]
-                status += f" {arch=} {state=}"
+                statuses.append(f"{arch}: {state}")
 
                 if _is_build_pending(build):
                     pending = True
 
-            logger.info(status)
+            logger.info(", ".join(statuses))
 
             if pending is False:
                 break
@@ -408,10 +431,11 @@ class LaunchpadClient:
 
         if _is_build_status_failure(build):
             logger.error("Build failed for arch %r.", arch)
+            raise errors.RemoteBuildFailedError(f"Build failed for arch {arch}.")
 
     def _download_file(self, *, url: str, dst: str, gunzip: bool = False) -> None:
         # TODO: consolidate with, and use indicators.download_requests_stream
-        logger.debug("Downloading: %s", url)
+        logger.info("Downloading: %s", url)
         try:
             with requests.get(url, stream=True, timeout=3600) as response:
                 # Wrap response with gzipfile if gunzip is requested.
@@ -451,11 +475,9 @@ class LaunchpadClient:
     def push_source_tree(self, repo_dir: Path) -> None:
         """Push source tree to Launchpad."""
         lp_repo = self._create_git_repository(force=True)
-        # This token will only be used once, immediately after issuing it,
-        # so it can have a short expiry time.  It's not a problem if it
-        # expires before the build completes, or even before the push
-        # completes.
-        date_expires = datetime.now(timezone.utc) + timedelta(minutes=1)
+        # This token will be used multiple times, so we don't want it to
+        # expire too soon. Especially if the git push takes a long time.
+        date_expires = datetime.now(timezone.utc) + timedelta(minutes=60)
         token = lp_repo.issueAccessToken(  # type: ignore
             description=f"{self._app_name} remote-build for {self._build_id}",
             scopes=["repository:push"],
@@ -470,4 +492,4 @@ class LaunchpadClient:
         logger.info("Sending build data to Launchpad: %s", stripped_url)
 
         repo = GitRepo(repo_dir)
-        repo.push_url(url, "main", "HEAD", token)
+        repo.push_url(url, "main", "HEAD", token, push_tags=True)

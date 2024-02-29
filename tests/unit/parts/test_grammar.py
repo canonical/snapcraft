@@ -26,7 +26,7 @@ from snapcraft.parts.grammar import process_part, process_parts
 _PROCESSOR = GrammarProcessor(
     arch="amd64",
     target_arch="amd64",
-    checker=lambda x: x == x,  # pylint: disable=comparison-with-itself
+    checker=lambda x: x == x,  # pylint: disable=comparison-with-itself  # noqa PLR0124
 )
 GrammarEntry = namedtuple("GrammarEntry", ["value", "expected"])
 

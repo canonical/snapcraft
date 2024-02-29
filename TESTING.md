@@ -78,13 +78,13 @@ For example:
   * To run only the unit tests for the plugins:
 
     ```
-    pytest tests/unit/plugins
+    pytest tests/unit/parts/plugins
     ```
 
   * To run only the integration tests for the store:
 
     ```
-    pytest tests/integration/store
+    pytest tests/unit/store
     ```
 
 The snaps tests script has more complex arguments. For an explanation of them, run:

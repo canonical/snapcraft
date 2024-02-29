@@ -26,7 +26,7 @@ from typing import Dict, List, Optional, Set, Tuple, cast
 from craft_cli import emit
 from elftools.construct import ConstructError
 from elftools.elf import constants, dynamic, elffile, gnuversions, sections, segments
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 
 from snapcraft import utils
 
@@ -109,7 +109,7 @@ class _Library:
     :param soname_cache: The soname cache manager.
     """
 
-    def __init__(
+    def __init__(  # noqa PLR0913
         self,
         *,
         soname: str,
@@ -260,11 +260,13 @@ class ElfFile:
 
                 for tag in section.iter_tags():
                     if tag.entry.d_tag == "DT_NEEDED":
-                        needed = tag.needed  # pyright: ignore[reportGeneralTypeIssues]
+                        needed = (
+                            tag.needed  # pyright: ignore[reportAttributeAccessIssue]
+                        )
                         self.needed[needed] = _NeededLibrary(name=needed)
                     elif tag.entry.d_tag == "DT_SONAME":
                         self.soname = (
-                            tag.soname  # pyright: ignore[reportGeneralTypeIssues]
+                            tag.soname  # pyright: ignore[reportAttributeAccessIssue]
                         )
 
             for segment in elf_file.iter_segments():
@@ -321,9 +323,8 @@ class ElfFile:
     def is_linker_compatible(self, *, linker_version: str) -> bool:
         """Determine if the linker will work given the required glibc version."""
         version_required = self.get_required_glibc()
-        # TODO: pkg_resources is deprecated in setuptools>66 (CRAFT-1598)
-        parsed_version_required = parse_version(version_required)  # type: ignore
-        parsed_linker_version = parse_version(linker_version)  # type: ignore
+        parsed_version_required = parse_version(version_required)
+        parsed_linker_version = parse_version(linker_version)
         is_compatible = parsed_version_required <= parsed_linker_version
         emit.debug(
             f"Check if linker {linker_version!r} works with GLIBC_{version_required} "
@@ -338,12 +339,13 @@ class ElfFile:
 
         version_required = ""
         for lib in self.needed.values():
-            for version in lib.versions:
-                if not version.startswith("GLIBC_"):
+            for _version in lib.versions:
+                if not _version.startswith("GLIBC_"):
                     continue
-                version = version[6:]
-                # TODO: pkg_resources is deprecated in setuptools>66 (CRAFT-1598)
-                if parse_version(version) > parse_version(version_required):  # type: ignore
+                version = _version[6:]
+                if not version_required or parse_version(version) > parse_version(
+                    version_required
+                ):
                     version_required = version
 
         self._required_glibc = version_required

@@ -100,7 +100,7 @@ def get_os_platform(
         else:
             os_release = {}
             for line in lines:
-                line = line.strip()
+                line = line.strip()  # noqa PLW2901
                 if not line or line.startswith("#") or "=" not in line:
                     continue
                 key, value = line.rstrip().split("=", 1)
@@ -125,6 +125,24 @@ def get_host_architecture():
     return _ARCH_TRANSLATIONS_PLATFORM_TO_DEB.get(
         os_platform_machine, os_platform_machine
     )
+
+
+def is_architecture_supported(architecture: str) -> bool:
+    """Check if an debian-syntax architecture is supported.
+
+    :param architecture: architecture to check
+
+    :returns: True if the architecture is supported by snapcraft.
+    """
+    return architecture in list(_ARCH_TRANSLATIONS_DEB_TO_PLATFORM)
+
+
+def get_supported_architectures() -> List[str]:
+    """Get a list of architectures supported by snapcraft.
+
+    :returns: A list of architectures.
+    """
+    return list(_ARCH_TRANSLATIONS_DEB_TO_PLATFORM.keys())
 
 
 def convert_architecture_deb_to_platform(architecture: str) -> str:
@@ -198,14 +216,20 @@ def get_effective_base(
 ) -> Optional[str]:
     """Return the base to use to create the snap.
 
-    Returns build-base if set, but if not, name is returned if the
-    snap is of type base. For all other snaps, the base is returned
-    as the build-base.
+    Return the build-base if set.
+    Exception:
+    "base" snaps will return name if build-base is not set.
+    "devel" snaps, return the base, where the true base is, except "base" snaps.
     """
+    if project_type == "base":
+        return build_base if build_base else name
+
     if build_base is not None:
+        if build_base == "devel":
+            return base
         return build_base
 
-    return name if project_type == "base" else base
+    return base
 
 
 def get_parallel_build_count() -> int:

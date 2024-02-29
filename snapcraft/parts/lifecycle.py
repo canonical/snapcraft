@@ -29,12 +29,11 @@ from craft_cli import emit
 from craft_parts import ProjectInfo, Step, StepInfo, callbacks
 from craft_providers import Executor
 
-from snapcraft import errors, linters, pack, providers, ua_manager, utils
+from snapcraft import errors, linters, models, pack, providers, ua_manager, utils
 from snapcraft.elf import Patcher, SonameCache, elf_utils
 from snapcraft.elf import errors as elf_errors
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import manifest, snap_yaml
-from snapcraft.projects import Architecture, ArchitectureProject, Project
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_host_architecture,
@@ -99,7 +98,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
             parallel_build_count=build_count,
             target_arch=build_for,
         )
-        project = Project.unmarshal(yaml_data_for_arch)
+        project = models.Project.unmarshal(yaml_data_for_arch)
 
         _run_command(
             command_name,
@@ -112,10 +111,10 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
         )
 
 
-def _run_command(
+def _run_command(  # noqa PLR0913 # pylint: disable=too-many-branches, too-many-statements
     command_name: str,
     *,
-    project: Project,
+    project: models.Project,
     parse_info: Dict[str, List[str]],
     assets_dir: Path,
     start_time: datetime,
@@ -186,6 +185,19 @@ def _run_command(
         lifecycle.clean(part_names=part_names)
         return
 
+    # patchelf relies on known file list to work properly, but override-prime
+    # parts don't have the list yet, and we can't track changes in the prime.
+    for _part in getattr(project, "parts", {}).values():
+        if "enable-patchelf" in _part.get("build-attributes", []) and _part.get(
+            "override-prime", None
+        ):
+            emit.progress(
+                "Warning: 'enable-patchelf' feature will not apply to files primed "
+                "by parts that use the 'override-prime' keyword. It's not possible "
+                "to track file changes in the prime directory.",
+                permanent=True,
+            )
+
     try:
         _run_lifecycle_and_pack(
             lifecycle,
@@ -210,6 +222,11 @@ def _run_command(
             emit.progress(msg, permanent=True)
             launch_shell()
         raise errors.SnapcraftError(msg) from err
+    except errors.SnapcraftError as err:
+        if parsed_args.debug:
+            emit.progress(str(err), permanent=True)
+            launch_shell()
+        raise
     except Exception as err:
         if parsed_args.debug:
             emit.progress(str(err), permanent=True)
@@ -217,12 +234,12 @@ def _run_command(
         raise errors.SnapcraftError(str(err)) from err
 
 
-def _run_lifecycle_and_pack(
+def _run_lifecycle_and_pack(  # noqa PLR0913
     lifecycle: PartsLifecycle,
     *,
     command_name: str,
     step_name: str,
-    project: Project,
+    project: models.Project,
     project_dir: Path,
     assets_dir: Path,
     start_time: datetime,
@@ -273,7 +290,7 @@ def _run_lifecycle_and_pack(
 
 def _generate_metadata(
     *,
-    project: Project,
+    project: models.Project,
     lifecycle: PartsLifecycle,
     project_dir: Path,
     assets_dir: Path,
@@ -314,7 +331,7 @@ def _generate_metadata(
 
 
 def _generate_manifest(
-    project: Project,
+    project: models.Project,
     *,
     lifecycle: PartsLifecycle,
     start_time: datetime,
@@ -348,7 +365,7 @@ def _generate_manifest(
     shutil.copy(snap_project.project_file, lifecycle.prime_dir / "snap")
 
 
-def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None:
+def _clean_provider(project: models.Project, parsed_args: "argparse.Namespace") -> None:
     """Clean the provider environment.
 
     :param project: The project to clean.
@@ -368,8 +385,8 @@ def _clean_provider(project: Project, parsed_args: "argparse.Namespace") -> None
 
 
 # pylint: disable-next=too-many-branches, too-many-statements
-def _run_in_provider(
-    project: Project, command_name: str, parsed_args: "argparse.Namespace"
+def _run_in_provider(  # noqa PLR0915
+    project: models.Project, command_name: str, parsed_args: "argparse.Namespace"
 ) -> None:
     """Pack image in provider instance."""
     emit.debug("Checking build provider availability")
@@ -427,7 +444,7 @@ def _run_in_provider(
     snapcraft_base = project.get_effective_base()
     build_base = providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE[snapcraft_base]
 
-    if snapcraft_base == "devel":
+    if snapcraft_base in ("devel", "core24"):
         emit.progress(
             "Running snapcraft with a devel instance is for testing purposes only.",
             permanent=True,
@@ -465,7 +482,8 @@ def _run_in_provider(
         except subprocess.CalledProcessError as err:
             raise errors.SnapcraftError(
                 f"Failed to execute {command_name} in instance.",
-                details=(
+                details=err.stderr.strip() if err.stderr else None,
+                resolution=(
                     "Run the same command again with --debug to shell into "
                     "the environment if you wish to introspect this failure."
                 ),
@@ -503,7 +521,7 @@ def _set_global_environment(info: ProjectInfo) -> None:
 
 
 def _check_experimental_plugins(
-    project: Project, enable_experimental_plugins: bool
+    project: models.Project, enable_experimental_plugins: bool
 ) -> None:
     """Ensure the experimental plugin flag is enabled to use unstable plugins."""
     for name, part in project.parts.items():
@@ -636,13 +654,13 @@ def get_build_plan(
 
     :return: List of tuples of every valid build-on->build-for combination.
     """
-    archs = ArchitectureProject.unmarshal(yaml_data).architectures
+    archs = models.ArchitectureProject.unmarshal(yaml_data).architectures
 
     host_arch = get_host_architecture()
     build_plan: List[Tuple[str, str]] = []
 
     # `isinstance()` calls are for mypy type checking and should not change logic
-    for arch in [arch for arch in archs if isinstance(arch, Architecture)]:
+    for arch in [arch for arch in archs if isinstance(arch, models.Architecture)]:
         for build_on in arch.build_on:
             if build_on in host_arch and isinstance(arch.build_for, list):
                 build_plan.append((host_arch, arch.build_for[0]))

@@ -68,7 +68,7 @@ def _parse_rosdep_resolve_dependencies(
     dependencies: Dict[str, Set[str]] = {}
     dependency_set = None
     for line in lines:
-        line = line.strip()
+        line = line.strip()  # noqa PLW2901
         if line.startswith("#"):
             key = line.strip("# ")
             dependencies[key] = set()
@@ -223,7 +223,7 @@ class RosPlugin(plugins.Plugin):
     @overrides
     def get_build_commands(self) -> List[str]:
         return (
-            [
+            [  # noqa S608 (false positive on SQL injection)
                 "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
                 # Preserve http(s)_proxy env var in root for remote-build proxy since rosdep
                 # doesn't support proxy
@@ -317,7 +317,7 @@ def get_installed_dependencies(installed_packages_path: str) -> Set[str]:
 @click.option("--target-arch", envvar="CRAFT_TARGET_ARCH", required=True)
 @click.option("--stage-cache-dir", required=True)
 @click.option("--base", required=True)
-def stage_runtime_dependencies(
+def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
     part_src: str,
     part_install: str,
     ros_version: str,
@@ -336,7 +336,7 @@ def stage_runtime_dependencies(
         catkin_packages.find_packages(part_install).values(),
     )
     for pkg in catkin_packages.find_packages(part_src).values():
-        pkg = cast(catkin_pkg.package.Package, pkg)
+        pkg = cast(catkin_pkg.package.Package, pkg)  # noqa PLW2901
         # Evaluate the conditions of all dependencies
         pkg.evaluate_conditions(
             {

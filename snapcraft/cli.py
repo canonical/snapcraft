@@ -32,6 +32,7 @@ import snapcraft
 import snapcraft_legacy
 from snapcraft import __version__, errors, store, utils
 from snapcraft.parts import plugins
+from snapcraft.remote import RemoteBuildError
 from snapcraft_legacy.cli import legacy
 
 from . import commands
@@ -191,19 +192,6 @@ def get_dispatcher() -> craft_cli.Dispatcher:
         _ORIGINAL_LIB_NAME_LOG_LEVEL[lib_name] = logger.level
         logger.setLevel(logging.DEBUG)
 
-    if utils.is_managed_mode():
-        log_filepath = utils.get_managed_environment_log_path()
-    else:
-        log_filepath = None
-
-    emit.init(
-        mode=get_verbosity(),
-        appname="snapcraft",
-        greeting=f"Starting Snapcraft {__version__}",
-        log_filepath=log_filepath,
-        streaming_brief=True,
-    )
-
     return craft_cli.Dispatcher(
         "snapcraft",
         COMMAND_GROUPS,
@@ -243,7 +231,8 @@ def _emit_error(error, cause=None):
     emit.error(error)
 
 
-def run():  # noqa: C901
+# pylint: disable-next=too-many-statements
+def run():  # noqa: C901 (complex-structure)
     """Run the CLI."""
     dispatcher = get_dispatcher()
     retcode = 1
@@ -298,6 +287,14 @@ def run():  # noqa: C901
     except errors.LinterError as err:
         emit.error(craft_cli.errors.CraftError(f"linter error: {err}"))
         retcode = err.exit_code
+    except RemoteBuildError as err:
+        emit.error(
+            craft_cli.errors.CraftError(
+                message=f"remote-build error: {err}",
+                docs_url="https://snapcraft.io/docs/remote-build",
+            )
+        )
+        retcode = 1
     except errors.SnapcraftError as err:
         _emit_error(err)
         retcode = 1

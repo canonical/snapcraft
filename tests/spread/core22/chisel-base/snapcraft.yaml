@@ -1,0 +1,19 @@
+name: core2x
+type: base
+build-base: core22
+summary: base using chisel from core22 assets
+description: |
+  Test creating a base using a stable release of chisel
+version: 0+git
+confinement: strict
+
+parts:
+  base:
+    plugin: nil
+    stage-packages:
+      - base-files_etc
+      - base-files_bin
+      - base-files_lib
+      - base-files_tmp
+      - base-files_var
+      - base-files_home

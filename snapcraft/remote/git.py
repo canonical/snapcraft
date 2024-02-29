@@ -17,14 +17,43 @@
 """Git repository class and helper utilities."""
 
 import logging
+import os
+import subprocess
+import time
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 
-import pygit2
+# Cannot catch the pygit2 error here raised by the global use of
+# pygit2.Settings on import. We would ideally use pygit2.Settings
+# for this
+try:
+    import pygit2
+except Exception:  # pylint: disable=broad-exception-caught
+    # This environment comes from ssl.get_default_verify_paths
+    _old_env = os.getenv("SSL_CERT_DIR")
+    # Needs updating when the base changes for Snapcraft
+    os.environ["SSL_CERT_DIR"] = "/snap/core22/current/etc/ssl/certs"
+    import pygit2
 
-from .errors import GitError
+    # Restore the environment in case Snapcraft shells out and the environment
+    # that was setup is required.
+    if _old_env is not None:
+        os.environ["SSL_CERT_DIR"] = _old_env
+    else:
+        del os.environ["SSL_CERT_DIR"]
+
+from .errors import GitError, RemoteBuildInvalidGitRepoError
 
 logger = logging.getLogger(__name__)
+
+
+class GitType(Enum):
+    """Type of git repository."""
+
+    INVALID = 0
+    NORMAL = 1
+    SHALLOW = 2
 
 
 def is_repo(path: Path) -> bool:
@@ -45,6 +74,44 @@ def is_repo(path: Path) -> bool:
         raise GitError(
             f"Could not check for git repository in {str(path)!r}."
         ) from error
+
+
+def get_git_repo_type(path: Path) -> GitType:
+    """Check if a directory is a git repo and return the type.
+
+    :param path: filepath to check
+
+    :returns: GitType
+    """
+    if is_repo(path):
+        repo = pygit2.Repository(path)
+        if repo.is_shallow:
+            return GitType.SHALLOW
+        return GitType.NORMAL
+
+    return GitType.INVALID
+
+
+def check_git_repo_for_remote_build(path: Path) -> None:
+    """Check if a directory meets the requirements of doing remote builds.
+
+    :param path: filepath to check
+
+    :raises RemoteBuildInvalidGitRepoError: if incompatible git repo is found
+    """
+    git_type = get_git_repo_type(path.absolute())
+
+    if git_type == GitType.INVALID:
+        raise RemoteBuildInvalidGitRepoError(
+            f"Could not find a git repository in {str(path.absolute())!r}. "
+            "The project must be in the top-level of a git repository."
+        )
+
+    if git_type == GitType.SHALLOW:
+        raise RemoteBuildInvalidGitRepoError(
+            "Remote builds are not supported for projects in shallowly cloned "
+            "git repositories."
+        )
 
 
 class GitRepo:
@@ -88,10 +155,12 @@ class GitRepo:
                 f"Could not add changes for the git repository in {str(self.path)!r}."
             ) from error
 
-    def commit(self, message: str = "auto commit") -> None:
+    def commit(self, message: str = "auto commit") -> str:
         """Commit changes to the repo.
 
         :param message: the commit message
+
+        :returns: object ID of the commit as str
 
         :raises GitError: if the commit could not be created
         """
@@ -110,7 +179,9 @@ class GitRepo:
         target = [] if self._repo.head_is_unborn else [self._repo.head.target]
 
         try:
-            self._repo.create_commit("HEAD", author, author, message, tree, target)
+            return str(
+                self._repo.create_commit("HEAD", author, author, message, tree, target)
+            )
         except pygit2.GitError as error:
             raise GitError(
                 "Could not create a commit for the git repository "
@@ -146,12 +217,13 @@ class GitRepo:
                 f"Could not initialize a git repository in {str(self.path)!r}."
             ) from error
 
-    def push_url(
+    def push_url(  # pylint: disable=too-many-branches
         self,
         remote_url: str,
         remote_branch: str,
         ref: str = "HEAD",
         token: Optional[str] = None,
+        push_tags: bool = False,
     ) -> None:
         """Push a reference to a branch on a remote url.
 
@@ -159,6 +231,7 @@ class GitRepo:
         :param remote_branch: the branch on the remote to push to
         :param ref: name of shorthand ref to push (i.e. a branch, tag, or `HEAD`)
         :param token: token in the url to hide in logs and errors
+        :param push_tags: if true, push all tags to URL (similar to `git push --tags`)
 
         :raises GitError: if the ref cannot be resolved or pushed
         """
@@ -175,13 +248,69 @@ class GitRepo:
             "Pushing %r to remote %r with refspec %r.", ref, stripped_url, refspec
         )
 
+        # temporarily call git directly due to libgit2 bug that unable to push
+        # large repos using https. See https://github.com/libgit2/libgit2/issues/6385
+        # and https://github.com/snapcore/snapcraft/issues/4478
+        cmd: list[str] = ["git", "push", remote_url, refspec, "--progress"]
+        if push_tags:
+            cmd.append("--tags")
+
+        git_proc: Optional[subprocess.Popen] = None
         try:
-            self._repo.remotes.create_anonymous(remote_url).push([refspec])
-        except pygit2.GitError as error:
+            with subprocess.Popen(
+                cmd,
+                cwd=str(self.path),
+                bufsize=1,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+            ) as git_proc:
+                # do not block on reading from the pipes
+                # (has no effect on Windows until Python 3.12, so the readline() method is
+                # blocking on Windows but git will still proceed)
+                if git_proc.stdout:
+                    os.set_blocking(git_proc.stdout.fileno(), False)
+                if git_proc.stderr:
+                    os.set_blocking(git_proc.stderr.fileno(), False)
+
+                git_stdout: str
+                git_stderr: str
+
+                while git_proc.poll() is None:
+                    if git_proc.stdout:
+                        while git_stdout := git_proc.stdout.readline():
+                            logger.info(git_stdout.rstrip())
+                    if git_proc.stderr:
+                        while git_stderr := git_proc.stderr.readline():
+                            logger.error(git_stderr.rstrip())
+                    # avoid too much looping, but not too slow to display progress
+                    time.sleep(0.01)
+
+        except subprocess.SubprocessError as error:
+            # logging the remaining output
+            if git_proc:
+                if git_proc.stdout:
+                    for git_stdout in git_proc.stdout.readlines():
+                        logger.info(git_stdout.rstrip())
+                if git_proc.stderr:
+                    for git_stderr in git_proc.stderr.readlines():
+                        logger.error(git_stderr.rstrip())
+
             raise GitError(
                 f"Could not push {ref!r} to {stripped_url!r} with refspec {refspec!r} "
-                f"for the git repository in {str(self.path)!r}."
+                f"for the git repository in {str(self.path)!r}: "
+                f"{error!s}"
             ) from error
+
+        if git_proc:
+            git_proc.wait()
+            if git_proc.returncode == 0:
+                return
+
+        raise GitError(
+            f"Could not push {ref!r} to {stripped_url!r} with refspec {refspec!r} "
+            f"for the git repository in {str(self.path)!r}."
+        )
 
     def _resolve_ref(self, ref: str) -> str:
         """Get a full reference name for a shorthand ref.

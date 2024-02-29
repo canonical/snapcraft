@@ -42,6 +42,7 @@ SNAPCRAFT_BASE_TO_PROVIDER_BASE = {
     "core18": bases.BuilddBaseAlias.BIONIC,
     "core20": bases.BuilddBaseAlias.FOCAL,
     "core22": bases.BuilddBaseAlias.JAMMY,
+    "core24": bases.BuilddBaseAlias.NOBLE,
     "devel": bases.BuilddBaseAlias.DEVEL,
 }
 
@@ -199,7 +200,13 @@ def get_base_configuration(
         compatibility_tag=f"snapcraft-{bases.BuilddBase.compatibility_tag}.0",
         environment=environment,
         hostname=instance_name,
-        snaps=[Snap(name=snap_name, channel=snap_channel, classic=True)],
+        snaps=[
+            Snap(
+                name=snap_name,
+                channel=snap_channel,
+                classic=True,
+            )
+        ],
         # Requirement for apt gpg and version:git
         packages=["gnupg", "dirmngr", "git"],
     )

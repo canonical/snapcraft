@@ -21,12 +21,12 @@ from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Set, Union, cast
 
 import yaml
+from craft_application.models import UniqueStrList
 from craft_cli import emit
 from pydantic import Extra, ValidationError, validator
 from pydantic_yaml import YamlModel
 
-from snapcraft import errors
-from snapcraft.projects import App, Project, UniqueStrList
+from snapcraft import errors, models
 from snapcraft.utils import get_ld_library_paths, process_version
 
 
@@ -55,7 +55,7 @@ class SnapApp(_SnapMetadataModel):
     TODO: implement extensions (CRAFT-805)
     """
 
-    class Config:
+    class Config:  # type: ignore[reportIncompatibleVariableOverride]
         """Pydantic model configuration."""
 
         extra = Extra.allow
@@ -166,9 +166,9 @@ class ContentSlot(_SnapMetadataModel):
         """Obtain the slot's content directories."""
         content_dirs: Set[Path] = set()
 
-        for path in self.read + self.write:
+        for path_ in self.read + self.write:
             # Strip leading "$SNAP" and "/".
-            path = re.sub(r"^\$SNAP", "", path)
+            path = re.sub(r"^\$SNAP", "", path_)
             path = re.sub(r"^/", "", path)
             path = re.sub(r"^./", "", path)
             content_dirs.add(installed_path / path)
@@ -188,13 +188,13 @@ class Links(_SnapMetadataModel):
     @staticmethod
     def _normalize_value(
         value: Optional[Union[str, UniqueStrList]]
-    ) -> Optional[List[str]]:
+    ) -> Optional[UniqueStrList]:
         if isinstance(value, str):
-            value = [value]
+            value = cast(UniqueStrList, [value])
         return value
 
     @classmethod
-    def from_project(cls, project: Project) -> "Links":
+    def from_project(cls, project: models.Project) -> "Links":
         """Create Links from a Project."""
         return cls(
             contact=cls._normalize_value(project.contact),
@@ -218,7 +218,7 @@ class SnapMetadata(_SnapMetadataModel):
     https://snapcraft.io/docs/snap-format for details.
     """
 
-    class Config:
+    class Config:  # type: ignore[reportIncompatibleVariableOverride]
         """Pydantic model configuration."""
 
         extra = Extra.allow
@@ -338,7 +338,7 @@ def read(prime_dir: Path) -> SnapMetadata:
     return SnapMetadata.unmarshal(data)
 
 
-def _create_snap_app(app: App, assumes: Set[str]) -> SnapApp:
+def _create_snap_app(app: models.App, assumes: Set[str]) -> SnapApp:
     app_sockets: Dict[str, Socket] = {}
     if app.sockets:
         for socket_name, socket in app.sockets.items():
@@ -410,7 +410,7 @@ def _get_grade(grade: Optional[str], build_base: Optional[str]) -> str:
     return grade
 
 
-def write(project: Project, prime_dir: Path, *, arch: str):
+def write(project: models.Project, prime_dir: Path, *, arch: str):
     """Create a snap.yaml file.
 
     :param project: Snapcraft project.

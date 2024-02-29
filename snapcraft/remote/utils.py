@@ -25,7 +25,7 @@ from typing import Iterable, List
 
 from .errors import UnsupportedArchitectureError
 
-_SUPPORTED_ARCHS = ["amd64", "arm64", "armhf", "i386", "ppc64el", "s390x"]
+_SUPPORTED_ARCHS = ["amd64", "arm64", "armhf", "i386", "ppc64el", "riscv64", "s390x"]
 
 
 def validate_architectures(architectures: List[str]) -> None:

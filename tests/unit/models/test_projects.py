@@ -14,13 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 import pydantic
 import pytest
+from craft_application.models import UniqueStrList
 
 from snapcraft import errors
-from snapcraft.projects import (
+from snapcraft.models import (
     MANDATORY_ADOPTABLE_FIELDS,
     Architecture,
     ContentPlug,
@@ -100,7 +101,8 @@ class TestProjectDefaults:
         assert project.adopt_info is None
         assert project.architectures == [
             Architecture(
-                build_on=[get_host_architecture()], build_for=[get_host_architecture()]
+                build_on=cast(UniqueStrList, [get_host_architecture()]),
+                build_for=cast(UniqueStrList, [get_host_architecture()]),
             )
         ]
         assert project.ua_services is None
@@ -1709,6 +1711,24 @@ class TestArchitecture:
         assert "multiple items will build snaps that claim to run on amd64" in str(
             error.value
         )
+
+    @pytest.mark.parametrize(
+        "architectures",
+        [
+            "unknown",
+            {"build-on": ["unknown"]},
+            {"build-on": ["unknown"], "build-for": ["amd64"]},
+            {"build-on": ["amd64"], "build-for": ["unknown"]},
+        ],
+    )
+    def test_architecture_unsupported(self, architectures, project_yaml_data):
+        """Raise an error for unsupported architectures."""
+        data = project_yaml_data(architectures=[architectures])
+
+        with pytest.raises(errors.ProjectValidationError) as error:
+            Project.unmarshal(data)
+
+        assert "Architecture 'unknown' is not supported." in str(error.value)
 
     def test_project_get_build_on(self, project_yaml_data):
         """Test `get_build_on()` returns the build-on string."""

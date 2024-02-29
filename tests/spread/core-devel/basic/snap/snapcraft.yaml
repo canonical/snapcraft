@@ -1,0 +1,16 @@
+name: build-base-devel
+version: '1.0'
+summary: build-base-devel
+description: Build a base snap with a build-base of devel
+confinement: strict
+
+type: base
+build-base: devel
+
+# grade must be devel when build-base is devel
+grade: devel
+
+parts:
+  build-base-devel:
+    plugin: nil
+    stage-packages: [base-files]

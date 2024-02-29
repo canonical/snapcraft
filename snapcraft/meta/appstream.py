@@ -137,7 +137,7 @@ def _get_transformed_dom(path: str):
 
 def _get_dom(path: str) -> lxml.etree.ElementTree:
     try:
-        return lxml.etree.parse(path)
+        return lxml.etree.parse(path)  # noqa S320
     except OSError as err:
         raise errors.SnapcraftError(str(err)) from err
     except lxml.etree.ParseError as err:
@@ -145,7 +145,7 @@ def _get_dom(path: str) -> lxml.etree.ElementTree:
 
 
 def _get_xslt():
-    xslt = lxml.etree.parse(StringIO(_XSLT))
+    xslt = lxml.etree.parse(StringIO(_XSLT))  # noqa S320
     return lxml.etree.XSLT(xslt)
 
 
