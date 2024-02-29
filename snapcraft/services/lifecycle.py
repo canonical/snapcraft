@@ -98,10 +98,13 @@ class Lifecycle(LifecycleService):
             if stage_packages:
                 primed_stage_packages |= set(stage_packages)
 
+        host_arch = utils.get_host_architecture()
+        build_for = self._build_plan[0].build_for if self._build_plan else host_arch
+
         manifest.write(
             project,
             self.prime_dir,
-            arch=utils.get_host_architecture(),
+            arch=build_for,
             parts=parts,
             start_time=self._start_time,
             image_information=image_information,
