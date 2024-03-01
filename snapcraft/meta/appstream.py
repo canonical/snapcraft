@@ -135,7 +135,8 @@ def _get_transformed_dom(path: str):
     return transform(dom)
 
 
-def _get_dom(path: str) -> lxml.etree.ElementTree:
+# error: Function "lxml.etree.ElementTree" is not valid as a type
+def _get_dom(path: str) -> lxml.etree.ElementTree:  # type: ignore
     try:
         return lxml.etree.parse(path)  # noqa S320
     except OSError as err:

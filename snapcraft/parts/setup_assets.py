@@ -74,8 +74,9 @@ def setup_assets(
 
     # Ensure all hooks are executable
     if hooks_dir.is_dir():
-        for hook in hooks_dir.iterdir():
-            _ensure_hook_executable(hook)
+        for hook in hooks_dir.iterdir():  # type: ignore
+            # mypy says we are passing a Hook, but this is indeed a Path
+            _ensure_hook_executable(hook)  # type: ignore
 
     if project.type == "gadget":
         gadget_yaml = project_dir / "gadget.yaml"
