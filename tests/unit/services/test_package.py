@@ -43,7 +43,7 @@ def test_pack(package_service, default_factory, mocker):
     )
 
 
-def test_pack_target_arch(default_project, default_factory, mocker):
+def test_pack_target_arch(default_project, default_factory, mocker, tmp_path):
     mock_pack_snap = mocker.patch.object(pack, "pack_snap")
     mocker.patch.object(linters, "run_linters")
     mocker.patch.object(linters, "report")
@@ -54,6 +54,7 @@ def test_pack_target_arch(default_project, default_factory, mocker):
         services=default_factory,
         platform="amd64",
         build_for="s390x",
+        project_path=tmp_path,
     )
 
     package_service.pack(prime_dir=Path("prime"), dest=Path())

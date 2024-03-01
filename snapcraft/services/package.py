@@ -18,13 +18,15 @@
 
 from __future__ import annotations
 
+import os
 import pathlib
-from typing import TYPE_CHECKING
+import shutil
+from typing import TYPE_CHECKING, cast
 
 from craft_application import AppMetadata, PackageService
 from overrides import override
 
-from snapcraft import errors, linters, models, pack
+from snapcraft import errors, linters, models, pack, services, utils
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import snap_yaml
 from snapcraft.utils import process_version
@@ -38,18 +40,20 @@ class Package(PackageService):
 
     _project: models.Project
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 (Too many arguments)
         self,
         app: AppMetadata,
         services: SnapcraftServiceFactory,
         *,
         project: models.Project,
+        project_path: pathlib.Path,
         platform: str | None,
         build_for: str,
     ) -> None:
         super().__init__(app, services, project=project)
         self._platform = platform
         self._build_for = build_for
+        self._project_path = project_path
 
     @override
     def pack(self, prime_dir: pathlib.Path, dest: pathlib.Path) -> list[pathlib.Path]:
@@ -87,8 +91,17 @@ class Package(PackageService):
         """
         meta_dir = path / "meta"
         meta_dir.mkdir(parents=True, exist_ok=True)
-
         self.metadata.to_yaml_file(meta_dir / "snap.yaml")
+
+        enable_manifest = utils.strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n"))
+
+        if enable_manifest:
+            snap_dir = path / "snap"
+            snap_dir.mkdir(parents=True, exist_ok=True)
+            lifecycle = cast(services.Lifecycle, self._services.lifecycle)
+            lifecycle.manifest.to_yaml_file(snap_dir / "manifest.yaml")
+
+            shutil.copy(self._project_path, snap_dir)
 
     @property
     def metadata(self) -> snap_yaml.SnapMetadata:

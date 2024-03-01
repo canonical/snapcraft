@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Data models for snapcraft."""
 
+from .manifest import Manifest
 from .project import (
     MANDATORY_ADOPTABLE_FIELDS,
     App,
@@ -37,6 +38,7 @@ __all__ = [
     "GrammarAwareProject",
     "Hook",
     "Lint",
+    "Manifest",
     "Project",
     "Socket",
 ]

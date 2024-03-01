@@ -16,19 +16,17 @@
 """Snapcraft Lifecycle Service."""
 
 import copy
+import json
 import os
-import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Any, cast
 
 from craft_application import AppMetadata, LifecycleService, ServiceFactory
 from craft_application.models import BuildInfo
-from craft_cli import emit
 from overrides import overrides
 
-from snapcraft import models, utils
-from snapcraft.meta import manifest
+from snapcraft import __version__, errors, models, os_release, utils
 
 
 class Lifecycle(LifecycleService):
@@ -43,7 +41,6 @@ class Lifecycle(LifecycleService):
         work_dir: Path | str,
         cache_dir: Path | str,
         build_plan: list[BuildInfo],
-        project_path: Path,
         **lifecycle_kwargs: Any,  # noqa: ANN401 - eventually used in an Any
     ) -> None:
         super().__init__(
@@ -55,8 +52,8 @@ class Lifecycle(LifecycleService):
             build_plan=build_plan,
             **lifecycle_kwargs,
         )
-        self._project_path = project_path
         self._start_time = datetime.now()
+        self._manifest: models.Manifest
 
     @overrides
     def setup(self) -> None:
@@ -76,13 +73,24 @@ class Lifecycle(LifecycleService):
 
         enable_manifest = utils.strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n"))
         if enable_manifest:
-            self._generate_manifest()
+            self._manifest = self._generate_manifest()
 
-    def _generate_manifest(self) -> None:
+    @property
+    def manifest(self) -> models.Manifest:
+        return self._manifest
+
+    def _generate_manifest(self) -> models.Manifest:
         """Create and populate the manifest file."""
-        emit.progress("Generating snap manifest...")
-        image_information = os.getenv("SNAPCRAFT_IMAGE_INFO", "{}")
         primed_stage_packages: set[str] = set()
+
+        image_information = os.getenv("SNAPCRAFT_IMAGE_INFO", "{}")
+        try:
+            image_info = json.loads(image_information)
+        except json.decoder.JSONDecodeError as err:
+            raise errors.SnapcraftError(
+                f"Image information decode error at {err.lineno}:{err.colno}: "
+                f"{err.doc!r}: {err.msg}"
+            ) from err
 
         project = cast(models.Project, self._project)
 
@@ -98,19 +106,33 @@ class Lifecycle(LifecycleService):
             if stage_packages:
                 primed_stage_packages |= set(stage_packages)
 
+        osrel = os_release.OsRelease()
+        version = utils.process_version(project.version)
         host_arch = utils.get_host_architecture()
         build_for = self._build_plan[0].build_for if self._build_plan else host_arch
 
-        manifest.write(
-            project,
-            self.prime_dir,
-            arch=build_for,
+        return models.Manifest(
+            # Snapcraft annotations
+            snapcraft_version=__version__,
+            snapcraft_started_at=self._start_time.isoformat("T") + "Z",
+            snapcraft_os_release_id=osrel.name().lower(),
+            snapcraft_os_release_version_id=osrel.version_id().lower(),
+            # Project fields
+            name=project.name,
+            version=version,
+            summary=project.summary,  # type: ignore
+            description=project.description,  # type: ignore
+            base=project.base,
+            grade=project.grade or "stable",
+            confinement=project.confinement,
+            apps=project.apps,
             parts=parts,
-            start_time=self._start_time,
-            image_information=image_information,
+            # Architecture
+            architectures=[build_for],
+            # Image info
+            image_info=image_info,
+            # Build environment
+            build_packages=[],
+            build_snaps=[],
             primed_stage_packages=list(primed_stage_packages),
         )
-        emit.progress("Generated snap manifest")
-
-        # Also copy the original snapcraft.yaml
-        shutil.copy(self._project_path, self.prime_dir / "snap")

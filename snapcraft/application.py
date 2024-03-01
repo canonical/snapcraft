@@ -143,16 +143,14 @@ class Snapcraft(Application):
         if build_for is None:
             build_for = util.get_host_architecture()
 
-        self.services.set_kwargs("package", platform=platform, build_for=build_for)
-        super()._configure_services(platform, build_for)
-
         self.services.set_kwargs(
-            "lifecycle",
-            cache_dir=self.cache_dir,
-            work_dir=self._work_dir,
-            build_plan=self._build_plan,
+            "package",
+            platform=platform,
+            build_for=build_for,
             project_path=self._project_path,
         )
+
+        super()._configure_services(platform, build_for)
 
     @property
     def command_groups(self):
