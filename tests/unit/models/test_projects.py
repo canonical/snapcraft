@@ -258,59 +258,18 @@ class TestProjectValidation:
         project = Project.unmarshal(project_yaml_data(version=version))
         assert project.version == version
 
-    @pytest.mark.parametrize(
-        "version,error",
-        [
-            (
-                "1_0",
-                "Invalid version '1_0': Snap versions consist of",
-            ),  # _ is an invalid character
-            (
-                "1=1",
-                "Invalid version '1=1': Snap versions consist of",
-            ),  # = is an invalid character
-            (
-                ".1",
-                "Invalid version '.1': Snap versions consist of",
-            ),  # cannot start with period
-            (
-                ":1",
-                "Invalid version ':1': Snap versions consist of",
-            ),  # cannot start with colon
-            (
-                "+1",
-                r"Invalid version '\+1': Snap versions consist of",
-            ),  # cannot start with plus sign
-            # escaping + from the regex string to match.
-            (
-                "~1",
-                "Invalid version '~1': Snap versions consist of",
-            ),  # cannot start with tilde
-            (
-                "-1",
-                "Invalid version '-1': Snap versions consist of",
-            ),  # cannot start with hyphen
-            (
-                "1.",
-                "Invalid version '1.': Snap versions consist of",
-            ),  # cannot end with period
-            (
-                "1:",
-                "Invalid version '1:': Snap versions consist of",
-            ),  # cannot end with colon
-            (
-                "1-",
-                "Invalid version '1-': Snap versions consist of",
-            ),  # cannot end with hyphen
-            (
-                "123456789012345678901234567890123",
-                "ensure this value has at most 32 characters",
-            ),  # too large
-        ],
-    )
-    def test_project_version_invalid(self, version, error, project_yaml_data):
-        with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(version=version))
+    def test_project_version_invalid(self, project_yaml_data):
+        # We only test one invalid version as this model is inherited
+        # from Craft Application.
+        with pytest.raises(errors.ProjectValidationError) as raised:
+
+            Project.unmarshal(project_yaml_data(version="1=1"))
+
+        assert str(raised.value) == (
+            "Bad snapcraft.yaml content:\n- string does not match regex "
+            '"^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$" '
+            "(in field 'version')"
+        )
 
     @pytest.mark.parametrize(
         "snap_type",
