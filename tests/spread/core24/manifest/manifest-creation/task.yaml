@@ -36,7 +36,7 @@ execute: |
   )
 
   cp prime/snap/manifest.yaml ~/
-  eval $(yq -o=shell ~/manifest.yaml)
+  eval "$(yq -o=shell ~/manifest.yaml)"
 
   # compare expected fields
   for key in "${!expected[@]}"; do
