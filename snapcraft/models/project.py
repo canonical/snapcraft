@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Uni
 
 import pydantic
 from craft_application import models
-from craft_application.models import BuildInfo, UniqueStrList
+from craft_application.models import BuildInfo, UniqueStrList, VersionStr
 from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from craft_providers import bases
@@ -45,10 +45,8 @@ from snapcraft.utils import (
 # fmt: off
 if TYPE_CHECKING:
     ProjectName = str
-    ProjectVersion = str
 else:
     ProjectName = constr(max_length=40)
-    ProjectVersion = constr(max_length=32, strict=True)
 # fmt: on
 
 
@@ -444,7 +442,7 @@ class Project(models.Project):
     name: ProjectName  # type: ignore[assignment]
     build_base: Optional[str]
     compression: Literal["lzo", "xz"] = "xz"
-    version: Optional[ProjectVersion]  # type: ignore[assignment]
+    version: Optional[VersionStr]  # type: ignore[assignment]
     donation: Optional[Union[str, UniqueStrList]]
     # snapcraft's `source_code` is more general than craft-application
     source_code: Optional[str]  # type: ignore[assignment]

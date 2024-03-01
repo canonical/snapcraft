@@ -89,7 +89,7 @@ def _update_project_variables(project: Project, project_vars: Dict[str, str]):
     """Update project fields with values set during lifecycle processing."""
     try:
         if project_vars["version"]:
-            project.version = project_vars["version"]
+            project.version = cast(VersionStr, project_vars["version"])
         if project_vars["grade"]:
             project.grade = project_vars["grade"]  # type: ignore
     except pydantic.ValidationError as err:
