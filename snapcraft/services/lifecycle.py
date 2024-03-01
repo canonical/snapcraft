@@ -77,6 +77,7 @@ class Lifecycle(LifecycleService):
 
     @property
     def manifest(self) -> models.Manifest:
+        """Obtain the snap build manifest data."""
         return self._manifest
 
     def _generate_manifest(self) -> models.Manifest:
