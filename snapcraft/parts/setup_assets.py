@@ -22,7 +22,7 @@ import shutil
 import stat
 import urllib.parse
 from pathlib import Path
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 import requests
 from craft_cli import emit
@@ -33,7 +33,12 @@ from .desktop_file import DesktopFile
 
 
 def setup_assets(
-    project: models.Project, *, assets_dir: Path, project_dir: Path, prime_dir: Path
+    project: models.Project,
+    *,
+    assets_dir: Path,
+    project_dir: Path,
+    prime_dir: Path,
+    meta_directory_handler: Optional[Callable[[Path, Path], None]] = None,
 ) -> None:
     """Copy assets to the appropriate locations in the snap filesystem.
 
@@ -41,15 +46,22 @@ def setup_assets(
     :param assets_dir: The directory containing snap project assets.
     :param project_dir: The project root directory.
     :param prime_dir: The directory containing the content to be snapped.
+    :param meta_directory_handler: callback that overrides default behavior for
+        handling hooks and gui. The arguments passed are assets_dir and prime_dir.
     """
     meta_dir = prime_dir / "meta"
     gui_dir = meta_dir / "gui"
     gui_dir.mkdir(parents=True, exist_ok=True)
+    hooks_dir = meta_dir / "hooks"
 
-    _write_snap_directory(assets_dir=assets_dir, prime_dir=prime_dir, meta_dir=meta_dir)
-
-    # create wrappers for hooks in the snap/hooks directory
-    _create_hook_wrappers(prime_dir)
+    if meta_directory_handler:
+        meta_directory_handler(assets_dir, prime_dir)
+    else:
+        _write_snap_directory(
+            assets_dir=assets_dir, prime_dir=prime_dir, meta_dir=meta_dir
+        )
+        # create wrappers for hooks in the snap/hooks directory
+        _create_hook_wrappers(prime_dir)
 
     # hooks with command chains will execute the command chain instead of the hook wrapper
     if project.hooks:
@@ -59,6 +71,11 @@ def setup_assets(
                     hook.command_chain, name=f"hook {hook_name!r}", prime_dir=prime_dir
                 )
             _ensure_hook(meta_dir / "hooks" / hook_name)
+
+    # Ensure all hooks are executable
+    if hooks_dir.is_dir():
+        for hook in hooks_dir.iterdir():
+            _ensure_hook_executable(hook)
 
     if project.type == "gadget":
         gadget_yaml = project_dir / "gadget.yaml"
@@ -213,14 +230,6 @@ def _write_snap_directory(*, assets_dir: Path, prime_dir: Path, meta_dir: Path) 
 
                 _copy_file(source, destination, follow_symlinks=True)
 
-                # Ensure that the hook is executable in meta/hooks, this is a moot
-                # point considering the prior link_or_copy call, but is technically
-                # correct and allows for this operation to take place only once.
-                if origin[0] == meta_dir and origin[1] == "hooks":
-                    _ensure_hook_executable(destination)
-
-    # TODO: record manifest and source snapcraft.yaml
-
 
 def _ensure_hook(hook_path: Path) -> None:
     """Create a stub for hook_path if it does not exist.
@@ -237,7 +246,6 @@ def _ensure_hook(hook_path: Path) -> None:
 
     hook_path.parent.mkdir(parents=True, exist_ok=True)
     hook_path.write_text("#!/bin/true\n")
-    _ensure_hook_executable(hook_path)
 
 
 def _ensure_hook_executable(hook_path: Path) -> None:
@@ -293,8 +301,6 @@ def _write_hook_wrapper(hook_name: str, wrapper_path: Path) -> None:
             f'exec "{Path("$SNAP", "snap", "hooks", hook_name)}" "$@"',
             file=wrapper_file,
         )
-
-    _ensure_hook_executable(wrapper_path)
 
 
 def _copy_file(source: Path, destination: Path, **kwargs) -> None:
