@@ -452,9 +452,9 @@ def lifecycle_service(
 @pytest.fixture()
 def provider_service(default_project, default_factory, default_build_plan, tmp_path):
     from snapcraft.application import APP_METADATA
-    from snapcraft.services import Provider
+    from snapcraft.services import Provider as ProviderSvc
 
-    return Provider(
+    return ProviderSvc(
         app=APP_METADATA,
         services=default_factory,
         project=default_project,
