@@ -26,9 +26,10 @@ from typing import TYPE_CHECKING, cast
 from craft_application import AppMetadata, PackageService
 from overrides import override
 
-from snapcraft import errors, linters, models, pack, services, utils
+from snapcraft import errors, linters, models, pack, utils
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import snap_yaml
+from snapcraft.services import Lifecycle
 from snapcraft.utils import process_version
 
 if TYPE_CHECKING:
@@ -98,7 +99,7 @@ class Package(PackageService):
         if enable_manifest:
             snap_dir = path / "snap"
             snap_dir.mkdir(parents=True, exist_ok=True)
-            lifecycle = cast(services.Lifecycle, self._services.lifecycle)
+            lifecycle = cast(Lifecycle, self._services.lifecycle)
             lifecycle.manifest.to_yaml_file(snap_dir / "manifest.yaml")
 
             shutil.copy(self._project_path, snap_dir)
