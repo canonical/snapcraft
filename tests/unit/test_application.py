@@ -148,6 +148,48 @@ def test_build_planner_success_architecture_all(base, build_base, expected_base)
     assert "all" not in [a.build_on for a in architectures]
 
 
+@pytest.mark.parametrize(
+    ("base", "expected_base"),
+    [
+        ("core20", bases.BaseName("ubuntu", "20.04")),
+        ("core22", bases.BaseName("ubuntu", "22.04")),
+        ("core24", bases.BaseName("ubuntu", "24.04")),
+    ],
+)
+@pytest.mark.parametrize(
+    ("project_type", "needs_build_base"),
+    [
+        ("app", False),
+        ("base", True),
+    ],
+)
+def test_build_planner_project_type(
+    architectures, base, expected_base, project_type, needs_build_base
+):
+    data = {
+        "architectures": architectures,
+        "base": base,
+        "type": project_type,
+    }
+
+    if needs_build_base:
+        data["build-base"] = base
+
+    planner = application.SnapcraftBuildPlanner.parse_obj(data)
+
+    actual = planner.get_build_plan()
+
+    archs = cast(list[Architecture], planner.architectures)
+
+    assert planner.project_type == project_type
+
+    for build_info in actual:
+        assert build_info.base == expected_base
+        assert [build_info.build_for] in [a.build_for for a in archs]
+        assert [build_info.build_on] in [a.build_on for a in archs]
+        assert build_info.platform == f"{expected_base.name}@{expected_base.version}"
+
+
 @pytest.mark.parametrize("env_vars", application.MAPPED_ENV_VARS.items())
 def test_application_map_build_on_env_var(monkeypatch, env_vars):
     """Test that instantiating the Snapcraft application class will set the value of the
