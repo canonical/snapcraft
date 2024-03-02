@@ -129,6 +129,10 @@ class Snapcraft(Application):
         # Whether we know that we should use the core24-based codepath.
         self._known_core24 = False
 
+        # Locate the project file. It's used in early execution to determine
+        # compatibility with previous versions of the snapcraft codebase, and in
+        # the package service to copy the project file into the snap payload if
+        # manifest generation is enabled.
         try:
             self._project_path: pathlib.Path | None = self._resolve_project_path(None)
         except FileNotFoundError:
