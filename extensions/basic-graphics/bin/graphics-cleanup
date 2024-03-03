@@ -1,0 +1,14 @@
+#!/bin/bash
+set -euo pipefail
+
+SELF="$( cd -- "$(dirname "$0")/.." ; pwd -P )"
+
+rm -f $(
+  (
+    for provider in "$@"; do
+      cat ${SELF}/lists/$provider.${CRAFT_TARGET_ARCH}.list
+    done
+  ) | sort -u | awk "/.+/ { print \"${CRAFT_PRIME}/\" \$0 }"
+)
+
+find "${CRAFT_PRIME}" -type d -empty -delete
