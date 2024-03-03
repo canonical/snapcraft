@@ -26,12 +26,12 @@ dev = [
 lint = [
     "black~=24.1",
     "codespell[toml]~=2.2",
-    "ruff~=0.2.1",
+    "ruff~=0.3.0",
     "yamllint~=1.34"
 ]
 types = [
     "mypy[reports]~=1.8.0",
-    "pyright==1.1.351",
+    "pyright==1.1.352",
 ]
 docs = [
     "furo==2024.1.29",
