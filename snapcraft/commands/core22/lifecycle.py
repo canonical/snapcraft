@@ -50,17 +50,17 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             help="Shell into the environment if the build fails",
         )
         parser.add_argument(
-            "--enable-manifest",
+            "--enable-manifest",  # Deprecated and removed in core24
             action="store_true",
             default=utils.strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n")),
-            help="Generate snap manifest",
+            help=argparse.SUPPRESS,
         )
         parser.add_argument(
-            "--manifest-image-information",
+            "--manifest-image-information",  # Deprecated and removed in core24
             type=str,
             metavar="image-info",
             default=os.getenv("SNAPCRAFT_IMAGE_INFO"),
-            help="Set snap manifest image-info",
+            help=argparse.SUPPRESS,
         )
         parser.add_argument(
             "--bind-ssh",

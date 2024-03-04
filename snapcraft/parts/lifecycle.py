@@ -322,6 +322,10 @@ def _generate_metadata(
     emit.progress("Generated snap metadata", permanent=True)
 
     if parsed_args.enable_manifest:
+        emit.progress(
+            "'--enable-manifest' is deprecated, and will be removed in core24.",
+            permanent=True,
+        )
         _generate_manifest(
             project,
             lifecycle=lifecycle,
@@ -414,9 +418,17 @@ def _run_in_provider(  # noqa PLR0915
 
     if getattr(parsed_args, "enable_manifest", False):
         cmd.append("--enable-manifest")
+        emit.progress(
+            "'--enable-manifest' is deprecated, and will be removed in core24.",
+            permanent=True,
+        )
     image_information = getattr(parsed_args, "manifest_image_information", None)
     if image_information:
         cmd.extend(["--manifest-image-information", image_information])
+        emit.progress(
+            "'--manifest-image-information' is deprecated, and will be removed in core24.",
+            permanent=True,
+        )
 
     cmd.append("--build-for")
     cmd.append(project.get_build_for())

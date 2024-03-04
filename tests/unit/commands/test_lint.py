@@ -475,11 +475,6 @@ def test_lint_managed_mode_without_snapcraft_yaml(
                 "Not loading lint filters from 'snapcraft.yaml' because the file does "
                 "not exist inside the snap file.",
             ),
-            call(
-                "verbose",
-                "To include 'snapcraft.yaml' in a snap file, use the parameter "
-                "'--enable-manifest' when building the snap.",
-            ),
         ]
     )
 
