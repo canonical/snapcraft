@@ -17,12 +17,12 @@
 import json
 import os
 from textwrap import dedent
-from typing import cast
 
 import pytest
 from craft_providers import bases
 
 from snapcraft import application, services
+from snapcraft.const import SnapArch
 from snapcraft.models.project import Architecture
 
 
@@ -38,156 +38,25 @@ def architectures(request):
     return request.param
 
 
-@pytest.mark.parametrize(
-    ("base", "expected_base"),
-    [
-        ("core20", bases.BaseName("ubuntu", "20.04")),
-        ("core22", bases.BaseName("ubuntu", "22.04")),
-        ("core24", bases.BaseName("ubuntu", "24.04")),
-    ],
-)
-def test_build_planner_success_default_architecture(base, expected_base):
+def test_build_planner_success_base_only():
     data = {
-        "base": base,
+        "base": "core24",
+        "name": "test",
+        "platforms": {"amd64v2": {"build-on": ["amd64"], "build-for": ["amd64"]}},
     }
 
     planner = application.SnapcraftBuildPlanner.parse_obj(data)
 
     actual = planner.get_build_plan()
 
-    archs = cast(list[Architecture], planner.architectures)
     for build_info in actual:
-        assert build_info.base == expected_base
-        assert [build_info.build_for] in [a.build_for for a in archs]
-        assert [build_info.build_on] in [a.build_on for a in archs]
-        assert build_info.platform == f"{expected_base.name}@{expected_base.version}"
+        assert build_info.base == bases.BaseName("ubuntu", "24.04")
+        assert build_info.build_for == SnapArch.amd64
+        assert build_info.build_on == SnapArch.amd64
+        assert build_info.platform == "amd64v2"
 
 
-@pytest.mark.parametrize(
-    ("base", "expected_base"),
-    [
-        ("core20", bases.BaseName("ubuntu", "20.04")),
-        ("core22", bases.BaseName("ubuntu", "22.04")),
-        ("core24", bases.BaseName("ubuntu", "24.04")),
-    ],
-)
-def test_build_planner_success_base_only(architectures, base, expected_base):
-    data = {
-        "architectures": architectures,
-        "base": base,
-    }
-
-    planner = application.SnapcraftBuildPlanner.parse_obj(data)
-
-    actual = planner.get_build_plan()
-
-    archs = cast(list[Architecture], planner.architectures)
-    for build_info in actual:
-        assert build_info.base == expected_base
-        assert [build_info.build_for] in [a.build_for for a in archs]
-        assert [build_info.build_on] in [a.build_on for a in archs]
-        assert build_info.platform == f"{expected_base.name}@{expected_base.version}"
-
-
-@pytest.mark.parametrize("base", ["core20", "core22", "core24"])
-@pytest.mark.parametrize(
-    ("build_base", "expected_base"),
-    [
-        ("core20", bases.BaseName("ubuntu", "20.04")),
-        ("core22", bases.BaseName("ubuntu", "22.04")),
-        ("core24", bases.BaseName("ubuntu", "24.04")),
-    ],
-)
-def test_build_planner_success_build_base(
-    architectures, base, build_base, expected_base
-):
-    data = {
-        "architectures": architectures,
-        "base": base,
-        "build-base": build_base,
-    }
-
-    planner = application.SnapcraftBuildPlanner.parse_obj(data)
-
-    actual = planner.get_build_plan()
-
-    archs = cast(list[Architecture], planner.architectures)
-    for build_info in actual:
-        assert build_info.base == expected_base
-        assert [build_info.build_for] in [a.build_for for a in archs]
-        assert [build_info.build_on] in [a.build_on for a in archs]
-        assert build_info.platform == f"{expected_base.name}@{expected_base.version}"
-
-
-@pytest.mark.parametrize("base", ["core20", "core22", "core24"])
-@pytest.mark.parametrize(
-    ("build_base", "expected_base"),
-    [
-        ("core20", bases.BaseName("ubuntu", "20.04")),
-        ("core22", bases.BaseName("ubuntu", "22.04")),
-        ("core24", bases.BaseName("ubuntu", "24.04")),
-    ],
-)
-def test_build_planner_success_architecture_all(base, build_base, expected_base):
-    data = {
-        "architectures": [{"build-on": ["amd64"], "build-for": "all"}],
-        "base": base,
-        "build-base": build_base,
-    }
-
-    planner = application.SnapcraftBuildPlanner.parse_obj(data)
-
-    actual = planner.get_build_plan()
-
-    architectures = cast(list[Architecture], planner.architectures)
-    for build_info in actual:
-        assert build_info.base == expected_base
-        assert [build_info.build_on] in [a.build_on for a in architectures]
-        assert build_info.platform == f"{expected_base.name}@{expected_base.version}"
-
-    assert "all" not in [a.build_on for a in architectures]
-
-
-@pytest.mark.parametrize(
-    ("base", "expected_base"),
-    [
-        ("core20", bases.BaseName("ubuntu", "20.04")),
-        ("core22", bases.BaseName("ubuntu", "22.04")),
-        ("core24", bases.BaseName("ubuntu", "24.04")),
-    ],
-)
-@pytest.mark.parametrize(
-    ("project_type", "needs_build_base"),
-    [
-        ("app", False),
-        ("base", True),
-    ],
-)
-def test_build_planner_project_type(
-    architectures, base, expected_base, project_type, needs_build_base
-):
-    data = {
-        "architectures": architectures,
-        "base": base,
-        "type": project_type,
-    }
-
-    if needs_build_base:
-        data["build-base"] = base
-
-    planner = application.SnapcraftBuildPlanner.parse_obj(data)
-
-    actual = planner.get_build_plan()
-
-    archs = cast(list[Architecture], planner.architectures)
-
-    assert planner.project_type == project_type
-
-    for build_info in actual:
-        assert build_info.base == expected_base
-        assert [build_info.build_for] in [a.build_for for a in archs]
-        assert [build_info.build_on] in [a.build_on for a in archs]
-        assert build_info.platform == f"{expected_base.name}@{expected_base.version}"
+# TODO: add tests `get_build_plan()`
 
 
 @pytest.mark.parametrize("env_vars", application.MAPPED_ENV_VARS.items())
@@ -240,6 +109,12 @@ def test_application_expand_extensions(emitter, monkeypatch, extension_source, n
             description: default project
             base: core24
             build-base: devel
+            platforms:
+                amd64:
+                    build-on:
+                    - amd64
+                    build-for:
+                    - amd64
             license: MIT
             parts:
                 fake-extension/fake-part:

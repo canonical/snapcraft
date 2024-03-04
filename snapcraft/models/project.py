@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,12 +16,27 @@
 
 """Project file definition and helpers."""
 
+# pylint: disable=too-many-lines
+
 import copy
 import re
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 import pydantic
 from craft_application import models
+from craft_application.errors import CraftValidationError
 from craft_application.models import BuildInfo, UniqueStrList, VersionStr
 from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
@@ -29,6 +44,7 @@ from craft_providers import bases
 from pydantic import PrivateAttr, constr
 
 from snapcraft import utils
+from snapcraft.const import SnapArch
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
@@ -75,6 +91,9 @@ def validate_architectures(architectures):
 
     :raise ValueError: If architecture data is invalid.
     """
+    if not architectures:
+        return architectures
+
     # validate strings and Architecture objects are not mixed
     if not (
         all(isinstance(architecture, str) for architecture in architectures)
@@ -426,6 +445,54 @@ class ContentPlug(models.CraftBaseModel):
         return default_provider
 
 
+class Platform(pydantic.BaseModel):
+    """Snapcraft project platform definition."""
+
+    build_on: list[SnapArch] | None = pydantic.Field(min_items=1, unique_items=True)
+    build_for: list[SnapArch] | None = pydantic.Field(min_items=1, unique_items=True)
+
+    class Config:  # pylint: disable=too-few-public-methods
+        """Pydantic model configuration."""
+
+        allow_population_by_field_name = True
+        alias_generator: Callable[[str], str] = lambda s: s.replace(  # noqa: E731
+            "_", "-"
+        )
+
+    @pydantic.validator("build_for", pre=True)
+    @classmethod
+    def _vectorise_build_for(cls, val: str | list[str]) -> list[str]:
+        """Vectorise target architecture if needed."""
+        if isinstance(val, str):
+            val = [val]
+        return val
+
+    @pydantic.root_validator(skip_on_failure=True)
+    @classmethod
+    def _validate_platform_set(cls, values: Mapping[str, Any]) -> Mapping[str, Any]:
+        """Validate the build_on build_for combination."""
+        build_for: list[str] = values["build_for"] if values.get("build_for") else []
+        build_on: list[str] = values["build_on"] if values.get("build_on") else []
+
+        # We can only build for 1 arch at the moment
+        if len(build_for) > 1:
+            raise CraftValidationError(
+                str(
+                    f"Trying to build a rock for {build_for} "
+                    "but multiple target architectures are not "
+                    "currently supported. Please specify only 1 value."
+                )
+            )
+
+        # If build_for is provided, then build_on must also be
+        if not build_on and build_for:
+            raise CraftValidationError(
+                "'build_for' expects 'build_on' to also be provided."
+            )
+
+        return values
+
+
 MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
 
@@ -454,7 +521,8 @@ class Project(models.Project):
         Dict[str, Dict[Literal["symlink", "bind", "bind-file", "type"], str]]
     ]
     grade: Optional[Literal["stable", "devel"]]
-    architectures: List[Union[str, Architecture]] = [get_host_architecture()]
+    architectures: List[Union[str, Architecture]] | None = None
+    # TODO: set architectures to [get_host_architecture()] if base is core22
     assumes: UniqueStrList = cast(UniqueStrList, [])
     package_repositories: Optional[List[Dict[str, Any]]]
     hooks: Optional[Dict[str, Hook]]
@@ -590,6 +658,49 @@ class Project(models.Project):
             )
         return field_value
 
+    @pydantic.root_validator(pre=True)
+    @classmethod
+    def _validate_platforms_and_architectures(cls, values):
+        """Validate usage of platforms and architectures.
+
+        core22 base:
+         - can optionally define architectures
+         - cannot define platforms
+
+        core24 and newer bases:
+         - cannot define architectures
+         - must define platforms
+        """
+        base = get_effective_base(
+            base=values.get("base"),
+            build_base=values.get("build_base"),
+            project_type=values.get("type"),
+            name=values.get("name"),
+        )
+
+        if base == "core24":
+            if values.get("architectures"):
+                raise ValueError(
+                    (
+                        "'architectures' keyword is not supported for base %r. "
+                        "Use 'platforms' keyword instead.",
+                        base,
+                    ),
+                )
+            if not values.get("platforms"):
+                raise ValueError(
+                    ("The 'platforms' keyword must be defined for base %r. ", base)
+                )
+        else:
+            if not values.get("architectures"):
+                values["architectures"] = [get_host_architecture()]
+            if values.get("platforms"):
+                raise ValueError(
+                    "'platforms' keyword is not supported with 'base=core22'"
+                )
+
+        return values
+
     @pydantic.root_validator()
     @classmethod
     def _validate_grade_and_build_base(cls, values):
@@ -718,9 +829,12 @@ class Project(models.Project):
         return base
 
     def get_build_on(self) -> str:
-        """Get the first build_on architecture from the project."""
-        if isinstance(self.architectures[0], Architecture) and isinstance(
-            self.architectures[0].build_on, List
+        """Get the first build_on architecture from the project for core22."""
+        # pylint: disable=unsubscriptable-object
+        if (
+            self.architectures
+            and isinstance(self.architectures[0], Architecture)
+            and isinstance(self.architectures[0].build_on, List)
         ):
             return self.architectures[0].build_on[0]
 
@@ -728,9 +842,12 @@ class Project(models.Project):
         raise RuntimeError("cannot determine build-on architecture")
 
     def get_build_for(self) -> str:
-        """Get the first build_for architecture from the project."""
-        if isinstance(self.architectures[0], Architecture) and isinstance(
-            self.architectures[0].build_for, List
+        """Get the first build_for architecture from the project for core22."""
+        # pylint: disable=unsubscriptable-object
+        if (
+            self.architectures
+            and isinstance(self.architectures[0], Architecture)
+            and isinstance(self.architectures[0].build_for, List)
         ):
             return self.architectures[0].build_for[0]
 
@@ -738,7 +855,7 @@ class Project(models.Project):
         raise RuntimeError("cannot determine build-for architecture")
 
     def get_build_for_arch_triplet(self) -> Optional[str]:
-        """Get the architecture triplet for the first build-for architecture.
+        """Get the architecture triplet for the first build-for architecture for core22.
 
         :returns: The build-for arch triplet. If build-for is "all", then return None.
         """
@@ -750,11 +867,12 @@ class Project(models.Project):
         return None
 
     def get_build_plan(self) -> List[BuildInfo]:
-        """Get the build plan for this project."""
+        """Get the build plan for core22 projects."""
         build_plan: List[BuildInfo] = []
 
         architectures = cast(List[Architecture], self.architectures)
 
+        # pylint: disable-next=not-an-iterable
         for arch in architectures:
             # build_for will be a single element list
             build_for = cast(list, arch.build_for)[0]

@@ -68,6 +68,7 @@ def fake_snapcraft_project():
         "version": "1.0",
         "summary": "test summary",
         "parts": {"part1": {"plugin": "nil"}},
+        "architectures": [{"build_on": ["amd64"], "build_for": ["amd64"]}],
     }
     return models.Project.unmarshal(data)
 

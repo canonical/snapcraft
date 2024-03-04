@@ -579,7 +579,14 @@ class TestProjectValidation:
         error = "build-base must be 'devel' when base is 'core24'"
 
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(base="core24"))
+            Project.unmarshal(
+                project_yaml_data(
+                    base="core24",
+                    platforms={
+                        "amd64v2": {"build-on": ["amd64"], "build-for": ["amd64"]}
+                    },
+                )
+            )
 
     def test_project_global_plugs_warning(self, project_yaml_data, emitter):
         data = project_yaml_data(plugs={"desktop": None, "desktop-legacy": None})
@@ -1359,11 +1366,14 @@ def test_get_snap_project_with_content_plugs_does_not_add_extension(
 class TestArchitecture:
     """Validate architectures."""
 
+    # pylint: disable=unsubscriptable-object
+
     def test_architecture_valid_list_of_strings(self, project_yaml_data):
         """Architectures can be defined as a list of strings (shorthand notation)."""
         data = project_yaml_data(architectures=["amd64", "armhf"])
         architectures = Project.unmarshal(data).architectures
 
+        assert isinstance(architectures, list)
         assert isinstance(architectures[0], Architecture)
         assert isinstance(architectures[1], Architecture)
         assert architectures[0].build_on == ["amd64"]
@@ -1381,6 +1391,7 @@ class TestArchitecture:
         )
         architectures = Project.unmarshal(data).architectures
 
+        assert isinstance(architectures, list)
         assert isinstance(architectures[0], Architecture)
         assert isinstance(architectures[1], Architecture)
         assert architectures[0].build_on == ["amd64"]
@@ -1398,6 +1409,7 @@ class TestArchitecture:
         )
         architectures = Project.unmarshal(data).architectures
 
+        assert isinstance(architectures, list)
         assert isinstance(architectures[0], Architecture)
         assert isinstance(architectures[1], Architecture)
         assert architectures[0].build_on == ["amd64"]
@@ -1423,6 +1435,7 @@ class TestArchitecture:
         )
         architectures = Project.unmarshal(data).architectures
 
+        assert isinstance(architectures, list)
         assert isinstance(architectures[0], Architecture)
         assert architectures[0].build_on == ["amd64", "armhf"]
         assert architectures[0].build_for == ["amd64"]
@@ -1436,6 +1449,7 @@ class TestArchitecture:
         )
         architectures = Project.unmarshal(data).architectures
 
+        assert isinstance(architectures, list)
         assert isinstance(architectures[0], Architecture)
         assert architectures[0].build_on == ["arm64"]
         assert architectures[0].build_for == ["arm64"]
@@ -1554,6 +1568,7 @@ class TestArchitecture:
         )
         architectures = Project.unmarshal(data).architectures
 
+        assert isinstance(architectures, list)
         assert isinstance(architectures[0], Architecture)
         assert architectures[0].build_on == ["amd64"]
         assert architectures[0].build_for == ["all"]
@@ -1635,6 +1650,7 @@ class TestArchitecture:
 
         architectures = Project.unmarshal(data).architectures
 
+        assert isinstance(architectures, list)
         assert isinstance(architectures[0], Architecture)
         assert architectures[0].build_on == ["amd64"]
         assert architectures[0].build_for == ["amd64"]

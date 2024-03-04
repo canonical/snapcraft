@@ -272,6 +272,10 @@ suites:
    systems:
      - ubuntu-22.04*
 
+ # TODO:
+ # - add `platforms` keyword to all core24 snapcraft.yaml files
+ # - add core24 platforms tests
+ # - remove core24 architecture tests
  tests/spread/core24/:
    summary: core24 specific tests
    systems:
