@@ -17,14 +17,17 @@
 """Tests for the Snapcraft Package service."""
 
 from pathlib import Path
+from textwrap import dedent
 
-from craft_application.models import SummaryStr
+import pytest
+from craft_application.models import SummaryStr, VersionStr
 
 from snapcraft import linters, meta, pack, services
 from snapcraft.application import APP_METADATA
 
 
-def test_pack(package_service, default_factory, mocker):
+@pytest.mark.usefixtures("default_factory")
+def test_pack(package_service, mocker):
     mock_pack_snap = mocker.patch.object(pack, "pack_snap")
     mocker.patch.object(linters, "run_linters")
     mocker.patch.object(linters, "report")
@@ -72,7 +75,7 @@ def test_metadata(package_service, default_factory, default_build_plan, new_dir)
     assert package_service.metadata == meta.SnapMetadata(
         name="default",
         title=None,
-        version="1.0",
+        version=VersionStr("1.0"),
         summary=SummaryStr("default project"),
         description="default project",
         license="MIT",
@@ -95,4 +98,38 @@ def test_metadata(package_service, default_factory, default_build_plan, new_dir)
         system_usernames=None,
         provenance=None,
         links=None,
+    )
+
+
+def test_write_metadata(
+    package_service,
+    default_factory,
+    default_build_plan,
+    new_dir,
+):
+    default_factory.set_kwargs(
+        "lifecycle",
+        work_dir=Path("work"),
+        cache_dir=new_dir,
+        build_plan=default_build_plan,
+    )
+
+    package_service.write_metadata(new_dir)
+
+    assert (new_dir / "meta" / "snap.yaml").read_text() == dedent(
+        """\
+        name: default
+        version: '1.0'
+        summary: default project
+        description: default project
+        license: MIT
+        architectures:
+        - amd64
+        base: core24
+        confinement: devmode
+        grade: devel
+        environment:
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+    """
     )
