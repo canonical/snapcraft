@@ -28,10 +28,10 @@ from craft_providers.bases.ubuntu import BuilddBaseAlias
 
 from snapcraft import errors
 from snapcraft.elf import ElfFile
+from snapcraft.models import MANDATORY_ADOPTABLE_FIELDS, Project
 from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts.plugins import KernelPlugin
 from snapcraft.parts.update_metadata import update_project_metadata
-from snapcraft.projects import MANDATORY_ADOPTABLE_FIELDS, Project
 from snapcraft.utils import get_host_architecture
 
 _SNAPCRAFT_YAML_FILENAMES = [
@@ -1306,8 +1306,12 @@ def test_lifecycle_run_in_provider_default(
     mock_prepare_instance = mocker.patch(
         "snapcraft.parts.lifecycle.providers.prepare_instance"
     )
-    mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
-    mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
+    mocker.patch(
+        "snapcraft.models.project.Project.get_build_on", return_value="test-arch-1"
+    )
+    mocker.patch(
+        "snapcraft.models.project.Project.get_build_for", return_value="test-arch-2"
+    )
 
     expected_command = [
         "snapcraft",
@@ -1395,8 +1399,12 @@ def test_lifecycle_run_in_provider_all_options(
     mock_prepare_instance = mocker.patch(
         "snapcraft.parts.lifecycle.providers.prepare_instance"
     )
-    mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
-    mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
+    mocker.patch(
+        "snapcraft.models.project.Project.get_build_on", return_value="test-arch-1"
+    )
+    mocker.patch(
+        "snapcraft.models.project.Project.get_build_for", return_value="test-arch-2"
+    )
 
     # build the expected command to be executed in the provider
     parts = ["test-part-1", "test-part-2"]
@@ -1499,8 +1507,12 @@ def test_lifecycle_run_in_provider_try(
     mocker.patch("snapcraft.parts.lifecycle.providers.capture_logs_from_instance")
     mocker.patch("snapcraft.parts.lifecycle.providers.ensure_provider_is_available")
     mocker.patch("snapcraft.parts.lifecycle.providers.prepare_instance")
-    mocker.patch("snapcraft.projects.Project.get_build_on", return_value="test-arch-1")
-    mocker.patch("snapcraft.projects.Project.get_build_for", return_value="test-arch-2")
+    mocker.patch(
+        "snapcraft.models.project.Project.get_build_on", return_value="test-arch-1"
+    )
+    mocker.patch(
+        "snapcraft.models.project.Project.get_build_for", return_value="test-arch-2"
+    )
 
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     parts_lifecycle._run_in_provider(
@@ -1551,8 +1563,8 @@ def test_lifecycle_run_in_provider(
     mocker.patch("snapcraft.parts.lifecycle.providers.capture_logs_from_instance")
     mocker.patch("snapcraft.parts.lifecycle.providers.ensure_provider_is_available")
     mocker.patch("snapcraft.parts.lifecycle.providers.prepare_instance")
-    mocker.patch("snapcraft.projects.Project.get_build_on")
-    mocker.patch("snapcraft.projects.Project.get_build_for")
+    mocker.patch("snapcraft.models.project.Project.get_build_on")
+    mocker.patch("snapcraft.models.project.Project.get_build_for")
 
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     parts_lifecycle._run_in_provider(
@@ -1586,7 +1598,9 @@ def test_lifecycle_run_in_provider_devel_base(
     tmp_path,
 ):
     """Verify the `devel` base is handled properly when launching an instance."""
-    mocker.patch("snapcraft.projects.Project.get_effective_base", return_value="devel")
+    mocker.patch(
+        "snapcraft.models.project.Project.get_effective_base", return_value="devel"
+    )
     mock_base_configuration = Mock()
     mocker.patch(
         "snapcraft.parts.lifecycle.providers.get_base_configuration",
@@ -1595,8 +1609,8 @@ def test_lifecycle_run_in_provider_devel_base(
     mocker.patch("snapcraft.parts.lifecycle.providers.capture_logs_from_instance")
     mocker.patch("snapcraft.parts.lifecycle.providers.ensure_provider_is_available")
     mocker.patch("snapcraft.parts.lifecycle.providers.prepare_instance")
-    mocker.patch("snapcraft.projects.Project.get_build_on")
-    mocker.patch("snapcraft.projects.Project.get_build_for")
+    mocker.patch("snapcraft.models.project.Project.get_build_on")
+    mocker.patch("snapcraft.models.project.Project.get_build_for")
 
     project = Project.unmarshal(snapcraft_yaml(base="core22"))
     parts_lifecycle._run_in_provider(

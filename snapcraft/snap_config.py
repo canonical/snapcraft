@@ -58,7 +58,7 @@ class SnapConfig(pydantic.BaseModel, extra=pydantic.Extra.forbid):
         try:
             snap_config = cls(**data)
         except pydantic.ValidationError as error:
-            # TODO: use `_format_pydantic_errors()` from projects.py
+            # TODO: use `_format_pydantic_errors()` from project.py
             raise ValueError(f"error parsing snap config: {error}") from error
 
         return snap_config
