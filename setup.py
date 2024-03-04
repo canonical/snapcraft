@@ -82,7 +82,6 @@ dev_requires = [
     "pytest-cov",
     "pytest-mock",
     "pytest-subprocess",
-    "ruff",
     "tox>=4.5",
     "types-PyYAML",
     "types-requests",
