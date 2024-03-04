@@ -1,0 +1,18 @@
+name: multiple-build-for
+version: "1.0"
+summary: test
+description: |
+  Building on amd64 would match two snaps, so the "naked" build should fail.
+grade: devel
+confinement: strict
+base: core24
+build-base: devel
+architectures:
+  - build-on: amd64
+    build-for: amd64
+  - build-on: [amd64, arm64]
+    build-for: arm64
+
+parts:
+  nil:
+    plugin: nil

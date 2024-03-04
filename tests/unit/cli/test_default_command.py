@@ -25,7 +25,7 @@ from snapcraft import cli
 
 def test_default_command(mocker):
     mocker.patch.object(sys, "argv", ["cmd"])
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -56,7 +56,7 @@ def test_default_command(mocker):
 
 def test_default_command_destructive_mode(mocker):
     mocker.patch.object(sys, "argv", ["cmd", "--destructive-mode"])
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -87,7 +87,7 @@ def test_default_command_destructive_mode(mocker):
 
 def test_default_command_use_lxd(mocker):
     mocker.patch.object(sys, "argv", ["cmd", "--use-lxd"])
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -119,7 +119,7 @@ def test_default_command_use_lxd(mocker):
 @pytest.mark.parametrize("option", ["-o", "--output"])
 def test_default_command_output(mocker, option):
     mocker.patch.object(sys, "argv", ["cmd", option, "name"])
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -150,7 +150,7 @@ def test_default_command_output(mocker, option):
 
 def test_default_command_http_proxy(mocker):
     mocker.patch.object(sys, "argv", ["cmd", "--http-proxy", "test-http"])
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -181,7 +181,7 @@ def test_default_command_http_proxy(mocker):
 
 def test_default_command_https_proxy(mocker):
     mocker.patch.object(sys, "argv", ["cmd", "--https-proxy", "test-https"])
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(

@@ -19,13 +19,37 @@
 from __future__ import annotations
 
 import pathlib
+from typing import TYPE_CHECKING
 
-from craft_application import PackageService, models
+from craft_application import AppMetadata, PackageService
 from overrides import override
+
+from snapcraft import errors, linters, models, pack
+from snapcraft.linters import LinterStatus
+from snapcraft.meta import snap_yaml
+from snapcraft.utils import process_version
+
+if TYPE_CHECKING:
+    from snapcraft.services import SnapcraftServiceFactory
 
 
 class Package(PackageService):
     """Package service subclass for Snapcraft."""
+
+    _project: models.Project
+
+    def __init__(
+        self,
+        app: AppMetadata,
+        services: SnapcraftServiceFactory,
+        *,
+        project: models.Project,
+        platform: str | None,
+        build_for: str,
+    ) -> None:
+        super().__init__(app, services, project=project)
+        self._platform = platform
+        self._build_for = build_for
 
     @override
     def pack(self, prime_dir: pathlib.Path, dest: pathlib.Path) -> list[pathlib.Path]:
@@ -33,13 +57,27 @@ class Package(PackageService):
 
         :param prime_dir: Path to the directory to pack.
         :param dest: Directory into which to write the package(s).
-
         :returns: A list of paths to created packages.
         """
-        # TODO
-        raise NotImplementedError(
-            "Packing using the package service not yet implemented."
-        )
+        issues = linters.run_linters(prime_dir, lint=self._project.lint)
+        status = linters.report(issues, intermediate=True)
+
+        # In case of linter errors, stop execution and return the error code.
+        if status in (LinterStatus.ERRORS, LinterStatus.FATAL):
+            raise errors.LinterError("Linter errors found", exit_code=status)
+
+        return [
+            pathlib.Path(
+                pack.pack_snap(
+                    prime_dir,
+                    output=str(dest),
+                    compression=self._project.compression,
+                    name=self._project.name,
+                    version=process_version(self._project.version),
+                    target_arch=self._build_for,
+                )
+            )
+        ]
 
     @override
     def write_metadata(self, path: pathlib.Path) -> None:
@@ -47,11 +85,14 @@ class Package(PackageService):
 
         :param path: The path to the prime directory.
         """
-        # TODO
-        raise NotImplementedError("Writing metadata not yet implemented.")
+        meta_dir = path / "meta"
+        meta_dir.mkdir(parents=True, exist_ok=True)
+
+        self.metadata.to_yaml_file(meta_dir / "snap.yaml")
 
     @property
-    def metadata(self) -> models.BaseMetadata:
+    def metadata(self) -> snap_yaml.SnapMetadata:
         """Get the metadata model for this project."""
-        # TODO: get metadata from project
-        return models.BaseMetadata()
+        return snap_yaml.get_metadata_from_project(
+            self._project, self._services.lifecycle.prime_dir, arch=self._build_for
+        )

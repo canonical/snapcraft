@@ -30,7 +30,7 @@ from craft_providers import ProviderError
 
 import snapcraft
 import snapcraft_legacy
-from snapcraft import __version__, errors, store, utils
+from snapcraft import errors, store, utils
 from snapcraft.parts import plugins
 from snapcraft.remote import RemoteBuildError
 from snapcraft_legacy.cli import legacy
@@ -42,92 +42,91 @@ COMMAND_GROUPS = [
     craft_cli.CommandGroup(
         "Lifecycle",
         [
-            commands.CleanCommand,
-            commands.PullCommand,
-            commands.BuildCommand,
-            commands.StageCommand,
-            commands.PrimeCommand,
-            commands.PackCommand,
-            commands.RemoteBuildCommand,
-            commands.SnapCommand,  # hidden (legacy compatibility)
-            commands.PluginsCommand,
-            commands.ListPluginsCommand,
-            commands.TryCommand,
+            commands.core22.CleanCommand,
+            commands.core22.PullCommand,
+            commands.core22.BuildCommand,
+            commands.core22.StageCommand,
+            commands.core22.PrimeCommand,
+            commands.core22.PackCommand,
+            commands.core22.RemoteBuildCommand,
+            commands.core22.SnapCommand,  # hidden (legacy compatibility)
+            commands.core22.PluginsCommand,
+            commands.core22.ListPluginsCommand,
+            commands.core22.TryCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Extensions",
         [
-            commands.ListExtensionsCommand,
-            commands.ExtensionsCommand,  # hidden (alias to list-extensions)
-            commands.ExpandExtensionsCommand,
+            commands.core22.ListExtensionsCommand,
+            commands.core22.ExtensionsCommand,  # hidden (alias to list-extensions)
+            commands.core22.ExpandExtensionsCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Account",
         [
-            commands.StoreLoginCommand,
-            commands.StoreExportLoginCommand,
-            commands.StoreLogoutCommand,
-            commands.StoreWhoAmICommand,
+            commands.core22.StoreLoginCommand,
+            commands.core22.StoreExportLoginCommand,
+            commands.core22.StoreLogoutCommand,
+            commands.core22.StoreWhoAmICommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Snap Names",
         [
-            commands.StoreRegisterCommand,
-            commands.StoreNamesCommand,
-            commands.StoreLegacyListRegisteredCommand,
-            commands.StoreLegacyListCommand,
-            commands.StoreLegacyMetricsCommand,
-            commands.StoreLegacyUploadMetadataCommand,
+            commands.core22.StoreRegisterCommand,
+            commands.core22.StoreNamesCommand,
+            commands.legacy.StoreLegacyListRegisteredCommand,
+            commands.legacy.StoreLegacyListCommand,
+            commands.legacy.StoreLegacyMetricsCommand,
+            commands.legacy.StoreLegacyUploadMetadataCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Snap Release Management",
         [
-            commands.StoreReleaseCommand,
-            commands.StoreCloseCommand,
-            commands.StoreStatusCommand,
-            commands.StoreUploadCommand,
-            commands.StoreLegacyPushCommand,  # hidden (legacy for upload)
-            commands.StoreLegacyPromoteCommand,
-            commands.StoreListRevisionsCommand,
-            commands.StoreRevisionsCommand,  # hidden (alias to list-revisions)
+            commands.core22.StoreReleaseCommand,
+            commands.core22.StoreCloseCommand,
+            commands.core22.StoreStatusCommand,
+            commands.core22.StoreUploadCommand,
+            commands.legacy.StoreLegacyPushCommand,  # hidden (legacy for upload)
+            commands.legacy.StoreLegacyPromoteCommand,
+            commands.core22.StoreListRevisionsCommand,
+            commands.core22.StoreRevisionsCommand,  # hidden (alias to list-revisions)
         ],
     ),
     craft_cli.CommandGroup(
         "Store Snap Tracks",
         [
-            commands.StoreListTracksCommand,
-            commands.StoreTracksCommand,  # hidden (alias to list-tracks)
-            commands.StoreLegacySetDefaultTrackCommand,
+            commands.core22.StoreListTracksCommand,
+            commands.core22.StoreTracksCommand,  # hidden (alias to list-tracks)
+            commands.legacy.StoreLegacySetDefaultTrackCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Key Management",
         [
-            commands.StoreLegacyCreateKeyCommand,
-            commands.StoreLegacyRegisterKeyCommand,
-            commands.StoreLegacySignBuildCommand,
-            commands.StoreLegacyListKeysCommand,
+            commands.legacy.StoreLegacyCreateKeyCommand,
+            commands.legacy.StoreLegacyRegisterKeyCommand,
+            commands.legacy.StoreLegacySignBuildCommand,
+            commands.legacy.StoreLegacyListKeysCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Validation Sets",
         [
-            commands.StoreEditValidationSetsCommand,
-            commands.StoreLegacyListValidationSetsCommand,
-            commands.StoreLegacyValidateCommand,
-            commands.StoreLegacyGatedCommand,
+            commands.core22.StoreEditValidationSetsCommand,
+            commands.legacy.StoreLegacyListValidationSetsCommand,
+            commands.legacy.StoreLegacyValidateCommand,
+            commands.legacy.StoreLegacyGatedCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Other",
         [
-            commands.VersionCommand,
-            commands.LintCommand,
-            commands.InitCommand,
+            commands.core22.LintCommand,
+            commands.core22.InitCommand,
         ],
     ),
 ]
@@ -197,24 +196,21 @@ def get_dispatcher() -> craft_cli.Dispatcher:
         COMMAND_GROUPS,
         summary="Package, distribute, and update snaps for Linux and IoT",
         extra_global_args=GLOBAL_ARGS,
-        default_command=commands.PackCommand,
+        default_command=commands.core22.PackCommand,
     )
 
 
 def _run_dispatcher(
     dispatcher: craft_cli.Dispatcher, global_args: Dict[str, Any]
 ) -> None:
-    if global_args.get("version"):
-        emit.message(f"snapcraft {__version__}")
-    else:
-        if global_args.get("trace"):
-            emit.message(
-                "Options -t and --trace are deprecated, use --verbosity=debug instead."
-            )
-            emit.set_mode(EmitterMode.DEBUG)
+    if global_args.get("trace"):
+        emit.message(
+            "Options -t and --trace are deprecated, use --verbosity=debug instead."
+        )
+        emit.set_mode(EmitterMode.DEBUG)
 
-        dispatcher.load_command(None)
-        dispatcher.run()
+    dispatcher.load_command(None)
+    dispatcher.run()
     emit.ended_ok()
 
 

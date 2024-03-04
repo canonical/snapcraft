@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,27 +19,119 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import signal
 import sys
+from typing import Any, List, cast
 
+import craft_application.commands as craft_app_commands
+import craft_application.models
 import craft_cli
+import pydantic
 from craft_application import Application, AppMetadata, util
+from craft_application.models import BuildInfo
 from craft_cli import emit
+from craft_providers import bases
 from overrides import override
 
-from snapcraft import cli, errors, models, services
+from snapcraft import cli, commands, errors, models, services
 from snapcraft.commands import unimplemented
+from snapcraft.extensions import apply_extensions
+from snapcraft.models import Architecture
+from snapcraft.models.project import apply_root_packages, validate_architectures
+from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
+from snapcraft.utils import get_effective_base, get_host_architecture
+
+
+class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
+    """A project model that creates build plans."""
+
+    architectures: List[str | Architecture] = pydantic.Field(
+        default_factory=lambda: [get_host_architecture()]
+    )
+    base: str | None = None
+    build_base: str | None = None
+    name: str | None = None
+    project_type: str | None = pydantic.Field(default=None, alias="type")
+
+    @pydantic.validator("architectures", always=True)
+    def _validate_architecture_data(  # pylint: disable=no-self-argument
+        cls, architectures: list[str | Architecture]
+    ) -> list[Architecture]:
+        """Validate architecture data.
+
+        Most importantly, converts architecture strings into Architecture objects.
+        """
+        return validate_architectures(architectures)
+
+    def get_build_plan(self) -> List[BuildInfo]:
+        """Get the build plan for this project."""
+        build_plan: List[BuildInfo] = []
+
+        for arch in self.architectures:
+            # build_for will be a single element list
+            if isinstance(arch, Architecture):
+                build_on = arch.build_on
+                build_for = cast(list[str], arch.build_for)[0]
+            else:
+                build_on = arch
+                build_for = arch
+
+            # TODO: figure out when to filter `all`
+            if build_for == "all":
+                build_for = get_host_architecture()
+
+            # build on will be a list of archs
+            for build_on in cast(list[str], build_on):
+                base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
+                    str(
+                        get_effective_base(
+                            base=self.base,
+                            build_base=self.build_base,
+                            name=self.name,
+                            project_type=self.project_type,
+                        )
+                    )
+                ]
+                build_plan.append(
+                    BuildInfo(
+                        platform=f"ubuntu@{base.value}",
+                        build_on=build_on,
+                        build_for=build_for,
+                        base=bases.BaseName("ubuntu", base.value),
+                    )
+                )
+
+        return build_plan
+
 
 APP_METADATA = AppMetadata(
     name="snapcraft",
     summary="Package, distribute, and update snaps for Linux and IoT",
     ProjectClass=models.Project,
+    BuildPlannerClass=SnapcraftBuildPlanner,
     source_ignore_patterns=["*.snap"],
+    project_variables=["version", "grade"],
+    mandatory_adoptable_fields=["version", "summary", "description"],
 )
+
+
+MAPPED_ENV_VARS = {
+    ev: "SNAP" + ev for ev in ("CRAFT_BUILD_FOR", "CRAFT_BUILD_ENVIRONMENT")
+}
 
 
 class Snapcraft(Application):
     """Snapcraft application definition."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Whether we know that we should use the core24-based codepath.
+        self._known_core24 = False
+
+        for craft_var, snapcraft_var in MAPPED_ENV_VARS.items():
+            if env_val := os.getenv(snapcraft_var):
+                os.environ[craft_var] = env_val
 
     @override
     def _configure_services(self, platform: str | None, build_for: str | None) -> None:
@@ -55,10 +147,31 @@ class Snapcraft(Application):
         # TODO: Remove this once we've got lifecycle commands and version migrated.
         return self._command_groups
 
-    def run(self) -> int:
-        """Fall back to the old snapcraft entrypoint."""
-        self._get_dispatcher()
-        raise errors.ClassicFallback()
+    def _resolve_project_path(self, project_dir: pathlib.Path | None) -> pathlib.Path:
+        """Overridden to handle the two possible locations for snapcraft.yaml."""
+        if project_dir is None:
+            project_dir = pathlib.Path.cwd()
+
+        try:
+            return super()._resolve_project_path(project_dir / "snap")
+        except FileNotFoundError:
+            return super()._resolve_project_path(project_dir)
+
+    @property
+    def app_config(self) -> dict[str, Any]:
+        """Overridden to add "core" knowledge to the config."""
+        config = super().app_config
+        config["core24"] = self._known_core24
+        return config
+
+    @override
+    def _extra_yaml_transform(
+        self, yaml_data: dict[str, Any], *, build_on: str, build_for: str | None
+    ) -> dict[str, Any]:
+        arch = build_on
+        target_arch = build_for if build_for else get_host_architecture()
+        new_yaml_data = apply_extensions(yaml_data, arch=arch, target_arch=target_arch)
+        return apply_root_packages(new_yaml_data)
 
     @override
     def _get_dispatcher(self) -> craft_cli.Dispatcher:
@@ -68,18 +181,27 @@ class Snapcraft(Application):
 
         :returns: A ready-to-run Dispatcher object
         """
-        # Set the logging level to DEBUG for all craft-libraries. This is OK even if
-        # the specific application doesn't use a specific library, the call does not
-        # import the package.
-        util.setup_loggers(*self._cli_loggers)
-
-        craft_cli.emit.init(
-            mode=craft_cli.EmitterMode.BRIEF,
-            appname=self.app.name,
-            greeting=f"Starting {self.app.name}",
-            log_filepath=self.log_path,
-            streaming_brief=True,
-        )
+        # Handle "multiplexing" of Snapcraft "codebases" depending on the
+        # project's base (if any). Here, we handle the case where there *is*
+        # a project and it's core24, which means it should definitely fall into
+        # the craft-application-based flow.
+        try:
+            existing_project = self._resolve_project_path(None)
+        except FileNotFoundError:
+            # No project file - don't know if we should use core24 code or not.
+            pass
+        else:
+            with existing_project.open() as file:
+                yaml_data = util.safe_yaml_load(file)
+            base = yaml_data.get("base")
+            build_base = yaml_data.get("build-base")
+            if "core24" in (base, build_base) or build_base == "devel":
+                # We know for sure that we're handling a core24 project
+                self._known_core24 = True
+            elif any(arg in ("version", "--version", "-V") for arg in sys.argv):
+                pass
+            else:
+                raise errors.ClassicFallback()
 
         dispatcher = craft_cli.Dispatcher(
             self.app.name,
@@ -88,25 +210,19 @@ class Snapcraft(Application):
             extra_global_args=self._global_arguments,
             # TODO: craft-application should allow setting the default command without
             # overriding `_get_dispatcher()`
-            default_command=unimplemented.Pack,
+            default_command=craft_app_commands.lifecycle.PackCommand,
         )
 
         try:
             craft_cli.emit.trace("pre-parsing arguments...")
             # Workaround for the fact that craft_cli requires a command.
             # https://github.com/canonical/craft-cli/issues/141
-            if "--version" in sys.argv or "-V" in sys.argv:
-                try:
-                    global_args = dispatcher.pre_parse_args(["pull", *sys.argv[1:]])
-                except craft_cli.ArgumentParsingError:
-                    global_args = dispatcher.pre_parse_args(sys.argv[1:])
+            if any(arg in ("--version", "-V") for arg in sys.argv) and (
+                "version" not in sys.argv
+            ):
+                global_args = dispatcher.pre_parse_args(["version", *sys.argv[1:]])
             else:
                 global_args = dispatcher.pre_parse_args(sys.argv[1:])
-
-            if global_args.get("version"):
-                craft_cli.emit.ended_ok()
-                print(f"{self.app.name} {self.app.version}")
-                sys.exit(0)
         except craft_cli.ProvideHelpException as err:
             print(err, file=sys.stderr)  # to stderr, as argparse normally does
             craft_cli.emit.ended_ok()
@@ -135,27 +251,27 @@ class Snapcraft(Application):
         return dispatcher
 
 
-def main() -> int:
-    """Run craft-application based snapcraft with classic fallback."""
-    util.setup_loggers(
-        "craft_parts", "craft_providers", "craft_store", "snapcraft.remote"
-    )
-
+def create_app() -> Snapcraft:
+    """Create a Snapcraft application with the proper commands."""
     snapcraft_services = services.SnapcraftServiceFactory(app=APP_METADATA)
 
-    app = Snapcraft(app=APP_METADATA, services=snapcraft_services)
+    app = Snapcraft(
+        app=APP_METADATA,
+        services=snapcraft_services,
+        extra_loggers={"snapcraft.remote"},
+    )
 
     app.add_command_group(
         "Lifecycle",
         [
-            unimplemented.Clean,
-            unimplemented.Pull,
-            unimplemented.Build,
-            unimplemented.Stage,
-            unimplemented.Prime,
-            unimplemented.Pack,
+            craft_app_commands.lifecycle.CleanCommand,
+            craft_app_commands.lifecycle.PullCommand,
+            craft_app_commands.lifecycle.BuildCommand,
+            craft_app_commands.lifecycle.StageCommand,
+            craft_app_commands.lifecycle.PrimeCommand,
+            craft_app_commands.lifecycle.PackCommand,
+            commands.SnapCommand,  # Hidden (legacy compatibility)
             unimplemented.RemoteBuild,
-            unimplemented.Snap,  # Hidden (legacy compatibility)
             unimplemented.Plugins,
             unimplemented.ListPlugins,
             unimplemented.Try,
@@ -164,9 +280,8 @@ def main() -> int:
     app.add_command_group(
         "Extensions",
         [
-            unimplemented.ListExtensions,
-            unimplemented.Extensions,
-            unimplemented.ExpandExtensions,
+            commands.ListExtensions,
+            commands.ExpandExtensions,
         ],
     )
     app.add_command_group(
@@ -230,12 +345,19 @@ def main() -> int:
     )
     app.add_command_group(
         "Other",
-        [
-            unimplemented.Version,
+        list(craft_app_commands.get_other_command_group().commands)
+        + [
             unimplemented.Lint,
             unimplemented.Init,
         ],
     )
+
+    return app
+
+
+def main() -> int:
+    """Run craft-application based snapcraft with classic fallback."""
+    app = create_app()
 
     try:
         return app.run()

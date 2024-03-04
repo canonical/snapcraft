@@ -16,20 +16,22 @@
 
 """Project file definition and helpers."""
 
+import copy
 import re
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union, cast
 
 import pydantic
 from craft_application import models
-from craft_application.models import BuildInfo, UniqueStrList
-from craft_archives import repo
+from craft_application.models import BuildInfo, UniqueStrList, VersionStr
 from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
+from craft_providers import bases
 from pydantic import PrivateAttr, constr
 
-from snapcraft import parts, utils
+from snapcraft import utils
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
+from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_effective_base,
@@ -43,10 +45,8 @@ from snapcraft.utils import (
 # fmt: off
 if TYPE_CHECKING:
     ProjectName = str
-    ProjectVersion = str
 else:
     ProjectName = constr(max_length=40)
-    ProjectVersion = constr(max_length=32, strict=True)
 # fmt: on
 
 
@@ -63,7 +63,7 @@ def _validate_command_chain(command_chains: Optional[List[str]]) -> Optional[Lis
     return command_chains
 
 
-def _validate_architectures(architectures):
+def validate_architectures(architectures):
     """Expand and validate architecture data.
 
     Validation includes:
@@ -168,6 +168,34 @@ def _validate_architectures_all_keyword(architectures):
                 f" {len(architectures)} items: upon release they will conflict."
                 "'all' should only be used if there is a single item"
             )
+
+
+def apply_root_packages(yaml_data: dict[str, Any]) -> dict[str, Any]:
+    """Create a new part with root level attributes.
+
+    Root level attributes such as build-packages and build-snaps
+    are known to Snapcraft but not Craft Parts. Create a new part
+    "snapcraft/core" with these attributes and apply it to the
+    current yaml_data.
+    """
+    if "build-packages" not in yaml_data and "build-snaps" not in yaml_data:
+        return yaml_data
+
+    yaml_data = copy.deepcopy(yaml_data)
+    yaml_data.setdefault("parts", {})
+    yaml_data["parts"]["snapcraft/core"] = {"plugin": "nil"}
+
+    if "build-packages" in yaml_data:
+        yaml_data["parts"]["snapcraft/core"]["build-packages"] = yaml_data.pop(
+            "build-packages"
+        )
+
+    if "build-snaps" in yaml_data:
+        yaml_data["parts"]["snapcraft/core"]["build-snaps"] = yaml_data.pop(
+            "build-snaps"
+        )
+
+    return yaml_data
 
 
 class Socket(models.CraftBaseModel):
@@ -414,9 +442,7 @@ class Project(models.Project):
     name: ProjectName  # type: ignore[assignment]
     build_base: Optional[str]
     compression: Literal["lzo", "xz"] = "xz"
-    # TODO: ensure we have a test for version being retrieved using adopt-info
-    # snapcraft's `version` is more general than craft-application
-    version: Optional[ProjectVersion]  # type: ignore[assignment]
+    version: Optional[VersionStr]  # type: ignore[assignment]
     donation: Optional[Union[str, UniqueStrList]]
     # snapcraft's `source_code` is more general than craft-application
     source_code: Optional[str]  # type: ignore[assignment]
@@ -430,7 +456,7 @@ class Project(models.Project):
     grade: Optional[Literal["stable", "devel"]]
     architectures: List[Union[str, Architecture]] = [get_host_architecture()]
     assumes: UniqueStrList = cast(UniqueStrList, [])
-    package_repositories: List[Dict[str, Any]] = []  # handled by repo
+    package_repositories: Optional[List[Dict[str, Any]]]
     hooks: Optional[Dict[str, Hook]]
     passthrough: Optional[Dict[str, Any]]
     apps: Optional[Dict[str, App]]
@@ -501,7 +527,9 @@ class Project(models.Project):
     def _validate_adoptable_fields(cls, values):
         for field in MANDATORY_ADOPTABLE_FIELDS:
             if field not in values and "adopt-info" not in values:
-                raise ValueError(f"Snap {field} is required if not using adopt-info")
+                raise ValueError(
+                    f"Required field '{field}' is not set and 'adopt-info' not used."
+                )
         return values
 
     @pydantic.root_validator(pre=True)
@@ -587,20 +615,6 @@ class Project(models.Project):
             build_base = values.get("base")
         return build_base
 
-    @pydantic.validator("package_repositories", each_item=True)
-    @classmethod
-    def _validate_package_repositories(cls, item):
-        """Ensure package-repositories format is correct."""
-        repo.validate_repository(item)
-        return item
-
-    @pydantic.validator("parts", each_item=True)
-    @classmethod
-    def _validate_parts(cls, item):
-        """Verify each part (craft-parts will re-validate this)."""
-        parts.validate_part(item)
-        return item
-
     @pydantic.validator("epoch")
     @classmethod
     def _validate_epoch(cls, epoch):
@@ -616,7 +630,7 @@ class Project(models.Project):
     @classmethod
     def _validate_architecture_data(cls, architectures):
         """Validate architecture data."""
-        return _validate_architectures(architectures)
+        return validate_architectures(architectures)
 
     @pydantic.validator("provenance")
     @classmethod
@@ -737,8 +751,31 @@ class Project(models.Project):
 
     def get_build_plan(self) -> List[BuildInfo]:
         """Get the build plan for this project."""
-        # TODO
-        raise NotImplementedError("Not implemented yet!")
+        build_plan: List[BuildInfo] = []
+
+        architectures = cast(List[Architecture], self.architectures)
+
+        for arch in architectures:
+            # build_for will be a single element list
+            build_for = cast(list, arch.build_for)[0]
+
+            # TODO: figure out when to filter `all`
+            if build_for == "all":
+                build_for = get_host_architecture()
+
+            # build on will be a list of archs
+            for build_on in arch.build_on:
+                base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[self.get_effective_base()]
+                build_plan.append(
+                    BuildInfo(
+                        platform=f"ubuntu@{base.value}",
+                        build_on=build_on,
+                        build_for=build_for,
+                        base=bases.BaseName("ubuntu", base.value),
+                    )
+                )
+
+        return build_plan
 
 
 class _GrammarAwareModel(pydantic.BaseModel):
@@ -784,7 +821,7 @@ class ArchitectureProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
     @classmethod
     def _validate_architecture_data(cls, architectures):
         """Validate architecture data."""
-        return _validate_architectures(architectures)
+        return validate_architectures(architectures)
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "ArchitectureProject":

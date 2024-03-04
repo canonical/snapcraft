@@ -1,0 +1,26 @@
+summary: Test manifest file creation
+
+environment:
+  CMD/cmdline: snapcraft --enable-manifest
+  CMD/envvars: env SNAPCRAFT_BUILD_INFO=y snapcraft
+
+prepare: |
+  snap install review-tools
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+  rm -f ~/manifest_0.1_*.snap
+
+execute: |
+  # If this next line fails, delete it and replace it with the one following it
+  $CMD 2>&1 | MATCH 'unrecognized arguments: --enable-manifest'; exit 0
+  # $CMD
+
+  test -f manifest_0.1_*.snap
+  test -f prime/snap/manifest.yaml
+  test "$(grep -c -- '^ *- hello=[0-9]' prime/snap/manifest.yaml)" -eq 2
+  cmp snap/snapcraft.yaml prime/snap/snapcraft.yaml
+
+  cp manifest_0.1_*.snap ~
+  review-tools.snap-review ~/manifest_0.1_*.snap

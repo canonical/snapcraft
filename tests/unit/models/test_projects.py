@@ -29,6 +29,7 @@ from snapcraft.models import (
     Hook,
     Project,
 )
+from snapcraft.models.project import apply_root_packages
 from snapcraft.utils import get_host_architecture
 
 
@@ -89,7 +90,7 @@ class TestProjectDefaults:
         assert project.icon is None
         assert project.layout is None
         assert project.license is None
-        assert project.package_repositories == []
+        assert project.package_repositories is None
         assert project.assumes == []
         assert project.hooks is None
         assert project.passthrough is None
@@ -188,7 +189,7 @@ class TestProjectValidation:
     def test_adoptable_fields(self, field, project_yaml_data):
         data = project_yaml_data()
         data.pop(field)
-        error = f"Snap {field} is required if not using adopt-info"
+        error = f"Required field '{field}' is not set and 'adopt-info' not used."
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(data)
 
@@ -203,6 +204,7 @@ class TestProjectValidation:
     @pytest.mark.parametrize("field", MANDATORY_ADOPTABLE_FIELDS)
     def test_adoptable_field_assignment(self, field, project_yaml_data):
         data = project_yaml_data()
+        data["adopt-info"] = "part1"
         project = Project.unmarshal(data)
         setattr(project, field, None)
 
@@ -256,59 +258,18 @@ class TestProjectValidation:
         project = Project.unmarshal(project_yaml_data(version=version))
         assert project.version == version
 
-    @pytest.mark.parametrize(
-        "version,error",
-        [
-            (
-                "1_0",
-                "Invalid version '1_0': Snap versions consist of",
-            ),  # _ is an invalid character
-            (
-                "1=1",
-                "Invalid version '1=1': Snap versions consist of",
-            ),  # = is an invalid character
-            (
-                ".1",
-                "Invalid version '.1': Snap versions consist of",
-            ),  # cannot start with period
-            (
-                ":1",
-                "Invalid version ':1': Snap versions consist of",
-            ),  # cannot start with colon
-            (
-                "+1",
-                r"Invalid version '\+1': Snap versions consist of",
-            ),  # cannot start with plus sign
-            # escaping + from the regex string to match.
-            (
-                "~1",
-                "Invalid version '~1': Snap versions consist of",
-            ),  # cannot start with tilde
-            (
-                "-1",
-                "Invalid version '-1': Snap versions consist of",
-            ),  # cannot start with hyphen
-            (
-                "1.",
-                "Invalid version '1.': Snap versions consist of",
-            ),  # cannot end with period
-            (
-                "1:",
-                "Invalid version '1:': Snap versions consist of",
-            ),  # cannot end with colon
-            (
-                "1-",
-                "Invalid version '1-': Snap versions consist of",
-            ),  # cannot end with hyphen
-            (
-                "123456789012345678901234567890123",
-                "ensure this value has at most 32 characters",
-            ),  # too large
-        ],
-    )
-    def test_project_version_invalid(self, version, error, project_yaml_data):
-        with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(version=version))
+    def test_project_version_invalid(self, project_yaml_data):
+        # We only test one invalid version as this model is inherited
+        # from Craft Application.
+        with pytest.raises(errors.ProjectValidationError) as raised:
+
+            Project.unmarshal(project_yaml_data(version="1=1"))
+
+        assert str(raised.value) == (
+            "Bad snapcraft.yaml content:\n- string does not match regex "
+            '"^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$" '
+            "(in field 'version')"
+        )
 
     @pytest.mark.parametrize(
         "snap_type",
@@ -1781,3 +1742,32 @@ class TestArchitecture:
         arch_triplet = project.get_build_for_arch_triplet()
 
         assert not arch_triplet
+
+
+class TestApplyRootPackages:
+    """Test Transform the Project."""
+
+    def test_apply_root_packages(self, project_yaml_data):
+        """Test creating a part with root level build-packages and build-snaps."""
+        data = project_yaml_data()
+        data["build-packages"] = ["pkg1", "pkg2"]
+        data["build-snaps"] = ["snap3", "snap4"]
+
+        data_transformed = apply_root_packages(data)
+
+        project = Project.unmarshal(data_transformed)
+
+        assert project.parts["snapcraft/core"]["build-packages"] == ["pkg1", "pkg2"]
+        assert project.parts["snapcraft/core"]["build-snaps"] == ["snap3", "snap4"]
+
+    def test_root_packages_transform_no_affect(self, project_yaml_data):
+        """Test that nothing is applied if there are not build-packages or build-snaps."""
+        data = project_yaml_data()
+
+        data_transformed = apply_root_packages(data)
+
+        project = Project.unmarshal(data_transformed)
+
+        assert project.build_packages is None
+        assert project.build_snaps is None
+        assert "snapcraft/core" not in project.parts

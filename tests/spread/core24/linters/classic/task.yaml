@@ -1,0 +1,13 @@
+summary: Test classic linter output
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap ./*.txt
+
+execute: |
+  snapcraft 2> output.txt
+
+  test -f classic-linter-test_0.1_*.snap
+
+  sed -n '/^Running linters/,/^Creating snap/p' < output.txt > linter_output.txt
+  diff -u linter_output.txt expected_linter_output.txt

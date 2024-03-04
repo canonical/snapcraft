@@ -71,7 +71,7 @@ def fake_extension():
 
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core22",)
+            return ("core22", "core24")
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -367,3 +367,105 @@ def fake_provider(mock_instance):
             yield mock_instance
 
     return FakeProvider()
+
+
+@pytest.fixture()
+def extra_project_params():
+    """Configuration fixture for the Project used by the default services."""
+    return {"confinement": "devmode"}
+
+
+# The factory setup from CraftApplication is imported at the fixture level.
+# pylint: disable=import-outside-toplevel
+
+
+@pytest.fixture()
+def default_project(extra_project_params):
+    from craft_application.models import SummaryStr, VersionStr
+
+    from snapcraft.models.project import Project
+
+    parts = extra_project_params.pop("parts", {})
+
+    return Project(
+        name="default",
+        version=VersionStr("1.0"),
+        summary=SummaryStr("default project"),
+        description="default project",
+        base="core24",
+        build_base="devel",
+        grade="devel",
+        parts=parts,
+        license="MIT",
+        **extra_project_params,
+    )
+
+
+@pytest.fixture()
+def default_factory(default_project):
+    from snapcraft.application import APP_METADATA
+    from snapcraft.services import SnapcraftServiceFactory
+
+    factory = SnapcraftServiceFactory(
+        app=APP_METADATA,
+        project=default_project,
+    )
+    return factory
+
+
+@pytest.fixture()
+def default_build_plan():
+    from craft_application.models import BuildInfo
+    from craft_providers import bases
+
+    return [
+        BuildInfo(
+            platform="generic-x86-64",
+            build_on="amd64",
+            build_for="amd64",
+            base=bases.BaseName("ubuntu", "24.04"),
+        )
+    ]
+
+
+@pytest.fixture()
+def lifecycle_service(default_project, default_factory, default_build_plan, tmp_path):
+    from snapcraft.application import APP_METADATA
+    from snapcraft.services import Lifecycle
+
+    return Lifecycle(
+        app=APP_METADATA,
+        project=default_project,
+        services=default_factory,
+        work_dir=tmp_path / "work",
+        cache_dir=tmp_path / "cache",
+        build_plan=default_build_plan,
+    )
+
+
+@pytest.fixture()
+def package_service(default_project, default_factory):
+    from snapcraft.application import APP_METADATA
+    from snapcraft.services import Package
+
+    return Package(
+        app=APP_METADATA,
+        project=default_project,
+        services=default_factory,
+        platform="amd64",
+        build_for="amd64",
+    )
+
+
+# pylint: enable=import-outside-toplevel
+
+
+@pytest.fixture()
+def fake_services(default_factory, lifecycle_service, package_service):
+    lifecycle_service.setup()
+    default_factory.lifecycle = lifecycle_service
+
+    package_service.setup()
+    default_factory.package = package_service
+
+    return default_factory

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,13 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from argparse import Namespace
-
-from snapcraft import __version__
-from snapcraft.commands.version import VersionCommand
+"""Tests for the Snapcraft Lifecycle service."""
 
 
-def test_version_command(emitter):
-    cmd = VersionCommand(None)
-    cmd.run(Namespace())
-    emitter.assert_message(f"snapcraft {__version__}")
+def test_lifecycle_installs_base(lifecycle_service, mocker):
+    install_snaps = mocker.patch("craft_parts.packages.snaps.install_snaps")
+
+    lifecycle_service.setup()
+    lifecycle_service.run("pull")
+
+    info = lifecycle_service.project_info
+    assert info.base == "core24"
+    install_snaps.assert_called_once_with(
+        {"core24"},
+    )

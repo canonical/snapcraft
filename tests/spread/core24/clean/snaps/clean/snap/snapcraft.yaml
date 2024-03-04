@@ -1,0 +1,15 @@
+name: clean
+version: '1.0'
+summary: test
+description: test
+grade: devel
+confinement: strict
+base: core24
+build-base: devel
+
+parts:
+  part1:
+    plugin: nil
+
+  part2:
+    plugin: nil
