@@ -58,7 +58,7 @@ execute: |
     done
 
     # Connect the content sharing snap
-    snap connect "${SNAP}":ros-noetic ros-noetic-ros-core
+    snap connect "${SNAP}":ros-noetic-ros-core ros-noetic-ros-core
   fi
 
   [ "$($SNAP)" = "hello world" ]
