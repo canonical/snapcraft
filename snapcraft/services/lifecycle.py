@@ -67,20 +67,7 @@ class Lifecycle(LifecycleService):
         )
         super().setup()
 
-    @overrides
-    def run(self, step_name: str | None, part_names: list[str] | None = None) -> None:
-        super().run(step_name, part_names)
-
-        enable_manifest = utils.strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n"))
-        if enable_manifest:
-            self._manifest = self._generate_manifest()
-
-    @property
-    def manifest(self) -> models.Manifest:
-        """Obtain the snap build manifest data."""
-        return self._manifest
-
-    def _generate_manifest(self) -> models.Manifest:
+    def generate_manifest(self) -> models.Manifest:
         """Create and populate the manifest file."""
         primed_stage_packages: set[str] = set()
 

@@ -100,7 +100,8 @@ class Package(PackageService):
             snap_dir = path / "snap"
             snap_dir.mkdir(parents=True, exist_ok=True)
             lifecycle = cast(Lifecycle, self._services.lifecycle)
-            lifecycle.manifest.to_yaml_file(snap_dir / "manifest.yaml")
+            manifest = lifecycle.generate_manifest()
+            manifest.to_yaml_file(snap_dir / "manifest.yaml")
 
             shutil.copy(self._project_path, snap_dir)
 
