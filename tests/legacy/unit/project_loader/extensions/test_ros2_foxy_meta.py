@@ -72,9 +72,9 @@ class TestClass:
                 }
             ],
             "plugs": {
-                "ros-foxy": {
+                meta: {
                     "interface": "content",
-                    "content": "ros-foxy",
+                    "content": meta,
                     "target": "$SNAP/opt/ros/underlay_ws",
                     "default-provider": meta,
                 }
