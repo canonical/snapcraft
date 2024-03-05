@@ -10,15 +10,6 @@ environment:
   SNAP/test_foreign_armhf: test-foreign-armhf
   SNAP/test_foreign_i386: test-foreign-i386
 
-prepare: |
-  # Workaround to be able to test the snaps
-  if snap install core24; then
-    echo Remove this workaround
-    exit 1
-  else
-    snap install core24 --edge
-  fi
-
 restore: |
   cd "$SNAP"
   rm -f ./*.snap

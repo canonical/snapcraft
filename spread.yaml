@@ -278,6 +278,15 @@ suites:
      - ubuntu-24.04*
    environment:
      SNAPCRAFT_BUILD_ENVIRONMENT: ""
+   prepare: |
+     # Workaround to be able to test the snaps
+     if snap install core24; then
+       echo Remove this workaround
+       exit 1
+     else
+       snap install core24 --edge
+     fi
+
 
  tests/spread/core24/environment/:
    summary: core24 environment tests

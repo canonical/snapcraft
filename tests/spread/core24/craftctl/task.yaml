@@ -23,6 +23,5 @@ execute: |
   cd "$SNAP"
   snapcraft --verbose --destructive-mode
   TESTBIN="${SNAP##*test-}"
-  snap install --edge core24
   snap install craftctl-*.snap --dangerous
   $TESTBIN | grep hello
