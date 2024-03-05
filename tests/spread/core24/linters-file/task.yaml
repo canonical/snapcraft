@@ -1,0 +1,20 @@
+summary: Run snapcraft lint on a snap file.
+
+environment:
+  SNAP: lint-file
+
+restore: |
+  cd "${SNAP}"
+  rm -f ./*.snap ./*.assert ./linter_output.txt
+  rm -f ./*.snap
+
+execute: |
+  # build the test snap destructively to save time
+  snapcraft --destructive-mode
+
+  snapcraft lint lint-file_0.1_*.snap 2> output.txt
+
+  # get the lint warnings at end of the log file
+  sed -n '/Running linters.../,+4 p' < output.txt > linter-output.txt
+
+  diff -u linter-output.txt expected-linter-output.txt
