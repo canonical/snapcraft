@@ -16,8 +16,8 @@ parts:
       - test-ppa
 
 apps:
-    test-ppa:
-      command: usr/bin/test-ppa
+  test-apt-ppa:
+    command: usr/bin/test-ppa
 
 package-repositories:
   - type: apt

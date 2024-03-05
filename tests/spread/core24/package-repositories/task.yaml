@@ -7,6 +7,8 @@ environment:
   SNAP/test_apt_ppa: test-apt-ppa
   SNAP/test_pin: test-pin
   SNAP/test_multi_keys: test-multi-keys
+  SNAP/test_foreign_armhf: test-foreign-armhf
+  SNAP/test_foreign_i386: test-foreign-i386
   SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
 prepare: |
@@ -33,8 +35,9 @@ execute: |
 
   # And verify the snap runs as expected.
   snap install "${SNAP}"_1.0_*.snap --dangerous
-  snap_executable="${SNAP}.test-ppa"
-  [ "$("${snap_executable}")" = "hello!" ]
+  # Exclamation mark is not allowed in command, so do a
+  # more relaxed match
+  "${SNAP}" | MATCH hello
 
   snap remove "${SNAP}"
   rm -f ./*.snap
@@ -44,5 +47,6 @@ execute: |
 
   # And verify the snap runs as expected.
   snap install "${SNAP}"_1.0_*.snap --dangerous
-  snap_executable="${SNAP}.test-ppa"
-  [ "$("${snap_executable}")" = "hello!" ]
+  # Exclamation mark is not allowed in command, so do a
+  # more relaxed match
+  "${SNAP}" | MATCH hello

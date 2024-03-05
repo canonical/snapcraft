@@ -1,4 +1,4 @@
-name: test-archs
+name: test-foreign-armhf
 version: '1.0'
 summary: test package repos with different architectures
 description: test package repos with different architectures
@@ -34,6 +34,11 @@ parts:
       - file
     stage-packages:
       - libpython3.11-minimal:armhf
+      - hello
     override-build: |
       file ${CRAFT_PART_INSTALL}/usr/lib/arm-linux-gnueabihf/libssl.so.3 | grep "ARM"
       craftctl default
+
+apps:
+  test-foreign-armhf:
+    command: usr/bin/hello -g hello
