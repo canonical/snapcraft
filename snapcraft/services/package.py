@@ -47,14 +47,14 @@ class Package(PackageService):
         services: SnapcraftServiceFactory,
         *,
         project: models.Project,
-        project_path: pathlib.Path,
+        snapcraft_yaml_path: pathlib.Path,
         platform: str | None,
         build_for: str,
     ) -> None:
         super().__init__(app, services, project=project)
         self._platform = platform
         self._build_for = build_for
-        self._project_path = project_path
+        self._snapcraft_yaml_path = snapcraft_yaml_path
 
     @override
     def pack(self, prime_dir: pathlib.Path, dest: pathlib.Path) -> list[pathlib.Path]:
@@ -103,7 +103,7 @@ class Package(PackageService):
             manifest = lifecycle.generate_manifest()
             manifest.to_yaml_file(snap_dir / "manifest.yaml")
 
-            shutil.copy(self._project_path, snap_dir)
+            shutil.copy(self._snapcraft_yaml_path, snap_dir)
 
     @property
     def metadata(self) -> snap_yaml.SnapMetadata:

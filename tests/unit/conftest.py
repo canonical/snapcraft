@@ -472,7 +472,7 @@ def package_service(default_project, default_factory, snapcraft_yaml, tmp_path):
         app=APP_METADATA,
         project=default_project,
         services=default_factory,
-        project_path=file_path,
+        snapcraft_yaml_path=file_path,
         platform="amd64",
         build_for="amd64",
     )

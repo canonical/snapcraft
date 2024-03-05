@@ -151,7 +151,7 @@ class Snapcraft(Application):
             "package",
             platform=platform,
             build_for=build_for,
-            project_path=self._snapcraft_yaml_path,
+            snapcraft_yaml_path=self._snapcraft_yaml_path,
         )
 
         super()._configure_services(platform, build_for)

@@ -57,10 +57,10 @@ def test_pack_target_arch(default_project, default_factory, mocker, tmp_path):
         services=default_factory,
         platform="amd64",
         build_for="s390x",
-        project_path=tmp_path,
+        snapcraft_yaml_path=tmp_path / "snapcraft.yaml",
     )
 
-    package_service.pack(prime_dir=Path("prime"), dest=Path())
+    package_service.pack(prime_dir=tmp_path / "prime", dest=tmp_path)
 
     assert mock_pack_snap.call_args.kwargs["target_arch"] == "s390x"
 
