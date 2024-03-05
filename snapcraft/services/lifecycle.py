@@ -122,5 +122,5 @@ class Lifecycle(LifecycleService):
             # Build environment
             build_packages=[],
             build_snaps=[],
-            primed_stage_packages=list(primed_stage_packages),
+            primed_stage_packages=sorted(primed_stage_packages),
         )
