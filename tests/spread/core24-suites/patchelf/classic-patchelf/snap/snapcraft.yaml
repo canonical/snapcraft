@@ -29,7 +29,7 @@ parts:
       - libcurl4-openssl-dev
       - patchelf
     override-build: |
-      snapcraftctl build
+      craftctl default
       mv $CRAFT_PART_INSTALL/bin/hello-classic $CRAFT_PART_INSTALL/bin/hello-classic-existing-rpath
       patchelf --force-rpath --set-rpath "\$ORIGIN/../fake-lib" $CRAFT_PART_INSTALL/bin/hello-classic-existing-rpath
   hello-no-patchelf:
@@ -39,5 +39,5 @@ parts:
       - gcc
       - libcurl4-openssl-dev
     override-build: |
-      snapcraftctl build
+      craftctl default
       mv $CRAFT_PART_INSTALL/bin/hello-classic $CRAFT_PART_INSTALL/bin/hello-classic-no-patchelf
