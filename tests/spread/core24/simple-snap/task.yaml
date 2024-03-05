@@ -8,6 +8,5 @@ restore: |
 execute: |
   cd "./snap"
   snapcraft pack
-  snap install --edge core24
   snap install --dangerous ./*.snap
   /snap/bin/simple-snap.hello
