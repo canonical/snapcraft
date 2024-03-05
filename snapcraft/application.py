@@ -134,9 +134,9 @@ class Snapcraft(Application):
         # the package service to copy the project file into the snap payload if
         # manifest generation is enabled.
         try:
-            self._project_path: pathlib.Path | None = self._resolve_project_path(None)
+            self._snapcraft_yaml_path: pathlib.Path | None = self._resolve_project_path(None)
         except FileNotFoundError:
-            self._project_path = None
+            self._snapcraft_yaml_path = None
 
         for craft_var, snapcraft_var in MAPPED_ENV_VARS.items():
             if env_val := os.getenv(snapcraft_var):
@@ -151,7 +151,7 @@ class Snapcraft(Application):
             "package",
             platform=platform,
             build_for=build_for,
-            project_path=self._project_path,
+            project_path=self._snapcraft_yaml_path,
         )
 
         super()._configure_services(platform, build_for)
@@ -162,6 +162,7 @@ class Snapcraft(Application):
         # TODO: Remove this once we've got lifecycle commands and version migrated.
         return self._command_groups
 
+    @override
     def _resolve_project_path(self, project_dir: pathlib.Path | None) -> pathlib.Path:
         """Overridden to handle the two possible locations for snapcraft.yaml."""
         if project_dir is None:
@@ -203,8 +204,8 @@ class Snapcraft(Application):
         # project's base (if any). Here, we handle the case where there *is*
         # a project and it's core24, which means it should definitely fall into
         # the craft-application-based flow.
-        if self._project_path:
-            with self._project_path.open() as file:
+        if self._snapcraft_yaml_path:
+            with self._snapcraft_yaml_path.open() as file:
                 yaml_data = util.safe_yaml_load(file)
             base = yaml_data.get("base")
             build_base = yaml_data.get("build-base")
