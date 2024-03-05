@@ -288,17 +288,17 @@ suites:
      fi
 
 
- tests/spread/core24/environment/:
+ tests/spread/core24-suites/environment/:
    summary: core24 environment tests
    systems:
      - ubuntu-22.04*
 
- tests/spread/core24/scriptlets/:
+ tests/spread/core24-suites/scriptlets/:
    summary: core24 scriptlet tests
    systems:
      - ubuntu-22.04*
 
- tests/spread/core24/manifest/:
+ tests/spread/core24-suites/manifest/:
    summary: core24 manifest tests
    systems:
      - ubuntu-22.04*
@@ -308,7 +308,7 @@ suites:
    systems:
      - ubuntu-22.04*
 
- tests/spread/core24/patchelf/:
+ tests/spread/core24-suites/patchelf/:
    summary: core24 patchelf tests
    systems:
      - ubuntu-22.04*
