@@ -1,4 +1,4 @@
-name: test-archs
+name: test-foreign-i386
 version: '1.0'
 summary: test package repos with different architectures
 description: test package repos with different architectures
@@ -29,6 +29,11 @@ parts:
       - file
     stage-packages:
       - libpython3.11-minimal:i386
+      - hello
     override-build: |
       file ${CRAFT_PART_INSTALL}/usr/lib/i386-linux-gnu/libssl.so.3 | grep "ELF 32-bit"
       craftctl default
+
+apps:
+  test-foreign-i386:
+    command: usr/bin/hello -g hello
