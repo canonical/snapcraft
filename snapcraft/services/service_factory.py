@@ -35,6 +35,9 @@ class SnapcraftServiceFactory(ServiceFactory):
     LifecycleClass: type[services.Lifecycle] = (  # type: ignore[reportIncompatibleVariableOverride]
         services.Lifecycle
     )
+    ProviderClass: type[services.Provider] = (  # type: ignore[reportIncompatibleVariableOverride]
+        services.Provider
+    )
     PackageClass: type[services.Package] = (  # type: ignore[reportIncompatibleVariableOverride]
         services.Package
     )

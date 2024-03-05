@@ -18,10 +18,12 @@
 
 from snapcraft.services.lifecycle import Lifecycle
 from snapcraft.services.package import Package
+from snapcraft.services.provider import Provider
 from snapcraft.services.service_factory import SnapcraftServiceFactory
 
 __all__ = [
     "Lifecycle",
     "Package",
+    "Provider",
     "SnapcraftServiceFactory",
 ]

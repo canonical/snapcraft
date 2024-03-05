@@ -82,7 +82,7 @@ class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
                 build_for = get_host_architecture()
 
             # build on will be a list of archs
-            for build_on in cast(list[str], build_on):
+            for build_on_arch in cast(list[str], build_on):
                 base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
                     str(
                         get_effective_base(
@@ -96,7 +96,7 @@ class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
                 build_plan.append(
                     BuildInfo(
                         platform=f"ubuntu@{base.value}",
-                        build_on=build_on,
+                        build_on=build_on_arch,
                         build_for=build_for,
                         base=bases.BaseName("ubuntu", base.value),
                     )
@@ -129,6 +129,17 @@ class Snapcraft(Application):
         # Whether we know that we should use the core24-based codepath.
         self._known_core24 = False
 
+        # Locate the project file. It's used in early execution to determine
+        # compatibility with previous versions of the snapcraft codebase, and in
+        # the package service to copy the project file into the snap payload if
+        # manifest generation is enabled.
+        try:
+            self._snapcraft_yaml_path: pathlib.Path | None = self._resolve_project_path(
+                None
+            )
+        except FileNotFoundError:
+            self._snapcraft_yaml_path = None
+
         for craft_var, snapcraft_var in MAPPED_ENV_VARS.items():
             if env_val := os.getenv(snapcraft_var):
                 os.environ[craft_var] = env_val
@@ -138,7 +149,13 @@ class Snapcraft(Application):
         if build_for is None:
             build_for = util.get_host_architecture()
 
-        self.services.set_kwargs("package", platform=platform, build_for=build_for)
+        self.services.set_kwargs(
+            "package",
+            platform=platform,
+            build_for=build_for,
+            snapcraft_yaml_path=self._snapcraft_yaml_path,
+        )
+
         super()._configure_services(platform, build_for)
 
     @property
@@ -147,6 +164,7 @@ class Snapcraft(Application):
         # TODO: Remove this once we've got lifecycle commands and version migrated.
         return self._command_groups
 
+    @override
     def _resolve_project_path(self, project_dir: pathlib.Path | None) -> pathlib.Path:
         """Overridden to handle the two possible locations for snapcraft.yaml."""
         if project_dir is None:
@@ -155,7 +173,10 @@ class Snapcraft(Application):
         try:
             return super()._resolve_project_path(project_dir / "snap")
         except FileNotFoundError:
-            return super()._resolve_project_path(project_dir)
+            try:
+                return super()._resolve_project_path(project_dir)
+            except FileNotFoundError:
+                return super()._resolve_project_path(project_dir / "build-aux" / "snap")
 
     @property
     def app_config(self) -> dict[str, Any]:
@@ -185,13 +206,8 @@ class Snapcraft(Application):
         # project's base (if any). Here, we handle the case where there *is*
         # a project and it's core24, which means it should definitely fall into
         # the craft-application-based flow.
-        try:
-            existing_project = self._resolve_project_path(None)
-        except FileNotFoundError:
-            # No project file - don't know if we should use core24 code or not.
-            pass
-        else:
-            with existing_project.open() as file:
+        if self._snapcraft_yaml_path:
+            with self._snapcraft_yaml_path.open() as file:
                 yaml_data = util.safe_yaml_load(file)
             base = yaml_data.get("base")
             build_base = yaml_data.get("build-base")

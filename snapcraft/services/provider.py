@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,32 +13,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Data models for snapcraft."""
+"""Snapcraft Lifecycle Service."""
 
-from .manifest import Manifest
-from .project import (
-    MANDATORY_ADOPTABLE_FIELDS,
-    App,
-    Architecture,
-    ArchitectureProject,
-    ContentPlug,
-    GrammarAwareProject,
-    Hook,
-    Lint,
-    Project,
-    Socket,
-)
+import os
 
-__all__ = [
-    "MANDATORY_ADOPTABLE_FIELDS",
-    "App",
-    "Architecture",
-    "ArchitectureProject",
-    "ContentPlug",
-    "GrammarAwareProject",
-    "Hook",
-    "Lint",
-    "Manifest",
-    "Project",
-    "Socket",
-]
+from craft_application import ProviderService
+from overrides import overrides
+
+
+class Provider(ProviderService):
+    """Snapcraft specialization of the Lifecycle Service."""
+
+    @overrides
+    def setup(self) -> None:
+        if build_info := os.getenv("SNAPCRAFT_BUILD_INFO"):
+            self.environment["SNAPCRAFT_BUILD_INFO"] = build_info
+        if image_info := os.getenv("SNAPCRAFT_IMAGE_INFO"):
+            self.environment["SNAPCRAFT_IMAGE_INFO"] = image_info

@@ -429,7 +429,9 @@ def default_build_plan():
 
 
 @pytest.fixture()
-def lifecycle_service(default_project, default_factory, default_build_plan, tmp_path):
+def lifecycle_service(
+    default_project, default_factory, default_build_plan, snapcraft_yaml, tmp_path
+):
     from snapcraft.application import APP_METADATA
     from snapcraft.services import Lifecycle
 
@@ -444,14 +446,33 @@ def lifecycle_service(default_project, default_factory, default_build_plan, tmp_
 
 
 @pytest.fixture()
-def package_service(default_project, default_factory):
+def provider_service(default_project, default_factory, default_build_plan, tmp_path):
+    from snapcraft.application import APP_METADATA
+    from snapcraft.services import Provider as ProviderSvc
+
+    return ProviderSvc(
+        app=APP_METADATA,
+        services=default_factory,
+        project=default_project,
+        work_dir=tmp_path / "work",
+        build_plan=default_build_plan,
+        install_snap=False,
+    )
+
+
+@pytest.fixture()
+def package_service(default_project, default_factory, snapcraft_yaml, tmp_path):
     from snapcraft.application import APP_METADATA
     from snapcraft.services import Package
+
+    file_path = tmp_path / "snapcraft.yaml"
+    snapcraft_yaml(filename=file_path)
 
     return Package(
         app=APP_METADATA,
         project=default_project,
         services=default_factory,
+        snapcraft_yaml_path=file_path,
         platform="amd64",
         build_for="amd64",
     )
