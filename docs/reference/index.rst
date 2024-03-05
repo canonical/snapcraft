@@ -8,6 +8,9 @@ Reference
 
    architectures
    commands
+   plugins
+   part_properties
+   parts_steps
 
 Indices and tables
 ==================
