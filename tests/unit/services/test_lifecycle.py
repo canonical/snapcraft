@@ -92,6 +92,7 @@ def test_generate_manifest(
         build_packages=default_project.build_packages or [],
         build_snaps=default_project.build_snaps or [],
         primed_stage_packages=stage_packages,
+        apps=None,
     )
 
     assert lifecycle_service.get_pull_assets.mock_calls == [
