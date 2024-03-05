@@ -108,8 +108,8 @@ class Lifecycle(LifecycleService):
             # Project fields
             name=project.name,
             version=version,
-            summary=project.summary,  # type: ignore
-            description=project.description,  # type: ignore
+            summary=str(project.summary),
+            description=str(project.description),
             base=project.base,
             grade=project.grade or "stable",
             confinement=project.confinement,
