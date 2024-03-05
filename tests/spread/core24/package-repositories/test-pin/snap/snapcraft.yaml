@@ -7,6 +7,10 @@ confinement: strict
 base: core24
 build-base: devel
 
+apps:
+  test-pin:
+    command: usr/bin/test-ppa
+
 parts:
   test-ppa:
     plugin: nil
@@ -25,7 +29,3 @@ package-repositories:
     key-id: 78E1918602959B9C59103100F1831DDAFC42E99D
     url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu
     priority: 999
-
-apps:
-    test-ppa:
-      command: usr/bin/test-ppa
