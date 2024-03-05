@@ -303,11 +303,6 @@ suites:
    systems:
      - ubuntu-22.04*
 
- tests/spread/core24/architectures/:
-   summary: core24 architecture tests
-   systems:
-     - ubuntu-22.04*
-
  tests/spread/core24-suites/patchelf/:
    summary: core24 patchelf tests
    systems:
