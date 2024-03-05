@@ -15,14 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Tests for the Snapcraft Package service."""
-
+import datetime
 from pathlib import Path
 from textwrap import dedent
 
 import pytest
+import yaml
 from craft_application.models import SummaryStr, VersionStr
 
-from snapcraft import linters, meta, pack, services
+from snapcraft import __version__, linters, meta, models, pack, services
 from snapcraft.application import APP_METADATA
 
 
@@ -139,3 +140,39 @@ def test_write_metadata(
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
     """
     )
+
+    assert not (new_dir / "snap" / "manifest.yaml").exists()
+
+
+def test_write_metadata_with_manifest(
+    monkeypatch,
+    package_service,
+    default_factory,
+    default_build_plan,
+    new_dir,
+):
+    monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "1")
+    default_factory.set_kwargs(
+        "lifecycle",
+        work_dir=Path("work"),
+        cache_dir=new_dir,
+        build_plan=default_build_plan,
+    )
+
+    package_service.write_metadata(new_dir)
+
+    snap_yaml = yaml.safe_load((new_dir / "meta" / "snap.yaml").read_text())
+
+    # This will be different every time due to started_at differing, we can check
+    # that it's a valid manifest and compare some fields to snap.yaml.
+    manifest_dict = yaml.safe_load((new_dir / "snap" / "manifest.yaml").read_text())
+    manifest = models.Manifest.parse_obj(manifest_dict)
+
+    assert manifest.snapcraft_version == __version__
+    assert (
+        datetime.datetime.fromisoformat(manifest.snapcraft_started_at[:-1])
+        == default_factory.lifecycle._start_time
+    )
+    assert manifest.name == snap_yaml["name"]
+    assert manifest.grade == snap_yaml["grade"]
+    assert manifest.architectures == snap_yaml["architectures"]
