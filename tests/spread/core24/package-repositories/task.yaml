@@ -9,7 +9,6 @@ environment:
   SNAP/test_multi_keys: test-multi-keys
   SNAP/test_foreign_armhf: test-foreign-armhf
   SNAP/test_foreign_i386: test-foreign-i386
-  SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
 prepare: |
   # Workaround to be able to test the snaps
