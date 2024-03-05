@@ -276,6 +276,8 @@ suites:
    summary: core24 specific tests
    systems:
      - ubuntu-24.04*
+   environment:
+     SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
  tests/spread/core24/environment/:
    summary: core24 environment tests
