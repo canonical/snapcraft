@@ -5,7 +5,7 @@ prepare: |
   apt-mark auto patchelf dpkg-dev
 
 restore: |
-  snapcraft clean
+  snapcraft clean --destructive-mode
   rm -f ./*.snap
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -13,7 +13,7 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
-  snapcraft prime
+  snapcraft prime --destructive-mode
 
   arch_triplet="$(dpkg-architecture -q DEB_HOST_MULTIARCH)"
 
@@ -26,14 +26,14 @@ execute: |
   fi
 
   # Account for /usr merge.
-  RPATH_MATCH="^/snap/$base/current/lib/$arch_triplet"
-  RPATH_ORIGIN_MATCH="^\\\$ORIGIN/../fake-lib:/snap/$base/current/lib/$arch_triplet"
+  RPATH_MATCH="^/snap/core24/current/lib/$arch_triplet"
+  RPATH_ORIGIN_MATCH="^\\\$ORIGIN/../fake-lib:/snap/core24/current/lib/$arch_triplet"
 
   # Verify binary rpath patching with existing rpath
-  patchelf --print-interpreter prime/bin/hello-strict-existing-rpath | MATCH "^/snap/$base/current/lib.*ld.*.so.*"
+  patchelf --print-interpreter prime/bin/hello-strict-existing-rpath | MATCH "^/snap/core24/current/lib.*ld.*.so.*"
   patchelf --print-rpath prime/bin/hello-strict-existing-rpath | MATCH "${RPATH_ORIGIN_MATCH}"
 
   # Verify binary rpath patching without existing rpath
-  patchelf --print-interpreter prime/bin/hello-strict-enable-patchelf | MATCH "^/snap/$base/current/lib.*ld.*.so.*"
+  patchelf --print-interpreter prime/bin/hello-strict-enable-patchelf | MATCH "^/snap/core24/current/lib.*ld.*.so.*"
   patchelf --print-rpath prime/bin/hello-strict-enable-patchelf | MATCH "${RPATH_MATCH}"
 
