@@ -82,7 +82,7 @@ class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
                 build_for = get_host_architecture()
 
             # build on will be a list of archs
-            for build_on in cast(list[str], build_on):
+            for build_on_arch in cast(list[str], build_on):
                 base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
                     str(
                         get_effective_base(
@@ -96,7 +96,7 @@ class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
                 build_plan.append(
                     BuildInfo(
                         platform=f"ubuntu@{base.value}",
-                        build_on=build_on,
+                        build_on=build_on_arch,
                         build_for=build_for,
                         base=bases.BaseName("ubuntu", base.value),
                     )
@@ -134,7 +134,9 @@ class Snapcraft(Application):
         # the package service to copy the project file into the snap payload if
         # manifest generation is enabled.
         try:
-            self._snapcraft_yaml_path: pathlib.Path | None = self._resolve_project_path(None)
+            self._snapcraft_yaml_path: pathlib.Path | None = self._resolve_project_path(
+                None
+            )
         except FileNotFoundError:
             self._snapcraft_yaml_path = None
 
