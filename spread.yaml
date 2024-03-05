@@ -291,22 +291,22 @@ suites:
  tests/spread/core24-suites/environment/:
    summary: core24 environment tests
    systems:
-     - ubuntu-22.04*
+     - ubuntu-24.04*
 
  tests/spread/core24-suites/scriptlets/:
    summary: core24 scriptlet tests
    systems:
-     - ubuntu-22.04*
+     - ubuntu-24.04*
 
  tests/spread/core24-suites/manifest/:
    summary: core24 manifest tests
    systems:
-     - ubuntu-22.04*
+     - ubuntu-24.04*
 
  tests/spread/core24-suites/patchelf/:
    summary: core24 patchelf tests
    systems:
-     - ubuntu-22.04*
+     - ubuntu-24.04*
 
  # General, core suite
  tests/spread/general/:
