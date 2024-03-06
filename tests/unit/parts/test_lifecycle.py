@@ -1765,7 +1765,7 @@ def test_patch_elf(snapcraft_yaml, mocker, new_dir):
     """Patch binaries if the ``enable-patchelf`` build attribute is defined."""
     run_patchelf_mock = mocker.patch("snapcraft.elf._patcher.Patcher._run_patchelf")
     shutil.copy("/bin/true", "elf.bin")
-    callbacks.register_post_step(parts_lifecycle._patch_elf, step_list=[Step.PRIME])
+    callbacks.register_post_step(parts_lifecycle.patch_elf, step_list=[Step.PRIME])
 
     mocker.patch(
         "snapcraft.elf.elf_utils.get_dynamic_linker",
@@ -1829,7 +1829,7 @@ def test_patch_elf_with_override_prime(snapcraft_yaml, mocker, new_dir, emitter)
     """Patch binaries with `enable-patchelf`` and override-prime defined"""
     run_patchelf_mock = mocker.patch("snapcraft.elf._patcher.Patcher._run_patchelf")
     shutil.copy("/bin/true", "elf.bin")
-    callbacks.register_post_step(parts_lifecycle._patch_elf, step_list=[Step.PRIME])
+    callbacks.register_post_step(parts_lifecycle.patch_elf, step_list=[Step.PRIME])
 
     mocker.patch(
         "snapcraft.elf.elf_utils.get_dynamic_linker",

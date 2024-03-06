@@ -24,9 +24,10 @@ from typing import Any, cast
 
 from craft_application import AppMetadata, LifecycleService, ServiceFactory
 from craft_application.models import BuildInfo
+from craft_parts import StepInfo
 from overrides import overrides
 
-from snapcraft import __version__, errors, models, os_release, utils
+from snapcraft import __version__, errors, models, os_release, parts, utils
 
 
 class Lifecycle(LifecycleService):
@@ -66,6 +67,11 @@ class Lifecycle(LifecycleService):
             extra_build_snaps=project.get_extra_build_snaps(),
         )
         super().setup()
+
+    @overrides
+    def post_prime(self, step_info: StepInfo) -> bool:
+        """Run post-prime parts steps for Snapcraft."""
+        return parts.patch_elf(step_info)
 
     def generate_manifest(self) -> models.Manifest:
         """Create and populate the manifest file."""

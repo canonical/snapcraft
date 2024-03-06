@@ -85,7 +85,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     # Register our own callbacks
     callbacks.register_prologue(_set_global_environment)
     callbacks.register_pre_step(_set_step_environment)
-    callbacks.register_post_step(_patch_elf, step_list=[Step.PRIME])
+    callbacks.register_post_step(patch_elf, step_list=[Step.PRIME])
 
     build_count = utils.get_parallel_build_count()
 
@@ -568,7 +568,7 @@ def _set_step_environment(step_info: StepInfo) -> bool:
     return True
 
 
-def _patch_elf(step_info: StepInfo) -> bool:
+def patch_elf(step_info: StepInfo) -> bool:
     """Patch rpath and interpreter in ELF files for classic mode."""
     if "enable-patchelf" not in step_info.build_attributes:
         emit.debug(f"patch_elf: not enabled for part {step_info.part_name!r}")
