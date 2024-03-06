@@ -593,7 +593,7 @@ class TestProjectValidation:
 
         assert project.grade == "devel"
 
-    @pytest.mark.parametrize("build_base", {"core22", "devel"})
+    @pytest.mark.parametrize("build_base", ["core22", "devel"])
     def test_project_grade_not_defined(self, build_base, project_yaml_data):
         """Do not validate the grade if it is not defined, regardless of build_base."""
         data = project_yaml_data(build_base=build_base)
