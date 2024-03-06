@@ -1,0 +1,21 @@
+name: grammar-build-for
+version: "1.0"
+summary: test
+description: |
+  Exercise snapcraft's advanced grammar keywords, `on`, and `to`.
+  This test leverages architecture keywords, `build-on` and `build-for`.
+grade: devel
+confinement: strict
+base: core22
+architectures:
+  - build-on: amd64
+    build-for: amd64
+  - build-on: amd64
+    build-for: arm64
+
+parts:
+  hello-world:
+    plugin: dump
+    source:
+    - on amd64 to amd64: src/on-amd64-to-amd64
+    - on amd64 to arm64: src/on-amd64-to-arm64
