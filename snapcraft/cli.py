@@ -181,15 +181,15 @@ def get_dispatcher() -> craft_cli.Dispatcher:
     Run all the checks and setup required to ensure the Dispatcher can run.
     """
     # Run the legacy implementation if inside a legacy managed environment.
-    if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
-        snapcraft.ProjectOptions = snapcraft_legacy.ProjectOptions  # type: ignore
-        legacy.legacy_run()
-
-    # set lib loggers to debug level so that all messages are sent to Emitter
-    for lib_name in _LIB_NAMES:
-        logger = logging.getLogger(lib_name)
-        _ORIGINAL_LIB_NAME_LOG_LEVEL[lib_name] = logger.level
-        logger.setLevel(logging.DEBUG)
+    # if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
+    #     snapcraft.ProjectOptions = snapcraft_legacy.ProjectOptions  # type: ignore
+    #     legacy.legacy_run()
+    #
+    # # set lib loggers to debug level so that all messages are sent to Emitter
+    # for lib_name in _LIB_NAMES:
+    #     logger = logging.getLogger(lib_name)
+    #     _ORIGINAL_LIB_NAME_LOG_LEVEL[lib_name] = logger.level
+    #     logger.setLevel(logging.DEBUG)
 
     return craft_cli.Dispatcher(
         "snapcraft",
