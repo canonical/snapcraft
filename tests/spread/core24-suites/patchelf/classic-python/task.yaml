@@ -2,13 +2,7 @@ summary: Build and run a Python-based core24 classic snap
 
 # To ensure the patchelf fixes are correct, we run this test on focal systems.
 systems:
-  - ubuntu-20.04
-  - ubuntu-20.04-64
-  - ubuntu-20.04-amd64
-  - ubuntu-20.04-arm64
-  - ubuntu-20.04-armhf
-  - ubuntu-20.04-s390x
-  - ubuntu-20.04-ppc64el
+  - ubuntu-20.04*
 
 prepare: |
   # Clone the snapcraft-docs/python-ctypes-example
@@ -22,15 +16,20 @@ prepare: |
 
   # Set the base to core24
   sed -i 's/base: core22/base: core24/' snap/snapcraft.yaml
+  # And the build-base to devel
+  sed -i '1ibuild-base: devel' snap/snapcraft.yaml
+
+restore: |
+  cd python-ctypes-example
+  snapcraft clean
+  rm -f ./*.snap
+  cd ..
+  rm -rf python-ctypes-example
 
 execute: |
   cd python-ctypes-example
 
-  # Build the core24 snap
-  unset SNAPCRAFT_BUILD_ENVIRONMENT
-  # If this next line fails, delete it and replace it with the one following it
-  snapcraft --use-lxd 2>&1 | MATCH 'unrecognized arguments: --use-lxd'; exit 0
-  # snapcraft --use-lxd
+  snapcraft pack
 
   # Install the new snap
   sudo snap install --classic --dangerous example-python-ctypes*.snap
@@ -39,8 +38,3 @@ execute: |
   # interpreter to core24's libc. Failure would output things like:
   # version `GLIBC_2.35' not found (required by /snap/example-python-ctypes/x1/bin/python3)
   example-python-ctypes -c "import ctypes; print(ctypes.__file__)" | MATCH "/snap/example-python-ctypes/"
-
-restore: |
-  cd python-ctypes-example
-  snapcraft clean
-  rm -f ./*.snap
