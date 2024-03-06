@@ -307,6 +307,17 @@ suites:
    summary: core24 patchelf tests
    systems:
      - ubuntu-24.04*
+   prepare: |
+     # Workaround to be able to test the snaps
+     if snap list core24; then
+       # The already installed case
+       exit 0
+     elif snap install core24; then
+       echo Remove this workaround
+       exit 1
+     else
+       snap install core24 --edge
+     fi
 
  # General, core suite
  tests/spread/general/:
