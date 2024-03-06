@@ -22,7 +22,7 @@ import os
 import pathlib
 import signal
 import sys
-from typing import Any, List
+from typing import Any, List, Sequence
 
 import craft_application.commands as craft_app_commands
 import craft_application.models
@@ -37,7 +37,7 @@ from overrides import override
 
 from snapcraft import cli, commands, errors, models, services
 from snapcraft.commands import unimplemented
-from snapcraft.const import SUPPORTED_ARCHS
+from snapcraft.const import SUPPORTED_ARCHS, SnapArch
 from snapcraft.extensions import apply_extensions
 from snapcraft.models import Platform
 from snapcraft.models.project import apply_root_packages
@@ -51,37 +51,37 @@ class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
     base: str | None
     build_base: str | None = None
     name: str
-    platforms: dict[str, Any]
+    platforms: dict[str, Any] | None = None
     project_type: str | None = pydantic.Field(default=None, alias="type")
 
     @pydantic.validator("platforms")
     @classmethod
     def _validate_all_platforms(cls, platforms: dict[str, Any]) -> dict[str, Any]:
-        """Make sure all provided platforms are tangible and sane."""
+        """Validate and convert platform data to a dict of Platforms."""
         for platform_label in platforms:
-            platform: dict[str, Any] = (
+            platform_data: dict[str, Any] = (
                 platforms[platform_label] if platforms[platform_label] else {}
             )
             error_prefix = f"Error for platform entry '{platform_label}'"
 
             # Make sure the provided platform_set is valid
             try:
-                platform = Platform(**platform).dict()
+                platform = Platform(**platform_data)
             except CraftValidationError as err:
-                # pylint: disable=raise-missing-from
-                raise CraftValidationError(f"{error_prefix}: {str(err)}")
+                raise CraftValidationError(f"{error_prefix}: {str(err)}") from None
 
             # build_on and build_for are validated
             # let's also validate the platform label
-            build_on_one_of = (
-                platform["build_on"] if platform["build_on"] else [platform_label]
-            )
+            if platform.build_on:
+                build_on_one_of: Sequence[SnapArch | str] = platform.build_on
+            else:
+                build_on_one_of = [platform_label]
 
             # If the label maps to a valid architecture and
             # `build-for` is present, then both need to have the same value,
             # otherwise the project is invalid.
-            if platform["build_for"]:
-                build_target = platform["build_for"][0]
+            if platform.build_for:
+                build_target = platform.build_for[0]
                 if platform_label in SUPPORTED_ARCHS and platform_label != build_target:
                     raise CraftValidationError(
                         str(
@@ -90,24 +90,21 @@ class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
                             f"both values must match. {platform_label} != {build_target}"
                         )
                     )
-            else:
-                build_target = platform_label
+            # if no build-for is present, then the platform label needs to be a valid architecture
+            elif platform_label not in SUPPORTED_ARCHS:
+                raise CraftValidationError(
+                    str(
+                        f"{error_prefix}: platform entry label must correspond to a "
+                        "valid architecture if 'build-for' is not provided."
+                    )
+                )
 
             # Both build and target architectures must be supported
             if not any(b_o in SUPPORTED_ARCHS for b_o in build_on_one_of):
                 raise CraftValidationError(
                     str(
                         f"{error_prefix}: trying to build snap in one of "
-                        f"{build_on_one_of}, but none of these build architectures is supported. "
-                        f"Supported architectures: {SUPPORTED_ARCHS}"
-                    )
-                )
-
-            if build_target not in SUPPORTED_ARCHS:
-                raise CraftValidationError(
-                    str(
-                        f"{error_prefix}: trying to build snap for target "
-                        f"architecture {build_target}, which is not supported. "
+                        f"{build_on_one_of}, but none of these build architectures are supported. "
                         f"Supported architectures: {SUPPORTED_ARCHS}"
                     )
                 )
@@ -132,9 +129,12 @@ class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
 
         base = bases.BaseName("ubuntu", effective_base)
 
+        if self.platforms is None:
+            raise CraftValidationError("Must define at least one platform.")
+
         for platform_entry, platform in self.platforms.items():
-            for build_for in platform.get("build_for") or [platform_entry]:
-                for build_on in platform.get("build_on") or [platform_entry]:
+            for build_for in platform.build_for or [platform_entry]:
+                for build_on in platform.build_on or [platform_entry]:
                     build_infos.append(
                         BuildInfo(
                             platform=platform_entry,

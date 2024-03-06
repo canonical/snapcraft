@@ -19,10 +19,11 @@ import os
 from textwrap import dedent
 
 import pytest
-from craft_providers import bases
+from craft_application.errors import CraftValidationError
+from craft_application.models import BuildInfo
+from craft_providers.bases import BaseName
 
 from snapcraft import application, services
-from snapcraft.const import SnapArch
 from snapcraft.models.project import Architecture
 
 
@@ -38,25 +39,160 @@ def architectures(request):
     return request.param
 
 
-def test_build_planner_success_base_only():
-    data = {
-        "base": "core24",
-        "name": "test",
-        "platforms": {"amd64v2": {"build-on": ["amd64"], "build-for": ["amd64"]}},
-    }
+@pytest.mark.parametrize(
+    ("platforms", "expected_build_infos"),
+    [
+        pytest.param(
+            {"amd64": None},
+            [
+                BuildInfo(
+                    build_on="amd64",
+                    build_for="amd64",
+                    base=BaseName(name="ubuntu", version="24.04"),
+                    platform="amd64",
+                )
+            ],
+            id="single_platform_as_arch",
+        ),
+        pytest.param(
+            {
+                "arm64": {
+                    "build-on": ["arm64", "armhf"],
+                    "build-for": ["arm64"],
+                },
+            },
+            [
+                BuildInfo(
+                    build_on="arm64",
+                    build_for="arm64",
+                    base=BaseName(name="ubuntu", version="24.04"),
+                    platform="arm64",
+                ),
+                BuildInfo(
+                    build_on="armhf",
+                    build_for="arm64",
+                    base=BaseName(name="ubuntu", version="24.04"),
+                    platform="arm64",
+                ),
+            ],
+            id="multiple_build_on",
+        ),
+        pytest.param(
+            {
+                "amd64v2": {
+                    "build-on": ["amd64"],
+                    "build-for": "amd64",
+                },
+            },
+            [
+                BuildInfo(
+                    build_on="amd64",
+                    build_for="amd64",
+                    base=BaseName(name="ubuntu", version="24.04"),
+                    platform="amd64v2",
+                )
+            ],
+            id="custom_platform_name",
+        ),
+    ],
+)
+def test_build_planner_get_build_plan(platforms, expected_build_infos):
+    """Test `get_build_plan()` function with different platforms."""
+    planner = application.SnapcraftBuildPlanner.parse_obj(
+        {"name": "test-snap", "base": "core24", "platforms": platforms}
+    )
 
-    planner = application.SnapcraftBuildPlanner.parse_obj(data)
+    actual_build_infos = planner.get_build_plan()
 
-    actual = planner.get_build_plan()
-
-    for build_info in actual:
-        assert build_info.base == bases.BaseName("ubuntu", "24.04")
-        assert build_info.build_for == SnapArch.amd64
-        assert build_info.build_on == SnapArch.amd64
-        assert build_info.platform == "amd64v2"
+    assert actual_build_infos == expected_build_infos
 
 
-# TODO: add tests `get_build_plan()`
+def test_build_planner_get_build_plan_base(mocker):
+    """Test `get_build_plan()` uses the correct base."""
+    mock_get_effective_base = mocker.patch(
+        "snapcraft.application.get_effective_base", return_value="core24"
+    )
+    planner = application.SnapcraftBuildPlanner.parse_obj(
+        {
+            "name": "test-snap",
+            "base": "test-base",
+            "build-base": "test-build-base",
+            "platforms": {"amd64": None},
+            "project_type": "test-type",
+        }
+    )
+
+    actual_build_infos = planner.get_build_plan()
+
+    assert actual_build_infos == [
+        BuildInfo(
+            platform="amd64",
+            build_on="amd64",
+            build_for="amd64",
+            base=BaseName(name="ubuntu", version="24.04"),
+        )
+    ]
+    mock_get_effective_base.assert_called_once_with(
+        base="test-base",
+        build_base="test-build-base",
+        project_type="test-type",
+        name="test-snap",
+    )
+
+
+def test_project_platform_error_has_context():
+    """Platform validation errors include which platform entry is invalid."""
+    with pytest.raises(CraftValidationError) as raised:
+        application.SnapcraftBuildPlanner.parse_obj(
+            {
+                "name": "test-snap",
+                "base": "test-base",
+                "build-base": "test-build-base",
+                "platforms": {"test-platform": {"build-for": ["amd64"]}},
+                "project_type": "test-type",
+            }
+        )
+
+    assert "'test-platform': 'build_for' expects 'build_on'" in str(raised.value)
+
+
+def test_project_platform_mismatch():
+    """Raise an error if platform name and build-for are valid but different archs."""
+    with pytest.raises(CraftValidationError) as raised:
+        application.SnapcraftBuildPlanner.parse_obj(
+            {
+                "name": "test-snap",
+                "base": "test-base",
+                "build-base": "test-build-base",
+                "platforms": {"amd64": {"build-on": ["amd64"], "build-for": ["arm64"]}},
+                "project_type": "test-type",
+            }
+        )
+
+    assert (
+        "if 'build_for' is provided and the platform entry label "
+        "corresponds to a valid architecture, then both values must match. "
+        "amd64 != arm64" in str(raised.value)
+    )
+
+
+def test_project_platform_unknown_name():
+    """Raise an error if an empty platform is not a valid architecture."""
+    with pytest.raises(CraftValidationError) as raised:
+        application.SnapcraftBuildPlanner.parse_obj(
+            {
+                "name": "test-snap",
+                "base": "test-base",
+                "build-base": "test-build-base",
+                "platforms": {"unknown": None},
+                "project_type": "test-type",
+            }
+        )
+
+    assert (
+        "platform entry label must correspond to a valid architecture "
+        "if 'build-for' is not provided." in str(raised.value)
+    )
 
 
 @pytest.mark.parametrize("env_vars", application.MAPPED_ENV_VARS.items())
@@ -110,11 +246,7 @@ def test_application_expand_extensions(emitter, monkeypatch, extension_source, n
             base: core24
             build-base: devel
             platforms:
-                amd64:
-                    build-on:
-                    - amd64
-                    build-for:
-                    - amd64
+                amd64: null
             license: MIT
             parts:
                 fake-extension/fake-part:

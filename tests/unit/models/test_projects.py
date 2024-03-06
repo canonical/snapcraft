@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,23 +14,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import itertools
 from typing import Any, Dict, cast
 
 import pydantic
 import pytest
+from craft_application.errors import CraftValidationError
 from craft_application.models import UniqueStrList
 
-from snapcraft import errors
+from snapcraft import const, errors
 from snapcraft.models import (
     MANDATORY_ADOPTABLE_FIELDS,
     Architecture,
     ContentPlug,
     GrammarAwareProject,
     Hook,
+    Platform,
     Project,
 )
 from snapcraft.models.project import apply_root_packages
 from snapcraft.utils import get_host_architecture
+
+# required project data for core24 snaps
+CORE24_DATA = {"base": "core24", "build_base": "devel", "grade": "devel"}
 
 
 @pytest.fixture
@@ -579,14 +585,7 @@ class TestProjectValidation:
         error = "build-base must be 'devel' when base is 'core24'"
 
         with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(
-                project_yaml_data(
-                    base="core24",
-                    platforms={
-                        "amd64v2": {"build-on": ["amd64"], "build-for": ["amd64"]}
-                    },
-                )
-            )
+            Project.unmarshal(project_yaml_data(base="core24"))
 
     def test_project_global_plugs_warning(self, project_yaml_data, emitter):
         data = project_yaml_data(plugs={"desktop": None, "desktop-legacy": None})
@@ -667,6 +666,57 @@ class TestHookValidation:
 
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(project_yaml_data(hooks=hook))
+
+
+class TestPlatforms:
+    """Validate platforms."""
+
+    VALID_PLATFORM_ARCHITECTURES = [
+        # single architecture in a list
+        *(list(x) for x in itertools.combinations(const.SnapArch, 1)),
+        # two architectures in a list
+        *(list(x) for x in itertools.combinations(const.SnapArch, 2)),
+    ]
+
+    @pytest.mark.parametrize("build_on", VALID_PLATFORM_ARCHITECTURES)
+    @pytest.mark.parametrize("build_for", [[arch] for arch in const.SnapArch])
+    def test_platform_validation_lists(self, build_on, build_for, project_yaml_data):
+        """Unmarshal build-on and build-for lists."""
+        platform_data = Platform(**{"build-on": build_on, "build-for": build_for})
+
+        assert platform_data.build_for == build_for
+        assert platform_data.build_on == build_on
+
+    @pytest.mark.parametrize("build_on", const.SnapArch)
+    @pytest.mark.parametrize("build_for", const.SnapArch)
+    def test_platform_validation_strings(self, build_on, build_for, project_yaml_data):
+        """Unmarshal and vectorize build-on and build-for strings."""
+        platform_data = Platform(**{"build-on": build_on, "build-for": build_for})
+
+        assert platform_data.build_for == [build_for]
+        assert platform_data.build_on == [build_on]
+
+    def test_platform_build_for_requires_build_on(self, project_yaml_data):
+        """Raise an error if build-for is provided by build-on is not."""
+        with pytest.raises(CraftValidationError) as raised:
+            Platform(**{"build-for": [const.SnapArch.amd64]})
+
+        assert "'build_for' expects 'build_on' to also be provided" in str(raised.value)
+
+    def test_platform_default(self, project_yaml_data):
+        """Default value for platforms is the host architecture."""
+        project = Project.unmarshal(project_yaml_data(**CORE24_DATA))
+
+        assert project.platforms == {get_host_architecture(): None}
+
+    def test_platforms_not_allowed_core22(self, project_yaml_data):
+        with pytest.raises(errors.ProjectValidationError) as raised:
+            Project.unmarshal(project_yaml_data(platforms={"amd64": None}))
+
+        assert (
+            "'platforms' keyword is not supported for base 'core22'. "
+            "Use 'architectures' keyword instead." in str(raised.value)
+        )
 
 
 class TestAppValidation:
@@ -1758,6 +1808,16 @@ class TestArchitecture:
         arch_triplet = project.get_build_for_arch_triplet()
 
         assert not arch_triplet
+
+    def test_architectures_not_allowed(self, project_yaml_data):
+        """'architectures' keyword is not allowed if base is not core22."""
+        with pytest.raises(errors.ProjectValidationError) as raised:
+            Project.unmarshal(project_yaml_data(**CORE24_DATA, architectures=["amd64"]))
+
+        assert (
+            "'architectures' keyword is not supported for base 'core24'. "
+            "Use 'platforms' keyword instead."
+        ) in str(raised.value)
 
 
 class TestApplyRootPackages:

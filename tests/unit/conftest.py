@@ -397,41 +397,18 @@ def default_project(extra_project_params):
         grade="devel",
         parts=parts,
         license="MIT",
-        platforms={"amd64": {"build-on": ["amd64"], "build-for": ["amd64"]}},
         **extra_project_params,
     )
 
 
 @pytest.fixture()
-def default_project_core22(extra_project_params):
-    from craft_application.models import SummaryStr, VersionStr
-
-    from snapcraft.models.project import Project
-
-    parts = extra_project_params.pop("parts", {})
-
-    return Project(
-        name="default",
-        version=VersionStr("1.0"),
-        summary=SummaryStr("default project"),
-        description="default project",
-        base="core22",
-        build_base="devel",
-        grade="devel",
-        parts=parts,
-        license="MIT",
-        **extra_project_params,
-    )
-
-
-@pytest.fixture()
-def default_factory(default_project_core22):
+def default_factory(default_project):
     from snapcraft.application import APP_METADATA
     from snapcraft.services import SnapcraftServiceFactory
 
     factory = SnapcraftServiceFactory(
         app=APP_METADATA,
-        project=default_project_core22,
+        project=default_project,
     )
     return factory
 

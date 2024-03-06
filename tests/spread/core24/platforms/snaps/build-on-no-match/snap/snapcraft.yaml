@@ -8,10 +8,12 @@ grade: devel
 confinement: strict
 base: core24
 build-base: devel
-architectures:
-  - build-on: arm64
+platforms:
+  platform1:
+    build-on: arm64
     build-for: arm64
-  - build-on: armhf
+  platform2:
+    build-on: armhf
     build-for: armhf
 
 parts:

@@ -23,7 +23,6 @@ import re
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
     Dict,
     List,
     Literal,
@@ -445,24 +444,18 @@ class ContentPlug(models.CraftBaseModel):
         return default_provider
 
 
-class Platform(pydantic.BaseModel):
+class Platform(models.CraftBaseModel):
     """Snapcraft project platform definition."""
 
     build_on: list[SnapArch] | None = pydantic.Field(min_items=1, unique_items=True)
-    build_for: list[SnapArch] | None = pydantic.Field(min_items=1, unique_items=True)
+    build_for: list[SnapArch] | None = pydantic.Field(
+        min_items=1, max_items=1, unique_items=True
+    )
 
-    class Config:  # pylint: disable=too-few-public-methods
-        """Pydantic model configuration."""
-
-        allow_population_by_field_name = True
-        alias_generator: Callable[[str], str] = lambda s: s.replace(  # noqa: E731
-            "_", "-"
-        )
-
-    @pydantic.validator("build_for", pre=True)
+    @pydantic.validator("build_on", "build_for", pre=True)
     @classmethod
     def _vectorise_build_for(cls, val: str | list[str]) -> list[str]:
-        """Vectorise target architecture if needed."""
+        """Vectorise target architectures if needed."""
         if isinstance(val, str):
             val = [val]
         return val
@@ -470,22 +463,11 @@ class Platform(pydantic.BaseModel):
     @pydantic.root_validator(skip_on_failure=True)
     @classmethod
     def _validate_platform_set(cls, values: Mapping[str, Any]) -> Mapping[str, Any]:
-        """Validate the build_on build_for combination."""
-        build_for: list[str] = values["build_for"] if values.get("build_for") else []
-        build_on: list[str] = values["build_on"] if values.get("build_on") else []
+        """If build_for is provided, then build_on must also be.
 
-        # We can only build for 1 arch at the moment
-        if len(build_for) > 1:
-            raise CraftValidationError(
-                str(
-                    f"Trying to build a rock for {build_for} "
-                    "but multiple target architectures are not "
-                    "currently supported. Please specify only 1 value."
-                )
-            )
-
-        # If build_for is provided, then build_on must also be
-        if not build_on and build_for:
+        This aligns with the precedent set by the `architectures` keyword.
+        """
+        if not values.get("build_on") and values.get("build_for"):
             raise CraftValidationError(
                 "'build_for' expects 'build_on' to also be provided."
             )
@@ -522,7 +504,6 @@ class Project(models.Project):
     ]
     grade: Optional[Literal["stable", "devel"]]
     architectures: List[Union[str, Architecture]] | None = None
-    # TODO: set architectures to [get_host_architecture()] if base is core22
     assumes: UniqueStrList = cast(UniqueStrList, [])
     package_repositories: Optional[List[Dict[str, Any]]]
     hooks: Optional[Dict[str, Hook]]
@@ -669,7 +650,7 @@ class Project(models.Project):
 
         core24 and newer bases:
          - cannot define architectures
-         - must define platforms
+         - can optionally define platforms
         """
         base = get_effective_base(
             base=values.get("base"),
@@ -678,26 +659,24 @@ class Project(models.Project):
             name=values.get("name"),
         )
 
-        if base == "core24":
-            if values.get("architectures"):
-                raise ValueError(
-                    (
-                        "'architectures' keyword is not supported for base %r. "
-                        "Use 'platforms' keyword instead.",
-                        base,
-                    ),
-                )
-            if not values.get("platforms"):
-                raise ValueError(
-                    ("The 'platforms' keyword must be defined for base %r. ", base)
-                )
-        else:
-            if not values.get("architectures"):
-                values["architectures"] = [get_host_architecture()]
+        if base == "core22":
             if values.get("platforms"):
                 raise ValueError(
-                    "'platforms' keyword is not supported with 'base=core22'"
+                    f"'platforms' keyword is not supported for base {base!r}. "
+                    "Use 'architectures' keyword instead."
                 )
+            # set default value
+            if not values.get("architectures"):
+                values["architectures"] = [get_host_architecture()]
+        else:
+            if values.get("architectures"):
+                raise ValueError(
+                    f"'architectures' keyword is not supported for base {base!r}. "
+                    "Use 'platforms' keyword instead."
+                )
+            # set default value
+            if not values.get("platforms"):
+                values["platforms"] = {get_host_architecture(): None}
 
         return values
 
