@@ -312,9 +312,14 @@ suites:
  tests/spread/general/:
    summary: tests of snapcraft core functionality
    systems:
+     - ubuntu-20.04*
+     - ubuntu-22.04*
 
  tests/spread/general/hooks/:
    summary: tests of snapcraft hook functionality
+   systems:
+     - ubuntu-20.04*
+     - ubuntu-22.04*
 
  tests/spread/core-devel/:
    summary: tests of devel base snaps
