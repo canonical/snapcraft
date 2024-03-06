@@ -333,7 +333,7 @@ def test_get_command_environment(mocker, mock_default_command_environment):
     """Verify command environment is properly constructed."""
     command_environment = providers.get_command_environment()
 
-    assert command_environment == {"PATH": "test-path", "SNAPCRAFT_MANAGED_MODE": "1"}
+    assert command_environment == {"PATH": "test-path", "CRAFT_MANAGED_MODE": "1"}
 
 
 def test_get_command_environment_passthrough(
@@ -356,7 +356,7 @@ def test_get_command_environment_passthrough(
 
     assert command_environment == {
         "PATH": "test-path",
-        "SNAPCRAFT_MANAGED_MODE": "1",
+        "CRAFT_MANAGED_MODE": "1",
         "http_proxy": "test-http",
         "https_proxy": "test-https",
         "no_proxy": "test-no-proxy",
@@ -378,7 +378,7 @@ def test_get_command_environment_http_https_proxy(
 
     assert command_environment == {
         "PATH": "test-path",
-        "SNAPCRAFT_MANAGED_MODE": "1",
+        "CRAFT_MANAGED_MODE": "1",
         "http_proxy": "test-http",
         "https_proxy": "test-https",
     }
@@ -398,7 +398,7 @@ def test_get_command_environment_http_https_priority(
 
     assert command_environment == {
         "PATH": "test-path",
-        "SNAPCRAFT_MANAGED_MODE": "1",
+        "CRAFT_MANAGED_MODE": "1",
         "http_proxy": "test-http-from-arg",
         "https_proxy": "test-https-from-arg",
     }
