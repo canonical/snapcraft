@@ -88,8 +88,8 @@ class Lifecycle(LifecycleService):
 
         project = cast(models.Project, self._project)
 
-        parts = copy.deepcopy(project.parts)
-        for name, part in parts.items():
+        project_parts = copy.deepcopy(project.parts)
+        for name, part in project_parts.items():
             assets = self.get_pull_assets(part_name=name)
             if assets:
                 part["stage-packages"] = assets.get("stage-packages", []) or []
@@ -120,7 +120,7 @@ class Lifecycle(LifecycleService):
             grade=project.grade or "stable",
             confinement=project.confinement,
             apps=project.apps,
-            parts=parts,
+            parts=project_parts,
             # Architecture
             architectures=[build_for],
             # Image info
