@@ -18,7 +18,6 @@ import json
 import os
 from textwrap import dedent
 from typing import cast
-from unittest.mock import Mock
 
 import pytest
 from craft_providers import bases
