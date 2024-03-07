@@ -19,7 +19,7 @@ execute: |
   fi
 
   unset SNAPCRAFT_BUILD_ENVIRONMENT
-  export SNAPCRAFT_MANAGED_MODE=1
+  export CRAFT_MANAGED_MODE=1
 
   snapcraft pull --use-lxd
 

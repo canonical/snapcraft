@@ -16,9 +16,13 @@
 
 """Tests for the Snapcraft Lifecycle service."""
 import json
+import platform
+import shutil
+import sys
 from unittest import mock
 
 import pytest
+import pytest_subprocess
 
 from snapcraft import __version__, models, os_release, utils
 
@@ -34,6 +38,59 @@ def test_lifecycle_installs_base(lifecycle_service, mocker):
     install_snaps.assert_called_once_with(
         {"core24"},
     )
+
+
+def test_post_prime_no_patchelf(fp, tmp_path, lifecycle_service):
+    mock_step_info = mock.Mock()
+    mock_step_info.configure_mock(
+        **{
+            "base": "core24",
+            "build_attributes": [],
+            "state.files": ["usr/bin/ls"],
+            "prime_dir": tmp_path / "prime",
+        }
+    )
+
+    lifecycle_service.post_prime(mock_step_info)
+
+    assert not fp.calls
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Patchelf only works on Linux")
+@pytest.mark.xfail(
+    not shutil.which("patchelf"), reason="Expects a real patchelf binary."
+)
+def test_post_prime_patchelf(
+    fp: pytest_subprocess.FakeProcess, tmp_path, lifecycle_service
+):
+    mock_step_info = mock.Mock()
+    mock_step_info.configure_mock(
+        **{
+            "base": "core24",
+            "build_attributes": ["enable-patchelf"],
+            "state.files": ["usr/bin/ls"],
+            "prime_dir": tmp_path / "prime",
+        }
+    )
+
+    prime_bin = tmp_path / "prime" / "usr" / "bin"
+    prime_bin.mkdir(parents=True)
+    shutil.copy("/bin/ls", prime_bin)
+    (tmp_path / "prime/usr/bin/hello").touch()
+
+    linux_arch = platform.machine().replace("_", "-")
+    patchelf_command = [
+        fp.program("patchelf"),
+        "--set-interpreter",
+        f"/snap/core24/current/lib64/ld-linux-{linux_arch}.so.2",
+        fp.any(),  # Temporary file containing the file to patch.
+    ]
+    fp.register(["/usr/bin/ldd", str(tmp_path / "prime" / "usr/bin/ls")])
+    fp.register(patchelf_command)  # type: ignore[arg-type]
+
+    lifecycle_service.post_prime(mock_step_info)
+
+    assert fp.call_count(patchelf_command) == 1  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize(
