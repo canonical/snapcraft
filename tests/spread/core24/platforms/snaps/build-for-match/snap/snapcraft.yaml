@@ -1,8 +1,8 @@
-name: env-var-no-match
+name: build-for-match
 version: "1.0"
 summary: test
 description: |
-  No snaps should be built if there no `build-for` that matches
+  Only snaps should be built where `build-for` matches the
   command line argument `--build-for <architecture>`.
 grade: devel
 confinement: strict

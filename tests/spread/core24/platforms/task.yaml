@@ -1,8 +1,8 @@
 summary: Build snaps that test the build-on/build-for architecture logic in snapcraft.
 
 environment:
-  SNAP/arg_match: arg-match
-  SNAP/arg_no_match: arg-no-match
+  SNAP/build_for_match: build-for-match
+  SNAP/build_for_no_match: build-for-no-match
   SNAP/build_on_no_match: build-on-no-match
   SNAP/env_var_match: env-var-match
   SNAP/env_var_no_match: env-var-no-match
