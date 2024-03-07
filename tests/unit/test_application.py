@@ -25,6 +25,7 @@ from craft_providers.bases import BaseName
 
 from snapcraft import application, services
 from snapcraft.models.project import Architecture
+from snapcraft.utils import get_host_architecture
 
 
 @pytest.fixture(
@@ -105,6 +106,24 @@ def test_build_planner_get_build_plan(platforms, expected_build_infos):
     actual_build_infos = planner.get_build_plan()
 
     assert actual_build_infos == expected_build_infos
+
+
+def test_platform_default():
+    """Default value for platforms is the host architecture."""
+    planner = application.SnapcraftBuildPlanner.parse_obj(
+        {"name": "test-snap", "base": "core24"}
+    )
+
+    actual_build_infos = planner.get_build_plan()
+
+    assert actual_build_infos == [
+        BuildInfo(
+            build_on=get_host_architecture(),
+            build_for=get_host_architecture(),
+            base=BaseName(name="ubuntu", version="24.04"),
+            platform=get_host_architecture(),
+        )
+    ]
 
 
 def test_build_planner_get_build_plan_base(mocker):
@@ -245,8 +264,6 @@ def test_application_expand_extensions(emitter, monkeypatch, extension_source, n
             description: default project
             base: core24
             build-base: devel
-            platforms:
-                amd64: null
             license: MIT
             parts:
                 fake-extension/fake-part:

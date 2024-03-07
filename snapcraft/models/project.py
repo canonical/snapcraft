@@ -668,15 +668,12 @@ class Project(models.Project):
             # set default value
             if not values.get("architectures"):
                 values["architectures"] = [get_host_architecture()]
-        else:
-            if values.get("architectures"):
-                raise ValueError(
-                    f"'architectures' keyword is not supported for base {base!r}. "
-                    "Use 'platforms' keyword instead."
-                )
-            # set default value
-            if not values.get("platforms"):
-                values["platforms"] = {get_host_architecture(): None}
+
+        elif values.get("architectures"):
+            raise ValueError(
+                f"'architectures' keyword is not supported for base {base!r}. "
+                "Use 'platforms' keyword instead."
+            )
 
         return values
 

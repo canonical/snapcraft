@@ -129,8 +129,9 @@ class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
 
         base = bases.BaseName("ubuntu", effective_base)
 
+        # set default value
         if self.platforms is None:
-            raise CraftValidationError("Must define at least one platform.")
+            self.platforms = {get_host_architecture(): None}
 
         for platform_entry, platform in self.platforms.items():
             for build_for in platform.build_for or [platform_entry]:

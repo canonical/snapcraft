@@ -703,12 +703,6 @@ class TestPlatforms:
 
         assert "'build_for' expects 'build_on' to also be provided" in str(raised.value)
 
-    def test_platform_default(self, project_yaml_data):
-        """Default value for platforms is the host architecture."""
-        project = Project.unmarshal(project_yaml_data(**CORE24_DATA))
-
-        assert project.platforms == {get_host_architecture(): None}
-
     def test_platforms_not_allowed_core22(self, project_yaml_data):
         with pytest.raises(errors.ProjectValidationError) as raised:
             Project.unmarshal(project_yaml_data(platforms={"amd64": None}))
