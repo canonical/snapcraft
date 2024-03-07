@@ -8,16 +8,17 @@ environment:
   SNAP: colcon-ros2-wrapper
   SNAP_DIR: "../../plugins/v2/snaps/$SNAP"
 
-  INTERFACE: ros-foxy
-
   META_SNAP/colcon_foxy_ros_core: ros-foxy-ros-core
   EXTENSION/colcon_foxy_ros_core: ros2-foxy-ros-core
+  INTERFACE/colcon_foxy_ros_core: ros-foxy-ros-core
 
   META_SNAP/colcon_foxy_ros_base: ros-foxy-ros-base
   EXTENSION/colcon_foxy_ros_base: ros2-foxy-ros-base
+  INTERFACE/colcon_foxy_ros_base: ros-foxy-ros-base
 
   META_SNAP/colcon_foxy_desktop: ros-foxy-desktop
   EXTENSION/colcon_foxy_desktop: ros2-foxy-desktop
+  INTERFACE/colcon_foxy_desktop: ros-foxy-desktop
 
 # The content snap required for the test to succeed is only
 # available on a subset of all the architectures this testbed

@@ -92,9 +92,9 @@ class TestClass:
                 }
             ],
             "plugs": {
-                "ros-noetic": {
+                meta: {
                     "interface": "content",
-                    "content": "ros-noetic",
+                    "content": meta,
                     "target": "$SNAP/opt/ros/underlay_ws",
                     "default-provider": meta,
                 }
