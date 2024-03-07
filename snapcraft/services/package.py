@@ -29,6 +29,7 @@ from overrides import override
 from snapcraft import errors, linters, models, pack, utils
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import snap_yaml
+from snapcraft.parts.setup_assets import setup_assets
 from snapcraft.services import Lifecycle
 from snapcraft.utils import process_version
 
@@ -84,6 +85,23 @@ class Package(PackageService):
             )
         ]
 
+    def _get_assets_dir(self) -> pathlib.Path:
+        """Return a snapcraft assets directory.
+
+        Asset directories can exist in:
+
+        - <PROJECT_ROOT>/snap
+        - <PROJECT_ROOT>/build-aux/snap
+        """
+        project_dir = self._services.lifecycle.project_info.project_dir
+        for asset_reldir in ("snap", "build-aux/snap"):
+            asset_dir = project_dir / asset_reldir
+            if asset_dir.exists():
+                return asset_dir
+
+        # This is for backwards compatibility with setup_assets(...)
+        return project_dir / "snap"
+
     @override
     def write_metadata(self, path: pathlib.Path) -> None:
         """Write the project metadata to metadata.yaml in the given directory.
@@ -105,9 +123,79 @@ class Package(PackageService):
 
             shutil.copy(self._snapcraft_yaml_path, snap_dir)
 
+        assets_dir = self._get_assets_dir()
+        setup_assets(
+            self._project,
+            assets_dir=assets_dir,
+            project_dir=self._services.lifecycle.project_info.project_dir,
+            prime_dir=path,
+            meta_directory_handler=meta_directory_handler,
+        )
+
     @property
     def metadata(self) -> snap_yaml.SnapMetadata:
         """Get the metadata model for this project."""
         return snap_yaml.get_metadata_from_project(
             self._project, self._services.lifecycle.prime_dir, arch=self._build_for
         )
+
+
+def _hardlink_or_copy(source: pathlib.Path, destination: pathlib.Path) -> bool:
+    """Try to hardlink and fallback to copy if it fails.
+
+    :param source: the source path.
+    :param destination: the destination path.
+    :returns: True if a hardlink was done or False for copy.
+    """
+    # Unlink the destination to avoid link failures
+    destination.unlink(missing_ok=True)
+
+    try:
+        destination.hardlink_to(source)
+    except OSError as os_error:
+        # Cross device link
+        if os_error.errno != 18:
+            raise
+        shutil.copy(source, destination)
+        return False
+
+    return True
+
+
+def meta_directory_handler(assets_dir: pathlib.Path, path: pathlib.Path):
+    """Handle hooks and gui assets from Snapcraft.
+
+    :param assets_dir: directory with project assets.
+    :param path: directory to write assets to.
+    """
+    meta_dir = path / "meta"
+    built_snap_hooks = path / "snap" / "hooks"
+    hooks_project_dir = assets_dir / "hooks"
+
+    hooks_meta_dir = meta_dir / "hooks"
+
+    if built_snap_hooks.is_dir():
+        hooks_meta_dir.mkdir(parents=True, exist_ok=True)
+        for hook in built_snap_hooks.iterdir():
+            meta_dir_hook = hooks_meta_dir / hook.name
+            # Remove to always refresh to the latest
+            meta_dir_hook.unlink(missing_ok=True)
+            meta_dir_hook.hardlink_to(hook)
+
+    # Overwrite any built hooks with project level ones
+    if hooks_project_dir.is_dir():
+        hooks_meta_dir.mkdir(parents=True, exist_ok=True)
+        for hook in hooks_project_dir.iterdir():
+            meta_dir_hook = hooks_meta_dir / hook.name
+
+            _hardlink_or_copy(hook, meta_dir_hook)
+
+    # Write any gui assets
+    gui_project_dir = assets_dir / "gui"
+    gui_meta_dir = meta_dir / "gui"
+    if gui_project_dir.is_dir():
+        gui_meta_dir.mkdir(parents=True, exist_ok=True)
+        for gui in gui_project_dir.iterdir():
+            meta_dir_gui = gui_meta_dir / gui.name
+
+            _hardlink_or_copy(gui, meta_dir_gui)

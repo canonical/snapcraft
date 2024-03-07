@@ -24,9 +24,10 @@ from typing import Any, cast
 
 from craft_application import AppMetadata, LifecycleService, ServiceFactory
 from craft_application.models import BuildInfo
+from craft_parts import StepInfo
 from overrides import overrides
 
-from snapcraft import __version__, errors, models, os_release, utils
+from snapcraft import __version__, errors, models, os_release, parts, utils
 
 
 class Lifecycle(LifecycleService):
@@ -67,6 +68,11 @@ class Lifecycle(LifecycleService):
         )
         super().setup()
 
+    @overrides
+    def post_prime(self, step_info: StepInfo) -> bool:
+        """Run post-prime parts steps for Snapcraft."""
+        return parts.patch_elf(step_info)
+
     def generate_manifest(self) -> models.Manifest:
         """Create and populate the manifest file."""
         primed_stage_packages: set[str] = set()
@@ -82,8 +88,8 @@ class Lifecycle(LifecycleService):
 
         project = cast(models.Project, self._project)
 
-        parts = copy.deepcopy(project.parts)
-        for name, part in parts.items():
+        project_parts = copy.deepcopy(project.parts)
+        for name, part in project_parts.items():
             assets = self.get_pull_assets(part_name=name)
             if assets:
                 part["stage-packages"] = assets.get("stage-packages", []) or []
@@ -114,7 +120,7 @@ class Lifecycle(LifecycleService):
             grade=project.grade or "stable",
             confinement=project.confinement,
             apps=project.apps,
-            parts=parts,
+            parts=project_parts,
             # Architecture
             architectures=[build_for],
             # Image info
