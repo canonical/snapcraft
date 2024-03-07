@@ -223,7 +223,7 @@ def get_command_environment(
     :return: Dictionary of environmental variables.
     """
     env = bases.buildd.default_command_environment()
-    env["SNAPCRAFT_MANAGED_MODE"] = "1"
+    env["CRAFT_MANAGED_MODE"] = "1"
 
     # Pass-through host environment that target may need.
     for env_key in [
