@@ -34,7 +34,7 @@ parts:
     after: [matter-sdk]
     override-build: |
       # Source the Matter SDK environment variables
-      source ../../matter-sdk/build/matter-sdk-env.sh
+      source $CRAFT_STAGE/matter-sdk-env.sh
 
       # Build the lighting app for snapcraft spread testing purposes
       cd ../../matter-sdk/build/examples/lighting-app/linux

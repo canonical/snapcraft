@@ -110,7 +110,7 @@ def test_get_build_commands(part_info):
         "set +u && source scripts/setup/bootstrap.sh --platform build && set -u",
         "echo 'Built Matter SDK'",
         'MATTER_SDK_PATHS="${PATH%$OLD_PATH}"',
-        'echo "export PATH=$MATTER_SDK_PATHS\\$PATH" >> matter-sdk-env.sh',
+        'echo "export PATH=$MATTER_SDK_PATHS\\$PATH" >> $CRAFT_STAGE/matter-sdk-env.sh',
     ]
 
     assert plugin.get_build_commands() == expected_commands

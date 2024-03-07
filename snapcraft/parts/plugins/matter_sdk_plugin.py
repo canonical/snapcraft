@@ -167,11 +167,11 @@ class MatterSdkPlugin(plugins.Plugin):
             ]
         )
 
-        # Prepend the Matter SDK related PATH to the beginning of the PATH environment variable
-        # and save it to the matter-sdk-env.sh file
+        # Prepend the Matter SDK related PATH to the beginning of the PATH environment variable,
+        # and save it to the staging area as matter-sdk-env.sh file.
         commands.extend(
             [
-                'echo "export PATH=$MATTER_SDK_PATHS\\$PATH" >> matter-sdk-env.sh',
+                'echo "export PATH=$MATTER_SDK_PATHS\\$PATH" >> $CRAFT_STAGE/matter-sdk-env.sh',
             ]
         )
 
