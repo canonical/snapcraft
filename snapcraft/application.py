@@ -189,13 +189,10 @@ class Snapcraft(Application):
 
     @override
     def _configure_services(self, platform: str | None, build_for: str | None) -> None:
-        if build_for is None:
-            build_for = util.get_host_architecture()
-
         self.services.set_kwargs(
             "package",
             platform=platform,
-            build_for=build_for,
+            build_plan=self._build_plan,
             snapcraft_yaml_path=self._snapcraft_yaml_path,
         )
 
