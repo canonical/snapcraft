@@ -284,9 +284,9 @@ def test_application_managed_core20_fallback(monkeypatch, new_dir, mocker):
     (new_dir / "snap").mkdir()
 
     mock_legacy_run = mocker.patch("snapcraft_legacy.cli.legacy.legacy_run")
-    application.create_app = Mock()
+    mock_create_app = mocker.patch.object(application, "create_app")
 
     application.main()
 
-    application.create_app.assert_not_called()
+    mock_create_app.assert_not_called()
     mock_legacy_run.assert_called()
