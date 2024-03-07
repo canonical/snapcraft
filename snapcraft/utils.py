@@ -178,7 +178,7 @@ def strtobool(value: str) -> bool:
 
 def is_managed_mode() -> bool:
     """Check if snapcraft is running in a managed environment."""
-    managed_flag = os.getenv("SNAPCRAFT_MANAGED_MODE", "n")
+    managed_flag = os.getenv("CRAFT_MANAGED_MODE", "n")
     return strtobool(managed_flag)
 
 
