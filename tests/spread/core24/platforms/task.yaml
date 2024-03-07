@@ -7,6 +7,8 @@ environment:
   SNAP/env_var_match: env-var-match
   SNAP/env_var_no_match: env-var-no-match
   SNAP/multiple_build_for: multiple-build-for
+  SNAP/platform_match: platform-match
+  SNAP/platform_no_match: platform-no-match
   SNAP/single_arch: single-arch
 
 prepare: |
