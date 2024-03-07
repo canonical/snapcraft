@@ -50,7 +50,7 @@ if TYPE_CHECKING:
     import argparse
 
 
-_EXPERIMENTAL_PLUGINS = ["kernel, matter-sdk"]
+_EXPERIMENTAL_PLUGINS = ["kernel"]
 
 
 def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
