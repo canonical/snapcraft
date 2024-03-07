@@ -18,6 +18,8 @@ prepare: |
   sed -i 's/base: core22/base: core24/' snap/snapcraft.yaml
   # And the build-base to devel
   sed -i '1ibuild-base: devel' snap/snapcraft.yaml
+  # And change Python 3.10 to Python 3.12
+  sed -i 's/python3.10/python3.12/' snap/snapcraft.yaml
 
 restore: |
   cd python-ctypes-example
