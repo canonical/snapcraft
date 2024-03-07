@@ -18,6 +18,7 @@ import json
 import os
 from textwrap import dedent
 from typing import cast
+from unittest.mock import Mock
 
 import pytest
 from craft_providers import bases
@@ -274,3 +275,18 @@ def test_application_build_with_extensions(monkeypatch, extension_source, new_di
 
     project = app.get_project()
     assert "fake-extension/fake-part" in project.parts
+
+
+def test_application_managed_core20_fallback(monkeypatch, new_dir, mocker):
+    monkeypatch.setenv("CRAFT_DEBUG", "1")
+    monkeypatch.setenv("SNAPCRAFT_BUILD_ENVIRONMENT", "managed-host")
+
+    (new_dir / "snap").mkdir()
+
+    mock_legacy_run = mocker.patch("snapcraft_legacy.cli.legacy.legacy_run")
+    application.create_app = Mock()
+
+    application.main()
+
+    application.create_app.assert_not_called()
+    mock_legacy_run.assert_called()

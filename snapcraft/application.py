@@ -382,6 +382,7 @@ def main() -> int:
     if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
         snapcraft.ProjectOptions = snapcraft_legacy.ProjectOptions  # type: ignore
         legacy.legacy_run()
+        return 0  # never called in normal operation
 
     # set lib loggers to debug level so that all messages are sent to Emitter
     for lib_name in _LIB_NAMES:
