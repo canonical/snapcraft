@@ -6,7 +6,8 @@ description: |
   This test leverages the platform keywords, `build-on` and `build-for`.
 grade: devel
 confinement: strict
-base: core22
+base: core24
+build-base: devel
 platforms:
   platform1:
     build-on: amd64
