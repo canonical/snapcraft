@@ -28,13 +28,18 @@ parts:
   matter-sdk:
     plugin: matter-sdk
     matter-sdk-version: "1536ca20c5917578ca40ce509400e97b52751788" # use this commit with ptpython version fix; needs to be updated once matter sdk have a stable release
+    override-build: |
+      craftctl default
+      cp -r $CRAFT_PART_BUILD/matter-sdk-env.sh $CRAFT_PART_INSTALL
+    stage: 
+      - matter-sdk-env.sh
 
   lighting:
     plugin: nil
     after: [matter-sdk]
     override-build: |
       # Source the Matter SDK environment variables
-      source ../../matter-sdk/build/matter-sdk-env.sh
+      source $CRAFT_STAGE/matter-sdk-env.sh
 
       # Build the lighting app for snapcraft spread testing purposes
       cd ../../matter-sdk/build/examples/lighting-app/linux
