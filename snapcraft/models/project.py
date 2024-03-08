@@ -606,7 +606,10 @@ class Project(models.Project):
     donation: Optional[Union[str, UniqueStrList]]
     # snapcraft's `source_code` is more general than craft-application
     source_code: Optional[str]  # type: ignore[assignment]
-    website: Optional[str]
+    license: Optional[str]
+    contact: Optional[str]
+    issues: Optional[Union[str, UniqueStrList]]
+    website: Optional[Union[str, UniqueStrList]]
     type: Optional[Literal["app", "base", "gadget", "kernel", "snapd"]]
     icon: Optional[str]
     confinement: Literal["classic", "devmode", "strict"]

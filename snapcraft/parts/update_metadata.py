@@ -86,6 +86,33 @@ def update_from_extracted_metadata(
 
         if metadata.version and not project.version:
             project.version = cast(VersionStr, metadata.version)
+            
+        if metadata.license and not project.license:
+            project.license = metadata.license
+            
+        if metadata.contact and not project.contact:
+            project.contact = metadata.contact
+            
+        if metadata.donation and project.donation:
+            project.donation = project.donation + metadata.donation
+            
+        if metadata.donation and not project.donation:
+            project.donation = metadata.donation
+            
+        if metadata.source_code and not project.source_code:
+            project.source_code = metadata.source_code
+            
+        if metadata.issues and project.issues:
+            project.issues = project.issues + metadata.issues
+        
+        if metadata.issues and not project.issues:
+            project.issues = metadata.issues
+        
+        if metadata.website and project.website:
+            project.website = project.website + metadata.website
+            
+        if metadata.website and not project.website:
+            project.website = metadata.website
 
         if metadata.grade and not project.grade:
             project.grade = metadata.grade  # type: ignore

@@ -71,6 +71,12 @@ def project_yaml_data():
             "base": "core22",
             "grade": "stable",
             "confinement": "strict",
+            "license" : "license",
+            "contact": "contact",
+            "donation": ["donation1"],
+            "issues": ["issues1"],
+            "website": ["website1"],
+            "source-code": "source-code",
             "parts": {},
             **extra_args,
         }
@@ -89,8 +95,14 @@ def test_update_project_metadata(project_yaml_data, appstream_file, new_dir):
         title="title",
         summary="summary",
         description="description",
+        license="license",
         version="1.2.3",
         icon="assets/icon.png",
+        contact="contact",
+        donation=["donation2"],
+        issues=["issues2"],
+        website=["website2"],
+        source_code="vcs-browser",
         desktop_file_paths=["assets/file.desktop"],
     )
     assets_dir = Path("assets")
@@ -121,6 +133,11 @@ def test_update_project_metadata(project_yaml_data, appstream_file, new_dir):
     assert project.summary == "summary"  # already set in project
     assert project.description == "description"  # already set in project
     assert project.version == "0.1"  # already set in project
+    assert project.contact == "contact" # already set in project
+    assert project.issues == ["issues1", "issues2"]
+    assert project.donation == ["donation1", "donation2"]
+    assert project.website == ["website1", "website2"]
+    assert project.source_code == "source-code" # adopts from project
     assert project.icon == "assets/icon.png"
     assert project.apps["app3"].desktop == "assets/file.desktop"
 
@@ -237,7 +254,7 @@ def test_update_project_metadata_multiple(
     project = Project(**yaml_data)
     metadata1 = ExtractedMetadata(version="4.5.6")
     metadata2 = ExtractedMetadata(
-        summary="metadata summary", description="metadata description"
+        summary="metadata summary", description="metadata description", website=["website1"], source_code="source-code", issues=["issues1"], donation=["donation1"]
     )
     metadata3 = ExtractedMetadata(
         version="7.8.9", title="metadata title", grade="devel"
@@ -245,12 +262,18 @@ def test_update_project_metadata_multiple(
     metadata4 = ExtractedMetadata(
         summary="extra summary", description="extra description"
     )
+    metadata5 = ExtractedMetadata(
+        license="GPL-3.0", contact="test@test.com"
+    )
+    metadata6 = ExtractedMetadata(
+        source_code="source-code", website=["website2"], issues=["issues2"], donation=["donation2"]
+    )
     prj_vars = {"version": "", "grade": ""}
 
     update_project_metadata(
         project,
         project_vars=prj_vars,
-        metadata_list=[metadata1, metadata2, metadata3, metadata4],
+        metadata_list=[metadata1, metadata2, metadata3, metadata4, metadata5, metadata6],
         assets_dir=new_dir,
         prime_dir=new_dir,
     )
@@ -260,6 +283,12 @@ def test_update_project_metadata_multiple(
     assert project.description == expected["description"]
     assert project.title == expected["title"]
     assert project.grade == expected["grade"]
+    assert project.contact == "test@test.com"
+    assert project.license == "GPL-3.0"
+    assert project.donation == ["donation1", "donation2"]
+    assert project.source_code == "source-code"
+    assert project.issues == ["issues1", "issues2"]
+    assert project.website == ["website1", "website2"]
 
 
 @pytest.mark.parametrize(
