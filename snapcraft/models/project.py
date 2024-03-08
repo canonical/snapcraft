@@ -639,7 +639,7 @@ class Project(models.Project):
             )
         return field_value
 
-    @pydantic.root_validator(pre=True)
+    @pydantic.root_validator(pre=False)
     @classmethod
     def _validate_platforms_and_architectures(cls, values):
         """Validate usage of platforms and architectures.
@@ -654,11 +654,10 @@ class Project(models.Project):
         """
         base = get_effective_base(
             base=values.get("base"),
-            build_base=values.get("build_base"),
+            build_base=values.get("build-base"),
             project_type=values.get("type"),
             name=values.get("name"),
         )
-
         if base == "core22":
             if values.get("platforms"):
                 raise ValueError(
@@ -667,7 +666,12 @@ class Project(models.Project):
                 )
             # set default value
             if not values.get("architectures"):
-                values["architectures"] = [get_host_architecture()]
+                values["architectures"] = [
+                    Architecture(
+                        build_on=cast(UniqueStrList, [get_host_architecture()]),
+                        build_for=cast(UniqueStrList, [get_host_architecture()]),
+                    )
+                ]
 
         elif values.get("architectures"):
             raise ValueError(
