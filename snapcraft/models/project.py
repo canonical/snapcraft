@@ -655,7 +655,7 @@ class Project(models.Project):
         """
         base = get_effective_base(
             base=values.get("base"),
-            build_base=values.get("build-base"),
+            build_base=values.get("build_base"),
             project_type=values.get("type"),
             name=values.get("name"),
         )
