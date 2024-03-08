@@ -442,13 +442,13 @@ def get_metadata_from_project(
 
     effective_base = project.get_effective_base()
 
-    if effective_base == "core24":
+    if effective_base == "core22":
+        # if arch is "all", do not include architecture-specific paths in the environment
+        arch_triplet = None if arch == "all" else project.get_build_for_arch_triplet()
+    else:
         arch_triplet: str | None = get_arch_triplet(
             convert_architecture_deb_to_platform(arch)
         )
-    else:
-        # if arch is "all", do not include architecture-specific paths in the environment
-        arch_triplet = None if arch == "all" else project.get_build_for_arch_triplet()
 
     environment = _populate_environment(
         project.environment, prime_dir, arch_triplet, project.confinement
