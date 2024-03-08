@@ -38,6 +38,9 @@ from snapcraft.commands import unimplemented
 from snapcraft.extensions import apply_extensions
 from snapcraft.models.project import SnapcraftBuildPlanner, apply_root_packages
 from snapcraft.utils import get_host_architecture
+from snapcraft_legacy.cli import legacy
+
+from .legacy_cli import _LIB_NAMES, _ORIGINAL_LIB_NAME_LOG_LEVEL
 
 APP_METADATA = AppMetadata(
     name="snapcraft",
