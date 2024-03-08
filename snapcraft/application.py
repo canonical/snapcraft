@@ -22,131 +22,19 @@ import os
 import pathlib
 import signal
 import sys
-from typing import Any, List, Sequence
+from typing import Any
 
 import craft_application.commands as craft_app_commands
-import craft_application.models
 import craft_cli
-import pydantic
 from craft_application import Application, AppMetadata, util
-from craft_application.errors import CraftValidationError
-from craft_application.models import BuildInfo
 from craft_cli import emit
-from craft_providers import bases
 from overrides import override
 
 from snapcraft import cli, commands, errors, models, services
 from snapcraft.commands import unimplemented
-from snapcraft.const import SUPPORTED_ARCHS, SnapArch
 from snapcraft.extensions import apply_extensions
-from snapcraft.models import Platform
-from snapcraft.models.project import apply_root_packages
-from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
-from snapcraft.utils import get_effective_base, get_host_architecture
-
-
-class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
-    """A project model that creates build plans."""
-
-    base: str | None
-    build_base: str | None = None
-    name: str
-    platforms: dict[str, Any] | None = None
-    project_type: str | None = pydantic.Field(default=None, alias="type")
-
-    @pydantic.validator("platforms")
-    @classmethod
-    def _validate_all_platforms(cls, platforms: dict[str, Any]) -> dict[str, Any]:
-        """Validate and convert platform data to a dict of Platforms."""
-        for platform_label in platforms:
-            platform_data: dict[str, Any] = (
-                platforms[platform_label] if platforms[platform_label] else {}
-            )
-            error_prefix = f"Error for platform entry '{platform_label}'"
-
-            # Make sure the provided platform_set is valid
-            try:
-                platform = Platform(**platform_data)
-            except CraftValidationError as err:
-                raise CraftValidationError(f"{error_prefix}: {str(err)}") from None
-
-            # build_on and build_for are validated
-            # let's also validate the platform label
-            if platform.build_on:
-                build_on_one_of: Sequence[SnapArch | str] = platform.build_on
-            else:
-                build_on_one_of = [platform_label]
-
-            # If the label maps to a valid architecture and
-            # `build-for` is present, then both need to have the same value,
-            # otherwise the project is invalid.
-            if platform.build_for:
-                build_target = platform.build_for[0]
-                if platform_label in SUPPORTED_ARCHS and platform_label != build_target:
-                    raise CraftValidationError(
-                        str(
-                            f"{error_prefix}: if 'build_for' is provided and the "
-                            "platform entry label corresponds to a valid architecture, then "
-                            f"both values must match. {platform_label} != {build_target}"
-                        )
-                    )
-            # if no build-for is present, then the platform label needs to be a valid architecture
-            elif platform_label not in SUPPORTED_ARCHS:
-                raise CraftValidationError(
-                    str(
-                        f"{error_prefix}: platform entry label must correspond to a "
-                        "valid architecture if 'build-for' is not provided."
-                    )
-                )
-
-            # Both build and target architectures must be supported
-            if not any(b_o in SUPPORTED_ARCHS for b_o in build_on_one_of):
-                raise CraftValidationError(
-                    str(
-                        f"{error_prefix}: trying to build snap in one of "
-                        f"{build_on_one_of}, but none of these build architectures are supported. "
-                        f"Supported architectures: {SUPPORTED_ARCHS}"
-                    )
-                )
-
-            platforms[platform_label] = platform
-
-        return platforms
-
-    def get_build_plan(self) -> List[BuildInfo]:
-        """Get the build plan for this project."""
-        build_infos: list[BuildInfo] = []
-        effective_base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
-            str(
-                get_effective_base(
-                    base=self.base,
-                    build_base=self.build_base,
-                    project_type=self.project_type,
-                    name=self.name,
-                )
-            )
-        ].value
-
-        base = bases.BaseName("ubuntu", effective_base)
-
-        # set default value
-        if self.platforms is None:
-            self.platforms = {get_host_architecture(): None}
-
-        for platform_entry, platform in self.platforms.items():
-            for build_for in platform.build_for or [platform_entry]:
-                for build_on in platform.build_on or [platform_entry]:
-                    build_infos.append(
-                        BuildInfo(
-                            platform=platform_entry,
-                            build_on=build_on,
-                            build_for=build_for,
-                            base=base,
-                        )
-                    )
-
-        return build_infos
-
+from snapcraft.models.project import SnapcraftBuildPlanner, apply_root_packages
+from snapcraft.utils import get_host_architecture
 
 APP_METADATA = AppMetadata(
     name="snapcraft",

@@ -27,6 +27,7 @@ from .project import (
     Lint,
     Platform,
     Project,
+    SnapcraftBuildPlanner,
     Socket,
 )
 
@@ -42,5 +43,6 @@ __all__ = [
     "Manifest",
     "Platform",
     "Project",
+    "SnapcraftBuildPlanner",
     "Socket",
 ]
