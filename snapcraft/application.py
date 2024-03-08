@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import pathlib
 import signal
@@ -30,6 +31,8 @@ from craft_application import Application, AppMetadata, util
 from craft_cli import emit
 from overrides import override
 
+import snapcraft
+import snapcraft_legacy
 from snapcraft import cli, commands, errors, models, services
 from snapcraft.commands import unimplemented
 from snapcraft.extensions import apply_extensions
@@ -301,6 +304,17 @@ def create_app() -> Snapcraft:
 
 def main() -> int:
     """Run craft-application based snapcraft with classic fallback."""
+    if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
+        snapcraft.ProjectOptions = snapcraft_legacy.ProjectOptions  # type: ignore
+        legacy.legacy_run()
+        return 0  # never called in normal operation
+
+    # set lib loggers to debug level so that all messages are sent to Emitter
+    for lib_name in _LIB_NAMES:
+        logger = logging.getLogger(lib_name)
+        _ORIGINAL_LIB_NAME_LOG_LEVEL[lib_name] = logger.level
+        logger.setLevel(logging.DEBUG)
+
     app = create_app()
 
     try:
