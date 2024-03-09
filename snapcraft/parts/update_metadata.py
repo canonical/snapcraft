@@ -115,12 +115,17 @@ def _update_project_links(
             if isinstance(getattr(project, field), str):
                 setattr(project, field, cast(UniqueStrList, [getattr(project, field)]))
 
-            if getattr(metadata, field) and getattr(project, field) != getattr(
-                metadata, field
+            if (
+                getattr(metadata, field)
+                and getattr(project, field)
+                and getattr(project, field) != getattr(metadata, field)
             ):
                 project_list = list(getattr(project, field))
                 project_list.extend(set(getattr(metadata, field)) - set(project_list))
                 setattr(project, field, cast(UniqueStrList, project_list))
+                
+            if not getattr(project, field):
+                setattr(project, field, cast(UniqueStrList, getattr(metadata, field)))
 
 
 def _update_project_variables(project: Project, project_vars: Dict[str, str]):
