@@ -123,7 +123,7 @@ def _update_project_links(
                 project_list = list(getattr(project, field))
                 project_list.extend(set(getattr(metadata, field)) - set(project_list))
                 setattr(project, field, cast(UniqueStrList, project_list))
-                
+
             if not getattr(project, field):
                 setattr(project, field, cast(UniqueStrList, getattr(metadata, field)))
 
