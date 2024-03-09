@@ -59,7 +59,6 @@ def test_pack_target_arch(
         app=APP_METADATA,
         project=default_project,
         services=default_factory,
-        platform="amd64",
         build_plan=default_build_plan,
         snapcraft_yaml_path=tmp_path / "snapcraft.yaml",
     )
