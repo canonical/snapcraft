@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Dict, Final, List, cast
 
 import pydantic
-from craft_application.models import ProjectTitle, SummaryStr, VersionStr
+from craft_application.models import ProjectTitle, SummaryStr, UniqueStrList, VersionStr
 from craft_cli import emit
 
 from snapcraft import errors
@@ -49,6 +49,7 @@ def update_project_metadata(
     :raises SnapcraftError: If project update failed.
     """
     _update_project_variables(project, project_vars)
+    _update_project_links(project, metadata_list)
 
     update_from_extracted_metadata(
         project, metadata_list=metadata_list, assets_dir=assets_dir, prime_dir=prime_dir
@@ -86,33 +87,9 @@ def update_from_extracted_metadata(
 
         if metadata.version and not project.version:
             project.version = cast(VersionStr, metadata.version)
-            
+
         if metadata.license and not project.license:
             project.license = metadata.license
-            
-        if metadata.contact and not project.contact:
-            project.contact = metadata.contact
-            
-        if metadata.donation and project.donation:
-            project.donation = project.donation + metadata.donation
-            
-        if metadata.donation and not project.donation:
-            project.donation = metadata.donation
-            
-        if metadata.source_code and not project.source_code:
-            project.source_code = metadata.source_code
-            
-        if metadata.issues and project.issues:
-            project.issues = project.issues + metadata.issues
-        
-        if metadata.issues and not project.issues:
-            project.issues = metadata.issues
-        
-        if metadata.website and project.website:
-            project.website = project.website + metadata.website
-            
-        if metadata.website and not project.website:
-            project.website = metadata.website
 
         if metadata.grade and not project.grade:
             project.grade = metadata.grade  # type: ignore
@@ -126,6 +103,92 @@ def update_from_extracted_metadata(
         _update_project_app_desktop_file(
             project, metadata=metadata, assets_dir=assets_dir, prime_dir=prime_dir
         )
+
+
+def _update_project_links(
+    project: Project,
+    metadata_list: List[ExtractedMetadata],
+) -> None:
+    for metadata in metadata_list:
+        if metadata.contact and project.contact:
+            for item in metadata.contact:
+                project.contact = cast(
+                    UniqueStrList,
+                    (
+                        [project.contact]
+                        if isinstance(project.contact, str)
+                        else project.contact
+                    ),
+                )
+                if item not in project.contact:
+                    project.contact.extend([item])
+
+        if metadata.contact and not project.contact:
+            project.contact = cast(UniqueStrList, metadata.contact)
+
+        if metadata.donation and project.donation:
+            for item in metadata.donation:
+                if item not in project.donation:
+                    project.donation = cast(
+                        UniqueStrList,
+                        (
+                            [project.donation]
+                            if isinstance(project.donation, str)
+                            else project.donation
+                        ),
+                    )
+                    project.donation.extend([item])
+
+        if metadata.donation and not project.donation:
+            project.donation = cast(UniqueStrList, metadata.donation)
+
+        if metadata.source_code and project.source_code:
+            for item in metadata.source_code:
+                if item not in project.source_code:
+                    project.source_code = cast(
+                        UniqueStrList,
+                        (
+                            [project.source_code]
+                            if isinstance(project.source_code, str)
+                            else project.source_code
+                        ),
+                    )
+                    project.source_code.extend([item])
+
+        if metadata.source_code and not project.source_code:
+            project.source_code = cast(UniqueStrList, metadata.source_code)
+
+        if metadata.issues and project.issues:
+            for item in metadata.issues:
+                if item not in project.issues:
+                    project.issues = cast(
+                        UniqueStrList,
+                        (
+                            [project.issues]
+                            if isinstance(project.issues, str)
+                            else project.issues
+                        ),
+                    )
+                    project.issues.extend([item])
+
+        if metadata.issues and not project.issues:
+            project.issues = cast(UniqueStrList, metadata.issues)
+
+        if metadata.website and project.website:
+            for item in metadata.website:
+                if item not in project.website:
+                    project.website = cast(
+                        UniqueStrList,
+                        (
+                            [project.website]
+                            if isinstance(project.website, str)
+                            else project.website
+                        ),
+                    )
+                    project.website.extend([item])
+
+        if metadata.website and not project.website:
+            project.website = cast(UniqueStrList, metadata.website)
 
 
 def _update_project_variables(project: Project, project_vars: Dict[str, str]):

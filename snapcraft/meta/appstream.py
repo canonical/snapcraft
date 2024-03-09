@@ -101,12 +101,13 @@ def extract(relpath: str, *, workdir: str) -> Optional[ExtractedMetadata]:
     title = _get_value_from_xml_element(dom, "name")
     version = _get_latest_release_from_nodes(dom.findall("releases/release"))
     project_license = _get_value_from_xml_element(dom, "project_license")
-    contact = _get_value_from_xml_element(dom, "update_contact")
+    update_contact = _get_value_from_xml_element(dom, "update_contact")
+    contact = [update_contact] if update_contact else None
 
     issues = _get_urls_from_xml_element(dom.findall("url"), "bugtracker")
     donation = _get_urls_from_xml_element(dom.findall("url"), "donation")
     website = _get_urls_from_xml_element(dom.findall("url"), "homepage")
-    source_code = _get_source_code_from_xml_element(dom.findall("url"))
+    source_code = _get_urls_from_xml_element(dom.findall("url"), "vcs-browser")
 
     desktop_file_paths = []
     desktop_file_ids = _get_desktop_file_ids_from_nodes(dom.findall("launchable"))
@@ -178,17 +179,14 @@ def _get_value_from_xml_element(tree, key) -> Optional[str]:
 def _get_urls_from_xml_element(nodes, url_type) -> Optional[List[str]]:
     urls = []  # type: List[str]
     for node in nodes:
-        if node is not None and node.attrib["type"] == url_type:
+        if (
+            node is not None
+            and node.attrib["type"] == url_type
+            and node.text not in urls
+        ):
             urls.append(node.text.strip())
     if urls:
         return urls
-    return None
-
-
-def _get_source_code_from_xml_element(nodes) -> Optional[str]:
-    for node in nodes:
-        if node is not None and node.attrib["type"] == "vcs-browser":
-            return node.text.strip()
     return None
 
 
