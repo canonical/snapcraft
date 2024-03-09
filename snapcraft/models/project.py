@@ -602,14 +602,16 @@ class Project(models.Project):
     name: ProjectName  # type: ignore[assignment]
     build_base: Optional[str]
     compression: Literal["lzo", "xz"] = "xz"
-    version: Optional[VersionStr]  # type: ignore[assignment]
-    donation: Optional[Union[str, UniqueStrList]]
+    # TODO: ensure we have a test for version being retrieved using adopt-info
+    # snapcraft's `version` is more general than craft-application
+    version: Optional[ProjectVersion]  # type: ignore[assignment]
+    donation: Optional[UniqueStrList]  # type: ignore[assignment]
     # snapcraft's `source_code` is more general than craft-application
-    source_code: UniqueStrList = cast(UniqueStrList, [])  # type: ignore[assignment]
+    source_code: Optional[UniqueStrList]  # type: ignore[assignment]
     license: Optional[str]  # type: ignore[assignment]
-    contact: UniqueStrList = cast(UniqueStrList, [])  # type: ignore[assignment]
-    issues: UniqueStrList = cast(UniqueStrList, [])  # type: ignore[assignment]
-    website: UniqueStrList = cast(UniqueStrList, [])
+    contact: Optional[UniqueStrList]  # type: ignore[assignment]
+    issues: Optional[UniqueStrList]  # type: ignore[assignment]
+    website: Optional[UniqueStrList]  # type: ignore[assignment]
     type: Optional[Literal["app", "base", "gadget", "kernel", "snapd"]]
     icon: Optional[str]
     confinement: Literal["classic", "devmode", "strict"]
