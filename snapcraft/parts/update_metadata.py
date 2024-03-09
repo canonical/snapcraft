@@ -112,9 +112,6 @@ def _update_project_links(
     for metadata in metadata_list:
         fields = ["contact", "donation", "source_code", "issues", "website"]
         for field in fields:
-            if isinstance(getattr(project, field), str):
-                setattr(project, field, cast(UniqueStrList, [getattr(project, field)]))
-
             if (
                 getattr(metadata, field)
                 and getattr(project, field)
