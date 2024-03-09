@@ -72,11 +72,11 @@ def project_yaml_data():
             "grade": "stable",
             "confinement": "strict",
             "license": "license",
-            "contact": "contact1",
-            "donation": "donation1",
-            "issues": "issues1",
-            "website": "website1",
-            "source-code": "source-code",
+            "contact": {"contact1"},
+            "donation": {"donation1"},
+            "issues": {"issues1"},
+            "website": {"website1"},
+            "source-code": {"source-code"},
             "parts": {},
             **extra_args,
         }
@@ -299,7 +299,7 @@ def test_update_project_metadata_multiple(
     assert project.contact == ["test@test.com"]
     assert project.license == "GPL-3.0"
     assert project.donation == ["donation1", "donation2"]
-    assert project.source_code == "source-code"
+    assert project.source_code == ["source-code"]
     assert project.issues == ["issues1", "issues2"]
     assert project.website == ["website1", "website2"]
 
