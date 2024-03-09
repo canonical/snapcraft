@@ -475,7 +475,6 @@ def package_service(
         project=default_project,
         services=default_factory,
         snapcraft_yaml_path=file_path,
-        platform="amd64",
         build_plan=default_build_plan,
     )
 

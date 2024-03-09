@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -50,13 +50,13 @@ class Package(PackageService):
         *,
         project: models.Project,
         snapcraft_yaml_path: pathlib.Path,
-        platform: str | None,
         build_plan: list[BuildInfo],
     ) -> None:
         super().__init__(app, services, project=project)
-        self._platform = platform
-        self._build_for = build_plan[0].build_for
         self._snapcraft_yaml_path = snapcraft_yaml_path
+        self._build_plan = build_plan
+        self._platform = build_plan[0].platform
+        self._build_for = build_plan[0].build_for
 
     @override
     def pack(self, prime_dir: pathlib.Path, dest: pathlib.Path) -> list[pathlib.Path]:
@@ -81,7 +81,7 @@ class Package(PackageService):
                     compression=self._project.compression,
                     name=self._project.name,
                     version=process_version(self._project.version),
-                    target_arch=self._build_for,
+                    target_arch=self._build_plan[0].build_for,
                 )
             )
         ]
@@ -137,7 +137,9 @@ class Package(PackageService):
     def metadata(self) -> snap_yaml.SnapMetadata:
         """Get the metadata model for this project."""
         return snap_yaml.get_metadata_from_project(
-            self._project, self._services.lifecycle.prime_dir, arch=self._build_for
+            self._project,
+            self._services.lifecycle.prime_dir,
+            arch=self._build_plan[0].build_for,
         )
 
 
