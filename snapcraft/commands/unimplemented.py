@@ -52,8 +52,8 @@ class UnimplementedMixin:
         return False
 
     def provider_name(
-            self,
-            parsed_args: argparse.Namespace,  # noqa: ARG002 (the unused argument is for subclasses)
+        self,
+        parsed_args: argparse.Namespace,  # noqa: ARG002 (the unused argument is for subclasses)
     ) -> str | None:
         """Name of the provider where the command should be run inside of.
 
