@@ -82,7 +82,9 @@ class Snapcraft(Application):
                 os.environ[craft_var] = env_val
 
     @override
-    def _configure_services(self, platform: str | None, build_for: str | None) -> None:
+    def _configure_services(
+        self, platform: str | None, build_for: str | None, provider_name: str | None
+    ) -> None:
         self.services.set_kwargs(
             "package",
             platform=platform,
@@ -90,7 +92,7 @@ class Snapcraft(Application):
             snapcraft_yaml_path=self._snapcraft_yaml_path,
         )
 
-        super()._configure_services(platform, build_for)
+        super()._configure_services(platform, build_for, provider_name)
 
     @property
     def command_groups(self):
