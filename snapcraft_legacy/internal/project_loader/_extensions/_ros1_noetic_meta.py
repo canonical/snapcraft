@@ -53,10 +53,10 @@ class RosNoeticMetaBase(RosNoeticExtension):
         self.part_snippet_extra = dict()
 
         self.root_snippet["plugs"] = {
-            "ros-noetic":
+            self.ros_noetic_snaps.content:
                 {
                     "interface": "content",
-                    "content": "ros-noetic",
+                    "content": self.ros_noetic_snaps.content,
                     "target": "$SNAP/opt/ros/underlay_ws",
                     "default-provider": self.ros_noetic_snaps.content,
                 }

@@ -50,5 +50,8 @@ sudo snap install shellcheck
 # Install pyright for static tests.
 sudo snap install pyright --classic
 
+# Install ruff for linting
+sudo snap install ruff
+
 echo "Virtual environment may be activated by running:"
 echo "source ${SNAPCRAFT_VIRTUAL_ENV_DIR}/bin/activate"

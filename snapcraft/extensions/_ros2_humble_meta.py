@@ -54,9 +54,9 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
     def get_root_snippet(self) -> Dict[str, Any]:
         root_snippet = super().get_root_snippet()
         root_snippet["plugs"] = {
-            "ros-humble": {
+            self.ros2_humble_snaps.content: {
                 "interface": "content",
-                "content": "ros-humble",
+                "content": self.ros2_humble_snaps.content,
                 "target": "$SNAP/opt/ros/underlay_ws",
                 "default-provider": self.ros2_humble_snaps.content,
             }
