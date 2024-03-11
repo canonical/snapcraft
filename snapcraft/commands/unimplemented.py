@@ -274,9 +274,3 @@ class EditValidationSets(
     UnimplementedMixin, commands.core22.StoreEditValidationSetsCommand
 ):  # noqa: D101 (missing docstring)
     pass
-
-
-class RemoteBuild(
-    UnimplementedMixin, commands.core22.RemoteBuildCommand
-):  # noqa: D101 (missing docstring)
-    pass

@@ -270,7 +270,6 @@ class TestProjectValidation:
         # We only test one invalid version as this model is inherited
         # from Craft Application.
         with pytest.raises(errors.ProjectValidationError) as raised:
-
             Project.unmarshal(project_yaml_data(version="1=1"))
 
         assert str(raised.value) == (
