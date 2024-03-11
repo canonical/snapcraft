@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -29,7 +29,12 @@ from pydantic import ValidationError, validator
 from typing_extensions import override
 
 from snapcraft import errors, models
-from snapcraft.utils import get_ld_library_paths, process_version
+from snapcraft.elf.elf_utils import get_arch_triplet
+from snapcraft.utils import (
+    convert_architecture_deb_to_platform,
+    get_ld_library_paths,
+    process_version,
+)
 
 
 class SnapcraftMetadata(BaseMetadata):
@@ -224,6 +229,8 @@ class SnapMetadata(SnapcraftMetadata):
 
     This is currently a partial implementation, see
     https://snapcraft.io/docs/snap-format for details.
+
+    TODO: should platforms replace architectures for core24?
     """
 
     name: str
@@ -433,8 +440,15 @@ def get_metadata_from_project(
     if project.hooks and any(h for h in project.hooks.values() if h.command_chain):
         assumes.add("command-chain")
 
-    # if arch is "all", do not include architecture-specific paths in the environment
-    arch_triplet = None if arch == "all" else project.get_build_for_arch_triplet()
+    effective_base = project.get_effective_base()
+
+    if effective_base == "core22":
+        # if arch is "all", do not include architecture-specific paths in the environment
+        arch_triplet: str | None = (
+            None if arch == "all" else project.get_build_for_arch_triplet()
+        )
+    else:
+        arch_triplet = get_arch_triplet(convert_architecture_deb_to_platform(arch))
 
     environment = _populate_environment(
         project.environment, prime_dir, arch_triplet, project.confinement

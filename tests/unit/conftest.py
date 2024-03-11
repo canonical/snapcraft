@@ -461,7 +461,9 @@ def provider_service(default_project, default_factory, default_build_plan, tmp_p
 
 
 @pytest.fixture()
-def package_service(default_project, default_factory, snapcraft_yaml, tmp_path):
+def package_service(
+    default_build_plan, default_project, default_factory, snapcraft_yaml, tmp_path
+):
     from snapcraft.application import APP_METADATA
     from snapcraft.services import Package
 
@@ -474,7 +476,7 @@ def package_service(default_project, default_factory, snapcraft_yaml, tmp_path):
         services=default_factory,
         snapcraft_yaml_path=file_path,
         platform="amd64",
-        build_for="amd64",
+        build_plan=default_build_plan,
     )
 
 

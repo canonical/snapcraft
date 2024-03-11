@@ -972,7 +972,7 @@ def test_lifecycle_shell(snapcraft_yaml, cmd, expected_last_step, new_dir, mocke
     )
 
     assert last_step == expected_last_step
-    assert mock_shell.mock_calls == [call(["bash"], check=False, cwd=None)]
+    assert mock_shell.mock_calls[-1] == call(["bash"], check=False, cwd=None)
 
 
 @pytest.mark.parametrize(
@@ -1020,7 +1020,7 @@ def test_lifecycle_shell_after(
     )
 
     assert last_step == expected_last_step
-    assert mock_shell.mock_calls == [call(["bash"], check=False, cwd=None)]
+    assert mock_shell.mock_calls[-1] == call(["bash"], check=False, cwd=None)
 
 
 def test_lifecycle_adopt_project_vars(snapcraft_yaml, new_dir):

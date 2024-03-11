@@ -24,6 +24,7 @@ import shutil
 from typing import TYPE_CHECKING, cast
 
 from craft_application import AppMetadata, PackageService
+from craft_application.models import BuildInfo
 from overrides import override
 
 from snapcraft import errors, linters, models, pack, utils
@@ -50,11 +51,11 @@ class Package(PackageService):
         project: models.Project,
         snapcraft_yaml_path: pathlib.Path,
         platform: str | None,
-        build_for: str,
+        build_plan: list[BuildInfo],
     ) -> None:
         super().__init__(app, services, project=project)
         self._platform = platform
-        self._build_for = build_for
+        self._build_for = build_plan[0].build_for
         self._snapcraft_yaml_path = snapcraft_yaml_path
 
     @override

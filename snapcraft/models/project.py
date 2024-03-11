@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,13 +15,28 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Project file definition and helpers."""
+from __future__ import annotations
 
+# pylint: disable=too-many-lines
 import copy
 import re
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    cast,
+)
 
 import pydantic
 from craft_application import models
+from craft_application.errors import CraftValidationError
 from craft_application.models import BuildInfo, UniqueStrList, VersionStr
 from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
@@ -29,6 +44,7 @@ from craft_providers import bases
 from pydantic import PrivateAttr, constr
 
 from snapcraft import utils
+from snapcraft.const import SUPPORTED_ARCHS, SnapArch
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
@@ -75,6 +91,9 @@ def validate_architectures(architectures):
 
     :raise ValueError: If architecture data is invalid.
     """
+    if not architectures:
+        return architectures
+
     # validate strings and Architecture objects are not mixed
     if not (
         all(isinstance(architecture, str) for architecture in architectures)
@@ -426,6 +445,37 @@ class ContentPlug(models.CraftBaseModel):
         return default_provider
 
 
+class Platform(models.CraftBaseModel):
+    """Snapcraft project platform definition."""
+
+    build_on: list[SnapArch] | None = pydantic.Field(min_items=1, unique_items=True)
+    build_for: list[SnapArch] | None = pydantic.Field(
+        min_items=1, max_items=1, unique_items=True
+    )
+
+    @pydantic.validator("build_on", "build_for", pre=True)
+    @classmethod
+    def _vectorise_build_for(cls, val: str | list[str]) -> list[str]:
+        """Vectorise target architectures if needed."""
+        if isinstance(val, str):
+            val = [val]
+        return val
+
+    @pydantic.root_validator(skip_on_failure=True)
+    @classmethod
+    def _validate_platform_set(cls, values: Mapping[str, Any]) -> Mapping[str, Any]:
+        """If build_for is provided, then build_on must also be.
+
+        This aligns with the precedent set by the `architectures` keyword.
+        """
+        if not values.get("build_on") and values.get("build_for"):
+            raise CraftValidationError(
+                "'build_for' expects 'build_on' to also be provided."
+            )
+
+        return values
+
+
 MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
 
@@ -454,7 +504,7 @@ class Project(models.Project):
         Dict[str, Dict[Literal["symlink", "bind", "bind-file", "type"], str]]
     ]
     grade: Optional[Literal["stable", "devel"]]
-    architectures: List[Union[str, Architecture]] = [get_host_architecture()]
+    architectures: List[Union[str, Architecture]] | None = None
     assumes: UniqueStrList = cast(UniqueStrList, [])
     package_repositories: Optional[List[Dict[str, Any]]]
     hooks: Optional[Dict[str, Hook]]
@@ -590,6 +640,48 @@ class Project(models.Project):
             )
         return field_value
 
+    @pydantic.root_validator(pre=False)
+    @classmethod
+    def _validate_platforms_and_architectures(cls, values):
+        """Validate usage of platforms and architectures.
+
+        core22 base:
+         - can optionally define architectures
+         - cannot define platforms
+
+        core24 and newer bases:
+         - cannot define architectures
+         - can optionally define platforms
+        """
+        base = get_effective_base(
+            base=values.get("base"),
+            build_base=values.get("build_base"),
+            project_type=values.get("type"),
+            name=values.get("name"),
+        )
+        if base == "core22":
+            if values.get("platforms"):
+                raise ValueError(
+                    f"'platforms' keyword is not supported for base {base!r}. "
+                    "Use 'architectures' keyword instead."
+                )
+            # set default value
+            if not values.get("architectures"):
+                values["architectures"] = [
+                    Architecture(
+                        build_on=cast(UniqueStrList, [get_host_architecture()]),
+                        build_for=cast(UniqueStrList, [get_host_architecture()]),
+                    )
+                ]
+
+        elif values.get("architectures"):
+            raise ValueError(
+                f"'architectures' keyword is not supported for base {base!r}. "
+                "Use 'platforms' keyword instead."
+            )
+
+        return values
+
     @pydantic.root_validator()
     @classmethod
     def _validate_grade_and_build_base(cls, values):
@@ -718,9 +810,12 @@ class Project(models.Project):
         return base
 
     def get_build_on(self) -> str:
-        """Get the first build_on architecture from the project."""
-        if isinstance(self.architectures[0], Architecture) and isinstance(
-            self.architectures[0].build_on, List
+        """Get the first build_on architecture from the project for core22."""
+        # pylint: disable=unsubscriptable-object
+        if (
+            self.architectures
+            and isinstance(self.architectures[0], Architecture)
+            and isinstance(self.architectures[0].build_on, List)
         ):
             return self.architectures[0].build_on[0]
 
@@ -728,9 +823,12 @@ class Project(models.Project):
         raise RuntimeError("cannot determine build-on architecture")
 
     def get_build_for(self) -> str:
-        """Get the first build_for architecture from the project."""
-        if isinstance(self.architectures[0], Architecture) and isinstance(
-            self.architectures[0].build_for, List
+        """Get the first build_for architecture from the project for core22."""
+        # pylint: disable=unsubscriptable-object
+        if (
+            self.architectures
+            and isinstance(self.architectures[0], Architecture)
+            and isinstance(self.architectures[0].build_for, List)
         ):
             return self.architectures[0].build_for[0]
 
@@ -738,7 +836,7 @@ class Project(models.Project):
         raise RuntimeError("cannot determine build-for architecture")
 
     def get_build_for_arch_triplet(self) -> Optional[str]:
-        """Get the architecture triplet for the first build-for architecture.
+        """Get the architecture triplet for the first build-for architecture for core22.
 
         :returns: The build-for arch triplet. If build-for is "all", then return None.
         """
@@ -750,11 +848,12 @@ class Project(models.Project):
         return None
 
     def get_build_plan(self) -> List[BuildInfo]:
-        """Get the build plan for this project."""
+        """Get the build plan for core22 projects."""
         build_plan: List[BuildInfo] = []
 
         architectures = cast(List[Architecture], self.architectures)
 
+        # pylint: disable-next=not-an-iterable
         for arch in architectures:
             # build_for will be a single element list
             build_for = cast(list, arch.build_for)[0]
@@ -960,3 +1059,106 @@ def _format_global_keyword_warning(keyword: str, empty_entries: List[str]) -> st
         "stanza which is intended for configuration only."
         "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"
     )
+
+
+class SnapcraftBuildPlanner(models.BuildPlanner):
+    """A project model that creates build plans."""
+
+    base: str | None
+    build_base: str | None = None
+    name: str
+    platforms: dict[str, Any] | None = None
+    project_type: str | None = pydantic.Field(default=None, alias="type")
+
+    @pydantic.validator("platforms")
+    @classmethod
+    def _validate_all_platforms(cls, platforms: dict[str, Any]) -> dict[str, Any]:
+        """Validate and convert platform data to a dict of Platforms."""
+        for platform_label in platforms:
+            platform_data: dict[str, Any] = (
+                platforms[platform_label] if platforms[platform_label] else {}
+            )
+            error_prefix = f"Error for platform entry '{platform_label}'"
+
+            # Make sure the provided platform_set is valid
+            try:
+                platform = Platform(**platform_data)
+            except CraftValidationError as err:
+                raise CraftValidationError(f"{error_prefix}: {str(err)}") from None
+
+            # build_on and build_for are validated
+            # let's also validate the platform label
+            if platform.build_on:
+                build_on_one_of: Sequence[SnapArch | str] = platform.build_on
+            else:
+                build_on_one_of = [platform_label]
+
+            # If the label maps to a valid architecture and
+            # `build-for` is present, then both need to have the same value,
+            # otherwise the project is invalid.
+            if platform.build_for:
+                build_target = platform.build_for[0]
+                if platform_label in SUPPORTED_ARCHS and platform_label != build_target:
+                    raise CraftValidationError(
+                        str(
+                            f"{error_prefix}: if 'build_for' is provided and the "
+                            "platform entry label corresponds to a valid architecture, then "
+                            f"both values must match. {platform_label} != {build_target}"
+                        )
+                    )
+            # if no build-for is present, then the platform label needs to be a valid architecture
+            elif platform_label not in SUPPORTED_ARCHS:
+                raise CraftValidationError(
+                    str(
+                        f"{error_prefix}: platform entry label must correspond to a "
+                        "valid architecture if 'build-for' is not provided."
+                    )
+                )
+
+            # Both build and target architectures must be supported
+            if not any(b_o in SUPPORTED_ARCHS for b_o in build_on_one_of):
+                raise CraftValidationError(
+                    str(
+                        f"{error_prefix}: trying to build snap in one of "
+                        f"{build_on_one_of}, but none of these build architectures are supported. "
+                        f"Supported architectures: {SUPPORTED_ARCHS}"
+                    )
+                )
+
+            platforms[platform_label] = platform
+
+        return platforms
+
+    def get_build_plan(self) -> List[BuildInfo]:
+        """Get the build plan for this project."""
+        build_infos: list[BuildInfo] = []
+        effective_base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
+            str(
+                get_effective_base(
+                    base=self.base,
+                    build_base=self.build_base,
+                    project_type=self.project_type,
+                    name=self.name,
+                )
+            )
+        ].value
+
+        base = bases.BaseName("ubuntu", effective_base)
+
+        # set default value
+        if self.platforms is None:
+            self.platforms = {get_host_architecture(): None}
+
+        for platform_entry, platform in self.platforms.items():
+            for build_for in platform.build_for or [platform_entry]:
+                for build_on in platform.build_on or [platform_entry]:
+                    build_infos.append(
+                        BuildInfo(
+                            platform=platform_entry,
+                            build_on=build_on,
+                            build_for=build_for,
+                            base=base,
+                        )
+                    )
+
+        return build_infos

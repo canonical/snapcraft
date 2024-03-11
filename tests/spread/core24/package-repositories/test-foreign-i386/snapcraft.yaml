@@ -6,8 +6,8 @@ grade: devel
 confinement: strict
 base: core24
 build-base: devel
-architectures:
-  - build-on: amd64
+platforms:
+  amd64:
 
 package-repositories:
   # The repo that contains libpython3.11-minimal:i386

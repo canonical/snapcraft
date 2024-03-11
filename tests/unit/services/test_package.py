@@ -47,7 +47,10 @@ def test_pack(package_service, mocker):
     )
 
 
-def test_pack_target_arch(default_project, default_factory, mocker, tmp_path):
+def test_pack_target_arch(
+    default_build_plan, default_project, default_factory, mocker, tmp_path
+):
+    default_build_plan[0].build_for = "s390x"
     mock_pack_snap = mocker.patch.object(pack, "pack_snap")
     mocker.patch.object(linters, "run_linters")
     mocker.patch.object(linters, "report")
@@ -57,7 +60,7 @@ def test_pack_target_arch(default_project, default_factory, mocker, tmp_path):
         project=default_project,
         services=default_factory,
         platform="amd64",
-        build_for="s390x",
+        build_plan=default_build_plan,
         snapcraft_yaml_path=tmp_path / "snapcraft.yaml",
     )
 

@@ -23,16 +23,12 @@ import os
 import pathlib
 import signal
 import sys
-from typing import Any, List, cast
+from typing import Any
 
 import craft_application.commands as craft_app_commands
-import craft_application.models
 import craft_cli
-import pydantic
 from craft_application import Application, AppMetadata, util
-from craft_application.models import BuildInfo
 from craft_cli import emit
-from craft_providers import bases
 from overrides import override
 
 import snapcraft
@@ -40,76 +36,11 @@ import snapcraft_legacy
 from snapcraft import cli, commands, errors, models, services
 from snapcraft.commands import unimplemented
 from snapcraft.extensions import apply_extensions
-from snapcraft.models import Architecture
-from snapcraft.models.project import apply_root_packages, validate_architectures
-from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
-from snapcraft.utils import get_effective_base, get_host_architecture
+from snapcraft.models.project import SnapcraftBuildPlanner, apply_root_packages
+from snapcraft.utils import get_host_architecture
 from snapcraft_legacy.cli import legacy
 
 from .legacy_cli import _LIB_NAMES, _ORIGINAL_LIB_NAME_LOG_LEVEL
-
-
-class SnapcraftBuildPlanner(craft_application.models.BuildPlanner):
-    """A project model that creates build plans."""
-
-    architectures: List[str | Architecture] = pydantic.Field(
-        default_factory=lambda: [get_host_architecture()]
-    )
-    base: str | None = None
-    build_base: str | None = None
-    name: str | None = None
-    project_type: str | None = pydantic.Field(default=None, alias="type")
-
-    @pydantic.validator("architectures", always=True)
-    def _validate_architecture_data(  # pylint: disable=no-self-argument
-        cls, architectures: list[str | Architecture]
-    ) -> list[Architecture]:
-        """Validate architecture data.
-
-        Most importantly, converts architecture strings into Architecture objects.
-        """
-        return validate_architectures(architectures)
-
-    def get_build_plan(self) -> List[BuildInfo]:
-        """Get the build plan for this project."""
-        build_plan: List[BuildInfo] = []
-
-        for arch in self.architectures:
-            # build_for will be a single element list
-            if isinstance(arch, Architecture):
-                build_on = arch.build_on
-                build_for = cast(list[str], arch.build_for)[0]
-            else:
-                build_on = arch
-                build_for = arch
-
-            # TODO: figure out when to filter `all`
-            if build_for == "all":
-                build_for = get_host_architecture()
-
-            # build on will be a list of archs
-            for build_on_arch in cast(list[str], build_on):
-                base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
-                    str(
-                        get_effective_base(
-                            base=self.base,
-                            build_base=self.build_base,
-                            name=self.name,
-                            project_type=self.project_type,
-                        )
-                    )
-                ]
-                build_plan.append(
-                    BuildInfo(
-                        platform=f"ubuntu@{base.value}",
-                        build_on=build_on_arch,
-                        build_for=build_for,
-                        base=bases.BaseName("ubuntu", base.value),
-                    )
-                )
-
-        return build_plan
-
 
 APP_METADATA = AppMetadata(
     name="snapcraft",
@@ -152,13 +83,10 @@ class Snapcraft(Application):
 
     @override
     def _configure_services(self, platform: str | None, build_for: str | None) -> None:
-        if build_for is None:
-            build_for = util.get_host_architecture()
-
         self.services.set_kwargs(
             "package",
             platform=platform,
-            build_for=build_for,
+            build_plan=self._build_plan,
             snapcraft_yaml_path=self._snapcraft_yaml_path,
         )
 

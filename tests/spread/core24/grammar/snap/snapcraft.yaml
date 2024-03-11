@@ -3,14 +3,17 @@ version: "1.0"
 summary: test
 description: |
   Exercise snapcraft's advanced grammar keywords, `on`, and `to`.
-  This test leverages architecture keywords, `build-on` and `build-for`.
+  This test leverages the platform keywords, `build-on` and `build-for`.
 grade: devel
 confinement: strict
-base: core22
-architectures:
-  - build-on: amd64
+base: core24
+build-base: devel
+platforms:
+  platform1:
+    build-on: amd64
     build-for: amd64
-  - build-on: amd64
+  platform2:
+    build-on: amd64
     build-for: arm64
 
 parts:

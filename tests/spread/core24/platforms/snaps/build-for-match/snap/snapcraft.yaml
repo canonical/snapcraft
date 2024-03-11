@@ -1,17 +1,19 @@
-name: env-var-match
+name: build-for-match
 version: "1.0"
 summary: test
 description: |
   Only snaps should be built where `build-for` matches the
-  environmental variable `SNAPCRAFT_BUILD_FOR`.
+  command line argument `--build-for <architecture>`.
 grade: devel
 confinement: strict
 base: core24
 build-base: devel
-architectures:
-  - build-on: amd64
+platforms:
+  platform1:
+    build-on: amd64
     build-for: amd64
-  - build-on: [amd64, arm64]
+  platform2:
+    build-on: [amd64, arm64]
     build-for: arm64
 
 parts:

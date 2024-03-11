@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2024 Canonical Ltd.
+# Copyright 2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,36 +13,26 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Data models for snapcraft."""
 
-from .manifest import Manifest
-from .project import (
-    MANDATORY_ADOPTABLE_FIELDS,
-    App,
-    Architecture,
-    ArchitectureProject,
-    ContentPlug,
-    GrammarAwareProject,
-    Hook,
-    Lint,
-    Platform,
-    Project,
-    SnapcraftBuildPlanner,
-    Socket,
-)
+"""Constants used in snapcraft."""
 
-__all__ = [
-    "MANDATORY_ADOPTABLE_FIELDS",
-    "App",
-    "Architecture",
-    "ArchitectureProject",
-    "ContentPlug",
-    "GrammarAwareProject",
-    "Hook",
-    "Lint",
-    "Manifest",
-    "Platform",
-    "Project",
-    "SnapcraftBuildPlanner",
-    "Socket",
-]
+import enum
+
+
+class SnapArch(str, enum.Enum):
+    """An architecture for a snap."""
+
+    # pylint: disable=invalid-name
+    amd64 = "amd64"
+    arm64 = "arm64"
+    armhf = "armhf"
+    ppc64el = "ppc64el"
+    riscv64 = "riscv64"
+    s390x = "s390x"
+
+    def __str__(self) -> str:
+        """Stringify the value."""
+        return str(self.value)
+
+
+SUPPORTED_ARCHS = frozenset(arch.value for arch in SnapArch)
