@@ -28,6 +28,7 @@ from snapcraft import const, errors
 from snapcraft.models import (
     MANDATORY_ADOPTABLE_FIELDS,
     Architecture,
+    ComponentProject,
     ContentPlug,
     GrammarAwareProject,
     Hook,
@@ -117,6 +118,7 @@ class TestProjectDefaults:
         assert project.ua_services is None
         assert project.system_usernames is None
         assert project.provenance is None
+        assert project.components is None
 
     def test_app_defaults(self, project_yaml_data):
         data = project_yaml_data(apps={"app1": {"command": "/bin/true"}})
@@ -259,7 +261,7 @@ class TestProjectValidation:
             "git",
             "1~",
             "1+",
-            "12345678901234567890123456789012",
+            "x" * 32,
         ],
     )
     def test_project_version_valid(self, version, project_yaml_data):
@@ -2017,3 +2019,242 @@ def test_project_platform_unknown_name():
         "platform entry label must correspond to a valid architecture "
         "if 'build-for' is not provided." in str(raised.value)
     )
+
+
+@pytest.mark.parametrize("project", [ComponentProject, Project])
+class TestComponents:
+    """Validate components."""
+
+    @pytest.fixture
+    def stub_component_data(self):
+        return {
+            "type": "test",
+            "summary": "test summary",
+            "description": "test description",
+            "version": "1.0",
+        }
+
+    def test_components_valid(self, project, project_yaml_data, stub_component_data):
+        components = {"foo": stub_component_data, "bar": stub_component_data}
+
+        test_project = project.unmarshal(project_yaml_data(components=components))
+
+        assert test_project.components == components
+
+    def test_component_type_valid(
+        self, project, project_yaml_data, stub_component_data
+    ):
+        component = {"foo": stub_component_data}
+        component["foo"]["type"] = "test"
+
+        test_project = project.unmarshal(project_yaml_data(components=component))
+
+        assert test_project.components
+        assert test_project.components["foo"].type == "test"
+
+    def test_component_type_invalid(
+        self, project, project_yaml_data, stub_component_data
+    ):
+        component = {"foo": stub_component_data}
+        component["foo"]["type"] = "invalid"
+        error = ".*unexpected value; permitted: 'test'"
+
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            project.unmarshal(project_yaml_data(components=component))
+
+    @pytest.mark.parametrize(
+        "name", ["name", "name-with-dashes", "x" * 40, "foo-snap-bar"]
+    )
+    def test_component_name_valid(
+        self, project, name, project_yaml_data, stub_component_data
+    ):
+        component = {name: stub_component_data}
+
+        test_project = project.unmarshal(project_yaml_data(components=component))
+
+        assert test_project.components
+        assert list(test_project.components.keys()) == [name]
+
+    @pytest.mark.parametrize(
+        "name,error",
+        [
+            (
+                "snap-",
+                "Component names cannot start with the reserved namespace 'snap-'",
+            ),
+            (
+                "snap-foo",
+                "Component names cannot start with the reserved namespace 'snap-'",
+            ),
+            ("123456", "Component names can only use"),
+            ("name-ends-with-digits-0123", "Component names can only use"),
+            ("456-name-starts-with-digits", "Component names can only use"),
+            ("name-789-contains-digits", "Component names can only use"),
+            ("name_with_underscores", "Component names can only use"),
+            ("name-with-UPPERCASE", "Component names can only use"),
+            ("name with spaces", "Component names can only use"),
+            ("-name-starts-with-hyphen", "Component names cannot start with a hyphen"),
+            ("name-ends-with-hyphen-", "Component names cannot end with a hyphen"),
+            (
+                "name-has--two-hyphens",
+                "Component names cannot have two hyphens in a row",
+            ),
+            ("x" * 41, "ensure this value has at most 40 characters"),
+        ],
+    )
+    def test_component_name_invalid(
+        self, project, name, error, project_yaml_data, stub_component_data
+    ):
+        component = {name: stub_component_data}
+
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            project.unmarshal(project_yaml_data(components=component))
+
+    def test_component_summary_valid(
+        self, project, project_yaml_data, stub_component_data
+    ):
+        component = {"foo": stub_component_data}
+        summary = "x" * 78
+        component["foo"]["summary"] = summary
+
+        test_project = project.unmarshal(project_yaml_data(components=component))
+
+        assert test_project.components
+        assert test_project.components["foo"].summary == summary
+
+    def test_component_summary_invalid(
+        self, project, project_yaml_data, stub_component_data
+    ):
+        component = {"foo": stub_component_data}
+        component["foo"]["summary"] = "x" * 79
+
+        error = "ensure this value has at most 78 characters"
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            project.unmarshal(project_yaml_data(components=component))
+
+    @pytest.mark.parametrize(
+        "version",
+        [
+            "1",
+            "1.0",
+            "1.0.1-5.2~build0.20.04:1+1A",
+            "git",
+            "1~",
+            "1+",
+            "x" * 32,
+        ],
+    )
+    def test_component_version_valid(
+        self, project, version, project_yaml_data, stub_component_data
+    ):
+        component = {"foo": stub_component_data}
+        component["foo"]["version"] = version
+
+        test_project = project.unmarshal(project_yaml_data(components=component))
+
+        assert test_project.components
+        assert test_project.components["foo"].version == version
+
+    @pytest.mark.parametrize(
+        "version,error",
+        [
+            pytest.param(
+                "1_0",
+                "Invalid version '1_0': Component versions consist of",
+                id="'_' in version",
+            ),
+            pytest.param(
+                "1=1",
+                "Invalid version '1=1': Component versions consist of",
+                id="'=' in version",
+            ),
+            pytest.param(
+                ".1",
+                "Invalid version '.1': Component versions consist of",
+                id="cannot start with '.'",
+            ),
+            pytest.param(
+                ":1",
+                "Invalid version ':1': Component versions consist of",
+                id="cannot start with ':'",
+            ),
+            pytest.param(
+                "+1",
+                r"Invalid version '\+1': Component versions consist of",
+                id="cannot start with '+'",
+            ),
+            pytest.param(
+                "~1",
+                "Invalid version '~1': Component versions consist of",
+                id="cannot start with '~'",
+            ),
+            pytest.param(
+                "-1",
+                "Invalid version '-1': Component versions consist of",
+                id="cannot start with '-'",
+            ),
+            pytest.param(
+                "1.",
+                "Invalid version '1.': Component versions consist of",
+                id="cannot end with '.'",
+            ),
+            pytest.param(
+                "1:",
+                "Invalid version '1:': Component versions consist of",
+                id="cannot end with ':'",
+            ),
+            pytest.param(
+                "1-",
+                "Invalid version '1-': Component versions consist of",
+                id="cannot end with '-'",
+            ),
+            pytest.param(
+                "x" * 33,
+                "ensure this value has at most 32 characters",
+                id="too large",
+            ),
+            pytest.param(
+                "",
+                "Component version cannot be an empty string",
+                id="empty string",
+            ),
+        ],
+    )
+    def test_project_version_invalid(
+        self, project, version, error, project_yaml_data, stub_component_data
+    ):
+        component = {"foo": stub_component_data}
+        component["foo"]["version"] = version
+
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            project.unmarshal(project_yaml_data(components=component))
+
+    def test_get_component_names(self, project, project_yaml_data, stub_component_data):
+        components = {"foo": stub_component_data, "bar-baz": stub_component_data}
+        test_project = project.unmarshal(project_yaml_data(components=components))
+
+        component_names = test_project.get_component_names()
+
+        assert component_names == ["foo", "bar-baz"]
+
+    def test_get_component_names_none(self, project, project_yaml_data):
+        test_project = project.unmarshal(project_yaml_data())
+
+        component_names = test_project.get_component_names()
+
+        assert component_names == []
+
+    def test_get_partitions(self, project, project_yaml_data, stub_component_data):
+        components = {"foo": stub_component_data, "bar-baz": stub_component_data}
+        test_project = project.unmarshal(project_yaml_data(components=components))
+
+        partitions = test_project.get_partitions()
+
+        assert partitions == ["default", "component/foo", "component/bar-baz"]
+
+    def test_get_partitions_none(self, project, project_yaml_data):
+        test_project = project.unmarshal(project_yaml_data())
+
+        partitions = test_project.get_partitions()
+
+        assert partitions is None

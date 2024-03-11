@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=too-many-lines
+
 """Project file definition and helpers."""
 from __future__ import annotations
 
@@ -37,7 +39,7 @@ from typing import (
 import pydantic
 from craft_application import models
 from craft_application.errors import CraftValidationError
-from craft_application.models import BuildInfo, UniqueStrList, VersionStr
+from craft_application.models import BuildInfo, SummaryStr, UniqueStrList, VersionStr
 from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from craft_providers import bases
@@ -215,6 +217,62 @@ def apply_root_packages(yaml_data: dict[str, Any]) -> dict[str, Any]:
         )
 
     return yaml_data
+
+
+def _validate_version_name(version: str, model_name: str) -> None:
+    """Validate a version complies to the naming convention.
+
+    :param version: version string to validate
+    :param model_name: name of the model that contains the version
+
+    :raises ValueError: if the version contains invalid characters
+    """
+    if version and not re.match(
+        r"^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$", version
+    ):
+        raise ValueError(
+            f"Invalid version '{version}': {model_name.title()} versions consist of "
+            "upper- and lower-case alphanumeric characters, as well as periods, colons, "
+            "plus signs, tildes, and hyphens. They cannot begin with a period, colon, "
+            "plus sign, tilde, or hyphen. They cannot end with a period, colon, or "
+            "hyphen"
+        )
+
+
+def _validate_component_name(name: str) -> None:
+    """Validate a component name."""
+    if not re.fullmatch(r"[a-z-]*[a-z][a-z-]*", name):
+        raise ValueError(
+            "Component names can only use ASCII lowercase letters and hyphens"
+        )
+
+    if name.startswith("snap-"):
+        raise ValueError(
+            "Component names cannot start with the reserved namespace 'snap-'"
+        )
+
+    if name.startswith("-"):
+        raise ValueError("Component names cannot start with a hyphen")
+
+    if name.endswith("-"):
+        raise ValueError("Component names cannot end with a hyphen")
+
+    if "--" in name:
+        raise ValueError("Component names cannot have two hyphens in a row")
+
+
+def _get_partitions_from_components(
+    components_data: Optional[Dict[str, Any]]
+) -> Optional[List[str]]:
+    """Get a list of partitions based on the project's components.
+
+    :returns: A list of partitions formatted as ['default', 'component/<name>', ...]
+    or None if no components are defined.
+    """
+    if components_data:
+        return ["default", *[f"component/{name}" for name in components_data.keys()]]
+
+    return None
 
 
 class Socket(models.CraftBaseModel):
@@ -476,6 +534,26 @@ class Platform(models.CraftBaseModel):
         return values
 
 
+class Component(models.CraftBaseModel):
+    """Snapcraft component definition."""
+
+    summary: SummaryStr
+    description: str
+    type: Literal["test"]
+    version: Optional[VersionStr]  # type: ignore[assignment]
+
+    @pydantic.validator("version")
+    @classmethod
+    def _validate_version(cls, version):
+        if version == "":
+            raise ValueError("Component version cannot be an empty string.")
+
+        if version:
+            _validate_version_name(version, "Component")
+
+        return version
+
+
 MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
 
@@ -521,6 +599,7 @@ class Project(models.Project):
     build_snaps: Optional[GrammarStrList]
     ua_services: Optional[UniqueStrList]
     provenance: Optional[str]
+    components: Optional[Dict[ProjectName, Component]]
 
     @pydantic.validator("plugs")
     @classmethod
@@ -619,17 +698,18 @@ class Project(models.Project):
         if not version and "adopt_info" not in values:
             raise ValueError("Version must be declared if not adopting metadata")
 
-        if version and not re.match(
-            r"^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$", version
-        ):
-            raise ValueError(
-                f"Invalid version '{version}': Snap versions consist of upper- and lower-case "
-                "alphanumeric characters, as well as periods, colons, plus signs, tildes, "
-                "and hyphens. They cannot begin with a period, colon, plus sign, tilde, or "
-                "hyphen. They cannot end with a period, colon, or hyphen"
-            )
+        _validate_version_name(version, "Snap")
 
         return version
+
+    @pydantic.validator("components")
+    @classmethod
+    def _validate_components(cls, components):
+        """Validate component names."""
+        for component_name in components.keys():
+            _validate_component_name(component_name)
+
+        return components
 
     @pydantic.validator("grade", "summary", "description")
     @classmethod
@@ -847,6 +927,21 @@ class Project(models.Project):
 
         return None
 
+    def get_component_names(self) -> List[str]:
+        """Get a list of component names.
+
+        :returns: A list of component names.
+        """
+        return list(self.components.keys()) if self.components else []
+
+    def get_partitions(self) -> Optional[List[str]]:
+        """Get a list of partitions based on the project's components.
+
+        :returns: A list of partitions formatted as ['default', 'component/<name>', ...]
+        or None if no components are defined.
+        """
+        return _get_partitions_from_components(self.components)
+
     def get_build_plan(self) -> List[BuildInfo]:
         """Get the build plan for core22 projects."""
         build_plan: List[BuildInfo] = []
@@ -924,7 +1019,7 @@ class ArchitectureProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "ArchitectureProject":
-        """Create and populate a new ``Project`` object from dictionary data.
+        """Create and populate a new ``ArchitectureProject`` object from dictionary data.
 
         The unmarshal method validates entries in the input dictionary, populating
         the corresponding fields in the data object.
@@ -944,6 +1039,59 @@ class ArchitectureProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
             raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
 
         return architectures
+
+
+class ComponentProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
+    """Project definition containing only component data."""
+
+    components: Optional[Dict[ProjectName, Component]]
+
+    @pydantic.validator("components")
+    @classmethod
+    def _validate_components(cls, components):
+        """Validate component names."""
+        for component_name in components.keys():
+            _validate_component_name(component_name)
+
+        return components
+
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]) -> "ComponentProject":
+        """Create and populate a new ``ComponentProject`` object from dictionary data.
+
+        The unmarshal method validates entries in the input dictionary, populating
+        the corresponding fields in the data object.
+
+        :param data: The dictionary data to unmarshal.
+
+        :return: The newly created object.
+
+        :raise TypeError: If data is not a dictionary.
+        """
+        if not isinstance(data, dict):
+            raise TypeError("Project data is not a dictionary")
+
+        try:
+            components = ComponentProject(**data)
+        except pydantic.ValidationError as err:
+            raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
+
+        return components
+
+    def get_component_names(self) -> List[str]:
+        """Get a list of component names.
+
+        :returns: A list of component names.
+        """
+        return list(self.components.keys()) if self.components else []
+
+    def get_partitions(self) -> Optional[List[str]]:
+        """Get a list of partitions based on the project's components.
+
+        :returns: A list of partitions formatted as ['default', 'component/<name>', ...]
+        or None if no components are defined.
+        """
+        return _get_partitions_from_components(self.components)
 
 
 def _format_pydantic_errors(errors, *, file_name: str = "snapcraft.yaml"):
