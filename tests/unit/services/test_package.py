@@ -25,6 +25,9 @@ from craft_application.models import SummaryStr, VersionStr
 
 from snapcraft import __version__, linters, meta, models, pack, services
 from snapcraft.application import APP_METADATA
+from snapcraft.meta import ExtractedMetadata
+from snapcraft.parts import extract_metadata, update_metadata
+from snapcraft.services import Package
 
 
 @pytest.mark.usefixtures("default_factory")
@@ -61,6 +64,7 @@ def test_pack_target_arch(
         services=default_factory,
         build_plan=default_build_plan,
         snapcraft_yaml_path=tmp_path / "snapcraft.yaml",
+        parse_info={},
     )
 
     package_service.pack(prime_dir=tmp_path / "prime", dest=tmp_path)
@@ -330,3 +334,63 @@ def test_write_metadata_with_project_gui(
     assert (meta_dir / "gui" / "default.default.desktop").read_text() == "desktop_file"
     assert (meta_dir / "gui" / "icon.png").exists()
     assert (meta_dir / "gui" / "icon.png").read_text() == "package_png_icon"
+
+
+@pytest.fixture
+def extra_project_params(extra_project_params):
+    #     extra_project_params["version"] = None
+    #     extra_project_params["summary"] = None
+    #     extra_project_params["description"] = None
+    extra_project_params["adopt-info"] = "my-part"
+
+    #     extra_project_params["parts"] = {"my-part": {"plugin": "nil"}}
+    return extra_project_params
+
+
+def test_update_project_parse_info(
+    default_project, default_factory, default_build_plan, new_dir, mocker
+):
+    work_dir = Path("work").resolve()
+
+    default_factory.set_kwargs(
+        "lifecycle",
+        work_dir=work_dir,
+        cache_dir=new_dir,
+        build_plan=default_build_plan,
+    )
+
+    lifecycle = default_factory.lifecycle
+    project_info = lifecycle.project_info
+    project_info.execution_finished = True
+
+    fake_metadata = ExtractedMetadata()
+    mocked_extract = mocker.patch.object(
+        extract_metadata, "extract_lifecycle_metadata", return_value=[fake_metadata]
+    )
+    mocked_update = mocker.patch.object(
+        update_metadata, "update_from_extracted_metadata"
+    )
+
+    parse_info = {"my-part": ["file.metadata.xml"]}
+    package = Package(
+        app=APP_METADATA,
+        project=default_project,
+        services=default_factory,
+        snapcraft_yaml_path=new_dir / "snapcraft.yaml",
+        build_plan=default_build_plan,
+        parse_info=parse_info,
+    )
+
+    package.update_project()
+
+    mocked_extract.assert_called_once_with(
+        default_project.adopt_info,
+        parse_info,
+        work_dir,
+    )
+    mocked_update.assert_called_once_with(
+        default_project,
+        metadata_list=[fake_metadata],
+        assets_dir=new_dir / "snap",
+        prime_dir=work_dir / "prime",
+    )

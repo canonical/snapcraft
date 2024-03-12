@@ -89,6 +89,7 @@ class Snapcraft(Application):
             "package",
             build_plan=self._build_plan,
             snapcraft_yaml_path=self._snapcraft_yaml_path,
+            parse_info=self._parse_info,
         )
 
         super()._configure_services(provider_name)
