@@ -135,3 +135,37 @@ def test_application_managed_core20_fallback(monkeypatch, new_dir, mocker):
 
     mock_create_app.assert_not_called()
     mock_legacy_run.assert_called()
+
+
+PARSE_INFO_PROJECT = dedent(
+    """\
+    name: parse-info-project
+    base: core24
+    build-base: devel
+
+    grade: devel
+    confinement: strict
+    adopt-info: parse-info-part
+
+    parts:
+      parse-info-part:
+        plugin: nil
+        source: .
+        parse-info: [usr/share/metainfo/metainfo.xml]
+"""
+)
+
+
+def test_get_project_parse_info(new_dir):
+    """Test that parse-info data is correctly extracted and stored when loading
+    the project from a YAML file."""
+    snap_dir = new_dir / "snap"
+    snap_dir.mkdir()
+    project_yaml = snap_dir / "snapcraft.yaml"
+    project_yaml.write_text(PARSE_INFO_PROJECT)
+
+    app = application.create_app()
+    assert app._parse_info == {}
+
+    _project = app.get_project()
+    assert app._parse_info == {"parse-info-part": ["usr/share/metainfo/metainfo.xml"]}
