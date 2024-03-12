@@ -41,6 +41,7 @@ from snapcraft.utils import get_host_architecture
 from snapcraft_legacy.cli import legacy
 
 from .legacy_cli import _LIB_NAMES, _ORIGINAL_LIB_NAME_LOG_LEVEL
+from .parts.yaml_utils import extract_parse_info
 
 APP_METADATA = AppMetadata(
     name="snapcraft",
@@ -61,10 +62,11 @@ MAPPED_ENV_VARS = {
 class Snapcraft(Application):
     """Snapcraft application definition."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         # Whether we know that we should use the core24-based codepath.
         self._known_core24 = False
+        self._parse_info: dict[str, list[str]] = {}
 
         # Locate the project file. It's used in early execution to determine
         # compatibility with previous versions of the snapcraft codebase, and in
@@ -125,6 +127,7 @@ class Snapcraft(Application):
         arch = build_on
         target_arch = build_for if build_for else get_host_architecture()
         new_yaml_data = apply_extensions(yaml_data, arch=arch, target_arch=target_arch)
+        self._parse_info = extract_parse_info(new_yaml_data)
         return apply_root_packages(new_yaml_data)
 
     @override
