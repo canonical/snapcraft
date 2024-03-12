@@ -8,6 +8,7 @@ environment:
   SNAP/colcon_ros2_wrapper: colcon-ros2-wrapper
   SNAP/flutter: flutter-hello
   SNAP/python: python-hello
+  SNAP/qmake: qmake-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
