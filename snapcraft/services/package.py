@@ -30,6 +30,8 @@ from overrides import override
 from snapcraft import errors, linters, models, pack, utils
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import snap_yaml
+from snapcraft.parts import extract_metadata as extract
+from snapcraft.parts import update_metadata as update
 from snapcraft.parts.setup_assets import setup_assets
 from snapcraft.services import Lifecycle
 from snapcraft.utils import process_version
@@ -51,12 +53,28 @@ class Package(PackageService):
         project: models.Project,
         snapcraft_yaml_path: pathlib.Path,
         build_plan: list[BuildInfo],
+        parse_info: dict[str, list[str]],
     ) -> None:
         super().__init__(app, services, project=project)
         self._snapcraft_yaml_path = snapcraft_yaml_path
         self._build_plan = build_plan
         self._platform = build_plan[0].platform
         self._build_for = build_plan[0].build_for
+        self._parse_info = parse_info
+
+    @override
+    def _extra_project_updates(self) -> None:
+        # Update the project from parse-info data.
+        project_info = self._services.lifecycle.project_info
+        extracted_metadata = extract.extract_lifecycle_metadata(
+            self._project.adopt_info, self._parse_info, project_info.work_dir
+        )
+        update.update_from_extracted_metadata(
+            self._project,
+            metadata_list=extracted_metadata,
+            assets_dir=self._get_assets_dir(),
+            prime_dir=project_info.prime_dir,
+        )
 
     @override
     def pack(self, prime_dir: pathlib.Path, dest: pathlib.Path) -> list[pathlib.Path]:

@@ -19,6 +19,10 @@ import os
 from textwrap import dedent
 
 import pytest
+import yaml
+from craft_application import util
+from craft_parts.packages import snaps
+from craft_providers import bases
 
 from snapcraft import application, services
 from snapcraft.models.project import Architecture
@@ -151,7 +155,11 @@ PARSE_INFO_PROJECT = dedent(
       parse-info-part:
         plugin: nil
         source: .
-        parse-info: [usr/share/metainfo/metainfo.xml]
+        parse-info: [usr/share/metainfo/app.metainfo.xml]
+        override-build: |
+          craftctl default
+          mkdir -p ${CRAFT_PART_INSTALL}/usr/share/metainfo
+          cp metainfo.xml ${CRAFT_PART_INSTALL}/usr/share/metainfo/app.metainfo.xml
 """
 )
 
@@ -168,4 +176,63 @@ def test_get_project_parse_info(new_dir):
     assert app._parse_info == {}
 
     _project = app.get_project()
-    assert app._parse_info == {"parse-info-part": ["usr/share/metainfo/metainfo.xml"]}
+    assert app._parse_info == {
+        "parse-info-part": ["usr/share/metainfo/app.metainfo.xml"]
+    }
+
+
+APPSTREAM_CONTENTS = dedent(
+    """\
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!-- Some Comment -->
+    <component type="desktop-application">
+      <id>io.snapcraft.appstream</id>
+      <metadata_license>FSFAP</metadata_license>
+      <project_license>GPL-2.0+</project_license>
+      <name>Sample app</name>
+      <summary>Sample summary</summary>
+
+      <description><p>Sample description</p></description>
+
+      <releases>
+        <release version="1.2.3" date="2020-01-01">
+          <description>
+            <p>Initial release.</p>
+          </description>
+        </release>
+      </releases>
+    </component>
+    """
+)
+
+
+def test_parse_info_integrated(monkeypatch, mocker, new_dir):
+    # Pretend this is an Ubuntu 24.04 system, to match the project's build-base
+    mocker.patch.object(
+        util, "get_host_base", return_value=bases.BaseName("ubuntu", "24.04")
+    )
+
+    # Mock the installation of the core24 snap, as it can currently fail due
+    # to network issues and it's not necessary for the test
+    mocker.patch.object(snaps, "install_snaps")
+
+    snap_dir = new_dir / "snap"
+    snap_dir.mkdir()
+
+    project_yaml = snap_dir / "snapcraft.yaml"
+    project_yaml.write_text(PARSE_INFO_PROJECT)
+
+    metainfo_file = new_dir / "metainfo.xml"
+    metainfo_file.write_text(APPSTREAM_CONTENTS)
+
+    monkeypatch.setattr("sys.argv", ["snapcraft", "prime", "--destructive-mode"])
+    app = application.create_app()
+    app.run()
+
+    # Check for the parsed data directly in the generated snap.yaml
+    snap_file = new_dir / "prime/meta/snap.yaml"
+    snap_yaml = yaml.safe_load(snap_file.read_text())
+
+    assert snap_yaml["summary"] == "Sample summary"
+    assert snap_yaml["description"] == "Sample description"
+    assert snap_yaml["version"] == "1.2.3"
