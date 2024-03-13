@@ -15,7 +15,7 @@ lint:
 
 apps:
   maven-hello:
-    command: bin/java -jar $SNAP/jar/hello-$SNAPCRAFT_PROJECT_VERSION.jar
+    command: bin/java -jar $SNAP/jar/hello-${CRAFT_PROJECT_VERSION}.jar
 
 parts:
   hello:
