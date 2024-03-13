@@ -1,6 +1,7 @@
 attrs==23.1.0
 catkin-pkg==0.5.2
 click==8.1.7
+craft-application @ git+https://github.com/canonical/craft-application@main
 craft-archives==1.1.3
 craft-cli==2.5.1
 craft-grammar==1.1.1

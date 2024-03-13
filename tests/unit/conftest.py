@@ -416,15 +416,20 @@ def default_factory(default_project):
 
 @pytest.fixture()
 def default_build_plan():
+    from craft_application import util
     from craft_application.models import BuildInfo
-    from craft_providers import bases
+
+    # Set the build info base to match the host's, so we can test in destructive
+    # mode with no issues.
+    arch = util.get_host_architecture()
+    base = util.get_host_base()
 
     return [
         BuildInfo(
             platform="generic-x86-64",
-            build_on="amd64",
-            build_for="amd64",
-            base=bases.BaseName("ubuntu", "24.04"),
+            build_on=arch,
+            build_for=arch,
+            base=base,
         )
     ]
 
@@ -476,7 +481,6 @@ def package_service(
         project=default_project,
         services=default_factory,
         snapcraft_yaml_path=file_path,
-        platform="amd64",
         build_plan=default_build_plan,
     )
 
