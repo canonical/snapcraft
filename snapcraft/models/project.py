@@ -1139,6 +1139,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
                     build_base=self.build_base,
                     project_type=self.project_type,
                     name=self.name,
+                    translate_devel=False,  # We want actual "devel" if set.
                 )
             )
         ].value
