@@ -11,5 +11,6 @@ Snapcraft.
    :maxdepth: 1
 
    plugins/dump_plugin
+   plugins/maven_plugin
    plugins/python_plugin
    plugins/rust_plugin
