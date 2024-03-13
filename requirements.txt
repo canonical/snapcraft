@@ -9,7 +9,7 @@ craft-application @ git+https://github.com/canonical/craft-application@main
 craft-archives==1.1.3
 craft-cli==2.5.1
 craft-grammar==1.1.2
-git+https://github.com/canonical/craft-parts@feature/namespaced-partitions-patch#egg=craft-parts
+craft-parts==1.28.0
 craft-providers==1.23.0
 craft-store==2.6.0
 cryptography==42.0.4
