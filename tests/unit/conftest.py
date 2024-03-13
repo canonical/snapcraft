@@ -434,9 +434,7 @@ def default_build_plan():
 
 
 @pytest.fixture()
-def lifecycle_service(
-    default_project, default_factory, default_build_plan, snapcraft_yaml, tmp_path
-):
+def lifecycle_service(default_project, default_factory, default_build_plan, tmp_path):
     from snapcraft.application import APP_METADATA
     from snapcraft.services import Lifecycle
 
@@ -472,7 +470,7 @@ def package_service(
     from snapcraft.application import APP_METADATA
     from snapcraft.services import Package
 
-    file_path = tmp_path / "snapcraft.yaml"
+    file_path = tmp_path / "snap" / "snapcraft.yaml"
     snapcraft_yaml(filename=file_path)
 
     return Package(
