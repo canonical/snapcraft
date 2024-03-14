@@ -847,35 +847,6 @@ class Project(models.Project):
 
         return None
 
-    def get_build_plan(self) -> List[BuildInfo]:
-        """Get the build plan for core22 projects."""
-        build_plan: List[BuildInfo] = []
-
-        architectures = cast(List[Architecture], self.architectures)
-
-        # pylint: disable-next=not-an-iterable
-        for arch in architectures:
-            # build_for will be a single element list
-            build_for = cast(list, arch.build_for)[0]
-
-            # TODO: figure out when to filter `all`
-            if build_for == "all":
-                build_for = get_host_architecture()
-
-            # build on will be a list of archs
-            for build_on in arch.build_on:
-                base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[self.get_effective_base()]
-                build_plan.append(
-                    BuildInfo(
-                        platform=f"ubuntu@{base.value}",
-                        build_on=build_on,
-                        build_for=build_for,
-                        base=bases.BaseName("ubuntu", base.value),
-                    )
-                )
-
-        return build_plan
-
 
 class _GrammarAwareModel(pydantic.BaseModel):
     class Config:
