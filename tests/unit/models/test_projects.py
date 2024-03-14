@@ -1915,6 +1915,28 @@ def test_build_planner_get_build_plan(platforms, expected_build_infos):
     assert actual_build_infos == expected_build_infos
 
 
+def test_get_build_plan_devel():
+    """Test that "devel" build-bases are correctly reflected on the build plan"""
+    planner = snapcraft.models.project.SnapcraftBuildPlanner.parse_obj(
+        {
+            "name": "test-snap",
+            "base": "core24",
+            "build-base": "devel",
+            "platforms": {"amd64": None},
+        }
+    )
+
+    build_plan = planner.get_build_plan()
+    assert build_plan == [
+        BuildInfo(
+            build_on="amd64",
+            build_for="amd64",
+            base=BaseName(name="ubuntu", version="devel"),
+            platform="amd64",
+        )
+    ]
+
+
 def test_platform_default():
     """Default value for platforms is the host architecture."""
     planner = snapcraft.models.project.SnapcraftBuildPlanner.parse_obj(
@@ -1963,6 +1985,7 @@ def test_build_planner_get_build_plan_base(mocker):
         build_base="test-build-base",
         project_type="test-type",
         name="test-snap",
+        translate_devel=False,
     )
 
 
