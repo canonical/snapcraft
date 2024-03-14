@@ -5,8 +5,6 @@ restore: |
   rm -f ./*.snap ./*.comp
 
 execute: |
-  unset SNAPCRAFT_BUILD_ENVIRONMENT
-
   cd "./snap"
   
   snapcraft pack --use-lxd

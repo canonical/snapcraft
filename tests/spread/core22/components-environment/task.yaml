@@ -5,8 +5,6 @@ restore: |
   rm -f ./*.snap
 
 execute: |
-  unset SNAPCRAFT_BUILD_ENVIRONMENT
-
   check_vars() {
     file="$1"
     root="$(pwd)"
