@@ -2160,52 +2160,52 @@ class TestComponents:
         [
             pytest.param(
                 "1_0",
-                "Invalid version '1_0': Component versions consist of",
+                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
                 id="'_' in version",
             ),
             pytest.param(
                 "1=1",
-                "Invalid version '1=1': Component versions consist of",
+                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
                 id="'=' in version",
             ),
             pytest.param(
                 ".1",
-                "Invalid version '.1': Component versions consist of",
+                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
                 id="cannot start with '.'",
             ),
             pytest.param(
                 ":1",
-                "Invalid version ':1': Component versions consist of",
+                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
                 id="cannot start with ':'",
             ),
             pytest.param(
                 "+1",
-                r"Invalid version '\+1': Component versions consist of",
+                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
                 id="cannot start with '+'",
             ),
             pytest.param(
                 "~1",
-                "Invalid version '~1': Component versions consist of",
+                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
                 id="cannot start with '~'",
             ),
             pytest.param(
                 "-1",
-                "Invalid version '-1': Component versions consist of",
+                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
                 id="cannot start with '-'",
             ),
             pytest.param(
                 "1.",
-                "Invalid version '1.': Component versions consist of",
+                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
                 id="cannot end with '.'",
             ),
             pytest.param(
                 "1:",
-                "Invalid version '1:': Component versions consist of",
+                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
                 id="cannot end with ':'",
             ),
             pytest.param(
                 "1-",
-                "Invalid version '1-': Component versions consist of",
+                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
                 id="cannot end with '-'",
             ),
             pytest.param(
@@ -2215,19 +2215,22 @@ class TestComponents:
             ),
             pytest.param(
                 "",
-                "Component version cannot be an empty string",
+                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
                 id="empty string",
             ),
         ],
     )
-    def test_project_version_invalid(
+    def test_component_version_invalid(
         self, project, version, error, project_yaml_data, stub_component_data
     ):
         component = {"foo": stub_component_data}
         component["foo"]["version"] = version
 
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        with pytest.raises(errors.ProjectValidationError) as raised:
             project.unmarshal(project_yaml_data(components=component))
+
+        assert error in str(raised.value)
+        assert str(raised.value).endswith("(in field 'components.foo.version')")
 
     def test_get_component_names(self, project, project_yaml_data, stub_component_data):
         components = {"foo": stub_component_data, "bar-baz": stub_component_data}
