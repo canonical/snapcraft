@@ -1815,6 +1815,58 @@ class TestArchitecture:
             "Use 'platforms' keyword instead."
         ) in str(raised.value)
 
+    @pytest.mark.parametrize(
+        ("architectures", "expected"),
+        [
+            (Architecture(build_on="amd64", build_for=None), ["amd64"]),
+            (Architecture(build_on="amd64", build_for=UniqueStrList([])), ["amd64"]),
+            (Architecture(build_on="amd64", build_for="i386"), ["i386"]),
+            (
+                Architecture(build_on="amd64", build_for=UniqueStrList(["i386"])),
+                ["i386"],
+            ),
+            (
+                Architecture(
+                    build_on="amd64", build_for=UniqueStrList(["amd64", "i386"])
+                ),
+                ["i386", "amd64"],
+            ),
+            (
+                Architecture(build_on=UniqueStrList(["arm64"]), build_for=None),
+                ["arm64"],
+            ),
+            (
+                Architecture(build_on=UniqueStrList(["arm64"]), build_for="armhf"),
+                ["armhf"],
+            ),
+            (
+                Architecture(
+                    build_on=UniqueStrList(["arm64"]),
+                    build_for=UniqueStrList(["armhf"]),
+                ),
+                ["armhf"],
+            ),
+            (
+                Architecture(
+                    build_on=UniqueStrList(["arm64"]),
+                    build_for=UniqueStrList(["armhf", "arm64"]),
+                ),
+                ["armhf", "arm64"],
+            ),
+            (
+                Architecture(
+                    build_on=UniqueStrList(["amd64", "arm64"]),
+                    build_for=UniqueStrList(["armhf", "riscv"]),
+                ),
+                ["armhf", "riscv"],
+            ),
+        ],
+    )
+    def test_architecture_get_archs_list(self, architectures, expected):
+        """Test `get_archs_list()`."""
+
+        assert set(architectures.get_archs_list()) == set(expected)
+
 
 class TestApplyRootPackages:
     """Test Transform the Project."""

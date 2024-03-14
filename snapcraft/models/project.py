@@ -29,6 +29,7 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
+    Set,
     Tuple,
     Union,
     cast,
@@ -424,6 +425,33 @@ class Architecture(models.CraftBaseModel, extra=pydantic.Extra.forbid):
 
     build_on: Union[str, UniqueStrList]
     build_for: Optional[Union[str, UniqueStrList]]
+
+    def get_archs_list(self) -> List[str]:
+        """Get the unique list of architectures.
+
+        Since `build_on` and `build_for` could be str or list, provide a method
+        to easily get the list of unique architectures to use.
+
+        This will return `build-for` if set, otherwise `build-on`.
+
+        :returns: A list of unique architectures.
+        """
+        archs_set: Set[str] = set()
+
+        if isinstance(self.build_for, str):
+            archs_set.add(self.build_for)
+        elif isinstance(self.build_for, list):
+            for arch in self.build_for:
+                archs_set.add(arch)
+
+        if not archs_set:
+            if isinstance(self.build_on, str):
+                archs_set.add(self.build_on)
+            elif isinstance(self.build_on, list):
+                for arch in self.build_on:
+                    archs_set.add(arch)
+
+        return list(archs_set)
 
 
 class ContentPlug(models.CraftBaseModel):
