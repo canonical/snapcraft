@@ -109,16 +109,25 @@ def test_parts_lifecycle_run_with_components(
     )
     lifecycle.run(step_name)
 
-    assert lifecycle.prime_dir == Path(new_dir, "prime/default")
+    # default partition
+    assert lifecycle.prime_dir == Path(new_dir, "prime")
     assert lifecycle.prime_dir.is_dir()
-    assert lifecycle.get_prime_dir_for_component(component="foo") == Path(
-        new_dir, "prime/component/foo"
+
+    # component/foo partition
+    assert (
+        lifecycle.get_prime_dir_for_component(component="foo")
+        == Path(new_dir) / "partitions" / "component" / "foo" / "prime"
     )
     assert lifecycle.get_prime_dir_for_component(component="foo").is_dir()
-    assert lifecycle.get_prime_dir_for_component(component="bar") == Path(
-        new_dir, "prime/component/bar"
+
+    # component/bar partition
+    assert (
+        lifecycle.get_prime_dir_for_component(component="bar")
+        == Path(new_dir) / "partitions" / "component" / "bar" / "prime"
     )
     assert lifecycle.get_prime_dir_for_component(component="bar").is_dir()
+
+    # partitions
     assert lcm_spy.call_args[1]["partitions"] == [
         "default",
         "component/foo",

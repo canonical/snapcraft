@@ -1263,19 +1263,25 @@ def test_expand_environment_with_partitions(new_dir, mocker):
     )
 
     assert yaml_data == {
-        "field9": [f"{new_dir}/stage/default", f"{new_dir}/stage/default"],
-        "field10": [f"{new_dir}/stage/default", f"{new_dir}/stage/default"],
-        "field11": [f"{new_dir}/stage/component/foo", f"{new_dir}/stage/component/foo"],
-        "field12": [
-            f"{new_dir}/stage/component/bar-baz",
-            f"{new_dir}/stage/component/bar-baz",
+        "field9": [f"{new_dir}/stage", f"{new_dir}/stage"],
+        "field10": [f"{new_dir}/stage", f"{new_dir}/stage"],
+        "field11": [
+            f"{new_dir}/partitions/component/foo/stage",
+            f"{new_dir}/partitions/component/foo/stage",
         ],
-        "field13": [f"{new_dir}/prime/default", f"{new_dir}/prime/default"],
-        "field14": [f"{new_dir}/prime/default", f"{new_dir}/prime/default"],
-        "field15": [f"{new_dir}/prime/component/foo", f"{new_dir}/prime/component/foo"],
+        "field12": [
+            f"{new_dir}/partitions/component/bar-baz/stage",
+            f"{new_dir}/partitions/component/bar-baz/stage",
+        ],
+        "field13": [f"{new_dir}/prime", f"{new_dir}/prime"],
+        "field14": [f"{new_dir}/prime", f"{new_dir}/prime"],
+        "field15": [
+            f"{new_dir}/partitions/component/foo/prime",
+            f"{new_dir}/partitions/component/foo/prime",
+        ],
         "field16": [
-            f"{new_dir}/prime/component/bar-baz",
-            f"{new_dir}/prime/component/bar-baz",
+            f"{new_dir}/partitions/component/bar-baz/prime",
+            f"{new_dir}/partitions/component/bar-baz/prime",
         ],
         "field17": [f"{new_dir}", f"{new_dir}"],
     }
@@ -2139,12 +2145,12 @@ def test_lifecycle_write_component_metadata(
         call(
             project=project,
             component_name="foo",
-            component_prime_dir=new_dir / "prime/component/foo",
+            component_prime_dir=new_dir / "partitions/component/foo/prime",
         ),
         call(
             project=project,
             component_name="bar-baz",
-            component_prime_dir=new_dir / "prime/component/bar-baz",
+            component_prime_dir=new_dir / "partitions/component/bar-baz/prime",
         ),
     ]
 
@@ -2185,12 +2191,12 @@ def test_lifecycle_pack_components(
 
     assert mock_pack.mock_calls == [
         call(
-            directory=new_dir / "prime/component/foo",
+            directory=new_dir / "partitions/component/foo/prime",
             compression="xz",
             output_dir=new_dir,
         ),
         call(
-            directory=new_dir / "prime/component/bar-baz",
+            directory=new_dir / "partitions/component/bar-baz/prime",
             compression="xz",
             output_dir=new_dir,
         ),
@@ -2235,12 +2241,12 @@ def test_lifecycle_pack_components_with_output(
 
     assert mock_pack.mock_calls == [
         call(
-            directory=new_dir / "prime/component/foo",
+            directory=new_dir / "partitions/component/foo/prime",
             compression="xz",
             output_dir=new_dir / "dir",
         ),
         call(
-            directory=new_dir / "prime/component/bar-baz",
+            directory=new_dir / "partitions/component/bar-baz/prime",
             compression="xz",
             output_dir=new_dir / "dir",
         ),
