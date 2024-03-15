@@ -182,6 +182,7 @@ exclude_patterns.extend(
         # Excluded here because they are included explicitly in other documents;
         # if we don't exclude them, they generate "duplicate label" errors.
         "common/craft-parts/dump_plugin.rst",
+        "common/craft-parts/maven_plugin.rst",
         "common/craft-parts/part_properties.rst",
         "common/craft-parts/python_plugin.rst",
         "common/craft-parts/rust_plugin.rst",
