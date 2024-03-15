@@ -100,7 +100,7 @@ install_requires = [
     "craft-archives",
     "craft-cli",
     "craft-grammar",
-    # "craft-parts",
+    #"craft-parts",
     "craft-parts @ git+https://github.com/canonical/craft-parts@CRAFT-2584-Document-maven-plugin",
     "craft-providers",
     "craft-store",
