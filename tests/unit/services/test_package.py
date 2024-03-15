@@ -16,6 +16,7 @@
 
 """Tests for the Snapcraft Package service."""
 import datetime
+import shutil
 from pathlib import Path
 from textwrap import dedent
 
@@ -200,6 +201,11 @@ def project_hooks_dir(new_dir, request):
 def test_write_metadata_with_project_hooks(
     package_service, default_factory, default_build_plan, new_dir, project_hooks_dir
 ):
+    if "build-aux" in str(project_hooks_dir):
+        # /build-aux cannot co-exist with /snap
+        shutil.move(new_dir / "snap" / "snapcraft.yaml", new_dir)
+        shutil.rmtree(new_dir / "snap")
+
     default_factory.set_kwargs(
         "lifecycle",
         work_dir=Path("work"),
