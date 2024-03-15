@@ -236,6 +236,8 @@ suites:
      - ubuntu-22.04-armhf
      - ubuntu-22.04-s390x
      - ubuntu-22.04-ppc64el
+   environment:
+     SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
  tests/spread/core22/environment/:
    summary: core22 environment tests
