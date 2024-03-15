@@ -65,6 +65,8 @@ class Lifecycle(LifecycleService):
         self._manager_kwargs.update(
             base=project.get_effective_base(),
             extra_build_snaps=project.get_extra_build_snaps(),
+            confinement=project.confinement,
+            project_base=project.base or "",
         )
         super().setup()
 

@@ -158,3 +158,29 @@ def test_generate_manifest(
     assert lifecycle_service.get_primed_stage_packages.mock_calls == [
         mock.call(part_name=part_name) for part_name in parts
     ]
+
+
+@pytest.mark.parametrize("base", ["core24", None])
+@pytest.mark.parametrize("confinement", ["strict", "devmode", "classic"])
+def test_lifecycle_custom_arguments(
+    lifecycle_service, default_project, base, confinement
+):
+    """Test that the lifecycle project has the correct project base and confinement."""
+
+    # Set the base and confinement on the project. This roundabout way here
+    # is because the validators make it hard to update the base from/to None
+    # without "type" being already correct.
+    new_attrs = {"base": base, "confinement": confinement}
+    if base is None:
+        new_attrs["type"] = "base"
+    default_project.__dict__.update(**new_attrs)
+
+    lifecycle_service.setup()
+
+    info = lifecycle_service.project_info
+
+    expected_confinement = confinement
+    expected_base = base if base is not None else ""
+
+    assert info.project_base == expected_base
+    assert info.confinement == expected_confinement
