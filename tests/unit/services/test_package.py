@@ -127,9 +127,11 @@ def test_write_metadata(
         build_plan=default_build_plan,
     )
 
-    package_service.write_metadata(new_dir)
+    prime_dir = new_dir / "prime"
+    meta_dir = prime_dir / "meta"
 
-    meta_dir = new_dir / "meta"
+    package_service.write_metadata(prime_dir)
+
     assert (meta_dir / "snap.yaml").read_text() == dedent(
         """\
         name: default
@@ -148,7 +150,7 @@ def test_write_metadata(
     """
     )
 
-    assert not (new_dir / "snap" / "manifest.yaml").exists()
+    assert not (prime_dir / "snap" / "manifest.yaml").exists()
 
 
 def test_write_metadata_with_manifest(
@@ -166,13 +168,16 @@ def test_write_metadata_with_manifest(
         build_plan=default_build_plan,
     )
 
-    package_service.write_metadata(new_dir)
+    prime_dir = new_dir / "prime"
+    meta_dir = prime_dir / "meta"
 
-    snap_yaml = yaml.safe_load((new_dir / "meta" / "snap.yaml").read_text())
+    package_service.write_metadata(prime_dir)
+
+    snap_yaml = yaml.safe_load((meta_dir / "snap.yaml").read_text())
 
     # This will be different every time due to started_at differing, we can check
     # that it's a valid manifest and compare some fields to snap.yaml.
-    manifest_dict = yaml.safe_load((new_dir / "snap" / "manifest.yaml").read_text())
+    manifest_dict = yaml.safe_load((prime_dir / "snap" / "manifest.yaml").read_text())
     manifest = models.Manifest.parse_obj(manifest_dict)
 
     assert manifest.snapcraft_version == __version__
