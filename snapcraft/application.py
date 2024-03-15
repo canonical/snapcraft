@@ -29,6 +29,7 @@ import craft_application.commands as craft_app_commands
 import craft_cli
 from craft_application import Application, AppMetadata, util
 from craft_cli import emit
+from craft_parts.plugins.plugins import PluginType
 from overrides import override
 
 import snapcraft
@@ -41,6 +42,7 @@ from snapcraft.utils import get_host_architecture
 from snapcraft_legacy.cli import legacy
 
 from .legacy_cli import _LIB_NAMES, _ORIGINAL_LIB_NAME_LOG_LEVEL
+from .parts import plugins
 from .parts.yaml_utils import extract_parse_info
 
 APP_METADATA = AppMetadata(
@@ -82,6 +84,9 @@ class Snapcraft(Application):
         for craft_var, snapcraft_var in MAPPED_ENV_VARS.items():
             if env_val := os.getenv(snapcraft_var):
                 os.environ[craft_var] = env_val
+
+    def _get_app_plugins(self) -> dict[str, PluginType]:
+        return plugins.get_plugins(core22=False)
 
     @override
     def _configure_services(self, provider_name: str | None) -> None:
