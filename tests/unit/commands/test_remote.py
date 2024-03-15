@@ -98,7 +98,7 @@ def mock_run_legacy(mocker):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_argv")
 def test_command_user_confirms_upload(
@@ -115,7 +115,7 @@ def test_command_user_confirms_upload(
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_argv")
 def test_command_user_denies_upload(
@@ -135,7 +135,7 @@ def test_command_user_denies_upload(
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml")
 def test_command_accept_upload(
@@ -153,7 +153,7 @@ def test_command_accept_upload(
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
@@ -173,7 +173,7 @@ def test_command_new_build_arguments_mutually_exclusive(capsys, mocker):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", sorted(LEGACY_BASES | {"core22"}), indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm")
 def test_command_legacy_build_arguments_not_mutually_exclusive(mocker, mock_run_legacy):
@@ -190,7 +190,7 @@ def test_command_legacy_build_arguments_not_mutually_exclusive(mocker, mock_run_
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm")
 def test_command_build_on_warning(
@@ -208,7 +208,7 @@ def test_command_build_on_warning(
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml", "mock_confirm", "fake_sudo", "mock_argv"
@@ -236,7 +236,7 @@ def test_cannot_load_snapcraft_yaml(capsys):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build", "mock_argv"
@@ -256,7 +256,7 @@ def test_launchpad_timeout_default(mock_remote_builder):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
@@ -285,7 +285,7 @@ def test_launchpad_timeout(mocker, mock_remote_builder):
 
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
-@pytest.mark.parametrize("base", CURRENT_BASES | LEGACY_BASES)
+@pytest.mark.parametrize("base", sorted(CURRENT_BASES | LEGACY_BASES))
 def test_get_effective_base(
     base, snapcraft_yaml, mock_run_new_or_fallback_remote_build
 ):
@@ -321,7 +321,7 @@ def test_get_effective_base_with_build_base(
 
 
 @pytest.mark.usefixtures("mock_argv", "mock_confirm")
-@pytest.mark.parametrize("base", CURRENT_BASES | LEGACY_BASES | ESM_BASES)
+@pytest.mark.parametrize("base", sorted(CURRENT_BASES | LEGACY_BASES | ESM_BASES))
 def test_get_effective_base_type(
     base, snapcraft_yaml, mock_run_new_or_fallback_remote_build
 ):
@@ -395,7 +395,7 @@ def test_get_effective_base_core18_esm_warning(
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES - {"core22"}), indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_newer_than_core_22(emitter, mock_run_new_remote_build):
@@ -407,7 +407,7 @@ def test_run_newer_than_core_22(emitter, mock_run_new_remote_build):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", sorted(LEGACY_BASES | {"core22"}), indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_core22_and_older(emitter, mock_run_legacy):
@@ -419,7 +419,7 @@ def test_run_core22_and_older(emitter, mock_run_legacy):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES - {"core22"}), indirect=True
 )
 @pytest.mark.parametrize(
     "envvar", ["force-fallback", "disable-fallback", "badvalue", None]
@@ -441,7 +441,7 @@ def test_run_envvar_newer_than_core22(
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", sorted(LEGACY_BASES | {"core22"}), indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_envvar_disable_fallback(emitter, mock_run_new_remote_build, monkeypatch):
@@ -458,7 +458,7 @@ def test_run_envvar_disable_fallback(emitter, mock_run_new_remote_build, monkeyp
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", sorted(LEGACY_BASES | {"core22"}), indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_envvar_force_fallback(emitter, mock_run_legacy, monkeypatch):
@@ -475,7 +475,7 @@ def test_run_envvar_force_fallback(emitter, mock_run_legacy, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", sorted(LEGACY_BASES | {"core22"}), indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_envvar_force_fallback_unset(emitter, mock_run_legacy, monkeypatch):
@@ -489,7 +489,7 @@ def test_run_envvar_force_fallback_unset(emitter, mock_run_legacy, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", sorted(LEGACY_BASES | {"core22"}), indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_envvar_force_fallback_empty(emitter, mock_run_legacy, monkeypatch):
@@ -503,7 +503,7 @@ def test_run_envvar_force_fallback_empty(emitter, mock_run_legacy, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", sorted(LEGACY_BASES | {"core22"}), indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_envvar_invalid(capsys, emitter, mock_run_legacy, monkeypatch):
@@ -521,7 +521,7 @@ def test_run_envvar_invalid(capsys, emitter, mock_run_legacy, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", sorted(LEGACY_BASES | {"core22"}), indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_in_repo(emitter, mock_run_new_remote_build, new_dir):
@@ -538,7 +538,7 @@ def test_run_in_repo(emitter, mock_run_new_remote_build, new_dir):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", sorted(LEGACY_BASES | {"core22"}), indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_not_in_repo(emitter, mock_run_legacy):
@@ -550,7 +550,7 @@ def test_run_not_in_repo(emitter, mock_run_legacy):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES - {"core22"}), indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_in_repo_newer_than_core22(
@@ -567,7 +567,7 @@ def test_run_in_repo_newer_than_core22(
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", LEGACY_BASES | {"core22"}, indirect=True
+    "create_snapcraft_yaml", sorted(sorted(LEGACY_BASES | {"core22"})), indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_confirm", "mock_argv")
 def test_run_in_shallow_repo(emitter, mock_run_legacy, new_dir):
@@ -614,7 +614,7 @@ def test_run_in_shallow_repo(emitter, mock_run_legacy, new_dir):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES - {"core22"}, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES - {"core22"}), indirect=True
 )
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml", "mock_confirm", "mock_argv", "use_new_remote_build"
@@ -672,7 +672,7 @@ def test_run_in_shallow_repo_unsupported(capsys, new_dir):
 ######################
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES | LEGACY_BASES)
+@pytest.mark.parametrize("base", sorted(CURRENT_BASES | LEGACY_BASES))
 @pytest.mark.parametrize(
     ["archs", "expected_archs"],
     [
@@ -730,7 +730,7 @@ def test_determine_architectures_from_snapcraft_yaml(
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml", "mock_argv", "mock_confirm", "use_new_remote_build"
@@ -763,7 +763,7 @@ def test_determine_architectures_host_arch(mocker, mock_remote_builder):
     ],
 )
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
@@ -806,7 +806,7 @@ def test_determine_architectures_provided_by_user_duplicate_arguments(
     ],
 )
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
@@ -829,7 +829,7 @@ def test_determine_architectures_provided_by_user(
     )
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES | LEGACY_BASES)
+@pytest.mark.parametrize("base", sorted(CURRENT_BASES | LEGACY_BASES))
 @pytest.mark.usefixtures("mock_confirm", "use_new_remote_build")
 def test_determine_architectures_error(base, capsys, snapcraft_yaml, mocker):
     """Error if `--build-for` is provided and archs are in the snapcraft.yaml."""
@@ -855,7 +855,7 @@ def test_determine_architectures_error(base, capsys, snapcraft_yaml, mocker):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
@@ -879,7 +879,7 @@ def test_build_id_provided(mocker, mock_remote_builder):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml", "mock_confirm", "mock_argv", "use_new_remote_build"
@@ -899,7 +899,7 @@ def test_build_id_not_provided(mock_remote_builder):
     )
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES | LEGACY_BASES)
+@pytest.mark.parametrize("base", sorted(CURRENT_BASES | LEGACY_BASES))
 @pytest.mark.usefixtures("mock_confirm", "mock_argv", "use_new_remote_build")
 def test_build_id_no_project_name_error(base, capsys):
     """Raise an error if there is no name in the snapcraft.yaml file."""
@@ -931,7 +931,7 @@ def test_build_id_no_project_name_error(base, capsys):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
@@ -946,7 +946,7 @@ def test_status(mocker, mock_remote_builder):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml",
@@ -964,7 +964,7 @@ def test_recover_no_build(emitter, mocker):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml", "mock_confirm", "use_new_remote_build"
@@ -984,7 +984,7 @@ def test_recover_build(emitter, mocker, mock_remote_builder):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml", "mock_argv", "mock_confirm", "use_new_remote_build"
@@ -1003,7 +1003,7 @@ def test_recover_build_user_confirms(emitter, mocker, mock_remote_builder):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures("create_snapcraft_yaml", "mock_argv", "use_new_remote_build")
 def test_recover_build_user_denies(emitter, mocker, mock_remote_builder):
@@ -1025,7 +1025,7 @@ def test_recover_build_user_denies(emitter, mocker, mock_remote_builder):
 
 
 @pytest.mark.parametrize(
-    "create_snapcraft_yaml", CURRENT_BASES | LEGACY_BASES, indirect=True
+    "create_snapcraft_yaml", sorted(CURRENT_BASES | LEGACY_BASES), indirect=True
 )
 @pytest.mark.usefixtures(
     "create_snapcraft_yaml", "mock_argv", "mock_confirm", "use_new_remote_build"
