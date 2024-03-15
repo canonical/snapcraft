@@ -8,6 +8,8 @@ restore: |
   rm -f ./*.snap ./*.assert ./linter_output.txt
 
 execute: |
+  cd "${SNAP}"
+
   # build the test snap destructively to save time
   snapcraft --destructive-mode
 
