@@ -12,9 +12,8 @@ systems:
 
 restore: |
   cd "${SNAP}"
-  # - extra field 'parse-info' not permitted in 'parts.appstream-desktop' configuration
-  snapcraft clean 2>&1 | MATCH "extra field "; exit 0
-  snapcraft clean --destructive-mode 2>&1 | MATCH "extra field "; exit 0
+  snapcraft clean
+  snapcraft clean --destructive-mode
   rm -f ./*.snap
 
 execute: |

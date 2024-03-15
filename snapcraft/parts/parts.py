@@ -24,12 +24,13 @@ from typing import Any, Dict, List, Optional, Set
 import craft_parts
 from craft_archives import repo
 from craft_cli import emit
-from craft_parts import Action, ActionType, Part, ProjectDirs, Step
+from craft_parts import Action, ActionType, Step
 from craft_parts.packages import Repository
 from xdg import BaseDirectory  # type: ignore
 
 from snapcraft import errors
-from snapcraft.meta import ExtractedMetadata, extract_metadata
+from snapcraft.meta import ExtractedMetadata
+from snapcraft.parts.extract_metadata import extract_lifecycle_metadata
 from snapcraft.utils import convert_architecture_deb_to_platform, get_host_architecture
 
 _LIFECYCLE_STEPS = {
@@ -265,35 +266,9 @@ class PartsLifecycle:
 
     def extract_metadata(self) -> List[ExtractedMetadata]:
         """Obtain metadata information."""
-        if self._adopt_info is None or self._adopt_info not in self._parse_info:
-            return []
-
-        dirs = ProjectDirs(work_dir=self._work_dir, partitions=self._partitions)
-        part = Part(
-            self._adopt_info, {}, project_dirs=dirs, partitions=self._partitions
+        return extract_lifecycle_metadata(
+            self._adopt_info, self._parse_info, self._work_dir, self._partitions
         )
-        locations = (
-            part.part_src_dir,
-            part.part_build_dir,
-            part.part_install_dir,
-        )
-        metadata_list: List[ExtractedMetadata] = []
-
-        for metadata_file in self._parse_info[self._adopt_info]:
-            emit.trace(f"extract metadata: parse info from {metadata_file}")
-
-            for location in locations:
-                if pathlib.Path(location, metadata_file.lstrip("/")).is_file():
-                    metadata = extract_metadata(metadata_file, workdir=str(location))
-                    if metadata:
-                        metadata_list.append(metadata)
-                        break
-
-                    emit.progress(
-                        f"No metadata extracted from {metadata_file}", permanent=True
-                    )
-
-        return metadata_list
 
     def get_primed_stage_packages(self) -> List[str]:
         """Obtain the list of primed stage packages from all parts."""

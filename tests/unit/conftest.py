@@ -482,6 +482,7 @@ def package_service(
         services=default_factory,
         snapcraft_yaml_path=file_path,
         build_plan=default_build_plan,
+        parse_info={},
     )
 
 
