@@ -31,5 +31,5 @@ to be part of the final payload::
     stage-packages:
       - openjdk-11-jre-headless
 
-.. include:: /common/craft-parts/mave_plugin.rst
+.. include:: /common/craft-parts/maven_plugin.rst
    :start-after: .. _maven-details-end:
