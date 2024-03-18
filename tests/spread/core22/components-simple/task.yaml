@@ -1,13 +1,11 @@
 summary: Build a snap with components
 
 restore: |
-  snapcraft clean
+  snapcraft clean --destructive-mode
   rm -f ./*.snap ./*.comp
 
 execute: |
-  cd "./snap"
-  
-  snapcraft pack --use-lxd
+  snapcraft pack --destructive-mode
 
   # assert contents of default partition
   unsquashfs -dest "snap-contents" "snap-with-components_1.0_amd64.snap"

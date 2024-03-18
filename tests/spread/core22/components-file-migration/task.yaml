@@ -1,11 +1,12 @@
 summary: Test file migratation with components
 
 restore: |
-  snapcraft clean
+  snapcraft clean --destructive-mode
   rm -f ./*.snap ./*.comp
 
 execute: |
-  snapcraft pack
+  # Craft Parts is not partitions aware during organize in managed mode
+  snapcraft pack --destructive-mode
 
   # assert file1-new and file2-new are in the snap
   unsquashfs -dest "snap-contents" "snap-with-components_1.0_amd64.snap"
