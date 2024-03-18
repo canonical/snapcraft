@@ -1,8 +1,12 @@
 summary: Test file migratation with components
 
+prepare: |
+  snap refresh snapd --edge
+
 restore: |
   snapcraft clean --destructive-mode
   rm -f ./*.snap ./*.comp
+  snap refresh snapd --stable
 
 execute: |
   # Craft Parts is not partitions aware during organize in managed mode
