@@ -17,52 +17,26 @@
 """Model and utilities for component.yaml metadata."""
 
 from pathlib import Path
-from typing import Any, Dict, Optional
 
-import yaml
-from pydantic import Extra
-from pydantic_yaml import YamlModel
+from craft_application.models import BaseMetadata
 
+from snapcraft import models
 from snapcraft.errors import SnapcraftError
-from snapcraft.models import Project
 
 
-class ComponentMetadata(YamlModel):
+class ComponentMetadata(BaseMetadata):
     """The component.yaml model."""
 
     component: str
     type: str
-    version: Optional[str]
+    version: str | None
     summary: str
     description: str
 
-    class Config:  # pylint: disable=too-few-public-methods
-        """Pydantic model configuration."""
 
-        allow_population_by_field_name = True
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
-        extra = Extra.forbid
-
-    @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "ComponentMetadata":
-        """Create and populate a new ``ComponentMetadata`` object from dictionary data.
-
-        The unmarshal method validates entries in the input dictionary, populating
-        the corresponding fields in the data object.
-
-        :param data: The dictionary data to unmarshal.
-
-        :return: The newly created object.
-
-        :raise TypeError: If data is not a dictionary.
-        """
-        if not isinstance(data, dict):
-            raise TypeError("data is not a dictionary")
-
-        return cls(**data)
-
-
-def write(project: Project, component_name: str, component_prime_dir: Path) -> None:
+def write(
+    project: models.Project, component_name: str, component_prime_dir: Path
+) -> None:
     """Create a component.yaml file.
 
     :param project: The snapcraft project.
@@ -88,21 +62,4 @@ def write(project: Project, component_name: str, component_prime_dir: Path) -> N
         description=component.description,
     )
 
-    yaml.add_representer(str, _repr_str, Dumper=yaml.SafeDumper)
-    yaml_data = component_metadata.yaml(
-        by_alias=True,
-        exclude_none=True,
-        allow_unicode=True,
-        sort_keys=False,
-        width=1000,
-    )
-
-    component_yaml = meta_dir / "component.yaml"
-    component_yaml.write_text(yaml_data)
-
-
-def _repr_str(dumper, data):
-    """Multi-line string representer for the YAML dumper."""
-    if "\n" in data:
-        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
-    return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+    component_metadata.to_yaml_file(meta_dir / "component.yaml")
