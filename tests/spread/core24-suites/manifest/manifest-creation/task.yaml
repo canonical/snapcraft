@@ -43,9 +43,9 @@ execute: |
     test "${!key}" = "${expected[$key]}"
   done
 
-  # account for hello package version change
-  echo -n "$parts_my_part_stage_packages_0" | grep -q '^hello=[0-9]\+\.[0-9]\+-[0-9]\+ubuntu[0-9]\+$'
-  echo -n "$primed_stage_packages_0" | grep -q '^hello=[0-9]\+\.[0-9]\+-[0-9]\+ubuntu[0-9]\+$'
+  # account for hello package version change and possible ubuntu patch
+  echo -n "$parts_my_part_stage_packages_0" | grep -q '^hello=[0-9]\+\.[0-9]\+-[0-9]\+\(ubuntu[0-9]\+\)\?$'
+  echo -n "$primed_stage_packages_0" | grep -q '^hello=[0-9]\+\.[0-9]\+-[0-9]\+\(ubuntu[0-9]\+\)\?$'
 
   cp manifest_0.1_*.snap ~/
   review-tools.snap-review ~/manifest_0.1_*.snap
