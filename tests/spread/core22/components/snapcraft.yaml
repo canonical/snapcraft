@@ -49,5 +49,5 @@ parts:
       # exclude a file in the default partition
       - -(default)/other-file-in-snap
     prime:
-      # exclude a file in a partitionk
+      # exclude a file in a partition
       - -(component/share)/other-file-in-component
