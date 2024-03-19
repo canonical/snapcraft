@@ -23,11 +23,13 @@ import os
 import pathlib
 import signal
 import sys
+from contextlib import suppress
 from typing import Any
 
 import craft_application.commands as craft_app_commands
 import craft_cli
 from craft_application import Application, AppMetadata, util
+from craft_application.errors import ProjectFileMissingError
 from craft_cli import emit
 from craft_parts.plugins.plugins import PluginType
 from overrides import override
@@ -111,13 +113,23 @@ class Snapcraft(Application):
         if project_dir is None:
             project_dir = pathlib.Path.cwd()
 
-        try:
+        with suppress(FileNotFoundError):
             return super()._resolve_project_path(project_dir / "snap")
-        except FileNotFoundError:
-            try:
-                return super()._resolve_project_path(project_dir)
-            except FileNotFoundError:
-                return super()._resolve_project_path(project_dir / "build-aux" / "snap")
+
+        with suppress(FileNotFoundError):
+            return super()._resolve_project_path(project_dir)
+
+        with suppress(FileNotFoundError):
+            return super()._resolve_project_path(project_dir / "build-aux" / "snap")
+
+        raise ProjectFileMissingError(
+            f"Project file '{self.app.name+'.yaml'}' not found in '{project_dir}'",
+            details="Please ensure that the project file is present in the project directory.",
+            resolution=(
+                "For more information, see https://snapcraft.io/docs/creating-snapcraft-yaml"
+            ),
+            retcode=66,  # EX_NOINPUT from sysexits.h
+        )
 
     @property
     def app_config(self) -> dict[str, Any]:
