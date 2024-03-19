@@ -4,13 +4,12 @@ prepare: |
   snap refresh snapd --edge
 
 restore: |
-  snapcraft clean --destructive-mode
+  snapcraft clean
   rm -f ./*.snap ./*.comp
   snap refresh snapd --stable
 
 execute: |
-  # Craft Parts is not partitions aware during organize in managed mode
-  snapcraft pack --destructive-mode
+  snapcraft pack
 
   # assert contents of default partition
   unsquashfs -dest "snap-contents" "hello-components_1.0_amd64.snap"
