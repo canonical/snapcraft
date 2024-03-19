@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import pathlib
+from typing import Sequence
 
 from craft_cli import emit
 from craft_parts import Part, ProjectDirs
@@ -25,7 +26,10 @@ from snapcraft import meta
 
 
 def extract_lifecycle_metadata(
-    adopt_info: str | None, parse_info: dict[str, list[str]], work_dir: pathlib.Path
+    adopt_info: str | None,
+    parse_info: dict[str, list[str]],
+    work_dir: pathlib.Path,
+    partitions: Sequence[str] | None,
 ) -> list[meta.ExtractedMetadata]:
     """Obtain metadata information.
 
@@ -37,8 +41,8 @@ def extract_lifecycle_metadata(
     if adopt_info is None or adopt_info not in parse_info:
         return []
 
-    dirs = ProjectDirs(work_dir=work_dir)
-    part = Part(adopt_info, {}, project_dirs=dirs)
+    dirs = ProjectDirs(work_dir=work_dir, partitions=partitions)
+    part = Part(adopt_info, {}, project_dirs=dirs, partitions=partitions)
     locations = (
         part.part_src_dir,
         part.part_build_dir,

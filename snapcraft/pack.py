@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -90,6 +90,78 @@ def _get_filename(
     return None
 
 
+def _pack(
+    directory: Path,
+    output_dir: Path,
+    output_file: Optional[str],
+    compression: Optional[str],
+) -> str:
+    """Pack a directory with `snap pack` as a snap or component.
+
+    :param directory: Directory to pack.
+    :param output_dir: Directory to output the artefact to.
+    :param output_file: Name of the artefact.
+    :param compression: Compression type to use, None for default.
+
+    :returns: The filename of the packed snap or component.
+
+    :raises SnapcraftError: If the directory cannot be packed.
+    """
+    command: List[Union[str, Path]] = ["snap", "pack"]
+
+    if output_file:
+        command.extend(["--filename", output_file])
+    if compression:
+        command.extend(["--compression", compression])
+    command.extend([directory, output_dir])
+
+    emit.debug(f"Pack command: {command}")
+    try:
+        proc = subprocess.run(
+            command, capture_output=True, check=True, universal_newlines=True
+        )
+    except subprocess.CalledProcessError as err:
+        msg = str(err)
+        details = None
+        if err.stderr:
+            details = err.stderr.strip()
+        raise errors.SnapcraftError(msg, details=details) from err
+
+    return Path(str(proc.stdout).partition(":")[2].strip()).name
+
+
+def pack_component(
+    directory: Path, output_dir: Path, compression: Optional[str] = None
+) -> str:
+    """Pack a directory containing component data.
+
+    Calls `snap pack <options> <component-dir> <output-dir>`.
+
+    Requires snapd to be installed from the `latest/edge` channel.
+
+    :param directory: Directory to pack.
+    :param compression: Compression type to use, None for default.
+    :param output_dir: Directory to output component to.
+
+    :returns: The filename of the packed component.
+
+    :raises SnapcraftError: If the component cannot be packed.
+    """
+    try:
+        return _pack(
+            directory=directory,
+            output_dir=output_dir,
+            output_file=None,
+            compression=compression,
+        )
+    except errors.SnapcraftError as err:
+        err.resolution = (
+            "Packing components is experimental and requires `snapd` "
+            "to be installed from the `latest/edge` channel."
+        )
+        raise
+
+
 def pack_snap(
     directory: Path,
     *,
@@ -100,6 +172,8 @@ def pack_snap(
     target_arch: Optional[str] = None,
 ) -> str:
     """Pack snap contents with `snap pack`.
+
+    Calls `snap pack <options> <snap-dir> <output-dir>`.
 
     `output` may either be a directory, a file path, or just a file name.
       - directory: write snap to directory with default snap name
@@ -115,34 +189,23 @@ def pack_snap(
     :param name: Name of snap project.
     :param version: Version of snap project.
     :param target_arch: Target architecture the snap project is built to.
+
+    :returns: The filename of the packed snap.
+
+    :raises SnapcraftError: If the directory cannot be packed.
     """
     emit.debug(f"pack_snap: output={output!r}, compression={compression!r}")
 
     # TODO remove workaround once LP: #1950465 is fixed
     _verify_snap(directory)
 
-    # create command formatted as `snap pack <options> <snap-dir> <output-dir>`
-    command: List[Union[str, Path]] = ["snap", "pack"]
+    output_dir = _get_directory(output)
     output_file = _get_filename(output, name, version, target_arch)
-    if output_file is not None:
-        command.extend(["--filename", output_file])
-    if compression is not None:
-        command.extend(["--compression", compression])
-    command.append(directory)
-    command.append(_get_directory(output))
 
     emit.progress("Creating snap package...")
-    emit.debug(f"Pack command: {command}")
-    try:
-        proc = subprocess.run(
-            command, capture_output=True, check=True, universal_newlines=True
-        )
-    except subprocess.CalledProcessError as err:
-        msg = f"{err!s}"
-        details = None
-        if err.stderr:
-            details = err.stderr.strip()
-        raise errors.SnapcraftError(msg, details=details) from err
-
-    snap_filename = Path(str(proc.stdout).partition(":")[2].strip()).name
-    return snap_filename
+    return _pack(
+        directory=directory,
+        output_dir=output_dir,
+        output_file=output_file,
+        compression=compression,
+    )

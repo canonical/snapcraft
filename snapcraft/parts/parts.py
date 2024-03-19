@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -50,10 +50,12 @@ class PartsLifecycle:
     :param assets_dir: The directory containing project assets.
     :param adopt_info: The name of the part containing metadata do adopt.
     :param extra_build_snaps: A list of additional build snaps to install.
+    :param partitions: A list of partitions for the project.
 
     :raises PartsLifecycleError: On error initializing the parts lifecycle.
     """
 
+    # pylint: disable-next=too-many-locals
     def __init__(  # noqa PLR0913
         self,
         all_parts: Dict[str, Any],
@@ -73,6 +75,7 @@ class PartsLifecycle:
         extra_build_snaps: Optional[List[str]] = None,
         target_arch: str,
         track_stage_packages: bool,
+        partitions: Optional[List[str]],
     ):
         self._work_dir = work_dir
         self._assets_dir = assets_dir
@@ -81,6 +84,7 @@ class PartsLifecycle:
         self._adopt_info = adopt_info
         self._parse_info = parse_info
         self._all_part_names = [*all_parts]
+        self._partitions = partitions
 
         emit.progress("Initializing parts lifecycle")
 
@@ -110,9 +114,29 @@ class PartsLifecycle:
                 # custom arguments
                 project_base=project_base,
                 confinement=confinement,
+                partitions=self._partitions,
             )
         except craft_parts.PartsError as err:
             raise errors.PartsLifecycleError(str(err)) from err
+
+    def get_prime_dir_for_component(self, component: str) -> pathlib.Path:
+        """Get the prime directory path for a component.
+
+        :param component: Name of the component to get the prime directory for.
+
+        :returns: The component's prime directory.
+
+        :raises SnapcraftError: If the component does not exist.
+        """
+        try:
+            return self._lcm.project_info.get_prime_dir(
+                partition=f"component/{component}"
+            )
+        except ValueError as err:
+            raise errors.SnapcraftError(
+                f"Could not get prime directory for component {component!r} "
+                "because it does not exist."
+            ) from err
 
     @property
     def prime_dir(self) -> pathlib.Path:
@@ -243,7 +267,7 @@ class PartsLifecycle:
     def extract_metadata(self) -> List[ExtractedMetadata]:
         """Obtain metadata information."""
         return extract_lifecycle_metadata(
-            self._adopt_info, self._parse_info, self._work_dir
+            self._adopt_info, self._parse_info, self._work_dir, self._partitions
         )
 
     def get_primed_stage_packages(self) -> List[str]:

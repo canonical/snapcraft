@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,7 +23,7 @@ from unittest.mock import ANY, Mock, PropertyMock, call
 
 import pytest
 from craft_cli import EmitterMode, emit
-from craft_parts import Action, Step, callbacks
+from craft_parts import Action, Features, Step, callbacks
 from craft_providers.bases.ubuntu import BuilddBaseAlias
 
 from snapcraft import errors
@@ -82,6 +82,19 @@ def mock_get_instance_name(mocker):
         "snapcraft.parts.lifecycle.providers.get_instance_name",
         return_value="test-instance-name",
     )
+
+
+@pytest.fixture
+def stub_component_data():
+    """Returns data for two components named `foo` and `bar-baz`."""
+    data = {
+        "type": "test",
+        "summary": "test summary",
+        "description": "test description",
+        "version": "1.0",
+    }
+
+    return {"foo": data, "bar-baz": data}
 
 
 def test_config_not_found(new_dir):
@@ -159,6 +172,104 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
             ),
         ),
     ]
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_lifecycle_run_with_components(
+    new_dir, snapcraft_yaml, mocker, stub_component_data
+):
+    """Use partitions when components are defined."""
+    yaml_data = snapcraft_yaml(base="core22", components=stub_component_data)
+
+    mock_run_command = mocker.patch("snapcraft.parts.lifecycle._run_command")
+    mock_expand_env = mocker.patch("snapcraft.parts.lifecycle._expand_environment")
+    mocker.patch("snapcraft.utils.get_parallel_build_count", return_value=5)
+
+    parts_lifecycle.run(
+        "pull",
+        argparse.Namespace(
+            parts=["part1"],
+            destructive_mode=True,
+            use_lxd=False,
+            provider=None,
+            build_for=None,
+        ),
+    )
+
+    project = Project.unmarshal(yaml_data)
+
+    assert mock_run_command.mock_calls == [
+        call(
+            "pull",
+            project=project,
+            parse_info={},
+            assets_dir=Path("snap"),
+            parallel_build_count=5,
+            start_time=mocker.ANY,
+            parsed_args=argparse.Namespace(
+                parts=["part1"],
+                destructive_mode=True,
+                use_lxd=False,
+                provider=None,
+                build_for=None,
+            ),
+        ),
+    ]
+    assert mock_expand_env.mock_calls == [
+        call(
+            mocker.ANY,
+            parallel_build_count=5,
+            target_arch=mocker.ANY,
+            partitions=["default", "component/foo", "component/bar-baz"],
+        )
+    ]
+    assert Features().enable_partitions is True
+
+
+def test_lifecycle_run_no_components(new_dir, snapcraft_yaml, mocker):
+    """Do not use partitions when components are not defined."""
+    yaml_data = snapcraft_yaml(base="core22")
+
+    mock_run_command = mocker.patch("snapcraft.parts.lifecycle._run_command")
+    mock_expand_env = mocker.patch("snapcraft.parts.lifecycle._expand_environment")
+    mocker.patch("snapcraft.utils.get_parallel_build_count", return_value=5)
+
+    parts_lifecycle.run(
+        "pull",
+        argparse.Namespace(
+            parts=["part1"],
+            destructive_mode=True,
+            use_lxd=False,
+            provider=None,
+            build_for=None,
+        ),
+    )
+
+    project = Project.unmarshal(yaml_data)
+
+    assert mock_run_command.mock_calls == [
+        call(
+            "pull",
+            project=project,
+            parse_info={},
+            assets_dir=Path("snap"),
+            parallel_build_count=5,
+            start_time=mocker.ANY,
+            parsed_args=argparse.Namespace(
+                parts=["part1"],
+                destructive_mode=True,
+                use_lxd=False,
+                provider=None,
+                build_for=None,
+            ),
+        ),
+    ]
+    assert mock_expand_env.mock_calls == [
+        call(
+            mocker.ANY, parallel_build_count=5, target_arch=mocker.ANY, partitions=None
+        )
+    ]
+    assert Features().enable_partitions is False
 
 
 @pytest.mark.parametrize(
@@ -1096,7 +1207,10 @@ def test_expand_environment(new_dir, mocker):
         "field12": ["$CRAFT_PARALLEL_BUILD_COUNT", "$SNAPCRAFT_PARALLEL_BUILD_COUNT"],
     }
     parts_lifecycle._expand_environment(
-        yaml_data, parallel_build_count=8, target_arch="arm64"
+        yaml_data,
+        parallel_build_count=8,
+        target_arch="arm64",
+        partitions=None,
     )
 
     assert yaml_data == {
@@ -1117,6 +1231,59 @@ def test_expand_environment(new_dir, mocker):
             "field11": [f"{new_dir}", f"{new_dir}"],
         },
         "field12": ["8", "8"],
+    }
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_expand_environment_with_partitions(new_dir, mocker):
+    mocker.patch("platform.machine", return_value="aarch64")
+
+    yaml_data = {
+        "field9": ["$CRAFT_STAGE", "$SNAPCRAFT_STAGE"],
+        "field10": ["$CRAFT_DEFAULT_STAGE", "$SNAPCRAFT_DEFAULT_STAGE"],
+        "field11": ["$CRAFT_COMPONENT_FOO_STAGE", "$SNAPCRAFT_COMPONENT_FOO_STAGE"],
+        "field12": [
+            "$CRAFT_COMPONENT_BAR_BAZ_STAGE",
+            "$SNAPCRAFT_COMPONENT_BAR_BAZ_STAGE",
+        ],
+        "field13": ["$CRAFT_PRIME", "$SNAPCRAFT_PRIME"],
+        "field14": ["$CRAFT_DEFAULT_PRIME", "$SNAPCRAFT_DEFAULT_PRIME"],
+        "field15": ["$CRAFT_COMPONENT_FOO_PRIME", "$SNAPCRAFT_COMPONENT_FOO_PRIME"],
+        "field16": [
+            "$CRAFT_COMPONENT_BAR_BAZ_PRIME",
+            "$SNAPCRAFT_COMPONENT_BAR_BAZ_PRIME",
+        ],
+        "field17": ["$CRAFT_PROJECT_DIR", "$SNAPCRAFT_PROJECT_DIR"],
+    }
+    parts_lifecycle._expand_environment(
+        yaml_data,
+        parallel_build_count=8,
+        target_arch="arm64",
+        partitions=["default", "component/foo", "component/bar-baz"],
+    )
+
+    assert yaml_data == {
+        "field9": [f"{new_dir}/stage", f"{new_dir}/stage"],
+        "field10": [f"{new_dir}/stage", f"{new_dir}/stage"],
+        "field11": [
+            f"{new_dir}/partitions/component/foo/stage",
+            f"{new_dir}/partitions/component/foo/stage",
+        ],
+        "field12": [
+            f"{new_dir}/partitions/component/bar-baz/stage",
+            f"{new_dir}/partitions/component/bar-baz/stage",
+        ],
+        "field13": [f"{new_dir}/prime", f"{new_dir}/prime"],
+        "field14": [f"{new_dir}/prime", f"{new_dir}/prime"],
+        "field15": [
+            f"{new_dir}/partitions/component/foo/prime",
+            f"{new_dir}/partitions/component/foo/prime",
+        ],
+        "field16": [
+            f"{new_dir}/partitions/component/bar-baz/prime",
+            f"{new_dir}/partitions/component/bar-baz/prime",
+        ],
+        "field17": [f"{new_dir}", f"{new_dir}"],
     }
 
 
@@ -1940,4 +2107,147 @@ def test_lifecycle_write_metadata(
             image_information="{}",
             primed_stage_packages=[],
         )
+    ]
+
+
+@pytest.mark.usefixtures("enable_partitions_feature", "project_vars")
+def test_lifecycle_write_component_metadata(
+    snapcraft_yaml, new_dir, mocker, stub_component_data
+):
+    """Component metadata should be written during the lifecycle."""
+    yaml_data = snapcraft_yaml(base="core22", components=stub_component_data)
+    project = Project.unmarshal(snapcraft_yaml(**yaml_data))
+    mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch("snapcraft.pack.pack_snap")
+    mock_write = mocker.patch("snapcraft.meta.component_yaml.write")
+
+    parsed_args = argparse.Namespace(
+        debug=False,
+        destructive_mode=True,
+        use_lxd=False,
+        enable_manifest=True,
+        ua_token=None,
+        parts=[],
+        manifest_image_information=None,
+    )
+
+    parts_lifecycle._run_command(
+        "prime",
+        project=project,
+        parse_info={},
+        assets_dir=Path(),
+        start_time=datetime.now(),
+        parallel_build_count=8,
+        parsed_args=parsed_args,
+    )
+
+    assert mock_write.mock_calls == [
+        call(
+            project=project,
+            component_name="foo",
+            component_prime_dir=new_dir / "partitions/component/foo/prime",
+        ),
+        call(
+            project=project,
+            component_name="bar-baz",
+            component_prime_dir=new_dir / "partitions/component/bar-baz/prime",
+        ),
+    ]
+
+
+@pytest.mark.usefixtures("enable_partitions_feature", "project_vars")
+@pytest.mark.parametrize("step", ["pack", "snap"])
+def test_lifecycle_pack_components(
+    step, snapcraft_yaml, new_dir, mocker, stub_component_data
+):
+    """Pack components as part of the lifecycle."""
+    yaml_data = snapcraft_yaml(base="core22", components=stub_component_data)
+    project = Project.unmarshal(snapcraft_yaml(**yaml_data))
+    mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch("snapcraft.meta.component_yaml.write")
+    mocker.patch("snapcraft.pack.pack_snap")
+    mock_pack = mocker.patch("snapcraft.pack.pack_component")
+
+    parsed_args = argparse.Namespace(
+        debug=False,
+        destructive_mode=True,
+        use_lxd=False,
+        enable_manifest=True,
+        ua_token=None,
+        parts=[],
+        manifest_image_information=None,
+        output=None,
+    )
+
+    parts_lifecycle._run_command(
+        step,
+        project=project,
+        parse_info={},
+        assets_dir=Path(),
+        start_time=datetime.now(),
+        parallel_build_count=8,
+        parsed_args=parsed_args,
+    )
+
+    assert mock_pack.mock_calls == [
+        call(
+            directory=new_dir / "partitions/component/foo/prime",
+            compression="xz",
+            output_dir=new_dir,
+        ),
+        call(
+            directory=new_dir / "partitions/component/bar-baz/prime",
+            compression="xz",
+            output_dir=new_dir,
+        ),
+    ]
+
+
+@pytest.mark.usefixtures("enable_partitions_feature", "project_vars")
+@pytest.mark.parametrize("step", ["pack", "snap"])
+@pytest.mark.parametrize("output", ["dir", "dir/file"])
+def test_lifecycle_pack_components_with_output(
+    output, step, snapcraft_yaml, new_dir, mocker, stub_component_data
+):
+    """Pack components when `--output` is passed with a directory or filename."""
+    Path(new_dir / "dir").mkdir()
+    yaml_data = snapcraft_yaml(base="core22", components=stub_component_data)
+    project = Project.unmarshal(snapcraft_yaml(**yaml_data))
+    mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch("snapcraft.meta.component_yaml.write")
+    mocker.patch("snapcraft.pack.pack_snap")
+    mock_pack = mocker.patch("snapcraft.pack.pack_component")
+
+    parsed_args = argparse.Namespace(
+        debug=False,
+        destructive_mode=True,
+        use_lxd=False,
+        enable_manifest=True,
+        ua_token=None,
+        parts=[],
+        manifest_image_information=None,
+        output=output,
+    )
+
+    parts_lifecycle._run_command(
+        step,
+        project=project,
+        parse_info={},
+        assets_dir=Path(),
+        start_time=datetime.now(),
+        parallel_build_count=8,
+        parsed_args=parsed_args,
+    )
+
+    assert mock_pack.mock_calls == [
+        call(
+            directory=new_dir / "partitions/component/foo/prime",
+            compression="xz",
+            output_dir=new_dir / "dir",
+        ),
+        call(
+            directory=new_dir / "partitions/component/bar-baz/prime",
+            compression="xz",
+            output_dir=new_dir / "dir",
+        ),
     ]

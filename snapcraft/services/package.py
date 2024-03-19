@@ -67,7 +67,10 @@ class Package(PackageService):
         # Update the project from parse-info data.
         project_info = self._services.lifecycle.project_info
         extracted_metadata = extract.extract_lifecycle_metadata(
-            self._project.adopt_info, self._parse_info, project_info.work_dir
+            self._project.adopt_info,
+            self._parse_info,
+            project_info.work_dir,
+            partitions=project_info.partitions,
         )
         update.update_from_extracted_metadata(
             self._project,

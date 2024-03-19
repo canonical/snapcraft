@@ -395,9 +395,7 @@ def test_update_project_parse_info(
     package.update_project()
 
     mocked_extract.assert_called_once_with(
-        default_project.adopt_info,
-        parse_info,
-        work_dir,
+        default_project.adopt_info, parse_info, work_dir, partitions=None
     )
     mocked_update.assert_called_once_with(
         default_project,
