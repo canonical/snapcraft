@@ -1,5 +1,5 @@
 
-.. include:: /common/craft-parts/python_plugin.rst
+.. include:: /common/craft-parts/reference/plugins/python_plugin.rst
    :end-before: .. _python-details-begin:
 
 Dependencies
@@ -19,5 +19,5 @@ Whether the Python interpreter needs to be included in the snap depends on its
 Snapcraft will prefer an included interpreter over the base's, even for projects
 with ``strict`` and ``devmode`` confinement.
 
-.. include:: /common/craft-parts/python_plugin.rst
+.. include:: /common/craft-parts/reference/plugins/python_plugin.rst
    :start-after: .. _python-details-end:
