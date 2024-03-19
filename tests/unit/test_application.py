@@ -236,3 +236,12 @@ def test_parse_info_integrated(monkeypatch, mocker, new_dir):
     assert snap_yaml["summary"] == "Sample summary"
     assert snap_yaml["description"] == "Sample description"
     assert snap_yaml["version"] == "1.2.3"
+
+
+def test_application_plugins():
+    app = application.create_app()
+    plugins = app._get_app_plugins()
+
+    # Just do some sanity checks.
+    assert "python" in plugins
+    assert "kernel" not in plugins

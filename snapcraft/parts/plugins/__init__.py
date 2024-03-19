@@ -22,7 +22,7 @@ from .conda_plugin import CondaPlugin
 from .flutter_plugin import FlutterPlugin
 from .kernel_plugin import KernelPlugin
 from .python_plugin import PythonPlugin
-from .register import register
+from .register import get_plugins, register
 
 __all__ = [
     "ColconPlugin",
@@ -30,5 +30,6 @@ __all__ = [
     "FlutterPlugin",
     "KernelPlugin",
     "PythonPlugin",
+    "get_plugins",
     "register",
 ]
