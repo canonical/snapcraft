@@ -7,3 +7,6 @@ Explanation
    :maxdepth: 1
 
    architectures
+   filesets
+   parts
+   lifecycle

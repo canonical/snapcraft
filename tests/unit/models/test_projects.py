@@ -14,13 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 import pydantic
 import pytest
+from craft_application.models import UniqueStrList
 
 from snapcraft import errors
-from snapcraft.projects import (
+from snapcraft.models import (
     MANDATORY_ADOPTABLE_FIELDS,
     Architecture,
     ContentPlug,
@@ -100,7 +101,8 @@ class TestProjectDefaults:
         assert project.adopt_info is None
         assert project.architectures == [
             Architecture(
-                build_on=[get_host_architecture()], build_for=[get_host_architecture()]
+                build_on=cast(UniqueStrList, [get_host_architecture()]),
+                build_for=cast(UniqueStrList, [get_host_architecture()]),
             )
         ]
         assert project.ua_services is None
@@ -591,7 +593,7 @@ class TestProjectValidation:
 
         assert project.grade == "devel"
 
-    @pytest.mark.parametrize("build_base", {"core22", "devel"})
+    @pytest.mark.parametrize("build_base", ["core22", "devel"])
     def test_project_grade_not_defined(self, build_base, project_yaml_data):
         """Do not validate the grade if it is not defined, regardless of build_base."""
         data = project_yaml_data(build_base=build_base)
@@ -611,6 +613,12 @@ class TestProjectValidation:
 
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(project_yaml_data(build_base="devel", grade="stable"))
+
+    def test_project_development_base_error(self, project_yaml_data):
+        error = "build-base must be 'devel' when base is 'core24'"
+
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(project_yaml_data(base="core24"))
 
     def test_project_global_plugs_warning(self, project_yaml_data, emitter):
         data = project_yaml_data(plugs={"desktop": None, "desktop-legacy": None})

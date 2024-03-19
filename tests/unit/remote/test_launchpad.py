@@ -236,17 +236,11 @@ def launchpad_client(mock_login_with):
     )
 
 
-def test_login(mock_login_with):
-    lpc = LaunchpadClient(
-        app_name="test-app",
-        build_id="id",
-        project_name="test-project",
-        architectures=[],
-    )
+def test_login(mock_login_with, launchpad_client):
 
-    assert lpc.user == "user"
+    assert launchpad_client.user == "user"
 
-    assert mock_login_with.called_with(
+    mock_login_with.assert_called_once_with(
         "test-app remote-build",
         "production",
         ANY,

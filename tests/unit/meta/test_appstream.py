@@ -49,6 +49,24 @@ class TestAppstreamData:
             ("icon", {"type": "local"}, "icon", "/icon.png", "/icon.png"),
             ("id", {}, "common_id", "test-id", "test-id"),
             ("name", {}, "title", "test-title", "test-title"),
+            ("project_license", {}, "license", "test-license", "test-license"),
+            ("update_contact", {}, "contact", "test-contact", "test-contact"),
+            ("url", {"type": "homepage"}, "website", "test-website", ["test-website"]),
+            ("url", {"type": "bugtracker"}, "issues", "test-issues", ["test-issues"]),
+            (
+                "url",
+                {"type": "donation"},
+                "donation",
+                "test-donation",
+                ["test-donation"],
+            ),
+            (
+                "url",
+                {"type": "vcs-browser"},
+                "source_code",
+                "test-source",
+                "test-source",
+            ),
         ],
     )
     def test_entries(self, file_extension, key, attributes, param_name, value, expect):
@@ -491,6 +509,7 @@ class TestAppstreamContent:
                   <li xml:lang="es">Publica snaps en la tienda.</li>
                 </ul>
               </description>
+              <update_contact>rrroschan@gmail.com</update_contact>
               </component>
         """
         )
@@ -514,6 +533,8 @@ class TestAppstreamContent:
             - _Build snaps_.
             - Publish snaps to the store."""
         )
+        assert metadata.license == "GPL-3.0-or-later"
+        assert metadata.contact == "rrroschan@gmail.com"
 
     def test_appstream_code_tags_not_swallowed(self):
         file_name = "foliate.appdata.xml"
@@ -626,6 +647,107 @@ class TestAppstreamContent:
             - Build snaps.
             - Publish snaps to the store."""
         )
+
+    def test_appstream_links(self):
+        file_name = "foliate.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="UTF-8"?>
+              <component type="desktop">
+              <id>com.github.maoschanz.drawing</id>
+              <metadata_license>CC0-1.0</metadata_license>
+              <project_license>GPL-3.0-or-later</project_license>
+              <content_rating type="oars-1.1"/>
+              <name>Drawing</name>
+              <description>
+                <p>Command Line Utility to <em>create snaps</em> quickly.</p>
+                <p xml:lang="es">Aplicativo de línea de comandos para crear snaps.</p>
+                <p>Ordered Features:</p>
+                <p xml:lang="es">Funciones:</p>
+                <ol>
+                  <li><em>Build snaps</em>.</li>
+                  <li xml:lang="es">Construye snaps.</li>
+                  <li>Publish snaps to the store.</li>
+                  <li xml:lang="es">Publica snaps en la tienda.</li>
+                </ol>
+                <p>Unordered Features:</p>
+                <ul>
+                  <li><em>Build snaps</em>.</li>
+                  <li xml:lang="es">Construye snaps.</li>
+                  <li>Publish snaps to the store.</li>
+                  <li xml:lang="es">Publica snaps en la tienda.</li>
+                </ul>
+              </description>
+              <url type="homepage">https://johnfactotum.github.io/foliate/</url>
+              <url type="vcs-browser">https://github.com/johnfactotum/foliate</url>
+              <url type="bugtracker">https://github.com/johnfactotum/foliate/issues</url>
+              <url type="translate">https://github.com/johnfactotum/foliate/tree/gtk4/po</url>
+              <url type="faq">https://github.com/johnfactotum/foliate/blob/gtk4/docs/faq.md</url>
+              <url type="donation">https://www.buymeacoffee.com/johnfactotum</url>
+              </component>
+        """
+        )
+        Path(file_name).write_text(content)
+
+        metadata = appstream.extract(file_name, workdir=".")
+
+        assert metadata is not None
+        assert metadata.website == ["https://johnfactotum.github.io/foliate/"]
+        assert metadata.issues == ["https://github.com/johnfactotum/foliate/issues"]
+        assert metadata.donation == ["https://www.buymeacoffee.com/johnfactotum"]
+        assert metadata.source_code == "https://github.com/johnfactotum/foliate"
+
+    def test_appstream_url(self):
+        file_name = "foliate.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="UTF-8"?>
+              <component type="desktop">
+              <id>com.github.maoschanz.drawing</id>
+              <metadata_license>CC0-1.0</metadata_license>
+              <project_license>GPL-3.0-or-later</project_license>
+              <content_rating type="oars-1.1"/>
+              <name>Drawing</name>
+              <url type="homepage">https://johnfactotum.github.io/foliate/</url>
+              <url type="vcs-browser">https://github.com/johnfactotum/foliate</url>
+              </component>
+            """
+        )
+        Path(file_name).write_text(content)
+
+        metadata = appstream.extract(file_name, workdir=".")
+        assert metadata is not None
+        assert metadata.source_code == "https://github.com/johnfactotum/foliate"
+
+    def test_appstream_with_multiple_lists(self):
+        file_name = "foliate.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="UTF-8"?>
+              <component type="desktop">
+              <id>com.github.maoschanz.drawing</id>
+              <metadata_license>CC0-1.0</metadata_license>
+              <project_license>GPL-3.0-or-later</project_license>
+              <content_rating type="oars-1.1"/>
+              <name>Drawing</name>
+              <url type="homepage">https://johnfactotum.github.io/foliate/</url>
+              <url type="vcs-browser">https://github.com/johnfactotum/foliate</url>
+              <url type="bugtracker">https://github.com/alainm23/planify/issues</url>
+              <url type="bugtracker">https://github.com/johnfactotum/foliate/issues</url>
+              </component>
+        """
+        )
+        Path(file_name).write_text(content)
+
+        metadata = appstream.extract(file_name, workdir=".")
+        assert metadata is not None
+        assert metadata.issues == [
+            "https://github.com/alainm23/planify/issues",
+            "https://github.com/johnfactotum/foliate/issues",
+        ]
+        assert metadata.source_code == "https://github.com/johnfactotum/foliate"
+        assert metadata.website == ["https://johnfactotum.github.io/foliate/"]
+        assert metadata.donation is None
 
     def test_appstream_parse_error(self):
         file_name = "snapcraft_legacy.appdata.xml"
