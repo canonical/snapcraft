@@ -229,7 +229,7 @@ def create_app() -> Snapcraft:
             craft_app_commands.lifecycle.PrimeCommand,
             craft_app_commands.lifecycle.PackCommand,
             commands.SnapCommand,  # Hidden (legacy compatibility)
-            unimplemented.RemoteBuild,
+            commands.RemoteBuildCommand,
             unimplemented.Plugins,
             unimplemented.ListPlugins,
             unimplemented.Try,
