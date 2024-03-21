@@ -1,5 +1,5 @@
 
-.. include:: /common/craft-parts/maven_plugin.rst
+.. include:: /common/craft-parts/reference/plugins/maven_plugin.rst
    :end-before: .. _maven-details-begin:
 
 Dependencies
@@ -33,5 +33,5 @@ and the Java Runtime is staged to be part of the final payload::
     stage-packages:
       - openjdk-11-jre-headless
 
-.. include:: /common/craft-parts/maven_plugin.rst
+.. include:: /common/craft-parts/reference/plugins/maven_plugin.rst
    :start-after: .. _maven-details-end:
