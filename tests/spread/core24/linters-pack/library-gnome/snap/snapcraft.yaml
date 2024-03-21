@@ -44,16 +44,6 @@ apps:
     common-id: org.gnome.Calculator.desktop
 
 parts:
-  meson-deps:
-    plugin: nil
-    source: https://github.com/mesonbuild/meson.git
-    source-branch: '0.62'
-    override-build: |
-      pip install .
-    build-packages:
-      - python3-pip
-      - ninja-build
-
   libraries:
     plugin: nil
     stage-packages:
@@ -64,9 +54,8 @@ parts:
       - usr/lib/*/libadwaita*
 
   gnome-calculator:
-    after: [ meson-deps ]
     source: https://gitlab.gnome.org/GNOME/gnome-calculator.git
-    source-branch: 'gnome-42'
+    source-branch: 'gnome-46'
     plugin: meson
     meson-parameters:
       - --prefix=/snap/gnome-calculator/current/usr
@@ -74,7 +63,8 @@ parts:
       - -Ddisable-introspection=true
     organize:
       snap/gnome-calculator/current/usr: usr
-    build-snaps: [ gnome-42-2204-sdk/latest/edge ]
+    build-snaps:
+      - gnome-46-2404-sdk/latest/edge
     build-packages:
       - libmpc-dev
       - libmpfr-dev
@@ -100,7 +90,7 @@ parts:
   cleanup:
     after: [gnome-calculator]
     plugin: nil
-    build-snaps: [core24, gtk-common-themes, gnome-42-2204/latest/edge]
+    build-snaps: [core24, gtk-common-themes, gnome-46-2404/latest/edge]
     override-prime: |
       set -eux
       for snap in "core24" "gtk-common-themes" "gnome-42-2204"; do

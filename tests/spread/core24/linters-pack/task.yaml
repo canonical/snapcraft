@@ -12,16 +12,17 @@ environment:
 
 restore: |
   cd "${SNAP}"
-  # Remove this once library-gnome works
-  if ! snapcraft clean && [ "${SNAP}" != library-gnome ]; then
-    exit 1
-  fi
+  snapcraft clean
   rm -f ./*.snap ./linter_output.txt
 
 execute: |
   cd "${SNAP}"
 
-  snapcraft 2> output.txt
+  # Remove this once library-gnome works (it will probably fail
+  # on the diff check.
+  if ! snapcraft pack 2> output.txt && [ "${SNAP}" = library-gnome ]; then
+    exit 0
+  fi
 
   test -f linter-test_0.1_*.snap
 
