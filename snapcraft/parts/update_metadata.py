@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Dict, Final, List, cast
 
 import pydantic
-from craft_application.models import ProjectTitle, SummaryStr, VersionStr
+from craft_application.models import ProjectTitle, SummaryStr, UniqueStrList, VersionStr
 from craft_cli import emit
 
 from snapcraft import errors
@@ -49,6 +49,7 @@ def update_project_metadata(
     :raises SnapcraftError: If project update failed.
     """
     _update_project_variables(project, project_vars)
+    _update_project_links(project, metadata_list)
 
     for metadata in metadata_list:
         # Data specified in the project yaml has precedence over extracted data
@@ -63,6 +64,9 @@ def update_project_metadata(
 
         if metadata.version and not project.version:
             project.version = cast(VersionStr, metadata.version)
+
+        if metadata.license and not project.license:
+            project.license = metadata.license
 
         if metadata.grade and not project.grade:
             project.grade = metadata.grade  # type: ignore
@@ -83,6 +87,26 @@ def update_project_metadata(
             raise errors.SnapcraftError(
                 f"Field {field!r} was not adopted from metadata"
             )
+
+
+def _update_project_links(
+    project: Project,
+    metadata_list: List[ExtractedMetadata],
+) -> None:
+    for metadata in metadata_list:
+        fields = ["contact", "donation", "source_code", "issues", "website"]
+        for field in fields:
+            if (
+                getattr(metadata, field)
+                and getattr(project, field)
+                and getattr(project, field) != getattr(metadata, field)
+            ):
+                project_list = list(getattr(project, field))
+                project_list.extend(set(getattr(metadata, field)) - set(project_list))
+                setattr(project, field, cast(UniqueStrList, project_list))
+
+            if not getattr(project, field):
+                setattr(project, field, cast(UniqueStrList, getattr(metadata, field)))
 
 
 def _update_project_variables(project: Project, project_vars: Dict[str, str]):
