@@ -123,7 +123,7 @@ class Snapcraft(Application):
             return super()._resolve_project_path(project_dir / "build-aux" / "snap")
 
         raise ProjectFileMissingError(
-            f"Project file '{self.app.name+'.yaml'}' not found in '{project_dir}'",
+            f"Project file 'snapcraft.yaml' not found in '{project_dir}'",
             details="Please ensure that the project file is present in the project directory.",
             resolution=(
                 "For more information, see https://snapcraft.io/docs/creating-snapcraft-yaml"

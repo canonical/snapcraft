@@ -245,3 +245,18 @@ def test_application_plugins():
     # Just do some sanity checks.
     assert "python" in plugins
     assert "kernel" not in plugins
+
+
+def test_application_project_missing_error(monkeypatch, capsys, new_dir):
+    """Test that the application exits with an error when the project file is missing."""
+    monkeypatch.setattr("sys.argv", ["snapcraft", "pull", "--destructive-mode"])
+    app = application.create_app()
+
+    assert app.run() == 66
+
+    stderr = capsys.readouterr().err
+    assert "Project file 'snapcraft.yaml' not found in" in stderr
+    assert (
+        "For more information, see https://snapcraft.io/docs/creating-snapcraft-yaml"
+        in stderr
+    )
