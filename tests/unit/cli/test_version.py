@@ -18,6 +18,8 @@ import argparse
 import sys
 from unittest.mock import call
 
+import pytest
+
 from snapcraft import __version__, application
 
 
@@ -37,12 +39,14 @@ def test_version_command(mocker):
 def test_version_argument(mocker, emitter):
     mocker.patch.object(sys, "argv", ["cmd", "--version"])
     app = application.create_app()
-    app.run()
+    with pytest.raises(SystemExit):
+        app.run()
     emitter.assert_message(f"snapcraft {__version__}")
 
 
 def test_version_argument_with_command(mocker, emitter):
     mocker.patch.object(sys, "argv", ["cmd", "--version", "version"])
     app = application.create_app()
-    app.run()
+    with pytest.raises(SystemExit):
+        app.run()
     emitter.assert_message(f"snapcraft {__version__}")

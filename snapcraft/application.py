@@ -21,7 +21,6 @@ from __future__ import annotations
 import logging
 import os
 import pathlib
-import signal
 import sys
 from typing import Any
 
@@ -138,12 +137,6 @@ class Snapcraft(Application):
 
     @override
     def _get_dispatcher(self) -> craft_cli.Dispatcher:
-        """Configure this application. Should be called by the run method.
-
-        Side-effect: This method may exit the process.
-
-        :returns: A ready-to-run Dispatcher object
-        """
         # Handle "multiplexing" of Snapcraft "codebases" depending on the
         # project's base (if any). Here, we handle the case where there *is*
         # a project and it's core24, which means it should definitely fall into
@@ -160,53 +153,18 @@ class Snapcraft(Application):
                 pass
             else:
                 raise errors.ClassicFallback()
+        return super()._get_dispatcher()
 
-        dispatcher = craft_cli.Dispatcher(
+    @override
+    def _create_dispatcher(self) -> craft_cli.Dispatcher:
+        """Overridden to set the default command to "pack"."""
+        return craft_cli.Dispatcher(
             self.app.name,
             self.command_groups,
             summary=str(self.app.summary),
             extra_global_args=self._global_arguments,
-            # TODO: craft-application should allow setting the default command without
-            # overriding `_get_dispatcher()`
             default_command=craft_app_commands.lifecycle.PackCommand,
         )
-
-        try:
-            craft_cli.emit.trace("pre-parsing arguments...")
-            # Workaround for the fact that craft_cli requires a command.
-            # https://github.com/canonical/craft-cli/issues/141
-            if any(arg in ("--version", "-V") for arg in sys.argv) and (
-                "version" not in sys.argv
-            ):
-                global_args = dispatcher.pre_parse_args(["version", *sys.argv[1:]])
-            else:
-                global_args = dispatcher.pre_parse_args(sys.argv[1:])
-        except craft_cli.ProvideHelpException as err:
-            print(err, file=sys.stderr)  # to stderr, as argparse normally does
-            craft_cli.emit.ended_ok()
-            sys.exit(0)
-        except craft_cli.ArgumentParsingError as err:
-            print(err, file=sys.stderr)  # to stderr, as argparse normally does
-            craft_cli.emit.ended_ok()
-            sys.exit(64)  # Command line usage error from sysexits.h
-        except KeyboardInterrupt as err:
-            self._emit_error(craft_cli.CraftError("Interrupted."), cause=err)
-            sys.exit(128 + signal.SIGINT)
-        # pylint: disable-next=broad-exception-caught
-        except Exception as err:  # noqa: BLE001
-            self._emit_error(
-                craft_cli.CraftError(
-                    f"Internal error while loading {self.app.name}: {err!r}"
-                )
-            )
-            if os.getenv("CRAFT_DEBUG") == "1":
-                raise
-            sys.exit(70)  # EX_SOFTWARE from sysexits.h
-
-        craft_cli.emit.trace("Preparing application...")
-        self.configure(global_args)
-
-        return dispatcher
 
 
 def create_app() -> Snapcraft:
