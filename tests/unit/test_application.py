@@ -257,10 +257,7 @@ def test_application_project_missing_error(monkeypatch, capsys, new_dir):
 
     stderr = capsys.readouterr().err
     assert "Project file 'snapcraft.yaml' not found in" in stderr
-    assert (
-        "For more information, see https://snapcraft.io/docs/creating-snapcraft-yaml"
-        in stderr
-    )
+    assert "https://snapcraft.io/docs/creating-snapcraft-yaml" in stderr
 
 
 def test_default_command_integrated(monkeypatch, mocker, new_dir):

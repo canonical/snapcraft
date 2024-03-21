@@ -23,7 +23,7 @@ import os
 import pathlib
 import sys
 from contextlib import suppress
-from typing import Any
+from typing import Any, cast
 
 import craft_application.commands as craft_app_commands
 import craft_cli
@@ -121,14 +121,7 @@ class Snapcraft(Application):
         with suppress(FileNotFoundError):
             return super()._resolve_project_path(project_dir / "build-aux" / "snap")
 
-        raise ProjectFileMissingError(
-            f"Project file 'snapcraft.yaml' not found in '{project_dir}'",
-            details="Please ensure that the project file is present in the project directory.",
-            resolution=(
-                "For more information, see https://snapcraft.io/docs/creating-snapcraft-yaml"
-            ),
-            retcode=66,  # EX_NOINPUT from sysexits.h
-        )
+        raise FileNotFoundError("snapcraft.yaml not found in the project directory.")
 
     @property
     def app_config(self) -> dict[str, Any]:
@@ -177,6 +170,31 @@ class Snapcraft(Application):
             extra_global_args=self._global_arguments,
             default_command=craft_app_commands.lifecycle.PackCommand,
         )
+
+    @override
+    def get_project(
+        self,
+        *,
+        platform: str | None = None,
+        build_for: str | None = None,
+    ) -> models.Project:
+        """Get the project model.
+
+        This only resolves and renders the project the first time it gets run.
+        After that, it merely uses a cached project model.
+
+        :param platform: the platform name listed in the build plan.
+        :param build_for: the architecture to build this project for.
+        :returns: A transformed, loaded project model.
+        """
+        try:
+            return cast(
+                models.Project,
+                super().get_project(platform=platform, build_for=build_for),
+            )
+        except ProjectFileMissingError as err:
+            err.docs_url = "https://snapcraft.io/docs/creating-snapcraft-yaml"
+            raise
 
 
 def create_app() -> Snapcraft:
