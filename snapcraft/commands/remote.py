@@ -75,6 +75,29 @@ class RemoteBuildCommand(ExtensibleCommand):
 
     @overrides
     def _fill_parser(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--recover", action="store_true", help="recover an interrupted build"
+        )
+        parser.add_argument(
+            "--launchpad-accept-public-upload",
+            action="store_true",
+            help="acknowledge that uploaded code will be publicly available.",
+        )
+        parser.add_argument(
+            "--launchpad-timeout",
+            type=int,
+            default=0,
+            metavar="<seconds>",
+            help="Time in seconds to wait for launchpad to build.",
+        )
+
+        parser.add_argument(
+            "--status", action="store_true", help="display remote build status"
+        )
+        parser.add_argument(
+            "--build-id", metavar="build-id", help="specific build id to retrieve"
+        )
+
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
             "--platform",
@@ -91,29 +114,7 @@ class RemoteBuildCommand(ExtensibleCommand):
             help="Set architecture to build for",
         )
 
-        parser.add_argument(
-            "--recover", action="store_true", help="recover an interrupted build"
-        )
-        parser.add_argument(
-            "--status", action="store_true", help="display remote build status"
-        )
-        parser.add_argument(
-            "--build-id", metavar="build-id", help="specific build id to retrieve"
-        )
-        parser.add_argument(
-            "--launchpad-accept-public-upload",
-            action="store_true",
-            help="acknowledge that uploaded code will be publicly available.",
-        )
-        parser.add_argument(
-            "--launchpad-timeout",
-            type=int,
-            default=0,
-            metavar="<seconds>",
-            help="Time in seconds to wait for launchpad to build.",
-        )
-
-    # pylint: disable=too-many-branches, too-many-statements
+    # pylint: disable=too-many-statements
     def _run(self, parsed_args: argparse.Namespace, **kwargs: Any) -> int | None:
         """Run the remote-build command.
 

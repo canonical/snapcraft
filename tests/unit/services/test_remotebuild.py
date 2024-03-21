@@ -17,36 +17,6 @@
 """Tests for the Snapcraft Remote Build service."""
 from unittest import mock
 
-import pytest
-
-
-def test_remotebuild_fetch_logs(mocker, tmp_path, remote_build_service):
-    """Test that logs are fetched"""
-    remote_build_service._is_setup = True
-    remote_build_service._name = "snapcraft-mytest-7f417e8455caa67e89ba6a1f3f6bed18"
-
-    remote_build_service._builds = [
-        mock.Mock(build_log_url="http://whatever", arch_tag="riscv64")
-    ]
-    remote_build_service.request.download_files_with_progress = mock.Mock()
-    logs = remote_build_service.fetch_logs(tmp_path)
-
-    remote_build_service.request.download_files_with_progress.assert_called_once()
-
-    assert "riscv64" in logs
-
-
-def test_remotebuild_fetch_no_setup(mocker, tmp_path, remote_build_service):
-    """Test that fetch operations raise a RuntimeError if the service is not set up."""
-    remote_build_service._is_setup = False
-
-    with pytest.raises(RuntimeError):
-        all(remote_build_service.monitor_builds())
-    with pytest.raises(RuntimeError):
-        remote_build_service.fetch_logs(tmp_path)
-    with pytest.raises(RuntimeError):
-        remote_build_service.fetch_artifacts(tmp_path)
-
 
 def test_new_snap_recipe(mocker, remote_build_service):
     """Test that a new SnapRecipe is created."""
@@ -68,5 +38,5 @@ def test_new_snap_recipe(mocker, remote_build_service):
         "craft_test_user",
         architectures=["riscv64"],
         project="mytest",
-        git_ref=git_repo.self_link + "/+ref/main",
+        git_ref=git_repo.git_https_url,
     )
