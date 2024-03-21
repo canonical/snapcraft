@@ -24,6 +24,7 @@ from collections.abc import Collection
 from pathlib import Path
 from typing import Any, cast
 
+import lazr.restfulclient.errors
 from craft_application.application import _filter_plan
 from craft_application.commands import ExtensibleCommand
 from craft_application.errors import RemoteBuildError
@@ -212,6 +213,11 @@ class RemoteBuildCommand(ExtensibleCommand):
                 emit.progress("Cleaning up")
                 builder.cleanup()
                 raise
+            except lazr.restfulclient.errors.Conflict:
+                emit.progress("Remote repository is already existing.", permanent=True)
+                emit.progress("Cleaning up")
+                builder.cleanup()
+                return 75
 
         try:
             returncode = self._monitor_and_complete(build_id, builds)
