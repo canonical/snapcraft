@@ -24,8 +24,8 @@ from overrides import overrides
 
 from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
-_SDK_SNAP = {"core22": "gnome-42-2204-sdk"}
-_PLATFORM_TRANSLATION = {"core22": "2204"}
+_SDK_SNAP = {"core22": "gnome-42-2204-sdk", "core24": "gnome-46-2404-sdk"}
+_PLATFORM_TRANSLATION = {"core22": "2204", "core24": "2404"}
 
 
 @dataclasses.dataclass
@@ -67,7 +67,7 @@ class GNOME(Extension):
     @staticmethod
     @overrides
     def get_supported_bases() -> Tuple[str, ...]:
-        return ("core22",)
+        return ("core22", "core24")
 
     @staticmethod
     @overrides

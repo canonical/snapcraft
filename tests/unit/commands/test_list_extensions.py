@@ -44,7 +44,7 @@ def test_command(emitter, command):
         flutter-dev             core18
         flutter-master          core18
         flutter-stable          core18
-        gnome                   core22
+        gnome                   core22, core24
         gnome-3-28              core18
         gnome-3-34              core18
         gnome-3-38              core20
@@ -88,7 +88,7 @@ def test_command_extension_dups(emitter, command):
         flutter-dev             core18
         flutter-master          core18
         flutter-stable          core18
-        gnome                   core22
+        gnome                   core22, core24
         gnome-3-28              core18
         gnome-3-34              core18
         gnome-3-38              core20
