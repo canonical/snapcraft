@@ -24,8 +24,10 @@ from snapcraft.extensions.ros2_humble_ros_base import ROS2HumbleRosBaseExtension
 from snapcraft.extensions.ros2_humble_ros_core import ROS2HumbleRosCoreExtension
 
 
-def setup_method_fixture(extension, yaml_data=None, arch=None, target_arch=None):
-    return extension(yaml_data=yaml_data, arch=arch, target_arch=target_arch)
+def setup_method_fixture(
+    extension, name=None, yaml_data=None, arch=None, target_arch=None
+):
+    return extension(name=name, yaml_data=yaml_data, arch=arch, target_arch=target_arch)
 
 
 class TestExtensionROS2HumbleMetaExtensions:

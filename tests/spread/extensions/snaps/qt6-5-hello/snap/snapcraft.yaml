@@ -1,0 +1,22 @@
+name: qt6-5-hello
+version: "1.0"
+summary: Test the qt6-5 extension
+description: It simply prints a hello world
+
+base: core22
+grade: devel
+confinement: strict
+
+apps:
+  qt6-5-hello:
+    command: usr/local/bin/hello
+    extensions: [qt6-5]
+
+parts:
+  hello:
+    plugin: cmake
+    source: .
+    build-packages:
+      - libglib2.0-0
+      - libdouble-conversion3
+      - libb2-1
