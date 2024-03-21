@@ -21,6 +21,7 @@ from textwrap import dedent
 import pytest
 import yaml
 from craft_application import util
+from craft_application.commands.lifecycle import PackCommand
 from craft_parts.packages import snaps
 from craft_providers import bases
 
@@ -260,3 +261,27 @@ def test_application_project_missing_error(monkeypatch, capsys, new_dir):
         "For more information, see https://snapcraft.io/docs/creating-snapcraft-yaml"
         in stderr
     )
+
+
+def test_default_command_integrated(monkeypatch, mocker, new_dir):
+    """Test that for core24 projects we accept "pack" as the default command."""
+
+    # Pretend this is an Ubuntu 24.04 system, to match the project's build-base
+    mocker.patch.object(
+        util, "get_host_base", return_value=bases.BaseName("ubuntu", "24.04")
+    )
+
+    snap_dir = new_dir / "snap"
+    snap_dir.mkdir()
+
+    # The project itself doesn't really matter.
+    project_yaml = snap_dir / "snapcraft.yaml"
+    project_yaml.write_text(PARSE_INFO_PROJECT)
+
+    mocked_pack_run = mocker.patch.object(PackCommand, "run", return_value=0)
+
+    monkeypatch.setattr("sys.argv", ["snapcraft", "--destructive-mode"])
+    app = application.create_app()
+    app.run()
+
+    assert mocked_pack_run.called
