@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Any, cast
 
 import lazr.restfulclient.errors
-from craft_application.application import _filter_plan
+from craft_application.application import filter_plan
 from craft_application.commands import ExtensibleCommand
 from craft_application.errors import RemoteBuildError
 from craft_application.launchpad.models import Build, BuildState
@@ -159,7 +159,7 @@ class RemoteBuildCommand(ExtensibleCommand):
 
         build_planner = self._app.BuildPlannerClass.unmarshal(project.marshal())
         full_build_plan = build_planner.get_build_plan()
-        possible_build_plan = _filter_plan(
+        possible_build_plan = filter_plan(
             full_build_plan,
             platform=parsed_args.platform,
             build_for=parsed_args.build_for,
