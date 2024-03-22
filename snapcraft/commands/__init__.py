@@ -19,11 +19,13 @@
 from . import core22, legacy
 from .extensions import ExpandExtensions, ListExtensions
 from .lifecycle import SnapCommand
+from .remote import RemoteBuildCommand
 
 __all__ = [
     "core22",
     "legacy",
     "SnapCommand",
+    "RemoteBuildCommand",
     "ExpandExtensions",
     "ListExtensions",
 ]

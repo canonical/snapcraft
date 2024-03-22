@@ -41,3 +41,6 @@ class SnapcraftServiceFactory(ServiceFactory):
     PackageClass: type[services.Package] = (  # type: ignore[reportIncompatibleVariableOverride]
         services.Package
     )
+    RemoteBuildClass: type[  # type: ignore[reportIncompatibleVariableOverride]
+        services.RemoteBuild
+    ] = services.RemoteBuild
