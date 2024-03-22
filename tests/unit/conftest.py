@@ -484,16 +484,56 @@ def package_service(
     )
 
 
+@pytest.fixture()
+def remote_build_service(default_factory, mocker):
+    import launchpadlib.launchpad
+    import lazr.restfulclient.resource
+    from craft_application import launchpad
+    from craft_application.launchpad.models import SnapRecipe
+
+    from snapcraft.application import APP_METADATA
+    from snapcraft.services import RemoteBuild
+
+    me = Mock(lazr.restfulclient.resource.Entry)
+    me.name = "craft_test_user"
+
+    class FakeRemoteBuildService(RemoteBuild):
+        """Fake remote build service with snap recipe."""
+
+        RecipeClass = SnapRecipe
+
+    # The login should not do anything
+    mocker.patch("craft_application.launchpad.Launchpad.anonymous")
+    mocker.patch("craft_application.launchpad.Launchpad.login")
+
+    fake_lp = launchpad.Launchpad(
+        APP_METADATA.name, Mock(spec=launchpadlib.launchpad.Launchpad, me=me)
+    )
+
+    service = FakeRemoteBuildService(
+        app=APP_METADATA,
+        services=default_factory,
+    )
+    service.lp = fake_lp
+
+    return service
+
+
 # pylint: enable=import-outside-toplevel
 
 
 @pytest.fixture()
-def fake_services(default_factory, lifecycle_service, package_service):
+def fake_services(
+    default_factory, lifecycle_service, package_service, remote_build_service
+):
     lifecycle_service.setup()
     default_factory.lifecycle = lifecycle_service
 
     package_service.setup()
     default_factory.package = package_service
+
+    remote_build_service.setup()
+    default_factory.remote_build = remote_build_service
 
     return default_factory
 
