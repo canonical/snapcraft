@@ -446,6 +446,7 @@ def lifecycle_service(default_project, default_factory, default_build_plan, tmp_
         work_dir=tmp_path / "work",
         cache_dir=tmp_path / "cache",
         build_plan=default_build_plan,
+        partitions=default_project.get_partitions(),
     )
 
 
