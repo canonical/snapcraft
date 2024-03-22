@@ -1,0 +1,44 @@
+summary: Build a snap with components
+
+prepare: |
+  snap refresh snapd --edge
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap ./*.comp
+  snap refresh snapd --stable
+
+execute: |
+  snapcraft pack
+
+  # assert contents of default partition
+  unsquashfs -dest "snap-contents" "hello-components_1.0_amd64.snap"
+  if [ ! -e "snap-contents/bin/hello" ]; then
+    echo "Expected 'bin/hello' in snap contents"
+    exit 1
+  fi
+
+  # assert component was packed
+  component_file="hello-components+share_1.0.comp"
+  if [ ! -e "${component_file}" ]; then
+    echo "Expected 'share' component to exist"
+    exit 1
+  fi
+
+  # assert component contents
+  unsquashfs -dest "component-contents" "${component_file}"
+  if [ ! -f "component-contents/file-in-component" ]; then
+    echo "Expected 'file-in-component' in the 'share' component"
+    exit 1
+  fi
+
+  if [ -f "component-contents/other-file-in-component" ]; then
+    echo "Expected 'other-file-in-component' not to be in the 'share' component"
+    exit 1
+  fi
+  
+  # assert contents of component metadata
+  if ! diff component-contents/meta/component.yaml expected-component.yaml; then
+    echo "Metadata for the share component is incorrect."
+    exit 1
+  fi
