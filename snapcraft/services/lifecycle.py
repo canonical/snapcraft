@@ -75,6 +75,28 @@ class Lifecycle(LifecycleService):
         """Run post-prime parts steps for Snapcraft."""
         return parts.patch_elf(step_info)
 
+    def get_prime_dir(self, component: str | None = None) -> Path:
+        """Get the prime directory path for the default prime dir or a component.
+
+        :param component: Name of the component to get the prime directory for.
+
+        :returns: The Path to the component's prime directory.
+
+        :raises SnapcraftError: If the component does not exist.
+        """
+        if component is None:
+            return self.prime_dir
+
+        try:
+            return self._lcm.project_info.get_prime_dir(
+                partition=f"component/{component}"
+            )
+        except ValueError as err:
+            raise errors.SnapcraftError(
+                f"Could not get prime directory for component {component!r} "
+                "because it does not exist."
+            ) from err
+
     def generate_manifest(self) -> models.Manifest:
         """Create and populate the manifest file."""
         primed_stage_packages: set[str] = set()

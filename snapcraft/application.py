@@ -26,6 +26,7 @@ from typing import Any
 
 import craft_application.commands as craft_app_commands
 import craft_cli
+import craft_parts
 from craft_application import Application, AppMetadata, util
 from craft_cli import emit
 from craft_parts.plugins.plugins import PluginType
@@ -125,6 +126,21 @@ class Snapcraft(Application):
         config = super().app_config
         config["core24"] = self._known_core24
         return config
+
+    @override
+    def _setup_partitions(self, yaml_data: dict[str, Any]) -> list[str] | None:
+        components = models.ComponentProject.unmarshal(yaml_data)
+        if components.components is None:
+            return None
+
+        # Users of partitions need to manually enable them, in Snapcraft
+        # this is done dynamically depending on the existence of components.
+        # This is why we have the enablement after the check, if not
+        # we could have directly returned with .get_partitions() which
+        # handles the empty case.
+        craft_parts.Features(enable_partitions=True)
+
+        return components.get_partitions()
 
     @override
     def _extra_yaml_transform(
