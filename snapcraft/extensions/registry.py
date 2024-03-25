@@ -22,6 +22,7 @@ from snapcraft import errors
 
 from .gnome import GNOME
 from .kde_neon import KDENeon
+from .kde_neon_6 import KDENeon
 from .ros2_humble import ROS2HumbleExtension
 from .ros2_humble_desktop import ROS2HumbleDesktopExtension
 from .ros2_humble_ros_base import ROS2HumbleRosBaseExtension
@@ -39,6 +40,7 @@ _EXTENSIONS: Dict[str, "ExtensionType"] = {
     "ros2-humble-ros-base": ROS2HumbleRosBaseExtension,
     "ros2-humble-desktop": ROS2HumbleDesktopExtension,
     "kde-neon": KDENeon,
+    "kde-neon-6": KDENeon,
 }
 
 

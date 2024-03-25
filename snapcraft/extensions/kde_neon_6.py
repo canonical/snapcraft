@@ -41,9 +41,12 @@ class ExtensionInfo:
 class KDESnaps:
     """A structure of KDE related snaps."""
 
-    sdk: str
-    content: str
-    builtin: bool = True
+    qt6_sdk_snap: str
+    kf6_sdk_snap: str
+    content_qt6: str
+    content_kf6: str
+    qt6_builtin: bool = True
+    kf6_builtin: bool = True
 
 
 class KDENeon(Extension):
@@ -100,8 +103,8 @@ class KDENeon(Extension):
     def kde_snaps(self) -> KDESnaps:
         """Return the KDE related snaps to use to construct the environment."""
         base = self.yaml_data["base"]
-        sdk_qt6_snap = _QT6_SDK_SNAP[base]
-        sdk_kf6_snap = _KF6_SDK_SNAP[base]
+        qt6_sdk_snap = _QT6_SDK_SNAP[base]
+        kf6_sdk_snap = _KF6_SDK_SNAP[base]
 
         build_snaps: List[str] = []
         for part in self.yaml_data["parts"].values():
@@ -123,16 +126,16 @@ class KDENeon(Extension):
         else:
             kf6_builtin = True
         # The same except the trailing -sd
-        content_qt6_snap = sdk_snap[:-4]
-        content_kf6_snap = sdk_snap[:-4]
+        content_qt6_snap = qt6_sdk_snap[:-4]
+        content_kf6_snap = kf6_sdk_snap[:-4]
 
-        return KDESnaps(qt6_sdk=qt6_sdk_snap, content_qt6=content_qt6_snap, qt6_builtin=qt6_builtin,
-                        kf6_sdk=kf6_sdk_snap, content_kf6=content_kf6_snap, kf6_builtin=kf6_builtin)
+        return KDESnaps(qt6_sdk_snap=qt6_sdk_snap, content_qt6=content_qt6_snap, qt6_builtin=qt6_builtin,
+                        kf6_sdk_snap=kf6_sdk_snap, content_kf6=content_kf6_snap, kf6_builtin=kf6_builtin)
 
     @functools.cached_property
     def ext_info(self) -> ExtensionInfo:
         """Return the extension info cmake_args, provider, content, build_snaps."""
-        cmake_args = "-DCMAKE_FIND_ROOT_PATH=/snap/" + self.kde_snaps.qt6_sdk + "/current;/snap/" + self.kde_snaps.kf6_sdk + "/current"
+        cmake_args = "-DCMAKE_FIND_ROOT_PATH=/snap/" + self.kde_snaps.qt6_sdk_snap + "/current;/snap/" + self.kde_snaps.kf6_sdk_snap + "/current"
 
         return ExtensionInfo(cmake_args=cmake_args)
 
@@ -183,8 +186,9 @@ class KDENeon(Extension):
 
     @overrides
     def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
-        qt6_sdk_snap = self.kde_snaps.qt6_sdk
-        kf6_sdk_snap = self.kde_snaps.kf6_sdk
+        qt6_sdk_snap = self.kde_snaps.qt6_sdk_snap
+        kf6_sdk_snap = self.kde_snaps.kf6_sdk_snap
+        \
         cmake_args = self.ext_info.cmake_args
 
         return {
@@ -227,7 +231,7 @@ class KDENeon(Extension):
                     "source": str(source),
                     "plugin": "make",
                     "make-parameters": [f"PLATFORM_PLUG={self.kde_snaps.content_qt6}, {self.kde_snaps.content_kf6}"],
-                    "build-snaps": [self.kde_snaps.qt6_sdk, self.kde_snaps.kf6_sdk],
+                    "build-snaps": [self.kde_snaps.qt6_sdk_snap, self.kde_snaps.kf6_sdk_snap],
                 },
             }
 
