@@ -409,6 +409,18 @@ def complex_project():
             bind: $SNAP/gnome-platform/usr/share/xml/iso-codes
 
         provenance: test-provenance-1
+
+        components:
+          component-a:
+            summary: test
+            description: test
+            type: test
+            version: "1.0"
+          component-b:
+            summary: test
+            description: test
+            type: test
+            version: "2.0"
         """
     )
     data = yaml.safe_load(snapcraft_yaml)
@@ -539,6 +551,15 @@ def test_complex_snap_yaml(complex_project, new_dir):
           snap_aziotdu:
             scope: shared
         provenance: test-provenance-1
+        components:
+          component-a:
+            summary: test
+            description: test
+            type: test
+          component-b:
+            summary: test
+            description: test
+            type: test
         """
     )
 

@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import re
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Set, Union, cast
 
@@ -257,6 +258,7 @@ class SnapMetadata(SnapcraftMetadata):
     system_usernames: Optional[Dict[str, Any]]
     provenance: Optional[str]
     links: Optional[Links]
+    components: Optional[Dict[str, Any]]
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "SnapMetadata":
@@ -483,6 +485,7 @@ def get_metadata_from_project(
         system_usernames=project.system_usernames,
         provenance=project.provenance,
         links=links if links else None,
+        components=_process_components(project.components),
     )
     if project.passthrough:
         for name, value in project.passthrough.items():
@@ -558,3 +561,22 @@ def _populate_environment(
         del environment["PATH"]
 
     return environment if environment else None
+
+
+def _process_components(components) -> Dict[str, Any] | None:
+    """Process component data for snap.yaml.
+
+    Removes the version keyword from components because the coupling
+    between a snap and a component is loosely defined and should not
+    be tied to a specific version.
+    """
+    if not components:
+        return components
+
+    components_copy = deepcopy(components)
+
+    for component in components_copy.values():
+        if component.version:
+            component.version = None
+
+    return components_copy
