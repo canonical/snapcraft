@@ -29,7 +29,6 @@ _QT6_SDK_SNAP = {"core22": "kde-qt6-core22-sdk"}
 _KF6_SDK_SNAP = {"core22": "kf6-core22-sdk"}
 
 
-
 @dataclasses.dataclass
 class ExtensionInfo:
     """Content/SDK build information."""
@@ -38,7 +37,7 @@ class ExtensionInfo:
 
 
 @dataclasses.dataclass
-class KDESnaps:
+class KDESnaps6:
     """A structure of KDE related snaps."""
 
     qt6_sdk_snap: str
@@ -49,7 +48,7 @@ class KDESnaps:
     kf6_builtin: bool = True
 
 
-class KDENeon(Extension):
+class KDENeon6(Extension):
     r"""The KDE Neon extension.
 
     This extension makes it easy to assemble KDE based applications
@@ -96,11 +95,21 @@ class KDENeon(Extension):
     def get_app_snippet(self) -> Dict[str, Any]:
         return {
             "command-chain": ["snap/command-chain/desktop-launch6"],
-            "plugs": ["desktop", "desktop-legacy", "opengl", "wayland", "x11", "audio-playback", "unity7", "network", "network-bind"],
+            "plugs": [
+                "desktop",
+                "desktop-legacy",
+                "opengl",
+                "wayland",
+                "x11",
+                "audio-playback",
+                "unity7",
+                "network",
+                "network-bind",
+            ],
         }
 
     @functools.cached_property
-    def kde_snaps(self) -> KDESnaps:
+    def kde_snaps(self) -> KDESnaps6:
         """Return the KDE related snaps to use to construct the environment."""
         base = self.yaml_data["base"]
         qt6_sdk_snap = _QT6_SDK_SNAP[base]
@@ -129,13 +138,21 @@ class KDENeon(Extension):
         content_qt6_snap = qt6_sdk_snap[:-4]
         content_kf6_snap = kf6_sdk_snap[:-4]
 
-        return KDESnaps(qt6_sdk_snap=qt6_sdk_snap, content_qt6=content_qt6_snap, qt6_builtin=qt6_builtin,
-                        kf6_sdk_snap=kf6_sdk_snap, content_kf6=content_kf6_snap, kf6_builtin=kf6_builtin)
+        return KDESnaps6(
+            qt6_sdk_snap=qt6_sdk_snap,
+            content_qt6=content_qt6_snap,
+            qt6_builtin=qt6_builtin,
+            kf6_sdk_snap=kf6_sdk_snap,
+            content_kf6=content_kf6_snap,
+            kf6_builtin=kf6_builtin,
+        )
 
     @functools.cached_property
     def ext_info(self) -> ExtensionInfo:
         """Return the extension info cmake_args, provider, content, build_snaps."""
-        cmake_args = "-DCMAKE_FIND_ROOT_PATH=/snap/" + self.kde_snaps.qt6_sdk_snap + "/current;/snap/" + self.kde_snaps.kf6_sdk_snap + "/current"
+        qt6_cmake = f"/snap/{self.kde_snaps.qt6_sdk_snap}/current;"
+        kf6_cmake = f"/snap/{self.kde_snaps.kf6_sdk_snap}/current"
+        cmake_args = "-DCMAKE_FIND_ROOT_PATH=" + qt6_cmake + kf6_cmake
 
         return ExtensionInfo(cmake_args=cmake_args)
 
@@ -188,21 +205,29 @@ class KDENeon(Extension):
     def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
         qt6_sdk_snap = self.kde_snaps.qt6_sdk_snap
         kf6_sdk_snap = self.kde_snaps.kf6_sdk_snap
-        \
         cmake_args = self.ext_info.cmake_args
 
         return {
             "build-environment": [
                 {
                     "PATH": prepend_to_env(
-                        "PATH", [f"/snap/{qt6_sdk_snap}/current/usr/bin:/snap/{kf6_sdk_snap}/current/usr/bin"]
+                        "PATH",
+                        [
+                            f"/snap/{qt6_sdk_snap}/current/"
+                            f"usr/bin:/snap/{kf6_sdk_snap}/"
+                            f"current/usr/bin"
+                        ],
                     ),
                 },
                 {
                     "XDG_DATA_DIRS": prepend_to_env(
                         "XDG_DATA_DIRS",
                         [
-                            f"$CRAFT_STAGE/usr/share:/snap/{qt6_sdk_snap}/current/usr/share:/snap/{kf6_sdk_snap}/current/usr/share",
+                            f"$CRAFT_STAGE/usr/share:"
+                            f"/snap/{qt6_sdk_snap}"
+                            f"/current/usr/share:"
+                            f"/snap/{kf6_sdk_snap}"
+                            f"/current/usr/share",
                             "/usr/share",
                         ],
                     ),
@@ -230,8 +255,11 @@ class KDENeon(Extension):
                 "kde-neon-6/sdk": {
                     "source": str(source),
                     "plugin": "make",
-                    "make-parameters": [f"PLATFORM_PLUG={self.kde_snaps.content_qt6}, {self.kde_snaps.content_kf6}"],
-                    "build-snaps": [self.kde_snaps.qt6_sdk_snap, self.kde_snaps.kf6_sdk_snap],
+                    "make-parameters": ["PLATFORM_PLUG=$SNAPCRAFT_PROJECT_NAME"],
+                    "build-snaps": [
+                        self.kde_snaps.qt6_sdk_snap,
+                        self.kde_snaps.kf6_sdk_snap,
+                    ],
                 },
             }
 
@@ -239,6 +267,6 @@ class KDENeon(Extension):
             "kde-neon-6/sdk": {
                 "source": str(source),
                 "plugin": "make",
-                "make-parameters": [f"PLATFORM_PLUG={self.kde_snaps.content_qt6}, {self.kde_snaps.content_kf6}"],
+                "make-parameters": ["PLATFORM_PLUG=$SNAPCRAFT_PROJECT_NAME"],
             },
         }
