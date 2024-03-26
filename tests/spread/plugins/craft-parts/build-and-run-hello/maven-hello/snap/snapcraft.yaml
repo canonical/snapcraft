@@ -1,0 +1,30 @@
+name: maven-hello
+version: '1.0'
+summary: A test project
+description: |
+  A test project for the maven plugin. It says hello.
+
+grade: stable # must be 'stable' to release into candidate/stable channels
+confinement: strict  # use 'strict' once you have the right plugs and slots
+base: core22
+
+lint:
+  ignore:
+    - library:
+        - usr/lib/jvm/java-*/lib/*.so
+
+apps:
+  maven-hello:
+    command: bin/java -jar $SNAP/jar/hello-1.0.jar
+
+parts:
+  hello:
+    plugin: maven
+    source: .
+    build-packages:
+      - openjdk-11-jre-headless
+      - maven
+    stage-packages:
+      - openjdk-11-jre-headless
+    prime:
+      - -usr/lib/jvm/java-11-openjdk-*/lib/security/blacklisted.certs
