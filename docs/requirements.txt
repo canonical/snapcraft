@@ -7,7 +7,7 @@ craft-cli==2.5.1
 craft-grammar==1.1.1
 craft-parts==1.29.0
 craft-providers==1.23.1
-craft-store==2.5.0
+craft-store==2.6.1
 Deprecated==1.2.14
 distro==1.8.0
 gnupg==2.3.1
