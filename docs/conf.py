@@ -1,7 +1,10 @@
 import datetime
+import logging
 import os
 import pathlib
 import sys
+
+import craft_parts_docs
 
 project_dir = pathlib.Path("..").resolve()
 sys.path.insert(0, str(project_dir.absolute()))
@@ -60,7 +63,12 @@ extensions = [
 
 myst_enable_extensions = ["substitution", "deflist"]
 
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "sphinx-resources"]
+exclude_patterns = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    "sphinx-resources",
+]
 
 rst_epilog = """
 .. include:: /reuse/links.txt
@@ -161,6 +169,33 @@ if "github_issues" in html_context and html_context["github_issues"]:
 # For example: "explanation/old-name.html": "../how-to/prettify.html",
 # redirects = {}
 
+extensions.extend(
+    (
+        "sphinx.ext.ifconfig",
+        "sphinxcontrib.details.directive",
+    )
+)
+
+exclude_patterns.extend(
+    (
+        # Excluded because Snapcraft doesn't use overlays
+        "common/craft-parts/overlay_parameters.rst",
+        # Excluded here because they are either included explicitly in other
+        # documents (so they generate "duplicate label" errors) or they aren't
+        # used in this documentation at all (so they generate "unreferenced"
+        # errors).
+        "common/craft-parts/explanation/overlay_parameters.rst",
+        "common/craft-parts/explanation/overlays.rst",
+        "common/craft-parts/how-to/craftctl.rst",
+        "common/craft-parts/reference/parts_steps.rst",
+        "common/craft-parts/reference/step_execution_environment.rst",
+        "common/craft-parts/reference/step_output_directories.rst",
+        "common/craft-parts/reference/plugins/python_plugin.rst",
+        "common/craft-parts/reference/plugins/maven_plugin.rst",
+        # Extra non-craft-parts exclusions can be added after this comment
+    )
+)
+
 
 def generate_cli_docs(nil):
     gen_cli_docs_path = (project_dir / "tools" / "docs" / "gen_cli_docs.py").resolve()
@@ -169,3 +204,12 @@ def generate_cli_docs(nil):
 
 def setup(app):
     app.connect("builder-inited", generate_cli_docs)
+
+
+# Setup libraries documentation snippets for use in snapcraft docs.
+common_docs_path = pathlib.Path(__file__).parent / "common"
+craft_parts_docs_path = pathlib.Path(craft_parts_docs.__file__).parent / "craft-parts"
+(common_docs_path / "craft-parts").unlink(missing_ok=True)
+(common_docs_path / "craft-parts").symlink_to(
+    craft_parts_docs_path, target_is_directory=True
+)

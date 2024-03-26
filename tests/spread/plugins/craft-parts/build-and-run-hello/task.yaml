@@ -8,6 +8,8 @@ environment:
   SNAP/colcon_ros2_wrapper: colcon-ros2-wrapper
   SNAP/flutter: flutter-hello
   SNAP/python: python-hello
+  SNAP/qmake: qmake-hello
+  SNAP/maven: maven-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -86,6 +88,8 @@ execute: |
     modified_file=lib/main.dart
   elif [ -f src/hello/__init__.py ]; then
     modified_file=src/hello/__init__.py
+  elif [ -f src/main/java/com/example/hello/Main.java ]; then
+    modified_file=src/main/java/com/example/hello/Main.java
   else
     FATAL "Cannot setup ${SNAP} for rebuilding"
   fi

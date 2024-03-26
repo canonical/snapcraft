@@ -8,6 +8,9 @@ Reference
 
    architectures
    commands
+   plugins
+   /common/craft-parts/reference/part_properties
+   parts_steps
 
 Indices and tables
 ==================
