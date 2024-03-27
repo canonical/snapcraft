@@ -28,7 +28,7 @@ $(DEST_CONFIGURE_HOOK):
 
 install: $(DEST_LAUNCHER) $(DEST_CONFIGURE_HOOK)
 	install -d $(DATA_DIR)
-	install -d $(DATA_DIR)/kf5
+	install -d $(DATA_DIR)/kf6
 	install -D -m755 $(DEST_LAUNCHER) "$(BIN_DIR)"/$(DEST_LAUNCHER)
 	install -D -m755 $(LOCALE_GENERATOR) "$(BIN_DIR)"/$(LOCALE_GENERATOR)
 	install -D -m755 $(DEST_CONFIGURE_HOOK) "$(BIN_DIR)"/$(DEST_CONFIGURE_HOOK)
