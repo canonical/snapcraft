@@ -32,6 +32,15 @@ class SnapcraftServiceFactory(ServiceFactory):
     project: models.Project | None = None  # type: ignore[reportIncompatibleVariableOverride]
 
     # These are overrides of default ServiceFactory services
+    LifecycleClass: type[services.Lifecycle] = (  # type: ignore[reportIncompatibleVariableOverride]
+        services.Lifecycle
+    )
+    ProviderClass: type[services.Provider] = (  # type: ignore[reportIncompatibleVariableOverride]
+        services.Provider
+    )
     PackageClass: type[services.Package] = (  # type: ignore[reportIncompatibleVariableOverride]
         services.Package
     )
+    RemoteBuildClass: type[  # type: ignore[reportIncompatibleVariableOverride]
+        services.RemoteBuild
+    ] = services.RemoteBuild

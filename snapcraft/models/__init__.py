@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,16 +15,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Data models for snapcraft."""
 
+from .manifest import Manifest
 from .project import (
     MANDATORY_ADOPTABLE_FIELDS,
     App,
     Architecture,
     ArchitectureProject,
+    ComponentProject,
     ContentPlug,
     GrammarAwareProject,
     Hook,
     Lint,
+    Platform,
     Project,
+    SnapcraftBuildPlanner,
     Socket,
 )
 
@@ -33,10 +37,14 @@ __all__ = [
     "App",
     "Architecture",
     "ArchitectureProject",
+    "ComponentProject",
     "ContentPlug",
     "GrammarAwareProject",
     "Hook",
     "Lint",
+    "Manifest",
+    "Platform",
     "Project",
+    "SnapcraftBuildPlanner",
     "Socket",
 ]

@@ -1,0 +1,36 @@
+summary: Appstream desktop file test
+
+environment:
+  SNAP/desktop: desktop
+  SNAP/icon_desktop: icon-desktop
+
+# This test snap is limited to amd64 arch due to architectures specified
+# in expected_snap.yaml.
+systems:
+  - ubuntu-24.04-64
+  - ubuntu-24.04-amd64
+
+restore: |
+  cd "${SNAP}"
+  snapcraft clean
+  snapcraft clean --destructive-mode
+  rm -f ./*.snap
+
+execute: |
+  cd "${SNAP}"
+
+  # make sure we can create the snap using a build provider...
+  snapcraft prime
+
+  # and also in destructive mode
+  snapcraft prime --destructive-mode
+
+  if ! diff -U10 prime/meta/snap.yaml expected_snap.yaml; then
+      echo "The formatting for snap.yaml is incorrect"
+      exit 1
+  fi
+
+  if ! diff -U10 prime/meta/gui/appstream-desktop.desktop expected_appstream-desktop.desktop; then
+      echo "The formatting for appstream-desktop.desktop is incorrect"
+      exit 1
+  fi

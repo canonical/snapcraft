@@ -210,10 +210,13 @@ def test_get_base_configuration(
 
     mock_buildd_base.assert_called_with(
         alias=alias,
-        compatibility_tag="snapcraft-buildd-base-v0.0",
+        compatibility_tag="snapcraft-buildd-base-v0.1",
         environment="test-env",
         hostname="test-instance-name",
-        snaps=[Snap(name="test-snap-name", channel="test-channel", classic=True)],
+        snaps=[
+            Snap(name="snapd", channel="latest/edge", classic=True),
+            Snap(name="test-snap-name", channel="test-channel", classic=True),
+        ],
         packages=["gnupg", "dirmngr", "git"],
     )
 
@@ -256,7 +259,10 @@ def test_get_base_configuration_snap_channel(
         compatibility_tag=ANY,
         environment=ANY,
         hostname=ANY,
-        snaps=[Snap(name="snapcraft", channel=snap_channel, classic=True)],
+        snaps=[
+            Snap(name="snapd", channel="latest/edge", classic=True),
+            Snap(name="snapcraft", channel=snap_channel, classic=True),
+        ],
         packages=ANY,
     )
 
@@ -290,7 +296,10 @@ def test_get_base_configuration_snap_instance_name_default(
         compatibility_tag=ANY,
         environment=ANY,
         hostname=ANY,
-        snaps=[Snap(name="snapcraft", channel=None, classic=True)],
+        snaps=[
+            Snap(name="snapd", channel="latest/edge", classic=True),
+            Snap(name="snapcraft", channel=None, classic=True),
+        ],
         packages=ANY,
     )
 
@@ -324,7 +333,10 @@ def test_get_base_configuration_snap_instance_name_not_running_as_snap(
         compatibility_tag=ANY,
         environment=ANY,
         hostname=ANY,
-        snaps=[Snap(name="snapcraft", channel=None, classic=True)],
+        snaps=[
+            Snap(name="snapd", channel="latest/edge", classic=True),
+            Snap(name="snapcraft", channel=None, classic=True),
+        ],
         packages=ANY,
     )
 
@@ -333,7 +345,7 @@ def test_get_command_environment(mocker, mock_default_command_environment):
     """Verify command environment is properly constructed."""
     command_environment = providers.get_command_environment()
 
-    assert command_environment == {"PATH": "test-path", "SNAPCRAFT_MANAGED_MODE": "1"}
+    assert command_environment == {"PATH": "test-path", "CRAFT_MANAGED_MODE": "1"}
 
 
 def test_get_command_environment_passthrough(
@@ -356,7 +368,7 @@ def test_get_command_environment_passthrough(
 
     assert command_environment == {
         "PATH": "test-path",
-        "SNAPCRAFT_MANAGED_MODE": "1",
+        "CRAFT_MANAGED_MODE": "1",
         "http_proxy": "test-http",
         "https_proxy": "test-https",
         "no_proxy": "test-no-proxy",
@@ -378,7 +390,7 @@ def test_get_command_environment_http_https_proxy(
 
     assert command_environment == {
         "PATH": "test-path",
-        "SNAPCRAFT_MANAGED_MODE": "1",
+        "CRAFT_MANAGED_MODE": "1",
         "http_proxy": "test-http",
         "https_proxy": "test-https",
     }
@@ -398,7 +410,7 @@ def test_get_command_environment_http_https_priority(
 
     assert command_environment == {
         "PATH": "test-path",
-        "SNAPCRAFT_MANAGED_MODE": "1",
+        "CRAFT_MANAGED_MODE": "1",
         "http_proxy": "test-http-from-arg",
         "https_proxy": "test-https-from-arg",
     }

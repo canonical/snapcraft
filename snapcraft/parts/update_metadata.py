@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -50,6 +50,29 @@ def update_project_metadata(
     """
     _update_project_variables(project, project_vars)
 
+    update_from_extracted_metadata(
+        project, metadata_list=metadata_list, assets_dir=assets_dir, prime_dir=prime_dir
+    )
+
+    # Fields that must not end empty
+    for field in MANDATORY_ADOPTABLE_FIELDS:
+        if not getattr(project, field):
+            raise errors.SnapcraftError(
+                f"Field {field!r} was not adopted from metadata"
+            )
+
+
+def update_from_extracted_metadata(
+    project: Project,
+    *,
+    metadata_list: List[ExtractedMetadata],
+    assets_dir: Path,
+    prime_dir: Path,
+) -> None:
+    """Set project fields from extracted metadata.
+
+    See ``update_project_metadata()`` for the parameters.
+    """
     for metadata in metadata_list:
         # Data specified in the project yaml has precedence over extracted data
         if metadata.title and not project.title:
@@ -77,19 +100,12 @@ def update_project_metadata(
             project, metadata=metadata, assets_dir=assets_dir, prime_dir=prime_dir
         )
 
-    # Fields that must not end empty
-    for field in MANDATORY_ADOPTABLE_FIELDS:
-        if not getattr(project, field):
-            raise errors.SnapcraftError(
-                f"Field {field!r} was not adopted from metadata"
-            )
-
 
 def _update_project_variables(project: Project, project_vars: Dict[str, str]):
     """Update project fields with values set during lifecycle processing."""
     try:
         if project_vars["version"]:
-            project.version = project_vars["version"]
+            project.version = cast(VersionStr, project_vars["version"])
         if project_vars["grade"]:
             project.grade = project_vars["grade"]  # type: ignore
     except pydantic.ValidationError as err:

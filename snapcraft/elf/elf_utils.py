@@ -121,11 +121,14 @@ def get_dynamic_linker(*, root_path: Path, snap_path: Path) -> str:
     if not arch_config:
         raise RuntimeError(f"Dynamic linker not defined for arch {arch!r}")
 
-    linker_path = root_path / arch_config.dynamic_linker
-    if not linker_path.exists():
-        raise errors.DynamicLinkerNotFound(linker_path)
+    arch_linker_path = Path(arch_config.dynamic_linker)
+    # First consider the pre usrmerge world, then the post usrmerge reality.
+    for probable_path in (arch_linker_path, Path("usr") / arch_linker_path):
+        linker_path = root_path / probable_path
+        if linker_path.exists():
+            return str(snap_path / probable_path)
 
-    return str(snap_path / arch_config.dynamic_linker)
+    raise errors.DynamicLinkerNotFound(root_path / arch_config.dynamic_linker)
 
 
 def get_arch_triplet(arch: Optional[str] = None) -> str:

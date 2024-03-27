@@ -129,6 +129,21 @@ def test_get_effective_base(base, build_base, project_type, name, expected_base)
     assert result == expected_base
 
 
+def test_get_effective_base_translate_devel():
+    params = {
+        "base": "core24",
+        "build_base": "devel",
+        "project_type": None,
+        "name": "my-project",
+    }
+
+    translate_true = utils.get_effective_base(translate_devel=True, **params)
+    assert translate_true == "core24"
+
+    translate_false = utils.get_effective_base(translate_devel=False, **params)
+    assert translate_false == "devel"
+
+
 def test_get_os_platform_linux(tmp_path, mocker):
     """Utilize an /etc/os-release file to determine platform."""
     # explicitly add commented and empty lines, for parser robustness

@@ -23,7 +23,10 @@ import pytest
 import requests
 
 from snapcraft import commands, errors
-from snapcraft.commands.validation_sets import StoreClientCLI, edit_validation_sets
+from snapcraft.commands.core22.validation_sets import (
+    StoreClientCLI,
+    edit_validation_sets,
+)
 from snapcraft_legacy.storeapi.errors import StoreValidationSetsError
 from snapcraft_legacy.storeapi.v2 import validation_sets
 from tests.unit.store.utils import FakeResponse
@@ -98,7 +101,7 @@ def fake_snap_sign(mocker):
         return (json.dumps(assertion) + f"\n\nSIGNED{key_name}").encode()
 
     return mocker.patch(
-        "snapcraft.commands.validation_sets._sign_assertion", side_effect=sign
+        "snapcraft.commands.core22.validation_sets._sign_assertion", side_effect=sign
     )
 
 
@@ -123,7 +126,7 @@ def edit_return_value():
 def fake_edit_validation_sets(mocker, edit_return_value):
     """A fake for editing validation sets that returns no changes by default."""
     return mocker.patch(
-        "snapcraft.commands.validation_sets.edit_validation_sets",
+        "snapcraft.commands.core22.validation_sets.edit_validation_sets",
         return_value=edit_return_value,
     )
 
@@ -180,7 +183,7 @@ def test_edit_validation_sets_with_no_changes_to_existing_set(
     edit_return_value["snaps"][0]["presence"] = "optional"
     fake_edit_validation_sets.return_value = edit_return_value
 
-    cmd = commands.StoreEditValidationSetsCommand(None)
+    cmd = commands.core22.StoreEditValidationSetsCommand(None)
 
     cmd.run(
         argparse.Namespace(
@@ -210,7 +213,7 @@ def test_edit_validation_sets_with_changes_to_existing_set(
     fake_snap_sign,
     key_name,
 ):
-    cmd = commands.StoreEditValidationSetsCommand(None)
+    cmd = commands.core22.StoreEditValidationSetsCommand(None)
 
     cmd.run(
         argparse.Namespace(
@@ -264,7 +267,7 @@ def test_edit_validation_sets_with_errors_to_amend(
     ]
     confirm_mock = mocker.patch("snapcraft.utils.confirm_with_user", return_value=True)
 
-    cmd = commands.StoreEditValidationSetsCommand(None)
+    cmd = commands.core22.StoreEditValidationSetsCommand(None)
 
     cmd.run(
         argparse.Namespace(
@@ -319,7 +322,7 @@ def test_edit_validation_sets_with_errors_not_amended(
     )
     confirm_mock = mocker.patch("snapcraft.utils.confirm_with_user", return_value=False)
 
-    cmd = commands.StoreEditValidationSetsCommand(None)
+    cmd = commands.core22.StoreEditValidationSetsCommand(None)
 
     with pytest.raises(errors.SnapcraftError):
         cmd.run(

@@ -10,6 +10,7 @@ prepare: |
 
 restore: |
   cd "$SNAP"
+  snapcraft clean --destructive-mode
   rm -f ./*.snap
   rm -Rf work
 
@@ -19,5 +20,5 @@ restore: |
 
 execute: |
   cd "$SNAP"
-  snapcraft 2>&1 | tee progress.txt
+  snapcraft --destructive-mode 2>&1 | tee progress.txt
   grep "Created snap package ${SNAP}_1.0_amd64.snap" progress.txt
