@@ -18,6 +18,7 @@
 
 from craft_parts import validate_part
 
+from .lifecycle import patch_elf
 from .parts import PartsLifecycle
 
-__all__ = ["PartsLifecycle", "validate_part"]
+__all__ = ["PartsLifecycle", "patch_elf", "validate_part"]

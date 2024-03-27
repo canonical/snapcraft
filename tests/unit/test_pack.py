@@ -301,3 +301,57 @@ def test_pack_snap_error(mocker, new_dir, fake_process):
         """app description field 'command' contains illegal "pack-error foo=bar" """
         """(legal: '^[A-Za-z0-9/. _#:$-]*$')"""
     )
+
+
+def test_pack_component(fake_process, new_dir):
+    fake_process.register_subprocess(
+        ["snap", "pack", str(new_dir / "in"), str(new_dir / "out")],
+        stdout="built: my-snap+component_1.0.comp",
+    )
+
+    name = pack.pack_component(
+        directory=new_dir / "in",
+        output_dir=new_dir / "out",
+    )
+
+    assert name == "my-snap+component_1.0.comp"
+
+
+def test_pack_component_with_compression(fake_process, new_dir):
+    fake_process.register_subprocess(
+        [
+            "snap",
+            "pack",
+            "--compression",
+            "test",
+            str(new_dir / "in"),
+            str(new_dir / "out"),
+        ],
+        stdout="built: my-snap+component_1.0.comp",
+    )
+
+    name = pack.pack_component(
+        directory=new_dir / "in",
+        output_dir=new_dir / "out",
+        compression="test",
+    )
+
+    assert name == "my-snap+component_1.0.comp"
+
+
+def test_pack_component_error(fake_process, new_dir):
+    fake_process.register_subprocess(
+        ["snap", "pack", str(new_dir / "in"), str(new_dir / "out")],
+        returncode=1,
+    )
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        pack.pack_component(
+            directory=new_dir / "in",
+            output_dir=new_dir / "out",
+        )
+
+    assert raised.value.resolution == (
+        "Packing components is experimental and requires `snapd` "
+        "to be installed from the `latest/edge` channel."
+    )

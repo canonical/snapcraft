@@ -19,11 +19,18 @@ from textwrap import dedent
 
 import pytest
 
-from snapcraft.commands import ExtensionsCommand, ListExtensionsCommand
+import snapcraft.commands.core22
 
 
 @pytest.mark.usefixtures("fake_extension")
-@pytest.mark.parametrize("command", [ListExtensionsCommand, ExtensionsCommand])
+@pytest.mark.parametrize(
+    "command",
+    [
+        snapcraft.commands.core22.ListExtensionsCommand,
+        snapcraft.commands.core22.ExtensionsCommand,
+        snapcraft.commands.ListExtensions,
+    ],
+)
 def test_command(emitter, command):
     cmd = command(None)
     cmd.run(Namespace())
@@ -32,12 +39,12 @@ def test_command(emitter, command):
             """\
         Extension name          Supported bases
         ----------------------  ----------------------
-        fake-extension          core22
+        fake-extension          core22, core24
         flutter-beta            core18
         flutter-dev             core18
         flutter-master          core18
         flutter-stable          core18
-        gnome                   core22
+        gnome                   core22, core24
         gnome-3-28              core18
         gnome-3-34              core18
         gnome-3-38              core20
@@ -61,7 +68,14 @@ def test_command(emitter, command):
 
 
 @pytest.mark.usefixtures("fake_extension_name_from_legacy")
-@pytest.mark.parametrize("command", [ListExtensionsCommand, ExtensionsCommand])
+@pytest.mark.parametrize(
+    "command",
+    [
+        snapcraft.commands.core22.ListExtensionsCommand,
+        snapcraft.commands.core22.ExtensionsCommand,
+        snapcraft.commands.ListExtensions,
+    ],
+)
 def test_command_extension_dups(emitter, command):
     cmd = command(None)
     cmd.run(Namespace())
@@ -74,7 +88,7 @@ def test_command_extension_dups(emitter, command):
         flutter-dev             core18
         flutter-master          core18
         flutter-stable          core18
-        gnome                   core22
+        gnome                   core22, core24
         gnome-3-28              core18
         gnome-3-34              core18
         gnome-3-38              core20

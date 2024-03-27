@@ -60,16 +60,17 @@ def gnome_extension_with_default_build_snap_from_latest_edge():
 ###################
 
 
-def test_get_supported_bases(gnome_extension):
-    assert gnome_extension.get_supported_bases() == ("core22",)
+def test_get_supported_bases():
+    assert gnome.GNOME.get_supported_bases() == ("core22", "core24")
 
 
-def test_get_supported_confinement(gnome_extension):
-    assert gnome_extension.get_supported_confinement() == ("strict", "devmode")
+def test_get_supported_confinement():
+    assert gnome.GNOME.get_supported_confinement() == ("strict", "devmode")
 
 
-def test_is_experimental():
-    assert gnome.GNOME.is_experimental(base="core22") is False
+@pytest.mark.parametrize("base", ["core22", "core24"])
+def test_is_experimental(base):
+    assert gnome.GNOME.is_experimental(base=base) is False
 
 
 def test_get_app_snippet(gnome_extension):
