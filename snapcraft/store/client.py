@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -425,7 +425,7 @@ class LegacyStoreClientCLI:
             },
         )
 
-    def notify_upload(
+    def notify_upload(  # noqa: PLR0913[too-many-arguments]
         self,
         *,
         snap_name: str,
@@ -433,6 +433,7 @@ class LegacyStoreClientCLI:
         snap_file_size: int,
         built_at: Optional[str],
         channels: Optional[Sequence[str]],
+        components: Optional[Dict[str, str]],
     ) -> int:
         """Notify an upload to the Snap Store.
 
@@ -441,6 +442,7 @@ class LegacyStoreClientCLI:
         :param snap_file_size: the file size of the uploaded snap
         :param built_at: the build timestamp for this build
         :param channels: the channels to release to after being accepted into the Snap Store
+        :param components: A dictionary of component names to component upload-ids.
         :returns: the snap's processed revision
         """
         data = {
@@ -454,6 +456,8 @@ class LegacyStoreClientCLI:
             data["built_at"] = built_at
         if channels is not None:
             data["channels"] = channels
+        if components:
+            data["components"] = components
 
         response = self.request(
             "POST",
@@ -519,7 +523,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         emit.debug(f"Skipping verification for {snap_name!r}")
 
     @overrides
-    def notify_upload(
+    def notify_upload(  # noqa: PLR0913[too-many-arguments]
         self,
         *,
         snap_name: str,
@@ -527,9 +531,14 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         snap_file_size: int,
         built_at: Optional[str],
         channels: Optional[Sequence[str]],
+        components: Optional[Dict[str, str]],
     ) -> int:
         if channels:
             raise errors.SnapcraftError("Releasing during currently unsupported")
+        if components:
+            raise errors.SnapcraftError(
+                "Components support for on-prem stores is currently unsupported"
+            )
         emit.debug(
             f"Ignoring snap_file_size of {snap_file_size!r} and "
             f"built_at {built_at!r}"
