@@ -26,6 +26,7 @@ from typing import Any
 
 import craft_application.commands as craft_app_commands
 import craft_cli
+import craft_parts
 from craft_application import Application, AppMetadata, util
 from craft_cli import emit
 from craft_parts.plugins.plugins import PluginType
@@ -124,6 +125,16 @@ class Snapcraft(Application):
         config = super().app_config
         config["core24"] = self._known_core24
         return config
+
+    @override
+    def _setup_partitions(self, yaml_data: dict[str, Any]) -> list[str] | None:
+        component_names = yaml_data["components"].keys()
+        if not component_names:
+            return None
+
+        craft_parts.Features(enable_partitions=True)
+
+        return ["default", *[f"component/{name}" for name in component_names]]
 
     @override
     def _extra_yaml_transform(

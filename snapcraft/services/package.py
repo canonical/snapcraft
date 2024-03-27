@@ -29,7 +29,7 @@ from overrides import override
 
 from snapcraft import errors, linters, models, pack, utils
 from snapcraft.linters import LinterStatus
-from snapcraft.meta import snap_yaml
+from snapcraft.meta import component_yaml, snap_yaml
 from snapcraft.parts import extract_metadata as extract
 from snapcraft.parts import update_metadata as update
 from snapcraft.parts.setup_assets import setup_assets
@@ -79,6 +79,18 @@ class Package(PackageService):
             prime_dir=project_info.prime_dir,
         )
 
+    def _pack_components(self, dest: pathlib.Path) -> list[pathlib.Path]:
+        component_files: list[pathlib.Path] = []
+        for component in self._project.get_component_names():
+            filename = pack.pack_component(
+                self._services.lifecycle.get_prime_dir(component),
+                compression=self._project.compression,
+                output_dir=dest,
+            )
+            component_files.append(pathlib.Path(filename))
+
+        return component_files
+
     @override
     def pack(self, prime_dir: pathlib.Path, dest: pathlib.Path) -> list[pathlib.Path]:
         """Create one or more packages as appropriate.
@@ -94,18 +106,19 @@ class Package(PackageService):
         if status in (LinterStatus.ERRORS, LinterStatus.FATAL):
             raise errors.LinterError("Linter errors found", exit_code=status)
 
-        return [
-            pathlib.Path(
-                pack.pack_snap(
-                    prime_dir,
-                    output=str(dest),
-                    compression=self._project.compression,
-                    name=self._project.name,
-                    version=process_version(self._project.version),
-                    target_arch=self._build_plan[0].build_for,
-                )
+        snap_file = pathlib.Path(
+            pack.pack_snap(
+                prime_dir,
+                output=str(dest),
+                compression=self._project.compression,
+                name=self._project.name,
+                version=process_version(self._project.version),
+                target_arch=self._build_plan[0].build_for,
             )
-        ]
+        )
+        component_files = self._pack_components(dest)
+
+        return [snap_file] + component_files
 
     def _get_assets_dir(self) -> pathlib.Path:
         """Return a snapcraft assets directory.
@@ -153,6 +166,13 @@ class Package(PackageService):
             prime_dir=path,
             meta_directory_handler=meta_directory_handler,
         )
+
+        for component in self._project.get_component_names():
+            component_yaml.write(
+                project=self._project,
+                component_name=component,
+                component_prime_dir=self._services.lifecycle.get_prime_dir(component),
+            )
 
     @property
     def metadata(self) -> snap_yaml.SnapMetadata:
