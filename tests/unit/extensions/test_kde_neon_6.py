@@ -266,7 +266,7 @@ def test_get_parts_snippet(kde_neon_6_extension):
         "kde-neon-6/sdk": {
             "source": str(source),
             "plugin": "make",
-            "make-parameters": ["PLATFORM_PLUG=$SNAPCRAFT_PROJECT_NAME"],
+            "make-parameters": ["PLATFORM_PLUG=kf6-core22"],
             "build-snaps": ["kde-qt6-core22-sdk", "kf6-core22-sdk"],
         }
     }
@@ -279,7 +279,7 @@ def test_get_parts_snippet_with_external_sdk(kde_neon_6_extension_with_build_sna
         "kde-neon-6/sdk": {
             "source": str(source),
             "plugin": "make",
-            "make-parameters": ["PLATFORM_PLUG=$SNAPCRAFT_PROJECT_NAME"],
+            "make-parameters": ["PLATFORM_PLUG=kf6-core22"],
         }
     }
 
@@ -292,6 +292,6 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
         "kde-neon-6/sdk": {
             "source": str(source),
             "plugin": "make",
-            "make-parameters": ["PLATFORM_PLUG=$SNAPCRAFT_PROJECT_NAME"],
+            "make-parameters": ["PLATFORM_PLUG=kf6-core22"],
         }
     }
