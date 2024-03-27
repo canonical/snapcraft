@@ -21,7 +21,6 @@ import sys
 import tempfile
 import textwrap
 from dataclasses import dataclass
-from typing import Union
 from unittest import mock
 
 import pytest
@@ -33,26 +32,12 @@ from snapcraft_legacy.plugins.v2.kernel import KernelPlugin
 
 class Kernelv2PluginProperties:
     kernel_kdefconfig: [str] = ["defconfig"]
-    kernel_kconfigfile: str = None
     kernel_kconfigflavour: str = None
     kernel_kconfigs: [str] = None
     kernel_image_target = "Image.gz"
-    kernel_with_firmware: bool = True
-    kernel_device_trees: [str] = None
-    kernel_compiler: str = None
-    kernel_compiler_paths: [str] = None
-    kernel_compiler_parameters: [str] = None
-    kernel_initrd_modules: [str] = None
-    kernel_initrd_configured_modules: [str] = None
-    kernel_initrd_firmware: [str] = None
-    kernel_initrd_compression: [str] = None
-    kernel_initrd_compression_options: [str] = None
-    kernel_initrd_overlay: str = None
-    kernel_initrd_addons: [str] = None
     kernel_enable_zfs_support: bool = False
     kernel_enable_perf: bool = False
     kernel_add_ppa: bool = False
-    kernel_use_llvm: bool = False
 
 
 class TestPluginKernel(TestCase):
@@ -65,52 +50,22 @@ class TestPluginKernel(TestCase):
 
     def _setup_test(
         self,
-        kernelkdefconfig=["defconfig"],
-        kernelkconfigfile=None,
-        kernelkconfigflavour=None,
+        kernelkdefconfig=None,
+        kernelkconfigflavour="generic",
         kernelkconfigs=None,
         kernelimagetarget="Image.gz",
-        kernelwithfirmware=True,
-        kerneldevicetrees=None,
-        kernelinitrdmodules=None,
-        kernelinitrdconfiguredmodules=None,
-        kernelinitrdstagefirmware=False,
-        kernelinitrdfirmware=None,
-        kernelinitrdcompression=None,
-        kernelinitrdcompressionoptions=None,
-        kernelinitrdoverlay=None,
-        kernelinitrdaddons=None,
-        kernelcompiler=None,
-        kernelcompilerpaths=None,
-        kernelcompilerparameters=None,
         kernelenablezfssupport=False,
         kernelenableperf=False,
-        kernelusellvm: Union[bool, str] = False,
         arch=platform.machine(),
     ):
         @dataclass
         class Options(Kernelv2PluginProperties):
             kernel_kdefconfig = kernelkdefconfig
-            kernel_kconfigfile = kernelkconfigfile
             kernel_kconfigflavour = kernelkconfigflavour
             kernel_kconfigs = kernelkconfigs
             kernel_image_target = kernelimagetarget
-            kernel_with_firmware = kernelwithfirmware
-            kernel_device_trees = kerneldevicetrees
-            kernel_initrd_modules = kernelinitrdmodules
-            kernel_initrd_configured_modules = kernelinitrdconfiguredmodules
-            kernel_initrd_stage_firmware = kernelinitrdstagefirmware
-            kernel_initrd_firmware = kernelinitrdfirmware
-            kernel_initrd_compression = kernelinitrdcompression
-            kernel_initrd_compression_options = kernelinitrdcompressionoptions
-            kernel_initrd_overlay = kernelinitrdoverlay
-            kernel_initrd_addons = kernelinitrdaddons
-            kernel_compiler = kernelcompiler
-            kernel_compiler_paths = kernelcompilerpaths
-            kernel_compiler_parameters = kernelcompilerparameters
             kernel_enable_zfs_support = kernelenablezfssupport
             kernel_enable_perf = kernelenableperf
-            kernel_use_llvm = kernelusellvm
             # Ensure that the PPA is not added so we don't cause side-effects
             kernel_add_ppa = False
 
@@ -144,13 +99,9 @@ class TestPluginKernel(TestCase):
                 "properties": {
                     "kernel-kdefconfig": {
                         "type": "array",
-                        "default": ["defconfig"],
+                        "default": [],
                     },
-                    "kernel-kconfigfile": {
-                        "type": "string",
-                        "default": None,
-                    },
-                    "kernel-kconfigflavour": {"type": "string", "default": ""},
+                    "kernel-kconfigflavour": {"type": "string", "default": "generic"},
                     "kernel-kconfigs": {
                         "type": "array",
                         "minitems": 1,
@@ -162,96 +113,12 @@ class TestPluginKernel(TestCase):
                         "oneOf": [{"type": "string"}, {"type": "object"}],
                         "default": "",
                     },
-                    "kernel-with-firmware": {
-                        "type": "boolean",
-                        "default": True,
-                    },
-                    "kernel-device-trees": {
-                        "type": "array",
-                        "minitems": 1,
-                        "uniqueItems": True,
-                        "items": {"type": "string"},
-                        "default": [],
-                    },
-                    "kernel-initrd-modules": {
-                        "type": "array",
-                        "minitems": 1,
-                        "uniqueItems": True,
-                        "items": {"type": "string"},
-                        "default": [],
-                    },
-                    "kernel-initrd-configured-modules": {
-                        "type": "array",
-                        "minitems": 1,
-                        "uniqueItems": True,
-                        "items": {"type": "string"},
-                        "default": [],
-                    },
-                    "kernel-initrd-stage-firmware": {
-                        "type": "boolean",
-                        "default": False,
-                    },
-                    "kernel-initrd-firmware": {
-                        "type": "array",
-                        "minitems": 1,
-                        "uniqueItems": True,
-                        "items": {"type": "string"},
-                        "default": [],
-                    },
-                    "kernel-initrd-compression": {
-                        "type": "string",
-                        "enum": ["lz4", "xz", "gz", "zstd"],
-                    },
-                    "kernel-initrd-compression-options": {
-                        "type": "array",
-                        "minitems": 1,
-                        "uniqueItems": True,
-                        "items": {"type": "string"},
-                        "default": [],
-                    },
-                    "kernel-initrd-overlay": {
-                        "type": "string",
-                        "default": "",
-                    },
-                    "kernel-initrd-addons": {
-                        "type": "array",
-                        "minitems": 1,
-                        "uniqueItems": True,
-                        "items": {"type": "string"},
-                        "default": [],
-                    },
-                    "kernel-compiler": {
-                        "type": "string",
-                        "default": "",
-                    },
-                    "kernel-compiler-paths": {
-                        "type": "array",
-                        "minitems": 1,
-                        "uniqueItems": True,
-                        "items": {"type": "string"},
-                        "default": [],
-                    },
-                    "kernel-compiler-parameters": {
-                        "type": "array",
-                        "minitems": 1,
-                        "uniqueItems": True,
-                        "items": {"type": "string"},
-                        "default": [],
-                    },
                     "kernel-enable-zfs-support": {
                         "type": "boolean",
                         "default": False,
                     },
                     "kernel-enable-perf": {
                         "type": "boolean",
-                        "default": False,
-                    },
-                    "kernel-add-ppa": {
-                        "type": "boolean",
-                        "default": True,
-                    },
-                    "kernel-use-llvm": {
-                        "oneOf": [{"type": "boolean"}, {"type": "string"}],
                         "default": False,
                     },
                 },
@@ -271,50 +138,8 @@ class TestPluginKernel(TestCase):
                 "gcc",
                 "cmake",
                 "cryptsetup",
-                "dracut-core",
                 "kmod",
                 "kpartx",
-                "lz4",
-                "systemd",
-            },
-        )
-
-    def test_get_base_build_packages_lz4(self):
-        plugin = self._setup_test(kernelinitrdcompression="lz4")
-        self.assertEqual(
-            plugin.get_build_packages(),
-            {
-                "bc",
-                "binutils",
-                "debhelper",
-                "fakeroot",
-                "gcc",
-                "cmake",
-                "cryptsetup",
-                "dracut-core",
-                "kmod",
-                "kpartx",
-                "lz4",
-                "systemd",
-            },
-        )
-
-    def test_get_base_build_packages_xz(self):
-        plugin = self._setup_test(kernelinitrdcompression="xz")
-        self.assertEqual(
-            plugin.get_build_packages(),
-            {
-                "bc",
-                "binutils",
-                "debhelper",
-                "fakeroot",
-                "gcc",
-                "cmake",
-                "cryptsetup",
-                "dracut-core",
-                "kmod",
-                "kpartx",
-                "xz-utils",
                 "systemd",
             },
         )
@@ -331,10 +156,8 @@ class TestPluginKernel(TestCase):
                 "gcc",
                 "cmake",
                 "cryptsetup",
-                "dracut-core",
                 "kmod",
                 "kpartx",
-                "lz4",
                 "systemd",
                 "autoconf",
                 "automake",
@@ -356,10 +179,8 @@ class TestPluginKernel(TestCase):
                 "gcc",
                 "cmake",
                 "cryptsetup",
-                "dracut-core",
                 "kmod",
                 "kpartx",
-                "lz4",
                 "systemd",
                 "autoconf",
                 "automake",
@@ -378,124 +199,42 @@ class TestPluginKernel(TestCase):
         plugin = self._setup_test()
         opt = plugin.options
 
-        self.assertEqual(opt.kernel_kdefconfig, ["defconfig"])
-        self.assertIs(opt.kernel_kconfigfile, None)
-        self.assertEqual(opt.kernel_kconfigflavour, None)
+        self.assertEqual(opt.kernel_kdefconfig, None)
+        self.assertEqual(opt.kernel_kconfigflavour, "generic")
         self.assertEqual(opt.kernel_kconfigs, None)
         self.assertEqual(opt.kernel_image_target, "Image.gz")
-        self.assertTrue(opt.kernel_with_firmware)
-        self.assertEqual(opt.kernel_device_trees, None)
-        self.assertEqual(opt.kernel_compiler, None)
-        self.assertEqual(opt.kernel_compiler_paths, None)
-        self.assertEqual(opt.kernel_compiler_parameters, None)
-        self.assertEqual(opt.kernel_initrd_modules, None)
-        self.assertEqual(opt.kernel_initrd_configured_modules, None)
-        self.assertEqual(opt.kernel_initrd_firmware, None)
-        self.assertEqual(opt.kernel_initrd_compression, None)
-        self.assertEqual(opt.kernel_initrd_compression_options, None)
-        self.assertEqual(opt.kernel_initrd_overlay, None)
-        self.assertEqual(opt.kernel_initrd_addons, None)
         self.assertFalse(opt.kernel_enable_zfs_support)
         self.assertFalse(opt.kernel_enable_perf)
-        self.assertFalse(opt.kernel_add_ppa)
-        self.assertFalse(opt.kernel_use_llvm)
 
     def test_check_configuration_kde_config(self):
         plugin = self._setup_test(
             kernelkdefconfig=["snappy_defconfig"],
             kernelimagetarget="Image",
-            kernelwithfirmware=True,
         )
         opt = plugin.options
 
         self.assertEqual(opt.kernel_kdefconfig, ["snappy_defconfig"])
-        self.assertIs(opt.kernel_kconfigfile, None)
-        self.assertIs(opt.kernel_kconfigflavour, None)
+        self.assertIs(opt.kernel_kconfigflavour, "generic")
         self.assertIs(opt.kernel_kconfigs, None)
         self.assertEqual(opt.kernel_image_target, "Image")
-        self.assertTrue(opt.kernel_with_firmware)
-        self.assertIs(opt.kernel_device_trees, None)
-        self.assertIs(opt.kernel_compiler, None)
-        self.assertIs(opt.kernel_compiler_paths, None)
-        self.assertIs(opt.kernel_compiler_parameters, None)
-        self.assertIs(opt.kernel_initrd_modules, None)
-        self.assertIs(opt.kernel_initrd_configured_modules, None)
-        self.assertIs(opt.kernel_initrd_firmware, None)
-        self.assertIs(opt.kernel_initrd_compression, None)
-        self.assertIs(opt.kernel_initrd_compression_options, None)
-        self.assertIs(opt.kernel_initrd_overlay, None)
-        self.assertIs(opt.kernel_initrd_addons, None)
         self.assertFalse(opt.kernel_enable_zfs_support)
         self.assertFalse(opt.kernel_enable_perf)
-        self.assertFalse(opt.kernel_add_ppa)
-        self.assertFalse(opt.kernel_use_llvm)
 
     def test_check_configuration_image_target(self):
         plugin = self._setup_test(
             kernelkdefconfig=["snappy_defconfig"],
             kernelimagetarget={"arm64": "Image", "armhf": "Image.gz"},
-            kernelwithfirmware=True,
-            kernelinitrdcompression="zstd",
         )
         opt = plugin.options
 
         self.assertEqual(opt.kernel_kdefconfig, ["snappy_defconfig"])
-        self.assertIs(opt.kernel_kconfigfile, None)
-        self.assertIs(opt.kernel_kconfigflavour, None)
+        self.assertIs(opt.kernel_kconfigflavour, "generic")
         self.assertIs(opt.kernel_kconfigs, None)
         self.assertEqual(
             opt.kernel_image_target, {"arm64": "Image", "armhf": "Image.gz"}
         )
-        self.assertTrue(opt.kernel_with_firmware)
-        self.assertIs(opt.kernel_device_trees, None)
-        self.assertIs(opt.kernel_compiler, None)
-        self.assertIs(opt.kernel_compiler_paths, None)
-        self.assertIs(opt.kernel_compiler_parameters, None)
-        self.assertIs(opt.kernel_initrd_modules, None)
-        self.assertIs(opt.kernel_initrd_configured_modules, None)
-        self.assertIs(opt.kernel_initrd_firmware, None)
-        self.assertEqual(opt.kernel_initrd_compression, "zstd")
-        self.assertIs(opt.kernel_initrd_compression_options, None)
-        self.assertIs(opt.kernel_initrd_overlay, None)
-        self.assertIs(opt.kernel_initrd_addons, None)
         self.assertFalse(opt.kernel_enable_zfs_support)
         self.assertFalse(opt.kernel_enable_perf)
-        self.assertFalse(opt.kernel_add_ppa)
-        self.assertFalse(opt.kernel_use_llvm)
-
-    def test_check_configuration_konfig_file(self):
-        plugin = self._setup_test(
-            kernelkconfigfile="arch/arm64/configs/snappy_defconfig",
-            kernelwithfirmware=True,
-            kernelkconfigs=["CONFIG_DEBUG_INFO=n", "CONFIG_DM_CRYPT=y"],
-            kernelinitrdcompression="lz4",
-            kernelinitrdcompressionoptions=["-9", "-l"],
-        )
-        opt = plugin.options
-
-        self.assertEqual(opt.kernel_kdefconfig, ["defconfig"])
-        self.assertEqual(opt.kernel_kconfigfile, "arch/arm64/configs/snappy_defconfig")
-        self.assertIs(opt.kernel_kconfigflavour, None)
-        self.assertEqual(
-            opt.kernel_kconfigs, ["CONFIG_DEBUG_INFO=n", "CONFIG_DM_CRYPT=y"]
-        )
-        self.assertEqual(opt.kernel_image_target, "Image.gz")
-        self.assertTrue(opt.kernel_with_firmware)
-        self.assertIs(opt.kernel_device_trees, None)
-        self.assertIs(opt.kernel_compiler, None)
-        self.assertIs(opt.kernel_compiler_paths, None)
-        self.assertIs(opt.kernel_compiler_parameters, None)
-        self.assertIs(opt.kernel_initrd_modules, None)
-        self.assertIs(opt.kernel_initrd_configured_modules, None)
-        self.assertIs(opt.kernel_initrd_firmware, None)
-        self.assertEqual(opt.kernel_initrd_compression, "lz4")
-        self.assertEqual(opt.kernel_initrd_compression_options, ["-9", "-l"])
-        self.assertIs(opt.kernel_initrd_overlay, None)
-        self.assertIs(opt.kernel_initrd_addons, None)
-        self.assertFalse(opt.kernel_enable_zfs_support)
-        self.assertFalse(opt.kernel_enable_perf)
-        self.assertFalse(opt.kernel_add_ppa)
-        self.assertFalse(opt.kernel_use_llvm)
 
     def test_check_get_build_environment(self):
         plugin = self._setup_test()
@@ -507,15 +246,13 @@ class TestPluginKernel(TestCase):
                 "CROSS_COMPILE": "${SNAPCRAFT_ARCH_TRIPLET}-",
                 "ARCH": plugin._kernel_arch,
                 "DEB_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
-                "UC_INITRD_DEB": "${SNAPCRAFT_PART_BUILD}/ubuntu-core-initramfs",
                 "KERNEL_BUILD_ARCH_DIR": f"${{SNAPCRAFT_PART_BUILD}}/arch/{plugin._kernel_arch}/boot",
                 "KERNEL_IMAGE_TARGET": plugin.kernel_image_target,
             },
         )
 
-    def test_check_get_build_environment_compiler_paths_cross(self):
+    def test_check_get_build_environment_cross(self):
         plugin = self._setup_test(
-            kernelcompilerpaths=["gcc-11/bin"],
             kernelimagetarget={"arm64": "Image", "armhf": "Image.gz"},
             arch="armv7l",
         )
@@ -527,29 +264,8 @@ class TestPluginKernel(TestCase):
                 "CROSS_COMPILE": "${SNAPCRAFT_ARCH_TRIPLET}-",
                 "ARCH": "arm",
                 "DEB_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
-                "UC_INITRD_DEB": "${SNAPCRAFT_PART_BUILD}/ubuntu-core-initramfs",
                 "KERNEL_BUILD_ARCH_DIR": "${SNAPCRAFT_PART_BUILD}/arch/arm/boot",
                 "KERNEL_IMAGE_TARGET": "Image.gz",
-                "PATH": "${SNAPCRAFT_STAGE}/gcc-11/bin:${PATH}",
-            },
-        )
-
-    def test_check_get_build_environment_compiler_paths(self):
-        plugin = self._setup_test(
-            kernelcompilerpaths=["gcc-11/bin", "gcc-11/sbin"],
-        )
-        plugin._kernel_arch = "amd64"
-
-        self.assertEqual(
-            plugin.get_build_environment(),
-            {
-                "CROSS_COMPILE": "${SNAPCRAFT_ARCH_TRIPLET}-",
-                "ARCH": plugin._kernel_arch,
-                "DEB_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
-                "UC_INITRD_DEB": "${SNAPCRAFT_PART_BUILD}/ubuntu-core-initramfs",
-                "KERNEL_BUILD_ARCH_DIR": f"${{SNAPCRAFT_PART_BUILD}}/arch/{plugin._kernel_arch}/boot",
-                "KERNEL_IMAGE_TARGET": plugin.kernel_image_target,
-                "PATH": "${SNAPCRAFT_STAGE}/gcc-11/bin:${SNAPCRAFT_STAGE}/gcc-11/sbin:${PATH}",
             },
         )
 
@@ -560,16 +276,9 @@ class TestPluginKernel(TestCase):
         plugin.get_build_environment()
         build_commands = plugin.get_build_commands()
         assert _is_sub_array(build_commands, _determine_kernel_src)
-        assert _is_sub_array(build_commands, _initrd_modules_empty_cmd)
-        assert _is_sub_array(build_commands, _initrd_configured_modules_empty_cmd)
-        assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _download_initrd_fnc)
-        assert _is_sub_array(build_commands, _get_initrd_cmd)
-        assert _is_sub_array(build_commands, _download_snapd_fnc)
-        assert _is_sub_array(build_commands, _get_snapd_cmd)
         assert not _is_sub_array(build_commands, _clone_zfs_cmd)
         assert _is_sub_array(build_commands, _clean_old_build_cmd)
-        assert _is_sub_array(build_commands, _prepare_config_cmd)
+        assert _is_sub_array(build_commands, _prepare_config_flavour_generic_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_cmd)
         assert _check_config in build_commands
         if platform.machine() == "x86_64":
@@ -580,136 +289,33 @@ class TestPluginKernel(TestCase):
             assert _is_sub_array(build_commands, _install_kernel_cmd)
 
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
-        assert _is_sub_array(build_commands, _install_initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _configure_initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _initrd_overlay_features_cmd)
-        assert not _is_sub_array(build_commands, _install_initrd_firmware_cmd)
-        assert not _is_sub_array(build_commands, _install_initrd_addons_cmd)
-        assert not _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
-        assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
-        assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
-        assert _is_sub_array(build_commands, _initrd_check_firmware_part)
-        assert _is_sub_array(build_commands, _initrd_tool_cmd)
-        assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
-        assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
-        assert _is_sub_array(build_commands, _create_inird_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert not _is_sub_array(build_commands, _build_zfs_cmd)
         assert not _is_sub_array(build_commands, _build_perf_cmd)
         assert _is_sub_array(build_commands, _finalize_install_cmd)
 
-    def test_check_get_build_command_defconfig_configs_no_firmware_lz4(self):
+    def test_check_get_build_command_kdeconfig(self):
         plugin = self._setup_test(
-            kernelkconfigfile="arch/arm64/configs/snappy_defconfig",
-            kernelcompiler="clang",
-            kernelcompilerparameters=["-arch", "arm64"],
-            kernelimagetarget="Image",
-            kernelwithfirmware=False,
-            kernelkconfigs=["CONFIG_DEBUG_INFO=n", "CONFIG_DM_CRYPT=y"],
-            kernelinitrdcompression="lz4",
-            kernelinitrdcompressionoptions=["-9", "-l"],
-            kernelinitrdmodules=["dm-crypt", "slimbus"],
-            kernelinitrdstagefirmware=True,
-            kernelinitrdfirmware=["firmware/for/wifi", "firmware/for/webcam"],
-            kernelinitrdaddons=[
-                "usr/bin/cryptsetup",
-                "usr/lib/my-arch/libcrypto.so",
-            ],
+            kernelkdefconfig=["snappy_defconfig"],
         )
 
         # we need to get build environment
         plugin.get_build_environment()
         build_commands = plugin.get_build_commands()
         assert _is_sub_array(build_commands, _determine_kernel_src)
-        assert _is_sub_array(build_commands, _initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _initrd_configured_modules_empty_cmd)
-        assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _download_initrd_fnc)
-        assert _is_sub_array(build_commands, _get_initrd_cmd)
-        assert _is_sub_array(build_commands, _download_snapd_fnc)
-        assert _is_sub_array(build_commands, _get_snapd_cmd)
         assert not _is_sub_array(build_commands, _clone_zfs_cmd)
         assert _is_sub_array(build_commands, _clean_old_build_cmd)
-        assert _is_sub_array(build_commands, _prepare_config_defconfig_cmd)
-        assert _is_sub_array(build_commands, _prepare_config_extra_config_cmd)
-        assert _is_sub_array(build_commands, _remake_old_config_clang_cmd)
+        assert _is_sub_array(build_commands, _prepare_snappy_config_cmd)
+        assert _is_sub_array(build_commands, _remake_old_config_cmd)
         assert _check_config in build_commands
         if platform.machine() == "x86_64":
-            assert _is_sub_array(build_commands, _build_kernel_clang_image_x86_cmd)
-            assert _is_sub_array(
-                build_commands, _install_kernel_no_firmware_clang_x86_cmd
-            )
+            assert _is_sub_array(build_commands, _build_kernel_x86_cmd)
+            assert _is_sub_array(build_commands, _install_kernel_x86_cmd)
         else:
-            assert _is_sub_array(build_commands, _build_kernel_clang_image_cmd)
-            assert _is_sub_array(build_commands, _install_kernel_no_firmware_clang_cmd)
+            assert _is_sub_array(build_commands, _build_kernel_cmd)
+            assert _is_sub_array(build_commands, _install_kernel_cmd)
 
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
-        assert _is_sub_array(build_commands, _install_initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _configure_initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _initrd_overlay_features_cmd)
-        assert _is_sub_array(build_commands, _install_initrd_firmware_cmd)
-        assert _is_sub_array(build_commands, _install_initrd_addons_cmd)
-        assert not _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
-        assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
-        assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
-        assert _is_sub_array(build_commands, _initrd_check_firmware_stage)
-        assert _is_sub_array(build_commands, _initrd_tool_cmd)
-        assert _is_sub_array(build_commands, _update_initrd_compression_cmd)
-        assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
-        assert _is_sub_array(build_commands, _create_inird_stage_firmware_cmd)
-        assert _is_sub_array(build_commands, _install_config_cmd)
-        assert not _is_sub_array(build_commands, _build_zfs_cmd)
-        assert not _is_sub_array(build_commands, _build_perf_cmd)
-        assert _is_sub_array(build_commands, _finalize_install_cmd)
-
-    def test_check_get_build_command_unknown_compiler(self):
-        plugin = self._setup_test(
-            kernelcompiler="my-gcc",
-        )
-
-        # we need to get build environment
-        plugin.get_build_environment()
-        with self.assertLogs(level=logging.INFO) as cm:
-            build_commands = plugin.get_build_commands()
-
-        # there is "INFO:snapcraft_legacy.plugins.v2.kernel:Getting build commands..."
-        assert len(cm.output) == 3
-        assert "Only other 'supported' compiler is clang" in cm.output[1]
-        assert "hopefully you know what you are doing" in cm.output[2]
-        assert _is_sub_array(build_commands, _determine_kernel_src)
-        assert _is_sub_array(build_commands, _initrd_modules_empty_cmd)
-        assert _is_sub_array(build_commands, _initrd_configured_modules_empty_cmd)
-        assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _download_initrd_fnc)
-        assert _is_sub_array(build_commands, _get_initrd_cmd)
-        assert _is_sub_array(build_commands, _download_snapd_fnc)
-        assert _is_sub_array(build_commands, _get_snapd_cmd)
-        assert not _is_sub_array(build_commands, _clone_zfs_cmd)
-        assert _is_sub_array(build_commands, _clean_old_build_cmd)
-        assert _is_sub_array(build_commands, _prepare_config_custom_cc_cmd)
-        assert _is_sub_array(build_commands, _remake_old_config_custom_cc_cmd)
-        assert _check_config in build_commands
-        if platform.machine() == "x86_64":
-            assert _is_sub_array(build_commands, _build_kernel_x86_custom_cc_cmd)
-            assert _is_sub_array(build_commands, _install_kernel_x86_custom_cc_cmd)
-        else:
-            assert _is_sub_array(build_commands, _build_kernel_custom_cc_cmd)
-            assert _is_sub_array(build_commands, _install_kernel_custom_cc_cmd)
-
-        assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
-        assert _is_sub_array(build_commands, _install_initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _configure_initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _initrd_overlay_features_cmd)
-        assert not _is_sub_array(build_commands, _install_initrd_firmware_cmd)
-        assert not _is_sub_array(build_commands, _install_initrd_addons_cmd)
-        assert not _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
-        assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
-        assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
-        assert _is_sub_array(build_commands, _initrd_check_firmware_part)
-        assert _is_sub_array(build_commands, _initrd_tool_cmd)
-        assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
-        assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
-        assert _is_sub_array(build_commands, _create_inird_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert not _is_sub_array(build_commands, _build_zfs_cmd)
         assert not _is_sub_array(build_commands, _build_perf_cmd)
@@ -719,50 +325,28 @@ class TestPluginKernel(TestCase):
         plugin = self._setup_test(
             kernelkconfigflavour="raspi",
             kernelkconfigs=["CONFIG_DEBUG_INFO=n", "CONFIG_DM_CRYPT=y"],
-            kerneldevicetrees=["pi3", "pi3b", "pi4", "pi/cm3", "pi/cm4"],
-            kernelwithfirmware=False,
             kernelenablezfssupport=True,
             kernelenableperf=True,
-            kernelinitrdmodules=["dm-crypt", "slimbus"],
-            kernelinitrdconfiguredmodules=["libarc4"],
-            kernelinitrdoverlay="my-overlay",
-            kernelinitrdcompression="gz",
         )
 
         # we need to get build environment
         plugin.get_build_environment()
         build_commands = plugin.get_build_commands()
         assert _is_sub_array(build_commands, _determine_kernel_src)
-        assert _is_sub_array(build_commands, _initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _initrd_configured_modules_cmd)
-        assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _download_initrd_fnc)
-        assert _is_sub_array(build_commands, _get_initrd_cmd)
-        assert _is_sub_array(build_commands, _download_snapd_fnc)
-        assert _is_sub_array(build_commands, _get_snapd_cmd)
         assert _is_sub_array(build_commands, _clone_zfs_cmd)
         assert _is_sub_array(build_commands, _clean_old_build_cmd)
-        assert _is_sub_array(build_commands, _prepare_config_flavour_cmd)
+        assert _is_sub_array(build_commands, _prepare_config_flavour_raspi_cmd)
         assert _is_sub_array(build_commands, _prepare_config_extra_config_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_cmd)
         assert _check_config in build_commands
-        assert _is_sub_array(build_commands, _build_kernel_dtbs_cmd)
-        assert _is_sub_array(build_commands, _install_kernel_no_dtbs_no_firmware_cmd)
+        if platform.machine() == "x86_64":
+            assert _is_sub_array(build_commands, _build_kernel_x86_cmd)
+            assert _is_sub_array(build_commands, _install_kernel_no_dtbs_cmd)
+        else:
+            assert _is_sub_array(build_commands, _build_kernel_cmd)
+            assert _is_sub_array(build_commands, _install_kernel_dtbs_cmd)
+
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
-        assert _is_sub_array(build_commands, _install_dtbs_cmd)
-        assert _is_sub_array(build_commands, _install_initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _configure_initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _initrd_overlay_features_cmd)
-        assert not _is_sub_array(build_commands, _install_initrd_firmware_cmd)
-        assert not _is_sub_array(build_commands, _install_initrd_addons_cmd)
-        assert _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
-        assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
-        assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
-        assert _is_sub_array(build_commands, _initrd_check_firmware_part)
-        assert _is_sub_array(build_commands, _initrd_tool_cmd)
-        assert _is_sub_array(build_commands, _update_initrd_compression_gz_cmd)
-        assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
-        assert _is_sub_array(build_commands, _create_inird_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert _is_sub_array(build_commands, _build_zfs_cmd)
         assert _is_sub_array(build_commands, _build_perf_cmd)
@@ -775,9 +359,6 @@ class TestPluginKernel(TestCase):
             kernelimagetarget={"arm64": "Image", "armhf": "Image.gz"},
             kernelenablezfssupport=True,
             kernelenableperf=True,
-            kernelinitrdmodules=["dm-crypt", "slimbus"],
-            kernelinitrdconfiguredmodules=["libarc4"],
-            kernelinitrdoverlay="my-overlay",
             arch="armv7l",
         )
 
@@ -785,36 +366,15 @@ class TestPluginKernel(TestCase):
         plugin.get_build_environment()
         build_commands = plugin.get_build_commands()
         assert _is_sub_array(build_commands, _determine_kernel_src)
-        assert _is_sub_array(build_commands, _initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _initrd_configured_modules_cmd)
-        assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _download_initrd_fnc)
-        assert _is_sub_array(build_commands, _get_initrd_armhf_cmd)
-        assert _is_sub_array(build_commands, _download_snapd_fnc)
-        assert _is_sub_array(build_commands, _get_snapd_armhf_cmd)
         assert _is_sub_array(build_commands, _clone_zfs_cmd)
         assert _is_sub_array(build_commands, _clean_old_build_cmd)
-        assert _is_sub_array(build_commands, _prepare_config_flavour_cmd)
+        assert _is_sub_array(build_commands, _prepare_config_flavour_raspi_cmd)
         assert _is_sub_array(build_commands, _prepare_config_extra_config_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_armhf_cmd)
         assert _check_config in build_commands
         assert _is_sub_array(build_commands, _build_kernel_armhf_cmd)
         assert _is_sub_array(build_commands, _install_kernel_armhf_cmd)
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
-        assert not _is_sub_array(build_commands, _install_dtbs_cmd)
-        assert _is_sub_array(build_commands, _install_initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _configure_initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _initrd_overlay_features_cmd)
-        assert not _is_sub_array(build_commands, _install_initrd_firmware_cmd)
-        assert not _is_sub_array(build_commands, _install_initrd_addons_cmd)
-        assert _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
-        assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
-        assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
-        assert _is_sub_array(build_commands, _initrd_check_firmware_part)
-        assert _is_sub_array(build_commands, _initrd_tool_cmd)
-        assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
-        assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
-        assert _is_sub_array(build_commands, _create_inird_cmd)
         assert _is_sub_array(build_commands, _install_config_cmd)
         assert _is_sub_array(build_commands, _build_zfs_cmd)
         assert _is_sub_array(build_commands, _build_perf_armhf_cmd)
@@ -895,7 +455,7 @@ class TestPluginKernel(TestCase):
                 # assert log does not support no log case, we log and check that
                 # if the only log
                 logging.getLogger("kernel.py").warning("ONLY WARNING")
-                check_new_config(config_path=config_file.name, initrd_modules=[])
+                check_new_config(config_path=config_file.name)
             self.assertEqual(cm.output, ["WARNING:kernel.py:ONLY WARNING"])
 
     def test_check_new_config_missing(self):
@@ -914,7 +474,7 @@ class TestPluginKernel(TestCase):
             )
             config_file.flush()
             with self.assertLogs(level=logging.WARNING) as cm:
-                check_new_config(config_path=config_file.name, initrd_modules=[])
+                check_new_config(config_path=config_file.name)
             # there should be 2 warning logs, one for missing configs, one for kernel module
             assert len(cm.output) == 2
             assert (
@@ -931,11 +491,7 @@ class TestPluginKernel(TestCase):
                 "**** WARNING **** WARNING **** WARNING **** WARNING ****"
                 in cm.output[1]
             )
-            assert (
-                "adding\nthe corresponding module to initrd:\n\nCONFIG_SQUASHFS\n"
-                in cm.output[1]
-            )
-            assert "CONFIG_SQUASHFS" in cm.output[1]
+            assert "missing options:\nCONFIG_SQUASHFS\n" in cm.output[1]
 
     def test_check_new_config_squash_module_missing(self):
         # create test config
@@ -953,119 +509,26 @@ class TestPluginKernel(TestCase):
             )
             config_file.flush()
             with self.assertLogs(level=logging.WARNING) as cm:
-                check_new_config(config_path=config_file.name, initrd_modules=[])
+                check_new_config(config_path=config_file.name)
             # there should be 1 warning log for missing module in initrd
             assert len(cm.output) == 1
             assert (
                 "**** WARNING **** WARNING **** WARNING **** WARNING ****"
                 in cm.output[0]
             )
+            assert "adding\nthe corresponding module to initrd:\n" in cm.output[0]
             assert (
-                "adding\nthe corresponding module to initrd:\n\nCONFIG_SQUASHFS\n"
-                in cm.output[0]
+                "modules to be included in the initrd:\nCONFIG_SQUASHFS" in cm.output[0]
             )
-            assert "CONFIG_SQUASHFS" in cm.output[0]
-
-    def test_check_new_config_squash_module(self):
-        # create test config
-        with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8") as config_file:
-            config_file.write(
-                "".join(
-                    [
-                        x + "\n"
-                        for x in _BUUILT_IN_BASE
-                        + _SECCOMP_BUILD_IN
-                        + _SQUASHFS_AS_MODULE
-                        + _SQUASHFS_LZO_BUILT_IN
-                    ]
-                )
-            )
-            config_file.flush()
-            with self.assertLogs(level=logging.WARNING) as cm:
-                # assert log does not support no log case, we log and check that
-                # if the only log
-                logging.getLogger("kernel.py").warning("ONLY WARNING")
-                check_new_config(
-                    config_path=config_file.name, initrd_modules=["squashfs"]
-                )
-            self.assertEqual(cm.output, ["WARNING:kernel.py:ONLY WARNING"])
 
     def test_check_new_config_squash_missing_file(self):
         # run with invalid file
         e = ""
         try:
-            check_new_config(config_path="wrong/file", initrd_modules=["suashfs"])
+            check_new_config(config_path="wrong/file")
         except FileNotFoundError as err:
             e = err.strerror
         assert e == "No such file or directory"
-
-    def test_use_llvm(self):
-        plugin = self._setup_test(kernelusellvm=True)
-        self.assertEqual("1", plugin._llvm_version)
-        self.assertEqual(
-            plugin.get_build_packages(),
-            {
-                "bc",
-                "binutils",
-                "debhelper",
-                "fakeroot",
-                "gcc",
-                "cmake",
-                "cryptsetup",
-                "dracut-core",
-                "kmod",
-                "kpartx",
-                "lld",
-                "llvm",
-                "lz4",
-                "systemd",
-            },
-        )
-        plugin.get_build_environment()
-        cmd = plugin.get_build_commands()
-        targets = f"{plugin.kernel_image_target} modules"
-        if plugin._kernel_arch in ("arm", "arm64", "riscv64"):
-            targets += " dtbs"
-        self.assertIn(
-            f'make -j$(nproc) -C ${{KERNEL_SRC}} O=${{SNAPCRAFT_PART_BUILD}} LLVM="1" {targets}',
-            cmd,
-        )
-
-    def test_use_llvm_specific_version(self):
-        version = "-10"
-        plugin = self._setup_test(kernelusellvm=version)
-        self.assertEqual(version, plugin._llvm_version)
-        self.assertEqual(
-            plugin.get_build_packages(),
-            {
-                "bc",
-                "binutils",
-                "debhelper",
-                "fakeroot",
-                "gcc",
-                "cmake",
-                "cryptsetup",
-                "dracut-core",
-                "kmod",
-                "kpartx",
-                f"lld{version}",
-                f"llvm{version}",
-                "lz4",
-                "systemd",
-            },
-        )
-        plugin.get_build_environment()
-        cmd = plugin.get_build_commands()
-        targets = f"{plugin.kernel_image_target} modules"
-        if plugin._kernel_arch in ("arm", "arm64", "riscv64"):
-            targets += " dtbs"
-        self.assertIn(
-            f'make -j$(nproc) -C ${{KERNEL_SRC}} O=${{SNAPCRAFT_PART_BUILD}} LLVM="{version}" {targets}',
-            cmd,
-        )
-
-    def test_bad_llvm_version(self):
-        self.assertRaises(ValueError, self._setup_test, kernelusellvm="-badsuffix")
 
 
 def _is_sub_array(array, sub_array):
@@ -1125,146 +588,6 @@ _determine_kernel_src = [
     'echo "KERNEL_SRC=${KERNEL_SRC}"',
 ]
 
-_initrd_modules_empty_cmd = ['initrd_installed_kernel_modules=""']
-
-_initrd_modules_cmd = ['initrd_installed_kernel_modules="dm-crypt slimbus"']
-
-_initrd_configured_modules_empty_cmd = ['initrd_configured_kernel_modules=""']
-
-_initrd_configured_modules_cmd = ['initrd_configured_kernel_modules="libarc4"']
-
-_link_files_fnc = [
-    textwrap.dedent(
-        """
-        # link files, accept wild cards
-        # 1: reference dir, 2: file(s) including wild cards, 3: dst dir
-        link_files() {
-        	if [ "${2}" = "*" ]; then
-        		for f in $(ls ${1})
-        		do
-        			link_files "${1}" "${f}" "${3}"
-        		done
-        		return 0
-        	fi
-        	if [ -d "${1}/${2}" ]; then
-        		for f in $(ls ${1}/${2})
-        		do
-        			link_files "${1}" "${2}/${f}" "${3}"
-        		done
-        		return 0
-        	fi
-
-        	local found=""
-        	for f in $(ls ${1}/${2})
-        	do
-        		if [[ -L "${f}" ]]; then
-        			local rel_path=$( realpath --no-symlinks --relative-to=${1} ${f} )
-        		else
-        			local rel_path=$( realpath -se --relative-to=${1} ${f} )
-        		fi
-        		local dir_path=$(dirname ${rel_path})
-        		mkdir -p ${3}/${dir_path}
-        		echo "installing ${f} to ${3}/${dir_path}"
-        		ln -f ${f} ${3}/${dir_path}
-        		found="yes"
-        	done
-        	if [ "yes" = "${found}" ]; then
-        		return 0
-        	else
-        		return 1
-        	fi
-        }
-        """
-    )
-]
-
-_download_initrd_fnc = [
-    textwrap.dedent(
-        """
-        # Helper to download code initrd deb package
-        # 1: arch, 2: output dir
-        download_core_initrd() {
-        	apt-get download ubuntu-core-initramfs:${1}
-        	# unpack dep to the target dir
-        	dpkg -x ubuntu-core-initramfs_*.deb ${2}
-        }
-        """
-    )
-]
-
-_get_initrd_cmd = [
-    textwrap.dedent(
-        """
-        echo "Getting ubuntu-core-initrd...."
-        # only download u-c-initrd deb if needed
-        if [ ! -e ${{UC_INITRD_DEB}} ]; then
-        	download_core_initrd {arch} ${{UC_INITRD_DEB}}
-        fi
-        """.format(
-            arch=_DEB_ARCH_TRANSLATIONS[platform.machine()]
-        )
-    )
-]
-
-
-_get_initrd_armhf_cmd = [
-    textwrap.dedent(
-        """
-        echo "Getting ubuntu-core-initrd...."
-        # only download u-c-initrd deb if needed
-        if [ ! -e ${{UC_INITRD_DEB}} ]; then
-        	download_core_initrd {arch} ${{UC_INITRD_DEB}}
-        fi
-        """.format(
-            arch="armhf"
-        )
-    )
-]
-
-_download_snapd_fnc = [
-    textwrap.dedent(
-        """
-        # Helper to download snap-bootstrap from snapd deb package
-        # 1: arch, 2: output dir
-        download_snap_bootstrap() {
-        	apt-get download snapd:${1}
-        	# unpack dep to the target dir
-        	dpkg -x snapd_*.deb ${2}
-        }
-        """
-    )
-]
-
-_get_snapd_cmd = [
-    textwrap.dedent(
-        """
-        echo "Getting snapd deb for snap bootstrap..."
-        # only download again if files does not exist, otherwise
-        # assume we are re-running build
-        if [ ! -e ${{UC_INITRD_DEB}}/usr/lib/snapd ]; then
-        	download_snap_bootstrap {arch} ${{UC_INITRD_DEB}}
-        fi
-        """.format(
-            arch=_DEB_ARCH_TRANSLATIONS[platform.machine()]
-        )
-    )
-]
-
-_get_snapd_armhf_cmd = [
-    textwrap.dedent(
-        """
-        echo "Getting snapd deb for snap bootstrap..."
-        # only download again if files does not exist, otherwise
-        # assume we are re-running build
-        if [ ! -e ${{UC_INITRD_DEB}}/usr/lib/snapd ]; then
-        	download_snap_bootstrap {arch} ${{UC_INITRD_DEB}}
-        fi
-        """.format(
-            arch="armhf"
-        )
-    )
-]
-
 _clean_old_build_cmd = [
     textwrap.dedent(
         """
@@ -1274,30 +597,14 @@ _clean_old_build_cmd = [
         """
     )
 ]
-
-
-_prepare_config_cmd = [
+_prepare_snappy_config_cmd = [
     'echo "Preparing config..."',
     "if [ ! -e ${SNAPCRAFT_PART_BUILD}/.config ]; then",
-    "\tmake -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} defconfig",
+    "\tmake -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} snappy_defconfig",
     "fi",
 ]
 
-_prepare_config_custom_cc_cmd = [
-    'echo "Preparing config..."',
-    "if [ ! -e ${SNAPCRAFT_PART_BUILD}/.config ]; then",
-    '\tmake -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} CC="my-gcc" defconfig',
-    "fi",
-]
-
-_prepare_config_defconfig_cmd = [
-    'echo "Preparing config..."',
-    "if [ ! -e ${SNAPCRAFT_PART_BUILD}/.config ]; then",
-    "\tcp arch/arm64/configs/snappy_defconfig ${SNAPCRAFT_PART_BUILD}/.config",
-    "fi",
-]
-
-_prepare_config_flavour_cmd = [
+_prepare_config_flavour_raspi_cmd = [
     'echo "Preparing config..."',
     "if [ ! -e ${SNAPCRAFT_PART_BUILD}/.config ]; then",
     textwrap.dedent(
@@ -1322,6 +629,31 @@ _prepare_config_flavour_cmd = [
     "fi",
 ]
 
+_prepare_config_flavour_generic_cmd = [
+    'echo "Preparing config..."',
+    "if [ ! -e ${SNAPCRAFT_PART_BUILD}/.config ]; then",
+    textwrap.dedent(
+        """	echo "Assembling Ubuntu config..."
+	if [ -f ${KERNEL_SRC}/debian/rules ] && [ -x ${KERNEL_SRC}/debian/rules ]; then
+		# Generate Ubuntu kernel configs
+		pushd ${KERNEL_SRC}
+		fakeroot debian/rules clean genconfigs || true
+		popd
+
+		# Pick the right kernel .config for the target arch and flavour
+		ubuntuconfig=${KERNEL_SRC}/CONFIGS/${DEB_ARCH}-config.flavour.generic
+		cat ${ubuntuconfig} > ${SNAPCRAFT_PART_BUILD}/.config
+
+		# Clean up kernel source directory
+		pushd ${KERNEL_SRC}
+		fakeroot debian/rules clean
+		rm -rf CONFIGS/
+		popd
+	fi"""
+    ),
+    "fi",
+]
+
 _prepare_config_extra_config_cmd = [
     'echo "Applying extra config...."',
     "echo 'CONFIG_DEBUG_INFO=n\nCONFIG_DM_CRYPT=y' > ${SNAPCRAFT_PART_BUILD}/.config_snap",
@@ -1332,25 +664,6 @@ _prepare_config_extra_config_cmd = [
 _remake_old_config_cmd = [
     'echo "Remaking oldconfig...."',
     "bash -c 'yes \"\" || true' | make -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} oldconfig",
-]
-
-_remake_old_config_custom_cc_cmd = [
-    'echo "Remaking oldconfig...."',
-    "bash -c 'yes \"\" || true'"
-    ' | make -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} CC="my-gcc" oldconfig',
-]
-
-_remake_old_config_clang_cmd = [
-    'echo "Remaking oldconfig...."',
-    " ".join(
-        [
-            "bash -c 'yes \"\" || true' |",
-            "make -j1 -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD}",
-            'CC="clang"',
-            "-arch arm64",
-            "oldconfig",
-        ],
-    ),
 ]
 
 _remake_old_config_armhf_cmd = [
@@ -1372,8 +685,6 @@ _check_config = " ".join(
         inspect.getfile(check_new_config),
         "check_new_config",
         "${SNAPCRAFT_PART_BUILD}/.config",
-        "${initrd_installed_kernel_modules}",
-        "${initrd_configured_kernel_modules}",
     ],
 )
 
@@ -1383,40 +694,6 @@ _build_kernel_cmd = [
 
 _build_kernel_x86_cmd = [
     "make -j$(nproc) -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} Image.gz modules",
-]
-
-_build_kernel_custom_cc_cmd = [
-    'make -j$(nproc) -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} CC="my-gcc" Image.gz modules dtbs',
-]
-
-_build_kernel_x86_custom_cc_cmd = [
-    'make -j$(nproc) -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} CC="my-gcc" Image.gz modules',
-]
-
-_build_kernel_clang_image_cmd = [
-    " ".join(
-        [
-            "make -j$(nproc)",
-            "-C ${KERNEL_SRC}",
-            "O=${SNAPCRAFT_PART_BUILD}",
-            'CC="clang"',
-            "-arch arm64",
-            "Image modules dtbs",
-        ],
-    ),
-]
-
-_build_kernel_clang_image_x86_cmd = [
-    " ".join(
-        [
-            "make -j$(nproc)",
-            "-C ${KERNEL_SRC}",
-            "O=${SNAPCRAFT_PART_BUILD}",
-            'CC="clang"',
-            "-arch arm64",
-            "Image modules",
-        ],
-    ),
 ]
 
 _build_kernel_armhf_cmd = [
@@ -1432,17 +709,6 @@ _build_kernel_armhf_cmd = [
     ),
 ]
 
-_build_kernel_dtbs_cmd = [
-    " ".join(
-        [
-            "make -j$(nproc)",
-            "-C ${KERNEL_SRC}",
-            "O=${SNAPCRAFT_PART_BUILD}",
-            "Image.gz modules pi3.dtb pi3b.dtb pi4.dtb pi/cm3.dtb pi/cm4.dtb",
-        ],
-    ),
-]
-
 _install_kernel_cmd = [
     " ".join(
         [
@@ -1451,7 +717,6 @@ _install_kernel_cmd = [
             "CONFIG_PREFIX=${SNAPCRAFT_PART_INSTALL}",
             "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${SNAPCRAFT_PART_INSTALL}",
             "dtbs_install INSTALL_DTBS_PATH=${SNAPCRAFT_PART_INSTALL}/dtbs",
-            "firmware_install INSTALL_FW_PATH=${SNAPCRAFT_PART_INSTALL}/lib/firmware",
         ],
     ),
 ]
@@ -1463,76 +728,29 @@ _install_kernel_x86_cmd = [
             "O=${SNAPCRAFT_PART_BUILD}",
             "CONFIG_PREFIX=${SNAPCRAFT_PART_INSTALL}",
             "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${SNAPCRAFT_PART_INSTALL}",
-            "firmware_install INSTALL_FW_PATH=${SNAPCRAFT_PART_INSTALL}/lib/firmware",
         ],
     ),
 ]
 
-_install_kernel_custom_cc_cmd = [
+_install_kernel_no_dtbs_cmd = [
     " ".join(
         [
             "make -j$(nproc) -C ${KERNEL_SRC}",
             "O=${SNAPCRAFT_PART_BUILD}",
-            'CC="my-gcc"',
+            "CONFIG_PREFIX=${SNAPCRAFT_PART_INSTALL}",
+            "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${SNAPCRAFT_PART_INSTALL}",
+        ],
+    ),
+]
+
+_install_kernel_dtbs_cmd = [
+    " ".join(
+        [
+            "make -j$(nproc) -C ${KERNEL_SRC}",
+            "O=${SNAPCRAFT_PART_BUILD}",
             "CONFIG_PREFIX=${SNAPCRAFT_PART_INSTALL}",
             "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${SNAPCRAFT_PART_INSTALL}",
             "dtbs_install INSTALL_DTBS_PATH=${SNAPCRAFT_PART_INSTALL}/dtbs",
-            "firmware_install INSTALL_FW_PATH=${SNAPCRAFT_PART_INSTALL}/lib/firmware",
-        ],
-    ),
-]
-
-_install_kernel_x86_custom_cc_cmd = [
-    " ".join(
-        [
-            "make -j$(nproc) -C ${KERNEL_SRC}",
-            "O=${SNAPCRAFT_PART_BUILD}",
-            'CC="my-gcc"',
-            "CONFIG_PREFIX=${SNAPCRAFT_PART_INSTALL}",
-            "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${SNAPCRAFT_PART_INSTALL}",
-            "firmware_install INSTALL_FW_PATH=${SNAPCRAFT_PART_INSTALL}/lib/firmware",
-        ],
-    ),
-]
-
-_install_kernel_no_dtbs_no_firmware_cmd = [
-    " ".join(
-        [
-            "make -j$(nproc) -C ${KERNEL_SRC}",
-            "O=${SNAPCRAFT_PART_BUILD}",
-            "CONFIG_PREFIX=${SNAPCRAFT_PART_INSTALL}",
-            "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${SNAPCRAFT_PART_INSTALL}",
-        ],
-    ),
-]
-
-_install_kernel_no_firmware_clang_cmd = [
-    " ".join(
-        [
-            "make",
-            "-j$(nproc)",
-            "-C ${KERNEL_SRC}",
-            "O=${SNAPCRAFT_PART_BUILD}",
-            'CC="clang"',
-            "-arch arm64",
-            "CONFIG_PREFIX=${SNAPCRAFT_PART_INSTALL}",
-            "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${SNAPCRAFT_PART_INSTALL}",
-            "dtbs_install INSTALL_DTBS_PATH=${SNAPCRAFT_PART_INSTALL}/dtbs",
-        ],
-    ),
-]
-
-_install_kernel_no_firmware_clang_x86_cmd = [
-    " ".join(
-        [
-            "make",
-            "-j$(nproc)",
-            "-C ${KERNEL_SRC}",
-            "O=${SNAPCRAFT_PART_BUILD}",
-            'CC="clang"',
-            "-arch arm64",
-            "CONFIG_PREFIX=${SNAPCRAFT_PART_INSTALL}",
-            "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${SNAPCRAFT_PART_INSTALL}",
         ],
     ),
 ]
@@ -1549,209 +767,12 @@ _install_kernel_armhf_cmd = [
             "CONFIG_PREFIX=${SNAPCRAFT_PART_INSTALL}",
             "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${SNAPCRAFT_PART_INSTALL}",
             "dtbs_install INSTALL_DTBS_PATH=${SNAPCRAFT_PART_INSTALL}/dtbs",
-            "firmware_install INSTALL_FW_PATH=${SNAPCRAFT_PART_INSTALL}/lib/firmware",
         ],
     ),
 ]
 
 _parse_kernel_release_cmd = [
     "KERNEL_RELEASE=$(cat ${SNAPCRAFT_PART_BUILD}/include/config/kernel.release)",
-]
-
-_intall_kernel_cmd = [
-    "[ -e ${SNAPCRAFT_PART_INSTALL}/kernel.img ] && rm -rf ${SNAPCRAFT_PART_INSTALL}/kernel.img",
-    " ".join(
-        [
-            "ln -f",
-            "${KERNEL_BUILD_ARCH_DIR}/${KERNEL_IMAGE_TARGET}",
-            "${SNAPCRAFT_PART_INSTALL}/${KERNEL_IMAGE_TARGET}-${KERNEL_RELEASE}",
-        ],
-    ),
-    "ln -f ${KERNEL_BUILD_ARCH_DIR}/${KERNEL_IMAGE_TARGET} ${SNAPCRAFT_PART_INSTALL}/kernel.img",
-    "",
-    'echo "Copying System map..."',
-    "[ -e ${SNAPCRAFT_PART_INSTALL}/System.map ] && rm -rf ${SNAPCRAFT_PART_INSTALL}/System.map*",
-    "ln -f ${SNAPCRAFT_PART_BUILD}/System.map ${SNAPCRAFT_PART_INSTALL}/System.map-${KERNEL_RELEASE}",
-]
-
-_install_dtbs_cmd = [
-    'echo "Copying custom dtbs..."',
-    "mkdir -p ${SNAPCRAFT_PART_INSTALL}/dtbs",
-    "ln -f ${KERNEL_BUILD_ARCH_DIR}/dts/pi3.dtb ${SNAPCRAFT_PART_INSTALL}/dtbs/pi3.dtb",
-    "ln -f ${KERNEL_BUILD_ARCH_DIR}/dts/pi3b.dtb ${SNAPCRAFT_PART_INSTALL}/dtbs/pi3b.dtb",
-    "ln -f ${KERNEL_BUILD_ARCH_DIR}/dts/pi4.dtb ${SNAPCRAFT_PART_INSTALL}/dtbs/pi4.dtb",
-    "ln -f ${KERNEL_BUILD_ARCH_DIR}/dts/pi/cm3.dtb ${SNAPCRAFT_PART_INSTALL}/dtbs/cm3.dtb",
-    "ln -f ${KERNEL_BUILD_ARCH_DIR}/dts/pi/cm4.dtb ${SNAPCRAFT_PART_INSTALL}/dtbs/cm4.dtb",
-]
-
-_install_initrd_modules_cmd = [
-    'echo "Installing ko modules to initrd..."',
-    'install_modules=""',
-    'echo "Gathering module dependencies..."',
-    'install_modules=""',
-    "uc_initrd_feature_kernel_modules=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/kernel-modules",
-    "mkdir -p ${uc_initrd_feature_kernel_modules}",
-    "initramfs_ko_modules_conf=${uc_initrd_feature_kernel_modules}/extra-modules.conf",
-    "touch ${initramfs_ko_modules_conf}",
-    "for m in ${initrd_installed_kernel_modules} ${initrd_configured_kernel_modules}",
-    "do",
-    "\techo ${m} >> ${initramfs_ko_modules_conf}",
-    "done",
-]
-
-_configure_initrd_modules_cmd = [
-    " ".join(
-        [
-            "[ -e ${initramfs_ko_modules_conf} ]",
-            "&&",
-            "sort -fu ${initramfs_ko_modules_conf} -o ${initramfs_ko_modules_conf}",
-        ],
-    ),
-    'echo "Configuring ubuntu-core-initramfs.conf with supported modules"',
-    'echo "If module is not included in initrd, do not include it"',
-    "initramfs_conf_dir=${uc_initrd_feature_kernel_modules}/usr/lib/modules-load.d",
-    "mkdir -p ${initramfs_conf_dir}",
-    "initramfs_conf=${initramfs_conf_dir}/ubuntu-core-initramfs.conf",
-    'echo "# configures modules" > ${initramfs_conf}',
-    "for m in $(cat ${initramfs_ko_modules_conf})",
-    "do",
-    " ".join(
-        [
-            "\tif",
-            "[ -n",
-            '"$(modprobe -n -q --show-depends',
-            "-d ${SNAPCRAFT_PART_INSTALL}",
-            '-S "${KERNEL_RELEASE}"',
-            '${m})" ]; then',
-        ],
-    ),
-    "\t\techo ${m} >> ${initramfs_conf}",
-    "\tfi",
-    "done",
-]
-
-_initrd_overlay_features_cmd = [
-    "uc_initrd_feature_firmware=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/uc-firmware",
-    "mkdir -p ${uc_initrd_feature_firmware}",
-    "uc_initrd_feature_overlay=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/uc-overlay",
-    "mkdir -p ${uc_initrd_feature_overlay}",
-]
-
-_install_initrd_firmware_cmd = [
-    'echo "Installing initrd overlay firmware..."',
-    "for f in firmware/for/wifi firmware/for/webcam",
-    "do",
-    '\tif ! link_files "${SNAPCRAFT_PART_INSTALL}" "${f}" "${uc_initrd_feature_firmware}/lib" ; then',
-    '\t\tif ! link_files "${SNAPCRAFT_STAGE}" "${f}" "${uc_initrd_feature_firmware}/lib" ; then',
-    '\t\t\techo "Missing firmware [${f}], ignoring it"',
-    "\t\tfi",
-    "\tfi",
-    "done",
-]
-
-_install_initrd_addons_cmd = [
-    'echo "Installing initrd addons..."',
-    "for a in usr/bin/cryptsetup usr/lib/my-arch/libcrypto.so",
-    "do",
-    '\techo "Copy overlay: ${a}"',
-    '\tlink_files "${SNAPCRAFT_STAGE}" "${a}" "${uc_initrd_feature_overlay}"',
-    "done",
-]
-
-_intatll_initrd_overlay_cmd = [
-    'link_files "${SNAPCRAFT_STAGE}/my-overlay" "" "${uc_initrd_feature_overlay}"'
-]
-
-_prepare_ininird_features_cmd = [
-    'echo "Preparing snap-boostrap initrd feature..."',
-    "uc_initrd_feature_snap_bootstratp=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snap-bootstrap",
-    "mkdir -p ${uc_initrd_feature_snap_bootstratp}",
-    " ".join(
-        [
-            "link_files",
-            '"${UC_INITRD_DEB}" "usr/lib/snapd/snap-bootstrap"',
-            '"${uc_initrd_feature_snap_bootstratp}"',
-        ],
-    ),
-    'link_files "${UC_INITRD_DEB}" "usr/lib/snapd/info" "${uc_initrd_feature_snap_bootstratp}"',
-    "cp ${UC_INITRD_DEB}/usr/lib/snapd/info ${SNAPCRAFT_PART_INSTALL}/snapd-info",
-]
-
-_clean_old_initrd_cmd = [
-    "if compgen -G ${SNAPCRAFT_PART_INSTALL}/initrd.img* > /dev/null; then",
-    "\trm -rf ${SNAPCRAFT_PART_INSTALL}/initrd.img*",
-    "fi",
-]
-
-_initrd_check_firmware_stage = [
-    '[ ! -d "${SNAPCRAFT_STAGE}/firmware" ] && echo -e "firmware directory '
-    "${SNAPCRAFT_STAGE}/firmware does not exist, consider using "
-    'kernel-initrd-stage-firmware: true/false option" && exit 1'
-]
-
-_initrd_check_firmware_part = [
-    '[ ! -d "${SNAPCRAFT_PART_INSTALL}/lib/firmware" ] && echo -e "firmware directory '
-    "${SNAPCRAFT_PART_INSTALL}/lib/firmware does not exist, consider using "
-    'kernel-initrd-stage-firmware: true/false option" && exit 1'
-]
-
-_initrd_tool_cmd = [
-    "ubuntu_core_initramfs=${UC_INITRD_DEB}/usr/bin/ubuntu-core-initramfs",
-]
-
-_update_initrd_compression_cmd = [
-    'echo "Updating compression command to be used for initrd"',
-    "sed -i 's/lz4 -9 -l/lz4 -9 -l/g' ${ubuntu_core_initramfs}",
-]
-
-_update_initrd_compression_gz_cmd = [
-    'echo "Updating compression command to be used for initrd"',
-    "sed -i 's/lz4 -9 -l/gzip -7/g' ${ubuntu_core_initramfs}",
-]
-
-_initrd_tool_workaroud_cmd = [
-    "for feature in kernel-modules snap-bootstrap uc-firmware uc-overlay",
-    "do",
-    " ".join(
-        [
-            '\tlink_files "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/${feature}"',
-            '"*"',
-            '"${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/main"',
-        ],
-    ),
-    "done",
-]
-
-_create_inird_cmd = [
-    " ".join(
-        [
-            "${ubuntu_core_initramfs}",
-            "create-initrd",
-            "--root ${UC_INITRD_DEB}",
-            "--kernelver=${KERNEL_RELEASE}",
-            "--kerneldir ${SNAPCRAFT_PART_INSTALL}/lib/modules/${KERNEL_RELEASE}",
-            "--firmwaredir ${SNAPCRAFT_PART_INSTALL}/lib/firmware",
-            "--skeleton ${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs",
-            "--output ${SNAPCRAFT_PART_INSTALL}/initrd.img",
-        ],
-    ),
-    "ln $(ls ${SNAPCRAFT_PART_INSTALL}/initrd.img*) ${SNAPCRAFT_PART_INSTALL}/initrd.img",
-]
-
-_create_inird_stage_firmware_cmd = [
-    " ".join(
-        [
-            "${ubuntu_core_initramfs}",
-            "create-initrd",
-            "--root ${UC_INITRD_DEB}",
-            "--kernelver=${KERNEL_RELEASE}",
-            "--kerneldir ${SNAPCRAFT_PART_INSTALL}/lib/modules/${KERNEL_RELEASE}",
-            "--firmwaredir ${SNAPCRAFT_STAGE}/firmware",
-            "--skeleton ${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs",
-            "--output ${SNAPCRAFT_PART_INSTALL}/initrd.img",
-        ],
-    ),
-    "ln $(ls ${SNAPCRAFT_PART_INSTALL}/initrd.img*) ${SNAPCRAFT_PART_INSTALL}/initrd.img",
 ]
 
 _install_config_cmd = [
@@ -1768,7 +789,7 @@ _finalize_install_cmd = [
         # but snapd expects modules/ and firmware/
         mv ${SNAPCRAFT_PART_INSTALL}/lib/modules ${SNAPCRAFT_PART_INSTALL}/
         # remove symlinks modules/*/build and modules/*/source
-        rm ${SNAPCRAFT_PART_INSTALL}/modules/*/build ${SNAPCRAFT_PART_INSTALL}/modules/*/source
+        rm -rf ${SNAPCRAFT_PART_INSTALL}/modules/*/build ${SNAPCRAFT_PART_INSTALL}/modules/*/source
         # if there is firmware dir, move it to snap root
         # this could have been from stage packages or from kernel build
         [ -d ${SNAPCRAFT_PART_INSTALL}/lib/firmware ] && mv ${SNAPCRAFT_PART_INSTALL}/lib/firmware ${SNAPCRAFT_PART_INSTALL}
