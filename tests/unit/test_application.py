@@ -18,6 +18,7 @@ import json
 import os
 from textwrap import dedent
 
+import craft_cli
 import pytest
 import yaml
 from craft_application import util
@@ -58,6 +59,30 @@ def test_application_map_build_on_env_var(monkeypatch, env_vars):
 
     assert os.getenv(craft_var) == env_val
     assert os.getenv(snapcraft_var) == env_val
+
+
+def test_application_map_log_verbosity_env_var(monkeypatch):
+    """Test that instantiating the Snapcraft application class will set the value of the
+    SNAPCRAFT_VERBOSITY_LEVEL environment variables to CRAFT_VERBOSITY_LEVEL.
+    """
+    old_emit_level = craft_cli.emit.get_mode()
+
+    monkeypatch.setenv("SNAPCRAFT_VERBOSITY_LEVEL", "TRACE")
+    assert os.getenv("CRAFT_VERBOSITY_LEVEL") is None
+
+    snapcraft_services = services.SnapcraftServiceFactory(app=application.APP_METADATA)
+    app = application.Snapcraft(
+        app=application.APP_METADATA, services=snapcraft_services
+    )
+
+    app._setup_logging()
+
+    assert os.getenv("SNAPCRAFT_VERBOSITY_LEVEL") == "TRACE"
+    assert os.getenv("CRAFT_VERBOSITY_LEVEL") == "TRACE"
+
+    assert craft_cli.emit.get_mode() == craft_cli.EmitterMode.TRACE
+
+    craft_cli.emit.set_mode(old_emit_level)
 
 
 @pytest.fixture()

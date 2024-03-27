@@ -56,7 +56,8 @@ APP_METADATA = AppMetadata(
 
 
 MAPPED_ENV_VARS = {
-    ev: "SNAP" + ev for ev in ("CRAFT_BUILD_FOR", "CRAFT_BUILD_ENVIRONMENT")
+    ev: "SNAP" + ev
+    for ev in ("CRAFT_BUILD_FOR", "CRAFT_BUILD_ENVIRONMENT", "CRAFT_VERBOSITY_LEVEL")
 }
 
 
