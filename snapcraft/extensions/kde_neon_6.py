@@ -191,7 +191,7 @@ class KDENeon6(Extension):
                     "target": "$SNAP/kf6",
                 },
             },
-            "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf6:$SNAP/qt6"},
+            "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf6"},
             "hooks": {
                 "configure": {
                     "plugs": ["desktop"],
