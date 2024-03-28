@@ -182,7 +182,7 @@ def _get_urls_from_xml_element(nodes, url_type) -> Optional[List[str]]:
         if (
             node is not None
             and node.attrib["type"] == url_type
-            and node.text not in urls
+            and node.text.strip() not in urls
         ):
             urls.append(node.text.strip())
     if urls:
