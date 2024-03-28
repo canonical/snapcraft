@@ -17,6 +17,7 @@
 """Snap file packing."""
 
 import subprocess
+from functools import wraps
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -130,6 +131,38 @@ def _pack(
     return Path(str(proc.stdout).partition(":")[2].strip()).name
 
 
+def _retry_with_newer_snapd(func):
+
+    @wraps(func)
+    def retry_with_beta_snapd(
+        directory: Path, output_dir: Path, compression: Optional[str] = None
+    ) -> str:
+        try:
+            return func(directory, output_dir, compression)
+        except errors.SnapcraftError:
+            try:
+                with emit.open_stream(
+                    "Refreshing snapd to support components"
+                ) as stream:
+                    subprocess.run(
+                        ["snap", "refresh", "--beta", "snapd"],
+                        check=True,
+                        stdout=stream,
+                        stderr=stream,
+                    )
+            except subprocess.CalledProcessError as err:
+                msg = str(err)
+                details = None
+                if err.stderr:
+                    details = err.stderr.strip()
+                raise errors.SnapcraftError(msg, details=details) from err
+
+            return func(directory, output_dir, compression)
+
+    return retry_with_beta_snapd
+
+
+@_retry_with_newer_snapd
 def pack_component(
     directory: Path, output_dir: Path, compression: Optional[str] = None
 ) -> str:
