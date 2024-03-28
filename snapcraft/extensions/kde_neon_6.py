@@ -182,7 +182,7 @@ class KDENeon6(Extension):
                     "content": content_qt6_snap,
                     "interface": "content",
                     "default-provider": platform_qt6_snap,
-                    "target": "$SNAP/kf6",
+                    "target": "$SNAP/qt6",
                 },
                 platform_kf6_snap: {
                     "content": content_kf6_snap,
@@ -191,7 +191,7 @@ class KDENeon6(Extension):
                     "target": "$SNAP/kf6",
                 },
             },
-            "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf6"},
+            "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf6:$SNAP/qt6"},
             "hooks": {
                 "configure": {
                     "plugs": ["desktop"],

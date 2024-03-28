@@ -107,7 +107,7 @@ def test_get_root_snippet(kde_neon_6_extension):
     assert kde_neon_6_extension.get_root_snippet() == {
         "assumes": ["snapd2.58.3"],
         "compression": "lzo",
-        "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf6"},
+        "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf6:$SNAP/qt6"},
         "hooks": {
             "configure": {
                 "plugs": ["desktop"],
@@ -131,7 +131,7 @@ def test_get_root_snippet(kde_neon_6_extension):
                 "content": "kde-qt6-core22-all",
                 "interface": "content",
                 "default-provider": "kde-qt6-core22",
-                "target": "$SNAP/kf6",
+                "target": "$SNAP/qt6",
             },
             "kf6-core22": {
                 "content": "kf6-core22-all",
@@ -147,7 +147,7 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
     assert kde_neon_6_extension_with_build_snap.get_root_snippet() == {
         "assumes": ["snapd2.58.3"],
         "compression": "lzo",
-        "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf6"},
+        "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf6:$SNAP/qt6"},
         "hooks": {
             "configure": {
                 "plugs": ["desktop"],
@@ -171,7 +171,7 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
                 "content": "kde-qt6-core22-all",
                 "interface": "content",
                 "default-provider": "kde-qt6-core22",
-                "target": "$SNAP/kf6",
+                "target": "$SNAP/qt6",
             },
             "kf6-core22": {
                 "content": "kf6-core22-all",
