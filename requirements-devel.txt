@@ -81,7 +81,7 @@ pyparsing==3.1.2
 pyproject-api==1.6.1
 pyramid==2.0.2
 pyRFC3339==1.1
-pyright==1.1.355
+pyright==1.1.356
 pytest==7.4.4
 pytest-cov==4.1.0
 pytest-mock==3.14.0

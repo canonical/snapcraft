@@ -84,7 +84,7 @@ def get_git_repo_type(path: Path) -> GitType:
     :returns: GitType
     """
     if is_repo(path):
-        repo = pygit2.Repository(path)  # type: ignore[reportAttributeAccessIssue]
+        repo = pygit2.Repository(str(path))
         if repo.is_shallow:
             return GitType.SHALLOW
         return GitType.NORMAL
@@ -138,7 +138,7 @@ class GitRepo:
         if not is_repo(path):
             self._init_repo()
 
-        self._repo = pygit2.Repository(path)  # type: ignore[reportAttributeAccessIssue]
+        self._repo = pygit2.Repository(str(path))
 
     def add_all(self) -> None:
         """Add all changes from the working tree to the index.
