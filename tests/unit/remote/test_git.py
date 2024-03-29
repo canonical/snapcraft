@@ -183,7 +183,9 @@ def test_add_all(new_dir):
     (repo.path / "bar").touch()
     repo.add_all()
 
-    status = pygit2.Repository(new_dir).status()
+    status = pygit2.Repository(  # type: ignore[reportAttributeAccessIssue]
+        new_dir
+    ).status()
 
     assert status == {
         "foo": pygit2.GIT_STATUS_INDEX_NEW,
@@ -196,7 +198,9 @@ def test_add_all_no_files_to_add(new_dir):
     repo = GitRepo(new_dir)
     repo.add_all()
 
-    status = pygit2.Repository(new_dir).status()
+    status = pygit2.Repository(  # type: ignore[reportAttributeAccessIssue]
+        new_dir
+    ).status()
 
     assert status == {}
 
@@ -223,7 +227,9 @@ def test_commit(new_dir):
     repo.commit()
 
     # verify commit (the `isinstance` checks are to satsify pyright)
-    commit = pygit2.Repository(new_dir).revparse_single("HEAD")
+    commit = pygit2.Repository(  # type: ignore[reportAttributeAccessIssue]
+        new_dir
+    ).revparse_single("HEAD")
     assert isinstance(commit, pygit2.Commit)
     assert commit.message == "auto commit"
     assert commit.committer.name == "auto commit"
