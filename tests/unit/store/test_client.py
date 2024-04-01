@@ -1117,8 +1117,7 @@ def test_on_prem_notify_upload_components_unsupported(on_prem_client):
         )
 
     assert (
-        str(raised.value)
-        == "Components support for on-prem stores is currently unsupported"
+        str(raised.value) == "Components are currently unsupported for on-prem stores"
     )
 
 

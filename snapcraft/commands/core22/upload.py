@@ -18,7 +18,6 @@
 
 import pathlib
 import textwrap
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, List, Optional
 
 from craft_cli import BaseCommand, emit
@@ -33,11 +32,8 @@ if TYPE_CHECKING:
     import argparse
 
 
-@dataclass(frozen=True)
 class ComponentOption:
     """Argparse helper to validate and convert a 'component' option.
-
-    Receives a callable to convert the string from command line to the desired object.
 
     Example of use:
 
@@ -45,17 +41,16 @@ class ComponentOption:
     """
 
     name: str | None = None
-    filename: str | None = None
+    path: pathlib.Path | None = None
 
-    def __call__(self, value):
+    def __init__(self, value: str) -> None:
         """Run by argparse to validate and convert the given argument."""
-        parts = [x.strip() for x in value.split("=")]
-        parts = [p for p in parts if p]
+        parts = [p.strip() for p in value.split("=") if p.strip()]
         if len(parts) == 2:
-            name, filename = parts
-            return ComponentOption(name, filename)
-
-        raise ValueError("the `--component` format must be <name>=<filename>")
+            self.name = parts[0]
+            self.path = pathlib.Path(parts[1])
+        else:
+            raise ValueError("the `--component` format must be <name>=<path>")
 
 
 class StoreUploadCommand(BaseCommand):
@@ -96,7 +91,7 @@ class StoreUploadCommand(BaseCommand):
         parser.add_argument(
             "--component",
             action="append",
-            type=ComponentOption(),
+            type=ComponentOption,
             default=[],
             help=(
                 "The component(s) to upload with the snap, "
@@ -135,7 +130,7 @@ class StoreUploadCommand(BaseCommand):
         for component in components:
             emit.debug(f"Uploading component {component.name!r}")
             upload_id = client.store_client.upload_file(
-                filepath=pathlib.Path(component.filename),
+                filepath=pathlib.Path(component.path),
                 monitor_callback=create_callback,
             )
             component_upload_ids[component.name] = upload_id
@@ -173,7 +168,7 @@ def _validate_components(
     }
     emit.debug(f"Components provided by the user: {provided_names}")
 
-    if snap_yaml.get("components"):
+    if "components" in snap_yaml:
         expected_names = set(snap_yaml["components"].keys())
         emit.debug(f"Components found in snap metadata: {expected_names}")
     else:
@@ -192,12 +187,12 @@ def _validate_components(
         )
 
     for component in provided_components:
-        if not component.filename:
+        if not component.path:
             # should not occur after argparse validation
             raise RuntimeError(f"Component {component.name} has no filename.")
 
-        component_filepath = pathlib.Path(component.filename)
-        if not component_filepath.exists():
+        component_filepath = pathlib.Path(component.path)
+        if not component_filepath.is_file():
             raise errors.SnapcraftError(
                 f"File '{component_filepath}' does not exist for component {component.name!r}."
             )

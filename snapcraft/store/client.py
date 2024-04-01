@@ -537,7 +537,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
             raise errors.SnapcraftError("Releasing during currently unsupported")
         if components:
             raise errors.SnapcraftError(
-                "Components support for on-prem stores is currently unsupported"
+                "Components are currently unsupported for on-prem stores"
             )
         emit.debug(
             f"Ignoring snap_file_size of {snap_file_size!r} and "

@@ -50,59 +50,28 @@ def fake_store_verify_upload(mocker):
 
 
 @pytest.fixture
-def snap_file():
-    return str(
-        (
-            pathlib.Path(unit.__file__)
-            / ".."
-            / ".."
-            / "legacy"
-            / "data"
-            / "test-snap.snap"
-        ).resolve()
-    )
+def data_path() -> pathlib.Path:
+    return pathlib.Path(unit.__file__).parents[1] / "legacy" / "data"
 
 
 @pytest.fixture
-def snap_file_with_started_at():
-    return str(
-        (
-            pathlib.Path(unit.__file__)
-            / ".."
-            / ".."
-            / "legacy"
-            / "data"
-            / "test-snap-with-started-at.snap"
-        ).resolve()
-    )
+def snap_file(data_path):
+    return str((data_path / "test-snap.snap").resolve())
 
 
 @pytest.fixture
-def snap_file_with_component():
-    return str(
-        (
-            pathlib.Path(unit.__file__)
-            / ".."
-            / ".."
-            / "legacy"
-            / "data"
-            / "test-snap-with-component.snap"
-        ).resolve()
-    )
+def snap_file_with_started_at(data_path):
+    return str((data_path / "test-snap-with-started-at.snap").resolve())
 
 
 @pytest.fixture
-def component_file():
-    return str(
-        (
-            pathlib.Path(unit.__file__)
-            / ".."
-            / ".."
-            / "legacy"
-            / "data"
-            / "test-snap-with-component+test-component.comp"
-        ).resolve()
-    )
+def snap_file_with_component(data_path):
+    return str((data_path / "test-snap-with-component.snap").resolve())
+
+
+@pytest.fixture
+def component_file(data_path):
+    return str((data_path / "test-snap-with-component+test-component.comp").resolve())
 
 
 ##################
@@ -237,9 +206,9 @@ def test_invalid_file():
 
 def test_componentoption_convert_ok():
     """Convert as expected."""
-    r = ComponentOption()("test-component=test-snap+test-component_1.0.comp")
+    r = ComponentOption("test-component=test-snap+test-component_1.0.comp")
     assert r.name == "test-component"
-    assert r.filename == "test-snap+test-component_1.0.comp"
+    assert r.path == pathlib.Path("test-snap+test-component_1.0.comp")
 
 
 @pytest.mark.parametrize(
@@ -255,8 +224,8 @@ def test_componentoption_convert_ok():
 def test_componentoption_convert_error(value):
     """Error while converting."""
     with pytest.raises(ValueError) as raised:
-        ComponentOption()(value)
-    assert str(raised.value) == ("the `--component` format must be <name>=<filename>")
+        ComponentOption(value)
+    assert str(raised.value) == ("the `--component` format must be <name>=<path>")
 
 
 def test_component_missing(capsys, mocker, snap_file_with_component):

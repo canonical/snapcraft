@@ -563,12 +563,16 @@ def _populate_environment(
     return environment if environment else None
 
 
-def _process_components(components) -> Dict[str, Any] | None:
+def _process_components(components: Dict[str, Any] | None) -> Dict[str, Any] | None:
     """Process component data for snap.yaml.
 
     Removes the version keyword from components because the coupling
     between a snap and a component is loosely defined and should not
     be tied to a specific version.
+
+    :param components: A dictionary of component names and data.
+
+    :returns: The processed component data for a snap.yaml file.
     """
     if not components:
         return components
