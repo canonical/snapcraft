@@ -220,10 +220,10 @@ def create_app() -> Snapcraft:
     app.add_command_group(
         "Store Account",
         [
-            unimplemented.Login,
-            unimplemented.ExportLogin,
-            unimplemented.Logout,
-            unimplemented.Whoami,
+            commands.StoreExportLoginCommand,
+            commands.StoreLoginCommand,
+            commands.StoreLogoutCommand,
+            commands.StoreWhoAmICommand,
         ],
     )
     app.add_command_group(

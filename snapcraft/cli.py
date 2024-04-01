@@ -62,10 +62,10 @@ COMMAND_GROUPS = [
     craft_cli.CommandGroup(
         "Store Account",
         [
-            commands.core22.StoreLoginCommand,
-            commands.core22.StoreExportLoginCommand,
-            commands.core22.StoreLogoutCommand,
-            commands.core22.StoreWhoAmICommand,
+            commands.StoreLoginCommand,
+            commands.StoreExportLoginCommand,
+            commands.StoreLogoutCommand,
+            commands.StoreWhoAmICommand,
         ],
     ),
     craft_cli.CommandGroup(

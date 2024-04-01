@@ -17,6 +17,12 @@
 """Snapcraft commands."""
 
 from . import core22, legacy
+from .account import (
+    StoreExportLoginCommand,
+    StoreLoginCommand,
+    StoreLogoutCommand,
+    StoreWhoAmICommand,
+)
 from .extensions import ExpandExtensions, ListExtensions
 from .lifecycle import SnapCommand
 from .manage import StoreCloseCommand, StoreReleaseCommand
@@ -48,4 +54,8 @@ __all__ = [
     "StoreReleaseCommand",
     "StoreNamesCommand",
     "StoreRegisterCommand",
+    "StoreExportLoginCommand",
+    "StoreLoginCommand",
+    "StoreLogoutCommand",
+    "StoreWhoAmICommand",
 ]

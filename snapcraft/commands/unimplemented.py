@@ -65,30 +65,6 @@ class UnimplementedMixin:
     always_load_project: bool = False
 
 
-class ExportLogin(
-    UnimplementedMixin, commands.core22.StoreExportLoginCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Login(
-    UnimplementedMixin, commands.core22.StoreLoginCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Logout(
-    UnimplementedMixin, commands.core22.StoreLogoutCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Whoami(
-    UnimplementedMixin, commands.core22.StoreWhoAmICommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
 class ListPlugins(
     UnimplementedMixin, commands.core22.ListPluginsCommand
 ):  # noqa: D101 (missing docstring)
