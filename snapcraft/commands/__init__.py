@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,6 +20,7 @@ from . import core22, legacy
 from .extensions import ExpandExtensions, ListExtensions
 from .lifecycle import SnapCommand
 from .remote import RemoteBuildCommand
+from .upload import StoreUploadCommand
 
 __all__ = [
     "core22",
@@ -28,4 +29,5 @@ __all__ = [
     "RemoteBuildCommand",
     "ExpandExtensions",
     "ListExtensions",
+    "StoreUploadCommand",
 ]

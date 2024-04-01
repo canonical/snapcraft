@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,7 +20,7 @@ from snapcraft.commands.core22.names import (
     StoreLegacyListCommand,
     StoreLegacyListRegisteredCommand,
 )
-from snapcraft.commands.core22.upload import StoreLegacyPushCommand
+from snapcraft.commands.upload import StoreLegacyPushCommand
 
 from .legacy import (
     LegacyBaseCommand,

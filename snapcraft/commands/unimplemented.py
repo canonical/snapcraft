@@ -275,12 +275,6 @@ class Push(
     pass
 
 
-class Upload(
-    UnimplementedMixin, commands.core22.StoreUploadCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
 class EditValidationSets(
     UnimplementedMixin, commands.core22.StoreEditValidationSetsCommand
 ):  # noqa: D101 (missing docstring)

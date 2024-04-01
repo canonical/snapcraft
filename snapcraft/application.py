@@ -243,7 +243,7 @@ def create_app() -> Snapcraft:
             unimplemented.Release,
             unimplemented.Close,
             unimplemented.Status,
-            unimplemented.Upload,
+            commands.StoreUploadCommand,
             unimplemented.Push,
             unimplemented.Promote,
             unimplemented.ListRevisions,

@@ -85,7 +85,7 @@ COMMAND_GROUPS = [
             commands.core22.StoreReleaseCommand,
             commands.core22.StoreCloseCommand,
             commands.core22.StoreStatusCommand,
-            commands.core22.StoreUploadCommand,
+            commands.StoreUploadCommand,
             commands.legacy.StoreLegacyPushCommand,  # hidden (legacy for upload)
             commands.legacy.StoreLegacyPromoteCommand,
             commands.core22.StoreListRevisionsCommand,

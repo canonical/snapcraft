@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -50,7 +50,6 @@ from .status import (
     StoreStatusCommand,
     StoreTracksCommand,
 )
-from .upload import StoreUploadCommand
 from .validation_sets import StoreEditValidationSetsCommand
 
 __all__ = [
@@ -82,7 +81,6 @@ __all__ = [
     "StoreRevisionsCommand",
     "StoreStatusCommand",
     "StoreTracksCommand",
-    "StoreUploadCommand",
     "StoreWhoAmICommand",
     "TryCommand",
 ]
