@@ -32,8 +32,7 @@ prepare: |
   # Do not change the test-snapcraft- prefix. Ensure that you
   # notify the store team if you need to use a different value when
   # working with the production store.     
-  # name="test-snapcraft-$(shuf -i 1-1000000000 -n 1)"
-  name="test-snapcraft-foo"
+  name="test-snapcraft-$(shuf -i 1-1000000000 -n 1)"
   set_name "$SNAP/snapcraft.yaml" "${name}"
   set_grade "$SNAP/snapcraft.yaml" stable
 
@@ -66,9 +65,7 @@ execute: |
   snapcraft whoami
 
   # Register
-  # registration is blocked by store, see:
-  # https://forum.snapcraft.io/t/manual-review-of-all-new-snap-name-registrations/39440
-  # snapcraft register --yes "${snap_name}"
+  snapcraft register --yes "${snap_name}"
 
   # Take a look at registered snaps.
   snapcraft list
