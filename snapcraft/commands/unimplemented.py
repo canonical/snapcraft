@@ -203,18 +203,6 @@ class Lint(
     pass
 
 
-class Close(
-    UnimplementedMixin, commands.core22.StoreCloseCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Release(
-    UnimplementedMixin, commands.core22.StoreReleaseCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
 class List(
     UnimplementedMixin, commands.legacy.StoreLegacyListCommand
 ):  # noqa: D101 (missing docstring)

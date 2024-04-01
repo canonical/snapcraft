@@ -240,8 +240,8 @@ def create_app() -> Snapcraft:
     app.add_command_group(
         "Store Snap Release Management",
         [
-            unimplemented.Release,
-            unimplemented.Close,
+            commands.StoreReleaseCommand,
+            commands.StoreCloseCommand,
             commands.StoreStatusCommand,
             commands.StoreUploadCommand,
             unimplemented.Push,

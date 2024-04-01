@@ -82,8 +82,8 @@ COMMAND_GROUPS = [
     craft_cli.CommandGroup(
         "Store Snap Release Management",
         [
-            commands.core22.StoreReleaseCommand,
-            commands.core22.StoreCloseCommand,
+            commands.StoreReleaseCommand,
+            commands.StoreCloseCommand,
             commands.StoreStatusCommand,
             commands.StoreUploadCommand,
             commands.legacy.StoreLegacyPushCommand,  # hidden (legacy for upload)
