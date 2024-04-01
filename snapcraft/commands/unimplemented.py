@@ -239,36 +239,6 @@ class Register(
     pass
 
 
-class ListRevisions(
-    UnimplementedMixin, commands.core22.StoreListRevisionsCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class ListTracks(
-    UnimplementedMixin, commands.core22.StoreListTracksCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Revisions(
-    UnimplementedMixin, commands.core22.StoreRevisionsCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Status(
-    UnimplementedMixin, commands.core22.StoreStatusCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Tracks(
-    UnimplementedMixin, commands.core22.StoreTracksCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
 class Push(
     UnimplementedMixin, commands.legacy.StoreLegacyPushCommand
 ):  # noqa: D101 (missing docstring)

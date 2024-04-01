@@ -242,19 +242,19 @@ def create_app() -> Snapcraft:
         [
             unimplemented.Release,
             unimplemented.Close,
-            unimplemented.Status,
+            commands.StoreStatusCommand,
             commands.StoreUploadCommand,
             unimplemented.Push,
             unimplemented.Promote,
-            unimplemented.ListRevisions,
-            unimplemented.Revisions,
+            commands.StoreListRevisionsCommand,
+            commands.StoreRevisionsCommand,
         ],
     )
     app.add_command_group(
         "Store Snap Tracks",
         [
-            unimplemented.ListTracks,
-            unimplemented.Tracks,
+            commands.StoreListTracksCommand,
+            commands.StoreTracksCommand,
             unimplemented.SetDefaultTrack,
         ],
     )

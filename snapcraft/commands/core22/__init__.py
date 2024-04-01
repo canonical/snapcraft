@@ -43,13 +43,6 @@ from .lint import LintCommand
 from .manage import StoreCloseCommand, StoreReleaseCommand
 from .names import StoreNamesCommand, StoreRegisterCommand
 from .remote import RemoteBuildCommand
-from .status import (
-    StoreListRevisionsCommand,
-    StoreListTracksCommand,
-    StoreRevisionsCommand,
-    StoreStatusCommand,
-    StoreTracksCommand,
-)
 from .validation_sets import StoreEditValidationSetsCommand
 
 __all__ = [
@@ -71,16 +64,11 @@ __all__ = [
     "StoreCloseCommand",
     "StoreEditValidationSetsCommand",
     "StoreExportLoginCommand",
-    "StoreListTracksCommand",
-    "StoreListRevisionsCommand",
     "StoreLoginCommand",
     "StoreLogoutCommand",
     "StoreNamesCommand",
     "StoreRegisterCommand",
     "StoreReleaseCommand",
-    "StoreRevisionsCommand",
-    "StoreStatusCommand",
-    "StoreTracksCommand",
     "StoreWhoAmICommand",
     "TryCommand",
 ]

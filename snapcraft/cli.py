@@ -84,19 +84,19 @@ COMMAND_GROUPS = [
         [
             commands.core22.StoreReleaseCommand,
             commands.core22.StoreCloseCommand,
-            commands.core22.StoreStatusCommand,
+            commands.StoreStatusCommand,
             commands.StoreUploadCommand,
             commands.legacy.StoreLegacyPushCommand,  # hidden (legacy for upload)
             commands.legacy.StoreLegacyPromoteCommand,
-            commands.core22.StoreListRevisionsCommand,
-            commands.core22.StoreRevisionsCommand,  # hidden (alias to list-revisions)
+            commands.StoreListRevisionsCommand,
+            commands.StoreRevisionsCommand,  # hidden (alias to list-revisions)
         ],
     ),
     craft_cli.CommandGroup(
         "Store Snap Tracks",
         [
-            commands.core22.StoreListTracksCommand,
-            commands.core22.StoreTracksCommand,  # hidden (alias to list-tracks)
+            commands.StoreListTracksCommand,
+            commands.StoreTracksCommand,  # hidden (alias to list-tracks)
             commands.legacy.StoreLegacySetDefaultTrackCommand,
         ],
     ),
