@@ -215,18 +215,6 @@ class ListRegistered(
     pass
 
 
-class Names(
-    UnimplementedMixin, commands.core22.StoreNamesCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Register(
-    UnimplementedMixin, commands.core22.StoreRegisterCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
 class Push(
     UnimplementedMixin, commands.legacy.StoreLegacyPushCommand
 ):  # noqa: D101 (missing docstring)

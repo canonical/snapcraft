@@ -16,7 +16,7 @@
 
 """Snapcraft commands for legacy base (core20)."""
 
-from snapcraft.commands.core22.names import (
+from snapcraft.commands.names import (
     StoreLegacyListCommand,
     StoreLegacyListRegisteredCommand,
 )

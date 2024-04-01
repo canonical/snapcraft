@@ -71,8 +71,8 @@ COMMAND_GROUPS = [
     craft_cli.CommandGroup(
         "Store Snap Names",
         [
-            commands.core22.StoreRegisterCommand,
-            commands.core22.StoreNamesCommand,
+            commands.StoreRegisterCommand,
+            commands.StoreNamesCommand,
             commands.legacy.StoreLegacyListRegisteredCommand,
             commands.legacy.StoreLegacyListCommand,
             commands.legacy.StoreLegacyMetricsCommand,

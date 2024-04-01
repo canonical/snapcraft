@@ -20,6 +20,7 @@ from . import core22, legacy
 from .extensions import ExpandExtensions, ListExtensions
 from .lifecycle import SnapCommand
 from .manage import StoreCloseCommand, StoreReleaseCommand
+from .names import StoreNamesCommand, StoreRegisterCommand
 from .remote import RemoteBuildCommand
 from .status import (
     StoreListRevisionsCommand,
@@ -45,4 +46,6 @@ __all__ = [
     "StoreTracksCommand",
     "StoreCloseCommand",
     "StoreReleaseCommand",
+    "StoreNamesCommand",
+    "StoreRegisterCommand",
 ]

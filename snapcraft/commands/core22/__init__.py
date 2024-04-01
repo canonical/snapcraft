@@ -40,7 +40,6 @@ from .lifecycle import (
     TryCommand,
 )
 from .lint import LintCommand
-from .names import StoreNamesCommand, StoreRegisterCommand
 from .remote import RemoteBuildCommand
 from .validation_sets import StoreEditValidationSetsCommand
 
@@ -64,8 +63,6 @@ __all__ = [
     "StoreExportLoginCommand",
     "StoreLoginCommand",
     "StoreLogoutCommand",
-    "StoreNamesCommand",
-    "StoreRegisterCommand",
     "StoreWhoAmICommand",
     "TryCommand",
 ]

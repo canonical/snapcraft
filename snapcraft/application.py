@@ -229,8 +229,8 @@ def create_app() -> Snapcraft:
     app.add_command_group(
         "Store Snap Names",
         [
-            unimplemented.Register,
-            unimplemented.Names,
+            commands.StoreRegisterCommand,
+            commands.StoreNamesCommand,
             unimplemented.ListRegistered,
             unimplemented.List,
             unimplemented.Metrics,
