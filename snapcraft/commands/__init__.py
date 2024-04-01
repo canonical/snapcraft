@@ -36,6 +36,7 @@ from .status import (
     StoreTracksCommand,
 )
 from .upload import StoreUploadCommand
+from .validation_sets import StoreEditValidationSetsCommand
 
 __all__ = [
     "core22",
@@ -58,4 +59,5 @@ __all__ = [
     "StoreLoginCommand",
     "StoreLogoutCommand",
     "StoreWhoAmICommand",
+    "StoreEditValidationSetsCommand",
 ]

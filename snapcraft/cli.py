@@ -112,7 +112,7 @@ COMMAND_GROUPS = [
     craft_cli.CommandGroup(
         "Store Validation Sets",
         [
-            commands.core22.StoreEditValidationSetsCommand,
+            commands.StoreEditValidationSetsCommand,
             commands.legacy.StoreLegacyListValidationSetsCommand,
             commands.legacy.StoreLegacyValidateCommand,
             commands.legacy.StoreLegacyGatedCommand,

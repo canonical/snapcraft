@@ -35,7 +35,6 @@ from .lifecycle import (
 )
 from .lint import LintCommand
 from .remote import RemoteBuildCommand
-from .validation_sets import StoreEditValidationSetsCommand
 
 __all__ = [
     "BuildCommand",
@@ -53,6 +52,5 @@ __all__ = [
     "RemoteBuildCommand",
     "SnapCommand",
     "StageCommand",
-    "StoreEditValidationSetsCommand",
     "TryCommand",
 ]

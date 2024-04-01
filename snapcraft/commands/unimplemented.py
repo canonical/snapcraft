@@ -195,9 +195,3 @@ class Push(
     UnimplementedMixin, commands.legacy.StoreLegacyPushCommand
 ):  # noqa: D101 (missing docstring)
     pass
-
-
-class EditValidationSets(
-    UnimplementedMixin, commands.core22.StoreEditValidationSetsCommand
-):  # noqa: D101 (missing docstring)
-    pass

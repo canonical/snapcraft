@@ -270,7 +270,7 @@ def create_app() -> Snapcraft:
     app.add_command_group(
         "Store Validation Sets",
         [
-            unimplemented.EditValidationSets,
+            commands.StoreEditValidationSetsCommand,
             unimplemented.ListValidationSets,
             unimplemented.Validate,
             unimplemented.Gated,
