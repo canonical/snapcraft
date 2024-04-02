@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -30,7 +30,12 @@ _PLATFORM_TRANSLATION = {"core22": "2204", "core24": "2404"}
 
 @dataclasses.dataclass
 class GNOMESnaps:
-    """A structure of GNOME related snaps."""
+    """A structure of GNOME related snaps.
+
+    :cvar sdk: The name of the SDK snap to use.
+    :cvar content: The name of the content snap to use.
+    :cvar builtin: True if the SDK is built into the content snap.
+    """
 
     sdk: str
     content: str
@@ -103,6 +108,8 @@ class GNOME(Extension):
         for part in self.yaml_data["parts"].values():
             build_snaps.extend(part.get("build-snaps", []))
 
+        # use the sdk snap if it is defined in any part's build-snaps
+        # otherwise, assume it is built into the content snap
         matcher = re.compile(r"gnome-\d+-" + _PLATFORM_TRANSLATION[base] + r"-sdk.*")
         sdk_snap_candidates = [s for s in build_snaps if matcher.match(s)]
         if sdk_snap_candidates:
@@ -272,6 +279,11 @@ class GNOME(Extension):
 
     @overrides
     def get_parts_snippet(self) -> Dict[str, Any]:
+        """Get the parts snippet for the GNOME extension.
+
+        If the GNOME SDK is not built into the content snap, the add the
+        sdk snap as a build-snap.
+        """
         source = get_extensions_data_dir() / "desktop" / "command-chain"
 
         if self.gnome_snaps.builtin:
