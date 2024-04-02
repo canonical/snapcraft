@@ -194,8 +194,8 @@ def test_register_store_id(emitter, fake_store_register):
     "command_class",
     [
         commands.StoreNamesCommand,
-        commands.legacy.StoreLegacyListCommand,
-        commands.legacy.StoreLegacyListRegisteredCommand,
+        commands.StoreLegacyListCommand,
+        commands.StoreLegacyListRegisteredCommand,
     ],
 )
 @pytest.mark.usefixtures("memory_keyring")

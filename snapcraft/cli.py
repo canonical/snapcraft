@@ -73,10 +73,10 @@ COMMAND_GROUPS = [
         [
             commands.StoreRegisterCommand,
             commands.StoreNamesCommand,
-            commands.legacy.StoreLegacyListRegisteredCommand,
-            commands.legacy.StoreLegacyListCommand,
-            commands.legacy.StoreLegacyMetricsCommand,
-            commands.legacy.StoreLegacyUploadMetadataCommand,
+            commands.StoreLegacyListRegisteredCommand,
+            commands.StoreLegacyListCommand,
+            commands.StoreLegacyMetricsCommand,
+            commands.StoreLegacyUploadMetadataCommand,
         ],
     ),
     craft_cli.CommandGroup(
@@ -86,8 +86,8 @@ COMMAND_GROUPS = [
             commands.StoreCloseCommand,
             commands.StoreStatusCommand,
             commands.StoreUploadCommand,
-            commands.legacy.StoreLegacyPushCommand,  # hidden (legacy for upload)
-            commands.legacy.StoreLegacyPromoteCommand,
+            commands.StoreLegacyPushCommand,  # hidden (legacy for upload)
+            commands.StoreLegacyPromoteCommand,
             commands.StoreListRevisionsCommand,
             commands.StoreRevisionsCommand,  # hidden (alias to list-revisions)
         ],
@@ -97,25 +97,25 @@ COMMAND_GROUPS = [
         [
             commands.StoreListTracksCommand,
             commands.StoreTracksCommand,  # hidden (alias to list-tracks)
-            commands.legacy.StoreLegacySetDefaultTrackCommand,
+            commands.StoreLegacySetDefaultTrackCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Key Management",
         [
-            commands.legacy.StoreLegacyCreateKeyCommand,
-            commands.legacy.StoreLegacyRegisterKeyCommand,
-            commands.legacy.StoreLegacySignBuildCommand,
-            commands.legacy.StoreLegacyListKeysCommand,
+            commands.StoreLegacyCreateKeyCommand,
+            commands.StoreLegacyRegisterKeyCommand,
+            commands.StoreLegacySignBuildCommand,
+            commands.StoreLegacyListKeysCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Validation Sets",
         [
             commands.StoreEditValidationSetsCommand,
-            commands.legacy.StoreLegacyListValidationSetsCommand,
-            commands.legacy.StoreLegacyValidateCommand,
-            commands.legacy.StoreLegacyGatedCommand,
+            commands.StoreLegacyListValidationSetsCommand,
+            commands.StoreLegacyValidateCommand,
+            commands.StoreLegacyGatedCommand,
         ],
     ),
     craft_cli.CommandGroup(

@@ -231,10 +231,10 @@ def create_app() -> Snapcraft:
         [
             commands.StoreRegisterCommand,
             commands.StoreNamesCommand,
-            unimplemented.ListRegistered,
-            unimplemented.List,
-            unimplemented.Metrics,
-            unimplemented.UploadMetadata,
+            commands.StoreLegacyListRegisteredCommand,
+            commands.StoreLegacyListCommand,
+            commands.StoreLegacyMetricsCommand,
+            commands.StoreLegacyUploadMetadataCommand,
         ],
     )
     app.add_command_group(
@@ -244,8 +244,8 @@ def create_app() -> Snapcraft:
             commands.StoreCloseCommand,
             commands.StoreStatusCommand,
             commands.StoreUploadCommand,
-            unimplemented.Push,
-            unimplemented.Promote,
+            commands.StoreLegacyPushCommand,
+            commands.StoreLegacyPromoteCommand,
             commands.StoreListRevisionsCommand,
             commands.StoreRevisionsCommand,
         ],
@@ -255,25 +255,25 @@ def create_app() -> Snapcraft:
         [
             commands.StoreListTracksCommand,
             commands.StoreTracksCommand,
-            unimplemented.SetDefaultTrack,
+            commands.StoreLegacySetDefaultTrackCommand,
         ],
     )
     app.add_command_group(
         "Store Key Management",
         [
-            unimplemented.CreateKey,
-            unimplemented.RegisterKey,
-            unimplemented.SignBuild,
-            unimplemented.ListKeys,
+            commands.StoreLegacyCreateKeyCommand,
+            commands.StoreLegacyRegisterKeyCommand,
+            commands.StoreLegacySignBuildCommand,
+            commands.StoreLegacyListKeysCommand,
         ],
     )
     app.add_command_group(
         "Store Validation Sets",
         [
             commands.StoreEditValidationSetsCommand,
-            unimplemented.ListValidationSets,
-            unimplemented.Validate,
-            unimplemented.Gated,
+            commands.StoreLegacyListValidationSetsCommand,
+            commands.StoreLegacyValidateCommand,
+            commands.StoreLegacyGatedCommand,
         ],
     )
     app.add_command_group(

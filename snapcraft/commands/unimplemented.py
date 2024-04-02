@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -101,72 +101,6 @@ class Init(
     pass
 
 
-class CreateKey(
-    UnimplementedMixin, commands.legacy.StoreLegacyCreateKeyCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Gated(
-    UnimplementedMixin, commands.legacy.StoreLegacyGatedCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class ListKeys(
-    UnimplementedMixin, commands.legacy.StoreLegacyListKeysCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class ListValidationSets(
-    UnimplementedMixin, commands.legacy.StoreLegacyListValidationSetsCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Metrics(
-    UnimplementedMixin, commands.legacy.StoreLegacyMetricsCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Promote(
-    UnimplementedMixin, commands.legacy.StoreLegacyPromoteCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class RegisterKey(
-    UnimplementedMixin, commands.legacy.StoreLegacyRegisterKeyCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class SetDefaultTrack(
-    UnimplementedMixin, commands.legacy.StoreLegacySetDefaultTrackCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class SignBuild(
-    UnimplementedMixin, commands.legacy.StoreLegacySignBuildCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class UploadMetadata(
-    UnimplementedMixin, commands.legacy.StoreLegacyUploadMetadataCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Validate(
-    UnimplementedMixin, commands.legacy.StoreLegacyValidateCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
 class Try(
     UnimplementedMixin, commands.core22.TryCommand
 ):  # noqa: D101 (missing docstring)
@@ -175,23 +109,5 @@ class Try(
 
 class Lint(
     UnimplementedMixin, commands.core22.LintCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class List(
-    UnimplementedMixin, commands.legacy.StoreLegacyListCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class ListRegistered(
-    UnimplementedMixin, commands.legacy.StoreLegacyListRegisteredCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Push(
-    UnimplementedMixin, commands.legacy.StoreLegacyPushCommand
 ):  # noqa: D101 (missing docstring)
     pass

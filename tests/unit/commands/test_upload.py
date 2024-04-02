@@ -79,7 +79,7 @@ def snap_file_with_started_at():
 @pytest.mark.usefixtures("memory_keyring")
 @pytest.mark.parametrize(
     "command_class",
-    (commands.StoreUploadCommand, commands.legacy.StoreLegacyPushCommand),
+    (commands.StoreUploadCommand, commands.StoreLegacyPushCommand),
 )
 def test_default(
     emitter,
@@ -114,7 +114,7 @@ def test_default(
 @pytest.mark.usefixtures("memory_keyring")
 @pytest.mark.parametrize(
     "command_class",
-    (commands.StoreUploadCommand, commands.legacy.StoreLegacyPushCommand),
+    (commands.StoreUploadCommand, commands.StoreLegacyPushCommand),
 )
 def test_built_at(
     emitter,
