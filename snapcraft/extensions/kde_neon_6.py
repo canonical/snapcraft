@@ -213,9 +213,8 @@ class KDENeon6(Extension):
                     "PATH": prepend_to_env(
                         "PATH",
                         [
-                            f"/snap/{qt6_sdk_snap}/current/"
-                            f"usr/bin:/snap/{kf6_sdk_snap}/"
-                            f"current/usr/bin"
+                            f"/snap/{qt6_sdk_snap}/current/usr/bin",
+                            f"/snap/{kf6_sdk_snap}/current/usr/bin",
                         ],
                     ),
                 },
