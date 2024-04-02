@@ -594,4 +594,7 @@ def _process_components(
     if not components:
         return None
 
-    return {name: ComponentMetadata(**data.dict()) for name, data in components.items()}
+    return {
+        name: ComponentMetadata.unmarshal(data.marshal())
+        for name, data in components.items()
+    }
