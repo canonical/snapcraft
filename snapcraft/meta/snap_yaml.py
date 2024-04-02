@@ -563,7 +563,9 @@ def _populate_environment(
     return environment if environment else None
 
 
-def _process_components(components: Dict[str, Any] | None) -> Dict[str, Any] | None:
+def _process_components(
+    components: Dict[str, models.Component] | None
+) -> Dict[str, Any] | None:
     """Process component data for snap.yaml.
 
     Removes the version keyword from components because the coupling
