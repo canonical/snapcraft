@@ -306,6 +306,15 @@ class KDENeon6(Extension):
                         self.kde_snaps.qt6_sdk_snap,
                         self.kde_snaps.kf6_sdk_snap,
                     ],
+                    "build-packages": [
+                        "gettext",
+                        "libxml2-utils",
+                        "docbook-xml",
+                        "docbook-xsl",
+                        "libglx-dev",
+                        "libgl1-dev",
+                        "libglvnd-dev",
+                    ],
                 },
             }
 
