@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 import re
-from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Set, Union, cast
 
@@ -225,6 +224,25 @@ class Links(SnapcraftMetadata):
         )
 
 
+class ComponentMetadata(SnapcraftMetadata):  # type: ignore # (pydantic plugin is crashing)
+    """Component metadata model.
+
+    This model contains different information than the model in the
+    `component_yaml` module. For example, version and architecture metadata
+    is not included.
+    """
+
+    summary: SummaryStr
+    description: str
+    type: str
+
+    @override
+    class Config(BaseMetadata.Config):
+        """Ignore extra parameters in component metadata."""
+
+        extra = pydantic.Extra.ignore
+
+
 class SnapMetadata(SnapcraftMetadata):
     """The snap.yaml model.
 
@@ -258,7 +276,7 @@ class SnapMetadata(SnapcraftMetadata):
     system_usernames: Optional[Dict[str, Any]]
     provenance: Optional[str]
     links: Optional[Links]
-    components: Optional[Dict[str, Any]]
+    components: Optional[Dict[str, ComponentMetadata]]
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "SnapMetadata":
@@ -456,6 +474,7 @@ def get_metadata_from_project(
         project.environment, prime_dir, arch_triplet, project.confinement
     )
     version = process_version(project.version)
+    components = _process_components(project.components)
 
     # project provided assumes and computed assumes
     total_assumes = sorted(project.assumes + list(assumes))
@@ -485,7 +504,7 @@ def get_metadata_from_project(
         system_usernames=project.system_usernames,
         provenance=project.provenance,
         links=links if links else None,
-        components=_process_components(project.components),
+        components=components,
     )
     if project.passthrough:
         for name, value in project.passthrough.items():
@@ -565,24 +584,14 @@ def _populate_environment(
 
 def _process_components(
     components: Dict[str, models.Component] | None
-) -> Dict[str, Any] | None:
-    """Process component data for snap.yaml.
+) -> Dict[str, ComponentMetadata] | None:
+    """Convert Components from a project to ComponentMetadata for a snap.yaml.
 
-    Removes the version keyword from components because the coupling
-    between a snap and a component is loosely defined and should not
-    be tied to a specific version.
+    :param components: Component data from a project model.
 
-    :param components: A dictionary of component names and data.
-
-    :returns: The processed component data for a snap.yaml file.
+    :returns: A dictionary of ComponentMetadata or None if no components are defined.
     """
     if not components:
-        return components
+        return None
 
-    components_copy = deepcopy(components)
-
-    for component in components_copy.values():
-        if component.version:
-            component.version = None
-
-    return components_copy
+    return {name: ComponentMetadata(**data.dict()) for name, data in components.items()}

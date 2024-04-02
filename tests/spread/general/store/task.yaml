@@ -18,9 +18,6 @@ prepare: |
     exit 1
   fi
 
-  # components are only supported on the edge channel
-  snap refresh snapd --edge
-
   # Install the review tools to make sure we do not break anything
   # assumed in there.
   # TODO: requires running inside $HOME.
