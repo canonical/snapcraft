@@ -25,25 +25,25 @@ from .account import (
 )
 from .extensions import ExpandExtensions, ListExtensions
 from .legacy import (
-    StoreLegacyUploadMetadataCommand,
-    StoreLegacyPromoteCommand,
-    StoreLegacySetDefaultTrackCommand,
-    StoreLegacyMetricsCommand,
-    StoreLegacyListKeysCommand,
     StoreLegacyCreateKeyCommand,
-    StoreLegacyRegisterKeyCommand,
-    StoreLegacySignBuildCommand,
-    StoreLegacyValidateCommand,
     StoreLegacyGatedCommand,
+    StoreLegacyListKeysCommand,
     StoreLegacyListValidationSetsCommand,
+    StoreLegacyMetricsCommand,
+    StoreLegacyPromoteCommand,
+    StoreLegacyRegisterKeyCommand,
+    StoreLegacySetDefaultTrackCommand,
+    StoreLegacySignBuildCommand,
+    StoreLegacyUploadMetadataCommand,
+    StoreLegacyValidateCommand,
 )
 from .lifecycle import SnapCommand
 from .manage import StoreCloseCommand, StoreReleaseCommand
 from .names import (
-    StoreNamesCommand,
-    StoreRegisterCommand,
     StoreLegacyListCommand,
     StoreLegacyListRegisteredCommand,
+    StoreNamesCommand,
+    StoreRegisterCommand,
 )
 from .remote import RemoteBuildCommand
 from .status import (
@@ -53,7 +53,7 @@ from .status import (
     StoreStatusCommand,
     StoreTracksCommand,
 )
-from .upload import StoreUploadCommand, StoreLegacyPushCommand
+from .upload import StoreLegacyPushCommand, StoreUploadCommand
 from .validation_sets import StoreEditValidationSetsCommand
 
 __all__ = [
