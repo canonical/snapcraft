@@ -50,6 +50,10 @@ def stub_project_data():
                 "summary": "test summary",
                 "description": "test description",
                 "version": "1.0",
+                "hooks": {
+                    "install": {"plugs": ["home", "network"]},
+                    "post-refresh": {},
+                },
             },
         },
     }

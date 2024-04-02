@@ -2050,12 +2050,14 @@ class TestComponents:
 
     @pytest.fixture
     def stub_component_data(self):
-        return {
+        data: dict[str, Any] = {
             "type": "test",
             "summary": "test summary",
             "description": "test description",
             "version": "1.0",
+            "hooks": None,
         }
+        return data
 
     def test_components_valid(self, project, project_yaml_data, stub_component_data):
         components = {"foo": stub_component_data, "bar": stub_component_data}

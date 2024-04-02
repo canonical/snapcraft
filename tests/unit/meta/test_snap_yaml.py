@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -418,6 +418,21 @@ def complex_project():
             description: test
             type: test
             version: "1.0"
+            hooks:
+              install:
+                command-chain:
+                - test
+                environment:
+                  test-variable-1: test
+                  test-variable-2: test
+                plugs:
+                - home
+                - network
+                passthrough:
+                  somefield:
+                  - some
+                  - value
+              post-refresh: {}
           component-b:
             summary: test
             description: test
@@ -558,6 +573,21 @@ def test_complex_snap_yaml(complex_project, new_dir):
             summary: test
             description: test
             type: test
+            hooks:
+              install:
+                command-chain:
+                - test
+                environment:
+                  test-variable-1: test
+                  test-variable-2: test
+                plugs:
+                - home
+                - network
+                passthrough:
+                  somefield:
+                  - some
+                  - value
+              post-refresh: {}
           component-b:
             summary: test
             description: test
