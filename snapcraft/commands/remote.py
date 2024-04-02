@@ -137,8 +137,12 @@ class RemoteBuildCommand(ExtensibleCommand):
             and not confirm_with_user(_CONFIRMATION_PROMPT, default=False)
         ):
             raise errors.RemoteBuildError(
-                "Remote build needs explicit acknowledgement that data sent to build servers is public.",
-                details="In non-interactive runs, please use the option `--launchpad-accept-public-upload`.",
+                "Remote build needs explicit acknowledgement that data sent to build servers "
+                "is public.",
+                details=(
+                    "In non-interactive runs, please use the option "
+                    "`--launchpad-accept-public-upload`."
+                ),
                 reportable=False,
                 retcode=77,
             )
@@ -196,7 +200,8 @@ class RemoteBuildCommand(ExtensibleCommand):
                 raise errors.RemoteBuildError(
                     f"build-for '{parsed_args.build_for}' is not supported.", retcode=78
                 )
-            # Allow the user to build for a single architecture if snapcraft.yaml doesn't define architectures.
+            # Allow the user to build for a single architecture if snapcraft.yaml
+            # doesn't define architectures.
             architectures = [parsed_args.build_for]
 
         emit.debug(f"Architectures to build: {architectures}")
