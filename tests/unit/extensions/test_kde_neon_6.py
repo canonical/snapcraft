@@ -1,7 +1,7 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright 2022 Canonical Ltd.
-# Copyright 2024 Scarlett Moore <sgmoore@kde.org>
+# Copyright 2023-2024 Scarlett Moore <sgmoore@kde.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -128,12 +128,6 @@ def test_get_root_snippet(kde_neon_6_extension):
                 "target": "$SNAP/data-dir/sounds",
                 "default-provider": "gtk-common-themes",
             },
-            "kde-qt6-core22": {
-                "content": "kde-qt6-core22-all",
-                "interface": "content",
-                "default-provider": "kde-qt6-core22",
-                "target": "$SNAP/qt6",
-            },
             "kf6-core22": {
                 "content": "kf6-core22-all",
                 "interface": "content",
@@ -167,12 +161,6 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
                 "interface": "content",
                 "target": "$SNAP/data-dir/sounds",
                 "default-provider": "gtk-common-themes",
-            },
-            "kde-qt6-core22": {
-                "content": "kde-qt6-core22-all",
-                "interface": "content",
-                "default-provider": "kde-qt6-core22",
-                "target": "$SNAP/qt6",
             },
             "kf6-core22": {
                 "content": "kf6-core22-all",
@@ -217,11 +205,41 @@ class TestGetPartSnippet:
                     )
                 },
                 {
-                    "SNAPCRAFT_CMAKE_ARGS": (
-                        "-DCMAKE_FIND_ROOT_PATH="
+                    "XDG_CONFIG_HOME": (
+                        "$CRAFT_STAGE/etc/xdg:"
+                        "/snap/kde-qt6-core22-sdk/current/etc/xdg:"
+                        "/snap/kf6-core22-sdk/current/etc/xdg:"
+                        "/etc/xdg${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}"
+                    )
+                },
+                {
+                    "LD_LIBRARY_PATH": (
+                        "/snap/kde-qt6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
+                        "/snap/kf6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
+                        "/snap/kde-qt6-core22-sdk/current/usr/lib:"
+                        "/snap/kf6-core22-sdk/current/usr/lib:"
+                        "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
+                        "$CRAFT_STAGE/usr/lib:"
+                        "$CRAFT_STAGE/lib/"
+                        "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+                    )
+                },
+                {
+                    "CMAKE_PREFIX_PATH": (
+                        "$CRAFT_STAGE;"
                         "/snap/kde-qt6-core22-sdk/current;"
-                        "/snap/kf6-core22-sdk/current"
-                        "${SNAPCRAFT_CMAKE_ARGS:+:$SNAPCRAFT_CMAKE_ARGS}"
+                        "/snap/kf6-core22-sdk/current;"
+                        "/usr"
+                        "${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}"
+                    )
+                },
+                {
+                    "CMAKE_FIND_ROOT_PATH": (
+                        "$CRAFT_STAGE;"
+                        "/snap/kde-qt6-core22-sdk/current;"
+                        "/snap/kf6-core22-sdk/current;"
+                        "/usr"
+                        "${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}"
                     )
                 },
             ]
@@ -249,11 +267,41 @@ def test_get_part_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
                 )
             },
             {
-                "SNAPCRAFT_CMAKE_ARGS": (
-                    "-DCMAKE_FIND_ROOT_PATH="
+                "XDG_CONFIG_HOME": (
+                    "$CRAFT_STAGE/etc/xdg:"
+                    "/snap/kde-qt6-core22-sdk/current/etc/xdg:"
+                    "/snap/kf6-core22-sdk/current/etc/xdg:"
+                    "/etc/xdg${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}"
+                )
+            },
+            {
+                "LD_LIBRARY_PATH": (
+                    "/snap/kde-qt6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
+                    "/snap/kf6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
+                    "/snap/kde-qt6-core22-sdk/current/usr/lib:"
+                    "/snap/kf6-core22-sdk/current/usr/lib:"
+                    "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
+                    "$CRAFT_STAGE/usr/lib:"
+                    "$CRAFT_STAGE/lib/"
+                    "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+                ),
+            },
+            {
+                "CMAKE_PREFIX_PATH": (
+                    "$CRAFT_STAGE;"
                     "/snap/kde-qt6-core22-sdk/current;"
-                    "/snap/kf6-core22-sdk/current"
-                    "${SNAPCRAFT_CMAKE_ARGS:+:$SNAPCRAFT_CMAKE_ARGS}"
+                    "/snap/kf6-core22-sdk/current;"
+                    "/usr"
+                    "${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}"
+                )
+            },
+            {
+                "CMAKE_FIND_ROOT_PATH": (
+                    "$CRAFT_STAGE;"
+                    "/snap/kde-qt6-core22-sdk/current;"
+                    "/snap/kf6-core22-sdk/current;"
+                    "/usr"
+                    "${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}"
                 )
             },
         ]
@@ -269,6 +317,15 @@ def test_get_parts_snippet(kde_neon_6_extension):
             "plugin": "make",
             "make-parameters": ["PLATFORM_PLUG=kf6-core22"],
             "build-snaps": ["kde-qt6-core22-sdk", "kf6-core22-sdk"],
+            "build-packages": [
+                "gettext",
+                "libxml2-utils",
+                "docbook-xml",
+                "docbook-xsl",
+                "libglx-dev",
+                "libgl1-dev",
+                "libglvnd-dev",
+            ],
         }
     }
 

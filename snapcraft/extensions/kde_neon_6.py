@@ -30,13 +30,6 @@ _KF6_SDK_SNAP = {"core22": "kf6-core22-sdk"}
 
 
 @dataclasses.dataclass
-class ExtensionInfo:
-    """Content/SDK build information."""
-
-    cmake_args: str
-
-
-@dataclasses.dataclass
 class KDESnaps6:
     """A structure of KDE related snaps."""
 
@@ -147,19 +140,8 @@ class KDENeon6(Extension):
             kf6_builtin=kf6_builtin,
         )
 
-    @functools.cached_property
-    def ext_info(self) -> ExtensionInfo:
-        """Return the extension info cmake_args, provider, content, build_snaps."""
-        qt6_cmake = f"/snap/{self.kde_snaps.qt6_sdk_snap}/current;"
-        kf6_cmake = f"/snap/{self.kde_snaps.kf6_sdk_snap}/current"
-        cmake_args = "-DCMAKE_FIND_ROOT_PATH=" + qt6_cmake + kf6_cmake
-
-        return ExtensionInfo(cmake_args=cmake_args)
-
     @overrides
     def get_root_snippet(self) -> Dict[str, Any]:
-        platform_qt6_snap = self.kde_snaps.content_qt6
-        content_qt6_snap = self.kde_snaps.content_qt6 + "-all"
         platform_kf6_snap = self.kde_snaps.content_kf6
         content_kf6_snap = self.kde_snaps.content_kf6 + "-all"
 
@@ -177,12 +159,6 @@ class KDENeon6(Extension):
                     "interface": "content",
                     "target": "$SNAP/data-dir/sounds",
                     "default-provider": "gtk-common-themes",
-                },
-                platform_qt6_snap: {
-                    "content": content_qt6_snap,
-                    "interface": "content",
-                    "default-provider": platform_qt6_snap,
-                    "target": "$SNAP/qt6",
                 },
                 platform_kf6_snap: {
                     "content": content_kf6_snap,
@@ -205,7 +181,6 @@ class KDENeon6(Extension):
     def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
         qt6_sdk_snap = self.kde_snaps.qt6_sdk_snap
         kf6_sdk_snap = self.kde_snaps.kf6_sdk_snap
-        cmake_args = self.ext_info.cmake_args
 
         return {
             "build-environment": [
@@ -222,18 +197,10 @@ class KDENeon6(Extension):
                     "XDG_DATA_DIRS": prepend_to_env(
                         "XDG_DATA_DIRS",
                         [
-                            f"$CRAFT_STAGE/usr/share",
+                            "$CRAFT_STAGE/usr/share",
                             f"/snap/{qt6_sdk_snap}/current/usr/share",
                             f"/snap/{kf6_sdk_snap}/current/usr/share",
                             "/usr/share",
-                        ],
-                    ),
-                },
-                {
-                    "SNAPCRAFT_CMAKE_ARGS": prepend_to_env(
-                        "SNAPCRAFT_CMAKE_ARGS",
-                        [
-                            cmake_args,
                         ],
                     ),
                 },
@@ -252,13 +219,15 @@ class KDENeon6(Extension):
                     "LD_LIBRARY_PATH": prepend_to_env(
                         "LD_LIBRARY_PATH",
                         [
-                            f"/snap/{qt6_sdk_snap}/current/usr/lib/${{CRAFT_ARCH_TRIPLET_BUILD_FOR}}",
-                            f"/snap/{kf6_sdk_snap}/current/usr/lib/${{CRAFT_ARCH_TRIPLET_BUILD_FOR}}",
+                            f"/snap/{qt6_sdk_snap}/current/usr/lib/"
+                            f"${{CRAFT_ARCH_TRIPLET_BUILD_FOR}}",
+                            f"/snap/{kf6_sdk_snap}/current/usr/lib/"
+                            f"${{CRAFT_ARCH_TRIPLET_BUILD_FOR}}",
                             f"/snap/{qt6_sdk_snap}/current/usr/lib",
                             f"/snap/{kf6_sdk_snap}/current/usr/lib",
-                            "${CRAFT_STAGE}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
-                            "${CRAFT_STAGE}/usr/lib",
-                            "${CRAFT_STAGE}/lib/",
+                            "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                            "$CRAFT_STAGE/usr/lib",
+                            "$CRAFT_STAGE/lib/",
                         ],
                     ),
                 },
@@ -296,7 +265,7 @@ class KDENeon6(Extension):
         # https://github.com/snapcore/snapcraft-desktop-integration
         source = get_extensions_data_dir() / "desktop" / "kde-neon-6"
 
-        if self.kde_snaps.qt6_builtin:
+        if self.kde_snaps.kf6_builtin:
             return {
                 "kde-neon-6/sdk": {
                     "source": str(source),
