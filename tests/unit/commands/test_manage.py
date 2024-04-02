@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -71,7 +71,7 @@ def fake_store_get_account_info(mocker):
 
 @pytest.mark.usefixtures("memory_keyring")
 def test_release(emitter, fake_store_release):
-    cmd = commands.core22.StoreReleaseCommand(None)
+    cmd = commands.StoreReleaseCommand(None)
 
     cmd.run(
         argparse.Namespace(
@@ -93,7 +93,7 @@ def test_release(emitter, fake_store_release):
 
 @pytest.mark.usefixtures("memory_keyring")
 def test_release_multiple_channels(emitter, fake_store_release):
-    cmd = commands.core22.StoreReleaseCommand(None)
+    cmd = commands.StoreReleaseCommand(None)
 
     cmd.run(
         argparse.Namespace(
@@ -120,7 +120,7 @@ def test_release_multiple_channels(emitter, fake_store_release):
 
 @pytest.mark.usefixtures("memory_keyring")
 def test_release_progressive(emitter, fake_store_release):
-    cmd = commands.core22.StoreReleaseCommand(None)
+    cmd = commands.StoreReleaseCommand(None)
 
     cmd.run(
         argparse.Namespace(
@@ -147,7 +147,7 @@ def test_release_progressive(emitter, fake_store_release):
 
 @pytest.mark.usefixtures("memory_keyring")
 def test_close(emitter, fake_store_close):
-    cmd = commands.core22.StoreCloseCommand(None)
+    cmd = commands.StoreCloseCommand(None)
 
     cmd.run(argparse.Namespace(name="test-snap", channel="edge"))
 
@@ -163,7 +163,7 @@ def test_close(emitter, fake_store_close):
 
 @pytest.mark.usefixtures("memory_keyring", "fake_store_get_account_info")
 def test_close_no_snap_id(emitter):
-    cmd = commands.core22.StoreCloseCommand(None)
+    cmd = commands.StoreCloseCommand(None)
 
     with pytest.raises(errors.SnapcraftError) as raised:
         cmd.run(argparse.Namespace(name="test-unknown-snap", channel="edge"))

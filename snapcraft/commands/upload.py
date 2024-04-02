@@ -20,7 +20,8 @@ import pathlib
 import textwrap
 from typing import TYPE_CHECKING, Any, List, Optional
 
-from craft_cli import BaseCommand, emit
+from craft_application.commands import AppCommand
+from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
 from overrides import overrides
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
@@ -53,7 +54,7 @@ class ComponentOption:
             raise ValueError("the `--component` format must be <name>=<path>")
 
 
-class StoreUploadCommand(BaseCommand):
+class StoreUploadCommand(AppCommand):
     """Upload a snap to the Snap Store."""
 
     name = "upload"

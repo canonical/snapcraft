@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,12 +16,6 @@
 
 """Snapcraft commands for core22 base."""
 
-from .account import (
-    StoreExportLoginCommand,
-    StoreLoginCommand,
-    StoreLogoutCommand,
-    StoreWhoAmICommand,
-)
 from .discovery import ListPluginsCommand, PluginsCommand
 from .extensions import (
     ExpandExtensionsCommand,
@@ -40,18 +34,7 @@ from .lifecycle import (
     TryCommand,
 )
 from .lint import LintCommand
-from .manage import StoreCloseCommand, StoreReleaseCommand
-from .names import StoreNamesCommand, StoreRegisterCommand
 from .remote import RemoteBuildCommand
-from .status import (
-    StoreListRevisionsCommand,
-    StoreListTracksCommand,
-    StoreRevisionsCommand,
-    StoreStatusCommand,
-    StoreTracksCommand,
-)
-from .upload import StoreUploadCommand
-from .validation_sets import StoreEditValidationSetsCommand
 
 __all__ = [
     "BuildCommand",
@@ -69,20 +52,5 @@ __all__ = [
     "RemoteBuildCommand",
     "SnapCommand",
     "StageCommand",
-    "StoreCloseCommand",
-    "StoreEditValidationSetsCommand",
-    "StoreExportLoginCommand",
-    "StoreListTracksCommand",
-    "StoreListRevisionsCommand",
-    "StoreLoginCommand",
-    "StoreLogoutCommand",
-    "StoreNamesCommand",
-    "StoreRegisterCommand",
-    "StoreReleaseCommand",
-    "StoreRevisionsCommand",
-    "StoreStatusCommand",
-    "StoreTracksCommand",
-    "StoreUploadCommand",
-    "StoreWhoAmICommand",
     "TryCommand",
 ]

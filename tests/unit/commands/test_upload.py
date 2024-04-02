@@ -7,7 +7,7 @@ import craft_cli.errors
 import pytest
 
 from snapcraft import cli, commands
-from snapcraft.commands.core22.upload import ComponentOption
+from snapcraft.commands.upload import ComponentOption
 from tests import unit
 
 ############
@@ -82,7 +82,7 @@ def component_file(data_path):
 @pytest.mark.usefixtures("memory_keyring")
 @pytest.mark.parametrize(
     "command_class",
-    (commands.core22.StoreUploadCommand, commands.legacy.StoreLegacyPushCommand),
+    (commands.StoreUploadCommand, commands.StoreLegacyPushCommand),
 )
 def test_default(
     emitter,
@@ -119,7 +119,7 @@ def test_default(
 @pytest.mark.usefixtures("memory_keyring")
 @pytest.mark.parametrize(
     "command_class",
-    (commands.core22.StoreUploadCommand, commands.legacy.StoreLegacyPushCommand),
+    (commands.StoreUploadCommand, commands.StoreLegacyPushCommand),
 )
 def test_built_at(
     emitter,
@@ -157,7 +157,7 @@ def test_built_at(
 def test_default_channels(
     emitter, fake_store_notify_upload, fake_store_verify_upload, snap_file
 ):
-    cmd = commands.core22.StoreUploadCommand(None)
+    cmd = commands.StoreUploadCommand(None)
 
     cmd.run(
         argparse.Namespace(
@@ -185,7 +185,7 @@ def test_default_channels(
 
 
 def test_invalid_file():
-    cmd = commands.core22.StoreUploadCommand(None)
+    cmd = commands.StoreUploadCommand(None)
 
     with pytest.raises(craft_cli.errors.ArgumentParsingError) as raised:
         cmd.run(

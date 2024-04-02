@@ -220,60 +220,60 @@ def create_app() -> Snapcraft:
     app.add_command_group(
         "Store Account",
         [
-            unimplemented.Login,
-            unimplemented.ExportLogin,
-            unimplemented.Logout,
-            unimplemented.Whoami,
+            commands.StoreExportLoginCommand,
+            commands.StoreLoginCommand,
+            commands.StoreLogoutCommand,
+            commands.StoreWhoAmICommand,
         ],
     )
     app.add_command_group(
         "Store Snap Names",
         [
-            unimplemented.Register,
-            unimplemented.Names,
-            unimplemented.ListRegistered,
-            unimplemented.List,
-            unimplemented.Metrics,
-            unimplemented.UploadMetadata,
+            commands.StoreRegisterCommand,
+            commands.StoreNamesCommand,
+            commands.StoreLegacyListRegisteredCommand,
+            commands.StoreLegacyListCommand,
+            commands.StoreLegacyMetricsCommand,
+            commands.StoreLegacyUploadMetadataCommand,
         ],
     )
     app.add_command_group(
         "Store Snap Release Management",
         [
-            unimplemented.Release,
-            unimplemented.Close,
-            unimplemented.Status,
-            unimplemented.Upload,
-            unimplemented.Push,
-            unimplemented.Promote,
-            unimplemented.ListRevisions,
-            unimplemented.Revisions,
+            commands.StoreReleaseCommand,
+            commands.StoreCloseCommand,
+            commands.StoreStatusCommand,
+            commands.StoreUploadCommand,
+            commands.StoreLegacyPushCommand,
+            commands.StoreLegacyPromoteCommand,
+            commands.StoreListRevisionsCommand,
+            commands.StoreRevisionsCommand,
         ],
     )
     app.add_command_group(
         "Store Snap Tracks",
         [
-            unimplemented.ListTracks,
-            unimplemented.Tracks,
-            unimplemented.SetDefaultTrack,
+            commands.StoreListTracksCommand,
+            commands.StoreTracksCommand,
+            commands.StoreLegacySetDefaultTrackCommand,
         ],
     )
     app.add_command_group(
         "Store Key Management",
         [
-            unimplemented.CreateKey,
-            unimplemented.RegisterKey,
-            unimplemented.SignBuild,
-            unimplemented.ListKeys,
+            commands.StoreLegacyCreateKeyCommand,
+            commands.StoreLegacyRegisterKeyCommand,
+            commands.StoreLegacySignBuildCommand,
+            commands.StoreLegacyListKeysCommand,
         ],
     )
     app.add_command_group(
         "Store Validation Sets",
         [
-            unimplemented.EditValidationSets,
-            unimplemented.ListValidationSets,
-            unimplemented.Validate,
-            unimplemented.Gated,
+            commands.StoreEditValidationSetsCommand,
+            commands.StoreLegacyListValidationSetsCommand,
+            commands.StoreLegacyValidateCommand,
+            commands.StoreLegacyGatedCommand,
         ],
     )
     app.add_command_group(

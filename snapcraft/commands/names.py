@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,7 +20,8 @@ import operator
 import textwrap
 from typing import TYPE_CHECKING
 
-from craft_cli import BaseCommand, emit
+from craft_application.commands import AppCommand
+from craft_cli import emit
 from overrides import overrides
 from tabulate import tabulate
 
@@ -57,7 +58,7 @@ _MESSAGE_REGISTER_SUCCESS = "Registered {!r}"
 _MESSAGE_REGISTER_NO = "Snap name {!r} not registered"
 
 
-class StoreRegisterCommand(BaseCommand):
+class StoreRegisterCommand(AppCommand):
     """Register a snap name with the Snap Store."""
 
     name = "register"
@@ -117,7 +118,7 @@ class StoreRegisterCommand(BaseCommand):
             emit.message(_MESSAGE_REGISTER_NO.format(snap_name))
 
 
-class StoreNamesCommand(BaseCommand):
+class StoreNamesCommand(AppCommand):
     """List the snap names registered with the current account."""
 
     name = "names"
