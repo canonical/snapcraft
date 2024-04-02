@@ -28,7 +28,6 @@ from snapcraft import __version__, linters, meta, models, pack, services
 from snapcraft.application import APP_METADATA
 from snapcraft.meta import ExtractedMetadata
 from snapcraft.parts import extract_metadata, update_metadata
-from snapcraft.services import Package
 
 
 @pytest.mark.usefixtures("default_factory")
@@ -384,7 +383,7 @@ def test_update_project_parse_info(
     )
 
     parse_info = {"my-part": ["file.metadata.xml"]}
-    package = Package(
+    package = services.Package(
         app=APP_METADATA,
         project=default_project,
         services=default_factory,
