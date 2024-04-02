@@ -19,6 +19,7 @@
 
 import gzip
 import logging
+import os
 import shutil
 import time
 from datetime import datetime, timedelta, timezone
@@ -266,7 +267,7 @@ class LaunchpadClient:
         try:
             return Launchpad.login_with(
                 f"{self._app_name} remote-build",
-                "production",
+                os.getenv("CRAFT_LAUNCHPAD_INSTANCE", "production"),
                 self._cache_dir,
                 credentials_file=str(self._credentials),
                 version="devel",

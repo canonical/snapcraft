@@ -119,6 +119,7 @@ def remote_build(
         snapcraft remote-build --status
         snapcraft remote-build --status --build-id snapcraft-my-snap-b98a6bd3
     """
+    echo.warning("legacy")
     project = get_project()
 
     if build_for:

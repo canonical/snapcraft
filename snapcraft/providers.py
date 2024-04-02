@@ -39,6 +39,7 @@ from snapcraft.utils import (
 )
 
 SNAPCRAFT_BASE_TO_PROVIDER_BASE = {
+    "core": bases.BuilddBaseAlias.XENIAL,
     "core18": bases.BuilddBaseAlias.BIONIC,
     "core20": bases.BuilddBaseAlias.FOCAL,
     "core22": bases.BuilddBaseAlias.JAMMY,
