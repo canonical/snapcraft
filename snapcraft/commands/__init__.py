@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,15 +17,79 @@
 """Snapcraft commands."""
 
 from . import core22, legacy
+from .account import (
+    StoreExportLoginCommand,
+    StoreLoginCommand,
+    StoreLogoutCommand,
+    StoreWhoAmICommand,
+)
 from .extensions import ExpandExtensions, ListExtensions
+from .legacy import (
+    StoreLegacyCreateKeyCommand,
+    StoreLegacyGatedCommand,
+    StoreLegacyListKeysCommand,
+    StoreLegacyListValidationSetsCommand,
+    StoreLegacyMetricsCommand,
+    StoreLegacyPromoteCommand,
+    StoreLegacyRegisterKeyCommand,
+    StoreLegacySetDefaultTrackCommand,
+    StoreLegacySignBuildCommand,
+    StoreLegacyUploadMetadataCommand,
+    StoreLegacyValidateCommand,
+)
 from .lifecycle import SnapCommand
+from .manage import StoreCloseCommand, StoreReleaseCommand
+from .names import (
+    StoreLegacyListCommand,
+    StoreLegacyListRegisteredCommand,
+    StoreNamesCommand,
+    StoreRegisterCommand,
+)
 from .remote import RemoteBuildCommand
+from .status import (
+    StoreListRevisionsCommand,
+    StoreListTracksCommand,
+    StoreRevisionsCommand,
+    StoreStatusCommand,
+    StoreTracksCommand,
+)
+from .upload import StoreLegacyPushCommand, StoreUploadCommand
+from .validation_sets import StoreEditValidationSetsCommand
 
 __all__ = [
-    "core22",
-    "legacy",
-    "SnapCommand",
-    "RemoteBuildCommand",
     "ExpandExtensions",
     "ListExtensions",
+    "RemoteBuildCommand",
+    "SnapCommand",
+    "StoreCloseCommand",
+    "StoreEditValidationSetsCommand",
+    "StoreExportLoginCommand",
+    "StoreLegacyCreateKeyCommand",
+    "StoreLegacyGatedCommand",
+    "StoreLegacyListCommand",
+    "StoreLegacyListKeysCommand",
+    "StoreLegacyListRegisteredCommand",
+    "StoreLegacyListValidationSetsCommand",
+    "StoreLegacyMetricsCommand",
+    "StoreLegacyPromoteCommand",
+    "StoreLegacyPushCommand",
+    "StoreLegacyRegisterKeyCommand",
+    "StoreLegacySetDefaultTrackCommand",
+    "StoreLegacySignBuildCommand",
+    "StoreLegacyUploadMetadataCommand",
+    "StoreLegacyValidateCommand",
+    "StoreListRevisionsCommand",
+    "StoreListTracksCommand",
+    "StoreLoginCommand",
+    "StoreLogoutCommand",
+    "StoreNamesCommand",
+    "StoreRegisterCommand",
+    "StoreReleaseCommand",
+    "StoreRevisionsCommand",
+    "StoreStatusCommand",
+    "StoreTracksCommand",
+    "StoreUploadCommand",
+    "StoreWhoAmICommand",
+    "core22",
+    "legacy",
 ]

@@ -62,60 +62,60 @@ COMMAND_GROUPS = [
     craft_cli.CommandGroup(
         "Store Account",
         [
-            commands.core22.StoreLoginCommand,
-            commands.core22.StoreExportLoginCommand,
-            commands.core22.StoreLogoutCommand,
-            commands.core22.StoreWhoAmICommand,
+            commands.StoreLoginCommand,
+            commands.StoreExportLoginCommand,
+            commands.StoreLogoutCommand,
+            commands.StoreWhoAmICommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Snap Names",
         [
-            commands.core22.StoreRegisterCommand,
-            commands.core22.StoreNamesCommand,
-            commands.legacy.StoreLegacyListRegisteredCommand,
-            commands.legacy.StoreLegacyListCommand,
-            commands.legacy.StoreLegacyMetricsCommand,
-            commands.legacy.StoreLegacyUploadMetadataCommand,
+            commands.StoreRegisterCommand,
+            commands.StoreNamesCommand,
+            commands.StoreLegacyListRegisteredCommand,
+            commands.StoreLegacyListCommand,
+            commands.StoreLegacyMetricsCommand,
+            commands.StoreLegacyUploadMetadataCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Snap Release Management",
         [
-            commands.core22.StoreReleaseCommand,
-            commands.core22.StoreCloseCommand,
-            commands.core22.StoreStatusCommand,
-            commands.core22.StoreUploadCommand,
-            commands.legacy.StoreLegacyPushCommand,  # hidden (legacy for upload)
-            commands.legacy.StoreLegacyPromoteCommand,
-            commands.core22.StoreListRevisionsCommand,
-            commands.core22.StoreRevisionsCommand,  # hidden (alias to list-revisions)
+            commands.StoreReleaseCommand,
+            commands.StoreCloseCommand,
+            commands.StoreStatusCommand,
+            commands.StoreUploadCommand,
+            commands.StoreLegacyPushCommand,  # hidden (legacy for upload)
+            commands.StoreLegacyPromoteCommand,
+            commands.StoreListRevisionsCommand,
+            commands.StoreRevisionsCommand,  # hidden (alias to list-revisions)
         ],
     ),
     craft_cli.CommandGroup(
         "Store Snap Tracks",
         [
-            commands.core22.StoreListTracksCommand,
-            commands.core22.StoreTracksCommand,  # hidden (alias to list-tracks)
-            commands.legacy.StoreLegacySetDefaultTrackCommand,
+            commands.StoreListTracksCommand,
+            commands.StoreTracksCommand,  # hidden (alias to list-tracks)
+            commands.StoreLegacySetDefaultTrackCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Key Management",
         [
-            commands.legacy.StoreLegacyCreateKeyCommand,
-            commands.legacy.StoreLegacyRegisterKeyCommand,
-            commands.legacy.StoreLegacySignBuildCommand,
-            commands.legacy.StoreLegacyListKeysCommand,
+            commands.StoreLegacyCreateKeyCommand,
+            commands.StoreLegacyRegisterKeyCommand,
+            commands.StoreLegacySignBuildCommand,
+            commands.StoreLegacyListKeysCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Validation Sets",
         [
-            commands.core22.StoreEditValidationSetsCommand,
-            commands.legacy.StoreLegacyListValidationSetsCommand,
-            commands.legacy.StoreLegacyValidateCommand,
-            commands.legacy.StoreLegacyGatedCommand,
+            commands.StoreEditValidationSetsCommand,
+            commands.StoreLegacyListValidationSetsCommand,
+            commands.StoreLegacyValidateCommand,
+            commands.StoreLegacyGatedCommand,
         ],
     ),
     craft_cli.CommandGroup(
