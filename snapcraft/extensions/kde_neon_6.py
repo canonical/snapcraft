@@ -222,11 +222,9 @@ class KDENeon6(Extension):
                     "XDG_DATA_DIRS": prepend_to_env(
                         "XDG_DATA_DIRS",
                         [
-                            f"$CRAFT_STAGE/usr/share:"
-                            f"/snap/{qt6_sdk_snap}"
-                            f"/current/usr/share:"
-                            f"/snap/{kf6_sdk_snap}"
-                            f"/current/usr/share",
+                            f"$CRAFT_STAGE/usr/share",
+                            f"/snap/{qt6_sdk_snap}/current/usr/share",
+                            f"/snap/{kf6_sdk_snap}/current/usr/share",
                             "/usr/share",
                         ],
                     ),
