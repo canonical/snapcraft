@@ -41,7 +41,7 @@ class SnapCommand(craft_application.commands.lifecycle.PackCommand):
     ) -> None:
         emit.progress(
             "Warning: the 'snap' command is deprecated and will be removed "
-            "in a future release of Snapcraft. Please use 'pack' instead.",
+            "in a future release of Snapcraft. Use 'pack' instead.",
             permanent=True,
         )
 
