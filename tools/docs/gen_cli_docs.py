@@ -99,7 +99,8 @@ def main(docs_dir):
         g = group_path.open("w")
 
         for cmd_class in sorted(group.commands, key=lambda c: c.name):
-            cmd = cmd_class({})
+            # craft-application.AppCommand require 'app' and 'services' in the config
+            cmd = cmd_class(config={"app": {}, "services": {}})
             p = _CustomArgumentParser(help_builder)
             cmd.fill_parser(p)
 

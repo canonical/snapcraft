@@ -26,6 +26,7 @@ from typing import Any
 
 import craft_application.commands as craft_app_commands
 import craft_cli
+import craft_parts
 from craft_application import Application, AppMetadata, util
 from craft_cli import emit
 from craft_parts.plugins.plugins import PluginType
@@ -127,6 +128,21 @@ class Snapcraft(Application):
         return config
 
     @override
+    def _setup_partitions(self, yaml_data: dict[str, Any]) -> list[str] | None:
+        components = models.ComponentProject.unmarshal(yaml_data)
+        if components.components is None:
+            return None
+
+        # Users of partitions need to manually enable them, in Snapcraft
+        # this is done dynamically depending on the existence of components.
+        # This is why we have the enablement after the check, if not
+        # we could have directly returned with .get_partitions() which
+        # handles the empty case.
+        craft_parts.Features(enable_partitions=True)
+
+        return components.get_partitions()
+
+    @override
     def _extra_yaml_transform(
         self, yaml_data: dict[str, Any], *, build_on: str, build_for: str | None
     ) -> dict[str, Any]:
@@ -204,60 +220,60 @@ def create_app() -> Snapcraft:
     app.add_command_group(
         "Store Account",
         [
-            unimplemented.Login,
-            unimplemented.ExportLogin,
-            unimplemented.Logout,
-            unimplemented.Whoami,
+            commands.StoreExportLoginCommand,
+            commands.StoreLoginCommand,
+            commands.StoreLogoutCommand,
+            commands.StoreWhoAmICommand,
         ],
     )
     app.add_command_group(
         "Store Snap Names",
         [
-            unimplemented.Register,
-            unimplemented.Names,
-            unimplemented.ListRegistered,
-            unimplemented.List,
-            unimplemented.Metrics,
-            unimplemented.UploadMetadata,
+            commands.StoreRegisterCommand,
+            commands.StoreNamesCommand,
+            commands.StoreLegacyListRegisteredCommand,
+            commands.StoreLegacyListCommand,
+            commands.StoreLegacyMetricsCommand,
+            commands.StoreLegacyUploadMetadataCommand,
         ],
     )
     app.add_command_group(
         "Store Snap Release Management",
         [
-            unimplemented.Release,
-            unimplemented.Close,
-            unimplemented.Status,
-            unimplemented.Upload,
-            unimplemented.Push,
-            unimplemented.Promote,
-            unimplemented.ListRevisions,
-            unimplemented.Revisions,
+            commands.StoreReleaseCommand,
+            commands.StoreCloseCommand,
+            commands.StoreStatusCommand,
+            commands.StoreUploadCommand,
+            commands.StoreLegacyPushCommand,
+            commands.StoreLegacyPromoteCommand,
+            commands.StoreListRevisionsCommand,
+            commands.StoreRevisionsCommand,
         ],
     )
     app.add_command_group(
         "Store Snap Tracks",
         [
-            unimplemented.ListTracks,
-            unimplemented.Tracks,
-            unimplemented.SetDefaultTrack,
+            commands.StoreListTracksCommand,
+            commands.StoreTracksCommand,
+            commands.StoreLegacySetDefaultTrackCommand,
         ],
     )
     app.add_command_group(
         "Store Key Management",
         [
-            unimplemented.CreateKey,
-            unimplemented.RegisterKey,
-            unimplemented.SignBuild,
-            unimplemented.ListKeys,
+            commands.StoreLegacyCreateKeyCommand,
+            commands.StoreLegacyRegisterKeyCommand,
+            commands.StoreLegacySignBuildCommand,
+            commands.StoreLegacyListKeysCommand,
         ],
     )
     app.add_command_group(
         "Store Validation Sets",
         [
-            unimplemented.EditValidationSets,
-            unimplemented.ListValidationSets,
-            unimplemented.Validate,
-            unimplemented.Gated,
+            commands.StoreEditValidationSetsCommand,
+            commands.StoreLegacyListValidationSetsCommand,
+            commands.StoreLegacyValidateCommand,
+            commands.StoreLegacyGatedCommand,
         ],
     )
     app.add_command_group(

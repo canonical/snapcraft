@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,7 +20,8 @@ import pathlib
 import textwrap
 from typing import TYPE_CHECKING, List, Optional
 
-from craft_cli import BaseCommand, emit
+from craft_application.commands import AppCommand
+from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
 from overrides import overrides
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
@@ -32,7 +33,7 @@ if TYPE_CHECKING:
     import argparse
 
 
-class StoreUploadCommand(BaseCommand):
+class StoreUploadCommand(AppCommand):
     """Upload a snap to the Snap Store."""
 
     name = "upload"

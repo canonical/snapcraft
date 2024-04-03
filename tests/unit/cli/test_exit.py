@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -31,7 +31,7 @@ def test_no_keyring_error(capsys, mocker):
     mocker.patch.object(sys, "argv", ["cmd", "whoami"])
     mocker.patch.object(sys.stdin, "isatty", return_value=True)
     mock_version_cmd = mocker.patch(
-        "snapcraft.commands.core22.account.StoreWhoAmICommand.run",
+        "snapcraft.commands.account.StoreWhoAmICommand.run",
         side_effect=craft_store.errors.NoKeyringError,
     )
 
