@@ -20,7 +20,6 @@ from pathlib import Path
 import pydantic
 import pytest
 import yaml
-
 from craft_application.models import SummaryStr, VersionStr
 
 from snapcraft import models
