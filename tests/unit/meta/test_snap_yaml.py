@@ -21,6 +21,8 @@ import pydantic
 import pytest
 import yaml
 
+from craft_application.models import SummaryStr, VersionStr
+
 from snapcraft import models
 from snapcraft.meta import snap_yaml
 from snapcraft.meta.snap_yaml import ContentPlug, ContentSlot, SnapMetadata
@@ -1334,10 +1336,10 @@ def test_no_links(simple_project):
 def test_component_metadata_from_component():
     """Create a ComponentMetadata from a Component."""
     component = models.Component(
-        summary="test",
+        summary=SummaryStr("test"),
         description="test",
         type="test",
-        version="1.0",
+        version=VersionStr("1.0"),
     )
 
     metadata = snap_yaml.ComponentMetadata.from_component(component)
