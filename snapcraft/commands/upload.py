@@ -18,7 +18,7 @@
 
 import pathlib
 import textwrap
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
@@ -27,6 +27,7 @@ from overrides import overrides
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
 from snapcraft import errors, store, utils
+from snapcraft.meta import SnapMetadata
 from snapcraft_legacy._store import get_data_from_snap_file
 
 if TYPE_CHECKING:
@@ -113,13 +114,14 @@ class StoreUploadCommand(AppCommand):
         client = store.StoreClientCLI()
 
         snap_yaml, manifest_yaml = get_data_from_snap_file(snap_file)
-        snap_name = snap_yaml["name"]
+        snap_metadata = SnapMetadata.unmarshal(snap_yaml)
+        snap_name = snap_metadata.name
         built_at = None
         if manifest_yaml:
             built_at = manifest_yaml.get("snapcraft-started-at")
 
         components = parsed_args.component
-        _validate_components(components, snap_yaml)
+        _validate_components(components, snap_metadata)
 
         client.verify_upload(snap_name=snap_name)
 
@@ -152,7 +154,7 @@ class StoreUploadCommand(AppCommand):
 
 
 def _validate_components(
-    provided_components: list[ComponentOption], snap_yaml: dict[str, Any]
+    provided_components: list[ComponentOption], snap_metadata: SnapMetadata
 ) -> None:
     """Validate component data.
 
@@ -161,7 +163,7 @@ def _validate_components(
      - All component files exist.
 
     :param provided_components: A list of ComponentOptions provided by the user.
-    :param snap_yaml: The snap's metadata.
+    :param snap_metadata: The snap's metadata.
     """
     # get the names of the components provided by the user
     provided_names = {
@@ -169,8 +171,8 @@ def _validate_components(
     }
     emit.debug(f"Components provided by the user: {provided_names}")
 
-    if "components" in snap_yaml:
-        expected_names = set(snap_yaml["components"].keys())
+    if snap_metadata.components:
+        expected_names = set(snap_metadata.components.keys())
         emit.debug(f"Components found in snap metadata: {expected_names}")
     else:
         expected_names = set()
