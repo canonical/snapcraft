@@ -18,6 +18,7 @@
 
 import pathlib
 import textwrap
+from collections import abc
 from typing import TYPE_CHECKING, List, Optional
 
 from craft_application.commands import AppCommand
@@ -154,7 +155,7 @@ class StoreUploadCommand(AppCommand):
 
 
 def _validate_components(
-    provided_components: list[ComponentOption], snap_metadata: SnapMetadata
+    provided_components: abc.Collection[ComponentOption], snap_metadata: SnapMetadata
 ) -> None:
     """Validate component data.
 

@@ -242,6 +242,11 @@ class ComponentMetadata(SnapcraftMetadata):  # type: ignore # (pydantic plugin i
 
         extra = pydantic.Extra.ignore
 
+    @classmethod
+    def from_component(cls, component: models.Component) -> "ComponentMetadata":
+        """Create a ComponentMetadata model from a Component model."""
+        return cls.unmarshal(component.marshal())
+
 
 class SnapMetadata(SnapcraftMetadata):
     """The snap.yaml model.
@@ -595,6 +600,6 @@ def _process_components(
         return None
 
     return {
-        name: ComponentMetadata.unmarshal(data.marshal())
+        name: ComponentMetadata.from_component(data)
         for name, data in components.items()
     }
