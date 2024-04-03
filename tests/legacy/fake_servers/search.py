@@ -65,8 +65,8 @@ class FakeStoreSearchServer(base.BaseFakeServer):
         snap = request.matchdict["snap"]
         # tests/legacy/data/test-snap.snap
         test_sha3_384 = (
-            "8c0118831680a22090503ee5db98c88dd90ef551d80fc816"
-            "dec968f60527216199dacc040cddfe5cec6870db836cb908"
+            "81ed198c357e9efa960283939d8bbcd618acd90f76effbce"
+            "28daed467acb97567b0987740c70dc48c1f639b44d32452b"
         )
         revision = "10000"
         confinement = "strict"
