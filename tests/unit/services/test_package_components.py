@@ -37,6 +37,18 @@ def extra_project_params(extra_project_params):
             "summary": SummaryStr("first component"),
             "description": "lorem ipsum",
             "version": VersionStr("1.0"),
+            "hooks": {
+                "install": {
+                    "command-chain": ["test"],
+                    "environment": {
+                        "test-variable-1": "test",
+                        "test-variable-2": "test",
+                    },
+                    "plugs": ["home", "network"],
+                    "passthrough": {"somefield": ["some", "value"]},
+                },
+                "post-refresh": {},
+            },
         },
         "secondcomponent": {
             "type": "test",
@@ -133,6 +145,21 @@ def test_write_metadata(
             summary: first component
             description: lorem ipsum
             type: test
+            hooks:
+              install:
+                command-chain:
+                - test
+                environment:
+                  test-variable-1: test
+                  test-variable-2: test
+                plugs:
+                - home
+                - network
+                passthrough:
+                  somefield:
+                  - some
+                  - value
+              post-refresh: {}
           secondcomponent:
             summary: second component
             description: lorem ipsum
