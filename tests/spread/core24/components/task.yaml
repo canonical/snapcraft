@@ -19,7 +19,7 @@ execute: |
   fi
 
   # assert snap metadata
-  if ! diff snap-contents/meta/snap.yaml expected-snap.yaml; then
+  if ! diff -u snap-contents/meta/snap.yaml expected-snap.yaml; then
     echo "Metadata for the snap is incorrect."
     exit 1
   fi
@@ -44,7 +44,7 @@ execute: |
   fi
   
   # assert contents of component metadata
-  if ! diff component-contents/meta/component.yaml expected-component.yaml; then
+  if ! diff -u component-contents/meta/component.yaml expected-component.yaml; then
     echo "Metadata for the share component is incorrect."
     exit 1
   fi
