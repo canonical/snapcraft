@@ -281,16 +281,11 @@ class LaunchpadClient:
 
     def get_git_https_url(self, token: Optional[str] = None) -> str:
         """Get url for launchpad repository."""
+        lp_domain = self._lp._root_uri.host[4:]
         if token:
-            return (
-                f"https://{self._lp_user}:{token}@git.launchpad.net/"
-                f"~{self._lp_user}/+git/{self._lp_name}/"
-            )
-
-        return (
-            f"https://{self._lp_user}@git.launchpad.net/"
-            f"~{self._lp_user}/+git/{self._lp_name}/"
-        )
+            return f"https://{self._lp_user}:{token}@git.{lp_domain}/~{self._lp_user}/+git/{self._lp_name}/"
+        else:
+            return f"https://{self._lp_user}@git.{lp_domain}/~{self._lp_user}/+git/{self._lp_name}/"
 
     def _create_git_repository(self, force=False) -> Entry:
         """Create git repository."""
