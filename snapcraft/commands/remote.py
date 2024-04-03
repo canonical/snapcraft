@@ -175,8 +175,6 @@ class RemoteBuildCommand(ExtensibleCommand):
 
         emit.trace(f"Project directory: {project_dir}")
 
-        # breakpoint()
-
         possible_build_plan = filter_plan(
             self._app.BuildPlannerClass.unmarshal(project.marshal()).get_build_plan(),
             platform=parsed_args.platform,
