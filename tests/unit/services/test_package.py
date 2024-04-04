@@ -201,6 +201,7 @@ def project_hooks_dir(new_dir, request):
 def test_write_metadata_with_project_hooks(
     package_service, default_factory, default_build_plan, new_dir, project_hooks_dir
 ):
+    work_dir = new_dir / "work"
     if "build-aux" in str(project_hooks_dir):
         # /build-aux cannot co-exist with /snap
         shutil.move(new_dir / "snap" / "snapcraft.yaml", new_dir)
@@ -208,7 +209,7 @@ def test_write_metadata_with_project_hooks(
 
     default_factory.set_kwargs(
         "lifecycle",
-        work_dir=Path("work"),
+        work_dir=work_dir,
         cache_dir=new_dir,
         build_plan=default_build_plan,
     )
@@ -216,7 +217,7 @@ def test_write_metadata_with_project_hooks(
     (project_hooks_dir / "configure").write_text("configure_hook")
     (project_hooks_dir / "install").write_text("install_hook")
 
-    prime_dir = new_dir / "prime"
+    prime_dir = work_dir / "prime"
     meta_dir = prime_dir / "meta"
 
     package_service.write_metadata(prime_dir)
@@ -254,14 +255,15 @@ def test_write_metadata_with_built_hooks(
     default_build_plan,
     new_dir,
 ):
+    work_dir = new_dir / "work"
     default_factory.set_kwargs(
         "lifecycle",
-        work_dir=Path("work"),
+        work_dir=work_dir,
         cache_dir=new_dir,
         build_plan=default_build_plan,
     )
     # Create some hooks
-    prime_dir = new_dir / "prime"
+    prime_dir = work_dir / "prime"
     built_hooks_dir = prime_dir / "snap" / "hooks"
     built_hooks_dir.mkdir(parents=True)
     (built_hooks_dir / "configure").write_text("configure_hook")
@@ -303,9 +305,10 @@ def test_write_metadata_with_project_gui(
     default_build_plan,
     new_dir,
 ):
+    work_dir = new_dir / "work"
     default_factory.set_kwargs(
         "lifecycle",
-        work_dir=Path("work"),
+        work_dir=work_dir,
         cache_dir=new_dir,
         build_plan=default_build_plan,
     )
@@ -315,7 +318,7 @@ def test_write_metadata_with_project_gui(
     (project_gui_dir / "default.default.desktop").write_text("desktop_file")
     (project_gui_dir / "icon.png").write_text("package_png_icon")
 
-    prime_dir = new_dir / "prime"
+    prime_dir = work_dir / "prime"
     meta_dir = prime_dir / "meta"
 
     package_service.write_metadata(prime_dir)

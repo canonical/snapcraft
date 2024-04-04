@@ -356,7 +356,7 @@ def _generate_metadata(
         project,
         assets_dir=assets_dir,
         project_dir=project_dir,
-        prime_dir=lifecycle.prime_dir,
+        prime_dirs=lifecycle.prime_dirs,
     )
 
     emit.progress("Generating snap metadata...")

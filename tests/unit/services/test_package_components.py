@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Tests for Components in Snapcraft's Package service."""
+import shutil
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import call
@@ -39,7 +40,7 @@ def extra_project_params(extra_project_params):
             "version": VersionStr("1.0"),
             "hooks": {
                 "install": {
-                    "command-chain": ["test"],
+                    "command-chain": ["test-command-chain"],
                     "environment": {
                         "test-variable-1": "test",
                         "test-variable-2": "test",
@@ -59,6 +60,13 @@ def extra_project_params(extra_project_params):
     }
 
     return extra_project_params
+
+
+@pytest.fixture(params=["snap", "build-aux/snap"])
+def project_assets_dir(new_dir, request):
+    assets_dir = new_dir / request.param
+    assets_dir.mkdir(parents=True)
+    yield assets_dir
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
@@ -111,10 +119,37 @@ def test_pack(package_service, lifecycle_service, mocker):
 @pytest.mark.usefixtures("enable_partitions_feature")
 @pytest.mark.usefixtures("default_project")
 def test_write_metadata(
+    project_assets_dir,
     package_service,
     lifecycle_service,
     new_dir,
 ):
+    # create an executable to run via the command-chain
+    command_chain_exe = (
+        new_dir
+        / "work"
+        / "partitions"
+        / "component"
+        / "firstcomponent"
+        / "prime"
+        / "test-command-chain"
+    )
+    command_chain_exe.parent.mkdir(parents=True)
+    command_chain_exe.touch()
+    command_chain_exe.chmod(0o755)
+
+    if "build-aux" in str(project_assets_dir):
+        # /build-aux cannot co-exist with /snap
+        shutil.move(new_dir / "snap" / "snapcraft.yaml", new_dir)
+        shutil.rmtree(new_dir / "snap")
+
+    # Create some hooks
+    (project_assets_dir / "component/firstcomponent/hooks").mkdir(parents=True)
+    (project_assets_dir / "component/firstcomponent/hooks/install").write_text(
+        "install_hook"
+    )
+    (project_assets_dir / "post-refresh").write_text("post-refresh")
+
     # the ServiceFactory will try to start up its own lifecycle if
     # we do not set it up ourselves
     lifecycle_service.setup()
@@ -148,7 +183,7 @@ def test_write_metadata(
             hooks:
               install:
                 command-chain:
-                - test
+                - test-command-chain
                 environment:
                   test-variable-1: test
                   test-variable-2: test

@@ -37,7 +37,7 @@ def setup_assets(
     *,
     assets_dir: Path,
     project_dir: Path,
-    prime_dir: Path,
+    prime_dirs: dict[str | None, Path],
     meta_directory_handler: Optional[Callable[[Path, Path], None]] = None,
 ) -> None:
     """Copy assets to the appropriate locations in the snap filesystem.
@@ -45,17 +45,30 @@ def setup_assets(
     :param project: The snap project file.
     :param assets_dir: The directory containing snap project assets.
     :param project_dir: The project root directory.
-    :param prime_dir: The directory containing the content to be snapped.
+    :param prime_dirs: A mapping of component names to prime directories. 'None' should
+        map to the default prime directory.
     :param meta_directory_handler: callback that overrides default behavior for
         handling hooks and gui. The arguments passed are assets_dir and prime_dir.
     """
+    prime_dir = prime_dirs[None]
     meta_dir = prime_dir / "meta"
     gui_dir = meta_dir / "gui"
     gui_dir.mkdir(parents=True, exist_ok=True)
 
     copy_assets(assets_dir, prime_dir, meta_directory_handler)
-
     setup_hooks(project.hooks, prime_dir)
+
+    # core22 doesn't provide a meta_directory_handler, which means that core22 component
+    # hooks would be handled like core22 snap hooks (with hook wrappers).
+    # This behavior is not desired, so component hooks are currently ignored for core22.
+    if project.components and project.get_effective_base() != "core22":
+        for component_name, component in project.components.items():
+            copy_assets(
+                assets_dir / "component" / component_name,
+                prime_dirs[component_name],
+                meta_directory_handler,
+            )
+            setup_hooks(component.hooks, prime_dirs[component_name])
 
     if project.type == "gadget":
         gadget_yaml = project_dir / "gadget.yaml"
@@ -206,7 +219,7 @@ def _find_icon_file(assets_dir: Path) -> Optional[Path]:
 def _validate_command_chain(
     command_chain: List[str], *, name: str, prime_dir: Path
 ) -> None:
-    """Verify if each item in the command chain is executble."""
+    """Verify if each item in the command chain is executable."""
     for item in command_chain:
         executable_path = prime_dir / item
 

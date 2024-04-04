@@ -164,7 +164,7 @@ class Package(PackageService):
             self._project,
             assets_dir=assets_dir,
             project_dir=self._services.lifecycle.project_info.project_dir,
-            prime_dir=path,
+            prime_dirs=lifecycle_service.prime_dirs,
             meta_directory_handler=meta_directory_handler,
         )
 
