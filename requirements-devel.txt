@@ -14,7 +14,7 @@ coverage==7.4.4
 craft-application @ git+https://github.com/canonical/craft-application.git@CRAFT-2630-all-grammar
 craft-archives==1.1.3
 craft-cli==2.5.1
-craft-grammar==1.1.2
+craft-grammar @ git+https://github.com/canonical/craft-grammar.git@CRAFT-2656-more-types
 craft-parts==1.29.0
 craft-providers==1.23.1
 craft-store==2.6.1

@@ -24,7 +24,7 @@ parts:
     - on amd64 to arm64: src/on-amd64-to-arm64
     organize:
     - on amd64 to amd64:
-      "hello-world.sh": "hello-world-amd64.sh"
+      hello-world.sh: hello-world-amd64.sh
     - on amd64 to arm64:
-      "hello-world.sh": "hello-world-arm64.sh"
+      hello-world.sh: hello-world-arm64.sh
 

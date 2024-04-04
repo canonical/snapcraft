@@ -99,7 +99,7 @@ install_requires = [
     "craft-application @ git+https://github.com/canonical/craft-application.git@CRAFT-2630-all-grammar",
     "craft-archives",
     "craft-cli",
-    "craft-grammar",
+    "craft-grammar @ git+https://github.com/canonical/craft-grammar.git@CRAFT-2656-more-types",
     "craft-parts",
     "craft-providers",
     "craft-store",
