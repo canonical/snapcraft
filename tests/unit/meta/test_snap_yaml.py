@@ -16,11 +16,12 @@
 
 import textwrap
 from pathlib import Path
+from typing import cast
 
 import pydantic
 import pytest
 import yaml
-from craft_application.models import SummaryStr, VersionStr
+from craft_application.models import SummaryStr, UniqueStrList, VersionStr
 
 from snapcraft import models
 from snapcraft.meta import snap_yaml
@@ -1369,6 +1370,14 @@ def test_component_metadata_from_component():
         description="test",
         type="test",
         version=VersionStr("1.0"),
+        hooks={
+            "install": models.Hook(
+                plugs=cast(UniqueStrList, ["home", "network"]),
+                command_chain=["test"],
+                environment={"test-variable-1": "test", "test-variable-2": "test"},
+                passthrough={"somefield": ["some", "value"]},
+            )
+        },
     )
 
     metadata = snap_yaml.ComponentMetadata.from_component(component)
@@ -1376,3 +1385,4 @@ def test_component_metadata_from_component():
     assert metadata.summary == component.summary
     assert metadata.description == component.description
     assert metadata.type == component.type
+    assert metadata.hooks == component.hooks
