@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -52,31 +52,10 @@ def setup_assets(
     meta_dir = prime_dir / "meta"
     gui_dir = meta_dir / "gui"
     gui_dir.mkdir(parents=True, exist_ok=True)
-    hooks_dir = meta_dir / "hooks"
 
-    if meta_directory_handler:
-        meta_directory_handler(assets_dir, prime_dir)
-    else:
-        _write_snap_directory(
-            assets_dir=assets_dir, prime_dir=prime_dir, meta_dir=meta_dir
-        )
-        # create wrappers for hooks in the snap/hooks directory
-        _create_hook_wrappers(prime_dir)
+    copy_assets(assets_dir, prime_dir, meta_directory_handler)
 
-    # hooks with command chains will execute the command chain instead of the hook wrapper
-    if project.hooks:
-        for hook_name, hook in project.hooks.items():
-            if hook.command_chain:
-                _validate_command_chain(
-                    hook.command_chain, name=f"hook {hook_name!r}", prime_dir=prime_dir
-                )
-            _ensure_hook(meta_dir / "hooks" / hook_name)
-
-    # Ensure all hooks are executable
-    if hooks_dir.is_dir():
-        for hook in hooks_dir.iterdir():  # type: ignore
-            # mypy says we are passing a Hook, but this is indeed a Path
-            _ensure_hook_executable(hook)  # type: ignore
+    setup_hooks(project.hooks, prime_dir)
 
     if project.type == "gadget":
         gadget_yaml = project_dir / "gadget.yaml"
@@ -117,6 +96,51 @@ def setup_assets(
                 prime_dir=prime_dir,
             )
             desktop_file.write(gui_dir=gui_dir, icon_path=relative_icon_path)
+
+
+def copy_assets(
+    assets_dir: Path,
+    prime_dir: Path,
+    meta_directory_handler: Optional[Callable[[Path, Path], None]] = None,
+) -> None:
+    """Copy assets into the prime dir.
+
+    :param assets_dir: The directory containing snap project assets.
+    :param prime_dir: The directory containing the content to be snapped.
+    :param meta_directory_handler: callback that overrides default behavior for
+        handling hooks and gui. The arguments passed are assets_dir and prime_dir.
+    """
+    if meta_directory_handler:
+        meta_directory_handler(assets_dir, prime_dir)
+    else:
+        _write_snap_directory(
+            assets_dir=assets_dir, prime_dir=prime_dir, meta_dir=prime_dir / "meta"
+        )
+        # create wrappers for hooks in the snap/hooks directory
+        _create_hook_wrappers(prime_dir)
+
+
+def setup_hooks(hooks: dict[str, models.Hook] | None, prime_dir: Path) -> None:
+    """Set up hooks assets.
+
+    :param hooks: A dictionary of hooks to set up.
+    :param prime_dir: The prime directory where the hooks should be set up.
+    """
+    hooks_dir = prime_dir / "meta" / "hooks"
+
+    if hooks:
+        for hook_name, hook in hooks.items():
+            if hook.command_chain:
+                _validate_command_chain(
+                    hook.command_chain, name=f"hook {hook_name!r}", prime_dir=prime_dir
+                )
+            _ensure_hook(hooks_dir / hook_name)
+
+    # Ensure all hooks are executable
+    if hooks_dir.is_dir():
+        for hook in hooks_dir.iterdir():  # type: ignore
+            # mypy says we are passing a Hook, but this is indeed a Path
+            _ensure_hook_executable(hook)  # type: ignore
 
 
 def _finalize_icon(
