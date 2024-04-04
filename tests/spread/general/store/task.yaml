@@ -55,7 +55,7 @@ execute: |
   cd "$SNAP"
   snap_file=$(ls ./*.snap)
   foo_component_file=$(ls ./test-snapcraft*+foo_1.0.comp)
-  bar_component_file=$(ls ./test-snapcraft*+bar_1.0.comp)
+  bar_component_file=$(ls ./test-snapcraft*+bar-baz_1.0.comp)
   snap_name=$(grep "name: " snapcraft.yaml | sed -e "s/name: \(.*$\)/\1/")
 
   # Login mechanism
@@ -71,7 +71,7 @@ execute: |
   snapcraft list
 
   # Push and Release
-  snapcraft upload "${snap_file}" --release edge --component "foo=${foo_component_file}" --component "bar=${bar_component_file}"
+  snapcraft upload "${snap_file}" --release edge --component "foo=${foo_component_file}" --component "bar-baz=${bar_baz_component_file}"
 
   # Show revisions
   snapcraft list-revisions "${snap_name}"
