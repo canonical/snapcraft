@@ -15,33 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Snapcraft Lifecycle Service."""
 
-from collections.abc import Collection
-from typing import Any
 
 from craft_application import launchpad
 from craft_application.services import remotebuild
-from overrides import override
 
 
 class RemoteBuild(remotebuild.RemoteBuildService):
     """Snapcraft remote build service."""
 
     RecipeClass = launchpad.models.SnapRecipe
-
-    @override
-    def _new_recipe(
-        self,
-        name: str,
-        repository: launchpad.models.GitRepository,
-        architectures: Collection[str] | None = None,
-        **_: Any,  # noqa: ANN401
-    ) -> launchpad.models.Recipe:
-        """Create a new recipe."""
-        return launchpad.models.SnapRecipe.new(
-            self.lp,
-            name,
-            self.lp.username,
-            architectures=architectures,
-            project=self._lp_project.name,
-            git_ref=repository.git_https_url,
-        )
