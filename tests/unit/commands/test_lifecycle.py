@@ -101,6 +101,6 @@ def test_snap_command_fallback(tmp_path, emitter, mocker, fake_services):
     mock_pack.assert_called_once()
     emitter.assert_progress(
         "Warning: the 'snap' command is deprecated and will be removed "
-        "in a future release of Snapcraft. Please use 'pack' instead.",
+        "in a future release of Snapcraft. Use 'pack' instead.",
         permanent=True,
     )
