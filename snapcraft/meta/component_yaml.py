@@ -25,7 +25,11 @@ from snapcraft.errors import SnapcraftError
 
 
 class ComponentMetadata(BaseMetadata):
-    """The component.yaml model."""
+    """The component.yaml model.
+
+    Component hooks are not included in the component's metadata.
+    Instead, they are included in the snap's metadata.
+    """
 
     component: str
     type: str
