@@ -20,7 +20,9 @@ from pathlib import Path
 import pydantic
 import pytest
 import yaml
+from craft_application.models import SummaryStr, VersionStr
 
+from snapcraft import models
 from snapcraft.meta import snap_yaml
 from snapcraft.meta.snap_yaml import ContentPlug, ContentSlot, SnapMetadata
 from snapcraft.models import Project
@@ -409,6 +411,18 @@ def complex_project():
             bind: $SNAP/gnome-platform/usr/share/xml/iso-codes
 
         provenance: test-provenance-1
+
+        components:
+          component-a:
+            summary: test
+            description: test
+            type: test
+            version: "1.0"
+          component-b:
+            summary: test
+            description: test
+            type: test
+            version: "2.0"
         """
     )
     data = yaml.safe_load(snapcraft_yaml)
@@ -539,6 +553,15 @@ def test_complex_snap_yaml(complex_project, new_dir):
           snap_aziotdu:
             scope: shared
         provenance: test-provenance-1
+        components:
+          component-a:
+            summary: test
+            description: test
+            type: test
+          component-b:
+            summary: test
+            description: test
+            type: test
         """
     )
 
@@ -1307,3 +1330,19 @@ def test_no_links(simple_project):
     links = snap_yaml.Links.from_project(project)
 
     assert bool(links) is False
+
+
+def test_component_metadata_from_component():
+    """Create a ComponentMetadata from a Component."""
+    component = models.Component(
+        summary=SummaryStr("test"),
+        description="test",
+        type="test",
+        version=VersionStr("1.0"),
+    )
+
+    metadata = snap_yaml.ComponentMetadata.from_component(component)
+
+    assert metadata.summary == component.summary
+    assert metadata.description == component.description
+    assert metadata.type == component.type

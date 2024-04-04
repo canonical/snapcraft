@@ -128,6 +128,15 @@ def test_write_metadata(
         environment:
           LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+        components:
+          firstcomponent:
+            summary: first component
+            description: lorem ipsum
+            type: test
+          secondcomponent:
+            summary: second component
+            description: lorem ipsum
+            type: test
     """
     )
 

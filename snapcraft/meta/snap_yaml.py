@@ -224,6 +224,30 @@ class Links(SnapcraftMetadata):
         )
 
 
+class ComponentMetadata(SnapcraftMetadata):  # type: ignore # (pydantic plugin is crashing)
+    """Component metadata model.
+
+    This model contains different information than the model in the
+    `component_yaml` module. For example, version and architecture metadata
+    is not included.
+    """
+
+    summary: SummaryStr
+    description: str
+    type: str
+
+    @override
+    class Config(BaseMetadata.Config):
+        """Ignore extra parameters in component metadata."""
+
+        extra = pydantic.Extra.ignore
+
+    @classmethod
+    def from_component(cls, component: models.Component) -> "ComponentMetadata":
+        """Create a ComponentMetadata model from a Component model."""
+        return cls.unmarshal(component.marshal())
+
+
 class SnapMetadata(SnapcraftMetadata):
     """The snap.yaml model.
 
@@ -257,6 +281,7 @@ class SnapMetadata(SnapcraftMetadata):
     system_usernames: Optional[Dict[str, Any]]
     provenance: Optional[str]
     links: Optional[Links]
+    components: Optional[Dict[str, ComponentMetadata]]
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "SnapMetadata":
@@ -454,6 +479,7 @@ def get_metadata_from_project(
         project.environment, prime_dir, arch_triplet, project.confinement
     )
     version = process_version(project.version)
+    components = _process_components(project.components)
 
     # project provided assumes and computed assumes
     total_assumes = sorted(project.assumes + list(assumes))
@@ -483,6 +509,7 @@ def get_metadata_from_project(
         system_usernames=project.system_usernames,
         provenance=project.provenance,
         links=links if links else None,
+        components=components,
     )
     if project.passthrough:
         for name, value in project.passthrough.items():
@@ -558,3 +585,21 @@ def _populate_environment(
         del environment["PATH"]
 
     return environment if environment else None
+
+
+def _process_components(
+    components: Dict[str, models.Component] | None
+) -> Dict[str, ComponentMetadata] | None:
+    """Convert Components from a project to ComponentMetadata for a snap.yaml.
+
+    :param components: Component data from a project model.
+
+    :returns: A dictionary of ComponentMetadata or None if no components are defined.
+    """
+    if not components:
+        return None
+
+    return {
+        name: ComponentMetadata.from_component(data)
+        for name, data in components.items()
+    }
