@@ -27,7 +27,7 @@ jobs:
           sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
 
   integration-spread-tests:
-    runs-on: self-hosted
+    runs-on: [self-hosted, jammy, x64]
     needs: build
     strategy:
       # FIXME: enable fail-fast mode once spread can cancel an executing job.
@@ -70,7 +70,7 @@ jobs:
           done
 
   integration-spread-tests-store:
-    runs-on: self-hosted
+    runs-on: [self-hosted, jammy, x64]
     needs: build
     strategy:
       # FIXME: enable fail-fast mode once spread can cancel an executing job.

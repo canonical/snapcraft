@@ -26,7 +26,7 @@ jobs:
           sudo snap install --dangerous --classic ${{ steps.snapcraft.outputs.snap }}
 
   kernel-plugins:
-    runs-on: self-hosted
+    runs-on: [self-hosted, jammy, x64]
     needs: [snap-build]
     strategy:
       fail-fast: false
@@ -52,7 +52,7 @@ jobs:
           spread google:ubuntu-22.04-64:tests/spread/plugins/${{ matrix.type }}/kernel
 
   remote-build-core24:
-    runs-on: self-hosted
+    runs-on: [self-hosted, jammy, x64]
     needs: [snap-build]
     strategy:
       fail-fast: false
@@ -81,7 +81,7 @@ jobs:
           spread google:${{ matrix.system }}:tests/spread/core24/remote-build
 
   remote-build:
-    runs-on: self-hosted
+    runs-on: [self-hosted, jammy, x64]
     needs: [snap-build]
     strategy:
       fail-fast: false
