@@ -18,3 +18,8 @@ components:
     summary: Hello World
     description: Hello World
     type: test
+    hooks:
+      install:
+        plugs:
+        - home
+        - network
