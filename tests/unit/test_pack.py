@@ -344,14 +344,17 @@ def test_pack_component_error(fake_process, new_dir):
         ["snap", "pack", str(new_dir / "in"), str(new_dir / "out")],
         returncode=1,
     )
-
-    with pytest.raises(errors.SnapcraftError) as raised:
-        pack.pack_component(
-            directory=new_dir / "in",
-            output_dir=new_dir / "out",
-        )
-
-    assert raised.value.resolution == (
-        "Packing components is experimental and requires `snapd` "
-        "to be installed from the `latest/edge` channel."
+    fake_process.register_subprocess(
+        ["snap", "refresh", "--beta", "snapd"],
     )
+    fake_process.register_subprocess(
+        ["snap", "pack", str(new_dir / "in"), str(new_dir / "out")],
+        stdout="built: my-snap+component_1.0.comp",
+    )
+
+    name = pack.pack_component(
+        directory=new_dir / "in",
+        output_dir=new_dir / "out",
+    )
+
+    assert name == "my-snap+component_1.0.comp"

@@ -19,7 +19,8 @@
 import textwrap
 from typing import TYPE_CHECKING
 
-from craft_cli import BaseCommand, emit
+from craft_application.commands import AppCommand
+from craft_cli import emit
 from overrides import overrides
 
 from snapcraft import store, utils
@@ -28,7 +29,7 @@ if TYPE_CHECKING:
     import argparse
 
 
-class StoreReleaseCommand(BaseCommand):
+class StoreReleaseCommand(AppCommand):
     """Release a snap in the Snap Store."""
 
     name = "release"
@@ -107,7 +108,7 @@ class StoreReleaseCommand(BaseCommand):
         )
 
 
-class StoreCloseCommand(BaseCommand):
+class StoreCloseCommand(AppCommand):
     """Close a channel for a snap in the Snap Store."""
 
     name = "close"

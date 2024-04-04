@@ -112,6 +112,7 @@ def test_metadata(
         system_usernames=None,
         provenance=None,
         links=None,
+        components=None,
     )
 
 
