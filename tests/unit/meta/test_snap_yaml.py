@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,11 +16,12 @@
 
 import textwrap
 from pathlib import Path
+from typing import cast
 
 import pydantic
 import pytest
 import yaml
-from craft_application.models import SummaryStr, VersionStr
+from craft_application.models import SummaryStr, UniqueStrList, VersionStr
 
 from snapcraft import models
 from snapcraft.meta import snap_yaml
@@ -418,6 +419,21 @@ def complex_project():
             description: test
             type: test
             version: "1.0"
+            hooks:
+              install:
+                command-chain:
+                - test
+                environment:
+                  test-variable-1: test
+                  test-variable-2: test
+                plugs:
+                - home
+                - network
+                passthrough:
+                  somefield:
+                  - some
+                  - value
+              post-refresh: {}
           component-b:
             summary: test
             description: test
@@ -558,6 +574,21 @@ def test_complex_snap_yaml(complex_project, new_dir):
             summary: test
             description: test
             type: test
+            hooks:
+              install:
+                command-chain:
+                - test
+                environment:
+                  test-variable-1: test
+                  test-variable-2: test
+                plugs:
+                - home
+                - network
+                passthrough:
+                  somefield:
+                  - some
+                  - value
+              post-refresh: {}
           component-b:
             summary: test
             description: test
@@ -1339,6 +1370,14 @@ def test_component_metadata_from_component():
         description="test",
         type="test",
         version=VersionStr("1.0"),
+        hooks={
+            "install": models.Hook(
+                plugs=cast(UniqueStrList, ["home", "network"]),
+                command_chain=["test"],
+                environment={"test-variable-1": "test", "test-variable-2": "test"},
+                passthrough={"somefield": ["some", "value"]},
+            )
+        },
     )
 
     metadata = snap_yaml.ComponentMetadata.from_component(component)
@@ -1346,3 +1385,4 @@ def test_component_metadata_from_component():
     assert metadata.summary == component.summary
     assert metadata.description == component.description
     assert metadata.type == component.type
+    assert metadata.hooks == component.hooks

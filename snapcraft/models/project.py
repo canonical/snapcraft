@@ -541,6 +541,7 @@ class Component(models.CraftBaseModel):
     description: str
     type: Literal["test"]
     version: Optional[VersionStr]  # type: ignore[assignment]
+    hooks: dict[str, Hook] | None
 
     @pydantic.validator("version")
     @classmethod

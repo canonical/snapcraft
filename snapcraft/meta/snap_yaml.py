@@ -235,6 +235,7 @@ class ComponentMetadata(SnapcraftMetadata):  # type: ignore # (pydantic plugin i
     summary: SummaryStr
     description: str
     type: str
+    hooks: dict[str, models.Hook] | None
 
     @override
     class Config(BaseMetadata.Config):

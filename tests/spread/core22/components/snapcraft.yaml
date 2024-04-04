@@ -16,6 +16,9 @@ components:
     summary: Hello World
     description: Hello World
     version: "1.0"
+    hooks:
+      install:
+        plugs: ["home", "network"]
 
 parts:
   hello:
