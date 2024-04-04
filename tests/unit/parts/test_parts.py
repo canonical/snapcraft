@@ -58,6 +58,7 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
     lifecycle.run(step_name)
     assert lifecycle.prime_dir == Path(new_dir, "prime")
     assert lifecycle.prime_dir.is_dir()
+    assert lifecycle.prime_dirs == {None: lifecycle.prime_dir}
     assert lcm_spy.mock_calls == [
         call(
             {"parts": {"p1": {"plugin": "nil"}}},
@@ -87,6 +88,14 @@ def test_parts_lifecycle_run_with_components(
     mocker, base, parts_data, step_name, new_dir
 ):
     """Verify usage of the partitions feature."""
+    expected_prime_dir = Path(new_dir) / "prime"
+    expected_foo_prime_dir = (
+        Path(new_dir) / "partitions" / "component" / "foo" / "prime"
+    )
+    expected_bar_prime_dir = (
+        Path(new_dir) / "partitions" / "component" / "bar" / "prime"
+    )
+
     lcm_spy = mocker.spy(craft_parts, "LifecycleManager")
     lifecycle = PartsLifecycle(
         parts_data,
@@ -110,22 +119,26 @@ def test_parts_lifecycle_run_with_components(
     lifecycle.run(step_name)
 
     # default partition
-    assert lifecycle.prime_dir == Path(new_dir, "prime")
+    assert lifecycle.prime_dir == expected_prime_dir
     assert lifecycle.prime_dir.is_dir()
 
     # component/foo partition
     assert (
-        lifecycle.get_prime_dir_for_component(component="foo")
-        == Path(new_dir) / "partitions" / "component" / "foo" / "prime"
+        lifecycle.get_prime_dir_for_component(component="foo") == expected_foo_prime_dir
     )
     assert lifecycle.get_prime_dir_for_component(component="foo").is_dir()
 
     # component/bar partition
     assert (
-        lifecycle.get_prime_dir_for_component(component="bar")
-        == Path(new_dir) / "partitions" / "component" / "bar" / "prime"
+        lifecycle.get_prime_dir_for_component(component="bar") == expected_bar_prime_dir
     )
     assert lifecycle.get_prime_dir_for_component(component="bar").is_dir()
+
+    assert lifecycle.prime_dirs == {
+        None: lifecycle.prime_dir,
+        "bar": expected_bar_prime_dir,
+        "foo": expected_foo_prime_dir,
+    }
 
     # partitions
     assert lcm_spy.call_args[1]["partitions"] == [

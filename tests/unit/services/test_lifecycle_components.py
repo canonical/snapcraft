@@ -61,3 +61,17 @@ def test_lifecycle_get_prime_dir(lifecycle_service, component, expected_prime):
         lifecycle_service.get_prime_dir(component=component)
         == lifecycle_service._work_dir / expected_prime
     )
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+@pytest.mark.usefixtures("default_project")
+def test_lifecycle_prime_dirs(lifecycle_service):
+    lifecycle_service.setup()
+
+    assert lifecycle_service.prime_dirs == {
+        None: lifecycle_service._work_dir / "prime",
+        "firstcomponent": lifecycle_service._work_dir
+        / "partitions/component/firstcomponent/prime",
+        "secondcomponent": lifecycle_service._work_dir
+        / "partitions/component/secondcomponent/prime",
+    }

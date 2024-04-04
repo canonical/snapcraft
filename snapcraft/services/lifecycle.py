@@ -97,6 +97,23 @@ class Lifecycle(LifecycleService):
                 "because it does not exist."
             ) from err
 
+    @property
+    def prime_dirs(self) -> dict[str | None, Path]:
+        """Return a mapping of component names to prime directories.
+
+        'None' maps to the default prime directory.
+        """
+        partition_prime_dirs = self._lcm.project_info.prime_dirs
+        component_prime_dirs: dict[str | None, Path] = {None: self.prime_dir}
+
+        # strip 'component/' prefix so that the component name is the key
+        for partition, prime_dir in partition_prime_dirs.items():
+            if partition and partition.startswith("component/"):
+                component = partition.split("/", 1)[1]
+                component_prime_dirs[component] = prime_dir
+
+        return component_prime_dirs
+
     def generate_manifest(self) -> models.Manifest:
         """Create and populate the manifest file."""
         primed_stage_packages: set[str] = set()

@@ -144,6 +144,23 @@ class PartsLifecycle:
         return self._lcm.project_info.prime_dir
 
     @property
+    def prime_dirs(self) -> dict[str | None, pathlib.Path]:
+        """Return a mapping of component names to prime directories.
+
+        'None' maps to the default prime directory.
+        """
+        partition_prime_dirs = self._lcm.project_info.prime_dirs
+        component_prime_dirs: dict[str | None, pathlib.Path] = {None: self.prime_dir}
+
+        # strip 'component/' prefix so that the component name is the key
+        for partition, prime_dir in partition_prime_dirs.items():
+            if partition and partition.startswith("component/"):
+                component = partition.split("/", 1)[1]
+                component_prime_dirs[component] = prime_dir
+
+        return component_prime_dirs
+
+    @property
     def target_arch(self) -> str:
         """Return the parts project target architecture."""
         return self._lcm.project_info.target_arch
