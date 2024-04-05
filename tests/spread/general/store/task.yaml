@@ -3,7 +3,9 @@ summary: Test the store workflow
 manual: true
 
 environment:
-  SNAP: "/snapcraft/tests/spread/core22/components/"
+  # use a core22 snap with components but no component hooks
+  # this can be changed after the snap store and review-tools have more support for components
+  SNAP: "/snapcraft/tests/spread/core22/components-environment/"
   SNAPCRAFT_STORE_CREDENTIALS/ubuntu_one: "$(HOST: echo ${SNAPCRAFT_STORE_CREDENTIALS_STAGING})"
   SNAPCRAFT_STORE_CREDENTIALS/legacy: "$(HOST: echo ${SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY})"
   SNAPCRAFT_STORE_CREDENTIALS/candid: "$(HOST: echo ${SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID})"
@@ -52,7 +54,8 @@ execute: |
   # Get information about our snap.
   cd "$SNAP"
   snap_file=$(ls ./*.snap)
-  component_file=$(ls ./*.comp)
+  foo_component_file=$(ls ./test-snapcraft*+foo_1.0.comp)
+  bar_baz_component_file=$(ls ./test-snapcraft*+bar-baz_1.0.comp)
   snap_name=$(grep "name: " snapcraft.yaml | sed -e "s/name: \(.*$\)/\1/")
 
   # Login mechanism
@@ -68,7 +71,7 @@ execute: |
   snapcraft list
 
   # Push and Release
-  snapcraft upload "${snap_file}" --release edge --component "share=${component_file}"
+  snapcraft upload "${snap_file}" --release edge --component "foo=${foo_component_file}" --component "bar-baz=${bar_baz_component_file}"
 
   # Show revisions
   snapcraft list-revisions "${snap_name}"

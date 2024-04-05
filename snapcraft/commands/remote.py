@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any, cast
 
 import lazr.restfulclient.errors
+from craft_application import errors
 from craft_application.application import filter_plan
 from craft_application.commands import ExtensibleCommand
 from craft_application.errors import RemoteBuildError
@@ -113,6 +114,38 @@ class RemoteBuildCommand(ExtensibleCommand):
             default=os.getenv("CRAFT_BUILD_FOR"),
             help="Set architecture to build for",
         )
+        parser.add_argument(
+            "--project", help="upload to the specified Launchpad project"
+        )
+
+    def _validate(self, parsed_args: argparse.Namespace) -> None:
+        """Do pre-build validation."""
+        if os.getenv("SUDO_USER") and os.geteuid() == 0:
+            emit.progress(
+                "Running with 'sudo' may cause permission errors and is discouraged.",
+                permanent=True,
+            )
+            # Give the user a bit of time to process this before proceeding.
+            time.sleep(1)
+
+        if (
+            not parsed_args.launchpad_accept_public_upload
+            and (
+                not parsed_args.project
+                or not self._services.remote_build.is_project_private()
+            )
+            and not confirm_with_user(_CONFIRMATION_PROMPT, default=False)
+        ):
+            raise errors.RemoteBuildError(
+                "Remote build needs explicit acknowledgement that data sent to build servers "
+                "is public.",
+                details=(
+                    "In non-interactive runs, please use the option "
+                    "`--launchpad-accept-public-upload`."
+                ),
+                reportable=False,
+                retcode=77,
+            )
 
     # pylint: disable=too-many-statements
     def _run(self, parsed_args: argparse.Namespace, **kwargs: Any) -> int | None:
@@ -122,30 +155,14 @@ class RemoteBuildCommand(ExtensibleCommand):
 
         :raises AcceptPublicUploadError: If the user does not agree to upload data.
         """
-        if os.getenv("SUDO_USER") and os.geteuid() == 0:
-            emit.progress(
-                "Running with 'sudo' may cause permission errors and is discouraged.",
-                permanent=True,
-            )
-            # Give the user a bit of time to process this before proceeding.
-            time.sleep(1)
+        if parsed_args.project:
+            self._services.remote_build.set_project(parsed_args.project)
 
+        self._validate(parsed_args)
         emit.progress(
             "remote-build is experimental and is subject to change. Use with caution.",
             permanent=True,
         )
-
-        if not parsed_args.launchpad_accept_public_upload and not confirm_with_user(
-            _CONFIRMATION_PROMPT, default=False
-        ):
-            emit.progress(
-                "Remote build needs explicit acknowledgement that data sent to build servers is "
-                "public.\n"
-                "In non-interactive runs, please use the option "
-                "`--launchpad-accept-public-upload`.",
-                permanent=True,
-            )
-            return 77
 
         builder = self._services.remote_build
         project = cast(models.Project, self._services.project)
@@ -158,10 +175,8 @@ class RemoteBuildCommand(ExtensibleCommand):
 
         emit.trace(f"Project directory: {project_dir}")
 
-        build_planner = self._app.BuildPlannerClass.unmarshal(project.marshal())
-        full_build_plan = build_planner.get_build_plan()
         possible_build_plan = filter_plan(
-            full_build_plan,
+            self._app.BuildPlannerClass.unmarshal(project.marshal()).get_build_plan(),
             platform=parsed_args.platform,
             build_for=parsed_args.build_for,
             host_arch=None,
@@ -179,21 +194,15 @@ class RemoteBuildCommand(ExtensibleCommand):
             return 78  # Configuration error
 
         if parsed_args.build_for and not architectures:
-            if parsed_args.build_for in SUPPORTED_ARCHS:
-                # allow the user to build for a single architecture
-                # if the snapcraft.yaml not defined the platforms
-                architectures = [parsed_args.build_for]
-            else:
-                emit.progress(
-                    f"build-for '{parsed_args.build_for}' is not supported.",
-                    permanent=True,
+            if parsed_args.build_for not in SUPPORTED_ARCHS:
+                raise errors.RemoteBuildError(
+                    f"build-for '{parsed_args.build_for}' is not supported.", retcode=78
                 )
-                return 78  # Configuration error
+            # Allow the user to build for a single architecture if snapcraft.yaml
+            # doesn't define architectures.
+            architectures = [parsed_args.build_for]
 
         emit.debug(f"Architectures to build: {architectures}")
-
-        if not architectures:
-            architectures = None
 
         if parsed_args.launchpad_timeout:
             emit.debug(f"Setting timeout to {parsed_args.launchpad_timeout} seconds")
@@ -208,14 +217,16 @@ class RemoteBuildCommand(ExtensibleCommand):
                 "Starting new build. It may take a while to upload large projects."
             )
             try:
-                builds = builder.start_builds(project_dir, architectures=architectures)
+                builds = builder.start_builds(
+                    project_dir, architectures=architectures or None
+                )
             except RemoteBuildError:
                 emit.progress("Starting build failed.", permanent=True)
                 emit.progress("Cleaning up")
                 builder.cleanup()
                 raise
             except lazr.restfulclient.errors.Conflict:
-                emit.progress("Remote repository is already existing.", permanent=True)
+                emit.progress("Remote repository already exists.", permanent=True)
                 emit.progress("Cleaning up")
                 builder.cleanup()
                 return 75
@@ -226,13 +237,10 @@ class RemoteBuildCommand(ExtensibleCommand):
             if confirm_with_user("Cancel builds?", default=True):
                 emit.progress("Cancelling builds.")
                 builder.cancel_builds()
-                emit.progress("Cleaning up")
-                builder.cleanup()
             returncode = 0
-        else:
-            if returncode != 75:  # TimeoutError
-                emit.progress("Cleaning up")
-                builder.cleanup()
+        if returncode != 75:  # TimeoutError
+            emit.progress("Cleaning up")
+            builder.cleanup()
         return returncode
 
     def _monitor_and_complete(

@@ -154,16 +154,56 @@ def mock_run_legacy(mocker):
 
 
 @pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
-@pytest.mark.usefixtures("mock_argv", "fake_services")
+@pytest.mark.parametrize("project_name", ["something", "something-else"])
+def test_set_project(
+    mocker, snapcraft_yaml, base, mock_confirm, fake_services, project_name
+):
+    """Check that a project name gets set if the user provides a project."""
+    mocker.patch("sys.argv", ["snapcraft", "remote-build", "--project", project_name])
+
+    snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
+    snapcraft_yaml(**snapcraft_yaml_dict)
+    app = application.create_app()
+    remote_build = app.services.remote_build
+    remote_build.is_project_private = lambda: False
+
+    app.run()
+
+    assert remote_build._project_name == project_name
+    mock_confirm.assert_called_once()
+
+
+@pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
+@pytest.mark.parametrize("project_name", ["something", "something_else"])
+def test_no_confirmation_for_private_project(
+    mocker, snapcraft_yaml, base, mock_confirm, fake_services, project_name
+):
+    """If a user uploads to a private project, we don't need a confirmation prompt."""
+    mocker.patch("sys.argv", ["snapcraft", "remote-build", "--project", project_name])
+
+    snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
+    snapcraft_yaml(**snapcraft_yaml_dict)
+    app = application.create_app()
+    remote_build = app.services.remote_build
+    remote_build.is_project_private = lambda: True
+
+    app.run()
+
+    assert remote_build._project_name == project_name
+    mock_confirm.assert_not_called()
+
+
+@pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
+@pytest.mark.usefixtures("mock_argv")
 def test_command_user_confirms_upload(
-    snapcraft_yaml,
-    base,
-    mock_confirm,
+    snapcraft_yaml, base, mock_confirm, fake_services
 ):
     """Check if the confirmation prompt is shown."""
     snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
     snapcraft_yaml(**snapcraft_yaml_dict)
+    fake_services.remote_build.is_project_private = lambda: False
     app = application.create_app()
+
     app.run()
 
     mock_confirm.assert_called_once_with(
@@ -1352,7 +1392,7 @@ def test_build_for_no_platforms(
 
 @pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
 def test_build_for_error(
-    emitter,
+    capsys,
     mocker,
     snapcraft_yaml,
     base,
@@ -1382,7 +1422,9 @@ def test_build_for_error(
     app = application.create_app()
     assert app.run() == 78
 
-    emitter.assert_progress("build-for 'nonexistent' is not supported.", permanent=True)
+    _, err = capsys.readouterr()
+
+    assert "build-for 'nonexistent' is not supported." in err
 
 
 ##################
