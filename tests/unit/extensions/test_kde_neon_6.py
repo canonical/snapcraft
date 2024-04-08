@@ -319,11 +319,13 @@ def test_get_parts_snippet(kde_neon_6_extension):
             "build-snaps": ["kde-qt6-core22-sdk", "kf6-core22-sdk"],
             "build-packages": [
                 "gettext",
+                "doxygen",
+                "graphiz",
                 "libxml2-utils",
                 "docbook-xml",
                 "docbook-xsl",
                 "libglx-dev",
-                "libgl1-dev",
+                "libgl-dev",
                 "libglvnd-dev",
             ],
         }
