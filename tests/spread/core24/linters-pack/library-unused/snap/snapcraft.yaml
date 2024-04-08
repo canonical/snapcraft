@@ -13,6 +13,6 @@ parts:
     plugin: nil
     source: src
     stage-packages:
-      - libpng16-16
+      - libpng16-16t64
     override-build:
       gcc -o $CRAFT_PART_INSTALL/linter-test test.c
