@@ -127,7 +127,7 @@ class KDENeon6(Extension):
             kf6_builtin = False
         else:
             kf6_builtin = True
-        # The same except the trailing -sd
+        # The same except the trailing -sdk
         content_qt6_snap = qt6_sdk_snap[:-4]
         content_kf6_snap = kf6_sdk_snap[:-4]
 
