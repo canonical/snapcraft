@@ -22,7 +22,7 @@ import shutil
 import stat
 import urllib.parse
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Callable, List
 
 import requests
 from craft_cli import emit
@@ -38,7 +38,7 @@ def setup_assets(
     assets_dir: Path,
     project_dir: Path,
     prime_dirs: dict[str | None, Path],
-    meta_directory_handler: Optional[Callable[[Path, Path], None]] = None,
+    meta_directory_handler: Callable[[Path, Path], None] | None = None,
 ) -> None:
     """Copy assets to the appropriate locations in the snap filesystem.
 
@@ -87,7 +87,7 @@ def setup_assets(
     icon_path = _finalize_icon(
         project.icon, assets_dir=assets_dir, gui_dir=gui_dir, prime_dir=prime_dir
     )
-    relative_icon_path: Optional[str] = None
+    relative_icon_path: str | None = None
 
     if icon_path is not None:
         if prime_dir in icon_path.parents:
@@ -114,7 +114,7 @@ def setup_assets(
 def copy_assets(
     assets_dir: Path,
     prime_dir: Path,
-    meta_directory_handler: Optional[Callable[[Path, Path], None]] = None,
+    meta_directory_handler: Callable[[Path, Path], None] | None = None,
 ) -> None:
     """Copy assets into the prime dir.
 
@@ -157,8 +157,8 @@ def setup_hooks(hooks: dict[str, models.Hook] | None, prime_dir: Path) -> None:
 
 
 def _finalize_icon(
-    icon: Optional[str], *, assets_dir: Path, gui_dir: Path, prime_dir: Path
-) -> Optional[Path]:
+    icon: str | None, *, assets_dir: Path, gui_dir: Path, prime_dir: Path
+) -> Path | None:
     """Ensure sure icon is properly configured and installed.
 
     Fetch from a remote URL, if required, and place in the meta/gui
@@ -209,7 +209,7 @@ def _finalize_icon(
     return target_icon_path
 
 
-def _find_icon_file(assets_dir: Path) -> Optional[Path]:
+def _find_icon_file(assets_dir: Path) -> Path | None:
     for icon_path in (assets_dir / "gui/icon.png", assets_dir / "gui/icon.svg"):
         if icon_path.is_file():
             return icon_path
