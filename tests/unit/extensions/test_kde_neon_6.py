@@ -320,7 +320,7 @@ def test_get_parts_snippet(kde_neon_6_extension):
             "build-packages": [
                 "gettext",
                 "doxygen",
-                "graphiz",
+                "graphviz",
                 "libxml2-utils",
                 "docbook-xml",
                 "docbook-xsl",
