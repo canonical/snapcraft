@@ -17,6 +17,8 @@
 """Tests for Components in Snapcraft's Lifecycle service."""
 import pytest
 
+from snapcraft import errors
+
 
 @pytest.fixture
 def extra_project_params(extra_project_params):
@@ -60,6 +62,20 @@ def test_lifecycle_get_prime_dir(lifecycle_service, component, expected_prime):
     assert (
         lifecycle_service.get_prime_dir(component=component)
         == lifecycle_service._work_dir / expected_prime
+    )
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+@pytest.mark.usefixtures("default_project")
+def test_lifecycle_get_prime_dir_non_existent_component(lifecycle_service):
+    """Raise an error when getting the prime directory of a non-existent component."""
+    lifecycle_service.setup()
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        lifecycle_service.get_prime_dir("bad")
+
+    assert str(raised.value) == (
+        "Could not get prime directory for component 'bad' because it does not exist."
     )
 
 

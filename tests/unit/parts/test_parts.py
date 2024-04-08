@@ -123,16 +123,12 @@ def test_parts_lifecycle_run_with_components(
     assert lifecycle.prime_dir.is_dir()
 
     # component/foo partition
-    assert (
-        lifecycle.get_prime_dir_for_component(component="foo") == expected_foo_prime_dir
-    )
-    assert lifecycle.get_prime_dir_for_component(component="foo").is_dir()
+    assert lifecycle.get_prime_dir(component="foo") == expected_foo_prime_dir
+    assert lifecycle.get_prime_dir(component="foo").is_dir()
 
     # component/bar partition
-    assert (
-        lifecycle.get_prime_dir_for_component(component="bar") == expected_bar_prime_dir
-    )
-    assert lifecycle.get_prime_dir_for_component(component="bar").is_dir()
+    assert lifecycle.get_prime_dir(component="bar") == expected_bar_prime_dir
+    assert lifecycle.get_prime_dir(component="bar").is_dir()
 
     assert lifecycle.prime_dirs == {
         None: lifecycle.prime_dir,
@@ -176,7 +172,7 @@ def test_parts_lifecycle_get_prime_dir_non_existent_component(
     )
 
     with pytest.raises(errors.SnapcraftError) as raised:
-        lifecycle.get_prime_dir_for_component("bad")
+        lifecycle.get_prime_dir("bad")
 
     assert str(raised.value) == (
         "Could not get prime directory for component 'bad' because it does not exist."

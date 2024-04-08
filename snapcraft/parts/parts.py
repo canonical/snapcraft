@@ -31,6 +31,7 @@ from xdg import BaseDirectory  # type: ignore
 from snapcraft import errors
 from snapcraft.meta import ExtractedMetadata
 from snapcraft.parts.extract_metadata import extract_lifecycle_metadata
+from snapcraft.services.lifecycle import get_prime_dirs_from_project
 from snapcraft.utils import convert_architecture_deb_to_platform, get_host_architecture
 
 _LIFECYCLE_STEPS = {
@@ -119,20 +120,18 @@ class PartsLifecycle:
         except craft_parts.PartsError as err:
             raise errors.PartsLifecycleError(str(err)) from err
 
-    def get_prime_dir_for_component(self, component: str) -> pathlib.Path:
-        """Get the prime directory path for a component.
+    def get_prime_dir(self, component: str | None = None) -> pathlib.Path:
+        """Get the prime directory path for the default prime dir or a component.
 
         :param component: Name of the component to get the prime directory for.
 
-        :returns: The component's prime directory.
+        :returns: The default prime directory or a component's prime directory.
 
         :raises SnapcraftError: If the component does not exist.
         """
         try:
-            return self._lcm.project_info.get_prime_dir(
-                partition=f"component/{component}"
-            )
-        except ValueError as err:
+            return self.prime_dirs[component]
+        except KeyError as err:
             raise errors.SnapcraftError(
                 f"Could not get prime directory for component {component!r} "
                 "because it does not exist."
@@ -149,16 +148,7 @@ class PartsLifecycle:
 
         'None' maps to the default prime directory.
         """
-        partition_prime_dirs = self._lcm.project_info.prime_dirs
-        component_prime_dirs: dict[str | None, pathlib.Path] = {None: self.prime_dir}
-
-        # strip 'component/' prefix so that the component name is the key
-        for partition, prime_dir in partition_prime_dirs.items():
-            if partition and partition.startswith("component/"):
-                component = partition.split("/", 1)[1]
-                component_prime_dirs[component] = prime_dir
-
-        return component_prime_dirs
+        return get_prime_dirs_from_project(self._lcm.project_info)
 
     @property
     def target_arch(self) -> str:

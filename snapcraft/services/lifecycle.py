@@ -24,7 +24,7 @@ from typing import Any, cast
 
 from craft_application import AppMetadata, LifecycleService, ServiceFactory
 from craft_application.models import BuildInfo
-from craft_parts import StepInfo
+from craft_parts import ProjectInfo, StepInfo
 from overrides import overrides
 
 from snapcraft import __version__, errors, models, os_release, parts, utils
@@ -80,18 +80,13 @@ class Lifecycle(LifecycleService):
 
         :param component: Name of the component to get the prime directory for.
 
-        :returns: The Path to the component's prime directory.
+        :returns: The default prime directory or a component's prime directory.
 
         :raises SnapcraftError: If the component does not exist.
         """
-        if component is None:
-            return self.prime_dir
-
         try:
-            return self._lcm.project_info.get_prime_dir(
-                partition=f"component/{component}"
-            )
-        except ValueError as err:
+            return self.prime_dirs[component]
+        except KeyError as err:
             raise errors.SnapcraftError(
                 f"Could not get prime directory for component {component!r} "
                 "because it does not exist."
@@ -103,16 +98,7 @@ class Lifecycle(LifecycleService):
 
         'None' maps to the default prime directory.
         """
-        partition_prime_dirs = self._lcm.project_info.prime_dirs
-        component_prime_dirs: dict[str | None, Path] = {None: self.prime_dir}
-
-        # strip 'component/' prefix so that the component name is the key
-        for partition, prime_dir in partition_prime_dirs.items():
-            if partition and partition.startswith("component/"):
-                component = partition.split("/", 1)[1]
-                component_prime_dirs[component] = prime_dir
-
-        return component_prime_dirs
+        return get_prime_dirs_from_project(self._lcm.project_info)
 
     def generate_manifest(self) -> models.Manifest:
         """Create and populate the manifest file."""
@@ -171,3 +157,22 @@ class Lifecycle(LifecycleService):
             build_snaps=[],
             primed_stage_packages=sorted(primed_stage_packages),
         )
+
+
+def get_prime_dirs_from_project(project_info: ProjectInfo) -> dict[str | None, Path]:
+    """Get a mapping of component names to prime directories from a ProjectInfo.
+
+    'None' maps to the default prime directory.
+
+    :param project_info: The ProjectInfo to get the prime directory mapping from.
+    """
+    partition_prime_dirs = project_info.prime_dirs
+    component_prime_dirs: dict[str | None, Path] = {None: project_info.prime_dir}
+
+    # strip 'component/' prefix so that the component name is the key
+    for partition, prime_dir in partition_prime_dirs.items():
+        if partition and partition.startswith("component/"):
+            component = partition.split("/", 1)[1]
+            component_prime_dirs[component] = prime_dir
+
+    return component_prime_dirs
