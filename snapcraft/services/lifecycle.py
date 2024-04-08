@@ -24,10 +24,11 @@ from typing import Any, cast
 
 from craft_application import AppMetadata, LifecycleService, ServiceFactory
 from craft_application.models import BuildInfo
-from craft_parts import StepInfo
+from craft_parts import StepInfo, callbacks
 from overrides import overrides
 
 from snapcraft import __version__, errors, models, os_release, parts, utils
+from snapcraft.parts.lifecycle import set_global_environment, set_step_environment
 
 
 class Lifecycle(LifecycleService):
@@ -68,6 +69,10 @@ class Lifecycle(LifecycleService):
             confinement=project.confinement,
             project_base=project.base or "",
         )
+
+        callbacks.register_prologue(set_global_environment)
+        callbacks.register_pre_step(set_step_environment)
+
         super().setup()
 
     @overrides

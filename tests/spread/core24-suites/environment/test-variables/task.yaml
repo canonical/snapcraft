@@ -26,10 +26,17 @@ execute: |
     echo "==== $file ===="
     cat "$file"
     for exp in \
+      "^SNAPCRAFT_PROJECT_VERSION=1" \
+      "^SNAPCRAFT_PROJECT_GRADE=devel" \
+      "^SNAPCRAFT_PROJECT_NAME=variables" \
       "^CRAFT_ARCH_TRIPLET=x86_64-linux-gnu$" \
+      "^SNAPCRAFT_ARCH_TRIPLET=x86_64-linux-gnu$" \
       "^CRAFT_TARGET_ARCH=amd64$" \
+      "^SNAPCRAFT_TARGET_ARCH=amd64$" \
       "^CRAFT_PARALLEL_BUILD_COUNT=[0-9]\+$" \
+      "^SNAPCRAFT_PARALLEL_BUILD_COUNT=[0-9]\+$" \
       "^CRAFT_PROJECT_DIR=${root}$" \
+      "^SNAPCRAFT_PROJECT_DIR=${root}$" \
       "^CRAFT_PART_NAME=hello$" \
       "^CRAFT_PART_SRC=${root}/parts/hello/src$" \
       "^CRAFT_PART_SRC_WORK=${root}/parts/hello/src$" \
@@ -37,7 +44,9 @@ execute: |
       "^CRAFT_PART_BUILD_WORK=${root}/parts/hello/build$" \
       "^CRAFT_PART_INSTALL=${root}/parts/hello/install$" \
       "^CRAFT_STAGE=${root}/stage$" \
-      "^CRAFT_PRIME=${root}/prime$"; do
+      "^SNAPCRAFT_STAGE=${root}/stage$" \
+      "^CRAFT_PRIME=${root}/prime$" \
+      "^SNAPCRAFT_PRIME=${root}/prime$" \
       grep -q "$exp" < "$file"
     done
   }

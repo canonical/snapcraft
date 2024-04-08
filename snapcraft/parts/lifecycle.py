@@ -83,8 +83,8 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     build_plan = get_build_plan(yaml_data, parsed_args)
 
     # Register our own callbacks
-    callbacks.register_prologue(_set_global_environment)
-    callbacks.register_pre_step(_set_step_environment)
+    callbacks.register_prologue(set_global_environment)
+    callbacks.register_pre_step(set_step_environment)
     callbacks.register_post_step(patch_elf, step_list=[Step.PRIME])
 
     build_count = utils.get_parallel_build_count()
@@ -574,7 +574,7 @@ def _expose_prime(
     instance.mount(host_source=project_path / "prime", target=dirs.prime_dir)
 
 
-def _set_global_environment(info: ProjectInfo) -> None:
+def set_global_environment(info: ProjectInfo) -> None:
     """Set global environment variables."""
     info.global_environment.update(
         {
@@ -645,7 +645,7 @@ def _check_experimental_plugins(
         )
 
 
-def _set_step_environment(step_info: StepInfo) -> bool:
+def set_step_environment(step_info: StepInfo) -> bool:
     """Set the step environment before executing each lifecycle step."""
     step_info.step_environment.update(
         {
@@ -745,7 +745,7 @@ def _expand_environment(
         project_vars=project_vars,
         partitions=partitions,
     )
-    _set_global_environment(info)
+    set_global_environment(info)
 
     craft_parts.expand_environment(snapcraft_yaml, info=info, skip=["name", "version"])
 
