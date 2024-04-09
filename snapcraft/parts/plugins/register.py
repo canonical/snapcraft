@@ -23,6 +23,7 @@ from .colcon_plugin import ColconPlugin
 from .conda_plugin import CondaPlugin
 from .flutter_plugin import FlutterPlugin
 from .kernel_plugin import KernelPlugin
+from .matter_sdk_plugin import MatterSdkPlugin
 from .python_plugin import PythonPlugin
 
 
@@ -36,6 +37,7 @@ def get_plugins(core22: bool) -> dict[str, PluginType]:
         "conda": CondaPlugin,
         "flutter": FlutterPlugin,
         "python": PythonPlugin,
+        "matter-sdk": MatterSdkPlugin,
     }
 
     if core22:
