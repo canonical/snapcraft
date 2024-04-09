@@ -194,6 +194,7 @@ if can_open_file "$REALHOME/.config/user-dirs.dirs"; then
         rm "$XDG_CONFIG_HOME/user-dirs.locale.md5sum"
       fi
       needs_xdg_reload=true
+    fi
   fi
 else
   needs_xdg_update=true
