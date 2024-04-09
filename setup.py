@@ -84,7 +84,8 @@ dev_requires = [
     "pytest-subprocess",
     "tox>=4.5",
     "types-PyYAML",
-    "types-requests",
+    # types-requests>=2.31.0.7 requires urllib3>=2
+    "types-requests==2.31.0.6",
     "types-setuptools",
     "types-simplejson",
     "types-tabulate",
