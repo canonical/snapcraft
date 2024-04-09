@@ -27,10 +27,10 @@ from snapcraft import cli
 @pytest.mark.parametrize(
     "cmd,run_method",
     [
-        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
-        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
-        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
-        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+        ("pull", "snapcraft.commands.core22.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.core22.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.core22.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.core22.lifecycle.PrimeCommand.run"),
     ],
 )
 def test_lifecycle_command(cmd, run_method, mocker):
@@ -68,10 +68,10 @@ def test_lifecycle_command(cmd, run_method, mocker):
 @pytest.mark.parametrize(
     "cmd,run_method",
     [
-        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
-        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
-        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
-        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+        ("pull", "snapcraft.commands.core22.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.core22.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.core22.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.core22.lifecycle.PrimeCommand.run"),
     ],
 )
 def test_lifecycle_command_arguments(cmd, run_method, mocker):
@@ -118,10 +118,10 @@ def test_lifecycle_command_arguments(cmd, run_method, mocker):
 @pytest.mark.parametrize(
     "cmd,run_method",
     [
-        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
-        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
-        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
-        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+        ("pull", "snapcraft.commands.core22.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.core22.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.core22.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.core22.lifecycle.PrimeCommand.run"),
     ],
 )
 def test_lifecycle_command_arguments_destructive_mode(cmd, run_method, mocker):
@@ -169,10 +169,10 @@ def test_lifecycle_command_arguments_destructive_mode(cmd, run_method, mocker):
 @pytest.mark.parametrize(
     "cmd,run_method",
     [
-        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
-        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
-        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
-        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+        ("pull", "snapcraft.commands.core22.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.core22.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.core22.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.core22.lifecycle.PrimeCommand.run"),
     ],
 )
 def test_lifecycle_command_arguments_use_lxd(cmd, run_method, mocker):
@@ -220,10 +220,10 @@ def test_lifecycle_command_arguments_use_lxd(cmd, run_method, mocker):
 @pytest.mark.parametrize(
     "cmd,run_method",
     [
-        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
-        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
-        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
-        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+        ("pull", "snapcraft.commands.core22.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.core22.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.core22.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.core22.lifecycle.PrimeCommand.run"),
     ],
 )
 def test_lifecycle_command_arguments_bind_ssh(cmd, run_method, mocker):
@@ -269,10 +269,10 @@ def test_lifecycle_command_arguments_bind_ssh(cmd, run_method, mocker):
 @pytest.mark.parametrize(
     "cmd,run_method",
     [
-        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
-        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
-        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
-        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+        ("pull", "snapcraft.commands.core22.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.core22.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.core22.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.core22.lifecycle.PrimeCommand.run"),
     ],
 )
 def test_lifecycle_command_arguments_ua_token(cmd, run_method, mocker):
@@ -320,10 +320,10 @@ def test_lifecycle_command_arguments_ua_token(cmd, run_method, mocker):
 @pytest.mark.parametrize(
     "cmd,run_method",
     [
-        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
-        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
-        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
-        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+        ("pull", "snapcraft.commands.core22.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.core22.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.core22.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.core22.lifecycle.PrimeCommand.run"),
     ],
 )
 def test_lifecycle_command_arguments_debug(cmd, run_method, mocker):
@@ -369,10 +369,10 @@ def test_lifecycle_command_arguments_debug(cmd, run_method, mocker):
 @pytest.mark.parametrize(
     "cmd,run_method",
     [
-        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
-        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
-        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
-        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+        ("pull", "snapcraft.commands.core22.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.core22.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.core22.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.core22.lifecycle.PrimeCommand.run"),
     ],
 )
 def test_lifecycle_command_arguments_shell(cmd, run_method, mocker):
@@ -418,10 +418,10 @@ def test_lifecycle_command_arguments_shell(cmd, run_method, mocker):
 @pytest.mark.parametrize(
     "cmd,run_method",
     [
-        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
-        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
-        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
-        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+        ("pull", "snapcraft.commands.core22.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.core22.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.core22.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.core22.lifecycle.PrimeCommand.run"),
     ],
 )
 def test_lifecycle_command_arguments_shell_after(cmd, run_method, mocker):
@@ -467,10 +467,10 @@ def test_lifecycle_command_arguments_shell_after(cmd, run_method, mocker):
 @pytest.mark.parametrize(
     "cmd,run_method",
     [
-        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
-        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
-        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
-        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+        ("pull", "snapcraft.commands.core22.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.core22.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.core22.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.core22.lifecycle.PrimeCommand.run"),
     ],
 )
 def test_lifecycle_command_arguments_http_proxy(cmd, run_method, mocker):
@@ -508,10 +508,10 @@ def test_lifecycle_command_arguments_http_proxy(cmd, run_method, mocker):
 @pytest.mark.parametrize(
     "cmd,run_method",
     [
-        ("pull", "snapcraft.commands.lifecycle.PullCommand.run"),
-        ("build", "snapcraft.commands.lifecycle.BuildCommand.run"),
-        ("stage", "snapcraft.commands.lifecycle.StageCommand.run"),
-        ("prime", "snapcraft.commands.lifecycle.PrimeCommand.run"),
+        ("pull", "snapcraft.commands.core22.lifecycle.PullCommand.run"),
+        ("build", "snapcraft.commands.core22.lifecycle.BuildCommand.run"),
+        ("stage", "snapcraft.commands.core22.lifecycle.StageCommand.run"),
+        ("prime", "snapcraft.commands.core22.lifecycle.PrimeCommand.run"),
     ],
 )
 def test_lifecycle_command_arguments_https_proxy(cmd, run_method, mocker):
@@ -552,7 +552,7 @@ def test_lifecycle_command_pack(mocker):
         "argv",
         ["cmd", "pack"],
     )
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -587,7 +587,7 @@ def test_lifecycle_command_pack_destructive_mode(mocker):
         "argv",
         ["cmd", "pack", "--destructive-mode"],
     )
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -622,7 +622,7 @@ def test_lifecycle_command_pack_use_lxd(mocker):
         "argv",
         ["cmd", "pack", "--use-lxd"],
     )
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -657,7 +657,7 @@ def test_lifecycle_command_pack_enable_manifest(mocker):
         "argv",
         ["cmd", "pack", "--enable-manifest"],
     )
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -693,7 +693,7 @@ def test_lifecycle_command_pack_env_enable_manifest(mocker):
         "argv",
         ["cmd", "pack"],
     )
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -728,7 +728,7 @@ def test_lifecycle_command_pack_manifest_image_information(mocker):
         "argv",
         ["cmd", "pack", "--manifest-image-information", "{'some-info': true}"],
     )
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -764,7 +764,7 @@ def test_lifecycle_command_pack_env_manifest_image_information(mocker):
         "argv",
         ["cmd", "pack"],
     )
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -799,7 +799,7 @@ def test_lifecycle_command_pack_bind_ssh(mocker):
         "argv",
         ["cmd", "pack", "--bind-ssh"],
     )
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -840,7 +840,7 @@ def test_lifecycle_command_pack_ua_token(mocker):
             "--enable-experimental-ua-services",
         ],
     )
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -876,7 +876,7 @@ def test_lifecycle_command_pack_env_ua_token(mocker):
         "argv",
         ["cmd", "pack"],
     )
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -911,7 +911,7 @@ def test_lifecycle_command_pack_build_for(mocker):
         "argv",
         ["cmd", "pack", "--build-for", "armhf"],
     )
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -947,7 +947,7 @@ def test_lifecycle_command_pack_env_build_for(mocker):
         "argv",
         ["cmd", "pack"],
     )
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -982,7 +982,7 @@ def test_lifecycle_command_pack_debug(mocker):
         "argv",
         ["cmd", "pack", "--debug"],
     )
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -1014,7 +1014,7 @@ def test_lifecycle_command_pack_debug(mocker):
 @pytest.mark.parametrize("option", ["-o", "--output"])
 def test_lifecycle_command_pack_output(mocker, option):
     mocker.patch.object(sys, "argv", ["cmd", "pack", option, "name"])
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -1045,7 +1045,7 @@ def test_lifecycle_command_pack_output(mocker, option):
 
 def test_lifecycle_command_pack_directory(mocker):
     mocker.patch.object(sys, "argv", ["cmd", "pack", "name"])
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -1076,7 +1076,7 @@ def test_lifecycle_command_pack_directory(mocker):
 
 def test_lifecycle_command_pack_http_proxy(mocker):
     mocker.patch.object(sys, "argv", ["cmd", "pack", "--http-proxy", "test-http"])
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(
@@ -1107,7 +1107,7 @@ def test_lifecycle_command_pack_http_proxy(mocker):
 
 def test_lifecycle_command_pack_https_proxy(mocker):
     mocker.patch.object(sys, "argv", ["cmd", "pack", "--https-proxy", "test-https"])
-    mock_pack_cmd = mocker.patch("snapcraft.commands.lifecycle.PackCommand.run")
+    mock_pack_cmd = mocker.patch("snapcraft.commands.core22.lifecycle.PackCommand.run")
     cli.run()
     assert mock_pack_cmd.mock_calls == [
         call(

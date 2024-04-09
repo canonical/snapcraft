@@ -25,7 +25,7 @@ from snapcraft import cli
 
 @pytest.fixture
 def legacy_run(mocker):
-    return mocker.patch("snapcraft.commands.legacy.LegacyBaseCommand.run")
+    return mocker.patch("snapcraft.commands.legacy.LegacyAppCommand.run")
 
 
 def test_promote_command(mocker, legacy_run):

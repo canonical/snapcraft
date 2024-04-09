@@ -16,8 +16,6 @@ restore: |
   install_snapcraft
 
 execute: |
-  unset SNAPCRAFT_BUILD_ENVIRONMENT
-
   # create a base instance by running snapcraft
   snapcraft pull --use-lxd --verbosity=trace
 

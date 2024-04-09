@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -25,7 +25,8 @@ import textwrap
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict
 
-from craft_cli import BaseCommand, emit
+from craft_application.commands import AppCommand
+from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
 from overrides import overrides
 
@@ -53,7 +54,7 @@ def _read_config(config_path) -> str:
     return config_file.read_text(encoding="utf-8")
 
 
-class StoreLoginCommand(BaseCommand):
+class StoreLoginCommand(AppCommand):
     """Command to log in to the Snap Store."""
 
     name = "login"
@@ -115,7 +116,7 @@ class StoreLoginCommand(BaseCommand):
         emit.message("Login successful")
 
 
-class StoreExportLoginCommand(BaseCommand):
+class StoreExportLoginCommand(AppCommand):
     """Command to export login to use with the Snap Store."""
 
     name = "export-login"
@@ -241,7 +242,7 @@ class StoreExportLoginCommand(BaseCommand):
         emit.message(message)
 
 
-class StoreWhoAmICommand(BaseCommand):
+class StoreWhoAmICommand(AppCommand):
     """Command to show login information from Snap Store."""
 
     name = "whoami"
@@ -287,7 +288,7 @@ class StoreWhoAmICommand(BaseCommand):
         emit.message(message)
 
 
-class StoreLogoutCommand(BaseCommand):
+class StoreLogoutCommand(AppCommand):
     """Command to log out from the Snap Store."""
 
     name = "logout"

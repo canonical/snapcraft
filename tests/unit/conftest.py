@@ -23,6 +23,7 @@ from unittest.mock import Mock
 
 import pytest
 import yaml
+from craft_parts import Features
 from craft_providers import Executor, Provider
 from craft_providers.base import Base
 from overrides import override
@@ -71,7 +72,7 @@ def fake_extension():
 
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
-            return ("core22",)
+            return ("core22", "core24")
 
         @staticmethod
         def get_supported_confinement() -> Tuple[str, ...]:
@@ -367,3 +368,182 @@ def fake_provider(mock_instance):
             yield mock_instance
 
     return FakeProvider()
+
+
+@pytest.fixture()
+def extra_project_params():
+    """Configuration fixture for the Project used by the default services."""
+    return {"confinement": "devmode"}
+
+
+# The factory setup from CraftApplication is imported at the fixture level.
+# pylint: disable=import-outside-toplevel
+
+
+@pytest.fixture()
+def default_project(extra_project_params):
+    from craft_application.models import SummaryStr, VersionStr
+
+    from snapcraft.models.project import Project
+
+    parts = extra_project_params.pop("parts", {})
+
+    return Project(
+        name="default",
+        version=VersionStr("1.0"),
+        summary=SummaryStr("default project"),
+        description="default project",
+        base="core24",
+        build_base="devel",
+        grade="devel",
+        parts=parts,
+        license="MIT",
+        **extra_project_params,
+    )
+
+
+@pytest.fixture()
+def default_factory(default_project):
+    from snapcraft.application import APP_METADATA
+    from snapcraft.services import SnapcraftServiceFactory
+
+    factory = SnapcraftServiceFactory(
+        app=APP_METADATA,
+        project=default_project,
+    )
+    return factory
+
+
+@pytest.fixture()
+def default_build_plan():
+    from craft_application import util
+    from craft_application.models import BuildInfo
+
+    # Set the build info base to match the host's, so we can test in destructive
+    # mode with no issues.
+    arch = util.get_host_architecture()
+    base = util.get_host_base()
+
+    return [
+        BuildInfo(
+            platform="generic-x86-64",
+            build_on=arch,
+            build_for=arch,
+            base=base,
+        )
+    ]
+
+
+@pytest.fixture()
+def lifecycle_service(default_project, default_factory, default_build_plan, tmp_path):
+    from snapcraft.application import APP_METADATA
+    from snapcraft.services import Lifecycle
+
+    return Lifecycle(
+        app=APP_METADATA,
+        project=default_project,
+        services=default_factory,
+        work_dir=tmp_path / "work",
+        cache_dir=tmp_path / "cache",
+        build_plan=default_build_plan,
+        partitions=default_project.get_partitions(),
+    )
+
+
+@pytest.fixture()
+def provider_service(default_project, default_factory, default_build_plan, tmp_path):
+    from snapcraft.application import APP_METADATA
+    from snapcraft.services import Provider as ProviderSvc
+
+    return ProviderSvc(
+        app=APP_METADATA,
+        services=default_factory,
+        project=default_project,
+        work_dir=tmp_path / "work",
+        build_plan=default_build_plan,
+        install_snap=False,
+    )
+
+
+@pytest.fixture()
+def package_service(
+    default_build_plan, default_project, default_factory, snapcraft_yaml, tmp_path
+):
+    from snapcraft.application import APP_METADATA
+    from snapcraft.services import Package
+
+    file_path = tmp_path / "snap" / "snapcraft.yaml"
+    snapcraft_yaml(filename=file_path)
+
+    return Package(
+        app=APP_METADATA,
+        project=default_project,
+        services=default_factory,
+        snapcraft_yaml_path=file_path,
+        build_plan=default_build_plan,
+        parse_info={},
+    )
+
+
+@pytest.fixture()
+def remote_build_service(default_factory, mocker):
+    import launchpadlib.launchpad
+    import lazr.restfulclient.resource
+    from craft_application import launchpad
+    from craft_application.launchpad.models import SnapRecipe
+
+    from snapcraft.application import APP_METADATA
+    from snapcraft.services import RemoteBuild
+
+    me = Mock(lazr.restfulclient.resource.Entry)
+    me.name = "craft_test_user"
+
+    class FakeRemoteBuildService(RemoteBuild):
+        """Fake remote build service with snap recipe."""
+
+        RecipeClass = SnapRecipe
+
+    # The login should not do anything
+    mocker.patch("craft_application.launchpad.Launchpad.anonymous")
+    mocker.patch("craft_application.launchpad.Launchpad.login")
+
+    fake_lp = launchpad.Launchpad(
+        APP_METADATA.name, Mock(spec=launchpadlib.launchpad.Launchpad, me=me)
+    )
+
+    service = FakeRemoteBuildService(
+        app=APP_METADATA,
+        services=default_factory,
+    )
+    service.lp = fake_lp
+
+    return service
+
+
+# pylint: enable=import-outside-toplevel
+
+
+@pytest.fixture()
+def fake_services(
+    default_factory, lifecycle_service, package_service, remote_build_service
+):
+    lifecycle_service.setup()
+    default_factory.lifecycle = lifecycle_service
+
+    package_service.setup()
+    default_factory.package = package_service
+
+    remote_build_service.setup()
+    default_factory.remote_build = remote_build_service
+
+    return default_factory
+
+
+@pytest.fixture()
+def enable_partitions_feature():
+    """Resets the partitions feature in craft-parts."""
+    assert Features().enable_partitions is False
+    Features.reset()
+    Features(enable_partitions=True)
+    yield
+    Features.reset()

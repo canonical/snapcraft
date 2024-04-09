@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,22 +14,42 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Project file definition and helpers."""
+# pylint: disable=too-many-lines
 
+"""Project file definition and helpers."""
+from __future__ import annotations
+
+# pylint: disable=too-many-lines
+import copy
 import re
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    cast,
+)
 
 import pydantic
 from craft_application import models
-from craft_application.models import BuildInfo, UniqueStrList
-from craft_archives import repo
+from craft_application.errors import CraftValidationError
+from craft_application.models import BuildInfo, SummaryStr, UniqueStrList, VersionStr
 from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
+from craft_providers import bases
 from pydantic import PrivateAttr, constr
 
-from snapcraft import parts, utils
+from snapcraft import utils
+from snapcraft.const import SUPPORTED_ARCHS, SnapArch
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
+from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_effective_base,
@@ -43,10 +63,8 @@ from snapcraft.utils import (
 # fmt: off
 if TYPE_CHECKING:
     ProjectName = str
-    ProjectVersion = str
 else:
     ProjectName = constr(max_length=40)
-    ProjectVersion = constr(max_length=32, strict=True)
 # fmt: on
 
 
@@ -63,7 +81,7 @@ def _validate_command_chain(command_chains: Optional[List[str]]) -> Optional[Lis
     return command_chains
 
 
-def _validate_architectures(architectures):
+def validate_architectures(architectures):
     """Expand and validate architecture data.
 
     Validation includes:
@@ -75,6 +93,9 @@ def _validate_architectures(architectures):
 
     :raise ValueError: If architecture data is invalid.
     """
+    if not architectures:
+        return architectures
+
     # validate strings and Architecture objects are not mixed
     if not (
         all(isinstance(architecture, str) for architecture in architectures)
@@ -168,6 +189,90 @@ def _validate_architectures_all_keyword(architectures):
                 f" {len(architectures)} items: upon release they will conflict."
                 "'all' should only be used if there is a single item"
             )
+
+
+def apply_root_packages(yaml_data: dict[str, Any]) -> dict[str, Any]:
+    """Create a new part with root level attributes.
+
+    Root level attributes such as build-packages and build-snaps
+    are known to Snapcraft but not Craft Parts. Create a new part
+    "snapcraft/core" with these attributes and apply it to the
+    current yaml_data.
+    """
+    if "build-packages" not in yaml_data and "build-snaps" not in yaml_data:
+        return yaml_data
+
+    yaml_data = copy.deepcopy(yaml_data)
+    yaml_data.setdefault("parts", {})
+    yaml_data["parts"]["snapcraft/core"] = {"plugin": "nil"}
+
+    if "build-packages" in yaml_data:
+        yaml_data["parts"]["snapcraft/core"]["build-packages"] = yaml_data.pop(
+            "build-packages"
+        )
+
+    if "build-snaps" in yaml_data:
+        yaml_data["parts"]["snapcraft/core"]["build-snaps"] = yaml_data.pop(
+            "build-snaps"
+        )
+
+    return yaml_data
+
+
+def _validate_version_name(version: str, model_name: str) -> None:
+    """Validate a version complies to the naming convention.
+
+    :param version: version string to validate
+    :param model_name: name of the model that contains the version
+
+    :raises ValueError: if the version contains invalid characters
+    """
+    if version and not re.match(
+        r"^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$", version
+    ):
+        raise ValueError(
+            f"Invalid version '{version}': {model_name.title()} versions consist of "
+            "upper- and lower-case alphanumeric characters, as well as periods, colons, "
+            "plus signs, tildes, and hyphens. They cannot begin with a period, colon, "
+            "plus sign, tilde, or hyphen. They cannot end with a period, colon, or "
+            "hyphen"
+        )
+
+
+def _validate_component_name(name: str) -> None:
+    """Validate a component name."""
+    if not re.fullmatch(r"[a-z-]*[a-z][a-z-]*", name):
+        raise ValueError(
+            "Component names can only use ASCII lowercase letters and hyphens"
+        )
+
+    if name.startswith("snap-"):
+        raise ValueError(
+            "Component names cannot start with the reserved namespace 'snap-'"
+        )
+
+    if name.startswith("-"):
+        raise ValueError("Component names cannot start with a hyphen")
+
+    if name.endswith("-"):
+        raise ValueError("Component names cannot end with a hyphen")
+
+    if "--" in name:
+        raise ValueError("Component names cannot have two hyphens in a row")
+
+
+def _get_partitions_from_components(
+    components_data: Optional[Dict[str, Any]]
+) -> Optional[List[str]]:
+    """Get a list of partitions based on the project's components.
+
+    :returns: A list of partitions formatted as ['default', 'component/<name>', ...]
+    or None if no components are defined.
+    """
+    if components_data:
+        return ["default", *[f"component/{name}" for name in components_data.keys()]]
+
+    return None
 
 
 class Socket(models.CraftBaseModel):
@@ -398,6 +503,58 @@ class ContentPlug(models.CraftBaseModel):
         return default_provider
 
 
+class Platform(models.CraftBaseModel):
+    """Snapcraft project platform definition."""
+
+    build_on: list[SnapArch] | None = pydantic.Field(min_items=1, unique_items=True)
+    build_for: list[SnapArch] | None = pydantic.Field(
+        min_items=1, max_items=1, unique_items=True
+    )
+
+    @pydantic.validator("build_on", "build_for", pre=True)
+    @classmethod
+    def _vectorise_build_for(cls, val: str | list[str]) -> list[str]:
+        """Vectorise target architectures if needed."""
+        if isinstance(val, str):
+            val = [val]
+        return val
+
+    @pydantic.root_validator(skip_on_failure=True)
+    @classmethod
+    def _validate_platform_set(cls, values: Mapping[str, Any]) -> Mapping[str, Any]:
+        """If build_for is provided, then build_on must also be.
+
+        This aligns with the precedent set by the `architectures` keyword.
+        """
+        if not values.get("build_on") and values.get("build_for"):
+            raise CraftValidationError(
+                "'build_for' expects 'build_on' to also be provided."
+            )
+
+        return values
+
+
+class Component(models.CraftBaseModel):
+    """Snapcraft component definition."""
+
+    summary: SummaryStr
+    description: str
+    type: Literal["test"]
+    version: Optional[VersionStr]  # type: ignore[assignment]
+    hooks: dict[str, Hook] | None
+
+    @pydantic.validator("version")
+    @classmethod
+    def _validate_version(cls, version):
+        if version == "":
+            raise ValueError("Component version cannot be an empty string.")
+
+        if version:
+            _validate_version_name(version, "Component")
+
+        return version
+
+
 MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
 
@@ -414,9 +571,7 @@ class Project(models.Project):
     name: ProjectName  # type: ignore[assignment]
     build_base: Optional[str]
     compression: Literal["lzo", "xz"] = "xz"
-    # TODO: ensure we have a test for version being retrieved using adopt-info
-    # snapcraft's `version` is more general than craft-application
-    version: Optional[ProjectVersion]  # type: ignore[assignment]
+    version: Optional[VersionStr]  # type: ignore[assignment]
     donation: Optional[Union[str, UniqueStrList]]
     # snapcraft's `source_code` is more general than craft-application
     source_code: Optional[str]  # type: ignore[assignment]
@@ -428,9 +583,9 @@ class Project(models.Project):
         Dict[str, Dict[Literal["symlink", "bind", "bind-file", "type"], str]]
     ]
     grade: Optional[Literal["stable", "devel"]]
-    architectures: List[Union[str, Architecture]] = [get_host_architecture()]
+    architectures: List[Union[str, Architecture]] | None = None
     assumes: UniqueStrList = cast(UniqueStrList, [])
-    package_repositories: List[Dict[str, Any]] = []  # handled by repo
+    package_repositories: Optional[List[Dict[str, Any]]]
     hooks: Optional[Dict[str, Hook]]
     passthrough: Optional[Dict[str, Any]]
     apps: Optional[Dict[str, App]]
@@ -445,6 +600,7 @@ class Project(models.Project):
     build_snaps: Optional[GrammarStrList]
     ua_services: Optional[UniqueStrList]
     provenance: Optional[str]
+    components: Optional[Dict[ProjectName, Component]]
 
     @pydantic.validator("plugs")
     @classmethod
@@ -501,7 +657,9 @@ class Project(models.Project):
     def _validate_adoptable_fields(cls, values):
         for field in MANDATORY_ADOPTABLE_FIELDS:
             if field not in values and "adopt-info" not in values:
-                raise ValueError(f"Snap {field} is required if not using adopt-info")
+                raise ValueError(
+                    f"Required field '{field}' is not set and 'adopt-info' not used."
+                )
         return values
 
     @pydantic.root_validator(pre=True)
@@ -541,17 +699,18 @@ class Project(models.Project):
         if not version and "adopt_info" not in values:
             raise ValueError("Version must be declared if not adopting metadata")
 
-        if version and not re.match(
-            r"^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$", version
-        ):
-            raise ValueError(
-                f"Invalid version '{version}': Snap versions consist of upper- and lower-case "
-                "alphanumeric characters, as well as periods, colons, plus signs, tildes, "
-                "and hyphens. They cannot begin with a period, colon, plus sign, tilde, or "
-                "hyphen. They cannot end with a period, colon, or hyphen"
-            )
+        _validate_version_name(version, "Snap")
 
         return version
+
+    @pydantic.validator("components")
+    @classmethod
+    def _validate_components(cls, components):
+        """Validate component names."""
+        for component_name in components.keys():
+            _validate_component_name(component_name)
+
+        return components
 
     @pydantic.validator("grade", "summary", "description")
     @classmethod
@@ -561,6 +720,48 @@ class Project(models.Project):
                 f"{field.name.capitalize()} must be declared if not adopting metadata"
             )
         return field_value
+
+    @pydantic.root_validator(pre=False)
+    @classmethod
+    def _validate_platforms_and_architectures(cls, values):
+        """Validate usage of platforms and architectures.
+
+        core22 base:
+         - can optionally define architectures
+         - cannot define platforms
+
+        core24 and newer bases:
+         - cannot define architectures
+         - can optionally define platforms
+        """
+        base = get_effective_base(
+            base=values.get("base"),
+            build_base=values.get("build_base"),
+            project_type=values.get("type"),
+            name=values.get("name"),
+        )
+        if base == "core22":
+            if values.get("platforms"):
+                raise ValueError(
+                    f"'platforms' keyword is not supported for base {base!r}. "
+                    "Use 'architectures' keyword instead."
+                )
+            # set default value
+            if not values.get("architectures"):
+                values["architectures"] = [
+                    Architecture(
+                        build_on=cast(UniqueStrList, [get_host_architecture()]),
+                        build_for=cast(UniqueStrList, [get_host_architecture()]),
+                    )
+                ]
+
+        elif values.get("architectures"):
+            raise ValueError(
+                f"'architectures' keyword is not supported for base {base!r}. "
+                "Use 'platforms' keyword instead."
+            )
+
+        return values
 
     @pydantic.root_validator()
     @classmethod
@@ -587,20 +788,6 @@ class Project(models.Project):
             build_base = values.get("base")
         return build_base
 
-    @pydantic.validator("package_repositories", each_item=True)
-    @classmethod
-    def _validate_package_repositories(cls, item):
-        """Ensure package-repositories format is correct."""
-        repo.validate_repository(item)
-        return item
-
-    @pydantic.validator("parts", each_item=True)
-    @classmethod
-    def _validate_parts(cls, item):
-        """Verify each part (craft-parts will re-validate this)."""
-        parts.validate_part(item)
-        return item
-
     @pydantic.validator("epoch")
     @classmethod
     def _validate_epoch(cls, epoch):
@@ -616,7 +803,7 @@ class Project(models.Project):
     @classmethod
     def _validate_architecture_data(cls, architectures):
         """Validate architecture data."""
-        return _validate_architectures(architectures)
+        return validate_architectures(architectures)
 
     @pydantic.validator("provenance")
     @classmethod
@@ -704,9 +891,12 @@ class Project(models.Project):
         return base
 
     def get_build_on(self) -> str:
-        """Get the first build_on architecture from the project."""
-        if isinstance(self.architectures[0], Architecture) and isinstance(
-            self.architectures[0].build_on, List
+        """Get the first build_on architecture from the project for core22."""
+        # pylint: disable=unsubscriptable-object
+        if (
+            self.architectures
+            and isinstance(self.architectures[0], Architecture)
+            and isinstance(self.architectures[0].build_on, List)
         ):
             return self.architectures[0].build_on[0]
 
@@ -714,9 +904,12 @@ class Project(models.Project):
         raise RuntimeError("cannot determine build-on architecture")
 
     def get_build_for(self) -> str:
-        """Get the first build_for architecture from the project."""
-        if isinstance(self.architectures[0], Architecture) and isinstance(
-            self.architectures[0].build_for, List
+        """Get the first build_for architecture from the project for core22."""
+        # pylint: disable=unsubscriptable-object
+        if (
+            self.architectures
+            and isinstance(self.architectures[0], Architecture)
+            and isinstance(self.architectures[0].build_for, List)
         ):
             return self.architectures[0].build_for[0]
 
@@ -724,7 +917,7 @@ class Project(models.Project):
         raise RuntimeError("cannot determine build-for architecture")
 
     def get_build_for_arch_triplet(self) -> Optional[str]:
-        """Get the architecture triplet for the first build-for architecture.
+        """Get the architecture triplet for the first build-for architecture for core22.
 
         :returns: The build-for arch triplet. If build-for is "all", then return None.
         """
@@ -735,10 +928,20 @@ class Project(models.Project):
 
         return None
 
-    def get_build_plan(self) -> List[BuildInfo]:
-        """Get the build plan for this project."""
-        # TODO
-        raise NotImplementedError("Not implemented yet!")
+    def get_component_names(self) -> List[str]:
+        """Get a list of component names.
+
+        :returns: A list of component names.
+        """
+        return list(self.components.keys()) if self.components else []
+
+    def get_partitions(self) -> Optional[List[str]]:
+        """Get a list of partitions based on the project's components.
+
+        :returns: A list of partitions formatted as ['default', 'component/<name>', ...]
+        or None if no components are defined.
+        """
+        return _get_partitions_from_components(self.components)
 
 
 class _GrammarAwareModel(pydantic.BaseModel):
@@ -784,11 +987,11 @@ class ArchitectureProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
     @classmethod
     def _validate_architecture_data(cls, architectures):
         """Validate architecture data."""
-        return _validate_architectures(architectures)
+        return validate_architectures(architectures)
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "ArchitectureProject":
-        """Create and populate a new ``Project`` object from dictionary data.
+        """Create and populate a new ``ArchitectureProject`` object from dictionary data.
 
         The unmarshal method validates entries in the input dictionary, populating
         the corresponding fields in the data object.
@@ -808,6 +1011,59 @@ class ArchitectureProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
             raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
 
         return architectures
+
+
+class ComponentProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
+    """Project definition containing only component data."""
+
+    components: Optional[Dict[ProjectName, Component]]
+
+    @pydantic.validator("components")
+    @classmethod
+    def _validate_components(cls, components):
+        """Validate component names."""
+        for component_name in components.keys():
+            _validate_component_name(component_name)
+
+        return components
+
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]) -> "ComponentProject":
+        """Create and populate a new ``ComponentProject`` object from dictionary data.
+
+        The unmarshal method validates entries in the input dictionary, populating
+        the corresponding fields in the data object.
+
+        :param data: The dictionary data to unmarshal.
+
+        :return: The newly created object.
+
+        :raise TypeError: If data is not a dictionary.
+        """
+        if not isinstance(data, dict):
+            raise TypeError("Project data is not a dictionary")
+
+        try:
+            components = ComponentProject(**data)
+        except pydantic.ValidationError as err:
+            raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
+
+        return components
+
+    def get_component_names(self) -> List[str]:
+        """Get a list of component names.
+
+        :returns: A list of component names.
+        """
+        return list(self.components.keys()) if self.components else []
+
+    def get_partitions(self) -> Optional[List[str]]:
+        """Get a list of partitions based on the project's components.
+
+        :returns: A list of partitions formatted as ['default', 'component/<name>', ...]
+        or None if no components are defined.
+        """
+        return _get_partitions_from_components(self.components)
 
 
 def _format_pydantic_errors(errors, *, file_name: str = "snapcraft.yaml"):
@@ -923,3 +1179,107 @@ def _format_global_keyword_warning(keyword: str, empty_entries: List[str]) -> st
         "stanza which is intended for configuration only."
         "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"
     )
+
+
+class SnapcraftBuildPlanner(models.BuildPlanner):
+    """A project model that creates build plans."""
+
+    base: str | None
+    build_base: str | None = None
+    name: str
+    platforms: dict[str, Any] | None = None
+    project_type: str | None = pydantic.Field(default=None, alias="type")
+
+    @pydantic.validator("platforms")
+    @classmethod
+    def _validate_all_platforms(cls, platforms: dict[str, Any]) -> dict[str, Any]:
+        """Validate and convert platform data to a dict of Platforms."""
+        for platform_label in platforms:
+            platform_data: dict[str, Any] = (
+                platforms[platform_label] if platforms[platform_label] else {}
+            )
+            error_prefix = f"Error for platform entry '{platform_label}'"
+
+            # Make sure the provided platform_set is valid
+            try:
+                platform = Platform(**platform_data)
+            except CraftValidationError as err:
+                raise CraftValidationError(f"{error_prefix}: {str(err)}") from None
+
+            # build_on and build_for are validated
+            # let's also validate the platform label
+            if platform.build_on:
+                build_on_one_of: Sequence[SnapArch | str] = platform.build_on
+            else:
+                build_on_one_of = [platform_label]
+
+            # If the label maps to a valid architecture and
+            # `build-for` is present, then both need to have the same value,
+            # otherwise the project is invalid.
+            if platform.build_for:
+                build_target = platform.build_for[0]
+                if platform_label in SUPPORTED_ARCHS and platform_label != build_target:
+                    raise CraftValidationError(
+                        str(
+                            f"{error_prefix}: if 'build_for' is provided and the "
+                            "platform entry label corresponds to a valid architecture, then "
+                            f"both values must match. {platform_label} != {build_target}"
+                        )
+                    )
+            # if no build-for is present, then the platform label needs to be a valid architecture
+            elif platform_label not in SUPPORTED_ARCHS:
+                raise CraftValidationError(
+                    str(
+                        f"{error_prefix}: platform entry label must correspond to a "
+                        "valid architecture if 'build-for' is not provided."
+                    )
+                )
+
+            # Both build and target architectures must be supported
+            if not any(b_o in SUPPORTED_ARCHS for b_o in build_on_one_of):
+                raise CraftValidationError(
+                    str(
+                        f"{error_prefix}: trying to build snap in one of "
+                        f"{build_on_one_of}, but none of these build architectures are supported. "
+                        f"Supported architectures: {SUPPORTED_ARCHS}"
+                    )
+                )
+
+            platforms[platform_label] = platform
+
+        return platforms
+
+    def get_build_plan(self) -> List[BuildInfo]:
+        """Get the build plan for this project."""
+        build_infos: list[BuildInfo] = []
+        effective_base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
+            str(
+                get_effective_base(
+                    base=self.base,
+                    build_base=self.build_base,
+                    project_type=self.project_type,
+                    name=self.name,
+                    translate_devel=False,  # We want actual "devel" if set.
+                )
+            )
+        ].value
+
+        base = bases.BaseName("ubuntu", effective_base)
+
+        # set default value
+        if self.platforms is None:
+            self.platforms = {get_host_architecture(): None}
+
+        for platform_entry, platform in self.platforms.items():
+            for build_for in platform.build_for or [platform_entry]:
+                for build_on in platform.build_on or [platform_entry]:
+                    build_infos.append(
+                        BuildInfo(
+                            platform=platform_entry,
+                            build_on=build_on,
+                            build_for=build_for,
+                            base=base,
+                        )
+                    )
+
+        return build_infos

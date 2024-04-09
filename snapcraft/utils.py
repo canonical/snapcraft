@@ -178,7 +178,7 @@ def strtobool(value: str) -> bool:
 
 def is_managed_mode() -> bool:
     """Check if snapcraft is running in a managed environment."""
-    managed_flag = os.getenv("SNAPCRAFT_MANAGED_MODE", "n")
+    managed_flag = os.getenv("CRAFT_MANAGED_MODE", "n")
     return strtobool(managed_flag)
 
 
@@ -213,19 +213,23 @@ def get_effective_base(
     build_base: Optional[str],
     project_type: Optional[str],
     name: Optional[str],
+    translate_devel: bool = True,
 ) -> Optional[str]:
     """Return the base to use to create the snap.
 
     Return the build-base if set.
     Exception:
-    "base" snaps will return name if build-base is not set.
-    "devel" snaps, return the base, where the true base is, except "base" snaps.
+    - "base" snaps will return name if build-base is not set.
+    - For snaps with "devel" "build-base", if the "project_type" is "base",
+      returns "devel". Otherwise:
+        - if "translate_devel" is True, returns the "base";
+        - otherwise, returns "devel".
     """
     if project_type == "base":
         return build_base if build_base else name
 
     if build_base is not None:
-        if build_base == "devel":
+        if build_base == "devel" and translate_devel:
             return base
         return build_base
 

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2024 Canonical Ltd.
+# Copyright 2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,29 +14,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Snapcraft remote build command."""
+"""Snapcraft remote build command that using craft-application."""
 
 import argparse
 import os
 import textwrap
-from enum import Enum
+import time
+from collections.abc import Collection
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, cast
 
-from craft_cli import BaseCommand, emit
-from craft_cli.helptexts import HIDDEN
+import lazr.restfulclient.errors
+from craft_application import errors
+from craft_application.application import filter_plan
+from craft_application.commands import ExtensibleCommand
+from craft_application.errors import RemoteBuildError
+from craft_application.launchpad.models import Build, BuildState
+from craft_application.remote.utils import get_build_id
+from craft_cli import emit
 from overrides import overrides
 
-from snapcraft.errors import MaintenanceBase, SnapcraftError
-from snapcraft.legacy_cli import run_legacy
-from snapcraft.parts import yaml_utils
-from snapcraft.remote import (
-    AcceptPublicUploadError,
-    GitType,
-    RemoteBuilder,
-    get_git_repo_type,
-)
-from snapcraft.utils import confirm_with_user, get_host_architecture, humanize_list
+from snapcraft import models
+from snapcraft.const import SUPPORTED_ARCHS
+from snapcraft.utils import confirm_with_user
 
 _CONFIRMATION_PROMPT = (
     "All data sent to remote builders will be publicly available. "
@@ -44,21 +44,12 @@ _CONFIRMATION_PROMPT = (
 )
 
 
-_STRATEGY_ENVVAR = "SNAPCRAFT_REMOTE_BUILD_STRATEGY"
-
-
-class _Strategies(Enum):
-    """Possible values of the build strategy."""
-
-    DISABLE_FALLBACK = "disable-fallback"
-    FORCE_FALLBACK = "force-fallback"
-
-
-class RemoteBuildCommand(BaseCommand):
+class RemoteBuildCommand(ExtensibleCommand):
     """Command passthrough for the remote-build command."""
 
+    always_load_project = True
     name = "remote-build"
-    help_msg = "Dispatch a snap for remote build"
+    help_msg = "Build a snap remotely on Launchpad."
     overview = textwrap.dedent(
         """
         Command remote-build sends the current project to be built
@@ -67,7 +58,7 @@ class RemoteBuildCommand(BaseCommand):
         local filesystem.
 
         If not specified in the snapcraft.yaml file, the list of
-        architectures to build can be set using the --build-on option.
+        architectures to build can be set using the --platforms option.
         If both are specified, an error will occur.
 
         Interrupted remote builds can be resumed using the --recover
@@ -84,27 +75,9 @@ class RemoteBuildCommand(BaseCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
+    def _fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--recover", action="store_true", help="recover an interrupted build"
-        )
-        parser.add_argument(
-            "--status", action="store_true", help="display remote build status"
-        )
-        parser.add_argument(
-            "--build-on",
-            type=lambda arg: [arch.strip() for arch in arg.split(",")],
-            metavar="arch",
-            help=HIDDEN,
-        )
-        parser.add_argument(
-            "--build-for",
-            type=lambda arg: [arch.strip() for arch in arg.split(",")],
-            metavar="arch",
-            help="comma-separated list of architectures to build for",
-        )
-        parser.add_argument(
-            "--build-id", metavar="build-id", help="specific build id to retrieve"
         )
         parser.add_argument(
             "--launchpad-accept-public-upload",
@@ -119,318 +92,211 @@ class RemoteBuildCommand(BaseCommand):
             help="Time in seconds to wait for launchpad to build.",
         )
 
-    @overrides
-    def run(self, parsed_args: argparse.Namespace) -> None:
+        parser.add_argument(
+            "--status", action="store_true", help="display remote build status"
+        )
+        parser.add_argument(
+            "--build-id", metavar="build-id", help="specific build id to retrieve"
+        )
+
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument(
+            "--platform",
+            type=str,
+            metavar="name",
+            default=os.getenv("CRAFT_PLATFORM"),
+            help="Set platform to build for",
+        )
+        group.add_argument(
+            "--build-for",
+            type=str,
+            metavar="arch",
+            default=os.getenv("CRAFT_BUILD_FOR"),
+            help="Set architecture to build for",
+        )
+        parser.add_argument(
+            "--project", help="upload to the specified Launchpad project"
+        )
+
+    def _validate(self, parsed_args: argparse.Namespace) -> None:
+        """Do pre-build validation."""
+        if os.getenv("SUDO_USER") and os.geteuid() == 0:
+            emit.progress(
+                "Running with 'sudo' may cause permission errors and is discouraged.",
+                permanent=True,
+            )
+            # Give the user a bit of time to process this before proceeding.
+            time.sleep(1)
+
+        if (
+            not parsed_args.launchpad_accept_public_upload
+            and (
+                not parsed_args.project
+                or not self._services.remote_build.is_project_private()
+            )
+            and not confirm_with_user(_CONFIRMATION_PROMPT, default=False)
+        ):
+            raise errors.RemoteBuildError(
+                "Remote build needs explicit acknowledgement that data sent to build servers "
+                "is public.",
+                details=(
+                    "In non-interactive runs, please use the option "
+                    "`--launchpad-accept-public-upload`."
+                ),
+                reportable=False,
+                retcode=77,
+            )
+
+    # pylint: disable=too-many-statements
+    def _run(self, parsed_args: argparse.Namespace, **kwargs: Any) -> int | None:
         """Run the remote-build command.
 
         :param parsed_args: Snapcraft's argument namespace.
 
         :raises AcceptPublicUploadError: If the user does not agree to upload data.
-        :raises SnapcraftError: If the project cannot be loaded and parsed.
         """
-        if os.getenv("SUDO_USER") and os.geteuid() == 0:
-            emit.message(
-                "Running with 'sudo' may cause permission errors and is discouraged."
-            )
+        if parsed_args.project:
+            self._services.remote_build.set_project(parsed_args.project)
 
-        emit.message(
-            "snapcraft remote-build is experimental and is subject to change "
-            "- use with caution."
-        )
-
-        if parsed_args.build_on:
-            emit.message("Use --build-for instead of --build-on")
-
-        if not parsed_args.launchpad_accept_public_upload and not confirm_with_user(
-            _CONFIRMATION_PROMPT
-        ):
-            raise AcceptPublicUploadError()
-
-        # pylint: disable=attribute-defined-outside-init
-        self._snapcraft_yaml = yaml_utils.get_snap_project().project_file
-        self._parsed_args = parsed_args
-        # pylint: enable=attribute-defined-outside-init
-        try:
-            base = self._get_effective_base()
-        except MaintenanceBase as base_err:
-            base = base_err.base
-            emit.progress(_get_esm_warning_for_base(base), permanent=True)
-
-        self._run_new_or_fallback_remote_build(base)
-
-    def _run_new_or_fallback_remote_build(self, base: str) -> None:
-        """Run the new or fallback remote-build.
-
-        Three checks determine whether to run the new or fallback remote-build:
-        1. Base: snaps newer than core22 must use the new remote-build. Core22 and older
-           snaps may use the new or fallback remote-build.
-        2. Envvar: If the envvar "SNAPCRAFT_REMOTE_BUILD_STRATEGY" is "force-fallback",
-           the fallback remote-build is used. If it is "disable-fallback", the new
-           remote-build code is used.
-        3. Repo: If the project is in a git repository, the new remote-build is used.
-           Otherwise, the fallback remote-build is used.
-
-        :param base: The effective base of the project.
-        """
-        # bases newer than core22 must use the new remote-build
-        if base in yaml_utils.CURRENT_BASES - {"core22"}:
-            emit.debug("Running new remote-build because base is newer than core22")
-            self._run_new_remote_build()
-            return
-
-        strategy = self._get_build_strategy()
-
-        if strategy == _Strategies.DISABLE_FALLBACK:
-            emit.debug(
-                "Running new remote-build because environment variable "
-                f"{_STRATEGY_ENVVAR!r} is {_Strategies.DISABLE_FALLBACK.value!r}"
-            )
-            self._run_new_remote_build()
-            return
-
-        if strategy == _Strategies.FORCE_FALLBACK:
-            emit.debug(
-                "Running fallback remote-build because environment variable "
-                f"{_STRATEGY_ENVVAR!r} is {_Strategies.FORCE_FALLBACK.value!r}"
-            )
-            run_legacy()
-            return
-
-        git_type = get_git_repo_type(Path().absolute())
-
-        if git_type == GitType.NORMAL:
-            emit.debug(
-                "Running new remote-build because project is in a git repository"
-            )
-            self._run_new_remote_build()
-            return
-
-        if git_type == GitType.SHALLOW:
-            emit.debug("Current git repository is shallow cloned.")
-            emit.progress(
-                "Remote build for shallow clones is deprecated "
-                "and will be removed in core24",
-                permanent=True,
-            )
-            # fall-through to legacy remote-build
-
-        emit.debug("Running fallback remote-build")
-        run_legacy()
-
-    def _get_project_name(self) -> str:
-        """Get the project name from the project's snapcraft.yaml.
-
-        :returns: The project name.
-
-        :raises SnapcraftError: If the snapcraft.yaml does not contain a 'name' keyword.
-        """
-        with open(self._snapcraft_yaml, encoding="utf-8") as file:
-            data = yaml_utils.safe_load(file)
-
-        project_name = data.get("name")
-
-        if project_name:
-            emit.debug(
-                f"Using project name {project_name!r} from "
-                f"{str(self._snapcraft_yaml)!r}"
-            )
-            return project_name
-
-        raise SnapcraftError(
-            f"Could not get project name from {str(self._snapcraft_yaml)!r}."
-        )
-
-    def _run_new_remote_build(self) -> None:
-        """Run new remote-build code."""
-        emit.progress("Setting up launchpad environment")
-        remote_builder = RemoteBuilder(
-            app_name="snapcraft",
-            build_id=self._parsed_args.build_id,
-            project_name=self._get_project_name(),
-            architectures=self._determine_architectures(),
-            project_dir=Path(),
-            timeout=self._parsed_args.launchpad_timeout,
-        )
-
-        if self._parsed_args.status:
-            remote_builder.print_status()
-            return
-
-        emit.progress("Looking for existing build")
-        has_outstanding_build = remote_builder.has_outstanding_build()
-        if self._parsed_args.recover and not has_outstanding_build:
-            emit.progress("No build found", permanent=True)
-            return
-
-        if has_outstanding_build:
-            emit.progress("Found existing build", permanent=True)
-            remote_builder.print_status()
-
-            # If recovery specified, monitor build and exit.
-            if self._parsed_args.recover or confirm_with_user(
-                "Do you wish to recover this build?", default=True
-            ):
-                emit.progress("Building")
-                try:
-                    remote_builder.monitor_build()
-                finally:
-                    emit.progress("Cleaning")
-                    remote_builder.clean_build()
-                    emit.progress("Build task(s) completed", permanent=True)
-                return
-
-            # Otherwise clean running build before we start a new one.
-            emit.progress("Cleaning existing build")
-            remote_builder.clean_build()
-        else:
-            emit.progress("No existing build task(s) found", permanent=True)
-
+        self._validate(parsed_args)
         emit.progress(
-            "If interrupted, resume with: 'snapcraft remote-build --recover "
-            f"--build-id {remote_builder.build_id}'",
+            "remote-build is experimental and is subject to change. Use with caution.",
             permanent=True,
         )
-        emit.progress("Starting build")
-        remote_builder.start_build()
-        emit.progress("Building")
-        try:
-            remote_builder.monitor_build()
-        finally:
-            emit.progress("Cleaning")
-            remote_builder.clean_build()
-            emit.progress("Build task(s) completed", permanent=True)
 
-    def _get_build_strategy(self) -> Optional[_Strategies]:
-        """Get the build strategy from the envvar `SNAPCRAFT_REMOTE_BUILD_STRATEGY`.
+        builder = self._services.remote_build
+        project = cast(models.Project, self._services.project)
+        config = cast(dict[str, Any], self.config)
+        project_dir = (
+            Path(config.get("global_args", {}).get("project_dir") or ".")
+            .expanduser()
+            .resolve()
+        )
 
-        :returns: The strategy or None.
+        emit.trace(f"Project directory: {project_dir}")
 
-        :raises SnapcraftError: If the variable is set to an invalid value.
-        """
-        strategy = os.getenv(_STRATEGY_ENVVAR)
+        possible_build_plan = filter_plan(
+            self._app.BuildPlannerClass.unmarshal(project.marshal()).get_build_plan(),
+            platform=parsed_args.platform,
+            build_for=parsed_args.build_for,
+            host_arch=None,
+        )
 
-        if not strategy:
-            return None
+        architectures: list[str] | None = list(
+            {build_info.build_for for build_info in possible_build_plan}
+        )
 
-        try:
-            return _Strategies(strategy)
-        except ValueError as err:
-            valid_strategies = humanize_list(
-                (strategy.value for strategy in _Strategies), "and"
+        if parsed_args.platform and not architectures:
+            emit.progress(
+                f"platform '{parsed_args.platform}' is not present in the build plan.",
+                permanent=True,
             )
-            raise SnapcraftError(
-                f"Unknown value {strategy!r} in environment variable "
-                f"{_STRATEGY_ENVVAR!r}. Valid values are {valid_strategies}."
-            ) from err
+            return 78  # Configuration error
 
-    def _get_effective_base(self) -> str:
-        """Get a valid effective base from the project's snapcraft.yaml.
+        if parsed_args.build_for and not architectures:
+            if parsed_args.build_for not in SUPPORTED_ARCHS:
+                raise errors.RemoteBuildError(
+                    f"build-for '{parsed_args.build_for}' is not supported.", retcode=78
+                )
+            # Allow the user to build for a single architecture if snapcraft.yaml
+            # doesn't define architectures.
+            architectures = [parsed_args.build_for]
 
-        :returns: The project's effective base.
+        emit.debug(f"Architectures to build: {architectures}")
 
-        :raises SnapcraftError: If the base is unknown or missing.
-        :raises MaintenanceBase: If the base is not supported
-        """
-        with open(self._snapcraft_yaml, encoding="utf-8") as file:
-            base = yaml_utils.get_base(file)
+        if parsed_args.launchpad_timeout:
+            emit.debug(f"Setting timeout to {parsed_args.launchpad_timeout} seconds")
+            builder.set_timeout(parsed_args.launchpad_timeout)
 
-        if base is None:
-            raise SnapcraftError(
-                f"Could not determine base from {str(self._snapcraft_yaml)!r}."
-            )
-
-        emit.debug(f"Got base {base!r} from {str(self._snapcraft_yaml)!r}")
-
-        if base in yaml_utils.ESM_BASES:
-            raise MaintenanceBase(base)
-
-        if base not in yaml_utils.BASES:
-            raise SnapcraftError(
-                f"Unknown base {base!r} in {str(self._snapcraft_yaml)!r}."
-            )
-
-        return base
-
-    def _get_project_build_on_architectures(self) -> List[str]:
-        """Get a list of build-on architectures from the project's snapcraft.yaml.
-
-        :returns: A list of architectures.
-        """
-        with open(self._snapcraft_yaml, encoding="utf-8") as file:
-            data = yaml_utils.safe_load(file)
-
-        project_archs = data.get("architectures")
-
-        archs = []
-        if project_archs:
-            for item in project_archs:
-                if "build-on" in item:
-                    new_arch = item["build-on"]
-                    if isinstance(new_arch, list):
-                        archs.extend(new_arch)
-                    else:
-                        archs.append(new_arch)
-
-        return archs
-
-    def _determine_architectures(self) -> List[str]:
-        """Determine architectures to build for.
-
-        The build architectures can be set via the `--build-on` parameter or determined
-        from the build-on architectures listed in the project's snapcraft.yaml.
-
-        To retain backwards compatibility, `--build-for` can also be used to
-        set the architectures.
-
-        :returns: A list of architectures.
-
-        :raises SnapcraftError: If `--build-on` was provided and architectures are
-        defined in the project's snapcraft.yaml.
-        :raises SnapcraftError: If `--build-on` and `--build-for` are both provided.
-        """
-        # argparse's `add_mutually_exclusive_group()` cannot be used because
-        # ArgumentParsingErrors executes the legacy remote-builder before this module
-        # can decide if the project is allowed to use the legacy remote-builder
-        if self._parsed_args.build_on and self._parsed_args.build_for:
-            raise SnapcraftError(
-                # use the same error as argparse produces for consistency
-                "Error: argument --build-for: not allowed with argument --build-on"
-            )
-
-        project_architectures = self._get_project_build_on_architectures()
-        if project_architectures and self._parsed_args.build_for:
-            raise SnapcraftError(
-                "Cannot use `--build-on` because architectures are already defined in "
-                "snapcraft.yaml."
-            )
-
-        if project_architectures:
-            archs = project_architectures
-        elif self._parsed_args.build_on:
-            archs = self._parsed_args.build_on
-        elif self._parsed_args.build_for:
-            archs = self._parsed_args.build_for
+        build_id = get_build_id(self._app.name, project.name, project_dir)
+        if parsed_args.recover:
+            emit.progress(f"Recovering build {build_id}")
+            builds = builder.resume_builds(build_id)
         else:
-            # default to typical snapcraft behavior (build for host)
-            archs = [get_host_architecture()]
+            emit.progress(
+                "Starting new build. It may take a while to upload large projects."
+            )
+            try:
+                builds = builder.start_builds(
+                    project_dir, architectures=architectures or None
+                )
+            except RemoteBuildError:
+                emit.progress("Starting build failed.", permanent=True)
+                emit.progress("Cleaning up")
+                builder.cleanup()
+                raise
+            except lazr.restfulclient.errors.Conflict:
+                emit.progress("Remote repository already exists.", permanent=True)
+                emit.progress("Cleaning up")
+                builder.cleanup()
+                return 75
 
-        return archs
+        try:
+            returncode = self._monitor_and_complete(build_id, builds)
+        except KeyboardInterrupt:
+            if confirm_with_user("Cancel builds?", default=True):
+                emit.progress("Cancelling builds.")
+                builder.cancel_builds()
+            returncode = 0
+        if returncode != 75:  # TimeoutError
+            emit.progress("Cleaning up")
+            builder.cleanup()
+        return returncode
 
+    def _monitor_and_complete(
+        self, build_id: str | None, builds: Collection[Build]
+    ) -> int:
+        builder = self._services.remote_build
+        emit.progress("Monitoring build")
+        try:
+            for states in builder.monitor_builds():
+                building: set[str] = set()
+                succeeded: set[str] = set()
+                uploading: set[str] = set()
+                not_building: set[str] = set()
+                for arch, build_state in states.items():
+                    if build_state.is_running:
+                        building.add(arch)
+                    elif build_state == BuildState.SUCCESS:
+                        succeeded.add(arch)
+                    elif build_state == BuildState.UPLOADING:
+                        uploading.add(arch)
+                    else:
+                        not_building.add(arch)
+                progress_parts: list[str] = []
+                if not_building:
+                    progress_parts.append("Stopped: " + ",".join(sorted(not_building)))
+                if building:
+                    progress_parts.append("Building: " + ", ".join(sorted(building)))
+                if uploading:
+                    progress_parts.append("Uploading: " + ",".join(sorted(uploading)))
+                if succeeded:
+                    progress_parts.append("Succeeded: " + ", ".join(sorted(succeeded)))
+                emit.progress("; ".join(progress_parts))
+        except TimeoutError:
+            if build_id:
+                resume_command = (
+                    f"{self._app.name} remote-build --recover --build-id={build_id}"
+                )
+            else:
+                resume_command = f"{self._app.name} remote-build --recover"
+            emit.message(
+                f"Timed out waiting for build.\nTo resume, run {resume_command!r}"
+            )
+            return 75  # Temporary failure
 
-def _get_esm_warning_for_base(base: str) -> str:
-    """Return a warning appropriate for the base under ESM."""
-    channel: Optional[str] = None
-    match base:
-        case "core":
-            channel = "4.x"
-            version = "4"
-        case "core18":
-            channel = "7.x"
-            version = "7"
-        case _:
-            raise RuntimeError(f"Unmatched base {base!r}")
+        emit.progress(f"Fetching {len(builds)} build logs...")
+        logs = builder.fetch_logs(Path.cwd())
 
-    return (
-        f"WARNING: base {base!r} was last supported on Snapcraft {version} available "
-        f"on the {channel!r} channel."
-    )
+        emit.progress("Fetching build artifacts...")
+        artifacts = builder.fetch_artifacts(Path.cwd())
+
+        log_names = sorted(path.name for path in logs.values() if path)
+        artifact_names = sorted(path.name for path in artifacts)
+
+        emit.message(
+            "Build completed.\n"
+            f"Log files: {', '.join(log_names)}\n"
+            f"Artifacts: {', '.join(artifact_names)}"
+        )
+        return 0

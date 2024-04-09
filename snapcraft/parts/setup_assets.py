@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,7 +22,7 @@ import shutil
 import stat
 import urllib.parse
 from pathlib import Path
-from typing import List, Optional
+from typing import Callable, List
 
 import requests
 from craft_cli import emit
@@ -33,32 +33,42 @@ from .desktop_file import DesktopFile
 
 
 def setup_assets(
-    project: models.Project, *, assets_dir: Path, project_dir: Path, prime_dir: Path
+    project: models.Project,
+    *,
+    assets_dir: Path,
+    project_dir: Path,
+    prime_dirs: dict[str | None, Path],
+    meta_directory_handler: Callable[[Path, Path], None] | None = None,
 ) -> None:
     """Copy assets to the appropriate locations in the snap filesystem.
 
     :param project: The snap project file.
     :param assets_dir: The directory containing snap project assets.
     :param project_dir: The project root directory.
-    :param prime_dir: The directory containing the content to be snapped.
+    :param prime_dirs: A mapping of component names to prime directories. 'None' should
+        map to the default prime directory.
+    :param meta_directory_handler: callback that overrides default behavior for
+        handling hooks and gui. The arguments passed are assets_dir and prime_dir.
     """
+    prime_dir = prime_dirs[None]
     meta_dir = prime_dir / "meta"
     gui_dir = meta_dir / "gui"
     gui_dir.mkdir(parents=True, exist_ok=True)
 
-    _write_snap_directory(assets_dir=assets_dir, prime_dir=prime_dir, meta_dir=meta_dir)
+    copy_assets(assets_dir, prime_dir, meta_directory_handler)
+    setup_hooks(project.hooks, prime_dir)
 
-    # create wrappers for hooks in the snap/hooks directory
-    _create_hook_wrappers(prime_dir)
-
-    # hooks with command chains will execute the command chain instead of the hook wrapper
-    if project.hooks:
-        for hook_name, hook in project.hooks.items():
-            if hook.command_chain:
-                _validate_command_chain(
-                    hook.command_chain, name=f"hook {hook_name!r}", prime_dir=prime_dir
-                )
-            _ensure_hook(meta_dir / "hooks" / hook_name)
+    # core22 doesn't provide a meta_directory_handler, which means that core22 component
+    # hooks would be handled like core22 snap hooks (with hook wrappers).
+    # This behavior is not desired, so component hooks are currently ignored for core22.
+    if project.components and project.get_effective_base() != "core22":
+        for component_name, component in project.components.items():
+            copy_assets(
+                assets_dir / "component" / component_name,
+                prime_dirs[component_name],
+                meta_directory_handler,
+            )
+            setup_hooks(component.hooks, prime_dirs[component_name])
 
     if project.type == "gadget":
         gadget_yaml = project_dir / "gadget.yaml"
@@ -77,7 +87,7 @@ def setup_assets(
     icon_path = _finalize_icon(
         project.icon, assets_dir=assets_dir, gui_dir=gui_dir, prime_dir=prime_dir
     )
-    relative_icon_path: Optional[str] = None
+    relative_icon_path: str | None = None
 
     if icon_path is not None:
         if prime_dir in icon_path.parents:
@@ -101,9 +111,54 @@ def setup_assets(
             desktop_file.write(gui_dir=gui_dir, icon_path=relative_icon_path)
 
 
+def copy_assets(
+    assets_dir: Path,
+    prime_dir: Path,
+    meta_directory_handler: Callable[[Path, Path], None] | None = None,
+) -> None:
+    """Copy assets into the prime dir.
+
+    :param assets_dir: The directory containing snap project assets.
+    :param prime_dir: The directory containing the content to be snapped.
+    :param meta_directory_handler: callback that overrides default behavior for
+        handling hooks and gui. The arguments passed are assets_dir and prime_dir.
+    """
+    if meta_directory_handler:
+        meta_directory_handler(assets_dir, prime_dir)
+    else:
+        _write_snap_directory(
+            assets_dir=assets_dir, prime_dir=prime_dir, meta_dir=prime_dir / "meta"
+        )
+        # create wrappers for hooks in the snap/hooks directory
+        _create_hook_wrappers(prime_dir)
+
+
+def setup_hooks(hooks: dict[str, models.Hook] | None, prime_dir: Path) -> None:
+    """Set up hooks assets.
+
+    :param hooks: A dictionary of hooks to set up.
+    :param prime_dir: The prime directory where the hooks should be set up.
+    """
+    hooks_dir = prime_dir / "meta" / "hooks"
+
+    if hooks:
+        for hook_name, hook in hooks.items():
+            if hook.command_chain:
+                _validate_command_chain(
+                    hook.command_chain, name=f"hook {hook_name!r}", prime_dir=prime_dir
+                )
+            _ensure_hook(hooks_dir / hook_name)
+
+    # Ensure all hooks are executable
+    if hooks_dir.is_dir():
+        for hook in hooks_dir.iterdir():  # type: ignore
+            # mypy says we are passing a Hook, but this is indeed a Path
+            _ensure_hook_executable(hook)  # type: ignore
+
+
 def _finalize_icon(
-    icon: Optional[str], *, assets_dir: Path, gui_dir: Path, prime_dir: Path
-) -> Optional[Path]:
+    icon: str | None, *, assets_dir: Path, gui_dir: Path, prime_dir: Path
+) -> Path | None:
     """Ensure sure icon is properly configured and installed.
 
     Fetch from a remote URL, if required, and place in the meta/gui
@@ -154,7 +209,7 @@ def _finalize_icon(
     return target_icon_path
 
 
-def _find_icon_file(assets_dir: Path) -> Optional[Path]:
+def _find_icon_file(assets_dir: Path) -> Path | None:
     for icon_path in (assets_dir / "gui/icon.png", assets_dir / "gui/icon.svg"):
         if icon_path.is_file():
             return icon_path
@@ -164,7 +219,7 @@ def _find_icon_file(assets_dir: Path) -> Optional[Path]:
 def _validate_command_chain(
     command_chain: List[str], *, name: str, prime_dir: Path
 ) -> None:
-    """Verify if each item in the command chain is executble."""
+    """Verify if each item in the command chain is executable."""
     for item in command_chain:
         executable_path = prime_dir / item
 
@@ -213,14 +268,6 @@ def _write_snap_directory(*, assets_dir: Path, prime_dir: Path, meta_dir: Path) 
 
                 _copy_file(source, destination, follow_symlinks=True)
 
-                # Ensure that the hook is executable in meta/hooks, this is a moot
-                # point considering the prior link_or_copy call, but is technically
-                # correct and allows for this operation to take place only once.
-                if origin[0] == meta_dir and origin[1] == "hooks":
-                    _ensure_hook_executable(destination)
-
-    # TODO: record manifest and source snapcraft.yaml
-
 
 def _ensure_hook(hook_path: Path) -> None:
     """Create a stub for hook_path if it does not exist.
@@ -237,7 +284,6 @@ def _ensure_hook(hook_path: Path) -> None:
 
     hook_path.parent.mkdir(parents=True, exist_ok=True)
     hook_path.write_text("#!/bin/true\n")
-    _ensure_hook_executable(hook_path)
 
 
 def _ensure_hook_executable(hook_path: Path) -> None:
@@ -293,8 +339,6 @@ def _write_hook_wrapper(hook_name: str, wrapper_path: Path) -> None:
             f'exec "{Path("$SNAP", "snap", "hooks", hook_name)}" "$@"',
             file=wrapper_file,
         )
-
-    _ensure_hook_executable(wrapper_path)
 
 
 def _copy_file(source: Path, destination: Path, **kwargs) -> None:

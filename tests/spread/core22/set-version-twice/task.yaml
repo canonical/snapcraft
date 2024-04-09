@@ -5,7 +5,7 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
 
 restore: |
-  snapcraft clean
+  snapcraft clean --destructive-mode
   rm -Rf subdir ./*.snap
   rm -f snap/*.yaml
 
@@ -16,14 +16,14 @@ execute: |
   mkdir -p snap
   cp original-snapcraft.yaml snap/snapcraft.yaml
 
-  snapcraft prime
+  snapcraft prime --destructive-mode
 
   cp modified-snapcraft.yaml snap/snapcraft.yaml
 
   snapcraft build part2
-  snapcraft prime
+  snapcraft prime --destructive-mode
 
   cp original-snapcraft.yaml snap/snapcraft.yaml
 
   snapcraft build part2
-  snapcraft prime
+  snapcraft prime --destructive-mode

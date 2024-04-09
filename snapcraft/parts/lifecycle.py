@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,18 +22,18 @@ import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import craft_parts
 from craft_cli import emit
-from craft_parts import ProjectInfo, Step, StepInfo, callbacks
+from craft_parts import Features, ProjectInfo, Step, StepInfo, callbacks
 from craft_providers import Executor
 
 from snapcraft import errors, linters, models, pack, providers, ua_manager, utils
 from snapcraft.elf import Patcher, SonameCache, elf_utils
 from snapcraft.elf import errors as elf_errors
 from snapcraft.linters import LinterStatus
-from snapcraft.meta import manifest, snap_yaml
+from snapcraft.meta import component_yaml, manifest, snap_yaml
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_host_architecture,
@@ -85,9 +85,11 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     # Register our own callbacks
     callbacks.register_prologue(_set_global_environment)
     callbacks.register_pre_step(_set_step_environment)
-    callbacks.register_post_step(_patch_elf, step_list=[Step.PRIME])
+    callbacks.register_post_step(patch_elf, step_list=[Step.PRIME])
 
     build_count = utils.get_parallel_build_count()
+
+    partitions = _validate_and_get_partitions(yaml_data)
 
     for build_on, build_for in build_plan:
         emit.verbose(f"Running on {build_on} for {build_for}")
@@ -97,6 +99,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
             yaml_data_for_arch,
             parallel_build_count=build_count,
             target_arch=build_for,
+            partitions=partitions,
         )
         project = models.Project.unmarshal(yaml_data_for_arch)
 
@@ -166,7 +169,7 @@ def _run_command(  # noqa PLR0913 # pylint: disable=too-many-branches, too-many-
         base=project.get_effective_base(),
         project_base=project.base or "",
         confinement=project.confinement,
-        package_repositories=project.package_repositories,
+        package_repositories=project.package_repositories or [],
         parallel_build_count=parallel_build_count,
         part_names=part_names,
         adopt_info=project.adopt_info,
@@ -179,6 +182,7 @@ def _run_command(  # noqa PLR0913 # pylint: disable=too-many-branches, too-many-
         extra_build_snaps=project.get_extra_build_snaps(),
         target_arch=project.get_build_for(),
         track_stage_packages=track_stage_packages,
+        partitions=project.get_partitions(),
     )
 
     if command_name == "clean":
@@ -287,6 +291,44 @@ def _run_lifecycle_and_pack(  # noqa PLR0913
         )
         emit.progress(f"Created snap package {snap_filename}", permanent=True)
 
+        if project.components:
+            _pack_components(lifecycle, project, parsed_args.output)
+
+
+def _pack_components(
+    lifecycle: PartsLifecycle, project: models.Project, output: Optional[str]
+) -> None:
+    """Pack components.
+
+    `--output` can be used to set the output directory, the name of the snap, or both.
+
+    If `output` is a directory, output components in the output directory.
+    If `output` is a filename, output components in the parent directory.
+    If `output` is not provided, output components in the cwd.
+
+    :param lifecycle: The part lifecycle.
+    :param project: The snapcraft project.
+    :param output: Output filepath of snap.
+    """
+    emit.progress("Creating component packages...")
+
+    if output:
+        if Path(output).is_dir():
+            output_dir = Path(output).resolve()
+        else:
+            output_dir = Path(output).parent.resolve()
+    else:
+        output_dir = Path.cwd()
+
+    for component in project.get_component_names():
+        filename = pack.pack_component(
+            directory=lifecycle.get_prime_dir(component),
+            compression=project.compression,
+            output_dir=output_dir,
+        )
+        emit.verbose(f"Packed component {component!r} to {filename!r}.")
+    emit.progress("Created component packages", permanent=True)
+
 
 def _generate_metadata(
     *,
@@ -314,14 +356,28 @@ def _generate_metadata(
         project,
         assets_dir=assets_dir,
         project_dir=project_dir,
-        prime_dir=lifecycle.prime_dir,
+        prime_dirs=lifecycle.prime_dirs,
     )
 
     emit.progress("Generating snap metadata...")
     snap_yaml.write(project, lifecycle.prime_dir, arch=project.get_build_for())
     emit.progress("Generated snap metadata", permanent=True)
 
+    if components := project.get_component_names():
+        emit.progress("Generating component metadata...")
+        for component in components:
+            component_yaml.write(
+                project=project,
+                component_name=component,
+                component_prime_dir=lifecycle.get_prime_dir(component),
+            )
+        emit.progress("Generated component metadata", permanent=True)
+
     if parsed_args.enable_manifest:
+        emit.progress(
+            "'--enable-manifest' is deprecated, and will be removed in core24.",
+            permanent=True,
+        )
         _generate_manifest(
             project,
             lifecycle=lifecycle,
@@ -414,9 +470,17 @@ def _run_in_provider(  # noqa PLR0915
 
     if getattr(parsed_args, "enable_manifest", False):
         cmd.append("--enable-manifest")
+        emit.progress(
+            "'--enable-manifest' is deprecated, and will be removed in core24.",
+            permanent=True,
+        )
     image_information = getattr(parsed_args, "manifest_image_information", None)
     if image_information:
         cmd.extend(["--manifest-image-information", image_information])
+        emit.progress(
+            "'--manifest-image-information' is deprecated, and will be removed in core24.",
+            permanent=True,
+        )
 
     cmd.append("--build-for")
     cmd.append(project.get_build_for())
@@ -476,7 +540,7 @@ def _run_in_provider(  # noqa PLR0915
             )
             with emit.pause():
                 if command_name == "try":
-                    _expose_prime(project_path, instance)
+                    _expose_prime(project_path, instance, project.get_partitions())
                 # run snapcraft inside the instance
                 instance.execute_run(cmd, check=True, cwd=output_dir)
         except subprocess.CalledProcessError as err:
@@ -492,13 +556,20 @@ def _run_in_provider(  # noqa PLR0915
             providers.capture_logs_from_instance(instance)
 
 
-def _expose_prime(project_path: Path, instance: Executor):
-    """Expose the instance's prime directory in ``project_path`` on the host."""
+def _expose_prime(
+    project_path: Path, instance: Executor, partitions: Optional[List[str]]
+):
+    """Expose the instance's prime directory in ``project_path`` on the host.
+
+    :param project_path: path of the project
+    :param instance: instance with the prime directory to expose
+    :param partitions: A list of partitions for the project.
+    """
     host_prime = project_path / "prime"
     host_prime.mkdir(exist_ok=True)
 
     managed_root = utils.get_managed_environment_home_path()
-    dirs = craft_parts.ProjectDirs(work_dir=managed_root)
+    dirs = craft_parts.ProjectDirs(work_dir=managed_root, partitions=partitions)
 
     instance.mount(host_source=project_path / "prime", target=dirs.prime_dir)
 
@@ -518,6 +589,38 @@ def _set_global_environment(info: ProjectInfo) -> None:
             "SNAPCRAFT_PRIME": str(info.prime_dir),
         }
     )
+
+    if info.partitions:
+        info.global_environment.update(_get_environment_for_partitions(info))
+
+
+def _get_environment_for_partitions(info: ProjectInfo) -> Dict[str, str]:
+    """Get environment variables related to partitions.
+
+    Assumes the partition feature is enabled and partitions are defined.
+
+    :param info: The project information.
+
+    :returns: A dictionary contain environment variables for partitions.
+    """
+    environment: Dict[str, str] = {}
+
+    if not info.partitions:
+        raise ValueError("Project does not contain any partitions.")
+
+    for partition in info.partitions:
+        formatted_partition = partition.upper().translate(
+            {ord("-"): "_", ord("/"): "_"}
+        )
+
+        environment[f"SNAPCRAFT_{formatted_partition}_STAGE"] = str(
+            info.get_stage_dir(partition=partition)
+        )
+        environment[f"SNAPCRAFT_{formatted_partition}_PRIME"] = str(
+            info.get_prime_dir(partition=partition)
+        )
+
+    return environment
 
 
 def _check_experimental_plugins(
@@ -556,7 +659,7 @@ def _set_step_environment(step_info: StepInfo) -> bool:
     return True
 
 
-def _patch_elf(step_info: StepInfo) -> bool:
+def patch_elf(step_info: StepInfo) -> bool:
     """Patch rpath and interpreter in ELF files for classic mode."""
     if "enable-patchelf" not in step_info.build_attributes:
         emit.debug(f"patch_elf: not enabled for part {step_info.part_name!r}")
@@ -604,12 +707,19 @@ def _patch_elf(step_info: StepInfo) -> bool:
 
 
 def _expand_environment(
-    snapcraft_yaml: Dict[str, Any], *, parallel_build_count: int, target_arch: str
+    snapcraft_yaml: Dict[str, Any],
+    *,
+    parallel_build_count: int,
+    target_arch: str,
+    partitions: Optional[List[str]],
 ) -> None:
     """Expand global variables in the provided dictionary values.
 
     :param snapcraft_yaml: A dictionary containing the contents of the
         snapcraft.yaml project file.
+    :param parallel_build_count: The maximum number of concurrent jobs.
+    :param target_arch: The target architecture of the project.
+    :param partitions: A list of partitions for the project.
     """
     if utils.is_managed_mode():
         work_dir = utils.get_managed_environment_home_path()
@@ -624,7 +734,7 @@ def _expand_environment(
     if target_arch == "all":
         target_arch = get_host_architecture()
 
-    dirs = craft_parts.ProjectDirs(work_dir=work_dir)
+    dirs = craft_parts.ProjectDirs(work_dir=work_dir, partitions=partitions)
     info = craft_parts.ProjectInfo(
         application_name="snapcraft",  # not used in environment expansion
         cache_dir=Path(),  # not used in environment expansion
@@ -633,6 +743,7 @@ def _expand_environment(
         project_name=snapcraft_yaml.get("name", ""),
         project_dirs=dirs,
         project_vars=project_vars,
+        partitions=partitions,
     )
     _set_global_environment(info)
 
@@ -688,3 +799,28 @@ def get_build_plan(
         emit.trace(log_output)
 
     return build_plan
+
+
+def _validate_and_get_partitions(yaml_data: Dict[str, Any]) -> Optional[List[str]]:
+    """Validate partitions support, enable the feature, and get a list of partitions.
+
+    :param yaml_data: The project's YAML data.
+
+    :returns: A list of partitions containing the default partition and a partition for
+    each component in the project or None if no components are defined.
+
+    :raises SnapcraftError: If components are defined in the project but not supported.
+    """
+    project = models.ComponentProject.unmarshal(yaml_data)
+
+    if project.components:
+        if Features().enable_partitions:
+            emit.debug("Not enabling partitions because feature is already enabled")
+        else:
+            emit.debug("Enabling partitions")
+            Features.reset()
+            Features(enable_partitions=True)
+
+        return project.get_partitions()
+
+    return None

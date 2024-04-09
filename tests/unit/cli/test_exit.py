@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -57,7 +57,7 @@ def test_craft_providers_error(capsys, mocker):
     mocker.patch.object(sys, "argv", ["cmd", "pull"])
     mocker.patch.object(sys.stdin, "isatty", return_value=True)
     mocker.patch(
-        "snapcraft.commands.lifecycle.PullCommand.run",
+        "snapcraft.commands.core22.lifecycle.PullCommand.run",
         side_effect=ProviderError(
             brief="test brief",
             details="test details",
@@ -80,7 +80,7 @@ def test_remote_build_error(capsys, mocker):
     mocker.patch.object(sys, "argv", ["cmd", "pull"])
     mocker.patch.object(sys.stdin, "isatty", return_value=True)
     mocker.patch(
-        "snapcraft.commands.lifecycle.PullCommand.run",
+        "snapcraft.commands.core22.lifecycle.PullCommand.run",
         side_effect=RemoteBuildError(brief="test brief", details="test details"),
     )
 
@@ -109,7 +109,7 @@ def test_remote_build_failed(capsys, mocker):
     mocker.patch.object(sys, "argv", ["cmd", "remote-build"])
     mocker.patch.object(sys.stdin, "isatty", return_value=True)
     mocker.patch(
-        "snapcraft.commands.remote.RemoteBuildCommand.run",
+        "snapcraft.commands.core22.remote.RemoteBuildCommand.run",
         side_effect=RemoteBuildFailedError(
             details="Build failed for arch amd64.\nBuild failed for arch arm64."
         ),

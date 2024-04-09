@@ -1,0 +1,9 @@
+summary: Check warnings for top-level enabling of slots and plugs
+
+restore: |
+  snapcraft clean --destructive-mode
+  rm -f ./*.snap
+
+execute: |
+  expected_output=$(< expected_output.txt)
+  snapcraft pull -v --destructive-mode | MATCH "$expected_output"
