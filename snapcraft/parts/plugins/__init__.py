@@ -21,6 +21,7 @@ from .colcon_plugin import ColconPlugin
 from .conda_plugin import CondaPlugin
 from .flutter_plugin import FlutterPlugin
 from .kernel_plugin import KernelPlugin
+from .matter_sdk_plugin import MatterSdkPlugin
 from .python_plugin import PythonPlugin
 from .register import get_plugins, register
 
@@ -28,6 +29,7 @@ __all__ = [
     "ColconPlugin",
     "CondaPlugin",
     "FlutterPlugin",
+    "MatterSdkPlugin",
     "KernelPlugin",
     "PythonPlugin",
     "get_plugins",
