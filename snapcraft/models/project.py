@@ -35,6 +35,7 @@ from typing import (
     Union,
     cast,
 )
+from typing_extensions import override
 
 import pydantic
 from craft_application import models
@@ -602,6 +603,12 @@ class Project(models.Project):
     provenance: Optional[str]
     components: Optional[Dict[ProjectName, Component]]
 
+    @override
+    @classmethod
+    def _providers_base(cls, base: str | None) -> bases.BaseAlias | None:
+        """Get a BaseAlias from snapcraft's base."""
+        return SNAPCRAFT_BASE_TO_PROVIDER_BASE.get(base)
+
     @pydantic.validator("plugs")
     @classmethod
     def _validate_plugs(cls, plugs):
@@ -769,15 +776,6 @@ class Project(models.Project):
         """If build_base is devel, then grade must be devel."""
         if values.get("build_base") == "devel" and values.get("grade") == "stable":
             raise ValueError("grade must be 'devel' when build-base is 'devel'")
-        return values
-
-    @pydantic.root_validator()
-    @classmethod
-    def _validate_base(cls, values):
-        """Not allowed to use unstable base without devel build-base."""
-        if values.get("base") == "core24" and values.get("build_base") != "devel":
-            raise ValueError("build-base must be 'devel' when base is 'core24'")
-
         return values
 
     @pydantic.validator("build_base", always=True)
