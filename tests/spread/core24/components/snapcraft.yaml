@@ -55,3 +55,15 @@ parts:
     prime:
       # exclude a file in a partition
       - -(component/share)/other-file-in-component
+
+  # 'install' is a project hook (in 'snap/component/share/hooks/')
+  # 'remove' is generated at build time
+  hooks:
+    source: .
+    plugin: dump
+    override-build: |
+      touch ${CRAFT_PART_INSTALL}/remove
+      chmod +x ${CRAFT_PART_INSTALL}/remove
+      craftctl default
+    organize:
+      remove: (component/share)/meta/hooks/remove

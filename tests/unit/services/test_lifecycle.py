@@ -184,3 +184,17 @@ def test_lifecycle_custom_arguments(
 
     assert info.project_base == expected_base
     assert info.confinement == expected_confinement
+
+
+@pytest.mark.usefixtures("default_project")
+def test_lifecycle_get_prime_dir(lifecycle_service):
+    lifecycle_service.setup()
+
+    assert lifecycle_service.get_prime_dir() == lifecycle_service._work_dir / "prime"
+
+
+@pytest.mark.usefixtures("default_project")
+def test_lifecycle_prime_dirs(lifecycle_service):
+    lifecycle_service.setup()
+
+    assert lifecycle_service.prime_dirs == {None: lifecycle_service._work_dir / "prime"}
