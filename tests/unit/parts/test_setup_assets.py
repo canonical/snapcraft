@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2022 Canonical Ltd.
+# Copyright 2017-2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -104,7 +104,7 @@ def test_gadget(yaml_data, gadget_yaml_file, new_dir):
         project,
         assets_dir=Path("snap"),
         project_dir=Path.cwd(),
-        prime_dir=Path("prime"),
+        prime_dirs={None: Path("prime")},
     )
 
     # gadget file should be in meta/
@@ -129,7 +129,7 @@ def test_gadget_missing(yaml_data, new_dir):
             project,
             assets_dir=Path("snap"),
             project_dir=Path.cwd(),
-            prime_dir=Path("prime"),
+            prime_dirs={None: Path("prime")},
         )
 
     assert str(raised.value) == "gadget.yaml is required for gadget snaps"
@@ -152,7 +152,7 @@ def test_kernel(yaml_data, kernel_yaml_file, new_dir):
         project,
         assets_dir=Path("snap"),
         project_dir=Path.cwd(),
-        prime_dir=Path("prime"),
+        prime_dirs={None: Path("prime")},
     )
 
     # kernel file should be in meta/
@@ -177,7 +177,7 @@ def test_kernel_missing(yaml_data, new_dir):
         project,
         assets_dir=Path("snap"),
         project_dir=Path.cwd(),
-        prime_dir=Path("prime"),
+        prime_dirs={None: Path("prime")},
     )
 
     # kernel file should not be in meta/
@@ -244,7 +244,7 @@ class TestSetupAssets:
             project,
             assets_dir=Path("snap"),
             project_dir=Path.cwd(),
-            prime_dir=Path("prime"),
+            prime_dirs={None: Path("prime")},
         )
 
         # desktop file should be in meta/gui and named after app
@@ -283,7 +283,7 @@ class TestSetupAssets:
             default_project,
             assets_dir=assets_dir,
             project_dir=project_dir,
-            prime_dir=prime_dir,
+            prime_dirs={None: Path("prime")},
         )
 
         hook_meta_dir = prime_dir / "meta" / "hooks"
@@ -336,7 +336,7 @@ class TestSetupAssets:
             default_project,
             assets_dir=assets_dir,
             project_dir=project_dir,
-            prime_dir=prime_dir,
+            prime_dirs={None: Path("prime")},
             meta_directory_handler=handler,
         )
 
@@ -376,7 +376,7 @@ class TestSetupAssets:
             project,
             assets_dir=Path("snap"),
             project_dir=Path.cwd(),
-            prime_dir=Path("prime"),
+            prime_dirs={None: Path("prime")},
         )
 
         # desktop file should be in meta/gui and named after app
@@ -413,7 +413,7 @@ class TestSetupAssets:
             project,
             assets_dir=Path("snap"),
             project_dir=Path.cwd(),
-            prime_dir=Path("prime"),
+            prime_dirs={None: Path("prime")},
         )
 
         assert os.listdir("prime/meta/gui") == []
@@ -445,7 +445,7 @@ class TestSetupAssets:
             project,
             assets_dir=Path("snap"),
             project_dir=Path.cwd(),
-            prime_dir=Path("prime"),
+            prime_dirs={None: Path("prime")},
         )
 
         # desktop file should be in meta/gui and named after app
@@ -494,7 +494,7 @@ class TestCommandChain:
                 project,
                 assets_dir=Path("snap"),
                 project_dir=Path.cwd(),
-                prime_dir=new_dir,
+                prime_dirs={None: Path("prime")},
             )
 
         assert str(raised.value) == (
@@ -520,7 +520,7 @@ class TestCommandChain:
                 project,
                 assets_dir=Path("snap"),
                 project_dir=Path.cwd(),
-                prime_dir=new_dir,
+                prime_dirs={None: Path("prime")},
             )
 
         assert str(raised.value) == (

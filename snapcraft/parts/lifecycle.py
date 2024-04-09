@@ -322,7 +322,7 @@ def _pack_components(
 
     for component in project.get_component_names():
         filename = pack.pack_component(
-            directory=lifecycle.get_prime_dir_for_component(component),
+            directory=lifecycle.get_prime_dir(component),
             compression=project.compression,
             output_dir=output_dir,
         )
@@ -356,7 +356,7 @@ def _generate_metadata(
         project,
         assets_dir=assets_dir,
         project_dir=project_dir,
-        prime_dir=lifecycle.prime_dir,
+        prime_dirs=lifecycle.prime_dirs,
     )
 
     emit.progress("Generating snap metadata...")
@@ -369,7 +369,7 @@ def _generate_metadata(
             component_yaml.write(
                 project=project,
                 component_name=component,
-                component_prime_dir=lifecycle.get_prime_dir_for_component(component),
+                component_prime_dir=lifecycle.get_prime_dir(component),
             )
         emit.progress("Generated component metadata", permanent=True)
 
