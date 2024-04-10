@@ -1,0 +1,17 @@
+name: neon-hello-6
+version: "1.0"
+summary: Test the kde-neon extension
+description: It simply prints a hello world
+
+grade: devel
+confinement: strict
+
+apps:
+  neon-hello-6:
+    command: usr/local/bin/hello
+    extensions: [kde-neon-6]
+
+parts:
+  hello:
+    plugin: cmake
+    source: .
