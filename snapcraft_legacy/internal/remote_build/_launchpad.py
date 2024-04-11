@@ -254,7 +254,7 @@ class LaunchpadClient:
         try:
             return Launchpad.login_with(
                 "snapcraft remote-build {}".format(snapcraft_legacy.__version__),
-                "production",
+                os.getenv("CRAFT_LAUNCHPAD_INSTANCE", "production"),
                 self._cache_dir,
                 credentials_file=self._credentials,
                 version="devel",
@@ -266,10 +266,11 @@ class LaunchpadClient:
         return f"~{self._lp_user}/+git/{self._lp_name}"
 
     def get_git_https_url(self, token: Optional[str] = None) -> str:
+        lp_domain = self._lp._root_uri.host[4:]
         if token:
-            return f"https://{self._lp_user}:{token}@git.launchpad.net/~{self._lp_user}/+git/{self._lp_name}/"
+            return f"https://{self._lp_user}:{token}@git.{lp_domain}/~{self._lp_user}/+git/{self._lp_name}/"
         else:
-            return f"https://{self._lp_user}@git.launchpad.net/~{self._lp_user}/+git/{self._lp_name}/"
+            return f"https://{self._lp_user}@git.{lp_domain}/~{self._lp_user}/+git/{self._lp_name}/"
 
     def _create_git_repository(self, force=False) -> Entry:
         """Create git repository."""
