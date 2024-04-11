@@ -35,7 +35,6 @@ from typing import (
     Union,
     cast,
 )
-from typing_extensions import override
 
 import pydantic
 from craft_application import models
@@ -45,6 +44,7 @@ from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from craft_providers import bases
 from pydantic import PrivateAttr, constr
+from typing_extensions import override
 
 from snapcraft import utils
 from snapcraft.const import SUPPORTED_ARCHS, SnapArch
@@ -607,6 +607,9 @@ class Project(models.Project):
     @classmethod
     def _providers_base(cls, base: str | None) -> bases.BaseAlias | None:
         """Get a BaseAlias from snapcraft's base."""
+        if not base:
+            return None
+
         return SNAPCRAFT_BASE_TO_PROVIDER_BASE.get(base)
 
     @pydantic.validator("plugs")

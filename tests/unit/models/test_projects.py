@@ -24,7 +24,7 @@ from craft_application.models import BuildInfo, UniqueStrList
 from craft_providers.bases import BaseName
 
 import snapcraft.models
-from snapcraft import const, errors
+from snapcraft import const, errors, providers
 from snapcraft.models import (
     MANDATORY_ADOPTABLE_FIELDS,
     Architecture,
@@ -585,11 +585,16 @@ class TestProjectValidation:
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(project_yaml_data(build_base="devel", grade="stable"))
 
-    def test_project_development_base_error(self, project_yaml_data):
-        error = "build-base must be 'devel' when base is 'core24'"
+    @pytest.mark.parametrize("base", providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE.items())
+    def test_provider_base(self, base, project_yaml_data):
+        providers_base = Project._providers_base(base[0])
 
-        with pytest.raises(CraftValidationError, match=error):
-            Project.unmarshal(project_yaml_data(base="core24"))
+        assert providers_base == base[1]
+
+    def test_provider_base_none(self, project_yaml_data):
+        base = Project._providers_base(None)
+
+        assert base is None
 
     def test_project_global_plugs_warning(self, project_yaml_data, emitter):
         data = project_yaml_data(plugs={"desktop": None, "desktop-legacy": None})
