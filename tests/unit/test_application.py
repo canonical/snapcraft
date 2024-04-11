@@ -25,10 +25,11 @@ from craft_application import util
 from craft_application.commands.lifecycle import PackCommand
 from craft_parts.packages import snaps
 from craft_providers import bases
+from snapcraft.errors import ClassicFallback
 
 from snapcraft import application, services
 from snapcraft.models.project import Architecture
-from snapcraft.parts.yaml_utils import ESM_BASES
+from snapcraft.parts.yaml_utils import CURRENT_BASES, ESM_BASES
 
 
 @pytest.fixture(
@@ -300,6 +301,7 @@ def test_default_command_integrated(monkeypatch, mocker, new_dir):
 
 @pytest.mark.parametrize("base", ESM_BASES)
 def test_esm_error(snapcraft_yaml, base):
+    """Test that an error is raised when using an ESM base."""
     snapcraft_yaml_dict = {"base": base}
     snapcraft_yaml(**snapcraft_yaml_dict)
 
@@ -309,3 +311,23 @@ def test_esm_error(snapcraft_yaml, base):
         RuntimeError, match=f"ERROR: base {base!r} was last supported on Snapcraft"
     ):
         app.run()
+
+
+@pytest.mark.parametrize("base", CURRENT_BASES)
+def test_esm_pass(mocker, snapcraft_yaml, base):
+    """Test that no error is raised when using current supported bases."""
+    snapcraft_yaml_dict = {"base": base}
+    snapcraft_yaml(**snapcraft_yaml_dict)
+
+    mock_dispatch = mocker.patch(
+        "craft_application.application.Application._get_dispatcher"
+    )
+
+    app = application.create_app()
+
+    try:
+        app.run()
+    except ClassicFallback:
+        pass
+    else:
+        mock_dispatch.assert_called_once()
