@@ -58,10 +58,7 @@ def setup_assets(
     copy_assets(assets_dir, prime_dir, meta_directory_handler)
     setup_hooks(project.hooks, prime_dir)
 
-    # core22 doesn't provide a meta_directory_handler, which means that core22 component
-    # hooks would be handled like core22 snap hooks (with hook wrappers).
-    # This behavior is not desired, so component hooks are currently ignored for core22.
-    if project.components and project.get_effective_base() != "core22":
+    if project.components:
         for component_name, component in project.components.items():
             copy_assets(
                 assets_dir / "component" / component_name,

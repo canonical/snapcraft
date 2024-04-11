@@ -43,8 +43,22 @@ execute: |
     exit 1
   fi
   
-  # assert contents of component metadata
-  if ! diff -u component-contents/meta/component.yaml expected-component.yaml; then
+  component_meta_dir="component-contents/meta"
+
+  # assert component metadata
+  if ! diff -u "${component_meta_dir}/component.yaml" expected-component.yaml; then
     echo "Metadata for the share component is incorrect."
+    exit 1
+  fi
+
+  # assert component hooks
+  if [ ! -f "${component_meta_dir}/hooks/install" ] || [ ! -f "${component_meta_dir}/hooks/remove" ]; then
+    echo "Expected component hooks to be present."
+    exit 1
+  fi
+
+  # assert project hook has a hook wrapper
+  if [ ! -f component-contents/snap/hooks/install ]; then
+    echo "Expected hook wrapper to be present."
     exit 1
   fi
