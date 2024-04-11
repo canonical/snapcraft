@@ -28,6 +28,7 @@ from craft_providers import bases
 
 from snapcraft import application, services
 from snapcraft.models.project import Architecture
+from snapcraft.parts.yaml_utils import ESM_BASES
 
 
 @pytest.fixture(
@@ -295,3 +296,16 @@ def test_default_command_integrated(monkeypatch, mocker, new_dir):
     app.run()
 
     assert mocked_pack_run.called
+
+
+@pytest.mark.parametrize("base", ESM_BASES)
+def test_esm_error(snapcraft_yaml, base):
+    snapcraft_yaml_dict = {"base": base}
+    snapcraft_yaml(**snapcraft_yaml_dict)
+
+    app = application.create_app()
+
+    with pytest.raises(
+        RuntimeError, match=f"ERROR: base {base!r} was last supported on Snapcraft"
+    ):
+        app.run()
