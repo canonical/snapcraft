@@ -1,6 +1,4 @@
 summary: Run snapcraft lint on a snap file.
-# Disabled from regular CI runs until we have "snapcraft lint" in core24
-manual: true
 
 environment:
   SNAP: lint-file
