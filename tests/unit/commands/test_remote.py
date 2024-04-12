@@ -32,7 +32,7 @@ from craft_application.remote.utils import get_build_id
 
 from snapcraft import application
 from snapcraft.const import SnapArch
-from snapcraft.errors import ClassicFallback, SnapcraftError
+from snapcraft.errors import ClassicFallback
 from snapcraft.parts.yaml_utils import CURRENT_BASES, LEGACY_BASES
 from snapcraft.utils import get_host_architecture
 
@@ -317,116 +317,6 @@ def test_run_core20(
 
     mock_run_legacy.assert_called_once()
     mock_remote_build_run.assert_not_called()
-
-
-@pytest.mark.parametrize(
-    "envvar", ["force-fallback", "disable-fallback", "badvalue", None]
-)
-@pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
-@pytest.mark.usefixtures("mock_confirm", "mock_argv")
-def test_run_envvar(
-    monkeypatch,
-    snapcraft_yaml,
-    base,
-    envvar,
-    mock_remote_build_run,
-    mock_run_legacy,
-):
-    """Bases core24 and later run new remote-build regardless of envvar."""
-    snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
-    snapcraft_yaml(**snapcraft_yaml_dict)
-
-    if envvar:
-        monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", envvar)
-    else:
-        monkeypatch.delenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", raising=False)
-
-    application.main()
-
-    mock_remote_build_run.assert_called_once()
-    mock_run_legacy.assert_not_called()
-
-
-@pytest.mark.parametrize("base", LEGACY_BASES)
-@pytest.mark.usefixtures("mock_confirm", "mock_argv")
-def test_run_envvar_disable_fallback_core20(
-    snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
-):
-    """core20 base run new remote-build if envvar is `disable-fallback`."""
-    monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "disable-fallback")
-    snapcraft_yaml_dict = {"base": base}
-    snapcraft_yaml(**snapcraft_yaml_dict)
-
-    application.main()
-
-    mock_remote_build_run.assert_called_once()
-    mock_run_legacy.assert_not_called()
-
-
-@pytest.mark.parametrize("base", LEGACY_BASES | {"core22"})
-@pytest.mark.usefixtures("mock_confirm", "mock_argv")
-def test_run_envvar_force_fallback_core22(
-    snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
-):
-    """core22 and older bases run legacy remote-build if envvar is `force-fallback`."""
-    monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "force-fallback")
-
-    snapcraft_yaml_dict = {"base": base}
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    application.main()
-
-    mock_run_legacy.assert_called_once()
-    mock_remote_build_run.assert_not_called()
-
-
-@pytest.mark.parametrize("base", LEGACY_BASES)
-@pytest.mark.usefixtures("mock_confirm", "mock_argv")
-def test_run_envvar_force_fallback_unset_core20(
-    snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
-):
-    """core20 base run legacy remote-build if envvar is unset."""
-    monkeypatch.delenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", raising=False)
-
-    snapcraft_yaml_dict = {"base": base}
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    application.main()
-
-    mock_run_legacy.assert_called_once()
-    mock_remote_build_run.assert_not_called()
-
-
-@pytest.mark.parametrize("base", {"core22"})
-@pytest.mark.usefixtures("mock_confirm", "mock_argv")
-def test_run_envvar_force_fallback_empty_core22(
-    snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
-):
-    """core22 bases run craft-application remote-build if envvar is empty."""
-    monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "")
-
-    snapcraft_yaml_dict = {"base": base}
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    application.main()
-
-    mock_remote_build_run.assert_called_once()
-    mock_run_legacy.assert_not_called()
-
-
-@pytest.mark.parametrize("base", LEGACY_BASES | {"core22"})
-@pytest.mark.usefixtures("mock_confirm", "mock_argv")
-def test_run_envvar_invalid(snapcraft_yaml, base, monkeypatch):
-    """core20 and core22 bases raise an error if the envvar is invalid."""
-    monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "badvalue")
-
-    snapcraft_yaml_dict = {"base": base}
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    with pytest.raises(SnapcraftError) as err:
-        application.main()
-
-    assert err.match(
-        "Unknown value 'badvalue' in environment variable "
-        "'SNAPCRAFT_REMOTE_BUILD_STRATEGY'. Valid values are 'disable-fallback' and "
-        "'force-fallback'"
-    )
 
 
 @pytest.mark.parametrize("base", CURRENT_BASES)

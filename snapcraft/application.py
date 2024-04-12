@@ -203,14 +203,18 @@ class Snapcraft(Application):
                         "'SNAPCRAFT_REMOTE_BUILD_STRATEGY'. "
                         "Valid values are 'disable-fallback' and 'force-fallback'."
                     )
-                if "core20" in (base, build_base):
-                    # Use legacy snapcraft unless explicitly forced to use craft-application
-                    if build_strategy != "disable-fallback":
-                        raise errors.ClassicFallback()
-                if "core22" in (base, build_base):
-                    # Use craft-application unless explicitly forced to use legacy snapcraft
-                    if build_strategy == "force-fallback":
-                        raise errors.ClassicFallback()
+                # Use legacy snapcraft unless explicitly forced to use craft-application
+                if (
+                    "core20" in (base, build_base)
+                    and build_strategy != "disable-fallback"
+                ):
+                    raise errors.ClassicFallback()
+                # Use craft-application unless explicitly forced to use legacy snapcraft
+                if (
+                    "core22" in (base, build_base)
+                    and build_strategy == "force-fallback"
+                ):
+                    raise errors.ClassicFallback()
             else:
                 raise errors.ClassicFallback()
         return super()._get_dispatcher()
