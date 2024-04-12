@@ -22,7 +22,7 @@ import logging
 import os
 import pathlib
 import sys
-from typing import Any
+from typing import Any, Optional
 
 import craft_application.commands as craft_app_commands
 import craft_cli
@@ -60,6 +60,25 @@ MAPPED_ENV_VARS = {
     ev: "SNAP" + ev
     for ev in ("CRAFT_BUILD_FOR", "CRAFT_BUILD_ENVIRONMENT", "CRAFT_VERBOSITY_LEVEL")
 }
+
+
+def _get_esm_error_for_base(base: str) -> None:
+    """Raise an error appropriate for the base under ESM."""
+    channel: Optional[str] = None
+    match base:
+        case "core":
+            channel = "4.x"
+            version = "4"
+        case "core18":
+            channel = "7.x"
+            version = "7"
+        case _:
+            return
+
+    raise RuntimeError(
+        f"ERROR: base {base!r} was last supported on Snapcraft {version} available "
+        f"on the {channel!r} channel."
+    )
 
 
 class Snapcraft(Application):
@@ -163,11 +182,39 @@ class Snapcraft(Application):
                 yaml_data = util.safe_yaml_load(file)
             base = yaml_data.get("base")
             build_base = yaml_data.get("build-base")
+            _get_esm_error_for_base(base)
             if "core24" in (base, build_base) or build_base == "devel":
                 # We know for sure that we're handling a core24 project
                 self._known_core24 = True
             elif any(arg in ("version", "--version", "-V") for arg in sys.argv):
                 pass
+            elif "remote-build" in sys.argv and any(
+                b in ("core20", "core22") for b in (base, build_base)
+            ):
+                build_strategy = os.environ.get("SNAPCRAFT_REMOTE_BUILD_STRATEGY", None)
+                if build_strategy not in (
+                    "force-fallback",
+                    "disable-fallback",
+                    "",
+                    None,
+                ):
+                    raise errors.SnapcraftError(
+                        f"Unknown value {build_strategy!r} in environment variable "
+                        "'SNAPCRAFT_REMOTE_BUILD_STRATEGY'. "
+                        "Valid values are 'disable-fallback' and 'force-fallback'."
+                    )
+                # Use legacy snapcraft unless explicitly forced to use craft-application
+                if (
+                    "core20" in (base, build_base)
+                    and build_strategy != "disable-fallback"
+                ):
+                    raise errors.ClassicFallback()
+                # Use craft-application unless explicitly forced to use legacy snapcraft
+                if (
+                    "core22" in (base, build_base)
+                    and build_strategy == "force-fallback"
+                ):
+                    raise errors.ClassicFallback()
             else:
                 raise errors.ClassicFallback()
         return super()._get_dispatcher()
