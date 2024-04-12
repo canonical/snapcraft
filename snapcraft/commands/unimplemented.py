@@ -105,9 +105,3 @@ class Try(
     UnimplementedMixin, commands.core22.TryCommand
 ):  # noqa: D101 (missing docstring)
     pass
-
-
-class Lint(
-    UnimplementedMixin, commands.core22.LintCommand
-):  # noqa: D101 (missing docstring)
-    pass
