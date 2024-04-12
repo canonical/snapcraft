@@ -605,13 +605,13 @@ class Project(models.Project):
     # TODO: ensure we have a test for version being retrieved using adopt-info
     # snapcraft's `version` is more general than craft-application
     version: Optional[ProjectVersion]  # type: ignore[assignment]
-    donation: Optional[UniqueStrList]  # type: ignore[assignment]
+    donation: Optional[UniqueStrList]
     # snapcraft's `source_code` is more general than craft-application
-    source_code: Optional[UniqueStrList]  # type: ignore[assignment]
+    source_code: Optional[UniqueStrList]
     license: Optional[str]  # type: ignore[assignment]
-    contact: Optional[UniqueStrList]  # type: ignore[assignment]
-    issues: Optional[UniqueStrList]  # type: ignore[assignment]
-    website: Optional[UniqueStrList]  # type: ignore[assignment]
+    contact: Optional[UniqueStrList]
+    issues: Optional[UniqueStrList]
+    website: Optional[UniqueStrList]
     type: Optional[Literal["app", "base", "gadget", "kernel", "snapd"]]
     icon: Optional[str]
     confinement: Literal["classic", "devmode", "strict"]
