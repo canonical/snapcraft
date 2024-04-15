@@ -144,7 +144,6 @@ def test_application_expand_extensions(emitter, monkeypatch, extension_source, n
             summary: default project
             description: default project
             base: core24
-            build-base: devel
             license: MIT
             parts:
                 fake-extension/fake-part:

@@ -1,6 +1,5 @@
 name: plugs-warn
 base: core24
-build-base: devel
 version: '0.1'
 summary: Check warnings for top-level enabling of slots and plugs
 description: Check warnings for top-level enabling of slots and plugs.

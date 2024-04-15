@@ -1,6 +1,5 @@
 name: appstream-desktop
 base: core24
-build-base: devel
 
 grade: devel
 confinement: strict
