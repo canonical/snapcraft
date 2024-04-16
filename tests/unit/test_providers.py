@@ -214,7 +214,6 @@ def test_get_base_configuration(
         environment="test-env",
         hostname="test-instance-name",
         snaps=[
-            Snap(name="snapd", channel="latest/edge", classic=True),
             Snap(name="test-snap-name", channel="test-channel", classic=True),
         ],
         packages=["gnupg", "dirmngr", "git"],
@@ -260,7 +259,6 @@ def test_get_base_configuration_snap_channel(
         environment=ANY,
         hostname=ANY,
         snaps=[
-            Snap(name="snapd", channel="latest/edge", classic=True),
             Snap(name="snapcraft", channel=snap_channel, classic=True),
         ],
         packages=ANY,
@@ -297,7 +295,6 @@ def test_get_base_configuration_snap_instance_name_default(
         environment=ANY,
         hostname=ANY,
         snaps=[
-            Snap(name="snapd", channel="latest/edge", classic=True),
             Snap(name="snapcraft", channel=None, classic=True),
         ],
         packages=ANY,
@@ -334,7 +331,6 @@ def test_get_base_configuration_snap_instance_name_not_running_as_snap(
         environment=ANY,
         hostname=ANY,
         snaps=[
-            Snap(name="snapd", channel="latest/edge", classic=True),
             Snap(name="snapcraft", channel=None, classic=True),
         ],
         packages=ANY,

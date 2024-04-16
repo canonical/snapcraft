@@ -202,11 +202,6 @@ def get_base_configuration(
         hostname=instance_name,
         snaps=[
             Snap(
-                name="snapd",
-                channel="latest/edge",
-                classic=True,
-            ),
-            Snap(
                 name=snap_name,
                 channel=snap_channel,
                 classic=True,
