@@ -13,7 +13,6 @@ prepare: |
 
   snapcraft init
   sed -i 's/base: core22/base: core24/' snap/snapcraft.yaml
-  echo "build-base: devel" >> snap/snapcraft.yaml
 
   # Commit the project
   git config --global --add safe.directory "$PWD"

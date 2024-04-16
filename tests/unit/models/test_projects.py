@@ -39,7 +39,7 @@ from snapcraft.models.project import apply_root_packages
 from snapcraft.utils import get_host_architecture
 
 # required project data for core24 snaps
-CORE24_DATA = {"base": "core24", "build_base": "devel", "grade": "devel"}
+CORE24_DATA = {"base": "core24", "grade": "devel"}
 
 
 @pytest.fixture
@@ -584,12 +584,6 @@ class TestProjectValidation:
 
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(project_yaml_data(build_base="devel", grade="stable"))
-
-    def test_project_development_base_error(self, project_yaml_data):
-        error = "build-base must be 'devel' when base is 'core24'"
-
-        with pytest.raises(errors.ProjectValidationError, match=error):
-            Project.unmarshal(project_yaml_data(base="core24"))
 
     def test_project_global_plugs_warning(self, project_yaml_data, emitter):
         data = project_yaml_data(plugs={"desktop": None, "desktop-legacy": None})

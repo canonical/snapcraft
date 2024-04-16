@@ -6,7 +6,6 @@ description: |
 grade: devel
 confinement: strict
 base: core24
-build-base: devel
 platforms:
   platform1:
     build-on: [amd64, arm64]

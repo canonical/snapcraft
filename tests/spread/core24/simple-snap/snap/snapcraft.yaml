@@ -5,7 +5,6 @@ description: |
   Build a simple confined snap to test the build process.
 
 base: core24
-build-base: devel
 
 grade: devel
 confinement: strict

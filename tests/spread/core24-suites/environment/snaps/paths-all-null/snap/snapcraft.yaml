@@ -9,7 +9,6 @@ description: |
 grade: devel
 confinement: strict
 base: core24
-build-base: devel
 
 environment:
   LD_LIBRARY_PATH: null

@@ -7,7 +7,6 @@ description: |
 
 grade: devel
 base: core24
-build-base: devel
 confinement: devmode
 
 plugs:
