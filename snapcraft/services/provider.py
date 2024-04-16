@@ -30,3 +30,9 @@ class Provider(ProviderService):
             self.environment["SNAPCRAFT_BUILD_INFO"] = build_info
         if image_info := os.getenv("SNAPCRAFT_IMAGE_INFO"):
             self.environment["SNAPCRAFT_IMAGE_INFO"] = image_info
+        if experimental_extensions := os.getenv(
+            "SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS"
+        ):
+            self.environment["SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS"] = (
+                experimental_extensions
+            )
