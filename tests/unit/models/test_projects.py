@@ -585,11 +585,17 @@ class TestProjectValidation:
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(project_yaml_data(build_base="devel", grade="stable"))
 
-    @pytest.mark.parametrize("base", providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE.items())
-    def test_provider_base(self, base, project_yaml_data):
-        providers_base = Project._providers_base(base[0])
+    @pytest.mark.parametrize(
+        ("base", "expected_base"),
+        [
+            ("bare", None),
+            *providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE.items()
+        ],
+    )
+    def test_provider_base(self, base, expected_base, project_yaml_data):
+        providers_base = Project._providers_base(base)
 
-        assert providers_base == base[1]
+        assert providers_base == expected_base
 
     def test_provider_base_error(self, project_yaml_data):
         with pytest.raises(CraftValidationError) as raised:

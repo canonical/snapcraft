@@ -614,6 +614,9 @@ class Project(models.Project):
 
         :raises CraftValidationError: If the project's base cannot be determined.
         """
+        if base == "bare":
+            return None
+
         try:
             return SNAPCRAFT_BASE_TO_PROVIDER_BASE[base]
         except KeyError as err:
