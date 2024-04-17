@@ -605,7 +605,7 @@ class Project(models.Project):
 
     @override
     @classmethod
-    def _providers_base(cls, base: str) -> bases.BaseAlias:
+    def _providers_base(cls, base: str) -> bases.BaseAlias | None:
         """Get a BaseAlias from snapcraft's base.
 
         :param base: The application-specific base name.
