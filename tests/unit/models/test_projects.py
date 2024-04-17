@@ -591,10 +591,11 @@ class TestProjectValidation:
 
         assert providers_base == base[1]
 
-    def test_provider_base_none(self, project_yaml_data):
-        base = Project._providers_base(None)
+    def test_provider_base_error(self, project_yaml_data):
+        with pytest.raises(CraftValidationError) as raised:
+            Project._providers_base("unknown")
 
-        assert base is None
+        assert "Unknown base 'unknown'" in str(raised.value)
 
     def test_project_global_plugs_warning(self, project_yaml_data, emitter):
         data = project_yaml_data(plugs={"desktop": None, "desktop-legacy": None})

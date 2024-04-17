@@ -605,12 +605,19 @@ class Project(models.Project):
 
     @override
     @classmethod
-    def _providers_base(cls, base: str | None) -> bases.BaseAlias | None:
-        """Get a BaseAlias from snapcraft's base."""
-        if not base:
-            return None
+    def _providers_base(cls, base: str) -> bases.BaseAlias:
+        """Get a BaseAlias from snapcraft's base.
 
-        return SNAPCRAFT_BASE_TO_PROVIDER_BASE.get(base)
+        :param base: The application-specific base name.
+
+        :returns: The BaseAlias for the base.
+
+        :raises CraftValidationError: If the project's base cannot be determined.
+        """
+        try:
+            return SNAPCRAFT_BASE_TO_PROVIDER_BASE[base]
+        except KeyError as err:
+            raise CraftValidationError(f"Unknown base {base!r}") from err
 
     @pydantic.validator("plugs")
     @classmethod
