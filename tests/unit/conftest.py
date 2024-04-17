@@ -394,7 +394,6 @@ def default_project(extra_project_params):
         summary=SummaryStr("default project"),
         description="default project",
         base="core24",
-        build_base="devel",
         grade="devel",
         parts=parts,
         license="MIT",

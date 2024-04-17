@@ -5,7 +5,6 @@ description: test package repos with different architectures
 grade: devel
 confinement: strict
 base: core24
-build-base: devel
 platforms:
   amd64:
 

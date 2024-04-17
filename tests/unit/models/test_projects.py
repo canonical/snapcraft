@@ -39,7 +39,7 @@ from snapcraft.models.project import apply_root_packages
 from snapcraft.utils import get_host_architecture
 
 # required project data for core24 snaps
-CORE24_DATA = {"base": "core24", "build_base": "devel", "grade": "devel"}
+CORE24_DATA = {"base": "core24", "grade": "devel"}
 
 
 @pytest.fixture

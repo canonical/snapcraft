@@ -20,6 +20,11 @@
 def test_provider(provider_service, monkeypatch):
     monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "foo")
     monkeypatch.setenv("SNAPCRAFT_IMAGE_INFO", "bar")
+    monkeypatch.setenv("SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS", "baz")
     provider_service.setup()
     assert provider_service.environment["SNAPCRAFT_BUILD_INFO"] == "foo"
     assert provider_service.environment["SNAPCRAFT_IMAGE_INFO"] == "bar"
+    assert (
+        provider_service.environment["SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS"]
+        == "baz"
+    )

@@ -3,7 +3,6 @@ version: "1.0"
 summary: Build a snap with components
 description: Build a snap with components
 base: core24
-build-base: devel
 grade: devel
 confinement: strict
 
