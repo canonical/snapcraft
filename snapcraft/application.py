@@ -147,6 +147,59 @@ class Snapcraft(Application):
         return config
 
     @override
+    def _set_global_environment(self, info: craft_parts.ProjectInfo) -> None:
+        """Set global environment variables."""
+        super()._set_global_environment(info)
+        info.global_environment.update(
+            {
+                "CRAFT_ARCH_TRIPLET": info.arch_triplet,
+                "CRAFT_TARGET_ARCH": info.target_arch,
+                "CRAFT_PARALLEL_BUILD_COUNT": str(info.parallel_build_count),
+                "SNAPCRAFT_PROJECT_VERSION": info.get_project_var(
+                    "version", raw_read=True
+                ),
+                "SNAPCRAFT_PROJECT_GRADE": info.get_project_var("grade", raw_read=True),
+                "CRAFT_PROJECT_DIR": str(info.project_dir),
+                "CRAFT_PROJECT_NAME": str(info.project_name),
+                "CRAFT_STAGE": str(info.stage_dir),
+                "CRAFT_PRIME": str(info.prime_dir),
+            }
+        )
+
+        if info.partitions:
+            info.global_environment.update(self._get_environment_for_partitions(info))
+
+    def _get_environment_for_partitions(
+        self, info: craft_parts.ProjectInfo
+    ) -> dict[str, str]:
+        """Get environment variables related to partitions.
+
+        Assumes the partition feature is enabled and partitions are defined.
+
+        :param info: The project information.
+
+        :returns: A dictionary contain environment variables for partitions.
+        """
+        environment: dict[str, str] = {}
+
+        if not info.partitions:
+            raise ValueError("Project does not contain any partitions.")
+
+        for partition in info.partitions:
+            formatted_partition = partition.upper().translate(
+                {ord("-"): "_", ord("/"): "_"}
+            )
+
+            environment[f"CRAFT_{formatted_partition}_STAGE"] = str(
+                info.get_stage_dir(partition=partition)
+            )
+            environment[f"CRAFT_{formatted_partition}_PRIME"] = str(
+                info.get_prime_dir(partition=partition)
+            )
+
+        return environment
+
+    @override
     def _setup_partitions(self, yaml_data: dict[str, Any]) -> list[str] | None:
         components = models.ComponentProject.unmarshal(yaml_data)
         if components.components is None:
