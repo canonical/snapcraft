@@ -22,7 +22,7 @@ append_dir QML2_IMPORT_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/qt6/qml"
 append_dir QML2_IMPORT_PATH "$SNAP_DESKTOP_RUNTIME/lib/$ARCH"
 
 # Fix locating the QtWebEngineProcess executable
-export QTWEBENGINEPROCESS_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/qt6/libexec/QtWebEngineProcess"
+export QTWEBENGINEPROCESS_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/qt6/libexec/QtWebEngineProcess"
 
 # Removes Qt warning: Could not find a location
 # of the system Compose files
@@ -52,7 +52,16 @@ echo "$SNAP/usr/lib/$ARCH" >> "$XDG_CONFIG_HOME/qtchooser/default.conf"
 # 0001-let-qlibraryinfo-fall-back-to-locate-qt.conf-via-XDG.patch
 # to make QLibraryInfo look in XDG_* locations for qt.conf. The paths configured
 # here are applied to everything that uses QLibraryInfo as final fallback and
-# has no XDG_* fallback before that. Currently the most interesting offender
+# has no XDG_* fallback before that. Currently the most interesting of
+export VLC_PLUGIN_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/vlc/plugins"
+
+# Ensure QtChooser behaves.
+export QTCHOOSER_NO_GLOBAL_DIR=1
+export QT_SELECT=6
+# qtchooser hardcodes reference paths, we'll need to rewrite them properly
+ensure_dir_exists "$XDG_CONFIG_HOME/qtchooser"
+echo "$SNAP/usr/lib/qt6/bin" > "$XDG_CONFIG_HOME/qtchooser/6.conf"
+echo "$SNAP/usr/lib/$ARCH" >> fender
 # is QtWebEngine which will not work unless the Data path is correctly set.
 cat << EOF > "$XDG_CONFIG_HOME/qt.conf"
 [Paths]

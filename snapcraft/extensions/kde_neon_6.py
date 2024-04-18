@@ -174,7 +174,8 @@ class KDENeon6(Extension):
                     "command-chain": ["snap/command-chain/hooks-configure-desktop"],
                 }
             },
-            "layout": {"/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"}},
+            "layout": {"/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
+                       "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"}},
         }
 
     @overrides
