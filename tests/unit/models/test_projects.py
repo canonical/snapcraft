@@ -1309,7 +1309,7 @@ class TestGrammarValidation:
             }
         )
 
-        error = r".*- value must be a string: \[25\]"
+        error = r".*- value must be a str: \[25\]"
         with pytest.raises(errors.ProjectValidationError, match=error):
             GrammarAwareProject.validate_grammar(data)
 

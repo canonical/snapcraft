@@ -41,7 +41,7 @@ from craft_application import models
 from craft_application.errors import CraftValidationError
 from craft_application.models import BuildInfo, SummaryStr, UniqueStrList, VersionStr
 from craft_cli import emit
-from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
+from craft_grammar.models import Grammar
 from craft_providers import bases
 from pydantic import PrivateAttr, constr
 
@@ -596,8 +596,8 @@ class Project(models.Project):
     adopt_info: Optional[str]
     system_usernames: Optional[Dict[str, Any]]
     environment: Optional[Dict[str, Optional[str]]]
-    build_packages: Optional[GrammarStrList]
-    build_snaps: Optional[GrammarStrList]
+    build_packages: Optional[Grammar[list[str]]]
+    build_snaps: Optional[Grammar[list[str]]]
     ua_services: Optional[UniqueStrList]
     provenance: Optional[str]
     components: Optional[Dict[ProjectName, Component]]
@@ -946,12 +946,12 @@ class _GrammarAwareModel(pydantic.BaseModel):
 
 
 class _GrammarAwarePart(_GrammarAwareModel):
-    source: Optional[GrammarStr]
-    build_environment: Optional[GrammarSingleEntryDictList]
-    build_packages: Optional[GrammarStrList]
-    stage_packages: Optional[GrammarStrList]
-    build_snaps: Optional[GrammarStrList]
-    stage_snaps: Optional[GrammarStrList]
+    source: Optional[Grammar[str]]
+    build_environment: Optional[Grammar[list[dict]]]
+    build_packages: Optional[Grammar[list[str]]]
+    stage_packages: Optional[Grammar[list[str]]]
+    build_snaps: Optional[Grammar[list[str]]]
+    stage_snaps: Optional[Grammar[list[str]]]
     parse_info: Optional[List[str]]
 
 
