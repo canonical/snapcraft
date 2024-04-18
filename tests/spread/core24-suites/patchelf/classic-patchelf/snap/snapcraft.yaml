@@ -5,7 +5,6 @@ description: |
   Build a classic confined snap, mostly used to test the provisioning
   of `core` inside a snap.
 base: core24
-build-base: devel
 
 grade: devel
 confinement: classic

@@ -3,7 +3,6 @@ version: "1.0"
 summary: test build-snaps and build-packages at the root
 description: verify that these keys are processed correctly
 base: core24
-build-base: devel
 confinement: strict
 grade: devel
 

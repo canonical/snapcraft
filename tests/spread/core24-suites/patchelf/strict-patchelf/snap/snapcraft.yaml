@@ -4,7 +4,6 @@ summary: Build a strictly confined snap
 description: |
   Build a strictly confined snap to test ELF patching
 base: core24
-build-base: devel
 
 grade: devel
 confinement: strict

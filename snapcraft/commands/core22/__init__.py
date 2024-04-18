@@ -34,7 +34,6 @@ from .lifecycle import (
     TryCommand,
 )
 from .lint import LintCommand
-from .remote import RemoteBuildCommand
 
 __all__ = [
     "BuildCommand",
@@ -49,7 +48,6 @@ __all__ = [
     "PluginsCommand",
     "PrimeCommand",
     "PullCommand",
-    "RemoteBuildCommand",
     "SnapCommand",
     "StageCommand",
     "TryCommand",

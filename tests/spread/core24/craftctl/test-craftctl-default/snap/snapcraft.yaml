@@ -5,7 +5,6 @@ description: test
 grade: devel
 confinement: strict
 base: core24
-build-base: devel
 
 apps:
   craftctl-default:

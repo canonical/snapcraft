@@ -7,7 +7,6 @@ version: "1.0"
 grade: devel
 confinement: strict
 base: core24
-build-base: devel
 issues:
   - https://github.com/acme/project/issues
   - https://bugs.launchpad.net/project/filebug

@@ -68,9 +68,15 @@ def test_get_supported_confinement():
     assert gnome.GNOME.get_supported_confinement() == ("strict", "devmode")
 
 
-@pytest.mark.parametrize("base", ["core22", "core24"])
-def test_is_experimental(base):
-    assert gnome.GNOME.is_experimental(base=base) is False
+@pytest.mark.parametrize(
+    ("base", "is_experimental"),
+    [
+        ("core22", False),
+        ("core24", True),
+    ],
+)
+def test_is_experimental(base, is_experimental):
+    assert gnome.GNOME.is_experimental(base=base) is is_experimental
 
 
 def test_get_app_snippet(gnome_extension):

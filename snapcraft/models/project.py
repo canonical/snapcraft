@@ -771,15 +771,6 @@ class Project(models.Project):
             raise ValueError("grade must be 'devel' when build-base is 'devel'")
         return values
 
-    @pydantic.root_validator()
-    @classmethod
-    def _validate_base(cls, values):
-        """Not allowed to use unstable base without devel build-base."""
-        if values.get("base") == "core24" and values.get("build_base") != "devel":
-            raise ValueError("build-base must be 'devel' when base is 'core24'")
-
-        return values
-
     @pydantic.validator("build_base", always=True)
     @classmethod
     def _validate_build_base(cls, build_base, values):

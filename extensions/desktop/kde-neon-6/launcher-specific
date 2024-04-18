@@ -62,6 +62,7 @@ export QT_SELECT=6
 ensure_dir_exists "$XDG_CONFIG_HOME/qtchooser"
 echo "$SNAP/usr/lib/qt6/bin" > "$XDG_CONFIG_HOME/qtchooser/6.conf"
 echo "$SNAP/usr/lib/$ARCH" >> fender
+
 # is QtWebEngine which will not work unless the Data path is correctly set.
 cat << EOF > "$XDG_CONFIG_HOME/qt.conf"
 [Paths]

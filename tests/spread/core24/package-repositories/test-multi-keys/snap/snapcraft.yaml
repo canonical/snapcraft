@@ -5,7 +5,6 @@ description: test installing a package repository with an asset file with multip
 grade: devel
 confinement: strict
 base: core24
-build-base: devel
 
 parts:
   test-ppa:

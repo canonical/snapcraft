@@ -24,12 +24,12 @@ from typing import Any, Dict
 
 import craft_cli
 import craft_store
+from craft_application.errors import RemoteBuildError
 from craft_cli import ArgumentParsingError, EmitterMode, ProvideHelpException, emit
 from craft_providers import ProviderError
 
 from snapcraft import errors, store, utils
 from snapcraft.parts import plugins
-from snapcraft.remote import RemoteBuildError
 
 from . import commands
 from .legacy_cli import run_legacy
@@ -44,7 +44,6 @@ COMMAND_GROUPS = [
             commands.core22.StageCommand,
             commands.core22.PrimeCommand,
             commands.core22.PackCommand,
-            commands.core22.RemoteBuildCommand,
             commands.core22.SnapCommand,  # hidden (legacy compatibility)
             commands.core22.PluginsCommand,
             commands.core22.ListPluginsCommand,

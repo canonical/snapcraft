@@ -23,7 +23,6 @@ description: |
 grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: strict
 base: core24
-build-base: devel
 
 slots:
   # for GtkApplication registration
