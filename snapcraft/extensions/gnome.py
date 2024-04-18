@@ -91,8 +91,11 @@ class GNOME(Extension):
 
     @overrides
     def get_app_snippet(self) -> Dict[str, Any]:
+        command_chain = ["snap/command-chain/desktop-launch"]
+        if self.yaml_data["base"] == "core24":
+            command_chain.insert(0, "bin/gpu-2404-wrapper")
         return {
-            "command-chain": ["snap/command-chain/desktop-launch"],
+            "command-chain": command_chain,
             "plugs": [
                 "desktop",
                 "desktop-legacy",
@@ -130,6 +133,33 @@ class GNOME(Extension):
     @overrides
     def get_root_snippet(self) -> Dict[str, Any]:
         platform_snap = self.gnome_snaps.content
+        base = self.yaml_data["base"]
+
+        match base:
+            case "core22":
+                gpu_plugs = {}
+                gpu_layouts = {
+                    "/usr/share/libdrm": {
+                        "bind": "$SNAP/gnome-platform/usr/share/libdrm"
+                    },
+                }
+            case "core24":
+                gpu_plugs = {
+                    "gpu-2404": {
+                        "interface": "content",
+                        "target": "$SNAP/gpu",
+                        "default-provider": "mesa-2404",
+                    },
+                }
+
+                gpu_layouts = {
+                    "/usr/share/libdrm": {"bind": "$SNAP/gpu/libdrm"},
+                    "/usr/share/drirc.d": {"symlink": "$SNAP/gpu/drirc.d"},
+                    "/usr/share/X11/XErrorDB": {"symlink": "$SNAP/gpu/X11/XErrorDB"},
+                    "/usr/share/X11/locale": {"symlink": "$SNAP/gpu/X11/locale"},
+                }
+            case _:
+                raise AssertionError(f"Unsupported base: {base}")
 
         return {
             "assumes": ["snapd2.43"],  # for 'snapctl is-connected'
@@ -155,6 +185,7 @@ class GNOME(Extension):
                     "target": "$SNAP/gnome-platform",
                     "default-provider": platform_snap,
                 },
+                **gpu_plugs,
             },
             "environment": {
                 "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -182,7 +213,7 @@ class GNOME(Extension):
                 "/usr/share/xml/iso-codes": {
                     "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
                 },
-                "/usr/share/libdrm": {"bind": "$SNAP/gnome-platform/usr/share/libdrm"},
+                **gpu_layouts,
             },
         }
 
@@ -291,6 +322,19 @@ class GNOME(Extension):
         """
         source = get_extensions_data_dir() / "desktop" / "command-chain"
 
+        gpu_parts = {}
+        if self.yaml_data["base"] == "core24":
+            gpu_parts["gpu-2404"] = {
+                "after": list(self.yaml_data["parts"].keys()),
+                "source": "https://github.com/canonical/gpu-snap.git",
+                "plugin": "dump",
+                "override-prime": (
+                    "craftctl default\n"
+                    "${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-2404"
+                ),
+                "prime": ["bin/gpu-2404-wrapper"],
+            }
+
         if self.gnome_snaps.builtin:
             base = self.yaml_data["base"]
             sdk_snap = _SDK_SNAP[base]
@@ -299,12 +343,14 @@ class GNOME(Extension):
                     "source": str(source),
                     "plugin": "make",
                     "build-snaps": [sdk_snap],
-                }
+                },
+                **gpu_parts,
             }
 
         return {
             "gnome/sdk": {
                 "source": str(source),
                 "plugin": "make",
-            }
+            },
+            **gpu_parts,
         }

@@ -32,6 +32,13 @@ def gnome_extension():
 
 
 @pytest.fixture
+def gnome_extension_core24():
+    return gnome.GNOME(
+        yaml_data={"base": "core24", "parts": {}}, arch="amd64", target_arch="amd64"
+    )
+
+
+@pytest.fixture
 def gnome_extension_with_build_snap():
     return gnome.GNOME(
         yaml_data={
@@ -86,6 +93,13 @@ def test_get_app_snippet(gnome_extension):
     }
 
 
+def test_get_app_snippet_core24(gnome_extension_core24):
+    assert gnome_extension_core24.get_app_snippet() == {
+        "command-chain": ["bin/gpu-2404-wrapper", "snap/command-chain/desktop-launch"],
+        "plugs": ["desktop", "desktop-legacy", "gsettings", "opengl", "wayland", "x11"],
+    }
+
+
 def test_get_root_snippet(gnome_extension):
     assert gnome_extension.get_root_snippet() == {
         "assumes": ["snapd2.43"],
@@ -134,6 +148,32 @@ def test_get_root_snippet(gnome_extension):
                 "target": "$SNAP/data-dir/sounds",
             },
         },
+    }
+
+
+def test_get_root_snippet_with_gpu(gnome_extension_core24):
+    snippet = gnome_extension_core24.get_root_snippet()
+
+    assert snippet["plugs"]["gpu-2404"] == {
+        "default-provider": "mesa-2404",
+        "interface": "content",
+        "target": "$SNAP/gpu",
+    }
+
+    assert snippet["layout"]["/usr/share/libdrm"] == {
+        "bind": "$SNAP/gpu/libdrm",
+    }
+
+    assert snippet["layout"]["/usr/share/drirc.d"] == {
+        "symlink": "$SNAP/gpu/drirc.d",
+    }
+
+    assert snippet["layout"]["/usr/share/X11/XErrorDB"] == {
+        "symlink": "$SNAP/gpu/X11/XErrorDB",
+    }
+
+    assert snippet["layout"]["/usr/share/X11/locale"] == {
+        "symlink": "$SNAP/gpu/X11/locale",
     }
 
 
@@ -365,6 +405,25 @@ def test_get_parts_snippet(gnome_extension):
             "plugin": "make",
             "build-snaps": ["gnome-42-2204-sdk"],
         }
+    }
+
+
+def test_get_parts_snippet_core24(gnome_extension_core24):
+    assert gnome_extension_core24.get_parts_snippet() == {
+        "gnome/sdk": {
+            "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
+            "plugin": "make",
+            "build-snaps": ["gnome-46-2404-sdk"],
+        },
+        "gpu-2404": {
+            "after": [],
+            "source": "https://github.com/canonical/gpu-snap.git",
+            "plugin": "dump",
+            "override-prime": (
+                "craftctl default\n" "${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-2404"
+            ),
+            "prime": ["bin/gpu-2404-wrapper"],
+        },
     }
 
 
