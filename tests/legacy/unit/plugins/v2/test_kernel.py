@@ -292,12 +292,13 @@ class TestPluginKernel(TestCase):
         assert _is_sub_array(build_commands, _clean_old_build_cmd)
         assert _is_sub_array(build_commands, _prepare_config_flavour_generic_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_cmd)
+        assert _is_sub_array(build_commands, _prepare_kernel_versions)
         assert _check_config in build_commands
         if platform.machine() == "x86_64":
-            assert _is_sub_array(build_commands, _build_kernel_x86_cmd)
+            assert _is_sub_array(build_commands, _build_kernel_abi_version_x86_cmd)
             assert _is_sub_array(build_commands, _install_kernel_x86_cmd)
         else:
-            assert _is_sub_array(build_commands, _build_kernel_cmd)
+            assert _is_sub_array(build_commands, _build_kernel_abi_version_cmd)
             assert _is_sub_array(build_commands, _install_kernel_cmd)
 
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
@@ -350,12 +351,15 @@ class TestPluginKernel(TestCase):
         assert _is_sub_array(build_commands, _prepare_config_flavour_raspi_cmd)
         assert _is_sub_array(build_commands, _prepare_config_extra_config_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_cmd)
+        assert _is_sub_array(build_commands, _prepare_kernel_versions)
         assert _check_config in build_commands
         if platform.machine() == "x86_64":
-            assert _is_sub_array(build_commands, _build_kernel_x86_cmd)
+            assert _is_sub_array(
+                build_commands, _build_kernel_abi_version_x86_raspi_cmd
+            )
             assert _is_sub_array(build_commands, _install_kernel_no_dtbs_cmd)
         else:
-            assert _is_sub_array(build_commands, _build_kernel_cmd)
+            assert _is_sub_array(build_commands, _build_kernel_abi_version_raspi_cmd)
             assert _is_sub_array(build_commands, _install_kernel_dtbs_cmd)
 
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
@@ -383,6 +387,7 @@ class TestPluginKernel(TestCase):
         assert _is_sub_array(build_commands, _prepare_config_flavour_raspi_cmd)
         assert _is_sub_array(build_commands, _prepare_config_extra_config_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_armhf_cmd)
+        assert _is_sub_array(build_commands, _prepare_kernel_versions)
         assert _check_config in build_commands
         assert _is_sub_array(build_commands, _build_kernel_armhf_cmd)
         assert _is_sub_array(build_commands, _install_kernel_armhf_cmd)
@@ -666,6 +671,11 @@ _prepare_config_flavour_generic_cmd = [
     "fi",
 ]
 
+_prepare_kernel_versions = [
+    "ABI_VERSION=$(head -n 1 ${KERNEL_SRC}/debian/changelog | awk -F '[()]' '{split($2, v, \"-\"); split(v[2], a, \".\"); print a[1]}')",
+    "KERNEL_MAIN_VERSION=$(head -n 1 ${KERNEL_SRC}/debian/changelog | awk -F '[()]' '{split($2, v, \"-\"); print v[1]}')",
+]
+
 _prepare_config_extra_config_cmd = [
     'echo "Applying extra config...."',
     "echo 'CONFIG_DEBUG_INFO=n\nCONFIG_DM_CRYPT=y' > ${SNAPCRAFT_PART_BUILD}/.config_snap",
@@ -704,8 +714,52 @@ _build_kernel_cmd = [
     "make -j$(nproc) -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} Image.gz modules dtbs",
 ]
 
+_build_kernel_abi_version_cmd = [
+    _build_kernel_cmd[0]
+    + " "
+    + " ".join(
+        [
+            'KERNELRELEASE="${KERNEL_MAIN_VERSION}-${ABI_VERSION}-generic"',
+            'CFLAGS_MODULE="-DPKG_ABI=${ABI_VERSION}"',
+        ]
+    ),
+]
+
+_build_kernel_abi_version_raspi_cmd = [
+    _build_kernel_cmd[0]
+    + " "
+    + " ".join(
+        [
+            'KERNELRELEASE="${KERNEL_MAIN_VERSION}-${ABI_VERSION}-raspi"',
+            'CFLAGS_MODULE="-DPKG_ABI=${ABI_VERSION}"',
+        ]
+    ),
+]
+
 _build_kernel_x86_cmd = [
     "make -j$(nproc) -C ${KERNEL_SRC} O=${SNAPCRAFT_PART_BUILD} Image.gz modules",
+]
+
+_build_kernel_abi_version_x86_cmd = [
+    _build_kernel_x86_cmd[0]
+    + " "
+    + " ".join(
+        [
+            'KERNELRELEASE="${KERNEL_MAIN_VERSION}-${ABI_VERSION}-generic"',
+            'CFLAGS_MODULE="-DPKG_ABI=${ABI_VERSION}"',
+        ]
+    ),
+]
+
+_build_kernel_abi_version_x86_raspi_cmd = [
+    _build_kernel_x86_cmd[0]
+    + " "
+    + " ".join(
+        [
+            'KERNELRELEASE="${KERNEL_MAIN_VERSION}-${ABI_VERSION}-raspi"',
+            'CFLAGS_MODULE="-DPKG_ABI=${ABI_VERSION}"',
+        ]
+    ),
 ]
 
 _build_kernel_armhf_cmd = [
@@ -717,6 +771,8 @@ _build_kernel_armhf_cmd = [
             "ARCH=arm",
             "CROSS_COMPILE=${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}-",
             "Image.gz modules dtbs",
+            'KERNELRELEASE="${KERNEL_MAIN_VERSION}-${ABI_VERSION}-raspi"',
+            'CFLAGS_MODULE="-DPKG_ABI=${ABI_VERSION}"',
         ],
     ),
 ]

@@ -225,12 +225,15 @@ class KernelPlugin(PluginV2):
     @overrides
     def get_build_commands(self) -> List[str]:
         logger.info("Getting build commands...")
+        kconfigflavour = self.options.kernel_kconfigflavour
+        if self.options.kernel_kdefconfig:
+            kconfigflavour = ""
         return _kernel_build.get_build_commands(
             make_cmd=self._make_cmd.copy(),
             make_targets=self._make_targets,
             make_install_targets=self._make_install_targets,
             target_arch_triplet="${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}",
-            config_flavour=self.options.kernel_kconfigflavour,
+            config_flavour=kconfigflavour,
             defconfig=self.options.kernel_kdefconfig,
             configs=self.options.kernel_kconfigs,
             enable_zfs_support=self.options.kernel_enable_zfs_support,
