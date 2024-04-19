@@ -321,8 +321,33 @@ def _call_check_config_cmd(dest_dir: str) -> List[str]:
     ]
 
 
-def _get_build_command(make_cmd: List[str], targets: List[str]) -> List[str]:
+def _get_build_command(
+    make_cmd: List[str], targets: List[str], config_flavour: str
+) -> List[str]:
     """Build the kernel."""
+    # if config_flavour is used, determine ABI version and set KERNELRELEASE name
+    if config_flavour:
+        return [
+            'echo "Building kernel..."',
+            "ABI_VERSION=$(head -n 1 ${KERNEL_SRC}/debian/changelog | awk -F '[()]' "
+            "'{split($2, v, "
+            '"-"'
+            "); split(v[2], a, "
+            '"."'
+            "); print a[1]}')",
+            "KERNEL_MAIN_VERSION=$(head -n 1 ${KERNEL_SRC}/debian/changelog | awk -F "
+            "'[()]' '{split($2, v, "
+            '"-"'
+            "); print v[1]}')",
+            " ".join(
+                make_cmd
+                + targets
+                + [
+                    f'KERNELRELEASE="${{KERNEL_MAIN_VERSION}}-${{ABI_VERSION}}-{config_flavour}"',
+                    'CFLAGS_MODULE="-DPKG_ABI=${ABI_VERSION}"',
+                ]
+            ),
+        ]
     return [
         'echo "Building kernel..."',
         " ".join(make_cmd + targets),
@@ -423,7 +448,11 @@ def get_build_commands(
         "",
         *_call_check_config_cmd(dest_dir=build_dir),
         "",
-        *_get_build_command(make_cmd=make_cmd, targets=make_targets),
+        *_get_build_command(
+            make_cmd=make_cmd,
+            targets=make_targets,
+            config_flavour=config_flavour,
+        ),
         *_get_install_command(
             make_cmd=make_cmd.copy(),
             make_install_targets=make_install_targets,
