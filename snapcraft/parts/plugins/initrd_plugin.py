@@ -153,11 +153,13 @@ class InitrdPlugin(plugins.Plugin):
         self._deb_arch = _kernel_build.get_deb_architecture(target_arch)
 
     @overrides
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:  # pylint: disable=missing-function-docstring
         return set()
 
     @overrides
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(
+        self,
+    ) -> set[str]:  # pylint: disable=missing-function-docstring
         build_packages = {
             "bc",
             "binutils",
@@ -189,13 +191,17 @@ class InitrdPlugin(plugins.Plugin):
         return build_packages
 
     @overrides
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(
+        self,
+    ) -> dict[str, str]:  # pylint: disable=missing-function-docstring
         return {
             "UC_INITRD_DEB": "${CRAFT_PART_BUILD}/ubuntu-core-initramfs",
         }
 
     @overrides
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(
+        self,
+    ) -> list[str]:  # pylint: disable=missing-function-docstring
         logger.info("Getting build commands...")
         return _initrd_build.get_build_commands(
             target_arch=self._target_arch,
