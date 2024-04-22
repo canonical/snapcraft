@@ -25,6 +25,7 @@ from typing import Any, cast
 from craft_application import AppMetadata, LifecycleService, ServiceFactory
 from craft_application.models import BuildInfo
 from craft_parts import ProjectInfo, StepInfo
+from craft_parts.packages import Repository as Repo
 from overrides import overrides
 
 from snapcraft import __version__, errors, models, os_release, parts, utils
@@ -59,6 +60,14 @@ class Lifecycle(LifecycleService):
     @overrides
     def setup(self) -> None:
         project = cast(models.Project, self._project)
+
+        if project.package_repositories:
+            # Note: we unfortunately need to handle missing gpg/dirmngr binaries
+            # ourselves here, as this situation happens in Launchpad (where
+            # builds are executed destructively).
+            required_packages = ["gpg", "dirmngr"]
+            if any(p for p in required_packages if not Repo.is_package_installed(p)):
+                Repo.install_packages(required_packages, refresh_package_cache=False)
 
         # Have the lifecycle install the base snap, and look into it when
         # determining the package cutoff.
