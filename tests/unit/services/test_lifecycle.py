@@ -23,6 +23,7 @@ from unittest import mock
 
 import pytest
 import pytest_subprocess
+from craft_parts.packages import Repository
 
 from snapcraft import __version__, models, os_release, utils
 
@@ -198,3 +199,24 @@ def test_lifecycle_prime_dirs(lifecycle_service):
     lifecycle_service.setup()
 
     assert lifecycle_service.prime_dirs == {None: lifecycle_service._work_dir / "prime"}
+
+
+@pytest.fixture()
+def package_repositories_params(extra_project_params):
+    """Add package-repositories configuration to the default project."""
+    extra_project_params["package_repositories"] = [{"type": "apt", "ppa": "test/ppa"}]
+
+
+@pytest.mark.usefixtures("package_repositories_params", "default_project")
+def test_lifecycle_installs_gpg_dirmngr(lifecycle_service, mocker):
+    mock_is_installed = mocker.patch.object(
+        Repository, "is_package_installed", return_value=False
+    )
+    mock_install = mocker.patch.object(Repository, "install_packages")
+
+    lifecycle_service.setup()
+
+    assert mock_is_installed.called
+    mock_install.assert_called_once_with(
+        ["gpg", "dirmngr"], refresh_package_cache=False
+    )
