@@ -4,7 +4,6 @@ description: |
   Verify that top level metadata links in snapcraft.yaml are created at a top level
   links entry in snap.yaml.
 version: "1.0"
-grade: devel
 confinement: strict
 base: core24
 issues:

@@ -2,7 +2,6 @@ name: test-foreign-i386
 version: '1.0'
 summary: test package repos with different architectures
 description: test package repos with different architectures
-grade: devel
 confinement: strict
 base: core24
 platforms:

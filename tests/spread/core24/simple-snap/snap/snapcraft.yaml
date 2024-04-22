@@ -6,7 +6,7 @@ description: |
 
 base: core24
 
-grade: devel
+grade: stable
 confinement: strict
 
 apps:
