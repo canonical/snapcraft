@@ -31,7 +31,7 @@ jobs:
           echo "::group::Begin snap install"
           echo "Installing snaps in the background while running apt and pip..."
           sudo snap install --no-wait --classic pyright
-          sudo snap install --no-wait shellcheck
+          sudo snap install --no-wait shellcheck ruff
           echo "::endgroup::"
           echo "::group::pip install"
           python -m pip install tox
