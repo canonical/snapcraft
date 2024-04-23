@@ -19,6 +19,7 @@ import json
 import platform
 import shutil
 import sys
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -220,3 +221,37 @@ def test_lifecycle_installs_gpg_dirmngr(lifecycle_service, mocker):
     mock_install.assert_called_once_with(
         ["gpg", "dirmngr"], refresh_package_cache=False
     )
+
+
+@pytest.mark.parametrize(
+    ("project_location", "assets_dir", "expected_keys_path"),
+    [
+        # These locations come from yaml_utils._SNAP_PROJECT_FILES
+        # snapcraft.yaml locations where the keys are expected to be in snap/keys
+        ("snapcraft.yaml", "snap", "snap/keys"),
+        ("snap/snapcraft.yaml", "snap", "snap/keys"),
+        (".snapcraft.yaml", "snap", "snap/keys"),
+        # snapcraft.yaml location where the keys are expected to be somewhere else
+        ("build-aux/snap/snapcraft.yaml", "build-aux/snap", "build-aux/snap/keys"),
+    ],
+)
+def test_local_keys_path(
+    new_dir, lifecycle_service, project_location, assets_dir, expected_keys_path
+):
+    """Check that _get_local_keys_path() is correct given the location of snapcraft.yaml."""
+    snap_dir = new_dir / Path(project_location).parent
+    snap_dir.mkdir(exist_ok=True, parents=True)
+
+    # The project file itself doesn't really matter, but must exist
+    project_yaml = snap_dir / "snapcraft.yaml"
+    project_yaml.touch()
+
+    # app = application.create_app()
+    keys_dir = Path(assets_dir) / "keys"
+
+    # If the keys dir doesn't exist the method should return None
+    assert not keys_dir.is_dir()
+    assert lifecycle_service._get_local_keys_path() is None
+
+    keys_dir.mkdir(exist_ok=True, parents=True)
+    assert lifecycle_service._get_local_keys_path() == Path(expected_keys_path)
