@@ -29,6 +29,7 @@ from craft_parts.packages import Repository as Repo
 from overrides import overrides
 
 from snapcraft import __version__, errors, models, os_release, parts, utils
+from snapcraft.parts.yaml_utils import get_snap_project
 
 
 class Lifecycle(LifecycleService):
@@ -168,6 +169,15 @@ class Lifecycle(LifecycleService):
             build_snaps=[],
             primed_stage_packages=sorted(primed_stage_packages),
         )
+
+    @overrides
+    def _get_local_keys_path(self) -> Path | None:
+        snap_project = get_snap_project()
+        keys_dir = snap_project.assets_dir / "keys"
+        if keys_dir.is_dir():
+            return keys_dir
+
+        return None
 
 
 def get_prime_dirs_from_project(project_info: ProjectInfo) -> dict[str | None, Path]:
