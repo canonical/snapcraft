@@ -97,7 +97,7 @@ install_requires = [
     "attrs",
     "catkin-pkg; sys_platform == 'linux'",
     "click",
-    "craft-application @ git+https://github.com/canonical/craft-application@work/CRAFT-2817-transform-before-grammar#egg=craft-application",
+    "craft-application",
     "craft-archives",
     "craft-cli",
     "craft-grammar",
