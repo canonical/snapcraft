@@ -30,7 +30,7 @@ lint = [
 ]
 types = [
     "mypy[reports]~=1.9.0",
-    "pyright==1.1.358",
+    "pyright==1.1.359",
 ]
 docs = [
     "furo==2024.1.29",
