@@ -16,9 +16,9 @@ platforms:
     build-for: arm64
 
 build-packages:
-  - on amd64:
+  - on amd64 to amd64:
     - libogg-dev
-  - on arm64:
+  - on amd64 to arm64:
     - libpci-dev
 
 parts:
