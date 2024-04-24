@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Starcraft package demo."""
-from typing import List, Optional, Any
+from typing import Any
 
 try:
     from ._version import __version__
@@ -27,7 +27,7 @@ except ImportError:  # pragma: no cover
         __version__ = "dev"
 
 
-def hello(people: Optional[List[Any]] = None) -> None:
+def hello(people: list[Any] | None = None) -> None:
     """Says hello."""
     print("Hello *craft team!")
     if people:
