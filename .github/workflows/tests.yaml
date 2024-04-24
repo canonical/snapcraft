@@ -24,7 +24,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
           cache: 'pip'
       - name: Configure environment
         run: |
@@ -57,10 +57,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: |
-            3.8
             3.10
-            3.11
-            3.12-dev
+            3.12
+            3.13-dev
           cache: 'pip'
       - name: Configure environment
         run: |
@@ -98,10 +97,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: |
-            3.8
             3.10
-            3.11
-            3.12-dev
+            3.12
+            3.13-dev
           cache: 'pip'
       - name: Configure environment
         run: |
