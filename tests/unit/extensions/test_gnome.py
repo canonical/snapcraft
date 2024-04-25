@@ -95,7 +95,7 @@ def test_get_app_snippet(gnome_extension):
 
 def test_get_app_snippet_core24(gnome_extension_core24):
     assert gnome_extension_core24.get_app_snippet() == {
-        "command-chain": ["bin/gpu-2404-wrapper", "snap/command-chain/desktop-launch"],
+        "command-chain": ["snap/command-chain/gpu-2404-wrapper", "snap/command-chain/desktop-launch"],
         "plugs": ["desktop", "desktop-legacy", "gsettings", "opengl", "wayland", "x11"],
     }
 
@@ -413,16 +413,8 @@ def test_get_parts_snippet_core24(gnome_extension_core24):
         "gnome/sdk": {
             "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
             "plugin": "make",
+            "make-parameters": "GPU_WRAPPER=gpu-2404-wrapper",
             "build-snaps": ["gnome-46-2404-sdk"],
-        },
-        "gpu-2404": {
-            "after": [],
-            "source": "https://github.com/canonical/gpu-snap.git",
-            "plugin": "dump",
-            "override-prime": (
-                "craftctl default\n" "${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-2404"
-            ),
-            "prime": ["bin/gpu-2404-wrapper"],
         },
     }
 

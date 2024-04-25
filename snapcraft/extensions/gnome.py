@@ -93,7 +93,7 @@ class GNOME(Extension):
     def get_app_snippet(self) -> Dict[str, Any]:
         command_chain = ["snap/command-chain/desktop-launch"]
         if self.yaml_data["base"] == "core24":
-            command_chain.insert(0, "bin/gpu-2404-wrapper")
+            command_chain.insert(0, "snap/command-chain/gpu-2404-wrapper")
         return {
             "command-chain": command_chain,
             "plugs": [
@@ -322,18 +322,9 @@ class GNOME(Extension):
         """
         source = get_extensions_data_dir() / "desktop" / "command-chain"
 
-        gpu_parts = {}
+        gpu_opts = {}
         if self.yaml_data["base"] == "core24":
-            gpu_parts["gpu-2404"] = {
-                "after": list(self.yaml_data["parts"].keys()),
-                "source": "https://github.com/canonical/gpu-snap.git",
-                "plugin": "dump",
-                "override-prime": (
-                    "craftctl default\n"
-                    "${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-2404"
-                ),
-                "prime": ["bin/gpu-2404-wrapper"],
-            }
+            gpu_opts["make-parameters"] = "GPU_WRAPPER=gpu-2404-wrapper"
 
         if self.gnome_snaps.builtin:
             base = self.yaml_data["base"]
@@ -343,14 +334,14 @@ class GNOME(Extension):
                     "source": str(source),
                     "plugin": "make",
                     "build-snaps": [sdk_snap],
+                    **gpu_opts,
                 },
-                **gpu_parts,
             }
 
         return {
             "gnome/sdk": {
                 "source": str(source),
                 "plugin": "make",
+                **gpu_opts,
             },
-            **gpu_parts,
         }
