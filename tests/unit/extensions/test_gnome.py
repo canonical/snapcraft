@@ -157,23 +157,19 @@ def test_get_root_snippet_with_gpu(gnome_extension_core24):
     assert snippet["plugs"]["gpu-2404"] == {
         "default-provider": "mesa-2404",
         "interface": "content",
-        "target": "$SNAP/gpu",
+        "target": "$SNAP/gpu-2404",
     }
 
     assert snippet["layout"]["/usr/share/libdrm"] == {
-        "bind": "$SNAP/gpu/libdrm",
+        "bind": "$SNAP/gpu-2404/libdrm",
     }
 
     assert snippet["layout"]["/usr/share/drirc.d"] == {
-        "symlink": "$SNAP/gpu/drirc.d",
+        "symlink": "$SNAP/gpu-2404/drirc.d",
     }
 
     assert snippet["layout"]["/usr/share/X11/XErrorDB"] == {
-        "symlink": "$SNAP/gpu/X11/XErrorDB",
-    }
-
-    assert snippet["layout"]["/usr/share/X11/locale"] == {
-        "symlink": "$SNAP/gpu/X11/locale",
+        "symlink": "$SNAP/gpu-2404/X11/XErrorDB",
     }
 
 

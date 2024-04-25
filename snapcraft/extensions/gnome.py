@@ -147,16 +147,15 @@ class GNOME(Extension):
                 gpu_plugs = {
                     "gpu-2404": {
                         "interface": "content",
-                        "target": "$SNAP/gpu",
+                        "target": "$SNAP/gpu-2404",
                         "default-provider": "mesa-2404",
                     },
                 }
 
                 gpu_layouts = {
-                    "/usr/share/libdrm": {"bind": "$SNAP/gpu/libdrm"},
-                    "/usr/share/drirc.d": {"symlink": "$SNAP/gpu/drirc.d"},
-                    "/usr/share/X11/XErrorDB": {"symlink": "$SNAP/gpu/X11/XErrorDB"},
-                    "/usr/share/X11/locale": {"symlink": "$SNAP/gpu/X11/locale"},
+                    "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
+                    "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
+                    "/usr/share/X11/XErrorDB": {"symlink": "$SNAP/gpu-2404/X11/XErrorDB"},
                 }
             case _:
                 raise AssertionError(f"Unsupported base: {base}")
