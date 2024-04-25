@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -127,6 +127,18 @@ def get_base(filestream: TextIO) -> Optional[str]:
     :raises SnapcraftError: If the yaml could not be loaded.
     """
     data = safe_load(filestream)
+    return get_base_from_yaml(data)
+
+
+def get_base_from_yaml(data: dict[str, Any]) -> str | None:
+    """Get the effective base from a dictionary of yaml data.
+
+    :param data: The YAML data to load.
+
+    :returns: Effective base of the project or None if the base cannot be determined.
+
+    :raises SnapcraftError: If the yaml could not be loaded.
+    """
     return utils.get_effective_base(
         base=data.get("base"),
         build_base=data.get("build-base"),
