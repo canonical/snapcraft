@@ -22,6 +22,7 @@ you with tox, but you'll need to install:
   deadsnakes_ PPA) with setuptools.
 - tox_ version 3.8 or later
 - ShellCheck_  (also available via snap: ``snap install shellcheck``)
+- Codespell_ (also available via snap: ``snap install codespell``)
 - ruff_ (also available via snap: ``snap install ruff``)
 
 Once you have all of those installed, you can install the necessary virtual
@@ -267,6 +268,7 @@ Example footers::
 
 .. _Black: https://black.readthedocs.io
 .. _`Canonical contributor licence agreement`: http://www.ubuntu.com/legal/contributors/
+.. _Codespell: https://github.com/codespell-project/codespell
 .. _`conventional commit`: https://www.conventionalcommits.org/en/v1.0.0/#summary
 .. _deadsnakes: https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa
 .. _`git submodules`: https://git-scm.com/book/en/v2/Git-Tools-Submodules#_cloning_submodules
