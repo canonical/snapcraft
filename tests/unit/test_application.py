@@ -161,9 +161,13 @@ def test_application_expand_extensions(emitter, monkeypatch, extension_source, n
 
 
 @pytest.mark.usefixtures("fake_extension")
-def test_application_build_with_extensions(monkeypatch, extension_source, new_dir):
-    """Test that extensions are correctly applied in regular builds."""
+def test_application_extra_yaml_transforms(
+    monkeypatch, extension_source, new_dir, emitter
+):
+    """Test that extra_yaml_transforms applies root keywords and expands extensions."""
     monkeypatch.setenv("CRAFT_DEBUG", "1")
+    extension_source["build-packages"] = [{"to s390x": "test-package"}]
+    extension_source["build-snaps"] = [{"to s390x": "test-snap"}]
 
     project_path = new_dir / "snap/snapcraft.yaml"
     (new_dir / "snap").mkdir()
@@ -172,12 +176,16 @@ def test_application_build_with_extensions(monkeypatch, extension_source, new_di
     # Calling a lifecycle command will create a Project. Creating a Project
     # without applying the extensions will fail because the "extensions" field
     # will still be present on the yaml data, so it's enough to run "pull".
-    monkeypatch.setattr("sys.argv", ["snapcraft", "pull", "--destructive-mode"])
+    monkeypatch.setattr(
+        "sys.argv", ["snapcraft", "pull", "--destructive-mode", "--build-for", "s390x"]
+    )
     app = application.create_app()
     app.run()
 
     project = app.get_project()
     assert "fake-extension/fake-part" in project.parts
+    assert project.parts["snapcraft/core"]["build-packages"] == ["test-package"]
+    assert project.parts["snapcraft/core"]["build-snaps"] == ["test-snap"]
 
 
 def test_application_managed_core20_fallback(monkeypatch, new_dir, mocker):
