@@ -15,6 +15,6 @@ parts:
       - gcc
       - libcaca-dev
     stage-packages:
-      - libpng16-16
+      - libogg0
     override-build:
       gcc -o $CRAFT_PART_INSTALL/linter-test test.c -lcaca

@@ -128,7 +128,8 @@ class ExpandExtensionsCommand(BaseCommand, abc.ABC):
 
         # `apply_yaml()` adds or replaces the architectures keyword with an Architecture
         # object, which does not easily dump to a yaml file
-        yaml_data_for_arch.pop("architectures")
+        yaml_data_for_arch.pop("architectures", None)
+        yaml_data_for_arch.pop("platforms", None)
 
         # `parse-info` keywords must be removed before unmarshalling, because they are
         # not part of the Project model

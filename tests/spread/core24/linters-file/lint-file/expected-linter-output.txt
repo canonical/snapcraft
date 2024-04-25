@@ -1,5 +1,3 @@
-Running linters...
-Running linter: library
-Lint warnings:
-- library: linter-test: missing dependency 'libcaca.so.0'. (https://snapcraft.io/docs/linters-library)
-- library: libpng16.so.16: unused library 'usr/lib/x86_64-linux-gnu/libpng16.so.16.37.0'. (https://snapcraft.io/docs/linters-library)
+Lint warnings:                                                                                                                                                        
+- library: linter-test: missing dependency 'libcaca.so.0'. (https://snapcraft.io/docs/linters-library)                                                                
+- library: libogg.so.0: unused library 'usr/lib/x86_64-linux-gnu/libogg.so.0.8.5'. (https://snapcraft.io/docs/linters-library)  

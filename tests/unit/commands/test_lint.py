@@ -25,8 +25,8 @@ import pytest
 from craft_providers.bases import BuilddBaseAlias
 from craft_providers.multipass import MultipassProvider
 
-from snapcraft import cli, models
-from snapcraft.commands.core22.lint import LintCommand
+from snapcraft import application, models
+from snapcraft.commands.lint import LintCommand
 from snapcraft.errors import SnapcraftError
 from snapcraft.meta.snap_yaml import SnapMetadata
 
@@ -81,9 +81,7 @@ def mock_argv(mocker, fake_snap_file):
 
 @pytest.fixture
 def mock_capture_logs_from_instance(mocker):
-    return mocker.patch(
-        "snapcraft.commands.core22.lint.providers.capture_logs_from_instance"
-    )
+    return mocker.patch("snapcraft.commands.lint.providers.capture_logs_from_instance")
 
 
 @pytest.fixture
@@ -100,16 +98,14 @@ def mock_get_base_configuration(mocker):
 
 @pytest.fixture
 def mock_is_managed_mode(mocker):
-    return mocker.patch(
-        "snapcraft.commands.core22.lint.is_managed_mode", return_value=False
-    )
+    return mocker.patch("snapcraft.commands.lint.is_managed_mode", return_value=False)
 
 
 @pytest.fixture
 def mock_provider(mocker, mock_instance, fake_provider):
     _mock_provider = Mock(wraps=fake_provider)
     mocker.patch(
-        "snapcraft.commands.core22.lint.providers.get_provider",
+        "snapcraft.commands.lint.providers.get_provider",
         return_value=_mock_provider,
     )
     return _mock_provider
@@ -118,13 +114,13 @@ def mock_provider(mocker, mock_instance, fake_provider):
 @pytest.fixture
 def mock_run_linters(mocker):
     return mocker.patch(
-        "snapcraft.commands.core22.lint.linters.run_linters", return_value=Mock()
+        "snapcraft.commands.lint.linters.run_linters", return_value=Mock()
     )
 
 
 @pytest.fixture
 def mock_report(mocker):
-    return mocker.patch("snapcraft.commands.core22.lint.linters.report")
+    return mocker.patch("snapcraft.commands.lint.linters.report")
 
 
 def test_lint_default(
@@ -144,7 +140,7 @@ def test_lint_default(
     fake_snap_file.touch()
     fake_assert_file.touch()
 
-    cli.run()
+    application.main()
 
     mock_ensure_provider_is_available.assert_called_once()
     mock_get_base_configuration.assert_called_once_with(
@@ -202,7 +198,7 @@ def test_lint_http_https_proxy(
         ],
     )
 
-    cli.run()
+    application.main()
 
     mock_get_base_configuration.assert_called_once_with(
         alias=BuilddBaseAlias.JAMMY,
@@ -228,7 +224,7 @@ def test_lint_assert_file_missing(
     # create a snap file
     fake_snap_file.touch()
 
-    cli.run()
+    application.main()
 
     mock_instance.push_file.assert_called_once_with(
         source=fake_snap_file,
@@ -259,7 +255,7 @@ def test_lint_assert_file_not_valid(
     # make the assertion filepath a directory
     fake_assert_file.mkdir()
 
-    cli.run()
+    application.main()
 
     mock_instance.push_file.assert_called_once_with(
         source=fake_snap_file,
@@ -285,14 +281,14 @@ def test_lint_multipass_not_supported(
     """Raise an error if Multipass is used as the build provider."""
     _mock_provider = Mock(wraps=fake_provider, spec=MultipassProvider)
     mocker.patch(
-        "snapcraft.commands.core22.lint.providers.get_provider",
+        "snapcraft.commands.lint.providers.get_provider",
         return_value=_mock_provider,
     )
 
     # create a snap file
     fake_snap_file.touch()
 
-    cli.run()
+    application.main()
 
     out, err = capsys.readouterr()
     assert not out
@@ -303,7 +299,7 @@ def test_lint_multipass_not_supported(
 
 def test_lint_default_snap_file_missing(capsys, fake_snap_file, mock_argv):
     """Raise an error if the snap file does not exist."""
-    cli.run()
+    application.main()
 
     out, err = capsys.readouterr()
     assert not out
@@ -315,7 +311,7 @@ def test_lint_default_snap_file_not_valid(capsys, fake_snap_file, mock_argv):
     # make the snap filepath a directory
     fake_snap_file.mkdir()
 
-    cli.run()
+    application.main()
 
     out, err = capsys.readouterr()
     assert not out
@@ -340,7 +336,7 @@ def test_lint_execute_run_error(
 
     mock_instance.execute_run.side_effect = CalledProcessError(cmd="err", returncode=1)
 
-    cli.run()
+    application.main()
 
     mock_capture_logs_from_instance.assert_called_once()
     out, err = capsys.readouterr()
@@ -389,14 +385,14 @@ def test_lint_managed_mode(
     fake_snap_metadata.confinement = confinement
     fake_snap_metadata.grade = grade
     mocker.patch(
-        "snapcraft.commands.core22.lint.snap_yaml.read", return_value=fake_snap_metadata
+        "snapcraft.commands.lint.snap_yaml.read", return_value=fake_snap_metadata
     )
     mocker.patch(
-        "snapcraft.commands.core22.lint.LintCommand._load_project",
+        "snapcraft.commands.lint.LintCommand._load_project",
         return_value=fake_snapcraft_project,
     )
 
-    cli.run()
+    application.main()
 
     mock_run_linters.assert_called_once_with(
         lint=models.Lint(ignore=["classic"]),
@@ -445,14 +441,14 @@ def test_lint_managed_mode_without_snapcraft_yaml(
 
     # mock data from the unsquashed snap
     mocker.patch(
-        "snapcraft.commands.core22.lint.snap_yaml.read", return_value=fake_snap_metadata
+        "snapcraft.commands.lint.snap_yaml.read", return_value=fake_snap_metadata
     )
     mocker.patch(
-        "snapcraft.commands.core22.lint.LintCommand._load_project",
+        "snapcraft.commands.lint.LintCommand._load_project",
         return_value=None,
     )
 
-    cli.run()
+    application.main()
 
     mock_run_linters.assert_called_once_with(
         lint=models.Lint(ignore=["classic"]),
@@ -507,14 +503,14 @@ def test_lint_managed_mode_unsquash_error(
 
     # mock data from the unsquashed snap
     mocker.patch(
-        "snapcraft.commands.core22.lint.snap_yaml.read", return_value=fake_snap_metadata
+        "snapcraft.commands.lint.snap_yaml.read", return_value=fake_snap_metadata
     )
     mocker.patch(
-        "snapcraft.commands.core22.lint.LintCommand._load_project",
+        "snapcraft.commands.lint.LintCommand._load_project",
         return_value=fake_snapcraft_project,
     )
 
-    cli.run()
+    application.main()
 
     out, err = capsys.readouterr()
     assert not out
@@ -550,14 +546,14 @@ def test_lint_managed_mode_snap_install_error(
 
     # mock data from the unsquashed snap
     mocker.patch(
-        "snapcraft.commands.core22.lint.snap_yaml.read", return_value=fake_snap_metadata
+        "snapcraft.commands.lint.snap_yaml.read", return_value=fake_snap_metadata
     )
     mocker.patch(
-        "snapcraft.commands.core22.lint.LintCommand._load_project",
+        "snapcraft.commands.lint.LintCommand._load_project",
         return_value=fake_snapcraft_project,
     )
 
-    cli.run()
+    application.main()
 
     out, err = capsys.readouterr()
     assert not out
@@ -593,14 +589,14 @@ def test_lint_managed_mode_assert(
 
     # mock data from the unsquashed snap
     mocker.patch(
-        "snapcraft.commands.core22.lint.snap_yaml.read", return_value=fake_snap_metadata
+        "snapcraft.commands.lint.snap_yaml.read", return_value=fake_snap_metadata
     )
     mocker.patch(
-        "snapcraft.commands.core22.lint.LintCommand._load_project",
+        "snapcraft.commands.lint.LintCommand._load_project",
         return_value=fake_snapcraft_project,
     )
 
-    cli.run()
+    application.main()
 
     mock_run_linters.assert_called_once_with(
         lint=models.Lint(ignore=["classic"]),
@@ -657,14 +653,14 @@ def test_lint_managed_mode_assert_error(
 
     # mock data from the unsquashed snap
     mocker.patch(
-        "snapcraft.commands.core22.lint.snap_yaml.read", return_value=fake_snap_metadata
+        "snapcraft.commands.lint.snap_yaml.read", return_value=fake_snap_metadata
     )
     mocker.patch(
-        "snapcraft.commands.core22.lint.LintCommand._load_project",
+        "snapcraft.commands.lint.LintCommand._load_project",
         return_value=fake_snapcraft_project,
     )
 
-    cli.run()
+    application.main()
 
     mock_run_linters.assert_called_once_with(
         lint=models.Lint(ignore=["classic"]),
@@ -749,17 +745,17 @@ def test_lint_managed_mode_with_lint_config(
 
     # mock data from the unsquashed snap
     mocker.patch(
-        "snapcraft.commands.core22.lint.snap_yaml.read", return_value=fake_snap_metadata
+        "snapcraft.commands.lint.snap_yaml.read", return_value=fake_snap_metadata
     )
 
     # add a lint config to the project
     fake_snapcraft_project.lint = project_lint
     mocker.patch(
-        "snapcraft.commands.core22.lint.LintCommand._load_project",
+        "snapcraft.commands.lint.LintCommand._load_project",
         return_value=fake_snapcraft_project,
     )
 
-    cli.run()
+    application.main()
 
     # lint config from project should be passed to `run_linter()`
     mock_run_linters.assert_called_once_with(
@@ -812,9 +808,7 @@ def test_load_project_complex(mocker, tmp_path):
     This includes lint, parse-info, architectures, and advanced grammar.
     """
     # mock for advanced grammar parsing (i.e. `on amd64:`)
-    mocker.patch(
-        "snapcraft.commands.core22.lint.get_host_architecture", return_value="amd64"
-    )
+    mocker.patch("snapcraft.commands.lint.get_host_architecture", return_value="amd64")
 
     # create a snap file
     (tmp_path / "snap").mkdir()
