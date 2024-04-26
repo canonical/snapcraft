@@ -97,7 +97,7 @@ def test_get_app_snippet_core24(gnome_extension_core24):
     assert gnome_extension_core24.get_app_snippet() == {
         "command-chain": [
             "snap/command-chain/gpu-2404-wrapper",
-            "snap/command-chain/desktop-launch"
+            "snap/command-chain/desktop-launch",
         ],
         "plugs": ["desktop", "desktop-legacy", "gsettings", "opengl", "wayland", "x11"],
     }
