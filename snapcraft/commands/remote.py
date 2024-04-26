@@ -18,6 +18,7 @@
 
 import argparse
 import os
+import shutil
 import textwrap
 import time
 from collections.abc import Collection
@@ -25,6 +26,7 @@ from pathlib import Path
 from typing import Any, cast
 
 import lazr.restfulclient.errors
+import platformdirs
 from craft_application import errors
 from craft_application.application import filter_plan
 from craft_application.commands import ExtensibleCommand
@@ -148,7 +150,9 @@ class RemoteBuildCommand(ExtensibleCommand):
             )
 
     # pylint: disable=too-many-statements
-    def _run(self, parsed_args: argparse.Namespace, **kwargs: Any) -> int | None:
+    def _run(  # noqa: PLR0915 (too-many-statements)
+        self, parsed_args: argparse.Namespace, **kwargs: Any
+    ) -> int | None:
         """Run the remote-build command.
 
         :param parsed_args: Snapcraft's argument namespace.
@@ -163,6 +167,7 @@ class RemoteBuildCommand(ExtensibleCommand):
             "remote-build is experimental and is subject to change. Use with caution.",
             permanent=True,
         )
+        self._copy_legacy_credentials()
 
         builder = self._services.remote_build
         project = cast(models.Project, self._services.project)
@@ -300,3 +305,26 @@ class RemoteBuildCommand(ExtensibleCommand):
             f"Artifacts: {', '.join(artifact_names)}"
         )
         return 0
+
+    def _copy_legacy_credentials(self) -> None:
+        """If new credentials do not exist, copy legacy credentials."""
+        credentials = (
+            platformdirs.user_data_path(self._app.name) / "launchpad-credentials"
+        )
+        legacy_credentials = (
+            platformdirs.user_data_path(self._app.name)
+            / "provider/launchpad/credentials"
+        )
+
+        if not credentials.exists() and legacy_credentials.exists():
+            emit.progress(
+                f"Warning: Launchpad credentials should be stored in '{credentials}'.",
+                permanent=True,
+            )
+            emit.progress(
+                "Copying launchpad credentials from legacy location "
+                f"'{legacy_credentials}' to '{credentials}'.",
+                permanent=True,
+            )
+            credentials.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(legacy_credentials, credentials)

@@ -119,6 +119,17 @@ def mock_run_legacy(mocker):
     return mocker.patch("snapcraft_legacy.cli.legacy.legacy_run")
 
 
+@pytest.fixture()
+def fake_user_data_path(mocker, new_dir):
+    """Do not touch real launchpad credential files."""
+    user_data_path = new_dir / ".local" / "share" / "snapcraft"
+    mocker.patch(
+        "snapcraft.commands.remote.platformdirs.user_data_path",
+        return_value=user_data_path,
+    )
+    return user_data_path
+
+
 #############
 # CLI tests #
 #############
@@ -284,6 +295,36 @@ def test_launchpad_timeout(mocker, snapcraft_yaml, base, fake_services):
     mock_start_builds.assert_called_once()
     assert app.services.remote_build._deadline is not None
     assert app.services.remote_build._deadline > time.monotonic_ns() + 90 * 10**9
+
+
+@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.usefixtures("mock_argv", "mock_confirm", "fake_services")
+def test_remote_build_copy_credentials(
+    emitter, snapcraft_yaml, base, mock_run_remote_build, fake_user_data_path
+):
+    # create legacy credentials file
+    legacy_credentials = fake_user_data_path / "provider" / "launchpad" / "credentials"
+    legacy_credentials.parent.mkdir(parents=True, exist_ok=True)
+    legacy_credentials.touch()
+    # do not create new credentials file
+    credentials = fake_user_data_path / "launchpad-credentials"
+    snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
+    snapcraft_yaml(**snapcraft_yaml_dict)
+
+    app = application.create_app()
+    app.run()
+
+    emitter.assert_progress(
+        f"Warning: Launchpad credentials should be stored in '{credentials}'.",
+        permanent=True,
+    )
+    emitter.assert_progress(
+        "Copying launchpad credentials from legacy location "
+        f"'{legacy_credentials}' to '{credentials}'.",
+        permanent=True,
+    )
+    mock_run_remote_build.assert_called_once()
+    assert credentials.exists()
 
 
 #######################
