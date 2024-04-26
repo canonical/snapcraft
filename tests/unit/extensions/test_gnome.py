@@ -412,7 +412,7 @@ def test_get_parts_snippet_core24(gnome_extension_core24):
         "gnome/sdk": {
             "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
             "plugin": "make",
-            "make-parameters": "GPU_WRAPPER=gpu-2404-wrapper",
+            "make-parameters": ["GPU_WRAPPER=gpu-2404-wrapper"],
             "build-snaps": ["gnome-46-2404-sdk"],
         },
     }

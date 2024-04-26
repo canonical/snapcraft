@@ -325,7 +325,7 @@ class GNOME(Extension):
 
         gpu_opts = {}
         if self.yaml_data["base"] == "core24":
-            gpu_opts["make-parameters"] = "GPU_WRAPPER=gpu-2404-wrapper"
+            gpu_opts["make-parameters"] = ["GPU_WRAPPER=gpu-2404-wrapper"]
 
         if self.gnome_snaps.builtin:
             base = self.yaml_data["base"]
