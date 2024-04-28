@@ -575,6 +575,7 @@ class TestAppstreamContent:
         metadata = appstream.extract(file_name, workdir=".")
 
         assert metadata is not None
+        assert metadata.license == "GPL-3.0-or-later"
         assert metadata.description == textwrap.dedent(
             """\
             Command Line Utility to create snaps quickly.
@@ -633,6 +634,7 @@ class TestAppstreamContent:
         metadata = appstream.extract(file_name, workdir=".")
 
         assert metadata is not None
+        assert metadata.license == "GPL-3.0-or-later"
         assert metadata.description == textwrap.dedent(
             """\
             Command Line Utility to create snaps quickly.
