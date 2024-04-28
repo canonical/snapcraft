@@ -608,7 +608,6 @@ class Project(models.Project):
     donation: Optional[UniqueStrList]
     # snapcraft's `source_code` is more general than craft-application
     source_code: Optional[UniqueStrList]
-    license: Optional[str]  # type: ignore[assignment]
     contact: Optional[UniqueStrList]
     issues: Optional[UniqueStrList]
     website: Optional[UniqueStrList]
@@ -860,6 +859,13 @@ class Project(models.Project):
             )
 
         return provenance
+
+    @pydantic.validator("contact", "donation", "issues", "source_code", "website", pre=True)
+    @classmethod
+    def _validate_contact(cls, field_value):
+        if isinstance(field_value, str):
+            field_value = cast(UniqueStrList, [field_value])
+        return field_value
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "Project":

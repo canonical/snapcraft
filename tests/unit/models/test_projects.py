@@ -56,6 +56,8 @@ def project_yaml_data():
             "grade": "stable",
             "confinement": "strict",
             "parts": {},
+            "contact": "hello@world",
+            "website": "example.org",
             **kwargs,
         }
 
@@ -90,11 +92,11 @@ class TestProjectDefaults:
 
         assert project.build_base == project.base
         assert project.compression == "xz"
-        assert project.contact is None
+        assert project.contact == ["hello@world"]
         assert project.donation is None
         assert project.issues is None
         assert project.source_code is None
-        assert project.website is None
+        assert project.website == ["example.org"]
         assert project.type is None
         assert project.icon is None
         assert project.layout is None
