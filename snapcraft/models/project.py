@@ -602,14 +602,12 @@ class Project(models.Project):
     name: ProjectName  # type: ignore[assignment]
     build_base: Optional[str]
     compression: Literal["lzo", "xz"] = "xz"
-    # TODO: ensure we have a test for version being retrieved using adopt-info
-    # snapcraft's `version` is more general than craft-application
-    version: Optional[ProjectVersion]  # type: ignore[assignment]
+    version: Optional[VersionStr]  # type: ignore[assignment]
     donation: Optional[UniqueStrList]
     # snapcraft's `source_code` is more general than craft-application
-    source_code: Optional[UniqueStrList]
-    contact: Optional[UniqueStrList]
-    issues: Optional[UniqueStrList]
+    source_code: Optional[UniqueStrList]  # type: ignore[assignment]
+    contact: Optional[UniqueStrList]  # type: ignore[assignment]
+    issues: Optional[UniqueStrList]  # type: ignore[assignment]
     website: Optional[UniqueStrList]
     type: Optional[Literal["app", "base", "gadget", "kernel", "snapd"]]
     icon: Optional[str]
@@ -860,7 +858,9 @@ class Project(models.Project):
 
         return provenance
 
-    @pydantic.validator("contact", "donation", "issues", "source_code", "website", pre=True)
+    @pydantic.validator(
+        "contact", "donation", "issues", "source_code", "website", pre=True
+    )
     @classmethod
     def _validate_contact(cls, field_value):
         if isinstance(field_value, str):
