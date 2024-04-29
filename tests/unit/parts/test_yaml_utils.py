@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -199,3 +199,53 @@ def test_apply_yaml_defines_root_packages(minimal_yaml_data, key, value):
         "architectures": [Architecture(build_on="amd64", build_for="amd64")],
         "parts": {"nil": {}, "snapcraft/core": {"plugin": "nil", key: ["foo"]}},
     }
+
+
+def test_get_base(mocker):
+    mock_get_effective_base = mocker.patch(
+        "snapcraft.parts.yaml_utils.utils.get_effective_base",
+        return_value="test-effective-base",
+    )
+    yaml = io.StringIO(
+        dedent(
+            """\
+            name: test-name
+            type: test-type
+            base: test-base
+            build-base: test-build-base
+            """
+        )
+    )
+
+    effective_base = yaml_utils.get_base(yaml)
+
+    mock_get_effective_base.assert_called_with(
+        base="test-base",
+        build_base="test-build-base",
+        name="test-name",
+        project_type="test-type",
+    )
+    assert effective_base == "test-effective-base"
+
+
+def test_get_base_from_yaml(mocker):
+    mock_get_effective_base = mocker.patch(
+        "snapcraft.parts.yaml_utils.utils.get_effective_base",
+        return_value="test-effective-base",
+    )
+    yaml_dict = {
+        "name": "test-name",
+        "type": "test-type",
+        "base": "test-base",
+        "build-base": "test-build-base",
+    }
+
+    effective_base = yaml_utils.get_base_from_yaml(yaml_dict)
+
+    mock_get_effective_base.assert_called_with(
+        base="test-base",
+        build_base="test-build-base",
+        name="test-name",
+        project_type="test-type",
+    )
+    assert effective_base == "test-effective-base"

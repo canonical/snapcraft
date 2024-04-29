@@ -19,10 +19,12 @@ import json
 import platform
 import shutil
 import sys
+from pathlib import Path
 from unittest import mock
 
 import pytest
 import pytest_subprocess
+from craft_parts.packages import Repository
 
 from snapcraft import __version__, models, os_release, utils
 
@@ -198,3 +200,58 @@ def test_lifecycle_prime_dirs(lifecycle_service):
     lifecycle_service.setup()
 
     assert lifecycle_service.prime_dirs == {None: lifecycle_service._work_dir / "prime"}
+
+
+@pytest.fixture()
+def package_repositories_params(extra_project_params):
+    """Add package-repositories configuration to the default project."""
+    extra_project_params["package_repositories"] = [{"type": "apt", "ppa": "test/ppa"}]
+
+
+@pytest.mark.usefixtures("package_repositories_params", "default_project")
+def test_lifecycle_installs_gpg_dirmngr(lifecycle_service, mocker):
+    mock_is_installed = mocker.patch.object(
+        Repository, "is_package_installed", return_value=False
+    )
+    mock_install = mocker.patch.object(Repository, "install_packages")
+
+    lifecycle_service.setup()
+
+    assert mock_is_installed.called
+    mock_install.assert_called_once_with(
+        ["gpg", "dirmngr"], refresh_package_cache=False
+    )
+
+
+@pytest.mark.parametrize(
+    ("project_location", "assets_dir", "expected_keys_path"),
+    [
+        # These locations come from yaml_utils._SNAP_PROJECT_FILES
+        # snapcraft.yaml locations where the keys are expected to be in snap/keys
+        ("snapcraft.yaml", "snap", "snap/keys"),
+        ("snap/snapcraft.yaml", "snap", "snap/keys"),
+        (".snapcraft.yaml", "snap", "snap/keys"),
+        # snapcraft.yaml location where the keys are expected to be somewhere else
+        ("build-aux/snap/snapcraft.yaml", "build-aux/snap", "build-aux/snap/keys"),
+    ],
+)
+def test_local_keys_path(
+    new_dir, lifecycle_service, project_location, assets_dir, expected_keys_path
+):
+    """Check that _get_local_keys_path() is correct given the location of snapcraft.yaml."""
+    snap_dir = new_dir / Path(project_location).parent
+    snap_dir.mkdir(exist_ok=True, parents=True)
+
+    # The project file itself doesn't really matter, but must exist
+    project_yaml = snap_dir / "snapcraft.yaml"
+    project_yaml.touch()
+
+    # app = application.create_app()
+    keys_dir = Path(assets_dir) / "keys"
+
+    # If the keys dir doesn't exist the method should return None
+    assert not keys_dir.is_dir()
+    assert lifecycle_service._get_local_keys_path() is None
+
+    keys_dir.mkdir(exist_ok=True, parents=True)
+    assert lifecycle_service._get_local_keys_path() == Path(expected_keys_path)

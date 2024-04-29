@@ -10,7 +10,14 @@ environment:
   SNAP/test_foreign_armhf: test-foreign-armhf
   SNAP/test_foreign_i386: test-foreign-i386
 
+prepare: |
+  # Remove the currently installed "gpg" and "dirmngr" packages to ensure that
+  # Snapcraft itself is installing them when necessary.
+  sudo dpkg --remove --force-depends gpg dirmngr
+
 restore: |
+  sudo apt install -y gpg dirmngr
+
   cd "$SNAP"
   rm -f ./*.snap
   snapcraft clean
