@@ -24,10 +24,12 @@ from typing import Any, cast
 
 from craft_application import AppMetadata, LifecycleService, ServiceFactory
 from craft_application.models import BuildInfo
-from craft_parts import ProjectInfo, StepInfo
+from craft_parts import ProjectInfo, StepInfo, callbacks
+from craft_parts.packages import Repository as Repo
 from overrides import overrides
 
 from snapcraft import __version__, errors, models, os_release, parts, utils
+from snapcraft.parts.yaml_utils import get_snap_project
 
 
 class Lifecycle(LifecycleService):
@@ -60,6 +62,14 @@ class Lifecycle(LifecycleService):
     def setup(self) -> None:
         project = cast(models.Project, self._project)
 
+        if project.package_repositories:
+            # Note: we unfortunately need to handle missing gpg/dirmngr binaries
+            # ourselves here, as this situation happens in Launchpad (where
+            # builds are executed destructively).
+            required_packages = ["gpg", "dirmngr"]
+            if any(p for p in required_packages if not Repo.is_package_installed(p)):
+                Repo.install_packages(required_packages, refresh_package_cache=False)
+
         # Have the lifecycle install the base snap, and look into it when
         # determining the package cutoff.
         self._manager_kwargs.update(
@@ -68,6 +78,8 @@ class Lifecycle(LifecycleService):
             confinement=project.confinement,
             project_base=project.base or "",
         )
+        callbacks.register_prologue(parts.set_global_environment)
+        callbacks.register_pre_step(parts.set_step_environment)
         super().setup()
 
     @overrides
@@ -157,6 +169,15 @@ class Lifecycle(LifecycleService):
             build_snaps=[],
             primed_stage_packages=sorted(primed_stage_packages),
         )
+
+    @overrides
+    def _get_local_keys_path(self) -> Path | None:
+        snap_project = get_snap_project()
+        keys_dir = snap_project.assets_dir / "keys"
+        if keys_dir.is_dir():
+            return keys_dir
+
+        return None
 
 
 def get_prime_dirs_from_project(project_info: ProjectInfo) -> dict[str | None, Path]:

@@ -14,6 +14,12 @@ platforms:
     build-on: amd64
     build-for: arm64
 
+build-packages:
+  - on amd64 to amd64:
+    - libogg-dev
+  - on amd64 to arm64:
+    - libpci-dev
+
 parts:
   hello-world:
     plugin: dump

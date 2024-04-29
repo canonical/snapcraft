@@ -26,8 +26,18 @@ execute: |
     echo "==== $file ===="
     cat "$file"
     for exp in \
-      "^CRAFT_ARCH_TRIPLET=x86_64-linux-gnu$" \
-      "^CRAFT_TARGET_ARCH=amd64$" \
+      "^SNAPCRAFT_PROJECT_GRADE=devel$" \
+      "^SNAPCRAFT_PROJECT_NAME=None$" \
+      "^SNAPCRAFT_PROJECT_VERSION=1$" \
+      "^SNAPCRAFT_PARALLEL_BUILD_COUNT=[0-9]\+$" \
+      "^SNAPCRAFT_PROJECT_DIR=${root}$" \
+      "^SNAPCRAFT_PART_SRC=${root}/parts/hello/src$" \
+      "^SNAPCRAFT_PART_SRC_WORK=${root}/parts/hello/src$" \
+      "^SNAPCRAFT_PART_BUILD=${root}/parts/hello/build$" \
+      "^SNAPCRAFT_PART_BUILD_WORK=${root}/parts/hello/build$" \
+      "^SNAPCRAFT_PART_INSTALL=${root}/parts/hello/install$" \
+      "^SNAPCRAFT_STAGE=${root}/stage$" \
+      "^SNAPCRAFT_PRIME=${root}/prime$" \
       "^CRAFT_PARALLEL_BUILD_COUNT=[0-9]\+$" \
       "^CRAFT_PROJECT_DIR=${root}$" \
       "^CRAFT_PART_NAME=hello$" \

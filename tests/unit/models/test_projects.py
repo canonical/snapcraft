@@ -593,7 +593,8 @@ class TestProjectValidation:
             "Plugs should be assigned to the app to which they apply, and not "
             "implicitly assigned via the global 'plugs:' stanza "
             "which is intended for configuration only."
-            "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"
+            "\n(Reference: https://snapcraft.io/docs/snapcraft-top-level-metadata"
+            "#heading--plugs-and-slots-for-an-entire-snap)"
         )
         emitter.assert_message(expected_message)
 
@@ -605,7 +606,8 @@ class TestProjectValidation:
             "Slots should be assigned to the app to which they apply, and not "
             "implicitly assigned via the global 'slots:' stanza "
             "which is intended for configuration only."
-            "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"
+            "\n(Reference: https://snapcraft.io/docs/snapcraft-top-level-metadata"
+            "#heading--plugs-and-slots-for-an-entire-snap)"
         )
         emitter.assert_message(expected_message)
 
@@ -936,7 +938,9 @@ class TestAppValidation:
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(data)
 
-    @pytest.mark.parametrize("refresh_mode", ["endure", "restart", "_invalid"])
+    @pytest.mark.parametrize(
+        "refresh_mode", ["endure", "restart", "ignore-running", "_invalid"]
+    )
     def test_app_refresh_mode(self, refresh_mode, app_yaml_data):
         data = app_yaml_data(refresh_mode=refresh_mode)
 

@@ -372,7 +372,7 @@ class App(models.CraftBaseModel):
     daemon: Optional[Literal["simple", "forking", "oneshot", "notify", "dbus"]]
     after: UniqueStrList = cast(UniqueStrList, [])
     before: UniqueStrList = cast(UniqueStrList, [])
-    refresh_mode: Optional[Literal["endure", "restart"]]
+    refresh_mode: Optional[Literal["endure", "restart", "ignore-running"]]
     stop_mode: Optional[
         Literal[
             "sigterm",
@@ -1168,7 +1168,8 @@ def _format_global_keyword_warning(keyword: str, empty_entries: List[str]) -> st
         f"{keyword.capitalize()}s should be assigned to the app to which they apply, "
         f"and not implicitly assigned via the global '{keyword.lower()}s:' "
         "stanza which is intended for configuration only."
-        "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"
+        "\n(Reference: https://snapcraft.io/docs/snapcraft-top-level-metadata"
+        "#heading--plugs-and-slots-for-an-entire-snap)"
     )
 
 
