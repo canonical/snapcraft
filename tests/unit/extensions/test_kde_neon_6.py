@@ -115,7 +115,10 @@ def test_get_root_snippet(kde_neon_6_extension):
                 "command-chain": ["snap/command-chain/hooks-configure-desktop"],
             }
         },
-        "layout": {"/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"}},
+        "layout": {
+            "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
+            "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
+        },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
             "icon-themes": {
@@ -149,7 +152,10 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
                 "command-chain": ["snap/command-chain/hooks-configure-desktop"],
             }
         },
-        "layout": {"/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"}},
+        "layout": {
+            "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
+            "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
+        },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
             "icon-themes": {

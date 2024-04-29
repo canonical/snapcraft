@@ -38,6 +38,7 @@ from snapcraft import cli, commands, errors, models, services
 from snapcraft.commands import unimplemented
 from snapcraft.extensions import apply_extensions
 from snapcraft.models.project import SnapcraftBuildPlanner, apply_root_packages
+from snapcraft.parts import set_global_environment
 from snapcraft.utils import get_host_architecture
 from snapcraft_legacy.cli import legacy
 
@@ -246,6 +247,12 @@ class Snapcraft(Application):
             extra_global_args=self._global_arguments,
             default_command=craft_app_commands.lifecycle.PackCommand,
         )
+
+    @override
+    def _set_global_environment(self, info: craft_parts.ProjectInfo) -> None:
+        """Set global environment variables."""
+        super()._set_global_environment(info)
+        set_global_environment(info)
 
 
 def create_app() -> Snapcraft:

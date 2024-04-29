@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,13 +23,18 @@ from unittest.mock import Mock
 
 import pytest
 import yaml
-from craft_parts import Features
+from craft_parts import Features, callbacks
 from craft_providers import Executor, Provider
 from craft_providers.base import Base
 from overrides import override
 from pymacaroons import Caveat, Macaroon
 
 from snapcraft.extensions import extension, register, unregister
+
+
+@pytest.fixture(autouse=True)
+def unregister_callbacks(mocker):
+    callbacks.unregister_all()
 
 
 @pytest.fixture
