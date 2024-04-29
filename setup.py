@@ -138,9 +138,15 @@ install_requires = [
     "urllib3<2",  # requests-unixsocket does not yet work with urllib3 v2.0+
 ]
 
-extras_requires = {
-    "dev": dev_requires,
+docs_requires = {
+    "canonical-sphinx",
+    "pyspelling",
+    "sphinxcontrib-details-directive",
+    "sphinx-autobuild",
+    "sphinx-lint",
 }
+
+extras_requires = {"dev": dev_requires, "docs": docs_requires}
 
 setup(
     name=name,
