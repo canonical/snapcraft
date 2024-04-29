@@ -372,7 +372,7 @@ class App(models.CraftBaseModel):
     daemon: Optional[Literal["simple", "forking", "oneshot", "notify", "dbus"]]
     after: UniqueStrList = cast(UniqueStrList, [])
     before: UniqueStrList = cast(UniqueStrList, [])
-    refresh_mode: Optional[Literal["endure", "restart"]]
+    refresh_mode: Optional[Literal["endure", "restart", "ignore-running"]]
     stop_mode: Optional[
         Literal[
             "sigterm",
