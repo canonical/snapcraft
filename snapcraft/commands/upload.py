@@ -67,8 +67,7 @@ class StoreUploadCommand(AppCommand):
         be released to the selected channels if the store review passes for this
         <snap-file>.
 
-        This operation will block until the store finishes processing this <snap-
-        file>.
+        This operation blocks until the store finishes processing the <snap-file>.
 
         If --release is used, the channel map will be displayed after the operation
         takes place.
