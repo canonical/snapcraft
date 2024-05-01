@@ -658,11 +658,11 @@ def test_build_for_error(
         "craft_application.services.remotebuild.RemoteBuildService.start_builds"
     )
     app = application.create_app()
-    assert app.run() == 78
+    assert app.run() == 1
 
     _, err = capsys.readouterr()
 
-    assert "build-for 'nonexistent' is not supported." in err
+    assert "Architecture 'nonexistent' is not supported." in err
 
 
 ########################
