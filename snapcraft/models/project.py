@@ -44,6 +44,7 @@ from craft_cli import emit
 from craft_grammar.models import Grammar
 from craft_providers import bases
 from pydantic import PrivateAttr, constr
+from typing_extensions import override
 
 from snapcraft import utils
 from snapcraft.const import SUPPORTED_ARCHS, SnapArch
@@ -601,6 +602,22 @@ class Project(models.Project):
     ua_services: Optional[UniqueStrList]
     provenance: Optional[str]
     components: Optional[Dict[ProjectName, Component]]
+
+    @override
+    @classmethod
+    def _providers_base(cls, base: str) -> bases.BaseAlias | None:
+        """Get a BaseAlias from snapcraft's base.
+        :param base: The application-specific base name.
+        :returns: The BaseAlias for the base.
+        :raises CraftValidationError: If the project's base cannot be determined.
+        """
+        if base == "bare":
+            return None
+
+        try:
+            return SNAPCRAFT_BASE_TO_PROVIDER_BASE[base]
+        except KeyError as err:
+            raise CraftValidationError(f"Unknown base {base!r}") from err
 
     @pydantic.validator("plugs")
     @classmethod
