@@ -41,9 +41,10 @@ from craft_application import models
 from craft_application.errors import CraftValidationError
 from craft_application.models import BuildInfo, SummaryStr, UniqueStrList, VersionStr
 from craft_cli import emit
-from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
+from craft_grammar.models import Grammar
 from craft_providers import bases
 from pydantic import PrivateAttr, constr
+from typing_extensions import override
 
 from snapcraft import utils
 from snapcraft.const import SUPPORTED_ARCHS, SnapArch
@@ -596,11 +597,27 @@ class Project(models.Project):
     adopt_info: Optional[str]
     system_usernames: Optional[Dict[str, Any]]
     environment: Optional[Dict[str, Optional[str]]]
-    build_packages: Optional[GrammarStrList]
-    build_snaps: Optional[GrammarStrList]
+    build_packages: Optional[Grammar[list[str]]]
+    build_snaps: Optional[Grammar[list[str]]]
     ua_services: Optional[UniqueStrList]
     provenance: Optional[str]
     components: Optional[Dict[ProjectName, Component]]
+
+    @override
+    @classmethod
+    def _providers_base(cls, base: str) -> bases.BaseAlias | None:
+        """Get a BaseAlias from snapcraft's base.
+        :param base: The application-specific base name.
+        :returns: The BaseAlias for the base.
+        :raises CraftValidationError: If the project's base cannot be determined.
+        """
+        if base == "bare":
+            return None
+
+        try:
+            return SNAPCRAFT_BASE_TO_PROVIDER_BASE[base]
+        except KeyError as err:
+            raise CraftValidationError(f"Unknown base {base!r}") from err
 
     @pydantic.validator("plugs")
     @classmethod
@@ -946,12 +963,12 @@ class _GrammarAwareModel(pydantic.BaseModel):
 
 
 class _GrammarAwarePart(_GrammarAwareModel):
-    source: Optional[GrammarStr]
-    build_environment: Optional[GrammarSingleEntryDictList]
-    build_packages: Optional[GrammarStrList]
-    stage_packages: Optional[GrammarStrList]
-    build_snaps: Optional[GrammarStrList]
-    stage_snaps: Optional[GrammarStrList]
+    source: Optional[Grammar[str]]
+    build_environment: Optional[Grammar[list[dict]]]
+    build_packages: Optional[Grammar[list[str]]]
+    stage_packages: Optional[Grammar[list[str]]]
+    build_snaps: Optional[Grammar[list[str]]]
+    stage_snaps: Optional[Grammar[list[str]]]
     parse_info: Optional[List[str]]
 
 
