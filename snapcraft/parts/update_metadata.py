@@ -110,7 +110,7 @@ def _update_project_links(
     metadata_list: List[ExtractedMetadata],
 ) -> None:
     """Update project links from metadata.
-    
+
     :param project: The Project model to update.
     :param metadata_list: A list of parsed information from metadata files.
     """
