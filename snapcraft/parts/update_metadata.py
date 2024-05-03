@@ -109,20 +109,23 @@ def _update_project_links(
     project: Project,
     metadata_list: List[ExtractedMetadata],
 ) -> None:
+    """Update project links from metadata.
+    
+    :param project: The Project model to update.
+    :param metadata_list: A list of parsed information from metadata files.
+    """
     for metadata in metadata_list:
         fields = ["contact", "donation", "source_code", "issues", "website"]
         for field in fields:
-            if (
-                getattr(metadata, field)
-                and getattr(project, field)
-                and getattr(project, field) != getattr(metadata, field)
-            ):
-                project_list = list(getattr(project, field))
-                project_list.extend(set(getattr(metadata, field)) - set(project_list))
+            metadata_field = getattr(metadata, field)
+            project_field = getattr(project, field)
+            if metadata_field and project_field and project_field != metadata_field:
+                project_list = list(project_field)
+                project_list.extend(set(metadata_field) - set(project_list))
                 setattr(project, field, cast(UniqueStrList, project_list))
 
             if not getattr(project, field):
-                setattr(project, field, cast(UniqueStrList, getattr(metadata, field)))
+                setattr(project, field, cast(UniqueStrList, metadata_field))
 
 
 def _update_project_variables(project: Project, project_vars: Dict[str, str]):
