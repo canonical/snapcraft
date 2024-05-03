@@ -72,11 +72,11 @@ def project_yaml_data():
             "grade": "stable",
             "confinement": "strict",
             "license": "license",
-            "contact": {"contact1"},
-            "donation": {"donation1"},
-            "issues": {"issues1"},
-            "website": {"website1"},
-            "source-code": {"source-code"},
+            "contact": "contact1",
+            "donation": "donation1",
+            "issues": "issues1",
+            "website": "website1",
+            "source-code": "source-code",
             "parts": {},
             **extra_args,
         }
@@ -258,8 +258,8 @@ def test_update_project_metadata_multiple(
         description="metadata description",
         website=["website1"],
         source_code=["source-code"],
-        issues=["issues1"],
-        donation=["donation1"],
+        issues=["issues1", "issues3"],
+        donation=["donation1", "donation2"],
     )
     metadata3 = ExtractedMetadata(
         version="7.8.9", title="metadata title", grade="devel"
@@ -269,9 +269,9 @@ def test_update_project_metadata_multiple(
     )
     metadata5 = ExtractedMetadata(license="GPL-3.0", contact=["test@test.com"])
     metadata6 = ExtractedMetadata(
-        source_code=["source-code"],
+        source_code=["source-code", "vcs-browser"],
         website=["website2"],
-        issues=["issues2"],
+        issues=["issues2", "issues3"],
         donation=["donation2"],
     )
     prj_vars = {"version": "", "grade": ""}
@@ -299,8 +299,8 @@ def test_update_project_metadata_multiple(
     assert project.contact == ["test@test.com"]
     assert project.license == "GPL-3.0"
     assert project.donation == ["donation1", "donation2"]
-    assert project.source_code == ["source-code"]
-    assert project.issues == ["issues1", "issues2"]
+    assert project.source_code == ["source-code", "vcs-browser"]
+    assert project.issues == ["issues1", "issues3", "issues2"]
     assert project.website == ["website1", "website2"]
 
 
