@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -24,9 +24,10 @@ import tempfile
 import textwrap
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
-from typing import Iterator, Optional
+from typing import Any, Iterator, Optional
 
-from craft_cli import BaseCommand, emit
+from craft_application.commands import AppCommand
+from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
 from craft_providers.multipass import MultipassProvider
 from craft_providers.util import snap_cmd
@@ -42,9 +43,10 @@ from snapcraft.utils import (
 )
 
 
-class LintCommand(BaseCommand):
+class LintCommand(AppCommand):
     """Lint-related commands."""
 
+    always_load_project = False
     name = "lint"
     help_msg = "Lint a snap file"
     overview = textwrap.dedent(
@@ -58,7 +60,7 @@ class LintCommand(BaseCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_file",
             metavar="snap-file",
@@ -78,8 +80,11 @@ class LintCommand(BaseCommand):
             help="Set https proxy",
         )
 
-    @overrides
-    def run(self, parsed_args: argparse.Namespace):
+    def run(  # pylint: disable=unused-argument
+        self,
+        parsed_args: argparse.Namespace,
+        **kwargs: Any,
+    ) -> None:
         """Run the linter command.
 
         :param parsed_args: snapcraft's argument namespace
