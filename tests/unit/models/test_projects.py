@@ -56,8 +56,6 @@ def project_yaml_data():
             "grade": "stable",
             "confinement": "strict",
             "parts": {},
-            "contact": "hello@world",
-            "website": "example.org",
             **kwargs,
         }
 
@@ -92,11 +90,11 @@ class TestProjectDefaults:
 
         assert project.build_base == project.base
         assert project.compression == "xz"
-        assert project.contact == ["hello@world"]
+        assert project.contact is None
         assert project.donation is None
         assert project.issues is None
         assert project.source_code is None
-        assert project.website == ["example.org"]
+        assert project.website is None
         assert project.type is None
         assert project.icon is None
         assert project.layout is None
@@ -627,6 +625,66 @@ class TestProjectValidation:
             "#heading--plugs-and-slots-for-an-entire-snap)"
         )
         emitter.assert_message(expected_message)
+
+    def test_links_scalar(self, project_yaml_data):
+        data = project_yaml_data(
+            contact="https://matrix.to/#/#nickvision:matrix.org",
+            donation="https://github.com/sponsors/nlogozzo",
+            issues="https://github.com/NickvisionApps/Parabolic/issues",
+            source_code="https://github.com/NickvisionApps/Parabolic",
+            website="https://github.com/NickvisionApps/Parabolic",
+        )
+        project = Project.unmarshal(data)
+        assert project.contact == ["https://matrix.to/#/#nickvision:matrix.org"]
+        assert project.donation == ["https://github.com/sponsors/nlogozzo"]
+        assert project.issues == ["https://github.com/NickvisionApps/Parabolic/issues"]
+        assert project.source_code == ["https://github.com/NickvisionApps/Parabolic"]
+        assert project.website == ["https://github.com/NickvisionApps/Parabolic"]
+
+    def test_links_list(self, project_yaml_data):
+        data = project_yaml_data(
+            contact=[
+                "https://matrix.to/#/#nickvision:matrix.org",
+                "hello@example.org",
+            ],
+            donation=[
+                "https://github.com/sponsors/nlogozzo",
+                "https://paypal.me/nlogozzo",
+            ],
+            issues=[
+                "https://github.com/NickvisionApps/Parabolic/issues",
+                "https://github.com/NickvisionApps/Denaro/issues",
+            ],
+            source_code=[
+                "https://github.com/NickvisionApps/Parabolic",
+                "https://github.com/NickvisionApps/Denaro",
+            ],
+            website=[
+                "https://github.com/NickvisionApps/Parabolic",
+                "https://github.com/NickvisionApps/Denaro",
+            ],
+        )
+        project = Project.unmarshal(data)
+        assert project.contact == [
+            "https://matrix.to/#/#nickvision:matrix.org",
+            "hello@example.org",
+        ]
+        assert project.donation == [
+            "https://github.com/sponsors/nlogozzo",
+            "https://paypal.me/nlogozzo",
+        ]
+        assert project.issues == [
+            "https://github.com/NickvisionApps/Parabolic/issues",
+            "https://github.com/NickvisionApps/Denaro/issues",
+        ]
+        assert project.source_code == [
+            "https://github.com/NickvisionApps/Parabolic",
+            "https://github.com/NickvisionApps/Denaro",
+        ]
+        assert project.website == [
+            "https://github.com/NickvisionApps/Parabolic",
+            "https://github.com/NickvisionApps/Denaro",
+        ]
 
 
 class TestHookValidation:

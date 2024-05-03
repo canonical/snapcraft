@@ -862,7 +862,7 @@ class Project(models.Project):
         "contact", "donation", "issues", "source_code", "website", pre=True
     )
     @classmethod
-    def _validate_contact(cls, field_value):
+    def _validate_urls(cls, field_value):
         if isinstance(field_value, str):
             field_value = cast(UniqueStrList, [field_value])
         return field_value
