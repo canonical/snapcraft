@@ -16,6 +16,7 @@
 
 """Utilities for snapcraft."""
 from __future__ import annotations
+
 import multiprocessing
 import os
 import pathlib
@@ -492,7 +493,7 @@ def is_snapcraft_running_from_snap() -> bool:
 
 
 def convert_architectures_to_platforms(
-    architectures: list[str | models.Architecture]
+    architectures: list[str | models.Architecture],
 ) -> dict[str, dict[str, list[str]]]:
     """Convert a core22 architectures configuration to core24 platforms."""
     platforms = {}
@@ -513,4 +514,3 @@ def convert_architectures_to_platforms(
             }
 
     return platforms
-
