@@ -494,23 +494,23 @@ def is_snapcraft_running_from_snap() -> bool:
 
 def convert_architectures_to_platforms(
     architectures: list[str | models.Architecture],
-) -> dict[str, dict[str, list[str]]]:
+) -> dict[str, models.Platform]:
     """Convert a core22 architectures configuration to core24 platforms."""
-    platforms = {}
+    platforms: dict[str, models.Platform] = {}
     for architecture in architectures:
         if isinstance(architecture, str):
-            platforms[architecture] = None
+            build_on = build_for = [architecture]
         else:
-            build_for = architecture.build_for or architecture.build_on
-            build_on = architecture.build_on
+            build_for = architecture.build_for or architecture.build_on  # type: ignore[assignment]
+            build_on = architecture.build_on  # type: ignore[assignment]
 
-            if isinstance(build_for, str):
-                build_for = [build_for]
-            if isinstance(build_on, str):
-                build_on = [build_on]
-            platforms[build_for[0]] = {
-                "build-for": build_for,
-                "build-on": build_on,
-            }
+        if isinstance(build_for, str):
+            build_for = [build_for]
+        if isinstance(build_on, str):
+            build_on = [build_on]
+        platforms[build_for[0]] = models.Platform(
+            build_for=build_for,  # type: ignore[assignment]
+            build_on=build_on,  # type: ignore[assignment]
+        )
 
     return platforms
