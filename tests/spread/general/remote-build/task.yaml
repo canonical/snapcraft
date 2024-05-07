@@ -4,8 +4,12 @@ kill-timeout: 180m
 
 environment:
   LAUNCHPAD_TOKEN: "$(HOST: echo ${LAUNCHPAD_TOKEN})"
+  STRATEGY: ""
   STRATEGY/DISABLE_FALLBACK: "disable-fallback"
   STRATEGY/FORCE_FALLBACK: "force-fallback"
+  SNAPCRAFT_FILE: ""
+  SNAPCRAFT_FILE/architectures: "architectures-snap.yaml"
+  SNAPCRAFT_FILE/platforms: "platforms-snap.yaml"
 
 prepare: |
   if [[ -z "$LAUNCHPAD_TOKEN" ]]; then
@@ -13,7 +17,12 @@ prepare: |
     exit 1
   fi
 
-  snapcraft init
+  if [ -z "${SNAPCRAFT_FILE}" ]; then
+    snapcraft init
+  else
+    mkdir snap
+    cp "${SNAPCRAFT_FILE}" snap/snapcraft.yaml
+  fi
 
   # Commit the project
   git config --global --add safe.directory "$PWD"

@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Utilities for snapcraft."""
+from __future__ import annotations
 import multiprocessing
 import os
 import pathlib
@@ -25,12 +26,15 @@ import sys
 from dataclasses import dataclass
 from getpass import getpass
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import TYPE_CHECKING, Iterable, List, Optional
 
 from craft_cli import emit
 from craft_parts.sources.git_source import GitSource
 
 from snapcraft import errors
+
+if TYPE_CHECKING:
+    from snapcraft import models
 
 
 @dataclass
@@ -485,3 +489,28 @@ def process_version(version: Optional[str]) -> str:
 def is_snapcraft_running_from_snap() -> bool:
     """Check if snapcraft is running from the snap."""
     return os.getenv("SNAP_NAME") == "snapcraft" and os.getenv("SNAP") is not None
+
+
+def convert_architectures_to_platforms(
+    architectures: list[str | models.Architecture]
+) -> dict[str, dict[str, list[str]]]:
+    """Convert a core22 architectures configuration to core24 platforms."""
+    platforms = {}
+    for architecture in architectures:
+        if isinstance(architecture, str):
+            platforms[architecture] = None
+        else:
+            build_for = architecture.build_for or architecture.build_on
+            build_on = architecture.build_on
+
+            if isinstance(build_for, str):
+                build_for = [build_for]
+            if isinstance(build_on, str):
+                build_on = [build_on]
+            platforms[build_for[0]] = {
+                "build-for": build_for,
+                "build-on": build_on,
+            }
+
+    return platforms
+
