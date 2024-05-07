@@ -22,7 +22,7 @@ from unittest.mock import call, patch
 
 import pytest
 
-from snapcraft import errors, models, utils
+from snapcraft import const, errors, models, utils
 
 
 @pytest.fixture
@@ -662,10 +662,23 @@ def test_confirm_with_user_pause_emitter(mock_isatty, emitter):
     ("architectures", "expected"),
     [
         ([], {}),
-        (["amd64"], {"amd64": None}),
+        (
+            ["amd64"],
+            {
+                "amd64": models.Platform(
+                    build_for=[const.SnapArch("amd64")],
+                    build_on=[const.SnapArch("amd64")],
+                )
+            },
+        ),
         (
             [models.Architecture(build_on="amd64", build_for="riscv64")],
-            {"riscv64": {"build-on": ["amd64"], "build-for": ["riscv64"]}},
+            {
+                "riscv64": models.Platform(
+                    build_for=[const.SnapArch("riscv64")],
+                    build_on=[const.SnapArch("amd64")],
+                )
+            },
         ),
         (
             [
@@ -673,7 +686,12 @@ def test_confirm_with_user_pause_emitter(mock_isatty, emitter):
                     {"build_on": ["amd64"], "build_for": ["riscv64"]}
                 )
             ],
-            {"riscv64": {"build-on": ["amd64"], "build-for": ["riscv64"]}},
+            {
+                "riscv64": models.Platform(
+                    build_for=[const.SnapArch("riscv64")],
+                    build_on=[const.SnapArch("amd64")],
+                )
+            },
         ),
         (
             [
@@ -685,8 +703,14 @@ def test_confirm_with_user_pause_emitter(mock_isatty, emitter):
                 ),
             ],
             {
-                "riscv64": {"build-on": ["amd64", "arm64"], "build-for": ["riscv64"]},
-                "arm64": {"build-on": ["amd64", "arm64"], "build-for": ["arm64"]},
+                "riscv64": models.Platform(
+                    build_for=[const.SnapArch("riscv64")],
+                    build_on=[const.SnapArch("amd64"), const.SnapArch("arm64")],
+                ),
+                "arm64": models.Platform(
+                    build_for=[const.SnapArch("arm64")],
+                    build_on=[const.SnapArch("amd64"), const.SnapArch("arm64")],
+                ),
             },
         ),
     ],

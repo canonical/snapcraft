@@ -33,6 +33,7 @@ from craft_cli import emit
 from craft_parts.sources.git_source import GitSource
 
 from snapcraft import errors
+from snapcraft.models import project
 
 if TYPE_CHECKING:
     from snapcraft import models
@@ -508,7 +509,7 @@ def convert_architectures_to_platforms(
             build_for = [build_for]
         if isinstance(build_on, str):
             build_on = [build_on]
-        platforms[build_for[0]] = models.Platform(
+        platforms[build_for[0]] = project.Platform(
             build_for=build_for,  # type: ignore[assignment]
             build_on=build_on,  # type: ignore[assignment]
         )
