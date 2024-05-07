@@ -95,7 +95,7 @@ def test_core22_pack_command_with_directory(mocker):
 def test_snap_command_fallback(tmp_path, emitter, mocker, fake_services):
     """Test that the snap command is falling back to the pack command."""
     parsed_args = argparse.Namespace(parts=[], output=tmp_path)
-    mock_pack = mocker.patch("craft_application.commands.lifecycle.PackCommand._run")
+    mock_pack = mocker.patch("snapcraft.commands.lifecycle.PackCommand._run")
     cmd = lifecycle.SnapCommand({"app": APP_METADATA, "services": fake_services})
     cmd.run(parsed_args=parsed_args)
     mock_pack.assert_called_once()
