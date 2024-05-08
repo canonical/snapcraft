@@ -13,6 +13,7 @@ description: |-
 
 
   Test me please.
+license: GPL-2.0+
 architectures:
 - amd64
 base: core24
