@@ -545,9 +545,10 @@ class Platform(models.CraftBaseModel):
             if isinstance(architecture, str):
                 build_on = build_for = [architecture]
             else:
-                build_for = (  # type: ignore[assignment]
-                    architecture.build_for or architecture.build_on
-                )
+                if architecture.build_for:
+                    build_for = architecture.build_for  # type: ignore[assignment]
+                else:
+                    build_for = architecture.build_on  # type: ignore[assignment]
                 build_on = architecture.build_on  # type: ignore[assignment]
 
             if isinstance(build_for, str):
