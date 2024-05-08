@@ -24,6 +24,7 @@ from collections.abc import Collection
 from pathlib import Path
 from typing import Any, cast
 
+import craft_cli
 import lazr.restfulclient.errors
 from craft_application import errors
 from craft_application.application import filter_plan
@@ -174,6 +175,16 @@ class RemoteBuildCommand(ExtensibleCommand):
         )
 
         emit.trace(f"Project directory: {project_dir}")
+
+        if project.architectures:
+            for arch in project.architectures:
+                if isinstance(arch, models.Architecture) and arch.build_for and "all" in arch.build_for:
+                    raise craft_cli.CraftError(
+                        message="Remote build does not support architecture 'all'.",
+                        resolution="Reconfigure your snap for architecture-dependent builds.",
+                        reportable=False,
+                        retcode=78  # Configuration error
+                    )
 
         possible_build_plan = filter_plan(
             self._app.BuildPlannerClass.unmarshal(project.marshal()).get_build_plan(),

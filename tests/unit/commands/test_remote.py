@@ -16,6 +16,7 @@
 
 """Remote-build command tests."""
 
+import argparse
 import os
 import shutil
 import subprocess
@@ -24,13 +25,14 @@ import time
 from pathlib import Path
 from unittest.mock import ANY, Mock
 
+import craft_cli
 import pytest
 from craft_application import launchpad
 from craft_application.errors import RemoteBuildError
 from craft_application.remote.git import GitRepo
 from craft_application.remote.utils import get_build_id
 
-from snapcraft import application
+from snapcraft import application, commands, models
 from snapcraft.const import SnapArch
 from snapcraft.errors import ClassicFallback
 from snapcraft.parts.yaml_utils import CURRENT_BASES, LEGACY_BASES
@@ -409,6 +411,30 @@ def test_run_in_shallow_repo_unsupported(
 ######################
 # Architecture tests #
 ######################
+
+
+def test_no_architecture_all(
+    mocker, snapcraft_yaml, fake_services, mock_remote_builder_fake_build_process
+):
+    """Test that remote builds error out early with an architecture 'all'."""
+    project = snapcraft_yaml(
+        base="core22",
+        architectures=[{"build-on": "amd64", "build-for": "all"}]
+    )
+    fake_services.project = models.Project.unmarshal(project)
+    cmd = commands.RemoteBuildCommand(
+        {"app": application.APP_METADATA, "services": fake_services}
+    )
+
+    with pytest.raises(
+        craft_cli.CraftError, match="Remote build does not support architecture 'all'"
+    ):
+        cmd.run(
+            argparse.Namespace(
+                project=None,
+                launchpad_accept_public_upload=True,
+            )
+        )
 
 
 @pytest.mark.parametrize("base", CURRENT_BASES)

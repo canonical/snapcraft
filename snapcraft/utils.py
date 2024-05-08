@@ -27,7 +27,7 @@ import sys
 from dataclasses import dataclass
 from getpass import getpass
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, List, Optional
+from typing import Iterable, List, Optional
 
 from craft_cli import emit
 from craft_parts.sources.git_source import GitSource
