@@ -1225,10 +1225,13 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
             error_prefix = f"Error for platform entry '{platform_label}'"
 
             # Make sure the provided platform_set is valid
-            try:
-                platform = Platform(**platform_data)
-            except CraftValidationError as err:
-                raise CraftValidationError(f"{error_prefix}: {str(err)}") from None
+            if isinstance(platform_data, Platform):
+                platform = platform_data
+            else:
+                try:
+                    platform = Platform(**platform_data)
+                except CraftValidationError as err:
+                    raise CraftValidationError(f"{error_prefix}: {str(err)}") from None
 
             # build_on and build_for are validated
             # let's also validate the platform label

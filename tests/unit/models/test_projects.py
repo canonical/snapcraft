@@ -1974,6 +1974,74 @@ def test_build_planner_get_build_plan(platforms, expected_build_infos):
     assert actual_build_infos == expected_build_infos
 
 
+@pytest.mark.parametrize(
+    ("architectures", "expected_build_infos"),
+    [
+        pytest.param(
+            ["amd64"],
+            [
+                BuildInfo(
+                    build_on="amd64",
+                    build_for="amd64",
+                    base=BaseName(name="ubuntu", version="22.04"),
+                    platform="amd64",
+                )
+            ],
+            id="single_platform_as_arch",
+        ),
+        pytest.param(
+            [
+                {
+                    "build-on": ["arm64", "armhf"],
+                    "build-for": ["arm64"],
+                },
+            ],
+            [
+                BuildInfo(
+                    build_on="arm64",
+                    build_for="arm64",
+                    base=BaseName(name="ubuntu", version="22.04"),
+                    platform="arm64",
+                ),
+                BuildInfo(
+                    build_on="armhf",
+                    build_for="arm64",
+                    base=BaseName(name="ubuntu", version="22.04"),
+                    platform="arm64",
+                ),
+            ],
+            id="multiple_build_on",
+        ),
+        pytest.param(
+            [
+                {
+                    "build-on": ["amd64"],
+                    "build-for": "amd64",
+                },
+            ],
+            [
+                BuildInfo(
+                    build_on="amd64",
+                    build_for="amd64",
+                    base=BaseName(name="ubuntu", version="22.04"),
+                    platform="amd64",
+                )
+            ],
+            id="fully_defined_arch",
+        ),
+    ],
+)
+def test_build_planner_get_build_plan_core22(architectures, expected_build_infos):
+    """Test `get_build_plan()` function with different platforms."""
+    planner = snapcraft.models.project.SnapcraftBuildPlanner.parse_obj(
+        {"name": "test-snap", "base": "core22", "architectures": architectures}
+    )
+
+    actual_build_infos = planner.get_build_plan()
+
+    assert actual_build_infos == expected_build_infos
+
+
 def test_get_build_plan_devel():
     """Test that "devel" build-bases are correctly reflected on the build plan"""
     planner = snapcraft.models.project.SnapcraftBuildPlanner.parse_obj(
