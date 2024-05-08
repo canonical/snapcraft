@@ -33,10 +33,9 @@ from craft_cli import emit
 from craft_parts.sources.git_source import GitSource
 
 from snapcraft import errors
-from snapcraft.models import project
 
 if TYPE_CHECKING:
-    from snapcraft import models
+    pass
 
 
 @dataclass
@@ -491,27 +490,3 @@ def process_version(version: Optional[str]) -> str:
 def is_snapcraft_running_from_snap() -> bool:
     """Check if snapcraft is running from the snap."""
     return os.getenv("SNAP_NAME") == "snapcraft" and os.getenv("SNAP") is not None
-
-
-def convert_architectures_to_platforms(
-    architectures: list[str | models.Architecture],
-) -> dict[str, models.Platform]:
-    """Convert a core22 architectures configuration to core24 platforms."""
-    platforms: dict[str, models.Platform] = {}
-    for architecture in architectures:
-        if isinstance(architecture, str):
-            build_on = build_for = [architecture]
-        else:
-            build_for = architecture.build_for or architecture.build_on  # type: ignore[assignment]
-            build_on = architecture.build_on  # type: ignore[assignment]
-
-        if isinstance(build_for, str):
-            build_for = [build_for]
-        if isinstance(build_on, str):
-            build_on = [build_on]
-        platforms[build_for[0]] = project.Platform(
-            build_for=build_for,  # type: ignore[assignment]
-            build_on=build_on,  # type: ignore[assignment]
-        )
-
-    return platforms

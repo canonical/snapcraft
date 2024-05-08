@@ -710,6 +710,66 @@ class TestPlatforms:
             "Use 'architectures' keyword instead." in str(raised.value)
         )
 
+    @pytest.mark.parametrize(
+        ("architectures", "expected"),
+        [
+            ([], {}),
+            (
+                ["amd64"],
+                {
+                    "amd64": Platform(
+                        build_for=[const.SnapArch("amd64")],
+                        build_on=[const.SnapArch("amd64")],
+                    )
+                },
+            ),
+            (
+                [Architecture(build_on="amd64", build_for="riscv64")],
+                {
+                    "riscv64": Platform(
+                        build_for=[const.SnapArch("riscv64")],
+                        build_on=[const.SnapArch("amd64")],
+                    )
+                },
+            ),
+            (
+                [
+                    Architecture.unmarshal(
+                        {"build_on": ["amd64"], "build_for": ["riscv64"]}
+                    )
+                ],
+                {
+                    "riscv64": Platform(
+                        build_for=[const.SnapArch("riscv64")],
+                        build_on=[const.SnapArch("amd64")],
+                    )
+                },
+            ),
+            (
+                [
+                    Architecture.unmarshal(
+                        {"build_on": ["amd64", "arm64"], "build_for": ["riscv64"]}
+                    ),
+                    Architecture.unmarshal(
+                        {"build_on": ["amd64", "arm64"], "build_for": ["arm64"]}
+                    ),
+                ],
+                {
+                    "riscv64": Platform(
+                        build_for=[const.SnapArch("riscv64")],
+                        build_on=[const.SnapArch("amd64"), const.SnapArch("arm64")],
+                    ),
+                    "arm64": Platform(
+                        build_for=[const.SnapArch("arm64")],
+                        build_on=[const.SnapArch("amd64"), const.SnapArch("arm64")],
+                    ),
+                },
+            ),
+        ],
+    )
+    def test_from_architectures(self, architectures, expected):
+        assert Platform.from_architectures(architectures) == expected
+
 
 class TestAppValidation:
     """Validate apps."""

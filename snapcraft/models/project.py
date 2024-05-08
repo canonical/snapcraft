@@ -44,6 +44,7 @@ from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from craft_providers import bases
 from pydantic import PrivateAttr, constr
+from typing_extensions import Self
 
 from snapcraft import utils
 from snapcraft.const import SUPPORTED_ARCHS, SnapArch
@@ -532,6 +533,33 @@ class Platform(models.CraftBaseModel):
             )
 
         return values
+
+    @classmethod
+    def from_architectures(
+        cls,
+        architectures: list[str | Architecture],
+    ) -> dict[str, Self]:
+        """Convert a core22 architectures configuration to core24 platforms."""
+        platforms: dict[str, Self] = {}
+        for architecture in architectures:
+            if isinstance(architecture, str):
+                build_on = build_for = [architecture]
+            else:
+                build_for = (  # type: ignore[assignment]
+                    architecture.build_for or architecture.build_on
+                )
+                build_on = architecture.build_on  # type: ignore[assignment]
+
+            if isinstance(build_for, str):
+                build_for = [build_for]
+            if isinstance(build_on, str):
+                build_on = [build_on]
+            platforms[build_for[0]] = cls(
+                build_for=build_for,  # type: ignore[assignment]
+                build_on=build_on,  # type: ignore[assignment]
+            )
+
+        return platforms
 
 
 class Component(models.CraftBaseModel):
@@ -1263,9 +1291,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
             self.platforms = {get_host_architecture(): None}
             # For backwards compatibility with core22, convert the platforms.
             if self.base == "core22" and self.architectures:
-                self.platforms = utils.convert_architectures_to_platforms(
-                    self.architectures
-                )
+                self.platforms = Platform.from_architectures(self.architectures)
 
         for platform_entry, platform in self.platforms.items():
             for build_for in platform.build_for or [platform_entry]:

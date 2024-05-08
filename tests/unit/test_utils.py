@@ -22,7 +22,7 @@ from unittest.mock import call, patch
 
 import pytest
 
-from snapcraft import const, errors, models, utils
+from snapcraft import errors, utils
 
 
 @pytest.fixture
@@ -656,64 +656,3 @@ def test_confirm_with_user_pause_emitter(mock_isatty, emitter):
 
     with patch("snapcraft.utils.input", fake_input):
         utils.confirm_with_user("prompt")
-
-
-@pytest.mark.parametrize(
-    ("architectures", "expected"),
-    [
-        ([], {}),
-        (
-            ["amd64"],
-            {
-                "amd64": models.Platform(
-                    build_for=[const.SnapArch("amd64")],
-                    build_on=[const.SnapArch("amd64")],
-                )
-            },
-        ),
-        (
-            [models.Architecture(build_on="amd64", build_for="riscv64")],
-            {
-                "riscv64": models.Platform(
-                    build_for=[const.SnapArch("riscv64")],
-                    build_on=[const.SnapArch("amd64")],
-                )
-            },
-        ),
-        (
-            [
-                models.Architecture.unmarshal(
-                    {"build_on": ["amd64"], "build_for": ["riscv64"]}
-                )
-            ],
-            {
-                "riscv64": models.Platform(
-                    build_for=[const.SnapArch("riscv64")],
-                    build_on=[const.SnapArch("amd64")],
-                )
-            },
-        ),
-        (
-            [
-                models.Architecture.unmarshal(
-                    {"build_on": ["amd64", "arm64"], "build_for": ["riscv64"]}
-                ),
-                models.Architecture.unmarshal(
-                    {"build_on": ["amd64", "arm64"], "build_for": ["arm64"]}
-                ),
-            ],
-            {
-                "riscv64": models.Platform(
-                    build_for=[const.SnapArch("riscv64")],
-                    build_on=[const.SnapArch("amd64"), const.SnapArch("arm64")],
-                ),
-                "arm64": models.Platform(
-                    build_for=[const.SnapArch("arm64")],
-                    build_on=[const.SnapArch("amd64"), const.SnapArch("arm64")],
-                ),
-            },
-        ),
-    ],
-)
-def test_convert_architectures_to_platforms(architectures, expected):
-    assert utils.convert_architectures_to_platforms(architectures) == expected
