@@ -47,6 +47,7 @@ from pydantic import PrivateAttr, constr
 from typing_extensions import Self
 
 from snapcraft import utils
+from snapcraft import errors
 from snapcraft.const import SUPPORTED_ARCHS, SnapArch
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
@@ -555,6 +556,8 @@ class Platform(models.CraftBaseModel):
                     else:
                         build_for = cast(UniqueStrList, architecture.build_for)
 
+            if "all" in build_for:
+                raise errors.ArchAllInvalid()
             platforms[build_for[0]] = cls(
                 build_for=build_for,
                 build_on=build_on,

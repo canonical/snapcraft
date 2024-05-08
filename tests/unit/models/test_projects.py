@@ -770,6 +770,11 @@ class TestPlatforms:
     def test_from_architectures(self, architectures, expected):
         assert Platform.from_architectures(architectures) == expected
 
+    def test_from_architectures_no_all(self):
+        """Test that 'from_architectures' does not support architecture 'all'."""
+        with pytest.raises(errors.ArchAllInvalid):
+            Platform.from_architectures([Architecture(build_on="amd64", build_for="all")])
+
 
 class TestAppValidation:
     """Validate apps."""
