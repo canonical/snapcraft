@@ -55,7 +55,7 @@ myst-parser==3.0.1
 oauthlib==3.2.2
 overrides==7.7.0
 packaging==24.0
-pip==22.0.2
+pip==23.3
 platformdirs==4.2.1
 polib==1.2.0
 progressbar==2.5
