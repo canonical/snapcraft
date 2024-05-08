@@ -23,11 +23,11 @@ import craft_cli
 import pytest
 import yaml
 from craft_application import util
-from craft_application.commands.lifecycle import PackCommand
 from craft_parts.packages import snaps
 from craft_providers import bases
 
 from snapcraft import application, services
+from snapcraft.commands import PackCommand
 from snapcraft.errors import ClassicFallback, SnapcraftError
 from snapcraft.models.project import Architecture
 from snapcraft.parts.yaml_utils import CURRENT_BASES, ESM_BASES, LEGACY_BASES

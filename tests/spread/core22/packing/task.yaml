@@ -4,6 +4,9 @@ environment:
   CMD/pack: pack
   CMD/pack_output: pack -o output.snap
   CMD/pack_output_subdir: pack --output subdir/output.snap
+  CMD/pack_directory: pack prime
+  CMD/pack_directory_output: pack prime --output output.snap
+  CMD/pack_directory_output_subdir: pack prime --output subdir/output.snap
   CMD/snap: snap
   CMD/snap_output: snap --output output.snap
   CMD/snap_output_subdir: snap -o subdir/output.snap
@@ -25,6 +28,11 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
+  # create a local directory to pack
+  if [[ "$SPREAD_VARIANT" =~ "pack_directory" ]]; then
+    snapcraft prime --destructive-mode
+  fi
+  
   # shellcheck disable=SC2086
   snapcraft $CMD --destructive-mode
 
