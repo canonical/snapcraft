@@ -23,6 +23,7 @@ from craft_application.errors import CraftValidationError
 from craft_application.models import BuildInfo, UniqueStrList
 from craft_providers.bases import BaseName
 
+from snapcraft import utils
 import snapcraft.models
 from snapcraft import const, errors
 from snapcraft.models import (
@@ -2029,6 +2030,18 @@ def test_build_planner_get_build_plan(platforms, expected_build_infos):
             ],
             id="fully_defined_arch",
         ),
+        pytest.param(
+            None,
+            [
+                BuildInfo(
+                    build_on=utils.get_host_architecture(),
+                    build_for=utils.get_host_architecture(),
+                    base=BaseName(name="ubuntu", version="22.04"),
+                    platform=utils.get_host_architecture(),
+                )
+            ],
+            id="no_arch"
+        )
     ],
 )
 def test_build_planner_get_build_plan_core22(architectures, expected_build_infos):
