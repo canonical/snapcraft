@@ -34,9 +34,6 @@ from craft_parts.sources.git_source import GitSource
 
 from snapcraft import errors
 
-if TYPE_CHECKING:
-    pass
-
 
 @dataclass
 class OSPlatform:

@@ -1291,7 +1291,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
         if self.platforms is None:
             self.platforms = {get_host_architecture(): None}
             # For backwards compatibility with core22, convert the platforms.
-            if self.base == "core22" and self.architectures:
+            if effective_base == "22.04" and self.architectures:
                 self.platforms = Platform.from_architectures(self.architectures)
 
         for platform_entry, platform in self.platforms.items():
