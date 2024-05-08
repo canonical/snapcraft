@@ -24,7 +24,7 @@ from craft_application.models import BuildInfo, UniqueStrList
 from craft_providers.bases import BaseName
 
 import snapcraft.models
-from snapcraft import const, errors
+from snapcraft import const, errors, providers
 from snapcraft.models import (
     MANDATORY_ADOPTABLE_FIELDS,
     Architecture,
@@ -584,6 +584,21 @@ class TestProjectValidation:
 
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(project_yaml_data(build_base="devel", grade="stable"))
+
+    @pytest.mark.parametrize(
+        ("base", "expected_base"),
+        [("bare", None), *providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE.items()],
+    )
+    def test_provider_base(self, base, expected_base, project_yaml_data):
+        providers_base = Project._providers_base(base)
+
+        assert providers_base == expected_base
+
+    def test_provider_base_error(self, project_yaml_data):
+        with pytest.raises(CraftValidationError) as raised:
+            Project._providers_base("unknown")
+
+        assert "Unknown base 'unknown'" in str(raised.value)
 
     def test_project_global_plugs_warning(self, project_yaml_data, emitter):
         data = project_yaml_data(plugs={"desktop": None, "desktop-legacy": None})
