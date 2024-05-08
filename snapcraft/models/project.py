@@ -543,21 +543,21 @@ class Platform(models.CraftBaseModel):
         platforms: dict[str, Self] = {}
         for architecture in architectures:
             if isinstance(architecture, str):
-                build_on = build_for = [architecture]
+                build_on = build_for = cast(UniqueStrList, [architecture])
             else:
-                if architecture.build_for:
-                    build_for = architecture.build_for  # type: ignore[assignment]
+                if isinstance(architecture.build_on, str):
+                    build_on = build_for = cast(UniqueStrList, [architecture.build_on])
                 else:
-                    build_for = architecture.build_on  # type: ignore[assignment]
-                build_on = architecture.build_on  # type: ignore[assignment]
+                    build_on = build_for = cast(UniqueStrList, architecture.build_on)
+                if architecture.build_for:
+                    if isinstance(architecture.build_for, str):
+                        build_for = cast(UniqueStrList, [architecture.build_for])
+                    else:
+                        build_for = cast(UniqueStrList, architecture.build_for)
 
-            if isinstance(build_for, str):
-                build_for = [build_for]
-            if isinstance(build_on, str):
-                build_on = [build_on]
             platforms[build_for[0]] = cls(
-                build_for=build_for,  # type: ignore[assignment]
-                build_on=build_on,  # type: ignore[assignment]
+                build_for=build_for,
+                build_on=build_on,
             )
 
         return platforms
