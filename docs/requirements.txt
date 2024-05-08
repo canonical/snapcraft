@@ -85,7 +85,7 @@ requests==2.31.0
 requests-toolbelt==1.0.0
 requests-unixsocket==0.3.0
 SecretStorage==3.3.3
-setuptools==59.6.0
+setuptools==65.5.1
 simplejson==3.19.2
 six==1.16.0
 snap-helpers==0.4.2
