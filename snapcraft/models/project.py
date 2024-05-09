@@ -1107,7 +1107,9 @@ class ComponentProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
         return _get_partitions_from_components(self.components)
 
 
-def _format_pydantic_errors(errors, *, file_name: str = "snapcraft.yaml"):
+def _format_pydantic_errors(  # pylint: disable=redefined-outer-name
+    errors, *, file_name: str = "snapcraft.yaml"
+):
     """Format errors.
 
     Example 1: Single error.
