@@ -82,11 +82,6 @@ class GNOME(Extension):
     @staticmethod
     @overrides
     def is_experimental(base: Optional[str]) -> bool:
-        # core24 is experimental until streamlined graphics support is finalized
-        # see https://forum.snapcraft.io/t/39718
-        if base == "core24":
-            return True
-
         return False
 
     @overrides
