@@ -273,7 +273,7 @@ def create_app() -> Snapcraft:
             craft_app_commands.lifecycle.BuildCommand,
             craft_app_commands.lifecycle.StageCommand,
             craft_app_commands.lifecycle.PrimeCommand,
-            craft_app_commands.lifecycle.PackCommand,
+            commands.PackCommand,
             commands.SnapCommand,  # Hidden (legacy compatibility)
             commands.RemoteBuildCommand,
             unimplemented.Plugins,
