@@ -44,10 +44,9 @@ from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from craft_providers import bases
 from pydantic import PrivateAttr, constr
-from typing_extensions import override, Self
+from typing_extensions import Self, override
 
-from snapcraft import utils
-from snapcraft import errors
+from snapcraft import errors, utils
 from snapcraft.const import SUPPORTED_ARCHS, SnapArch
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError

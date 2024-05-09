@@ -147,6 +147,20 @@ class RemoteBuildCommand(ExtensibleCommand):
                 reportable=False,
                 retcode=77,
             )
+        project = cast(models.Project, self._services.project)
+        if project.architectures:
+            for arch in project.architectures:
+                if (
+                    isinstance(arch, models.Architecture)
+                    and arch.build_for
+                    and "all" in arch.build_for
+                ):
+                    raise craft_cli.CraftError(
+                        message="Remote build does not support architecture 'all'.",
+                        resolution="Reconfigure your snap for architecture-dependent builds.",
+                        reportable=False,
+                        retcode=78,  # Configuration error
+                    )
 
     # pylint: disable=too-many-statements
     def _run(self, parsed_args: argparse.Namespace, **kwargs: Any) -> int | None:
@@ -175,20 +189,6 @@ class RemoteBuildCommand(ExtensibleCommand):
         )
 
         emit.trace(f"Project directory: {project_dir}")
-
-        if project.architectures:
-            for arch in project.architectures:
-                if (
-                    isinstance(arch, models.Architecture)
-                    and arch.build_for
-                    and "all" in arch.build_for
-                ):
-                    raise craft_cli.CraftError(
-                        message="Remote build does not support architecture 'all'.",
-                        resolution="Reconfigure your snap for architecture-dependent builds.",
-                        reportable=False,
-                        retcode=78,  # Configuration error
-                    )
 
         possible_build_plan = filter_plan(
             self._app.BuildPlannerClass.unmarshal(project.marshal()).get_build_plan(),
