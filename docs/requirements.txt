@@ -25,7 +25,7 @@ Deprecated==1.2.14
 distro==1.9.0
 docutils==0.19
 exceptiongroup==1.2.1
-furo==2024.4.27
+furo==2024.5.6
 gnupg==2.3.1
 h11==0.14.0
 html5lib==1.1
