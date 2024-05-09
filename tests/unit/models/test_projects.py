@@ -1018,7 +1018,9 @@ class TestAppValidation:
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(data)
 
-    @pytest.mark.parametrize("refresh_mode", ["endure", "restart", "_invalid"])
+    @pytest.mark.parametrize(
+        "refresh_mode", ["endure", "restart", "ignore-running", "_invalid"]
+    )
     def test_app_refresh_mode(self, refresh_mode, app_yaml_data):
         data = app_yaml_data(refresh_mode=refresh_mode)
 
