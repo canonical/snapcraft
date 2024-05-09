@@ -44,9 +44,9 @@ from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from craft_providers import bases
 from pydantic import PrivateAttr, constr
-from typing_extensions import override
+from typing_extensions import Self, override
 
-from snapcraft import utils
+from snapcraft import errors, utils
 from snapcraft.const import SUPPORTED_ARCHS, SnapArch
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
@@ -533,6 +533,36 @@ class Platform(models.CraftBaseModel):
             )
 
         return values
+
+    @classmethod
+    def from_architectures(
+        cls,
+        architectures: list[str | Architecture],
+    ) -> dict[str, Self]:
+        """Convert a core22 architectures configuration to core24 platforms."""
+        platforms: dict[str, Self] = {}
+        for architecture in architectures:
+            if isinstance(architecture, str):
+                build_on = build_for = cast(UniqueStrList, [architecture])
+            else:
+                if isinstance(architecture.build_on, str):
+                    build_on = build_for = cast(UniqueStrList, [architecture.build_on])
+                else:
+                    build_on = build_for = cast(UniqueStrList, architecture.build_on)
+                if architecture.build_for:
+                    if isinstance(architecture.build_for, str):
+                        build_for = cast(UniqueStrList, [architecture.build_for])
+                    else:
+                        build_for = cast(UniqueStrList, architecture.build_for)
+
+            if "all" in build_for:
+                raise errors.ArchAllInvalid()
+            platforms[build_for[0]] = cls(
+                build_for=build_for,
+                build_on=build_on,
+            )
+
+        return platforms
 
 
 class Component(models.CraftBaseModel):
@@ -1077,7 +1107,9 @@ class ComponentProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
         return _get_partitions_from_components(self.components)
 
 
-def _format_pydantic_errors(errors, *, file_name: str = "snapcraft.yaml"):
+def _format_pydantic_errors(  # pylint: disable=redefined-outer-name
+    errors, *, file_name: str = "snapcraft.yaml"
+):
     """Format errors.
 
     Example 1: Single error.
@@ -1199,6 +1231,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
     build_base: str | None = None
     name: str
     platforms: dict[str, Any] | None = None
+    architectures: List[Union[str, Architecture]] | None = None
     project_type: str | None = pydantic.Field(default=None, alias="type")
 
     @pydantic.validator("platforms")
@@ -1212,10 +1245,13 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
             error_prefix = f"Error for platform entry '{platform_label}'"
 
             # Make sure the provided platform_set is valid
-            try:
-                platform = Platform(**platform_data)
-            except CraftValidationError as err:
-                raise CraftValidationError(f"{error_prefix}: {str(err)}") from None
+            if isinstance(platform_data, Platform):
+                platform = platform_data
+            else:
+                try:
+                    platform = Platform(**platform_data)
+                except CraftValidationError as err:
+                    raise CraftValidationError(f"{error_prefix}: {str(err)}") from None
 
             # build_on and build_for are validated
             # let's also validate the platform label
@@ -1280,6 +1316,9 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
         # set default value
         if self.platforms is None:
             self.platforms = {get_host_architecture(): None}
+            # For backwards compatibility with core22, convert the platforms.
+            if effective_base == "22.04" and self.architectures:
+                self.platforms = Platform.from_architectures(self.architectures)
 
         for platform_entry, platform in self.platforms.items():
             for build_for in platform.build_for or [platform_entry]:

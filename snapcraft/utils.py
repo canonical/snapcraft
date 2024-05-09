@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Utilities for snapcraft."""
+from __future__ import annotations
+
 import multiprocessing
 import os
 import pathlib
