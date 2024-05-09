@@ -1,0 +1,19 @@
+name: test-snap
+version: '0.1'
+summary: test
+description: test
+
+grade: devel
+confinement: devmode
+
+base: core22
+
+architectures:
+  - build-on: arm64
+  - amd64
+  - build-for: s390x
+
+
+parts:
+  my-part:
+    plugin: nil
