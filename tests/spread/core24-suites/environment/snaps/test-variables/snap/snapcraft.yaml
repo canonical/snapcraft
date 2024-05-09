@@ -6,6 +6,11 @@ grade: devel
 confinement: strict
 base: core24
 
+platforms:
+  s390x:
+    build-on: amd64
+    build-for: s390x
+
 parts:
   hello:
     plugin: nil
