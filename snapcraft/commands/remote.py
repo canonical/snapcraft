@@ -178,12 +178,16 @@ class RemoteBuildCommand(ExtensibleCommand):
 
         if project.architectures:
             for arch in project.architectures:
-                if isinstance(arch, models.Architecture) and arch.build_for and "all" in arch.build_for:
+                if (
+                    isinstance(arch, models.Architecture)
+                    and arch.build_for
+                    and "all" in arch.build_for
+                ):
                     raise craft_cli.CraftError(
                         message="Remote build does not support architecture 'all'.",
                         resolution="Reconfigure your snap for architecture-dependent builds.",
                         reportable=False,
-                        retcode=78  # Configuration error
+                        retcode=78,  # Configuration error
                     )
 
         possible_build_plan = filter_plan(

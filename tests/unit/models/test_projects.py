@@ -23,9 +23,8 @@ from craft_application.errors import CraftValidationError
 from craft_application.models import BuildInfo, UniqueStrList
 from craft_providers.bases import BaseName
 
-from snapcraft import utils
 import snapcraft.models
-from snapcraft import const, errors, providers
+from snapcraft import const, errors, providers, utils
 from snapcraft.models import (
     MANDATORY_ADOPTABLE_FIELDS,
     Architecture,
@@ -789,7 +788,9 @@ class TestPlatforms:
     def test_from_architectures_no_all(self):
         """Test that 'from_architectures' does not support architecture 'all'."""
         with pytest.raises(errors.ArchAllInvalid):
-            Platform.from_architectures([Architecture(build_on="amd64", build_for="all")])
+            Platform.from_architectures(
+                [Architecture(build_on="amd64", build_for="all")]
+            )
 
 
 class TestAppValidation:
@@ -2055,8 +2056,8 @@ def test_build_planner_get_build_plan(platforms, expected_build_infos):
                     platform=utils.get_host_architecture(),
                 )
             ],
-            id="no_arch"
-        )
+            id="no_arch",
+        ),
     ],
 )
 def test_build_planner_get_build_plan_core22(architectures, expected_build_infos):

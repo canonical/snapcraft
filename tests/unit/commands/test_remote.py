@@ -418,8 +418,7 @@ def test_no_architecture_all(
 ):
     """Test that remote builds error out early with an architecture 'all'."""
     project = snapcraft_yaml(
-        base="core22",
-        architectures=[{"build-on": "amd64", "build-for": "all"}]
+        base="core22", architectures=[{"build-on": "amd64", "build-for": "all"}]
     )
     fake_services.project = models.Project.unmarshal(project)
     cmd = commands.RemoteBuildCommand(
