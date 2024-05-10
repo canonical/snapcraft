@@ -1,6 +1,6 @@
 name: core2x
 type: base
-build-base: devel
+build-base: core24
 summary: base using chisel from core24 assets
 description: |
   Test creating a base using a stable release of chisel

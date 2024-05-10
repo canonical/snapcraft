@@ -44,6 +44,20 @@ class UnimplementedMixin:
         # Fallback to the codepaths for non-core24-code.
         raise errors.ClassicFallback()
 
+    def needs_project(
+        self,
+        parsed_args: argparse.Namespace,  # noqa: ARG002 (unused argument is for subclasses)
+    ) -> bool:
+        """Property to determine if the command needs a project loaded.
+
+        Defaults to `self.always_load_project`.
+
+        :param parsed_args: Parsed arguments for the command.
+
+        :returns: True if the command needs a project loaded, False otherwise.
+        """
+        return self.always_load_project
+
     def run_managed(
         self,
         parsed_args: argparse.Namespace,  # noqa: ARG002 (the unused argument is for subclasses)
