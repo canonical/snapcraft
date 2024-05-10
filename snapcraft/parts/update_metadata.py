@@ -49,7 +49,6 @@ def update_project_metadata(
     :raises SnapcraftError: If project update failed.
     """
     _update_project_variables(project, project_vars)
-    _update_project_links(project, metadata_list)
 
     update_from_extracted_metadata(
         project, metadata_list=metadata_list, assets_dir=assets_dir, prime_dir=prime_dir
@@ -103,6 +102,8 @@ def update_from_extracted_metadata(
         _update_project_app_desktop_file(
             project, metadata=metadata, assets_dir=assets_dir, prime_dir=prime_dir
         )
+
+        _update_project_links(project, metadata_list)
 
 
 def _update_project_links(
