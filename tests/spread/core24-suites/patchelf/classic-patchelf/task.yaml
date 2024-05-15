@@ -11,9 +11,10 @@ prepare: |
 restore: |
   snapcraft clean --destructive-mode
   rm -f ./*.snap
+  apt remove libpng16-16t64 -y
 
 execute: |
-  snapcraft prime --destructive-mode
+  snapcraft pack --destructive-mode
 
   arch_triplet="$(dpkg-architecture -q DEB_HOST_MULTIARCH)"
 
@@ -36,3 +37,12 @@ execute: |
      echo "found rpath with no-patchelf: ${rpath}"
      exit 1
   fi
+
+  # ensure system libraries are not loaded
+  snap install classic-patchelf_0.1_amd64.snap --dangerous --classic
+  classic-patchelf
+  apt install libpng16-16t64 -y
+  classic-patchelf
+
+  # debugging - fail to see the test output
+  exit 1

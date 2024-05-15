@@ -8,4 +8,4 @@ install: hello-classic
 	install -D $^ $(DESTDIR)/bin/
 
 hello-classic: hello-classic.c
-	$(CC) hello-classic.c -o hello-classic -lcurl
+	$(CC) hello-classic.c -o hello-classic -lcurl -lpng

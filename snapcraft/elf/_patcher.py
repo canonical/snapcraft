@@ -49,13 +49,15 @@ class Patcher:
         self._patchelf_cmd = preferred_patchelf or utils.get_snap_tool("patchelf")
         self._strip_cmd = utils.get_snap_tool("strip")
 
-    def patch(self, *, elf_file: ElfFile) -> None:
+    def patch(self, *, elf_file: ElfFile, use_system_libs: bool = True) -> None:
         """Patch elf_file with the Patcher instance configuration.
 
         If the ELF is executable, patch it to use the configured linker.
         If the ELF has dependencies (DT_NEEDED), set an rpath to them.
 
         :param elf_file: a data object representing an elf file and its attributes.
+        :param use_system_libs: If true, search for dependencies in the default
+            library search paths.
 
         :raises PatcherError: if the ELF file cannot be patched.
         """
@@ -84,6 +86,9 @@ class Patcher:
             if not set(proposed_rpath).issubset(set(current_rpath)):
                 formatted_rpath = ":".join(proposed_rpath)
                 patchelf_args.extend(["--force-rpath", "--set-rpath", formatted_rpath])
+
+            if not use_system_libs:
+                patchelf_args.append("--no-default-lib")
 
         # no patchelf_args means there is nothing to do.
         if not patchelf_args:

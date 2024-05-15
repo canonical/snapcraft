@@ -9,6 +9,10 @@ base: core24
 grade: devel
 confinement: classic
 
+apps:
+  classic-patchelf:
+    command: bin/hello-classic
+
 parts:
   hello:
     source: .
@@ -18,6 +22,7 @@ parts:
     build-packages:
       - gcc
       - libcurl4-openssl-dev
+      - libpng-dev
   hello-existing-rpath:
     source: .
     plugin: make
