@@ -26,6 +26,7 @@ import pytest
 import pytest_subprocess
 from craft_parts.packages import Repository
 
+import snapcraft.parts
 from snapcraft import __version__, models, os_release, utils
 
 
@@ -62,9 +63,28 @@ def test_post_prime_no_patchelf(fp, tmp_path, lifecycle_service):
 @pytest.mark.xfail(
     not shutil.which("patchelf"), reason="Expects a real patchelf binary."
 )
+@pytest.mark.parametrize(
+    ("confinement", "use_system_libs"),
+    [
+        ("strict", True),
+        ("devmode", True),
+        # classic snaps should not use libraries from the system
+        ("classic", False),
+    ],
+)
 def test_post_prime_patchelf(
-    fp: pytest_subprocess.FakeProcess, tmp_path, lifecycle_service
+    fp: pytest_subprocess.FakeProcess,
+    tmp_path,
+    lifecycle_service,
+    default_project,
+    mocker,
+    confinement,
+    use_system_libs,
 ):
+    patchelf_spy = mocker.spy(snapcraft.parts, "patch_elf")
+    new_attrs = {"confinement": confinement}
+    default_project.__dict__.update(**new_attrs)
+
     mock_step_info = mock.Mock()
     mock_step_info.configure_mock(
         **{
@@ -92,6 +112,7 @@ def test_post_prime_patchelf(
 
     lifecycle_service.post_prime(mock_step_info)
 
+    patchelf_spy.assert_called_with(mock_step_info, use_system_libs=use_system_libs)
     assert fp.call_count(patchelf_command) == 1  # type: ignore[arg-type]
 
 
