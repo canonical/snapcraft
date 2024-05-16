@@ -15,7 +15,7 @@ craft-application==2.7.0
 craft-archives==1.1.3
 craft-cli==2.5.1
 craft-grammar==1.2.0
-craft-parts==1.29.0
+craft-parts==1.30.0
 craft-providers==1.23.1
 craft-store==2.6.2
 cryptography==42.0.5
