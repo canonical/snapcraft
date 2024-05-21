@@ -25,7 +25,6 @@ dev = [
     "pytest-mock~=3.12",
 ]
 lint = [
-    "black~=24.1",
     "yamllint~=1.34",
 ]
 types = [
@@ -148,8 +147,15 @@ extend-exclude = [
     "docs",
     "__pycache__",
 ]
+
+[tool.ruff.format]
+docstring-code-format = true
+line-ending = "lf"
+quote-style = "double"
+
+[tool.ruff.lint]
 # Follow ST063 - Maintaining and updating linting specifications for updating these.
-lint.select = [  # Base linting rule selections.
+select = [  # Base linting rule selections.
     # See the internal document for discussion:
     # https://docs.google.com/document/d/1i1n8pDmFmWi4wTDpk-JfnWCVUThPJiggyPi2DYwBBu4/edit
     # All sections here are stable in ruff and shouldn't randomly introduce
@@ -217,12 +223,12 @@ lint.select = [  # Base linting rule selections.
     "RUF001", "RUF002", "RUF003",  # Ambiguous unicode characters
     "RUF005",  # Encourages unpacking rather than concatenation
     "RUF008",  # Do not use mutable default values for dataclass attributes
-    "RUF011",  # Don't use static keys in dict comprehensions.
+    "B035",    # Don't use static keys in dict comprehensions.
     "RUF013",  # Prohibit implicit Optionals (PEP 484)
     "RUF100",  # #noqa directive that doesn't flag anything
     "RUF200",  # If ruff fails to parse pyproject.toml...
 ]
-lint.ignore = [
+ignore = [
     "ANN10",  # Type annotations for `self` and `cls`
     #"E203",  # Whitespace before ":"  -- Commented because ruff doesn't currently check E203
     "E501",  # Line too long (reason: black will automatically fix this for us)
@@ -234,6 +240,11 @@ lint.ignore = [
     "A003",  # Class attribute shadowing built-in (reason: Class attributes don't often get bare references)
     "SIM117", # Use a single `with` statement with multiple contexts instead of nested `with` statements
               # (reason: this creates long lines that get wrapped and reduces readability)
+
+    # Ignored due to conflicts with ruff's formatter:
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "COM812",  # Missing trailing comma - mostly the same, but marginal differences.
+    "ISC001",  # Single-line implicit string concatenation.
 
     # Ignored due to common usage in current code
     "TRY003",  # Avoid specifying long messages outside the exception class
