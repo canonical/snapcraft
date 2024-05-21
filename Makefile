@@ -17,10 +17,6 @@ test-black:
 test-codespell:
 	tox run -e lint-codespell
 
-.PHONY: test-isort
-test-isort:
-	tox run -e lint-isort
-
 .PHONY: test-mypy
 test-mypy:
 	tox run -e lint-mypy
@@ -57,7 +53,7 @@ test-units: test-legacy-units
 tests: tests-static test-units
 
 .PHONY: tests-static
-tests-static: test-black test-codespell test-ruff test-isort test-mypy test-pydocstyle test-pyright test-pylint test-shellcheck
+tests-static: test-black test-codespell test-ruff test-mypy test-pydocstyle test-pyright test-pylint test-shellcheck
 
 .PHONY: lint
 lint: tests-static
