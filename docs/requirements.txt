@@ -81,7 +81,7 @@ pyxdg==0.28
 PyYAML==6.0.1
 raven==6.10.0
 regex==2024.4.28
-requests==2.31.0
+requests==2.32.0
 requests-toolbelt==1.0.0
 requests-unixsocket==0.3.0
 SecretStorage==3.3.3
