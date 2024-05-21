@@ -234,7 +234,7 @@ class ElfFile:
 
     # pylint: disable=too-many-branches
 
-    def _extract_attributes(self) -> None:  # noqa: C901
+    def _extract_attributes(self) -> None:  # noqa: C901,PLR0912
         with self.path.open("rb") as file:
             elf_file = elffile.ELFFile(file)
 
