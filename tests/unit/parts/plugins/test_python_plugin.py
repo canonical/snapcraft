@@ -60,7 +60,7 @@ def test_get_build_environment(plugin, new_dir):
 
 
 def test_get_build_commands(plugin, new_dir):
-    # pylint: disable=line-too-long
+
     assert plugin.get_build_commands() == [
         f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/my-part/install"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/my-part/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
@@ -109,7 +109,6 @@ def test_get_build_commands(plugin, new_dir):
         ),
         'ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"\n',
     ]
-    # pylint: enable=line-too-long
 
 
 def test_should_remove_symlinks(plugin):

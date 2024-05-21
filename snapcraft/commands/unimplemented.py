@@ -21,8 +21,6 @@ from typing import final
 
 from snapcraft import commands, errors
 
-# pylint: disable=missing-class-docstring,unused-argument
-
 
 class UnimplementedMixin:
     """A mixin that allows you to declare a command unimplemented.

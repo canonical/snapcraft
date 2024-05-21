@@ -162,7 +162,6 @@ class RemoteBuildCommand(ExtensibleCommand):
                         retcode=78,  # Configuration error
                     )
 
-    # pylint: disable=too-many-statements
     def _run(self, parsed_args: argparse.Namespace, **kwargs: Any) -> int | None:
         """Run the remote-build command.
 

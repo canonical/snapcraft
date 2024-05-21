@@ -95,7 +95,7 @@ def _dict_constructor(loader, node):
         ) from type_error
 
 
-class _SafeLoader(yaml.SafeLoader):  # pylint: disable=too-many-ancestors
+class _SafeLoader(yaml.SafeLoader):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

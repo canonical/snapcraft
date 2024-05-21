@@ -47,7 +47,7 @@ SNAPCRAFT_BASE_TO_PROVIDER_BASE = {
 }
 
 # TODO: move to a package data file for shellcheck and syntax highlighting
-# pylint: disable=line-too-long
+
 BASHRC = dedent(
     """\
     #!/bin/bash
@@ -104,7 +104,6 @@ BASHRC = dedent(
     PROMPT_COMMAND="set_environment; set_prompt"
     """
 )
-# pylint: enable=line-too-long
 
 
 def capture_logs_from_instance(instance: executor.Executor) -> None:

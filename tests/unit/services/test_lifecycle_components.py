@@ -22,10 +22,7 @@ from snapcraft import errors
 
 @pytest.fixture
 def extra_project_params(extra_project_params):
-    from craft_application.models import (  # pylint: disable=import-outside-toplevel
-        SummaryStr,
-        VersionStr,
-    )
+    from craft_application.models import SummaryStr, VersionStr
 
     extra_project_params["components"] = {
         "firstcomponent": {

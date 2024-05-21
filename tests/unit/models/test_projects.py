@@ -1494,8 +1494,6 @@ def test_get_snap_project_with_content_plugs_does_not_add_extension(
 class TestArchitecture:
     """Validate architectures."""
 
-    # pylint: disable=unsubscriptable-object
-
     def test_architecture_valid_list_of_strings(self, project_yaml_data):
         """Architectures can be defined as a list of strings (shorthand notation)."""
         data = project_yaml_data(architectures=["amd64", "armhf"])

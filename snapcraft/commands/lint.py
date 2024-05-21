@@ -80,11 +80,7 @@ class LintCommand(AppCommand):
             help="Set https proxy",
         )
 
-    def run(  # pylint: disable=unused-argument
-        self,
-        parsed_args: argparse.Namespace,
-        **kwargs: Any,
-    ) -> None:
+    def run(self, parsed_args: argparse.Namespace, **kwargs: Any) -> None:
         """Run the linter command.
 
         :param parsed_args: snapcraft's argument namespace
