@@ -16,10 +16,10 @@
 
 import logging
 
-from . import errors  # isort:skip
-from . import channels  # isort:skip
-from . import constants  # isort:skip
-from . import status  # isort:skip
+from . import errors
+from . import channels
+from . import constants
+from . import status
 
 logger = logging.getLogger(__name__)
 
