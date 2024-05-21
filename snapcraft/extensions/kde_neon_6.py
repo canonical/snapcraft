@@ -19,7 +19,7 @@
 import dataclasses
 import functools
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from overrides import overrides
 
@@ -71,21 +71,21 @@ class KDENeon6(Extension):
 
     @staticmethod
     @overrides
-    def get_supported_bases() -> Tuple[str, ...]:
+    def get_supported_bases() -> tuple[str, ...]:
         return ("core22",)
 
     @staticmethod
     @overrides
-    def get_supported_confinement() -> Tuple[str, ...]:
+    def get_supported_confinement() -> tuple[str, ...]:
         return "strict", "devmode"
 
     @staticmethod
     @overrides
-    def is_experimental(base: Optional[str]) -> bool:
+    def is_experimental(base: str | None) -> bool:
         return False
 
     @overrides
-    def get_app_snippet(self) -> Dict[str, Any]:
+    def get_app_snippet(self) -> dict[str, Any]:
         return {
             "command-chain": ["snap/command-chain/desktop-launch6"],
             "plugs": [
@@ -108,7 +108,7 @@ class KDENeon6(Extension):
         qt6_sdk_snap = _QT6_SDK_SNAP[base]
         kf6_sdk_snap = _KF6_SDK_SNAP[base]
 
-        build_snaps: List[str] = []
+        build_snaps: list[str] = []
         for part in self.yaml_data["parts"].values():
             build_snaps.extend(part.get("build-snaps", []))
 
@@ -141,7 +141,7 @@ class KDENeon6(Extension):
         )
 
     @overrides
-    def get_root_snippet(self) -> Dict[str, Any]:
+    def get_root_snippet(self) -> dict[str, Any]:
         platform_kf6_snap = self.kde_snaps.content_kf6
         content_kf6_snap = self.kde_snaps.content_kf6 + "-all"
 
@@ -181,7 +181,7 @@ class KDENeon6(Extension):
         }
 
     @overrides
-    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+    def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         qt6_sdk_snap = self.kde_snaps.qt6_sdk_snap
         kf6_sdk_snap = self.kde_snaps.kf6_sdk_snap
 
@@ -262,7 +262,7 @@ class KDENeon6(Extension):
         }
 
     @overrides
-    def get_parts_snippet(self) -> Dict[str, Any]:
+    def get_parts_snippet(self) -> dict[str, Any]:
         # We can change this to the lightweight command-chain when
         # the content snap includes the desktop-launch from
         # https://github.com/snapcore/snapcraft-desktop-integration

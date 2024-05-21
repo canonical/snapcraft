@@ -22,7 +22,7 @@ import pytest
 from snapcraft import errors, os_release
 
 
-@pytest.fixture
+@pytest.fixture()
 def _os_release(new_dir):
     def _release_data(contents):
         path = Path("os-release")

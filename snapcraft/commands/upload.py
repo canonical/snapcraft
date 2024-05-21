@@ -19,7 +19,7 @@
 import pathlib
 import textwrap
 from collections import abc
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
@@ -107,7 +107,7 @@ class StoreUploadCommand(AppCommand):
         if not snap_file.exists() or not snap_file.is_file():
             raise ArgumentParsingError(f"{str(snap_file)!r} is not a valid file")
 
-        channels: Optional[List[str]] = None
+        channels: list[str] | None = None
         if parsed_args.channels:
             channels = parsed_args.channels.split(",")
 

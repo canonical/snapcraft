@@ -14,14 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, List, Set
+from typing import Any
 
 from snapcraft.plugins.v2 import PluginV2
 
 
 class PluginImpl(PluginV2):
     @classmethod
-    def get_schema(cls) -> Dict[str, Any]:
+    def get_schema(cls) -> dict[str, Any]:
         return {
             "$schema": "http://json-schema.org/draft-04/schema#",
             "type": "object",
@@ -29,16 +29,16 @@ class PluginImpl(PluginV2):
             "properties": {"foo": {"type": "string"}},
         }
 
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return {"gcc"}
 
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return dict()
 
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         return [
             "mkdir -p ${SNAPCRAFT_PART_INSTALL}/bin",
             "gcc hello.c -o ${SNAPCRAFT_PART_INSTALL}/bin/hello",

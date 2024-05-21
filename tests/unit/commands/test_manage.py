@@ -26,7 +26,7 @@ from snapcraft import commands, errors
 ############
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_store_release(mocker):
     fake_client = mocker.patch(
         "snapcraft.store.StoreClientCLI.release",
@@ -35,7 +35,7 @@ def fake_store_release(mocker):
     return fake_client
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_store_close(mocker):
     fake_client = mocker.patch(
         "snapcraft.store.StoreClientCLI.close",
@@ -44,7 +44,7 @@ def fake_store_close(mocker):
     return fake_client
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_store_get_account_info(mocker):
     # reduced payload
     data = {

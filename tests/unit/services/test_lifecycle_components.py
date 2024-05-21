@@ -20,7 +20,7 @@ import pytest
 from snapcraft import errors
 
 
-@pytest.fixture
+@pytest.fixture()
 def extra_project_params(extra_project_params):
     from craft_application.models import (  # pylint: disable=import-outside-toplevel
         SummaryStr,

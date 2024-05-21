@@ -168,7 +168,7 @@ architectures set up accordingly.
 import logging
 import os
 import re
-from typing import Any, Dict, List, Optional, Set, Union, cast
+from typing import Any, cast
 
 from craft_parts import infos, plugins
 from overrides import overrides
@@ -196,29 +196,29 @@ _default_kernel_image_target = {
 class KernelPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     """The part properties used by the Kernel plugin."""
 
-    kernel_kdefconfig: List[str] = ["defconfig"]
-    kernel_kconfigfile: Optional[str]
-    kernel_kconfigflavour: Optional[str]
-    kernel_kconfigs: Optional[List[str]]
+    kernel_kdefconfig: list[str] = ["defconfig"]
+    kernel_kconfigfile: str | None
+    kernel_kconfigflavour: str | None
+    kernel_kconfigs: list[str] | None
     kernel_image_target: Any
     kernel_with_firmware: bool = True
-    kernel_device_trees: Optional[List[str]]
+    kernel_device_trees: list[str] | None
     kernel_build_efi_image: bool = False
-    kernel_compiler: Optional[str]
-    kernel_compiler_paths: Optional[List[str]]
-    kernel_compiler_parameters: Optional[List[str]]
-    kernel_initrd_modules: Optional[List[str]]
-    kernel_initrd_configured_modules: Optional[List[str]]
+    kernel_compiler: str | None
+    kernel_compiler_paths: list[str] | None
+    kernel_compiler_parameters: list[str] | None
+    kernel_initrd_modules: list[str] | None
+    kernel_initrd_configured_modules: list[str] | None
     kernel_initrd_stage_firmware: bool = False
-    kernel_initrd_firmware: Optional[List[str]]
-    kernel_initrd_compression: Optional[str]
-    kernel_initrd_compression_options: Optional[List[str]]
-    kernel_initrd_overlay: Optional[str]
-    kernel_initrd_addons: Optional[List[str]]
+    kernel_initrd_firmware: list[str] | None
+    kernel_initrd_compression: str | None
+    kernel_initrd_compression_options: list[str] | None
+    kernel_initrd_overlay: str | None
+    kernel_initrd_addons: list[str] | None
     kernel_enable_zfs_support: bool = False
     kernel_enable_perf: bool = False
     kernel_add_ppa: bool = True
-    kernel_use_llvm: Union[bool, str] = False
+    kernel_use_llvm: bool | str = False
 
     # part properties required by the plugin
     @root_validator
@@ -241,7 +241,7 @@ class KernelPluginProperties(plugins.PluginProperties, plugins.PluginModel):
         return values
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
+    def unmarshal(cls, data: dict[str, Any]):
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -282,7 +282,7 @@ class KernelPlugin(plugins.Plugin):
         self._llvm_version = self._determine_llvm_version()
         self._target_arch = self._part_info.target_arch
 
-    def _determine_llvm_version(self) -> Optional[str]:
+    def _determine_llvm_version(self) -> str | None:
         if (
             isinstance(self.options.kernel_use_llvm, bool)
             and self.options.kernel_use_llvm
@@ -354,7 +354,7 @@ class KernelPlugin(plugins.Plugin):
         if self._llvm_version is not None:
             self._make_cmd.append(f'LLVM="{self._llvm_version}"')
 
-    def _get_fw_install_targets(self) -> List[str]:
+    def _get_fw_install_targets(self) -> list[str]:
         if not self.options.kernel_with_firmware:
             return []
 
@@ -377,11 +377,11 @@ class KernelPlugin(plugins.Plugin):
                 self._make_cmd.append(str(opt))
 
     @overrides
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
     @overrides
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         build_packages = {
             "bc",
             "binutils",
@@ -439,7 +439,7 @@ class KernelPlugin(plugins.Plugin):
         return build_packages
 
     @overrides
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         logger.info("Getting build env...")
         self._init_build_env()
 
@@ -466,7 +466,7 @@ class KernelPlugin(plugins.Plugin):
         return env
 
     @overrides
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         logger.info("Getting build commands...")
         self._configure_compiler()
         return _kernel_build.get_build_commands(

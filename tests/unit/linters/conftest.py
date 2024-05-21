@@ -14,21 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional
 
 import pytest
 
 from snapcraft.linters.base import LinterIssue, LinterResult
 
 
-@pytest.fixture
+@pytest.fixture()
 def linter_issue():
     def _create_issue(
         *,
         result: LinterResult = LinterResult.OK,
-        filename: Optional[str] = None,
+        filename: str | None = None,
         text: str = "Linter message text",
-        url: Optional[str] = "https://some/url",
+        url: str | None = "https://some/url",
     ):
         return LinterIssue(
             name="test",
@@ -38,4 +37,4 @@ def linter_issue():
             url=url,
         )
 
-    yield _create_issue
+    return _create_issue

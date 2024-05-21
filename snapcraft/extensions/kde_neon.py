@@ -19,7 +19,7 @@
 import dataclasses
 import functools
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from overrides import overrides
 
@@ -75,21 +75,21 @@ class KDENeon(Extension):
 
     @staticmethod
     @overrides
-    def get_supported_bases() -> Tuple[str, ...]:
+    def get_supported_bases() -> tuple[str, ...]:
         return ("core22",)
 
     @staticmethod
     @overrides
-    def get_supported_confinement() -> Tuple[str, ...]:
+    def get_supported_confinement() -> tuple[str, ...]:
         return "strict", "devmode"
 
     @staticmethod
     @overrides
-    def is_experimental(base: Optional[str]) -> bool:
+    def is_experimental(base: str | None) -> bool:
         return False
 
     @overrides
-    def get_app_snippet(self) -> Dict[str, Any]:
+    def get_app_snippet(self) -> dict[str, Any]:
         return {
             "command-chain": ["snap/command-chain/desktop-launch"],
             "plugs": ["desktop", "desktop-legacy", "opengl", "wayland", "x11"],
@@ -101,7 +101,7 @@ class KDENeon(Extension):
         base = self.yaml_data["base"]
         sdk_snap = _SDK_SNAP[base]
 
-        build_snaps: List[str] = []
+        build_snaps: list[str] = []
         for part in self.yaml_data["parts"].values():
             build_snaps.extend(part.get("build-snaps", []))
 
@@ -127,7 +127,7 @@ class KDENeon(Extension):
         return ExtensionInfo(cmake_args=cmake_args)
 
     @overrides
-    def get_root_snippet(self) -> Dict[str, Any]:
+    def get_root_snippet(self) -> dict[str, Any]:
         platform_snap = self.kde_snaps.content
         content_snap = self.kde_snaps.content + "-all"
 
@@ -164,7 +164,7 @@ class KDENeon(Extension):
         }
 
     @overrides
-    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+    def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         sdk_snap = self.kde_snaps.sdk
         cmake_args = self.ext_info.cmake_args
 
@@ -196,7 +196,7 @@ class KDENeon(Extension):
         }
 
     @overrides
-    def get_parts_snippet(self) -> Dict[str, Any]:
+    def get_parts_snippet(self) -> dict[str, Any]:
         """Get the parts snippet for the KDE extension.
 
         If the KDE Neon SDK is not built into the content snap, the add the

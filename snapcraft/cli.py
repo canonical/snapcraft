@@ -20,7 +20,7 @@ import argparse
 import contextlib
 import os
 import sys
-from typing import Any, Dict
+from typing import Any
 
 import craft_cli
 import craft_store
@@ -181,7 +181,7 @@ def get_dispatcher() -> craft_cli.Dispatcher:
 
 
 def _run_dispatcher(
-    dispatcher: craft_cli.Dispatcher, global_args: Dict[str, Any]
+    dispatcher: craft_cli.Dispatcher, global_args: dict[str, Any]
 ) -> None:
     if global_args.get("trace"):
         emit.message(
@@ -208,7 +208,7 @@ def _emit_error(error, cause=None):
 
 
 # pylint: disable-next=too-many-statements
-def run():  # noqa: C901 (complex-structure)
+def run():  # (complex-structure)
     """Run the CLI."""
     dispatcher = get_dispatcher()
     retcode = 1

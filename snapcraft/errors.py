@@ -16,7 +16,6 @@
 
 """Snapcraft error definitions."""
 
-from typing import Optional
 
 from craft_cli import CraftError
 
@@ -146,13 +145,13 @@ class MaintenanceBase(SnapcraftError):
     """Error for bases under ESM and no longer supported in this release."""
 
     def __init__(self, base: str) -> None:
-        channel: Optional[str] = None
+        channel: str | None = None
         if base == "core":
             channel = "4.x"
         elif base == "core18":
             channel = "7.x"
 
-        resolution: Optional[str] = None
+        resolution: str | None = None
         if channel:
             resolution = f"Install from or refresh to the {channel!r} channel."
 

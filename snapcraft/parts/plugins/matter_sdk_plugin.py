@@ -16,7 +16,7 @@
 
 """The matter SDK plugin."""
 import os
-from typing import Any, Dict, List, Set, cast
+from typing import Any, cast
 
 from craft_parts import infos, plugins
 from overrides import overrides
@@ -32,7 +32,7 @@ class MatterSdkPluginProperties(plugins.PluginProperties, plugins.PluginModel):
 
     @classmethod
     @overrides
-    def unmarshal(cls, data: Dict[str, Any]) -> "MatterSdkPluginProperties":
+    def unmarshal(cls, data: dict[str, Any]) -> "MatterSdkPluginProperties":
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -75,7 +75,7 @@ class MatterSdkPlugin(plugins.Plugin):
         self.snap_arch = os.getenv("SNAP_ARCH")
 
     @overrides
-    def get_pull_commands(self) -> List[str]:
+    def get_pull_commands(self) -> list[str]:
         options = cast(MatterSdkPluginProperties, self._options)
         commands = []
 
@@ -95,7 +95,7 @@ class MatterSdkPlugin(plugins.Plugin):
         return commands
 
     @overrides
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return {
             "clang",
             "cmake",
@@ -118,15 +118,15 @@ class MatterSdkPlugin(plugins.Plugin):
         }
 
     @overrides
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {}
 
     @overrides
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
     @overrides
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         commands = []
 
         # The project writes its data to /tmp which isn't persisted.

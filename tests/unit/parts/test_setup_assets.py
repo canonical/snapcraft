@@ -18,7 +18,7 @@ import os
 import shutil
 import textwrap
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import call
 
 import pytest
@@ -35,7 +35,7 @@ from snapcraft.parts.setup_assets import (
 )
 
 
-@pytest.fixture
+@pytest.fixture()
 def desktop_file():
     def _write_file(filename: str):
         Path(filename).write_text(
@@ -49,12 +49,12 @@ def desktop_file():
             )
         )
 
-    yield _write_file
+    return _write_file
 
 
-@pytest.fixture
+@pytest.fixture()
 def yaml_data():
-    def _yaml_data(extra_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _yaml_data(extra_data: dict[str, Any]) -> dict[str, Any]:
         return {
             "name": "test-project",
             "base": "core22",
@@ -63,10 +63,10 @@ def yaml_data():
             **extra_data,
         }
 
-    yield _yaml_data
+    return _yaml_data
 
 
-@pytest.fixture
+@pytest.fixture()
 def gadget_yaml_file(new_dir):
     Path("gadget.yaml").write_text(
         textwrap.dedent(
@@ -77,7 +77,7 @@ def gadget_yaml_file(new_dir):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def kernel_yaml_file(new_dir):
     Path("kernel.yaml").write_text(
         textwrap.dedent(

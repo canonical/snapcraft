@@ -17,7 +17,6 @@
 import os
 import textwrap
 from pathlib import Path
-from typing import Optional
 
 import pytest
 
@@ -25,7 +24,7 @@ from snapcraft import errors
 from snapcraft.meta import ExtractedMetadata, appstream
 
 
-def _create_desktop_file(desktop_file_path, icon: Optional[str] = None) -> None:
+def _create_desktop_file(desktop_file_path, icon: str | None = None) -> None:
     dir_name = os.path.dirname(desktop_file_path)
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
@@ -95,7 +94,7 @@ class TestAppstreamIcons:
     """Check extraction of icon-related metadata."""
 
     def _create_appstream_file(
-        self, icon: Optional[str] = None, icon_type: str = "local"
+        self, icon: str | None = None, icon_type: str = "local"
     ):
         with open("foo.appdata.xml", "w") as f:
             if icon:

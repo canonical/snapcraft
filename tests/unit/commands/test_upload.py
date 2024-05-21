@@ -29,7 +29,7 @@ def fake_store_client_upload_file(mocker):
     return fake_client
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_store_notify_upload(mocker):
     fake_client = mocker.patch(
         "snapcraft.store.StoreClientCLI.notify_upload",
@@ -39,7 +39,7 @@ def fake_store_notify_upload(mocker):
     return fake_client
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_store_verify_upload(mocker):
     fake_client = mocker.patch(
         "snapcraft.store.StoreClientCLI.verify_upload",
@@ -49,27 +49,27 @@ def fake_store_verify_upload(mocker):
     return fake_client
 
 
-@pytest.fixture
+@pytest.fixture()
 def data_path() -> pathlib.Path:
     return pathlib.Path(unit.__file__).parents[1] / "legacy" / "data"
 
 
-@pytest.fixture
+@pytest.fixture()
 def snap_file(data_path):
     return str((data_path / "test-snap.snap").resolve())
 
 
-@pytest.fixture
+@pytest.fixture()
 def snap_file_with_started_at(data_path):
     return str((data_path / "test-snap-with-started-at.snap").resolve())
 
 
-@pytest.fixture
+@pytest.fixture()
 def snap_file_with_component(data_path):
     return str((data_path / "test-snap-with-component.snap").resolve())
 
 
-@pytest.fixture
+@pytest.fixture()
 def component_file(data_path):
     return str((data_path / "test-snap-with-component+test-component.comp").resolve())
 

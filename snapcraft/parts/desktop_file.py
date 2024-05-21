@@ -20,7 +20,6 @@ import configparser
 import os
 import shlex
 from pathlib import Path
-from typing import Optional
 
 from craft_cli import emit
 
@@ -69,7 +68,7 @@ class DesktopFile:
 
         self._parser[section]["Exec"] = " ".join(exec_split)
 
-    def _parse_and_reformat_section(self, *, section, icon_path: Optional[str] = None):
+    def _parse_and_reformat_section(self, *, section, icon_path: str | None = None):
         if "Exec" not in self._parser[section]:
             raise errors.DesktopFileError(self._filename, "missing 'Exec' key")
 
@@ -97,7 +96,7 @@ class DesktopFile:
                     f"not found in prime directory."
                 )
 
-    def _parse_and_reformat(self, *, icon_path: Optional[str] = None) -> None:
+    def _parse_and_reformat(self, *, icon_path: str | None = None) -> None:
         if "Desktop Entry" not in self._parser.sections():
             raise errors.DesktopFileError(
                 self._filename, "missing 'Desktop Entry' section"
@@ -106,7 +105,7 @@ class DesktopFile:
         for section in self._parser.sections():
             self._parse_and_reformat_section(section=section, icon_path=icon_path)
 
-    def write(self, *, gui_dir: Path, icon_path: Optional[str] = None) -> None:
+    def write(self, *, gui_dir: Path, icon_path: str | None = None) -> None:
         """Write the desktop file.
 
         :param gui_dir: The desktop file destination directory.

@@ -27,7 +27,7 @@ from snapcraft import commands
 ############
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_store_register(mocker):
     fake_client = mocker.patch(
         "snapcraft.store.StoreClientCLI.register",
@@ -36,7 +36,7 @@ def fake_store_register(mocker):
     return fake_client
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_store_get_names(mocker):
     data = [
         ("test-snap-public", "2016-07-26T20:18:32Z", "public", "-"),

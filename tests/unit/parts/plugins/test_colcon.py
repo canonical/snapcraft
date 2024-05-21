@@ -39,7 +39,7 @@ def test_parse_rosdep_resolve_dependencies():
     assert True
 
 
-@pytest.fixture
+@pytest.fixture()
 def setup_method_fixture():
     def _setup_method_fixture(new_dir, properties=None):
         if properties is None:
@@ -58,7 +58,7 @@ def setup_method_fixture():
 
         return colcon.ColconPlugin(properties=plugin_properties, part_info=part_info)
 
-    yield _setup_method_fixture
+    return _setup_method_fixture
 
 
 class TestPluginColconPlugin:
@@ -76,14 +76,14 @@ class TestPluginColconPlugin:
 
     def test_property_unexpected(self):
         try:
-            colcon.ColconPlugin.properties_class(  # noqa F841
+            colcon.ColconPlugin.properties_class(  # F841
                 source="."  # type: ignore
             )
         except ValidationError as e:
             raise AssertionError(f"{e}") from e
 
         with pytest.raises(ValidationError):
-            colcon.ColconPlugin.properties_class(  # noqa F841
+            colcon.ColconPlugin.properties_class(  # F841
                 source=".", foo="bar"  # type: ignore
             )
 

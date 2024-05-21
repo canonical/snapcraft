@@ -46,7 +46,7 @@ class UnimplementedMixin:
 
     def needs_project(
         self,
-        parsed_args: argparse.Namespace,  # noqa: ARG002 (unused argument is for subclasses)
+        parsed_args: argparse.Namespace,  # (unused argument is for subclasses)
     ) -> bool:
         """Property to determine if the command needs a project loaded.
 
@@ -60,14 +60,14 @@ class UnimplementedMixin:
 
     def run_managed(
         self,
-        parsed_args: argparse.Namespace,  # noqa: ARG002 (the unused argument is for subclasses)
+        parsed_args: argparse.Namespace,  # (the unused argument is for subclasses)
     ) -> bool:
         """Overridden to always return False, for now."""
         return False
 
     def provider_name(
         self,
-        parsed_args: argparse.Namespace,  # noqa: ARG002 (the unused argument is for subclasses)
+        parsed_args: argparse.Namespace,  # (the unused argument is for subclasses)
     ) -> str | None:
         """Name of the provider where the command should be run inside of.
 
@@ -81,41 +81,41 @@ class UnimplementedMixin:
 
 class ListPlugins(
     UnimplementedMixin, commands.core22.ListPluginsCommand
-):  # noqa: D101 (missing docstring)
+):  # (missing docstring)
     pass
 
 
 class Plugins(
     UnimplementedMixin, commands.core22.PluginsCommand
-):  # noqa: D101 (missing docstring)
+):  # (missing docstring)
     pass
 
 
 class ExpandExtensions(
     UnimplementedMixin, commands.core22.ExpandExtensionsCommand
-):  # noqa: D101 (missing docstring)
+):  # (missing docstring)
     pass
 
 
 class ListExtensions(
     UnimplementedMixin, commands.core22.ListExtensionsCommand
-):  # noqa: D101 (missing docstring)
+):  # (missing docstring)
     pass
 
 
 class Extensions(
     UnimplementedMixin, commands.core22.ExtensionsCommand
-):  # noqa: D101 (missing docstring)
+):  # (missing docstring)
     pass
 
 
 class Init(
     UnimplementedMixin, commands.core22.InitCommand
-):  # noqa: D101 (missing docstring)
+):  # (missing docstring)
     pass
 
 
 class Try(
     UnimplementedMixin, commands.core22.TryCommand
-):  # noqa: D101 (missing docstring)
+):  # (missing docstring)
     pass

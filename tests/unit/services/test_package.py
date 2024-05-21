@@ -195,7 +195,7 @@ def test_write_metadata_with_manifest(
 def project_hooks_dir(new_dir, request):
     hooks_dir = new_dir / request.param / "hooks"
     hooks_dir.mkdir(parents=True)
-    yield hooks_dir
+    return hooks_dir
 
 
 def test_write_metadata_with_project_hooks(
@@ -350,7 +350,7 @@ def test_write_metadata_with_project_gui(
     assert (meta_dir / "gui" / "icon.png").read_text() == "package_png_icon"
 
 
-@pytest.fixture
+@pytest.fixture()
 def extra_project_params(extra_project_params):
     #     extra_project_params["version"] = None
     #     extra_project_params["summary"] = None

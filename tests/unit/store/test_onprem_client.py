@@ -25,7 +25,7 @@ from snapcraft.store import constants
 from snapcraft.store.onprem_client import ON_PREM_ENDPOINTS, OnPremClient
 
 
-@pytest.fixture
+@pytest.fixture()
 def on_prem_client():
     """Return an instance of the OnPremClient"""
     return OnPremClient(

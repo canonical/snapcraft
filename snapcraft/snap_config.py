@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Snap config file definitions and helpers."""
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 import pydantic
 from craft_cli import emit
@@ -30,7 +30,7 @@ class SnapConfig(pydantic.BaseModel, extra=pydantic.Extra.forbid):
     :param provider: provider to use. Valid values are 'lxd' and 'multipass'.
     """
 
-    provider: Optional[Literal["lxd", "multipass"]] = None
+    provider: Literal["lxd", "multipass"] | None = None
 
     @pydantic.validator("provider", pre=True)
     @classmethod
@@ -39,7 +39,7 @@ class SnapConfig(pydantic.BaseModel, extra=pydantic.Extra.forbid):
         return provider.lower()
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "SnapConfig":
+    def unmarshal(cls, data: dict[str, Any]) -> "SnapConfig":
         """Create and populate a new ``SnapConfig`` object from dictionary data.
 
         The unmarshal method validates entries in the input dictionary, populating
@@ -64,7 +64,7 @@ class SnapConfig(pydantic.BaseModel, extra=pydantic.Extra.forbid):
         return snap_config
 
 
-def get_snap_config() -> Optional[SnapConfig]:
+def get_snap_config() -> SnapConfig | None:
     """Get validated snap configuration.
 
     :return: SnapConfig. If not running as a snap, return None.

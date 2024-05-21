@@ -31,7 +31,7 @@ from snapcraft.parts.plugins import KernelPlugin
 from snapcraft_legacy.plugins.v2._kernel_build import check_new_config
 
 
-@pytest.fixture
+@pytest.fixture()
 def setup_method_fixture():
     def _setup_method_fixture(
         new_dir, properties=None, arch=None, kernel_add_ppa=False
@@ -57,7 +57,7 @@ def setup_method_fixture():
             part_info=part_info,
         )
 
-    yield _setup_method_fixture
+    return _setup_method_fixture
 
 
 class TestPluginKernel:

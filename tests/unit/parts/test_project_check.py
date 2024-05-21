@@ -24,7 +24,7 @@ from snapcraft import errors, models
 from snapcraft.parts.project_check import run_project_checks
 
 
-@pytest.fixture
+@pytest.fixture()
 def snapcraft_yaml(new_dir):
     """Generic snapcraft application project with a nil part and no apps."""
     content = dedent(

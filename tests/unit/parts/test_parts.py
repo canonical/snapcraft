@@ -25,9 +25,9 @@ from snapcraft.parts import PartsLifecycle
 from snapcraft.parts.yaml_utils import CURRENT_BASES
 
 
-@pytest.fixture
+@pytest.fixture()
 def parts_data():
-    yield {
+    return {
         "p1": {"plugin": "nil"},
     }
 

@@ -20,7 +20,7 @@ import abc
 import enum
 import fnmatch
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal
 
 import pydantic
 from craft_cli import emit
@@ -52,10 +52,10 @@ class LinterIssue(pydantic.BaseModel):
     type: Literal["lint"]
     name: str
     result: LinterResult
-    filename: Optional[str]
+    filename: str | None
     text: str
-    url: Optional[str]
-    suggested_changes: Optional[str]  # XXX: pending definition
+    url: str | None
+    suggested_changes: str | None  # XXX: pending definition
 
     def __init__(self, **kwargs):
         super().__init__(type="lint", **kwargs)
@@ -90,21 +90,21 @@ class Linter(abc.ABC):
         self,
         name: str,
         snap_metadata: "SnapMetadata",
-        lint: Optional[models.Lint],
+        lint: models.Lint | None,
     ):
         self._name = name
         self._snap_metadata = snap_metadata
         self._lint = lint or models.Lint(ignore=[])
 
     @abc.abstractmethod
-    def run(self) -> List[LinterIssue]:
+    def run(self) -> list[LinterIssue]:
         """Execute linting.
 
         :return: A list of linter issues flagged by this linter.
         """
 
     def _is_file_ignored(
-        self, filepath: Union[elf.ElfFile, Path], category: str = ""
+        self, filepath: elf.ElfFile | Path, category: str = ""
     ) -> bool:
         """Check if the file name matches an ignored file pattern.
 
@@ -136,7 +136,7 @@ class Linter(abc.ABC):
         return False
 
     @staticmethod
-    def get_categories() -> List[str]:
+    def get_categories() -> list[str]:
         """Get a list of specific subcategories that can be filtered against.
 
         For Linter subclasses that perform multiple "kinds" of linting, this

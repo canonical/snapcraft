@@ -22,9 +22,10 @@ import shlex
 import subprocess
 import tempfile
 import textwrap
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
-from typing import Any, Iterator, Optional
+from typing import Any
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
@@ -112,7 +113,7 @@ class LintCommand(AppCommand):
                 snap_file, assert_file, parsed_args.http_proxy, parsed_args.https_proxy
             )
 
-    def _get_assert_file(self, snap_file: Path) -> Optional[Path]:
+    def _get_assert_file(self, snap_file: Path) -> Path | None:
         """Get an assertion file for a snap file.
 
         The assertion file name should be formatted as `<snap-name>.assert`.
@@ -138,9 +139,9 @@ class LintCommand(AppCommand):
     def _prepare_instance(
         self,
         snap_file: Path,
-        assert_file: Optional[Path],
-        http_proxy: Optional[str],
-        https_proxy: Optional[str],
+        assert_file: Path | None,
+        http_proxy: str | None,
+        https_proxy: str | None,
     ) -> None:
         """Prepare an instance to lint a snap file.
 
@@ -208,7 +209,7 @@ class LintCommand(AppCommand):
             finally:
                 providers.capture_logs_from_instance(instance)
 
-    def _run_linter(self, snap_file: Path, assert_file: Optional[Path]) -> None:
+    def _run_linter(self, snap_file: Path, assert_file: Path | None) -> None:
         """Run snapcraft linters on a snap file.
 
         :param snap_file: Path to snap file to lint.
@@ -262,7 +263,7 @@ class LintCommand(AppCommand):
 
             yield Path(temp_dir)
 
-    def _load_project(self, snapcraft_yaml_file: Path) -> Optional[models.Project]:
+    def _load_project(self, snapcraft_yaml_file: Path) -> models.Project | None:
         """Load a snapcraft Project from a snapcraft.yaml, if present.
 
         The snapcraft.yaml exist for snaps built with the `--enable-manifest` parameter.
@@ -295,7 +296,7 @@ class LintCommand(AppCommand):
     def _install_snap(
         self,
         snap_file: Path,
-        assert_file: Optional[Path],
+        assert_file: Path | None,
         snap_metadata: snap_yaml.SnapMetadata,
     ) -> Path:
         """Install a snap file and optional assertion file.
@@ -348,7 +349,7 @@ class LintCommand(AppCommand):
 
         return Path("/snap") / snap_metadata.name / "current"
 
-    def _load_lint_filters(self, project: Optional[models.Project]) -> models.Lint:
+    def _load_lint_filters(self, project: models.Project | None) -> models.Lint:
         """Load lint filters from a Project and disable the classic linter.
 
         :param project: Project from the snap file, if present.

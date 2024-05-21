@@ -17,7 +17,6 @@
 """The Snapcraft Python plugin."""
 
 import logging
-from typing import Optional
 
 from craft_parts import errors
 from craft_parts.plugins import python_plugin
@@ -41,7 +40,7 @@ class PythonPlugin(python_plugin.PythonPlugin):
     """
 
     @override
-    def _get_system_python_interpreter(self) -> Optional[str]:
+    def _get_system_python_interpreter(self) -> str | None:
         base = self._part_info.project_base
         confinement = self._part_info.confinement
 

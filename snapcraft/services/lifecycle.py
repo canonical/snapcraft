@@ -44,7 +44,7 @@ class Lifecycle(LifecycleService):
         work_dir: Path | str,
         cache_dir: Path | str,
         build_plan: list[BuildInfo],
-        **lifecycle_kwargs: Any,  # noqa: ANN401 - eventually used in an Any
+        **lifecycle_kwargs: Any,  # - eventually used in an Any
     ) -> None:
         super().__init__(
             app,

@@ -23,7 +23,7 @@ import pathlib
 import stat
 import textwrap
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
@@ -193,7 +193,7 @@ class StoreExportLoginCommand(AppCommand):
                 f"Set {store.constants.ENVIRONMENT_STORE_AUTH}=candid instead",
             )
 
-        kwargs: Dict[str, Any] = {}
+        kwargs: dict[str, Any] = {}
         if parsed_args.snaps:
             kwargs["packages"] = parsed_args.snaps.split(",")
         if parsed_args.channels:
@@ -205,7 +205,7 @@ class StoreExportLoginCommand(AppCommand):
                 with contextlib.suppress(ValueError):
                     expiry_date = datetime.strptime(parsed_args.expires, date_format)
                     break
-            else:  # noqa: PLW0120 Else clause on loop without a break statement
+            else:  # Else clause on loop without a break statement
                 valid_formats = utils.humanize_list(_VALID_DATE_FORMATS, "or")
                 raise ArgumentParsingError(
                     f"The expiry follow an ISO 8601 format ({valid_formats})"

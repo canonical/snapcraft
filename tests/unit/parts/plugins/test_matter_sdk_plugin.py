@@ -26,7 +26,7 @@ MATTER_SDK_REPO = "https://github.com/project-chip/connectedhomeip"
 
 @pytest.fixture(autouse=True)
 def part_info(new_dir):
-    yield PartInfo(
+    return PartInfo(
         project_info=ProjectInfo(
             application_name="test", project_name="test-snap", cache_dir=new_dir
         ),

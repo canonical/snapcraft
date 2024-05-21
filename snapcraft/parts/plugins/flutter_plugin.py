@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """The flutter plugin."""
-from typing import Any, Dict, List, Literal, Set, cast
+from typing import Any, Literal, cast
 
 from craft_parts import infos, plugins
 from overrides import overrides
@@ -33,7 +33,7 @@ class FlutterPluginProperties(plugins.PluginProperties, plugins.PluginModel):
 
     @classmethod
     @overrides
-    def unmarshal(cls, data: Dict[str, Any]) -> "FlutterPluginProperties":
+    def unmarshal(cls, data: dict[str, Any]) -> "FlutterPluginProperties":
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -76,11 +76,11 @@ class FlutterPlugin(plugins.Plugin):
         self.flutter_dir = part_info.part_build_dir / "flutter-distro"
 
     @overrides
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
     @overrides
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return {
             "clang",
             "curl",
@@ -91,12 +91,12 @@ class FlutterPlugin(plugins.Plugin):
         }
 
     @overrides
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {
             "PATH": f"{self.flutter_dir / 'bin'}:${{PATH}}",
         }
 
-    def _get_setup_flutter(self, options) -> List[str]:
+    def _get_setup_flutter(self, options) -> list[str]:
         # TODO move to pull
         return [
             # TODO detect changes to plugin properties
@@ -106,10 +106,10 @@ class FlutterPlugin(plugins.Plugin):
         ]
 
     @overrides
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         options = cast(FlutterPluginProperties, self._options)
 
-        flutter_install_cmd: List[str] = []
+        flutter_install_cmd: list[str] = []
 
         if not self.flutter_dir.exists():
             flutter_install_cmd = self._get_setup_flutter(options)

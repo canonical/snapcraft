@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import itertools
-from typing import Any, Dict, cast
+from typing import Any, cast
 
 import pydantic
 import pytest
@@ -42,11 +42,11 @@ from snapcraft.utils import get_host_architecture
 CORE24_DATA = {"base": "core24", "grade": "devel"}
 
 
-@pytest.fixture
+@pytest.fixture()
 def project_yaml_data():
     def _project_yaml_data(
         *, name: str = "name", version: str = "0.1", summary: str = "summary", **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return {
             "name": name,
             "version": version,
@@ -59,27 +59,27 @@ def project_yaml_data():
             **kwargs,
         }
 
-    yield _project_yaml_data
+    return _project_yaml_data
 
 
-@pytest.fixture
+@pytest.fixture()
 def app_yaml_data(project_yaml_data):
-    def _app_yaml_data(**kwargs) -> Dict[str, Any]:
+    def _app_yaml_data(**kwargs) -> dict[str, Any]:
         data = project_yaml_data()
         data["apps"] = {"app1": {"command": "/bin/true", **kwargs}}
         return data
 
-    yield _app_yaml_data
+    return _app_yaml_data
 
 
-@pytest.fixture
+@pytest.fixture()
 def socket_yaml_data(app_yaml_data):
-    def _socket_yaml_data(**kwargs) -> Dict[str, Any]:
+    def _socket_yaml_data(**kwargs) -> dict[str, Any]:
         data = app_yaml_data()
         data["apps"]["app1"]["sockets"] = {"socket1": {**kwargs}}
         return data
 
-    yield _socket_yaml_data
+    return _socket_yaml_data
 
 
 class TestProjectDefaults:
@@ -2208,7 +2208,7 @@ def test_project_platform_unknown_name():
 class TestComponents:
     """Validate components."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def stub_component_data(self):
         data: dict[str, Any] = {
             "type": "test",

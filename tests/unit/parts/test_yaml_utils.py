@@ -167,7 +167,7 @@ def test_extract_parse_info():
     assert parse_info == {"p1": "foo/metadata.xml"}
 
 
-@pytest.fixture
+@pytest.fixture()
 def minimal_yaml_data():
     return {
         "name": "name",

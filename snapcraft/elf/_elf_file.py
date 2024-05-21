@@ -21,7 +21,7 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, cast
+from typing import cast
 
 from craft_cli import emit
 from elftools.construct import ConstructError
@@ -32,8 +32,8 @@ from snapcraft import utils
 
 from . import errors
 
-_ElfArchitectureTuple = Tuple[str, str, str]
-_SonameCacheDict = Dict[Tuple[_ElfArchitectureTuple, str], Path]
+_ElfArchitectureTuple = tuple[str, str, str]
+_SonameCacheDict = dict[tuple[_ElfArchitectureTuple, str], Path]
 
 _DEBUG_INFO = ".debug_info"
 _DYNAMIC = ".dynamic"
@@ -47,7 +47,7 @@ class _NeededLibrary:
 
     def __init__(self, *, name: str) -> None:
         self.name = name
-        self.versions: Set[str] = set()
+        self.versions: set[str] = set()
 
     def add_version(self, version: str) -> None:
         """Add a new library version."""
@@ -64,19 +64,19 @@ class SonameCache:
         """Obtain cached item."""
         return self._soname_paths[key]
 
-    def __setitem__(self, key: Tuple[_ElfArchitectureTuple, str], item: Path):
+    def __setitem__(self, key: tuple[_ElfArchitectureTuple, str], item: Path):
         """Add item to cache."""
         # Initial API error checks
         if not isinstance(key, tuple):
-            raise EnvironmentError(
+            raise OSError(
                 "The key for SonameCache has to be a (arch, soname) tuple."
             )
         if not isinstance(key[0], tuple) or len(key[0]) != 3:
-            raise EnvironmentError(
+            raise OSError(
                 "The first element of the key needs to of type _ElfArchitectureTuple."
             )
         if not isinstance(key[1], str):
-            raise EnvironmentError(
+            raise OSError(
                 "The second element of the key needs to be "
                 "of type str representing the soname."
             )
@@ -114,8 +114,8 @@ class _Library:
         *,
         soname: str,
         soname_path: Path,
-        search_paths: List[Path],
-        base_path: Optional[Path],
+        search_paths: list[Path],
+        base_path: Path | None,
         arch_tuple: _ElfArchitectureTuple,
         soname_cache: SonameCache,
     ) -> None:
@@ -195,13 +195,13 @@ class ElfFile:
         :param str path: path to an elf_file within a snapcraft project.
         """
         self.path = path
-        self.dependencies: Set[_Library] = set()
+        self.dependencies: set[_Library] = set()
 
-        self.arch_tuple: Optional[_ElfArchitectureTuple] = None
+        self.arch_tuple: _ElfArchitectureTuple | None = None
         self.interp = ""
         self.soname = ""
-        self.versions: Set[str] = set()
-        self.needed: Dict[str, _NeededLibrary] = {}
+        self.versions: set[str] = set()
+        self.needed: dict[str, _NeededLibrary] = {}
         self.execstack_set = False
         self.is_dynamic = True
         self.build_id = ""
@@ -234,7 +234,7 @@ class ElfFile:
 
     # pylint: disable=too-many-branches
 
-    def _extract_attributes(self) -> None:  # noqa: C901,PLR0912
+    def _extract_attributes(self) -> None:  # noqa: PLR0912
         with self.path.open("rb") as file:
             elf_file = elffile.ELFFile(file)
 
@@ -354,11 +354,11 @@ class ElfFile:
     def load_dependencies(
         self,
         root_path: Path,
-        base_path: Optional[Path],
-        content_dirs: List[Path],
+        base_path: Path | None,
+        content_dirs: list[Path],
         arch_triplet: str,
-        soname_cache: Optional[SonameCache] = None,
-    ) -> Set[Path]:
+        soname_cache: SonameCache | None = None,
+    ) -> set[Path]:
         """Load the set of libraries that are needed to satisfy elf's runtime.
 
         This may include libraries contained within the project.
@@ -381,7 +381,7 @@ class ElfFile:
         if base_path is not None:
             search_paths.append(base_path)
 
-        ld_library_paths: List[str] = []
+        ld_library_paths: list[str] = []
         for path in search_paths:
             ld_library_paths.extend(
                 utils.get_common_ld_library_paths(path, arch_triplet)
@@ -406,7 +406,7 @@ class ElfFile:
             )
 
         # Return the set of dependency paths, minus those found in the base.
-        dependencies: Set[Path] = set()
+        dependencies: set[Path] = set()
         for library in self.dependencies:
             if not library.in_base_snap:
                 dependencies.add(library.path)
@@ -418,8 +418,8 @@ def _get_host_libc_path(arch_triplet) -> Path:
 
 
 def _determine_libraries(
-    *, path: Path, ld_library_paths: List[str], arch_triplet: str
-) -> Dict[str, str]:
+    *, path: Path, ld_library_paths: list[str], arch_triplet: str
+) -> dict[str, str]:
     # Try the usual method with ldd.
     with contextlib.suppress(subprocess.CalledProcessError):
         return _ldd(path, ld_library_paths)
@@ -444,8 +444,8 @@ def _determine_libraries(
 
 
 def _ldd(
-    path: Path, ld_library_paths: List[str], *, ld_preload: Optional[str] = None
-) -> Dict[str, str]:
+    path: Path, ld_library_paths: list[str], *, ld_preload: str | None = None
+) -> dict[str, str]:
     """Use host ldd to determine library dependencies."""
     ldd = utils.get_host_tool("ldd")  # TODO: use `ld` from the base snap (#4751)
     env = {
@@ -458,7 +458,7 @@ def _ldd(
     return _parse_ldd_output(_check_output([ldd, str(path)], extra_env=env))
 
 
-def _ld_trace(path: Path, ld_library_paths: List[str]) -> Dict[str, str]:
+def _ld_trace(path: Path, ld_library_paths: list[str]) -> dict[str, str]:
     """Use LD_TRACE_LOADED_OBJECTS to determine library dependencies."""
     env = {
         "LD_TRACE_LOADED_OBJECTS": "1",
@@ -468,7 +468,7 @@ def _ld_trace(path: Path, ld_library_paths: List[str]) -> Dict[str, str]:
     return _parse_ldd_output(_check_output([str(path)], extra_env=env))
 
 
-def _parse_ldd_output(output: str) -> Dict[str, str]:
+def _parse_ldd_output(output: str) -> dict[str, str]:
     """Parse ldd output.
 
     Example ldd outputs:
@@ -481,7 +481,7 @@ def _parse_ldd_output(output: str) -> Dict[str, str]:
 
     :returns: Dictionary of dependencies, mapping library name to path.
     """
-    libraries: Dict[str, str] = {}
+    libraries: dict[str, str] = {}
     ldd_lines = output.splitlines()
 
     for line in ldd_lines:
@@ -505,7 +505,7 @@ def _parse_ldd_output(output: str) -> Dict[str, str]:
     return libraries
 
 
-def _ldd_resolve(soname: str, soname_path: str) -> Tuple[str, str]:
+def _ldd_resolve(soname: str, soname_path: str) -> tuple[str, str]:
     emit.debug(f"_ldd_resolve: {soname!r} {soname_path!r}")
 
     # If found, resolve the path components.  We can safely determine that
@@ -522,7 +522,7 @@ def _ldd_resolve(soname: str, soname_path: str) -> Tuple[str, str]:
     return soname, soname
 
 
-def _check_output(cmd: List[str], *, extra_env: Dict[str, str]) -> str:
+def _check_output(cmd: list[str], *, extra_env: dict[str, str]) -> str:
     env = os.environ.copy()
     env.update(extra_env)
 

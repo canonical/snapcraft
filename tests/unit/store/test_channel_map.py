@@ -26,7 +26,7 @@ from snapcraft.store import channel_map
 ############
 
 
-@pytest.fixture
+@pytest.fixture()
 def channel_payload():
     return {
         "name": "latest/candidate",
@@ -37,7 +37,7 @@ def channel_payload():
     }
 
 
-@pytest.fixture
+@pytest.fixture()
 def mapped_channel_payload():
     return {
         "architecture": "amd64",

@@ -24,7 +24,7 @@ from snapcraft.extensions.ros2_humble import ROS2HumbleExtension
 _EXTENSION_NAME = "ros2-humble"
 
 
-@pytest.fixture
+@pytest.fixture()
 def setup_method_fixture():
     def _setup_method_fixture(yaml_data=None, arch=None, target_arch=None):
         if yaml_data is None:
@@ -38,7 +38,7 @@ def setup_method_fixture():
             yaml_data=yaml_data, arch=arch, target_arch=target_arch
         )
 
-    yield _setup_method_fixture
+    return _setup_method_fixture
 
 
 class TestExtensionROS2HumbleExtension:
