@@ -18,6 +18,7 @@
 import re
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 from craft_cli import emit
 from overrides import overrides
@@ -25,7 +26,7 @@ from overrides import overrides
 from snapcraft.elf import ElfFile, SonameCache, elf_utils
 from snapcraft.elf import errors as elf_errors
 
-from .base import Linter, LinterIssue, LinterResult, Optional
+from .base import Linter, LinterIssue, LinterResult
 
 
 class LibraryLinter(Linter):
