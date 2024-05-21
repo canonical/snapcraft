@@ -39,8 +39,7 @@ test-pyright:
 
 .PHONY: test-ruff
 test-ruff:
-	ruff --config snapcraft_legacy/ruff.toml $(SOURCES_LEGACY)
-	ruff $(SOURCES)
+	ruff check
 
 .PHONY: test-shellcheck
 test-shellcheck:
