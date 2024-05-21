@@ -72,67 +72,137 @@ extend-exclude = [
     "legacy",
     "tests/legacy",
 ]
-lint.select = [
-    "E", "F",  # The rules built into Flake8
+[tool.ruff.format]
+docstring-code-format = true
+line-ending = "lf"
+quote-style = "double"
+
+[tool.ruff.lint]
+# Follow ST063 - Maintaining and updating linting specifications for updating these.
+select = [  # Base linting rule selections.
+    # See the internal document for discussion:
+    # https://docs.google.com/document/d/1i1n8pDmFmWi4wTDpk-JfnWCVUThPJiggyPi2DYwBBu4/edit
+    # All sections here are stable in ruff and shouldn't randomly introduce
+    # failures with ruff updates.
+    "F",  # The rules built into Flake8
+    "E", "W",  # pycodestyle errors and warnings
     "I",  # isort checking
-    "PLC", "PLE", "PLR", "PLW",  # Pylint
-    # Additional stricter checking than previously enabled:
-    "A",  # Shadowing built-ins.
-    "W",  # PyCodeStyle warnings.
-    "N",  # Pep8 naming
+    "N",  # PEP8 naming
+    "D",  # Implement pydocstyle checking as well.
+    "UP",  # Pyupgrade - note that some of are excluded below due to Python versions
     "YTT",  # flake8-2020: Misuse of `sys.version` and `sys.version_info`
-    "ANN",  # Annotations
-    "S",  # Checks for common security issues
-    "BLE",  # Blind exception
-    "B",  # Opinionated bugbear linting
-    "C4",  # better comprehensions
-    "T10",  # Ensure we don't leave code that starts the debugger in
-    "ICN",  # Unconventional import aliases.
+    "ANN",  # Type annotations.
+    "ASYNC",  # Catching blocking calls in async functions
+    # flake8-bandit: security testing. https://docs.astral.sh/ruff/rules/#flake8-bandit-s
+    # https://bandit.readthedocs.io/en/latest/plugins/index.html#complete-test-plugin-listing
+    "S101", "S102",  # assert or exec
+    "S103", "S108",  # File permissions and tempfiles - use #noqa to silence when appropriate.
+    "S104",  # Network binds
+    "S105", "S106", "S107",  # Hardcoded passwords
+    "S110",  # try-except-pass (use contextlib.suppress instead)
+    "S113",  # Requests calls without timeouts
+    "S3",  # Serialising, deserialising, hashing, crypto, etc.
+    "S5",  # Unsafe cryptography or YAML loading.
+    "S602",  # Subprocess call with shell=true
+    "S701",  # jinja2 templates without autoescape
+    "BLE",  # Do not catch blind exceptions
+    "FBT",  # Disallow boolean positional arguments (make them keyword-only)
+    "B0",  # Common mistakes and typos.
+    "A",  # Shadowing built-ins.
+    "COM",  # Trailing commas
+    "C4", # Encourage comprehensions, which tend to be faster than alternatives.
+    "T10",  # Don't call the debugger in production code
+    "ISC",  # Implicit string concatenation that can cause subtle issues
+    "ICN",  # Only use common conventions for import aliases.
+    "INP",  # Implicit namespace packages
+    # flake8-pie: miscellaneous linters (enabled individually because they're not really related)
+    "PIE790",  # Unnecessary pass statement
+    "PIE794",  # Multiple definitions of class field
+    "PIE796",  # Duplicate value in an enum (reasonable to noqa for backwards compatibility)
+    "PIE804",  # Don't use a dict with unnecessary kwargs
+    "PIE807",  # prefer `list` over `lambda: []`
+    "PIE810",  # Use a tuple rather than multiple calls. E.g. `mystr.startswith(("Hi", "Hello"))`
+    "PYI",  # Linting for type stubs.
+    "PT",  # Pytest
     "Q",  # Consistent quotations
-    "RET",  # Return values
+    "RSE",  # Errors on pytest raises.
+    "RET",  # Simpler logic after return, raise, continue or break
+    "SLF",  # Prevent accessing private class members.
+    "SIM",  # Code simplification
+    "TID",  # Tidy imports
+    # The team have chosen to only use type-checking blocks when necessary to prevent circular imports.
+    # As such, the only enabled type-checking checks are those that warn of an import that needs to be
+    # removed from a type-checking block.
+    "TCH004",  # Remove imports from type-checking guard blocks if used at runtime
+    "TCH005",  # Delete empty type-checking blocks
+    "ARG",  # Unused arguments
+    "PTH",  # Migrate to pathlib
+    "FIX",  # All TODOs, FIXMEs, etc. should be turned into issues instead.
+    "ERA",  # Don't check in commented out code
+    "PGH",  # Pygrep hooks
+    "PL",  # Pylint
+    "TRY",  # Cleaner try/except,
+    "FLY",  # Detect things that would be better as f-strings.
+    "PERF",  # Catch things that can slow down the application like unnecessary casts to list.
+    "RUF001", "RUF002", "RUF003",  # Ambiguous unicode characters
+    "RUF005",  # Encourages unpacking rather than concatenation
+    "RUF008",  # Do not use mutable default values for dataclass attributes
+    "B035",    # Don't use static keys in dict comprehensions.
+    "RUF013",  # Prohibit implicit Optionals (PEP 484)
+    "RUF100",  # #noqa directive that doesn't flag anything
+    "RUF200",  # If ruff fails to parse pyproject.toml...
+
+    # Snapcraft specific extends
+    "B",  # Opinionated bugbear linting
 ]
-lint.ignore = [
-    # These following copy the flake8 configuration
+ignore = [
+    "ANN10",  # Type annotations for `self` and `cls`
     #"E203",  # Whitespace before ":"  -- Commented because ruff doesn't currently check E203
-    "E501",  # Line too long
-    # The following copy our pydocstyle configuration
+    "E501",  # Line too long (reason: black will automatically fix this for us)
     "D105",  # Missing docstring in magic method (reason: magic methods already have definitions)
     "D107",  # Missing docstring in __init__ (reason: documented in class docstring)
     "D203",  # 1 blank line required before class docstring (reason: pep257 default)
     "D213",  # Multi-line docstring summary should start at the second line (reason: pep257 default)
     "D215",  # Section underline is over-indented (reason: pep257 default)
+    "A003",  # Class attribute shadowing built-in (reason: Class attributes don't often get bare references)
+    "SIM117", # Use a single `with` statement with multiple contexts instead of nested `with` statements
+              # (reason: this creates long lines that get wrapped and reduces readability)
 
+    # Ignored due to conflicts with ruff's formatter:
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "COM812",  # Missing trailing comma - mostly the same, but marginal differences.
+    "ISC001",  # Single-line implicit string concatenation.
 
-    # Stricter type checking rules that that are disabled.
-    "A003",  # Class attribute shadowing a python built-in (class attributes are seldom if ever referred to bare)
-    "N818",  # Exception names ending with suffix `Error`
-    "ANN002",  "ANN003",  # Missing type annotation for *args and **kwargs
-    "ANN101", "ANN102",  # Type annotations for `self` and `cls` in methods
-    "ANN204",  # Missing type annotations for magic methods
-    "ANN401",  # Disallowing `typing.Any`
-    "B904",  # Within an except clause, always explicitly `raise` an exception `from` something.
-    "B905",  # Zip without explicit `strict=` parameter - this only exists in 3.10+
-
-
-    # Disabled because the current code breaks these rules without "noqa" comments
-    # Most of these are probably worth enabling eventually.
-
-    # Annotation issues appear to be mostly in older code, so could be eventually enabled.
-    # 39 instances of ANN001.
+    # Temporary snapcraft-specific disables.
+    "TRY003",  # Avoid specifying long messages outside the exception class
     "ANN001",  # Missing type annotation for function argument
-    # 5 instances of ANN201, 10 instances of ANN202
-    "ANN201", "ANN202",  # Missing return type annotation for public/private function
-    # 13 instances of ANN206 - probably mostly :noqa-able
-    "ANN206",
-    # 4 instances - would break if run with optimization
-    "S101", # Use of assert detected
-    # Comprehensions - IDK, these ones flagged and they really could go either way.
-    "C405", "C408", "C414",
-    "RET504", "RET506",  # Return value related.
-    "PLR2004",  # Magic values - widely used
-    "S603",  # Untrusted input for subprocess calls
-    "S604",  # shell=True parameter to a function
-    "S607",  # Partial executable path for subprocess calls
+    "D102",    # Missing docstring in public method
+    "ANN206",  # Missing return type annotation
+    "ARG002",  # Unused method argument
+    "PGH003",  # Use specific rule codes when ignoring type issues
+    "FIX002",  # TODO comments
+    "PTH",     # Replace os.path with pathlib.Path
+    "ANN003",  # Missing type annotation for **kwargs
+    # The following have fewer than 10 instances each as of 2024-05-21
+    "ANN202",  # Missing return type annotation for private function
+    "PLR2004", # Magic value used in comparison
+    "D101",    # Missing docstring in public class
+    "ANN401",  # Dynamically typed expressions disallowed in kwargs
+    "FBT001",  # Boolean-typed positional argument in function definition
+    "N818",    # Exception names should have an Error suffix
+    "ANN002",  # Missing type annotation for *args
+    "ANN204",  # Missing return type annotations for special methods
+    "FBT002",  # Boolean default positional argument
+    "B904",    # Don't use bare "raise" in "except"
+    "SIM102",  # Flatten if statements
+    "ARG004",  # Unused static method arguments
+    "PERF203", # try-except in a loop
+    "PERF401", # Use list comprehensions
+    "TRY004",  # Prefer TypeError for invalid type
+    "SLF001",  # Access private members
+    "S101",    # Use assert
+    "FIX003",  # Line contains XXX, consider resolving the issue
+    "TRY300",  # Consider moving this statement to an else block
 ]
 
 [tool.ruff.lint.pylint]
@@ -150,6 +220,21 @@ max-branches = 16
     "S106", # Allow Possible hardcoded password.
     "S108", # Allow Probable insecure usage of temporary file or directory.
     "PLR0913",  # Allow many arguments to tests
+
+    # Temporary snapcraft-specific disables
+    "ARG001",  # Unused function argument
+    "PT004",   # Fixture does not return anything
+    "INP001",  # File is part of an implicit namespace package.
+    "PT011",   # Broad pytest.raises check
+    "PT019",   # Fixture without value is injected as parameter, use @pytest.mark.usefixtures instead
+    "FBT003",  # Boolean positional value in function call
+    "ARG005",  # Unused lambda argument
+    "PT017",   # Found assertion on exception in except block, use pytest.raises instead
+    "RUF001",  # Ambiguous unicode character
+    "PYI024",  # Use typing.NamedTuple instead of collections.namedtuple
+    "PT005",   # Fixture returns a value, remove leading underscore
+    "PT008",   # Use return_value= instead of patching with a lambda
+    "PT012",   # pytest.raises() block should contain a single simple statement
 ]
 "tests/unit/parts/plugins/test_kernel.py" = [
     "E101",  # Mixed tabs and spaces. Ruff gets confused by tabs in multiline strings
