@@ -17,7 +17,6 @@
 """Helpers to parse and handle ELF binary files."""
 
 from pathlib import Path
-from typing import List
 
 from snapcraft import errors
 
@@ -25,7 +24,7 @@ from snapcraft import errors
 class PatcherError(errors.SnapcraftError):
     """Failed to patch an ELF file."""
 
-    def __init__(self, path: Path, *, cmd: List[str], code: int) -> None:
+    def __init__(self, path: Path, *, cmd: list[str], code: int) -> None:
         self.path = path
         self.cmd = cmd
         self.code = code

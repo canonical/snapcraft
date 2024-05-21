@@ -287,9 +287,9 @@ class TestElfFileAttrs:
 class TestSonameCache:
     """SonameCache functionality."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def arch(self):
-        yield ("ELFCLASS64", "ELFDATA2LSB", "EM_X86_64")
+        return ("ELFCLASS64", "ELFDATA2LSB", "EM_X86_64")
 
     def test_add_and_retrieve_soname_path(self, arch):
         soname_cache = elf.SonameCache()

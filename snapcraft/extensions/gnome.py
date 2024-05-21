@@ -18,7 +18,7 @@
 import dataclasses
 import functools
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from overrides import overrides
 
@@ -71,17 +71,17 @@ class GNOME(Extension):
 
     @staticmethod
     @overrides
-    def get_supported_bases() -> Tuple[str, ...]:
+    def get_supported_bases() -> tuple[str, ...]:
         return ("core22", "core24")
 
     @staticmethod
     @overrides
-    def get_supported_confinement() -> Tuple[str, ...]:
+    def get_supported_confinement() -> tuple[str, ...]:
         return "strict", "devmode"
 
     @staticmethod
     @overrides
-    def is_experimental(base: Optional[str]) -> bool:
+    def is_experimental(base: str | None) -> bool:
         # core24 is experimental until streamlined graphics support is finalized
         # see https://forum.snapcraft.io/t/39718
         if base == "core24":
@@ -90,7 +90,7 @@ class GNOME(Extension):
         return False
 
     @overrides
-    def get_app_snippet(self) -> Dict[str, Any]:
+    def get_app_snippet(self) -> dict[str, Any]:
         return {
             "command-chain": ["snap/command-chain/desktop-launch"],
             "plugs": [
@@ -109,7 +109,7 @@ class GNOME(Extension):
         base = self.yaml_data["base"]
         sdk_snap = _SDK_SNAP[base]
 
-        build_snaps: List[str] = []
+        build_snaps: list[str] = []
         for part in self.yaml_data["parts"].values():
             build_snaps.extend(part.get("build-snaps", []))
 
@@ -128,7 +128,7 @@ class GNOME(Extension):
         return GNOMESnaps(sdk=sdk_snap, content=content, builtin=builtin)
 
     @overrides
-    def get_root_snippet(self) -> Dict[str, Any]:
+    def get_root_snippet(self) -> dict[str, Any]:
         platform_snap = self.gnome_snaps.content
 
         return {
@@ -187,7 +187,7 @@ class GNOME(Extension):
         }
 
     @overrides
-    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+    def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         sdk_snap = self.gnome_snaps.sdk
 
         return {
@@ -283,7 +283,7 @@ class GNOME(Extension):
         }
 
     @overrides
-    def get_parts_snippet(self) -> Dict[str, Any]:
+    def get_parts_snippet(self) -> dict[str, Any]:
         """Get the parts snippet for the GNOME extension.
 
         If the GNOME SDK is not built into the content snap, the add the

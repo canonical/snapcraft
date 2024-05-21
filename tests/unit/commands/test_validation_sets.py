@@ -16,7 +16,7 @@
 
 import argparse
 import json
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import call
 
 import pytest
@@ -33,7 +33,7 @@ from tests.unit.store.utils import FakeResponse
 ############
 
 
-@pytest.fixture
+@pytest.fixture()
 def validation_sets_payload():
     return validation_sets.ValidationSets.unmarshal(
         {
@@ -67,14 +67,14 @@ def validation_sets_payload():
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_dashboard_post_validation_sets(validation_sets_payload, mocker):
     return mocker.patch.object(
         StoreClientCLI, "post_validation_sets", return_value=validation_sets_payload
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_dashboard_post_validation_sets_build_assertion(
     validation_sets_payload, mocker
 ):
@@ -85,16 +85,16 @@ def fake_dashboard_post_validation_sets_build_assertion(
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_dashboard_get_validation_sets(validation_sets_payload, mocker):
     return mocker.patch.object(
         StoreClientCLI, "get_validation_sets", return_value=validation_sets_payload
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_snap_sign(mocker):
-    def sign(assertion: Dict[str, Any], *, key_name: str) -> bytes:
+    def sign(assertion: dict[str, Any], *, key_name: str) -> bytes:
         return (json.dumps(assertion) + f"\n\nSIGNED{key_name}").encode()
 
     return mocker.patch(
@@ -102,7 +102,7 @@ def fake_snap_sign(mocker):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def edit_return_value():
     return {
         "account-id": "AccountIDXXXOfTheRequestingUserX",
@@ -119,7 +119,7 @@ def edit_return_value():
     }
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_edit_validation_sets(mocker, edit_return_value):
     """A fake for editing validation sets that returns no changes by default."""
     return mocker.patch(

@@ -40,7 +40,7 @@ def _override_data(to_dict, from_dict):
             to_dict[key] = value
 
 
-@pytest.fixture
+@pytest.fixture()
 def simple_project():
     def _simple_project(**kwargs):
         snapcraft_config = {
@@ -64,7 +64,7 @@ def simple_project():
         _override_data(snapcraft_config, kwargs)
         return Project.unmarshal(snapcraft_config)
 
-    yield _simple_project
+    return _simple_project
 
 
 def test_simple_snap_yaml(simple_project, new_dir):
@@ -296,7 +296,7 @@ def test_links_lists(simple_project, new_dir):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def complex_project():
     snapcraft_yaml = textwrap.dedent(
         """\
@@ -442,7 +442,7 @@ def complex_project():
         """
     )
     data = yaml.safe_load(snapcraft_yaml)
-    yield Project.unmarshal(data)
+    return Project.unmarshal(data)
 
 
 def test_complex_snap_yaml(complex_project, new_dir):

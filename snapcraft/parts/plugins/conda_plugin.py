@@ -19,7 +19,7 @@
 import os
 import platform
 import textwrap
-from typing import Any, Dict, List, Optional, Set, cast
+from typing import Any, cast
 
 from craft_parts import plugins
 from overrides import overrides
@@ -65,12 +65,12 @@ class CondaPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     """The part properties used by the conda plugin."""
 
     # part properties required by the plugin
-    conda_packages: Optional[List[str]] = None
-    conda_python_version: Optional[str] = None
+    conda_packages: list[str] | None = None
+    conda_python_version: str | None = None
     conda_miniconda_version: str = "latest"
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "CondaPluginProperties":
+    def unmarshal(cls, data: dict[str, Any]) -> "CondaPluginProperties":
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -108,15 +108,15 @@ class CondaPlugin(plugins.Plugin):
     properties_class = CondaPluginProperties
 
     @overrides
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
     @overrides
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return set()
 
     @overrides
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {"PATH": "${HOME}/miniconda/bin:${PATH}"}
 
     @staticmethod
@@ -149,7 +149,7 @@ class CondaPlugin(plugins.Plugin):
         return " ".join(deploy_cmd)
 
     @overrides
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         options = cast(CondaPluginProperties, self._options)
         url = _get_miniconda_source(options.conda_miniconda_version)
         return [

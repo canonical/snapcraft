@@ -27,7 +27,7 @@ from snapcraft.parts.plugins.conda_plugin import _get_miniconda_source
 
 @pytest.fixture(autouse=True)
 def part_info(new_dir):
-    yield PartInfo(
+    return PartInfo(
         project_info=ProjectInfo(
             application_name="test", project_name="test-snap", cache_dir=new_dir
         ),
@@ -35,7 +35,7 @@ def part_info(new_dir):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_platform(monkeypatch):
     if os.getenv("SNAP_ARCH"):
         monkeypatch.delenv("SNAP_ARCH")

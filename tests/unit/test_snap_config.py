@@ -23,7 +23,7 @@ from snaphelpers import SnapCtlError
 from snapcraft.snap_config import SnapConfig, get_snap_config
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_config():
     with patch(
         "snapcraft.snap_config.SnapConfigOptions", autospec=True
@@ -33,7 +33,7 @@ def mock_config():
 
 @pytest.fixture()
 def mock_is_running_from_snap(mocker):
-    yield mocker.patch(
+    return mocker.patch(
         "snapcraft.snap_config.is_snapcraft_running_from_snap", return_value=True
     )
 

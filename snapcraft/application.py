@@ -22,7 +22,7 @@ import logging
 import os
 import pathlib
 import sys
-from typing import Any, Optional
+from typing import Any
 
 import craft_application.commands as craft_app_commands
 import craft_cli
@@ -65,7 +65,7 @@ MAPPED_ENV_VARS = {
 
 def _get_esm_error_for_base(base: str) -> None:
     """Raise an error appropriate for the base under ESM."""
-    channel: Optional[str] = None
+    channel: str | None = None
     match base:
         case "core":
             channel = "4.x"

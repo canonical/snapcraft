@@ -28,7 +28,7 @@ from snapcraft import commands
 ############
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_store_login(mocker):
     fake_client = mocker.patch(
         "snapcraft.store.StoreClientCLI.login",

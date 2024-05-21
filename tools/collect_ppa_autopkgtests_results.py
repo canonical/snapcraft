@@ -74,7 +74,7 @@ def commit_and_push(repo_dir, day):
             repo_dir,
             "commit",
             "--message",
-            "Add the results for {}".format(day),
+            f"Add the results for {day}",
         ]
     )
 

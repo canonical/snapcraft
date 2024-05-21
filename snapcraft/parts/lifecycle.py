@@ -22,7 +22,7 @@ import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any
 
 import craft_parts
 from craft_cli import emit
@@ -118,7 +118,7 @@ def _run_command(  # noqa PLR0913 # pylint: disable=too-many-branches, too-many-
     command_name: str,
     *,
     project: models.Project,
-    parse_info: Dict[str, List[str]],
+    parse_info: dict[str, list[str]],
     assets_dir: Path,
     start_time: datetime,
     parallel_build_count: int,
@@ -144,7 +144,7 @@ def _run_command(  # noqa PLR0913 # pylint: disable=too-many-branches, too-many-
     if parsed_args.use_lxd or (
         not managed_mode
         and not parsed_args.destructive_mode
-        and not os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "host"
+        and os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") != "host"
     ):
         if command_name == "clean" and not part_names:
             _clean_provider(project, parsed_args)
@@ -296,7 +296,7 @@ def _run_lifecycle_and_pack(  # noqa PLR0913
 
 
 def _pack_components(
-    lifecycle: PartsLifecycle, project: models.Project, output: Optional[str]
+    lifecycle: PartsLifecycle, project: models.Project, output: str | None
 ) -> None:
     """Pack components.
 
@@ -557,7 +557,7 @@ def _run_in_provider(  # noqa PLR0915
 
 
 def _expose_prime(
-    project_path: Path, instance: Executor, partitions: Optional[List[str]]
+    project_path: Path, instance: Executor, partitions: list[str] | None
 ):
     """Expose the instance's prime directory in ``project_path`` on the host.
 
@@ -601,7 +601,7 @@ def set_global_environment(info: ProjectInfo) -> None:
         info.global_environment.update(_get_environment_for_partitions(info))
 
 
-def _get_environment_for_partitions(info: ProjectInfo) -> Dict[str, str]:
+def _get_environment_for_partitions(info: ProjectInfo) -> dict[str, str]:
     """Get environment variables related to partitions.
 
     Assumes the partition feature is enabled and partitions are defined.
@@ -610,7 +610,7 @@ def _get_environment_for_partitions(info: ProjectInfo) -> Dict[str, str]:
 
     :returns: A dictionary contain environment variables for partitions.
     """
-    environment: Dict[str, str] = {}
+    environment: dict[str, str] = {}
 
     if not info.partitions:
         raise ValueError("Project does not contain any partitions.")
@@ -635,7 +635,7 @@ def _check_experimental_plugins(
 ) -> None:
     """Ensure the experimental plugin flag is enabled to use unstable plugins."""
     for name, part in project.parts.items():
-        if not isinstance(part, Dict):
+        if not isinstance(part, dict):
             continue
 
         plugin = part.get("plugin", "")
@@ -714,11 +714,11 @@ def patch_elf(step_info: StepInfo) -> bool:
 
 
 def _expand_environment(
-    snapcraft_yaml: Dict[str, Any],
+    snapcraft_yaml: dict[str, Any],
     *,
     parallel_build_count: int,
     target_arch: str,
-    partitions: Optional[List[str]],
+    partitions: list[str] | None,
 ) -> None:
     """Expand global variables in the provided dictionary values.
 
@@ -759,8 +759,8 @@ def _expand_environment(
 
 
 def get_build_plan(
-    yaml_data: Dict[str, Any], parsed_args: "argparse.Namespace"
-) -> List[Tuple[str, str]]:
+    yaml_data: dict[str, Any], parsed_args: "argparse.Namespace"
+) -> list[tuple[str, str]]:
     """Get a list of all build_on->build_for architectures from the project file.
 
     Additionally, check for the command line argument `--build-for <architecture>`
@@ -776,7 +776,7 @@ def get_build_plan(
     archs = models.ArchitectureProject.unmarshal(yaml_data).architectures
 
     host_arch = get_host_architecture()
-    build_plan: List[Tuple[str, str]] = []
+    build_plan: list[tuple[str, str]] = []
 
     # `isinstance()` calls are for mypy type checking and should not change logic
     for arch in [arch for arch in archs if isinstance(arch, models.Architecture)]:
@@ -809,7 +809,7 @@ def get_build_plan(
     return build_plan
 
 
-def _validate_and_get_partitions(yaml_data: Dict[str, Any]) -> Optional[List[str]]:
+def _validate_and_get_partitions(yaml_data: dict[str, Any]) -> list[str] | None:
     """Validate partitions support, enable the feature, and get a list of partitions.
 
     :param yaml_data: The project's YAML data.

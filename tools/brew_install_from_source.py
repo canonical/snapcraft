@@ -50,7 +50,7 @@ def download_snapcraft_source(dest_dir):
         os.environ.get("TRAVIS_PULL_REQUEST_SLUG") or "snapcore/snapcraft",
         os.environ.get("TRAVIS_PULL_REQUEST_BRANCH") or "master",
     )
-    print("Downloading branch source from {}".format(branch_source))
+    print(f"Downloading branch source from {branch_source}")
     urllib.request.urlretrieve(branch_source, dest_file)  # noqa S310
     return dest_file
 
@@ -77,15 +77,15 @@ def patch_brew_formula_source(
     compressed_source,
     compressed_sha256,
 ):
-    with open(original_formula_path, "r") as original_file:
+    with open(original_formula_path) as original_file:
         with open(destination_formula_path, "w") as destination_file:
             for line in original_file:
                 if line.startswith("  url "):
                     destination_file.write(
-                        '  url "file://{}"\n'.format(compressed_source)
+                        f'  url "file://{compressed_source}"\n'
                     )
                 elif line.startswith("  sha256 "):
-                    destination_file.write('  sha256 "{}"\n'.format(compressed_sha256))
+                    destination_file.write(f'  sha256 "{compressed_sha256}"\n')
                 else:
                     destination_file.write(line)
 

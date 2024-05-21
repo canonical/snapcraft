@@ -64,7 +64,6 @@ dev_requires = [
     "coverage[toml]",
     "pyflakes",
     "fixtures",
-    "isort",
     "mccabe",
     "mypy",
     "testscenarios",

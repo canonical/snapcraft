@@ -22,8 +22,9 @@ import pathlib
 import re
 import subprocess
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Dict, Iterable, List, Set, cast
+from typing import cast
 
 import catkin_pkg.package
 import click
@@ -52,7 +53,7 @@ class RosdepUnexpectedResultError(RosdepError):
 
 def _parse_rosdep_resolve_dependencies(
     dependency_name: str, output: str
-) -> Dict[str, Set[str]]:
+) -> dict[str, set[str]]:
     # The output of rosdep follows the pattern:
     #
     #    #apt
@@ -65,7 +66,7 @@ def _parse_rosdep_resolve_dependencies(
     # Split these out into a dict of dependency type -> dependencies.
     delimiters = re.compile(r"\n|\s")
     lines = delimiters.split(output)
-    dependencies: Dict[str, Set[str]] = {}
+    dependencies: dict[str, set[str]] = {}
     dependency_set = None
     for line in lines:
         line = line.strip()  # noqa PLW2901
@@ -85,7 +86,7 @@ class RosPlugin(plugins.Plugin):
     """Base class for ROS-related plugins. Not intended for use by end users."""
 
     @overrides
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return (
             set(self._options.colcon_ros_build_snaps)  # type: ignore
             if self._options.colcon_ros_build_snaps  # type: ignore
@@ -93,11 +94,11 @@ class RosPlugin(plugins.Plugin):
         )
 
     @overrides
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return {"python3-rosdep", "rospack-tools"}
 
     @overrides
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {"ROS_PYTHON_VERSION": "3"}
 
     @classmethod
@@ -106,7 +107,7 @@ class RosPlugin(plugins.Plugin):
         return True
 
     @abc.abstractmethod
-    def _get_workspace_activation_commands(self) -> List[str]:
+    def _get_workspace_activation_commands(self) -> list[str]:
         """Return a list of commands source a ROS workspace.
 
         The commands returned will be run before doing anything else.
@@ -119,7 +120,7 @@ class RosPlugin(plugins.Plugin):
         """
 
     @abc.abstractmethod
-    def _get_build_commands(self) -> List[str]:
+    def _get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step.
 
         The commands returned will be run after rosdep is used to install
@@ -132,7 +133,7 @@ class RosPlugin(plugins.Plugin):
         specific functionality.
         """
 
-    def _get_list_packages_commands(self) -> List[str]:
+    def _get_list_packages_commands(self) -> list[str]:
         """Generate a list of ROS 2 packages available in build snaps.
 
         The ROS 2 workspaces contained in build snaps are crawled with `rospack`
@@ -175,7 +176,7 @@ class RosPlugin(plugins.Plugin):
 
         return cmd
 
-    def _get_stage_runtime_dependencies_commands(self) -> List[str]:
+    def _get_stage_runtime_dependencies_commands(self) -> list[str]:
         env = {"LANG": "C.UTF-8", "LC_ALL": "C.UTF-8"}
 
         for key in [
@@ -221,7 +222,7 @@ class RosPlugin(plugins.Plugin):
         ]
 
     @overrides
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         return (
             [  # noqa S608 (false positive on SQL injection)
                 "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
@@ -264,7 +265,7 @@ def plugin_cli():
     """Define the plugin_cli Click group."""
 
 
-def get_installed_dependencies(installed_packages_path: str) -> Set[str]:
+def get_installed_dependencies(installed_packages_path: str) -> set[str]:
     """Retrieve recursive apt dependencies of a given package list."""
     if os.path.isfile(installed_packages_path):
         try:
@@ -329,14 +330,14 @@ def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
     """Stage the runtime dependencies of the ROS stack using rosdep."""
     click.echo("Staging runtime dependencies...")
     # @todo: support python packages (only apt currently supported)
-    apt_packages: Set[str] = set()
+    apt_packages: set[str] = set()
 
     installed_pkgs = cast(
         Iterable[catkin_pkg.package.Package],
         catkin_packages.find_packages(part_install).values(),
     )
     for pkg in catkin_packages.find_packages(part_src).values():
-        pkg = cast(catkin_pkg.package.Package, pkg)  # noqa PLW2901
+        pkg = cast(catkin_pkg.package.Package, pkg)  # PLW2901
         # Evaluate the conditions of all dependencies
         pkg.evaluate_conditions(
             {

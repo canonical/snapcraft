@@ -23,7 +23,7 @@ import pytest
 from snapcraft import cli
 
 
-@pytest.fixture
+@pytest.fixture()
 def legacy_run(mocker):
     return mocker.patch("snapcraft.commands.legacy.LegacyAppCommand.run")
 

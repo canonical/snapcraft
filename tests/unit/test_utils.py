@@ -17,7 +17,6 @@
 import os
 from pathlib import Path
 from textwrap import dedent
-from typing import List
 from unittest.mock import call, patch
 
 import pytest
@@ -25,19 +24,19 @@ import pytest
 from snapcraft import errors, utils
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_isatty(mocker):
-    yield mocker.patch("snapcraft.utils.sys.stdin.isatty", return_value=True)
+    return mocker.patch("snapcraft.utils.sys.stdin.isatty", return_value=True)
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_input(mocker):
-    yield mocker.patch("snapcraft.utils.input", return_value="")
+    return mocker.patch("snapcraft.utils.input", return_value="")
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_is_managed_mode(mocker):
-    yield mocker.patch("snapcraft.utils.is_managed_mode", return_value=False)
+    return mocker.patch("snapcraft.utils.is_managed_mode", return_value=False)
 
 
 @pytest.mark.parametrize(
@@ -407,7 +406,7 @@ def fake_exists(mocker):
     class _FileCheck:
         def __init__(self) -> None:
             self._original_exists = os.path.exists
-            self.paths: List[str] = []
+            self.paths: list[str] = []
 
         def exists(self, path: str) -> bool:
             if Path(path) in self.paths:
@@ -417,7 +416,7 @@ def fake_exists(mocker):
     file_checker = _FileCheck()
     mocker.patch("os.path.exists", new=file_checker.exists)
 
-    yield file_checker
+    return file_checker
 
 
 @pytest.fixture()

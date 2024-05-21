@@ -25,7 +25,7 @@ import pytest
 from snapcraft.parts.setup_assets import setup_assets
 
 
-@pytest.fixture
+@pytest.fixture()
 def extra_project_params(extra_project_params):
     from craft_application.models import (  # pylint: disable=import-outside-toplevel
         SummaryStr,

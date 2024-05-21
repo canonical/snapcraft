@@ -16,7 +16,7 @@
 
 import textwrap
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 
@@ -25,7 +25,7 @@ from snapcraft.models import App, Project
 from snapcraft.parts.update_metadata import update_project_metadata
 
 
-@pytest.fixture
+@pytest.fixture()
 def appstream_file(new_dir):
     content = textwrap.dedent(
         """
@@ -61,9 +61,9 @@ def appstream_file(new_dir):
     yaml_path.write_text(content)
 
 
-@pytest.fixture
+@pytest.fixture()
 def project_yaml_data():
-    def yaml_data(extra_args: Dict[str, Any]):
+    def yaml_data(extra_args: dict[str, Any]):
         return {
             "name": "name",
             "summary": "summary",
@@ -75,10 +75,10 @@ def project_yaml_data():
             **extra_args,
         }
 
-    yield yaml_data
+    return yaml_data
 
 
-def _project_app(data: Dict[str, Any]) -> App:
+def _project_app(data: dict[str, Any]) -> App:
     return App(**data)
 
 

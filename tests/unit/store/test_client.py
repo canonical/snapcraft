@@ -38,12 +38,12 @@ from .utils import FakeResponse
 #############
 
 
-@pytest.fixture
+@pytest.fixture()
 def no_wait(monkeypatch):
     monkeypatch.setattr(time, "sleep", lambda x: None)
 
 
-@pytest.fixture
+@pytest.fixture()
 def channel_map_payload():
     return {
         "channel-map": [
@@ -125,7 +125,7 @@ def channel_map_payload():
     }
 
 
-@pytest.fixture
+@pytest.fixture()
 def list_revisions_payload():
     return {
         "revisions": [
@@ -317,7 +317,7 @@ def test_get_legacy_ubuntu_client(new_dir, legacy_config_path, ephemeral):
 ########################
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_user_password(mocker):
     """Return a canned user name and password"""
     mocker.patch.object(
@@ -327,7 +327,7 @@ def fake_user_password(mocker):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_otp(mocker):
     """Return a canned user name and password"""
     mocker.patch.object(
@@ -337,7 +337,7 @@ def fake_otp(mocker):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_hostname(mocker):
     mocker.patch.object(client, "_get_hostname", return_value="fake-host")
 
@@ -491,7 +491,7 @@ def test_login_from_401_request(fake_client):
                 ).encode(),
             )
         ),
-        FakeResponse(status_code=200, content="text".encode()),
+        FakeResponse(status_code=200, content=b"text"),
     ]
 
     client.StoreClientCLI().request("GET", "http://url.com/path")
@@ -1057,12 +1057,12 @@ def test_list_revisions(fake_client, list_revisions_payload):
 ########################
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_client_request(mocker):
     return mocker.patch("snapcraft.store.client.OnPremClient.request", autospec=True)
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_client_notify_revision(mocker):
     return mocker.patch(
         "snapcraft.store.client.OnPremClient.notify_revision",
@@ -1073,7 +1073,7 @@ def fake_client_notify_revision(mocker):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def on_prem_client(monkeypatch):
     monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "onprem")
     # Remove any sleep calls from the client.

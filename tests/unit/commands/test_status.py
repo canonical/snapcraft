@@ -12,7 +12,7 @@ from snapcraft_legacy.storeapi.v2.releases import Releases
 ############
 
 
-@pytest.fixture
+@pytest.fixture()
 def channel_map_result():
     return channel_map.ChannelMap.unmarshal(
         {
@@ -124,7 +124,7 @@ def channel_map_result():
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_store_get_status_map(mocker, channel_map_result):
     fake_client = mocker.patch(
         "snapcraft.store.StoreClientCLI.get_channel_map",
@@ -134,7 +134,7 @@ def fake_store_get_status_map(mocker, channel_map_result):
     return fake_client
 
 
-@pytest.fixture
+@pytest.fixture()
 def list_revisions_result():
     return Releases.unmarshal(
         {
@@ -202,7 +202,7 @@ def list_revisions_result():
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_store_list_revisions(mocker, list_revisions_result):
     fake_client = mocker.patch(
         "snapcraft.store.StoreClientCLI.list_revisions",

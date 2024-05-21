@@ -25,14 +25,14 @@ from snapcraft.extensions.extension import get_extensions_data_dir
 ############
 
 
-@pytest.fixture
+@pytest.fixture()
 def kde_neon_6_extension():
     return kde_neon_6.KDENeon6(
         yaml_data={"base": "core22", "parts": {}}, arch="amd64", target_arch="amd64"
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def kde_neon_6_extension_with_build_snap():
     return kde_neon_6.KDENeon6(
         yaml_data={
@@ -51,7 +51,7 @@ def kde_neon_6_extension_with_build_snap():
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def kde_neon_6_extension_with_default_build_snap_from_latest_edge():
     return kde_neon_6.KDENeon6(
         yaml_data={

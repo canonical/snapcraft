@@ -18,7 +18,6 @@
 
 import contextlib
 from pathlib import Path
-from typing import Dict
 
 from snapcraft import errors
 
@@ -36,7 +35,7 @@ class OsRelease:
     def __init__(
         self,
         *,
-        os_release_file: Path = Path(  # noqa: B008 Function call in arg defaults
+        os_release_file: Path = Path(  # Function call in arg defaults
             "/etc/os-release"
         ),
     ) -> None:
@@ -45,7 +44,7 @@ class OsRelease:
         :param str os_release_file: Path to os-release file to be parsed.
         """
         with contextlib.suppress(FileNotFoundError):
-            self._os_release: Dict[str, str] = {}
+            self._os_release: dict[str, str] = {}
             with os_release_file.open(encoding="utf-8") as release_file:
                 for line in release_file:
                     entry = line.rstrip().split("=")

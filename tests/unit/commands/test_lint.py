@@ -31,19 +31,19 @@ from snapcraft.errors import SnapcraftError
 from snapcraft.meta.snap_yaml import SnapMetadata
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_assert_file(tmp_path):
     """Returns a path to a fake assertion file."""
     return tmp_path / "test-snap.assert"
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_snap_file(tmp_path):
     """Return a path to a fake snap file."""
     return tmp_path / "test-snap.snap"
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_snap_metadata():
     data = {
         "name": "test",
@@ -57,7 +57,7 @@ def fake_snap_metadata():
     return SnapMetadata.unmarshal(data)
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_snapcraft_project():
     data = {
         "name": "test-name",
@@ -73,35 +73,35 @@ def fake_snapcraft_project():
     return models.Project.unmarshal(data)
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_argv(mocker, fake_snap_file):
     """Mock `snapcraft lint` cli for a snap named `test-snap.snap`."""
     return mocker.patch.object(sys, "argv", ["snapcraft", "lint", str(fake_snap_file)])
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_capture_logs_from_instance(mocker):
     return mocker.patch("snapcraft.commands.lint.providers.capture_logs_from_instance")
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_ensure_provider_is_available(mocker):
     return mocker.patch(
         "snapcraft.parts.lifecycle.providers.ensure_provider_is_available"
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_get_base_configuration(mocker):
     return mocker.patch("snapcraft.parts.lifecycle.providers.get_base_configuration")
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_is_managed_mode(mocker):
     return mocker.patch("snapcraft.commands.lint.is_managed_mode", return_value=False)
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_provider(mocker, mock_instance, fake_provider):
     _mock_provider = Mock(wraps=fake_provider)
     mocker.patch(
@@ -111,14 +111,14 @@ def mock_provider(mocker, mock_instance, fake_provider):
     return _mock_provider
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_run_linters(mocker):
     return mocker.patch(
         "snapcraft.commands.lint.linters.run_linters", return_value=Mock()
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_report(mocker):
     return mocker.patch("snapcraft.commands.lint.linters.report")
 

@@ -76,12 +76,10 @@ def request_autopkgtest_execution(cookie_path, distro, architecture, version):
             "-O-",
             "--load-cookies",
             cookie_path,
-            "https://autopkgtest.ubuntu.com/request.cgi?release={distro}&"
-            "arch={architecture}&package=snapcraft&"
+            f"https://autopkgtest.ubuntu.com/request.cgi?release={distro}&"
+            f"arch={architecture}&package=snapcraft&"
             "ppa=snappy-dev/snapcraft-daily&"
-            "trigger=snapcraft/{version}".format(
-                distro=distro, architecture=architecture, version=version
-            ),
+            f"trigger=snapcraft/{version}",
         ]
     )
     if "Test request submitted" not in output:

@@ -18,7 +18,7 @@
 
 import abc
 import textwrap
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from craft_cli import BaseCommand, emit
 from craft_parts.plugins import get_registered_plugins
@@ -64,7 +64,7 @@ class ListPluginsCommand(BaseCommand, abc.ABC):
             raise errors.LegacyFallback()
 
         base = parsed_args.base
-        message: Optional[str] = None
+        message: str | None = None
 
         if base is None:
             try:

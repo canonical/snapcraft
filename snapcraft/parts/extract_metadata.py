@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 import pathlib
-from typing import Sequence
+from collections.abc import Sequence
 
 from craft_cli import emit
 from craft_parts import Part, ProjectDirs

@@ -25,7 +25,7 @@ import pytest
 from snapcraft import linters, pack
 
 
-@pytest.fixture
+@pytest.fixture()
 def extra_project_params(extra_project_params):
     from craft_application.models import (  # pylint: disable=import-outside-toplevel
         SummaryStr,
@@ -66,7 +66,7 @@ def extra_project_params(extra_project_params):
 def project_assets_dir(new_dir, request):
     assets_dir = new_dir / request.param
     assets_dir.mkdir(parents=True)
-    yield assets_dir
+    return assets_dir
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")

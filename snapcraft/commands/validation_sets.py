@@ -22,7 +22,7 @@ import subprocess
 import tempfile
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any
 
 import yaml
 from craft_application.commands import AppCommand
@@ -127,8 +127,8 @@ class StoreEditValidationSetsCommand(AppCommand):
 
 
 def _submit_validation_set(
-    edited_validation_sets: Dict[str, Any],
-    key_name: Optional[str],
+    edited_validation_sets: dict[str, Any],
+    key_name: str | None,
     store_client: StoreClientCLI,
 ) -> None:
     build_assertion = store_client.post_validation_sets_build_assertion(
@@ -174,7 +174,7 @@ def _generate_template(
     return unverified_validation_sets
 
 
-def edit_validation_sets(validation_sets_path: Path) -> Dict[str, Any]:
+def edit_validation_sets(validation_sets_path: Path) -> dict[str, Any]:
     """Spawn an editor to modify the validation-sets."""
     editor_cmd = os.getenv("EDITOR", "vi")
 
@@ -192,7 +192,7 @@ def edit_validation_sets(validation_sets_path: Path) -> Dict[str, Any]:
                 raise errors.SnapcraftError("Operation aborted") from yaml_error
 
 
-def _sign_assertion(assertion: Dict[str, Any], *, key_name: Optional[str]) -> bytes:
+def _sign_assertion(assertion: dict[str, Any], *, key_name: str | None) -> bytes:
     cmdline = ["snap", "sign"]
     if key_name:
         cmdline += ["-k", key_name]

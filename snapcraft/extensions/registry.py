@@ -16,7 +16,7 @@
 
 """Extension registry."""
 
-from typing import TYPE_CHECKING, Dict, List, Type
+from typing import TYPE_CHECKING
 
 from snapcraft import errors
 
@@ -31,9 +31,9 @@ from .ros2_humble_ros_core import ROS2HumbleRosCoreExtension
 if TYPE_CHECKING:
     from .extension import Extension
 
-    ExtensionType = Type[Extension]
+    ExtensionType = type[Extension]
 
-_EXTENSIONS: Dict[str, "ExtensionType"] = {
+_EXTENSIONS: dict[str, "ExtensionType"] = {
     "gnome": GNOME,
     "ros2-humble": ROS2HumbleExtension,
     "ros2-humble-ros-core": ROS2HumbleRosCoreExtension,
@@ -44,7 +44,7 @@ _EXTENSIONS: Dict[str, "ExtensionType"] = {
 }
 
 
-def get_extension_names() -> List[str]:
+def get_extension_names() -> list[str]:
     """Obtain a extension class given the name.
 
     :param name: The extension name.

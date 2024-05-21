@@ -59,9 +59,9 @@ def disable_getxattrs(mocker):
     mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
 
 
-@pytest.fixture
+@pytest.fixture()
 def project_vars(mocker):
-    yield mocker.patch(
+    return mocker.patch(
         "snapcraft.parts.PartsLifecycle.project_vars",
         new_callable=PropertyMock,
         return_value={"version": "0.1", "grade": "stable"},
@@ -74,18 +74,18 @@ def mock_provider(mocker, mock_instance, fake_provider):
     mocker.patch(
         "snapcraft.parts.lifecycle.providers.get_provider", return_value=_mock_provider
     )
-    yield _mock_provider
+    return _mock_provider
 
 
 @pytest.fixture()
 def mock_get_instance_name(mocker):
-    yield mocker.patch(
+    return mocker.patch(
         "snapcraft.parts.lifecycle.providers.get_instance_name",
         return_value="test-instance-name",
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def stub_component_data():
     """Returns data for two components named `foo` and `bar-baz`."""
     data = {

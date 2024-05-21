@@ -22,9 +22,9 @@ from craft_parts import Part, PartInfo, ProjectInfo, errors
 from snapcraft.parts.plugins import PythonPlugin
 
 
-@pytest.fixture
+@pytest.fixture()
 def part_info(new_dir):
-    yield PartInfo(
+    return PartInfo(
         project_info=ProjectInfo(
             application_name="test",
             project_name="test-snap",
@@ -37,10 +37,10 @@ def part_info(new_dir):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def plugin(part_info):
     properties = PythonPlugin.properties_class.unmarshal({"source": "."})
-    yield PythonPlugin(properties=properties, part_info=part_info)
+    return PythonPlugin(properties=properties, part_info=part_info)
 
 
 def test_get_build_snaps(plugin):

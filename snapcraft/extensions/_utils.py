@@ -19,7 +19,7 @@
 import collections
 import contextlib
 import copy
-from typing import TYPE_CHECKING, Any, Dict, List, Set
+from typing import TYPE_CHECKING, Any
 
 from .registry import get_extension_class
 
@@ -28,8 +28,8 @@ if TYPE_CHECKING:
 
 
 def apply_extensions(
-    yaml_data: Dict[str, Any], *, arch: str, target_arch: str
-) -> Dict[str, Any]:
+    yaml_data: dict[str, Any], *, arch: str, target_arch: str
+) -> dict[str, Any]:
     """Apply all extensions.
 
     :param dict yaml_data: Loaded, unprocessed snapcraft.yaml
@@ -42,7 +42,7 @@ def apply_extensions(
 
     # Mapping of extension names to set of app names to which the extension needs to be
     # applied.
-    declared_extensions: Dict[str, Set[str]] = collections.defaultdict(set)
+    declared_extensions: dict[str, set[str]] = collections.defaultdict(set)
 
     for app_name, app_definition in yaml_data.get("apps", {}).items():
         extension_names = app_definition.get("extensions", [])
@@ -67,8 +67,8 @@ def apply_extensions(
 
 
 def _apply_extension(
-    yaml_data: Dict[str, Any],
-    app_names: Set[str],
+    yaml_data: dict[str, Any],
+    app_names: set[str],
     extension: "Extension",
 ) -> None:
     # Apply the root components of the extension (if any)
@@ -127,10 +127,10 @@ def _apply_extension_property(existing_property: Any, extension_property: Any) -
     return extension_property
 
 
-def _remove_list_duplicates(seq: List[str]) -> List[str]:
+def _remove_list_duplicates(seq: list[str]) -> list[str]:
     """De-dupe string list maintaining ordering."""
-    seen: Set[str] = set()
-    deduped: List[str] = []
+    seen: set[str] = set()
+    deduped: list[str] = []
 
     for item in seq:
         if item not in seen:

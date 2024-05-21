@@ -62,7 +62,7 @@ class TestLinterIssue:
         assert f"{issue}" == "test: foo.txt: Linter message text"
 
 
-@pytest.fixture
+@pytest.fixture()
 def lint_ignore_data():
     """Yaml-loaded test data for specification of ignoring linter issues.
 

@@ -24,7 +24,7 @@ from snapcraft.elf import ElfFile, _elf_file
 from tests import TESTS_DIR
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_elf(mocker, new_dir):
     def _fake_elf(name: str) -> ElfFile:
         Path(name).write_bytes(b"\x7fELF")
@@ -37,10 +37,10 @@ def fake_elf(mocker, new_dir):
         "snapcraft.elf._elf_file.ElfFile._extract_attributes",
         new=_fake_elffile_extract_attributes,
     )
-    yield _fake_elf
+    return _fake_elf
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_libs(new_dir):
     core_path = new_dir / "core"
     core_path.mkdir()
@@ -57,10 +57,10 @@ def fake_libs(new_dir):
         lib.parent.mkdir(exist_ok=True)
         lib.write_bytes(b"\x7fELF")
 
-    yield root_libraries
+    return root_libraries
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_tools(new_dir, monkeypatch):
     bin_skel_path = TESTS_DIR / "bin" / "elf"
     bin_path = new_dir / "bin"
@@ -169,19 +169,7 @@ def _fake_elffile_extract_attributes(  # noqa: PLR0915
         self.is_dynamic = True
         self.has_debug_info = False
 
-    elif name == "fake_elf-with-execstack":
-        glibc = _elf_file._NeededLibrary(name="libc.so.6")
-        glibc.add_version("GLIBC_2.23")
-
-        self.interp = "/lib64/ld-linux-x86-64.so.2"
-        self.soname = ""
-        self.versions = set()
-        self.needed = {glibc.name: glibc}
-        self.execstack_set = True
-        self.is_dynamic = True
-        self.has_debug_info = False
-
-    elif name == "fake_elf-with-bad-execstack":
+    elif name == "fake_elf-with-execstack" or name == "fake_elf-with-bad-execstack":
         glibc = _elf_file._NeededLibrary(name="libc.so.6")
         glibc.add_version("GLIBC_2.23")
 

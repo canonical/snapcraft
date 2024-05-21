@@ -40,7 +40,7 @@ def temp_xdg(tmpdir, mocker):
     mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": os.path.join(tmpdir, ".config")})
 
 
-@pytest.fixture
+@pytest.fixture()
 def new_dir(tmp_path):
     """Change to a new temporary directory."""
 
@@ -52,7 +52,7 @@ def new_dir(tmp_path):
     os.chdir(cwd)
 
 
-@pytest.fixture
+@pytest.fixture()
 def memory_keyring():
     """In memory keyring backend for testing."""
     current_keyring = keyring.get_keyring()

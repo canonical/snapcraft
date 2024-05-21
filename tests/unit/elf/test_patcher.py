@@ -56,7 +56,7 @@ def test_patcher_fails_raises_patcherror_exception(fake_elf):
     assert raised.value.code == 1
 
 
-@pytest.fixture
+@pytest.fixture()
 def elf_file(new_dir):
     base_path = new_dir / "core"
     base_path.mkdir()
@@ -72,12 +72,12 @@ def elf_file(new_dir):
         content_dirs=[],
         arch_triplet="x86_64-linux-gnu",
     )
-    yield elf_file
+    return elf_file
 
 
-@pytest.fixture
+@pytest.fixture()
 def patcher():
-    yield elf.Patcher(
+    return elf.Patcher(
         dynamic_linker="/my/dynamic/linker",
         root_path=Path("/snap/foo/current"),
         preferred_patchelf=PATCHELF_PATH,

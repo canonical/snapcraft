@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Set
 
 from snapcraft.plugins.v2 import nil
 
@@ -26,12 +25,12 @@ class PluginImpl(nil.NilPlugin):
         schema["properties"]["foo"] = {"type": "string"}
         return schema
 
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         build_packages = super().get_build_packages()
         build_packages.add("gcc")
         return build_packages
 
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         commands = super().get_build_commands()
         commands.append("mkdir -p ${SNAPCRAFT_PART_INSTALL}/bin")
         commands.append("gcc hello.c -o ${SNAPCRAFT_PART_INSTALL}/bin/hello")

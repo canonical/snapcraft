@@ -19,7 +19,7 @@
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic_yaml import YamlModel
 
@@ -40,24 +40,24 @@ class Manifest(YamlModel):
     version: str
     summary: str
     description: str
-    base: Optional[str]
+    base: str | None
     grade: str
     confinement: str
-    apps: Optional[Dict[str, Any]]
-    parts: Dict[str, Any]
+    apps: dict[str, Any] | None
+    parts: dict[str, Any]
 
     # TODO: add assumes, environment, hooks, slots
 
     # Architecture
-    architectures: List[str]
+    architectures: list[str]
 
     # Image info
-    image_info: Dict[str, Any]
+    image_info: dict[str, Any]
 
     # Build environment
-    build_packages: List[str]
-    build_snaps: List[str]
-    primed_stage_packages: List
+    build_packages: list[str]
+    build_snaps: list[str]
+    primed_stage_packages: list
 
     class Config:  # pylint: disable=too-few-public-methods
         """Pydantic model configuration."""
@@ -71,10 +71,10 @@ def write(  # noqa PLR0913
     prime_dir: Path,
     *,
     arch: str,
-    parts: Dict[str, Any],
+    parts: dict[str, Any],
     image_information: str,
     start_time: datetime,
-    primed_stage_packages: List[str],
+    primed_stage_packages: list[str],
 ):
     """Create a manifest.yaml file."""
     snap_dir = prime_dir / "snap"

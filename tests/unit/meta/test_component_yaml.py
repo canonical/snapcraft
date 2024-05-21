@@ -25,7 +25,7 @@ from snapcraft.meta import component_yaml
 from snapcraft.meta.component_yaml import ComponentMetadata
 
 
-@pytest.fixture
+@pytest.fixture()
 def stub_project_data():
     return {
         "name": "mytest",

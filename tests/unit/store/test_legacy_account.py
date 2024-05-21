@@ -28,14 +28,14 @@ from snapcraft.store._legacy_account import LegacyUbuntuOne, get_auth
 ############
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_auth(root_macaroon, discharged_macaroon):
     return base64.b64encode(
         json.dumps({"r": root_macaroon, "d": discharged_macaroon}).encode()
     ).decode()
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_get_auth(monkeypatch, fake_auth):
     monkeypatch.setattr(
         "snapcraft.store._legacy_account.get_auth",

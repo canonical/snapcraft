@@ -19,7 +19,8 @@
 import contextlib
 import json
 import subprocess
-from typing import Any, Dict, Iterator, List, Optional
+from collections.abc import Iterator
+from typing import Any
 
 from craft_cli import emit
 from craft_parts.packages import Repository
@@ -73,7 +74,7 @@ def _attach(ua_token: str) -> None:
         raise UATokenAttachError from error
 
 
-def _enable_services(services: List[str]) -> None:
+def _enable_services(services: list[str]) -> None:
     """Enable the specified UA services.
 
     If a service is already enabled, it will not be re-enabled because UA will raise
@@ -128,7 +129,7 @@ def _is_attached() -> bool:
     return _status()["attached"]
 
 
-def _is_service_enabled(service_name: str, service_data: List[Dict[str, str]]) -> bool:
+def _is_service_enabled(service_name: str, service_data: list[dict[str, str]]) -> bool:
     """Check if a service is enabled.
 
     :param service_name: name of service to check
@@ -146,14 +147,14 @@ def _is_service_enabled(service_name: str, service_data: List[Dict[str, str]]) -
     return False
 
 
-def _status() -> Dict[str, Any]:
+def _status() -> dict[str, Any]:
     stdout = subprocess.check_output(["ua", "status", "--all", "--format", "json"])
     return json.loads(stdout)
 
 
 @contextlib.contextmanager
 def ua_manager(
-    ua_token: Optional[str], *, services: Optional[List[str]]
+    ua_token: str | None, *, services: list[str] | None
 ) -> Iterator[None]:
     """Attach and detach UA token as required.
 
