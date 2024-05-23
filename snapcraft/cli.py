@@ -120,7 +120,6 @@ COMMAND_GROUPS = [
     craft_cli.CommandGroup(
         "Other",
         [
-            commands.core22.LintCommand,
             commands.core22.InitCommand,
         ],
     ),

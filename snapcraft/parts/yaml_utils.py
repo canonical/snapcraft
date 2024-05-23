@@ -208,8 +208,23 @@ def apply_yaml(
             parts_yaml_data=yaml_data["parts"], arch=build_on, target_arch=build_for
         )
 
-    # replace all architectures with the architectures in the current build plan
-    yaml_data["architectures"] = [Architecture(build_on=build_on, build_for=build_for)]
+    if any(
+        b.startswith("core20") or b.startswith("core22")
+        for b in (
+            yaml_data.get("base", ""),
+            yaml_data.get("build-base", ""),
+            yaml_data.get("name", ""),
+        )
+    ):
+        # replace all architectures with the architectures in the current build plan
+        yaml_data["architectures"] = [
+            Architecture(build_on=build_on, build_for=build_for)
+        ]
+    else:
+        # replace all platforms with the platform in the current build plan
+        yaml_data["platforms"] = {
+            build_for: {"build-on": build_on, "build-for": build_for}
+        }
 
     return yaml_data
 

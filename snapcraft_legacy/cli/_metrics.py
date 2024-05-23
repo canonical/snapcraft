@@ -30,11 +30,13 @@ METRIC_NAMES_TO_SERIES_LABEL_MAPPINGS = {
     metrics_module.MetricsNames.INSTALLED_BASE_BY_COUNTRY.value: "Country",
     metrics_module.MetricsNames.INSTALLED_BASE_BY_OPERATING_SYSTEM.value: "OS",
     metrics_module.MetricsNames.INSTALLED_BASE_BY_VERSION.value: "Version",
+    metrics_module.MetricsNames.INSTALLED_BASE_BY_ARCHITECTURE.value: "Architecture",
     metrics_module.MetricsNames.WEEKLY_DEVICE_CHANGE.value: "Devices",
     metrics_module.MetricsNames.WEEKLY_INSTALLED_BASE_BY_CHANNEL.value: "Channel",
     metrics_module.MetricsNames.WEEKLY_INSTALLED_BASE_BY_COUNTRY.value: "Country",
     metrics_module.MetricsNames.WEEKLY_INSTALLED_BASE_BY_OPERATING_SYSTEM.value: "OS",
     metrics_module.MetricsNames.WEEKLY_INSTALLED_BASE_BY_VERSION.value: "Version",
+    metrics_module.MetricsNames.WEEKLY_INSTALLED_BASE_BY_ARCHITECTURE.value: "Architecture",
 }
 
 

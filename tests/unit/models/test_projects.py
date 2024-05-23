@@ -608,7 +608,8 @@ class TestProjectValidation:
             "Plugs should be assigned to the app to which they apply, and not "
             "implicitly assigned via the global 'plugs:' stanza "
             "which is intended for configuration only."
-            "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"
+            "\n(Reference: https://snapcraft.io/docs/snapcraft-top-level-metadata"
+            "#heading--plugs-and-slots-for-an-entire-snap)"
         )
         emitter.assert_message(expected_message)
 
@@ -620,7 +621,8 @@ class TestProjectValidation:
             "Slots should be assigned to the app to which they apply, and not "
             "implicitly assigned via the global 'slots:' stanza "
             "which is intended for configuration only."
-            "\n(Reference: https://snapcraft.io/docs/snapcraft-interfaces)"
+            "\n(Reference: https://snapcraft.io/docs/snapcraft-top-level-metadata"
+            "#heading--plugs-and-slots-for-an-entire-snap)"
         )
         emitter.assert_message(expected_message)
 

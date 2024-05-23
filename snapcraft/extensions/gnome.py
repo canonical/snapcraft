@@ -201,7 +201,7 @@ class GNOME(Extension):
                     "XDG_DATA_DIRS": prepend_to_env(
                         "XDG_DATA_DIRS",
                         [
-                            f"$SNAPCRAFT_STAGE/usr/share:/snap/{sdk_snap}/current/usr/share",
+                            f"$CRAFT_STAGE/usr/share:/snap/{sdk_snap}/current/usr/share",
                             "/usr/share",
                         ],
                     ),
@@ -273,7 +273,7 @@ class GNOME(Extension):
                         [
                             f"/snap/{sdk_snap}/current/usr/lib/girepository-1.0",
                             (
-                                f"/snap/{sdk_snap}/usr/lib/"
+                                f"/snap/{sdk_snap}/current/usr/lib/"
                                 "$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0"
                             ),
                         ],
