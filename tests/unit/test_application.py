@@ -309,6 +309,15 @@ def test_application_plugins():
     assert "kernel" not in plugins
 
 
+def test_application_dotnet_not_registered():
+    """dotnet plugin is disable for core24."""
+    app = application.create_app()
+
+    plugins = app._get_app_plugins()
+
+    assert "dotnet" not in plugins
+
+
 def test_default_command_integrated(monkeypatch, mocker, new_dir):
     """Test that for core24 projects we accept "pack" as the default command."""
 
