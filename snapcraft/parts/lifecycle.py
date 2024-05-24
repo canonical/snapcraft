@@ -666,8 +666,18 @@ def set_step_environment(step_info: StepInfo) -> bool:
     return True
 
 
-def patch_elf(step_info: StepInfo) -> bool:
-    """Patch rpath and interpreter in ELF files for classic mode."""
+def patch_elf(step_info: StepInfo, use_system_libs: bool = True) -> bool:
+    """Patch rpath and interpreter in ELF files for classic mode.
+
+    :param step_info: The step information.
+    :param use_system_libs: If true, search for dependencies in the default
+        library search paths.
+
+    :returns: True
+
+    :raises DynamicLinkerNotFound: If the dynamic linker is not found.
+    :raises PatcherError: If the ELF file cannot be patched.
+    """
     if "enable-patchelf" not in step_info.build_attributes:
         emit.debug(f"patch_elf: not enabled for part {step_info.part_name!r}")
         return True
@@ -708,7 +718,7 @@ def patch_elf(step_info: StepInfo) -> bool:
 
         relative_path = elf_file.path.relative_to(step_info.prime_dir)
         emit.progress(f"Patch ELF file: {str(relative_path)!r}")
-        patcher.patch(elf_file=elf_file)
+        patcher.patch(elf_file=elf_file, use_system_libs=use_system_libs)
 
     return True
 
