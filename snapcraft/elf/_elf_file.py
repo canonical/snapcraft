@@ -232,7 +232,7 @@ class ElfFile:
         with path.open("rb") as bin_file:
             return bin_file.read(4) == b"\x7fELF"
 
-    def _extract_attributes(self) -> None:  # noqa: C901,PLR0912
+    def _extract_attributes(self) -> None:  # noqa: C901,PLR0912 (complex-structure, too-many-branches)
         with self.path.open("rb") as file:
             elf_file = elffile.ELFFile(file)
 

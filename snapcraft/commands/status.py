@@ -183,7 +183,7 @@ def _get_channel_line(
     ]
 
 
-def _get_channel_lines_for_channel(  # noqa: C901
+def _get_channel_lines_for_channel(  # noqa: C901 (complex-structure)
     snap_channel_map: ChannelMap,
     channel_name: str,
     architecture: str,
@@ -305,7 +305,7 @@ def _has_channels_for_architecture(
     return found_architecture
 
 
-def get_tabulated_channel_map(  # noqa: C901
+def get_tabulated_channel_map(  # noqa: C901 (complex-structure)
     snap_channel_map,
     *,
     architectures: Sequence[str],

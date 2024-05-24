@@ -114,7 +114,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
         )
 
 
-def _run_command(  # noqa PLR0913
+def _run_command(  # noqa PLR0913 (too-many-arguments)
     command_name: str,
     *,
     project: models.Project,
