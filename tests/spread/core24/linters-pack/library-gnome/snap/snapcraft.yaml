@@ -91,6 +91,6 @@ parts:
     build-snaps: [core24, gtk-common-themes, gnome-46-2404/latest/edge]
     override-prime: |
       set -eux
-      for snap in "core24" "gtk-common-themes" "gnome-42-2204"; do
+      for snap in "core24" "gtk-common-themes" "gnome-46-2404"; do
         cd "/snap/$snap/current" && find . -type f,l -name *.so.* -exec rm -f "$CRAFT_PRIME/{}" \;
       done

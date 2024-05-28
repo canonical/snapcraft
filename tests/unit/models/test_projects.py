@@ -24,7 +24,7 @@ from craft_application.models import BuildInfo, UniqueStrList
 from craft_providers.bases import BaseName
 
 import snapcraft.models
-from snapcraft import const, errors
+from snapcraft import const, errors, providers, utils
 from snapcraft.models import (
     MANDATORY_ADOPTABLE_FIELDS,
     Architecture,
@@ -585,6 +585,21 @@ class TestProjectValidation:
         with pytest.raises(errors.ProjectValidationError, match=error):
             Project.unmarshal(project_yaml_data(build_base="devel", grade="stable"))
 
+    @pytest.mark.parametrize(
+        ("base", "expected_base"),
+        [("bare", None), *providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE.items()],
+    )
+    def test_provider_base(self, base, expected_base, project_yaml_data):
+        providers_base = Project._providers_base(base)
+
+        assert providers_base == expected_base
+
+    def test_provider_base_error(self, project_yaml_data):
+        with pytest.raises(CraftValidationError) as raised:
+            Project._providers_base("unknown")
+
+        assert "Unknown base 'unknown'" in str(raised.value)
+
     def test_project_global_plugs_warning(self, project_yaml_data, emitter):
         data = project_yaml_data(plugs={"desktop": None, "desktop-legacy": None})
         Project.unmarshal(data)
@@ -711,6 +726,73 @@ class TestPlatforms:
             "'platforms' keyword is not supported for base 'core22'. "
             "Use 'architectures' keyword instead." in str(raised.value)
         )
+
+    @pytest.mark.parametrize(
+        ("architectures", "expected"),
+        [
+            ([], {}),
+            (
+                ["amd64"],
+                {
+                    "amd64": Platform(
+                        build_for=[const.SnapArch("amd64")],
+                        build_on=[const.SnapArch("amd64")],
+                    )
+                },
+            ),
+            (
+                [Architecture(build_on="amd64", build_for="riscv64")],
+                {
+                    "riscv64": Platform(
+                        build_for=[const.SnapArch("riscv64")],
+                        build_on=[const.SnapArch("amd64")],
+                    )
+                },
+            ),
+            (
+                [
+                    Architecture.unmarshal(
+                        {"build_on": ["amd64"], "build_for": ["riscv64"]}
+                    )
+                ],
+                {
+                    "riscv64": Platform(
+                        build_for=[const.SnapArch("riscv64")],
+                        build_on=[const.SnapArch("amd64")],
+                    )
+                },
+            ),
+            (
+                [
+                    Architecture.unmarshal(
+                        {"build_on": ["amd64", "arm64"], "build_for": ["riscv64"]}
+                    ),
+                    Architecture.unmarshal(
+                        {"build_on": ["amd64", "arm64"], "build_for": ["arm64"]}
+                    ),
+                ],
+                {
+                    "riscv64": Platform(
+                        build_for=[const.SnapArch("riscv64")],
+                        build_on=[const.SnapArch("amd64"), const.SnapArch("arm64")],
+                    ),
+                    "arm64": Platform(
+                        build_for=[const.SnapArch("arm64")],
+                        build_on=[const.SnapArch("amd64"), const.SnapArch("arm64")],
+                    ),
+                },
+            ),
+        ],
+    )
+    def test_from_architectures(self, architectures, expected):
+        assert Platform.from_architectures(architectures) == expected
+
+    def test_from_architectures_no_all(self):
+        """Test that 'from_architectures' does not support architecture 'all'."""
+        with pytest.raises(errors.ArchAllInvalid):
+            Platform.from_architectures(
+                [Architecture(build_on="amd64", build_for="all")]
+            )
 
 
 class TestAppValidation:
@@ -1906,6 +1988,86 @@ def test_build_planner_get_build_plan(platforms, expected_build_infos):
     """Test `get_build_plan()` function with different platforms."""
     planner = snapcraft.models.project.SnapcraftBuildPlanner.parse_obj(
         {"name": "test-snap", "base": "core24", "platforms": platforms}
+    )
+
+    actual_build_infos = planner.get_build_plan()
+
+    assert actual_build_infos == expected_build_infos
+
+
+@pytest.mark.parametrize(
+    ("architectures", "expected_build_infos"),
+    [
+        pytest.param(
+            ["amd64"],
+            [
+                BuildInfo(
+                    build_on="amd64",
+                    build_for="amd64",
+                    base=BaseName(name="ubuntu", version="22.04"),
+                    platform="amd64",
+                )
+            ],
+            id="single_platform_as_arch",
+        ),
+        pytest.param(
+            [
+                {
+                    "build-on": ["arm64", "armhf"],
+                    "build-for": ["arm64"],
+                },
+            ],
+            [
+                BuildInfo(
+                    build_on="arm64",
+                    build_for="arm64",
+                    base=BaseName(name="ubuntu", version="22.04"),
+                    platform="arm64",
+                ),
+                BuildInfo(
+                    build_on="armhf",
+                    build_for="arm64",
+                    base=BaseName(name="ubuntu", version="22.04"),
+                    platform="arm64",
+                ),
+            ],
+            id="multiple_build_on",
+        ),
+        pytest.param(
+            [
+                {
+                    "build-on": ["amd64"],
+                    "build-for": "amd64",
+                },
+            ],
+            [
+                BuildInfo(
+                    build_on="amd64",
+                    build_for="amd64",
+                    base=BaseName(name="ubuntu", version="22.04"),
+                    platform="amd64",
+                )
+            ],
+            id="fully_defined_arch",
+        ),
+        pytest.param(
+            None,
+            [
+                BuildInfo(
+                    build_on=utils.get_host_architecture(),
+                    build_for=utils.get_host_architecture(),
+                    base=BaseName(name="ubuntu", version="22.04"),
+                    platform=utils.get_host_architecture(),
+                )
+            ],
+            id="no_arch",
+        ),
+    ],
+)
+def test_build_planner_get_build_plan_core22(architectures, expected_build_infos):
+    """Test `get_build_plan()` function with different platforms."""
+    planner = snapcraft.models.project.SnapcraftBuildPlanner.parse_obj(
+        {"name": "test-snap", "base": "core22", "architectures": architectures}
     )
 
     actual_build_infos = planner.get_build_plan()
