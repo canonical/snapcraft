@@ -320,7 +320,7 @@ class TestPluginColconPlugin:
             f"--stage-cache-dir {new_dir} --base core24",
         ]
 
-    def test_get_build_commands_with_all_properties(
+    def test_get_build_commands_with_all_properties_core22(
         self, setup_method_fixture, new_dir, monkeypatch
     ):
         # pylint: disable=line-too-long
@@ -461,6 +461,10 @@ class TestPluginColconPlugin:
             f"--stage-cache-dir {new_dir} --base core22",
         ]
 
+    def test_get_build_commands_with_all_properties_core24(
+        self, setup_method_fixture, new_dir, monkeypatch
+    ):
+        # pylint: disable=line-too-long
         plugin = setup_method_fixture(
             "core24",
             new_dir,
@@ -472,6 +476,24 @@ class TestPluginColconPlugin:
                 "colcon-packages": ["package1", "package2..."],
                 "colcon-packages-ignore": ["ipackage1", "ipackage2..."],
                 "colcon-ros-build-snaps": ["foo"],
+            },
+        )
+
+        monkeypatch.setattr(sys, "path", ["", "/test"])
+        monkeypatch.setattr(sys, "executable", "/test/python3")
+        monkeypatch.setattr(_ros, "__file__", "/test/_ros.py")
+        monkeypatch.setattr(
+            os,
+            "environ",
+            {
+                "FOO": "baR",
+                "PATH": "/bin:/test",
+                "SNAP": "TESTSNAP",
+                "SNAP_ARCH": "TESTARCH",
+                "SNAP_NAME": "TESTSNAPNAME",
+                "SNAP_VERSION": "TESTV1",
+                "http_proxy": "http://foo",
+                "https_proxy": "https://bar",
             },
         )
 
