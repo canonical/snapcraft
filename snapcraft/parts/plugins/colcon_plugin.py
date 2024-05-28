@@ -105,7 +105,11 @@ class ColconPlugin(_ros.RosPlugin):
 
     @overrides
     def get_build_packages(self) -> Set[str]:
-        return super().get_build_packages() | {"python3-colcon-common-extensions"}
+        base = self._part_info.base
+        build_packages = {"python3-colcon-common-extensions"}
+        if base == "core22":
+            build_packages |= {"python3-rosinstall", "python3-wstool"}
+        return super().get_build_packages() | build_packages
 
     @overrides
     def get_build_environment(self) -> Dict[str, str]:

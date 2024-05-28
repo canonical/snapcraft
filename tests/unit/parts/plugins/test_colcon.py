@@ -116,6 +116,8 @@ class TestPluginColconPlugin:
 
         assert plugin.get_build_packages() == {
             "python3-colcon-common-extensions",
+            "python3-rosinstall",
+            "python3-wstool",
             "python3-rosdep",
             "rospack-tools",
         }
