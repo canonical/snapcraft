@@ -179,12 +179,27 @@ class Snapcraft(Application):
         self._parse_info = extract_parse_info(new_yaml_data)
         return apply_root_packages(new_yaml_data)
 
+    @staticmethod
+    def _get_argv_command() -> str | None:
+        """Return the first non-option argument."""
+        for arg in sys.argv[1:]:
+            if arg.startswith("-"):
+                continue
+            return arg
+
+        return None
+
     @override
     def _get_dispatcher(self) -> craft_cli.Dispatcher:
         # Handle "multiplexing" of Snapcraft "codebases" depending on the
         # project's base (if any). Here, we handle the case where there *is*
         # a project and it's core24, which means it should definitely fall into
         # the craft-application-based flow.
+        argv_command = self._get_argv_command()
+        if argv_command == "lint":
+            # We don't need to check for core24 if we're just linting
+            return super()._get_dispatcher()
+
         if self._snapcraft_yaml_path:
             with self._snapcraft_yaml_path.open() as file:
                 yaml_data = util.safe_yaml_load(file)
@@ -194,9 +209,11 @@ class Snapcraft(Application):
             if "core24" in (base, build_base) or build_base == "devel":
                 # We know for sure that we're handling a core24 project
                 self._known_core24 = True
-            elif any(arg in ("version", "--version", "-V") for arg in sys.argv):
+            elif (
+                argv_command == "version" or "--version" in sys.argv or "-V" in sys.argv
+            ):
                 pass
-            elif "remote-build" in sys.argv and any(
+            elif argv_command == "remote-build" and any(
                 b in ("core20", "core22") for b in (base, build_base)
             ):
                 build_strategy = os.environ.get("SNAPCRAFT_REMOTE_BUILD_STRATEGY", None)
@@ -341,7 +358,7 @@ def create_app() -> Snapcraft:
         "Other",
         list(craft_app_commands.get_other_command_group().commands)
         + [
-            unimplemented.Lint,
+            commands.LintCommand,
             unimplemented.Init,
         ],
     )

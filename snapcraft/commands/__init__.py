@@ -38,6 +38,7 @@ from .legacy import (
     StoreLegacyValidateCommand,
 )
 from .lifecycle import PackCommand, SnapCommand
+from .lint import LintCommand
 from .manage import StoreCloseCommand, StoreReleaseCommand
 from .names import (
     StoreLegacyListCommand,
@@ -58,6 +59,7 @@ from .validation_sets import StoreEditValidationSetsCommand
 
 __all__ = [
     "ExpandExtensions",
+    "LintCommand",
     "ListExtensions",
     "RemoteBuildCommand",
     "PackCommand",

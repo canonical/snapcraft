@@ -1,6 +1,9 @@
 summary: Test the remote builder
 manual: true
 kill-timeout: 180m
+systems:
+  - fedora-39-64
+  - ubuntu-22.04*
 
 environment:
   LAUNCHPAD_TOKEN: "$(HOST: echo ${LAUNCHPAD_TOKEN})"
@@ -26,12 +29,18 @@ prepare: |
 
   # Commit the project
   git config --global --add safe.directory "$PWD"
+  git init
   git add snap/snapcraft.yaml
   git commit -m "Initial Commit"
 
   # Setup launchpad token
-  mkdir -p ~/.local/share/snapcraft/provider/launchpad/
-  echo -e "$LAUNCHPAD_TOKEN" >> ~/.local/share/snapcraft/provider/launchpad/credentials
+  if [[ $STRATEGY == "disable-fallback" ]]; then
+    mkdir -p ~/.local/share/snapcraft/
+    echo -e "$LAUNCHPAD_TOKEN" >> ~/.local/share/snapcraft/launchpad-credentials
+  else
+    mkdir -p ~/.local/share/snapcraft/provider/launchpad/
+    echo -e "$LAUNCHPAD_TOKEN" >> ~/.local/share/snapcraft/provider/launchpad/credentials
+  fi
 
 restore: |
   rm -f ./*.snap ./*.txt

@@ -33,7 +33,6 @@ from .lifecycle import (
     StageCommand,
     TryCommand,
 )
-from .lint import LintCommand
 
 __all__ = [
     "BuildCommand",
@@ -41,7 +40,6 @@ __all__ = [
     "ExpandExtensionsCommand",
     "ExtensionsCommand",
     "InitCommand",
-    "LintCommand",
     "ListExtensionsCommand",
     "ListPluginsCommand",
     "PackCommand",
