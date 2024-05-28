@@ -111,7 +111,7 @@ class TestPluginColconPlugin:
         assert properties.colcon_packages_ignore == ["ipackage1", "ipackage2..."]  # type: ignore
         assert properties.colcon_ros_build_snaps == ["ros-core"]  # type: ignore
 
-    def test_get_build_packages(self, setup_method_fixture, new_dir):
+    def test_get_build_packages_core22(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture("core22", new_dir)
 
         assert plugin.get_build_packages() == {
@@ -120,6 +120,7 @@ class TestPluginColconPlugin:
             "rospack-tools",
         }
 
+    def test_get_build_packages_core24(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture("core24", new_dir)
 
         assert plugin.get_build_packages() == {
@@ -161,7 +162,9 @@ class TestPluginColconPlugin:
     def test_out_of_source_build_property(self):
         assert colcon.ColconPlugin.get_out_of_source_build
 
-    def test_get_build_commands(self, setup_method_fixture, new_dir, monkeypatch):
+    def test_get_build_commands_core22(
+        self, setup_method_fixture, new_dir, monkeypatch
+    ):
         # pylint: disable=line-too-long
         plugin = setup_method_fixture("core22", new_dir)
 
@@ -238,7 +241,16 @@ class TestPluginColconPlugin:
             f"--stage-cache-dir {new_dir} --base core22",
         ]
 
+    def test_get_build_commands_core24(
+        self, setup_method_fixture, new_dir, monkeypatch
+    ):
+        # pylint: disable=line-too-long
         plugin = setup_method_fixture("core24", new_dir)
+
+        monkeypatch.setattr(sys, "path", ["", "/test"])
+        monkeypatch.setattr(sys, "executable", "/test/python3")
+        monkeypatch.setattr(_ros, "__file__", "/test/_ros.py")
+        monkeypatch.setattr(os, "environ", {})
 
         assert plugin.get_build_commands() == [
             "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
