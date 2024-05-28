@@ -2,6 +2,8 @@ summary: >-
   Build, clean, build, modify and rebuild, and run hello
   with different plugin configurations
 
+priority: 100
+
 systems:
   - ubuntu-24.04
   - ubuntu-24.04-64
