@@ -20,13 +20,12 @@ restore: |
 execute: |
   cd "${SNAP}"
 
-  # Remove this once library-gnome works (it will probably fail
-  # on the diff check.
-  if ! snapcraft pack 2> output.txt && [ "${SNAP}" = library-gnome ]; then
-    exit 0
+  snapcraft pack 2> output.txt
+
+  test -f linter-test_*.snap
+
+  # linter for gnome snap is not working as-expected (#4751)
+  if [ "${SNAP}" != "library-gnome" ]; then
+    sed -n '/^Running linters/,/^Creating snap/p' < output.txt > linter_output.txt
+    diff -u linter_output.txt expected_linter_output.txt
   fi
-
-  test -f linter-test_0.1_*.snap
-
-  sed -n '/^Running linters/,/^Creating snap/p' < output.txt > linter_output.txt
-  diff -u linter_output.txt expected_linter_output.txt

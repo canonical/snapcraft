@@ -247,7 +247,7 @@ class TestGetPartSnippet:
                 {"PATH": "/snap/gnome-42-2204-sdk/current/usr/bin${PATH:+:$PATH}"},
                 {
                     "XDG_DATA_DIRS": (
-                        "$SNAPCRAFT_STAGE/usr/share:/snap/gnome-42-2204-sdk"
+                        "$CRAFT_STAGE/usr/share:/snap/gnome-42-2204-sdk"
                         "/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
                     )
                 },
@@ -307,7 +307,7 @@ class TestGetPartSnippet:
                         [
                             "/snap/gnome-42-2204-sdk/current/usr/lib/girepository-1.0",
                             (
-                                "/snap/gnome-42-2204-sdk/usr/lib/"
+                                "/snap/gnome-42-2204-sdk/current/usr/lib/"
                                 "$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0"
                             ),
                         ]
@@ -324,7 +324,7 @@ def test_get_part_snippet_with_external_sdk(gnome_extension_with_build_snap):
             {"PATH": "/snap/gnome-44-2204-sdk/current/usr/bin${PATH:+:$PATH}"},
             {
                 "XDG_DATA_DIRS": (
-                    "$SNAPCRAFT_STAGE/usr/share:/snap/gnome-44-2204-sdk"
+                    "$CRAFT_STAGE/usr/share:/snap/gnome-44-2204-sdk"
                     "/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
                 )
             },
@@ -386,7 +386,7 @@ def test_get_part_snippet_with_external_sdk(gnome_extension_with_build_snap):
                     [
                         "/snap/gnome-44-2204-sdk/current/usr/lib/girepository-1.0",
                         (
-                            "/snap/gnome-44-2204-sdk/usr/lib/"
+                            "/snap/gnome-44-2204-sdk/current/usr/lib/"
                             "$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0"
                         ),
                     ]
