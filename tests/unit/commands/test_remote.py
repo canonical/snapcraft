@@ -25,6 +25,7 @@ import time
 from pathlib import Path
 from unittest.mock import ANY, Mock
 
+from craft_application.launchpad.models import BuildState
 import craft_cli
 import pytest
 from craft_application import launchpad
@@ -761,6 +762,48 @@ def test_monitor_build_error(mocker, emitter, snapcraft_yaml, base, fake_service
 
     mock_monitor_builds = mocker.patch(
         "craft_application.services.remotebuild.RemoteBuildService.monitor_builds",
+        side_effect=Exception(),
+    )
+
+    mock_fetch_logs = mocker.patch(
+        "snapcraft.services.remotebuild.RemoteBuild.fetch_logs"
+    )
+
+    mock_cleanup = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.cleanup"
+    )
+
+    app = application.create_app()
+    app.services.remote_build._name = get_build_id(
+        app.services.app.name, app.project.name, app.project_dir
+    )
+    app.services.remote_build._is_setup = True
+    app.services.remote_build.request.download_files_with_progress = Mock()
+
+    assert app.run() == 1
+
+    mock_start_builds.assert_called_once()
+    mock_monitor_builds.assert_called_once()
+    mock_fetch_logs.assert_not_called()
+    mock_cleanup.assert_called_once()
+
+    emitter.assert_progress("Cleaning up")
+
+
+@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.usefixtures("mock_confirm")
+def test_monitor_build_interrupt(mocker, emitter, snapcraft_yaml, base, fake_services):
+    """Test the monitor_build cleanup when a keyboard interrupt occurs."""
+    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"])
+    snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
+    snapcraft_yaml(**snapcraft_yaml_dict)
+
+    mock_start_builds = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.start_builds"
+    )
+
+    mock_monitor_builds = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.monitor_builds",
         side_effect=KeyboardInterrupt(),
     )
 
@@ -832,6 +875,154 @@ def test_monitor_build_timeout(mocker, emitter, snapcraft_yaml, base, fake_servi
         f"'{app.services.app.name} remote-build --recover "
         f"--build-id={app.services.remote_build._name}'"
     )
+
+
+@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.usefixtures("mock_confirm")
+def test_monitor_build_failure(mocker, emitter, snapcraft_yaml, base, fake_services):
+    """Test the monitor_build cleanup when a build fails."""
+    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"])
+    snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
+    snapcraft_yaml(**snapcraft_yaml_dict)
+
+    mock_start_builds = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.start_builds"
+    )
+
+    mock_monitor_builds = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.monitor_builds",
+        return_value=[
+            {"amd64": BuildState.PENDING},
+            {"amd64": BuildState.FAILED},
+        ],
+    )
+
+    mock_fetch_logs = mocker.patch(
+        "snapcraft.services.remotebuild.RemoteBuild.fetch_logs"
+    )
+
+    mock_cleanup = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.cleanup"
+    )
+
+    app = application.create_app()
+    app.services.remote_build._name = get_build_id(
+        app.services.app.name, app.project.name, app.project_dir
+    )
+    app.services.remote_build._is_setup = True
+    app.services.remote_build.request.download_files_with_progress = Mock()
+
+    assert app.run() == 1
+
+    mock_start_builds.assert_called_once()
+    mock_monitor_builds.assert_called_once()
+    mock_fetch_logs.assert_called_once()
+    mock_cleanup.assert_called_once()
+
+    emitter.assert_progress("Cleaning up")
+
+
+@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.usefixtures("mock_confirm")
+def test_monitor_build_success_no_artifacts(
+    mocker, emitter, snapcraft_yaml, base, fake_services
+):
+    """Test the cleanup when a build succeeds but doesn't generate artifacts."""
+    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"])
+    snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
+    snapcraft_yaml(**snapcraft_yaml_dict)
+
+    mock_start_builds = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.start_builds"
+    )
+
+    mock_monitor_builds = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.monitor_builds",
+        return_value=[
+            {"amd64": BuildState.PENDING},
+            {"amd64": BuildState.SUCCESS},
+        ],
+    )
+
+    mock_fetch_logs = mocker.patch(
+        "snapcraft.services.remotebuild.RemoteBuild.fetch_logs",
+    )
+    mock_fetch_artifacts = mocker.patch(
+        "snapcraft.services.remotebuild.RemoteBuild.fetch_artifacts",
+        return_value = []
+    )
+
+    mock_cleanup = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.cleanup"
+    )
+
+    app = application.create_app()
+    app.services.remote_build._name = get_build_id(
+        app.services.app.name, app.project.name, app.project_dir
+    )
+    app.services.remote_build._is_setup = True
+    app.services.remote_build.request.download_files_with_progress = Mock()
+
+    assert app.run() == 1
+
+    mock_start_builds.assert_called_once()
+    mock_monitor_builds.assert_called_once()
+    mock_fetch_logs.assert_called_once()
+    mock_fetch_artifacts.assert_called_once()
+    mock_cleanup.assert_called_once()
+
+    emitter.assert_progress("No build artifacts downloaded from Launchpad.", permanent=True)
+    emitter.assert_progress("Cleaning up")
+
+
+
+@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.usefixtures("mock_confirm")
+def test_monitor_build_success_no_logs(
+    mocker, emitter, snapcraft_yaml, base, fake_services
+):
+    """Test the cleanup when a build succeeds but doesn't generate logs."""
+    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"])
+    snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
+    snapcraft_yaml(**snapcraft_yaml_dict)
+
+    mock_start_builds = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.start_builds"
+    )
+
+    mock_monitor_builds = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.monitor_builds",
+        return_value=[
+            {"amd64": BuildState.PENDING},
+            {"amd64": BuildState.SUCCESS},
+        ],
+    )
+
+    mock_fetch_logs = mocker.patch(
+        "snapcraft.services.remotebuild.RemoteBuild.fetch_logs",
+        return_value=[]
+    )
+
+    mock_cleanup = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.cleanup"
+    )
+
+    app = application.create_app()
+    app.services.remote_build._name = get_build_id(
+        app.services.app.name, app.project.name, app.project_dir
+    )
+    app.services.remote_build._is_setup = True
+    app.services.remote_build.request.download_files_with_progress = Mock()
+
+    assert app.run() == 1
+
+    mock_start_builds.assert_called_once()
+    mock_monitor_builds.assert_called_once()
+    mock_fetch_logs.assert_called_once()
+    mock_cleanup.assert_called_once()
+
+    emitter.assert_progress("No log files downloaded from Launchpad.", permanent=True)
+    emitter.assert_progress("Cleaning up")
 
 
 @pytest.mark.parametrize("base", CURRENT_BASES)
