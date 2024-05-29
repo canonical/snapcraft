@@ -25,11 +25,11 @@ import time
 from pathlib import Path
 from unittest.mock import ANY, Mock
 
-from craft_application.launchpad.models import BuildState
 import craft_cli
 import pytest
 from craft_application import launchpad
 from craft_application.errors import RemoteBuildError
+from craft_application.launchpad.models import BuildState
 from craft_application.remote.git import GitRepo
 from craft_application.remote.utils import get_build_id
 
@@ -948,8 +948,7 @@ def test_monitor_build_success_no_artifacts(
         "snapcraft.services.remotebuild.RemoteBuild.fetch_logs",
     )
     mock_fetch_artifacts = mocker.patch(
-        "snapcraft.services.remotebuild.RemoteBuild.fetch_artifacts",
-        return_value = []
+        "snapcraft.services.remotebuild.RemoteBuild.fetch_artifacts", return_value=[]
     )
 
     mock_cleanup = mocker.patch(
@@ -971,9 +970,10 @@ def test_monitor_build_success_no_artifacts(
     mock_fetch_artifacts.assert_called_once()
     mock_cleanup.assert_called_once()
 
-    emitter.assert_progress("No build artifacts downloaded from Launchpad.", permanent=True)
+    emitter.assert_progress(
+        "No build artifacts downloaded from Launchpad.", permanent=True
+    )
     emitter.assert_progress("Cleaning up")
-
 
 
 @pytest.mark.parametrize("base", CURRENT_BASES)
@@ -999,8 +999,7 @@ def test_monitor_build_success_no_logs(
     )
 
     mock_fetch_logs = mocker.patch(
-        "snapcraft.services.remotebuild.RemoteBuild.fetch_logs",
-        return_value=[]
+        "snapcraft.services.remotebuild.RemoteBuild.fetch_logs", return_value=[]
     )
 
     mock_cleanup = mocker.patch(

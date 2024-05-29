@@ -20,7 +20,7 @@ import argparse
 import os
 import textwrap
 import time
-from collections.abc import Collection
+from collections.abc import Collection, Mapping
 from pathlib import Path
 from typing import Any, cast
 
@@ -163,7 +163,9 @@ class RemoteBuildCommand(ExtensibleCommand):
                     )
 
     # pylint: disable=too-many-statements
-    def _run(self, parsed_args: argparse.Namespace, **kwargs: Any) -> int | None:
+    def _run(  # noqa: PLR0915 (Too many statements)
+        self, parsed_args: argparse.Namespace, **kwargs: Any
+    ) -> int | None:
         """Run the remote-build command.
 
         :param parsed_args: Snapcraft's argument namespace.
@@ -253,19 +255,19 @@ class RemoteBuildCommand(ExtensibleCommand):
                 emit.progress("Cancelling builds.")
                 builder.cancel_builds()
             returncode = 0
-        except Exception as exc:
+        except Exception:  # pylint: disable=broad-exception-caught
             returncode = 1  # General error on any other exception
         if returncode != 75:  # TimeoutError
             emit.progress("Cleaning up")
             builder.cleanup()
         return returncode
 
-    def _monitor_and_complete(
+    def _monitor_and_complete(  # pylint: disable=R0912 # noqa: PLR0912 (too many branches)
         self, build_id: str | None, builds: Collection[Build]
     ) -> int:
         builder = self._services.remote_build
         emit.progress("Monitoring build")
-        states = {}
+        states: Mapping[str, BuildState] = {}
         try:
             for states in builder.monitor_builds():
                 building: set[str] = set()
@@ -320,7 +322,9 @@ class RemoteBuildCommand(ExtensibleCommand):
         artifacts = builder.fetch_artifacts(Path.cwd())
         if not artifacts:
             return_code = 1
-            emit.progress("No build artifacts downloaded from Launchpad.", permanent=True)
+            emit.progress(
+                "No build artifacts downloaded from Launchpad.", permanent=True
+            )
 
         log_names = sorted(path.name for path in logs.values() if path)
         artifact_names = sorted(path.name for path in artifacts)
