@@ -1,0 +1,19 @@
+summary: Set the grade of a snap
+
+environment:
+  GRADE/stable: stable
+  GRADE/devel: devel
+
+prepare:
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+
+  set_grade "snapcraft.yaml" "$GRADE"
+
+restore: |
+  snapcraft clean --destructive-mode
+
+execute: |
+  snapcraft prime --destructive-mode
+
+  cat prime/meta/snap.yaml | MATCH "grade: ${GRADE}"
