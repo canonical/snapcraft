@@ -204,21 +204,21 @@ class PartsLifecycle:
 
             self._install_package_repositories()
 
-            with self._lcm.action_executor() as aex:
-                for action in actions:
-                    # Workaround until canonical/craft-parts#540 is fixed
-                    if action.step == target_step and rerun_step:
-                        action = craft_parts.Action(  # noqa PLW2901
-                            part_name=action.part_name,
-                            step=action.step,
-                            action_type=ActionType.RERUN,
-                            reason="forced rerun",
-                            project_vars=action.project_vars,
-                            properties=action.properties,
-                        )
-                    message = _get_parts_action_message(action)
-                    emit.progress(message)
-                    with emit.open_stream() as stream:
+            with emit.open_stream() as stream:
+                with self._lcm.action_executor(stdout=stream, stderr=stream) as aex:
+                    for action in actions:
+                        # Workaround until canonical/craft-parts#540 is fixed
+                        if action.step == target_step and rerun_step:
+                            action = craft_parts.Action(  # noqa PLW2901
+                                part_name=action.part_name,
+                                step=action.step,
+                                action_type=ActionType.RERUN,
+                                reason="forced rerun",
+                                project_vars=action.project_vars,
+                                properties=action.properties,
+                            )
+                        message = _get_parts_action_message(action)
+                        emit.progress(message)
                         aex.execute(action, stdout=stream, stderr=stream)
 
             if shell_after:
