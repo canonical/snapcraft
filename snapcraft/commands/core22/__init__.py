@@ -16,7 +16,6 @@
 
 """Snapcraft commands for core22 base."""
 
-from .discovery import ListPluginsCommand, PluginsCommand
 from .extensions import (
     ExpandExtensionsCommand,
     ExtensionsCommand,
@@ -41,9 +40,7 @@ __all__ = [
     "ExtensionsCommand",
     "InitCommand",
     "ListExtensionsCommand",
-    "ListPluginsCommand",
     "PackCommand",
-    "PluginsCommand",
     "PrimeCommand",
     "PullCommand",
     "SnapCommand",

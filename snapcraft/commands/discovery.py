@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,15 +16,15 @@
 
 """Snapcraft discovery commands."""
 
-import abc
 import textwrap
 from typing import TYPE_CHECKING, Optional
 
-from craft_cli import BaseCommand, emit
+from craft_application.commands import AppCommand
+from craft_cli import emit
 from craft_parts.plugins import get_registered_plugins
 from overrides import overrides
 
-from snapcraft import errors, models
+from snapcraft import const, errors, models
 from snapcraft.parts.yaml_utils import (
     apply_yaml,
     extract_parse_info,
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     import argparse
 
 
-class ListPluginsCommand(BaseCommand, abc.ABC):
+class ListPluginsCommand(AppCommand):
     """List available plugins."""
 
     name = "list-plugins"
@@ -85,12 +85,13 @@ class ListPluginsCommand(BaseCommand, abc.ABC):
                     f"Displaying plugins available to the current base {base!r} project"
                 )
             except errors.ProjectMissing:
+                emit.trace("Defaulting to core22 because no project was found.")
                 base = "core22"
 
         if message is None:
             message = f"Displaying plugins available for {base!r}"
 
-        if base != "core22":
+        if base not in const.CURRENT_BASES:
             raise errors.SnapcraftError(f"{base} not supported")
 
         registered_plugins = get_registered_plugins()
@@ -98,7 +99,7 @@ class ListPluginsCommand(BaseCommand, abc.ABC):
         emit.message(message + "\n" + "\n".join(n for n in registered_plugins))
 
 
-class PluginsCommand(ListPluginsCommand, abc.ABC):
+class PluginsCommand(ListPluginsCommand):
     """A command alias to list the available plugins."""
 
     name = "plugins"

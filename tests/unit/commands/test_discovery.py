@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,7 +20,7 @@ import textwrap
 import craft_parts.plugins
 import pytest
 
-from snapcraft import commands, errors
+from snapcraft import commands, const, errors
 
 ############
 # Fixtures #
@@ -30,7 +30,7 @@ from snapcraft import commands, errors
 @pytest.fixture(autouse=True)
 def fake_registered_plugins(mocker):
     fake_plugins = mocker.patch(
-        "snapcraft.commands.core22.discovery.get_registered_plugins",
+        "snapcraft.commands.discovery.get_registered_plugins",
         autospec=True,
         return_value={
             "bar": craft_parts.plugins.Plugin,
@@ -45,11 +45,13 @@ def fake_registered_plugins(mocker):
 ###################
 
 
+@pytest.mark.parametrize(
+    "command", [commands.ListPluginsCommand, commands.PluginsCommand]
+)
 @pytest.mark.usefixtures("new_dir")
-def test_registered_plugins_default(emitter):
-    cmd = commands.core22.ListPluginsCommand(None)
-
-    cmd.run(argparse.Namespace(base=None))
+def test_registered_plugins_default(command, emitter):
+    """Default to core22."""
+    command(None).run(argparse.Namespace(base=None))
 
     emitter.assert_message(
         textwrap.dedent(
@@ -61,47 +63,59 @@ def test_registered_plugins_default(emitter):
     )
 
 
+@pytest.mark.parametrize(
+    "command", [commands.ListPluginsCommand, commands.PluginsCommand]
+)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("new_dir")
-def test_registered_plugins_project(emitter, snapcraft_yaml):
-    snapcraft_yaml(base="core22")
+def test_registered_plugins_project(command, base, emitter, snapcraft_yaml):
+    """Use the project's base."""
+    if base == "devel":
+        snapcraft_yaml(base=base, grade="devel")
+    else:
+        snapcraft_yaml(base=base)
 
-    cmd = commands.core22.ListPluginsCommand(None)
-
-    cmd.run(argparse.Namespace(base=None))
+    command(None).run(argparse.Namespace(base=None))
 
     emitter.assert_message(
         textwrap.dedent(
-            """\
-            Displaying plugins available to the current base 'core22' project
+            f"""\
+            Displaying plugins available to the current base {base!r} project
             bar
             foo"""
         )
     )
 
 
+@pytest.mark.parametrize(
+    "command", [commands.ListPluginsCommand, commands.PluginsCommand]
+)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("new_dir")
-def test_registered_plugins_base_option(emitter, snapcraft_yaml):
+def test_registered_plugins_base_option(command, base, emitter, snapcraft_yaml):
+    """The base cli option should override the project's base."""
     snapcraft_yaml(base="core20")
 
-    cmd = commands.core22.ListPluginsCommand(None)
-
-    cmd.run(argparse.Namespace(base="core22"))
+    command(None).run(argparse.Namespace(base=base))
 
     emitter.assert_message(
         textwrap.dedent(
-            """\
-            Displaying plugins available for 'core22'
+            f"""\
+            Displaying plugins available for {base!r}
             bar
             foo"""
         )
     )
 
 
+@pytest.mark.parametrize(
+    "command", [commands.ListPluginsCommand, commands.PluginsCommand]
+)
+@pytest.mark.parametrize("base", const.LEGACY_BASES)
 @pytest.mark.usefixtures("new_dir")
-def test_registered_plugins_legacy_project(emitter, snapcraft_yaml):
-    snapcraft_yaml(base="core20")
-
-    cmd = commands.core22.ListPluginsCommand(None)
+def test_registered_plugins_legacy_project(command, base, snapcraft_yaml):
+    """Legacy bases should fallback to the legacy handler."""
+    snapcraft_yaml(base=base)
 
     with pytest.raises(errors.LegacyFallback):
-        cmd.run(argparse.Namespace(base=None))
+        command(None).run(argparse.Namespace(base=None))

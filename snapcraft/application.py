@@ -283,9 +283,14 @@ def create_app() -> Snapcraft:
             commands.PackCommand,
             commands.SnapCommand,  # Hidden (legacy compatibility)
             commands.RemoteBuildCommand,
-            unimplemented.Plugins,
-            unimplemented.ListPlugins,
             unimplemented.Try,
+        ],
+    )
+    app.add_command_group(
+        "Plugins",
+        [
+            commands.ListPluginsCommand,
+            commands.PluginsCommand,
         ],
     )
     app.add_command_group(

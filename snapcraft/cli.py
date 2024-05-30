@@ -45,9 +45,14 @@ COMMAND_GROUPS = [
             commands.core22.PrimeCommand,
             commands.core22.PackCommand,
             commands.core22.SnapCommand,  # hidden (legacy compatibility)
-            commands.core22.PluginsCommand,
-            commands.core22.ListPluginsCommand,
             commands.core22.TryCommand,
+        ],
+    ),
+    craft_cli.CommandGroup(
+        "Plugins",
+        [
+            commands.PluginsCommand,
+            commands.ListPluginsCommand,
         ],
     ),
     craft_cli.CommandGroup(

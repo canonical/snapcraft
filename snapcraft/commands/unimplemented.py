@@ -79,18 +79,6 @@ class UnimplementedMixin:
     always_load_project: bool = False
 
 
-class ListPlugins(
-    UnimplementedMixin, commands.core22.ListPluginsCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
-class Plugins(
-    UnimplementedMixin, commands.core22.PluginsCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
 class ExpandExtensions(
     UnimplementedMixin, commands.core22.ExpandExtensionsCommand
 ):  # noqa: D101 (missing docstring)
