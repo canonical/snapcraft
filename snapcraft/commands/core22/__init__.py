@@ -16,11 +16,6 @@
 
 """Snapcraft commands for core22 base."""
 
-from .extensions import (
-    ExpandExtensionsCommand,
-    ExtensionsCommand,
-    ListExtensionsCommand,
-)
 from .init import InitCommand
 from .lifecycle import (
     BuildCommand,
@@ -36,10 +31,7 @@ from .lifecycle import (
 __all__ = [
     "BuildCommand",
     "CleanCommand",
-    "ExpandExtensionsCommand",
-    "ExtensionsCommand",
     "InitCommand",
-    "ListExtensionsCommand",
     "PackCommand",
     "PrimeCommand",
     "PullCommand",

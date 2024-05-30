@@ -296,8 +296,9 @@ def create_app() -> Snapcraft:
     app.add_command_group(
         "Extensions",
         [
-            commands.ListExtensions,
-            commands.ExpandExtensions,
+            commands.ExpandExtensionsCommand,
+            commands.ExtensionsCommand,
+            commands.ListExtensionsCommand,
         ],
     )
     app.add_command_group(

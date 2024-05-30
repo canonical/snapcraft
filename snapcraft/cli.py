@@ -58,9 +58,9 @@ COMMAND_GROUPS = [
     craft_cli.CommandGroup(
         "Extensions",
         [
-            commands.core22.ListExtensionsCommand,
-            commands.core22.ExtensionsCommand,  # hidden (alias to list-extensions)
-            commands.core22.ExpandExtensionsCommand,
+            commands.ListExtensionsCommand,
+            commands.ExtensionsCommand,  # hidden (alias to list-extensions)
+            commands.ExpandExtensionsCommand,
         ],
     ),
     craft_cli.CommandGroup(

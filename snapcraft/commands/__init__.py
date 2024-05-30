@@ -23,7 +23,11 @@ from .account import (
     StoreLogoutCommand,
     StoreWhoAmICommand,
 )
-from .extensions import ExpandExtensions, ListExtensions
+from .extensions import (
+    ExpandExtensionsCommand,
+    ExtensionsCommand,
+    ListExtensionsCommand,
+)
 from .legacy import (
     StoreLegacyCreateKeyCommand,
     StoreLegacyGatedCommand,
@@ -59,9 +63,10 @@ from .upload import StoreLegacyPushCommand, StoreUploadCommand
 from .validation_sets import StoreEditValidationSetsCommand
 
 __all__ = [
-    "ExpandExtensions",
+    "ExpandExtensionsCommand",
+    "ExtensionsCommand",
     "LintCommand",
-    "ListExtensions",
+    "ListExtensionsCommand",
     "ListPluginsCommand",
     "RemoteBuildCommand",
     "PackCommand",
