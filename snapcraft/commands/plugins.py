@@ -85,8 +85,8 @@ class ListPluginsCommand(AppCommand):
                     f"Displaying plugins available to the current base {base!r} project"
                 )
             except errors.ProjectMissing:
-                emit.trace("Defaulting to core22 because no project was found.")
-                base = "core22"
+                emit.trace("Defaulting to core24 because no project was found.")
+                base = "core24"
 
         if message is None:
             message = f"Displaying plugins available for {base!r}"

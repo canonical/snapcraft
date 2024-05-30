@@ -50,13 +50,13 @@ def fake_registered_plugins(mocker):
 )
 @pytest.mark.usefixtures("new_dir")
 def test_registered_plugins_default(command, emitter):
-    """Default to core22."""
+    """Default to core24."""
     command(None).run(argparse.Namespace(base=None))
 
     emitter.assert_message(
         textwrap.dedent(
             """\
-            Displaying plugins available for 'core22'
+            Displaying plugins available for 'core24'
             bar
             foo"""
         )
