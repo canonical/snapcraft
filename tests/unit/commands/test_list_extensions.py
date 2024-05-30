@@ -63,7 +63,8 @@ def test_command(emitter, command):
         ros2-humble             core22
         ros2-humble-desktop     core22
         ros2-humble-ros-base    core22
-        ros2-humble-ros-core    core22"""
+        ros2-humble-ros-core    core22
+        ros2-jazzy              core24"""
         )
     )
 
@@ -108,6 +109,7 @@ def test_command_extension_dups(emitter, command):
         ros2-humble             core22
         ros2-humble-desktop     core22
         ros2-humble-ros-base    core22
-        ros2-humble-ros-core    core22"""
+        ros2-humble-ros-core    core22
+        ros2-jazzy              core24"""
         )
     )

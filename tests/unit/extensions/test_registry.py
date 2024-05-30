@@ -29,6 +29,7 @@ def test_get_extension_names():
         "ros2-humble-ros-core",
         "ros2-humble-ros-base",
         "ros2-humble-desktop",
+        "ros2-jazzy",
         "kde-neon",
         "kde-neon-6",
         "fake-extension-experimental",
