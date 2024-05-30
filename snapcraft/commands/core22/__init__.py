@@ -16,7 +16,6 @@
 
 """Snapcraft commands for core22 base."""
 
-from .init import InitCommand
 from .lifecycle import (
     BuildCommand,
     CleanCommand,
@@ -31,7 +30,6 @@ from .lifecycle import (
 __all__ = [
     "BuildCommand",
     "CleanCommand",
-    "InitCommand",
     "PackCommand",
     "PrimeCommand",
     "PullCommand",

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,11 +16,11 @@
 
 """Snapcraft init command."""
 
-import abc
 from pathlib import Path
 from textwrap import dedent
 
-from craft_cli import BaseCommand, emit
+from craft_application.commands import AppCommand
+from craft_cli import emit
 from overrides import overrides
 
 from snapcraft import errors
@@ -49,7 +49,7 @@ _TEMPLATE_YAML = dedent(
 )
 
 
-class InitCommand(BaseCommand, abc.ABC):
+class InitCommand(AppCommand):
     """Initialize a snapcraft project."""
 
     name = "init"

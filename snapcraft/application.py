@@ -365,7 +365,7 @@ def create_app() -> Snapcraft:
         list(craft_app_commands.get_other_command_group().commands)
         + [
             commands.LintCommand,
-            unimplemented.Init,
+            commands.InitCommand,
         ],
     )
 

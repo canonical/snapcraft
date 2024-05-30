@@ -79,12 +79,6 @@ class UnimplementedMixin:
     always_load_project: bool = False
 
 
-class Init(
-    UnimplementedMixin, commands.core22.InitCommand
-):  # noqa: D101 (missing docstring)
-    pass
-
-
 class Try(
     UnimplementedMixin, commands.core22.TryCommand
 ):  # noqa: D101 (missing docstring)
