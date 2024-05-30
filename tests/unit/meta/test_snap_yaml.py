@@ -194,11 +194,11 @@ def test_build_base_stable(simple_project, new_dir):
 def test_links_scalars(simple_project, new_dir):
     snap_yaml.write(
         simple_project(
-            contact="me@acme.com",
-            issues="https://hubhub.com/issues",
-            donation="https://moneyfornothing.com",
-            source_code="https://closed.acme.com",
-            website="https://acme.com",
+            contact=["me@acme.com"],
+            issues=["https://hubhub.com/issues"],
+            donation=["https://moneyfornothing.com"],
+            source_code=["https://closed.acme.com"],
+            website=["https://acme.com"],
         ),
         prime_dir=Path(new_dir),
         arch="amd64",
@@ -251,8 +251,8 @@ def test_links_lists(simple_project, new_dir):
                 "https://corner.com/issues",
             ],
             donation=["https://moneyfornothing.com", "https://prince.com"],
-            source_code="https://closed.acme.com",
-            website="https://acme.com",
+            source_code=["https://closed.acme.com"],
+            website=["https://acme.com"],
         ),
         prime_dir=Path(new_dir),
         arch="amd64",
@@ -1313,20 +1313,20 @@ def test_architectures_all(simple_project, new_dir):
 
 def test_links_for_scalars(simple_project):
     project = simple_project(
-        contact="me@acme.com",
-        issues="https://hubhub.com/issues",
-        donation="https://moneyfornothing.com",
-        source_code="https://closed.acme.com",
-        website="https://acme.com",
+        contact=["me@acme.com"],
+        issues=["https://hubhub.com/issues"],
+        donation=["https://moneyfornothing.com"],
+        source_code=["https://closed.acme.com"],
+        website=["https://acme.com"],
     )
 
     links = snap_yaml.Links.from_project(project)
 
-    assert links.contact == [project.contact]
-    assert links.issues == [project.issues]
-    assert links.donation == [project.donation]
-    assert links.source_code == [project.source_code]
-    assert links.website == [project.website]
+    assert links.contact == project.contact
+    assert links.issues == project.issues
+    assert links.donation == project.donation
+    assert links.source_code == project.source_code
+    assert links.website == project.website
 
     assert bool(links) is True
 
