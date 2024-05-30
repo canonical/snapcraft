@@ -337,10 +337,10 @@ def _get_version():
 __version__ = _get_version()
 
 # Workaround for potential import loops.
-from snapcraft_legacy.internal import repo  # noqa isort:skip
+from snapcraft_legacy.internal import repo  # noqa
 
 # For backwards compatibility with external plugins.
-import snapcraft_legacy._legacy_loader  # noqa isort:skip
+import snapcraft_legacy._legacy_loader  # noqa
 from snapcraft_legacy import common  # noqa
 from snapcraft_legacy import extractors  # noqa
 from snapcraft_legacy import file_utils  # noqa
@@ -363,4 +363,4 @@ from snapcraft_legacy._store import (  # noqa
     validate,
 )
 
-from snapcraft_legacy.project._project_options import ProjectOptions  # noqa isort:skip
+from snapcraft_legacy.project._project_options import ProjectOptions  # noqa

@@ -110,6 +110,13 @@ class Snapcraft(Application):
         return plugins.get_plugins(core22=False)
 
     @override
+    def _register_default_plugins(self) -> None:
+        """Register per application plugins when initializing."""
+        super()._register_default_plugins()
+        # dotnet is disabled for core24 because it is pending a rewrite
+        craft_parts.plugins.unregister("dotnet")
+
+    @override
     def _configure_services(self, provider_name: str | None) -> None:
         self.services.set_kwargs(
             "package",
@@ -273,7 +280,7 @@ def create_app() -> Snapcraft:
             craft_app_commands.lifecycle.BuildCommand,
             craft_app_commands.lifecycle.StageCommand,
             craft_app_commands.lifecycle.PrimeCommand,
-            craft_app_commands.lifecycle.PackCommand,
+            commands.PackCommand,
             commands.SnapCommand,  # Hidden (legacy compatibility)
             commands.RemoteBuildCommand,
             unimplemented.Plugins,

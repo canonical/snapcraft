@@ -2,10 +2,7 @@ settings:
   components:
     - Snapcraft
   labels:
-    - Bug
-    - Enhancement
-    - Spike
-    - Epic
+    - Triaged
   # Adds a comment with the JIRA ID
   add_gh_comment: true
   # Reflect changes on JIRA
@@ -16,10 +13,10 @@ settings:
   # epic_key: "MTC-296"
   jira_project_key: "CRAFT"
   status_mapping:
-    opened: Untriaged
+    opened: Triaged
     closed: done
   label_mapping:
-    Enhancement: Story
-    Bug: Bug
-    Spike: Spike
-    Epic: Epic
+    enhancement: Story
+    bug: Bug
+    spike: Spike
+    epic: Epic

@@ -49,13 +49,15 @@ class Patcher:
         self._patchelf_cmd = preferred_patchelf or utils.get_snap_tool("patchelf")
         self._strip_cmd = utils.get_snap_tool("strip")
 
-    def patch(self, *, elf_file: ElfFile) -> None:
+    def patch(self, *, elf_file: ElfFile, use_system_libs: bool = True) -> None:
         """Patch elf_file with the Patcher instance configuration.
 
         If the ELF is executable, patch it to use the configured linker.
         If the ELF has dependencies (DT_NEEDED), set an rpath to them.
 
         :param elf_file: a data object representing an elf file and its attributes.
+        :param use_system_libs: If true, search for dependencies in the default
+            library search paths.
 
         :raises PatcherError: if the ELF file cannot be patched.
         """
@@ -90,6 +92,14 @@ class Patcher:
             return
 
         self._run_patchelf(patchelf_args=patchelf_args, elf_file_path=elf_file.path)
+
+        # `patchelf --no-default-libs` must be run after setting the rpath, see:
+        # https://github.com/NixOS/patchelf/issues/223
+        if elf_file.dependencies and not use_system_libs:
+            self._run_patchelf(
+                patchelf_args=["--no-default-lib"],
+                elf_file_path=elf_file.path,
+            )
 
     def _run_patchelf(self, *, patchelf_args: List[str], elf_file_path: Path) -> None:
         # Run patchelf on a copy of the primed file and replace it

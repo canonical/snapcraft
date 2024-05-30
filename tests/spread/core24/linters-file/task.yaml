@@ -20,8 +20,7 @@ execute: |
     snapcraft lint lint-file_0.1_*.snap 2> output.txt
   }
 
-  # TODO: restore this when core24 is stable
-  # core24 testing has undefined symbol warnings
+  # TODO: this check fails because core24 has undefined symbol warnings (#4751)
   # get the lint warnings at end of the log file
   #sed -n '/Running linters.../,+4 p' < output.txt > linter-output.txt
 
