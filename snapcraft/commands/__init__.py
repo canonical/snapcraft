@@ -23,7 +23,6 @@ from .account import (
     StoreLogoutCommand,
     StoreWhoAmICommand,
 )
-from .discovery import ListPluginsCommand, PluginsCommand
 from .extensions import ExpandExtensions, ListExtensions
 from .legacy import (
     StoreLegacyCreateKeyCommand,
@@ -47,6 +46,7 @@ from .names import (
     StoreNamesCommand,
     StoreRegisterCommand,
 )
+from .plugins import ListPluginsCommand, PluginsCommand
 from .remote import RemoteBuildCommand
 from .status import (
     StoreListRevisionsCommand,

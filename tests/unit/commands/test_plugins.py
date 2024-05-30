@@ -30,7 +30,7 @@ from snapcraft import commands, const, errors
 @pytest.fixture(autouse=True)
 def fake_registered_plugins(mocker):
     fake_plugins = mocker.patch(
-        "snapcraft.commands.discovery.get_registered_plugins",
+        "snapcraft.commands.plugins.get_registered_plugins",
         autospec=True,
         return_value={
             "bar": craft_parts.plugins.Plugin,
