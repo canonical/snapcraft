@@ -139,7 +139,7 @@ class TestAppstreamIcons:
         assert actual is not None
         assert actual.icon == expected.icon
 
-    def test_appstream_NxN_size_not_int_is_skipped(self):
+    def test_appstream_nxn_size_not_int_is_skipped(self):
         self._create_appstream_file(icon="icon", icon_type="stock")
         dir_name = os.path.join("usr", "share", "icons", "hicolor", "NxN")
         os.makedirs(dir_name)

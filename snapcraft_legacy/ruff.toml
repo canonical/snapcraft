@@ -7,16 +7,19 @@ extend-exclude = [
     "stage",
     "prime",
 ]
-ignore = ["E501"]
+lint.ignore = [
+    "E101",  # Mixed spaces and tabs
+    "E501",
+]
 line-length = 88
-select = [
+lint.select = [
     "C9",
     "E",
     "F",
     "W",
 ]
 
-[per-file-ignores]
+[lint.per-file-ignores]
 "snapcraft_legacy/plugins/v2/_kernel_build.py" = [
     "E101",  # Mixed tabs and spaces. Ruff gets confused by tabs in multiline strings
     "W191",  # Indentation contains tabs - another Ruff false positive
@@ -29,5 +32,5 @@ select = [
     "E721",  # Allowing type comparison
 ]
 
-[mccabe]
+[lint.mccabe]
 max-complexity = 10
