@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Dict, Final, List, cast
 
 import pydantic
-from craft_application.models import ProjectTitle, SummaryStr, VersionStr
+from craft_application.models import ProjectTitle, SummaryStr, UniqueStrList, VersionStr
 from craft_cli import emit
 
 from snapcraft import errors
@@ -87,6 +87,9 @@ def update_from_extracted_metadata(
         if metadata.version and not project.version:
             project.version = cast(VersionStr, metadata.version)
 
+        if metadata.license and not project.license:
+            project.license = metadata.license
+
         if metadata.grade and not project.grade:
             project.grade = metadata.grade  # type: ignore
 
@@ -99,6 +102,31 @@ def update_from_extracted_metadata(
         _update_project_app_desktop_file(
             project, metadata=metadata, assets_dir=assets_dir, prime_dir=prime_dir
         )
+
+        _update_project_links(project, metadata_list)
+
+
+def _update_project_links(
+    project: Project,
+    metadata_list: List[ExtractedMetadata],
+) -> None:
+    """Update project links from metadata.
+
+    :param project: The Project model to update.
+    :param metadata_list: A list of parsed information from metadata files.
+    """
+    for metadata in metadata_list:
+        fields = ["contact", "donation", "source_code", "issues", "website"]
+        for field in fields:
+            metadata_field = getattr(metadata, field)
+            project_field = getattr(project, field)
+            if metadata_field and project_field and project_field != metadata_field:
+                project_list = list(project_field)
+                project_list.extend(set(metadata_field) - set(project_list))
+                setattr(project, field, cast(UniqueStrList, project_list))
+
+            if not getattr(project, field):
+                setattr(project, field, cast(UniqueStrList, metadata_field))
 
 
 def _update_project_variables(project: Project, project_vars: Dict[str, str]):

@@ -603,10 +603,12 @@ class Project(models.Project):
     build_base: Optional[str]
     compression: Literal["lzo", "xz"] = "xz"
     version: Optional[VersionStr]  # type: ignore[assignment]
-    donation: Optional[Union[str, UniqueStrList]]
+    donation: Optional[UniqueStrList]
     # snapcraft's `source_code` is more general than craft-application
-    source_code: Optional[str]  # type: ignore[assignment]
-    website: Optional[str]
+    source_code: Optional[UniqueStrList]  # type: ignore[assignment]
+    contact: Optional[UniqueStrList]  # type: ignore[assignment]
+    issues: Optional[UniqueStrList]  # type: ignore[assignment]
+    website: Optional[UniqueStrList]
     type: Optional[Literal["app", "base", "gadget", "kernel", "snapd"]]
     icon: Optional[str]
     confinement: Literal["classic", "devmode", "strict"]
@@ -855,6 +857,15 @@ class Project(models.Project):
             )
 
         return provenance
+
+    @pydantic.validator(
+        "contact", "donation", "issues", "source_code", "website", pre=True
+    )
+    @classmethod
+    def _validate_urls(cls, field_value):
+        if isinstance(field_value, str):
+            field_value = cast(UniqueStrList, [field_value])
+        return field_value
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "Project":
