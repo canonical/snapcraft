@@ -26,11 +26,10 @@ from craft_application import util
 from craft_parts.packages import snaps
 from craft_providers import bases
 
-from snapcraft import application, services
+from snapcraft import application, const, services
 from snapcraft.commands import PackCommand
 from snapcraft.errors import ClassicFallback, SnapcraftError
 from snapcraft.models.project import Architecture
-from snapcraft.parts.yaml_utils import CURRENT_BASES, ESM_BASES, LEGACY_BASES
 
 
 @pytest.fixture(
@@ -342,7 +341,7 @@ def test_default_command_integrated(monkeypatch, mocker, new_dir):
     assert mocked_pack_run.called
 
 
-@pytest.mark.parametrize("base", ESM_BASES)
+@pytest.mark.parametrize("base", const.ESM_BASES)
 def test_esm_error(snapcraft_yaml, base):
     """Test that an error is raised when using an ESM base."""
     snapcraft_yaml_dict = {"base": base}
@@ -356,7 +355,7 @@ def test_esm_error(snapcraft_yaml, base):
         app.run()
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 def test_esm_pass(mocker, snapcraft_yaml, base):
     """Test that no error is raised when using current supported bases."""
     snapcraft_yaml_dict = {"base": base}
@@ -379,7 +378,7 @@ def test_esm_pass(mocker, snapcraft_yaml, base):
 @pytest.mark.parametrize(
     "envvar", ["force-fallback", "disable-fallback", "badvalue", None]
 )
-@pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
 @pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
 def test_run_envvar(
     monkeypatch,
@@ -404,7 +403,7 @@ def test_run_envvar(
     mock_run_legacy.assert_not_called()
 
 
-@pytest.mark.parametrize("base", LEGACY_BASES)
+@pytest.mark.parametrize("base", const.LEGACY_BASES)
 @pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
 def test_run_envvar_disable_fallback_core20(
     snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
@@ -420,7 +419,7 @@ def test_run_envvar_disable_fallback_core20(
     mock_run_legacy.assert_not_called()
 
 
-@pytest.mark.parametrize("base", LEGACY_BASES | {"core22"})
+@pytest.mark.parametrize("base", const.LEGACY_BASES | {"core22"})
 @pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
 def test_run_envvar_force_fallback_core22(
     snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
@@ -436,7 +435,7 @@ def test_run_envvar_force_fallback_core22(
     mock_remote_build_run.assert_not_called()
 
 
-@pytest.mark.parametrize("base", LEGACY_BASES)
+@pytest.mark.parametrize("base", const.LEGACY_BASES)
 @pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
 def test_run_envvar_force_fallback_unset_core20(
     snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
@@ -468,7 +467,7 @@ def test_run_envvar_force_fallback_empty_core22(
     mock_run_legacy.assert_not_called()
 
 
-@pytest.mark.parametrize("base", LEGACY_BASES | {"core22"})
+@pytest.mark.parametrize("base", const.LEGACY_BASES | {"core22"})
 @pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
 def test_run_envvar_invalid(snapcraft_yaml, base, monkeypatch):
     """core20 and core22 bases raise an error if the envvar is invalid."""
