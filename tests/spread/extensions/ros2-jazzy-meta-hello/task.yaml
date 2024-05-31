@@ -36,7 +36,7 @@ prepare: |
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
   # Overwrite the extension to test them all out of a single snap
-  sed -i "s|ros2-jazzy|${EXTENSION}|" "$SNAP_DIR/snap/snapcraft.yaml"
+  sed -i "s|\[ros2-jazzy\]|\[${EXTENSION}\]|" "$SNAP_DIR/snap/snapcraft.yaml"
 
   # The snap stages ros2run which will be available through content-sharing
   sed -i "\|stage-packages|d" "$SNAP_DIR/snap/snapcraft.yaml"
