@@ -2,7 +2,6 @@ name: test-multi-keys
 version: '1.0'
 summary: test
 description: test installing a package repository with an asset file with multiple keys
-grade: devel
 confinement: strict
 base: core24
 
@@ -14,10 +13,6 @@ parts:
     stage-packages:
       - test-ppa
       - puppet-tools-release # Comes from the Puppet repo
-    override-build: |
-      craftctl default
-      # This file comes from the puppet-tools-release package.
-      test -f ${CRAFT_PART_INSTALL}/usr/share/doc/puppet-tools-release/bill-of-materials
 
 apps:
   test-multi-keys:

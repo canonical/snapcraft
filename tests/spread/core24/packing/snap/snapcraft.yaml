@@ -8,7 +8,6 @@ description: |
   store.
 base: core24
 
-grade: devel
 confinement: devmode
 
 parts:
