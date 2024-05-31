@@ -34,7 +34,7 @@ from overrides import override
 
 import snapcraft
 import snapcraft_legacy
-from snapcraft import cli, commands, errors, models, services
+from snapcraft import cli, errors, models, services
 from snapcraft.extensions import apply_extensions
 from snapcraft.models.project import SnapcraftBuildPlanner, apply_root_packages
 from snapcraft.parts import set_global_environment
@@ -271,102 +271,8 @@ def create_app() -> Snapcraft:
         extra_loggers={"snapcraft.remote"},
     )
 
-    app.add_command_group(
-        "Lifecycle",
-        [
-            craft_app_commands.lifecycle.CleanCommand,
-            craft_app_commands.lifecycle.PullCommand,
-            craft_app_commands.lifecycle.BuildCommand,
-            craft_app_commands.lifecycle.StageCommand,
-            craft_app_commands.lifecycle.PrimeCommand,
-            commands.PackCommand,
-            commands.SnapCommand,  # Hidden (legacy compatibility)
-            commands.RemoteBuildCommand,
-            commands.TryCommand,
-        ],
-    )
-    app.add_command_group(
-        "Plugins",
-        [
-            commands.ListPluginsCommand,
-            commands.PluginsCommand,
-        ],
-    )
-    app.add_command_group(
-        "Extensions",
-        [
-            commands.ExpandExtensionsCommand,
-            commands.ExtensionsCommand,
-            commands.ListExtensionsCommand,
-        ],
-    )
-    app.add_command_group(
-        "Store Account",
-        [
-            commands.StoreExportLoginCommand,
-            commands.StoreLoginCommand,
-            commands.StoreLogoutCommand,
-            commands.StoreWhoAmICommand,
-        ],
-    )
-    app.add_command_group(
-        "Store Snap Names",
-        [
-            commands.StoreRegisterCommand,
-            commands.StoreNamesCommand,
-            commands.StoreLegacyListRegisteredCommand,
-            commands.StoreLegacyListCommand,
-            commands.StoreLegacyMetricsCommand,
-            commands.StoreLegacyUploadMetadataCommand,
-        ],
-    )
-    app.add_command_group(
-        "Store Snap Release Management",
-        [
-            commands.StoreReleaseCommand,
-            commands.StoreCloseCommand,
-            commands.StoreStatusCommand,
-            commands.StoreUploadCommand,
-            commands.StoreLegacyPushCommand,
-            commands.StoreLegacyPromoteCommand,
-            commands.StoreListRevisionsCommand,
-            commands.StoreRevisionsCommand,
-        ],
-    )
-    app.add_command_group(
-        "Store Snap Tracks",
-        [
-            commands.StoreListTracksCommand,
-            commands.StoreTracksCommand,
-            commands.StoreLegacySetDefaultTrackCommand,
-        ],
-    )
-    app.add_command_group(
-        "Store Key Management",
-        [
-            commands.StoreLegacyCreateKeyCommand,
-            commands.StoreLegacyRegisterKeyCommand,
-            commands.StoreLegacySignBuildCommand,
-            commands.StoreLegacyListKeysCommand,
-        ],
-    )
-    app.add_command_group(
-        "Store Validation Sets",
-        [
-            commands.StoreEditValidationSetsCommand,
-            commands.StoreLegacyListValidationSetsCommand,
-            commands.StoreLegacyValidateCommand,
-            commands.StoreLegacyGatedCommand,
-        ],
-    )
-    app.add_command_group(
-        "Other",
-        list(craft_app_commands.get_other_command_group().commands)
-        + [
-            commands.LintCommand,
-            commands.InitCommand,
-        ],
-    )
+    for group in [cli.CORE24_LIFECYCLE_COMMAND_GROUP, *cli.COMMAND_GROUPS]:
+        app.add_command_group(group.name, group.commands)
 
     return app
 
