@@ -2,7 +2,6 @@ name: test-apt-ppa
 version: '1.0'
 summary: test
 description: test
-grade: devel
 confinement: strict
 base: core24
 

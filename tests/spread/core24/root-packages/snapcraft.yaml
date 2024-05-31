@@ -4,7 +4,6 @@ summary: test build-snaps and build-packages at the root
 description: verify that these keys are processed correctly
 base: core24
 confinement: strict
-grade: devel
 
 build-packages: [hello]
 build-snaps: [hello]
