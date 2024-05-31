@@ -626,6 +626,66 @@ class TestProjectValidation:
         )
         emitter.assert_message(expected_message)
 
+    def test_links_scalar(self, project_yaml_data):
+        data = project_yaml_data(
+            contact="https://matrix.to/#/#nickvision:matrix.org",
+            donation="https://github.com/sponsors/nlogozzo",
+            issues="https://github.com/NickvisionApps/Parabolic/issues",
+            source_code="https://github.com/NickvisionApps/Parabolic",
+            website="https://github.com/NickvisionApps/Parabolic",
+        )
+        project = Project.unmarshal(data)
+        assert project.contact == ["https://matrix.to/#/#nickvision:matrix.org"]
+        assert project.donation == ["https://github.com/sponsors/nlogozzo"]
+        assert project.issues == ["https://github.com/NickvisionApps/Parabolic/issues"]
+        assert project.source_code == ["https://github.com/NickvisionApps/Parabolic"]
+        assert project.website == ["https://github.com/NickvisionApps/Parabolic"]
+
+    def test_links_list(self, project_yaml_data):
+        data = project_yaml_data(
+            contact=[
+                "https://matrix.to/#/#nickvision:matrix.org",
+                "hello@example.org",
+            ],
+            donation=[
+                "https://github.com/sponsors/nlogozzo",
+                "https://paypal.me/nlogozzo",
+            ],
+            issues=[
+                "https://github.com/NickvisionApps/Parabolic/issues",
+                "https://github.com/NickvisionApps/Denaro/issues",
+            ],
+            source_code=[
+                "https://github.com/NickvisionApps/Parabolic",
+                "https://github.com/NickvisionApps/Denaro",
+            ],
+            website=[
+                "https://github.com/NickvisionApps/Parabolic",
+                "https://github.com/NickvisionApps/Denaro",
+            ],
+        )
+        project = Project.unmarshal(data)
+        assert project.contact == [
+            "https://matrix.to/#/#nickvision:matrix.org",
+            "hello@example.org",
+        ]
+        assert project.donation == [
+            "https://github.com/sponsors/nlogozzo",
+            "https://paypal.me/nlogozzo",
+        ]
+        assert project.issues == [
+            "https://github.com/NickvisionApps/Parabolic/issues",
+            "https://github.com/NickvisionApps/Denaro/issues",
+        ]
+        assert project.source_code == [
+            "https://github.com/NickvisionApps/Parabolic",
+            "https://github.com/NickvisionApps/Denaro",
+        ]
+        assert project.website == [
+            "https://github.com/NickvisionApps/Parabolic",
+            "https://github.com/NickvisionApps/Denaro",
+        ]
+
 
 class TestHookValidation:
     """Validate hooks."""

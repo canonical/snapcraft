@@ -1,0 +1,22 @@
+name: ros2-jazzy-hello
+version: "1.0"
+summary: hello world
+description: |
+  A ROS 2 rlcpp-based workspace.
+
+grade: stable
+confinement: strict
+base: core24
+
+apps:
+  ros2-jazzy-hello:
+    command: opt/ros/jazzy/bin/ros2 run colcon_ros2_rlcpp_hello colcon_ros2_rlcpp_hello
+    plugs: [network, network-bind]
+    extensions: [ros2-jazzy]
+
+parts:
+  hello:
+    plugin: colcon
+    source: .
+    build-packages: [g++, make, vim]
+    stage-packages: [ros-jazzy-ros2run]

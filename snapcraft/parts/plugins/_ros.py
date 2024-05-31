@@ -84,6 +84,8 @@ def _parse_rosdep_resolve_dependencies(
 class RosPlugin(plugins.Plugin):
     """Base class for ROS-related plugins. Not intended for use by end users."""
 
+    _MAP_CORE_ROSDISTRO = {"core24": "jazzy"}
+
     @overrides
     def get_build_snaps(self) -> Set[str]:
         return (
@@ -94,7 +96,10 @@ class RosPlugin(plugins.Plugin):
 
     @overrides
     def get_build_packages(self) -> Set[str]:
-        return {"python3-rosdep", "rospack-tools"}
+        base = self._part_info.base
+        if base == "core22":
+            return {"python3-rosdep", "rospack-tools"}
+        return {"python3-rosdep", f"ros-{self._MAP_CORE_ROSDISTRO[base]}-ros2pkg"}
 
     @overrides
     def get_build_environment(self) -> Dict[str, str]:
@@ -147,6 +152,14 @@ class RosPlugin(plugins.Plugin):
         cmd.append('rm -f "${CRAFT_PART_INSTALL}/.build_snaps.txt"')
 
         if self._options.colcon_ros_build_snaps:  # type: ignore
+            base = self._part_info.base
+            if base == "core22":
+                rospkg_search_env = "ROS_PACKAGE_PATH"
+                rospkg_cmd = "rospack list-names"
+            else:
+                rospkg_search_env = "AMENT_PREFIX_PATH"
+                rospkg_cmd = "ros2 pkg list"
+
             for ros_build_snap in self._options.colcon_ros_build_snaps:  # type: ignore
                 snap_name = _get_parsed_snap(ros_build_snap)[0]
                 path = f"/snap/{snap_name}/current/opt/ros"
@@ -155,8 +168,8 @@ class RosPlugin(plugins.Plugin):
                     [
                         # Retrieve the list of all ROS packages available in the build snap
                         f"if [ -d {path} ]; then",
-                        f"ROS_PACKAGE_PATH={path} "
-                        'rospack list-names | (xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | '
+                        f"{rospkg_search_env}={path} "
+                        f'{rospkg_cmd} | (xargs rosdep resolve --rosdistro "${{ROS_DISTRO}}" || echo "") | '
                         'awk "/#apt/{getline;print;}" >> "${CRAFT_PART_INSTALL}/.installed_packages.txt"',
                         "fi",
                         # Retrieve the list of all non-ROS packages available in the build snap
