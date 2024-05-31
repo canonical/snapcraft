@@ -3,7 +3,6 @@ version: "1.0"
 summary: test
 description: |
   A single platform should create a single snap file.
-grade: devel
 confinement: strict
 base: core24
 platforms:
