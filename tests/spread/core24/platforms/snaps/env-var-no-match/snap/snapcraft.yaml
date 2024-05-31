@@ -4,7 +4,6 @@ summary: test
 description: |
   No snaps should be built if there no `build-for`
   matches the environmental variable `SNAPCRAFT_BUILD_FOR`.
-grade: devel
 confinement: strict
 base: core24
 platforms:

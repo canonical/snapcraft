@@ -3,7 +3,6 @@ version: "1.0"
 summary: test
 description: |
   Building on amd64 would match two snaps, so the "naked" build should fail.
-grade: devel
 confinement: strict
 base: core24
 platforms:
