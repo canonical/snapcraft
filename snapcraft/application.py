@@ -35,7 +35,6 @@ from overrides import override
 import snapcraft
 import snapcraft_legacy
 from snapcraft import cli, commands, errors, models, services
-from snapcraft.commands import unimplemented
 from snapcraft.extensions import apply_extensions
 from snapcraft.models.project import SnapcraftBuildPlanner, apply_root_packages
 from snapcraft.parts import set_global_environment
@@ -283,7 +282,7 @@ def create_app() -> Snapcraft:
             commands.PackCommand,
             commands.SnapCommand,  # Hidden (legacy compatibility)
             commands.RemoteBuildCommand,
-            unimplemented.Try,
+            commands.TryCommand,
         ],
     )
     app.add_command_group(

@@ -19,7 +19,7 @@
 import argparse
 from typing import final
 
-from snapcraft import commands, errors
+from snapcraft import errors
 
 # pylint: disable=missing-class-docstring,unused-argument
 
@@ -77,9 +77,3 @@ class UnimplementedMixin:
         return None
 
     always_load_project: bool = False
-
-
-class Try(
-    UnimplementedMixin, commands.core22.TryCommand
-):  # noqa: D101 (missing docstring)
-    pass

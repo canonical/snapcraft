@@ -42,7 +42,7 @@ from .legacy import (
     StoreLegacyUploadMetadataCommand,
     StoreLegacyValidateCommand,
 )
-from .lifecycle import PackCommand, SnapCommand
+from .lifecycle import PackCommand, SnapCommand, TryCommand
 from .lint import LintCommand
 from .manage import StoreCloseCommand, StoreReleaseCommand
 from .names import (
@@ -103,6 +103,7 @@ __all__ = [
     "StoreTracksCommand",
     "StoreUploadCommand",
     "StoreWhoAmICommand",
+    "TryCommand",
     "core22",
     "legacy",
 ]
