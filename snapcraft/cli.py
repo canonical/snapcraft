@@ -22,6 +22,7 @@ import os
 import sys
 from typing import Any, Dict
 
+import craft_application.commands
 import craft_cli
 import craft_store
 from craft_application.errors import RemoteBuildError
@@ -125,6 +126,8 @@ COMMAND_GROUPS = [
     craft_cli.CommandGroup(
         "Other",
         [
+            *craft_application.commands.get_other_command_group().commands,
+            commands.LintCommand,
             commands.InitCommand,
         ],
     ),
