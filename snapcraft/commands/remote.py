@@ -237,13 +237,11 @@ class RemoteBuildCommand(ExtensibleCommand):
                 )
             except RemoteBuildError:
                 emit.progress("Starting build failed.", permanent=True)
-                emit.progress("Cleaning up")
-                builder.cleanup()
+                self._cleanup()
                 raise
             except lazr.restfulclient.errors.Conflict:
                 emit.progress("Remote repository already exists.", permanent=True)
-                emit.progress("Cleaning up")
-                builder.cleanup()
+                self._cleanup()
                 return 75
 
         try:
@@ -254,9 +252,15 @@ class RemoteBuildCommand(ExtensibleCommand):
                 builder.cancel_builds()
             returncode = 0
         if returncode != 75:  # TimeoutError
-            emit.progress("Cleaning up")
-            builder.cleanup()
+            self._cleanup()
         return returncode
+
+    def _cleanup(self) -> None:
+        if os.getenv("SNAPCRAFT_REMOTE_BUILD_DISABLE_CLEANUP"):
+            emit.progress("Not cleaning up remote build.")
+        else:
+            emit.progress("Cleaning up")
+            self._services.remote_build.cleanup()
 
     def _monitor_and_complete(
         self, build_id: str | None, builds: Collection[Build]
