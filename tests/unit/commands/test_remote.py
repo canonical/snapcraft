@@ -33,10 +33,8 @@ from craft_application.launchpad.models import BuildState
 from craft_application.remote.git import GitRepo
 from craft_application.remote.utils import get_build_id
 
-from snapcraft import application, commands, models
-from snapcraft.const import SnapArch
+from snapcraft import application, commands, const, models
 from snapcraft.errors import ClassicFallback
-from snapcraft.parts.yaml_utils import CURRENT_BASES, LEGACY_BASES
 from snapcraft.utils import get_host_architecture
 
 # remote-build control logic may check if the working dir is a git repo,
@@ -127,7 +125,7 @@ def mock_run_legacy(mocker):
 #############
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.parametrize("project_name", ["something", "something-else"])
 def test_set_project(
     mocker, snapcraft_yaml, base, mock_confirm, fake_services, project_name
@@ -147,7 +145,7 @@ def test_set_project(
     mock_confirm.assert_called_once()
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.parametrize("project_name", ["something", "something_else"])
 def test_no_confirmation_for_private_project(
     mocker, snapcraft_yaml, base, mock_confirm, fake_services, project_name
@@ -167,7 +165,7 @@ def test_no_confirmation_for_private_project(
     mock_confirm.assert_not_called()
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_argv")
 def test_command_user_confirms_upload(
     snapcraft_yaml, base, mock_confirm, fake_services
@@ -187,7 +185,7 @@ def test_command_user_confirms_upload(
     )
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_argv", "fake_services")
 def test_command_user_denies_upload(
     capsys,
@@ -210,7 +208,7 @@ def test_command_user_denies_upload(
     ) in err
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_argv", "fake_services")
 def test_command_accept_upload(
     mocker, snapcraft_yaml, base, mock_confirm, mock_run_remote_build
@@ -228,7 +226,7 @@ def test_command_accept_upload(
     mock_run_remote_build.assert_called_once()
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_argv", "mock_confirm", "fake_services", "fake_sudo")
 def test_remote_build_sudo_warns(emitter, snapcraft_yaml, base, mock_run_remote_build):
     "Check if a warning is shown when snapcraft is run with sudo."
@@ -253,7 +251,7 @@ def test_cannot_load_snapcraft_yaml(capsys, mocker):
         app.run()
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_argv", "mock_confirm", "fake_services")
 def test_launchpad_timeout_default(mocker, snapcraft_yaml, base, fake_services):
     """Check if no timeout is set by default."""
@@ -269,7 +267,7 @@ def test_launchpad_timeout_default(mocker, snapcraft_yaml, base, fake_services):
     assert app.services.remote_build._deadline is None
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_argv", "mock_confirm", "fake_services")
 def test_launchpad_timeout(mocker, snapcraft_yaml, base, fake_services):
     """Set the timeout for the remote builder."""
@@ -294,7 +292,7 @@ def test_launchpad_timeout(mocker, snapcraft_yaml, base, fake_services):
 #######################
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_argv", "mock_confirm", "fake_services")
 def test_run_core22_and_later(snapcraft_yaml, base, mock_remote_build_run):
     """Bases that are core22 and later will use craft-application remote-build."""
@@ -305,7 +303,7 @@ def test_run_core22_and_later(snapcraft_yaml, base, mock_remote_build_run):
     mock_remote_build_run.assert_called_once()
 
 
-@pytest.mark.parametrize("base", LEGACY_BASES)
+@pytest.mark.parametrize("base", const.LEGACY_BASES)
 @pytest.mark.usefixtures("mock_confirm", "mock_argv")
 def test_run_core20(
     snapcraft_yaml,
@@ -322,7 +320,7 @@ def test_run_core20(
     mock_remote_build_run.assert_not_called()
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_confirm", "mock_argv")
 def test_run_in_repo_newer_than_core22(
     emitter,
@@ -347,7 +345,7 @@ def test_run_in_repo_newer_than_core22(
 
 
 @pytest.mark.xfail(reason="not implemented in craft-application")
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures(
     "mock_confirm",
     "mock_argv",
@@ -437,7 +435,7 @@ def test_no_architecture_all(
         )
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 def test_no_platform_defined_no_platform_or_build_for(
     mocker,
     snapcraft_yaml,
@@ -469,7 +467,7 @@ def test_no_platform_defined_no_platform_or_build_for(
     )
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
 def test_platform_defined_no_platform_or_build_for(
     mocker,
     snapcraft_yaml,
@@ -501,13 +499,14 @@ def test_platform_defined_no_platform_or_build_for(
     app.run()
 
     mock_start_builds.assert_called_once()
-    assert SnapArch.arm64 in mock_start_builds.call_args[1]["architectures"]
-    assert SnapArch.amd64 in mock_start_builds.call_args[1]["architectures"]
+    assert const.SnapArch.arm64 in mock_start_builds.call_args[1]["architectures"]
+    assert const.SnapArch.amd64 in mock_start_builds.call_args[1]["architectures"]
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
 @pytest.mark.parametrize(
-    ["platform", "arch"], [("rpi4", SnapArch.arm64), ("x86-64", SnapArch.amd64)]
+    ["platform", "arch"],
+    [("rpi4", const.SnapArch.arm64), ("x86-64", const.SnapArch.amd64)],
 )
 def test_platform(
     mocker,
@@ -547,7 +546,7 @@ def test_platform(
 @pytest.mark.xfail(
     reason="craft-application catches before it gets to the remote-build command"
 )
-@pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
 def test_platform_error(
     emitter,
     mocker,
@@ -580,9 +579,10 @@ def test_platform_error(
     )
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
 @pytest.mark.parametrize(
-    ["build_for", "arch"], [("amd64", SnapArch.amd64), ("arm64", SnapArch.arm64)]
+    ["build_for", "arch"],
+    [("amd64", const.SnapArch.amd64), ("arm64", const.SnapArch.arm64)],
 )
 def test_build_for(
     mocker,
@@ -619,9 +619,10 @@ def test_build_for(
     mock_start_builds.assert_called_once_with(ANY, architectures=[arch])
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.parametrize(
-    ["build_for", "arch"], [("amd64", SnapArch.amd64), ("arm64", SnapArch.arm64)]
+    ["build_for", "arch"],
+    [("amd64", const.SnapArch.amd64), ("arm64", const.SnapArch.arm64)],
 )
 def test_build_for_no_platforms(
     mocker,
@@ -654,7 +655,7 @@ def test_build_for_no_platforms(
     mock_start_builds.assert_called_once_with(ANY, architectures=[arch])
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
 def test_build_for_error(
     capsys,
     mocker,
@@ -696,7 +697,7 @@ def test_build_for_error(
 ########################
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_confirm")
 def test_monitor_build(mocker, emitter, snapcraft_yaml, base, fake_services):
     """Test the monitor_build method and the progress emitter."""
@@ -748,7 +749,7 @@ def test_monitor_build(mocker, emitter, snapcraft_yaml, base, fake_services):
     emitter.assert_progress("Succeeded: amd64")
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_confirm")
 def test_monitor_build_error(mocker, emitter, snapcraft_yaml, base, fake_services):
     """Test the monitor_build cleanup when an error occurs."""
@@ -790,7 +791,7 @@ def test_monitor_build_error(mocker, emitter, snapcraft_yaml, base, fake_service
     emitter.assert_progress("Cleaning up")
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_confirm")
 def test_monitor_build_interrupt(mocker, emitter, snapcraft_yaml, base, fake_services):
     """Test the monitor_build cleanup when a keyboard interrupt occurs."""
@@ -833,7 +834,7 @@ def test_monitor_build_interrupt(mocker, emitter, snapcraft_yaml, base, fake_ser
     emitter.assert_progress("Cleaning up")
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_confirm")
 def test_monitor_build_timeout(mocker, emitter, snapcraft_yaml, base, fake_services):
     """Test the monitor_build timeout."""
@@ -877,7 +878,7 @@ def test_monitor_build_timeout(mocker, emitter, snapcraft_yaml, base, fake_servi
     )
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_confirm")
 def test_monitor_build_failure(mocker, emitter, snapcraft_yaml, base, fake_services):
     """Test the monitor_build cleanup when a build fails."""
@@ -922,7 +923,7 @@ def test_monitor_build_failure(mocker, emitter, snapcraft_yaml, base, fake_servi
     emitter.assert_progress("Cleaning up")
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_confirm")
 def test_monitor_build_success_no_artifacts(
     mocker, emitter, snapcraft_yaml, base, fake_services
@@ -976,7 +977,7 @@ def test_monitor_build_success_no_artifacts(
     emitter.assert_progress("Cleaning up")
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_confirm")
 def test_monitor_build_success_no_logs(
     mocker, emitter, snapcraft_yaml, base, fake_services
@@ -1024,7 +1025,7 @@ def test_monitor_build_success_no_logs(
     emitter.assert_progress("Cleaning up")
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_confirm")
 def test_recover_build(mocker, snapcraft_yaml, base, fake_services):
     """Recover a build when `--recover` is provided."""
@@ -1063,7 +1064,7 @@ def test_recover_build(mocker, snapcraft_yaml, base, fake_services):
     mock_cleanup.assert_called_once()
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_confirm", "mock_argv")
 def test_remote_build(mocker, snapcraft_yaml, base, fake_services):
     """Test the remote-build command."""
@@ -1101,7 +1102,7 @@ def test_remote_build(mocker, snapcraft_yaml, base, fake_services):
     mock_cleanup.assert_called_once()
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_confirm", "mock_argv")
 def test_remote_build_error(emitter, mocker, snapcraft_yaml, base, fake_services):
     """Test the remote-build command when an error occurs."""
