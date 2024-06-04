@@ -87,6 +87,81 @@ You can also see all the environments by simply running ``tox list``
 Running ``tox run -m format`` and ``tox run -m lint`` before committing code is
 recommended.
 
+Branches
+--------
+
+Starcraft projects follow the `OneFlow`_ git branching model.
+
+
+Branch names
+============
+
+The branch name should be brief and less than 200 characters.
+
+Branch names are formatted as ``<category>/<name>``.
+
+This naming convention provides a few benefits:
+  - GitHub workflows can choose which categories they should run on
+  - GitHub branches rules can be configured per category
+  - Some IDEs and git tools display categorized branches in a neat and
+    nested format
+
+``main``
+########
+
+The main branch containing the latest changes.
+
+``renovate/*``
+##############
+
+Branches created automatically by the `Renovate bot`_.
+
+``work/<ticket>-<description>``
+###############################
+
+For any work driven by a ticketing system, the ticket should be
+part of the branch name. The ticketing system can be built into the repo
+like GitHub issues or an external ticketing system.
+
+For GitHub issue #100 (a ticket to add a README file), the branch would be
+called ``work/100-add-readme``.
+
+For an external ticketing system like Jira, a ticket labeled
+``CRAFT-100`` would use a branch called ``work/CRAFT-100-add-readme``.
+
+``work/<description>``
+######################
+
+For any new features, bug fixes, and general work not driven by a ticketing
+system.
+
+``hotfix/X.Y``
+##############
+
+For hotfixes to an existing minor release.
+
+For example, hotfixes for Testcraft 2.1 would go to a branch called
+``hotfix/2.1``.
+
+As a departure from OneFlow, hotfix branches for \*craft applications can be
+long-lived. This is because \*craft applications are built via Launchpad,
+which uses build recipes that follow specific branches.
+
+After a tagged release of a hotfix branch, the branch should be merged back
+to ``main``.
+
+``merge/<other-branch>``
+########################
+
+For commits that merge another branch into the current branch.  See the
+`chore <#chore>`_ section for information on merge commit headers.
+
+``release/X.Y.Z``
+#################
+
+For commits that prepare for a release. These commits should update the
+`changelog <#changelog>`_.
+
 Commits
 -------
 
@@ -265,6 +340,21 @@ Example footers::
   Signed-off-by: <name> <<email>>
   Co-authored-by: <name> <<email>>
 
+Changelog
+---------
+
+The changelog is a reference documentation page that gives a human-readable
+summary of changes to the project that are relevant to users.
+
+Each change should be clear in its purpose, whether it is fixing a bug,
+adding a feature, or changing an existing behavior.
+
+Internal changes should not be included in the changelog. For example,
+dev dependency updates, CI updates, and style changes should not
+be included.
+
+The changelog should link to the project's GitHub releases page, which
+contains an exhaustive list of all commits added to the release.
 
 .. _Black: https://black.readthedocs.io
 .. _`Canonical contributor licence agreement`: http://www.ubuntu.com/legal/contributors/
@@ -273,10 +363,12 @@ Example footers::
 .. _deadsnakes: https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa
 .. _`git submodules`: https://git-scm.com/book/en/v2/Git-Tools-Submodules#_cloning_submodules
 .. _`Martin Fowler's definition`: https://refactoring.com/
+.. _OneFlow: https://www.endoflineblog.com/oneflow-a-git-branching-model-and-workflow
 .. _pre-commit: https://pre-commit.com/
 .. _pyproject.toml: ./pyproject.toml
 .. _Pyright: https://github.com/microsoft/pyright
 .. _pytest: https://pytest.org
+.. _`Renovate bot`: https://github.com/renovatebot/renovate
 .. _ruff: https://github.com/charliermarsh/ruff
 .. _ShellCheck: https://www.shellcheck.net/
 .. _tox: https://tox.wiki
