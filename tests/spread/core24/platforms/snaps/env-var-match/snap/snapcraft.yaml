@@ -4,7 +4,6 @@ summary: test
 description: |
   Only snaps should be built where `build-for` matches the
   environmental variable `SNAPCRAFT_BUILD_FOR`.
-grade: devel
 confinement: strict
 base: core24
 platforms:

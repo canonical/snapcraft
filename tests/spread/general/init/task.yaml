@@ -4,11 +4,14 @@ restore: |
   rm -f ./*.snap
 
 execute: |
+  # unset SNAPCRAFT_BUILD_ENVIRONMENT=host
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
   # initialize a new snapcraft project
   snapcraft init
 
-  # the base should be core22
-  grep "^base: core22" snap/snapcraft.yaml
+  # the base should be core24
+  grep "^base: core24" snap/snapcraft.yaml
 
   # 'snapcraft init' should create a usable snapcraft.yaml file
   snapcraft

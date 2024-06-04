@@ -5,7 +5,6 @@ description: |
   Defining a plug using the content interface should only warn when it
   cannot find the snap listed under default-provider.
 
-grade: devel
 base: core24
 confinement: devmode
 
