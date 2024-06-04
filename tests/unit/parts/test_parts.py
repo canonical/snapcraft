@@ -20,9 +20,8 @@ from unittest.mock import ANY, call
 import craft_parts
 import pytest
 
-from snapcraft import errors
+from snapcraft import const, errors
 from snapcraft.parts import PartsLifecycle
-from snapcraft.parts.yaml_utils import CURRENT_BASES
 
 
 @pytest.fixture
@@ -82,7 +81,7 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.parametrize("step_name", ["pull", "build", "stage", "prime"])
 def test_parts_lifecycle_run_with_components(
     mocker, base, parts_data, step_name, new_dir
@@ -146,7 +145,7 @@ def test_parts_lifecycle_run_with_components(
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 def test_parts_lifecycle_get_prime_dir_non_existent_component(
     base, parts_data, new_dir
 ):

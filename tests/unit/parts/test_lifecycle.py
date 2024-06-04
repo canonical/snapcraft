@@ -23,13 +23,14 @@ from unittest.mock import ANY, Mock, PropertyMock, call
 
 import pytest
 from craft_cli import EmitterMode, emit
-from craft_parts import Action, Features, Step, callbacks
+from craft_parts import Action, Features, ProjectInfo, Step, callbacks
 from craft_providers.bases.ubuntu import BuilddBaseAlias
 
 from snapcraft import errors
 from snapcraft.elf import ElfFile
 from snapcraft.models import MANDATORY_ADOPTABLE_FIELDS, Project
 from snapcraft.parts import lifecycle as parts_lifecycle
+from snapcraft.parts import set_global_environment
 from snapcraft.parts.plugins import KernelPlugin, MatterSdkPlugin
 from snapcraft.parts.update_metadata import update_project_metadata
 from snapcraft.utils import get_host_architecture
@@ -1205,6 +1206,42 @@ def test_get_snap_project_no_base(snapcraft_yaml, new_dir):
     )
 
 
+@pytest.mark.parametrize("base", ["core22", "core24"])
+def test_set_global_environment(base, mocker, new_dir):
+    """Set the global environment."""
+    expected_global_environment = {
+        "SNAPCRAFT_PARALLEL_BUILD_COUNT": "1",
+        "SNAPCRAFT_PRIME": f"{new_dir}/prime",
+        "SNAPCRAFT_PROJECT_DIR": str(new_dir),
+        "SNAPCRAFT_PROJECT_GRADE": "test-grade",
+        "SNAPCRAFT_PROJECT_NAME": "None",
+        "SNAPCRAFT_PROJECT_VERSION": "test-version",
+        "SNAPCRAFT_STAGE": f"{new_dir}/stage",
+    }
+    if base == "core22":
+        expected_global_environment.update(
+            {
+                "SNAPCRAFT_ARCH_TRIPLET": "aarch64-linux-gnu",
+                "SNAPCRAFT_TARGET_ARCH": "arm64",
+            }
+        )
+    mocker.patch("platform.machine", return_value="aarch64")
+
+    info = ProjectInfo(
+        application_name="test",
+        base=base,
+        project_vars={
+            "version": "test-version",
+            "grade": "test-grade",
+        },
+        arch="aarch64",
+        cache_dir=new_dir,
+    )
+    set_global_environment(info)
+
+    assert info.global_environment == expected_global_environment
+
+
 def test_expand_environment(new_dir, mocker):
     mocker.patch("platform.machine", return_value="aarch64")
 
@@ -1212,6 +1249,7 @@ def test_expand_environment(new_dir, mocker):
         "name": "test-env",
         "version": "1.2.3",
         "grade": "stable",
+        "base": "core22",
         "field0": "$CRAFT_PROJECT_NAME",
         "field1": "$SNAPCRAFT_PROJECT_NAME",
         "field2": "$SNAPCRAFT_PROJECT_VERSION",
@@ -1235,6 +1273,7 @@ def test_expand_environment(new_dir, mocker):
     )
 
     assert yaml_data == {
+        "base": "core22",
         "name": "test-env",
         "version": "1.2.3",
         "grade": "stable",

@@ -98,6 +98,20 @@ class InvalidArchitecture(SnapcraftError):
         )
 
 
+class ArchAllInvalid(SnapcraftError):
+    """Architecture 'all' is invalid in this use case."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Cannot use architecture 'all'.",
+            details="This command does not support using architecture 'all' in your snap.",
+            resolution="Set your snap to architecture-dependent builds.",
+            logpath_report=False,
+            reportable=False,
+            retcode=78,
+        )
+
+
 class LinterError(SnapcraftError):
     """Snap linting returned an error.
 

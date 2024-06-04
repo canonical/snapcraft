@@ -775,7 +775,8 @@
                             "description": "controls if the app should be restarted at all",
                             "enum": [
                                 "endure",
-                                "restart"
+                                "restart",
+                                "ignore-running"
                             ]
                         },
                         "stop-mode": {

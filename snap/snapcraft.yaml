@@ -16,6 +16,10 @@ assumes:
 environment:
   PATH: "$SNAP/libexec/snapcraft:/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   LD_LIBRARY_PATH: "$SNAP/none"
+  # cryptography>=42.0 cannot load legacy algorithms on
+  # Ubuntu 20.04 for armhf, ppc64el, riscv64, and s390x
+  CRYPTOGRAPHY_OPENSSL_NO_LEGACY: "1"
+
 
 apps:
   snapcraft:

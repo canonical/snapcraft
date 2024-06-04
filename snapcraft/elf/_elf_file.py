@@ -234,7 +234,7 @@ class ElfFile:
 
     # pylint: disable=too-many-branches
 
-    def _extract_attributes(self) -> None:  # noqa: C901
+    def _extract_attributes(self) -> None:  # noqa: C901,PLR0912
         with self.path.open("rb") as file:
             elf_file = elffile.ELFFile(file)
 
@@ -447,7 +447,7 @@ def _ldd(
     path: Path, ld_library_paths: List[str], *, ld_preload: Optional[str] = None
 ) -> Dict[str, str]:
     """Use host ldd to determine library dependencies."""
-    ldd = utils.get_host_tool("ldd")  # TODO: check if we can run from base
+    ldd = utils.get_host_tool("ldd")  # TODO: use `ld` from the base snap (#4751)
     env = {
         "LD_LIBRARY_PATH": ":".join(ld_library_paths),
     }

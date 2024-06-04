@@ -83,8 +83,8 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
     build_plan = get_build_plan(yaml_data, parsed_args)
 
     # Register our own callbacks
-    callbacks.register_prologue(_set_global_environment)
-    callbacks.register_pre_step(_set_step_environment)
+    callbacks.register_prologue(set_global_environment)
+    callbacks.register_pre_step(set_step_environment)
     callbacks.register_post_step(patch_elf, step_list=[Step.PRIME])
 
     build_count = utils.get_parallel_build_count()
@@ -574,12 +574,10 @@ def _expose_prime(
     instance.mount(host_source=project_path / "prime", target=dirs.prime_dir)
 
 
-def _set_global_environment(info: ProjectInfo) -> None:
+def set_global_environment(info: ProjectInfo) -> None:
     """Set global environment variables."""
     info.global_environment.update(
         {
-            "SNAPCRAFT_ARCH_TRIPLET": info.arch_triplet,
-            "SNAPCRAFT_TARGET_ARCH": info.target_arch,
             "SNAPCRAFT_PARALLEL_BUILD_COUNT": str(info.parallel_build_count),
             "SNAPCRAFT_PROJECT_VERSION": info.get_project_var("version", raw_read=True),
             "SNAPCRAFT_PROJECT_GRADE": info.get_project_var("grade", raw_read=True),
@@ -589,6 +587,15 @@ def _set_global_environment(info: ProjectInfo) -> None:
             "SNAPCRAFT_PRIME": str(info.prime_dir),
         }
     )
+
+    # add deprecated environment variables for core22
+    if info.base == "core22":
+        info.global_environment.update(
+            {
+                "SNAPCRAFT_ARCH_TRIPLET": info.arch_triplet,
+                "SNAPCRAFT_TARGET_ARCH": info.target_arch,
+            }
+        )
 
     if info.partitions:
         info.global_environment.update(_get_environment_for_partitions(info))
@@ -645,7 +652,7 @@ def _check_experimental_plugins(
         )
 
 
-def _set_step_environment(step_info: StepInfo) -> bool:
+def set_step_environment(step_info: StepInfo) -> bool:
     """Set the step environment before executing each lifecycle step."""
     step_info.step_environment.update(
         {
@@ -659,8 +666,18 @@ def _set_step_environment(step_info: StepInfo) -> bool:
     return True
 
 
-def patch_elf(step_info: StepInfo) -> bool:
-    """Patch rpath and interpreter in ELF files for classic mode."""
+def patch_elf(step_info: StepInfo, use_system_libs: bool = True) -> bool:
+    """Patch rpath and interpreter in ELF files for classic mode.
+
+    :param step_info: The step information.
+    :param use_system_libs: If true, search for dependencies in the default
+        library search paths.
+
+    :returns: True
+
+    :raises DynamicLinkerNotFound: If the dynamic linker is not found.
+    :raises PatcherError: If the ELF file cannot be patched.
+    """
     if "enable-patchelf" not in step_info.build_attributes:
         emit.debug(f"patch_elf: not enabled for part {step_info.part_name!r}")
         return True
@@ -701,7 +718,7 @@ def patch_elf(step_info: StepInfo) -> bool:
 
         relative_path = elf_file.path.relative_to(step_info.prime_dir)
         emit.progress(f"Patch ELF file: {str(relative_path)!r}")
-        patcher.patch(elf_file=elf_file)
+        patcher.patch(elf_file=elf_file, use_system_libs=use_system_libs)
 
     return True
 
@@ -737,6 +754,7 @@ def _expand_environment(
     dirs = craft_parts.ProjectDirs(work_dir=work_dir, partitions=partitions)
     info = craft_parts.ProjectInfo(
         application_name="snapcraft",  # not used in environment expansion
+        base=yaml_utils.get_base_from_yaml(snapcraft_yaml) or "",
         cache_dir=Path(),  # not used in environment expansion
         arch=convert_architecture_deb_to_platform(target_arch),
         parallel_build_count=parallel_build_count,
@@ -745,7 +763,7 @@ def _expand_environment(
         project_vars=project_vars,
         partitions=partitions,
     )
-    _set_global_environment(info)
+    set_global_environment(info)
 
     craft_parts.expand_environment(snapcraft_yaml, info=info, skip=["name", "version"])
 
