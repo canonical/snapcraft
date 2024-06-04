@@ -791,7 +791,7 @@ def test_monitor_build_error(mocker, emitter, snapcraft_yaml, base, fake_service
     emitter.assert_progress("Cleaning up")
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_confirm")
 def test_monitor_build_interrupt(mocker, emitter, snapcraft_yaml, base, fake_services):
     """Test the monitor_build cleanup when a keyboard interrupt occurs."""
@@ -923,7 +923,7 @@ def test_monitor_build_failure(mocker, emitter, snapcraft_yaml, base, fake_servi
     emitter.assert_progress("Cleaning up")
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_confirm")
 def test_monitor_build_success_no_artifacts(
     mocker, emitter, snapcraft_yaml, base, fake_services
@@ -977,7 +977,7 @@ def test_monitor_build_success_no_artifacts(
     emitter.assert_progress("Cleaning up")
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_confirm")
 def test_monitor_build_success_no_logs(
     mocker, emitter, snapcraft_yaml, base, fake_services
@@ -1025,7 +1025,7 @@ def test_monitor_build_success_no_logs(
     emitter.assert_progress("Cleaning up")
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_confirm")
 def test_recover_build(mocker, snapcraft_yaml, base, fake_services):
     """Recover a build when `--recover` is provided."""
