@@ -141,11 +141,7 @@ def _run_command(  # noqa PLR0913 # pylint: disable=too-many-branches, too-many-
                 permanent=True,
             )
 
-    if parsed_args.use_lxd or (
-        not managed_mode
-        and not parsed_args.destructive_mode
-        and not os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "host"
-    ):
+    if _is_manager(parsed_args):
         if command_name == "clean" and not part_names:
             _clean_provider(project, parsed_args)
         else:
@@ -842,3 +838,17 @@ def _validate_and_get_partitions(yaml_data: Dict[str, Any]) -> Optional[List[str
         return project.get_partitions()
 
     return None
+
+
+def _is_manager(parsed_args: argparse.Namespace) -> bool:
+    """Check if snapcraft is managing a build environment.
+
+    :param parsed_args: The parsed arguments.
+
+    :returns: True if this instance of snapcraft is managing a build environment.
+    """
+    return parsed_args.use_lxd or (
+        not utils.is_managed_mode()
+        and not parsed_args.destructive_mode
+        and not os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "host"
+    )
