@@ -33,3 +33,4 @@ jobs:
         run: renovate --dry-run --autodiscover
         env:
           RENOVATE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RENOVATE_USE_BASE_BRANCH_CONFIG: ${{ github.ref }}

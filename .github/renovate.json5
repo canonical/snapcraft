@@ -30,7 +30,7 @@
       // Automerge patches, pin changes and digest changes.
       // Also groups these changes together.
       groupName: "bugfixes",
-      excludePackagePrefixes: ["lint", "types"],
+      excludeDepPatterns: ["lint/.*", "types/.*"],
       matchUpdateTypes: ["patch", "pin", "digest"],
       prPriority: 3, // Patches should go first!
       automerge: true
@@ -38,7 +38,7 @@
     {
       // Update all internal packages in one higher-priority PR
       groupName: "internal packages",
-      matchPackagePrefixes: ["craft-", "snap-"],
+      matchDepPatterns: ["craft-.*", "snap-.*"],
       matchLanguages: ["python"],
       prPriority: 2
     },
@@ -59,10 +59,10 @@
       // Minor changes can be grouped and automerged for dev dependencies, but are also deprioritised.
       groupName: "development dependencies (non-major)",
       groupSlug: "dev-dependencies",
-      matchPackagePrefixes: [
-        "dev",
-        "lint",
-        "types"
+      matchDepPatterns: [
+        "dev/.*",
+        "lint/.*",
+        "types/.*"
       ],
       matchUpdateTypes: ["minor", "patch", "pin", "digest"],
       prPriority: -1,
@@ -74,7 +74,7 @@
       groupSlug: "doc-dependencies",
       matchPackageNames: ["Sphinx", "furo"],
       matchPackagePatterns: ["[Ss]phinx.*$"],
-      matchPackagePrefixes: ["docs"],
+      matchDepPatterns: ["docs/.*"],
     },
     {
       // Other major dependencies get deprioritised below minor dev dependencies.
