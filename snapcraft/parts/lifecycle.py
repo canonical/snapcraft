@@ -91,6 +91,8 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
 
     partitions = _validate_and_get_partitions(yaml_data)
 
+    _warn_on_multiple_builds(parsed_args, build_plan)
+
     for build_on, build_for in build_plan:
         emit.verbose(f"Running on {build_on} for {build_for}")
         yaml_data_for_arch = yaml_utils.apply_yaml(yaml_data, build_on, build_for)
@@ -141,11 +143,7 @@ def _run_command(  # noqa PLR0913 # pylint: disable=too-many-branches, too-many-
                 permanent=True,
             )
 
-    if parsed_args.use_lxd or (
-        not managed_mode
-        and not parsed_args.destructive_mode
-        and not os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "host"
-    ):
+    if _is_manager(parsed_args):
         if command_name == "clean" and not part_names:
             _clean_provider(project, parsed_args)
         else:
@@ -842,3 +840,38 @@ def _validate_and_get_partitions(yaml_data: Dict[str, Any]) -> Optional[List[str
         return project.get_partitions()
 
     return None
+
+
+def _is_manager(parsed_args: "argparse.Namespace") -> bool:
+    """Check if snapcraft is managing build environments.
+
+    :param parsed_args: The parsed arguments.
+
+    :returns: True if this instance of snapcraft is managing a build environment.
+    """
+    return parsed_args.use_lxd or (
+        not utils.is_managed_mode()
+        and not parsed_args.destructive_mode
+        and not os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "host"
+    )
+
+
+def _warn_on_multiple_builds(
+    parsed_args: "argparse.Namespace", build_plan: List[Tuple[str, str]]
+) -> None:
+    """Warn if snapcraft will build multiple snaps in the same environment.
+
+    :param parsed_args: The parsed arguments.
+    :param build_plan: The build plan.
+    """
+    # the only acceptable scenario for multiple items in the filtered build plan
+    # is when snapcraft is managing build environments
+    if not _is_manager(parsed_args) and len(build_plan) > 1:
+        emit.message(
+            "Warning: Snapcraft is building multiple snaps in the same "
+            "environment which may result in unexpected behavior."
+        )
+        emit.message(
+            "For more information, check out: "
+            "https://snapcraft.io/docs/explanation-architectures#core22-8"
+        )
