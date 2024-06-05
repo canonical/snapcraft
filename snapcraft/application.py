@@ -129,8 +129,10 @@ class Snapcraft(Application):
     def _register_default_plugins(self) -> None:
         """Register per application plugins when initializing."""
         super()._register_default_plugins()
-        # dotnet is disabled for core24 because it is pending a rewrite
-        craft_parts.plugins.unregister("dotnet")
+
+        if self._known_core24:
+            # dotnet is disabled for core24 and newer because it is pending a rewrite
+            craft_parts.plugins.unregister("dotnet")
 
     @override
     def _configure_services(self, provider_name: str | None) -> None:
