@@ -843,7 +843,7 @@ def _validate_and_get_partitions(yaml_data: Dict[str, Any]) -> Optional[List[str
 
 
 def _is_manager(parsed_args: "argparse.Namespace") -> bool:
-    """Check if snapcraft is managing a build environment.
+    """Check if snapcraft is managing build environments.
 
     :param parsed_args: The parsed arguments.
 
