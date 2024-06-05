@@ -1,0 +1,4 @@
+summary: Test "snapcraft try" in core24
+
+execute: |
+  snapcraft try 2>&1 | grep -q -e '"snapcraft try" is not implemented for core24'
