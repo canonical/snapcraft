@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Import types and tell flake8 to ignore the "unused" List.
-
 """Extension to the Colcon plugin for ROS 2 Jazzy using content sharing."""
 
 import functools
