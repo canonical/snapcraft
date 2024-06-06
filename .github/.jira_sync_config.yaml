@@ -1,0 +1,22 @@
+settings:
+  components:
+    - Starbase
+  labels:
+    - Triaged
+  # Adds a comment with the JIRA ID
+  add_gh_comment: true
+  # Reflect changes on JIRA
+  sync_description: true
+  # Comments are synced from Github to JIRA
+  # Nothing goes from JIRA to Github
+  sync_comments: true
+  # epic_key: "MTC-296"
+  jira_project_key: "CRAFT"
+  status_mapping:
+    opened: Triaged
+    closed: done
+  label_mapping:
+    enhancement: Story
+    bug: Bug
+    spike: Spike
+    epic: Epic
