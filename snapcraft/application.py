@@ -85,10 +85,11 @@ def _get_esm_error_for_base(base: str) -> None:
 class Snapcraft(Application):
     """Snapcraft application definition."""
 
+    _known_core24: bool
+    """True if the project should use the core24/craft-application codepath."""
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        # Whether we know that we should use the core24-based codepath.
-        self._known_core24 = False
         self._parse_info: dict[str, list[str]] = {}
 
         # Locate the project file. It's used in early execution to determine
@@ -99,12 +100,27 @@ class Snapcraft(Application):
             self._snapcraft_yaml_path: pathlib.Path | None = self._resolve_project_path(
                 None
             )
+            with self._snapcraft_yaml_path.open() as file:
+                self._snapcraft_yaml_data = util.safe_yaml_load(file)
         except FileNotFoundError:
-            self._snapcraft_yaml_path = None
+            self._snapcraft_yaml_path = self._snapcraft_yaml_data = None
+
+        self._known_core24 = self._get_known_craft_app_base()
 
         for craft_var, snapcraft_var in MAPPED_ENV_VARS.items():
             if env_val := os.getenv(snapcraft_var):
                 os.environ[craft_var] = env_val
+
+    def _get_known_craft_app_base(self) -> bool:
+        if self._snapcraft_yaml_data:
+            base = self._snapcraft_yaml_data.get("base")
+            build_base = self._snapcraft_yaml_data.get("build-base")
+
+            # We know for sure that we're handling a core24 project
+            if "core24" in (base, build_base) or build_base == "devel":
+                return True
+
+        return False
 
     def _get_app_plugins(self) -> dict[str, PluginType]:
         return plugins.get_plugins(core22=False)
@@ -181,22 +197,23 @@ class Snapcraft(Application):
 
     @override
     def _get_dispatcher(self) -> craft_cli.Dispatcher:
-        # Handle "multiplexing" of Snapcraft "codebases" depending on the
-        # project's base (if any). Here, we handle the case where there *is*
-        # a project and it's core24, which means it should definitely fall into
-        # the craft-application-based flow.
-        if self._snapcraft_yaml_path:
-            with self._snapcraft_yaml_path.open() as file:
-                yaml_data = util.safe_yaml_load(file)
-            base = yaml_data.get("base")
-            build_base = yaml_data.get("build-base")
+        """Handle multiplexing of Snapcraft "codebases" depending on the project's base.
+
+        The ClassicFallback-based flow is used in any of the following scenarios:
+          - there is no project to load
+          - for core20 remote builds if SNAPCRAFT_REMOTE_BUILD_STRATEGY is not "disable-fallback"
+          - for core22 remote builds if SNAPCRAFT_REMOTE_BUILD_STRATEGY is "force-fallback"
+
+        The craft-application-based flow is used in any of the following scenarios:
+          - the project base is core24 or newer
+          - for the "version" command
+        """
+        if self._snapcraft_yaml_data:
+            base = self._snapcraft_yaml_data.get("base")
+            build_base = self._snapcraft_yaml_data.get("build-base")
             _get_esm_error_for_base(base)
-            if "core24" in (base, build_base) or build_base == "devel":
-                # We know for sure that we're handling a core24 project
-                self._known_core24 = True
-            elif any(arg in ("version", "--version", "-V") for arg in sys.argv):
-                pass
-            elif "remote-build" in sys.argv and any(
+
+            if "remote-build" in sys.argv and any(
                 b in ("core20", "core22") for b in (base, build_base)
             ):
                 build_strategy = os.environ.get("SNAPCRAFT_REMOTE_BUILD_STRATEGY", None)
@@ -223,7 +240,9 @@ class Snapcraft(Application):
                     and build_strategy == "force-fallback"
                 ):
                     raise errors.ClassicFallback()
-            else:
+            elif not self._known_core24 and not any(
+                arg in ("version", "--version", "-V") for arg in sys.argv
+            ):
                 raise errors.ClassicFallback()
         return super()._get_dispatcher()
 
