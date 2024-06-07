@@ -105,13 +105,14 @@ class Snapcraft(Application):
         except FileNotFoundError:
             self._snapcraft_yaml_path = self._snapcraft_yaml_data = None
 
-        self._known_core24 = self._get_known_craft_app_base()
+        self._known_core24 = self._get_known_core24()
 
         for craft_var, snapcraft_var in MAPPED_ENV_VARS.items():
             if env_val := os.getenv(snapcraft_var):
                 os.environ[craft_var] = env_val
 
-    def _get_known_craft_app_base(self) -> bool:
+    def _get_known_core24(self) -> bool:
+        """Return true if the project is known to be core24."""
         if self._snapcraft_yaml_data:
             base = self._snapcraft_yaml_data.get("base")
             build_base = self._snapcraft_yaml_data.get("build-base")

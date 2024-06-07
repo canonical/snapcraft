@@ -517,3 +517,26 @@ def test_run_envvar_invalid(snapcraft_yaml, base, monkeypatch):
         "'SNAPCRAFT_REMOTE_BUILD_STRATEGY'. Valid values are 'disable-fallback' and "
         "'force-fallback'"
     )
+
+
+@pytest.mark.parametrize(
+    ("base", "build_base", "is_known_core24"),
+    [
+        ("core20", None, False),
+        ("core20", "core20", False),
+        ("core20", "devel", False),
+        ("core22", None, False),
+        ("core22", "core22", False),
+        ("core22", "devel", False),
+        ("core24", "core22", True),
+        ("core24", None, True),
+        ("core24", "core24", True),
+        ("core24", "devel", True),
+    ],
+)
+def test_known_core24(snapcraft_yaml, base, build_base, is_known_core24):
+    snapcraft_yaml(base=base, build_base=build_base)
+
+    app = application.create_app()
+
+    assert app._known_core24 == is_known_core24
