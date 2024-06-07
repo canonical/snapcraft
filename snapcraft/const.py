@@ -35,3 +35,15 @@ class SnapArch(str, enum.Enum):
 
 
 SUPPORTED_ARCHS = frozenset(arch.value for arch in SnapArch)
+
+BASES = frozenset({"core", "core18", "core20", "core22", "core24", "devel"})
+"""All bases recognized by snapcraft."""
+
+ESM_BASES = frozenset({"core", "core18"})
+"""Bases no longer supported by the current version of snapcraft."""
+
+LEGACY_BASES = frozenset({"core20"})
+"""Bases handled by the legacy snapcraft codebase."""
+
+CURRENT_BASES = frozenset(BASES - ESM_BASES - LEGACY_BASES)
+"""Bases handled by the current snapcraft codebase."""

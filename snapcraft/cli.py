@@ -20,8 +20,10 @@ import argparse
 import contextlib
 import os
 import sys
+from dataclasses import dataclass
 from typing import Any, Dict
 
+import craft_application.commands
 import craft_cli
 import craft_store
 from craft_application.errors import RemoteBuildError
@@ -34,31 +36,61 @@ from snapcraft.parts import plugins
 from . import commands
 from .legacy_cli import run_legacy
 
+
+@dataclass
+class CommandGroup:
+    """Dataclass to hold a command group."""
+
+    name: str
+    commands: list
+
+
+CORE22_LIFECYCLE_COMMAND_GROUP = CommandGroup(
+    "Lifecycle",
+    [
+        commands.core22.CleanCommand,
+        commands.core22.PullCommand,
+        commands.core22.BuildCommand,
+        commands.core22.StageCommand,
+        commands.core22.PrimeCommand,
+        commands.core22.PackCommand,
+        commands.core22.SnapCommand,  # hidden (legacy compatibility)
+        commands.core22.TryCommand,
+    ],
+)
+
+CORE24_LIFECYCLE_COMMAND_GROUP = CommandGroup(
+    "Lifecycle",
+    [
+        craft_application.commands.lifecycle.CleanCommand,
+        craft_application.commands.lifecycle.PullCommand,
+        craft_application.commands.lifecycle.BuildCommand,
+        craft_application.commands.lifecycle.StageCommand,
+        craft_application.commands.lifecycle.PrimeCommand,
+        commands.PackCommand,
+        commands.SnapCommand,  # Hidden (legacy compatibility)
+        commands.RemoteBuildCommand,
+        commands.TryCommand,
+    ],
+)
+
 COMMAND_GROUPS = [
-    craft_cli.CommandGroup(
-        "Lifecycle",
+    CommandGroup(
+        "Plugins",
         [
-            commands.core22.CleanCommand,
-            commands.core22.PullCommand,
-            commands.core22.BuildCommand,
-            commands.core22.StageCommand,
-            commands.core22.PrimeCommand,
-            commands.core22.PackCommand,
-            commands.core22.SnapCommand,  # hidden (legacy compatibility)
-            commands.core22.PluginsCommand,
-            commands.core22.ListPluginsCommand,
-            commands.core22.TryCommand,
+            commands.PluginsCommand,
+            commands.ListPluginsCommand,
         ],
     ),
-    craft_cli.CommandGroup(
+    CommandGroup(
         "Extensions",
         [
-            commands.core22.ListExtensionsCommand,
-            commands.core22.ExtensionsCommand,  # hidden (alias to list-extensions)
-            commands.core22.ExpandExtensionsCommand,
+            commands.ListExtensionsCommand,
+            commands.ExtensionsCommand,  # hidden (alias to list-extensions)
+            commands.ExpandExtensionsCommand,
         ],
     ),
-    craft_cli.CommandGroup(
+    CommandGroup(
         "Store Account",
         [
             commands.StoreLoginCommand,
@@ -67,7 +99,7 @@ COMMAND_GROUPS = [
             commands.StoreWhoAmICommand,
         ],
     ),
-    craft_cli.CommandGroup(
+    CommandGroup(
         "Store Snap Names",
         [
             commands.StoreRegisterCommand,
@@ -78,7 +110,7 @@ COMMAND_GROUPS = [
             commands.StoreLegacyUploadMetadataCommand,
         ],
     ),
-    craft_cli.CommandGroup(
+    CommandGroup(
         "Store Snap Release Management",
         [
             commands.StoreReleaseCommand,
@@ -91,7 +123,7 @@ COMMAND_GROUPS = [
             commands.StoreRevisionsCommand,  # hidden (alias to list-revisions)
         ],
     ),
-    craft_cli.CommandGroup(
+    CommandGroup(
         "Store Snap Tracks",
         [
             commands.StoreListTracksCommand,
@@ -99,7 +131,7 @@ COMMAND_GROUPS = [
             commands.StoreLegacySetDefaultTrackCommand,
         ],
     ),
-    craft_cli.CommandGroup(
+    CommandGroup(
         "Store Key Management",
         [
             commands.StoreLegacyCreateKeyCommand,
@@ -108,7 +140,7 @@ COMMAND_GROUPS = [
             commands.StoreLegacyListKeysCommand,
         ],
     ),
-    craft_cli.CommandGroup(
+    CommandGroup(
         "Store Validation Sets",
         [
             commands.StoreEditValidationSetsCommand,
@@ -117,10 +149,12 @@ COMMAND_GROUPS = [
             commands.StoreLegacyGatedCommand,
         ],
     ),
-    craft_cli.CommandGroup(
+    CommandGroup(
         "Other",
         [
-            commands.core22.InitCommand,
+            *craft_application.commands.get_other_command_group().commands,
+            commands.LintCommand,
+            commands.InitCommand,
         ],
     ),
 ]
@@ -171,9 +205,14 @@ def get_verbosity() -> EmitterMode:
 
 def get_dispatcher() -> craft_cli.Dispatcher:
     """Return an instance of Dispatcher."""
+    craft_cli_command_groups = [
+        craft_cli.CommandGroup(group.name, group.commands)
+        for group in COMMAND_GROUPS + [CORE22_LIFECYCLE_COMMAND_GROUP]
+    ]
+
     return craft_cli.Dispatcher(
         "snapcraft",
-        COMMAND_GROUPS,
+        craft_cli_command_groups,
         summary="Package, distribute, and update snaps for Linux and IoT",
         extra_global_args=GLOBAL_ARGS,
         default_command=commands.core22.PackCommand,

@@ -2310,3 +2310,45 @@ def test_lifecycle_pack_components_with_output(
             output_dir=new_dir / "dir",
         ),
     ]
+
+
+@pytest.mark.parametrize(
+    "cmd", ["pull", "build", "stage", "prime", "pack", "snap", "clean"]
+)
+def test_lifecycle_warn_on_multiple_builds(
+    cmd, mocker, snapcraft_yaml, new_dir, emitter
+):
+    """Warn if multiple snaps will be built in the same environment."""
+    mocker.patch("snapcraft.parts.lifecycle._is_manager", return_value=False)
+    mocker.patch(
+        "snapcraft.parts.lifecycle.get_host_architecture", return_value="arm64"
+    )
+    snapcraft_yaml(
+        base="core22",
+        architectures=[
+            {"build-on": "arm64", "build-for": "arm64"},
+            {"build-on": "arm64", "build-for": "armhf"},
+        ],
+    )
+
+    mocker.patch("snapcraft.parts.lifecycle._run_command")
+
+    parts_lifecycle.run(
+        cmd,
+        parsed_args=argparse.Namespace(
+            destructive_mode=False,
+            use_lxd=False,
+            provider=None,
+            ua_token=None,
+            build_for=None,
+        ),
+    )
+
+    emitter.assert_message(
+        "Warning: Snapcraft is building multiple snaps in the same "
+        "environment which may result in unexpected behavior."
+    )
+    emitter.assert_message(
+        "For more information, check out: "
+        "https://snapcraft.io/docs/explanation-architectures#core22-8"
+    )
