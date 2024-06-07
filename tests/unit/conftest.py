@@ -382,7 +382,6 @@ def extra_project_params():
 
 
 # The factory setup from CraftApplication is imported at the fixture level.
-# pylint: disable=import-outside-toplevel
 
 
 @pytest.fixture()
@@ -522,9 +521,6 @@ def remote_build_service(default_factory, mocker):
     service.lp = fake_lp
 
     return service
-
-
-# pylint: enable=import-outside-toplevel
 
 
 @pytest.fixture()

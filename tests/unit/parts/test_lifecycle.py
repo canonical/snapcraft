@@ -1054,7 +1054,7 @@ def test_lifecycle_shell(snapcraft_yaml, cmd, expected_last_step, new_dir, mocke
     """Check if the last step executed before shell is the previous step."""
     last_step = None
 
-    def _fake_execute(_, action: Action, **kwargs):  # pylint: disable=unused-argument
+    def _fake_execute(_, action: Action, **kwargs):
         nonlocal last_step
         last_step = action.step
 
@@ -1102,7 +1102,7 @@ def test_lifecycle_shell_after(
     """Check if the last step executed before shell is the current step."""
     last_step = None
 
-    def _fake_execute(_, action: Action, **kwargs):  # pylint: disable=unused-argument
+    def _fake_execute(_, action: Action, **kwargs):
         nonlocal last_step
         last_step = action.step
 
@@ -1600,7 +1600,6 @@ def test_lifecycle_run_in_provider_default(
         (EmitterMode.TRACE, "--verbosity=trace"),
     ],
 )
-# pylint: disable-next=too-many-locals
 def test_lifecycle_run_in_provider_all_options(
     mock_get_instance_name,
     mock_instance,

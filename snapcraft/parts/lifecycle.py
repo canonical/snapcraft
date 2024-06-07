@@ -116,7 +116,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
         )
 
 
-def _run_command(  # noqa PLR0913 # pylint: disable=too-many-branches, too-many-statements
+def _run_command(  # noqa PLR0913 (too-many-arguments)
     command_name: str,
     *,
     project: models.Project,
@@ -438,7 +438,6 @@ def _clean_provider(project: models.Project, parsed_args: "argparse.Namespace") 
     emit.progress("Cleaned build provider", permanent=True)
 
 
-# pylint: disable-next=too-many-branches, too-many-statements
 def _run_in_provider(  # noqa PLR0915
     project: models.Project, command_name: str, parsed_args: "argparse.Namespace"
 ) -> None:

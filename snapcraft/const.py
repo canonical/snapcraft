@@ -22,7 +22,6 @@ import enum
 class SnapArch(str, enum.Enum):
     """An architecture for a snap."""
 
-    # pylint: disable=invalid-name
     amd64 = "amd64"
     arm64 = "arm64"
     armhf = "armhf"

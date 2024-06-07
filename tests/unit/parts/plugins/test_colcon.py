@@ -167,7 +167,6 @@ class TestPluginColconPlugin:
     def test_get_build_commands_core22(
         self, setup_method_fixture, new_dir, monkeypatch
     ):
-        # pylint: disable=line-too-long
         plugin = setup_method_fixture("core22", new_dir)
 
         monkeypatch.setattr(sys, "path", ["", "/test"])
@@ -325,7 +324,7 @@ class TestPluginColconPlugin:
     def test_get_build_commands_with_all_properties_core22(
         self, setup_method_fixture, new_dir, monkeypatch
     ):
-        # pylint: disable=line-too-long
+
         plugin = setup_method_fixture(
             "core22",
             new_dir,
@@ -607,7 +606,7 @@ class TestPluginColconPlugin:
     def test_get_build_commands_with_cmake_debug(
         self, setup_method_fixture, new_dir, monkeypatch
     ):
-        # pylint: disable=line-too-long
+
         plugin = setup_method_fixture(
             "core22",
             new_dir,

@@ -178,7 +178,7 @@ sh -s -- -y --no-modify-path --profile=minimal --default-toolchain {channel}
         for crate in options.rust_path:
             logger.info("Generating build commands for %s", crate)
             config_cmd_string = " ".join(config_cmd)
-            # pylint: disable=line-too-long
+
             rust_build_cmd_single = dedent(
                 f"""\
                 if cargo read-manifest --manifest-path "{crate}"/Cargo.toml > /dev/null; then

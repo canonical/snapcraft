@@ -162,10 +162,7 @@ class RemoteBuildCommand(ExtensibleCommand):
                         retcode=78,  # Configuration error
                     )
 
-    # pylint: disable=too-many-statements
-    def _run(  # noqa: PLR0915 (Too many statements)
-        self, parsed_args: argparse.Namespace, **kwargs: Any
-    ) -> int | None:
+    def _run(self, parsed_args: argparse.Namespace, **kwargs: Any) -> int | None:
         """Run the remote-build command.
 
         :param parsed_args: Snapcraft's argument namespace.

@@ -246,7 +246,6 @@ def _emit_error(error, cause=None):
     emit.error(error)
 
 
-# pylint: disable-next=too-many-statements
 def run():  # noqa: C901 (complex-structure)
     """Run the CLI."""
     dispatcher = get_dispatcher()
@@ -264,8 +263,7 @@ def run():  # noqa: C901 (complex-structure)
         with contextlib.suppress(KeyError, IndexError):
             if (
                 err.__context__ is not None
-                and err.__context__.args[0]  # pylint: disable=no-member
-                not in dispatcher.commands
+                and err.__context__.args[0] not in dispatcher.commands
             ):
                 run_legacy(err)
         print(err, file=sys.stderr)  # to stderr, as argparse normally does

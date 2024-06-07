@@ -326,7 +326,7 @@ class TestAppstreamContent:
 
     def test_appstream_with_ul_in_p(self):
         file_name = "snapcraft_legacy.appdata.xml"
-        # pylint: disable=line-too-long
+
         content = textwrap.dedent(
             """\
             <?xml version="1.0" encoding="UTF-8"?>
@@ -384,7 +384,6 @@ class TestAppstreamContent:
               </component>
         """
         )
-        # pylint: enable=line-too-long
 
         Path(file_name).write_text(content)
 
@@ -432,7 +431,7 @@ class TestAppstreamContent:
 
     def test_appstream_release(self):
         file_name = "foliate.appdata.xml"
-        # pylint: disable=line-too-long
+
         content = textwrap.dedent(
             """\
             <?xml version="1.0" encoding="UTF-8"?>
@@ -470,7 +469,6 @@ class TestAppstreamContent:
             </component>
         """
         )
-        # pylint: enable=line-too-long
 
         Path(file_name).write_text(content)
 

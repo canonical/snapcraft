@@ -14,12 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=too-many-lines
-
 """Project file definition and helpers."""
 from __future__ import annotations
 
-# pylint: disable=too-many-lines
 import copy
 import re
 from typing import (
@@ -944,7 +941,6 @@ class Project(models.Project):
 
     def get_build_on(self) -> str:
         """Get the first build_on architecture from the project for core22."""
-        # pylint: disable=unsubscriptable-object
         if (
             self.architectures
             and isinstance(self.architectures[0], Architecture)
@@ -957,7 +953,6 @@ class Project(models.Project):
 
     def get_build_for(self) -> str:
         """Get the first build_for architecture from the project for core22."""
-        # pylint: disable=unsubscriptable-object
         if (
             self.architectures
             and isinstance(self.architectures[0], Architecture)
@@ -1118,9 +1113,7 @@ class ComponentProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
         return _get_partitions_from_components(self.components)
 
 
-def _format_pydantic_errors(  # pylint: disable=redefined-outer-name
-    errors, *, file_name: str = "snapcraft.yaml"
-):
+def _format_pydantic_errors(errors, *, file_name: str = "snapcraft.yaml"):
     """Format errors.
 
     Example 1: Single error.

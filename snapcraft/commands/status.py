@@ -183,7 +183,7 @@ def _get_channel_line(
     ]
 
 
-def _get_channel_lines_for_channel(  # noqa: C901  # pylint: disable=too-many-locals
+def _get_channel_lines_for_channel(  # noqa: C901 (complex-structure)
     snap_channel_map: ChannelMap,
     channel_name: str,
     architecture: str,
@@ -305,7 +305,7 @@ def _has_channels_for_architecture(
     return found_architecture
 
 
-def get_tabulated_channel_map(  # pylint: disable=too-many-branches, too-many-locals  # noqa: C901
+def get_tabulated_channel_map(  # noqa: C901 (complex-structure)
     snap_channel_map,
     *,
     architectures: Sequence[str],
@@ -353,7 +353,7 @@ def get_tabulated_channel_map(  # pylint: disable=too-many-branches, too-many-lo
     if any(line[expires_column] != "" for line in channel_lines):
         headers.append("Expires at")
         for index, _ in enumerate(channel_lines):
-            if not channel_lines[index][expires_column]:  # pylint: disable=R1736
+            if not channel_lines[index][expires_column]:
                 channel_lines[index][expires_column] = "-"
     else:
         headers.append("")

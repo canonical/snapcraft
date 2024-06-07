@@ -170,7 +170,6 @@ class RosPlugin(plugins.Plugin):
                     search_path = base_path
                 else:
                     search_path = f"{path_ros_sys}:{path_ros_app}"
-                # pylint: disable=line-too-long
                 cmd.extend(
                     [
                         # Retrieve the list of all ROS packages available in the build snap
@@ -190,7 +189,7 @@ class RosPlugin(plugins.Plugin):
                         "fi",
                     ]
                 )
-                # pylint: enable=line-too-long
+
             cmd.append("")
 
         return cmd
@@ -262,11 +261,9 @@ class RosPlugin(plugins.Plugin):
             # Restore saved state
             + ['eval "${state}"']
             + self._get_list_packages_commands()
-            # pylint: disable=line-too-long
             + [
                 'rosdep install --default-yes --ignore-packages-from-source --from-paths "${CRAFT_PART_SRC_WORK}"',
             ]
-            # pylint: enable=line-too-long
             + [
                 'state="$(set +o); set -$-"',
                 "set +u",
@@ -345,7 +342,7 @@ def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
     target_arch: str,
     stage_cache_dir: str,
     base: str,
-):  # pylint: disable=too-many-arguments
+):
     """Stage the runtime dependencies of the ROS stack using rosdep."""
     click.echo("Staging runtime dependencies...")
     # @todo: support python packages (only apt currently supported)
