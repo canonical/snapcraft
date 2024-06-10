@@ -95,7 +95,7 @@ def fake_tools(new_dir, monkeypatch):
 
 def _fake_elffile_extract_attributes(  # noqa: PLR0915
     self,
-):  # pylint: disable=too-many-statements
+):
     """Mock method definition for ElfFile._extract_attributes()."""
     name = self.path.name
 

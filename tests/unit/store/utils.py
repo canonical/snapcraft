@@ -22,7 +22,7 @@ import requests
 class FakeResponse(requests.Response):
     """A fake requests.Response."""
 
-    def __init__(self, content, status_code):  # pylint: disable=super-init-not-called
+    def __init__(self, content, status_code):
         self._content = content
         self.status_code = status_code
 

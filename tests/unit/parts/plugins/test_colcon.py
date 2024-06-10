@@ -167,7 +167,6 @@ class TestPluginColconPlugin:
     def test_get_build_commands_core22(
         self, setup_method_fixture, new_dir, monkeypatch
     ):
-        # pylint: disable=line-too-long
         plugin = setup_method_fixture("core22", new_dir)
 
         monkeypatch.setattr(sys, "path", ["", "/test"])
@@ -246,7 +245,6 @@ class TestPluginColconPlugin:
     def test_get_build_commands_core24(
         self, setup_method_fixture, new_dir, monkeypatch
     ):
-        # pylint: disable=line-too-long
         plugin = setup_method_fixture("core24", new_dir)
 
         monkeypatch.setattr(sys, "path", ["", "/test"])
@@ -325,7 +323,7 @@ class TestPluginColconPlugin:
     def test_get_build_commands_with_all_properties_core22(
         self, setup_method_fixture, new_dir, monkeypatch
     ):
-        # pylint: disable=line-too-long
+
         plugin = setup_method_fixture(
             "core22",
             new_dir,
@@ -400,13 +398,13 @@ class TestPluginColconPlugin:
             "fi",
             'if [ -d "/snap/foo/current/opt/ros/${ROS_DISTRO}/" ]; then',
             'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths '
-            '"/snap/foo/current/opt/ros/${ROS_DISTRO}" --ignore-packages-from-source | '
+            '"/snap/foo/current/opt/ros/${ROS_DISTRO}/" --ignore-packages-from-source | '
             '(xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" '
             '>> "${CRAFT_PART_INSTALL}"/.installed_packages.txt',
             "fi",
             'if [ -d "/snap/foo/current/opt/ros/snap/" ]; then',
             'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths '
-            '"/snap/foo/current/opt/ros/snap" --ignore-packages-from-source | (xargs '
+            '"/snap/foo/current/opt/ros/snap/" --ignore-packages-from-source | (xargs '
             'rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> '
             '"${CRAFT_PART_INSTALL}"/.installed_packages.txt',
             "fi",
@@ -466,7 +464,6 @@ class TestPluginColconPlugin:
     def test_get_build_commands_with_all_properties_core24(
         self, setup_method_fixture, new_dir, monkeypatch
     ):
-        # pylint: disable=line-too-long
         plugin = setup_method_fixture(
             "core24",
             new_dir,
@@ -534,20 +531,20 @@ class TestPluginColconPlugin:
             'rm -f "${CRAFT_PART_INSTALL}/.installed_packages.txt"',
             'rm -f "${CRAFT_PART_INSTALL}/.build_snaps.txt"',
             "if [ -d /snap/foo/current/opt/ros ]; then",
-            "AMENT_PREFIX_PATH=/snap/foo/current/opt/ros ros2 pkg list | (xargs "
+            "AMENT_PREFIX_PATH=/snap/foo/current/opt/ros/${ROS_DISTRO}/:/snap/foo/current/opt/ros/snap/ ros2 pkg list | (xargs "
             'rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | awk '
             '"/#apt/{getline;print;}" >> '
             '"${CRAFT_PART_INSTALL}/.installed_packages.txt"',
             "fi",
             'if [ -d "/snap/foo/current/opt/ros/${ROS_DISTRO}/" ]; then',
             'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths '
-            '"/snap/foo/current/opt/ros/${ROS_DISTRO}" --ignore-packages-from-source | '
+            '"/snap/foo/current/opt/ros/${ROS_DISTRO}/" --ignore-packages-from-source | '
             '(xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" '
             '>> "${CRAFT_PART_INSTALL}"/.installed_packages.txt',
             "fi",
             'if [ -d "/snap/foo/current/opt/ros/snap/" ]; then',
             'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths '
-            '"/snap/foo/current/opt/ros/snap" --ignore-packages-from-source | (xargs '
+            '"/snap/foo/current/opt/ros/snap/" --ignore-packages-from-source | (xargs '
             'rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> '
             '"${CRAFT_PART_INSTALL}"/.installed_packages.txt',
             "fi",
@@ -607,7 +604,7 @@ class TestPluginColconPlugin:
     def test_get_build_commands_with_cmake_debug(
         self, setup_method_fixture, new_dir, monkeypatch
     ):
-        # pylint: disable=line-too-long
+
         plugin = setup_method_fixture(
             "core22",
             new_dir,
@@ -682,13 +679,13 @@ class TestPluginColconPlugin:
             "fi",
             'if [ -d "/snap/foo/current/opt/ros/${ROS_DISTRO}/" ]; then',
             'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths '
-            '"/snap/foo/current/opt/ros/${ROS_DISTRO}" --ignore-packages-from-source | '
+            '"/snap/foo/current/opt/ros/${ROS_DISTRO}/" --ignore-packages-from-source | '
             '(xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" '
             '>> "${CRAFT_PART_INSTALL}"/.installed_packages.txt',
             "fi",
             'if [ -d "/snap/foo/current/opt/ros/snap/" ]; then',
             'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths '
-            '"/snap/foo/current/opt/ros/snap" --ignore-packages-from-source | (xargs '
+            '"/snap/foo/current/opt/ros/snap/" --ignore-packages-from-source | (xargs '
             'rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> '
             '"${CRAFT_PART_INSTALL}"/.installed_packages.txt',
             "fi",

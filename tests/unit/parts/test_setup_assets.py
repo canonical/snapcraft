@@ -423,7 +423,7 @@ class TestSetupAssets:
         desktop_file("prime/test.desktop")
 
         # define project
-        # pylint: disable=line-too-long
+
         project = models.Project.unmarshal(
             yaml_data(
                 {
@@ -439,7 +439,6 @@ class TestSetupAssets:
                 },
             )
         )
-        # pylint: enable=line-too-long
 
         setup_assets(
             project,

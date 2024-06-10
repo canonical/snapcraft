@@ -10,32 +10,6 @@ extend-exclude = '''
 # en masse later.
 target_version = ["py310", "py311"]
 
-[tool.pylint.main]
-ignore-paths = ["tests/legacy"]
-
-[tool.pylint.messages_control]
-# duplicate-code can't be disabled locally: https://github.com/PyCQA/pylint/issues/214
-disable = "too-few-public-methods,fixme,use-implicit-booleaness-not-comparison,duplicate-code,unnecessary-lambda-assignment"
-
-[tool.pylint.format]
-max-attributes = 15
-max-args = 6
-max-locals = 20
-max-branches = 16
-good-names = "id"
-
-[tool.pylint.MASTER]
-extension-pkg-allow-list = [
-    "lxml.etree",
-    "pydantic",
-    "pytest",
-    "pygit2",
-]
-load-plugins = "pylint_fixme_info,pylint_pytest"
-
-[tool.pylint.SIMILARITIES]
-min-similarity-lines=10
-
 [tool.mypy]
 python_version = "3.10"
 ignore_missing_imports = true

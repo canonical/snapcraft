@@ -1054,7 +1054,7 @@ def test_lifecycle_shell(snapcraft_yaml, cmd, expected_last_step, new_dir, mocke
     """Check if the last step executed before shell is the previous step."""
     last_step = None
 
-    def _fake_execute(_, action: Action, **kwargs):  # pylint: disable=unused-argument
+    def _fake_execute(_, action: Action, **kwargs):
         nonlocal last_step
         last_step = action.step
 
@@ -1102,7 +1102,7 @@ def test_lifecycle_shell_after(
     """Check if the last step executed before shell is the current step."""
     last_step = None
 
-    def _fake_execute(_, action: Action, **kwargs):  # pylint: disable=unused-argument
+    def _fake_execute(_, action: Action, **kwargs):
         nonlocal last_step
         last_step = action.step
 
@@ -1600,7 +1600,6 @@ def test_lifecycle_run_in_provider_default(
         (EmitterMode.TRACE, "--verbosity=trace"),
     ],
 )
-# pylint: disable-next=too-many-locals
 def test_lifecycle_run_in_provider_all_options(
     mock_get_instance_name,
     mock_instance,
@@ -2311,3 +2310,45 @@ def test_lifecycle_pack_components_with_output(
             output_dir=new_dir / "dir",
         ),
     ]
+
+
+@pytest.mark.parametrize(
+    "cmd", ["pull", "build", "stage", "prime", "pack", "snap", "clean"]
+)
+def test_lifecycle_warn_on_multiple_builds(
+    cmd, mocker, snapcraft_yaml, new_dir, emitter
+):
+    """Warn if multiple snaps will be built in the same environment."""
+    mocker.patch("snapcraft.parts.lifecycle._is_manager", return_value=False)
+    mocker.patch(
+        "snapcraft.parts.lifecycle.get_host_architecture", return_value="arm64"
+    )
+    snapcraft_yaml(
+        base="core22",
+        architectures=[
+            {"build-on": "arm64", "build-for": "arm64"},
+            {"build-on": "arm64", "build-for": "armhf"},
+        ],
+    )
+
+    mocker.patch("snapcraft.parts.lifecycle._run_command")
+
+    parts_lifecycle.run(
+        cmd,
+        parsed_args=argparse.Namespace(
+            destructive_mode=False,
+            use_lxd=False,
+            provider=None,
+            ua_token=None,
+            build_for=None,
+        ),
+    )
+
+    emitter.assert_message(
+        "Warning: Snapcraft is building multiple snaps in the same "
+        "environment which may result in unexpected behavior."
+    )
+    emitter.assert_message(
+        "For more information, check out: "
+        "https://snapcraft.io/docs/explanation-architectures#core22-8"
+    )

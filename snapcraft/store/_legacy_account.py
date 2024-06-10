@@ -63,9 +63,7 @@ def _deserialize_macaroon(value) -> pymacaroons.Macaroon:
     try:
         return pymacaroons.Macaroon.deserialize(value)
     except:  # noqa LP: #1733004
-        raise errors.LegacyCredentialsParseError(  # pylint: disable=raise-missing-from
-            "Failed to deserialize macaroon"
-        )
+        raise errors.LegacyCredentialsParseError("Failed to deserialize macaroon")
 
 
 def _get_macaroons_from_conf(conf) -> Dict[str, str]:
@@ -160,7 +158,7 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
         base_url: str,
         storage_base_url: str,
         auth_url: str,
-        endpoints: craft_store.endpoints.Endpoints,  # pylint: disable=W0621
+        endpoints: craft_store.endpoints.Endpoints,
         application_name: str,
         user_agent: str,
         environment_auth: Optional[str] = None,

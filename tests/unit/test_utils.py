@@ -648,7 +648,6 @@ def test_confirm_with_user_pause_emitter(mock_isatty, emitter):
     """The emitter should be paused when using the terminal."""
     mock_isatty.return_value = True
 
-    # pylint: disable-next=unused-argument
     def fake_input(prompt):
         """Check if the Emitter is paused."""
         assert emitter.paused

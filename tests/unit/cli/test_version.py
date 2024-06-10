@@ -32,7 +32,7 @@ def test_version_command(mocker):
     app.run()
     assert mock_version_cmd.mock_calls == [
         call(argparse.Namespace()),
-        call().__bool__(),  # pylint: disable=unnecessary-dunder-call
+        call().__bool__(),
     ]
 
 

@@ -250,10 +250,7 @@ class LegacyStoreClientCLI:
         try:
             return self.store_client.request(*args, **kwargs)
         except craft_store.errors.StoreServerError as store_error:
-            if (
-                store_error.response.status_code
-                == requests.codes.unauthorized  # pylint: disable=no-member
-            ):
+            if store_error.response.status_code == requests.codes.unauthorized:
                 if os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS):
                     raise errors.StoreCredentialsUnauthorizedError(
                         "Exported credentials are no longer valid for the Snap Store.",
@@ -589,9 +586,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         self.request(
             "POST",
             self._base_url
-            + self.store_client._endpoints.get_releases_endpoint(  # pylint: disable=protected-access
-                snap_name
-            ),
+            + self.store_client._endpoints.get_releases_endpoint(snap_name),
             json=payload,
         )
 
@@ -604,9 +599,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         response = self.request(
             "GET",
             self._base_url
-            + self.store_client._endpoints.get_releases_endpoint(  # pylint: disable=protected-access
-                snap_name
-            ),
+            + self.store_client._endpoints.get_releases_endpoint(snap_name),
         )
 
         return channel_map.ChannelMap.from_list_releases(

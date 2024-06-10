@@ -24,6 +24,7 @@ import craft_application.commands
 from craft_cli import emit
 from typing_extensions import override
 
+import snapcraft.errors
 import snapcraft.pack
 
 
@@ -92,6 +93,35 @@ class PackCommand(craft_application.commands.lifecycle.PackCommand):
             return False
 
         return super().run_managed(parsed_args)
+
+
+class TryCommand(PackCommand):
+    """Prepare the parts for ``snap try``."""
+
+    name = "try"
+    help_msg = 'Prepare a snap for "snap try".'
+    overview = textwrap.dedent(
+        """
+        Process parts and expose the ``prime`` directory containing the
+        final payload, in preparation for ``snap try prime``.
+        """
+    )
+
+    @override
+    def run_managed(self, parsed_args: argparse.Namespace) -> bool:
+        """Overridden to return false, such that the command fails early."""
+        return False
+
+    @override
+    def _run(
+        self,
+        parsed_args: argparse.Namespace,
+        step_name: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        raise snapcraft.errors.FeatureNotImplemented(
+            '"snapcraft try" is not implemented for core24'
+        )
 
 
 class SnapCommand(PackCommand):
