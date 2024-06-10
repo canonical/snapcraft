@@ -36,6 +36,7 @@ class ComponentMetadata(SnapcraftMetadata):
     version: str | None
     summary: str
     description: str
+    provenance: str | None
 
 
 def write(
@@ -64,6 +65,7 @@ def write(
         version=component.version,
         summary=component.summary,
         description=component.description,
+        provenance=project.provenance,
     )
 
     component_metadata.to_yaml_file(meta_dir / "component.yaml")
