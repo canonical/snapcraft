@@ -252,14 +252,14 @@ class RemoteBuildCommand(ExtensibleCommand):
                 emit.progress("Cancelling builds.")
                 builder.cancel_builds()
             returncode = 0
-        except Exception:  # pylint: disable=broad-exception-caught
+        except Exception:
             returncode = 1  # General error on any other exception
         if returncode != 75:  # TimeoutError
             emit.progress("Cleaning up")
             builder.cleanup()
         return returncode
 
-    def _monitor_and_complete(  # pylint: disable=R0912 # noqa: PLR0912 (too many branches)
+    def _monitor_and_complete(  # noqa: PLR0912 (too many branches)
         self, build_id: str | None, builds: Collection[Build]
     ) -> int:
         builder = self._services.remote_build
