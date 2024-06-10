@@ -59,12 +59,13 @@ def stub_project_data():
     }
 
 
-def test_unmarshal_component():
+@pytest.mark.parametrize("version", ["1.0", None])
+def test_unmarshal_component(version):
     """Unmarshal a dictionary containing a component."""
     component_data = {
         "component": "mytest+component-a",
         "type": "test",
-        "version": "1.0",
+        "version": version,
         "summary": "test summary",
         "description": "test description",
     }
@@ -73,13 +74,34 @@ def test_unmarshal_component():
 
     assert component.component == "mytest+component-a"
     assert component.type == "test"
-    assert component.version == "1.0"
+    assert component.version == version
     assert component.summary == "test summary"
     assert component.description == "test description"
 
 
-def test_write_component_yaml(stub_project_data, new_dir):
-    """Write a component.yaml file from a project."""
+def test_write_component_yaml_minimal(stub_project_data, new_dir):
+    """Write a component.yaml file from a project with minimal metadata."""
+    stub_project_data["components"]["component-a"].pop("version")
+    project = models.Project.unmarshal(stub_project_data)
+    yaml_file = Path("meta/component.yaml")
+
+    component_yaml.write(
+        project, component_name="component-a", component_prime_dir=new_dir
+    )
+
+    assert yaml_file.is_file()
+    assert yaml_file.read_text() == textwrap.dedent(
+        """\
+        component: mytest+component-a
+        type: test
+        summary: test summary
+        description: test description
+        """
+    )
+
+
+def test_write_component_yaml_complex(stub_project_data, new_dir):
+    """Write a component.yaml file from a project with all metadata."""
     project = models.Project.unmarshal(stub_project_data)
     yaml_file = Path("meta/component.yaml")
 

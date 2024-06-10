@@ -18,13 +18,13 @@
 
 from pathlib import Path
 
-from craft_application.models import BaseMetadata
-
 from snapcraft import models
 from snapcraft.errors import SnapcraftError
 
+from . import SnapcraftMetadata
 
-class ComponentMetadata(BaseMetadata):
+
+class ComponentMetadata(SnapcraftMetadata):
     """The component.yaml model.
 
     Component hooks are not included in the component's metadata.
