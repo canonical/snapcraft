@@ -154,6 +154,7 @@ COMMAND_GROUPS = [
         [
             commands.InitCommand,
             commands.LintCommand,
+            commands.TestCommand,
             craft_application.commands.other.VersionCommand,
         ],
     ),

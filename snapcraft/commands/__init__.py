@@ -60,6 +60,7 @@ from .status import (
     StoreStatusCommand,
     StoreTracksCommand,
 )
+from .test import TestCommand
 from .upload import StoreLegacyPushCommand, StoreUploadCommand
 from .validation_sets import StoreEditValidationSetsCommand
 
@@ -103,6 +104,7 @@ __all__ = [
     "StoreTracksCommand",
     "StoreUploadCommand",
     "StoreWhoAmICommand",
+    "TestCommand",
     "TryCommand",
     "core22",
     "legacy",
