@@ -1,0 +1,21 @@
+# Add `needs-starcraft-review` if starcraft-reviewers is added as a reviewer
+
+name: add-reviewer-label
+
+on:
+  pull_request:
+    types:
+      - review_requested
+
+jobs:
+  add-reviewer-label:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Add 'needs-starcraft-review' label
+      uses: octokit/request-action@v2.3.1
+      with:
+        route: POST /repos/${{ github.repository }}/issues/${{ github.event.number }}/labels
+        mediaType: 'application/vnd.github.v3+json'
+        labels: '["needs-starcraft-review"]'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
