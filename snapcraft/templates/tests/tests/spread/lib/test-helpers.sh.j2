@@ -1,0 +1,39 @@
+
+export PATH=/snap/bin:$PROJECT_PATH/tests/spread/lib/tools:$PATH
+
+install_snapd() {
+    snap install snapd --channel "$SNAPD_CHANNEL"
+    snap refresh snapd --channel "$SNAPD_CHANNEL"
+}
+
+restore_snapd() {
+    snap install snapd --channel "latest/stable"
+    snap refresh snapd --channel "latest/stable"
+}
+
+
+get_snap_name() {
+    # use `snap info` to get the name of the snap
+    # xargs trims whitespace
+    snap info $SNAPCRAFT_TEST_SNAP_FILE | grep "^name:" | cut -d ':' -f 2 | xargs
+}
+
+install_lxd() {
+    snap install lxd --channel "$LXD_CHANNEL"
+    snap refresh lxd --channel "$LXD_CHANNEL"
+    lxd waitready
+    lxd init --auto
+    chmod a+wr /var/snap/lxd/common/lxd/unix.socket
+    lxc network set lxdbr0 ipv6.address none
+    usermod -a -G lxd "$USER"
+
+    # Work-around clash between docker and lxd on jammy
+    # https://github.com/docker/for-linux/issues/1034
+    iptables -F FORWARD
+    iptables -P FORWARD ACCEPT
+}
+
+restore_lxd() {
+    snap stop lxd
+    snap remove --purge lxd
+}

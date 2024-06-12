@@ -1,0 +1,20 @@
+summary: Run the snap integration test
+
+prepare: |
+  snap install $SNAPCRAFT_TEST_SNAP_FILE --dangerous
+
+execute: |
+  set -e
+  . "$CRAFT_TEST_LIB_PATH"/test-helpers.sh
+
+  $(get_snap_name)
+
+  snapcraft lint $SNAPCRAFT_TEST_SNAP_FILE
+
+  # review-tools.snap-review $SNAPCRAFT_TEST_SNAP_FILE
+
+restore: |
+  set -e
+  . "$CRAFT_TEST_LIB_PATH"/test-helpers.sh
+
+  snap remove $(get_snap_name)

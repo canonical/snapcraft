@@ -17,6 +17,7 @@
 """Snapcraft test command."""
 
 import argparse
+import os
 
 import craft_application.commands
 from typing_extensions import override
@@ -41,4 +42,6 @@ class TestCommand(craft_application.commands.TestCommand):
         self, parsed_args: argparse.Namespace
     ) -> dict[str, str]:
         """Set the environment for the spread command."""
-        return {"SNAPCRAFT_TEST_SNAP_FILENAME": parsed_args.snap}
+        env = os.environ.copy()
+        env["SNAPCRAFT_TEST_SNAP_FILE"] = parsed_args.snap
+        return env
