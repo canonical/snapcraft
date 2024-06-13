@@ -645,9 +645,15 @@ class Project(models.Project):
         """
         if base == "bare":
             return None
+        # Desktop bases are extended versions of the regular core bases.
+        # For bases that end with "-desktop", use the equivalent provider base.
+        if base.endswith("-desktop"):
+            core_base = base.rpartition("-")[0]
+        else:
+            core_base = base
 
         try:
-            return SNAPCRAFT_BASE_TO_PROVIDER_BASE[base]
+            return SNAPCRAFT_BASE_TO_PROVIDER_BASE[core_base]
         except KeyError as err:
             raise CraftValidationError(f"Unknown base {base!r}") from err
 

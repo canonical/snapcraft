@@ -587,7 +587,12 @@ class TestProjectValidation:
 
     @pytest.mark.parametrize(
         ("base", "expected_base"),
-        [("bare", None), *providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE.items()],
+        [
+            ("bare", None),
+            *providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE.items(),
+            ("core22-desktop", providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE["core22"]),
+            ("core24-desktop", providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE["core24"]),
+        ],
     )
     def test_provider_base(self, base, expected_base, project_yaml_data):
         providers_base = Project._providers_base(base)
