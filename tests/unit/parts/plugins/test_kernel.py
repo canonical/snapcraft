@@ -1909,7 +1909,7 @@ _install_config_cmd = [
     "ln -f ${CRAFT_PART_BUILD}/.config ${CRAFT_PART_INSTALL}/config-${KERNEL_RELEASE}",
 ]
 
-# pylint: disable=line-too-long
+
 _finalize_install_cmd = [
     textwrap.dedent(
         """
@@ -1929,7 +1929,7 @@ _finalize_install_cmd = [
         """
     )
 ]
-# pylint: enable=line-too-long
+
 
 _clone_zfs_cmd = [
     textwrap.dedent(

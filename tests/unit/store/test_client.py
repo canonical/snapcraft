@@ -372,7 +372,7 @@ def test_login_otp(fake_client):
     fake_client.login.side_effect = [
         craft_store.errors.StoreServerError(
             FakeResponse(
-                status_code=requests.codes.unauthorized,  # pylint: disable=no-member
+                status_code=requests.codes.unauthorized,
                 content=json.dumps(
                     {"error_list": [{"message": "2fa", "code": "twofactor-required"}]}
                 ).encode(),

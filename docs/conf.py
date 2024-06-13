@@ -20,6 +20,7 @@ import pathlib
 import sys
 
 import craft_parts_docs
+
 import snapcraft
 
 project_dir = pathlib.Path("..").resolve()

@@ -162,28 +162,34 @@ class RosPlugin(plugins.Plugin):
 
             for ros_build_snap in self._options.colcon_ros_build_snaps:  # type: ignore
                 snap_name = _get_parsed_snap(ros_build_snap)[0]
-                path = f"/snap/{snap_name}/current/opt/ros"
-                # pylint: disable=line-too-long
+                base_path = f"/snap/{snap_name}/current/opt/ros"
+                path_ros_sys = f"{base_path}/${{ROS_DISTRO}}/"
+                path_ros_app = f"{base_path}/snap/"
+                # ros2 pkg does not crawl sub-folders
+                if base == "core22":
+                    search_path = base_path
+                else:
+                    search_path = f"{path_ros_sys}:{path_ros_app}"
                 cmd.extend(
                     [
                         # Retrieve the list of all ROS packages available in the build snap
-                        f"if [ -d {path} ]; then",
-                        f"{rospkg_search_env}={path} "
+                        f"if [ -d {base_path} ]; then",
+                        f"{rospkg_search_env}={search_path} "
                         f'{rospkg_cmd} | (xargs rosdep resolve --rosdistro "${{ROS_DISTRO}}" || echo "") | '
                         'awk "/#apt/{getline;print;}" >> "${CRAFT_PART_INSTALL}/.installed_packages.txt"',
                         "fi",
                         # Retrieve the list of all non-ROS packages available in the build snap
-                        f'if [ -d "{path}/${{ROS_DISTRO}}/" ]; then',
-                        f'rosdep keys --rosdistro "${{ROS_DISTRO}}" --from-paths "{path}/${{ROS_DISTRO}}" --ignore-packages-from-source '
+                        f'if [ -d "{path_ros_sys}" ]; then',
+                        f'rosdep keys --rosdistro "${{ROS_DISTRO}}" --from-paths "{path_ros_sys}" --ignore-packages-from-source '
                         '| (xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> "${CRAFT_PART_INSTALL}"/.installed_packages.txt',
                         "fi",
-                        f'if [ -d "{path}/snap/" ]; then',
-                        f'rosdep keys --rosdistro "${{ROS_DISTRO}}" --from-paths "{path}/snap" --ignore-packages-from-source '
+                        f'if [ -d "{path_ros_app}" ]; then',
+                        f'rosdep keys --rosdistro "${{ROS_DISTRO}}" --from-paths "{path_ros_app}" --ignore-packages-from-source '
                         '| (xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> "${CRAFT_PART_INSTALL}"/.installed_packages.txt',
                         "fi",
                     ]
                 )
-                # pylint: enable=line-too-long
+
             cmd.append("")
 
         return cmd
@@ -255,11 +261,9 @@ class RosPlugin(plugins.Plugin):
             # Restore saved state
             + ['eval "${state}"']
             + self._get_list_packages_commands()
-            # pylint: disable=line-too-long
             + [
                 'rosdep install --default-yes --ignore-packages-from-source --from-paths "${CRAFT_PART_SRC_WORK}"',
             ]
-            # pylint: enable=line-too-long
             + [
                 'state="$(set +o); set -$-"',
                 "set +u",
@@ -338,7 +342,7 @@ def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
     target_arch: str,
     stage_cache_dir: str,
     base: str,
-):  # pylint: disable=too-many-arguments
+):
     """Stage the runtime dependencies of the ROS stack using rosdep."""
     click.echo("Staging runtime dependencies...")
     # @todo: support python packages (only apt currently supported)
