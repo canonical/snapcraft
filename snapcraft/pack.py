@@ -134,7 +134,7 @@ def _pack(
 def _retry_with_newer_snapd(func):
 
     @wraps(func)
-    def retry_with_beta_snapd(
+    def retry_with_edge_snapd(
         directory: Path, output_dir: Path, compression: Optional[str] = None
     ) -> str:
         try:
@@ -145,7 +145,7 @@ def _retry_with_newer_snapd(func):
                     "Refreshing snapd to support components"
                 ) as stream:
                     subprocess.run(
-                        ["snap", "refresh", "--beta", "snapd"],
+                        ["snap", "refresh", "--edge", "snapd"],
                         check=True,
                         stdout=stream,
                         stderr=stream,
@@ -159,7 +159,7 @@ def _retry_with_newer_snapd(func):
 
             return func(directory, output_dir, compression)
 
-    return retry_with_beta_snapd
+    return retry_with_edge_snapd
 
 
 @_retry_with_newer_snapd
