@@ -14,12 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=too-many-lines
-
 """Project file definition and helpers."""
 from __future__ import annotations
 
-# pylint: disable=too-many-lines
 import copy
 import re
 from typing import (
@@ -44,8 +41,9 @@ from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from craft_providers import bases
 from pydantic import PrivateAttr, constr
+from typing_extensions import Self, override
 
-from snapcraft import utils
+from snapcraft import errors, utils
 from snapcraft.const import SUPPORTED_ARCHS, SnapArch
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
@@ -533,6 +531,36 @@ class Platform(models.CraftBaseModel):
 
         return values
 
+    @classmethod
+    def from_architectures(
+        cls,
+        architectures: list[str | Architecture],
+    ) -> dict[str, Self]:
+        """Convert a core22 architectures configuration to core24 platforms."""
+        platforms: dict[str, Self] = {}
+        for architecture in architectures:
+            if isinstance(architecture, str):
+                build_on = build_for = cast(UniqueStrList, [architecture])
+            else:
+                if isinstance(architecture.build_on, str):
+                    build_on = build_for = cast(UniqueStrList, [architecture.build_on])
+                else:
+                    build_on = build_for = cast(UniqueStrList, architecture.build_on)
+                if architecture.build_for:
+                    if isinstance(architecture.build_for, str):
+                        build_for = cast(UniqueStrList, [architecture.build_for])
+                    else:
+                        build_for = cast(UniqueStrList, architecture.build_for)
+
+            if "all" in build_for:
+                raise errors.ArchAllInvalid()
+            platforms[build_for[0]] = cls(
+                build_for=build_for,
+                build_on=build_on,
+            )
+
+        return platforms
+
 
 class Component(models.CraftBaseModel):
     """Snapcraft component definition."""
@@ -572,10 +600,12 @@ class Project(models.Project):
     build_base: Optional[str]
     compression: Literal["lzo", "xz"] = "xz"
     version: Optional[VersionStr]  # type: ignore[assignment]
-    donation: Optional[Union[str, UniqueStrList]]
+    donation: Optional[UniqueStrList]
     # snapcraft's `source_code` is more general than craft-application
-    source_code: Optional[str]  # type: ignore[assignment]
-    website: Optional[str]
+    source_code: Optional[UniqueStrList]  # type: ignore[assignment]
+    contact: Optional[UniqueStrList]  # type: ignore[assignment]
+    issues: Optional[UniqueStrList]  # type: ignore[assignment]
+    website: Optional[UniqueStrList]
     type: Optional[Literal["app", "base", "gadget", "kernel", "snapd"]]
     icon: Optional[str]
     confinement: Literal["classic", "devmode", "strict"]
@@ -601,6 +631,31 @@ class Project(models.Project):
     ua_services: Optional[UniqueStrList]
     provenance: Optional[str]
     components: Optional[Dict[ProjectName, Component]]
+
+    @override
+    @classmethod
+    def _providers_base(cls, base: str) -> bases.BaseAlias | None:
+        """Get a BaseAlias from snapcraft's base.
+
+        :param base: The application-specific base name.
+
+        :returns: The BaseAlias for the base.
+
+        :raises CraftValidationError: If the project's base cannot be determined.
+        """
+        if base == "bare":
+            return None
+        # Desktop bases are extended versions of the regular core bases.
+        # For bases that end with "-desktop", use the equivalent provider base.
+        if base.endswith("-desktop"):
+            core_base = base.rpartition("-")[0]
+        else:
+            core_base = base
+
+        try:
+            return SNAPCRAFT_BASE_TO_PROVIDER_BASE[core_base]
+        except KeyError as err:
+            raise CraftValidationError(f"Unknown base {base!r}") from err
 
     @pydantic.validator("plugs")
     @classmethod
@@ -806,6 +861,15 @@ class Project(models.Project):
 
         return provenance
 
+    @pydantic.validator(
+        "contact", "donation", "issues", "source_code", "website", pre=True
+    )
+    @classmethod
+    def _validate_urls(cls, field_value):
+        if isinstance(field_value, str):
+            field_value = cast(UniqueStrList, [field_value])
+        return field_value
+
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "Project":
         """Create and populate a new ``Project`` object from dictionary data.
@@ -883,7 +947,6 @@ class Project(models.Project):
 
     def get_build_on(self) -> str:
         """Get the first build_on architecture from the project for core22."""
-        # pylint: disable=unsubscriptable-object
         if (
             self.architectures
             and isinstance(self.architectures[0], Architecture)
@@ -896,7 +959,6 @@ class Project(models.Project):
 
     def get_build_for(self) -> str:
         """Get the first build_for architecture from the project for core22."""
-        # pylint: disable=unsubscriptable-object
         if (
             self.architectures
             and isinstance(self.architectures[0], Architecture)
@@ -1180,6 +1242,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
     build_base: str | None = None
     name: str
     platforms: dict[str, Any] | None = None
+    architectures: List[Union[str, Architecture]] | None = None
     project_type: str | None = pydantic.Field(default=None, alias="type")
 
     @pydantic.validator("platforms")
@@ -1193,10 +1256,13 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
             error_prefix = f"Error for platform entry '{platform_label}'"
 
             # Make sure the provided platform_set is valid
-            try:
-                platform = Platform(**platform_data)
-            except CraftValidationError as err:
-                raise CraftValidationError(f"{error_prefix}: {str(err)}") from None
+            if isinstance(platform_data, Platform):
+                platform = platform_data
+            else:
+                try:
+                    platform = Platform(**platform_data)
+                except CraftValidationError as err:
+                    raise CraftValidationError(f"{error_prefix}: {str(err)}") from None
 
             # build_on and build_for are validated
             # let's also validate the platform label
@@ -1261,6 +1327,9 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
         # set default value
         if self.platforms is None:
             self.platforms = {get_host_architecture(): None}
+            # For backwards compatibility with core22, convert the platforms.
+            if effective_base == "22.04" and self.architectures:
+                self.platforms = Platform.from_architectures(self.architectures)
 
         for platform_entry, platform in self.platforms.items():
             for build_for in platform.build_for or [platform_entry]:

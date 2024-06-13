@@ -4,7 +4,6 @@ summary: test
 description: |
   No snaps should be built if there no `platform` that matches
   command line argument `--platform <platform>`.
-grade: devel
 confinement: strict
 base: core24
 platforms:

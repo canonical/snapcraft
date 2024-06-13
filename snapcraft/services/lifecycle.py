@@ -85,7 +85,12 @@ class Lifecycle(LifecycleService):
     @overrides
     def post_prime(self, step_info: StepInfo) -> bool:
         """Run post-prime parts steps for Snapcraft."""
-        return parts.patch_elf(step_info)
+        project = cast(models.Project, self._project)
+
+        # do not use system libraries in classic confinement
+        use_system_libs = not bool(project.confinement == "classic")
+
+        return parts.patch_elf(step_info, use_system_libs=use_system_libs)
 
     def get_prime_dir(self, component: str | None = None) -> Path:
         """Get the prime directory path for the default prime dir or a component.

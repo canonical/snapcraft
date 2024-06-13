@@ -56,7 +56,6 @@ class PartsLifecycle:
     :raises PartsLifecycleError: On error initializing the parts lifecycle.
     """
 
-    # pylint: disable-next=too-many-locals
     def __init__(  # noqa PLR0913
         self,
         all_parts: Dict[str, Any],
@@ -250,7 +249,7 @@ class PartsLifecycle:
         if refresh_required:
             emit.progress("Refreshing package repositories...")
             # TODO: craft-parts API for: force_refresh=refresh_required
-            # pylint: disable=C0415
+
             from craft_parts.packages import deb
 
             deb.Ubuntu.refresh_packages_list.cache_clear()

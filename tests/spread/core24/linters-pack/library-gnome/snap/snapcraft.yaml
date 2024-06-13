@@ -20,7 +20,6 @@ description: |
   decimal, and hexadecimal), boolean algebra, one’s and two’s complementation,
   character to character code conversion, and more.
 
-grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: strict
 base: core24
 

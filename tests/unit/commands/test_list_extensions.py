@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,16 +19,15 @@ from textwrap import dedent
 
 import pytest
 
-import snapcraft.commands.core22
+import snapcraft.commands
 
 
 @pytest.mark.usefixtures("fake_extension")
 @pytest.mark.parametrize(
     "command",
     [
-        snapcraft.commands.core22.ListExtensionsCommand,
-        snapcraft.commands.core22.ExtensionsCommand,
-        snapcraft.commands.ListExtensions,
+        snapcraft.commands.ListExtensionsCommand,
+        snapcraft.commands.ExtensionsCommand,
     ],
 )
 def test_command(emitter, command):
@@ -63,7 +62,11 @@ def test_command(emitter, command):
         ros2-humble             core22
         ros2-humble-desktop     core22
         ros2-humble-ros-base    core22
-        ros2-humble-ros-core    core22"""
+        ros2-humble-ros-core    core22
+        ros2-jazzy              core24
+        ros2-jazzy-desktop      core24
+        ros2-jazzy-ros-base     core24
+        ros2-jazzy-ros-core     core24"""
         )
     )
 
@@ -72,9 +75,8 @@ def test_command(emitter, command):
 @pytest.mark.parametrize(
     "command",
     [
-        snapcraft.commands.core22.ListExtensionsCommand,
-        snapcraft.commands.core22.ExtensionsCommand,
-        snapcraft.commands.ListExtensions,
+        snapcraft.commands.ListExtensionsCommand,
+        snapcraft.commands.ExtensionsCommand,
     ],
 )
 def test_command_extension_dups(emitter, command):
@@ -108,6 +110,10 @@ def test_command_extension_dups(emitter, command):
         ros2-humble             core22
         ros2-humble-desktop     core22
         ros2-humble-ros-base    core22
-        ros2-humble-ros-core    core22"""
+        ros2-humble-ros-core    core22
+        ros2-jazzy              core24
+        ros2-jazzy-desktop      core24
+        ros2-jazzy-ros-base     core24
+        ros2-jazzy-ros-core     core24"""
         )
     )

@@ -23,7 +23,12 @@ from .account import (
     StoreLogoutCommand,
     StoreWhoAmICommand,
 )
-from .extensions import ExpandExtensions, ListExtensions
+from .extensions import (
+    ExpandExtensionsCommand,
+    ExtensionsCommand,
+    ListExtensionsCommand,
+)
+from .init import InitCommand
 from .legacy import (
     StoreLegacyCreateKeyCommand,
     StoreLegacyGatedCommand,
@@ -37,7 +42,7 @@ from .legacy import (
     StoreLegacyUploadMetadataCommand,
     StoreLegacyValidateCommand,
 )
-from .lifecycle import SnapCommand
+from .lifecycle import PackCommand, SnapCommand, TryCommand
 from .lint import LintCommand
 from .manage import StoreCloseCommand, StoreReleaseCommand
 from .names import (
@@ -46,6 +51,7 @@ from .names import (
     StoreNamesCommand,
     StoreRegisterCommand,
 )
+from .plugins import ListPluginsCommand, PluginsCommand
 from .remote import RemoteBuildCommand
 from .status import (
     StoreListRevisionsCommand,
@@ -58,10 +64,15 @@ from .upload import StoreLegacyPushCommand, StoreUploadCommand
 from .validation_sets import StoreEditValidationSetsCommand
 
 __all__ = [
-    "ExpandExtensions",
+    "ExpandExtensionsCommand",
+    "ExtensionsCommand",
+    "InitCommand",
     "LintCommand",
-    "ListExtensions",
+    "ListExtensionsCommand",
+    "ListPluginsCommand",
     "RemoteBuildCommand",
+    "PackCommand",
+    "PluginsCommand",
     "SnapCommand",
     "StoreCloseCommand",
     "StoreEditValidationSetsCommand",
@@ -92,6 +103,7 @@ __all__ = [
     "StoreTracksCommand",
     "StoreUploadCommand",
     "StoreWhoAmICommand",
+    "TryCommand",
     "core22",
     "legacy",
 ]

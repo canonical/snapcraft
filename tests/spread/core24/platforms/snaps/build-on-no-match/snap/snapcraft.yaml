@@ -4,7 +4,6 @@ summary: test
 description: |
   When build-on doesn't match the host architecture,
   no snaps should be built.
-grade: devel
 confinement: strict
 base: core24
 platforms:

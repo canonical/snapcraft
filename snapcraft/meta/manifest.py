@@ -59,7 +59,7 @@ class Manifest(YamlModel):
     build_snaps: List[str]
     primed_stage_packages: List
 
-    class Config:  # pylint: disable=too-few-public-methods
+    class Config:
         """Pydantic model configuration."""
 
         allow_population_by_field_name = True

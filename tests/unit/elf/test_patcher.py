@@ -200,3 +200,31 @@ def test_patcher_patch_rpath_already_set(mocker, patcher, elf_file):
             ]
         )
     ]
+
+
+@pytest.mark.parametrize("use_system_libs", [True, False])
+def test_patcher_patch_use_system_libs(mocker, patcher, elf_file, use_system_libs):
+    run_mock = mocker.patch("subprocess.check_call")
+    mocker.patch("subprocess.check_output", return_value=b"\n")
+    expected_proposed_rpath = list(elf_file.dependencies)[0].path.parent
+    assert patcher.get_current_rpath(elf_file) == []
+
+    patcher.patch(elf_file=elf_file, use_system_libs=use_system_libs)
+
+    expected_calls = [
+        call(
+            [
+                PATCHELF_PATH,
+                "--set-interpreter",
+                "/my/dynamic/linker",
+                "--force-rpath",
+                "--set-rpath",
+                str(expected_proposed_rpath),
+                ANY,
+            ]
+        )
+    ]
+    if not use_system_libs:
+        expected_calls.append(call([PATCHELF_PATH, "--no-default-lib", ANY]))
+
+    assert run_mock.mock_calls == expected_calls

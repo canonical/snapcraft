@@ -23,7 +23,7 @@ from typing import Any, Dict, List, Optional, TextIO
 import yaml
 import yaml.error
 
-from snapcraft import errors, utils
+from snapcraft import const, errors, utils
 from snapcraft.extensions import apply_extensions
 from snapcraft.models import Architecture, GrammarAwareProject
 
@@ -31,15 +31,6 @@ from . import grammar
 
 _CORE_PART_KEYS = ["build-packages", "build-snaps"]
 _CORE_PART_NAME = "snapcraft/core"
-
-# All bases recognized by snapcraft
-BASES = {"core", "core18", "core20", "core22", "core24", "devel"}
-# Bases no longer supported by the current version of snapcraft
-ESM_BASES = {"core", "core18"}
-# Bases handled by the legacy snapcraft codebase
-LEGACY_BASES = {"core20"}
-# Bases handled by the current snapcraft codebase
-CURRENT_BASES = BASES - ESM_BASES - LEGACY_BASES
 
 
 @dataclass
@@ -95,7 +86,7 @@ def _dict_constructor(loader, node):
         ) from type_error
 
 
-class _SafeLoader(yaml.SafeLoader):  # pylint: disable=too-many-ancestors
+class _SafeLoader(yaml.SafeLoader):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -162,9 +153,9 @@ def load(filestream: TextIO) -> Dict[str, Any]:
 
     if build_base is None:
         raise errors.LegacyFallback("no base defined")
-    if build_base in ESM_BASES:
+    if build_base in const.ESM_BASES:
         raise errors.MaintenanceBase(build_base)
-    if build_base in LEGACY_BASES:
+    if build_base in const.LEGACY_BASES:
         raise errors.LegacyFallback(f"base is {build_base}")
 
     filestream.seek(0)

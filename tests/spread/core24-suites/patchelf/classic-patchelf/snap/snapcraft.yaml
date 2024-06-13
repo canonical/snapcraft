@@ -9,6 +9,10 @@ base: core24
 grade: devel
 confinement: classic
 
+apps:
+  classic-patchelf:
+    command: bin/hello-classic
+
 parts:
   hello:
     source: .

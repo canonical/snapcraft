@@ -3,7 +3,6 @@ base: core24
 version: '1.0'
 summary: 'test'
 description: test
-grade: devel
 confinement: devmode
 
 # The parts defined here will be in conflict if the package-cutoff is not working;

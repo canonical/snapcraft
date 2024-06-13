@@ -232,9 +232,9 @@ class ElfFile:
         with path.open("rb") as bin_file:
             return bin_file.read(4) == b"\x7fELF"
 
-    # pylint: disable=too-many-branches
-
-    def _extract_attributes(self) -> None:  # noqa: C901
+    def _extract_attributes(  # noqa: PLR0912 (too-many-branches)
+        self,
+    ) -> None:
         with self.path.open("rb") as file:
             elf_file = elffile.ELFFile(file)
 
@@ -317,8 +317,6 @@ class ElfFile:
             )
 
             self.elf_type = elf_file.header["e_type"]
-
-    # pylint: enable=too-many-branches
 
     def is_linker_compatible(self, *, linker_version: str) -> bool:
         """Determine if the linker will work given the required glibc version."""
@@ -447,7 +445,7 @@ def _ldd(
     path: Path, ld_library_paths: List[str], *, ld_preload: Optional[str] = None
 ) -> Dict[str, str]:
     """Use host ldd to determine library dependencies."""
-    ldd = utils.get_host_tool("ldd")  # TODO: check if we can run from base
+    ldd = utils.get_host_tool("ldd")  # TODO: use `ld` from the base snap (#4751)
     env = {
         "LD_LIBRARY_PATH": ":".join(ld_library_paths),
     }

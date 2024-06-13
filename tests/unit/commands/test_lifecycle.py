@@ -20,6 +20,7 @@ from unittest.mock import call
 import pytest
 
 import snapcraft.commands.core22.lifecycle as core22_lifecycle
+import snapcraft.errors
 from snapcraft.application import APP_METADATA
 from snapcraft.commands import lifecycle
 
@@ -95,7 +96,7 @@ def test_core22_pack_command_with_directory(mocker):
 def test_snap_command_fallback(tmp_path, emitter, mocker, fake_services):
     """Test that the snap command is falling back to the pack command."""
     parsed_args = argparse.Namespace(parts=[], output=tmp_path)
-    mock_pack = mocker.patch("craft_application.commands.lifecycle.PackCommand._run")
+    mock_pack = mocker.patch("snapcraft.commands.lifecycle.PackCommand._run")
     cmd = lifecycle.SnapCommand({"app": APP_METADATA, "services": fake_services})
     cmd.run(parsed_args=parsed_args)
     mock_pack.assert_called_once()
@@ -103,4 +104,17 @@ def test_snap_command_fallback(tmp_path, emitter, mocker, fake_services):
         "Warning: the 'snap' command is deprecated and will be removed "
         "in a future release of Snapcraft. Use 'pack' instead.",
         permanent=True,
+    )
+
+
+def test_core24_try_command(tmp_path, mocker, fake_services):
+    parsed_args = argparse.Namespace(parts=[], output=tmp_path)
+    cmd = lifecycle.TryCommand({"app": APP_METADATA, "services": fake_services})
+
+    with pytest.raises(snapcraft.errors.FeatureNotImplemented) as raised:
+        cmd.run(parsed_args=parsed_args)
+
+    assert str(raised.value) == (
+        'Command or feature not implemented: "snapcraft try" is not '
+        "implemented for core24"
     )

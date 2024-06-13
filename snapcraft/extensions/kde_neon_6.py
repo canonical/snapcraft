@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Generic KDE NEON extension to support core22 and onwards."""
+
 import dataclasses
 import functools
 import re
@@ -222,12 +223,23 @@ class KDENeon6(Extension):
                     "LD_LIBRARY_PATH": prepend_to_env(
                         "LD_LIBRARY_PATH",
                         [
+                            # Qt6 arch specific libs
                             f"/snap/{qt6_sdk_snap}/current/usr/lib/"
-                            f"${{CRAFT_ARCH_TRIPLET_BUILD_FOR}}",
-                            f"/snap/{kf6_sdk_snap}/current/usr/lib/"
-                            f"${{CRAFT_ARCH_TRIPLET_BUILD_FOR}}",
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                            # Qt6 libs
                             f"/snap/{qt6_sdk_snap}/current/usr/lib",
+                            # kf6 arch specific libs
+                            f"/snap/{kf6_sdk_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                            # blas
+                            f"/snap/{kf6_sdk_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/blas",
+                            # lapack
+                            f"/snap/{kf6_sdk_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack",
+                            # kf6 libs
                             f"/snap/{kf6_sdk_snap}/current/usr/lib",
+                            # Staged libs
                             "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
                             "$CRAFT_STAGE/usr/lib",
                             "$CRAFT_STAGE/lib/",

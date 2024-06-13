@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,7 +21,7 @@ from textwrap import dedent
 
 import pytest
 
-from snapcraft import commands
+from snapcraft import commands, const
 
 
 @dataclass
@@ -31,22 +31,16 @@ class CoreData:
     base: str
     build_base: str
     grade: str
-    command_class: type
 
 
-VALID_CORE_DATA = {
-    "core22": CoreData(
-        "core22", "core22", "stable", commands.core22.ExpandExtensionsCommand
-    ),
-    "core24": CoreData("core24", "devel", "devel", commands.ExpandExtensions),
-}
-
-
-@pytest.fixture(params=VALID_CORE_DATA.keys())
+@pytest.fixture(params=const.CURRENT_BASES)
 def valid_core_data(request) -> CoreData:
-    """Fixture that provides valid base, build-base and grade values for each
-    coreXX base."""
-    return VALID_CORE_DATA[request.param]
+    """Fixture that provides valid base, build-base and grade values for each base."""
+    # special handling for devel base
+    if request.param == "devel":
+        return CoreData(base="core24", build_base="devel", grade="devel")
+
+    return CoreData(base=request.param, build_base=request.param, grade="stable")
 
 
 @pytest.mark.usefixtures("fake_extension")
@@ -79,7 +73,7 @@ def test_expand_extensions_simple(new_dir, emitter, valid_core_data):
             file=yaml_file,
         )
 
-    cmd = valid_core_data.command_class(None)
+    cmd = commands.ExpandExtensionsCommand(None)
     cmd.run(Namespace())
     emitter.assert_message(
         dedent(
@@ -119,7 +113,7 @@ def test_expand_extensions_complex(new_dir, emitter, mocker, valid_core_data):
     """
     # mock for advanced grammar parsing (i.e. `on amd64:`)
     mocker.patch(
-        "snapcraft.commands.core22.extensions.get_host_architecture",
+        "snapcraft.commands.extensions.get_host_architecture",
         return_value="amd64",
     )
     with Path("snapcraft.yaml").open("w") as yaml_file:
@@ -157,7 +151,7 @@ def test_expand_extensions_complex(new_dir, emitter, mocker, valid_core_data):
             file=yaml_file,
         )
 
-    cmd = valid_core_data.command_class(None)
+    cmd = commands.ExpandExtensionsCommand(None)
     cmd.run(Namespace())
     emitter.assert_message(
         dedent(
