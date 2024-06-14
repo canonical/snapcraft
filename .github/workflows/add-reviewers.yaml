@@ -1,0 +1,42 @@
+# If there are not 2 reviews, re-add starcraft-reviewers when reviewed by the starcraft-reviewers team
+# Otherwise, drop the `need-starcraft-review` label
+
+name: add-reviewer
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  add-reviewer:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: check number of reviews
+      id: check-reviews
+      uses: octokit/request-action@v2.3.1
+      with:
+        route: GET /repos/${{ github.repository }}/pulls/${{ github.event.number }}/reviews
+        mediaType: 'application/vnd.github.v3+json'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: re-add team if there are not enough reviews
+      if: steps.check-reviews.outputs.data | fromJson | length < 2
+      uses: octokit/request-action@v2.3.1
+      with:
+        route: POST /repos/${{ github.repository }}/pulls/${{ github.event.number }}/requested_reviewers
+        mediaType: 'application/vnd.github.v3+json'
+        reviewers: starcraft-reviewers
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: drop label if there are enough reviews
+      if: steps.check-reviews.outputs.data | fromJson | length >= 2
+      uses: octokit/request-action@v2.3.1
+      with:
+        route: DELETE /repos/${{ github.repository }}/issues/${{ github.event.number }}/labels
+        mediaType: 'application/vnd.github.v3+json'
+        labels: '["needs-starcraft-review"]'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
