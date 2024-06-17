@@ -9,8 +9,6 @@ environment:
   SNAP/library_ignored_mixed: library-ignored-mixed
   SNAP/library_missing: library-missing
   SNAP/library_unused: library-unused
-  # gnome-extension core24 is experimental
-  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
 restore: |
   cd "${SNAP}"
