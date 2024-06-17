@@ -20,6 +20,7 @@ import sys
 from textwrap import dedent
 
 import craft_cli
+import craft_parts.plugins
 import pytest
 import yaml
 from craft_application import util
@@ -308,13 +309,45 @@ def test_application_plugins():
     assert "kernel" not in plugins
 
 
-def test_application_dotnet_not_registered():
-    """dotnet plugin is disable for core24."""
+@pytest.mark.parametrize(
+    ("base", "build_base"),
+    [
+        ("core20", None),
+        ("core20", "core20"),
+        ("core20", "devel"),
+        ("core22", None),
+        ("core22", "core22"),
+        ("core22", "devel"),
+    ],
+)
+def test_application_dotnet_registered(base, build_base, snapcraft_yaml):
+    """dotnet plugin is enabled for core22."""
+    snapcraft_yaml(base=base, build_base=build_base)
     app = application.create_app()
 
-    plugins = app._get_app_plugins()
+    app._register_default_plugins()
 
-    assert "dotnet" not in plugins
+    assert "dotnet" in craft_parts.plugins.get_registered_plugins()
+
+
+@pytest.mark.parametrize(
+    ("base", "build_base"),
+    [
+        ("core24", None),
+        ("core24", "core20"),
+        ("core24", "core22"),
+        ("core24", "core24"),
+        ("core24", "devel"),
+    ],
+)
+def test_application_dotnet_not_registered(base, build_base, snapcraft_yaml):
+    """dotnet plugin is disabled for core24 and newer bases."""
+    snapcraft_yaml(base=base, build_base=build_base)
+    app = application.create_app()
+
+    app._register_default_plugins()
+
+    assert "dotnet" not in craft_parts.plugins.get_registered_plugins()
 
 
 def test_default_command_integrated(monkeypatch, mocker, new_dir):
@@ -483,3 +516,26 @@ def test_run_envvar_invalid(snapcraft_yaml, base, monkeypatch):
         "'SNAPCRAFT_REMOTE_BUILD_STRATEGY'. Valid values are 'disable-fallback' and "
         "'force-fallback'"
     )
+
+
+@pytest.mark.parametrize(
+    ("base", "build_base", "is_known_core24"),
+    [
+        ("core20", None, False),
+        ("core20", "core20", False),
+        ("core20", "devel", False),
+        ("core22", None, False),
+        ("core22", "core22", False),
+        ("core22", "devel", False),
+        ("core24", "core22", True),
+        ("core24", None, True),
+        ("core24", "core24", True),
+        ("core24", "devel", True),
+    ],
+)
+def test_known_core24(snapcraft_yaml, base, build_base, is_known_core24):
+    snapcraft_yaml(base=base, build_base=build_base)
+
+    app = application.create_app()
+
+    assert app._known_core24 == is_known_core24

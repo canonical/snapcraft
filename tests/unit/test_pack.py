@@ -345,7 +345,7 @@ def test_pack_component_error(fake_process, new_dir):
         returncode=1,
     )
     fake_process.register_subprocess(
-        ["snap", "refresh", "--beta", "snapd"],
+        ["snap", "refresh", "--edge", "snapd"],
     )
     fake_process.register_subprocess(
         ["snap", "pack", str(new_dir / "in"), str(new_dir / "out")],

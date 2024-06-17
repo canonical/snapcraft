@@ -18,13 +18,13 @@
 
 from pathlib import Path
 
-from craft_application.models import BaseMetadata
-
 from snapcraft import models
 from snapcraft.errors import SnapcraftError
 
+from . import SnapcraftMetadata
 
-class ComponentMetadata(BaseMetadata):
+
+class ComponentMetadata(SnapcraftMetadata):
     """The component.yaml model.
 
     Component hooks are not included in the component's metadata.
@@ -36,6 +36,7 @@ class ComponentMetadata(BaseMetadata):
     version: str | None
     summary: str
     description: str
+    provenance: str | None
 
 
 def write(
@@ -64,6 +65,7 @@ def write(
         version=component.version,
         summary=component.summary,
         description=component.description,
+        provenance=project.provenance,
     )
 
     component_metadata.to_yaml_file(meta_dir / "component.yaml")
