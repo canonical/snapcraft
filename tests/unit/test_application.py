@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit tests for application classes."""
+
 import json
 import os
 import sys
@@ -21,6 +22,7 @@ from textwrap import dedent
 
 import craft_cli
 import craft_parts.plugins
+import craft_store
 import pytest
 import yaml
 from craft_application import util
@@ -540,3 +542,52 @@ def test_known_core24(snapcraft_yaml, base, build_base, is_known_core24):
     app = application.create_app()
 
     assert app._known_core24 == is_known_core24
+
+
+@pytest.mark.parametrize(
+    ("message", "resolution", "expected_message"),
+    [
+        (
+            "error message",
+            "error resolution",
+            "error message\nRecommended resolution: error resolution",
+        ),
+        ("error message", None, "error message"),
+    ],
+)
+def test_store_error(mocker, capsys, message, resolution, expected_message):
+    mocker.patch(
+        "snapcraft.application.Application.run",
+        side_effect=craft_store.errors.CraftStoreError(message, resolution=resolution),
+    )
+
+    return_code = application.main()
+
+    assert return_code == 1
+    _, err = capsys.readouterr()
+    assert f"craft-store error: {expected_message}" in err
+
+
+def test_store_key_error(mocker, capsys):
+    mocker.patch(
+        "snapcraft.application.Application.run",
+        side_effect=craft_store.errors.NoKeyringError(),
+    )
+
+    return_code = application.main()
+
+    assert return_code == 1
+    _, err = capsys.readouterr()
+    assert err.startswith(
+        # There is merit in showing the line as it would be printed out.
+        # If it is too long here it needs fixing at the source.
+        # pylint: disable=[line-too-long]
+        dedent(
+            """\
+            craft-store error: No keyring found to store or retrieve credentials from.
+            Recommended resolution: Ensure the keyring is working or SNAPCRAFT_STORE_CREDENTIALS is correctly exported into the environment
+            For more information, check out: https://snapcraft.io/docs/snapcraft-authentication
+        """
+            # pylint: enable=[line-too-long]
+        )
+    )
