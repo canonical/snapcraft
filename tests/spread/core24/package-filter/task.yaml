@@ -1,0 +1,14 @@
+summary: Test the package filtering in core24
+
+restore: |
+  snapcraft clean --destructive-mode
+
+execute: |
+  snapcraft prime --destructive-mode
+  
+  # Staging "python3-cffi" should also stage "python3-cffi-backend", even though
+  # it's already contained in the base snap
+  test -e prime/usr/lib/python3/dist-packages/_cffi_backend.cpython-*-linux-gnu.so
+
+  # Same for "python3-jsonschema": should also stage "python3-attr"
+  test -d prime/usr/lib/python3/dist-packages/attr
