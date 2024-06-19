@@ -37,6 +37,7 @@ raven==6.10.0
 regex==2022.10.31
 requests-unixsocket==0.3.0
 semver==2.13.0
+setuptools==65.5.1
 simplejson==3.19.2
 snap-helpers==0.4.2
 spdx==2.5.1
