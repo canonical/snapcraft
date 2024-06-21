@@ -2225,7 +2225,7 @@ def test_project_platform_error_has_context():
             }
         )
 
-    assert "'test-platform': 'build_for' expects 'build_on'" in str(raised.value)
+    assert "'build_for' expects 'build_on' to also be provided." in str(raised.value)
 
 
 def test_project_platform_mismatch():
@@ -2262,8 +2262,8 @@ def test_project_platform_unknown_name():
         )
 
     assert (
-        "platform entry label must correspond to a valid architecture "
-        "if 'build-for' is not provided." in str(raised.value)
+        "Invalid architecture: 'unknown' must be a valid debian architecture."
+        in str(raised.value)
     )
 
 
