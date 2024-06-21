@@ -101,7 +101,7 @@ install_requires = [
     "craft-archives",
     "craft-cli",
     "craft-grammar",
-    "craft-parts",
+    "craft-parts>=1.30.1",
     "craft-providers",
     "craft-store",
     "docutils<0.20",  # Frozen until we can update sphinx dependencies.
