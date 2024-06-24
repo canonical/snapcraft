@@ -27,6 +27,7 @@ from typing import Any, Optional
 import craft_application.commands as craft_app_commands
 import craft_cli
 import craft_parts
+import craft_store
 from craft_application import Application, AppMetadata, util
 from craft_cli import emit
 from craft_parts.plugins.plugins import PluginType
@@ -34,7 +35,7 @@ from overrides import override
 
 import snapcraft
 import snapcraft_legacy
-from snapcraft import cli, errors, models, services
+from snapcraft import cli, errors, models, services, store
 from snapcraft.extensions import apply_extensions
 from snapcraft.models.project import SnapcraftBuildPlanner, apply_root_packages
 from snapcraft.parts import set_global_environment
@@ -171,6 +172,34 @@ class Snapcraft(Application):
         config = super().app_config
         config["core24"] = self._known_core24
         return config
+
+    @override
+    def run(self) -> int:
+        try:
+            return_code = super().run()
+        except craft_store.errors.NoKeyringError as err:
+            self._emit_error(
+                craft_cli.errors.CraftError(
+                    f"craft-store error: {err}",
+                    resolution=(
+                        "Ensure the keyring is working or "
+                        f"{store.constants.ENVIRONMENT_STORE_CREDENTIALS} "
+                        "is correctly exported into the environment"
+                    ),
+                    docs_url="https://snapcraft.io/docs/snapcraft-authentication",
+                )
+            )
+            return_code = 1
+        except craft_store.errors.CraftStoreError as err:
+            self._emit_error(
+                craft_cli.errors.CraftError(
+                    f"craft-store error: {err}", resolution=err.resolution
+                ),
+                cause=err,
+            )
+            return_code = 1
+
+        return return_code
 
     @override
     def _setup_partitions(self, yaml_data: dict[str, Any]) -> list[str] | None:
