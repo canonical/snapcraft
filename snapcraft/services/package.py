@@ -25,9 +25,10 @@ from typing import TYPE_CHECKING, cast
 
 from craft_application import AppMetadata, PackageService
 from craft_application.models import BuildInfo
+from craft_application.util import strtobool
 from overrides import override
 
-from snapcraft import errors, linters, models, pack, utils
+from snapcraft import errors, linters, models, pack
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import component_yaml, snap_yaml
 from snapcraft.parts import extract_metadata as extract
@@ -147,7 +148,7 @@ class Package(PackageService):
         meta_dir.mkdir(parents=True, exist_ok=True)
         self.metadata.to_yaml_file(meta_dir / "snap.yaml")
 
-        enable_manifest = utils.strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n"))
+        enable_manifest = strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n"))
 
         # Snapcraft's Lifecycle implementation is what we need to refer to for typing
         lifecycle_service = cast(Lifecycle, self._services.lifecycle)

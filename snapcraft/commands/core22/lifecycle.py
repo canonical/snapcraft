@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,6 +21,7 @@ import argparse
 import os
 import textwrap
 
+from craft_application.util import strtobool
 from craft_cli import BaseCommand, emit
 from overrides import overrides
 
@@ -52,7 +53,7 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
         parser.add_argument(
             "--enable-manifest",  # Deprecated and removed in core24
             action="store_true",
-            default=utils.strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n")),
+            default=strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n")),
             help=argparse.SUPPRESS,
         )
         parser.add_argument(
