@@ -4,32 +4,54 @@ kill-timeout: 180m
 
 environment:
   LAUNCHPAD_TOKEN: "$(HOST: echo ${LAUNCHPAD_TOKEN})"
+  SNAP/all: all
+  SNAP/platforms: platforms
+  SNAP/no_platforms: no-platforms
 
 prepare: |
+  cd "./snaps/$SNAP"
+
   if [[ -z "$LAUNCHPAD_TOKEN" ]]; then
     echo "No credentials set in env LAUNCHPAD_TOKEN"
     exit 1
   fi
 
-  snapcraft init
-  sed -i 's/base: core22/base: core24/' snap/snapcraft.yaml
-
-  # Commit the project
+  # commit the project
   git config --global --add safe.directory "$PWD"
   git init
   git add snap/snapcraft.yaml
   git commit -m "Initial Commit"
 
-  # Setup launchpad token
+  # set up launchpad token
   mkdir -p ~/.local/share/snapcraft/
   echo -e "$LAUNCHPAD_TOKEN" >> ~/.local/share/snapcraft/launchpad-credentials
 
 restore: |
+  cd "./snaps/$SNAP"
+
   rm -f ./*.snap ./*.txt
 
   rm -rf snap .git
 
 execute: |
+  cd "./snaps/$SNAP"
+
   snapcraft remote-build --launchpad-accept-public-upload
 
   find . -maxdepth 1 -name "*.snap" | MATCH ".snap"
+
+  # confirm the snaps with the expected architectures were built
+  while read -r expected_snap; do
+    if [[ ! -e $expected_snap ]]; then
+      echo "Could not find snap '$expected_snap'"
+      exit 1
+    fi
+  done < "expected-snaps.txt"
+
+  # confirm no other snaps were built
+  expected_number_of_snaps=$(wc -l < "expected-snaps.txt")
+  actual_number_of_snaps=$(find . -wholename "./*.snap" | wc -l)
+  if [[ $expected_number_of_snaps -ne $actual_number_of_snaps ]]; then
+    echo "Expected $expected_number_of_snaps to be built, but $actual_number_of_snaps were built."
+    exit 1
+  fi

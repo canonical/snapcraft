@@ -109,3 +109,4 @@ jobs:
           LAUNCHPAD_TOKEN: "${{ secrets.LAUNCHPAD_TOKEN }}"
         run: |
           spread google:${{ matrix.system }}:tests/spread/general/remote-build
+          spread google:${{ matrix.system }}:tests/spread/core24/remote-build
