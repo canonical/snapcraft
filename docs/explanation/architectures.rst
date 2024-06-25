@@ -1,12 +1,22 @@
 Architectures
 =============
 
+The ``platforms`` and ``architectures`` keywords in a ``snapcraft.yaml`` file
+are used to define where snaps are built and where they will execute.
+
+The keywords are base-dependent:
+
+* ``platforms`` is used for ``core24`` snaps
+* ``architectures`` is used for ``core20`` and ``core22`` snaps
+
+
 Build-on, build-for, and run-on
 -------------------------------
 
-``build-on``, ``build-for``, and ``run-on`` are used inside the root
-``architectures`` keyword in a ``snapcraft.yaml``.
+``build-on``, ``build-for``, and ``run-on`` are used within the
+``architectures`` and ``platforms`` keywords in a ``snapcraft.yaml`` file.
 
+* ``core24`` uses ``build-on`` and ``build-for``
 * ``core22`` uses ``build-on`` and ``build-for``
 * ``core20`` uses ``build-on`` and ``run-on``
 
@@ -26,7 +36,8 @@ run-on
 ^^^^^^
 
 This is used for ``core20`` and has the same meaning as ``build-for``. It has
-been replaced with the preferred term ``build-for`` in ``core22``.
+been replaced with the preferred term ``build-for`` in ``core22`` and newer
+bases.
 
 .. _build-plans:
 
@@ -37,14 +48,21 @@ A build plan is a list of what snaps snapcraft will build. It can be defined
 in the ``snapcraft.yaml`` and filtered with command-line arguments and
 environment variables.
 
-core22
-^^^^^^
-
 Snapcraft can create multiple snaps, each built for a different architecture.
-Consider the following ``snapcraft.yaml`` snippet:
+Consider the following equivalent ``snapcraft.yaml`` snippets.
 
 .. code-block:: yaml
 
+  base: core24
+  platforms:
+    amd64:
+    arm64:
+      build-on: [amd64, arm64]
+      build-for: [arm64]
+
+.. code-block:: yaml
+
+  base: core22
   architectures:
     - build-on: [amd64]
       build-for: [amd64]
@@ -54,7 +72,7 @@ Consider the following ``snapcraft.yaml`` snippet:
 If snapcraft executes on an ``amd64`` machine, then it will create the
 following build plan:
 
-.. code-block:: text
+.. code-block:: yaml
 
   Created build plan:
     build-on: amd64 build-for: amd64
@@ -66,12 +84,42 @@ Two snap files will be created: ``my-snap_1.0_amd64.snap`` and
 If snapcraft executes on an ``arm64`` machine, then it will create the
 following build plan:
 
-.. code-block:: text
+.. code-block:: yaml
 
   Created build plan:
     build-on: arm64 build-for: arm64
 
 One snap file will be created: ``my-snap_1.0_arm64.snap``.
+
+core24
+^^^^^^
+
+The build plan can be filtered with one of the following methods:
+
+* environment variable ``CRAFT_BUILD_FOR=<arch>``
+* environment variable ``SNAPCRAFT_BUILD_FOR=<platform>``
+* command-line argument ``--build-for=<arch>``
+* command-line argument ``--platform=<platform>``
+
+The command-line argument takes priority over the environment variable. In the
+example above, using ``--build-for=arm64`` would cause snapcraft to build one
+snap for ``arm64``.
+
+Building with a provider
+""""""""""""""""""""""""
+
+When building a snap with LXD or Multipass, each build in the build plan
+occurs in its own environment.
+
+Destructive mode
+""""""""""""""""
+
+In destructive mode, snapcraft will only build one snap at a time. If multiple
+snaps can be built, snapcraft will fail to run. The build plan must be narrowed
+down with the ``--build-for`` or ``--platform`` arguments.
+
+core22
+^^^^^^
 
 This build plan can be filtered with the environment variable
 ``SNAPCRAFT_BUILD_FOR=<arch>`` or the command-line argument
@@ -89,10 +137,10 @@ Destructive mode
 """"""""""""""""
 
 In destructive mode, all builds in the build plan occur in the same location.
-This can cause unintended consequences, such as parts not being re-built. For
-more information, see `this issue <issue 4356_>`_.
+This can cause unintended consequences, such as parts not being re-built for
+each ``architecture``.
 
-To workaround this, use ``--build-for`` or ``SNAPCRAFT_BUILD_FOR`` to build
+To work around this, use ``--build-for`` or ``SNAPCRAFT_BUILD_FOR`` to build
 one snap at a time and run ``snapcraft clean --destructive-mode`` when changing
 the build-for architecture.
 
@@ -109,20 +157,25 @@ run when changing architectures.
 Remote build
 ^^^^^^^^^^^^
 
-Launchpad supports building snaps on multiple architectures.
+Launchpad supports building snaps on multiple architectures or platforms.
 
-If architectures are not defined in the ``snapcraft.yaml``, then Launchpad will
-build the snap on all architectures
-:ref:`supported by Launchpad<supported-architectures-launchpad>`.
-
-If architectures are defined in the ``snapcraft.yaml``, then Launchpad will
-build the snap on all ``build-on`` architectures.
+If ``architectures`` or ``platforms`` are not defined in the ``snapcraft.yaml``,
+then Launchpad will build the snap on ``amd64``.
 
 When a snap can be built on multiple architectures, Launchpad can choose which
-``build-on`` platform to use. For example:
+``build-on`` platform to use. Consider the following equivalent snippets:
 
 .. code-block:: yaml
 
+  base: core24
+  platforms:
+    ppc64el:
+      build-on: [amd64, arm64]
+      build-for: [ppc64el]
+
+.. code-block:: yaml
+
+  base: core22
   architectures:
   - build-on: [amd64, arm64]
     build-for: [ppc64el]
@@ -187,4 +240,3 @@ The second cause is the same :ref:`as above<build-plan-error>` - not enclosing
 a list of multiple architectures with brackets.
 
 .. _`issue 4340`: https://github.com/snapcore/snapcraft/issues/4340
-.. _`issue 4356`: https://github.com/snapcore/snapcraft/issues/4356
