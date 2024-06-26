@@ -59,7 +59,7 @@ class BoolParamType(click.ParamType):
         if isinstance(value, bool):
             return value
         try:
-            return bool(strtobool(value))
+            return strtobool(value)
         except ValueError:
             self.fail("%r is not a valid boolean" % value, param, ctx)
 
