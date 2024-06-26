@@ -43,6 +43,7 @@ def fake_platform(monkeypatch):
     monkeypatch.setattr("platform.architecture", lambda: ("64bit", "ELF"))
 
 
+@pytest.mark.skip(reason="causes high traffic on anaconda servers")
 @pytest.mark.usefixtures("fake_platform")
 class TestPluginCondaPlugin:
     """Conda plugin tests."""

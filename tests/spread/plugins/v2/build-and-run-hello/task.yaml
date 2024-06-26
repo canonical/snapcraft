@@ -8,7 +8,7 @@ environment:
   SNAP/cmake: cmake-hello
   SNAP/cmake_ninja: cmake-hello-ninja
   SNAP/cmake_subdir: cmake-hello-subdir
-  SNAP/conda: conda-hello
+  #SNAP/conda: conda-hello
   SNAP/crystal: crystal-hello
   SNAP/make: make-hello
   SNAP/local_plugin_from_base: local-plugin-from-base-hello

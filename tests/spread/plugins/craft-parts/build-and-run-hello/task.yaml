@@ -3,7 +3,7 @@ summary: >-
   with different plugin configurations
 
 environment:
-  SNAP/conda: conda-hello
+  #SNAP/conda: conda-hello
   SNAP/colcon_ros2_humble: colcon-ros2-humble-hello
   SNAP/colcon_ros2_wrapper: colcon-ros2-wrapper
   SNAP/flutter: flutter-hello
