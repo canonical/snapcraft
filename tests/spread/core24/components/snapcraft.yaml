@@ -3,8 +3,8 @@ version: "1.0"
 summary: Build a snap with components
 description: Build a snap with components
 base: core24
-grade: devel
 confinement: strict
+provenance: test-provenance
 
 apps:
   hello:

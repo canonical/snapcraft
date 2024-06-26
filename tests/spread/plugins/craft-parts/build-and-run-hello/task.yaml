@@ -10,6 +10,7 @@ environment:
   SNAP/python: python-hello
   SNAP/qmake: qmake-hello
   SNAP/maven: maven-hello
+  SNAP/dotnet: dotnet-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -28,6 +29,7 @@ restore: |
   # Undo changes to hello
   [ -f hello ] && git checkout hello
   [ -f hello.c ] && git checkout hello.c
+  [ -f hello.cs ] && git checkout hello.cs
   [ -f subdir/hello.c ] && git checkout subdir/hello.c
   [ -f hello.js ] && git checkout hello.js
   [ -f main.go ] && git checkout main.go
@@ -72,6 +74,8 @@ execute: |
     modified_file=hello
   elif [ -f hello.c ]; then
     modified_file=hello.c
+  elif [ -f hello.cs ]; then
+    modified_file=hello.cs
   elif [ -f subdir/hello.c ]; then
     modified_file=subdir/hello.c
   elif [ -f hello.js ]; then

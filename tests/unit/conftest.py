@@ -23,7 +23,7 @@ from unittest.mock import Mock
 
 import pytest
 import yaml
-from craft_parts import Features, callbacks
+from craft_parts import Features, callbacks, plugins
 from craft_providers import Executor, Provider
 from craft_providers.base import Base
 from overrides import override
@@ -35,6 +35,13 @@ from snapcraft.extensions import extension, register, unregister
 @pytest.fixture(autouse=True)
 def unregister_callbacks(mocker):
     callbacks.unregister_all()
+
+
+@pytest.fixture(autouse=True)
+def reset_plugins():
+    # craft-part modifies a dictionary of plugins that doesn't get reloaded between tests
+    # 'unregister_all()' resets to the dictionary to the default value
+    plugins.unregister_all()
 
 
 @pytest.fixture
@@ -382,7 +389,6 @@ def extra_project_params():
 
 
 # The factory setup from CraftApplication is imported at the fixture level.
-# pylint: disable=import-outside-toplevel
 
 
 @pytest.fixture()
@@ -522,9 +528,6 @@ def remote_build_service(default_factory, mocker):
     service.lp = fake_lp
 
     return service
-
-
-# pylint: enable=import-outside-toplevel
 
 
 @pytest.fixture()

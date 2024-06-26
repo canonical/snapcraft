@@ -17,10 +17,6 @@ test-black:
 test-codespell:
 	tox run -e lint-codespell
 
-.PHONY: test-isort
-test-isort:
-	tox run -e lint-isort
-
 .PHONY: test-mypy
 test-mypy:
 	tox run -e lint-mypy
@@ -29,18 +25,13 @@ test-mypy:
 test-pydocstyle:
 	tox run -e lint-docstyle
 
-.PHONY: test-pylint
-test-pylint:
-	tox run -e lint-pylint
-
 .PHONY: test-pyright
 test-pyright:
 	tox run -e lint-pyright
 
 .PHONY: test-ruff
 test-ruff:
-	ruff --config snapcraft_legacy/ruff.toml $(SOURCES_LEGACY)
-	ruff $(SOURCES)
+	ruff check
 
 .PHONY: test-shellcheck
 test-shellcheck:
@@ -58,7 +49,7 @@ test-units: test-legacy-units
 tests: tests-static test-units
 
 .PHONY: tests-static
-tests-static: test-black test-codespell test-ruff test-isort test-mypy test-pydocstyle test-pyright test-pylint test-shellcheck
+tests-static: test-black test-codespell test-ruff test-mypy test-pydocstyle test-pyright test-shellcheck
 
 .PHONY: lint
 lint: tests-static

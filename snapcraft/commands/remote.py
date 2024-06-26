@@ -20,7 +20,7 @@ import argparse
 import os
 import textwrap
 import time
-from collections.abc import Collection
+from collections.abc import Collection, Mapping
 from pathlib import Path
 from typing import Any, cast
 
@@ -162,7 +162,6 @@ class RemoteBuildCommand(ExtensibleCommand):
                         retcode=78,  # Configuration error
                     )
 
-    # pylint: disable=too-many-statements
     def _run(self, parsed_args: argparse.Namespace, **kwargs: Any) -> int | None:
         """Run the remote-build command.
 
@@ -253,16 +252,19 @@ class RemoteBuildCommand(ExtensibleCommand):
                 emit.progress("Cancelling builds.")
                 builder.cancel_builds()
             returncode = 0
+        except Exception:
+            returncode = 1  # General error on any other exception
         if returncode != 75:  # TimeoutError
             emit.progress("Cleaning up")
             builder.cleanup()
         return returncode
 
-    def _monitor_and_complete(
+    def _monitor_and_complete(  # noqa: PLR0912 (too many branches)
         self, build_id: str | None, builds: Collection[Build]
     ) -> int:
         builder = self._services.remote_build
         emit.progress("Monitoring build")
+        states: Mapping[str, BuildState] = {}
         try:
             for states in builder.monitor_builds():
                 building: set[str] = set()
@@ -300,11 +302,26 @@ class RemoteBuildCommand(ExtensibleCommand):
             )
             return 75  # Temporary failure
 
+        return_code = 0
+
+        for arch, build_state in states.items():
+            if build_state == BuildState.FAILED:
+                emit.progress(f"Build for architecture {arch} failed.", permanent=True)
+                return_code = 1
+
         emit.progress(f"Fetching {len(builds)} build logs...")
         logs = builder.fetch_logs(Path.cwd())
+        if not logs:
+            return_code = 1
+            emit.progress("No log files downloaded from Launchpad.", permanent=True)
 
         emit.progress("Fetching build artifacts...")
         artifacts = builder.fetch_artifacts(Path.cwd())
+        if not artifacts:
+            return_code = 1
+            emit.progress(
+                "No build artifacts downloaded from Launchpad.", permanent=True
+            )
 
         log_names = sorted(path.name for path in logs.values() if path)
         artifact_names = sorted(path.name for path in artifacts)
@@ -314,4 +331,4 @@ class RemoteBuildCommand(ExtensibleCommand):
             f"Log files: {', '.join(log_names)}\n"
             f"Artifacts: {', '.join(artifact_names)}"
         )
-        return 0
+        return return_code

@@ -8,7 +8,6 @@ description: |
   we live in tweetspace and your description wants to look good in the snap
   store.
 
-grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: classic
 
 lint:

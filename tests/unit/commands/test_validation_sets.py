@@ -254,7 +254,7 @@ def test_edit_validation_sets_with_errors_to_amend(
     fake_dashboard_post_validation_sets_build_assertion.side_effect = [
         StoreValidationSetsError(
             FakeResponse(
-                status_code=requests.codes.bad_request,  # pylint: disable=no-member
+                status_code=requests.codes.bad_request,
                 content=json.dumps(
                     {"error_list": [{"message": "bad assertion", "code": "no snap"}]}
                 ).encode(),
@@ -310,7 +310,7 @@ def test_edit_validation_sets_with_errors_not_amended(
     fake_dashboard_post_validation_sets_build_assertion.side_effect = (
         StoreValidationSetsError(
             FakeResponse(
-                status_code=requests.codes.bad_request,  # pylint: disable=no-member
+                status_code=requests.codes.bad_request,
                 content=json.dumps(
                     {"error_list": [{"message": "bad assertion", "code": "no snap"}]}
                 ).encode(),
@@ -352,7 +352,7 @@ def test_edit_yaml_error_retry(mocker, tmp_path, monkeypatch):
         "{{bad yaml {{",
     ]
 
-    def side_effect(*args, **kwargs):  # pylint: disable=unused-argument
+    def side_effect(*args, **kwargs):
         tmp_file.write_text(data_write.pop(), encoding="utf-8")
 
     subprocess_mock = mocker.patch("subprocess.run", side_effect=side_effect)
@@ -368,7 +368,7 @@ def test_edit_yaml_error_no_retry(mocker, tmp_path, monkeypatch):
     tmp_file = tmp_path / "validation_sets_template"
     confirm_mock = mocker.patch("snapcraft.utils.confirm_with_user", return_value=False)
 
-    def side_effect(*args, **kwargs):  # pylint: disable=unused-argument
+    def side_effect(*args, **kwargs):
         tmp_file.write_text("{{bad yaml {{", encoding="utf-8")
 
     subprocess_mock = mocker.patch("subprocess.run", side_effect=side_effect)

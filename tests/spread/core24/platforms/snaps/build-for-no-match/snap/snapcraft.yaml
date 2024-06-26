@@ -4,7 +4,6 @@ summary: test
 description: |
   No snaps should be built if there no `build-for` that matches
   command line argument `--build-for <architecture>`.
-grade: devel
 confinement: strict
 base: core24
 platforms:

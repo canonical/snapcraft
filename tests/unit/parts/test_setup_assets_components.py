@@ -27,10 +27,7 @@ from snapcraft.parts.setup_assets import setup_assets
 
 @pytest.fixture
 def extra_project_params(extra_project_params):
-    from craft_application.models import (  # pylint: disable=import-outside-toplevel
-        SummaryStr,
-        VersionStr,
-    )
+    from craft_application.models import SummaryStr, VersionStr
 
     extra_project_params["components"] = {
         "firstcomponent": {

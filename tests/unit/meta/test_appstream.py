@@ -50,7 +50,7 @@ class TestAppstreamData:
             ("id", {}, "common_id", "test-id", "test-id"),
             ("name", {}, "title", "test-title", "test-title"),
             ("project_license", {}, "license", "test-license", "test-license"),
-            ("update_contact", {}, "contact", "test-contact", "test-contact"),
+            ("update_contact", {}, "contact", "test-contact", ["test-contact"]),
             ("url", {"type": "homepage"}, "website", "test-website", ["test-website"]),
             ("url", {"type": "bugtracker"}, "issues", "test-issues", ["test-issues"]),
             (
@@ -65,7 +65,7 @@ class TestAppstreamData:
                 {"type": "vcs-browser"},
                 "source_code",
                 "test-source",
-                "test-source",
+                ["test-source"],
             ),
         ],
     )
@@ -139,7 +139,7 @@ class TestAppstreamIcons:
         assert actual is not None
         assert actual.icon == expected.icon
 
-    def test_appstream_NxN_size_not_int_is_skipped(self):
+    def test_appstream_nxn_size_not_int_is_skipped(self):
         self._create_appstream_file(icon="icon", icon_type="stock")
         dir_name = os.path.join("usr", "share", "icons", "hicolor", "NxN")
         os.makedirs(dir_name)
@@ -326,7 +326,7 @@ class TestAppstreamContent:
 
     def test_appstream_with_ul_in_p(self):
         file_name = "snapcraft_legacy.appdata.xml"
-        # pylint: disable=line-too-long
+
         content = textwrap.dedent(
             """\
             <?xml version="1.0" encoding="UTF-8"?>
@@ -384,7 +384,6 @@ class TestAppstreamContent:
               </component>
         """
         )
-        # pylint: enable=line-too-long
 
         Path(file_name).write_text(content)
 
@@ -432,7 +431,7 @@ class TestAppstreamContent:
 
     def test_appstream_release(self):
         file_name = "foliate.appdata.xml"
-        # pylint: disable=line-too-long
+
         content = textwrap.dedent(
             """\
             <?xml version="1.0" encoding="UTF-8"?>
@@ -470,7 +469,6 @@ class TestAppstreamContent:
             </component>
         """
         )
-        # pylint: enable=line-too-long
 
         Path(file_name).write_text(content)
 
@@ -534,7 +532,7 @@ class TestAppstreamContent:
             - Publish snaps to the store."""
         )
         assert metadata.license == "GPL-3.0-or-later"
-        assert metadata.contact == "rrroschan@gmail.com"
+        assert metadata.contact == ["rrroschan@gmail.com"]
 
     def test_appstream_code_tags_not_swallowed(self):
         file_name = "foliate.appdata.xml"
@@ -575,6 +573,7 @@ class TestAppstreamContent:
         metadata = appstream.extract(file_name, workdir=".")
 
         assert metadata is not None
+        assert metadata.license == "GPL-3.0-or-later"
         assert metadata.description == textwrap.dedent(
             """\
             Command Line Utility to create snaps quickly.
@@ -633,6 +632,7 @@ class TestAppstreamContent:
         metadata = appstream.extract(file_name, workdir=".")
 
         assert metadata is not None
+        assert metadata.license == "GPL-3.0-or-later"
         assert metadata.description == textwrap.dedent(
             """\
             Command Line Utility to create snaps quickly.
@@ -695,7 +695,7 @@ class TestAppstreamContent:
         assert metadata.website == ["https://johnfactotum.github.io/foliate/"]
         assert metadata.issues == ["https://github.com/johnfactotum/foliate/issues"]
         assert metadata.donation == ["https://www.buymeacoffee.com/johnfactotum"]
-        assert metadata.source_code == "https://github.com/johnfactotum/foliate"
+        assert metadata.source_code == ["https://github.com/johnfactotum/foliate"]
 
     def test_appstream_url(self):
         file_name = "foliate.appdata.xml"
@@ -717,7 +717,7 @@ class TestAppstreamContent:
 
         metadata = appstream.extract(file_name, workdir=".")
         assert metadata is not None
-        assert metadata.source_code == "https://github.com/johnfactotum/foliate"
+        assert metadata.source_code == ["https://github.com/johnfactotum/foliate"]
 
     def test_appstream_with_multiple_lists(self):
         file_name = "foliate.appdata.xml"
@@ -745,7 +745,7 @@ class TestAppstreamContent:
             "https://github.com/alainm23/planify/issues",
             "https://github.com/johnfactotum/foliate/issues",
         ]
-        assert metadata.source_code == "https://github.com/johnfactotum/foliate"
+        assert metadata.source_code == ["https://github.com/johnfactotum/foliate"]
         assert metadata.website == ["https://johnfactotum.github.io/foliate/"]
         assert metadata.donation is None
 

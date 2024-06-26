@@ -1,0 +1,40 @@
+name: TICS
+
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  CI:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          echo "::group::apt-get update"
+          sudo apt-get update
+          echo "::endgroup::"
+          echo "::group::apt-get install..."
+          sudo apt-get install -y libapt-pkg-dev libyaml-dev xdelta3 patchelf
+          echo "::endgroup::"
+          echo "::group::pip install"
+          python -m pip install 'tox<5.0' tox-gh
+          echo "::endgroup::"
+
+      - name: Setup Tox environment
+        run: tox run-parallel --parallel auto --parallel-no-spinner --parallel-live --colored yes -e test-all-py310 --notest
+
+      - name: Test with tox
+        run: tox run --skip-pkg-install --result-json results/tox-py310.json --colored yes -e test-all-py310
+
+      - name: Run TICS analysis
+        uses: tiobe/tics-github-action@v3
+        with:
+          mode: qserver
+          project: snapcraft
+          viewerUrl: https://canonical.tiobe.com/tiobeweb/TICS/api/cfg?name=default
+          ticsAuthToken: ${{ secrets.TICSAUTHTOKEN }}
+          installTics: true

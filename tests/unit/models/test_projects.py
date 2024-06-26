@@ -587,7 +587,12 @@ class TestProjectValidation:
 
     @pytest.mark.parametrize(
         ("base", "expected_base"),
-        [("bare", None), *providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE.items()],
+        [
+            ("bare", None),
+            *providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE.items(),
+            ("core22-desktop", providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE["core22"]),
+            ("core24-desktop", providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE["core24"]),
+        ],
     )
     def test_provider_base(self, base, expected_base, project_yaml_data):
         providers_base = Project._providers_base(base)
@@ -625,6 +630,66 @@ class TestProjectValidation:
             "#heading--plugs-and-slots-for-an-entire-snap)"
         )
         emitter.assert_message(expected_message)
+
+    def test_links_scalar(self, project_yaml_data):
+        data = project_yaml_data(
+            contact="https://matrix.to/#/#nickvision:matrix.org",
+            donation="https://github.com/sponsors/nlogozzo",
+            issues="https://github.com/NickvisionApps/Parabolic/issues",
+            source_code="https://github.com/NickvisionApps/Parabolic",
+            website="https://github.com/NickvisionApps/Parabolic",
+        )
+        project = Project.unmarshal(data)
+        assert project.contact == ["https://matrix.to/#/#nickvision:matrix.org"]
+        assert project.donation == ["https://github.com/sponsors/nlogozzo"]
+        assert project.issues == ["https://github.com/NickvisionApps/Parabolic/issues"]
+        assert project.source_code == ["https://github.com/NickvisionApps/Parabolic"]
+        assert project.website == ["https://github.com/NickvisionApps/Parabolic"]
+
+    def test_links_list(self, project_yaml_data):
+        data = project_yaml_data(
+            contact=[
+                "https://matrix.to/#/#nickvision:matrix.org",
+                "hello@example.org",
+            ],
+            donation=[
+                "https://github.com/sponsors/nlogozzo",
+                "https://paypal.me/nlogozzo",
+            ],
+            issues=[
+                "https://github.com/NickvisionApps/Parabolic/issues",
+                "https://github.com/NickvisionApps/Denaro/issues",
+            ],
+            source_code=[
+                "https://github.com/NickvisionApps/Parabolic",
+                "https://github.com/NickvisionApps/Denaro",
+            ],
+            website=[
+                "https://github.com/NickvisionApps/Parabolic",
+                "https://github.com/NickvisionApps/Denaro",
+            ],
+        )
+        project = Project.unmarshal(data)
+        assert project.contact == [
+            "https://matrix.to/#/#nickvision:matrix.org",
+            "hello@example.org",
+        ]
+        assert project.donation == [
+            "https://github.com/sponsors/nlogozzo",
+            "https://paypal.me/nlogozzo",
+        ]
+        assert project.issues == [
+            "https://github.com/NickvisionApps/Parabolic/issues",
+            "https://github.com/NickvisionApps/Denaro/issues",
+        ]
+        assert project.source_code == [
+            "https://github.com/NickvisionApps/Parabolic",
+            "https://github.com/NickvisionApps/Denaro",
+        ]
+        assert project.website == [
+            "https://github.com/NickvisionApps/Parabolic",
+            "https://github.com/NickvisionApps/Denaro",
+        ]
 
 
 class TestHookValidation:
@@ -1493,8 +1558,6 @@ def test_get_snap_project_with_content_plugs_does_not_add_extension(
 
 class TestArchitecture:
     """Validate architectures."""
-
-    # pylint: disable=unsubscriptable-object
 
     def test_architecture_valid_list_of_strings(self, project_yaml_data):
         """Architectures can be defined as a list of strings (shorthand notation)."""

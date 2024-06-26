@@ -1,7 +1,6 @@
 name: appstream-desktop
 base: core24
 
-grade: devel
 confinement: strict
 adopt-info: appstream-desktop
 

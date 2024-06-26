@@ -14,12 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=too-many-lines
-
 """Project file definition and helpers."""
 from __future__ import annotations
 
-# pylint: disable=too-many-lines
 import copy
 import re
 from typing import (
@@ -603,10 +600,12 @@ class Project(models.Project):
     build_base: Optional[str]
     compression: Literal["lzo", "xz"] = "xz"
     version: Optional[VersionStr]  # type: ignore[assignment]
-    donation: Optional[Union[str, UniqueStrList]]
+    donation: Optional[UniqueStrList]
     # snapcraft's `source_code` is more general than craft-application
-    source_code: Optional[str]  # type: ignore[assignment]
-    website: Optional[str]
+    source_code: Optional[UniqueStrList]  # type: ignore[assignment]
+    contact: Optional[UniqueStrList]  # type: ignore[assignment]
+    issues: Optional[UniqueStrList]  # type: ignore[assignment]
+    website: Optional[UniqueStrList]
     type: Optional[Literal["app", "base", "gadget", "kernel", "snapd"]]
     icon: Optional[str]
     confinement: Literal["classic", "devmode", "strict"]
@@ -646,9 +645,15 @@ class Project(models.Project):
         """
         if base == "bare":
             return None
+        # Desktop bases are extended versions of the regular core bases.
+        # For bases that end with "-desktop", use the equivalent provider base.
+        if base.endswith("-desktop"):
+            core_base = base.rpartition("-")[0]
+        else:
+            core_base = base
 
         try:
-            return SNAPCRAFT_BASE_TO_PROVIDER_BASE[base]
+            return SNAPCRAFT_BASE_TO_PROVIDER_BASE[core_base]
         except KeyError as err:
             raise CraftValidationError(f"Unknown base {base!r}") from err
 
@@ -856,6 +861,15 @@ class Project(models.Project):
 
         return provenance
 
+    @pydantic.validator(
+        "contact", "donation", "issues", "source_code", "website", pre=True
+    )
+    @classmethod
+    def _validate_urls(cls, field_value):
+        if isinstance(field_value, str):
+            field_value = cast(UniqueStrList, [field_value])
+        return field_value
+
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "Project":
         """Create and populate a new ``Project`` object from dictionary data.
@@ -933,7 +947,6 @@ class Project(models.Project):
 
     def get_build_on(self) -> str:
         """Get the first build_on architecture from the project for core22."""
-        # pylint: disable=unsubscriptable-object
         if (
             self.architectures
             and isinstance(self.architectures[0], Architecture)
@@ -946,7 +959,6 @@ class Project(models.Project):
 
     def get_build_for(self) -> str:
         """Get the first build_for architecture from the project for core22."""
-        # pylint: disable=unsubscriptable-object
         if (
             self.architectures
             and isinstance(self.architectures[0], Architecture)
@@ -1107,9 +1119,7 @@ class ComponentProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
         return _get_partitions_from_components(self.components)
 
 
-def _format_pydantic_errors(  # pylint: disable=redefined-outer-name
-    errors, *, file_name: str = "snapcraft.yaml"
-):
+def _format_pydantic_errors(errors, *, file_name: str = "snapcraft.yaml"):
     """Format errors.
 
     Example 1: Single error.

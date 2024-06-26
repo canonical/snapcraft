@@ -8,7 +8,6 @@ description: |
   such as `version`. Make sure this scenario builds correctly.
 adopt-info: part1
 
-grade: devel
 confinement: devmode
 
 parts:

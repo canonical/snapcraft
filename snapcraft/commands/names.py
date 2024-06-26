@@ -16,6 +16,7 @@
 
 """Snapcraft Store Account management commands."""
 
+import json
 import operator
 import textwrap
 from typing import TYPE_CHECKING
@@ -56,6 +57,11 @@ _MESSAGE_REGISTER_CONFIRM = textwrap.dedent(
 )
 _MESSAGE_REGISTER_SUCCESS = "Registered {!r}"
 _MESSAGE_REGISTER_NO = "Snap name {!r} not registered"
+
+
+def _set_nil(value):
+    """Return None when given the input "-", else the original input."""
+    return None if value == "-" else value
 
 
 class StoreRegisterCommand(AppCommand):
@@ -130,6 +136,16 @@ class StoreNamesCommand(AppCommand):
     )
 
     @overrides
+    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+        parser.add_argument(
+            "--format",
+            type=str,
+            choices=["json", "table"],
+            help="The output format (table | json)",
+            default="table",
+        )
+
+    @overrides
     def run(self, parsed_args):
         store_client = store.StoreClientCLI()
         snaps = store_client.get_names()
@@ -138,12 +154,28 @@ class StoreNamesCommand(AppCommand):
         if not snaps:
             emit.message("No registered snaps")
         else:
-            tabulated_snaps = tabulate(
-                snaps,
-                headers=["Name", "Since", "Visibility", "Notes"],
-                tablefmt="plain",
-            )
-            emit.message(tabulated_snaps)
+            headers = ["Name", "Since", "Visibility", "Notes"]
+
+            if parsed_args.format == "table":
+                tabulated_snaps = tabulate(
+                    snaps,
+                    headers=headers,
+                    tablefmt="plain",
+                )
+                emit.message(tabulated_snaps)
+            elif parsed_args.format == "json":
+                json_snaps = {
+                    "snaps": [
+                        {
+                            header.lower(): _set_nil(value)
+                            for header, value in zip(headers, snap)
+                        }
+                        for snap in snaps
+                    ]
+                }
+                emit.message(json.dumps(json_snaps, indent=4))
+            else:
+                raise NotImplementedError("Format not implemented", parsed_args.format)
 
 
 class StoreLegacyListCommand(StoreNamesCommand):

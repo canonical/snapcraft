@@ -20,17 +20,17 @@ import sys
 from textwrap import dedent
 
 import craft_cli
+import craft_parts.plugins
 import pytest
 import yaml
 from craft_application import util
 from craft_parts.packages import snaps
 from craft_providers import bases
 
-from snapcraft import application, services
+from snapcraft import application, const, services
 from snapcraft.commands import PackCommand
 from snapcraft.errors import ClassicFallback, SnapcraftError
 from snapcraft.models.project import Architecture
-from snapcraft.parts.yaml_utils import CURRENT_BASES, ESM_BASES, LEGACY_BASES
 
 
 @pytest.fixture(
@@ -309,6 +309,47 @@ def test_application_plugins():
     assert "kernel" not in plugins
 
 
+@pytest.mark.parametrize(
+    ("base", "build_base"),
+    [
+        ("core20", None),
+        ("core20", "core20"),
+        ("core20", "devel"),
+        ("core22", None),
+        ("core22", "core22"),
+        ("core22", "devel"),
+    ],
+)
+def test_application_dotnet_registered(base, build_base, snapcraft_yaml):
+    """dotnet plugin is enabled for core22."""
+    snapcraft_yaml(base=base, build_base=build_base)
+    app = application.create_app()
+
+    app._register_default_plugins()
+
+    assert "dotnet" in craft_parts.plugins.get_registered_plugins()
+
+
+@pytest.mark.parametrize(
+    ("base", "build_base"),
+    [
+        ("core24", None),
+        ("core24", "core20"),
+        ("core24", "core22"),
+        ("core24", "core24"),
+        ("core24", "devel"),
+    ],
+)
+def test_application_dotnet_not_registered(base, build_base, snapcraft_yaml):
+    """dotnet plugin is disabled for core24 and newer bases."""
+    snapcraft_yaml(base=base, build_base=build_base)
+    app = application.create_app()
+
+    app._register_default_plugins()
+
+    assert "dotnet" not in craft_parts.plugins.get_registered_plugins()
+
+
 def test_default_command_integrated(monkeypatch, mocker, new_dir):
     """Test that for core24 projects we accept "pack" as the default command."""
 
@@ -333,7 +374,7 @@ def test_default_command_integrated(monkeypatch, mocker, new_dir):
     assert mocked_pack_run.called
 
 
-@pytest.mark.parametrize("base", ESM_BASES)
+@pytest.mark.parametrize("base", const.ESM_BASES)
 def test_esm_error(snapcraft_yaml, base):
     """Test that an error is raised when using an ESM base."""
     snapcraft_yaml_dict = {"base": base}
@@ -347,7 +388,7 @@ def test_esm_error(snapcraft_yaml, base):
         app.run()
 
 
-@pytest.mark.parametrize("base", CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
 def test_esm_pass(mocker, snapcraft_yaml, base):
     """Test that no error is raised when using current supported bases."""
     snapcraft_yaml_dict = {"base": base}
@@ -370,7 +411,7 @@ def test_esm_pass(mocker, snapcraft_yaml, base):
 @pytest.mark.parametrize(
     "envvar", ["force-fallback", "disable-fallback", "badvalue", None]
 )
-@pytest.mark.parametrize("base", CURRENT_BASES - {"core22"})
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
 @pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
 def test_run_envvar(
     monkeypatch,
@@ -395,7 +436,7 @@ def test_run_envvar(
     mock_run_legacy.assert_not_called()
 
 
-@pytest.mark.parametrize("base", LEGACY_BASES)
+@pytest.mark.parametrize("base", const.LEGACY_BASES)
 @pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
 def test_run_envvar_disable_fallback_core20(
     snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
@@ -411,7 +452,7 @@ def test_run_envvar_disable_fallback_core20(
     mock_run_legacy.assert_not_called()
 
 
-@pytest.mark.parametrize("base", LEGACY_BASES | {"core22"})
+@pytest.mark.parametrize("base", const.LEGACY_BASES | {"core22"})
 @pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
 def test_run_envvar_force_fallback_core22(
     snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
@@ -427,7 +468,7 @@ def test_run_envvar_force_fallback_core22(
     mock_remote_build_run.assert_not_called()
 
 
-@pytest.mark.parametrize("base", LEGACY_BASES)
+@pytest.mark.parametrize("base", const.LEGACY_BASES)
 @pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
 def test_run_envvar_force_fallback_unset_core20(
     snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
@@ -459,7 +500,7 @@ def test_run_envvar_force_fallback_empty_core22(
     mock_run_legacy.assert_not_called()
 
 
-@pytest.mark.parametrize("base", LEGACY_BASES | {"core22"})
+@pytest.mark.parametrize("base", const.LEGACY_BASES | {"core22"})
 @pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
 def test_run_envvar_invalid(snapcraft_yaml, base, monkeypatch):
     """core20 and core22 bases raise an error if the envvar is invalid."""
@@ -475,3 +516,26 @@ def test_run_envvar_invalid(snapcraft_yaml, base, monkeypatch):
         "'SNAPCRAFT_REMOTE_BUILD_STRATEGY'. Valid values are 'disable-fallback' and "
         "'force-fallback'"
     )
+
+
+@pytest.mark.parametrize(
+    ("base", "build_base", "is_known_core24"),
+    [
+        ("core20", None, False),
+        ("core20", "core20", False),
+        ("core20", "devel", False),
+        ("core22", None, False),
+        ("core22", "core22", False),
+        ("core22", "devel", False),
+        ("core24", "core22", True),
+        ("core24", None, True),
+        ("core24", "core24", True),
+        ("core24", "devel", True),
+    ],
+)
+def test_known_core24(snapcraft_yaml, base, build_base, is_known_core24):
+    snapcraft_yaml(base=base, build_base=build_base)
+
+    app = application.create_app()
+
+    assert app._known_core24 == is_known_core24

@@ -27,10 +27,7 @@ from snapcraft import linters, pack
 
 @pytest.fixture
 def extra_project_params(extra_project_params):
-    from craft_application.models import (  # pylint: disable=import-outside-toplevel
-        SummaryStr,
-        VersionStr,
-    )
+    from craft_application.models import SummaryStr, VersionStr
 
     extra_project_params["components"] = {
         "firstcomponent": {
@@ -104,14 +101,14 @@ def test_pack(package_service, lifecycle_service, mocker):
                 compression="xz",
                 output_dir=Path("."),
             ),
-            call().__fspath__(),  # pylint: disable=unnecessary-dunder-call
+            call().__fspath__(),
             call(
                 lifecycle_service._work_dir
                 / "partitions/component/secondcomponent/prime",
                 compression="xz",
                 output_dir=Path("."),
             ),
-            call().__fspath__(),  # pylint: disable=unnecessary-dunder-call
+            call().__fspath__(),
         ]
     )
 

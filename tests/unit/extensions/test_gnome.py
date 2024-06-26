@@ -32,6 +32,13 @@ def gnome_extension():
 
 
 @pytest.fixture
+def gnome_extension_core24():
+    return gnome.GNOME(
+        yaml_data={"base": "core24", "parts": {}}, arch="amd64", target_arch="amd64"
+    )
+
+
+@pytest.fixture
 def gnome_extension_with_build_snap():
     return gnome.GNOME(
         yaml_data={
@@ -68,20 +75,24 @@ def test_get_supported_confinement():
     assert gnome.GNOME.get_supported_confinement() == ("strict", "devmode")
 
 
-@pytest.mark.parametrize(
-    ("base", "is_experimental"),
-    [
-        ("core22", False),
-        ("core24", True),
-    ],
-)
-def test_is_experimental(base, is_experimental):
-    assert gnome.GNOME.is_experimental(base=base) is is_experimental
+@pytest.mark.parametrize("base", ["core22", "core24"])
+def test_is_experimental(base):
+    assert gnome.GNOME.is_experimental(base=base) is False
 
 
 def test_get_app_snippet(gnome_extension):
     assert gnome_extension.get_app_snippet() == {
         "command-chain": ["snap/command-chain/desktop-launch"],
+        "plugs": ["desktop", "desktop-legacy", "gsettings", "opengl", "wayland", "x11"],
+    }
+
+
+def test_get_app_snippet_core24(gnome_extension_core24):
+    assert gnome_extension_core24.get_app_snippet() == {
+        "command-chain": [
+            "snap/command-chain/gpu-2404-wrapper",
+            "snap/command-chain/desktop-launch",
+        ],
         "plugs": ["desktop", "desktop-legacy", "gsettings", "opengl", "wayland", "x11"],
     }
 
@@ -134,6 +145,28 @@ def test_get_root_snippet(gnome_extension):
                 "target": "$SNAP/data-dir/sounds",
             },
         },
+    }
+
+
+def test_get_root_snippet_with_gpu(gnome_extension_core24):
+    snippet = gnome_extension_core24.get_root_snippet()
+
+    assert snippet["plugs"]["gpu-2404"] == {
+        "default-provider": "mesa-2404",
+        "interface": "content",
+        "target": "$SNAP/gpu-2404",
+    }
+
+    assert snippet["layout"]["/usr/share/libdrm"] == {
+        "bind": "$SNAP/gpu-2404/libdrm",
+    }
+
+    assert snippet["layout"]["/usr/share/drirc.d"] == {
+        "symlink": "$SNAP/gpu-2404/drirc.d",
+    }
+
+    assert snippet["layout"]["/usr/share/X11/XErrorDB"] == {
+        "symlink": "$SNAP/gpu-2404/X11/XErrorDB",
     }
 
 
@@ -365,6 +398,17 @@ def test_get_parts_snippet(gnome_extension):
             "plugin": "make",
             "build-snaps": ["gnome-42-2204-sdk"],
         }
+    }
+
+
+def test_get_parts_snippet_core24(gnome_extension_core24):
+    assert gnome_extension_core24.get_parts_snippet() == {
+        "gnome/sdk": {
+            "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
+            "plugin": "make",
+            "make-parameters": ["GPU_WRAPPER=gpu-2404-wrapper"],
+            "build-snaps": ["gnome-46-2404-sdk"],
+        },
     }
 
 

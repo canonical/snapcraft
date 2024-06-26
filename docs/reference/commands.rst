@@ -13,6 +13,11 @@ provided, the command applies to all parts.
 
 .. include:: commands/lifecycle-commands.rst
 
+Plugins
+----------
+
+.. include:: commands/plugins-commands.rst
+
 Extensions
 ----------
 
