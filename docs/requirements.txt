@@ -119,7 +119,7 @@ types-Deprecated==1.2.9.20240311
 types-PyYAML==6.0.12.20240311
 typing_extensions==4.11.0
 uc-micro-py==1.0.3
-urllib3==1.26.18
+urllib3==1.26.19
 uvicorn==0.29.0
 wadllib==1.3.6
 watchfiles==0.21.0
