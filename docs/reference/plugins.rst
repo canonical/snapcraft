@@ -22,5 +22,6 @@ Snapcraft.
    /common/craft-parts/reference/plugins/nil_plugin
    /common/craft-parts/reference/plugins/npm_plugin
    plugins/python_plugin
+   /common/craft-parts/reference/plugins/qmake_plugin
    /common/craft-parts/reference/plugins/rust_plugin
    /common/craft-parts/reference/plugins/scons_plugin
