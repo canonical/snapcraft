@@ -7,6 +7,7 @@ Explanation
    :maxdepth: 1
 
    architectures
+   remote-build
    /common/craft-parts/explanation/filesets
    /common/craft-parts/explanation/parts
    /common/craft-parts/explanation/how_parts_are_built
