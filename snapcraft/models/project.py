@@ -1264,7 +1264,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
                 try:
                     platform = Platform(**platform_data)
                 except CraftValidationError as err:
-                    raise CraftValidationError(f"{error_prefix}: {str(err)}") from None
+                    raise ValueError(f"{error_prefix}: {str(err)}") from None
 
             # build_on and build_for are validated
             # let's also validate the platform label
@@ -1279,7 +1279,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
             if platform.build_for:
                 build_target = platform.build_for[0]
                 if platform_label in SUPPORTED_ARCHS and platform_label != build_target:
-                    raise CraftValidationError(
+                    raise ValueError(
                         str(
                             f"{error_prefix}: if 'build_for' is provided and the "
                             "platform entry label corresponds to a valid architecture, then "
@@ -1288,7 +1288,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
                     )
             # if no build-for is present, then the platform label needs to be a valid architecture
             elif platform_label not in SUPPORTED_ARCHS:
-                raise CraftValidationError(
+                raise ValueError(
                     str(
                         f"{error_prefix}: platform entry label must correspond to a "
                         "valid architecture if 'build-for' is not provided."
@@ -1297,7 +1297,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
 
             # Both build and target architectures must be supported
             if not any(b_o in SUPPORTED_ARCHS for b_o in build_on_one_of):
-                raise CraftValidationError(
+                raise ValueError(
                     str(
                         f"{error_prefix}: trying to build snap in one of "
                         f"{build_on_one_of}, but none of these build architectures are supported. "
