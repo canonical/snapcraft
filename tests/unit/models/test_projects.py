@@ -2230,7 +2230,7 @@ def test_project_platform_error_has_context():
 
 def test_project_platform_mismatch():
     """Raise an error if platform name and build-for are valid but different archs."""
-    with pytest.raises(CraftValidationError) as raised:
+    with pytest.raises(pydantic.ValidationError) as raised:
         snapcraft.models.project.SnapcraftBuildPlanner.parse_obj(
             {
                 "name": "test-snap",
