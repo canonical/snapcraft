@@ -29,6 +29,7 @@ from getpass import getpass
 from pathlib import Path
 from typing import Iterable, List, Optional
 
+from craft_application.util import strtobool
 from craft_cli import emit
 from craft_parts.sources.git_source import GitSource
 
@@ -159,23 +160,6 @@ def convert_architecture_deb_to_platform(architecture: str) -> str:
         raise errors.InvalidArchitecture(architecture)
 
     return platform_arch
-
-
-def strtobool(value: str) -> bool:
-    """Convert a string representation of truth to true (1) or false (0).
-
-    :param value: a True value of 'y', 'yes', 't', 'true', 'on', and '1'
-        or a False value of 'n', 'no', 'f', 'false', 'off', and '0'.
-    :raises ValueError: if `value` is not a valid boolean value.
-    """
-    parsed_value = value.lower()
-
-    if parsed_value in ("y", "yes", "t", "true", "on", "1"):
-        return True
-    if parsed_value in ("n", "no", "f", "false", "off", "0"):
-        return False
-
-    raise ValueError(f"Invalid boolean value of {value!r}")
 
 
 def is_managed_mode() -> bool:
