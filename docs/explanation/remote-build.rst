@@ -85,9 +85,10 @@ Current
 
 If  ``--platform`` or ``--build-for`` are provided, Snapcraft will:
 
-# parse the project metadata for ``platforms`` or ``architectures`` keywords
-# create a build plan
-# filter the build plan with ``--build-for`` and ``--platform``
+#. parse the project metadata for ``platforms`` or ``architectures`` keywords
+#. create a build plan
+#. filter the build plan with whichever of ``--build-for`` or ``--platform``
+   was specified
 
 ``--build-for`` and ``--platform`` are mutually exclusive keywords.
 
@@ -119,7 +120,7 @@ Legacy
 ``--build-for`` and ``--build-on``
 **********************************
 
-The Launchpad build farm was designed for native builds and do not
+The Launchpad build farm was designed for native builds and does not
 have a concept of a ``build-for`` architecture.
 
 The legacy remote builder accepts ``--build-on`` and ``--build-for``.
