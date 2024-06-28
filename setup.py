@@ -93,7 +93,7 @@ install_requires = [
     "attrs",
     "catkin-pkg; sys_platform == 'linux'",
     "click",
-    "craft-application",
+    "craft-application>=3.0.0",
     "craft-archives",
     "craft-cli",
     "craft-grammar",
