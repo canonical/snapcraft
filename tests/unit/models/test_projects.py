@@ -779,7 +779,7 @@ class TestPlatforms:
     def test_platform_build_for_requires_build_on(self, project_yaml_data):
         """Raise an error if build-for is provided by build-on is not."""
         with pytest.raises(CraftValidationError) as raised:
-            Platform(**{"build-for": [const.SnapArch.amd64]})
+            Platform(**{"build-for": [const.SnapArch.amd64]})  # type: ignore[reportArgumentType]
 
         assert "'build_for' expects 'build_on' to also be provided" in str(raised.value)
 
@@ -795,8 +795,8 @@ class TestPlatforms:
     @pytest.mark.parametrize(
         ("architectures", "expected"),
         [
-            ([], {}),
-            (
+            pytest.param([], {}, id="empty"),
+            pytest.param(
                 ["amd64"],
                 {
                     "amd64": Platform(
@@ -804,8 +804,9 @@ class TestPlatforms:
                         build_on=[const.SnapArch("amd64")],
                     )
                 },
+                id="simple",
             ),
-            (
+            pytest.param(
                 [Architecture(build_on="amd64", build_for="riscv64")],
                 {
                     "riscv64": Platform(
@@ -813,8 +814,9 @@ class TestPlatforms:
                         build_on=[const.SnapArch("amd64")],
                     )
                 },
+                id="cross-compile-from-object",
             ),
-            (
+            pytest.param(
                 [
                     Architecture.unmarshal(
                         {"build_on": ["amd64"], "build_for": ["riscv64"]}
@@ -826,8 +828,9 @@ class TestPlatforms:
                         build_on=[const.SnapArch("amd64")],
                     )
                 },
+                id="cross-compile",
             ),
-            (
+            pytest.param(
                 [
                     Architecture.unmarshal(
                         {"build_on": ["amd64", "arm64"], "build_for": ["riscv64"]}
@@ -846,18 +849,22 @@ class TestPlatforms:
                         build_on=[const.SnapArch("amd64"), const.SnapArch("arm64")],
                     ),
                 },
+                id="complex",
+            ),
+            pytest.param(
+                [Architecture.unmarshal({"build_on": ["s390x"], "build_for": ["all"]})],
+                {
+                    "all": Platform(
+                        build_for=["all"],
+                        build_on=[const.SnapArch("s390x")],
+                    )
+                },
+                id="all",
             ),
         ],
     )
     def test_from_architectures(self, architectures, expected):
         assert Platform.from_architectures(architectures) == expected
-
-    def test_from_architectures_no_all(self):
-        """Test that 'from_architectures' does not support architecture 'all'."""
-        with pytest.raises(errors.ArchAllInvalid):
-            Platform.from_architectures(
-                [Architecture(build_on="amd64", build_for="all")]
-            )
 
 
 class TestAppValidation:
@@ -1425,6 +1432,21 @@ class TestGrammarValidation:
                 }
             }
         )
+        GrammarAwareProject.validate_grammar(data)
+
+    def test_grammar_all(self, project_yaml_data):
+        data = project_yaml_data(
+            parts={
+                "p1": {
+                    "stage-packages": [
+                        "pkg1",
+                        "pkg2",
+                        {"to all": ["foo", "bar"]},
+                    ],
+                },
+            },
+        )
+
         GrammarAwareProject.validate_grammar(data)
 
     def test_grammar_try(self, project_yaml_data):
@@ -2045,6 +2067,29 @@ class TestApplyRootPackages:
             ],
             id="custom_platform_name",
         ),
+        pytest.param(
+            {
+                "platform1": {
+                    "build-on": ["arm64", "armhf"],
+                    "build-for": ["all"],
+                },
+            },
+            [
+                BuildInfo(
+                    build_on="arm64",
+                    build_for="all",
+                    base=BaseName(name="ubuntu", version="24.04"),
+                    platform="platform1",
+                ),
+                BuildInfo(
+                    build_on="armhf",
+                    build_for="all",
+                    base=BaseName(name="ubuntu", version="24.04"),
+                    platform="platform1",
+                ),
+            ],
+            id="all",
+        ),
     ],
 )
 def test_build_planner_get_build_plan(platforms, expected_build_infos):
@@ -2100,7 +2145,7 @@ def test_build_planner_get_build_plan(platforms, expected_build_infos):
             [
                 {
                     "build-on": ["amd64"],
-                    "build-for": "amd64",
+                    "build-for": ["amd64"],
                 },
             ],
             [
@@ -2114,6 +2159,23 @@ def test_build_planner_get_build_plan(platforms, expected_build_infos):
             id="fully_defined_arch",
         ),
         pytest.param(
+            [
+                {
+                    "build-on": "amd64",
+                    "build-for": "amd64",
+                },
+            ],
+            [
+                BuildInfo(
+                    build_on="amd64",
+                    build_for="amd64",
+                    base=BaseName(name="ubuntu", version="22.04"),
+                    platform="amd64",
+                )
+            ],
+            id="fully_defined_arch_as_string",
+        ),
+        pytest.param(
             None,
             [
                 BuildInfo(
@@ -2124,6 +2186,40 @@ def test_build_planner_get_build_plan(platforms, expected_build_infos):
                 )
             ],
             id="no_arch",
+        ),
+        pytest.param(
+            [
+                {
+                    "build-on": ["s390x"],
+                    "build-for": ["all"],
+                },
+            ],
+            [
+                BuildInfo(
+                    build_on="s390x",
+                    build_for="all",
+                    base=BaseName(name="ubuntu", version="22.04"),
+                    platform="all",
+                )
+            ],
+            id="all",
+        ),
+        pytest.param(
+            [
+                {
+                    "build-on": "s390x",
+                    "build-for": "all",
+                },
+            ],
+            [
+                BuildInfo(
+                    build_on="s390x",
+                    build_for="all",
+                    base=BaseName(name="ubuntu", version="22.04"),
+                    platform="all",
+                )
+            ],
+            id="all_as_string",
         ),
     ],
 )
@@ -2136,6 +2232,89 @@ def test_build_planner_get_build_plan_core22(architectures, expected_build_infos
     actual_build_infos = planner.get_build_plan()
 
     assert actual_build_infos == expected_build_infos
+
+
+@pytest.mark.parametrize(
+    ("platforms", "message"),
+    [
+        # this could be made a valid definition by adjusting the manual validators
+        pytest.param(
+            {"all": {"build-on": ["arm64", "armhf"]}},
+            "platform entry label must correspond to a valid architecture if 'build-for' is not provided",
+            id="no-build-for",
+        ),
+        # this will always be invalid
+        pytest.param(
+            {"all": None},
+            "value is not a valid enumeration member",
+            id="no-build-for-no-build-on",
+        ),
+    ],
+)
+def test_build_planner_all_as_platform_invalid(platforms, message):
+    """The platform must be fully defined when using 'all'."""
+    build_plan_data = {
+        "name": "test-snap",
+        "base": "core24",
+        "platforms": platforms,
+    }
+    with pytest.raises(pydantic.ValidationError) as raised:
+        snapcraft.models.project.SnapcraftBuildPlanner(**build_plan_data)
+
+    assert message in str(raised.value)
+
+
+def test_build_planner_all_with_other_builds():
+    """'build-for: all' cannot be combined with other builds."""
+    build_plan_data = {
+        "name": "test-snap",
+        "base": "core24",
+        "platforms": {
+            "platform1": {
+                "build-on": ["arm64", "armhf"],
+                "build-for": ["arm64"],
+            },
+            "platform2": {
+                "build-on": ["s390x"],
+                "build-for": ["all"],
+            },
+        },
+    }
+
+    with pytest.raises(pydantic.ValidationError) as raised:
+        snapcraft.models.project.SnapcraftBuildPlanner(**build_plan_data)
+
+    assert (
+        "one of the platforms has 'all' in 'build-for', but there are 2 platforms"
+    ) in str(raised.value)
+
+
+def test_build_planner_all_with_other_builds_core22():
+    """'build-for: all' cannot be combined with other builds with core22 syntax."""
+    build_plan_data = {
+        "name": "test-snap",
+        "base": "core22",
+        "architectures": [
+            {
+                "build-on": ["s390x"],
+                "build-for": ["all"],
+            },
+            {
+                "build-on": ["arm64", "armhf"],
+                "build-for": ["arm64"],
+            },
+        ],
+    }
+
+    build_plan = snapcraft.models.project.SnapcraftBuildPlanner(**build_plan_data)
+
+    # architectures are only converted to Platforms when creating the build plan
+    with pytest.raises(pydantic.ValidationError) as raised:
+        build_plan.get_build_plan()
+
+    assert (
+        "one of the platforms has 'all' in 'build-for', but there are 2 platforms"
+    ) in str(raised.value)
 
 
 def test_get_build_plan_devel():

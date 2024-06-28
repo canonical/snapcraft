@@ -1,0 +1,37 @@
+name: grammar-build-for-all
+version: "1.0"
+summary: test
+description: |
+  Exercise snapcraft's advanced grammar keywords, `on`, and `to`.
+  This test leverages the platform keywords, `build-on` and `build-for`.
+confinement: strict
+base: core24
+platforms:
+  platform1:
+    build-on: amd64
+    build-for: all
+
+# grammar in root-level part keywords (including non-grammar elements)
+build-packages:
+  - libzstd1
+  - on amd64 to all:
+    - libogg-dev
+
+parts:
+  hello-world:
+    plugin: dump
+
+    # grammar-only string
+    source:
+    - on amd64 to all: src/on-amd64-to-all
+
+    # grammar dictionary
+    organize:
+    - on amd64 to all:
+        hello-world.sh: hello-world-all.sh
+
+    # grammar list (including non-grammar elements)
+    build-environment:
+    - HELLO: hello
+    - on amd64 to all:
+      - ARCH: all
