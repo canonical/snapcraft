@@ -1,7 +1,7 @@
 Remote build
 ============
 
-Remote build is a feature in snapcraft that offloads the build process to
+Remote build is a feature in Snapcraft that offloads the build process to
 `Launchpad`_'s `build farm`_ and enables developers to build snaps for
 different architectures.
 
@@ -28,7 +28,8 @@ Git repository
 Projects must be in the top level of a git repository because snapcraft uses
 a git-based workflow to upload projects to Launchpad.
 
-Shallowly cloned repositories are not supported (i.e. ``git clone --depth 1``)
+Shallowly cloned repositories are not supported (e.g. ``git clone --depth
+1``)
 because git does not support pushing shallow clones.
 
 Versions
@@ -79,10 +80,10 @@ Remote builds can be orchestrated for multiple platforms and architectures.
 Current
 ^^^^^^^
 
-``--build-for`` and ``--build-on``
+``--platform`` and ``--build-for``
 **********************************
 
-If  ``--build-for`` or ``--build-on`` are provided, Snapcraft will:
+If  ``--platform`` or ``--build-for`` are provided, Snapcraft will:
 
 # parse the project metadata for ``platforms`` or ``architectures`` keywords
 # create a build plan
@@ -104,7 +105,7 @@ The ``snapcraft.yaml`` file is always parsed by the new remote builder.
 
 If the project metadata does not contain a ``platforms`` or ``architectures``
 entry and no ``--build-for`` or ``--platform`` are passed, Snapcraft will
-request a build for the host's architecture.A
+request a build for the host's architecture.
 
 The remote builder does not work for ``core20`` snaps because it cannot parse
 the ``run-on`` keyword in a ``core20`` architecture entry (`[2]`_).
@@ -122,14 +123,14 @@ The Launchpad build farm was designed for native builds and do not
 have a concept of a ``build-for`` architecture.
 
 The legacy remote builder accepts ``--build-on`` and ``--build-for``.
-Since developers are typically interested in the ``build-for`` or
-a snap, snapcraft converts the ``--build-for`` for to ``--build-on``.
+Since developers are typically interested in the ``build-for`` of
+a snap, snapcraft converts the ``--build-for`` to ``--build-on``.
 
 These parameters are not mutually exclusive and ``--build-for`` takes
 precedence over ``--build-on``.
 
 Both of these parameters accept a comma-separated list of architectures.
-Snapcraft will request builds to occur on each specified architecture..
+Snapcraft will request builds to occur on each specified architecture.
 
 Project architectures
 *********************
@@ -150,7 +151,7 @@ Launchpad will ignore the requested architectures and prefer those defined
 in the ``snapcraft.yaml`` (`[5]`_).
 
 The legacy remote builder can be used for ``core20`` and ``core22`` snaps but
-The project is parsed using ``core20``'s ``snapcraft.yaml`` schema. This
+the project is parsed using ``core20``'s ``snapcraft.yaml`` schema. This
 means that snaps using keywords introduced in ``core22`` cannot be built with
 the remote builder (`[6]`_ `[7]`_ `[8]`_). This includes the ``core22``
 ``architectures`` keyword change of ``run-on`` to ``build-for``.
