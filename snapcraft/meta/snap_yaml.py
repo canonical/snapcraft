@@ -468,11 +468,11 @@ def get_metadata_from_project(
 
     effective_base = project.get_effective_base()
 
-    if effective_base == "core22":
+    if arch == "all":
         # if arch is "all", do not include architecture-specific paths in the environment
-        arch_triplet: str | None = (
-            None if arch == "all" else project.get_build_for_arch_triplet()
-        )
+        arch_triplet: str | None = None
+    elif effective_base == "core22":
+        arch_triplet = project.get_build_for_arch_triplet()
     else:
         arch_triplet = get_arch_triplet(convert_architecture_deb_to_platform(arch))
 

@@ -21,6 +21,7 @@ import copy
 import re
 from typing import (
     TYPE_CHECKING,
+    Annotated,
     Any,
     Dict,
     List,
@@ -43,7 +44,7 @@ from craft_providers import bases
 from pydantic import PrivateAttr, constr
 from typing_extensions import Self, override
 
-from snapcraft import errors, utils
+from snapcraft import utils
 from snapcraft.const import SUPPORTED_ARCHS, SnapArch
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
@@ -556,8 +557,6 @@ class Platform(models.Platform):
                     else:
                         build_for = cast(UniqueStrList, architecture.build_for)
 
-            if "all" in build_for:
-                raise errors.ArchAllInvalid()
             platforms[build_for[0]] = cls(build_for=build_for, build_on=build_on)
 
         return platforms
