@@ -12,7 +12,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import distutils.util
 import logging
 import os
 import shutil
@@ -23,6 +22,7 @@ from textwrap import dedent
 from typing import Dict
 
 import click
+from craft_application.util import strtobool
 import craft_store
 from raven import Client as RavenClient
 from raven.transport import RequestsHTTPTransport
@@ -74,7 +74,7 @@ logger = logging.getLogger(__name__)
 def _is_connected_to_tty() -> bool:
     # Used by inner instance, SNAPCRAFT_HAS_TTY is set by outer instance.
     if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
-        return distutils.util.strtobool(os.getenv("SNAPCRAFT_HAS_TTY", "n")) == 1
+        return strtobool(os.getenv("SNAPCRAFT_HAS_TTY", "n")) == 1
 
     return sys.stdout.isatty()
 
@@ -284,13 +284,13 @@ def _print_trace_output(exc_info, file=sys.stdout) -> None:
 def _is_send_to_sentry(exc_info) -> bool:  # noqa: C901
     # Check to see if error reporting has been disabled
     if (
-        distutils.util.strtobool(os.getenv("SNAPCRAFT_ENABLE_ERROR_REPORTING", "y"))
+        strtobool(os.getenv("SNAPCRAFT_ENABLE_ERROR_REPORTING", "y"))
         == 0
     ):
         return False
 
     # Check the environment to see if we should allow for silent reporting
-    if distutils.util.strtobool(os.getenv("SNAPCRAFT_ENABLE_SILENT_REPORT", "n")) == 1:
+    if strtobool(os.getenv("SNAPCRAFT_ENABLE_SILENT_REPORT", "n")) == 1:
         click.echo(_MSG_SILENT_REPORT)
         return True
 
