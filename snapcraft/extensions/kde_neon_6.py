@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Generic KDE NEON extension to support core22 and onwards."""
-
 import dataclasses
 import functools
 import re
@@ -51,6 +50,8 @@ class KDENeon6(Extension):
     It configures each application with the following plugs:
 
     \b
+    - Common GTK themes.
+    - Common Qt themes.
     - Common Icon Themes.
     - Common Sound Themes.
     - The Qt6 and KDE Frameworks 6 runtime libraries and utilities.
@@ -151,15 +152,30 @@ class KDENeon6(Extension):
             "compression": "lzo",
             "plugs": {
                 "desktop": {"mount-host-font-cache": False},
+                "gtk-2-themes": {
+                    "interface": "content",
+                    "target": "$SNAP/data-dir/themes",
+                    "default-provider": "gtk-common-themes:gtk-2-themes",
+                },
+                "gtk-3-themes": {
+                    "interface": "content",
+                    "target": "$SNAP/data-dir/themes",
+                    "default-provider": "gtk-common-themes:gtk-3-themes",
+                },
                 "icon-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/icons",
-                    "default-provider": "gtk-common-themes",
+                    "default-provider": "gtk-common-themes:icon-themes",
                 },
                 "sound-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/sounds",
-                    "default-provider": "gtk-common-themes",
+                    "default-provider": "gtk-common-themes:sound-themes",
+                },
+                "qt-6-themes": {
+                    "interface": "content",
+                    "target": "$SNAP/kf6",
+                    "default-provider": "qt-common-themes:qt-6-themes",
                 },
                 platform_kf6_snap: {
                     "content": content_kf6_snap,
@@ -223,23 +239,12 @@ class KDENeon6(Extension):
                     "LD_LIBRARY_PATH": prepend_to_env(
                         "LD_LIBRARY_PATH",
                         [
-                            # Qt6 arch specific libs
                             f"/snap/{qt6_sdk_snap}/current/usr/lib/"
-                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
-                            # Qt6 libs
+                            f"${{CRAFT_ARCH_TRIPLET_BUILD_FOR}}",
+                            f"/snap/{kf6_sdk_snap}/current/usr/lib/"
+                            f"${{CRAFT_ARCH_TRIPLET_BUILD_FOR}}",
                             f"/snap/{qt6_sdk_snap}/current/usr/lib",
-                            # kf6 arch specific libs
-                            f"/snap/{kf6_sdk_snap}/current/usr/lib/"
-                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
-                            # blas
-                            f"/snap/{kf6_sdk_snap}/current/usr/lib/"
-                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/blas",
-                            # lapack
-                            f"/snap/{kf6_sdk_snap}/current/usr/lib/"
-                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack",
-                            # kf6 libs
                             f"/snap/{kf6_sdk_snap}/current/usr/lib",
-                            # Staged libs
                             "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
                             "$CRAFT_STAGE/usr/lib",
                             "$CRAFT_STAGE/lib/",

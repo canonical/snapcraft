@@ -121,15 +121,30 @@ def test_get_root_snippet(kde_neon_6_extension):
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
+            "gtk-2-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/themes",
+                "default-provider": "gtk-common-themes:gtk-2-themes",
+            },
+            "gtk-3-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/themes",
+                "default-provider": "gtk-common-themes:gtk-3-themes",
+            },
             "icon-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/icons",
-                "default-provider": "gtk-common-themes",
+                "default-provider": "gtk-common-themes:icon-themes",
             },
             "sound-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/sounds",
-                "default-provider": "gtk-common-themes",
+                "default-provider": "gtk-common-themes:sound-themes",
+            },
+            "qt-6-themes": {
+                "interface": "content",
+                "target": "$SNAP/kf6",
+                "default-provider": "qt-common-themes:qt-6-themes",
             },
             "kf6-core22": {
                 "content": "kf6-core22-all",
@@ -158,15 +173,30 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
+            "gtk-2-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/themes",
+                "default-provider": "gtk-common-themes:gtk-2-themes",
+            },
+            "gtk-3-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/themes",
+                "default-provider": "gtk-common-themes:gtk-3-themes",
+            },
             "icon-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/icons",
-                "default-provider": "gtk-common-themes",
+                "default-provider": "gtk-common-themes:icon-themes",
             },
             "sound-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/sounds",
-                "default-provider": "gtk-common-themes",
+                "default-provider": "gtk-common-themes:sound-themes",
+            },
+            "qt-6-themes": {
+                "interface": "content",
+                "target": "$SNAP/kf6",
+                "default-provider": "qt-common-themes:qt-6-themes",
             },
             "kf6-core22": {
                 "content": "kf6-core22-all",
@@ -221,12 +251,8 @@ class TestGetPartSnippet:
                 {
                     "LD_LIBRARY_PATH": (
                         "/snap/kde-qt6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
-                        "/snap/kde-qt6-core22-sdk/current/usr/lib:"
                         "/snap/kf6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
-                        "/snap/kf6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
-                        "/blas:"
-                        "/snap/kf6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
-                        "/lapack:"
+                        "/snap/kde-qt6-core22-sdk/current/usr/lib:"
                         "/snap/kf6-core22-sdk/current/usr/lib:"
                         "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
                         "$CRAFT_STAGE/usr/lib:"
@@ -287,10 +313,8 @@ def test_get_part_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
             {
                 "LD_LIBRARY_PATH": (
                     "/snap/kde-qt6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
-                    "/snap/kde-qt6-core22-sdk/current/usr/lib:"
                     "/snap/kf6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
-                    "/snap/kf6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/blas:"
-                    "/snap/kf6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack:"
+                    "/snap/kde-qt6-core22-sdk/current/usr/lib:"
                     "/snap/kf6-core22-sdk/current/usr/lib:"
                     "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
                     "$CRAFT_STAGE/usr/lib:"
