@@ -12,7 +12,7 @@ craft-grammar==1.2.0
 craft-parts==1.32.0
 craft-providers==1.23.1
 craft-store==2.6.2
-cryptography==42.0.5
+cryptography==42.0.8
 Deprecated==1.2.14
 distro==1.9.0
 docutils==0.19
@@ -39,11 +39,11 @@ progressbar==2.5
 protobuf==3.20.3
 psutil==5.9.8
 pycparser==2.21
-pydantic==1.10.14
+pydantic==1.10.17
 pydantic-yaml==0.11.2
 pyelftools==0.30
 pygit2==1.13.3
-pylxd==2.3.2
+pylxd==2.3.4
 pymacaroons==0.13.0
 PyNaCl==1.5.0
 pyparsing==3.1.2
