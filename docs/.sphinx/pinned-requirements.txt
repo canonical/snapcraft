@@ -1,5 +1,5 @@
 alabaster==0.7.16
-Babel==2.11.0
+Babel==2.15.0
 beautifulsoup4==4.11.1
 certifi==2023.7.22
 charset-normalizer==2.1.1
