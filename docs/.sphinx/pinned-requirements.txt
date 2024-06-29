@@ -5,7 +5,7 @@ certifi==2023.7.22
 charset-normalizer==2.1.1
 colorama==0.4.6
 docutils==0.19
-furo==2022.12.7
+furo==2024.5.6
 idna==3.7
 imagesize==1.4.1
 Jinja2==3.1.4
@@ -20,8 +20,8 @@ requests==2.31.0
 six==1.16.0
 snowballstemmer==2.2.0
 soupsieve==2.3.2.post1
-Sphinx==5.3.0
-sphinx-autobuild==2021.3.14
+Sphinx==7.3.7
+sphinx-autobuild==2024.4.16
 sphinx-basic-ng==1.0.0b2
 sphinx_design==0.5.0
 sphinxcontrib-applehelp==1.0.8
