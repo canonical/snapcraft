@@ -67,6 +67,7 @@ exclude_patterns = [
     "common/craft-parts/explanation/overlay_parameters.rst",
     "common/craft-parts/explanation/overlays.rst",
     "common/craft-parts/how-to/craftctl.rst",
+    "common/craft-parts/reference/partition_specific_output_directory_variables.rst",
     "common/craft-parts/reference/parts_steps.rst",
     "common/craft-parts/reference/step_execution_environment.rst",
     "common/craft-parts/reference/step_output_directories.rst",
