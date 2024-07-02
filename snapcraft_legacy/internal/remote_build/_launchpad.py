@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019 Canonical Ltd
+# Copyright (C) 2019,2024 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,6 +16,8 @@
 
 import gzip
 import logging
+import pathlib
+import platformdirs
 import os
 import shutil
 import time
@@ -111,7 +113,6 @@ class LaunchpadClient:
 
         self._cache_dir = self._create_cache_directory()
         self._data_dir = self._create_data_directory()
-        self._credentials = os.path.join(self._data_dir, "credentials")
 
         self._lp: Launchpad = self.login()
         self.user = self._lp.me.name
@@ -121,6 +122,25 @@ class LaunchpadClient:
     @property
     def architectures(self) -> Sequence[str]:
         return self._architectures
+
+    @property
+    def _credentials_filepath(self) -> pathlib.Path:
+        """The filepath to the Launchpad credentials.
+
+        If the credentials file does not exist in the default location but exists in the
+        legacy location, emit a deprecation warning and return the legacy location.
+        """
+        credentials_filepath = platformdirs.user_data_path("snapcraft") / "launchpad-credentials"
+        legacy_credentials_filepath = platformdirs.user_data_path("snapcraft") / "provider/launchpad/credentials"
+
+        if not credentials_filepath.exists() and legacy_credentials_filepath.exists():
+            logger.warning(
+                f"Warning: Using launchpad credentials from deprecated location {str(legacy_credentials_filepath)!r}.\n"
+                f"Credentials should be migrated to {str(credentials_filepath)!r}."
+            )
+            return legacy_credentials_filepath
+
+        return credentials_filepath
 
     @architectures.setter
     def architectures(self, architectures: Sequence[str]) -> None:
@@ -256,7 +276,7 @@ class LaunchpadClient:
                 "snapcraft remote-build {}".format(snapcraft_legacy.__version__),
                 "production",
                 self._cache_dir,
-                credentials_file=self._credentials,
+                credentials_file=self._credentials_filepath,
                 version="devel",
             )
         except (ConnectionRefusedError, TimeoutError):
