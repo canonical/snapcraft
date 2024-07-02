@@ -51,44 +51,9 @@ jobs:
         run: |
           spread google:ubuntu-22.04-64:tests/spread/plugins/${{ matrix.type }}/kernel
 
-  remote-build-core24:
-    runs-on: [spread-installed]
-    needs: [snap-build]
-    strategy:
-      fail-fast: false
-      matrix:
-        system:
-          - ubuntu-24.04-64
-    steps:
-      - name: Cleanup job workspace
-        run: |
-          rm -rf "${{ github.workspace }}"
-          mkdir "${{ github.workspace }}"
-      - name: Checkout snapcraft
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          submodules: true
-      - name: Download snap artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: snap
-          path: tests
-      - name: remote-build test
-        env:
-          LAUNCHPAD_TOKEN: "${{ secrets.LAUNCHPAD_TOKEN }}"
-        run: |
-          spread google:${{ matrix.system }}:tests/spread/core24/remote-build
-
   remote-build:
     runs-on: [spread-installed]
     needs: [snap-build]
-    strategy:
-      fail-fast: false
-      matrix:
-        system:
-          - ubuntu-22.04-64
-          - fedora-39-64
     steps:
       - name: Cleanup job workspace
         run: |
@@ -108,5 +73,8 @@ jobs:
         env:
           LAUNCHPAD_TOKEN: "${{ secrets.LAUNCHPAD_TOKEN }}"
         run: |
-          spread google:${{ matrix.system }}:tests/spread/general/remote-build
-          spread google:${{ matrix.system }}:tests/spread/core24/remote-build
+          spread google:ubuntu-20.04-64:tests/spread/core20/remote-build-legacy \
+            google:ubuntu-22.04-64:tests/spread/core22/remote-build-legacy \
+            google:ubuntu-22.04-64:tests/spread/core22/remote-build \
+            google:ubuntu-24.04-64:tests/spread/core24/remote-build \
+            google:fedora-39-64:tests/spread/core24/remote-build:no_platforms
