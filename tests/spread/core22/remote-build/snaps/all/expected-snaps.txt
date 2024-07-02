@@ -1,0 +1,1 @@
+test-snap-all-core22_1.0_all.snap
