@@ -109,8 +109,9 @@ def extract(relpath: str, *, workdir: str) -> Optional[ExtractedMetadata]:
         if validators.url(update_contact) or validators.email(update_contact):
             contact = [update_contact]
         else:
-            emit.debug(
-                f"Invalid URL {update_contact} as {validators.url(update_contact)}"
+            emit.progress(
+                f"Ignoring invalid url {update_contact!r} in update_contact from appstream metadata.",
+                permanent=True,
             )
 
     issues = _get_urls_from_xml_element(dom.findall("url"), "bugtracker")
@@ -197,7 +198,10 @@ def _get_urls_from_xml_element(nodes, url_type) -> Optional[List[str]]:
             if validators.url(link) or validators.email(link):
                 urls.append(link)
             else:
-                emit.debug(f"Invalid URL {link} as {validators.url(link)}")
+                emit.progress(
+                    f"Ignoring invalid url {link!r} in {url_type!r} from appstream metadata.",
+                    permanent=True,
+                )
     if urls:
         return urls
     return None
