@@ -303,7 +303,7 @@ def test_update_project_metadata_multiple(
     assert project.website == ["website1", "website2"]
 
 
-def test_update_project_metadata_appstream(new_dir):
+def test_update_project_metadata_overriding_appstream(new_dir):
     yaml_data = {
         "name": "my-project",
         "base": "core22",
@@ -321,10 +321,11 @@ def test_update_project_metadata_appstream(new_dir):
         version="4.5.6",
         summary="metadata summary",
         description="metadata description",
-        website=["website1"],
-        source_code=["source-code"],
-        issues=["issues1", "issues3"],
-        donation=["donation1", "donation2"],
+        contact=["help@help.me"],
+        website=["https://example.com/website"],
+        source_code=["https://example.com/source-code"],
+        issues=["https://example.com/issues", "https://example.com/issues2"],
+        donation=["https://buyme.coffee", "https://github.com/sponsors"],
     )
     prj_vars = {"version": "", "grade": ""}
     update_project_metadata(

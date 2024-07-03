@@ -123,7 +123,7 @@ def _update_project_links(
         if not project_field:
 
             # values for a field from all metadata files
-            metadata_values = list()  # type: List[str]
+            metadata_values: list[str] = list()
 
             # iterate through all metadata and create a set of values for the field
             for metadata in metadata_list:

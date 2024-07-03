@@ -782,20 +782,23 @@ class TestAppstreamContent:
               <project_license>GPL-3.0-or-later</project_license>
               <content_rating type="oars-1.1"/>
               <name>Drawing</name>
-              <url type="homepage">test_at_hello_dot_com</url>
+              <url type="homepage">bad_invalid_mail</url>
               <url type="homepage">https://hello.com</url>
-              <url type="vcs-browser">file://test.deb</url>
-              <url type="vcs-browser">http://file_huge</url>
+              <url type="vcs-browser">file://invalid.file.link</url>
+              <url type="vcs-browser">http://missing-dot-com</url>
               <url type="bugtracker">https://github.com/alainm23/planify/issues</url>
-              <url type="bugtracker">https:/helo.com</url>
+              <url type="bugtracker">https:/missing-slash.com</url>
               <url type="donation">https://www.buymeacoffee.com/alainm23</url>
-              <url type="donation">paypal.me/alainm23</url>
+              <url type="donation">paypal.me/bad</url>
+              <update_contact>rrroschan@gmail.com</update_contact>
+              <update_contact>malformed_invalid@mailcom</update_contact>
               </component>
         """
         )
         Path(file_name).write_text(content)
         metadata = appstream.extract(file_name, workdir=".")
         assert metadata is not None
+        assert metadata.contact == ["rrroschan@gmail.com"]
         assert metadata.donation == ["https://www.buymeacoffee.com/alainm23"]
         assert metadata.website == ["https://hello.com"]
         assert metadata.source_code == None
