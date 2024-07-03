@@ -16,7 +16,6 @@
 
 """Remote-build command tests."""
 
-import argparse
 import os
 import shutil
 import subprocess
@@ -25,7 +24,6 @@ import time
 from pathlib import Path
 from unittest.mock import ANY, Mock
 
-import craft_cli
 import pytest
 from craft_application import launchpad
 from craft_application.errors import RemoteBuildError
@@ -33,7 +31,7 @@ from craft_application.launchpad.models import BuildState
 from craft_application.remote.git import GitRepo
 from craft_application.remote.utils import get_build_id
 
-from snapcraft import application, commands, const, models
+from snapcraft import application, const
 from snapcraft.errors import ClassicFallback
 from snapcraft.utils import get_host_architecture
 
@@ -412,29 +410,6 @@ def test_run_in_shallow_repo_unsupported(
 ######################
 
 
-def test_no_architecture_all(
-    mocker, snapcraft_yaml, fake_services, mock_remote_builder_fake_build_process
-):
-    """Test that remote builds error out early with an architecture 'all'."""
-    project = snapcraft_yaml(
-        base="core22", architectures=[{"build-on": "amd64", "build-for": "all"}]
-    )
-    fake_services.project = models.Project.unmarshal(project)
-    cmd = commands.RemoteBuildCommand(
-        {"app": application.APP_METADATA, "services": fake_services}
-    )
-
-    with pytest.raises(
-        craft_cli.CraftError, match="Remote build does not support architecture 'all'"
-    ):
-        cmd.run(
-            argparse.Namespace(
-                project=None,
-                launchpad_accept_public_upload=True,
-            )
-        )
-
-
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
 def test_no_platform_defined_no_platform_or_build_for(
     mocker,
@@ -465,6 +440,62 @@ def test_no_platform_defined_no_platform_or_build_for(
     mock_start_builds.assert_called_once_with(
         ANY, architectures=[get_host_architecture()]
     )
+
+
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
+def test_platform_build_for_all(
+    mocker,
+    snapcraft_yaml,
+    base,
+    fake_services,
+    mock_confirm,
+    mock_remote_builder_fake_build_process,
+):
+    snapcraft_yaml_dict = {
+        "base": base,
+        "build-base": "devel",
+        "grade": "devel",
+        "platforms": {
+            "test-platform": {"build-on": "arm64", "build-for": "all"},
+        },
+    }
+    snapcraft_yaml(**snapcraft_yaml_dict)
+    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"])
+    mock_start_builds = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.start_builds"
+    )
+    app = application.create_app()
+    app.run()
+
+    mock_start_builds.assert_called_once()
+    assert mock_start_builds.call_args[1]["architectures"] == ["all"]
+
+
+def test_platform_build_for_all_core22(
+    mocker,
+    snapcraft_yaml,
+    fake_services,
+    mock_confirm,
+    mock_remote_builder_fake_build_process,
+):
+    """remote-build command uses all platforms if no platform or build-for is given."""
+    snapcraft_yaml_dict = {
+        "base": "core22",
+        "grade": "devel",
+        "architectures": [
+            {"build-on": ["arm64"], "build-for": ["all"]},
+        ],
+    }
+    snapcraft_yaml(**snapcraft_yaml_dict)
+    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"])
+    mock_start_builds = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.start_builds"
+    )
+    app = application.create_app()
+    app.run()
+
+    mock_start_builds.assert_called_once()
+    assert mock_start_builds.call_args[1]["architectures"] == ["all"]
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
