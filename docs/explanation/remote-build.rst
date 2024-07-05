@@ -41,8 +41,9 @@ remote-builder.
 Current
 ^^^^^^^
 
-The current remote builder is available for ``core20``, ``core22``, ``core24``,
-and newer snaps.
+The current remote builder is available for ``core22``, ``core24``,
+and newer snaps.  It is not available for ``core20`` snaps because it cannot
+parse ``core20``'s ``snapcraft.yaml`` schema (`[10]`_).
 
 It does not modify the project or project metadata.
 
@@ -70,7 +71,7 @@ If the environment variable is unset, the remote builder will be determined
 by the base:
 
 * ``core22``, ``core24``, and newer snaps will use the current remote builder
-* ``core20`` snaps will use the legacy remote builder by default.
+* ``core20`` snaps will use the legacy remote builder
 
 Platforms and architectures
 ---------------------------
@@ -172,3 +173,4 @@ Launchpad is not able to parse this notation (`[9]`_).
 .. _`[7]`: https://bugs.launchpad.net/snapcraft/+bug/1992557
 .. _`[8]`: https://bugs.launchpad.net/snapcraft/+bug/2007789
 .. _`[9]`: https://bugs.launchpad.net/snapcraft/+bug/2042167
+.. _`[10]`: https://github.com/canonical/snapcraft/issues/4885
