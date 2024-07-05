@@ -1,12 +1,16 @@
 summary: Build snaps that test the build-on/build-for architecture logic in snapcraft.
 
 environment:
+  SNAP/all: all
+  SNAP/build_for_all: build-for-all
   SNAP/build_for_match: build-for-match
   SNAP/build_for_no_match: build-for-no-match
   SNAP/build_on_no_match: build-on-no-match
+  SNAP/env_var_all: env-var-all
   SNAP/env_var_match: env-var-match
   SNAP/env_var_no_match: env-var-no-match
   SNAP/multiple_build_for: multiple-build-for
+  SNAP/platform_all: platform-all
   SNAP/platform_match: platform-match
   SNAP/platform_no_match: platform-no-match
   SNAP/single_arch: single-arch
@@ -34,20 +38,25 @@ execute: |
     if [[ -e "arguments.txt" ]]; then
       call_args=$(cat "arguments.txt")
     fi
+
     env_vars=""
     if [[ -e "environmental-variables.txt" ]]; then
       env_vars=$(cat "environmental-variables.txt")
     fi
+
     # shellcheck disable=SC2086
     eval $env_vars snapcraft pack --destructive-mode $call_args 2>&1 | MATCH -f expected-failure.txt
+
   # if the environmental variable file exists, then call snapcraft with the environmental variables
   elif [[ -e "environmental-variables.txt" ]]; then
     # shellcheck disable=SC2046
     eval $(cat "environmental-variables.txt") snapcraft pack --destructive-mode
+
   # if the arguments variable file exists, then call snapcraft with the arguments
   elif [[ -e "arguments.txt" ]]; then
     # shellcheck disable=SC2046
     eval snapcraft pack --destructive-mode $(cat "arguments.txt")
+
   # otherwise, just call `snapcraft pack`
   else
     snapcraft pack --destructive-mode

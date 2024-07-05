@@ -1,0 +1,14 @@
+name: env-var-all
+version: "1.0"
+summary: test
+description: Match the `all` target via `SNAPCRAFT_BUILD_FOR`
+confinement: strict
+base: core24
+platforms:
+  platform1:
+    build-on: [amd64]
+    build-for: [all]
+
+parts:
+  nil:
+    plugin: nil

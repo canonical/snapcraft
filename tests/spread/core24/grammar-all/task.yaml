@@ -1,0 +1,17 @@
+summary: Build snaps that test the 'all' target in advanced grammar
+
+systems:
+  - ubuntu-24.04-64
+  - ubuntu-24.04-amd64
+
+restore: |
+  snapcraft clean --destructive-mode
+
+execute: |
+  snapcraft prime --destructive-mode --build-for all
+
+  # verify `on amd64 to all` grammar was processed
+  if ! grep "I was built on amd64 and built for all." "prime/hello-world-all.sh"; then
+    echo "Grammar was not processed as expected!"
+    exit 1
+  fi
