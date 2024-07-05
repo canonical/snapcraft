@@ -199,7 +199,7 @@ def _get_urls_from_xml_element(nodes, url_type) -> Optional[List[str]]:
                 urls.append(link)
             else:
                 emit.progress(
-                    f"Ignoring invalid url {link!r} in {url_type!r} from appstream metadata.",
+                    f"Ignoring invalid url or email {link!r} in {url_type!r} from appstream metadata.",
                     permanent=True,
                 )
     if urls:
