@@ -50,22 +50,40 @@ class TestAppstreamData:
             ("id", {}, "common_id", "test-id", "test-id"),
             ("name", {}, "title", "test-title", "test-title"),
             ("project_license", {}, "license", "test-license", "test-license"),
-            ("update_contact", {}, "contact", "test-contact", ["test-contact"]),
-            ("url", {"type": "homepage"}, "website", "test-website", ["test-website"]),
-            ("url", {"type": "bugtracker"}, "issues", "test-issues", ["test-issues"]),
+            (
+                "update_contact",
+                {},
+                "contact",
+                "test-contact@test.com",
+                ["test-contact@test.com"],
+            ),
+            (
+                "url",
+                {"type": "homepage"},
+                "website",
+                "http://test-website.test",
+                ["http://test-website.test"],
+            ),
+            (
+                "url",
+                {"type": "bugtracker"},
+                "issues",
+                "http://test-issues.test",
+                ["http://test-issues.test"],
+            ),
             (
                 "url",
                 {"type": "donation"},
                 "donation",
-                "test-donation",
-                ["test-donation"],
+                "http://test-donation.test",
+                ["http://test-donation.test"],
             ),
             (
                 "url",
                 {"type": "vcs-browser"},
                 "source_code",
-                "test-source",
-                ["test-source"],
+                "test@test.com",
+                ["test@test.com"],
             ),
         ],
     )
@@ -678,6 +696,7 @@ class TestAppstreamContent:
                   <li xml:lang="es">Publica snaps en la tienda.</li>
                 </ul>
               </description>
+              <update_contact>https://hello.com</update_contact>
               <url type="homepage">https://johnfactotum.github.io/foliate/</url>
               <url type="vcs-browser">https://github.com/johnfactotum/foliate</url>
               <url type="bugtracker">https://github.com/johnfactotum/foliate/issues</url>
@@ -692,6 +711,7 @@ class TestAppstreamContent:
         metadata = appstream.extract(file_name, workdir=".")
 
         assert metadata is not None
+        assert metadata.contact == ["https://hello.com"]
         assert metadata.website == ["https://johnfactotum.github.io/foliate/"]
         assert metadata.issues == ["https://github.com/johnfactotum/foliate/issues"]
         assert metadata.donation == ["https://www.buymeacoffee.com/johnfactotum"]
@@ -708,6 +728,7 @@ class TestAppstreamContent:
               <project_license>GPL-3.0-or-later</project_license>
               <content_rating type="oars-1.1"/>
               <name>Drawing</name>
+              <update_contact>rrroschan@gmail.com</update_contact>
               <url type="homepage">https://johnfactotum.github.io/foliate/</url>
               <url type="vcs-browser">https://github.com/johnfactotum/foliate</url>
               </component>
@@ -717,6 +738,7 @@ class TestAppstreamContent:
 
         metadata = appstream.extract(file_name, workdir=".")
         assert metadata is not None
+        assert metadata.contact == ["rrroschan@gmail.com"]
         assert metadata.source_code == ["https://github.com/johnfactotum/foliate"]
 
     def test_appstream_with_multiple_lists(self):
@@ -748,6 +770,39 @@ class TestAppstreamContent:
         assert metadata.source_code == ["https://github.com/johnfactotum/foliate"]
         assert metadata.website == ["https://johnfactotum.github.io/foliate/"]
         assert metadata.donation is None
+
+    def test_appstream_with_malformed_links(self):
+        file_name = "test.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="UTF-8"?>
+              <component type="desktop">
+              <id>com.github.maoschanz.drawing</id>
+              <metadata_license>CC0-1.0</metadata_license>
+              <project_license>GPL-3.0-or-later</project_license>
+              <content_rating type="oars-1.1"/>
+              <name>Drawing</name>
+              <url type="homepage">bad_invalid_mail</url>
+              <url type="homepage">https://hello.com</url>
+              <url type="vcs-browser">file://invalid.file.link</url>
+              <url type="vcs-browser">http://missing-dot-com</url>
+              <url type="bugtracker">https://github.com/alainm23/planify/issues</url>
+              <url type="bugtracker">https:/missing-slash.com</url>
+              <url type="donation">https://www.buymeacoffee.com/alainm23</url>
+              <url type="donation">paypal.me/bad</url>
+              <update_contact>rrroschan@gmail.com</update_contact>
+              <update_contact>malformed_invalid@mailcom</update_contact>
+              </component>
+        """
+        )
+        Path(file_name).write_text(content)
+        metadata = appstream.extract(file_name, workdir=".")
+        assert metadata is not None
+        assert metadata.contact == ["rrroschan@gmail.com"]
+        assert metadata.donation == ["https://www.buymeacoffee.com/alainm23"]
+        assert metadata.website == ["https://hello.com"]
+        assert metadata.source_code == None
+        assert metadata.issues == ["https://github.com/alainm23/planify/issues"]
 
     def test_appstream_parse_error(self):
         file_name = "snapcraft_legacy.appdata.xml"

@@ -23,6 +23,8 @@ from io import StringIO
 from typing import List, Optional, cast
 
 import lxml.etree
+import validators
+from craft_cli import emit
 from xdg.DesktopEntry import DesktopEntry
 
 from snapcraft import errors
@@ -102,7 +104,15 @@ def extract(relpath: str, *, workdir: str) -> Optional[ExtractedMetadata]:
     version = _get_latest_release_from_nodes(dom.findall("releases/release"))
     project_license = _get_value_from_xml_element(dom, "project_license")
     update_contact = _get_value_from_xml_element(dom, "update_contact")
-    contact = [update_contact] if update_contact else None
+    contact = None
+    if update_contact:
+        if validators.url(update_contact) or validators.email(update_contact):
+            contact = [update_contact]
+        else:
+            emit.progress(
+                f"Ignoring invalid url {update_contact!r} in update_contact from appstream metadata.",
+                permanent=True,
+            )
 
     issues = _get_urls_from_xml_element(dom.findall("url"), "bugtracker")
     donation = _get_urls_from_xml_element(dom.findall("url"), "donation")
@@ -184,7 +194,14 @@ def _get_urls_from_xml_element(nodes, url_type) -> Optional[List[str]]:
             and node.attrib["type"] == url_type
             and node.text.strip() not in urls
         ):
-            urls.append(node.text.strip())
+            link = node.text.strip()
+            if validators.url(link) or validators.email(link):
+                urls.append(link)
+            else:
+                emit.progress(
+                    f"Ignoring invalid url or email {link!r} in {url_type!r} from appstream metadata.",
+                    permanent=True,
+                )
     if urls:
         return urls
     return None

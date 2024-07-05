@@ -17,7 +17,7 @@
 """External metadata helpers."""
 
 from pathlib import Path
-from typing import Dict, Final, List, cast
+from typing import Dict, Final, List, OrderedDict, cast
 
 import pydantic
 from craft_application.models import ProjectTitle, SummaryStr, UniqueStrList, VersionStr
@@ -115,18 +115,26 @@ def _update_project_links(
     :param project: The Project model to update.
     :param metadata_list: A list of parsed information from metadata files.
     """
-    for metadata in metadata_list:
-        fields = ["contact", "donation", "source_code", "issues", "website"]
-        for field in fields:
-            metadata_field = getattr(metadata, field)
-            project_field = getattr(project, field)
-            if metadata_field and project_field and project_field != metadata_field:
-                project_list = list(project_field)
-                project_list.extend(set(metadata_field) - set(project_list))
-                setattr(project, field, cast(UniqueStrList, project_list))
+    fields = ["contact", "donation", "source_code", "issues", "website"]
+    for field in fields:
+        project_field = getattr(project, field)
 
-            if not getattr(project, field):
-                setattr(project, field, cast(UniqueStrList, metadata_field))
+        # only update the project if the project has not defined the field
+        if not project_field:
+
+            # values for a field from all metadata files
+            metadata_values: list[str] = list()
+
+            # iterate through all metadata and create a set of values for the field
+            for metadata in metadata_list:
+                if metadata_field := getattr(metadata, field):
+                    metadata_values = list(
+                        OrderedDict.fromkeys(metadata_values + metadata_field)
+                    )
+
+            # update project with all new values from the metadata
+            if metadata_values:
+                setattr(project, field, cast(UniqueStrList, metadata_values))
 
 
 def _update_project_variables(project: Project, project_vars: Dict[str, str]):

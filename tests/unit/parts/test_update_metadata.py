@@ -73,10 +73,8 @@ def project_yaml_data():
             "confinement": "strict",
             "license": "license",
             "contact": "contact1",
-            "donation": "donation1",
             "issues": "issues1",
             "website": "website1",
-            "source-code": "source-code",
             "parts": {},
             **extra_args,
         }
@@ -133,11 +131,11 @@ def test_update_project_metadata(project_yaml_data, appstream_file, new_dir):
     assert project.summary == "summary"  # already set in project
     assert project.description == "description"  # already set in project
     assert project.version == "0.1"  # already set in project
-    assert project.contact == ["contact1", "contact2"]
-    assert project.issues == ["issues1", "issues2"]
-    assert project.donation == ["donation1", "donation2"]
-    assert project.website == ["website1", "website2"]
-    assert project.source_code == ["source-code", "vcs-browser"]  # adopts from project
+    assert project.contact == ["contact1"]  # already set in project
+    assert project.issues == ["issues1"]  # already set in project
+    assert project.donation == ["donation2"]
+    assert project.website == ["website1"]  # already set in project
+    assert project.source_code == ["vcs-browser"]
     assert project.icon == "assets/icon.png"
     assert project.apps["app3"].desktop == "assets/file.desktop"
 
@@ -256,6 +254,7 @@ def test_update_project_metadata_multiple(
     metadata2 = ExtractedMetadata(
         summary="metadata summary",
         description="metadata description",
+        contact=["contact1"],
         website=["website1"],
         source_code=["source-code"],
         issues=["issues1", "issues3"],
@@ -267,7 +266,7 @@ def test_update_project_metadata_multiple(
     metadata4 = ExtractedMetadata(
         summary="extra summary", description="extra description"
     )
-    metadata5 = ExtractedMetadata(license="GPL-3.0", contact=["test@test.com"])
+    metadata5 = ExtractedMetadata(license="GPL-3.0", contact=["contact2", "contact1"])
     metadata6 = ExtractedMetadata(
         source_code=["source-code", "vcs-browser"],
         website=["website2"],
@@ -296,12 +295,53 @@ def test_update_project_metadata_multiple(
     assert project.description == expected["description"]
     assert project.title == expected["title"]
     assert project.grade == expected["grade"]
-    assert project.contact == ["test@test.com"]
+    assert project.contact == ["contact1", "contact2"]
     assert project.license == "GPL-3.0"
     assert project.donation == ["donation1", "donation2"]
     assert project.source_code == ["source-code", "vcs-browser"]
     assert project.issues == ["issues1", "issues3", "issues2"]
     assert project.website == ["website1", "website2"]
+
+
+def test_update_project_metadata_overriding_appstream(new_dir):
+    yaml_data = {
+        "name": "my-project",
+        "base": "core22",
+        "confinement": "strict",
+        "adopt-info": "part",
+        "parts": {},
+        "contact": "test@test.com",
+        "donation": "https://paypal.me/",
+        "issues": "https://test.com/issues",
+        "source-code": "https://test.com/source-code",
+        "website": "https://test.com/website",
+    }
+    project = Project(**yaml_data)
+    metadata = ExtractedMetadata(
+        version="4.5.6",
+        summary="metadata summary",
+        description="metadata description",
+        contact=["help@help.me"],
+        website=["https://example.com/website"],
+        source_code=["https://example.com/source-code"],
+        issues=["https://example.com/issues", "https://example.com/issues2"],
+        donation=["https://buyme.coffee", "https://github.com/sponsors"],
+    )
+    prj_vars = {"version": "", "grade": ""}
+    update_project_metadata(
+        project,
+        project_vars=prj_vars,
+        metadata_list=[metadata],
+        assets_dir=new_dir,
+        prime_dir=new_dir,
+    )
+
+    assert project is not None
+    assert project.contact == ["test@test.com"]
+    assert project.donation == ["https://paypal.me/"]
+    assert project.issues == ["https://test.com/issues"]
+    assert project.source_code == ["https://test.com/source-code"]
+    assert project.website == ["https://test.com/website"]
 
 
 @pytest.mark.parametrize(
