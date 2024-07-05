@@ -155,27 +155,47 @@ class KDENeon6(Extension):
                 "gtk-2-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/themes",
-                    "default-provider": "gtk-common-themes:gtk-2-themes",
+                    "default-provider": "gtk-common-themes",
+                },
+                "kde-gtk2-themes": {
+                    "interface": "content",
+                    "target": "$SNAP/data-dir/themes",
+                    "default-provider": "qt-common-themes",
+                },
+                "kde-gtk3-themes": {
+                    "interface": "content",
+                    "target": "$SNAP/data-dir/themes",
+                    "default-provider": "qt-common-themes",
                 },
                 "gtk-3-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/themes",
-                    "default-provider": "gtk-common-themes:gtk-3-themes",
+                    "default-provider": "gtk-common-themes",
+                },
+                "qt-icon-themes": {
+                    "interface": "content",
+                    "target": "$SNAP/data-dir/icons",
+                    "default-provider": "qt-common-themes",
                 },
                 "icon-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/icons",
-                    "default-provider": "gtk-common-themes:icon-themes",
+                    "default-provider": "gtk-common-themes",
+                },
+                "qt-sound-themes": {
+                    "interface": "content",
+                    "target": "$SNAP/data-dir/sounds",
+                    "default-provider": "qt-common-themes",
                 },
                 "sound-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/sounds",
-                    "default-provider": "gtk-common-themes:sound-themes",
+                    "default-provider": "gtk-common-themes",
                 },
                 "qt-6-themes": {
                     "interface": "content",
                     "target": "$SNAP/kf6",
-                    "default-provider": "qt-common-themes:qt-6-themes",
+                    "default-provider": "qt-common-themes",
                 },
                 platform_kf6_snap: {
                     "content": content_kf6_snap,
