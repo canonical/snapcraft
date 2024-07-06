@@ -274,12 +274,18 @@ class Snapcraft(Application):
                         "'SNAPCRAFT_REMOTE_BUILD_STRATEGY'. "
                         "Valid values are 'disable-fallback' and 'force-fallback'."
                     )
-                # Use legacy snapcraft unless explicitly forced to use craft-application
-                if (
-                    "core20" in (base, build_base)
-                    and build_strategy != "disable-fallback"
-                ):
+
+                # core20 must use the legacy remote builder because the Project model
+                # cannot parse core20 snapcraft.yaml schemas (#4885)
+                if "core20" in (base, build_base):
+                    if build_strategy == "disable-fallback":
+                        raise RuntimeError(
+                            "'SNAPCRAFT_REMOTE_BUILD_STRATEGY=disable-fallback' cannot "
+                            "be used for core20 snaps. Unset the environment variable "
+                            "or use 'force-fallback'."
+                        )
                     raise errors.ClassicFallback()
+
                 # Use craft-application unless explicitly forced to use legacy snapcraft
                 if (
                     "core22" in (base, build_base)
