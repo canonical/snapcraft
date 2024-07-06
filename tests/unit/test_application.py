@@ -440,18 +440,19 @@ def test_run_envvar(
 
 @pytest.mark.parametrize("base", const.LEGACY_BASES)
 @pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
-def test_run_envvar_disable_fallback_core20(
-    snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
-):
-    """core20 base run new remote-build if envvar is `disable-fallback`."""
+def test_run_envvar_disable_fallback_core20(snapcraft_yaml, base, monkeypatch):
+    """core20 bases cannot use the new remote-build."""
     monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "disable-fallback")
     snapcraft_yaml_dict = {"base": base}
     snapcraft_yaml(**snapcraft_yaml_dict)
 
-    application.main()
+    with pytest.raises(RuntimeError) as raised:
+        application.main()
 
-    mock_remote_build_run.assert_called_once()
-    mock_run_legacy.assert_not_called()
+    assert str(raised.value) == (
+        "'SNAPCRAFT_REMOTE_BUILD_STRATEGY=disable-fallback' cannot be used for core20 "
+        "snaps. Unset the environment variable or use 'force-fallback'."
+    )
 
 
 @pytest.mark.parametrize("base", const.LEGACY_BASES | {"core22"})
