@@ -7,5 +7,6 @@ How-to guides
    :maxdepth: 1
 
    architectures
+   bases
    /common/craft-parts/how-to/include_files
    /common/craft-parts/how-to/override_build
