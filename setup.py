@@ -132,6 +132,7 @@ install_requires = [
     "tinydb",
     "typing-extensions",
     "urllib3<2",  # requests-unixsocket does not yet work with urllib3 v2.0+
+    "validators>=0.28.3",
 ]
 
 docs_requires = {
