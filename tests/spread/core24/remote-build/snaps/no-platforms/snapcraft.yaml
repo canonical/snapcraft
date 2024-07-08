@@ -1,6 +1,6 @@
 name: test-snap-no-platforms-core24
 base: core24
-version: '0.1'
+version: "1.0"
 summary: Test snap for remote build
 description: Test snap for remote build
 

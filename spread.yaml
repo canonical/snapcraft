@@ -228,6 +228,11 @@ restore-each: |
   "$TOOLS_DIR"/restore.sh
 
 suites:
+ tests/spread/core20/:
+   summary: core20 specific tests
+   systems:
+     - ubuntu-20.04*
+
  tests/spread/core22/:
    summary: core22 specific tests
    systems:

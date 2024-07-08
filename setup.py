@@ -93,11 +93,11 @@ install_requires = [
     "attrs",
     "catkin-pkg; sys_platform == 'linux'",
     "click",
-    "craft-application>=3.0.0",
+    "craft-application>=3.1.0",
     "craft-archives",
-    "craft-cli",
+    "craft-cli>=2.6.0",
     "craft-grammar",
-    "craft-parts>=1.32.0",
+    "craft-parts>=1.33.0",
     "craft-providers",
     "craft-store",
     "docutils<0.20",  # Frozen until we can update sphinx dependencies.
@@ -132,6 +132,7 @@ install_requires = [
     "tinydb",
     "typing-extensions",
     "urllib3<2",  # requests-unixsocket does not yet work with urllib3 v2.0+
+    "validators>=0.28.3",
 ]
 
 docs_requires = {

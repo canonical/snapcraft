@@ -1,17 +1,11 @@
-summary: Test the remote builder for core24
+summary: Test the legacy remote builder for core22
 manual: true
 kill-timeout: 180m
-systems:
-  - fedora-*
-  - ubuntu-*
 
 environment:
   LAUNCHPAD_TOKEN: "$(HOST: echo ${LAUNCHPAD_TOKEN})"
-  SNAP: no-platforms
-  # launchpad can't parse `platforms` (https://github.com/canonical/snapcraft/issues/4858)
-  #SNAP/all: all
-  #SNAP/platforms: platforms
-  SNAP/no_platforms: no-platforms
+  SNAP: no-architectures
+  SNAPCRAFT_REMOTE_BUILD_STRATEGY: force-fallback
   CREDENTIALS_FILE: "$HOME/.local/share/snapcraft/launchpad-credentials"
   CREDENTIALS_FILE/new_credentials: "$HOME/.local/share/snapcraft/launchpad-credentials"
   CREDENTIALS_FILE/old_credentials: "$HOME/.local/share/snapcraft/provider/launchpad/credentials"
@@ -24,12 +18,6 @@ prepare: |
     exit 1
   fi
 
-  # commit the project
-  git config --global --add safe.directory "$PWD"
-  git init
-  git add snapcraft.yaml
-  git commit -m "Initial Commit"
-
   # set up launchpad token
   mkdir -p "$(dirname "$CREDENTIALS_FILE")"
   echo -e "$LAUNCHPAD_TOKEN" >> "$CREDENTIALS_FILE"
@@ -38,7 +26,6 @@ restore: |
   cd "./snaps/$SNAP"
 
   rm -f ./*.snap ./*.txt
-  rm -rf snap .git
 
 execute: |
   cd "./snaps/$SNAP"
