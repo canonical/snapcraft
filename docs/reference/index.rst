@@ -7,6 +7,7 @@ Reference
    :maxdepth: 1
 
    architectures
+   bases
    commands
    plugins
    /common/craft-parts/reference/part_properties
