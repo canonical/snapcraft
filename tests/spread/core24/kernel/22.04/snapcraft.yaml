@@ -2,17 +2,19 @@
 # Copyright (C) 2021 Canonical Ltd
 name: pc-kernel
 summary: Kernel plugin test
-description: A stripped-down pc kernel to test the kernel plugin.
+description: |
+  A stripped-down pc kernel to test the kernel plugin.
+  Uses the core24 feature set to build an Ubuntu 22.04 kernel
 
 grade: stable
-build-base: core22
+base: core24
+build-base: ubuntu@22.04
 confinement: strict
 type: kernel
 adopt-info: kernel
 
-architectures:
-  - build-on: [amd64]
-    build-for: amd64
+platforms:
+  amd64:
 
 parts:
   kernel:

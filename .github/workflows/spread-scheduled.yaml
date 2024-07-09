@@ -25,13 +25,11 @@ jobs:
         run: |
           sudo snap install --dangerous --classic ${{ steps.snapcraft.outputs.snap }}
 
-  kernel-plugins:
+  kernel-plugin:
     runs-on: [spread-installed]
     needs: [snap-build]
     strategy:
       fail-fast: false
-      matrix:
-        type: [craft-parts, v2]
     steps:
       - name: Cleanup job workspace
         run: |
@@ -49,7 +47,9 @@ jobs:
           path: tests
       - name: Kernel plugin test
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/plugins/${{ matrix.type }}/kernel
+          spread google:ubuntu-22.04-64:tests/spread/plugins/v2/kernel \
+            google:ubuntu-22.04-64:tests/spread/core22/kernel \
+            google:ubuntu-24.04-64:tests/spread/core24/kernel
 
   remote-build:
     runs-on: [spread-installed]
