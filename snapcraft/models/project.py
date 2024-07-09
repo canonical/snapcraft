@@ -44,8 +44,7 @@ from craft_providers import bases
 from pydantic import PrivateAttr, constr
 from typing_extensions import Self, override
 
-from snapcraft import utils
-from snapcraft.const import SUPPORTED_ARCHS, SnapArch
+from snapcraft import const, utils
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
@@ -506,11 +505,11 @@ class Platform(models.Platform):
     """Snapcraft project platform definition."""
 
     build_on: Annotated[  # type: ignore[assignment,reportIncompatibleVariableOverride]
-        list[SnapArch] | None,
+        list[const.SnapArch] | None,
         pydantic.Field(min_items=1, unique_items=True),
     ]
     build_for: Annotated[  # type: ignore[assignment,reportIncompatibleVariableOverride]
-        list[SnapArch | Literal["all"]] | None,
+        list[const.SnapArch | Literal["all"]] | None,
         pydantic.Field(min_items=1, max_items=1, unique_items=True),
     ]
 
@@ -1268,7 +1267,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
             # build_on and build_for are validated
             # let's also validate the platform label
             if platform.build_on:
-                build_on_one_of: Sequence[SnapArch | str] = platform.build_on
+                build_on_one_of: Sequence[const.SnapArch | str] = platform.build_on
             else:
                 build_on_one_of = [platform_label]
 
@@ -1277,7 +1276,10 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
             # otherwise the project is invalid.
             if platform.build_for:
                 build_target = platform.build_for[0]
-                if platform_label in SUPPORTED_ARCHS and platform_label != build_target:
+                if (
+                    platform_label in const.SUPPORTED_ARCHS
+                    and platform_label != build_target
+                ):
                     raise ValueError(
                         str(
                             f"{error_prefix}: if 'build_for' is provided and the "
@@ -1286,7 +1288,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
                         )
                     )
             # if no build-for is present, then the platform label needs to be a valid architecture
-            elif platform_label not in SUPPORTED_ARCHS:
+            elif platform_label not in const.SUPPORTED_ARCHS:
                 raise ValueError(
                     str(
                         f"{error_prefix}: platform entry label must correspond to a "
@@ -1295,12 +1297,12 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
                 )
 
             # Both build and target architectures must be supported
-            if not any(b_o in SUPPORTED_ARCHS for b_o in build_on_one_of):
+            if not any(b_o in const.SUPPORTED_ARCHS for b_o in build_on_one_of):
                 raise ValueError(
                     str(
                         f"{error_prefix}: trying to build snap in one of "
                         f"{build_on_one_of}, but none of these build architectures are supported. "
-                        f"Supported architectures: {SUPPORTED_ARCHS}"
+                        f"Supported architectures: {const.SUPPORTED_ARCHS}"
                     )
                 )
 
@@ -1329,8 +1331,8 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
         if self.platforms is None:
             self.platforms = {
                 get_host_architecture(): Platform(
-                    build_on=[SnapArch(get_host_architecture())],
-                    build_for=[SnapArch(get_host_architecture())],
+                    build_on=[const.SnapArch(get_host_architecture())],
+                    build_for=[const.SnapArch(get_host_architecture())],
                 )
             }
             # For backwards compatibility with core22, convert the platforms.
@@ -1340,8 +1342,8 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
                 )
 
         for platform_entry, platform in self.platforms.items():
-            for build_for in platform.build_for or [SnapArch(platform_entry)]:
-                for build_on in platform.build_on or [SnapArch(platform_entry)]:
+            for build_for in platform.build_for or [const.SnapArch(platform_entry)]:
+                for build_on in platform.build_on or [const.SnapArch(platform_entry)]:
                     build_infos.append(
                         BuildInfo(
                             platform=platform_entry,
