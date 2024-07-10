@@ -43,6 +43,6 @@ jobs:
           mode: qserver
           project: snapcraft
           viewerUrl: https://canonical.tiobe.com/tiobeweb/TICS/api/cfg?name=default
-          branchdir: ${{ GITHUB_WORKSPACE }}
+          branchdir: ${{ github.workspace }}
           ticsAuthToken: ${{ secrets.TICSAUTHTOKEN }}
           installTics: true
