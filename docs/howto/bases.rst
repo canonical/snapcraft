@@ -40,7 +40,7 @@ To build ``core18`` snaps, install snapcraft 7 from the *7.x* track:
 
 .. code-block:: shell
 
-   $ snap install snapcraft --channel 7.x
+   snap install snapcraft --channel 7.x
 
 ``core``
 ^^^^^^^^
@@ -49,7 +49,7 @@ To build ``core`` snaps, install snapcraft 4 from the *4.x* track:
 
 .. code-block:: shell
 
-   $ snap install snapcraft --channel 4.x
+   snap install snapcraft --channel 4.x
 
 
 The base snap mounts itself as the root filesystem within your snap such that
@@ -71,8 +71,8 @@ require re-downloading Snapcraft.
 
 .. code-block:: shell
 
-   $ snap refresh snapcraft --channel 7.x
-   $ snap refresh snapcraft --channel 8.x
+   snap refresh snapcraft --channel 7.x
+   snap refresh snapcraft --channel 8.x
 
 Parallel installs
 ^^^^^^^^^^^^^^^^^
@@ -83,9 +83,9 @@ details.
 
 .. code-block:: shell
 
-   $ snap install snapcraft snapcraft_7 --channel 7.x
-   $ snap install snapcraft snapcraft_8 --channel 8.x
-   $ snapcraft_8 pack
+   snap install snapcraft snapcraft_7 --channel 7.x
+   snap install snapcraft snapcraft_8 --channel 8.x
+   snapcraft_8 pack
 
 Containers
 ^^^^^^^^^^
@@ -142,6 +142,23 @@ This snippet will do the following:
 * create a kernel snap for Ubuntu 24.10
 * build the snap inside an Ubuntu 24.10 build environment
 * use the ``core24`` feature set and ``snapcraft.yaml`` schema
+
+How to build a bare base snap
+-----------------------------
+
+Bare base snaps are useful for fully statically linked applications and will
+not have access to a base snap at runtime.
+
+To build a bare base snap, use the following ``snapcraft.yaml`` snippet:
+
+.. code-block:: yaml
+
+   name: my-snap
+   base: bare
+   build-base: core24
+
+This snippet will build a bare base snap inside an Ubuntu 24.04 build
+environment.
 
 
 .. _`Snapcraft and ESM`: https://snapcraft.io/docs/snapcraft-esm

@@ -57,7 +57,7 @@ The ``base`` keyword in a ``snapcraft.yaml`` file:
 * the environment where the snap is built if ``build-base`` is not defined
 * and which base snap is used at runtime
 
-``base`` must be defined except for base and snapd snaps.
+``base`` must be defined except for base, snapd, and kernel snaps.
 
 ``base`` must be a :ref:`supported base<base-snap-reference>`.
 
@@ -89,11 +89,15 @@ be promoted to ``stable`` or ``candidate`` channels.
 Kernel snaps
 ^^^^^^^^^^^^
 
-``build-base`` must be defined as ``<distribution>@<series>`` when ``type:
-kernel`` is defined.
+Kernel snaps can optionally define a base and can use interim build bases.
 
+Interim build bases are defined as ``<distribution>@<series>`` where
 ``<distribution>`` is ``ubuntu`` and ``<series>`` is any `supported LTS or
 interim release`_.
+
+If the build base uses the ``<distribution>@<series>`` naming convention, then
+``base`` must be a :ref:`supported base<base-snap-reference>` so that Snapcraft
+can determine the correct featureset and ``snapcraft.yaml`` schema.
 
 See :ref:`How to build a kernel snap for interim releases<kernel-snap-how-to>`
 for details on how to use ``build-base`` for kernel snaps.

@@ -20,6 +20,9 @@ with the ``core24`` snap installed. Stage packages will be installed from the
 development. This is defined as the Ubuntu image with the ``devel`` alias in
 the `Ubuntu buildd image server`_.
 
+For ``base: bare`` snaps, a ``build-base`` is required to determine the feature
+set, build environment, and ``snapcraft.yaml`` schema.
+
 Base snaps
 ----------
 
@@ -31,9 +34,13 @@ a snap.
 Mounting
 --------
 
-The base snap mounts itself as the root filesystem within a snap's runtime
-environment. When an application runs, the base's library paths are searched
-directly after the paths for that snap.
+For strictly confined snaps, the base snap mounts itself as the root filesystem
+within a snap's runtime environment. When an application runs, the base's
+library paths are searched directly after the paths for that snap.
+
+For classic confined snaps, the base snap is not mounted. Classic snaps can
+still load libraries from the base snaps under ``/snap/<base>/``. For more
+information, see the documentation for `classic confinement`_.
 
 Choosing a base
 ---------------
@@ -49,6 +56,11 @@ snap, such as for running KDE Plasma or GNOME applications. Extensions support
 specific bases. See `supported extensions`_ for a list of which extensions
 support which bases.
 
+``bare`` is the recommended base for fully statically linked snaps because they
+will not have access to a base snap when running. The snap will have a smaller
+footprint at runtime because it does not require a base snap to be downloaded,
+installed, and mounted.
+
 .. _base-snap-explanation:
 
 Building a base snap
@@ -62,10 +74,11 @@ for maintenance and updates, in particular:
   be strict)
 * security updates must be proactive
 
-Base snaps can be either bootable or non-bootable. The former needs to include
-``systemd`` while the latter can be leaner.
+`Ubuntu Core`_ systems need a base snap. These base snaps must be bootable and
+include ``systemd``.
 
 
 .. _`Ubuntu buildd image server`: https://cloud-images.ubuntu.com/buildd/daily/
+.. _`classic confinement`: https://snapcraft.io/docs/classic-confinement
 .. _`extensions`: https://snapcraft.io/docs/snapcraft-extensions
 .. _`supported extensions`: https://snapcraft.io/docs/supported-extensions
