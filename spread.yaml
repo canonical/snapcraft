@@ -376,8 +376,15 @@ suites:
      sudo apt-get install git
      sudo apt-mark auto git
 
+ docs/howto/code/:
+   summary: tests how-to guides from the docs
+   systems:
+   - ubuntu-24.04-64
+
+
 path: /snapcraft/
 include:
+  - docs/
   - tests/
   - requirements.txt
   - requirements-devel.txt
