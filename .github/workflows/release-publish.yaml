@@ -11,18 +11,20 @@ permissions:
 
 jobs:
   source-wheel:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, jammy]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Fetch tag annotations
         run: |
+          # Note: we fetch the tags here instead of using actions/checkout's "fetch-tags"
+          # because of https://github.com/actions/checkout/issues/1467
           git fetch --force --tags --depth 1
           git describe --dirty --long --match '[0-9]*.[0-9]*.[0-9]*' --exclude '*[^0-9.]*'
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.10"
           check-latest: true
       - name: Build packages
         run: |
@@ -36,7 +38,10 @@ jobs:
           path: dist/
   pypi:
     needs: ["source-wheel"]
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, jammy]
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
     steps:
       - name: Get packages
         uses: actions/download-artifact@v4
@@ -44,17 +49,22 @@ jobs:
           name: pypi-packages
           path: dist/
       - name: Publish to pypi
+        # Note: this action uses PyPI's support for Trusted Publishers
+        # It needs a configuration on the PyPI project - see:
+        # https://docs.pypi.org/trusted-publishers/adding-a-publisher/#github-actions
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
   github-release:
     needs: ["source-wheel"]
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, jammy]
     steps:
       - name: Get pypi artifacts
         uses: actions/download-artifact@v4
+        with:
+          name: pypi-packages
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
+          # Add wheel and source tarball
           files: |
-            **
+            *.whl
+            *.tar.gz
