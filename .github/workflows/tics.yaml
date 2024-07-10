@@ -4,20 +4,17 @@ on:
   push:
     branches:
     - main
+    # to easy test changes to the workflow
+    - tiobe
 
 jobs:
   CI:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
 
       - name: Install dependencies
         run: |
@@ -25,7 +22,7 @@ jobs:
           sudo apt-get update
           echo "::endgroup::"
           echo "::group::apt-get install..."
-          sudo apt-get install -y libapt-pkg-dev libyaml-dev xdelta3 patchelf
+          sudo apt-get install -y python3 python3-dev libapt-pkg-dev libyaml-dev xdelta3 patchelf
           echo "::endgroup::"
           echo "::group::pip install"
           python -m pip install 'tox<5.0' tox-gh
