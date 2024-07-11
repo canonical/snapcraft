@@ -343,6 +343,9 @@ Example footers::
 Changelog
 ---------
 
+Scope
+=====
+
 The changelog is a reference documentation page that gives a human-readable
 summary of changes to the project that are relevant to users.
 
@@ -353,8 +356,32 @@ Internal changes should not be included in the changelog. For example,
 dev dependency updates, CI updates, and style changes should not
 be included.
 
+Style and format
+================
+
+Changes should be written in the imperative mood (present tense, second
+person) similar to commit headers.
+
 The changelog should link to the project's GitHub releases page, which
 contains an exhaustive list of all commits added to the release.
+
+Release entries should be sorted by date from newest to oldest.
+
+Hotfixes
+========
+
+If an older version gets a hotfix release, subsequent releases should mention
+when the hotfix is incorporated.
+
+For example, consider a package with a previous release ``2.9.0`` and a latest
+release of ``3.0.0``. If the ``2.9.0`` receives a hotfix release ``2.9.1`` and
+is merged back to ``main``, then the next ``3.x`` release should indicate that
+it includes the changes from 2.9.1.
+
+.. note::
+
+   3.0.1 includes changes from the 2.9.1 release.
+
 
 .. _Black: https://black.readthedocs.io
 .. _`Canonical contributor licence agreement`: http://www.ubuntu.com/legal/contributors/
