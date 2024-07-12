@@ -89,18 +89,11 @@ be promoted to ``stable`` or ``candidate`` channels.
 Kernel snaps
 ^^^^^^^^^^^^
 
-Kernel snaps can optionally define a base and can use interim build bases.
+``build-base`` must be a :ref:`supported base<base-snap-reference>` when
+``type: kernel`` is defined.
 
-Interim build bases are defined as ``<distribution>@<series>`` where
-``<distribution>`` is ``ubuntu`` and ``<series>`` is any `supported LTS or
-interim release`_.
-
-If the build base uses the ``<distribution>@<series>`` naming convention, then
-``base`` must be a :ref:`supported base<base-snap-reference>` so that Snapcraft
-can determine the correct featureset and ``snapcraft.yaml`` schema.
-
-See :ref:`How to build a kernel snap for interim releases<kernel-snap-how-to>`
-for details on how to use ``build-base`` for kernel snaps.
+See :ref:`How to build a kernel snap<kernel-snap-how-to>` for details on how to
+use ``build-base`` for kernel snaps.
 
 .. _`Snapcraft and ESM`: https://snapcraft.io/docs/snapcraft-esm
 .. _`Ubuntu 16.04 ESM`: https://releases.ubuntu.com/16.04/

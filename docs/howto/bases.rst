@@ -121,27 +121,26 @@ This snippet will do the following:
 
 .. _kernel-snap-how-to:
 
-How to build a kernel snap for interim releases
------------------------------------------------
+How to build a kernel snap
+--------------------------
 
-The ``build-base`` keyword is used to build kernel snaps for interim Ubuntu
+The ``build-base`` keyword is used to build kernel snaps for Ubuntu LTS
 releases.
 
-To build a kernel snap targeting the Ubuntu 24.10 release, use the following
+To build a kernel snap targeting the Ubuntu 22.04 release, use the following
 ``snapcraft.yaml`` snippet:
 
 .. code-block:: yaml
 
    name: pc-kernel
    type: kernel
-   base: core24
-   build-base: ubuntu@24.10
+   build-base: core22
 
 This snippet will do the following:
 
-* create a kernel snap for Ubuntu 24.10
-* build the snap inside an Ubuntu 24.10 build environment
-* use the ``core24`` feature set and ``snapcraft.yaml`` schema
+* create a kernel snap for Ubuntu 22.04
+* build the snap inside an Ubuntu 22.04 build environment
+* use the ``core22`` feature set and ``snapcraft.yaml`` schema
 
 How to build a bare base snap
 -----------------------------
