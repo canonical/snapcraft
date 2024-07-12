@@ -8,8 +8,8 @@ Components
 Components and Partitions
 -------------------------
 
-Components utilize a `Craft Parts`_ feature called ``partitions``. This feature
-is enabled only when a ``components`` keyword is defined.
+Components utilise a `Craft Parts`_ feature called ``partitions``. This feature
+is enabled only when a ``components`` keyword is defined in the project file.
 
 Each component has a namespaced partition ``component/<component-name>`` where
 ``component`` is the partition's namespace and ``<component-name>`` is the name
@@ -24,7 +24,7 @@ When a part is built, the output is the default partition's install directory
 for that part.
 
 Each component has a partition. This means each component has its own install,
-stage, and prime directories. When a file is organized into a component's
+stage, and prime directories. When a file is organised into a component's
 partition, it is moved to the part's install directory for that component's
 partition.
 
@@ -40,9 +40,9 @@ For example, consider a part with the ``organize`` keyword:
         organize:
           hello: (component/translations)/hello-world
 
-This part outputs a file called ``hello`` in ``my-part``'s default install
-directory. If no ``organize`` keyword was used, this file would be included in
-the snap itself
+This part's build creates a file called ``hello`` in ``my-part``'s default
+install directory. If no ``organize`` keyword was used, this file would be
+included in the snap itself.
 
 However this example uses the ``organize`` keyword to move the file ``hello``
 from ``my-part``'s default install directory to ``my-parts``'s install
