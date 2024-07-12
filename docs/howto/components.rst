@@ -82,3 +82,7 @@ and the component file for the ``translations`` component.
 
    snapcraft upload hello-components_1.0_amd64.snap \
      --component translations=hello-components+translations_1.0.comp
+
+The store expects a snap and its components to be uploaded together.
+
+The component has to be uploaded alongside the snap.

@@ -3,13 +3,25 @@ Components
 
 .. include:: /reuse/components-intro.rst
 
+Components are useful for distributing optional resources alongside a snap. For
+example, debug symbols are useful for the developer of an application and are
+closely linked to a particular build of an application. Debug symbols are not
+useful for the users. Including debug symbols in a snap package would waste
+user's network bandwidth and disk space. If an application packages debug
+symbols as a component alongside the snap, then the developers who require
+debug symbols can download and install them as a component.
+
+.. note::
+
+   Components are under development and not production ready.
+
 .. _components-and-partitions:
 
 Components and Partitions
 -------------------------
 
 Components utilise a `Craft Parts`_ feature called ``partitions``. This feature
-is enabled only when a ``components`` keyword is defined in the project file.
+is enabled only when the ``component`` keyword is defined in the project file.
 
 Each component has a namespaced partition ``component/<component-name>`` where
 ``component`` is the partition's namespace and ``<component-name>`` is the name
