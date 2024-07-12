@@ -93,7 +93,7 @@ Containers
 Isolated development environments allow using different versions of Snapcraft
 simultaneously.
 
-`Snapcraft rocks`_ are the recommended way to build snaps in a container:
+`Snapcraft rocks`_ are the recommended way to build snaps in a container.
 
 
 How to bootstrap a base snap

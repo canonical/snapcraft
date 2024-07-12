@@ -42,7 +42,7 @@ and ``core16`` are two distinct packages.
 
 .. warning::
 
-   `core16`_ is not a supported base. With no stable release, its beta and
+   core16 is not a supported base. With no stable release, its beta and
    candidate releases are classed as experimental.
 
 See `Snapcraft and ESM`_ for details bases built from ESM releases.
@@ -102,7 +102,6 @@ use ``build-base`` for kernel snaps.
 .. _`Ubuntu 22.04 LTS`: https://releases.ubuntu.com/22.04/
 .. _`Ubuntu 24.04 LTS`: https://releases.ubuntu.com/24.04/
 .. _`bare`: https://snapcraft.io/bare
-.. _`core16`: https://snapcraft.io/core16
 .. _`core18`: https://snapcraft.io/core18
 .. _`core20`: https://snapcraft.io/core20
 .. _`core22`: https://snapcraft.io/core22
