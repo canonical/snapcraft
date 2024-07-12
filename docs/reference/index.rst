@@ -8,6 +8,7 @@ Reference
 
    architectures
    commands
+   components
    plugins
    /common/craft-parts/reference/part_properties
    parts_steps
