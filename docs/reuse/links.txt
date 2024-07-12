@@ -2,6 +2,7 @@
 .. _Canonical Documentation Style Guide: https://docs.ubuntu.com/styleguide/en
 .. _Canonical website: https://canonical.com/
 .. _`Charmcraft`: https://juju.is/docs/sdk/charmcraft
+.. _`Craft Parts`: https://canonical-craft-parts.readthedocs-hosted.com/en/latest/
 .. _`Create a brand account`: https://snapcraft.io/docs/t/creating-snap-store-brand-accounts/6271
 .. _`Kernel connector`: https://www.kernel.org/doc/Documentation/connector/connector.txt
 .. _managing-snap-configuration: https://snapcraft.io/docs/configuration-in-snaps

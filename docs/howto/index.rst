@@ -8,5 +8,6 @@ How-to guides
 
    architectures
    bases
+   components
    /common/craft-parts/how-to/include_files
    /common/craft-parts/how-to/override_build
