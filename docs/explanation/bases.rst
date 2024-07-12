@@ -39,7 +39,7 @@ within a snap's runtime environment. When an application runs, the base's
 library paths are searched directly after the paths for that snap.
 
 For classic confined snaps, the base snap is not mounted as the root
-filesystem. The base snap is mounted like as ``/snap/<base>/``, so the snap can
+filesystem. The base snap is mounted as ``/snap/<base>/``, so the snap can
 still load libraries from the base snap. For more information, see the
 documentation for `classic confinement`_.
 
