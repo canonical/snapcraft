@@ -89,8 +89,17 @@ be promoted to ``stable`` or ``candidate`` channels.
 Kernel snaps
 ^^^^^^^^^^^^
 
-``build-base`` must be a :ref:`supported base<base-snap-reference>` when
-``type: kernel`` is defined.
+Kernel snaps can optionally define a base and can use interim and LTS build
+bases.
+
+``build-base`` must be defined as ``<distribution>@<series>`` where
+``<distribution>`` is ``ubuntu`` and ``<series>`` is a `interim or
+LTS release`_. Only ``ubuntu@22.04`` and ``ubuntu@24.04`` are supported.
+``ubuntu@24.10`` is not supported, see `issue #4910`_ for details.
+
+The ``base`` must be a :ref:`snap base<base-snap-reference>` so that
+Snapcraft can determine the correct featureset and ``snapcraft.yaml`` schema.
+``core22`` is the only supported base.
 
 See :ref:`How to build a kernel snap<kernel-snap-how-to>` for details on how to
 use ``build-base`` for kernel snaps.
@@ -107,4 +116,5 @@ use ``build-base`` for kernel snaps.
 .. _`core22`: https://snapcraft.io/core22
 .. _`core24`: https://snapcraft.io/core24
 .. _`core`: https://snapcraft.io/core
-.. _`supported LTS or interim release`: https://ubuntu.com/about/release-cycle
+.. _`issue #4910`: https://github.com/canonical/snapcraft/issues/4910
+.. _`interim or LTS release`: https://ubuntu.com/about/release-cycle
