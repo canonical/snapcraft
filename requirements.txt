@@ -72,5 +72,5 @@ validators==0.28.3
 wadllib==1.3.6
 wrapt==1.16.0
 ws4py==0.5.1
-zipp==3.17.0
+zipp==3.19.1
 python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz; sys.platform == "linux"
