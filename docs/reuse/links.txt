@@ -11,6 +11,7 @@
 .. _ROS: https://www.ros.org/
 .. _setuptools: https://setuptools.readthedocs.io/en/latest/
 .. _`Snapcraft`: https://snapcraft.io/docs/snapcraft
+.. _`snapcraft.yaml`: https://snapcraft.io/docs/snapcraft-schema
 .. _`snap-channels`: https://snapcraft.io/docs/channels
 .. _`Snap Store desktop app`: https://snapcraft.io/snap-store
 .. _`Snap Store`: https://snapcraft.io/store
