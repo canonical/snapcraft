@@ -82,7 +82,7 @@ dev_requires = [
     "types-PyYAML",
     # types-requests>=2.31.0.7 requires urllib3>=2
     "types-requests==2.31.0.6",
-    "types-setuptools",
+    "types-setuptools~=70.3.0",
     "types-simplejson",
     "types-tabulate",
     "types-toml",
