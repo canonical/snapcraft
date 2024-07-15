@@ -12,8 +12,6 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.10"
-  apt_packages:
-    - libapt-pkg-dev
   jobs:
     post_checkout:
       - git fetch --tags --depth 1 # Also fetch tags
@@ -22,12 +20,12 @@ build:
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
-  builder: html
+  builder: dirhtml
   fail_on_warning: true
 
 python:
   install:
-    - requirements: docs/requirements.txt
+    - requirements: requirements-doc.txt
     - method: pip
       path: .
       extra_requirements:
