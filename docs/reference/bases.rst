@@ -93,7 +93,7 @@ Kernel snaps can optionally define a base and can use interim and LTS build
 bases.
 
 ``build-base`` must be defined as ``<distribution>@<series>`` where
-``<distribution>`` is ``ubuntu`` and ``<series>`` is a `interim or
+``<distribution>`` is ``ubuntu`` and ``<series>`` is an `interim or
 LTS release`_. Only ``ubuntu@22.04`` and ``ubuntu@24.04`` are supported.
 ``ubuntu@24.10`` is not supported, see `issue #4910`_ for details.
 
