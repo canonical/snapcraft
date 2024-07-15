@@ -2,6 +2,7 @@
 .. _Canonical Documentation Style Guide: https://docs.ubuntu.com/styleguide/en
 .. _Canonical website: https://canonical.com/
 .. _`Charmcraft`: https://juju.is/docs/sdk/charmcraft
+.. _`Craft Parts`: https://canonical-craft-parts.readthedocs-hosted.com/en/latest/
 .. _`Create a brand account`: https://snapcraft.io/docs/t/creating-snap-store-brand-accounts/6271
 .. _`Kernel connector`: https://www.kernel.org/doc/Documentation/connector/connector.txt
 .. _managing-snap-configuration: https://snapcraft.io/docs/configuration-in-snaps
@@ -10,6 +11,7 @@
 .. _ROS: https://www.ros.org/
 .. _setuptools: https://setuptools.readthedocs.io/en/latest/
 .. _`Snapcraft`: https://snapcraft.io/docs/snapcraft
+.. _`snapcraft.yaml`: https://snapcraft.io/docs/snapcraft-schema
 .. _`snap-channels`: https://snapcraft.io/docs/channels
 .. _`Snap Store desktop app`: https://snapcraft.io/snap-store
 .. _`Snap Store`: https://snapcraft.io/store
@@ -18,4 +20,3 @@
 .. _`Ubuntu Core`: https://ubuntu.com/core/
 .. _vscode: https://code.visualstudio.com/
 .. _`YAML specification`: https://yaml.org/spec/
-
