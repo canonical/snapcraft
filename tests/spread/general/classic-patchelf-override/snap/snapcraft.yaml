@@ -1,0 +1,27 @@
+name: simple-snap
+version: "1.0"
+summary: Build a simple classic snap with override-prime
+description: |
+  Build a simple classic snap with override-prime that tests patchelf
+
+base: core22
+
+confinement: classic
+
+apps:
+  hello:
+    command: bin/hello
+
+parts:
+  hello:
+    source: .
+    plugin: make
+    build-attributes:
+      - enable-patchelf
+    build-packages:
+      - gcc
+      - libc-dev
+      - libcurl4-openssl-dev
+    stage-packages: [libcurl4]
+    override-prime: |
+      craftctl default
