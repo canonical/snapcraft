@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import json
 from textwrap import dedent
 from unittest.mock import ANY, call
 
@@ -199,22 +200,83 @@ def test_register_store_id(emitter, fake_store_register):
     ],
 )
 @pytest.mark.usefixtures("memory_keyring")
-def test_names(emitter, fake_store_get_names, command_class):
-    cmd = command_class(None)
+class TestNames:
+    """Tests for the names command."""
 
-    cmd.run(
-        argparse.Namespace(
-            store_id="1234", private=False, yes=True, **{"snap-name": "test-snap"}
-        )
-    )
+    def test_table(self, emitter, fake_store_get_names, command_class):
+        cmd = command_class(None)
 
-    if command_class.hidden:
-        emitter.assert_progress("This command is deprecated: use 'names' instead")
-    emitter.assert_message(
-        dedent(
-            """\
-            Name               Since                 Visibility    Notes
-            test-snap-private  2016-07-26T20:18:32Z  private       -
-            test-snap-public   2016-07-26T20:18:32Z  public        -"""
+        cmd.run(
+            argparse.Namespace(
+                store_id="1234",
+                private=False,
+                yes=True,
+                format="table",
+                **{"snap-name": "test-snap"},
+            )
         )
-    )
+
+        if command_class.hidden:
+            emitter.assert_progress("This command is deprecated: use 'names' instead")
+        emitter.assert_message(
+            dedent(
+                """\
+                Name               Since                 Visibility    Notes
+                test-snap-private  2016-07-26T20:18:32Z  private       -
+                test-snap-public   2016-07-26T20:18:32Z  public        -"""
+            )
+        )
+
+    def test_json(self, emitter, fake_store_get_names, command_class):
+        cmd = command_class(None)
+
+        cmd.run(
+            argparse.Namespace(
+                store_id="1234",
+                private=False,
+                yes=True,
+                format="json",
+                **{"snap-name": "test-snap"},
+            )
+        )
+
+        if command_class.hidden:
+            emitter.assert_progress("This command is deprecated: use 'names' instead")
+
+        emitter.assert_message(
+            json.dumps(
+                {
+                    "snaps": [
+                        {
+                            "name": "test-snap-private",
+                            "since": "2016-07-26T20:18:32Z",
+                            "visibility": "private",
+                            "notes": None,
+                        },
+                        {
+                            "name": "test-snap-public",
+                            "since": "2016-07-26T20:18:32Z",
+                            "visibility": "public",
+                            "notes": None,
+                        },
+                    ],
+                },
+                indent=4,
+            )
+        )
+
+    def test_format_error(self, emitter, fake_store_get_names, command_class):
+        cmd = command_class(None)
+
+        with pytest.raises(NotImplementedError) as exc_info:
+            cmd.run(
+                argparse.Namespace(
+                    store_id="1234",
+                    private=False,
+                    yes=True,
+                    format="invalid",
+                    **{"snap-name": "test-snap"},
+                )
+            )
+
+        assert exc_info.value.args == ("Format not implemented", "invalid")

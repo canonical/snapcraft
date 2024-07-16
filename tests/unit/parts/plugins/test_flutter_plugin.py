@@ -42,6 +42,7 @@ def test_get_build_packages(part_info):
     plugin = FlutterPlugin(properties=properties, part_info=part_info)
     assert plugin.get_build_packages() == {
         "clang",
+        "curl",
         "git",
         "cmake",
         "ninja-build",

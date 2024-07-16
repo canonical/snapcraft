@@ -25,7 +25,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import yaml
-from craft_cli import BaseCommand, emit
+from craft_application.commands import AppCommand
+from craft_cli import emit
 from overrides import overrides
 
 from snapcraft import errors, utils
@@ -59,7 +60,7 @@ _VALIDATION_SETS_TEMPLATE = textwrap.dedent(
 )
 
 
-class StoreEditValidationSetsCommand(BaseCommand):
+class StoreEditValidationSetsCommand(AppCommand):
     """Edit a validation set."""
 
     name = "edit-validation-sets"
@@ -195,9 +196,7 @@ def _sign_assertion(assertion: Dict[str, Any], *, key_name: Optional[str]) -> by
     cmdline = ["snap", "sign"]
     if key_name:
         cmdline += ["-k", key_name]
-    snap_sign = subprocess.Popen(  # pylint: disable=R1732
-        cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE
-    )
+    snap_sign = subprocess.Popen(cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     signed_assertion, _ = snap_sign.communicate(input=json.dumps(assertion).encode())
     if snap_sign.returncode != 0:
         raise errors.SnapcraftError("Failed to sign assertion")

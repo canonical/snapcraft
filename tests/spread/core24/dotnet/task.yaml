@@ -1,0 +1,11 @@
+summary: Build a snap with the dotnet plugin
+
+restore: |
+  rm -rf ./*.snap
+
+execute: |
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  # dotnet is disabled for core24 until the dotnet sdk snap is rewritten
+  snapcraft pack 2>&1 | MATCH "plugin not registered: 'dotnet'"

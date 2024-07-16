@@ -14,6 +14,7 @@ docs/reference.md
 docs/reference/commands
 docs/.sphinx
 docs/_build
+docs/common
 *.egg-info
 .eggs/
 .envrc
@@ -26,6 +27,7 @@ pip-wheel-metadata/
 *.pyc
 __pycache__
 .pytest_cache
+*.comp
 *.snap
 snap/.snapcraft/
 .spread-reuse.*

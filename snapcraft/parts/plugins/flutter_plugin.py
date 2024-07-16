@@ -83,6 +83,7 @@ class FlutterPlugin(plugins.Plugin):
     def get_build_packages(self) -> Set[str]:
         return {
             "clang",
+            "curl",
             "git",
             "cmake",
             "ninja-build",

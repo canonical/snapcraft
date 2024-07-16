@@ -17,7 +17,7 @@ help:
 install:
 	@echo "... setting up virtualenv"
 	python3 -m venv sphinx-resources/.sphinx/venv
-	. $(VENV); pip install --upgrade -r sphinx-resources/.sphinx/requirements.txt -r requirements.txt
+	. $(VENV); pip install --upgrade -r requirements.txt
 
 	@echo "\n" \
 		"--------------------------------------------------------------- \n" \

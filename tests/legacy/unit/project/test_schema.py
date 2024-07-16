@@ -502,7 +502,7 @@ def test_valid_restart_conditions(data, condition):
     Validator(data).validate()
 
 
-_REFRESH_MODES = ["endure", "restart"]
+_REFRESH_MODES = ["endure", "restart", "ignore-running"]
 
 
 @pytest.mark.parametrize("mode", _REFRESH_MODES)

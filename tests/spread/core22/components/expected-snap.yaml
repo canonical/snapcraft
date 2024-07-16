@@ -1,0 +1,26 @@
+name: hello-components
+version: '1.0'
+summary: Build a snap with components
+description: Build a snap with components
+architectures:
+- amd64
+base: core22
+apps:
+  hello:
+    command: bin/hello
+confinement: strict
+grade: devel
+environment:
+  LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+  PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+provenance: test-provenance
+components:
+  share:
+    summary: Hello World
+    description: Hello World
+    type: test
+    hooks:
+      install:
+        plugs:
+        - home
+        - network

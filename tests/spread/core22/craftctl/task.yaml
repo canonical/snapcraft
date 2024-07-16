@@ -14,6 +14,7 @@ restore: |
   cd "$SNAP"
   rm -f ./*.snap
   rm -Rf work
+  snapcraft clean --destructive-mode
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"

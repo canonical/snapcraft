@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -24,12 +24,14 @@ from typing import Any, Dict, List, Optional, Set
 import craft_parts
 from craft_archives import repo
 from craft_cli import emit
-from craft_parts import Action, ActionType, Part, ProjectDirs, Step
+from craft_parts import Action, ActionType, Step
 from craft_parts.packages import Repository
 from xdg import BaseDirectory  # type: ignore
 
 from snapcraft import errors
-from snapcraft.meta import ExtractedMetadata, extract_metadata
+from snapcraft.meta import ExtractedMetadata
+from snapcraft.parts.extract_metadata import extract_lifecycle_metadata
+from snapcraft.services.lifecycle import get_prime_dirs_from_project
 from snapcraft.utils import convert_architecture_deb_to_platform, get_host_architecture
 
 _LIFECYCLE_STEPS = {
@@ -49,6 +51,7 @@ class PartsLifecycle:
     :param assets_dir: The directory containing project assets.
     :param adopt_info: The name of the part containing metadata do adopt.
     :param extra_build_snaps: A list of additional build snaps to install.
+    :param partitions: A list of partitions for the project.
 
     :raises PartsLifecycleError: On error initializing the parts lifecycle.
     """
@@ -72,6 +75,7 @@ class PartsLifecycle:
         extra_build_snaps: Optional[List[str]] = None,
         target_arch: str,
         track_stage_packages: bool,
+        partitions: Optional[List[str]],
     ):
         self._work_dir = work_dir
         self._assets_dir = assets_dir
@@ -80,6 +84,7 @@ class PartsLifecycle:
         self._adopt_info = adopt_info
         self._parse_info = parse_info
         self._all_part_names = [*all_parts]
+        self._partitions = partitions
 
         emit.progress("Initializing parts lifecycle")
 
@@ -109,14 +114,40 @@ class PartsLifecycle:
                 # custom arguments
                 project_base=project_base,
                 confinement=confinement,
+                partitions=self._partitions,
             )
         except craft_parts.PartsError as err:
             raise errors.PartsLifecycleError(str(err)) from err
+
+    def get_prime_dir(self, component: str | None = None) -> pathlib.Path:
+        """Get the prime directory path for the default prime dir or a component.
+
+        :param component: Name of the component to get the prime directory for.
+
+        :returns: The default prime directory or a component's prime directory.
+
+        :raises SnapcraftError: If the component does not exist.
+        """
+        try:
+            return self.prime_dirs[component]
+        except KeyError as err:
+            raise errors.SnapcraftError(
+                f"Could not get prime directory for component {component!r} "
+                "because it does not exist."
+            ) from err
 
     @property
     def prime_dir(self) -> pathlib.Path:
         """Return the parts prime directory path."""
         return self._lcm.project_info.prime_dir
+
+    @property
+    def prime_dirs(self) -> dict[str | None, pathlib.Path]:
+        """Return a mapping of component names to prime directories.
+
+        'None' maps to the default prime directory.
+        """
+        return get_prime_dirs_from_project(self._lcm.project_info)
 
     @property
     def target_arch(self) -> str:
@@ -218,7 +249,7 @@ class PartsLifecycle:
         if refresh_required:
             emit.progress("Refreshing package repositories...")
             # TODO: craft-parts API for: force_refresh=refresh_required
-            # pylint: disable=C0415
+
             from craft_parts.packages import deb
 
             deb.Ubuntu.refresh_packages_list.cache_clear()
@@ -241,33 +272,9 @@ class PartsLifecycle:
 
     def extract_metadata(self) -> List[ExtractedMetadata]:
         """Obtain metadata information."""
-        if self._adopt_info is None or self._adopt_info not in self._parse_info:
-            return []
-
-        dirs = ProjectDirs(work_dir=self._work_dir)
-        part = Part(self._adopt_info, {}, project_dirs=dirs)
-        locations = (
-            part.part_src_dir,
-            part.part_build_dir,
-            part.part_install_dir,
+        return extract_lifecycle_metadata(
+            self._adopt_info, self._parse_info, self._work_dir, self._partitions
         )
-        metadata_list: List[ExtractedMetadata] = []
-
-        for metadata_file in self._parse_info[self._adopt_info]:
-            emit.trace(f"extract metadata: parse info from {metadata_file}")
-
-            for location in locations:
-                if pathlib.Path(location, metadata_file.lstrip("/")).is_file():
-                    metadata = extract_metadata(metadata_file, workdir=str(location))
-                    if metadata:
-                        metadata_list.append(metadata)
-                        break
-
-                    emit.progress(
-                        f"No metadata extracted from {metadata_file}", permanent=True
-                    )
-
-        return metadata_list
 
     def get_primed_stage_packages(self) -> List[str]:
         """Obtain the list of primed stage packages from all parts."""

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,15 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Snapcraft lifecycle commands."""
+"""Snapcraft extension commands."""
 
-import abc
 import textwrap
 from typing import Dict, List
 
 import tabulate
 import yaml
-from craft_cli import BaseCommand, emit
+from craft_application.commands import AppCommand
+from craft_cli import emit
 from overrides import overrides
 from pydantic import BaseModel
 
@@ -54,7 +54,7 @@ class ExtensionModel(BaseModel):
         }
 
 
-class ListExtensionsCommand(BaseCommand, abc.ABC):
+class ListExtensionsCommand(AppCommand):
     """List available extensions for all supported bases."""
 
     name = "list-extensions"
@@ -96,14 +96,14 @@ class ListExtensionsCommand(BaseCommand, abc.ABC):
         emit.message(tabulate.tabulate(printable_extensions, headers="keys"))
 
 
-class ExtensionsCommand(ListExtensionsCommand, abc.ABC):
+class ExtensionsCommand(ListExtensionsCommand):
     """A command alias to list the available extensions."""
 
     name = "extensions"
     hidden = True
 
 
-class ExpandExtensionsCommand(BaseCommand, abc.ABC):
+class ExpandExtensionsCommand(AppCommand):
     """Expand the extensions in the snapcraft.yaml file."""
 
     name = "expand-extensions"
@@ -128,7 +128,8 @@ class ExpandExtensionsCommand(BaseCommand, abc.ABC):
 
         # `apply_yaml()` adds or replaces the architectures keyword with an Architecture
         # object, which does not easily dump to a yaml file
-        yaml_data_for_arch.pop("architectures")
+        yaml_data_for_arch.pop("architectures", None)
+        yaml_data_for_arch.pop("platforms", None)
 
         # `parse-info` keywords must be removed before unmarshalling, because they are
         # not part of the Project model

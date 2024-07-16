@@ -17,18 +17,35 @@
 """Snapcraft provided plugin registration."""
 
 import craft_parts
+from craft_parts.plugins.plugins import PluginType
 
 from .colcon_plugin import ColconPlugin
 from .conda_plugin import CondaPlugin
 from .flutter_plugin import FlutterPlugin
 from .kernel_plugin import KernelPlugin
+from .matter_sdk_plugin import MatterSdkPlugin
 from .python_plugin import PythonPlugin
 
 
+def get_plugins(core22: bool) -> dict[str, PluginType]:
+    """Get the dict of Snapcraft-specific plugins.
+
+    :param core22: Whether core22-only plugins should be included.
+    """
+    plugins = {
+        "colcon": ColconPlugin,
+        "conda": CondaPlugin,
+        "flutter": FlutterPlugin,
+        "python": PythonPlugin,
+        "matter-sdk": MatterSdkPlugin,
+    }
+
+    if core22:
+        plugins["kernel"] = KernelPlugin
+
+    return plugins
+
+
 def register() -> None:
-    """Register Snapcraft plugins."""
-    craft_parts.plugins.register({"colcon": ColconPlugin})
-    craft_parts.plugins.register({"conda": CondaPlugin})
-    craft_parts.plugins.register({"flutter": FlutterPlugin})
-    craft_parts.plugins.register({"python": PythonPlugin})
-    craft_parts.plugins.register({"kernel": KernelPlugin})
+    """Register Snapcraft plugins for core22."""
+    craft_parts.plugins.register(get_plugins(core22=True))

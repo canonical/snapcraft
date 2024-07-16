@@ -102,12 +102,26 @@ class TestGetDynamicLinker:
     @pytest.mark.parametrize(
         "arch,linker",
         [
-            ("x86_64", "lib64/ld-linux-x86-64.so.2"),
-            ("aarch64", "lib/ld-linux-aarch64.so.1"),
-            ("armv7l", "lib/ld-linux-armhf.so.3"),
-            ("riscv64", "lib/ld-linux-riscv64-lp64d.so.1"),
-            ("ppc64le", "lib64/ld64.so.2"),
-            ("s390x", "lib/ld64.so.1"),
+            # pre usrmerge tests
+            pytest.param("x86_64", "lib64/ld-linux-x86-64.so.2", id="amd64"),
+            pytest.param("aarch64", "lib/ld-linux-aarch64.so.1", id="arm64"),
+            pytest.param("armv7l", "lib/ld-linux-armhf.so.3", id="armhf"),
+            pytest.param("riscv64", "lib/ld-linux-riscv64-lp64d.so.1", id="riscv64"),
+            pytest.param("ppc64le", "lib64/ld64.so.2", id="ppc64el"),
+            pytest.param("s390x", "lib/ld64.so.1", id="s390x"),
+            # post usrmerge tests
+            pytest.param(
+                "x86_64", "usr/lib64/ld-linux-x86-64.so.2", id="amd64 usrmerge"
+            ),
+            pytest.param(
+                "aarch64", "usr/lib/ld-linux-aarch64.so.1", id="arm64 usrmerge"
+            ),
+            pytest.param("armv7l", "usr/lib/ld-linux-armhf.so.3", id="armhf usrmerge"),
+            pytest.param(
+                "riscv64", "usr/lib/ld-linux-riscv64-lp64d.so.1", id="riscv64 usrmerge"
+            ),
+            pytest.param("ppc64le", "usr/lib64/ld64.so.2", id="ppc64el usrmerge"),
+            pytest.param("s390x", "usr/lib/ld64.so.1", id="s390x usrmerge"),
         ],
     )
     def test_get_dynamic_linker(self, mocker, new_dir, arch, linker):

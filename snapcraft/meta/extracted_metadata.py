@@ -47,3 +47,21 @@ class ExtractedMetadata:
 
     desktop_file_paths: List[str] = field(default_factory=list)
     """The extracted application desktop file paths."""
+
+    license: Optional[str] = None
+    """The extracted package license"""
+
+    contact: Optional[List[str]] = None
+    """The extracted package contact"""
+
+    donation: Optional[List[str]] = None
+    """The extracted package donation"""
+
+    issues: Optional[List[str]] = None
+    """The extracted package issues"""
+
+    source_code: Optional[List[str]] = None
+    """The extracted package source code"""
+
+    website: Optional[List[str]] = None
+    """The extracted package website"""

@@ -372,7 +372,7 @@ def test_login_otp(fake_client):
     fake_client.login.side_effect = [
         craft_store.errors.StoreServerError(
             FakeResponse(
-                status_code=requests.codes.unauthorized,  # pylint: disable=no-member
+                status_code=requests.codes.unauthorized,
                 content=json.dumps(
                     {"error_list": [{"message": "2fa", "code": "twofactor-required"}]}
                 ).encode(),
@@ -813,6 +813,7 @@ def test_notify_upload(fake_client):
         channels=None,
         built_at=None,
         snap_file_size=999,
+        components=None,
     )
 
     assert fake_client.request.mock_calls == [
@@ -858,6 +859,7 @@ def test_notify_upload_built_at(fake_client):
         channels=None,
         built_at="some-date",
         snap_file_size=999,
+        components=None,
     )
 
     assert fake_client.request.mock_calls == [
@@ -904,6 +906,7 @@ def test_notify_upload_channels(fake_client):
         channels=["stable"],
         built_at=None,
         snap_file_size=999,
+        components=None,
     )
 
     assert fake_client.request.mock_calls == [
@@ -917,6 +920,53 @@ def test_notify_upload_channels(fake_client):
                 "binary_filesize": 999,
                 "channels": ["stable"],
                 "source_uploaded": False,
+            },
+            headers={"Accept": "application/json"},
+        ),
+        call("GET", "https://track"),
+        call("GET", "https://track"),
+    ]
+
+
+@pytest.mark.usefixtures("no_wait")
+def test_notify_upload_components(fake_client):
+    fake_client.request.side_effect = [
+        FakeResponse(
+            status_code=200,
+            content=json.dumps({"status_details_url": "https://track"}).encode(),
+        ),
+        FakeResponse(
+            status_code=200,
+            content=json.dumps({"code": "processing", "processed": False}).encode(),
+        ),
+        FakeResponse(
+            status_code=200,
+            content=json.dumps(
+                {"code": "done", "processed": True, "revision": 42}
+            ).encode(),
+        ),
+    ]
+
+    client.StoreClientCLI().notify_upload(
+        snap_name="foo",
+        upload_id="some-id",
+        channels=None,
+        built_at=None,
+        snap_file_size=999,
+        components={"test-component": "test-upload-id"},
+    )
+
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/dev/api/snap-push/",
+            json={
+                "name": "foo",
+                "series": "16",
+                "updown_id": "some-id",
+                "binary_filesize": 999,
+                "source_uploaded": False,
+                "components": {"test-component": "test-upload-id"},
             },
             headers={"Accept": "application/json"},
         ),
@@ -951,6 +1001,7 @@ def test_notify_upload_error(fake_client):
             channels=["stable"],
             built_at=None,
             snap_file_size=999,
+            components=None,
         )
 
     assert str(raised.value) == textwrap.dedent(
@@ -1050,7 +1101,24 @@ def test_on_prem_notify_revision_release_unsupported(on_prem_client):
             snap_file_size=10,
             built_at=None,
             channels=["stable"],
+            components=None,
         )
+
+
+def test_on_prem_notify_upload_components_unsupported(on_prem_client):
+    with pytest.raises(errors.SnapcraftError) as raised:
+        on_prem_client.notify_upload(
+            snap_name="fake-snap",
+            upload_id="fake-id",
+            snap_file_size=10,
+            built_at=None,
+            channels=None,
+            components={"test-component": "test-upload-id"},
+        )
+
+    assert (
+        str(raised.value) == "Components are currently unsupported for on-prem stores"
+    )
 
 
 @pytest.mark.usefixtures("fake_client_notify_revision")
@@ -1075,6 +1143,7 @@ def test_on_prem_notify_revision_approved(on_prem_client, fake_client_request, e
             snap_file_size=10,
             built_at=None,
             channels=None,
+            components=None,
         )
         == 2
     )
@@ -1113,6 +1182,7 @@ def test_on_prem_notify_revision_rejected(on_prem_client, fake_client_request):
             snap_file_size=10,
             built_at=None,
             channels=None,
+            components=None,
         )
 
     assert str(raised.value) == "Error uploading snap: bad-snap-code"

@@ -21,8 +21,13 @@ from typing import Optional
 from craft_cli import CraftError
 
 
-class ClassicFallback(Exception):
-    """Temporary class to fall back to non craft-application launcher."""
+class ClassicFallback(BaseException):
+    """Temporary class to fall back to non craft-application launcher.
+
+    Note that it inherits from BaseException so that it passes through
+    craft-application, is caught by Snapcraft itself and then redirected to
+    non-core24 codepaths.
+    """
 
 
 class SnapcraftError(CraftError):
@@ -90,6 +95,20 @@ class InvalidArchitecture(SnapcraftError):
         super().__init__(
             f"Architecture {arch_name!r} is not supported.",
             resolution="Make sure the architecture name is correct.",
+        )
+
+
+class ArchAllInvalid(SnapcraftError):
+    """Architecture 'all' is invalid in this use case."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Cannot use architecture 'all'.",
+            details="This command does not support using architecture 'all' in your snap.",
+            resolution="Set your snap to architecture-dependent builds.",
+            logpath_report=False,
+            reportable=False,
+            retcode=78,
         )
 
 

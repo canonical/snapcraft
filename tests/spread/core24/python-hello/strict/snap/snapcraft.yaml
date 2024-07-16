@@ -1,0 +1,14 @@
+name: python-hello-strict
+version: "1.0"
+summary: simple python application
+description: build a python application using core24
+base: core24
+confinement: strict
+
+apps:
+  python-hello-strict:
+    command: bin/hello
+parts:
+  hello:
+    plugin: python
+    source: src

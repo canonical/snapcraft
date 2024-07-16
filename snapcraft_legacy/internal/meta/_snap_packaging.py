@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2020 Canonical Ltd
+# Copyright (C) 2016-2020,2024 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,7 +16,6 @@
 
 import contextlib
 import copy
-import distutils.util
 import itertools
 import logging
 import os
@@ -28,6 +27,7 @@ import urllib
 from typing import Any, Dict, Optional, Set
 
 import requests
+from craft_application.util import strtobool
 
 from snapcraft_legacy import (
     extractors,
@@ -631,7 +631,7 @@ class _SnapPackaging:
             os.unlink(manifest_file_path)
 
         # FIXME hide this functionality behind a feature flag for now
-        if distutils.util.strtobool(os.environ.get("SNAPCRAFT_BUILD_INFO", "n")):
+        if strtobool(os.environ.get("SNAPCRAFT_BUILD_INFO", "n")):
             os.makedirs(prime_snap_dir, exist_ok=True)
             shutil.copy2(self._snapcraft_yaml_path, recorded_snapcraft_yaml_path)
             annotated_snapcraft = _manifest.annotate_snapcraft(

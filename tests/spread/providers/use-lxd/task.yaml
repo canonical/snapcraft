@@ -1,9 +1,16 @@
 summary: Test --use-lxd takes priority over environment variables
+
+# fails for core24 snaps
+# see https://github.com/canonical/snapcraft/issues/4832
 systems:
   - ubuntu-22.04*
 
 prepare: |
   snapcraft init
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snap/snapcraft.yaml"
 
 restore: |
   rm -rf ./*.snap
@@ -19,7 +26,7 @@ execute: |
   fi
 
   unset SNAPCRAFT_BUILD_ENVIRONMENT
-  export SNAPCRAFT_MANAGED_MODE=1
+  export CRAFT_MANAGED_MODE=1
 
   snapcraft pull --use-lxd
 

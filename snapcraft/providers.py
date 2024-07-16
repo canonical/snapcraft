@@ -47,7 +47,7 @@ SNAPCRAFT_BASE_TO_PROVIDER_BASE = {
 }
 
 # TODO: move to a package data file for shellcheck and syntax highlighting
-# pylint: disable=line-too-long
+
 BASHRC = dedent(
     """\
     #!/bin/bash
@@ -104,7 +104,6 @@ BASHRC = dedent(
     PROMPT_COMMAND="set_environment; set_prompt"
     """
 )
-# pylint: enable=line-too-long
 
 
 def capture_logs_from_instance(instance: executor.Executor) -> None:
@@ -197,7 +196,7 @@ def get_base_configuration(
 
     return bases.BuilddBase(
         alias=alias,
-        compatibility_tag=f"snapcraft-{bases.BuilddBase.compatibility_tag}.0",
+        compatibility_tag=f"snapcraft-{bases.BuilddBase.compatibility_tag}.1",
         environment=environment,
         hostname=instance_name,
         snaps=[
@@ -205,7 +204,7 @@ def get_base_configuration(
                 name=snap_name,
                 channel=snap_channel,
                 classic=True,
-            )
+            ),
         ],
         # Requirement for apt gpg and version:git
         packages=["gnupg", "dirmngr", "git"],
@@ -223,7 +222,7 @@ def get_command_environment(
     :return: Dictionary of environmental variables.
     """
     env = bases.buildd.default_command_environment()
-    env["SNAPCRAFT_MANAGED_MODE"] = "1"
+    env["CRAFT_MANAGED_MODE"] = "1"
 
     # Pass-through host environment that target may need.
     for env_key in [

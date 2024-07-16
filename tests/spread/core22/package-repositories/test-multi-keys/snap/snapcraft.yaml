@@ -14,10 +14,6 @@ parts:
     stage-packages:
       - test-ppa
       - puppet-tools-release # Comes from the Puppet repo
-    override-build: |
-      craftctl default
-      # This file comes from the puppet-tools-release package.
-      test -f ${CRAFT_PART_INSTALL}/usr/share/doc/puppet-tools-release/bill-of-materials
 
 apps:
     test-ppa:

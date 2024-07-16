@@ -22,11 +22,16 @@ from snapcraft import errors
 
 from .gnome import GNOME
 from .kde_neon import KDENeon
+from .kde_neon_6 import KDENeon6
 from .qt_framework import QTFramework
 from .ros2_humble import ROS2HumbleExtension
 from .ros2_humble_desktop import ROS2HumbleDesktopExtension
 from .ros2_humble_ros_base import ROS2HumbleRosBaseExtension
 from .ros2_humble_ros_core import ROS2HumbleRosCoreExtension
+from .ros2_jazzy import ROS2JazzyExtension
+from .ros2_jazzy_desktop import ROS2JazzyDesktopExtension
+from .ros2_jazzy_ros_base import ROS2JazzyRosBaseExtension
+from .ros2_jazzy_ros_core import ROS2JazzyRosCoreExtension
 
 if TYPE_CHECKING:
     from .extension import Extension
@@ -39,7 +44,12 @@ _EXTENSIONS: Dict[str, "ExtensionType"] = {
     "ros2-humble-ros-core": ROS2HumbleRosCoreExtension,
     "ros2-humble-ros-base": ROS2HumbleRosBaseExtension,
     "ros2-humble-desktop": ROS2HumbleDesktopExtension,
+    "ros2-jazzy": ROS2JazzyExtension,
+    "ros2-jazzy-ros-core": ROS2JazzyRosCoreExtension,
+    "ros2-jazzy-ros-base": ROS2JazzyRosBaseExtension,
+    "ros2-jazzy-desktop": ROS2JazzyDesktopExtension,
     "kde-neon": KDENeon,
+    "kde-neon-6": KDENeon6,
     "qt6-6": QTFramework,
     "qt6-5": QTFramework,
     "qt5-15": QTFramework,

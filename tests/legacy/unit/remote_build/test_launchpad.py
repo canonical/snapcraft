@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019 Canonical Ltd
+# Copyright (C) 2019,2024 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,6 +16,8 @@
 
 import textwrap
 from datetime import datetime, timedelta, timezone
+import pathlib
+import pytest
 from unittest import mock
 
 import fixtures
@@ -535,3 +537,27 @@ class LaunchpadTestCase(unit.TestCase):
         self.assertRaises(
             errors.LaunchpadGitPushError, self.lpc.push_source_tree, repo_dir
         )
+
+
+@pytest.mark.parametrize(
+    ("new_exists", "legacy_exists", "expected"),
+    [
+        (False, False, pathlib.Path("launchpad-credentials")),
+        (False, True, pathlib.Path("provider/launchpad/credentials")),
+        (True, False, pathlib.Path("launchpad-credentials")),
+        (True, True, pathlib.Path("launchpad-credentials")),
+    ],
+)
+def test_credentials_filepaths(new_exists, legacy_exists, expected, mocker, new_dir):
+    """Load legacy credentials only when they exist and the new ones do not."""
+    mocker.patch.object(LaunchpadClient, "__init__", lambda x: None)
+    mocker.patch("platformdirs.user_data_path", return_value=new_dir)
+    if new_exists:
+        (new_dir / "launchpad-credentials").touch()
+    if legacy_exists:
+        (new_dir / "provider/launchpad/credentials").mkdir(parents=True)
+        (new_dir / "provider/launchpad/credentials").touch()
+
+    credentials_filepath = LaunchpadClient()._credentials_filepath
+
+    assert credentials_filepath == new_dir / expected

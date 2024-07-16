@@ -1,0 +1,15 @@
+name: single-arch
+version: "1.0"
+summary: test
+description: |
+  A single platform should create a single snap file.
+confinement: strict
+base: core24
+platforms:
+  platform1:
+    build-on: [amd64, arm64]
+    build-for: [amd64]
+
+parts:
+  nil:
+    plugin: nil

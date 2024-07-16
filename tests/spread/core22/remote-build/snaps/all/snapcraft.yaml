@@ -1,0 +1,16 @@
+name: test-snap-all-core22
+base: core22
+version: "1.0"
+summary: Test snap for remote build
+description: Test snap for remote build
+
+grade: stable
+confinement: strict
+
+architectures:
+  - build-on: [amd64]
+    build-for: [all]
+
+parts:
+  my-part:
+    plugin: nil

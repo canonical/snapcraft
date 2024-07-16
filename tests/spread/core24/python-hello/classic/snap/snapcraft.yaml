@@ -1,0 +1,25 @@
+name: python-hello-classic
+version: "1.0"
+summary: simple python application
+description: build a python application using core24
+base: core24
+confinement: classic
+
+apps:
+  python-hello-classic:
+    # Note that since commit 9b6e58337e0 we need to explicitly call bin/python,
+    # otherwise the wrong "python3" will be picked up by the shebang in
+    # $SNAP/bin/hello.
+    command: bin/python $SNAP/bin/hello
+
+parts:
+  hello:
+    plugin: python
+    source: src
+    build-attributes:
+      - enable-patchelf
+    stage-packages:
+      - libpython3.12-minimal
+      - libpython3.12-stdlib
+      - python3.12-minimal
+      - python3.12-venv

@@ -7,7 +7,6 @@ environment:
   SNAP/test_apt_ppa: test-apt-ppa
   SNAP/test_pin: test-pin
   SNAP/test_multi_keys: test-multi-keys
-  SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
 restore: |
   cd "$SNAP"

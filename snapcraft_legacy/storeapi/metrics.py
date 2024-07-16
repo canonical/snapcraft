@@ -36,11 +36,13 @@ MetricsStatus = enum.Enum(  # type: ignore
 
 class MetricsNames(enum.Enum):
     DAILY_DEVICE_CHANGE = "daily_device_change"
+    INSTALLED_BASE_BY_ARCHITECTURE = "installed_base_by_architecture"
     INSTALLED_BASE_BY_CHANNEL = "installed_base_by_channel"
     INSTALLED_BASE_BY_COUNTRY = "installed_base_by_country"
     INSTALLED_BASE_BY_OPERATING_SYSTEM = "installed_base_by_operating_system"
     INSTALLED_BASE_BY_VERSION = "installed_base_by_version"
     WEEKLY_DEVICE_CHANGE = "weekly_device_change"
+    WEEKLY_INSTALLED_BASE_BY_ARCHITECTURE = "weekly_installed_base_by_architecture"
     WEEKLY_INSTALLED_BASE_BY_CHANNEL = "weekly_installed_base_by_channel"
     WEEKLY_INSTALLED_BASE_BY_COUNTRY = "weekly_installed_base_by_country"
     WEEKLY_INSTALLED_BASE_BY_OPERATING_SYSTEM = (

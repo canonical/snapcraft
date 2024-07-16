@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" viewBox="0 0 37.680001 36" height="36" width="37.68" id="svg3750" version="1.1" sodipodi:docname="snapcraft-bird.svg" inkscape:version="0.92.2 (30a58d1, 2017-08-07)">
+  
+  
+  <defs id="defs3754">
+    
+  </defs>
+  <g transform="translate(-25.38,-12)" id="g3921">
+    <polygon style="fill:#82bea0" class="cls-2" points="47.06,32.14 55.37,23.83 47.06,20.14 " id="polygon3894"/>
+    <polygon style="fill:#82bea0" class="cls-2" points="31.19,48 45.85,33.34 41.38,28.9 " id="polygon3896"/>
+    <polygon style="fill:#82bea0" class="cls-2" points="25.38,12 46.35,32.84 46.35,19.58 " id="polygon3898"/>
+    <polygon style="fill:#fa6441" class="cls-3" points="59.62,19.58 47.54,19.58 63.06,26.48 " id="polygon3900"/>
+  </g>
+</svg>

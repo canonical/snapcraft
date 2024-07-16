@@ -1,0 +1,51 @@
+summary: Test manifest file creation
+
+environment:
+  CMD/envvars: env SNAPCRAFT_BUILD_INFO=y snapcraft --destructive-mode
+
+prepare: |
+  snap install review-tools
+  snap install yq
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+  rm -f ~/manifest_0.1_*.snap
+  rm -f ~/manifest.yaml
+
+execute: |
+  $CMD
+
+  test -f manifest_0.1_*.snap
+  test -f prime/snap/manifest.yaml
+
+  cmp snap/snapcraft.yaml prime/snap/snapcraft.yaml
+
+  declare -A expected=(
+    ["snapcraft_version"]=$(snapcraft --version|cut -d' ' -f2)
+    ["snapcraft_os_release_id"]=ubuntu
+    ["name"]=manifest
+    ["version"]='0.1'
+    ["summary"]='Single-line elevator pitch for your amazing snap'
+    ["base"]=core24
+    ["grade"]=devel
+    ["confinement"]=devmode
+    ["parts_my_part_plugin"]=nil
+    ["parts_other_part_plugin"]=nil
+    ["architectures_0"]=amd64
+  )
+
+  cp prime/snap/manifest.yaml ~/
+  eval "$(yq -o=shell ~/manifest.yaml)"
+
+  # compare expected fields
+  for key in "${!expected[@]}"; do
+    test "${!key}" = "${expected[$key]}"
+  done
+
+  # account for hello package version change and possible 'build' or 'ubuntu' patch
+  echo -n "$parts_my_part_stage_packages_0" | grep -q '^hello=[0-9]\+\.[0-9]\+-[0-9]\+\(build[0-9]\+\|ubuntu[0-9]\+\)\?$'
+  echo -n "$primed_stage_packages_0" | grep -q '^hello=[0-9]\+\.[0-9]\+-[0-9]\+\(build[0-9]\+\|ubuntu[0-9]\+\)\?$'
+
+  cp manifest_0.1_*.snap ~/
+  review-tools.snap-review ~/manifest_0.1_*.snap

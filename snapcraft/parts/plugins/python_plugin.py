@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,16 +19,16 @@
 import logging
 from typing import Optional
 
+from craft_parts import errors
 from craft_parts.plugins import python_plugin
 from overrides import override
 
 logger = logging.getLogger(__name__)
 
 
-_RUNTIME_PYTHON_PATH = {
-    ("core22", "strict"): "/usr/bin/python3.10",
-    ("core22", "devmode"): "/usr/bin/python3.10",
-    ("core22", "classic"): None,  # classic snaps must provision python
+_CONFINED_PYTHON_PATH = {
+    "core22": "/usr/bin/python3.10",
+    "core24": "/usr/bin/python3.12",
 }
 
 
@@ -44,7 +44,19 @@ class PythonPlugin(python_plugin.PythonPlugin):
     def _get_system_python_interpreter(self) -> Optional[str]:
         base = self._part_info.project_base
         confinement = self._part_info.confinement
-        interpreter = _RUNTIME_PYTHON_PATH.get((base, confinement))
+
+        if confinement == "classic" or base == "bare":
+            # classic snaps, and snaps without bases, must always provision Python
+            interpreter = None
+        else:
+            # otherwise, we should always know which Python is present on the
+            # base. If this fails on a new base, update _CONFINED_PYTHON_PATH
+            interpreter = _CONFINED_PYTHON_PATH.get(base)
+            if interpreter is None:
+                brief = f"Don't know which interpreter to use for base {base}."
+                resolution = "Please contact the Snapcraft team."
+                raise errors.PartsError(brief=brief, resolution=resolution)
+
         logger.debug(
             "Using python interpreter '%s' for base '%s', confinement '%s'",
             interpreter,

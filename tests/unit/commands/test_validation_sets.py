@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -254,7 +254,7 @@ def test_edit_validation_sets_with_errors_to_amend(
     fake_dashboard_post_validation_sets_build_assertion.side_effect = [
         StoreValidationSetsError(
             FakeResponse(
-                status_code=requests.codes.bad_request,  # pylint: disable=no-member
+                status_code=requests.codes.bad_request,
                 content=json.dumps(
                     {"error_list": [{"message": "bad assertion", "code": "no snap"}]}
                 ).encode(),
@@ -310,7 +310,7 @@ def test_edit_validation_sets_with_errors_not_amended(
     fake_dashboard_post_validation_sets_build_assertion.side_effect = (
         StoreValidationSetsError(
             FakeResponse(
-                status_code=requests.codes.bad_request,  # pylint: disable=no-member
+                status_code=requests.codes.bad_request,
                 content=json.dumps(
                     {"error_list": [{"message": "bad assertion", "code": "no snap"}]}
                 ).encode(),
@@ -342,7 +342,9 @@ def test_edit_validation_sets_with_errors_not_amended(
     assert confirm_mock.mock_calls == [call("Do you wish to amend the validation set?")]
 
 
-def test_edit_yaml_error_retry(mocker, tmp_path):
+def test_edit_yaml_error_retry(mocker, tmp_path, monkeypatch):
+    monkeypatch.setenv("EDITOR", "faux-vi")
+
     tmp_file = tmp_path / "validation_sets_template"
     confirm_mock = mocker.patch("snapcraft.utils.confirm_with_user", return_value=True)
     data_write = [
@@ -350,21 +352,23 @@ def test_edit_yaml_error_retry(mocker, tmp_path):
         "{{bad yaml {{",
     ]
 
-    def side_effect(*args, **kwargs):  # pylint: disable=unused-argument
+    def side_effect(*args, **kwargs):
         tmp_file.write_text(data_write.pop(), encoding="utf-8")
 
     subprocess_mock = mocker.patch("subprocess.run", side_effect=side_effect)
 
     assert edit_validation_sets(tmp_file) == {"good": "yaml"}
     assert confirm_mock.mock_calls == [call("Do you wish to amend the validation set?")]
-    assert subprocess_mock.mock_calls == [call(["vi", tmp_file], check=True)] * 2
+    assert subprocess_mock.mock_calls == [call(["faux-vi", tmp_file], check=True)] * 2
 
 
-def test_edit_yaml_error_no_retry(mocker, tmp_path):
+def test_edit_yaml_error_no_retry(mocker, tmp_path, monkeypatch):
+    monkeypatch.setenv("EDITOR", "faux-vi")
+
     tmp_file = tmp_path / "validation_sets_template"
     confirm_mock = mocker.patch("snapcraft.utils.confirm_with_user", return_value=False)
 
-    def side_effect(*args, **kwargs):  # pylint: disable=unused-argument
+    def side_effect(*args, **kwargs):
         tmp_file.write_text("{{bad yaml {{", encoding="utf-8")
 
     subprocess_mock = mocker.patch("subprocess.run", side_effect=side_effect)
@@ -373,4 +377,4 @@ def test_edit_yaml_error_no_retry(mocker, tmp_path):
         edit_validation_sets(tmp_file)
 
     assert confirm_mock.mock_calls == [call("Do you wish to amend the validation set?")]
-    assert subprocess_mock.mock_calls == [call(["vi", tmp_file], check=True)]
+    assert subprocess_mock.mock_calls == [call(["faux-vi", tmp_file], check=True)]

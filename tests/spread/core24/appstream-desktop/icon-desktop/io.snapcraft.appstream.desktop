@@ -1,0 +1,5 @@
+[Desktop Entry]
+Name=appstream-desktop
+Exec=appstream
+Type=Application
+Icon=/usr/share/icons/hicolor/scalable/apps/snapcraft.svg

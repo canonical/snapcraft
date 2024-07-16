@@ -26,7 +26,7 @@ jobs:
           sudo snap install --dangerous --classic ${{ steps.snapcraft.outputs.snap }}
 
   kernel-plugins:
-    runs-on: self-hosted
+    runs-on: [spread-installed]
     needs: [snap-build]
     strategy:
       fail-fast: false
@@ -52,14 +52,8 @@ jobs:
           spread google:ubuntu-22.04-64:tests/spread/plugins/${{ matrix.type }}/kernel
 
   remote-build:
-    runs-on: self-hosted
+    runs-on: [spread-installed]
     needs: [snap-build]
-    strategy:
-      fail-fast: false
-      matrix:
-        system:
-          - ubuntu-20.04-64
-          - fedora-39-64
     steps:
       - name: Cleanup job workspace
         run: |
@@ -79,4 +73,8 @@ jobs:
         env:
           LAUNCHPAD_TOKEN: "${{ secrets.LAUNCHPAD_TOKEN }}"
         run: |
-          spread google:${{ matrix.system }}:tests/spread/general/remote-build
+          spread google:ubuntu-20.04-64:tests/spread/core20/remote-build-legacy \
+            google:ubuntu-22.04-64:tests/spread/core22/remote-build-legacy \
+            google:ubuntu-22.04-64:tests/spread/core22/remote-build \
+            google:ubuntu-24.04-64:tests/spread/core24/remote-build \
+            google:fedora-39-64:tests/spread/core24/remote-build:no_platforms

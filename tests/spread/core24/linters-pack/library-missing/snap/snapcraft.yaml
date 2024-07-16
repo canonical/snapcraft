@@ -1,0 +1,17 @@
+name: linter-test
+base: core24
+version: '0.1'
+summary: Raise linter warnings for missing libraries
+description: spread test
+
+confinement: strict
+
+parts:
+  my-part:
+    plugin: nil
+    source: src
+    build-packages:
+      - gcc
+      - libcaca-dev
+    override-build:
+      gcc -o $CRAFT_PART_INSTALL/linter-test test.c -lcaca

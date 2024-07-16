@@ -1,0 +1,37 @@
+summary: setup hooks
+
+environment:
+  SNAP/default: default
+  SNAP/build_aux: aux
+  
+restore: |
+  cd "${SNAP}"
+  
+  snapcraft clean --destructive-mode
+  rm -rf hooks_*.snap
+
+execute: |
+  cd "${SNAP}"
+  
+  snapcraft pack --destructive-mode
+
+  # verify hooks were staged
+   if [[ ! -f prime/meta/hooks/configure ]] && [[ ! -f prime/meta/hooks/install ]]; then
+      echo "no hook found in prime/meta/hooks/"
+      exit 1
+  fi
+
+  # Verify both built hooks are in prime/snap/hooks
+  prime/snap/hooks/configure | MATCH "I am a code generated configure hook!"
+  prime/snap/hooks/install | MATCH "I am a code generated install hook!"
+
+  # verify that the built configure hook was provisioned
+  prime/meta/hooks/configure | MATCH "I am a code generated configure hook!"
+
+  # verify that the install hook from the project is provisioned
+  # over the one that was built
+  prime/meta/hooks/install | MATCH "I am a project install hook"
+
+  # verify snap is installable
+  snap install hooks_1.0_*.snap --dangerous
+

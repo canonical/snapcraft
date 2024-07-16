@@ -4,9 +4,6 @@ summary: Build and run a basic kde snap using extensions
 # available on a subset of all the architectures this testbed
 # can run on.
 systems:
-  - ubuntu-20.04
-  - ubuntu-20.04-64
-  - ubuntu-20.04-amd64
   - ubuntu-22.04
   - ubuntu-22.04-64
   - ubuntu-22.04-amd64
@@ -50,7 +47,6 @@ execute: |
   elif [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
     snap list kf5-5-113-qt-5-15-11-core22
   fi
-
 
   # Verify all dependencies were found.
   if echo "$output" | grep -q "part is missing libraries"; then

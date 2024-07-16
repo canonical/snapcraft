@@ -1,6 +1,12 @@
 summary: Build snaps that test the grammar keywords.
 
-environment:
+systems:
+  - ubuntu-20.04
+  - ubuntu-20.04-64
+  - ubuntu-20.04-amd64
+  - ubuntu-22.04
+  - ubuntu-22.04-64
+  - ubuntu-22.04-amd64
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh

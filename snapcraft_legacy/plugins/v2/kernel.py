@@ -1,5 +1,5 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
-# pylint: disable=line-too-long,too-many-lines,attribute-defined-outside-init
+
 #
 # Copyright 2020-2022 Canonical Ltd.
 #

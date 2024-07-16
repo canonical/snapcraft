@@ -1,0 +1,11 @@
+name: hello-components
+version: "1.0"
+summary: A snap with a component
+description: A simple snap with a component containing translations
+base: core24
+confinement: strict
+
+parts:
+  application:
+    source: src
+    plugin: dump

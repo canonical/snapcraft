@@ -17,7 +17,7 @@
 from textwrap import dedent
 
 import pytest
-from craft_parts import Part, PartInfo, ProjectInfo
+from craft_parts import Part, PartInfo, ProjectInfo, errors
 
 from snapcraft.parts.plugins import PythonPlugin
 
@@ -60,7 +60,7 @@ def test_get_build_environment(plugin, new_dir):
 
 
 def test_get_build_commands(plugin, new_dir):
-    # pylint: disable=line-too-long
+
     assert plugin.get_build_commands() == [
         f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/my-part/install"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/my-part/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
@@ -109,7 +109,6 @@ def test_get_build_commands(plugin, new_dir):
         ),
         'ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"\n',
     ]
-    # pylint: enable=line-too-long
 
 
 def test_should_remove_symlinks(plugin):
@@ -169,3 +168,25 @@ def test_get_system_python_interpreter_base_bare(confinement, interpreter, new_d
     plugin = PythonPlugin(properties=properties, part_info=part_info)
 
     assert plugin._get_system_python_interpreter() == interpreter
+
+
+@pytest.mark.parametrize("confinement", ["strict", "devmode"])
+def test_get_system_python_interpreter_unknown_base(confinement, new_dir):
+    """Test that unknown bases raise errors for confined snaps."""
+    part_info = PartInfo(
+        project_info=ProjectInfo(
+            application_name="test",
+            project_name="test-snap",
+            base="core22",
+            confinement=confinement,
+            project_base="core10",  # A base that the PythonPlugin doesn't know
+            cache_dir=new_dir,
+        ),
+        part=Part("my-part", {}),
+    )
+    properties = PythonPlugin.properties_class.unmarshal({"source": "."})
+    plugin = PythonPlugin(properties=properties, part_info=part_info)
+
+    expected_error = "Don't know which interpreter to use for base core10"
+    with pytest.raises(errors.PartsError, match=expected_error):
+        plugin._get_system_python_interpreter()

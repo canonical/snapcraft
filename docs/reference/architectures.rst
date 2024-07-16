@@ -5,7 +5,57 @@ snapcraft.yaml
 --------------
 
 The :doc:`architectures how-to</howto/architectures>` provides examples of how
-to use the ``architectures`` keyword.
+to use the ``platforms`` and ``architectures`` keyword.
+
+core24
+^^^^^^
+
+.. code-block:: yaml
+
+  platforms:
+      <platform 1>:
+          build-on: [<arch 1>, <arch 2>]
+          build-for: [<arch 1>]
+      <platform 2>:
+          build-on: [<arch 3>]
+          build-for: [<arch 4>]
+      ...
+
+platform
+""""""""
+
+The platform name describes a ``build-on``/``build-for`` pairing. If the
+platform name is a valid debian architecture, then ``build-on`` and
+``build-for`` can be omitted (see below for details).
+
+See here for a list of supported architectures.
+
+The recommended platform name is the ``build-for`` arch.
+
+build-on
+""""""""
+
+The ``build-on`` field is an optional list of architectures where the snap can
+be built. It can contain multiple architectures.
+
+If the platform name is a valid architecture and ``build-for`` is not defined,
+then ``build-on`` can be omitted. ``build-on`` will assume the platform name.
+
+build-for
+"""""""""
+
+The ``build-for`` field is an optional single-element list containing the
+architecture where the snap should run.
+
+If the platform name is a valid architecture, then ``build-for`` will
+assume the platform name.
+
+``build-for: [all]`` is a special keyword to denote an architecture-independent
+snap. If the ``all`` keyword is used, no other ``build-on/build-for`` pairs can
+be defined. See :ref:`this page<how-to-arch-build-for-all>` to learn how to
+use the ``all`` keyword.
+
+``all`` cannot be used for ``build-on``.
 
 core22
 ^^^^^^
@@ -105,6 +155,25 @@ The explicit and shorthand format cannot be mixed.
 
 Project variables
 -----------------
+
+core24
+^^^^^^
+
++----------------------------------+-------------------------------------------+
+| Project variable                 | Description                               |
++==================================+===========================================+
+| ``CRAFT_ARCH_BUILD_FOR``         | The architecture of the platform the snap |
+|                                  | is built for.                             |
++----------------------------------+-------------------------------------------+
+| ``CRAFT_ARCH_BUILD_ON``          | The architecture of the platform the snap |
+|                                  | is built on.                              |
++----------------------------------+-------------------------------------------+
+| ``CRAFT_ARCH_TRIPLET_BUILD_FOR`` | The architecture triplet of the platform  |
+|                                  | the snap is built for.                    |
++----------------------------------+-------------------------------------------+
+| ``CRAFT_ARCH_TRIPLET_BUILD_ON``  | The architecture triplet of the platform  |
+|                                  | the snap is built on.                     |
++----------------------------------+-------------------------------------------+
 
 core22
 ^^^^^^

@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 
-import argparse
 import os
 import pathlib
 import sys
 
-from craft_cli.dispatcher import Dispatcher, _CustomArgumentParser
+from craft_cli.dispatcher import _CustomArgumentParser
 
 this_dir = pathlib.Path(os.path.split(__file__)[0])
 sys.path.insert(0, str((this_dir / ".." / "..").absolute()))
 
-from snapcraft import cli
+from snapcraft import application
 
 
 def command_page_header(cmd, options_str, required_str):
@@ -82,7 +81,11 @@ def main(docs_dir):
         commands_ref_dir.mkdir()
 
     # Create a dispatcher like Snapcraft does to get access to the same options.
-    dispatcher = cli.get_dispatcher()
+    app = application.create_app()
+    command_groups = app.command_groups
+
+    # Create a dispatcher like Snapcraft does to get access to the same options.
+    dispatcher = app._create_dispatcher()
 
     help_builder = dispatcher._help_builder
 
@@ -93,13 +96,14 @@ def main(docs_dir):
 
     toc = []
 
-    for group in cli.COMMAND_GROUPS:
+    for group in command_groups:
         group_name = remove_spaces(group.name.lower()) + "-commands" + os.extsep + "rst"
         group_path = commands_ref_dir / group_name
         g = group_path.open("w")
 
         for cmd_class in sorted(group.commands, key=lambda c: c.name):
-            cmd = cmd_class({})
+            # craft-application.AppCommand require 'app' and 'services' in the config
+            cmd = cmd_class(config={"app": {}, "services": {}})
             p = _CustomArgumentParser(help_builder)
             cmd.fill_parser(p)
 

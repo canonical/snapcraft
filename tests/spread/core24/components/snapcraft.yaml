@@ -1,0 +1,68 @@
+name: hello-components
+version: "1.0"
+summary: Build a snap with components
+description: Build a snap with components
+base: core24
+confinement: strict
+provenance: test-provenance
+
+apps:
+  hello:
+    command: bin/hello
+
+components:
+  share:
+    type: test
+    summary: Hello World
+    description: Hello World
+    version: "1.0"
+    hooks:
+      install:
+        plugs: ["home", "network"]
+
+parts:
+  hello:
+    source: .
+    plugin: make
+    build-packages:
+      - gcc
+      - libc-dev
+      - libcurl4-openssl-dev
+
+  organized:
+    source: .
+    plugin: nil
+    override-build: |
+      for i in file-in-default other-file-in-default file-in-component other-file-in-component; do
+        touch ${CRAFT_PART_INSTALL}/"$i"
+      done
+      craftctl default
+    organize:
+      # implicitly use the default partition
+      file-in-default: file-in-snap
+
+      # explicitly use the default partition
+      (default)/other-file-in-default: (default)/other-file-in-snap
+
+      # move to another partition
+      file-in-component: (component/share)/file-in-component
+      (default)/other-file-in-component: (component/share)/other-file-in-component
+
+    stage:
+      # exclude a file in the default partition
+      - -(default)/other-file-in-snap
+    prime:
+      # exclude a file in a partition
+      - -(component/share)/other-file-in-component
+
+  # 'install' is a project hook (in 'snap/component/share/hooks/')
+  # 'remove' is generated at build time
+  hooks:
+    source: .
+    plugin: dump
+    override-build: |
+      touch ${CRAFT_PART_INSTALL}/remove
+      chmod +x ${CRAFT_PART_INSTALL}/remove
+      craftctl default
+    organize:
+      remove: (component/share)/meta/hooks/remove

@@ -1,0 +1,17 @@
+name: hello
+base: core24
+version: '0.1'
+summary: snapcraft lifecycle
+description: |
+  A test to ensure we can pull, build, stage and prime
+
+confinement: strict
+
+apps:
+  hello-try:
+    command: usr/bin/hello
+
+parts:
+  hello-part:
+    plugin: nil
+    stage-packages: ["hello"]

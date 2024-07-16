@@ -1,0 +1,6 @@
+component: hello-components+share
+type: test
+version: '1.0'
+summary: Hello World
+description: Hello World
+provenance: test-provenance

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,11 +16,13 @@
 
 """Snapcraft Store Account management commands."""
 
+import json
 import operator
 import textwrap
 from typing import TYPE_CHECKING
 
-from craft_cli import BaseCommand, emit
+from craft_application.commands import AppCommand
+from craft_cli import emit
 from overrides import overrides
 from tabulate import tabulate
 
@@ -57,7 +59,12 @@ _MESSAGE_REGISTER_SUCCESS = "Registered {!r}"
 _MESSAGE_REGISTER_NO = "Snap name {!r} not registered"
 
 
-class StoreRegisterCommand(BaseCommand):
+def _set_nil(value):
+    """Return None when given the input "-", else the original input."""
+    return None if value == "-" else value
+
+
+class StoreRegisterCommand(AppCommand):
     """Register a snap name with the Snap Store."""
 
     name = "register"
@@ -117,7 +124,7 @@ class StoreRegisterCommand(BaseCommand):
             emit.message(_MESSAGE_REGISTER_NO.format(snap_name))
 
 
-class StoreNamesCommand(BaseCommand):
+class StoreNamesCommand(AppCommand):
     """List the snap names registered with the current account."""
 
     name = "names"
@@ -129,6 +136,16 @@ class StoreNamesCommand(BaseCommand):
     )
 
     @overrides
+    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+        parser.add_argument(
+            "--format",
+            type=str,
+            choices=["json", "table"],
+            help="The output format (table | json)",
+            default="table",
+        )
+
+    @overrides
     def run(self, parsed_args):
         store_client = store.StoreClientCLI()
         snaps = store_client.get_names()
@@ -137,12 +154,28 @@ class StoreNamesCommand(BaseCommand):
         if not snaps:
             emit.message("No registered snaps")
         else:
-            tabulated_snaps = tabulate(
-                snaps,
-                headers=["Name", "Since", "Visibility", "Notes"],
-                tablefmt="plain",
-            )
-            emit.message(tabulated_snaps)
+            headers = ["Name", "Since", "Visibility", "Notes"]
+
+            if parsed_args.format == "table":
+                tabulated_snaps = tabulate(
+                    snaps,
+                    headers=headers,
+                    tablefmt="plain",
+                )
+                emit.message(tabulated_snaps)
+            elif parsed_args.format == "json":
+                json_snaps = {
+                    "snaps": [
+                        {
+                            header.lower(): _set_nil(value)
+                            for header, value in zip(headers, snap)
+                        }
+                        for snap in snaps
+                    ]
+                }
+                emit.message(json.dumps(json_snaps, indent=4))
+            else:
+                raise NotImplementedError("Format not implemented", parsed_args.format)
 
 
 class StoreLegacyListCommand(StoreNamesCommand):

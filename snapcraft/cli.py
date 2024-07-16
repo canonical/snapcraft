@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,44 +18,72 @@
 
 import argparse
 import contextlib
-import logging
 import os
 import sys
+from dataclasses import dataclass
 from typing import Any, Dict
 
+import craft_application.commands
 import craft_cli
 import craft_store
+from craft_application.errors import RemoteBuildError
+from craft_application.util import strtobool
 from craft_cli import ArgumentParsingError, EmitterMode, ProvideHelpException, emit
 from craft_providers import ProviderError
 
-import snapcraft
-import snapcraft_legacy
-from snapcraft import __version__, errors, store, utils
+from snapcraft import errors, store, utils
 from snapcraft.parts import plugins
-from snapcraft.remote import RemoteBuildError
-from snapcraft_legacy.cli import legacy
 
 from . import commands
-from .legacy_cli import _LIB_NAMES, _ORIGINAL_LIB_NAME_LOG_LEVEL, run_legacy
+from .legacy_cli import run_legacy
+
+
+@dataclass
+class CommandGroup:
+    """Dataclass to hold a command group."""
+
+    name: str
+    commands: list
+
+
+CORE22_LIFECYCLE_COMMAND_GROUP = CommandGroup(
+    "Lifecycle",
+    [
+        commands.core22.CleanCommand,
+        commands.core22.PullCommand,
+        commands.core22.BuildCommand,
+        commands.core22.StageCommand,
+        commands.core22.PrimeCommand,
+        commands.core22.PackCommand,
+        commands.core22.SnapCommand,  # hidden (legacy compatibility)
+        commands.core22.TryCommand,
+    ],
+)
+
+CORE24_LIFECYCLE_COMMAND_GROUP = CommandGroup(
+    "Lifecycle",
+    [
+        craft_application.commands.lifecycle.CleanCommand,
+        craft_application.commands.lifecycle.PullCommand,
+        craft_application.commands.lifecycle.BuildCommand,
+        craft_application.commands.lifecycle.StageCommand,
+        craft_application.commands.lifecycle.PrimeCommand,
+        commands.PackCommand,
+        commands.SnapCommand,  # Hidden (legacy compatibility)
+        commands.RemoteBuildCommand,
+        commands.TryCommand,
+    ],
+)
 
 COMMAND_GROUPS = [
-    craft_cli.CommandGroup(
-        "Lifecycle",
+    CommandGroup(
+        "Plugins",
         [
-            commands.CleanCommand,
-            commands.PullCommand,
-            commands.BuildCommand,
-            commands.StageCommand,
-            commands.PrimeCommand,
-            commands.PackCommand,
-            commands.RemoteBuildCommand,
-            commands.SnapCommand,  # hidden (legacy compatibility)
             commands.PluginsCommand,
             commands.ListPluginsCommand,
-            commands.TryCommand,
         ],
     ),
-    craft_cli.CommandGroup(
+    CommandGroup(
         "Extensions",
         [
             commands.ListExtensionsCommand,
@@ -63,7 +91,7 @@ COMMAND_GROUPS = [
             commands.ExpandExtensionsCommand,
         ],
     ),
-    craft_cli.CommandGroup(
+    CommandGroup(
         "Store Account",
         [
             commands.StoreLoginCommand,
@@ -72,7 +100,7 @@ COMMAND_GROUPS = [
             commands.StoreWhoAmICommand,
         ],
     ),
-    craft_cli.CommandGroup(
+    CommandGroup(
         "Store Snap Names",
         [
             commands.StoreRegisterCommand,
@@ -83,7 +111,7 @@ COMMAND_GROUPS = [
             commands.StoreLegacyUploadMetadataCommand,
         ],
     ),
-    craft_cli.CommandGroup(
+    CommandGroup(
         "Store Snap Release Management",
         [
             commands.StoreReleaseCommand,
@@ -96,7 +124,7 @@ COMMAND_GROUPS = [
             commands.StoreRevisionsCommand,  # hidden (alias to list-revisions)
         ],
     ),
-    craft_cli.CommandGroup(
+    CommandGroup(
         "Store Snap Tracks",
         [
             commands.StoreListTracksCommand,
@@ -104,7 +132,7 @@ COMMAND_GROUPS = [
             commands.StoreLegacySetDefaultTrackCommand,
         ],
     ),
-    craft_cli.CommandGroup(
+    CommandGroup(
         "Store Key Management",
         [
             commands.StoreLegacyCreateKeyCommand,
@@ -113,7 +141,7 @@ COMMAND_GROUPS = [
             commands.StoreLegacyListKeysCommand,
         ],
     ),
-    craft_cli.CommandGroup(
+    CommandGroup(
         "Store Validation Sets",
         [
             commands.StoreEditValidationSetsCommand,
@@ -122,10 +150,10 @@ COMMAND_GROUPS = [
             commands.StoreLegacyGatedCommand,
         ],
     ),
-    craft_cli.CommandGroup(
+    CommandGroup(
         "Other",
         [
-            commands.VersionCommand,
+            *craft_application.commands.get_other_command_group().commands,
             commands.LintCommand,
             commands.InitCommand,
         ],
@@ -156,7 +184,7 @@ def get_verbosity() -> EmitterMode:
 
     with contextlib.suppress(ValueError):
         # Parse environment variable for backwards compatibility with launchpad
-        if utils.strtobool(os.getenv("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "n").strip()):
+        if strtobool(os.getenv("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "n").strip()):
             verbosity = EmitterMode.DEBUG
 
     # if defined, use environmental variable SNAPCRAFT_VERBOSITY_LEVEL
@@ -177,44 +205,32 @@ def get_verbosity() -> EmitterMode:
 
 
 def get_dispatcher() -> craft_cli.Dispatcher:
-    """Return an instance of Dispatcher.
-
-    Run all the checks and setup required to ensure the Dispatcher can run.
-    """
-    # Run the legacy implementation if inside a legacy managed environment.
-    if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
-        snapcraft.ProjectOptions = snapcraft_legacy.ProjectOptions  # type: ignore
-        legacy.legacy_run()
-
-    # set lib loggers to debug level so that all messages are sent to Emitter
-    for lib_name in _LIB_NAMES:
-        logger = logging.getLogger(lib_name)
-        _ORIGINAL_LIB_NAME_LOG_LEVEL[lib_name] = logger.level
-        logger.setLevel(logging.DEBUG)
+    """Return an instance of Dispatcher."""
+    craft_cli_command_groups = [
+        craft_cli.CommandGroup(group.name, group.commands)
+        for group in COMMAND_GROUPS + [CORE22_LIFECYCLE_COMMAND_GROUP]
+    ]
 
     return craft_cli.Dispatcher(
         "snapcraft",
-        COMMAND_GROUPS,
+        craft_cli_command_groups,
         summary="Package, distribute, and update snaps for Linux and IoT",
         extra_global_args=GLOBAL_ARGS,
-        default_command=commands.PackCommand,
+        default_command=commands.core22.PackCommand,
     )
 
 
 def _run_dispatcher(
     dispatcher: craft_cli.Dispatcher, global_args: Dict[str, Any]
 ) -> None:
-    if global_args.get("version"):
-        emit.message(f"snapcraft {__version__}")
-    else:
-        if global_args.get("trace"):
-            emit.message(
-                "Options -t and --trace are deprecated, use --verbosity=debug instead."
-            )
-            emit.set_mode(EmitterMode.DEBUG)
+    if global_args.get("trace"):
+        emit.message(
+            "Options -t and --trace are deprecated, use --verbosity=debug instead."
+        )
+        emit.set_mode(EmitterMode.DEBUG)
 
-        dispatcher.load_command(None)
-        dispatcher.run()
+    dispatcher.load_command(None)
+    dispatcher.run()
     emit.ended_ok()
 
 
@@ -231,7 +247,6 @@ def _emit_error(error, cause=None):
     emit.error(error)
 
 
-# pylint: disable-next=too-many-statements
 def run():  # noqa: C901 (complex-structure)
     """Run the CLI."""
     dispatcher = get_dispatcher()
@@ -249,8 +264,7 @@ def run():  # noqa: C901 (complex-structure)
         with contextlib.suppress(KeyError, IndexError):
             if (
                 err.__context__ is not None
-                and err.__context__.args[0]  # pylint: disable=no-member
-                not in dispatcher.commands
+                and err.__context__.args[0] not in dispatcher.commands
             ):
                 run_legacy(err)
         print(err, file=sys.stderr)  # to stderr, as argparse normally does

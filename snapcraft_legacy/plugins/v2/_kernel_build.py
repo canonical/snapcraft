@@ -1,5 +1,5 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
-# pylint: disable=line-too-long,too-many-lines,attribute-defined-outside-init
+
 #
 # Copyright 2020-2022 Canonical Ltd.
 #
@@ -524,7 +524,7 @@ def _get_perf_build_commands(
     ]
 
 
-# pylint: disable-next=too-many-arguments
+
 def _make_initrd_cmd(
     initrd_compression: Optional[str],
     initrd_compression_options: Optional[List[str]],
@@ -917,7 +917,7 @@ def _make_initrd_cmd(
     ]
 
 
-# pylint: disable-next=too-many-arguments
+
 def get_build_commands(
     make_cmd: List[str],
     make_targets: List[str],
@@ -1142,7 +1142,7 @@ def _compression_cmd(
     return cmd
 
 
-# pylint: disable-next=too-many-arguments
+
 def _get_post_install_cmd(
     device_trees: Optional[List[str]],
     initrd_compression: Optional[str],
@@ -1192,7 +1192,7 @@ def _get_post_install_cmd(
     ]
 
 
-# pylint: disable-next=too-many-arguments
+
 def _get_install_command(
     device_trees: Optional[List[str]],
     make_cmd: List[str],

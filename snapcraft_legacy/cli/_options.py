@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2019 Canonical Ltd
+# Copyright (C) 2016-2019,2024 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,12 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import distutils.util
 import os
 import sys
 from typing import Any, Dict, List, Optional
 
 import click
+from craft_application.util import strtobool
 
 from snapcraft_legacy.cli.echo import confirm, prompt, warning
 from snapcraft_legacy.internal import common, errors
@@ -53,13 +53,13 @@ class BoolParamType(click.ParamType):
     def convert(self, value, param, ctx):
         """Convert option string to value.
 
-        Unlike click's BoolParamType, use distutils.util.strtobool to
+        Unlike click's BoolParamType, use craft_application.util.strtobool to
         convert values.
         """
         if isinstance(value, bool):
             return value
         try:
-            return bool(distutils.util.strtobool(value))
+            return strtobool(value)
         except ValueError:
             self.fail("%r is not a valid boolean" % value, param, ctx)
 

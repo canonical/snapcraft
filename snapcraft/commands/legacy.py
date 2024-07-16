@@ -19,7 +19,7 @@
 import textwrap
 from typing import TYPE_CHECKING
 
-from craft_cli import BaseCommand
+from craft_application.commands import AppCommand
 from overrides import overrides
 
 from snapcraft.legacy_cli import run_legacy
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     import argparse
 
 
-class LegacyBaseCommand(BaseCommand):
+class LegacyAppCommand(AppCommand):
     """Legacy command runner."""
 
     @overrides
@@ -45,7 +45,7 @@ class LegacyBaseCommand(BaseCommand):
 #########
 
 
-class StoreLegacyUploadMetadataCommand(LegacyBaseCommand):
+class StoreLegacyUploadMetadataCommand(LegacyAppCommand):
     """Command passthrough for the upload-metadata command."""
 
     name = "upload-metadata"
@@ -84,7 +84,7 @@ class StoreLegacyUploadMetadataCommand(LegacyBaseCommand):
         )
 
 
-class StoreLegacyPromoteCommand(LegacyBaseCommand):
+class StoreLegacyPromoteCommand(LegacyAppCommand):
     """Command passthrough for the promote command."""
 
     name = "promote"
@@ -133,7 +133,7 @@ class StoreLegacyPromoteCommand(LegacyBaseCommand):
         )
 
 
-class StoreLegacySetDefaultTrackCommand(LegacyBaseCommand):
+class StoreLegacySetDefaultTrackCommand(LegacyAppCommand):
     """Command passthrough for the set-default-track command."""
 
     name = "set-default-track"
@@ -156,7 +156,7 @@ class StoreLegacySetDefaultTrackCommand(LegacyBaseCommand):
         )
 
 
-class StoreLegacyMetricsCommand(LegacyBaseCommand):
+class StoreLegacyMetricsCommand(LegacyAppCommand):
     """Command passthrough for the metrics command."""
 
     name = "metrics"
@@ -194,7 +194,7 @@ class StoreLegacyMetricsCommand(LegacyBaseCommand):
 ##############
 
 
-class StoreLegacyListKeysCommand(LegacyBaseCommand):
+class StoreLegacyListKeysCommand(LegacyAppCommand):
     """Command passthrough for the list-keys command."""
 
     name = "list-keys"
@@ -206,7 +206,7 @@ class StoreLegacyListKeysCommand(LegacyBaseCommand):
     )
 
 
-class StoreLegacyCreateKeyCommand(LegacyBaseCommand):
+class StoreLegacyCreateKeyCommand(LegacyAppCommand):
     """Command passthrough for the create-key command."""
 
     name = "create-key"
@@ -224,7 +224,7 @@ class StoreLegacyCreateKeyCommand(LegacyBaseCommand):
         )
 
 
-class StoreLegacyRegisterKeyCommand(LegacyBaseCommand):
+class StoreLegacyRegisterKeyCommand(LegacyAppCommand):
     """Command passthrough for the register-key command."""
 
     name = "register-key"
@@ -241,7 +241,7 @@ class StoreLegacyRegisterKeyCommand(LegacyBaseCommand):
         )
 
 
-class StoreLegacySignBuildCommand(LegacyBaseCommand):
+class StoreLegacySignBuildCommand(LegacyAppCommand):
     """Command passthrough for the sign-build command."""
 
     name = "sign-build"
@@ -265,7 +265,7 @@ class StoreLegacySignBuildCommand(LegacyBaseCommand):
         )
 
 
-class StoreLegacyValidateCommand(LegacyBaseCommand):
+class StoreLegacyValidateCommand(LegacyAppCommand):
     """Command passthrough for the validate command."""
 
     name = "validate"
@@ -288,7 +288,7 @@ class StoreLegacyValidateCommand(LegacyBaseCommand):
         parser.add_argument("validations", nargs="+")
 
 
-class StoreLegacyGatedCommand(LegacyBaseCommand):
+class StoreLegacyGatedCommand(LegacyAppCommand):
     """Command passthrough for the gated command."""
 
     name = "gated"
@@ -303,7 +303,7 @@ class StoreLegacyGatedCommand(LegacyBaseCommand):
         parser.add_argument("snap_name", metavar="snap-name")
 
 
-class StoreLegacyListValidationSetsCommand(LegacyBaseCommand):
+class StoreLegacyListValidationSetsCommand(LegacyAppCommand):
     """Command passthrough for the list-validation-sets command."""
 
     name = "list-validation-sets"

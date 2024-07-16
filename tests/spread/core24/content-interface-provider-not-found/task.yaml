@@ -1,0 +1,9 @@
+summary: Build a snap that uses the content interface with a non published snap
+
+restore: |
+  snapcraft clean --destructive-mode
+
+execute: |
+  output=$(snapcraft prime --destructive-mode 2>&1 >/dev/null || true)
+
+  echo "$output" | grep -q -e "Could not install snap defined in plug" -e "Failed to install or refresh snap 'unknown-content-snap'"

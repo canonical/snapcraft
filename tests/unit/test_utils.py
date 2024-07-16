@@ -40,69 +40,6 @@ def mock_is_managed_mode(mocker):
     yield mocker.patch("snapcraft.utils.is_managed_mode", return_value=False)
 
 
-@pytest.mark.parametrize(
-    "value",
-    [
-        "y",
-        "Y",
-        "yes",
-        "YES",
-        "Yes",
-        "t",
-        "T",
-        "true",
-        "TRUE",
-        "True",
-        "On",
-        "ON",
-        "oN",
-        "1",
-    ],
-)
-def test_strtobool_true(value: str):
-    assert utils.strtobool(value) is True
-
-
-@pytest.mark.parametrize(
-    "value",
-    [
-        "n",
-        "N",
-        "no",
-        "NO",
-        "No",
-        "f",
-        "F",
-        "false",
-        "FALSE",
-        "False",
-        "off",
-        "OFF",
-        "oFF",
-        "0",
-    ],
-)
-def test_strtobool_false(value: str):
-    assert utils.strtobool(value) is False
-
-
-@pytest.mark.parametrize(
-    "value",
-    [
-        "not",
-        "yup",
-        "negative",
-        "positive",
-        "whatever",
-        "2",
-        "3",
-    ],
-)
-def test_strtobool_value_error(value: str):
-    with pytest.raises(ValueError):
-        utils.strtobool(value)
-
-
 #####################
 # Get Host Platform #
 #####################
@@ -127,6 +64,21 @@ def test_get_effective_base(base, build_base, project_type, name, expected_base)
         base=base, build_base=build_base, project_type=project_type, name=name
     )
     assert result == expected_base
+
+
+def test_get_effective_base_translate_devel():
+    params = {
+        "base": "core24",
+        "build_base": "devel",
+        "project_type": None,
+        "name": "my-project",
+    }
+
+    translate_true = utils.get_effective_base(translate_devel=True, **params)
+    assert translate_true == "core24"
+
+    translate_false = utils.get_effective_base(translate_devel=False, **params)
+    assert translate_false == "devel"
 
 
 def test_get_os_platform_linux(tmp_path, mocker):
@@ -633,7 +585,6 @@ def test_confirm_with_user_pause_emitter(mock_isatty, emitter):
     """The emitter should be paused when using the terminal."""
     mock_isatty.return_value = True
 
-    # pylint: disable-next=unused-argument
     def fake_input(prompt):
         """Check if the Emitter is paused."""
         assert emitter.paused

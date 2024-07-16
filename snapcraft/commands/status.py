@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,7 +21,8 @@ import textwrap
 from collections import OrderedDict
 from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Set, Tuple, cast
 
-from craft_cli import BaseCommand, emit
+from craft_application.commands import AppCommand
+from craft_cli import emit
 from overrides import overrides
 from tabulate import tabulate
 from typing_extensions import Final
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
     import argparse
 
 
-class StoreStatusCommand(BaseCommand):
+class StoreStatusCommand(AppCommand):
     """Check the status of a snap in the Snap Store."""
 
     name = "status"
@@ -182,7 +183,7 @@ def _get_channel_line(
     ]
 
 
-def _get_channel_lines_for_channel(  # noqa: C901  # pylint: disable=too-many-locals
+def _get_channel_lines_for_channel(  # noqa: C901 (complex-structure)
     snap_channel_map: ChannelMap,
     channel_name: str,
     architecture: str,
@@ -304,7 +305,7 @@ def _has_channels_for_architecture(
     return found_architecture
 
 
-def get_tabulated_channel_map(  # pylint: disable=too-many-branches, too-many-locals  # noqa: C901
+def get_tabulated_channel_map(  # noqa: C901 (complex-structure)
     snap_channel_map,
     *,
     architectures: Sequence[str],
@@ -352,7 +353,7 @@ def get_tabulated_channel_map(  # pylint: disable=too-many-branches, too-many-lo
     if any(line[expires_column] != "" for line in channel_lines):
         headers.append("Expires at")
         for index, _ in enumerate(channel_lines):
-            if not channel_lines[index][expires_column]:  # pylint: disable=R1736
+            if not channel_lines[index][expires_column]:
                 channel_lines[index][expires_column] = "-"
     else:
         headers.append("")
@@ -360,7 +361,7 @@ def get_tabulated_channel_map(  # pylint: disable=too-many-branches, too-many-lo
     return tabulate(channel_lines, numalign="left", headers=headers, tablefmt="plain")
 
 
-class StoreListTracksCommand(BaseCommand):
+class StoreListTracksCommand(AppCommand):
     """List the tracks of a snap in the Snap Store."""
 
     name = "list-tracks"
@@ -423,7 +424,7 @@ class StoreTracksCommand(StoreListTracksCommand):
     hidden = True
 
 
-class StoreListRevisionsCommand(BaseCommand):
+class StoreListRevisionsCommand(AppCommand):
     """List revisions of a published snap."""
 
     name = "list-revisions"

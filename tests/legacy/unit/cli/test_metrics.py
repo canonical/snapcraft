@@ -35,11 +35,13 @@ def test_get_series_label_from_metric_name():
         "installed_base_by_country": "Country",
         "installed_base_by_operating_system": "OS",
         "installed_base_by_version": "Version",
+        "installed_base_by_architecture": "Architecture",
         "weekly_device_change": "Devices",
         "weekly_installed_base_by_channel": "Channel",
         "weekly_installed_base_by_country": "Country",
         "weekly_installed_base_by_operating_system": "OS",
         "weekly_installed_base_by_version": "Version",
+        "weekly_installed_base_by_architecture": "Architecture",
     }
 
 

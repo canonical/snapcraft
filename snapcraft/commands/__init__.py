@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,13 +16,13 @@
 
 """Snapcraft commands."""
 
+from . import core22, legacy
 from .account import (
     StoreExportLoginCommand,
     StoreLoginCommand,
     StoreLogoutCommand,
     StoreWhoAmICommand,
 )
-from .discovery import ListPluginsCommand, PluginsCommand
 from .extensions import (
     ExpandExtensionsCommand,
     ExtensionsCommand,
@@ -42,16 +42,7 @@ from .legacy import (
     StoreLegacyUploadMetadataCommand,
     StoreLegacyValidateCommand,
 )
-from .lifecycle import (
-    BuildCommand,
-    CleanCommand,
-    PackCommand,
-    PrimeCommand,
-    PullCommand,
-    SnapCommand,
-    StageCommand,
-    TryCommand,
-)
+from .lifecycle import PackCommand, SnapCommand, TryCommand
 from .lint import LintCommand
 from .manage import StoreCloseCommand, StoreReleaseCommand
 from .names import (
@@ -60,6 +51,7 @@ from .names import (
     StoreNamesCommand,
     StoreRegisterCommand,
 )
+from .plugins import ListPluginsCommand, PluginsCommand
 from .remote import RemoteBuildCommand
 from .status import (
     StoreListRevisionsCommand,
@@ -70,30 +62,25 @@ from .status import (
 )
 from .upload import StoreLegacyPushCommand, StoreUploadCommand
 from .validation_sets import StoreEditValidationSetsCommand
-from .version import VersionCommand
 
 __all__ = [
-    "BuildCommand",
-    "CleanCommand",
     "ExpandExtensionsCommand",
     "ExtensionsCommand",
     "InitCommand",
     "LintCommand",
     "ListExtensionsCommand",
     "ListPluginsCommand",
+    "RemoteBuildCommand",
     "PackCommand",
     "PluginsCommand",
-    "PrimeCommand",
-    "PullCommand",
-    "RemoteBuildCommand",
     "SnapCommand",
-    "StageCommand",
     "StoreCloseCommand",
     "StoreEditValidationSetsCommand",
     "StoreExportLoginCommand",
     "StoreLegacyCreateKeyCommand",
     "StoreLegacyGatedCommand",
     "StoreLegacyListCommand",
+    "StoreLegacyListKeysCommand",
     "StoreLegacyListRegisteredCommand",
     "StoreLegacyListValidationSetsCommand",
     "StoreLegacyMetricsCommand",
@@ -104,9 +91,8 @@ __all__ = [
     "StoreLegacySignBuildCommand",
     "StoreLegacyUploadMetadataCommand",
     "StoreLegacyValidateCommand",
-    "StoreLegacyListKeysCommand",
-    "StoreListTracksCommand",
     "StoreListRevisionsCommand",
+    "StoreListTracksCommand",
     "StoreLoginCommand",
     "StoreLogoutCommand",
     "StoreNamesCommand",
@@ -118,5 +104,6 @@ __all__ = [
     "StoreUploadCommand",
     "StoreWhoAmICommand",
     "TryCommand",
-    "VersionCommand",
+    "core22",
+    "legacy",
 ]

@@ -1,0 +1,54 @@
+#!/bin/bash
+###################################
+# KDE NEON launcher specific part #
+###################################
+
+# Add paths for games
+append_dir PATH "$SNAP/usr/games"
+append_dir PATH "$SNAP_DESKTOP_RUNTIME/usr/games"
+
+# Qt Libs
+prepend_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH"
+
+# blas
+append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/blas"
+# lapack
+append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/lapack"
+
+# Add QT_PLUGIN_PATH (Qt Modules).
+append_dir QT_PLUGIN_PATH "$SNAP/usr/lib/$ARCH/qt6/plugins"
+append_dir QT_PLUGIN_PATH "$SNAP/usr/lib/$ARCH"
+append_dir QT_PLUGIN_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/qt6/plugins"
+append_dir QT_PLUGIN_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/"
+# And QML2_IMPORT_PATH (Qt Modules).
+append_dir QML2_IMPORT_PATH "$SNAP/usr/lib/$ARCH/qt6/qml"
+append_dir QML2_IMPORT_PATH "$SNAP/lib/$ARCH"
+append_dir QML2_IMPORT_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/qt6/qml"
+append_dir QML2_IMPORT_PATH "$SNAP_DESKTOP_RUNTIME/lib/$ARCH"
+
+# Fix locating the QtWebEngineProcess executable
+export QTWEBENGINEPROCESS_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/qt6/libexec/QtWebEngineProcess"
+# And QtWebEngine's path to resources
+QTWEBENGINE_RESOURCES_PATH="$SNAP_DESKTOP_RUNTIME/usr/share/qt6/resources"
+
+# Removes Qt warning: Could not find a location
+# of the system Compose files
+export QTCOMPOSE="$SNAP_DESKTOP_RUNTIME/usr/share/X11/locale"
+export QT_XKB_CONFIG_ROOT="/usr/share/X11/xkb"
+
+# KIO specific
+# Directly fork slaves.
+export KDE_FORK_SLAVES=1
+# Path to KIO slaves.
+export KF6_LIBEXEC_DIR="$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/libexec/kf6"
+
+# Add path to VLC plugins
+export VLC_PLUGIN_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/vlc/plugins"
+
+if [ -e "$SNAP_DESKTOP_RUNTIME/usr/share/i18n" ]; then
+    export I18NPATH="$SNAP_DESKTOP_RUNTIME/usr/share/i18n"
+    locpath="$XDG_DATA_HOME/locale"
+    ensure_dir_exists "$locpath"
+    export LOCPATH="$locpath:/usr/lib/locale"
+    LC_ALL=C.UTF-8 async_exec "$SNAP/snap/command-chain/locale-gen"
+fi

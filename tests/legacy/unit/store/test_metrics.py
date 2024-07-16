@@ -366,6 +366,17 @@ def test_metrics_results_unmarshal_multiple_metrics():
             MetricResults(
                 status=MetricsStatus["OK"],
                 snap_id="test-snap-id",
+                metric_name="installed_base_by_architecture",
+                buckets=["2021-01-01"],
+                series=[
+                    Series(name="blah", values=[1], currently_released=None),
+                    Series(name="blahh", values=[1, 2], currently_released=None),
+                    Series(name="blahhh", values=[1, 2, 3], currently_released=None),
+                ],
+            ),
+            MetricResults(
+                status=MetricsStatus["OK"],
+                snap_id="test-snap-id",
                 metric_name="installed_base_by_channel",
                 buckets=["2021-01-01"],
                 series=[
@@ -411,6 +422,17 @@ def test_metrics_results_unmarshal_multiple_metrics():
                 status=MetricsStatus["OK"],
                 snap_id="test-snap-id",
                 metric_name="weekly_device_change",
+                buckets=["2021-01-01"],
+                series=[
+                    Series(name="blah", values=[1], currently_released=None),
+                    Series(name="blahh", values=[1, 2], currently_released=None),
+                    Series(name="blahhh", values=[1, 2, 3], currently_released=None),
+                ],
+            ),
+            MetricResults(
+                status=MetricsStatus["OK"],
+                snap_id="test-snap-id",
+                metric_name="weekly_installed_base_by_architecture",
                 buckets=["2021-01-01"],
                 series=[
                     Series(name="blah", values=[1], currently_released=None),

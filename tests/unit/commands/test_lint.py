@@ -25,7 +25,7 @@ import pytest
 from craft_providers.bases import BuilddBaseAlias
 from craft_providers.multipass import MultipassProvider
 
-from snapcraft import cli, models
+from snapcraft import application, models
 from snapcraft.commands.lint import LintCommand
 from snapcraft.errors import SnapcraftError
 from snapcraft.meta.snap_yaml import SnapMetadata
@@ -68,6 +68,7 @@ def fake_snapcraft_project():
         "version": "1.0",
         "summary": "test summary",
         "parts": {"part1": {"plugin": "nil"}},
+        "architectures": [{"build_on": ["amd64"], "build_for": ["amd64"]}],
     }
     return models.Project.unmarshal(data)
 
@@ -104,7 +105,8 @@ def mock_is_managed_mode(mocker):
 def mock_provider(mocker, mock_instance, fake_provider):
     _mock_provider = Mock(wraps=fake_provider)
     mocker.patch(
-        "snapcraft.commands.lint.providers.get_provider", return_value=_mock_provider
+        "snapcraft.commands.lint.providers.get_provider",
+        return_value=_mock_provider,
     )
     return _mock_provider
 
@@ -138,7 +140,7 @@ def test_lint_default(
     fake_snap_file.touch()
     fake_assert_file.touch()
 
-    cli.run()
+    application.main()
 
     mock_ensure_provider_is_available.assert_called_once()
     mock_get_base_configuration.assert_called_once_with(
@@ -196,7 +198,7 @@ def test_lint_http_https_proxy(
         ],
     )
 
-    cli.run()
+    application.main()
 
     mock_get_base_configuration.assert_called_once_with(
         alias=BuilddBaseAlias.JAMMY,
@@ -222,7 +224,7 @@ def test_lint_assert_file_missing(
     # create a snap file
     fake_snap_file.touch()
 
-    cli.run()
+    application.main()
 
     mock_instance.push_file.assert_called_once_with(
         source=fake_snap_file,
@@ -253,7 +255,7 @@ def test_lint_assert_file_not_valid(
     # make the assertion filepath a directory
     fake_assert_file.mkdir()
 
-    cli.run()
+    application.main()
 
     mock_instance.push_file.assert_called_once_with(
         source=fake_snap_file,
@@ -279,13 +281,14 @@ def test_lint_multipass_not_supported(
     """Raise an error if Multipass is used as the build provider."""
     _mock_provider = Mock(wraps=fake_provider, spec=MultipassProvider)
     mocker.patch(
-        "snapcraft.commands.lint.providers.get_provider", return_value=_mock_provider
+        "snapcraft.commands.lint.providers.get_provider",
+        return_value=_mock_provider,
     )
 
     # create a snap file
     fake_snap_file.touch()
 
-    cli.run()
+    application.main()
 
     out, err = capsys.readouterr()
     assert not out
@@ -296,7 +299,7 @@ def test_lint_multipass_not_supported(
 
 def test_lint_default_snap_file_missing(capsys, fake_snap_file, mock_argv):
     """Raise an error if the snap file does not exist."""
-    cli.run()
+    application.main()
 
     out, err = capsys.readouterr()
     assert not out
@@ -308,7 +311,7 @@ def test_lint_default_snap_file_not_valid(capsys, fake_snap_file, mock_argv):
     # make the snap filepath a directory
     fake_snap_file.mkdir()
 
-    cli.run()
+    application.main()
 
     out, err = capsys.readouterr()
     assert not out
@@ -333,7 +336,7 @@ def test_lint_execute_run_error(
 
     mock_instance.execute_run.side_effect = CalledProcessError(cmd="err", returncode=1)
 
-    cli.run()
+    application.main()
 
     mock_capture_logs_from_instance.assert_called_once()
     out, err = capsys.readouterr()
@@ -389,7 +392,7 @@ def test_lint_managed_mode(
         return_value=fake_snapcraft_project,
     )
 
-    cli.run()
+    application.main()
 
     mock_run_linters.assert_called_once_with(
         lint=models.Lint(ignore=["classic"]),
@@ -445,7 +448,7 @@ def test_lint_managed_mode_without_snapcraft_yaml(
         return_value=None,
     )
 
-    cli.run()
+    application.main()
 
     mock_run_linters.assert_called_once_with(
         lint=models.Lint(ignore=["classic"]),
@@ -468,11 +471,6 @@ def test_lint_managed_mode_without_snapcraft_yaml(
                 "verbose",
                 "Not loading lint filters from 'snapcraft.yaml' because the file does "
                 "not exist inside the snap file.",
-            ),
-            call(
-                "verbose",
-                "To include 'snapcraft.yaml' in a snap file, use the parameter "
-                "'--enable-manifest' when building the snap.",
             ),
         ]
     )
@@ -512,7 +510,7 @@ def test_lint_managed_mode_unsquash_error(
         return_value=fake_snapcraft_project,
     )
 
-    cli.run()
+    application.main()
 
     out, err = capsys.readouterr()
     assert not out
@@ -555,7 +553,7 @@ def test_lint_managed_mode_snap_install_error(
         return_value=fake_snapcraft_project,
     )
 
-    cli.run()
+    application.main()
 
     out, err = capsys.readouterr()
     assert not out
@@ -598,7 +596,7 @@ def test_lint_managed_mode_assert(
         return_value=fake_snapcraft_project,
     )
 
-    cli.run()
+    application.main()
 
     mock_run_linters.assert_called_once_with(
         lint=models.Lint(ignore=["classic"]),
@@ -662,7 +660,7 @@ def test_lint_managed_mode_assert_error(
         return_value=fake_snapcraft_project,
     )
 
-    cli.run()
+    application.main()
 
     mock_run_linters.assert_called_once_with(
         lint=models.Lint(ignore=["classic"]),
@@ -757,7 +755,7 @@ def test_lint_managed_mode_with_lint_config(
         return_value=fake_snapcraft_project,
     )
 
-    cli.run()
+    application.main()
 
     # lint config from project should be passed to `run_linter()`
     mock_run_linters.assert_called_once_with(

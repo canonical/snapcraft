@@ -1,0 +1,77 @@
+summary: Test scriptlets variables on core24
+
+# limit to amd64 for BUILD_ON variables
+systems:
+  - ubuntu-24.04
+  - ubuntu-24.04-64
+  - ubuntu-24.04-amd64
+
+environment:
+  SNAP/test_variables: test-variables
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  # set_base "../snaps/$SNAP/snap/snapcraft.yaml"
+
+restore: |
+  cd "../snaps/$SNAP"
+  rm -f ./*.snap
+  rm -Rf work
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "../snaps/$SNAP"
+
+  check_vars() {
+    file="$1"
+    root="/snapcraft/tests/spread/core24-suites/environment/snaps/test-variables"
+    echo "==== $file ===="
+    cat "$file"
+    for exp in \
+      "^SNAPCRAFT_PROJECT_GRADE=devel$" \
+      "^SNAPCRAFT_PROJECT_NAME=None$" \
+      "^SNAPCRAFT_PROJECT_VERSION=1$" \
+      "^SNAPCRAFT_PARALLEL_BUILD_COUNT=[0-9]\+$" \
+      "^SNAPCRAFT_PROJECT_DIR=${root}$" \
+      "^SNAPCRAFT_PART_SRC=${root}/parts/hello/src$" \
+      "^SNAPCRAFT_PART_SRC_WORK=${root}/parts/hello/src$" \
+      "^SNAPCRAFT_PART_BUILD=${root}/parts/hello/build$" \
+      "^SNAPCRAFT_PART_BUILD_WORK=${root}/parts/hello/build$" \
+      "^SNAPCRAFT_PART_INSTALL=${root}/parts/hello/install$" \
+      "^SNAPCRAFT_STAGE=${root}/stage$" \
+      "^SNAPCRAFT_PRIME=${root}/prime$" \
+      "^CRAFT_ARCH_BUILD_ON=amd64$" \
+      "^CRAFT_ARCH_TRIPLET_BUILD_ON=x86_64-linux-gnu$" \
+      "^CRAFT_ARCH_BUILD_FOR=s390x$" \
+      "^CRAFT_ARCH_TRIPLET_BUILD_FOR=s390x-linux-gnu$" \
+      "^CRAFT_PARALLEL_BUILD_COUNT=[0-9]\+$" \
+      "^CRAFT_PROJECT_DIR=${root}$" \
+      "^CRAFT_PART_NAME=hello$" \
+      "^CRAFT_PART_SRC=${root}/parts/hello/src$" \
+      "^CRAFT_PART_SRC_WORK=${root}/parts/hello/src$" \
+      "^CRAFT_PART_BUILD=${root}/parts/hello/build$" \
+      "^CRAFT_PART_BUILD_WORK=${root}/parts/hello/build$" \
+      "^CRAFT_PART_INSTALL=${root}/parts/hello/install$" \
+      "^CRAFT_STAGE=${root}/stage$" \
+      "^CRAFT_PRIME=${root}/prime$"; do
+      grep -q "$exp" < "$file"
+    done
+  }
+  
+  # exercise lifecycle commands with and without `--platform` and `--build-for`
+
+  snapcraft pull --platform s390x
+  check_vars pull.txt
+
+  snapcraft build --build-for s390x
+  check_vars build.txt
+
+  snapcraft stage
+  check_vars stage.txt
+
+  snapcraft prime
+  check_vars prime.txt

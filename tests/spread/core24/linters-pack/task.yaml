@@ -1,0 +1,29 @@
+summary: Test linter output
+
+environment:
+  SNAP/classic: classic
+  SNAP/classic_libc: classic-libc
+  SNAP/library_gnome: library-gnome
+  SNAP/library_ignore_missing: library-ignore-missing
+  SNAP/library_ignore_unused: library-ignore-unused
+  SNAP/library_ignored_mixed: library-ignored-mixed
+  SNAP/library_missing: library-missing
+  SNAP/library_unused: library-unused
+
+restore: |
+  cd "${SNAP}"
+  snapcraft clean
+  rm -f ./*.snap ./linter_output.txt
+
+execute: |
+  cd "${SNAP}"
+
+  snapcraft pack 2> output.txt
+
+  test -f linter-test_*.snap
+
+  # linter for gnome snap is not working as-expected (#4751)
+  if [ "${SNAP}" != "library-gnome" ]; then
+    sed -n '/^Running linters/,/^Creating snap/p' < output.txt > linter_output.txt
+    diff -u linter_output.txt expected_linter_output.txt
+  fi

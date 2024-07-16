@@ -1,0 +1,30 @@
+summary: Run snapcraft lint on a snap file.
+
+environment:
+  SNAP: lint-file
+
+restore: |
+  cd "${SNAP}"
+  rm -f ./*.snap ./*.assert ./linter_output.txt
+
+execute: |
+  cd "${SNAP}"
+
+  # build the test snap destructively to save time
+  snapcraft --destructive-mode
+
+  snapcraft lint lint-file_0.1_*.snap 2> output.txt || {
+    lxc --project snapcraft start snapcraft-linter && 
+    sleep 10 &&
+    lxc --project snapcraft exec snapcraft-linter -- snap install --edge core24 &&
+    snapcraft lint lint-file_0.1_*.snap 2> output.txt
+  }
+
+  # TODO: this check fails because core24 has undefined symbol warnings (#4751)
+  # get the lint warnings at end of the log file
+  #sed -n '/Running linters.../,+4 p' < output.txt > linter-output.txt
+
+  #diff -u linter-output.txt expected-linter-output.txt
+
+  MATCH "library: linter-test: missing dependency 'libcaca.so.0'" < output.txt
+  MATCH "library: libogg.so.0: unused library" < output.txt

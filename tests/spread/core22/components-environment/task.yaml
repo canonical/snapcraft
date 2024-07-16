@@ -1,0 +1,29 @@
+summary: Test scriptlets variables on core22 with components
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  check_vars() {
+    file="$1"
+    root="$(pwd)"
+
+    # check CRAFT_* variables
+    diff -u <(sort "${file}" | grep "=${root}" | grep ^CRAFT) <(sed expected_env.txt -e "s@{{root}}@$root@g")
+
+    # check SNAPCRAFT_* variables
+    diff -u <(sort "${file}" | grep "=${root}" | grep ^SNAPCRAFT) <(sed expected_env.txt -e "s@{{root}}@$root@g" -e 's/^/SNAP/')
+  }
+
+  snapcraft pull --destructive-mode
+  check_vars pull.txt
+
+  snapcraft build --destructive-mode
+  check_vars build.txt
+
+  snapcraft stage --destructive-mode
+  check_vars stage.txt
+
+  snapcraft prime --destructive-mode
+  check_vars prime.txt

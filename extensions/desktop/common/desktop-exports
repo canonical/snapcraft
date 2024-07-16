@@ -170,7 +170,7 @@ needs_xdg_update=false
 needs_xdg_reload=false
 needs_xdg_links=false
 
-if [ "$HOME" != "$SNAP_USER_DATA" ] && ! is_subpath "$XDG_CONFIG_HOME" "$HOME"; then
+if [ "$HOME" != "$SNAP_REAL_HOME" ] && [ "$HOME" != "$SNAP_USER_DATA" ] && ! is_subpath "$XDG_CONFIG_HOME" "$HOME"; then
   for f in user-dirs.dirs user-dirs.locale; do
     if [ -f "$HOME/.config/$f" ]; then
       mv "$HOME/.config/$f" "$XDG_CONFIG_HOME"
@@ -181,18 +181,20 @@ fi
 
 if can_open_file "$REALHOME/.config/user-dirs.dirs"; then
   # shellcheck disable=SC2154
-  if [ "$needs_update" = true ] || [ "$needs_xdg_reload" = true ]; then
-    sed "/^#/!s#\$HOME#${REALHOME}#g" "$REALHOME/.config/user-dirs.dirs" > "$XDG_CONFIG_HOME/user-dirs.dirs"
-    md5sum < "$REALHOME/.config/user-dirs.dirs" > "$XDG_CONFIG_HOME/user-dirs.dirs.md5sum"
-    # It's possible user-dirs.dirs exists when user-dirs.locale doesn't. This
-    # simply means the user opted to never ask to translate their user dirs
-    if can_open_file "$REALHOME/.config/user-dirs.locale"; then
-      cp -a "$REALHOME/.config/user-dirs.locale" "$XDG_CONFIG_HOME"
-      md5sum < "$REALHOME/.config/user-dirs.locale" > "$XDG_CONFIG_HOME/user-dirs.locale.md5sum"
-    elif [ -f "$XDG_CONFIG_HOME/user-dirs.locale.md5sum" ]; then
-      rm "$XDG_CONFIG_HOME/user-dirs.locale.md5sum"
+   if [ "$XDG_CONFIG_HOME" != "$SNAP_REAL_HOME/.config" ]; then
+    if [ "$needs_update" = true ] || [ "$needs_xdg_reload" = true ]; then
+      sed "/^#/!s#\$HOME#${SNAP_REAL_HOME}#g" "$SNAP_REAL_HOME/.config/user-dirs.dirs" > "$XDG_CONFIG_HOME/user-dirs.dirs"
+      md5sum < "$SNAP_REAL_HOME/.config/user-dirs.dirs" > "$XDG_CONFIG_HOME/user-dirs.dirs.md5sum"
+      # It's possible user-dirs.dirs exists when user-dirs.locale doesn't. This
+      # simply means the user opted to never ask to translate their user dirs
+      if can_open_file "$SNAP_REAL_HOME/.config/user-dirs.locale"; then
+        cp -a "$SNAP_REAL_HOME/.config/user-dirs.locale" "$XDG_CONFIG_HOME"
+        md5sum < "$SNAP_REAL_HOME/.config/user-dirs.locale" > "$XDG_CONFIG_HOME/user-dirs.locale.md5sum"
+      elif [ -f "$XDG_CONFIG_HOME/user-dirs.locale.md5sum" ]; then
+        rm "$XDG_CONFIG_HOME/user-dirs.locale.md5sum"
+      fi
+      needs_xdg_reload=true
     fi
-    needs_xdg_reload=true
   fi
 else
   needs_xdg_update=true
@@ -221,13 +223,15 @@ fi
 
 # Create links for user-dirs.dirs
 if [ "$needs_xdg_links" = true ]; then
-  for ((i = 0; i < ${#XDG_SPECIAL_DIRS_PATHS[@]}; i++)); do
-    b="$(realpath "${XDG_SPECIAL_DIRS_PATHS[$i]}" --relative-to="$HOME" 2>/dev/null)"
-    if [[ -n "$b" && "$b" != "." && -e "$REALHOME/$b" ]]; then
-      [ -d "$HOME/$b" ] && rmdir "$HOME/$b" 2> /dev/null
-      [ ! -e "$HOME/$b" ] && ln -s "$REALHOME/$b" "$HOME/$b"
-    fi
-  done
+  if [ "$HOME" != "$SNAP_REAL_HOME" ]; then
+    for ((i = 0; i < ${#XDG_SPECIAL_DIRS_PATHS[@]}; i++)); do
+      b="$(realpath "${XDG_SPECIAL_DIRS_PATHS[$i]}" --relative-to="$HOME" 2>/dev/null)"
+      if [[ -n "$b" && "$b" != "." && -e "$SNAP_REAL_HOME/$b" ]]; then
+        [ -d "$HOME/$b" ] && rmdir "$HOME/$b" 2> /dev/null
+        [ ! -e "$HOME/$b" ] && ln -s "$SNAP_REAL_HOME/$b" "$HOME/$b"
+      fi
+    done
+  fi
 else
   # If we aren't creating new links, check if we have content saved in old locations and move it
   for ((i = 0; i < ${#XDG_SPECIAL_DIRS[@]}; i++)); do

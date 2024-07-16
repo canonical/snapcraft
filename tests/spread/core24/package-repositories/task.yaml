@@ -1,0 +1,49 @@
+summary: Test various package-repository configurations on core24
+
+environment:
+  SNAP/test_apt_key_fingerprint: test-apt-key-fingerprint
+  SNAP/test_apt_key_name: test-apt-key-name
+  SNAP/test_apt_keyserver: test-apt-keyserver
+  SNAP/test_apt_ppa: test-apt-ppa
+  SNAP/test_pin: test-pin
+  SNAP/test_multi_keys: test-multi-keys
+  SNAP/test_foreign_armhf: test-foreign-armhf
+  SNAP/test_foreign_i386: test-foreign-i386
+
+prepare: |
+  # Remove the currently installed "gpg" and "dirmngr" packages to ensure that
+  # Snapcraft itself is installing them when necessary.
+  sudo dpkg --remove --force-depends gpg dirmngr
+
+restore: |
+  sudo apt install -y gpg dirmngr
+
+  cd "$SNAP"
+  rm -f ./*.snap
+  snapcraft clean
+  snapcraft clean --destructive-mode
+  snap remove "${SNAP}"
+
+execute: |
+  cd "$SNAP"
+
+  # Build what we have.
+  snapcraft --verbose
+
+  # And verify the snap runs as expected.
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+  # Exclamation mark is not allowed in command, so do a
+  # more relaxed match
+  "${SNAP}" | MATCH hello
+
+  snap remove "${SNAP}"
+  rm -f ./*.snap
+
+  # Also build in destructive mode.
+  snapcraft --verbose --destructive-mode
+
+  # And verify the snap runs as expected.
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+  # Exclamation mark is not allowed in command, so do a
+  # more relaxed match
+  "${SNAP}" | MATCH hello

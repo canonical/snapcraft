@@ -1,0 +1,16 @@
+name: hooks
+base: core24
+version: '1.0'
+summary: Test conflicting generated and project hooks.
+description: Project hooks in $PROJECT/snap/hooks/ should take priority over conflicting code generated hooks.
+confinement: strict
+
+parts:
+  hooks:
+    source: src/
+    plugin: go
+    build-snaps: [go/1.20/stable]
+    organize:
+      bin/install: snap/hooks/install
+      bin/configure: snap/hooks/configure
+      

@@ -1,0 +1,14 @@
+CRAFT_COMPONENT_BAR_BAZ_PRIME={{root}}/partitions/component/bar-baz/prime
+CRAFT_COMPONENT_BAR_BAZ_STAGE={{root}}/partitions/component/bar-baz/stage
+CRAFT_COMPONENT_FOO_PRIME={{root}}/partitions/component/foo/prime
+CRAFT_COMPONENT_FOO_STAGE={{root}}/partitions/component/foo/stage
+CRAFT_DEFAULT_PRIME={{root}}/prime
+CRAFT_DEFAULT_STAGE={{root}}/stage
+CRAFT_PART_BUILD={{root}}/parts/hello/build
+CRAFT_PART_BUILD_WORK={{root}}/parts/hello/build
+CRAFT_PART_INSTALL={{root}}/parts/hello/install
+CRAFT_PART_SRC={{root}}/parts/hello/src
+CRAFT_PART_SRC_WORK={{root}}/parts/hello/src
+CRAFT_PRIME={{root}}/prime
+CRAFT_PROJECT_DIR={{root}}
+CRAFT_STAGE={{root}}/stage

@@ -1,8 +1,8 @@
 summary: Handle invalid utf-8 text during the build
 
 restore: |
-  snapcraft clean
+  snapcraft clean --destructive-mode
   rm -f ./*.snap
 
 execute: |
-  snapcraft pack -v 2>&1 | MATCH ":: hi � bye"
+  snapcraft pack --destructive-mode -v 2>&1 | MATCH ":: hi � bye"

@@ -91,7 +91,7 @@ class Hook:
 
         environment = hook_dict.get("environment", dict())
         for k, v in environment.items():
-            # Ensure alll environment values are converted to string.
+            # Ensure all environment values are converted to string.
             environment[k] = str(v)
 
         return Hook(

@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Utilities for snapcraft."""
+from __future__ import annotations
+
 import multiprocessing
 import os
 import pathlib
@@ -27,6 +29,7 @@ from getpass import getpass
 from pathlib import Path
 from typing import Iterable, List, Optional
 
+from craft_application.util import strtobool
 from craft_cli import emit
 from craft_parts.sources.git_source import GitSource
 
@@ -159,26 +162,9 @@ def convert_architecture_deb_to_platform(architecture: str) -> str:
     return platform_arch
 
 
-def strtobool(value: str) -> bool:
-    """Convert a string representation of truth to true (1) or false (0).
-
-    :param value: a True value of 'y', 'yes', 't', 'true', 'on', and '1'
-        or a False value of 'n', 'no', 'f', 'false', 'off', and '0'.
-    :raises ValueError: if `value` is not a valid boolean value.
-    """
-    parsed_value = value.lower()
-
-    if parsed_value in ("y", "yes", "t", "true", "on", "1"):
-        return True
-    if parsed_value in ("n", "no", "f", "false", "off", "0"):
-        return False
-
-    raise ValueError(f"Invalid boolean value of {value!r}")
-
-
 def is_managed_mode() -> bool:
     """Check if snapcraft is running in a managed environment."""
-    managed_flag = os.getenv("SNAPCRAFT_MANAGED_MODE", "n")
+    managed_flag = os.getenv("CRAFT_MANAGED_MODE", "n")
     return strtobool(managed_flag)
 
 
@@ -213,19 +199,23 @@ def get_effective_base(
     build_base: Optional[str],
     project_type: Optional[str],
     name: Optional[str],
+    translate_devel: bool = True,
 ) -> Optional[str]:
     """Return the base to use to create the snap.
 
     Return the build-base if set.
     Exception:
-    "base" snaps will return name if build-base is not set.
-    "devel" snaps, return the base, where the true base is, except "base" snaps.
+    - "base" snaps will return name if build-base is not set.
+    - For snaps with "devel" "build-base", if the "project_type" is "base",
+      returns "devel". Otherwise:
+        - if "translate_devel" is True, returns the "base";
+        - otherwise, returns "devel".
     """
     if project_type == "base":
         return build_base if build_base else name
 
     if build_base is not None:
-        if build_base == "devel":
+        if build_base == "devel" and translate_devel:
             return base
         return build_base
 

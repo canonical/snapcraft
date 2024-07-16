@@ -1,0 +1,60 @@
+summary: Build a snap with components
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap ./*.comp
+
+execute: |
+  snapcraft pack
+
+  # assert snap contents
+  unsquashfs -dest "snap-contents" "hello-components_1.0_amd64.snap"
+  if [ ! -e "snap-contents/bin/hello" ]; then
+    echo "Expected 'bin/hello' in snap contents"
+    exit 1
+  fi
+
+  # assert snap metadata
+  if ! diff -u snap-contents/meta/snap.yaml expected-snap.yaml; then
+    echo "Metadata for the snap is incorrect."
+    exit 1
+  fi
+
+  # assert component was packed
+  component_file="hello-components+share_1.0.comp"
+  if [ ! -e "${component_file}" ]; then
+    echo "Expected 'share' component to exist"
+    exit 1
+  fi
+
+  # assert component contents
+  unsquashfs -dest "component-contents" "${component_file}"
+  if [ ! -f "component-contents/file-in-component" ]; then
+    echo "Expected 'file-in-component' in the 'share' component"
+    exit 1
+  fi
+
+  if [ -f "component-contents/other-file-in-component" ]; then
+    echo "Expected 'other-file-in-component' not to be in the 'share' component"
+    exit 1
+  fi
+  
+  component_meta_dir="component-contents/meta"
+
+  # assert component metadata
+  if ! diff -u "${component_meta_dir}/component.yaml" expected-component.yaml; then
+    echo "Metadata for the share component is incorrect."
+    exit 1
+  fi
+
+  # assert component hooks
+  if [ ! -f "${component_meta_dir}/hooks/install" ] || [ ! -f "${component_meta_dir}/hooks/remove" ]; then
+    echo "Expected component hooks to be present."
+    exit 1
+  fi
+
+  # assert project hook has a hook wrapper
+  if [ ! -f component-contents/snap/hooks/install ]; then
+    echo "Expected hook wrapper to be present."
+    exit 1
+  fi

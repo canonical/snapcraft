@@ -1,0 +1,70 @@
+summary: >-
+  Build, clean, build, modify and rebuild, and run hello
+  with different plugin configurations
+
+priority: 100
+
+systems:
+  - ubuntu-24.04
+  - ubuntu-24.04-64
+  - ubuntu-24.04-amd64
+  - ubuntu-24.04-arm64
+
+environment:
+
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
+
+  SNAP_DIR: ../snaps/ros2-jazzy-hello
+  SNAP: ros2-jazzy-hello
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "${SNAP_DIR}/snap/snapcraft.yaml"
+
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  create_dpkg_restore_point
+
+restore: |
+  cd "${SNAP_DIR}"
+  snapcraft clean
+  rm -f ./*.snap
+
+  # Undo changes to hello
+  [ -f src/hello.cpp ] && git checkout src/hello.cpp
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  dpkg_restore_point
+
+execute: |
+  cd "${SNAP_DIR}"
+
+  # Make sure expand-extensions works
+  snapcraft expand-extensions
+
+  # Build what we have and verify the snap runs as expected.
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+
+  # Clean the hello part, then build and run again.
+  snapcraft clean hello
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+
+  # Make sure that what we built runs with the changes applied.
+  if [ -f src/hello.cpp ]; then
+    modified_file=src/hello.cpp
+  else
+    FATAL "Cannot setup ${SNAP} for rebuilding"
+  fi
+
+  sed -i "${modified_file}" -e 's/hello world/hello rebuilt world/'
+
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous

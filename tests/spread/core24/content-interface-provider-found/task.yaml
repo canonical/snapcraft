@@ -1,0 +1,13 @@
+summary: Build a snap that uses the content interface
+
+restore: |
+  snapcraft clean --destructive-mode
+
+execute: |
+  snapcraft prime --destructive-mode
+
+  if ! snap list hello; then
+    echo "snap listed as default provider was not installed"
+    exit 1
+  fi
+

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,11 +16,14 @@
 
 import textwrap
 from pathlib import Path
+from typing import cast
 
 import pydantic
 import pytest
 import yaml
+from craft_application.models import SummaryStr, UniqueStrList, VersionStr
 
+from snapcraft import const, models
 from snapcraft.meta import snap_yaml
 from snapcraft.meta.snap_yaml import ContentPlug, ContentSlot, SnapMetadata
 from snapcraft.models import Project
@@ -124,14 +127,78 @@ def test_assumes(simple_project, new_dir):
     )
 
 
+def test_build_base_devel(simple_project, new_dir):
+    """Devel base return devel grade and no build-base in snap.yaml."""
+    snap_yaml.write(
+        simple_project(build_base="devel"),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    content = yaml_file.read_text()
+    assert content == textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        base: core22
+        apps:
+          app1:
+            command: bin/mytest
+        confinement: strict
+        grade: devel
+        environment:
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+        """
+    )
+
+
+def test_build_base_stable(simple_project, new_dir):
+    """Stable base return stable grade and no build-base in snap.yaml."""
+    snap_yaml.write(
+        simple_project(build_base="core22"),
+        prime_dir=Path(new_dir),
+        arch="amd64",
+    )
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    content = yaml_file.read_text()
+    assert content == textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        architectures:
+        - amd64
+        base: core22
+        apps:
+          app1:
+            command: bin/mytest
+        confinement: strict
+        grade: stable
+        environment:
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+        """
+    )
+
+
 def test_links_scalars(simple_project, new_dir):
     snap_yaml.write(
         simple_project(
-            contact="me@acme.com",
-            issues="https://hubhub.com/issues",
-            donation="https://moneyfornothing.com",
-            source_code="https://closed.acme.com",
-            website="https://acme.com",
+            contact=["me@acme.com"],
+            issues=["https://hubhub.com/issues"],
+            donation=["https://moneyfornothing.com"],
+            source_code=["https://closed.acme.com"],
+            website=["https://acme.com"],
         ),
         prime_dir=Path(new_dir),
         arch="amd64",
@@ -184,8 +251,8 @@ def test_links_lists(simple_project, new_dir):
                 "https://corner.com/issues",
             ],
             donation=["https://moneyfornothing.com", "https://prince.com"],
-            source_code="https://closed.acme.com",
-            website="https://acme.com",
+            source_code=["https://closed.acme.com"],
+            website=["https://acme.com"],
         ),
         prime_dir=Path(new_dir),
         arch="amd64",
@@ -345,6 +412,33 @@ def complex_project():
             bind: $SNAP/gnome-platform/usr/share/xml/iso-codes
 
         provenance: test-provenance-1
+
+        components:
+          component-a:
+            summary: test
+            description: test
+            type: test
+            version: "1.0"
+            hooks:
+              install:
+                command-chain:
+                - test
+                environment:
+                  test-variable-1: test
+                  test-variable-2: test
+                plugs:
+                - home
+                - network
+                passthrough:
+                  somefield:
+                  - some
+                  - value
+              post-refresh: {}
+          component-b:
+            summary: test
+            description: test
+            type: test
+            version: "2.0"
         """
     )
     data = yaml.safe_load(snapcraft_yaml)
@@ -475,6 +569,30 @@ def test_complex_snap_yaml(complex_project, new_dir):
           snap_aziotdu:
             scope: shared
         provenance: test-provenance-1
+        components:
+          component-a:
+            summary: test
+            description: test
+            type: test
+            hooks:
+              install:
+                command-chain:
+                - test
+                environment:
+                  test-variable-1: test
+                  test-variable-2: test
+                plugs:
+                - home
+                - network
+                passthrough:
+                  somefield:
+                  - some
+                  - value
+              post-refresh: {}
+          component-b:
+            summary: test
+            description: test
+            type: test
         """
     )
 
@@ -1171,13 +1289,14 @@ def test_architectures(arch, arch_triplet, simple_project, new_dir):
     ) in content
 
 
-def test_architectures_all(simple_project, new_dir):
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"devel"})
+def test_architectures_all(base, simple_project, new_dir):
     """LD_LIBRARY_PATH should not contain arch-specific paths when arch = "all"."""
     # create library directories
     (new_dir / "usr/lib/x86_64-linux-gnu").mkdir(parents=True)
     (new_dir / "lib/x86_64-linux-gnu").mkdir(parents=True)
 
-    snap_yaml.write(simple_project(), prime_dir=Path(new_dir), arch="all")
+    snap_yaml.write(simple_project(base=base), prime_dir=Path(new_dir), arch="all")
 
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
@@ -1195,20 +1314,20 @@ def test_architectures_all(simple_project, new_dir):
 
 def test_links_for_scalars(simple_project):
     project = simple_project(
-        contact="me@acme.com",
-        issues="https://hubhub.com/issues",
-        donation="https://moneyfornothing.com",
-        source_code="https://closed.acme.com",
-        website="https://acme.com",
+        contact=["me@acme.com"],
+        issues=["https://hubhub.com/issues"],
+        donation=["https://moneyfornothing.com"],
+        source_code=["https://closed.acme.com"],
+        website=["https://acme.com"],
     )
 
     links = snap_yaml.Links.from_project(project)
 
-    assert links.contact == [project.contact]
-    assert links.issues == [project.issues]
-    assert links.donation == [project.donation]
-    assert links.source_code == [project.source_code]
-    assert links.website == [project.website]
+    assert links.contact == project.contact
+    assert links.issues == project.issues
+    assert links.donation == project.donation
+    assert links.source_code == project.source_code
+    assert links.website == project.website
 
     assert bool(links) is True
 
@@ -1243,3 +1362,28 @@ def test_no_links(simple_project):
     links = snap_yaml.Links.from_project(project)
 
     assert bool(links) is False
+
+
+def test_component_metadata_from_component():
+    """Create a ComponentMetadata from a Component."""
+    component = models.Component(
+        summary=SummaryStr("test"),
+        description="test",
+        type="test",
+        version=VersionStr("1.0"),
+        hooks={
+            "install": models.Hook(
+                plugs=cast(UniqueStrList, ["home", "network"]),
+                command_chain=["test"],
+                environment={"test-variable-1": "test", "test-variable-2": "test"},
+                passthrough={"somefield": ["some", "value"]},
+            )
+        },
+    )
+
+    metadata = snap_yaml.ComponentMetadata.from_component(component)
+
+    assert metadata.summary == component.summary
+    assert metadata.description == component.description
+    assert metadata.type == component.type
+    assert metadata.hooks == component.hooks

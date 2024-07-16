@@ -1,0 +1,19 @@
+name: build-on-no-match
+version: "1.0"
+summary: test
+description: |
+  When build-on doesn't match the host architecture,
+  no snaps should be built.
+confinement: strict
+base: core24
+platforms:
+  platform1:
+    build-on: arm64
+    build-for: arm64
+  platform2:
+    build-on: armhf
+    build-for: armhf
+
+parts:
+  nil:
+    plugin: nil

@@ -1,0 +1,20 @@
+summary: Build and run Python-based snaps in core24
+
+environment:
+  PARAM/strict: ""
+  PARAM/classic: "--classic"
+
+restore: |
+  cd ./"${SPREAD_VARIANT}"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cp -r src ./"${SPREAD_VARIANT}"/
+  cd ./"${SPREAD_VARIANT}"
+
+  snapcraft
+  # shellcheck disable=SC2086
+  snap install python-hello-"${SPREAD_VARIANT}"_1.0_*.snap --dangerous ${PARAM}
+
+  python-hello-"${SPREAD_VARIANT}" | MATCH "hello world"

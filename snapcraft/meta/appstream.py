@@ -23,6 +23,8 @@ from io import StringIO
 from typing import List, Optional, cast
 
 import lxml.etree
+import validators
+from craft_cli import emit
 from xdg.DesktopEntry import DesktopEntry
 
 from snapcraft import errors
@@ -100,6 +102,22 @@ def extract(relpath: str, *, workdir: str) -> Optional[ExtractedMetadata]:
     description = _get_value_from_xml_element(dom, "description")
     title = _get_value_from_xml_element(dom, "name")
     version = _get_latest_release_from_nodes(dom.findall("releases/release"))
+    project_license = _get_value_from_xml_element(dom, "project_license")
+    update_contact = _get_value_from_xml_element(dom, "update_contact")
+    contact = None
+    if update_contact:
+        if validators.url(update_contact) or validators.email(update_contact):
+            contact = [update_contact]
+        else:
+            emit.progress(
+                f"Ignoring invalid url {update_contact!r} in update_contact from appstream metadata.",
+                permanent=True,
+            )
+
+    issues = _get_urls_from_xml_element(dom.findall("url"), "bugtracker")
+    donation = _get_urls_from_xml_element(dom.findall("url"), "donation")
+    website = _get_urls_from_xml_element(dom.findall("url"), "homepage")
+    source_code = _get_urls_from_xml_element(dom.findall("url"), "vcs-browser")
 
     desktop_file_paths = []
     desktop_file_ids = _get_desktop_file_ids_from_nodes(dom.findall("launchable"))
@@ -125,6 +143,12 @@ def extract(relpath: str, *, workdir: str) -> Optional[ExtractedMetadata]:
         description=description,
         version=version,
         icon=icon,
+        license=project_license,
+        contact=contact,
+        issues=issues,
+        donation=donation,
+        website=website,
+        source_code=source_code,
         desktop_file_paths=desktop_file_paths,
     )
 
@@ -135,7 +159,8 @@ def _get_transformed_dom(path: str):
     return transform(dom)
 
 
-def _get_dom(path: str) -> lxml.etree.ElementTree:
+# error: Function "lxml.etree.ElementTree" is not valid as a type
+def _get_dom(path: str) -> lxml.etree.ElementTree:  # type: ignore
     try:
         return lxml.etree.parse(path)  # noqa S320
     except OSError as err:
@@ -158,6 +183,27 @@ def _get_value_from_xml_element(tree, key) -> Optional[str]:
         # here and strip any unwanted space.
         # TODO: Improve the XSLT to remove the need for this.
         return "\n".join([n.strip() for n in node.text.splitlines()]).strip()
+    return None
+
+
+def _get_urls_from_xml_element(nodes, url_type) -> Optional[List[str]]:
+    urls = []  # type: List[str]
+    for node in nodes:
+        if (
+            node is not None
+            and node.attrib["type"] == url_type
+            and node.text.strip() not in urls
+        ):
+            link = node.text.strip()
+            if validators.url(link) or validators.email(link):
+                urls.append(link)
+            else:
+                emit.progress(
+                    f"Ignoring invalid url or email {link!r} in {url_type!r} from appstream metadata.",
+                    permanent=True,
+                )
+    if urls:
+        return urls
     return None
 
 

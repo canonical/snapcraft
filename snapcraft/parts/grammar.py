@@ -66,7 +66,7 @@ def process_parts(
     """
 
     def self_check(value: Any) -> bool:
-        return value == value  # pylint: disable=comparison-with-itself  # noqa PLR0124
+        return value == value  # noqa: PLR0124 (comparison-with-itself)
 
     # TODO: make checker optional in craft-grammar.
     processor = GrammarProcessor(arch=arch, target_arch=target_arch, checker=self_check)

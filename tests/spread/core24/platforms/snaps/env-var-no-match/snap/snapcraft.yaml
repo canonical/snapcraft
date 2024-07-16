@@ -1,0 +1,19 @@
+name: env-var-no-match
+version: "1.0"
+summary: test
+description: |
+  No snaps should be built if there no `build-for`
+  matches the environmental variable `SNAPCRAFT_BUILD_FOR`.
+confinement: strict
+base: core24
+platforms:
+  platform1:
+    build-on: amd64
+    build-for: amd64
+  platform2:
+    build-on: [amd64, arm64]
+    build-for: arm64
+
+parts:
+  nil:
+    plugin: nil

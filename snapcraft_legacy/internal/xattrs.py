@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019 Canonical Ltd
+# Copyright (C) 2019,2024 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,10 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import distutils.util
 import os
 import sys
 from typing import Optional
+
+from craft_application.util import strtobool
 
 from snapcraft_legacy.internal.errors import XAttributeError, XAttributeTooLongError
 
@@ -77,7 +78,7 @@ def read_origin_stage_package(path: str) -> Optional[str]:
         return _read_snapcraft_xattr(path, "origin_stage_package")
     except XAttributeError:
         # Ignore error if origin stage package not required.
-        if distutils.util.strtobool(os.environ.get("SNAPCRAFT_BUILD_INFO", "n")):
+        if strtobool(os.environ.get("SNAPCRAFT_BUILD_INFO", "n")):
             raise
         return None
 
@@ -88,5 +89,5 @@ def write_origin_stage_package(path: str, value: str) -> None:
         _write_snapcraft_xattr(path, "origin_stage_package", value)
     except XAttributeError:
         # Ignore error if origin stage package not required.
-        if distutils.util.strtobool(os.environ.get("SNAPCRAFT_BUILD_INFO", "n")):
+        if strtobool(os.environ.get("SNAPCRAFT_BUILD_INFO", "n")):
             raise

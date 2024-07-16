@@ -1,0 +1,45 @@
+summary: Build a classic snap and validates elf patching
+
+prepare: |
+  apt-get install patchelf dpkg-dev -y
+  apt-mark auto patchelf dpkg-dev
+
+restore: |
+  # unset SNAPCRAFT_BUILD_ENVIRONMENT=host
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+  snapcraft clean
+
+  rm -f ./*.snap
+
+execute: |
+  # unset SNAPCRAFT_BUILD_ENVIRONMENT=host
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  snapcraft pack
+
+  unsquashfs -dest snap-contents classic-patchelf_0.1_amd64.snap
+
+  arch_triplet="$(dpkg-architecture -q DEB_HOST_MULTIARCH)"
+
+  # Account for /usr merge.
+  RPATH_MATCH="^/snap/core24/current/lib/$arch_triplet"
+  RPATH_ORIGIN_MATCH="^\\\$ORIGIN/../fake-lib:/snap/core24/current/lib/$arch_triplet"
+
+  # Verify typical binary.
+  patchelf --print-interpreter snap-contents/bin/hello-classic | MATCH "^/snap/core24/current/lib.*ld.*.so.*"
+  patchelf --print-rpath snap-contents/bin/hello-classic | MATCH "${RPATH_MATCH}"
+
+  # Verify binary w/ existing rpath.
+  patchelf --print-interpreter snap-contents/bin/hello-classic-existing-rpath | MATCH "^/snap/core24/current/lib.*ld.*.so.*"
+  patchelf --print-rpath snap-contents/bin/hello-classic-existing-rpath | MATCH "${RPATH_ORIGIN_MATCH}"
+
+  # Verify untouched no-patchelf.
+  patchelf --print-interpreter snap-contents/bin/hello-classic-no-patchelf | MATCH "^/lib.*ld.*.so.*"
+  rpath="$(patchelf --print-rpath snap-contents/bin/hello-classic-no-patchelf)"
+  if [[ -n "${rpath}" ]]; then
+     echo "found rpath with no-patchelf: ${rpath}"
+     exit 1
+  fi
+
+  # verify `patchelf --no-default-lib` was applied
+  readelf --dynamic snap-contents/bin/hello-classic | MATCH "FLAGS_1.*NODEFLIB"

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,11 +19,17 @@ from textwrap import dedent
 
 import pytest
 
-from snapcraft.commands import ExtensionsCommand, ListExtensionsCommand
+import snapcraft.commands
 
 
 @pytest.mark.usefixtures("fake_extension")
-@pytest.mark.parametrize("command", [ListExtensionsCommand, ExtensionsCommand])
+@pytest.mark.parametrize(
+    "command",
+    [
+        snapcraft.commands.ListExtensionsCommand,
+        snapcraft.commands.ExtensionsCommand,
+    ],
+)
 def test_command(emitter, command):
     cmd = command(None)
     cmd.run(Namespace())
@@ -32,16 +38,17 @@ def test_command(emitter, command):
             """\
         Extension name          Supported bases
         ----------------------  ----------------------
-        fake-extension          core22
+        fake-extension          core22, core24
         flutter-beta            core18
         flutter-dev             core18
         flutter-master          core18
         flutter-stable          core18
-        gnome                   core22
+        gnome                   core22, core24
         gnome-3-28              core18
         gnome-3-34              core18
         gnome-3-38              core20
         kde-neon                core18, core20, core22
+        kde-neon-6              core22
         qt5-15                  core22
         qt6-5                   core22
         qt6-6                   core22
@@ -58,13 +65,23 @@ def test_command(emitter, command):
         ros2-humble             core22
         ros2-humble-desktop     core22
         ros2-humble-ros-base    core22
-        ros2-humble-ros-core    core22"""
+        ros2-humble-ros-core    core22
+        ros2-jazzy              core24
+        ros2-jazzy-desktop      core24
+        ros2-jazzy-ros-base     core24
+        ros2-jazzy-ros-core     core24"""
         )
     )
 
 
 @pytest.mark.usefixtures("fake_extension_name_from_legacy")
-@pytest.mark.parametrize("command", [ListExtensionsCommand, ExtensionsCommand])
+@pytest.mark.parametrize(
+    "command",
+    [
+        snapcraft.commands.ListExtensionsCommand,
+        snapcraft.commands.ExtensionsCommand,
+    ],
+)
 def test_command_extension_dups(emitter, command):
     cmd = command(None)
     cmd.run(Namespace())
@@ -77,11 +94,12 @@ def test_command_extension_dups(emitter, command):
         flutter-dev             core18
         flutter-master          core18
         flutter-stable          core18
-        gnome                   core22
+        gnome                   core22, core24
         gnome-3-28              core18
         gnome-3-34              core18
         gnome-3-38              core20
         kde-neon                core18, core20, core22
+        kde-neon-6              core22
         qt5-15                  core22
         qt6-5                   core22
         qt6-6                   core22
@@ -98,6 +116,10 @@ def test_command_extension_dups(emitter, command):
         ros2-humble             core22
         ros2-humble-desktop     core22
         ros2-humble-ros-base    core22
-        ros2-humble-ros-core    core22"""
+        ros2-humble-ros-core    core22
+        ros2-jazzy              core24
+        ros2-jazzy-desktop      core24
+        ros2-jazzy-ros-base     core24
+        ros2-jazzy-ros-core     core24"""
         )
     )
