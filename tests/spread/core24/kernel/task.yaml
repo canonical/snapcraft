@@ -1,0 +1,23 @@
+summary: kernel plugin tests using the core24 feature set
+manual: true
+kill-timeout: 180m
+
+environment:
+  SNAP/jammy: "22.04"
+  SNAP/noble: "24.04"
+
+systems:
+  - ubuntu-24.04-64
+
+execute: |
+  cd "$SNAP"
+
+  # unset SNAPCRAFT_BUILD_ENVIRONMENT=host
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  snapcraft 2>&1 | grep -q -e "plugin not registered: 'kernel'"
+
+restore: |
+  cd "$SNAP"
+
+  snapcraft clean 2>&1 | grep -q -e "plugin not registered: 'kernel'"

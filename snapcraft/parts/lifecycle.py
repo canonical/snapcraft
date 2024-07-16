@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 import craft_parts
 from craft_cli import emit
 from craft_parts import Features, ProjectInfo, Step, StepInfo, callbacks
-from craft_providers import Executor
+from craft_providers import Executor, bases
 
 from snapcraft import errors, linters, models, pack, providers, ua_manager, utils
 from snapcraft.elf import Patcher, SonameCache, elf_utils
@@ -503,7 +503,13 @@ def _run_in_provider(  # noqa PLR0915
     )
 
     snapcraft_base = project.get_effective_base()
-    build_base = providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE[snapcraft_base]
+    build_base = project._providers_base(snapcraft_base)
+
+    # should not happen after schema validation
+    if not build_base:
+        raise RuntimeError("Could not determine build base.")
+    if not isinstance(build_base, bases.BuilddBaseAlias):
+        raise RuntimeError("Build base is not an Ubuntu base")
 
     if snapcraft_base in ("devel", "core24"):
         emit.progress(

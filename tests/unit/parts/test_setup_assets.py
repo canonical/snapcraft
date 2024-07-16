@@ -135,7 +135,8 @@ def test_gadget_missing(yaml_data, new_dir):
     assert str(raised.value) == "gadget.yaml is required for gadget snaps"
 
 
-def test_kernel(yaml_data, kernel_yaml_file, new_dir):
+@pytest.mark.parametrize("base", ["core22", "core24"])
+def test_kernel(base, yaml_data, kernel_yaml_file, new_dir):
     project = models.Project.unmarshal(
         {
             "name": "custom-kernel",
@@ -144,6 +145,8 @@ def test_kernel(yaml_data, kernel_yaml_file, new_dir):
             "version": "1.0",
             "summary": "summary",
             "description": "description",
+            "base": base,
+            "build_base": "ubuntu@22.04",
             "parts": {},
         }
     )
@@ -160,7 +163,8 @@ def test_kernel(yaml_data, kernel_yaml_file, new_dir):
     assert kernel_path.is_file()
 
 
-def test_kernel_missing(yaml_data, new_dir):
+@pytest.mark.parametrize("base", ["core22", "core24"])
+def test_kernel_missing(base, yaml_data, new_dir):
     project = models.Project.unmarshal(
         {
             "name": "custom-kernel",
@@ -169,6 +173,8 @@ def test_kernel_missing(yaml_data, new_dir):
             "version": "1.0",
             "summary": "summary",
             "description": "description",
+            "base": base,
+            "build_base": "ubuntu@22.04",
             "parts": {},
         }
     )

@@ -1202,7 +1202,7 @@ def test_get_snap_project_no_base(snapcraft_yaml, new_dir):
 
     assert str(raised.value) == (
         "Bad snapcraft.yaml content:\n"
-        "- Snap base must be declared when type is not base, kernel or snapd"
+        "- 'base' is a required keyword unless 'type' is 'base' or 'snapd'"
     )
 
 

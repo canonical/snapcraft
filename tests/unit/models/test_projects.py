@@ -172,21 +172,70 @@ class TestProjectValidation:
             ("app", True),
             ("gadget", True),
             ("base", False),
-            ("kernel", False),
+            ("kernel", True),
             ("snapd", False),
         ],
     )
-    def test_mandatory_base(self, snap_type, requires_base, project_yaml_data):
-        data = project_yaml_data(type=snap_type)
+    @pytest.mark.parametrize("base", ["core22", "core24"])
+    def test_mandatory_base(self, snap_type, requires_base, base, project_yaml_data):
+        data = project_yaml_data(type=snap_type, base=base)
         data.pop("base")
+        if snap_type == "kernel":
+            data["build_base"] = "ubuntu@24.04"
 
         if requires_base:
-            error = "Snap base must be declared when type is not"
+            error = "'base' is a required keyword unless 'type' is 'base' or 'snapd'"
             with pytest.raises(errors.ProjectValidationError, match=error):
                 Project.unmarshal(data)
         else:
             project = Project.unmarshal(data)
             assert project.base is None
+
+    @pytest.mark.parametrize("base", ["core22", "core24"])
+    @pytest.mark.parametrize("build_base", const.BUILD_BASES)
+    def test_build_base(self, base, build_base, project_yaml_data):
+        data = project_yaml_data(base=base, build_base=build_base, grade="devel")
+
+        project = Project.unmarshal(data)
+
+        assert project.build_base == build_base
+
+    @pytest.mark.parametrize("base", ["core22", "core24"])
+    def test_build_base_invalid(self, base, project_yaml_data):
+        data = project_yaml_data(base=base, build_base="invalid")
+        error = "'build-base' must be a valid Snap base."
+
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(data)
+
+    @pytest.mark.parametrize("base", ["core22", "core24"])
+    def test_kernel_build_base_missing(self, base, project_yaml_data):
+        data = project_yaml_data(base=base, type="kernel", grade="devel")
+        error = "'build-base' must be 'ubuntu@<series>' when 'type' is 'kernel'."
+
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(data)
+
+    @pytest.mark.parametrize("base", ["core22", "core24"])
+    def test_kernel_build_base_invalid(self, base, project_yaml_data):
+        data = project_yaml_data(
+            base=base, build_base="invalid", type="kernel", grade="devel"
+        )
+        error = "'build-base' must be 'ubuntu@<series>' when 'type' is 'kernel'."
+
+        with pytest.raises(errors.ProjectValidationError, match=error):
+            Project.unmarshal(data)
+
+    @pytest.mark.parametrize("base", ["core22", "core24"])
+    @pytest.mark.parametrize("build_base", const.KERNEL_BUILD_BASES)
+    def test_kernel_build_base(self, base, build_base, project_yaml_data):
+        data = project_yaml_data(
+            base=base, build_base=build_base, type="kernel", grade="devel"
+        )
+
+        project = Project.unmarshal(data)
+
+        assert project.build_base == build_base
 
     def test_mandatory_adoptable_fields_definition(self):
         assert MANDATORY_ADOPTABLE_FIELDS == (
@@ -285,10 +334,14 @@ class TestProjectValidation:
         "snap_type",
         ["app", "gadget", "kernel", "snapd", "base", "_invalid"],
     )
-    def test_project_type(self, snap_type, project_yaml_data):
-        data = project_yaml_data(type=snap_type)
-        if snap_type in ["base", "kernel", "snapd"]:
+    @pytest.mark.parametrize("base", ["core22", "core24"])
+    def test_project_type(self, snap_type, base, project_yaml_data):
+        """Unmarshall all project types."""
+        data = project_yaml_data(type=snap_type, base=base)
+        if snap_type in ["base", "snapd"]:
             data.pop("base")
+        if snap_type == "kernel":
+            data["build_base"] = "ubuntu@24.04"
 
         if snap_type != "_invalid":
             project = Project.unmarshal(data)
@@ -600,7 +653,7 @@ class TestProjectValidation:
         assert providers_base == expected_base
 
     def test_provider_base_error(self, project_yaml_data):
-        with pytest.raises(CraftValidationError) as raised:
+        with pytest.raises(ValueError) as raised:
             Project._providers_base("unknown")
 
         assert "Unknown base 'unknown'" in str(raised.value)

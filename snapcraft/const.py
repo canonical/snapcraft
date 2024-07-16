@@ -36,6 +36,7 @@ class SnapArch(str, enum.Enum):
 
 SUPPORTED_ARCHS = frozenset(arch.value for arch in SnapArch)
 
+# todo: 'devel' is not a valid base (#4879)
 BASES = frozenset({"core", "core18", "core20", "core22", "core24", "devel"})
 """All bases recognized by snapcraft."""
 
@@ -47,3 +48,11 @@ LEGACY_BASES = frozenset({"core20"})
 
 CURRENT_BASES = frozenset(BASES - ESM_BASES - LEGACY_BASES)
 """Bases handled by the current snapcraft codebase."""
+
+BUILD_BASES = CURRENT_BASES
+"""Build bases supported by snapcraft."""
+
+KERNEL_BUILD_BASES = frozenset(
+    {f"ubuntu@{series}" for series in ["22.04", "24.04", "24.10"]}
+)
+"""Build bases supported for kernel snaps."""
