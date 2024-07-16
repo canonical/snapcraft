@@ -339,10 +339,11 @@ suites:
  tests/spread/general/hooks/:
    summary: tests of snapcraft hook functionality
 
- tests/spread/core-devel/:
-   summary: tests of devel base snaps
-   environment:
-     SNAPCRAFT_BUILD_ENVIRONMENT: ""
+# 'build-base: devel' fails due to an issue with the 24.10 buildd image (#4921)
+# tests/spread/core-devel/:
+#   summary: tests of devel base snaps
+#   environment:
+#     SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
  # General, core suite
  tests/spread/cross-compile/:
