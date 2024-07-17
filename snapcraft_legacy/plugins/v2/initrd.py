@@ -35,13 +35,6 @@ The following initramfs-specific options are provided by this plugin:
       Configured modules are automatically added to initrd-modules.
       If module in question is not supported by the kernel, it is ignored.
 
-    - initrd-stage-firmware:
-      (boolean; default: False)
-      When building initrd, required firmware is automatically added based
-      on the included kernel modules. By default required firmware is searched
-      in the install directory of the current part. This flag allows use of
-      firmware from the stage directory instead.
-
     - initrd-firmware:
       (array of string; default: none)
       list of firmware files to be included in the initrd; these need to be
@@ -85,16 +78,13 @@ The following initramfs-specific options are provided by this plugin:
       ${SNAPCRAFT_STAGE}/{initrd-addon}
       Default: none
 
-    - initrd-add-ppa
-      (boolean; default: True)
-      controls if the snappy-dev PPA should be added to the system
-
 This plugin support cross compilation, for which plugin expects
 the build-environment is configured accordingly and has foreign architectures
 setup accordingly.
 """
 
 import logging
+import os
 import sys
 from typing import Any, Dict, List, Set
 
@@ -132,10 +122,6 @@ class InitrdPlugin(PluginV2):
                     "items": {"type": "string"},
                     "default": [],
                 },
-                "initrd-stage-firmware": {
-                    "type": "boolean",
-                    "default": False,
-                },
                 "initrd-firmware": {
                     "type": "array",
                     "minitems": 1,
@@ -165,10 +151,6 @@ class InitrdPlugin(PluginV2):
                     "items": {"type": "string"},
                     "default": [],
                 },
-                "initrd-add-ppa": {
-                    "type": "boolean",
-                    "default": True,
-                },
             },
         }
 
@@ -177,6 +159,12 @@ class InitrdPlugin(PluginV2):
         self.name = part_name
         self.options = options
         self._target_arch = _get_target_architecture()
+        # check if we are cross building
+        self._host_arch = os.getenv("SNAP_ARCH", "")
+        self._cross_building = False
+        if self._host_arch != self._target_arch:
+            self._cross_building = True
+        self._ubuntu_series = "focal"
 
     @overrides
     def get_build_snaps(self) -> Set[str]:
@@ -185,43 +173,40 @@ class InitrdPlugin(PluginV2):
     @overrides
     def get_build_packages(self) -> Set[str]:
         build_packages = {
-            "bc",
-            "binutils",
+            "curl",
+            "fakechroot",
             "fakeroot",
-            "dracut-core",
-            "kmod",
-            "kpartx",
-            "systemd",
         }
-
-        # install correct initramfs compression tool
-        if (
-            not self.options.initrd_compression
-            or self.options.initrd_compression == "lz4"
-        ):
-            build_packages |= {"lz4"}
-        elif self.options.initrd_compression == "xz":
-            build_packages |= {"xz-utils"}
-        elif self.options.initrd_compression == "zstd":
-            build_packages |= {"zstd"}
-
-        # add snappy ppa to get correct initrd tools
-        if self.options.initrd_add_ppa:
-            _initrd_build.add_snappy_ppa(with_sudo=True)
-
+        # consider cross-build option
+        if self._cross_building:
+            build_packages |= {
+                f"libfakechroot:{self._target_arch}",
+                f"libfakeroot:{self._target_arch}",
+            }
         return build_packages
 
     @overrides
     def get_build_environment(self) -> Dict[str, str]:
         return {
-            "UC_INITRD_DEB": "${SNAPCRAFT_PART_BUILD}/ubuntu-core-initramfs",
+            "UC_INITRD_ROOT_NAME": "uc-initramfs-build-root",
+            "UC_INITRD_ROOT": "${SNAPCRAFT_PART_SRC}/${UC_INITRD_ROOT_NAME}",
+            "KERNEL_MODULES": "${SNAPCRAFT_STAGE}/modules",
+            "KERNEL_FIRMWARE": "${SNAPCRAFT_STAGE}/firmware",
+            "UBUNTU_SERIES": self._ubuntu_series,
+            "UBUNTU_CORE_BASE": "core20",
+            "CRAFT_ARCH_TRIPLET_BUILD_FOR": "${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}",
+            "CRAFT_ARCH_BUILD_FOR": self._target_arch,
+            "CRAFT_ARCH_BUILD_ON": self._host_arch,
+            "CRAFT_STAGE": "${SNAPCRAFT_STAGE}",
+            "CRAFT_PART_SRC": "${SNAPCRAFT_PART_SRC}",
+            "CRAFT_PART_BUILD": "${SNAPCRAFT_PART_BUILD}",
+            "CRAFT_PART_INSTALL": "${SNAPCRAFT_PART_INSTALL}",
         }
 
     @overrides
     def get_build_commands(self) -> List[str]:
         logger.info("Getting build commands...")
         return _initrd_build.get_build_commands(
-            target_arch=self._target_arch,
             initrd_modules=self.options.initrd_modules,
             initrd_configured_modules=self.options.initrd_configured_modules,
             initrd_compression=self.options.initrd_compression,
@@ -229,15 +214,8 @@ class InitrdPlugin(PluginV2):
             initrd_firmware=self.options.initrd_firmware,
             initrd_addons=self.options.initrd_addons,
             initrd_overlay=self.options.initrd_overlay,
-            initrd_stage_firmware=self.options.initrd_stage_firmware,
-            build_efi_image=False,
             initrd_ko_use_workaround=True,
             initrd_default_compression="lz4 -9 -l",
-            initrd_include_extra_modules_conf=False,
-            initrd_tool_pass_root=True,
-            source_dir="${SNAPCRAFT_PART_SRC}",
-            install_dir="${SNAPCRAFT_PART_INSTALL}",
-            stage_dir="${SNAPCRAFT_STAGE}",
         )
 
     @property
