@@ -18,7 +18,6 @@
 """Common utilities for kernel plugins."""
 
 import logging
-import subprocess
 import textwrap
 from typing import List, Optional
 
@@ -42,52 +41,88 @@ def _get_initrd_kernel_modules(
         initrd_installed_kernel_modules = f"{' '.join(initrd_modules)}"
     if initrd_configured_modules:
         initrd_configured_kernel_modules = f"{' '.join(initrd_configured_modules)}"
-    return [
-        "# list of kernel modules to be installed in the initrd",
-        f'initrd_installed_kernel_modules="{initrd_installed_kernel_modules}"',
-        "# list of kernel modules in the initrd to be auto loaded",
-        "# any module in this list implies it will be added to initrd",
-        f'initrd_configured_kernel_modules="{initrd_configured_kernel_modules}"',
-    ]
+    installed_modules = textwrap.dedent(
+        f"""
+        # list of kernel modules to be installed in the initrd
+        initrd_installed_kernel_modules="{initrd_installed_kernel_modules}"
+        """
+    )
+
+    configured_modules = textwrap.dedent(
+        f"""
+        # list of kernel modules in the initrd to be auto loaded
+        # any module in this list implies it will be added to initrd
+        initrd_configured_kernel_modules="{initrd_configured_kernel_modules}"
+        """
+    )
+    return [installed_modules, configured_modules]
 
 
 def _link_files_fnc_cmd() -> List[str]:
     """Add function to link files."""
     cmd = textwrap.dedent(
         """
-        # link files, accept wild cards
+        # link files helper, accept wild cards
         # 1: reference dir, 2: file(s) including wild cards, 3: dst dir
+        # 4: quiet mode [ "-quiet" ] (optional)
         link_files() {
+            set +x
+            link_files_impl "${@}"
+            local retVal=$?
+            set -x
+            return ${retVal}
+        }
+
+        # link files helper implementation, accept wild cards
+        # 1: reference dir, 2: file(s) including wild cards, 3: dst dir
+        # 4: quiet mode [ "-quiet" ] (optional)
+        link_files_impl() {
+            if [ -z "${2}" ]; then
+                return 0
+            fi
+            local quiet="${4:--noisy}"
+            local f
             if [ "${2}" = "*" ]; then
-                for f in $(ls ${1})
+                while IFS= read -r -d $'\\0' f
                 do
-                    link_files "${1}" "${f}" "${3}"
-                done
+                    link_files_impl "${1}" "${f}" "${3}" "${quiet}"
+                done < <(find "${1}" -maxdepth 1 -mindepth 1 -printf '%P\\0')
                 return 0
             fi
             if [ -d "${1}/${2}" ]; then
-                for f in $(ls ${1}/${2})
+                while IFS= read -r -d $'\\0' f
                 do
-                    link_files "${1}" "${2}/${f}" "${3}"
-                done
+                    link_files_impl "${1}" "${2}/${f}" "${3}" "${quiet}"
+                done < <(find "${1}/${2}" -maxdepth 1 -mindepth 1 -printf '%P\\0')
                 return 0
             fi
 
-            local found=""
-            for f in $(ls ${1}/${2})
+            local found searchdir basename rel_path dir_path
+            searchdir=$(dirname "${2}")
+            basename=$(basename "${2}")
+            if ! compgen -G "${1}/${searchdir}" > /dev/null; then
+                echo "search pattern <${1}/${searchdir}> <${basename}> does not exist"
+                return 1
+            fi
+            # shellcheck disable=SC2086 # SC2086 does not apply, searchdir can contain wild cards, it cannot be quoted
+            while IFS= read -r -d $'\\0' f
             do
-                if [[ -L "${f}" ]]; then
-                    local rel_path=$( realpath --no-symlinks --relative-to=${1} ${f} )
+                if [[ -d "${f}" ]]; then
+                    link_files_impl "${1}" "${rel_path}" "${3}" "${quiet}"
                 else
-                    local rel_path=$( realpath -se --relative-to=${1} ${f} )
+                    if [[ -L "${f}" ]]; then
+                        rel_path=$( realpath --no-symlinks --relative-to="${1}" "${f}" )
+                    else
+                        rel_path=$( realpath -se --relative-to="${1}" "${f}" )
+                    fi
+                    dir_path=$(dirname "${rel_path}")
+                    mkdir -p "${3}/${dir_path}"
+                    [ "${quiet}" != "-quiet" ] && echo "installing ${f} to ${3}/${dir_path}"
+                    ln -f "${f}" "${3}/${dir_path}"
                 fi
-                local dir_path=$(dirname ${rel_path})
-                mkdir -p ${3}/${dir_path}
-                echo "installing ${f} to ${3}/${dir_path}"
-                ln -f ${f} ${3}/${dir_path}
                 found="yes"
-            done
-            if [ "yes" = "${found}" ]; then
+            done < <(find "${1}"/${searchdir} -maxdepth 1 -mindepth 1 -name "${basename}" -printf '%p\\0')
+            if [ "yes" = "${found:-}" ]; then
                 return 0
             else
                 return 1
@@ -98,70 +133,239 @@ def _link_files_fnc_cmd() -> List[str]:
     return [cmd]
 
 
-def _download_core_initrd_fnc_cmd() -> List[str]:
-    """Define helper to download code initrd deb package."""
+def _setup_ubuntu_base_chroot_fnc_cmd() -> List[str]:
+    """Add function to set tup chroot from Ubuntu Base."""
     cmd = textwrap.dedent(
         """
-        # Helper to download code initrd deb package
-        # 1: arch, 2: output dir 3: source dir
-        download_core_initrd() {
-            # skip download if file already exist
-            if ! ls ${3}/ubuntu-core-initramfs_*.deb 1> /dev/null 2>&1; then
-                apt-get download ubuntu-core-initramfs:${1}
-                mv ubuntu-core-initramfs_*.deb ${3}
+        # setup chroot from Ubuntu Base
+        # 1: work dir, 2: ubuntu series
+        setup_chroot_base() {
+            local work_dir="${1}"
+            local series="${2}"
+            local ubuntu_base="${work_dir}/ubuntu-base-${series}-${CRAFT_ARCH_BUILD_FOR}.tar.gz"
+            rm -rf "${ubuntu_base}"
+            curl \\
+                "https://cdimage.ubuntu.com/ubuntu-base/${series}/daily/current/${series}-base-${CRAFT_ARCH_BUILD_FOR}.tar.gz" \\
+                --output "${ubuntu_base}"
+            rm -rf "${UC_INITRD_ROOT}"
+            mkdir -p "${UC_INITRD_ROOT}"
+            tar --extract --file "${ubuntu_base}" --directory "${UC_INITRD_ROOT}"
+            cp --no-dereference /etc/resolv.conf "${UC_INITRD_ROOT}/etc/resolv.conf"
+            # if not running as root, setup build root env with fakechroot, fakeroot
+            if [ "$(whoami)" != "root" ]; then
+                cp --no-dereference --recursive \\
+                    /usr/lib/"${CRAFT_ARCH_TRIPLET_BUILD_FOR}"/fakechroot \\
+                    "${UC_INITRD_ROOT}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
+                cp --no-dereference --recursive \\
+                    /usr/lib/"${CRAFT_ARCH_TRIPLET_BUILD_FOR}"/libfakeroot \\
+                    "${UC_INITRD_ROOT}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
             fi
-            # unpack dep to the target dir
-            dpkg -x ${3}/ubuntu-core-initramfs_*.deb ${2}
+            # setup /dev/null as it's used to mask systemd service files
+            touch "${UC_INITRD_ROOT}/dev/null"
         }
         """
     )
     return [cmd]
 
 
-def _download_generic_initrd_cmd(target_arch: str, source_dir: str) -> List[str]:
-    """Download Ubuntu Core initrd deb."""
-    cmd = textwrap.dedent(
-        f"""
-        echo "Getting ubuntu-core-initrd...."
-        # only download u-c-initrd deb if needed
-        if [ ! -e ${{UC_INITRD_DEB}} ]; then
-            download_core_initrd {target_arch} ${{UC_INITRD_DEB}} {source_dir}
-        fi
-        """
-    )
-    return [cmd]
-
-
-def _download_snap_bootstrap_fnc_cmd() -> List[str]:
-    """Define helper to download snap-bootstrap from snapd deb package."""
+def _chroot_add_snappy_dev_ppa_fnc_cmd() -> List[str]:
+    """Add function to add snappy-dev ppa to chroot."""
     cmd = textwrap.dedent(
         """
-        # Helper to download snap-bootstrap from snapd deb package
-        # 1: arch, 2: output dir 3: source dir
-        download_snap_bootstrap() {
-            # skip download if file already exist
-            if ! ls ${3}/snapd_*.deb 1> /dev/null 2>&1; then
-                apt-get download snapd:${1}
-                mv snapd_*.deb ${3}
-            fi
-            # unpack dep to the target dir
-            dpkg -x ${3}/snapd_*.deb ${2}
+        # add snappy-dev/image ppa to the chroot
+        # import ppa keys for the ppa
+        # 1: work dir, 2: ubuntu series, 3: ppa fingerprint
+        chroot_add_snappy_dev_ppa() {
+            local work_dir="${1}"
+            local series="${2}"
+            local key_fingerprint="${3}"
+            local source_file="snappy-dev-image.sources"
+            local key_file="/etc/apt/keyrings/snappy-dev-image.gpg"
+            local chroot_home="${UC_INITRD_ROOT}"
+            local gnupg_home="${work_dir}/.gnupg"
+            local snappy_key="${gnupg_home}/snappy-dev.kbx"
+            rm -rf "${gnupg_home}"
+            mkdir --mode 700 "${gnupg_home}"
+            gpg \\
+                --homedir "${gnupg_home}" \\
+                --no-default-keyring \\
+                --keyring "${snappy_key}" \\
+                --keyserver keyserver.ubuntu.com \\
+                --recv-keys "${key_fingerprint}"
+
+            mkdir -p "$(dirname "${chroot_home}/${key_file}")"
+            rm -rf "${chroot_home:?}/${key_file}"
+            gpg \\
+                --homedir "${gnupg_home}" \\
+                --no-default-keyring \\
+                --keyring "${snappy_key}" \\
+                --export \\
+                --out "${chroot_home}/${key_file}"
+
+            tee "${chroot_home}/etc/apt/sources.list.d/${source_file}" <<EOF
+        Types: deb
+        URIs: https://ppa.launchpadcontent.net/snappy-dev/image/ubuntu/
+        Suites: ${series}
+        Components: main
+        Signed-By: ${key_file}
+        EOF
         }
         """
     )
     return [cmd]
 
 
-def _download_snap_bootstrap_cmd(target_arch: str, source_dir: str) -> List[str]:
-    """Download snap-bootstrap deb."""
+def _chroot_run_cmd_fnc_cmd() -> List[str]:
+    """Add helper function to run chroot commands."""
+    cmd = textwrap.dedent(
+        """
+        # clean any existing mounts for the chroot function
+        _clean_chroot() {
+            local chroot_home="${1}"
+            if [ -z "${chroot_home}" ]; then
+                echo "Missing chroot home to clean"
+                return
+            fi
+            for m in dev/pts dev/null dev/zero dev/full dev/random dev/urandom dev/tty dev proc run sys
+            do
+                if grep "${chroot_home}/${m}" /proc/self/mounts > /dev/null; then
+                    umount "${chroot_home}/${m}"
+                fi
+            done
+        }
+
+        _chroot_configured="no"
+        # setup necessary mounts for the chroot function
+        _setup_chroot() {
+            if [ "${_chroot_configured}" = "yes" ]; then
+                return
+            fi
+            local chroot_home="${1}"
+            for m in proc run sys dev dev/pts dev/null dev/zero dev/full dev/random dev/urandom dev/tty
+            do
+                mount --bind "/${m}" "${chroot_home}/${m}"
+            done
+            _chroot_configured="yes"
+        }
+
+        # run command in true chroot
+        _run_truechroot() {
+            local chroot_home="${1}"
+            local cmd="${2}"
+            trap "_clean_chroot ${chroot_home}" EXIT
+            _setup_chroot "${chroot_home}"
+            chroot "${chroot_home}" /bin/bash -c "${cmd}"
+        }
+
+        # run command in fake chroot
+        _run_fakechroot() {
+            local chroot_home="${1}"
+            local cmd="${2}"
+            if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
+                ld_path="${LD_LIBRARY_PATH}:/usr/lib/systemd:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/fakechroot:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libfakeroot"
+            else
+                ld_path="${LD_LIBRARY_PATH}:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/systemd:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/fakechroot:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libfakeroot"
+            fi
+            LD_LIBRARY_PATH="${ld_path}" fakechroot fakeroot chroot "${chroot_home}" /bin/bash -c "${cmd}"
+        }
+
+        # run command with chroot
+        # 1: chroot home, 2: command to run
+        run_chroot() {
+            local chroot_home="${1}"
+            local cmd="${2}"
+            # use true chroot if we have root permissions
+            if [ "$(whoami)" = "root" ]; then
+                _run_truechroot "${chroot_home}" "${cmd}"
+            else
+                _run_fakechroot "${chroot_home}" "${cmd}"
+            fi
+        }
+        """
+    )
+    return [cmd]
+
+
+def _setup_initrd_chroot_fnc_cmd() -> List[str]:
+    """Define helper fnc to prepare build chroot ."""
+    cmd = textwrap.dedent(
+        """
+        # setup chroot to build Ubuntu Core initrd
+        # chroot is based on the Ubuntu Base
+        # 1: work dir, 2: ppa fingerprint
+        setup_initrd_chroot() {
+            set +x
+            local work_dir="${1}"
+            local ppa_fingerprint="${2}"
+
+            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.base" ]; then
+                setup_chroot_base "${work_dir}" "${UBUNTU_SERIES}"
+                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.base"
+            fi
+
+            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.ppa" ]; then
+                run_chroot "${UC_INITRD_ROOT}" "apt-get update"
+                run_chroot "${UC_INITRD_ROOT}" "apt-get dist-upgrade -y"
+                run_chroot "${UC_INITRD_ROOT}" "apt-get install --no-install-recommends -y ca-certificates debconf-utils libfakeroot lz4 xz-utils zstd"
+                if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
+                    run_chroot "${UC_INITRD_ROOT}" "apt-get install --no-install-recommends -y systemd"
+                else
+                    run_chroot "${UC_INITRD_ROOT}" "apt-get install --no-install-recommends -y libsystemd-shared"
+                fi
+                chroot_add_snappy_dev_ppa "${work_dir}" "${UBUNTU_SERIES}" "${ppa_fingerprint}"
+                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.ppa"
+            fi
+
+            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.u-c-i" ]; then
+                run_chroot "${UC_INITRD_ROOT}" "apt-get update"
+                run_chroot "${UC_INITRD_ROOT}" "echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections"
+                run_chroot "${UC_INITRD_ROOT}" "DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y snapd ubuntu-core-initramfs"
+                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.u-c-i"
+            fi
+
+            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.firmware" ]; then
+                rm -rf "${UC_INITRD_ROOT}"/usr/lib/firmware/*
+                link_files "${KERNEL_FIRMWARE}" "*" "${UC_INITRD_ROOT}/usr/lib/firmware"
+                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.firmware"
+            fi
+
+            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.modules" ]; then
+                rm -rf "${UC_INITRD_ROOT}"/usr/lib/modules/*
+                link_files "${KERNEL_MODULES}" "*" "${UC_INITRD_ROOT}/usr/lib/modules"
+                # remove potentially dangling source link
+                rm -rf ${UC_INITRD_ROOT}/usr/lib/modules/*/build
+                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.modules"
+            fi
+
+            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.os-release" ]; then
+                cp "/snap/${UBUNTU_CORE_BASE}/current/etc/os-release" "${UC_INITRD_ROOT}/etc/os-release"
+                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.os-release"
+            fi
+            set -x
+        }
+        """
+    )
+    return [cmd]
+
+
+def _check_for_stage_firmware_cmd() -> List[str]:
+    """Check stage firmware exists."""
+    cmd = textwrap.dedent(
+        """
+        [ ! -d "${CRAFT_STAGE}/firmware" ] && \\
+            echo -e "firmware directory ${CRAFT_STAGE}/firmware does not exist, ensure part building firmware is run before this part." \\
+                && exit 1
+        """
+    )
+    return [cmd]
+
+
+def _setup_initrd_build_env_cmd() -> List[str]:
+    """Prepare Ubuntu Core Initrd build chroot."""
     cmd = textwrap.dedent(
         f"""
-        echo "Getting snapd deb for snap bootstrap..."
-        # only download again if files does not exist, otherwise
-        # assume we are re-running build
-        if [ ! -e ${{UC_INITRD_DEB}}/usr/lib/snapd ]; then
-            download_snap_bootstrap {target_arch} ${{UC_INITRD_DEB}} {source_dir}
-        fi
+        echo "Preparing Ubuntu Core Initrd chroot build environment..."
+        setup_initrd_chroot "${{CRAFT_PART_SRC}}" "{_SNAPPY_DEV_KEY_FINGERPRINT}"
         """
     )
     return [cmd]
@@ -174,223 +378,123 @@ def _make_initrd_cmd(
     initrd_firmware: Optional[List[str]],
     initrd_addons: Optional[List[str]],
     initrd_overlay: Optional[str],
-    initrd_stage_firmware: bool,
-    build_efi_image: bool,
     initrd_ko_use_workaround: bool,
     initrd_default_compression: str,
-    initrd_include_extra_modules_conf: bool,
-    initrd_tool_pass_root: bool,
-    install_dir: str,
-    stage_dir: str,
+    build_efi_image: Optional[bool],
+    efi_image_key: Optional[str],
+    efi_image_cert: Optional[str],
 ) -> List[str]:
     cmd_echo = [
         'echo "Generating initrd with ko modules for kernel release: ${KERNEL_RELEASE}"',
     ]
-
-    cmd_prepare_modules_feature = [
-        # install required modules to initrd
-        'echo "Installing ko modules to initrd..."',
-        'install_modules=""',
-        'echo "Gathering module dependencies..."',
-        'install_modules=""',
-        "uc_initrd_feature_kernel_modules=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/kernel-modules",
-        "mkdir -p ${uc_initrd_feature_kernel_modules}",
-        "initramfs_ko_modules_conf=${uc_initrd_feature_kernel_modules}/extra-modules.conf",
-        " ".join(
-            [
-                "touch",
-                "${initramfs_ko_modules_conf}",
-            ]
-        ),
-        " ".join(
-            [
-                "for",
-                "m",
-                "in",
-                "${initrd_installed_kernel_modules}",
-                "${initrd_configured_kernel_modules}",
-            ]
-        ),
-        "do",
-        " ".join(["\techo", "${m}", ">>", "${initramfs_ko_modules_conf}"]),
-        "done",
-        " ".join(
-            [
-                "[",
-                "-e",
-                "${initramfs_ko_modules_conf}",
-                "]",
-                "&&",
-                "sort",
-                "-fu",
-                "${initramfs_ko_modules_conf} -o ${initramfs_ko_modules_conf}",
-            ],
-        ),
-    ]
-
     if initrd_ko_use_workaround:
         initrd_configured_modules = "$(cat ${initramfs_ko_modules_conf})"
     else:
         initrd_configured_modules = "${initrd_configured_kernel_modules}"
 
-    cmd_prepare_modules_feature.extend(
-        [
-            'echo "Configuring ubuntu-core-initramfs.conf with supported modules"',
-            'echo "If module does not exist, do not include it"',
-            "initramfs_conf_dir=${uc_initrd_feature_kernel_modules}/usr/lib/modules-load.d",
-            "mkdir -p ${initramfs_conf_dir}",
-            "initramfs_conf=${initramfs_conf_dir}/ubuntu-core-initramfs.conf",
-            'echo "# configured modules" > ${initramfs_conf}',
-            " ".join(
-                [
-                    "for",
-                    "m",
-                    "in",
-                    initrd_configured_modules,
-                ]
-            ),
-            "do",
-            " ".join(
-                [
-                    "\tif [",
-                    "-n",
-                    f'"$(modprobe -n -q --show-depends -d {stage_dir} -S "${{KERNEL_RELEASE}}" ${{m}})"',
-                    "]; then",
-                ]
-            ),
-            "\t\techo ${m} >> ${initramfs_conf}",
-            "\tfi",
-            "done",
-        ]
+    cmd_prepare_modules_feature = textwrap.dedent(
+        f"""
+        echo "Installing ko modules to initrd..."
+        # shellcheck disable=SC2034 #SC2034 does not apply as install_modules not be always used
+        install_modules=""
+        echo "Gathering module dependencies..."
+        uc_initrd_feature_kernel_modules=${{UC_INITRD_ROOT}}/usr/lib/ubuntu-core-initramfs/kernel-modules
+        mkdir -p "${{uc_initrd_feature_kernel_modules}}"
+        initramfs_ko_modules_conf=${{UC_INITRD_ROOT}}/usr/lib/ubuntu-core-initramfs/extra-modules.conf
+        rm -rf "${{initramfs_ko_modules_conf}}"
+        for m in ${{initrd_installed_kernel_modules}} ${{initrd_configured_kernel_modules}}
+        do
+            echo "${{m}}" >> "${{initramfs_ko_modules_conf}}"
+        done
+        [ -e "${{initramfs_ko_modules_conf}}" ] && sort -fu "${{initramfs_ko_modules_conf}}" -o "${{initramfs_ko_modules_conf}}"
+
+        echo "Configuring ubuntu-core-initramfs.conf with supported modules"
+        echo "If module does not exist, do not include it"
+        initramfs_conf_dir=${{uc_initrd_feature_kernel_modules}}/usr/lib/modules-load.d
+        mkdir -p "${{initramfs_conf_dir}}"
+        initramfs_conf=${{initramfs_conf_dir}}/ubuntu-core-initramfs.conf
+        echo "# configured modules" > "${{initramfs_conf}}"
+        # shellcheck disable=SC2013 #SC2013 does not apply as array could be env, or file content
+        for m in {initrd_configured_modules}
+        do
+            if [ -n "$(modprobe -n -q --show-depends -d "${{CRAFT_STAGE}}" -S "${{KERNEL_RELEASE}}" "${{m}}")" ] ; then
+                echo "${{m}}" >> "${{initramfs_conf}}"
+            fi
+        done
+        """
     )
 
-    cmd_prepare_initrd_overlay_feature = [
-        "uc_initrd_feature_firmware=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/uc-firmware",
-        "mkdir -p ${uc_initrd_feature_firmware}",
-        "uc_initrd_feature_overlay=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/uc-overlay",
-        "mkdir -p ${uc_initrd_feature_overlay}",
-        "",
-    ]
+    cmd_prepare_initrd_overlay_feature = textwrap.dedent(
+        """
+        uc_initrd_feature_firmware=${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/uc-firmware
+        mkdir -p "${uc_initrd_feature_firmware}"
+        uc_initrd_feature_overlay=${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/uc-overlay
+        mkdir -p "${uc_initrd_feature_overlay}"
+        """
+    )
 
     # gather firmware files
+    cmd_prepare_initrd_overlay_firmware = ""
     if initrd_firmware:
-        cmd_prepare_initrd_overlay_feature.extend(
-            [
-                'echo "Installing initrd overlay firmware..."',
-                f"for f in {' '.join(initrd_firmware)}",
-                "do",
+        cmd_prepare_initrd_overlay_firmware = textwrap.dedent(
+            f"""
+            echo "Installing initrd overlay firmware..."
+            for fw in {' '.join(initrd_firmware)}
+            do
                 # firmware can be from kernel build or from stage
                 # firmware from kernel build takes preference
-                " ".join(
-                    [
-                        "\tif !",
-                        "link_files",
-                        f'"{install_dir}"',
-                        '"${f}"',
-                        '"${uc_initrd_feature_firmware}/lib"',
-                        ";",
-                        "then",
-                    ]
-                ),
-                " ".join(
-                    [
-                        "\t\tif !",
-                        "link_files",
-                        f'"{stage_dir}"',
-                        '"${f}"',
-                        '"${uc_initrd_feature_firmware}/lib"',
-                        ";",
-                        "then",
-                    ]
-                ),
-                '\t\t\techo "Missing firmware [${f}], ignoring it"',
-                "\t\tfi",
-                "\tfi",
-                "done",
-                "",
-            ]
+                if ! link_files "${{CRAFT_PART_INSTALL}}" "${{fw}}" "${{uc_initrd_feature_firmware}}/usr/lib" ; then
+                    if ! link_files "${{CRAFT_STAGE}}" "${{fw}}" "${{uc_initrd_feature_firmware}}/usr/lib"; then
+                        echo "Missing firmware [${{fw}}], ignoring it"
+                    fi
+                fi
+            done
+            """
         )
 
     # apply overlay if defined
+    cmd_prepare_initrd_overlay = ""
     if initrd_overlay:
-        cmd_prepare_initrd_overlay_feature.extend(
-            [
-                " ".join(
-                    [
-                        "link_files",
-                        f'"{stage_dir}/{initrd_overlay}"',
-                        '""',
-                        '"${uc_initrd_feature_overlay}"',
-                    ]
-                ),
-                "",
-            ]
+        cmd_prepare_initrd_overlay = textwrap.dedent(
+            f"""
+            link_files "${{CRAFT_STAGE}}/{initrd_overlay}" "*" "${{uc_initrd_feature_overlay}}"
+            """
         )
 
     # apply overlay addons if defined
+    cmd_prepare_initrd_addons = ""
     if initrd_addons:
-        cmd_prepare_initrd_overlay_feature.extend(
-            [
-                'echo "Installing initrd addons..."',
-                f"for a in {' '.join(initrd_addons)}",
-                "do",
-                '\techo "Copy overlay: ${a}"',
-                " ".join(
-                    [
-                        "\tlink_files",
-                        f'"{stage_dir}"',
-                        '"${a}"',
-                        '"${uc_initrd_feature_overlay}"',
-                    ]
-                ),
-                "done",
-            ],
+        cmd_prepare_initrd_addons = textwrap.dedent(
+            f"""
+            echo "Installing initrd addons..."
+            for a in {' '.join(initrd_addons)}
+            do
+                echo "Copy overlay: ${{a}}"
+                link_files "${{CRAFT_STAGE}}" "${{a}}" "${{uc_initrd_feature_overlay}}"
+            done
+            """
         )
 
-    cmd_prepare_snap_bootstrap_feature = [
+    cmd_prepare_snap_bootstrap_feature = textwrap.dedent(
+        """
         # install selected snap bootstrap
-        'echo "Preparing snap-boostrap initrd feature..."',
-        "uc_initrd_feature_snap_bootstratp=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snap-bootstrap",
-        "mkdir -p ${uc_initrd_feature_snap_bootstratp}",
-        " ".join(
-            [
-                "link_files",
-                '"${UC_INITRD_DEB}"',
-                '"usr/lib/snapd/snap-bootstrap"',
-                '"${uc_initrd_feature_snap_bootstratp}"',
-            ]
-        ),
-        " ".join(
-            [
-                "link_files",
-                '"${UC_INITRD_DEB}"',
-                '"usr/lib/snapd/info"',
-                '"${uc_initrd_feature_snap_bootstratp}"',
-            ]
-        ),
-        " ".join(
-            [
-                "cp",
-                "${UC_INITRD_DEB}/usr/lib/snapd/info",
-                f"{install_dir}/snapd-info",
-            ]
-        ),
-    ]
+        echo "Preparing snap-boostrap initrd feature..."
+        uc_initrd_main_lib_snapd=${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/usr/lib/snapd
+        [ -e "${uc_initrd_main_lib_snapd}/snap-bootstrap" ] && ln -f "${UC_INITRD_ROOT}/usr/lib/snapd/snap-bootstrap" \\
+                                                                     "${uc_initrd_main_lib_snapd}/snap-bootstrap"
+        [ -e "${uc_initrd_main_lib_snapd}/info" ] && ln -f "${UC_INITRD_ROOT}/usr/lib/snapd/info" \\
+                                                           "${uc_initrd_main_lib_snapd}/info"
 
-    cmd_create_initrd = [
-        f"if compgen -G {install_dir}/initrd.img* > /dev/null; then",
-        f"\trm -rf {install_dir}/initrd.img*",
-        "fi",
-    ]
+        cp "${UC_INITRD_ROOT}/usr/lib/snapd/info" "${CRAFT_PART_INSTALL}/snapd-info"
+        """
+    )
 
-    cmd_create_initrd.extend(
-        [
-            "",
-            "",
-            " ".join(
-                ["ubuntu_core_initramfs=${UC_INITRD_DEB}/usr/bin/ubuntu-core-initramfs"]
-            ),
-        ],
+    cmd_create_initrd = textwrap.dedent(
+        """
+        if compgen -G "${CRAFT_PART_INSTALL}/initrd.img*" > /dev/null; then
+            rm -rf "${CRAFT_PART_INSTALL}"/initrd.img*
+        fi
+        """
     )
 
     # ubuntu-core-initramfs does not support configurable compression command
@@ -399,171 +503,130 @@ def _make_initrd_cmd(
         initrd_compression=initrd_compression,
         initrd_compression_options=initrd_compression_options,
     )
+
+    cmd_create_initrd_update_compression = ""
     if comp_command:
-        cmd_create_initrd.extend(
-            [
-                "",
-                'echo "Updating compression command to be used for initrd"',
-                " ".join(
-                    [
-                        "sed",
-                        "-i",
-                        f"'s/{initrd_default_compression}/{comp_command}/g'",
-                        "${ubuntu_core_initramfs}",
-                    ],
-                ),
-            ]
-        )
-    cmd_create_initrd.extend(
-        [
-            'echo "Workaround for bug in ubuntu-core-initramfs"',
-            " ".join(
-                [
-                    "for",
-                    "feature",
-                    "in",
-                    "kernel-modules",
-                    "snap-bootstrap",
-                    "uc-firmware",
-                    "uc-overlay",
-                ],
-            ),
-            "do",
-            " ".join(
-                [
-                    "\tlink_files",
-                    '"${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/${feature}"',
-                    '"*"',
-                    '"${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/main"',
-                ],
-            ),
-            "done",
-        ]
-    )
-
-    if initrd_include_extra_modules_conf:
-        cmd_create_initrd.extend(
-            [
-                " ".join(
-                    [
-                        "cp",
-                        "${initramfs_ko_modules_conf}",
-                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/modules/main/extra-modules.conf",
-                    ],
-                ),
-                "",
-            ],
+        cmd_create_initrd_update_compression = textwrap.dedent(
+            f"""
+            echo "Updating compression command to be used for initrd"
+            sed -i 's/{initrd_default_compression}/{comp_command}/g' "${{UC_INITRD_ROOT}}/usr/bin/ubuntu-core-initramfs"',
+            """
         )
 
-    firmware_dir = f"{install_dir}/lib/firmware"
-    if initrd_stage_firmware:
-        firmware_dir = f"{stage_dir}/firmware"
+    cmd_create_initrd_workaround = textwrap.dedent(
+        """
+        echo "Workaround for bug in ubuntu-core-initramfs"
+        for feature in kernel-modules uc-firmware uc-overlay
+        do
+            link_files "${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/${feature}" \\
+                "*" \\
+                "${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main"
+        done
 
-    cmd_create_initrd.extend(
-        [
-            "",
-            " ".join(
-                [
-                    f'[ ! -d "{firmware_dir}" ]',
-                    "&&",
-                    f'echo -e "firmware directory {firmware_dir} does not exist, consider using'
-                    ' initrd-stage-firmware: true/false option"',
-                    "&&",
-                    "exit 1",
-                ]
-            ),
-            "",
-        ],
+        # actual ubuntu-core initramfs build is performed in chroot
+        # where tmp is not really tmpfs, avoid excessive use of cp
+        # cp "-ar"/"-aR" -> cp "-lR"
+        sed -i \\
+            -e 's/"cp", "-ar", args./"cp", "-lR", args./g' \\
+            -e 's/"cp", "-aR", args./"cp", "-lR", args./g' \\
+            ${UC_INITRD_ROOT}/usr/bin/ubuntu-core-initramfs
+        if [ "$(whoami)" != "root" ]; then
+            # ubuntu-core-initramfs unsets LD_PRELOAD before invoking dracut
+            # this leads to escaping of fakechroot, disable this
+            sed -i \\
+                -e 's/\\(.*\\)proc_env\\["LD_PRELOAD"\\]\\(.*\\)/\\1# proc_env\\["LD_PRELOAD"\\]\\2/g' \\
+                ${UC_INITRD_ROOT}/usr/bin/ubuntu-core-initramfs
+        fi
+        """
     )
-    if initrd_tool_pass_root:
-        build_initrd = [
-            "${ubuntu_core_initramfs}",
-            "create-initrd",
-            "--root",
-            "${UC_INITRD_DEB}",
-        ]
-    else:
-        build_initrd = [
-            "${ubuntu_core_initramfs}",
-            "create-initrd",
-        ]
 
-    build_initrd.extend(
-        [
-            "--kernelver=${KERNEL_RELEASE}",
-            "--kerneldir",
-            f"{stage_dir}/modules/${{KERNEL_RELEASE}}",
-            "--firmwaredir",
-            firmware_dir,
-            "--skeleton",
-            "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs",
-            # "--feature",
-            # "kernel-modules",
-            # "snap-bootstrap",
-            # "uc-firmware",
-            # "uc-overlay",
-            "--output",
-            f"{install_dir}/initrd.img",
-        ],
+    cmd_create_initrd_install_extra_modules = textwrap.dedent(
+        """
+        if [ -e "${initramfs_ko_modules_conf}" ]; then
+            if [ "${UBUNTU_SERIES}" = "focal" ]; then
+                cp "${initramfs_ko_modules_conf}" \\
+                   "${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/extra-modules.conf"
+            else
+                cp "${initramfs_ko_modules_conf}" \\
+                   "${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/modules/main/extra-modules.conf"
+            fi
+        fi
+        """
     )
-    cmd_create_initrd.extend(
-        [
-            " ".join(build_initrd),
-        ],
+
+    cmd_create_initrd_build_initrd = textwrap.dedent(
+        """
+        rm -rf ${UC_INITRD_ROOT}/boot/initrd*
+        run_chroot "${UC_INITRD_ROOT}" \\
+                "ubuntu-core-initramfs create-initrd --kernelver "${KERNEL_RELEASE}" --output /boot/initrd.img"
+        """
     )
-    cmd_create_initrd.extend(
-        [
-            f"ln $(ls {install_dir}/initrd.img*) {install_dir}/initrd.img",
-        ],
+
+    cmd_create_initrd_install_initrd = textwrap.dedent(
+        """
+        link_files "${UC_INITRD_ROOT}"/boot "initrd.img*" "${CRAFT_PART_INSTALL}"
+        ln -f "$(ls "${CRAFT_PART_INSTALL}"/initrd.img*)" "${CRAFT_PART_INSTALL}"/initrd.img
+        """
     )
+
+    cmd_create_initrd_build_efi_setup_keys = ""
+    cmd_create_initrd_build_efi = ""
     if build_efi_image:
-        cmd_create_initrd.extend(
-            [
-                "",
-                'echo "Building kernel.efi"',
-                "stub_p=$(find ${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/efi/ -maxdepth 1 -name 'linux*.efi.stub' -printf '%f\\n')",
-                " ".join(
-                    [
-                        "${ubuntu_core_initramfs}",
-                        "create-efi",
-                        "--kernelver=${KERNEL_RELEASE}",
-                        "--stub",
-                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/efi/${stub_p}",
-                        "--sbat",
-                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/efi/sbat.txt",
-                        "--key",
-                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key",
-                        "--cert",
-                        "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem",
-                        "--initrd",
-                        f"{install_dir}/initrd.img",
-                        "--kernel",
-                        f"{stage_dir}/kernel.img",
-                        "--output",
-                        f"{install_dir}/kernel.efi",
-                    ],
-                ),
-                f"ln $(ls {install_dir}/kernel.efi*) {install_dir}/kernel.efi",
-                f"rm {install_dir}/initrd.img*",
-            ],
+        signing_key = "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
+        certificate = "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
+        if efi_image_key and efi_image_cert:
+            signing_key = "/root/efi-signing-key.key"
+            certificate = "/root/efi-certificate.pem"
+            cmd_create_initrd_build_efi_setup_keys = textwrap.dedent(
+                f"""
+                cp --link "{efi_image_key}" "${{UC_INITRD_ROOT}}{signing_key}"
+                cp --link "{efi_image_cert}" "${{UC_INITRD_ROOT}}{certificate}"
+                """
+            )
+
+        cmd_create_initrd_build_efi = textwrap.dedent(
+            f"""
+            echo "Building kernel.efi"
+            rm -rf ${{UC_INITRD_ROOT}}/boot/kernel.efi*
+            ln -f "${{CRAFT_STAGE}}"/kernel.img "${{UC_INITRD_ROOT}}/boot/kernel.img-${{KERNEL_RELEASE}}"
+            run_chroot "${{UC_INITRD_ROOT}}" \\
+                    "ubuntu-core-initramfs create-efi \\
+                        --kernelver=${{KERNEL_RELEASE}} \\
+                        --key {signing_key} \\
+                        --cert {certificate} \\
+                        --initrd /boot/initrd.img \\
+                        --kernel /boot/kernel.img \\
+                        --output /boot/kernel.efi"
+
+            echo "Installing created kernel.efi image"
+            link_files "${{UC_INITRD_ROOT}}/boot" "kernel.efi*" "${{CRAFT_PART_INSTALL}}"
+            ln -f "$(ls "${{CRAFT_PART_INSTALL}}"/kernel.efi*)" "${{CRAFT_PART_INSTALL}}/kernel.efi"
+            rm "${{CRAFT_PART_INSTALL}}"/initrd.img*
+            """
         )
 
     return [
         *cmd_echo,
-        *cmd_prepare_modules_feature,
-        "",
-        *cmd_prepare_initrd_overlay_feature,
-        "",
-        *cmd_prepare_snap_bootstrap_feature,
-        "",
+        cmd_prepare_modules_feature,
+        cmd_prepare_initrd_overlay_feature,
+        cmd_prepare_initrd_overlay_firmware,
+        cmd_prepare_initrd_overlay,
+        cmd_prepare_initrd_addons,
+        cmd_prepare_snap_bootstrap_feature,
         'echo "Create new initrd..."',
-        *cmd_create_initrd,
+        cmd_create_initrd,
+        cmd_create_initrd_update_compression,
+        cmd_create_initrd_workaround,
+        cmd_create_initrd_install_extra_modules,
+        cmd_create_initrd_build_initrd,
+        cmd_create_initrd_install_initrd,
+        cmd_create_initrd_build_efi_setup_keys,
+        cmd_create_initrd_build_efi,
     ]
 
 
 # pylint: disable-next=too-many-arguments
 def get_build_commands(
-    target_arch: str,
     initrd_modules: Optional[List[str]],
     initrd_configured_modules: Optional[List[str]],
     initrd_compression: Optional[str],
@@ -571,15 +634,11 @@ def get_build_commands(
     initrd_firmware: Optional[List[str]],
     initrd_addons: Optional[List[str]],
     initrd_overlay: Optional[str],
-    initrd_stage_firmware: bool,
-    build_efi_image: bool,
     initrd_ko_use_workaround: bool,
     initrd_default_compression: str,
-    initrd_include_extra_modules_conf: bool,
-    initrd_tool_pass_root: bool,
-    source_dir: str,
-    install_dir: str,
-    stage_dir: str,
+    build_efi_image: Optional[bool] = False,
+    efi_image_key: Optional[str] = None,
+    efi_image_cert: Optional[str] = None,
 ) -> List[str]:
     """Get build command"""
     return [
@@ -590,29 +649,33 @@ def get_build_commands(
         "",
         *_link_files_fnc_cmd(),
         "",
-        *_download_core_initrd_fnc_cmd(),
+        *_setup_ubuntu_base_chroot_fnc_cmd(),
         "",
-        *_download_generic_initrd_cmd(target_arch=target_arch, source_dir=source_dir),
+        *_chroot_add_snappy_dev_ppa_fnc_cmd(),
         "",
-        *_download_snap_bootstrap_fnc_cmd(),
+        *_chroot_run_cmd_fnc_cmd(),
         "",
-        *_download_snap_bootstrap_cmd(target_arch=target_arch, source_dir=source_dir),
+        *_setup_initrd_chroot_fnc_cmd(),
         "",
-        *_get_initrd_install_command(
+        *_check_for_stage_firmware_cmd(),
+        "",
+        *_setup_initrd_build_env_cmd(),
+        "",
+        'echo "building initramfs..."',
+        "",
+        *_parse_kernel_release_cmd(),
+        "",
+        *_make_initrd_cmd(
             initrd_compression=initrd_compression,
             initrd_compression_options=initrd_compression_options,
             initrd_firmware=initrd_firmware,
             initrd_addons=initrd_addons,
             initrd_overlay=initrd_overlay,
-            initrd_stage_firmware=initrd_stage_firmware,
-            build_efi_image=build_efi_image,
             initrd_ko_use_workaround=initrd_ko_use_workaround,
             initrd_default_compression=initrd_default_compression,
-            initrd_include_extra_modules_conf=initrd_include_extra_modules_conf
-            and (bool(initrd_modules) or bool(initrd_configured_modules)),
-            initrd_tool_pass_root=initrd_tool_pass_root,
-            install_dir=install_dir,
-            stage_dir=stage_dir,
+            build_efi_image=build_efi_image,
+            efi_image_key=efi_image_key,
+            efi_image_cert=efi_image_cert,
         ),
         'echo "Initramfs build finished!"',
     ]
@@ -621,11 +684,11 @@ def get_build_commands(
 ### Install
 
 
-def _parse_kernel_release_cmd(stage_dir: str) -> List[str]:
+def _parse_kernel_release_cmd() -> List[str]:
     """Set kernel release from module/<release> directory name."""
     return [
         'echo "Parsing kernel release..."',
-        f"KERNEL_RELEASE=$(ls {stage_dir}/modules)",
+        'KERNEL_RELEASE=$(ls "${CRAFT_STAGE}/modules")',
     ]
 
 
@@ -644,139 +707,3 @@ def _compression_cmd(
     cmd = f"{compressor} {options}"
     logger.warning("WARNING: Using custom initrd compressions command: %s", cmd)
     return cmd
-
-
-# pylint: disable-next=too-many-arguments
-def _get_initrd_install_command(
-    initrd_compression: Optional[str],
-    initrd_compression_options: Optional[List[str]],
-    initrd_firmware: Optional[List[str]],
-    initrd_addons: Optional[List[str]],
-    initrd_overlay: Optional[str],
-    initrd_stage_firmware: bool,
-    build_efi_image: bool,
-    initrd_ko_use_workaround: bool,
-    initrd_default_compression: str,
-    initrd_include_extra_modules_conf: bool,
-    initrd_tool_pass_root: bool,
-    install_dir: str,
-    stage_dir: str,
-) -> List[str]:
-
-    return [
-        'echo "building initramfs..."',
-        "",
-        *_parse_kernel_release_cmd(stage_dir=stage_dir),
-        "",
-        *_make_initrd_cmd(
-            initrd_compression=initrd_compression,
-            initrd_compression_options=initrd_compression_options,
-            initrd_firmware=initrd_firmware,
-            initrd_addons=initrd_addons,
-            initrd_overlay=initrd_overlay,
-            initrd_stage_firmware=initrd_stage_firmware,
-            build_efi_image=build_efi_image,
-            initrd_ko_use_workaround=initrd_ko_use_workaround,
-            initrd_default_compression=initrd_default_compression,
-            initrd_include_extra_modules_conf=initrd_include_extra_modules_conf,
-            initrd_tool_pass_root=initrd_tool_pass_root,
-            install_dir=install_dir,
-            stage_dir=stage_dir,
-        ),
-        "",
-    ]
-
-
-### build dependencies
-
-
-def add_snappy_ppa(with_sudo=False) -> None:  # noqa: C901
-    """Setup snappy ppa on the host"""
-    # Add ppa necessary to build initrd.
-    # TODO: reimplement once snapcraft allows to the plugins to add custom ppa.
-    # For the moment we need to handle this as part of the get_build_packages()
-    # call and add ppa manually.
-
-    # Building of the initrd requires custom tools available in
-    # ppa:snappy-dev/image.
-    if with_sudo:
-        cmd = ["sudo", "apt-get", "install", "-y", "software-properties-common"]
-    else:
-        cmd = ["apt-get", "install", "-y", "software-properties-common"]
-    proc = subprocess.run(
-        cmd,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
-    if proc.returncode != 0:
-        raise ValueError(f"error installing package: {proc.stderr.decode().strip()}")
-
-    proc = subprocess.run(
-        ["grep", "-r", "snappy-dev/image/ubuntu", "/etc/apt/sources.list.d/"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        check=False,
-    )
-
-    if not proc.stdout or proc.stdout.decode().find("snappy-dev/image/ubuntu") == -1:
-        # check if we need to import key
-        try:
-            proc = subprocess.run(
-                ["apt-key", "export", _SNAPPY_DEV_KEY_FINGERPRINT],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                check=True,
-            )
-        except subprocess.CalledProcessError as error:
-            # Export shouldn't exit with failure based on testing
-            raise ValueError(
-                f"error to check for key={_SNAPPY_DEV_KEY_FINGERPRINT}: {error.output}"
-            ) from error
-
-        apt_key_output = proc.stdout.decode()
-        if "BEGIN PGP PUBLIC KEY BLOCK" in apt_key_output:
-            logger.info("key for ppa:snappy-dev/image already imported")
-
-        if with_sudo:
-            cmd = ["sudo", "apt-key"]
-        else:
-            cmd = ["apt-key"]
-
-        cmd.extend(
-            [
-                "adv",
-                "--keyserver",
-                "keyserver.ubuntu.com",
-                "--recv-keys",
-                _SNAPPY_DEV_KEY_FINGERPRINT,
-            ],
-        )
-
-        if "nothing exported" in apt_key_output:
-            logger.info("importing key for ppa:snappy-dev/image")
-            # first import key for the ppa
-            try:
-                subprocess.run(
-                    cmd,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    check=True,
-                )
-            except subprocess.CalledProcessError as error:
-                raise ValueError(
-                    f"Failed to add ppa key: {_SNAPPY_DEV_KEY_FINGERPRINT}: {error.output}"
-                ) from error
-
-        # add ppa itself
-        logger.warning("adding ppa:snappy-dev/image to handle initrd builds")
-        if with_sudo:
-            cmd = ["sudo", "add-apt-repository", "-y", "ppa:snappy-dev/image"]
-        else:
-            cmd = ["add-apt-repository", "-y", "ppa:snappy-dev/image"]
-        subprocess.run(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            check=True,
-        )
