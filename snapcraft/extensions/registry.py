@@ -31,6 +31,7 @@ from .ros2_jazzy import ROS2JazzyExtension
 from .ros2_jazzy_desktop import ROS2JazzyDesktopExtension
 from .ros2_jazzy_ros_base import ROS2JazzyRosBaseExtension
 from .ros2_jazzy_ros_core import ROS2JazzyRosCoreExtension
+from .env_injector import EnvInjectorExtension
 
 if TYPE_CHECKING:
     from .extension import Extension
@@ -49,6 +50,7 @@ _EXTENSIONS: Dict[str, "ExtensionType"] = {
     "ros2-jazzy-desktop": ROS2JazzyDesktopExtension,
     "kde-neon": KDENeon,
     "kde-neon-6": KDENeon6,
+    "env-injector": EnvInjectorExtension,
 }
 
 
