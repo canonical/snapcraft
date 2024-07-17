@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -24,14 +24,17 @@ import textwrap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+import craft_application.util
 import yaml
 from craft_application.commands import AppCommand
+from craft_application.errors import CraftValidationError
 from craft_cli import emit
 from overrides import overrides
 
 from snapcraft import errors, utils
 from snapcraft_legacy._store import StoreClientCLI
 from snapcraft_legacy.storeapi.errors import StoreValidationSetsError
+from snapcraft_legacy.storeapi.v2 import validation_sets
 
 if TYPE_CHECKING:
     import argparse
@@ -40,7 +43,7 @@ if TYPE_CHECKING:
 _VALIDATIONS_SETS_SNAPS_TEMPLATE = textwrap.dedent(
     """\
     snaps:
-    #  - name: <name>  # The name of the snap.
+      - name: hello  # The name of the snap.
     #    id:   <id>    # The ID of the snap. Optional, defaults to the current ID for
                        # the provided name.
     #    presence: [required|optional|invalid]  # Optional, defaults to required.
@@ -102,7 +105,9 @@ class StoreEditValidationSetsCommand(AppCommand):
         validation_sets_path.write_text(validation_sets_template, encoding="utf-8")
         edited_validation_sets = edit_validation_sets(validation_sets_path)
 
-        if edited_validation_sets == yaml.safe_load(validation_sets_template):
+        if edited_validation_sets == validation_sets.EditableBuildAssertion(
+            **yaml.safe_load(validation_sets_template)
+        ):
             emit.message("No changes made")
             return
 
@@ -127,32 +132,43 @@ class StoreEditValidationSetsCommand(AppCommand):
 
 
 def _submit_validation_set(
-    edited_validation_sets: Dict[str, Any],
+    edited_validation_sets: validation_sets.EditableBuildAssertion,
     key_name: Optional[str],
     store_client: StoreClientCLI,
 ) -> None:
+    emit.debug(f"Posting assertion to build: {edited_validation_sets.json()}")
     build_assertion = store_client.post_validation_sets_build_assertion(
-        validation_sets=edited_validation_sets
+        validation_sets=edited_validation_sets.marshal()
     )
-    signed_validation_sets = _sign_assertion(
-        build_assertion.marshal(), key_name=key_name
+    build_assertion_dict = build_assertion.marshal_as_str()
+
+    signed_validation_sets = _sign_assertion(build_assertion_dict, key_name=key_name)
+
+    emit.debug("Posting signed validation sets.")
+    response = store_client.post_validation_sets(
+        signed_validation_sets=signed_validation_sets
     )
-    store_client.post_validation_sets(signed_validation_sets=signed_validation_sets)
+    emit.debug(f"Response: {response.json()}")
 
 
 def _generate_template(
-    asserted_validation_sets, *, account_id: str, set_name: str, sequence: str
+    asserted_validation_sets: validation_sets.ValidationSets,
+    *,
+    account_id: str,
+    set_name: str,
+    sequence: str,
 ) -> str:
     """Generate a template to edit asserted_validation_sets."""
     try:
         # assertions should only have one item since a specific
         # sequence was requested.
-        revision = asserted_validation_sets.assertions[0].revision
+        revision = asserted_validation_sets.assertions[0].headers.revision
 
         snaps = yaml.dump(
             {
                 "snaps": [
-                    s.marshal() for s in asserted_validation_sets.assertions[0].snaps
+                    s.marshal()
+                    for s in asserted_validation_sets.assertions[0].headers.snaps
                 ]
             },
             default_flow_style=False,
@@ -174,7 +190,9 @@ def _generate_template(
     return unverified_validation_sets
 
 
-def edit_validation_sets(validation_sets_path: Path) -> Dict[str, Any]:
+def edit_validation_sets(
+    validation_sets_path: Path,
+) -> validation_sets.EditableBuildAssertion:
     """Spawn an editor to modify the validation-sets."""
     editor_cmd = os.getenv("EDITOR", "vi")
 
@@ -182,17 +200,23 @@ def edit_validation_sets(validation_sets_path: Path) -> Dict[str, Any]:
         with emit.pause():
             subprocess.run([editor_cmd, validation_sets_path], check=True)
         try:
-            edited_validation_sets = yaml.safe_load(
-                validation_sets_path.read_text(encoding="utf-8")
+            with validation_sets_path.open() as file:
+                data = craft_application.util.safe_yaml_load(file)
+            edited_validation_sets = validation_sets.EditableBuildAssertion.from_yaml_data(
+                data=data,
+                # filepath is only shown for pydantic errors and snapcraft should
+                # not expose the temp file name
+                filepath=Path("validation-sets"),
             )
             return edited_validation_sets
-        except yaml.YAMLError as yaml_error:
-            emit.message(f"A YAML parsing error occurred {yaml_error!s}")
+        except (yaml.YAMLError, CraftValidationError) as err:
+            emit.message(f"{err!s}")
             if not utils.confirm_with_user("Do you wish to amend the validation set?"):
-                raise errors.SnapcraftError("Operation aborted") from yaml_error
+                raise errors.SnapcraftError("Operation aborted") from err
 
 
 def _sign_assertion(assertion: Dict[str, Any], *, key_name: Optional[str]) -> bytes:
+    emit.debug("Signing assertion.")
     cmdline = ["snap", "sign"]
     if key_name:
         cmdline += ["-k", key_name]

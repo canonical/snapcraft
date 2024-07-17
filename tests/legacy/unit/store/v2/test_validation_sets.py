@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2021 Canonical Ltd
+# Copyright (C) 2021,2024 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,127 +19,104 @@ import pytest
 from snapcraft_legacy.storeapi.v2 import validation_sets
 
 
-@pytest.mark.parametrize("snap_id", (None, "snap_id"))
-@pytest.mark.parametrize("presence", (None, "required", "optional", "invalid"))
-@pytest.mark.parametrize("revision", ("42", None))
-def test_snap(snap_id, presence, revision):
-    payload = {
-        "name": "set-1",
+@pytest.fixture()
+def fake_snap_data():
+    return {
+        "name": "snap-name",
+        "id": "snap-id",
+        "presence": "required",
+        "revision": 42,
     }
 
-    if presence is not None:
-        payload["presence"] = presence
 
-    if snap_id is not None:
-        payload["id"] = snap_id
-
-    if revision is not None:
-        payload["revision"] = revision
-
-    s = validation_sets.Snap.unmarshal(payload)
-
-    assert repr(s) == "<Snap: 'set-1'>"
-    assert s.name == payload["name"]
-    assert s.snap_id == payload.get("id")
-    assert s.presence == payload.get("presence")
-    assert s.revision == payload.get("revision")
-    assert s.marshal() == payload
+@pytest.fixture()
+def fake_snap(fake_snap_data):
+    return validation_sets.Snap.unmarshal(fake_snap_data)
 
 
-@pytest.mark.parametrize("revision", ("42", None))
-def test_build_assertion(revision):
-    payload = {
+@pytest.fixture()
+def fake_editable_build_assertion_data(fake_snap_data):
+    return {
         "account-id": "account-id-1",
-        "authority-id": "authority-id-1",
         "name": "validation-set-1",
-        "sequence": "1",
+        "revision": "revision-1",
+        "sequence": 1,
+        "snaps": [fake_snap_data],
+    }
+
+
+@pytest.fixture()
+def fake_editable_build_assertion(fake_editable_build_assertion_data):
+    return validation_sets.EditableBuildAssertion.unmarshal(
+        fake_editable_build_assertion_data
+    )
+
+
+@pytest.fixture()
+def fake_build_assertion_data(fake_snap_data):
+    return {
+        "account-id": "account-id-1",
+        "name": "validation-set-1",
+        "revision": "revision-1",
+        "sequence": 1,
+        "snaps": [fake_snap_data],
+        "authority-id": "authority-id-1",
         "series": "16",
-        "snaps": [validation_sets.Snap(name="snap-name").marshal()],
+        "sign-key-sha3-384": "sign-key-1",
         "timestamp": "2020-10-29T16:36:56Z",
         "type": "validation-set",
     }
 
-    if revision is not None:
-        payload["revision"] = revision
 
-    s = validation_sets.BuildAssertion.unmarshal(payload)
-
-    assert repr(s) == "<BuildAssertion: 'validation-set-1'>"
-    assert s.account_id == payload["account-id"]
-    assert s.authority_id == payload["authority-id"]
-    assert s.name == payload["name"]
-    assert s.sequence == payload.get("sequence")
-    assert s.series == payload.get("series")
-    assert s.snaps == [validation_sets.Snap(name="snap-name")]
-    assert s.timestamp == "2020-10-29T16:36:56Z"
-
-    if revision is None:
-        payload["revision"] = "0"
-
-    assert s.marshal() == payload
+@pytest.fixture()
+def fake_build_assertion(fake_build_assertion_data):
+    return validation_sets.BuildAssertion.unmarshal(fake_build_assertion_data)
 
 
-def test_validation_sets():
-    payload = {
-        "assertions": [
+def test_ignore_sign_key(fake_build_assertion):
+    """Ignore the sign key when unmarshalling."""
+    assert not fake_build_assertion.sign_key_sha3_384
+
+
+def test_editable_build_assertion_marshal_as_str(fake_editable_build_assertion):
+    """Cast all scalars to string when marshalling."""
+    data = fake_editable_build_assertion.marshal_as_str()
+
+    assert data == {
+        "account-id": "account-id-1",
+        "name": "validation-set-1",
+        "revision": "revision-1",
+        "sequence": "1",
+        "snaps": [
             {
-                "headers": {
-                    "account-id": "account-id-1",
-                    "authority-id": "authority-id-1",
-                    "name": "validation-set-1",
-                    "revision": "1",
-                    "sequence": "1",
-                    "series": "16",
-                    "snaps": [validation_sets.Snap(name="snap-name-1").marshal()],
-                    "timestamp": "2020-10-29T16:36:56Z",
-                    "type": "validation-set",
-                }
+                "id": "snap-id",
+                "name": "snap-name",
+                "presence": "required",
+                "revision": "42",
             },
-            {
-                "headers": {
-                    "account-id": "account-id-1",
-                    "authority-id": "authority-id-1",
-                    "name": "validation-set-1",
-                    "revision": "3",
-                    "sequence": "1",
-                    "series": "16",
-                    "snaps": [validation_sets.Snap(name="snap-name-2").marshal()],
-                    "timestamp": "2020-10-29T16:36:56Z",
-                    "type": "validation-set",
-                },
-            },
-        ]
+        ],
     }
 
-    s = validation_sets.ValidationSets.unmarshal(payload)
 
-    assert repr(s) == "<ValidationSets: assertions 2>"
-    assert s.assertions[0] == validation_sets.BuildAssertion.unmarshal(
-        {
-            "account-id": "account-id-1",
-            "authority-id": "authority-id-1",
-            "name": "validation-set-1",
-            "revision": "1",
-            "sequence": "1",
-            "series": "16",
-            "snaps": [validation_sets.Snap(name="snap-name-1").marshal()],
-            "timestamp": "2020-10-29T16:36:56Z",
-            "type": "validation-set",
-        },
-    )
+def test_build_assertion_marshal_as_str(fake_build_assertion):
+    """Cast all scalars to string when marshalling."""
+    data = fake_build_assertion.marshal_as_str()
 
-    assert s.assertions[1] == validation_sets.BuildAssertion.unmarshal(
-        {
-            "account-id": "account-id-1",
-            "authority-id": "authority-id-1",
-            "name": "validation-set-1",
-            "revision": "3",
-            "sequence": "1",
-            "series": "16",
-            "snaps": [validation_sets.Snap(name="snap-name-2").marshal()],
-            "timestamp": "2020-10-29T16:36:56Z",
-            "type": "validation-set",
-        }
-    )
-
-    assert s.marshal() == payload
+    assert data == {
+        "account-id": "account-id-1",
+        "authority-id": "authority-id-1",
+        "name": "validation-set-1",
+        "revision": "revision-1",
+        "sequence": "1",
+        "series": "16",
+        "snaps": [
+            {
+                "id": "snap-id",
+                "name": "snap-name",
+                "presence": "required",
+                "revision": "42",
+            },
+        ],
+        "timestamp": "2020-10-29T16:36:56Z",
+        "type": "validation-set",
+    }
