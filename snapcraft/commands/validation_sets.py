@@ -32,6 +32,7 @@ from overrides import overrides
 from snapcraft import errors, utils
 from snapcraft_legacy._store import StoreClientCLI
 from snapcraft_legacy.storeapi.errors import StoreValidationSetsError
+from snapcraft_legacy.storeapi.v2 import validation_sets
 
 if TYPE_CHECKING:
     import argparse
@@ -135,13 +136,17 @@ def _submit_validation_set(
         validation_sets=edited_validation_sets
     )
     signed_validation_sets = _sign_assertion(
-        build_assertion.marshal(), key_name=key_name
+        build_assertion.marshal_as_str(), key_name=key_name
     )
     store_client.post_validation_sets(signed_validation_sets=signed_validation_sets)
 
 
 def _generate_template(
-    asserted_validation_sets, *, account_id: str, set_name: str, sequence: str
+    asserted_validation_sets: validation_sets.ValidationSets,
+    *,
+    account_id: str,
+    set_name: str,
+    sequence: str,
 ) -> str:
     """Generate a template to edit asserted_validation_sets."""
     try:

@@ -29,12 +29,13 @@ class Snap:
         jsonschema.validate(
             payload, BUILD_ASSERTION_JSONSCHEMA["properties"]["snaps"]["items"]
         )
+        revision = payload.get("revision")
 
         return cls(
             name=payload["name"],
             snap_id=payload.get("id"),
             presence=payload.get("presence"),
-            revision=payload.get("revision"),
+            revision=int(revision) if revision else None,
         )
 
     def marshal(self) -> Dict[str, Any]:
@@ -48,6 +49,21 @@ class Snap:
 
         if self.revision is not None:
             payload["revision"] = self.revision
+
+        return payload
+
+    def marshal_as_str(self) -> Dict[str, Any]:
+        """Marshal the object where all scalars are represented as strings."""
+        payload = {"name": self.name}
+
+        if self.snap_id is not None:
+            payload["id"] = self.snap_id
+
+        if self.presence is not None:
+            payload["presence"] = self.presence
+
+        if self.revision is not None:
+            payload["revision"] = str(self.revision)
 
         return payload
 
@@ -70,7 +86,7 @@ class Snap:
         name: str,
         snap_id: Optional[str] = None,
         presence: Optional[str] = None,
-        revision: Optional[str] = None,
+        revision: Optional[int] = None,
     ):
         self.name = name
         self.snap_id = snap_id
@@ -105,6 +121,19 @@ class BuildAssertion:
             "revision": self.revision,
             "sequence": self.sequence,
             "snaps": [s.marshal() for s in self.snaps],
+            "timestamp": self.timestamp,
+            "type": self.assertion_type,
+            "series": self.series,
+        }
+
+    def marshal_as_str(self) -> Dict[str, Any]:
+        return {
+            "account-id": self.account_id,
+            "authority-id": self.authority_id,
+            "name": self.name,
+            "revision": self.revision,
+            "sequence": self.sequence,
+            "snaps": [s.marshal_as_str() for s in self.snaps],
             "timestamp": self.timestamp,
             "type": self.assertion_type,
             "series": self.series,
