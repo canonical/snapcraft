@@ -22,6 +22,16 @@ The following initramfs-specific options are provided by this plugin:
       Optional, true if we want to create an EFI image.
       Default: false
 
+    - initrd-efi-image-key
+      Optional string; default: snake oil key (/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key)
+      Key to be used to create efi image
+      Requires initrd-build-efi-image to be true.
+
+    - initrd-efi-image-cert
+      Optional string; default: snake oil certificate.
+      Certificate to be used to create efi image.
+      Requires initrd-build-efi-image to be true.
+
     - initrd-modules:
       (array of string; default: none)
       list of modules to include in initrd.
@@ -37,13 +47,6 @@ The following initramfs-specific options are provided by this plugin:
       to be automatically loaded.
       Configured modules are automatically added to initrd-modules.
       If module in question is not supported by the kernel, it is ignored.
-
-    - initrd-stage-firmware:
-      (boolean; default: False)
-      When building initrd, required firmware is automatically added based
-      on the included kernel modules. By default required firmware is searched
-      in the install directory of the current part. This flag allows use of
-      firmware from the stage directory instead.
 
     - initrd-firmware:
       (array of string; default: none)
@@ -87,10 +90,6 @@ The following initramfs-specific options are provided by this plugin:
       During build it will be expanded to ${CRAFT_STAGE}/{initrd-addon}
       Default: none
 
-    - initrd-add-ppa
-      (boolean; default: True)
-      controls if the snappy-dev PPA should be added to the system
-
 This plugin support cross compilation, for which plugin expects
 the build-environment is comfigured accordingly and has foreign architectures
 setup accordingly.
@@ -116,15 +115,15 @@ class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
     plugin: Literal["initrd"] = "initrd"
 
     initrd_build_efi_image: bool = False
+    initrd_efi_image_key: str | None = None
+    initrd_efi_image_cert: str | None = None
     initrd_modules: list[str] | None = None
     initrd_configured_modules: list[str] | None = None
-    initrd_stage_firmware: bool = False
     initrd_firmware: list[str] | None = None
     initrd_compression: str | None = None
     initrd_compression_options: list[str] | None = None
     initrd_overlay: str | None = None
     initrd_addons: list[str] | None = None
-    initrd_add_ppa: bool = True
 
     # part properties required by the plugin
     @pydantic.model_validator(mode="after")
@@ -134,6 +133,18 @@ class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
         if self.initrd_compression_options and not self.initrd_compression:
             raise ValueError(
                 "initrd-compression-options requires also initrd-compression to be defined."
+            )
+
+        # validate if initrd-efi-image-key or initrd-efi-image-cert is set
+        # initrd-build-efi-image is also set
+        if (self.initrd_efi_image_key or self.initrd_efi_image_cert) and not (
+            self.initrd_build_efi_image
+            and self.initrd_efi_image_key
+            and self.initrd_efi_image_cert
+        ):
+            raise ValueError(
+                "initrd-efi-image-key and initrd-efi-image-cert must be both set if any is set"
+                "used when initrd-build-efi-image is enabled."
             )
         return self
 
@@ -151,6 +162,17 @@ class InitrdPlugin(plugins.Plugin):
         self._target_arch = self._part_info.target_arch
         target_arch = self._part_info.target_arch
         self._deb_arch = _kernel_build.get_deb_architecture(target_arch)
+        # check if we are cross building
+        self._cross_building = False
+        if (
+            self._part_info.project_info.host_arch
+            != self._part_info.project_info.target_arch
+        ):
+            self._cross_building = True
+        base = self._part_info.base
+        self._ubuntu_series = "noble"
+        if base == "core22":
+            self._ubuntu_series = "jammy"
 
     @overrides
     def get_build_snaps(self) -> set[str]:  # pylint: disable=missing-function-docstring
@@ -161,33 +183,18 @@ class InitrdPlugin(plugins.Plugin):
         self,
     ) -> set[str]:  # pylint: disable=missing-function-docstring
         build_packages = {
-            "bc",
-            "binutils",
-            "fakeroot",
+            "curl",
             "dracut-core",
-            "kmod",
-            "kpartx",
-            "systemd",
+            "fakechroot",
+            "fakeroot",
         }
-
-        # install correct initramfs compression tool
-        if self.options.initrd_compression == "lz4":
-            build_packages |= {"lz4"}
-        elif self.options.initrd_compression == "xz":
-            build_packages |= {"xz-utils"}
-        elif (
-            not self.options.initrd_compression
-            or self.options.initrd_compression == "zstd"
-        ):
-            build_packages |= {"zstd"}
-
-        if self.options.initrd_build_efi_image:
-            build_packages |= {"llvm"}
-
-        # add snappy ppa to get correct initrd tools
-        if self.options.initrd_add_ppa:
-            _initrd_build.add_snappy_ppa(with_sudo=False)
-
+        # if runnning as non-root and cross-building
+        # we need libfake{ch}root for the target arch
+        if self._cross_building and (os.getuid() != 0):
+            build_packages |= {
+                f"libfakechroot:{self._target_arch}",
+                f"libfakeroot:{self._target_arch}",
+            }
         return build_packages
 
     @overrides
@@ -195,7 +202,12 @@ class InitrdPlugin(plugins.Plugin):
         self,
     ) -> dict[str, str]:  # pylint: disable=missing-function-docstring
         return {
-            "UC_INITRD_DEB": "${CRAFT_PART_BUILD}/ubuntu-core-initramfs",
+            "UC_INITRD_ROOT_NAME": "uc-initramfs-build-root",
+            "UC_INITRD_ROOT": "${CRAFT_PART_SRC}/${UC_INITRD_ROOT_NAME}",
+            "KERNEL_MODULES": "${CRAFT_STAGE}/modules",
+            "KERNEL_FIRMWARE": "${CRAFT_STAGE}/firmware",
+            "UBUNTU_SERIES": self._ubuntu_series,
+            "UBUNTU_CORE_BASE": self._part_info.base,
         }
 
     @overrides
@@ -204,7 +216,6 @@ class InitrdPlugin(plugins.Plugin):
     ) -> list[str]:  # pylint: disable=missing-function-docstring
         logger.info("Getting build commands...")
         return _initrd_build.get_build_commands(
-            target_arch=self._target_arch,
             initrd_modules=self.options.initrd_modules,
             initrd_configured_modules=self.options.initrd_configured_modules,
             initrd_compression=self.options.initrd_compression,
@@ -212,15 +223,11 @@ class InitrdPlugin(plugins.Plugin):
             initrd_firmware=self.options.initrd_firmware,
             initrd_addons=self.options.initrd_addons,
             initrd_overlay=self.options.initrd_overlay,
-            initrd_stage_firmware=self.options.initrd_stage_firmware,
-            build_efi_image=self.options.initrd_build_efi_image,
             initrd_ko_use_workaround=False,
             initrd_default_compression="zstd -1 -T0",
-            initrd_include_extra_modules_conf=True,
-            initrd_tool_pass_root=False,
-            source_dir="${CRAFT_PART_SRC}",
-            install_dir="${CRAFT_PART_INSTALL}",
-            stage_dir="${CRAFT_STAGE}",
+            build_efi_image=self.options.initrd_build_efi_image,
+            efi_image_key=self.options.initrd_efi_image_key,
+            efi_image_cert=self.options.initrd_efi_image_cert,
         )
 
     @classmethod
