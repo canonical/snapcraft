@@ -66,8 +66,11 @@ class Extension(abc.ABC):
         """Return the root snippet to apply."""
 
     @abc.abstractmethod
-    def get_app_snippet(self) -> Dict[str, Any]:
-        """Return the app snippet to apply."""
+    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+        """Return the app snippet to apply.
+
+        :param app_name: the name of the app where the snippet will be applied
+        """
 
     @abc.abstractmethod
     def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
