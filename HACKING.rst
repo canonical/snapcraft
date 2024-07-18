@@ -167,11 +167,11 @@ Commits
 
 Commit messages are based on the `conventional commit`_ style::
 
-  <type>(<optional scope>): <description>
+  <type>[(optional scope)][!]: <description>
 
-  <optional body>
+  [optional body]
 
-  <optional footer>
+  [optional footer]
 
 The commit is divided into three sections: a header, body, and footer.
 
@@ -296,6 +296,16 @@ class name.
 
 If a commit affects many areas of the codebase, the scope should be omitted;
 ``many`` is not an accepted scope.
+
+Breaking changes
+################
+
+If an exclamation point (``!``) is inserted after the type/scope, this means
+that the commit introduces a breaking change.  Including one or more commits
+with an exclamation point in a release will trigger a major version increment.
+
+Breaking changes may also be indicated by including the words ``BREAKING CHANGE``
+in the commit footer.
 
 Description
 ###########
