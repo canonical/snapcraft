@@ -178,13 +178,17 @@ class KernelPlugin(PluginV2):
         build_packages = {
             "bc",
             "binutils",
-            "debhelper",
-            "fakeroot",
-            "gcc",
+            "bison",
             "cmake",
             "cryptsetup",
+            "debhelper",
+            "fakeroot",
+            "flex",
+            "gcc",
             "kmod",
             "kpartx",
+            "libelf-dev",
+            "libssl-dev",
             "systemd",
         }
 
