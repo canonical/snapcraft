@@ -146,10 +146,10 @@ class Snapcraft(Application):
 
         super()._configure_services(provider_name)
 
+    # TODO: remove this override (#4911)
     @property
     def command_groups(self):
         """Short-circuit the standard command groups for now."""
-        # TODO: Remove this once we've got lifecycle commands and version migrated.
         return self._command_groups
 
     @override
