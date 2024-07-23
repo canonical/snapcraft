@@ -1,14 +1,8 @@
 summary: test the validation-set commands
 
-manual: true
-
 environment:
   SNAPCRAFT_ASSERTION_KEY: "$(HOST: echo ${SNAPCRAFT_ASSERTION_KEY})"
   SNAPCRAFT_STORE_CREDENTIALS: "$(HOST: echo ${SNAPCRAFT_STORE_CREDENTIALS_STAGING})"
-  STORE_DASHBOARD_URL: https://dashboard.staging.snapcraft.io
-  STORE_API_URL: https://api.staging.snapcraft.io
-  STORE_UPLOAD_URL: https://storage.staging.snapcraftcontent.com
-  UBUNTU_ONE_SSO_URL: https://login.staging.ubuntu.com
 
 prepare: |
   if [[ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]]; then

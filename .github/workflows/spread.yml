@@ -115,8 +115,7 @@ jobs:
           SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID }}"
           SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY }}"
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/general/store \
-            google:ubuntu-22.04-64:tests/spread/general/validation-sets
+          spread google:ubuntu-22.04-64:tests/spread/store/
 
       - name: Discard spread workers
         if: always()
