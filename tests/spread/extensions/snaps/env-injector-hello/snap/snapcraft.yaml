@@ -1,0 +1,18 @@
+name: env-injector-hello
+version: "1.0"
+summary: test the env-injector extension
+description: This is a basic snap for testing env-injector extension
+
+grade: devel
+base: core24
+confinement: strict
+
+apps:
+  env-hello:
+    command: usr/local/bin/hello
+    extensions: [ env-injector ]
+
+parts:
+  hello:
+    plugin: cmake
+    source: .

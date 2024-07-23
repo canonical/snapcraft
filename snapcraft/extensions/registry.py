@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Dict, List, Type
 
 from snapcraft import errors
 
+from .env_injector import EnvInjectorExtension
 from .gnome import GNOME
 from .kde_neon import KDENeon
 from .kde_neon_6 import KDENeon6
@@ -31,7 +32,6 @@ from .ros2_jazzy import ROS2JazzyExtension
 from .ros2_jazzy_desktop import ROS2JazzyDesktopExtension
 from .ros2_jazzy_ros_base import ROS2JazzyRosBaseExtension
 from .ros2_jazzy_ros_core import ROS2JazzyRosCoreExtension
-from .env_injector import EnvInjectorExtension
 
 if TYPE_CHECKING:
     from .extension import Extension
@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     ExtensionType = Type[Extension]
 
 _EXTENSIONS: Dict[str, "ExtensionType"] = {
+    "env-injector": EnvInjectorExtension,
     "gnome": GNOME,
     "ros2-humble": ROS2HumbleExtension,
     "ros2-humble-ros-core": ROS2HumbleRosCoreExtension,
@@ -50,7 +51,6 @@ _EXTENSIONS: Dict[str, "ExtensionType"] = {
     "ros2-jazzy-desktop": ROS2JazzyDesktopExtension,
     "kde-neon": KDENeon,
     "kde-neon-6": KDENeon6,
-    "env-injector": EnvInjectorExtension,
 }
 
 
