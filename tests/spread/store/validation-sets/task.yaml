@@ -43,6 +43,12 @@ execute: |
 
   snapcraft list-validation-sets | MATCH testset
 
+  snapcraft edit-validation-sets "$(snapcraft whoami | yq .id)" testset 1 --key-name testspreadkey || true
+
+  cat debug-before.txt
+  echo "-------"
+  cat debug-after.txt
+
   # let's see something
   exit 1
 

@@ -11,7 +11,6 @@ fi
 
 cat "$validation_set_file" > debug-before.txt
 
-#sed -i "s/  revision:.*/  revision: $revision/g" $validation_set_file
-echo "  revision: 1" >> $validation_set_file
+sed -i "s/  revision:.*/  revision: $revision/g" $validation_set_file
 
 cat "$validation_set_file" > debug-after.txt
