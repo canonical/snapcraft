@@ -6,8 +6,7 @@ environment:
 
 prepare: |
   if [[ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]]; then
-    echo "No credentials set in env SNAPCRAFT_STORE_CREDENTIALS"
-    exit 1
+    ERROR "No credentials set in env SNAPCRAFT_STORE_CREDENTIALS"
   fi
 
   if [[ -z "$SNAPCRAFT_ASSERTION_KEY" ]]; then
