@@ -6,6 +6,7 @@ environment:
 
 execute: |
   snap info test-snapcraft-assertions
+  exit 1
 #prepare: |
 #  unset SNAPCRAFT_BUILD_ENVIRONMENT
 #  if [[ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]]; then
