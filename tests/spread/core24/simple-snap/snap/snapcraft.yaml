@@ -1,4 +1,4 @@
-name: simple-snap
+name: test-snapcraft-assertions
 version: "1.0"
 summary: Build a simple confined snap
 description: |
@@ -7,6 +7,7 @@ description: |
 base: core24
 
 confinement: strict
+grade: strict
 
 apps:
   hello:
