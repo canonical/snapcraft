@@ -14,9 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import platform
 import textwrap
 from dataclasses import dataclass
+from typing import List, Optional
 from unittest import mock
 
 from testtools import TestCase
@@ -25,14 +27,13 @@ from snapcraft_legacy.plugins.v2.initrd import InitrdPlugin
 
 
 class Initrdv2PluginProperties:
-    initrd_modules: [str] = None
-    initrd_configured_modules: [str] = None
-    initrd_firmware: [str] = None
-    initrd_compression: [str] = None
-    initrd_compression_options: [str] = None
-    initrd_overlay: str = None
-    initrd_addons: [str] = None
-    initrd_add_ppa: bool = False
+    initrd_modules: Optional[List[str]]
+    initrd_configured_modules: Optional[List[str]]
+    initrd_firmware: Optional[List[str]]
+    initrd_compression: Optional[str]
+    initrd_compression_options: Optional[List[str]]
+    initrd_overlay: Optional[str]
+    initrd_addons: Optional[List[str]]
 
 
 class TestPluginInitrd(TestCase):
@@ -65,10 +66,10 @@ class TestPluginInitrd(TestCase):
             initrd_compression_options = initrdcompressionoptions
             initrd_overlay = initrdoverlay
             initrd_addons = initrdaddons
-            # Ensure that the PPA is not added so we don't cause side-effects
-            initrd_add_ppa = False
 
         target_arch = _DEB_ARCH_TRANSLATIONS[arch]
+        # plugin used os.getenv("SNAP_ARCH") to determine host arch
+        os.environ["SNAP_ARCH"] = _DEB_ARCH_TRANSLATIONS[platform.machine()]
 
         with mock.patch(
             "snapcraft_legacy.plugins.v2.initrd._get_target_architecture",
@@ -100,10 +101,6 @@ class TestPluginInitrd(TestCase):
                         "items": {"type": "string"},
                         "default": [],
                     },
-                    "initrd-stage-firmware": {
-                        "type": "boolean",
-                        "default": False,
-                    },
                     "initrd-firmware": {
                         "type": "array",
                         "minitems": 1,
@@ -133,10 +130,6 @@ class TestPluginInitrd(TestCase):
                         "items": {"type": "string"},
                         "default": [],
                     },
-                    "initrd-add-ppa": {
-                        "type": "boolean",
-                        "default": True,
-                    },
                 },
             },
         )
@@ -147,46 +140,23 @@ class TestPluginInitrd(TestCase):
         self.assertEqual(
             plugin.get_build_packages(),
             {
-                "bc",
-                "binutils",
+                "curl",
+                "fakechroot",
                 "fakeroot",
-                "dracut-core",
-                "kmod",
-                "kpartx",
-                "lz4",
-                "systemd",
             },
         )
 
-    def test_get_base_build_packages_lz4(self):
-        plugin = self._setup_test(initrdcompression="lz4")
+    def test_get_base_build_packages_armhf(self):
+        plugin = self._setup_test(arch="armv7l")
+        # default initrd compression is zstd
         self.assertEqual(
             plugin.get_build_packages(),
             {
-                "bc",
-                "binutils",
+                "curl",
+                "fakechroot",
                 "fakeroot",
-                "dracut-core",
-                "kmod",
-                "kpartx",
-                "lz4",
-                "systemd",
-            },
-        )
-
-    def test_get_base_build_packages_xz(self):
-        plugin = self._setup_test(initrdcompression="xz")
-        self.assertEqual(
-            plugin.get_build_packages(),
-            {
-                "bc",
-                "binutils",
-                "fakeroot",
-                "dracut-core",
-                "kmod",
-                "kpartx",
-                "xz-utils",
-                "systemd",
+                "libfakechroot:armhf",
+                "libfakeroot:armhf",
             },
         )
 
@@ -205,7 +175,6 @@ class TestPluginInitrd(TestCase):
         self.assertEqual(opt.initrd_compression_options, None)
         self.assertEqual(opt.initrd_overlay, None)
         self.assertEqual(opt.initrd_addons, None)
-        self.assertFalse(opt.initrd_add_ppa)
 
     def test_check_configuration_zstd_compression(self):
         plugin = self._setup_test(
@@ -220,7 +189,6 @@ class TestPluginInitrd(TestCase):
         self.assertIs(opt.initrd_compression_options, None)
         self.assertIs(opt.initrd_overlay, None)
         self.assertIs(opt.initrd_addons, None)
-        self.assertFalse(opt.initrd_add_ppa)
 
     def test_check_configuration_lz4_custom_compression(self):
         plugin = self._setup_test(
@@ -236,7 +204,6 @@ class TestPluginInitrd(TestCase):
         self.assertEqual(opt.initrd_compression_options, ["-9", "-l"])
         self.assertIs(opt.initrd_overlay, None)
         self.assertIs(opt.initrd_addons, None)
-        self.assertFalse(opt.initrd_add_ppa)
 
     def test_check_get_build_environment(self):
         plugin = self._setup_test()
@@ -244,17 +211,41 @@ class TestPluginInitrd(TestCase):
         self.assertEqual(
             plugin.get_build_environment(),
             {
-                "UC_INITRD_DEB": "${SNAPCRAFT_PART_BUILD}/ubuntu-core-initramfs",
+                "UC_INITRD_ROOT_NAME": "uc-initramfs-build-root",
+                "UC_INITRD_ROOT": "${SNAPCRAFT_PART_SRC}/${UC_INITRD_ROOT_NAME}",
+                "KERNEL_MODULES": "${SNAPCRAFT_STAGE}/modules",
+                "KERNEL_FIRMWARE": "${SNAPCRAFT_STAGE}/firmware",
+                "UBUNTU_SERIES": "focal",
+                "UBUNTU_CORE_BASE": "core20",
+                "CRAFT_ARCH_TRIPLET_BUILD_FOR": "${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                "CRAFT_ARCH_BUILD_FOR": _DEB_ARCH_TRANSLATIONS[platform.machine()],
+                "CRAFT_ARCH_BUILD_ON": _DEB_ARCH_TRANSLATIONS[platform.machine()],
+                "CRAFT_STAGE": "${SNAPCRAFT_STAGE}",
+                "CRAFT_PART_SRC": "${SNAPCRAFT_PART_SRC}",
+                "CRAFT_PART_BUILD": "${SNAPCRAFT_PART_BUILD}",
+                "CRAFT_PART_INSTALL": "${SNAPCRAFT_PART_INSTALL}",
             },
         )
 
-    def test_check_get_build_environment_compiler_paths(self):
-        plugin = self._setup_test()
+    def test_check_get_build_environment_armhf(self):
+        plugin = self._setup_test(arch="armv7l")
 
         self.assertEqual(
             plugin.get_build_environment(),
             {
-                "UC_INITRD_DEB": "${SNAPCRAFT_PART_BUILD}/ubuntu-core-initramfs",
+                "UC_INITRD_ROOT_NAME": "uc-initramfs-build-root",
+                "UC_INITRD_ROOT": "${SNAPCRAFT_PART_SRC}/${UC_INITRD_ROOT_NAME}",
+                "KERNEL_MODULES": "${SNAPCRAFT_STAGE}/modules",
+                "KERNEL_FIRMWARE": "${SNAPCRAFT_STAGE}/firmware",
+                "UBUNTU_SERIES": "focal",
+                "UBUNTU_CORE_BASE": "core20",
+                "CRAFT_ARCH_TRIPLET_BUILD_FOR": "${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                "CRAFT_ARCH_BUILD_FOR": "armhf",
+                "CRAFT_ARCH_BUILD_ON": _DEB_ARCH_TRANSLATIONS[platform.machine()],
+                "CRAFT_STAGE": "${SNAPCRAFT_STAGE}",
+                "CRAFT_PART_SRC": "${SNAPCRAFT_PART_SRC}",
+                "CRAFT_PART_BUILD": "${SNAPCRAFT_PART_BUILD}",
+                "CRAFT_PART_INSTALL": "${SNAPCRAFT_PART_INSTALL}",
             },
         )
 
@@ -264,29 +255,31 @@ class TestPluginInitrd(TestCase):
         # we need to get build environment
         plugin.get_build_environment()
         build_commands = plugin.get_build_commands()
+
         assert _is_sub_array(build_commands, _initrd_modules_empty_cmd)
         assert _is_sub_array(build_commands, _initrd_configured_modules_empty_cmd)
         assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _download_initrd_fnc)
-        assert _is_sub_array(build_commands, _get_initrd_cmd)
-        assert _is_sub_array(build_commands, _download_snapd_fnc)
-        assert _is_sub_array(build_commands, _get_snapd_cmd)
+        assert _is_sub_array(build_commands, _setup_ubuntu_base_chroot_fnc)
+        assert _is_sub_array(build_commands, _chroot_add_snappy_dev_ppa_fnc)
+        assert _is_sub_array(build_commands, _chroot_run_cmd_fnc)
+        assert _is_sub_array(build_commands, _setup_initrd_chroot_fnc)
+        assert _is_sub_array(build_commands, _check_for_stage_firmware_cmd)
+        assert _is_sub_array(build_commands, _setup_initrd_build_env_cmd)
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
         assert _is_sub_array(build_commands, _install_initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _configure_initrd_modules_cmd)
         assert _is_sub_array(build_commands, _initrd_overlay_features_cmd)
         assert not _is_sub_array(build_commands, _install_initrd_firmware_cmd)
         assert not _is_sub_array(build_commands, _install_initrd_addons_cmd)
         assert not _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
         assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
-        assert _is_sub_array(build_commands, _initrd_check_firmware_part)
-        assert _is_sub_array(build_commands, _initrd_tool_cmd)
-        assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
+        assert not _is_sub_array(build_commands, _update_initrd_compression_lz4_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_cp_modules_conf_cmd)
         assert _is_sub_array(build_commands, _create_inird_cmd)
+        assert _is_sub_array(build_commands, _install_inird_cmd)
 
-    def test_check_get_build_command_defconfig_configs_no_firmware_lz4(self):
+    def test_check_get_build_command_custom_comp_modules_firmw_addons(self):
         plugin = self._setup_test(
             initrdcompression="lz4",
             initrdcompressionoptions=["-9", "-l"],
@@ -305,54 +298,29 @@ class TestPluginInitrd(TestCase):
         assert _is_sub_array(build_commands, _initrd_modules_cmd)
         assert _is_sub_array(build_commands, _initrd_configured_modules_empty_cmd)
         assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _download_initrd_fnc)
-        assert _is_sub_array(build_commands, _get_initrd_cmd)
-        assert _is_sub_array(build_commands, _download_snapd_fnc)
-        assert _is_sub_array(build_commands, _get_snapd_cmd)
+        assert _is_sub_array(build_commands, _link_files_fnc)
+        assert _is_sub_array(build_commands, _setup_ubuntu_base_chroot_fnc)
+        assert _is_sub_array(build_commands, _chroot_add_snappy_dev_ppa_fnc)
+        assert _is_sub_array(build_commands, _chroot_run_cmd_fnc)
+        assert _is_sub_array(build_commands, _setup_initrd_chroot_fnc)
+        assert _is_sub_array(build_commands, _check_for_stage_firmware_cmd)
+        assert _is_sub_array(build_commands, _setup_initrd_build_env_cmd)
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
         assert _is_sub_array(build_commands, _install_initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _configure_initrd_modules_cmd)
         assert _is_sub_array(build_commands, _initrd_overlay_features_cmd)
         assert _is_sub_array(build_commands, _install_initrd_firmware_cmd)
         assert _is_sub_array(build_commands, _install_initrd_addons_cmd)
         assert not _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
         assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
-        assert _is_sub_array(build_commands, _initrd_check_firmware_stage)
-        assert _is_sub_array(build_commands, _initrd_tool_cmd)
-        assert _is_sub_array(build_commands, _update_initrd_compression_cmd)
+        assert _is_sub_array(build_commands, _update_initrd_compression_lz4_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
-        assert _is_sub_array(build_commands, _create_inird_stage_firmware_cmd)
-
-    def test_check_get_build_command_unknown_compiler(self):
-        plugin = self._setup_test()
-
-        # we need to get build environment
-        plugin.get_build_environment()
-        build_commands = plugin.get_build_commands()
-        assert _is_sub_array(build_commands, _initrd_modules_empty_cmd)
-        assert _is_sub_array(build_commands, _initrd_configured_modules_empty_cmd)
-        assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _download_initrd_fnc)
-        assert _is_sub_array(build_commands, _get_initrd_cmd)
-        assert _is_sub_array(build_commands, _download_snapd_fnc)
-        assert _is_sub_array(build_commands, _get_snapd_cmd)
-        assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
-        assert _is_sub_array(build_commands, _install_initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _configure_initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _initrd_overlay_features_cmd)
-        assert not _is_sub_array(build_commands, _install_initrd_firmware_cmd)
-        assert not _is_sub_array(build_commands, _install_initrd_addons_cmd)
-        assert not _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
-        assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
-        assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
-        assert _is_sub_array(build_commands, _initrd_check_firmware_part)
-        assert _is_sub_array(build_commands, _initrd_tool_cmd)
-        assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
-        assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_cp_modules_conf_cmd)
         assert _is_sub_array(build_commands, _create_inird_cmd)
+        assert _is_sub_array(build_commands, _install_inird_cmd)
+        assert not _is_sub_array(build_commands, _create_efi_image_cmd)
 
-    def test_check_get_build_command_config_flavour_configs(self):
+    def test_check_get_build_command_comp_modules_modules_configured_overlay(self):
         plugin = self._setup_test(
             initrdmodules=["dm-crypt", "slimbus"],
             initrdconfiguredmodules=["libarc4"],
@@ -366,26 +334,29 @@ class TestPluginInitrd(TestCase):
         assert _is_sub_array(build_commands, _initrd_modules_cmd)
         assert _is_sub_array(build_commands, _initrd_configured_modules_cmd)
         assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _download_initrd_fnc)
-        assert _is_sub_array(build_commands, _get_initrd_cmd)
-        assert _is_sub_array(build_commands, _download_snapd_fnc)
-        assert _is_sub_array(build_commands, _get_snapd_cmd)
+        assert _is_sub_array(build_commands, _link_files_fnc)
+        assert _is_sub_array(build_commands, _setup_ubuntu_base_chroot_fnc)
+        assert _is_sub_array(build_commands, _chroot_add_snappy_dev_ppa_fnc)
+        assert _is_sub_array(build_commands, _chroot_run_cmd_fnc)
+        assert _is_sub_array(build_commands, _setup_initrd_chroot_fnc)
+        assert _is_sub_array(build_commands, _check_for_stage_firmware_cmd)
+        assert _is_sub_array(build_commands, _setup_initrd_build_env_cmd)
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
         assert _is_sub_array(build_commands, _install_initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _configure_initrd_modules_cmd)
         assert _is_sub_array(build_commands, _initrd_overlay_features_cmd)
         assert not _is_sub_array(build_commands, _install_initrd_firmware_cmd)
         assert not _is_sub_array(build_commands, _install_initrd_addons_cmd)
         assert _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
         assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
-        assert _is_sub_array(build_commands, _initrd_check_firmware_part)
-        assert _is_sub_array(build_commands, _initrd_tool_cmd)
         assert _is_sub_array(build_commands, _update_initrd_compression_gz_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_cp_modules_conf_cmd)
         assert _is_sub_array(build_commands, _create_inird_cmd)
+        assert _is_sub_array(build_commands, _install_inird_cmd)
+        assert not _is_sub_array(build_commands, _create_efi_image_cmd)
 
-    def test_check_get_build_command_cross(self):
+    def test_check_get_build_command_modules_modules_configured_overlay_cross(self):
         plugin = self._setup_test(
             initrdmodules=["dm-crypt", "slimbus"],
             initrdconfiguredmodules=["libarc4"],
@@ -399,24 +370,27 @@ class TestPluginInitrd(TestCase):
         assert _is_sub_array(build_commands, _initrd_modules_cmd)
         assert _is_sub_array(build_commands, _initrd_configured_modules_cmd)
         assert _is_sub_array(build_commands, _link_files_fnc)
-        assert _is_sub_array(build_commands, _download_initrd_fnc)
-        assert _is_sub_array(build_commands, _get_initrd_armhf_cmd)
-        assert _is_sub_array(build_commands, _download_snapd_fnc)
-        assert _is_sub_array(build_commands, _get_snapd_armhf_cmd)
+        assert _is_sub_array(build_commands, _link_files_fnc)
+        assert _is_sub_array(build_commands, _setup_ubuntu_base_chroot_fnc)
+        assert _is_sub_array(build_commands, _chroot_add_snappy_dev_ppa_fnc)
+        assert _is_sub_array(build_commands, _chroot_run_cmd_fnc)
+        assert _is_sub_array(build_commands, _setup_initrd_chroot_fnc)
+        assert _is_sub_array(build_commands, _check_for_stage_firmware_cmd)
+        assert _is_sub_array(build_commands, _setup_initrd_build_env_cmd)
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
         assert _is_sub_array(build_commands, _install_initrd_modules_cmd)
-        assert _is_sub_array(build_commands, _configure_initrd_modules_cmd)
         assert _is_sub_array(build_commands, _initrd_overlay_features_cmd)
         assert not _is_sub_array(build_commands, _install_initrd_firmware_cmd)
         assert not _is_sub_array(build_commands, _install_initrd_addons_cmd)
         assert _is_sub_array(build_commands, _intatll_initrd_overlay_cmd)
         assert _is_sub_array(build_commands, _prepare_ininird_features_cmd)
         assert _is_sub_array(build_commands, _clean_old_initrd_cmd)
-        assert _is_sub_array(build_commands, _initrd_check_firmware_part)
-        assert _is_sub_array(build_commands, _initrd_tool_cmd)
-        assert not _is_sub_array(build_commands, _update_initrd_compression_cmd)
+        assert not _is_sub_array(build_commands, _update_initrd_compression_lz4_cmd)
         assert _is_sub_array(build_commands, _initrd_tool_workaroud_cmd)
+        assert _is_sub_array(build_commands, _initrd_tool_cp_modules_conf_cmd)
         assert _is_sub_array(build_commands, _create_inird_cmd)
+        assert _is_sub_array(build_commands, _install_inird_cmd)
+        assert not _is_sub_array(build_commands, _create_efi_image_cmd)
 
 
 def _is_sub_array(array, sub_array):
@@ -449,56 +423,114 @@ def _is_sub_array(array, sub_array):
 _DEB_ARCH_TRANSLATIONS = {
     "aarch64": "arm64",
     "armv7l": "armhf",
-    "i686": "i386",
     "riscv64": "riscv64",
     "x86_64": "amd64",
 }
 
+_SNAPPY_DEV_KEY_FINGERPRINT = "F1831DDAFC42E99D"
 
-_initrd_modules_empty_cmd = ['initrd_installed_kernel_modules=""']
+_initrd_modules_empty_cmd = [
+    textwrap.dedent(
+        """
+        # list of kernel modules to be installed in the initrd
+        initrd_installed_kernel_modules=""
+        """
+    )
+]
 
-_initrd_modules_cmd = ['initrd_installed_kernel_modules="dm-crypt slimbus"']
+_initrd_modules_cmd = [
+    textwrap.dedent(
+        """
+        # list of kernel modules to be installed in the initrd
+        initrd_installed_kernel_modules="dm-crypt slimbus"
+        """
+    )
+]
 
-_initrd_configured_modules_empty_cmd = ['initrd_configured_kernel_modules=""']
+_initrd_configured_modules_empty_cmd = [
+    textwrap.dedent(
+        """
+        # list of kernel modules in the initrd to be auto loaded
+        # any module in this list implies it will be added to initrd
+        initrd_configured_kernel_modules=""
+        """
+    )
+]
 
-_initrd_configured_modules_cmd = ['initrd_configured_kernel_modules="libarc4"']
+_initrd_configured_modules_cmd = [
+    textwrap.dedent(
+        """
+        # list of kernel modules in the initrd to be auto loaded
+        # any module in this list implies it will be added to initrd
+        initrd_configured_kernel_modules="libarc4"
+        """
+    )
+]
 
 _link_files_fnc = [
     textwrap.dedent(
         """
-        # link files, accept wild cards
+        # link files helper, accept wild cards
         # 1: reference dir, 2: file(s) including wild cards, 3: dst dir
+        # 4: quiet mode [ "-quiet" ] (optional)
         link_files() {
+            set +x
+            link_files_impl "${@}"
+            local retVal=$?
+            set -x
+            return ${retVal}
+        }
+
+        # link files helper implementation, accept wild cards
+        # 1: reference dir, 2: file(s) including wild cards, 3: dst dir
+        # 4: quiet mode [ "-quiet" ] (optional)
+        link_files_impl() {
+            if [ -z "${2}" ]; then
+                return 0
+            fi
+            local quiet="${4:--noisy}"
+            local f
             if [ "${2}" = "*" ]; then
-                for f in $(ls ${1})
+                while IFS= read -r -d $'\\0' f
                 do
-                    link_files "${1}" "${f}" "${3}"
-                done
+                    link_files_impl "${1}" "${f}" "${3}" "${quiet}"
+                done < <(find "${1}" -maxdepth 1 -mindepth 1 -printf '%P\\0')
                 return 0
             fi
             if [ -d "${1}/${2}" ]; then
-                for f in $(ls ${1}/${2})
+                while IFS= read -r -d $'\\0' f
                 do
-                    link_files "${1}" "${2}/${f}" "${3}"
-                done
+                    link_files_impl "${1}" "${2}/${f}" "${3}" "${quiet}"
+                done < <(find "${1}/${2}" -maxdepth 1 -mindepth 1 -printf '%P\\0')
                 return 0
             fi
 
-            local found=""
-            for f in $(ls ${1}/${2})
+            local found searchdir basename rel_path dir_path
+            searchdir=$(dirname "${2}")
+            basename=$(basename "${2}")
+            if ! compgen -G "${1}/${searchdir}" > /dev/null; then
+                echo "search pattern <${1}/${searchdir}> <${basename}> does not exist"
+                return 1
+            fi
+            # shellcheck disable=SC2086 # SC2086 does not apply, searchdir can contain wild cards, it cannot be quoted
+            while IFS= read -r -d $'\\0' f
             do
-                if [[ -L "${f}" ]]; then
-                    local rel_path=$( realpath --no-symlinks --relative-to=${1} ${f} )
+                if [[ -d "${f}" ]]; then
+                    link_files_impl "${1}" "${rel_path}" "${3}" "${quiet}"
                 else
-                    local rel_path=$( realpath -se --relative-to=${1} ${f} )
+                    if [[ -L "${f}" ]]; then
+                        rel_path=$( realpath --no-symlinks --relative-to="${1}" "${f}" )
+                    else
+                        rel_path=$( realpath -se --relative-to="${1}" "${f}" )
+                    fi
+                    dir_path=$(dirname "${rel_path}")
+                    mkdir -p "${3}/${dir_path}"
+                    [ "${quiet}" != "-quiet" ] && echo "installing ${f} to ${3}/${dir_path}"
+                    ln -f "${f}" "${3}/${dir_path}"
                 fi
-                local dir_path=$(dirname ${rel_path})
-                mkdir -p ${3}/${dir_path}
-                echo "installing ${f} to ${3}/${dir_path}"
-                ln -f ${f} ${3}/${dir_path}
                 found="yes"
-            done
-            if [ "yes" = "${found}" ]; then
+            done < <(find "${1}"/${searchdir} -maxdepth 1 -mindepth 1 -name "${basename}" -printf '%p\\0')
+            if [ "yes" = "${found:-}" ]; then
                 return 0
             else
                 return 1
@@ -508,275 +540,448 @@ _link_files_fnc = [
     )
 ]
 
-_parts_source_dir = "${SNAPCRAFT_PART_SRC}"
 
-_download_initrd_fnc = [
+_setup_ubuntu_base_chroot_fnc = [
     textwrap.dedent(
         """
-        # Helper to download code initrd deb package
-        # 1: arch, 2: output dir 3: source dir
-        download_core_initrd() {
-            # skip download if file already exist
-            if ! ls ${3}/ubuntu-core-initramfs_*.deb 1> /dev/null 2>&1; then
-                apt-get download ubuntu-core-initramfs:${1}
-                mv ubuntu-core-initramfs_*.deb ${3}
+        # setup chroot from Ubuntu Base
+        # 1: work dir, 2: ubuntu series
+        setup_chroot_base() {
+            local work_dir="${1}"
+            local series="${2}"
+            local ubuntu_base="${work_dir}/ubuntu-base-${series}-${CRAFT_ARCH_BUILD_FOR}.tar.gz"
+            rm -rf "${ubuntu_base}"
+            curl \\
+                "https://cdimage.ubuntu.com/ubuntu-base/${series}/daily/current/${series}-base-${CRAFT_ARCH_BUILD_FOR}.tar.gz" \\
+                --output "${ubuntu_base}"
+            rm -rf "${UC_INITRD_ROOT}"
+            mkdir -p "${UC_INITRD_ROOT}"
+            tar --extract --file "${ubuntu_base}" --directory "${UC_INITRD_ROOT}"
+            cp --no-dereference /etc/resolv.conf "${UC_INITRD_ROOT}/etc/resolv.conf"
+            # if not running as root, setup build root env with fakechroot, fakeroot
+            if [ "$(whoami)" != "root" ]; then
+                cp --no-dereference --recursive \\
+                    /usr/lib/"${CRAFT_ARCH_TRIPLET_BUILD_FOR}"/fakechroot \\
+                    "${UC_INITRD_ROOT}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
+                cp --no-dereference --recursive \\
+                    /usr/lib/"${CRAFT_ARCH_TRIPLET_BUILD_FOR}"/libfakeroot \\
+                    "${UC_INITRD_ROOT}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
             fi
-            # unpack dep to the target dir
-            dpkg -x ${3}/ubuntu-core-initramfs_*.deb ${2}
+            # setup /dev/null as it's used to mask systemd service files
+            touch "${UC_INITRD_ROOT}/dev/null"
         }
         """
     )
 ]
 
-_get_initrd_cmd = [
+_chroot_add_snappy_dev_ppa_fnc = [
     textwrap.dedent(
         """
-        echo "Getting ubuntu-core-initrd...."
-        # only download u-c-initrd deb if needed
-        if [ ! -e ${{UC_INITRD_DEB}} ]; then
-            download_core_initrd {arch} ${{UC_INITRD_DEB}} {parts_source_dir}
-        fi
-        """.format(
-            arch=_DEB_ARCH_TRANSLATIONS[platform.machine()],
-            parts_source_dir=_parts_source_dir,
-        )
-    )
-]
+        # add snappy-dev/image ppa to the chroot
+        # import ppa keys for the ppa
+        # 1: work dir, 2: ubuntu series, 3: ppa fingerprint
+        chroot_add_snappy_dev_ppa() {
+            local work_dir="${1}"
+            local series="${2}"
+            local key_fingerprint="${3}"
+            local source_file="snappy-dev-image.sources"
+            local key_file="/etc/apt/keyrings/snappy-dev-image.gpg"
+            local chroot_home="${UC_INITRD_ROOT}"
+            local gnupg_home="${work_dir}/.gnupg"
+            local snappy_key="${gnupg_home}/snappy-dev.kbx"
+            rm -rf "${gnupg_home}"
+            mkdir --mode 700 "${gnupg_home}"
+            gpg \\
+                --homedir "${gnupg_home}" \\
+                --no-default-keyring \\
+                --keyring "${snappy_key}" \\
+                --keyserver keyserver.ubuntu.com \\
+                --recv-keys "${key_fingerprint}"
 
+            mkdir -p "$(dirname "${chroot_home}/${key_file}")"
+            rm -rf "${chroot_home:?}/${key_file}"
+            gpg \\
+                --homedir "${gnupg_home}" \\
+                --no-default-keyring \\
+                --keyring "${snappy_key}" \\
+                --export \\
+                --out "${chroot_home}/${key_file}"
 
-_get_initrd_armhf_cmd = [
-    textwrap.dedent(
-        """
-        echo "Getting ubuntu-core-initrd...."
-        # only download u-c-initrd deb if needed
-        if [ ! -e ${{UC_INITRD_DEB}} ]; then
-            download_core_initrd {arch} ${{UC_INITRD_DEB}} {parts_source_dir}
-        fi
-        """.format(
-            arch="armhf", parts_source_dir=_parts_source_dir
-        )
-    )
-]
-
-_download_snapd_fnc = [
-    textwrap.dedent(
-        """
-        # Helper to download snap-bootstrap from snapd deb package
-        # 1: arch, 2: output dir 3: source dir
-        download_snap_bootstrap() {
-            # skip download if file already exist
-            if ! ls ${3}/snapd_*.deb 1> /dev/null 2>&1; then
-                apt-get download snapd:${1}
-                mv snapd_*.deb ${3}
-            fi
-            # unpack dep to the target dir
-            dpkg -x ${3}/snapd_*.deb ${2}
+            tee "${chroot_home}/etc/apt/sources.list.d/${source_file}" <<EOF
+        Types: deb
+        URIs: https://ppa.launchpadcontent.net/snappy-dev/image/ubuntu/
+        Suites: ${series}
+        Components: main
+        Signed-By: ${key_file}
+        EOF
         }
         """
     )
 ]
 
-_get_snapd_cmd = [
+
+_chroot_run_cmd_fnc = [
     textwrap.dedent(
         """
-        echo "Getting snapd deb for snap bootstrap..."
-        # only download again if files does not exist, otherwise
-        # assume we are re-running build
-        if [ ! -e ${{UC_INITRD_DEB}}/usr/lib/snapd ]; then
-            download_snap_bootstrap {arch} ${{UC_INITRD_DEB}} {parts_source_dir}
-        fi
-        """.format(
-            arch=_DEB_ARCH_TRANSLATIONS[platform.machine()],
-            parts_source_dir=_parts_source_dir,
-        )
+        # clean any existing mounts for the chroot function
+        _clean_chroot() {
+            local chroot_home="${1}"
+            if [ -z "${chroot_home}" ]; then
+                echo "Missing chroot home to clean"
+                return
+            fi
+            for m in dev/pts dev/null dev/zero dev/full dev/random dev/urandom dev/tty dev proc run sys
+            do
+                if grep "${chroot_home}/${m}" /proc/self/mounts > /dev/null; then
+                    umount "${chroot_home}/${m}"
+                fi
+            done
+        }
+
+        _chroot_configured="no"
+        # setup necessary mounts for the chroot function
+        _setup_chroot() {
+            if [ "${_chroot_configured}" = "yes" ]; then
+                return
+            fi
+            local chroot_home="${1}"
+            for m in proc run sys dev dev/pts dev/null dev/zero dev/full dev/random dev/urandom dev/tty
+            do
+                mount --bind "/${m}" "${chroot_home}/${m}"
+            done
+            _chroot_configured="yes"
+        }
+
+        # run command in true chroot
+        _run_truechroot() {
+            local chroot_home="${1}"
+            local cmd="${2}"
+            trap "_clean_chroot ${chroot_home}" EXIT
+            _setup_chroot "${chroot_home}"
+            chroot "${chroot_home}" /bin/bash -c "${cmd}"
+        }
+
+        # run command in fake chroot
+        _run_fakechroot() {
+            local chroot_home="${1}"
+            local cmd="${2}"
+            if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
+                ld_path="${LD_LIBRARY_PATH}:/usr/lib/systemd:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/fakechroot:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libfakeroot"
+            else
+                ld_path="${LD_LIBRARY_PATH}:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/systemd:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/fakechroot:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libfakeroot"
+            fi
+            LD_LIBRARY_PATH="${ld_path}" fakechroot fakeroot chroot "${chroot_home}" /bin/bash -c "${cmd}"
+        }
+
+        # run command with chroot
+        # 1: chroot home, 2: command to run
+        run_chroot() {
+            local chroot_home="${1}"
+            local cmd="${2}"
+            # use true chroot if we have root permissions
+            if [ "$(whoami)" = "root" ]; then
+                _run_truechroot "${chroot_home}" "${cmd}"
+            else
+                _run_fakechroot "${chroot_home}" "${cmd}"
+            fi
+        }
+        """
     )
 ]
 
-_get_snapd_armhf_cmd = [
+_setup_initrd_chroot_fnc = [
     textwrap.dedent(
         """
-        echo "Getting snapd deb for snap bootstrap..."
-        # only download again if files does not exist, otherwise
-        # assume we are re-running build
-        if [ ! -e ${{UC_INITRD_DEB}}/usr/lib/snapd ]; then
-            download_snap_bootstrap {arch} ${{UC_INITRD_DEB}} {parts_source_dir}
-        fi
-        """.format(
-            arch="armhf", parts_source_dir=_parts_source_dir
-        )
+        # setup chroot to build Ubuntu Core initrd
+        # chroot is based on the Ubuntu Base
+        # 1: work dir, 2: ppa fingerprint
+        setup_initrd_chroot() {
+            set +x
+            local work_dir="${1}"
+            local ppa_fingerprint="${2}"
+
+            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.base" ]; then
+                setup_chroot_base "${work_dir}" "${UBUNTU_SERIES}"
+                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.base"
+            fi
+
+            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.ppa" ]; then
+                run_chroot "${UC_INITRD_ROOT}" "apt-get update"
+                run_chroot "${UC_INITRD_ROOT}" "apt-get dist-upgrade -y"
+                run_chroot "${UC_INITRD_ROOT}" "apt-get install --no-install-recommends -y ca-certificates debconf-utils libfakeroot lz4 xz-utils zstd"
+                if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
+                    run_chroot "${UC_INITRD_ROOT}" "apt-get install --no-install-recommends -y systemd"
+                else
+                    run_chroot "${UC_INITRD_ROOT}" "apt-get install --no-install-recommends -y libsystemd-shared"
+                fi
+                chroot_add_snappy_dev_ppa "${work_dir}" "${UBUNTU_SERIES}" "${ppa_fingerprint}"
+                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.ppa"
+            fi
+
+            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.u-c-i" ]; then
+                run_chroot "${UC_INITRD_ROOT}" "apt-get update"
+                run_chroot "${UC_INITRD_ROOT}" "echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections"
+                run_chroot "${UC_INITRD_ROOT}" "DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y snapd ubuntu-core-initramfs"
+                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.u-c-i"
+            fi
+
+            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.firmware" ]; then
+                rm -rf "${UC_INITRD_ROOT}"/usr/lib/firmware/*
+                link_files "${KERNEL_FIRMWARE}" "*" "${UC_INITRD_ROOT}/usr/lib/firmware"
+                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.firmware"
+            fi
+
+            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.modules" ]; then
+                rm -rf "${UC_INITRD_ROOT}"/usr/lib/modules/*
+                link_files "${KERNEL_MODULES}" "*" "${UC_INITRD_ROOT}/usr/lib/modules"
+                # remove potentially dangling source link
+                rm -rf ${UC_INITRD_ROOT}/usr/lib/modules/*/build
+                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.modules"
+            fi
+
+            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.os-release" ]; then
+                cp "/snap/${UBUNTU_CORE_BASE}/current/etc/os-release" "${UC_INITRD_ROOT}/etc/os-release"
+                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.os-release"
+            fi
+            set -x
+        }
+        """
+    )
+]
+
+_check_for_stage_firmware_cmd = [
+    textwrap.dedent(
+        """
+        [ ! -d "${CRAFT_STAGE}/firmware" ] && \\
+            echo -e "firmware directory ${CRAFT_STAGE}/firmware does not exist, ensure part building firmware is run before this part." \\
+                && exit 1
+        """
+    )
+]
+
+_setup_initrd_build_env_cmd = [
+    textwrap.dedent(
+        f"""
+        echo "Preparing Ubuntu Core Initrd chroot build environment..."
+        setup_initrd_chroot "${{CRAFT_PART_SRC}}" "{_SNAPPY_DEV_KEY_FINGERPRINT}"
+        """
     )
 ]
 
 _parse_kernel_release_cmd = [
-    "KERNEL_RELEASE=$(ls ${SNAPCRAFT_STAGE}/modules)",
+    'KERNEL_RELEASE=$(ls "${CRAFT_STAGE}/modules")',
 ]
 
 _install_initrd_modules_cmd = [
-    'echo "Installing ko modules to initrd..."',
-    'install_modules=""',
-    'echo "Gathering module dependencies..."',
-    'install_modules=""',
-    "uc_initrd_feature_kernel_modules=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/kernel-modules",
-    "mkdir -p ${uc_initrd_feature_kernel_modules}",
-    "initramfs_ko_modules_conf=${uc_initrd_feature_kernel_modules}/extra-modules.conf",
-    "touch ${initramfs_ko_modules_conf}",
-    "for m in ${initrd_installed_kernel_modules} ${initrd_configured_kernel_modules}",
-    "do",
-    "\techo ${m} >> ${initramfs_ko_modules_conf}",
-    "done",
-]
+    textwrap.dedent(
+        """
+        echo "Installing ko modules to initrd..."
+        # shellcheck disable=SC2034 #SC2034 does not apply as install_modules not be always used
+        install_modules=""
+        echo "Gathering module dependencies..."
+        uc_initrd_feature_kernel_modules=${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/kernel-modules
+        mkdir -p "${uc_initrd_feature_kernel_modules}"
+        initramfs_ko_modules_conf=${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/extra-modules.conf
+        rm -rf "${initramfs_ko_modules_conf}"
+        for m in ${initrd_installed_kernel_modules} ${initrd_configured_kernel_modules}
+        do
+            echo "${m}" >> "${initramfs_ko_modules_conf}"
+        done
+        [ -e "${initramfs_ko_modules_conf}" ] && sort -fu "${initramfs_ko_modules_conf}" -o "${initramfs_ko_modules_conf}"
 
-_configure_initrd_modules_cmd = [
-    " ".join(
-        [
-            "[ -e ${initramfs_ko_modules_conf} ]",
-            "&&",
-            "sort -fu ${initramfs_ko_modules_conf} -o ${initramfs_ko_modules_conf}",
-        ],
-    ),
-    'echo "Configuring ubuntu-core-initramfs.conf with supported modules"',
-    'echo "If module does not exist, do not include it"',
-    "initramfs_conf_dir=${uc_initrd_feature_kernel_modules}/usr/lib/modules-load.d",
-    "mkdir -p ${initramfs_conf_dir}",
-    "initramfs_conf=${initramfs_conf_dir}/ubuntu-core-initramfs.conf",
-    'echo "# configured modules" > ${initramfs_conf}',
-    "for m in $(cat ${initramfs_ko_modules_conf})",
-    "do",
-    " ".join(
-        [
-            "\tif",
-            "[ -n",
-            '"$(modprobe -n -q --show-depends',
-            "-d ${SNAPCRAFT_STAGE}",
-            '-S "${KERNEL_RELEASE}"',
-            '${m})" ]; then',
-        ],
-    ),
-    "\t\techo ${m} >> ${initramfs_conf}",
-    "\tfi",
-    "done",
+        echo "Configuring ubuntu-core-initramfs.conf with supported modules"
+        echo "If module does not exist, do not include it"
+        initramfs_conf_dir=${uc_initrd_feature_kernel_modules}/usr/lib/modules-load.d
+        mkdir -p "${initramfs_conf_dir}"
+        initramfs_conf=${initramfs_conf_dir}/ubuntu-core-initramfs.conf
+        echo "# configured modules" > "${initramfs_conf}"
+        # shellcheck disable=SC2013 #SC2013 does not apply as array could be env, or file content
+        for m in $(cat ${initramfs_ko_modules_conf})
+        do
+            if [ -n "$(modprobe -n -q --show-depends -d "${CRAFT_STAGE}" -S "${KERNEL_RELEASE}" "${m}")" ] ; then
+                echo "${m}" >> "${initramfs_conf}"
+            fi
+        done
+        """
+    )
 ]
 
 _initrd_overlay_features_cmd = [
-    "uc_initrd_feature_firmware=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/uc-firmware",
-    "mkdir -p ${uc_initrd_feature_firmware}",
-    "uc_initrd_feature_overlay=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/uc-overlay",
-    "mkdir -p ${uc_initrd_feature_overlay}",
+    textwrap.dedent(
+        """
+        uc_initrd_feature_firmware=${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/uc-firmware
+        mkdir -p "${uc_initrd_feature_firmware}"
+        uc_initrd_feature_overlay=${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/uc-overlay
+        mkdir -p "${uc_initrd_feature_overlay}"
+        """
+    )
 ]
 
 _install_initrd_firmware_cmd = [
-    'echo "Installing initrd overlay firmware..."',
-    "for f in firmware/for/wifi firmware/for/webcam",
-    "do",
-    '\tif ! link_files "${SNAPCRAFT_PART_INSTALL}" "${f}" "${uc_initrd_feature_firmware}/lib" ; then',
-    '\t\tif ! link_files "${SNAPCRAFT_STAGE}" "${f}" "${uc_initrd_feature_firmware}/lib" ; then',
-    '\t\t\techo "Missing firmware [${f}], ignoring it"',
-    "\t\tfi",
-    "\tfi",
-    "done",
+    textwrap.dedent(
+        """
+        echo "Installing initrd overlay firmware..."
+        for fw in firmware/for/wifi firmware/for/webcam
+        do
+            # firmware can be from kernel build or from stage
+            # firmware from kernel build takes preference
+            if ! link_files "${CRAFT_PART_INSTALL}" "${fw}" "${uc_initrd_feature_firmware}/usr/lib" ; then
+                if ! link_files "${CRAFT_STAGE}" "${fw}" "${uc_initrd_feature_firmware}/usr/lib"; then
+                    echo "Missing firmware [${fw}], ignoring it"
+                fi
+            fi
+        done
+        """
+    )
 ]
 
 _install_initrd_addons_cmd = [
-    'echo "Installing initrd addons..."',
-    "for a in usr/bin/cryptsetup usr/lib/my-arch/libcrypto.so",
-    "do",
-    '\techo "Copy overlay: ${a}"',
-    '\tlink_files "${SNAPCRAFT_STAGE}" "${a}" "${uc_initrd_feature_overlay}"',
-    "done",
+    textwrap.dedent(
+        """
+        echo "Installing initrd addons..."
+        for a in usr/bin/cryptsetup usr/lib/my-arch/libcrypto.so
+        do
+            echo "Copy overlay: ${a}"
+            link_files "${CRAFT_STAGE}" "${a}" "${uc_initrd_feature_overlay}"
+        done
+        """
+    )
 ]
 
 _intatll_initrd_overlay_cmd = [
-    'link_files "${SNAPCRAFT_STAGE}/my-overlay" "" "${uc_initrd_feature_overlay}"'
+    textwrap.dedent(
+        """
+        link_files "${CRAFT_STAGE}/my-overlay" "*" "${uc_initrd_feature_overlay}"
+        """
+    )
 ]
 
 _prepare_ininird_features_cmd = [
-    'echo "Preparing snap-boostrap initrd feature..."',
-    "uc_initrd_feature_snap_bootstratp=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snap-bootstrap",
-    "mkdir -p ${uc_initrd_feature_snap_bootstratp}",
-    " ".join(
-        [
-            "link_files",
-            '"${UC_INITRD_DEB}" "usr/lib/snapd/snap-bootstrap"',
-            '"${uc_initrd_feature_snap_bootstratp}"',
-        ],
-    ),
-    'link_files "${UC_INITRD_DEB}" "usr/lib/snapd/info" "${uc_initrd_feature_snap_bootstratp}"',
-    "cp ${UC_INITRD_DEB}/usr/lib/snapd/info ${SNAPCRAFT_PART_INSTALL}/snapd-info",
+    textwrap.dedent(
+        """
+        # install selected snap bootstrap
+        echo "Preparing snap-boostrap initrd feature..."
+        uc_initrd_main_lib_snapd=${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/usr/lib/snapd
+        [ -e "${uc_initrd_main_lib_snapd}/snap-bootstrap" ] && ln -f "${UC_INITRD_ROOT}/usr/lib/snapd/snap-bootstrap" \\
+                                                                     "${uc_initrd_main_lib_snapd}/snap-bootstrap"
+        [ -e "${uc_initrd_main_lib_snapd}/info" ] && ln -f "${UC_INITRD_ROOT}/usr/lib/snapd/info" \\
+                                                           "${uc_initrd_main_lib_snapd}/info"
+
+        cp "${UC_INITRD_ROOT}/usr/lib/snapd/info" "${CRAFT_PART_INSTALL}/snapd-info"
+        """
+    )
 ]
 
 _clean_old_initrd_cmd = [
-    "if compgen -G ${SNAPCRAFT_PART_INSTALL}/initrd.img* > /dev/null; then",
-    "\trm -rf ${SNAPCRAFT_PART_INSTALL}/initrd.img*",
-    "fi",
+    textwrap.dedent(
+        """
+        if compgen -G "${CRAFT_PART_INSTALL}/initrd.img*" > /dev/null; then
+            rm -rf "${CRAFT_PART_INSTALL}"/initrd.img*
+        fi
+        """
+    )
 ]
 
-_initrd_check_firmware_stage = [
-    '[ ! -d "${SNAPCRAFT_STAGE}/firmware" ] && echo -e "firmware directory '
-    "${SNAPCRAFT_STAGE}/firmware does not exist, consider using "
-    'initrd-stage-firmware: true/false option" && exit 1'
-]
-
-_initrd_check_firmware_part = [
-    '[ ! -d "${SNAPCRAFT_PART_INSTALL}/lib/firmware" ] && echo -e "firmware directory '
-    "${SNAPCRAFT_PART_INSTALL}/lib/firmware does not exist, consider using "
-    'initrd-stage-firmware: true/false option" && exit 1'
-]
-
-_initrd_tool_cmd = [
-    "ubuntu_core_initramfs=${UC_INITRD_DEB}/usr/bin/ubuntu-core-initramfs",
-]
-
-_update_initrd_compression_cmd = [
-    'echo "Updating compression command to be used for initrd"',
-    "sed -i 's/lz4 -9 -l/lz4 -9 -l/g' ${ubuntu_core_initramfs}",
+_update_initrd_compression_lz4_cmd = [
+    textwrap.dedent(
+        """
+        echo "Updating compression command to be used for initrd"
+        sed -i 's/lz4 -9 -l/lz4 -9 -l/g' "${UC_INITRD_ROOT}/usr/bin/ubuntu-core-initramfs"',
+        """
+    )
 ]
 
 _update_initrd_compression_gz_cmd = [
-    'echo "Updating compression command to be used for initrd"',
-    "sed -i 's/lz4 -9 -l/gzip -7/g' ${ubuntu_core_initramfs}",
+    textwrap.dedent(
+        """
+        echo "Updating compression command to be used for initrd"
+        sed -i 's/lz4 -9 -l/gzip -7/g' "${UC_INITRD_ROOT}/usr/bin/ubuntu-core-initramfs"',
+        """
+    )
 ]
 
 _initrd_tool_workaroud_cmd = [
-    "for feature in kernel-modules snap-bootstrap uc-firmware uc-overlay",
-    "do",
-    " ".join(
-        [
-            '\tlink_files "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/${feature}"',
-            '"*"',
-            '"${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/main"',
-        ],
-    ),
-    "done",
+    textwrap.dedent(
+        """
+        echo "Workaround for bug in ubuntu-core-initramfs"
+        for feature in kernel-modules uc-firmware uc-overlay
+        do
+            link_files "${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/${feature}" \\
+                "*" \\
+                "${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main"
+        done
+
+        # actual ubuntu-core initramfs build is performed in chroot
+        # where tmp is not really tmpfs, avoid excessive use of cp
+        # cp "-ar"/"-aR" -> cp "-lR"
+        sed -i \\
+            -e 's/"cp", "-ar", args./"cp", "-lR", args./g' \\
+            -e 's/"cp", "-aR", args./"cp", "-lR", args./g' \\
+            ${UC_INITRD_ROOT}/usr/bin/ubuntu-core-initramfs
+        if [ "$(whoami)" != "root" ]; then
+            # ubuntu-core-initramfs unsets LD_PRELOAD before invoking dracut
+            # this leads to escaping of fakechroot, disable this
+            sed -i \\
+                -e 's/\\(.*\\)proc_env\\["LD_PRELOAD"\\]\\(.*\\)/\\1# proc_env\\["LD_PRELOAD"\\]\\2/g' \\
+                ${UC_INITRD_ROOT}/usr/bin/ubuntu-core-initramfs
+        fi
+        """
+    )
+]
+
+_initrd_tool_cp_modules_conf_cmd = [
+    textwrap.dedent(
+        """
+        if [ -e "${initramfs_ko_modules_conf}" ]; then
+            if [ "${UBUNTU_SERIES}" = "focal" ]; then
+                cp "${initramfs_ko_modules_conf}" \\
+                   "${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/extra-modules.conf"
+            else
+                cp "${initramfs_ko_modules_conf}" \\
+                   "${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/modules/main/extra-modules.conf"
+            fi
+        fi
+        """
+    )
 ]
 
 _create_inird_cmd = [
-    " ".join(
-        [
-            "${ubuntu_core_initramfs}",
-            "create-initrd",
-            "--root ${UC_INITRD_DEB}",
-            "--kernelver=${KERNEL_RELEASE}",
-            "--kerneldir ${SNAPCRAFT_STAGE}/modules/${KERNEL_RELEASE}",
-            "--firmwaredir ${SNAPCRAFT_PART_INSTALL}/lib/firmware",
-            "--skeleton ${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs",
-            "--output ${SNAPCRAFT_PART_INSTALL}/initrd.img",
-        ],
-    ),
-    "ln $(ls ${SNAPCRAFT_PART_INSTALL}/initrd.img*) ${SNAPCRAFT_PART_INSTALL}/initrd.img",
+    textwrap.dedent(
+        """
+        rm -rf ${UC_INITRD_ROOT}/boot/initrd*
+        run_chroot "${UC_INITRD_ROOT}" \\
+                "ubuntu-core-initramfs create-initrd --kernelver "${KERNEL_RELEASE}" --output /boot/initrd.img"
+        """
+    )
 ]
 
-_create_inird_stage_firmware_cmd = [
-    " ".join(
-        [
-            "${ubuntu_core_initramfs}",
-            "create-initrd",
-            "--root ${UC_INITRD_DEB}",
-            "--kernelver=${KERNEL_RELEASE}",
-            "--kerneldir ${SNAPCRAFT_STAGE}/modules/${KERNEL_RELEASE}",
-            "--firmwaredir ${SNAPCRAFT_STAGE}/firmware",
-            "--skeleton ${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs",
-            "--output ${SNAPCRAFT_PART_INSTALL}/initrd.img",
-        ],
-    ),
-    "ln $(ls ${SNAPCRAFT_PART_INSTALL}/initrd.img*) ${SNAPCRAFT_PART_INSTALL}/initrd.img",
+_install_inird_cmd = [
+    textwrap.dedent(
+        """
+        link_files "${UC_INITRD_ROOT}"/boot "initrd.img*" "${CRAFT_PART_INSTALL}"
+        ln -f "$(ls "${CRAFT_PART_INSTALL}"/initrd.img*)" "${CRAFT_PART_INSTALL}"/initrd.img
+        """
+    )
+]
+
+_create_efi_image_cmd = [
+    textwrap.dedent(
+        """
+        echo "Building kernel.efi"
+        rm -rf ${UC_INITRD_ROOT}/boot/kernel.efi*
+        ln -f "${CRAFT_STAGE}"/kernel.img "${UC_INITRD_ROOT}/boot/kernel.img-${KERNEL_RELEASE}"
+        run_chroot "${UC_INITRD_ROOT}" \\
+                "ubuntu-core-initramfs create-efi \\
+                    --kernelver=${KERNEL_RELEASE} \\
+                    --key /usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key \\
+                    --cert /usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem \\
+                    --initrd /boot/initrd.img \\
+                    --kernel /boot/kernel.img \\
+                    --output /boot/kernel.efi"
+
+        link_files "${UC_INITRD_ROOT}"root "kernel.efi*" "${CRAFT_PART_INSTALL}"
+        ln -f "$(ls "${CRAFT_PART_INSTALL}"/kernel.efi*)" "${CRAFT_PART_INSTALL}/kernel.efi
+        rm "${CRAFT_PART_INSTALL}"/initrd.img*
+        """
+    )
 ]
