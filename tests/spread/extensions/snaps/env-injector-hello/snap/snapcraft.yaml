@@ -8,11 +8,23 @@ base: core24
 confinement: strict
 
 apps:
-  env-hello:
-    command: usr/local/bin/hello
+  hello1:
+    command: usr/bin/exec-env
+    extensions: [ env-injector ]
+
+  hello2:
+    command: usr/bin/exec-env
+    extensions: [ env-injector ]
+
+  hello-demo:
+    command: usr/bin/exec-env
+    environment:
+      # user-defined alias
+      env_alias: myapp
     extensions: [ env-injector ]
 
 parts:
-  hello:
-    plugin: cmake
+  env:
+    plugin: dump
     source: .
+

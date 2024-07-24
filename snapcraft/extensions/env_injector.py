@@ -20,10 +20,10 @@ from typing import Any, Dict, Optional, Tuple
 
 from overrides import overrides
 
-from .extension import Extension, get_extensions_data_dir
+from .extension import Extension
 
 
-class EnvInjectorExtension(Extension):
+class EnvInjector(Extension):
     """Extension to automatically set environment variables on snaps.
 
     This extension allows you to transform snap options into environment
@@ -46,6 +46,10 @@ class EnvInjectorExtension(Extension):
 
     .. code-block:: shell
         sudo snap set <snap-name> env-file=<path-to-env-file>
+    - To set environment file for a specific app:
+
+    .. code-block:: shell
+        sudo snap set <snap-name> apps.<app-name>.envfile=<path-to-env-file>
 
     """
 
@@ -80,47 +84,40 @@ class EnvInjectorExtension(Extension):
 
     @overrides
     def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
-        return {"build-environment": [{"SNAPCRAFT_ENV_INJECTOR_EXTENSION": "true"}]}
+        return {}
 
     @overrides
     def get_parts_snippet(self) -> Dict[str, Any]:
-        toolchain = self.get_toolchain()
+        toolchain = self.get_toolchain(self.arch)
         if toolchain is None:
             raise ValueError(
                 f"Unsupported architecture for env-injector extension: {self.arch}"
             )
+
         return {
             "env-injector/env-injector": {
-                "source": f"{get_extensions_data_dir()}/env-injector",
+                "source": "https://github.com/canonical/snappy-env.git",
+                "source-tag": "v1.0.0-beta",
                 "plugin": "nil",
-                "build-snaps": [
-                    "rustup",
-                ],
-                "build-packages": [
-                    "musl-tools",  # for static linking
-                    "upx-ucl",  # for binary compression
-                ],
+                "build-snaps": ["rustup"],
+                "build-packages": ["upx-ucl"],  # for binary compression
                 "override-build": f"""
+                rustup default stable
+                rustup target add {toolchain}
 
-      rustup default stable
-      rustup target add {toolchain}
+                cargo build --target {toolchain} --release
+                mkdir -p $SNAPCRAFT_PART_INSTALL/bin/command-chain
 
-      cargo build --target {toolchain} --release
-      mkdir -p $SNAPCRAFT_PART_INSTALL/bin/command-chain
-
-      cp target/{toolchain}/release/env-exporter $SNAPCRAFT_PART_INSTALL/bin/command-chain
-
-      # compress the binary
-      upx --best --lzma target/{toolchain}/release/env-exporter
-      cp target/{toolchain}/release/env-exporter $SNAPCRAFT_PART_INSTALL/bin/command-chain/env-exporter-upx
-
+                # compress the binary
+                upx --best --lzma target/{toolchain}/release/env-exporter
+                
+                cp target/{toolchain}/release/env-exporter $SNAPCRAFT_PART_INSTALL/bin/command-chain
                 """,
             }
         }
 
-    def get_toolchain(self):
+    def get_toolchain(self, arch: str):
         """Get the Rust toolchain for the current architecture."""
-        # Dictionary mapping architecture names
         toolchain = {
             "amd64": "x86_64-unknown-linux-gnu",
             "arm64": "aarch64-unknown-linux-gnu",
@@ -129,4 +126,4 @@ class EnvInjectorExtension(Extension):
             # 'ppc64el': 'powerpc64-unknown-linux-gnu', # Tier 2 toolchain
             # 's390x': 's390x-unknown-linux-gnu', # Tier 2 toolchain
         }
-        return toolchain.get(self.arch)
+        return toolchain.get(arch)
