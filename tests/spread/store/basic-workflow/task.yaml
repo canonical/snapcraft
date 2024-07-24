@@ -5,6 +5,7 @@ environment:
   SNAPCRAFT_STORE_CREDENTIALS/candid: "$(HOST: echo ${SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID})"
 
 prepare: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
   if [[ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]]; then
     echo "No credentials set in env SNAPCRAFT_STORE_CREDENTIALS"
     exit 1
@@ -41,6 +42,7 @@ restore: |
   restore_yaml "snapcraft.yaml"
 
 execute: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
   # Get information about our snap.
   cd "$SNAP"
   snap_file=$(ls ./*.snap)
