@@ -73,6 +73,38 @@ def fake_build_assertion(fake_build_assertion_data):
     return validation_sets.BuildAssertion.unmarshal(fake_build_assertion_data)
 
 
+@pytest.mark.parametrize(
+    ("input_dict", "expected"),
+    [
+        pytest.param({}, {}, id="empty"),
+        pytest.param(
+            {False: False, True: True},
+            {"False": "False", "True": "True"},
+            id="boolean values",
+        ),
+        pytest.param(
+            {0: 0, None: None, "dict": {}, "list": [], "str": ""},
+            ({"0": "0", None: None, "dict": {}, "list": [], "str": ""}),
+            id="none-like values",
+        ),
+        pytest.param(
+            {10: 10, 20.0: 20.0, "30": "30", True: True},
+            {"10": "10", "20.0": "20.0", "30": "30", "True": "True"},
+            id="scalar values",
+        ),
+        pytest.param(
+            {"foo": {"bar": [1, 2.0], "baz": {"qux": True}}},
+            {"foo": {"bar": ["1", "2.0"], "baz": {"qux": "True"}}},
+            id="nested data structures",
+        ),
+    ],
+)
+def test_cast_dict_scalars_to_strings(input_dict, expected):
+    actual = validation_sets.cast_dict_scalars_to_strings(input_dict)
+
+    assert actual == expected
+
+
 def test_ignore_sign_key(fake_build_assertion):
     """Ignore the sign key when unmarshalling."""
     assert not fake_build_assertion.sign_key_sha3_384

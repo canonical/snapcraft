@@ -28,19 +28,30 @@ else:
     SnapId = pydantic.constr(max_length=40)
 
 
-def cast_dict_values_to_strings(data: dict[str, Any]) -> dict[str, Any]:
-    """Cast all scalars in a dictionary to strings."""
-    return {k: _to_string(v) for k, v in data.items()}
+def cast_dict_scalars_to_strings(data: dict) -> dict[str, Any]:
+    """Cast all scalars in a dictionary to strings.
+
+    Supported scalar values are str, int, float, and bool.
+    """
+    return {_to_string(key): _to_string(value) for key, value in data.items()}
 
 
-def _to_string(data: list | str | int | None) -> dict | list | str | None:
-    """Recurse through nested lists and cast all scalars to strings."""
+def _to_string(
+    data: dict | list | str | int | float | str | bool | None
+) -> dict[str, Any] | list | str | None:
+    """Recurse through nested dicts and lists and cast scalar values to strings.
+
+    Supported scalar values are str, int, float, and bool.
+    """
     if isinstance(data, dict):
-        return {k: _to_string(v) for k, v in data.items()}
-    elif isinstance(data, list):
+        return {_to_string(key): _to_string(value) for key, value in data.items()}
+
+    if isinstance(data, list):
         return [_to_string(i) for i in data]
-    elif data:
+
+    if isinstance(data, (int, float, bool)):
         return str(data)
+
     return data
 
 
@@ -83,7 +94,7 @@ class EditableBuildAssertion(models.CraftBaseModel):
     def marshal_as_str(self) -> Dict[str, Any]:
         """Marshal the object where all scalars are represented as strings."""
         data = self.marshal()
-        return cast_dict_values_to_strings(data)
+        return cast_dict_scalars_to_strings(data)
 
 
 class BuildAssertion(EditableBuildAssertion):
