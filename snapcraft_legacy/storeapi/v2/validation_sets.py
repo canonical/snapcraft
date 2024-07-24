@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import Any, Annotated, Dict, Literal, TYPE_CHECKING
+import numbers
 import pydantic
 
 from craft_application import models
@@ -31,7 +32,7 @@ else:
 def cast_dict_scalars_to_strings(data: dict) -> dict[str, Any]:
     """Cast all scalars in a dictionary to strings.
 
-    Supported scalar values are str, int, float, and bool.
+    Supported scalar types are str, bool, and numbers.
     """
     return {_to_string(key): _to_string(value) for key, value in data.items()}
 
@@ -41,15 +42,19 @@ def _to_string(
 ) -> dict[str, Any] | list | str | None:
     """Recurse through nested dicts and lists and cast scalar values to strings.
 
-    Supported scalar values are str, int, float, and bool.
+    Supported scalar types are str, bool, and numbers.
     """
+    # start with a string as it is the most common scenario
+    if isinstance(data, str):
+        return data
+
     if isinstance(data, dict):
         return {_to_string(key): _to_string(value) for key, value in data.items()}
 
     if isinstance(data, list):
         return [_to_string(i) for i in data]
 
-    if isinstance(data, (int, float, bool)):
+    if isinstance(data, (numbers.Number, bool)):
         return str(data)
 
     return data
