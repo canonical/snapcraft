@@ -80,7 +80,7 @@ class EnvInjectorExtension(Extension):
 
     @overrides
     def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
-        return {"build-environment": [{"SNAPCRAFT_ENV_INJECTOR_EXTENSION": "true"}]}
+        return {}
 
     @overrides
     def get_parts_snippet(self) -> Dict[str, Any]:
