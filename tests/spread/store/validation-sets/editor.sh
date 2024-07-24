@@ -9,14 +9,15 @@ else
   (( revision=100 ))
 fi
 
+# capture core22 id from the staging store
+cat "$validation_set_file" > debug.txt
 
 cat << EOF > "$validation_set_file"
 account-id: pv8nW1ZaULF7xXAkE3tiU3TdlOnYlGUr
 name: testset
 sequence: 1
 snaps:
-- id: amcUKQILKXHHTlmSa7NMdnXSx02dNeeT
-  name: core22
+- name: core22
   presence: required
   revision: $revision
 EOF
