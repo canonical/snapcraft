@@ -10,8 +10,7 @@ prepare: |
   fi
 
   if [[ -z "$SNAPCRAFT_ASSERTION_KEY" ]]; then
-    echo "No gpg key set in env SNAPCRAFT_ASSERTION_KEY"
-    exit 1
+    ERROR "No gpg key set in env SNAPCRAFT_ASSERTION_KEY"
   fi
 
   # setup snap gpg dir
