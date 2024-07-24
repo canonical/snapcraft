@@ -10,6 +10,11 @@ prepare: |
     exit 1
   fi
 
+  if [[ -z "$SNAPCRAFT_ASSERTION_KEY" ]]; then
+    echo "No gpg key set in env SNAPCRAFT_ASSERTION_KEY"
+    exit 1
+  fi
+
   # setup snap gpg dir
   mkdir -p "$HOME/.snap/gnupg"
   chmod 700 "$HOME/.snap/gnupg"
@@ -19,6 +24,8 @@ prepare: |
   gpg --homedir "$HOME/.snap/gnupg" --import store-key.txt
   rm -f store-key.txt
 
+  snap install yq
+
 execute: |
   # ensure snapcraft is logged in and can access the store
   snapcraft whoami
@@ -26,9 +33,11 @@ execute: |
   # snapcraft will use a fake file editor
   export EDITOR="$PWD/editor.sh"
 
-  snapcraft edit-validation-sets pv8nW1ZaULF7xXAkE3tiU3TdlOnYlGUr testset 1 --key-name testspreadkey
+  snapcraft edit-validation-sets "$(snapcraft whoami | yq .id)" testset 1 --key-name testspreadkey
 
   snapcraft list-validation-sets | MATCH testset
 
 restore: |
   rm -rf "$HOME/.snap/gnupg"
+
+  snap remove --purge yq
