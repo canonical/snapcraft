@@ -2,23 +2,15 @@
 
 validation_set_file="$1"
 
-# flip-flop between two valid revisions: 100 and 101
-#if grep -q "^  revision:.*100" "$validation_set_file"; then
-#  (( revision=101 ))
-#else
-#  (( revision=100 ))
-#fi
+# flip-flop between two valid revisions: 1 and 2
+if grep -q "^  revision:.*1" "$validation_set_file"; then
+  (( revision=2 ))
+else
+  (( revision=1 ))
+fi
 
-# capture core22 id from the staging store
 cat "$validation_set_file" > debug-before.txt
 
-cat << EOF > "$validation_set_file"
-account-id: pv8nW1ZaULF7xXAkE3tiU3TdlOnYlGUr
-name: testset
-sequence: 1
-snaps:
-- name: test-snapcraft-assertions
-  presence: required
-EOF
+sed -i "s/  revision:.*/  revision: $revision/g" $validation_set_file
 
 cat "$validation_set_file" > debug-after.txt
