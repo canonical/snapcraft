@@ -377,6 +377,15 @@ suites:
      sudo apt-get install git
      sudo apt-mark auto git
 
+ tests/spread/store/:
+   summary: tests of store-related snapcraft commands
+   manual: true
+   environment:
+     STORE_DASHBOARD_URL: https://dashboard.staging.snapcraft.io
+     STORE_API_URL: https://api.staging.snapcraft.io
+     STORE_UPLOAD_URL: https://storage.staging.snapcraftcontent.com
+     UBUNTU_ONE_SSO_URL: https://login.staging.ubuntu.com
+
 path: /snapcraft/
 include:
   - tests/
