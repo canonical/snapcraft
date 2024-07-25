@@ -110,10 +110,12 @@ jobs:
         name: Run spread
         env:
           SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
+          SNAPCRAFT_ASSERTION_KEY: "${{ secrets.SNAPCRAFT_ASSERTION_KEY }}"
           SNAPCRAFT_STORE_CREDENTIALS_STAGING: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}"
           SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID }}"
           SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY }}"
-        run: spread google:ubuntu-22.04-64:tests/spread/general/store
+        run: |
+          spread google:ubuntu-22.04-64:tests/spread/store/
 
       - name: Discard spread workers
         if: always()
