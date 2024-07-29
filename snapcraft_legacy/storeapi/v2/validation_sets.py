@@ -96,7 +96,7 @@ class EditableBuildAssertion(models.CraftBaseModel):
     snaps: Annotated[list[Snap], pydantic.Field(min_items=1)]
     """List of snaps in a Validation Set assertion"""
 
-    def marshal_as_str(self) -> Dict[str, Any]:
+    def marshal_scalars_as_strings(self) -> Dict[str, Any]:
         """Marshal the object where all scalars are represented as strings."""
         data = self.marshal()
         return cast_dict_scalars_to_strings(data)

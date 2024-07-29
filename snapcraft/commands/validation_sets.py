@@ -124,7 +124,7 @@ class StoreEditValidationSetsCommand(AppCommand):
                         "Do you wish to amend the validation set?"
                     ):
                         raise errors.SnapcraftError(
-                            "Operation aborted"
+                            "operation aborted"
                         ) from validation_error
                     edited_validation_sets = edit_validation_sets(validation_sets_path)
         finally:
@@ -140,7 +140,7 @@ def _submit_validation_set(
     build_assertion = store_client.post_validation_sets_build_assertion(
         validation_sets=edited_validation_sets.marshal()
     )
-    build_assertion_dict = build_assertion.marshal_as_str()
+    build_assertion_dict = build_assertion.marshal_scalars_as_strings()
 
     signed_validation_sets = _sign_assertion(build_assertion_dict, key_name=key_name)
 
@@ -212,7 +212,7 @@ def edit_validation_sets(
         except (yaml.YAMLError, CraftValidationError) as err:
             emit.message(f"{err!s}")
             if not utils.confirm_with_user("Do you wish to amend the validation set?"):
-                raise errors.SnapcraftError("Operation aborted") from err
+                raise errors.SnapcraftError("operation aborted") from err
 
 
 def _sign_assertion(assertion: Dict[str, Any], *, key_name: Optional[str]) -> bytes:
@@ -223,6 +223,6 @@ def _sign_assertion(assertion: Dict[str, Any], *, key_name: Optional[str]) -> by
     snap_sign = subprocess.Popen(cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     signed_assertion, _ = snap_sign.communicate(input=json.dumps(assertion).encode())
     if snap_sign.returncode != 0:
-        raise errors.SnapcraftError("Failed to sign assertion")
+        raise errors.SnapcraftError("failed to sign assertion")
 
     return signed_assertion

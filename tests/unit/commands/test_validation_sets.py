@@ -248,7 +248,7 @@ def test_edit_validation_sets_with_changes_to_existing_set(
     ]
     assert fake_snap_sign.mock_calls == [
         call(
-            fake_build_assertion.marshal_as_str(),
+            fake_build_assertion.marshal_scalars_as_strings(),
             key_name=key_name,
         )
     ]
@@ -304,7 +304,7 @@ def test_edit_validation_sets_with_errors_to_amend(
     ]
     assert fake_snap_sign.mock_calls == [
         call(
-            fake_build_assertion.marshal_as_str(),
+            fake_build_assertion.marshal_scalars_as_strings(),
             key_name=None,
         )
     ]

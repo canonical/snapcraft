@@ -112,7 +112,7 @@ def test_ignore_sign_key(fake_build_assertion):
 
 def test_editable_build_assertion_marshal_as_str(fake_editable_build_assertion):
     """Cast all scalars to string when marshalling."""
-    data = fake_editable_build_assertion.marshal_as_str()
+    data = fake_editable_build_assertion.marshal_scalars_as_strings()
 
     assert data == {
         "account-id": "account-id-1",
@@ -132,7 +132,7 @@ def test_editable_build_assertion_marshal_as_str(fake_editable_build_assertion):
 
 def test_build_assertion_marshal_as_str(fake_build_assertion):
     """Cast all scalars to string when marshalling."""
-    data = fake_build_assertion.marshal_as_str()
+    data = fake_build_assertion.marshal_scalars_as_strings()
 
     assert data == {
         "account-id": "account-id-1",
