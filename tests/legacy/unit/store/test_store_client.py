@@ -438,7 +438,7 @@ class ValidationSetsTestCase(StoreTestCase):
 
         self.assertThat(vs, IsInstance(validation_sets.ValidationSets))
         self.assertThat(vs.assertions, HasLength(1))
-        self.assertThat(vs.assertions[0], Equals(build_assertion))
+        self.assertThat(vs.assertions[0].headers, Equals(build_assertion))
 
     def test_post_invalid_assertion(self):
         build_assertion = self.client.post_validation_sets_build_assertion(
@@ -516,7 +516,7 @@ class ValidationSetsTestCase(StoreTestCase):
 
         self.assertThat(vs, IsInstance(validation_sets.ValidationSets))
         self.expectThat(vs.assertions, HasLength(1))
-        self.expectThat(vs.assertions[0].name, Equals("acme-cert-2020-10"))
+        self.expectThat(vs.assertions[0].headers.name, Equals("acme-cert-2020-10"))
 
     def test_get_invalid_sequence(self):
         raised = self.assertRaises(
