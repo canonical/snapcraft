@@ -8,6 +8,7 @@ Reference
 
    architectures
    bases
+   changelog
    commands
    components
    plugins
