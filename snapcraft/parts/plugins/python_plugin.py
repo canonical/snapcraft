@@ -17,9 +17,10 @@
 """The Snapcraft Python plugin."""
 
 import logging
+from pathlib import Path
 from typing import Optional
 
-from craft_parts import errors
+from craft_parts import StepInfo, errors
 from craft_parts.plugins import python_plugin
 from overrides import override
 
@@ -64,3 +65,33 @@ class PythonPlugin(python_plugin.PythonPlugin):
             confinement,
         )
         return interpreter
+
+    @classmethod
+    def post_prime(cls, step_info: StepInfo) -> None:
+        """Perform Python-specific actions right before packing."""
+        base = step_info.project_base
+
+        if base != "core24":
+            # Only fix pyvenv.cfg on core24 snaps
+            return
+
+        root_path: Path = step_info.prime_dir
+
+        pyvenv = root_path / "pyvenv.cfg"
+        if not pyvenv.is_file():
+            return
+
+        snap_path = Path(f"/snap/{step_info.project_name}/current")
+        new_home = f"home = {snap_path}"
+
+        candidates = (
+            step_info.part_install_dir,
+            step_info.stage_dir,
+        )
+
+        contents = pyvenv.read_text()
+        for candidate in candidates:
+            old_home = f"home = {candidate}"
+            contents = contents.replace(old_home, new_home)
+
+        pyvenv.write_text(contents)

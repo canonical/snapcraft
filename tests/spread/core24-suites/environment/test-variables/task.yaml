@@ -33,7 +33,7 @@ execute: |
     cat "$file"
     for exp in \
       "^SNAPCRAFT_PROJECT_GRADE=devel$" \
-      "^SNAPCRAFT_PROJECT_NAME=None$" \
+      "^SNAPCRAFT_PROJECT_NAME=variables$" \
       "^SNAPCRAFT_PROJECT_VERSION=1$" \
       "^SNAPCRAFT_PARALLEL_BUILD_COUNT=[0-9]\+$" \
       "^SNAPCRAFT_PROJECT_DIR=${root}$" \
