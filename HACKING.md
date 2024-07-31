@@ -34,6 +34,18 @@ lxc exec snapcraft-dev -- sudo -iu ubuntu bash
 
 Import your keys (`ssh-import-id`) and add a `Host` entry to your ssh config if you are interested in [Code's](https://snapcraft.io/code) [Remote-SSH](https://code.visualstudio.com/docs/remote/ssh) plugin.
 
+### Tooling
+
+We use a large number of tools for our project. Most of these are installed for
+you with tox, but you'll need to install:
+
+- Python 3.10 (default on Ubuntu 22.04, available on Ubuntu 24.04 through the
+  [deadsnakes](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa) PPA) with setuptools.
+- [tox](https://tox.wiki) version 3.8 or later
+- [pyright](https://github.com/microsoft/pyright)  (also available via snap: `snap install pyright`)
+- [ruff](https://github.com/astral/ruff) (also available via snap: `snap install ruff`)
+- [ShellCheck](https://www.shellcheck.net/)  (also available via snap: `snap install shellcheck`)
+
 ### Testing
 
 See the [Testing guide](TESTING.md).
