@@ -147,7 +147,9 @@ class RemoteBuildCommand(ExtensibleCommand):
                 retcode=77,
             )
 
-    def _run(self, parsed_args: argparse.Namespace, **kwargs: Any) -> int | None:
+    def _run(  # noqa: PLR0915 [too-many-statements]
+        self, parsed_args: argparse.Namespace, **kwargs: Any
+    ) -> int | None:
         """Run the remote-build command.
 
         :param parsed_args: Snapcraft's argument namespace.
@@ -237,7 +239,7 @@ class RemoteBuildCommand(ExtensibleCommand):
                 emit.progress("Cancelling builds.")
                 builder.cancel_builds()
             returncode = 0
-        except Exception:
+        except Exception:  # noqa: BLE001 [blind-except]
             returncode = 1  # General error on any other exception
         if returncode != 75:  # TimeoutError
             emit.progress("Cleaning up")

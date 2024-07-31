@@ -801,7 +801,7 @@ class TestAppstreamContent:
         assert metadata.contact == ["rrroschan@gmail.com"]
         assert metadata.donation == ["https://www.buymeacoffee.com/alainm23"]
         assert metadata.website == ["https://hello.com"]
-        assert metadata.source_code == None
+        assert metadata.source_code is None
         assert metadata.issues == ["https://github.com/alainm23/planify/issues"]
 
     def test_appstream_parse_error(self):
