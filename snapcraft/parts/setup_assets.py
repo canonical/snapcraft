@@ -72,9 +72,6 @@ def setup_assets(
         if kernel_yaml.exists():
             _copy_file(kernel_yaml, meta_dir / "kernel.yaml")
 
-    if not project.apps:
-        return
-
     icon_path = _finalize_icon(
         project.icon, assets_dir=assets_dir, gui_dir=gui_dir, prime_dir=prime_dir
     )
@@ -87,19 +84,20 @@ def setup_assets(
 
     emit.debug(f"relative icon path: {relative_icon_path!r}")
 
-    for app_name, app in project.apps.items():
-        _validate_command_chain(
-            app.command_chain, name=f"app {app_name!r}", prime_dir=prime_dir
-        )
-
-        if app.desktop:
-            desktop_file = DesktopFile(
-                snap_name=project.name,
-                app_name=app_name,
-                filename=app.desktop,
-                prime_dir=prime_dir,
+    if project.apps:
+        for app_name, app in project.apps.items():
+            _validate_command_chain(
+                app.command_chain, name=f"app {app_name!r}", prime_dir=prime_dir
             )
-            desktop_file.write(gui_dir=gui_dir, icon_path=relative_icon_path)
+
+            if app.desktop:
+                desktop_file = DesktopFile(
+                    snap_name=project.name,
+                    app_name=app_name,
+                    filename=app.desktop,
+                    prime_dir=prime_dir,
+                )
+                desktop_file.write(gui_dir=gui_dir, icon_path=relative_icon_path)
 
 
 def _finalize_icon(
