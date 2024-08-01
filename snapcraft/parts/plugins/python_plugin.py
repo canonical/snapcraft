@@ -71,8 +71,8 @@ class PythonPlugin(python_plugin.PythonPlugin):
         """Perform Python-specific actions right before packing."""
         base = step_info.project_base
 
-        if base != "core24":
-            # Only fix pyvenv.cfg on core24 snaps
+        if base in ("core20", "core22"):
+            # Only fix pyvenv.cfg on core24+ snaps
             return
 
         root_path: Path = step_info.prime_dir
@@ -89,9 +89,11 @@ class PythonPlugin(python_plugin.PythonPlugin):
             step_info.stage_dir,
         )
 
-        contents = pyvenv.read_text()
+        old_contents = contents = pyvenv.read_text()
         for candidate in candidates:
             old_home = f"home = {candidate}"
             contents = contents.replace(old_home, new_home)
 
-        pyvenv.write_text(contents)
+        if old_contents != contents:
+            logger.debug("Updating pyvenv.cfg to:\n%s", contents)
+            pyvenv.write_text(contents)
