@@ -43,7 +43,10 @@ def test_lifecycle_installs_base(lifecycle_service, mocker):
     )
 
 
-def test_post_prime_no_patchelf(fp, tmp_path, lifecycle_service):
+def test_post_prime_no_patchelf(fp, tmp_path, lifecycle_service, default_project):
+    new_attrs = {"parts": {"my-part": {"plugin": "nil"}}}
+    default_project.__dict__.update(**new_attrs)
+
     mock_step_info = mock.Mock()
     mock_step_info.configure_mock(
         **{
@@ -51,6 +54,7 @@ def test_post_prime_no_patchelf(fp, tmp_path, lifecycle_service):
             "build_attributes": [],
             "state.files": ["usr/bin/ls"],
             "prime_dir": tmp_path / "prime",
+            "part_name": "my-part",
         }
     )
 
@@ -82,7 +86,7 @@ def test_post_prime_patchelf(
     use_system_libs,
 ):
     patchelf_spy = mocker.spy(snapcraft.parts, "patch_elf")
-    new_attrs = {"confinement": confinement}
+    new_attrs = {"confinement": confinement, "parts": {"my-part": {"plugin": "nil"}}}
     default_project.__dict__.update(**new_attrs)
 
     mock_step_info = mock.Mock()
@@ -92,6 +96,7 @@ def test_post_prime_patchelf(
             "build_attributes": ["enable-patchelf"],
             "state.files": ["usr/bin/ls"],
             "prime_dir": tmp_path / "prime",
+            "part_name": "my-part",
         }
     )
 
@@ -207,6 +212,7 @@ def test_lifecycle_custom_arguments(
 
     assert info.project_base == expected_base
     assert info.confinement == expected_confinement
+    assert info.project_name == default_project.name == "default"
 
 
 @pytest.mark.usefixtures("default_project")
