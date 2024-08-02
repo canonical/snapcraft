@@ -69,6 +69,6 @@ execute: |
   env-injector-hello.hello1
   env-injector-hello.hello2
 
-  # Test if the alias it's rewrite
+  # Make sure that alias is NOT rewritten
   snap set env-injector-hello apps.myapp.env.specific="City"
   env-injector-hello.hello-demo
