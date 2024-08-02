@@ -53,7 +53,7 @@ execute: |
   snap set env-injector-hello apps.hello1.env.hello="Hello"
   snap set env-injector-hello apps.hello2.env.specific="City"
 
-  # To Check if key with dot will be rejected 
+  # To check if key with dot will be rejected 
   snap set env-injector-hello env.word.dot="wrong"
 
   # To test order of env vars
