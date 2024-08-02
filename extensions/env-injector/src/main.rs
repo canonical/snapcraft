@@ -51,31 +51,14 @@ fn process_env(env: &serde_json::Value) -> HashMap<String, String> {
     for (k, v) in obj {
         if v.is_object() || v.is_array() {
             eprintln!(
-                "ERROR: Invalid value detected.\n\
-                    Key: {}\n\
-                    Reason: Environment variable names must not contain dots.\n\
-                    Action: Skipped\n",
+                "Skipped invalid key containing dots: {}",
                 v
             );
             continue;
         }
 
         let key = k.to_uppercase().replace("-", "_");
-        let value = match v {
-            serde_json::Value::String(s) => s.clone(),
-            serde_json::Value::Number(n) => n.to_string(),
-            serde_json::Value::Bool(b) => b.to_string(),
-            _ => {
-                eprintln!(
-                    "ERROR: Invalid type for environment variable value detected.\n\
-                        val: {}\n\
-                        Reason: It must be a string, number or boolean\n\
-                        Action: Skipped\n",
-                    k
-                );
-                continue;
-            },
-        };
+        let value = v.to_string();
         map.insert(key, value);
     }
     map
@@ -172,7 +155,7 @@ async fn run() -> Result<(), Box<dyn Error + Send + Sync>> {
     Ok(())
 }
 
-fn main()-> Result<(), Box<dyn Error + Send + Sync>> {
+fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     let args: Vec<String> = std::env::args().collect();
 
@@ -186,7 +169,7 @@ fn main()-> Result<(), Box<dyn Error + Send + Sync>> {
 
     run()?;
 
-    Command::new(command).args(args).status()?;
+    let status = Command::new(command).args(args).status()?;
 
-    Ok(())
+    std::process::exit(status.code().unwrap_or(1));
 }

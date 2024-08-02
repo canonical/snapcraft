@@ -59,10 +59,21 @@ int main(int argc, char const *argv[]) {
         fprintf(stderr, "\n[ERROR] Env. variable ORDER is not set.\n");
         exit(1);
     }
-
     if (strcmp(env_order, "from app-specific") != 0) {
         fprintf(stderr, "\n[ERROR] Precedence error: app-specific envs should override global envs.\n");
         exit(1);
+    }
+
+    // Scope specific envfile
+    const char *env_scope = getenv("SCOPED");
+
+    if (env_scope == NULL){
+        fprintf(stderr, "\n[ERROR] Env. variable SCOPED is not set.\n");
+        exit(-1);
+    }
+    if (strcmp(env_scope, "Scoped") != 0) {
+        fprintf(stderr, "\n[ERROR] app envfile error: unexpected value.\n");
+        exit(-1);
     }
 
     return 0;

@@ -19,7 +19,8 @@ apps:
   hello-demo:
     command: usr/local/bin/hello2
     environment:
-      app_alias: hello-demo
+      # user-defined alias
+      env_alias: myapp
     extensions: [ env-injector ]
 
 parts:

@@ -40,8 +40,11 @@ execute: |
 
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
-  # Create envfile
+  # Create global envfile
   echo 'HELLO_WORLD=Hello World' >> envfile.env
+
+  # Create app-specific envfile
+  echo 'SCOPED=Scoped' >> appenv.env
 
   # Set env vars: Global
   snap set env-injector-hello env.global="World"
@@ -56,7 +59,10 @@ execute: |
   # To test order of env vars
   echo 'ORDER="From envfile"' >> envfile.env
   snap set env-injector-hello apps.hello1.env.order="from app-specific"
+
+  # Load global and app-specific envfiles
   snap set env-injector-hello envfile="${SNAP_DIR}"/envfile.env
+  snap set env-injector-hello apps.hello1.envfile="${SNAP_DIR}"/appenv.env
 
   # Run the hello command
   # Those will fail if the env vars are not set as expected
@@ -64,5 +70,5 @@ execute: |
   env-injector-hello.hello2
 
   # Test if the alias it's rewrite
-  snap set env-injector-hello apps.hello-demo.env.specific="City"
+  snap set env-injector-hello apps.myapp.env.specific="City"
   env-injector-hello.hello-demo

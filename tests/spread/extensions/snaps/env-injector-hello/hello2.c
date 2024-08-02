@@ -42,5 +42,13 @@ int main(int argc, char const *argv[]) {
         exit(1);
     }
 
+    // Testing Scope specific envfile
+    const char *env_scope = getenv("SCOPE");
+
+    if (env_scope != NULL){
+        fprintf(stderr, "\n[ERROR] Env. variable SCOPE should not be captured by this app.\n");
+        exit(-1);
+    }
+
     return 0;
 }

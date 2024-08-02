@@ -47,6 +47,7 @@ class EnvInjectorExtension(Extension):
     .. code-block:: shell
         sudo snap set <snap-name> env-file=<path-to-env-file>
     - To set environment file for a specific app:
+
     .. code-block:: shell
         sudo snap set <snap-name> apps.<app-name>.envfile=<path-to-env-file>
 
