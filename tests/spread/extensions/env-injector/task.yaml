@@ -65,7 +65,7 @@ execute: |
   snap set env-injector-hello apps.hello1.envfile="${SNAP_DIR}"/appenv.env
 
   # Run the hello command
-  # Those will fail if the env vars are not set as expected
+  # These will fail if the env vars are not set as expected
   env-injector-hello.hello1
   env-injector-hello.hello2
 
