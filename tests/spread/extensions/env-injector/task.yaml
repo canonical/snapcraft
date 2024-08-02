@@ -41,13 +41,28 @@ execute: |
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   # Create envfile
-  echo 'HELLO_WORLD="Hello, World"' >> envfile.env
+  echo 'HELLO_WORLD=Hello World' >> envfile.env
 
-  # Set env vars: Global, App specific, and envfile
-  snap set env-injector-hello env.hello="Hello"
-  snap set env-injector-hello apps.hello.env.world="World"
-  snap set env-injector-hello envfile="${SNAP_DIR}"/enfile.env
+  # Set env vars: Global
+  snap set env-injector-hello env.global="World"
+
+  # Set env vars: specific to each app
+  snap set env-injector-hello apps.hello1.env.hello="Hello"
+  snap set env-injector-hello apps.hello2.env.specific="City"
+
+  # To Check if key with dot will be rejected 
+  snap set env-injector-hello env.word.dot="wrong"
+
+  # To test order of env vars
+  echo 'ORDER="From envfile"' >> envfile.env
+  snap set env-injector-hello apps.hello1.env.order="from app-specific"
+  snap set env-injector-hello envfile="${SNAP_DIR}"/envfile.env
 
   # Run the hello command
-  env-injector-hello.hello
+  # Those will fail if the env vars are not set as expected
+  env-injector-hello.hello1
+  env-injector-hello.hello2
 
+  # Test if the alias it's rewrite
+  snap set env-injector-hello apps.hello-demo.env.specific="City"
+  env-injector-hello.hello-demo

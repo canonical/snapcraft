@@ -46,6 +46,9 @@ class EnvInjectorExtension(Extension):
 
     .. code-block:: shell
         sudo snap set <snap-name> env-file=<path-to-env-file>
+    - To set environment file for a specific app:
+    .. code-block:: shell
+        sudo snap set <snap-name> apps.<app-name>.envfile=<path-to-env-file>
 
     """
 
@@ -97,7 +100,6 @@ class EnvInjectorExtension(Extension):
                     "rustup",
                 ],
                 "build-packages": [
-                    "musl-tools",  # for static linking
                     "upx-ucl",  # for binary compression
                 ],
                 "override-build": f"""

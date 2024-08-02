@@ -5,19 +5,18 @@
 int main(int argc, char const *argv[]) {
     const char *envs[] = {
         "GLOBAL",       // This is set globally
-        "HELLO",        // This is set for the app
+        "SPECIFIC",     // This is set for the app only
         "HELLO_WORLD",  // This is set from global env file
     };
 
     const char *expected[] = {
         "World",
-        "Hello",
+        "City",
         "Hello World",
     };
 
     int num_envs = sizeof(envs) / sizeof(envs[0]);
 
-    // Check Global, App specific and global env file
     for (int i = 0; i < num_envs; ++i) {
         const char *env = getenv(envs[i]);
 
@@ -35,33 +34,11 @@ int main(int argc, char const *argv[]) {
     }
 
     // Check that it's not possible to access other app ENVs 
-    const char *env_specific = getenv("SPECIFIC");
-    if (env_specific != NULL) {
+    const char *env_hello = getenv("HELLO");
+    if (env_hello != NULL) {
         fprintf(stderr, "\n[ERROR] Env. variable SPECIFIC is accessible from the app.\n");
         fprintf(stderr, "Expected: NULL\n");
-        fprintf(stderr, "Got %s\n", env_specific);
-        exit(1);
-    }
-
-    // Check if key with dot was rejected 
-    const char *env_dot = getenv("DOT");
-    if (env_dot != NULL) {
-        fprintf(stderr, "\n[ERROR] Received Env. variable DOT with wrong key subset.\n");
-        fprintf(stderr, "Expected: NULL\n");
-        fprintf(stderr, "Got %s\n", env_dot);
-        exit(1);
-    }
-
-    // Precedence check: Testing if the order of the envs is correct
-    const char *env_order = getenv("ORDER");
-
-    if (env_order == NULL){
-        fprintf(stderr, "\n[ERROR] Env. variable ORDER is not set.\n");
-        exit(1);
-    }
-
-    if (strcmp(env_order, "from app-specific") != 0) {
-        fprintf(stderr, "\n[ERROR] Precedence error: app-specific envs should override global envs.\n");
+        fprintf(stderr, "Got %s\n", env_hello);
         exit(1);
     }
 

@@ -8,8 +8,18 @@ base: core24
 confinement: strict
 
 apps:
-  env-hello:
+  hello1:
     command: usr/local/bin/hello
+    extensions: [ env-injector ]  
+
+  hello2:
+    command: usr/local/bin/hello2
+    extensions: [ env-injector ]
+
+  hello-demo:
+    command: usr/local/bin/hello2
+    environment:
+      app_alias: hello-demo
     extensions: [ env-injector ]
 
 parts:

@@ -43,20 +43,51 @@ async fn snapdapi_req() -> Result<serde_json::Value, Box<dyn Error + Send + Sync
     Ok(serde_json::from_slice(&body)?)
 }
 
+fn process_env(env: &serde_json::Value) -> HashMap<String, String> {
+    let obj = env.as_object()
+        .ok_or("Expected an object (JSON input)").unwrap();
+    let mut map = HashMap::new();
+
+    for (k, v) in obj {
+        if v.is_object() || v.is_array() {
+            eprintln!(
+                "ERROR: Invalid value detected.\n\
+                    Key: {}\n\
+                    Reason: Environment variable names must not contain dots.\n\
+                    Action: Skipped\n",
+                v
+            );
+            continue;
+        }
+
+        let key = k.to_uppercase().replace("-", "_");
+        let value = match v {
+            serde_json::Value::String(s) => s.clone(),
+            serde_json::Value::Number(n) => n.to_string(),
+            serde_json::Value::Bool(b) => b.to_string(),
+            _ => {
+                eprintln!(
+                    "ERROR: Invalid type for environment variable value detected.\n\
+                        val: {}\n\
+                        Reason: It must be a string, number or boolean\n\
+                        Action: Skipped\n",
+                    k
+                );
+                continue;
+            },
+        };
+        map.insert(key, value);
+    }
+    map
+}
+
+
+
+
 fn set_env_vars(app: &str, json: &serde_json::Value) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let stdout_str = json["result"]["stdout"].as_str().ok_or("Invalid stdout")?;
     let stdout_json: serde_json::Value = serde_json::from_str(stdout_str)?;
 
-    fn process_env(env: &serde_json::Value) -> HashMap<String, String> {
-        env.as_object()
-            .unwrap()
-            .iter()
-            .map(|(k, v)| {
-                let key = k.to_uppercase().replace("-", "_");
-                (key, v.to_string())
-            })
-            .collect()
-    }
 
     if let Some(global_env) = stdout_json["env"].as_object() {
         for (key, value) in process_env(&serde_json::Value::Object(global_env.clone())) {
