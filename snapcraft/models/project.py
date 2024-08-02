@@ -238,26 +238,44 @@ def _validate_version_name(version: str, model_name: str) -> None:
         )
 
 
-def _validate_component_name(name: str) -> None:
-    """Validate a component name."""
-    if not re.fullmatch(r"[a-z-]*[a-z][a-z-]*", name):
-        raise ValueError(
-            "Component names can only use ASCII lowercase letters and hyphens"
-        )
+def _validate_name(*, name: str, field_name: str) -> str:
+    """Validate a name.
 
-    if name.startswith("snap-"):
+    :param name: The name to validate.
+    :param field_name: The name of the field being validated.
+
+    :returns: The validated name.
+    """
+    if not re.match(r"^[a-z0-9-]*[a-z][a-z0-9-]*$", name):
         raise ValueError(
-            "Component names cannot start with the reserved namespace 'snap-'"
+            f"{field_name} names can only use lowercase alphanumeric "
+            "and hyphens and must have at least one letter"
         )
 
     if name.startswith("-"):
-        raise ValueError("Component names cannot start with a hyphen")
+        raise ValueError(f"{field_name} names cannot start with a hyphen")
 
     if name.endswith("-"):
-        raise ValueError("Component names cannot end with a hyphen")
+        raise ValueError(f"{field_name} names cannot end with a hyphen")
 
     if "--" in name:
-        raise ValueError("Component names cannot have two hyphens in a row")
+        raise ValueError(f"{field_name} names cannot have two hyphens in a row")
+
+    return name
+
+
+def _validate_component(name: str) -> str:
+    """Validate a component name.
+
+    :param name: The component name to validate.
+
+    :returns: The validated component name.
+    """
+    if name.startswith("snap-"):
+        raise ValueError(
+            "component names cannot start with the reserved prefix 'snap-'"
+        )
+    return _validate_name(name=name, field_name="component")
 
 
 def _get_partitions_from_components(
@@ -731,23 +749,8 @@ class Project(models.Project):
 
     @pydantic.validator("name")
     @classmethod
-    def _validate_name(cls, name):
-        if not re.match(r"^[a-z0-9-]*[a-z][a-z0-9-]*$", name):
-            raise ValueError(
-                "Snap names can only use ASCII lowercase letters, numbers, and hyphens, "
-                "and must have at least one letter"
-            )
-
-        if name.startswith("-"):
-            raise ValueError("Snap names cannot start with a hyphen")
-
-        if name.endswith("-"):
-            raise ValueError("Snap names cannot end with a hyphen")
-
-        if "--" in name:
-            raise ValueError("Snap names cannot have two hyphens in a row")
-
-        return name
+    def _validate_snap_name(cls, name):
+        return _validate_name(name=name, field_name="snap")
 
     @pydantic.validator("version")
     @classmethod
@@ -764,7 +767,7 @@ class Project(models.Project):
     def _validate_components(cls, components):
         """Validate component names."""
         for component_name in components.keys():
-            _validate_component_name(component_name)
+            _validate_component(name=component_name)
 
         return components
 
@@ -1077,7 +1080,7 @@ class ComponentProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
     def _validate_components(cls, components):
         """Validate component names."""
         for component_name in components.keys():
-            _validate_component_name(component_name)
+            _validate_component(name=component_name)
 
         return components
 
