@@ -28,7 +28,7 @@ systems:
   - ubuntu-24.04
   - ubuntu-24.04-64
   - ubuntu-24.04-amd64
-  # - ubuntu-24.04-arm64
+  - ubuntu-24.04-arm64
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
