@@ -36,7 +36,7 @@ importlib_metadata==7.1.0
 jaraco.classes==3.4.0
 jeepney==0.8.0
 Jinja2==3.1.4
-jsonschema==2.5.1
+jsonschema==2.6.0
 keyring==24.3.1
 launchpadlib==1.11.0
 lazr.restfulclient==0.14.6
