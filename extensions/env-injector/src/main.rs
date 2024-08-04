@@ -7,7 +7,7 @@ use std::error::Error;
 use std::process::Command;
 use std::collections::HashMap;
 use std::path::Path;
-use std::io::BufRead;
+use dotenv;
 
 const SNAPD_SOCKET: &str = "/run/snapd-snap.socket";
 
@@ -64,9 +64,6 @@ fn process_env(env: &serde_json::Value) -> HashMap<String, String> {
     map
 }
 
-
-
-
 fn set_env_vars(app: &str, json: &serde_json::Value) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let stdout_str = json["result"]["stdout"].as_str().ok_or("Invalid stdout")?;
     let stdout_json: serde_json::Value = serde_json::from_str(stdout_str)?;
@@ -87,7 +84,7 @@ fn set_env_vars(app: &str, json: &serde_json::Value) -> Result<(), Box<dyn std::
     Ok(())
 }
 
-fn source_env_file(file_path: &str) -> std::io::Result<HashMap<String, String>> {
+fn source_env_file(file_path: &str) -> std::io::Result<()> {
     let path = Path::new(file_path);
 
     if !path.exists() {
@@ -100,20 +97,12 @@ fn source_env_file(file_path: &str) -> std::io::Result<HashMap<String, String>> 
         return Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied, "File is not readable"));
     }
 
-    let file = std::fs::File::open(file_path)?;
-    let reader = std::io::BufReader::new(file);
+    dotenv::from_path(path).map_err(|e| {
+        eprintln!("Failed to load environment file: {}", e);
+        std::io::Error::new(std::io::ErrorKind::InvalidData, "Failed to load environment file")
+    })?;
 
-    let mut env_vars = HashMap::new();
-    for line in reader.lines() {
-        let line = line?;
-        if !line.trim().is_empty() && !line.starts_with('#') {
-            if let Some((key, value)) = line.split_once('=') {
-                env_vars.insert(key.to_string(), value.to_string());
-            }
-        }
-    }
-
-    Ok(env_vars)
+    Ok(())
 }
 
 fn set_env_vars_from_file(app: &str, json: &serde_json::Value) ->  Result<(), Box<dyn std::error::Error + Send + Sync>>  {
@@ -123,20 +112,12 @@ fn set_env_vars_from_file(app: &str, json: &serde_json::Value) ->  Result<(), Bo
 
     // Source the global envfile first
     if let Some(global_envfile) = stdout_json["envfile"].as_str() {
-        if let Ok(env_vars) = source_env_file(global_envfile) {
-            for (key, value) in env_vars {
-                std::env::set_var(key, value);
-            }
-        }
+        source_env_file(global_envfile)?;
     }
 
     // Source the app-specific envfile
     if let Some(app_envfile) = stdout_json["apps"][app]["envfile"].as_str() {
-        if let Ok(env_vars) = source_env_file(app_envfile) {
-            for (key, value) in env_vars {
-                std::env::set_var(key, value);
-            }
-        }
+        source_env_file(app_envfile)?;
     }
 
     Ok(())

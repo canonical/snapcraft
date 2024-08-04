@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+dotenv = "0.15.0"
 http-body-util = "0.1.2"
 hyper = {git = "https://github.com/hyperium/hyper", tag = "v1.4.1"}
 hyper-util = "0.1.6"
