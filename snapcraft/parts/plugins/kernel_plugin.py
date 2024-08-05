@@ -69,16 +69,6 @@ from snapcraft_legacy.plugins.v2 import _kernel_build
 
 logger = logging.getLogger(__name__)
 
-_default_kernel_image_target = {
-    "amd64": "bzImage",
-    "armhf": "zImage",
-    "arm64": "Image",
-    "powerpc": "uImage",
-    "ppc64el": "vmlinux.strip",
-    "s390x": "bzImage",
-    "riscv64": "Image",
-}
-
 
 class KernelPluginProperties(plugins.PluginProperties, frozen=True):
     """The part properties used by the Kernel plugin."""
@@ -129,43 +119,15 @@ class KernelPlugin(plugins.Plugin):
         ):
             self._cross_building = True
 
-    def _init_build_env(self) -> None:
-        # first get all the architectures, new v2 plugin is making life difficult
-        logger.info("Initializing build env...")
-
-        self._make_cmd = ["make", "-j$(nproc)"]
-        # we are building out of tree, configure paths
-        self._make_cmd.append("-C")
-        self._make_cmd.append("${KERNEL_SRC}")
-        self._make_cmd.append("O=${CRAFT_PART_BUILD}")
-
-        self._check_cross_compilation()
-        self._set_kernel_targets()
-
-    def _check_cross_compilation(self) -> None:
-        if self._cross_building:
-            self._make_cmd.append(f"ARCH={self._kernel_arch}")
-            self._make_cmd.append("CROSS_COMPILE=${CRAFT_ARCH_TRIPLET_BUILD_FOR}-")
-
-    def _set_kernel_targets(self) -> None:
+        # set kernel targets
         if not self.options.kernel_image_target:
-            self.kernel_image_target = _default_kernel_image_target[self._deb_arch]
+            self.kernel_image_target = _kernel_build.default_kernel_image_target[
+                self._deb_arch
+            ]
         elif isinstance(self.options.kernel_image_target, str):
             self.kernel_image_target = self.options.kernel_image_target
         elif self._deb_arch in self.options.kernel_image_target:
             self.kernel_image_target = self.options.kernel_image_target[self._deb_arch]
-
-        self._make_targets = [self.kernel_image_target, "modules"]
-        self._make_install_targets = [
-            "modules_install",
-            "INSTALL_MOD_STRIP=1",
-            "INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
-        ]
-        if self._kernel_arch in ("arm", "arm64", "riscv64"):
-            self._make_targets.append("dtbs")
-            self._make_install_targets.extend(
-                ["dtbs_install", "INSTALL_DTBS_PATH=${CRAFT_PART_INSTALL}/dtbs"]
-            )
 
     @overrides
     def get_build_snaps(self) -> set[str]:  # pylint: disable=missing-function-docstring
@@ -189,7 +151,10 @@ class KernelPlugin(plugins.Plugin):
             "kpartx",
             "libelf-dev",
             "libssl-dev",
+            "lz4",
             "systemd",
+            "xz-utils",
+            "zstd",
         }
 
         if self.options.kernel_enable_zfs_support:
@@ -212,8 +177,6 @@ class KernelPlugin(plugins.Plugin):
         self,
     ) -> dict[str, str]:  # pylint: disable=missing-function-docstring
         logger.info("Getting build env...")
-        self._init_build_env()
-
         return {
             "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
             "ARCH": self._kernel_arch,
@@ -231,19 +194,12 @@ class KernelPlugin(plugins.Plugin):
         if self.options.kernel_kdefconfig:
             kconfigflavour = ""
         return _kernel_build.get_build_commands(
-            make_cmd=self._make_cmd.copy(),
-            make_targets=self._make_targets,
-            make_install_targets=self._make_install_targets,
-            target_arch_triplet="${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+            kernel_arch=self._kernel_arch,
             config_flavour=kconfigflavour,
             defconfig=self.options.kernel_kdefconfig,
             configs=self.options.kernel_kconfigs,
             enable_zfs_support=self.options.kernel_enable_zfs_support,
             enable_perf=self.options.kernel_enable_perf,
-            project_dir="${CRAFT_PROJECT_DIR}",
-            source_dir="${CRAFT_PART_SRC}",
-            build_dir="${CRAFT_PART_BUILD}",
-            install_dir="${CRAFT_PART_INSTALL}",
         )
 
     @classmethod
