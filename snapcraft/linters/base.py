@@ -26,6 +26,7 @@ import pydantic
 from craft_cli import emit
 
 from snapcraft import elf, models
+from pydantic import ConfigDict
 
 if TYPE_CHECKING:
     from snapcraft.meta.snap_yaml import SnapMetadata
@@ -52,10 +53,10 @@ class LinterIssue(pydantic.BaseModel):
     type: Literal["lint"]
     name: str
     result: LinterResult
-    filename: Optional[str]
+    filename: Optional[str] = None
     text: str
-    url: Optional[str]
-    suggested_changes: Optional[str]  # XXX: pending definition
+    url: Optional[str] = None
+    suggested_changes: Optional[str] = None  # XXX: pending definition
 
     def __init__(self, **kwargs):
         super().__init__(type="lint", **kwargs)
@@ -71,13 +72,7 @@ class LinterIssue(pydantic.BaseModel):
             msg += f" ({self.url})"
 
         return msg
-
-    class Config:
-        """Pydantic model configuration."""
-
-        validate_assignment = True
-        extra = "forbid"
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+    model_config = ConfigDict(validate_assignment=True, extra="forbid", alias_generator=lambda s: s.replace("_", "-"))
 
 
 class Linter(abc.ABC):

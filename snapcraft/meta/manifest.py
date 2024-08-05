@@ -24,6 +24,7 @@ from typing import Any, Dict, List, Optional
 from pydantic_yaml import YamlModel
 
 from snapcraft import __version__, errors, models, os_release, utils
+from pydantic import ConfigDict
 
 
 class Manifest(YamlModel):
@@ -58,12 +59,7 @@ class Manifest(YamlModel):
     build_packages: List[str]
     build_snaps: List[str]
     primed_stage_packages: List
-
-    class Config:
-        """Pydantic model configuration."""
-
-        allow_population_by_field_name = True
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+    model_config = ConfigDict(populate_by_name=True, alias_generator=lambda s: s.replace("_", "-"))
 
 
 def write(  # noqa PLR0913

@@ -19,14 +19,16 @@ import numbers
 import pydantic
 
 from craft_application import models
+from pydantic import StringConstraints
+from typing_extensions import Annotated
 
 
 if TYPE_CHECKING:
     SnapName = str
     SnapId = str
 else:
-    SnapName = pydantic.constr(max_length=40)
-    SnapId = pydantic.constr(max_length=40)
+    SnapName = Annotated[str, StringConstraints(max_length=40)]
+    SnapId = Annotated[str, StringConstraints(max_length=40)]
 
 
 def cast_dict_scalars_to_strings(data: dict) -> dict[str, Any]:

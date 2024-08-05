@@ -41,8 +41,8 @@ from craft_application.models import BuildInfo, SummaryStr, UniqueStrList, Versi
 from craft_cli import emit
 from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
 from craft_providers import bases
-from pydantic import PrivateAttr, constr
-from typing_extensions import Self, override
+from pydantic import StringConstraints, ConfigDict, PrivateAttr
+from typing_extensions import Annotated, Self, override
 
 from snapcraft import utils
 from snapcraft.const import SUPPORTED_ARCHS, SnapArch
@@ -63,7 +63,7 @@ from snapcraft.utils import (
 if TYPE_CHECKING:
     ProjectName = str
 else:
-    ProjectName = constr(max_length=40)
+    ProjectName = Annotated[str, StringConstraints(max_length=40)]
 # fmt: on
 
 
@@ -1002,23 +1002,17 @@ class Project(models.Project):
 
 
 class _GrammarAwareModel(pydantic.BaseModel):
-    class Config:
-        """Default configuration for grammar-aware models."""
-
-        validate_assignment = True
-        extra = "allow"  # this is required to verify only grammar-aware parts
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
-        allow_population_by_field_name = True
+    model_config = ConfigDict(validate_assignment=True, extra="allow", alias_generator=lambda s: s.replace("_", "-"), populate_by_name=True)
 
 
 class _GrammarAwarePart(_GrammarAwareModel):
-    source: Optional[GrammarStr]
-    build_environment: Optional[GrammarSingleEntryDictList]
-    build_packages: Optional[GrammarStrList]
-    stage_packages: Optional[GrammarStrList]
-    build_snaps: Optional[GrammarStrList]
-    stage_snaps: Optional[GrammarStrList]
-    parse_info: Optional[List[str]]
+    source: Optional[GrammarStr] = None
+    build_environment: Optional[GrammarSingleEntryDictList] = None
+    build_packages: Optional[GrammarStrList] = None
+    stage_packages: Optional[GrammarStrList] = None
+    build_snaps: Optional[GrammarStrList] = None
+    stage_snaps: Optional[GrammarStrList] = None
+    parse_info: Optional[List[str]] = None
 
 
 class GrammarAwareProject(_GrammarAwareModel):

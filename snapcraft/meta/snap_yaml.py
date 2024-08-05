@@ -25,7 +25,7 @@ import pydantic
 import yaml
 from craft_application.models import BaseMetadata, SummaryStr, constraints
 from craft_cli import emit
-from pydantic import ValidationError, validator
+from pydantic import field_validator, ValidationError
 from typing_extensions import override
 
 from snapcraft import errors, models
@@ -97,6 +97,8 @@ class SnapApp(SnapcraftMetadata):
 class ContentPlug(SnapcraftMetadata):  # type: ignore # (pydantic plugin is crashing)
     """Content plug definition in the snap metadata."""
 
+    # TODO[pydantic]: The `Config` class inherits from another class, please create the `model_config` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     @override
     class Config(BaseMetadata.Config):
         """Allow extra parameters in content plugs."""
@@ -121,14 +123,16 @@ class ContentPlug(SnapcraftMetadata):  # type: ignore # (pydantic plugin is cras
 
         return cls(**data)
 
-    @validator("target")
+    @field_validator("target")
+    @classmethod
     @classmethod
     def _validate_target_not_empty(cls, val):
         if val == "":
             raise ValueError("value cannot be empty")
         return val
 
-    @validator("default_provider")
+    @field_validator("default_provider")
+    @classmethod
     @classmethod
     def _validate_default_provider(cls, default_provider):
         if default_provider and "/" in default_provider:
@@ -237,6 +241,8 @@ class ComponentMetadata(SnapcraftMetadata):  # type: ignore # (pydantic plugin i
     type: str
     hooks: dict[str, models.Hook] | None
 
+    # TODO[pydantic]: The `Config` class inherits from another class, please create the `model_config` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     @override
     class Config(BaseMetadata.Config):
         """Ignore extra parameters in component metadata."""
