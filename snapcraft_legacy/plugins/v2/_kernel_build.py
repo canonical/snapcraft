@@ -26,6 +26,16 @@ from typing import List, Optional
 logger = logging.getLogger(__name__)
 
 
+default_kernel_image_target = {
+    "amd64": "bzImage",
+    "armhf": "zImage",
+    "arm64": "Image",
+    "powerpc": "uImage",
+    "ppc64el": "vmlinux.strip",
+    "s390x": "bzImage",
+    "riscv64": "Image",
+}
+
 _ZFS_URL = "https://github.com/openzfs/zfs"
 
 
@@ -84,19 +94,17 @@ _required_systemd = [
 _required_boot = ["squashfs"]
 
 
-def _clone_zfs_cmd(enable_zfs: bool, dest_dir: str) -> List[str]:
+def _clone_zfs_cmd(enable_zfs: bool) -> List[str]:
     """Clone zfs git repository if needed."""
     if enable_zfs:
         return [
             textwrap.dedent(
-                """
-                if [ ! -d {dest_dir}/zfs ]; then
-                	echo "cloning zfs..."
-                	git clone --depth=1 {zfs_url} {dest_dir}/zfs -b master
+                f"""
+                if [ ! -d "${{CRAFT_PART_BUILD}}/zfs" ]; then
+                    echo "cloning zfs..."
+                    git clone --depth=1 {_ZFS_URL} "${{CRAFT_PART_BUILD}}/zfs" -b master
                 fi
-                """.format(
-                    dest_dir=dest_dir, zfs_url=_ZFS_URL
-                )
+                """
             )
         ]
     return [
@@ -104,69 +112,70 @@ def _clone_zfs_cmd(enable_zfs: bool, dest_dir: str) -> List[str]:
     ]
 
 
-def _clean_old_build_cmd(dest_dir: str) -> List[str]:
+def _clean_old_build_cmd() -> List[str]:
     """Clean previous build."""
     return [
         textwrap.dedent(
             """
             echo "Cleaning previous build first..."
-            [ -e {dest_dir}/modules ] && rm -rf {dest_dir}/modules
-            [ -L {dest_dir}/lib/modules ] && rm -rf {dest_dir}/lib/modules
-            """.format(
-                dest_dir=dest_dir
-            )
+            [ -e "${CRAFT_PART_INSTALL}/modules" ] && rm -rf "${CRAFT_PART_INSTALL}/modules"
+            [ -L "${CRAFT_PART_INSTALL}/lib/modules" ] && rm -rf "${CRAFT_PART_INSTALL}/lib/modules"
+            """
         )
     ]
 
 
 def _do_base_config_cmd(
-    make_cmd: List[str],
+    make_arg: List[str],
     config_flavour: str,
     defconfig: Optional[List[str]],
-    dest_dir: str,
 ) -> List[str]:
     # if the parts build dir already contains a .config file, use it
-    cmd = [
-        'echo "Preparing config..."',
-        f"if [ ! -e {dest_dir}/.config ]; then",
-    ]
-
     # if kconfigflavour is provided, assemble the ubuntu.flavour config
     # otherwise use defconfig to seed the base config
     if defconfig:
         logger.info("Using defconfig: %s", defconfig)
-        make_cmd = make_cmd.copy()
-        make_cmd[1] = "-j1"  # FIXME: make this more robust
-        cmd.append(f'\t{" ".join(make_cmd + defconfig)}')
+        conf_cmd = textwrap.dedent(
+            f"""
+            echo "Preparing config..."
+            if [ ! -e "${{CRAFT_PART_BUILD}}/.config" ]; then
+                make \\
+                    -j1 \\
+                    {" ".join(make_arg)} \\
+                    {" ".join(defconfig)}
+            fi
+            """
+        )
     else:
         logger.info("Using ubuntu config flavour %s", config_flavour)
         conf_cmd = textwrap.dedent(
-            f"""	echo "Assembling Ubuntu config..."
-	if [ -f ${{KERNEL_SRC}}/debian/rules ] && [ -x ${{KERNEL_SRC}}/debian/rules ]; then
-		# Generate Ubuntu kernel configs
-		pushd ${{KERNEL_SRC}}
-		fakeroot debian/rules clean genconfigs || true
-		popd
+            f"""
+            echo "Preparing config..."
+            if [ ! -e "${{CRAFT_PART_BUILD}}/.config" ]; then
+                echo "Assembling Ubuntu config..."
+                if [ -f "${{KERNEL_SRC}}/debian/rules" ] && [ -x "${{KERNEL_SRC}}/debian/rules" ]; then
+                    # Generate Ubuntu kernel configs
+                    pushd "${{KERNEL_SRC}}"
+                    fakeroot debian/rules clean genconfigs || true
+                    popd
 
-		# Pick the right kernel .config for the target arch and flavour
-		ubuntuconfig=${{KERNEL_SRC}}/CONFIGS/${{DEB_ARCH}}-config.flavour.{config_flavour}
-		cat ${{ubuntuconfig}} > {dest_dir}/.config
+                    # Pick the right kernel .config for the target arch and flavour
+                    ubuntuconfig="${{KERNEL_SRC}}/CONFIGS/${{DEB_ARCH}}-config.flavour.{config_flavour}"
+                    cat "${{ubuntuconfig}}" > "${{CRAFT_PART_BUILD}}/.config"
 
-		# Clean up kernel source directory
-		pushd ${{KERNEL_SRC}}
-		fakeroot debian/rules clean
-		rm -rf CONFIGS/
-		popd
-	fi"""
+                    # Clean up kernel source directory
+                    pushd "${{KERNEL_SRC}}"
+                    fakeroot debian/rules clean
+                    rm -rf CONFIGS/
+                    popd
+                fi
+            fi
+            """
         )
-        cmd.extend([conf_cmd])
-
-    cmd.append("fi")
-
-    return cmd
+    return [conf_cmd]
 
 
-def _do_patch_config_cmd(configs: Optional[List[str]], dest_dir: str) -> List[str]:
+def _do_patch_config_cmd(configs: Optional[List[str]]) -> List[str]:
     # prepend the generated file with provided kconfigs
     #  - concat kconfigs to buffer
     #  - read current .config and append
@@ -174,47 +183,51 @@ def _do_patch_config_cmd(configs: Optional[List[str]], dest_dir: str) -> List[st
     if not configs:
         return []
 
-    config = "\n".join(configs)
+    config = "\\n".join(configs)
 
     # note that prepending and appending the overrides seems
     # only way to convince all kbuild versions to pick up the
     # configs during oldconfig in .config
     return [
-        'echo "Applying extra config...."',
-        f"echo '{config}' > {dest_dir}/.config_snap",
-        f"cat {dest_dir}/.config >> {dest_dir}/.config_snap",
-        f"echo '{config}' >> {dest_dir}/.config_snap",
-        f"mv {dest_dir}/.config_snap {dest_dir}/.config",
+        textwrap.dedent(
+            f"""
+            echo "Applying extra config...."
+            echo -e '{config}' > "${{CRAFT_PART_BUILD}}/.config_snap"
+            cat "${{CRAFT_PART_BUILD}}/.config" >> "${{CRAFT_PART_BUILD}}/.config_snap"
+            echo -e '{config}' >> "${{CRAFT_PART_BUILD}}/.config_snap"
+            mv "${{CRAFT_PART_BUILD}}/.config_snap" "${{CRAFT_PART_BUILD}}/.config"
+            """
+        )
     ]
 
 
-def _do_remake_config_cmd(make_cmd: List[str]) -> List[str]:
+def _do_remake_config_cmd(make_arg: List[str]) -> List[str]:
     # update config to include kconfig amendments using oldconfig
-    make_cmd = make_cmd.copy()
-    make_cmd[1] = "-j1"  # FIXME: make this more robust
     return [
-        'echo "Remaking oldconfig...."',
-        f"bash -c 'yes \"\" || true' | {' '.join(make_cmd)} oldconfig",
+        textwrap.dedent(
+            f"""
+            echo "Remaking oldconfig...."
+            bash -c 'yes "" || true' | make -j1 {' '.join(make_arg)} oldconfig
+            """
+        )
     ]
 
 
 def _get_configure_command(
-    make_cmd: List[str],
+    make_arg: List[str],
     config_flavour: str,
     defconfig: Optional[List[str]],
     configs: Optional[List[str]],
-    dest_dir: str,
 ) -> List[str]:
     """Configure the kernel."""
     return [
         *_do_base_config_cmd(
-            make_cmd=make_cmd,
+            make_arg=make_arg,
             config_flavour=config_flavour,
             defconfig=defconfig,
-            dest_dir=dest_dir,
         ),
-        *_do_patch_config_cmd(configs=configs, dest_dir=dest_dir),
-        *_do_remake_config_cmd(make_cmd=make_cmd),
+        *_do_patch_config_cmd(configs=configs),
+        *_do_remake_config_cmd(make_arg=make_arg),
     ]
 
 
@@ -305,58 +318,72 @@ def check_new_config(config_path: str):
     _do_check_initrd(builtin, modules)
 
 
-def _call_check_config_cmd(dest_dir: str) -> List[str]:
+def _call_check_config_cmd() -> List[str]:
     """Invoke the python interpreter and execute check_new_config()."""
     return [
-        'echo "Checking config for expected options..."',
-        " ".join(
-            [
-                sys.executable,
-                "-I",
-                os.path.abspath(__file__),
-                "check_new_config",
-                f"{dest_dir}/.config",
-            ]
+        textwrap.dedent(
+            f"""
+            echo "Checking config for expected options..."
+            {sys.executable} \\
+                -I {os.path.abspath(__file__)} \\
+                    check_new_config "${{CRAFT_PART_BUILD}}/.config"
+            """
         ),
     ]
 
 
 def _get_build_command(
-    make_cmd: List[str], targets: List[str], config_flavour: str
+    make_arg: List[str], make_targets: List[str], config_flavour: str
 ) -> List[str]:
     """Build the kernel."""
     # if config_flavour is used, determine ABI version and set KERNELRELEASE name
     if config_flavour:
         return [
-            'echo "Building kernel..."',
-            "ABI_VERSION=$(head -n 1 ${KERNEL_SRC}/debian/changelog | awk -F '[()]' "
-            "'{split($2, v, "
-            '"-"'
-            "); split(v[2], a, "
-            '"."'
-            "); print a[1]}')",
-            "KERNEL_MAIN_VERSION=$(head -n 1 ${KERNEL_SRC}/debian/changelog | awk -F "
-            "'[()]' '{split($2, v, "
-            '"-"'
-            "); print v[1]}')",
-            " ".join(
-                make_cmd
-                + targets
-                + [
-                    f'KERNELRELEASE="${{KERNEL_MAIN_VERSION}}-${{ABI_VERSION}}-{config_flavour}"',
-                    'CFLAGS_MODULE="-DPKG_ABI=${ABI_VERSION}"',
-                ]
+            textwrap.dedent(
+                """
+                echo "Gathering release information"
+                DEBIAN="${KERNEL_SRC}/debian"
+                src_pkg_name=$(sed -n '1s/^\\(.*\\) (.*).*$/\\1/p' "${DEBIAN}/changelog")
+                release=$(sed -n '1s/^'"${src_pkg_name}"'.*(\\(.*\\)-.*).*$/\\1/p' "${DEBIAN}/changelog")
+                revisions=$(sed -n 's/^'"${src_pkg_name}"'\\ .*('"${release}"'-\\(.*\\)).*$/\\1/p' "${DEBIAN}/changelog" | tac)
+                revision=$(echo ${revisions} | awk '{print $NF}')
+                abinum=$(echo ${revision} | sed -r -e 's/([^\\+~]*)\\.[^\\.]+(~.*)?(\\+.*)?$/\\1/')
+                abi_release="${release}-${abinum}"
+                uploadnum=$(echo ${revision} | sed -r -e 's/[^\\+~]*\\.([^\\.~]+(~.*)?(\\+.*)?$)/\\1/')
+                """
+            ),
+            textwrap.dedent(
+                f"""
+                echo "Building kernel..."
+                # shellcheck disable=SC2086 #SC2086 does not apply as ${{KERNEL_IMAGE_TARGET}} is single word
+                make \\
+                    -j "$(nproc)" \\
+                    {" ".join(make_arg)} \\
+                    KERNELVERSION="${{abi_release}}-{config_flavour}" \\
+                    CONFIG_DEBUG_SECTION_MISMATCH=y \\
+                    KBUILD_BUILD_VERSION="${{uploadnum}}" \\
+                    LOCALVERSION= localver-extra= \\
+                    CFLAGS_MODULE="-DPKG_ABI=${{abinum}}" \\
+                    {" ".join(make_targets)}
+                """
             ),
         ]
+
     return [
-        'echo "Building kernel..."',
-        " ".join(make_cmd + targets),
+        textwrap.dedent(
+            f"""
+            echo "Building kernel..."
+            # shellcheck disable=SC2086 #SC2086 does not apply as ${{KERNEL_IMAGE_TARGET}} is single word
+            make \\
+                -j "$(nproc)" \\
+                {" ".join(make_arg)} \\
+                {" ".join(make_targets)}
+            """
+        ),
     ]
 
 
-def _get_zfs_build_commands(
-    enable_zfs: bool, arch_triplet: str, build_dir: str, install_dir: str
-) -> List[str]:
+def _get_zfs_build_commands(enable_zfs: bool) -> List[str]:
     """Include zfs build steps if required."""
     if not enable_zfs:
         return ['echo "Not building zfs modules"']
@@ -365,115 +392,116 @@ def _get_zfs_build_commands(
         textwrap.dedent(
             """
             echo "Building zfs modules..."
-            cd {build_dir}/zfs
+            cd "${CRAFT_PART_BUILD}/zfs"
             ./autogen.sh
-            ./configure --with-linux=${{KERNEL_SRC}} --with-linux-obj={build_dir} \
---with-config=kernel --host={arch_triplet}
-            make -j$(nproc)
-            make install DESTDIR={install_dir}/zfs
-            release_version="$(ls {install_dir}/modules)"
-            mv {install_dir}/zfs/lib/modules/${{release_version}}/extra \
-{install_dir}/modules/${{release_version}}
-            rm -rf {install_dir}/zfs
+            ./configure --with-linux="${KERNEL_SRC}" \\
+                        --with-linux-obj="${CRAFT_PART_BUILD}" \\
+                        --with-config=kernel \\
+                        --host="${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
+            make -j "$(nproc)"
+            make install DESTDIR="${CRAFT_PART_INSTALL}/zfs"
+            release_version="$(ls "${CRAFT_PART_INSTALL}/modules")"
+            mv "${CRAFT_PART_INSTALL}/zfs/lib/modules/${release_version}/extra" \\
+               "${CRAFT_PART_INSTALL}/modules/${release_version}"
+            rm -rf "${CRAFT_PART_INSTALL}/zfs"
             echo "Rebuilding module dependencies"
-            depmod -b {install_dir} ${{release_version}}
-            """.format(
-                build_dir=build_dir, install_dir=install_dir, arch_triplet=arch_triplet
-            )
-        )
+            depmod -b "${CRAFT_PART_INSTALL}" "${release_version}"
+            """
+        ),
     ]
 
 
-def _get_perf_build_commands(
-    make_cmd: List[str],
-    enable_perf: bool,
-    src_dir: str,
-    build_dir: str,
-    install_dir: str,
-) -> List[str]:
+def _get_perf_build_commands(enable_perf: bool) -> List[str]:
     """Build perf binary if enabled."""
     if not enable_perf:
         return ['echo "Not building perf binary"']
 
-    cmd = make_cmd + [
-        # Override source and build directories
-        "-C",
-        f'"{src_dir}/tools/perf"',
-        f'O="{build_dir}/tools/perf"',
-    ]
     return [
-        'echo "Building perf binary..."',
-        f'mkdir -p "{build_dir}/tools/perf"',
-        " ".join(cmd),
-        f'install -Dm0755 "{build_dir}/tools/perf/perf" "{install_dir}/bin/perf"',
+        textwrap.dedent(
+            """
+            echo "Building perf binary..."
+            mkdir -p "${CRAFT_PART_BUILD}/tools/perf
+            # Override source and build directories
+            make -j "$(nproc)" \\
+                 -C "${KERNEL_SRC}/tools/perf" \\
+                 O="${CRAFT_PART_BUILD}/tools/perf"
+            install -Dm0755 "${CRAFT_PART_BUILD}/tools/perf/perf" \\
+                            "${CRAFT_PART_INSTALL}"/bin/perf
+            """
+        ),
     ]
 
 
 def get_build_commands(
-    make_cmd: List[str],
-    make_targets: List[str],
-    make_install_targets: List[str],
-    target_arch_triplet: str,
+    kernel_arch: str,
     config_flavour: str,
     defconfig: Optional[List[str]],
     configs: Optional[List[str]],
     enable_zfs_support: bool,
     enable_perf: bool,
-    project_dir: str,
-    source_dir: str,
-    build_dir: str,
-    install_dir: str,
 ) -> List[str]:
     """Get build command"""
+
+    logger.info("Initializing build env...")
+    # we might be building out of tree, configure paths
+    make_arg = [
+        "-C",
+        '"${KERNEL_SRC}"',
+        'O="${CRAFT_PART_BUILD}"',
+    ]
+
+    make_targets = ["${KERNEL_IMAGE_TARGET}", "modules"]
+    make_install_targets = [
+        "modules_install",
+        "INSTALL_MOD_STRIP=1",
+        'INSTALL_MOD_PATH="${CRAFT_PART_INSTALL}"',
+    ]
+
+    if not kernel_arch == "x86":
+        make_targets.append("dtbs")
+        make_install_targets.extend(
+            ["dtbs_install", 'INSTALL_DTBS_PATH="${CRAFT_PART_INSTALL}/dtbs"']
+        )
+
     # kernel source can be either CRAFT_PART_SRC or CRAFT_PROJECT_DIR
+    kernel_src_cmd = textwrap.dedent(
+        """
+        [ -d "${CRAFT_PART_SRC}/kernel" ] && KERNEL_SRC="${CRAFT_PART_SRC}" || KERNEL_SRC="${CRAFT_PROJECT_DIR}"
+        echo "PATH=${PATH}"
+        echo "KERNEL_SRC=${KERNEL_SRC}"
+        """
+    )
+
     return [
-        f"[ -d {source_dir}/kernel ] && KERNEL_SRC={source_dir} || KERNEL_SRC={project_dir}",
-        'echo "PATH=$PATH"',
-        'echo "KERNEL_SRC=${KERNEL_SRC}"',
-        "",
+        kernel_src_cmd,
         *_clone_zfs_cmd(
             enable_zfs=enable_zfs_support,
-            dest_dir=build_dir,
         ),
         "",
-        *_clean_old_build_cmd(dest_dir=install_dir),
+        *_clean_old_build_cmd(),
         "",
         *_get_configure_command(
-            make_cmd=make_cmd,
+            make_arg=make_arg,
             config_flavour=config_flavour,
             defconfig=defconfig,
             configs=configs,
-            dest_dir=build_dir,
         ),
         "",
-        *_call_check_config_cmd(dest_dir=build_dir),
-        "",
+        *_call_check_config_cmd(),
         *_get_build_command(
-            make_cmd=make_cmd,
-            targets=make_targets,
+            make_arg=make_arg,
+            make_targets=make_targets,
             config_flavour=config_flavour,
         ),
         *_get_install_command(
-            make_cmd=make_cmd.copy(),
+            make_arg=make_arg,
             make_install_targets=make_install_targets,
-            build_dir=build_dir,
-            install_dir=install_dir,
         ),
         "",
-        *_get_zfs_build_commands(
-            enable_zfs=enable_zfs_support,
-            arch_triplet=target_arch_triplet,
-            build_dir=build_dir,
-            install_dir=install_dir,
-        ),
+        *_get_zfs_build_commands(enable_zfs=enable_zfs_support),
         "",
-        *_get_perf_build_commands(
-            make_cmd=make_cmd,
-            enable_perf=enable_perf,
-            src_dir="${KERNEL_SRC}",
-            build_dir=build_dir,
-            install_dir=install_dir,
-        ),
+        *_get_perf_build_commands(enable_perf=enable_perf),
+        "",
         'echo "Kernel build finished!"',
     ]
 
@@ -481,117 +509,74 @@ def get_build_commands(
 ### Install
 
 
-def _parse_kernel_release_cmd(build_dir: str) -> List[str]:
-    """Set release from kernel.release file."""
-    return [
-        'echo "Parsing created kernel release..."',
-        f"KERNEL_RELEASE=$(cat {build_dir}/include/config/kernel.release)",
-    ]
-
-
-def _copy_vmlinuz_cmd(install_dir: str) -> List[str]:
-    """Install kernel image."""
-    cmd = [
-        'echo "Copying kernel image..."',
-        # if kernel.img already exists, replace it, we are probably re-running
-        # build
-        f"[ -e {install_dir}/kernel.img ] && rm -rf {install_dir}/kernel.img",
-        f"mv ${{KERNEL_BUILD_ARCH_DIR}}/${{KERNEL_IMAGE_TARGET}} {install_dir}/kernel.img",
-    ]
-    return cmd
-
-
-def _copy_system_map_cmd(build_dir: str, install_dir: str) -> List[str]:
-    """Install the system map."""
-    cmd = [
-        'echo "Copying System map..."',
-        f"[ -e {install_dir}/System.map ] && rm -rf {install_dir}/System.map*",
-        f"ln -f {build_dir}/System.map {install_dir}/System.map-${{KERNEL_RELEASE}}",
-    ]
-    return cmd
-
-
-def _install_config_cmd(build_dir: str, install_dir: str) -> List[str]:
-    """Install the kernel configuration file."""
-    # install .config as config-$version
-    return [
-        "",
-        'echo "Installing kernel config..."',
-        f"ln -f {build_dir}/.config {install_dir}/config-${{KERNEL_RELEASE}}",
-    ]
-
-
-def _arrange_install_dir_cmd(install_dir: str) -> List[str]:
+def _arrange_install_dir_cmd() -> List[str]:
     """Final adjustments to installation directory."""
     return [
         textwrap.dedent(
             """
-
             echo "Finalizing install directory..."
             # upstream kernel installs under $INSTALL_MOD_PATH/lib/modules/
             # but snapd expects modules/ and firmware/
-            mv {install_dir}/lib/modules {install_dir}/
+            mv "${CRAFT_PART_INSTALL}/lib/modules" "${CRAFT_PART_INSTALL}"
             # remove symlinks modules/*/build and modules/*/source
-            rm -rf {install_dir}/modules/*/build {install_dir}/modules/*/source
+            rm -rf "${CRAFT_PART_INSTALL}"/modules/*/build "${CRAFT_PART_INSTALL}"/modules/*/source
             # if there is firmware dir, move it to snap root
             # this could have been from stage packages or from kernel build
-            [ -d {install_dir}/lib/firmware ] && mv {install_dir}/lib/firmware {install_dir}
+            [ -d "${CRAFT_PART_INSTALL}/lib/firmware" ] && mv "${CRAFT_PART_INSTALL}/lib/firmware" "${CRAFT_PART_INSTALL}"
             # create symlinks for modules and firmware for convenience
-            ln -sf ../modules {install_dir}/lib/modules
-            ln -sf ../firmware {install_dir}/lib/firmware
-            """.format(
-                install_dir=install_dir
-            )
-        )
+            ln -sf ../modules "${CRAFT_PART_INSTALL}/lib/modules"
+            ln -sf ../firmware "${CRAFT_PART_INSTALL}/lib/firmware"
+            """
+        ),
     ]
 
 
-def _get_post_install_cmd(
-    build_dir: str,
-    install_dir: str,
-) -> List[str]:
+def _get_post_install_cmd() -> List[str]:
     return [
-        "",
-        *_parse_kernel_release_cmd(build_dir=build_dir),
-        "",
-        *_copy_vmlinuz_cmd(install_dir=install_dir),
-        "",
-        *_copy_system_map_cmd(build_dir=build_dir, install_dir=install_dir),
-        "",
+        textwrap.dedent(
+            """
+            echo "Parsing created kernel release..."
+            KERNEL_RELEASE=$(cat "${CRAFT_PART_BUILD}/include/config/kernel.release")
+
+            echo "Copying kernel image..."
+            # if kernel.img already exists, replace it, we are probably re-running
+            # build
+            [ -e "${CRAFT_PART_INSTALL}/kernel.img" ] && rm -rf "${CRAFT_PART_INSTALL}/kernel.img"
+            mv "${KERNEL_BUILD_ARCH_DIR}/${KERNEL_IMAGE_TARGET}" "${CRAFT_PART_INSTALL}/kernel.img"
+
+            echo "Copying System map..."
+            [ -e "${CRAFT_PART_INSTALL}/System.map" ] && rm -rf "${CRAFT_PART_INSTALL}"/System.map*
+            ln -f "${CRAFT_PART_BUILD}/System.map" "${CRAFT_PART_INSTALL}/System.map-${KERNEL_RELEASE}"
+
+            echo "Installing kernel config..."
+            ln -f "${CRAFT_PART_BUILD}/.config" "${CRAFT_PART_INSTALL}/config-${KERNEL_RELEASE}"
+            """
+        ),
     ]
 
 
 def _get_install_command(
-    make_cmd: List[str],
+    make_arg: List[str],
     make_install_targets: List[str],
-    build_dir: str,
-    install_dir: str,
 ) -> List[str]:
     # install to installdir
-    # make_cmd = self._make_cmd.copy()
-    make_cmd += [
-        f"CONFIG_PREFIX={install_dir}",
-    ]
-    make_cmd += make_install_targets
-    cmd = [
-        'echo "Installing kernel build..."',
-        " ".join(make_cmd),
-    ]
-
-    # add post-install steps
-    cmd.extend(
-        _get_post_install_cmd(
-            build_dir=build_dir,
-            install_dir=install_dir,
-        ),
+    install_cmd = textwrap.dedent(
+        f"""
+        echo "Installing kernel build..."
+        make \\
+            -j "$(nproc)" \\
+            {" ".join(make_arg)} \\
+            CONFIG_PREFIX="${{CRAFT_PART_INSTALL}}" \\
+            {" ".join(make_install_targets)}
+        """
     )
 
-    # install .config as config-$version
-    cmd.extend(_install_config_cmd(build_dir=build_dir, install_dir=install_dir))
-
-    cmd.extend(_arrange_install_dir_cmd(install_dir=install_dir))
-
-    return cmd
+    return [
+        install_cmd,
+        # add post-install steps
+        *_get_post_install_cmd(),
+        *_arrange_install_dir_cmd(),
+    ]
 
 
 ### Utilities
