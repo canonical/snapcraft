@@ -77,6 +77,7 @@ class Lifecycle(LifecycleService):
             extra_build_snaps=project.get_extra_build_snaps(),
             confinement=project.confinement,
             project_base=project.base or "",
+            project_name=project.name,
         )
         callbacks.register_prologue(parts.set_global_environment)
         callbacks.register_pre_step(parts.set_step_environment)
@@ -85,7 +86,18 @@ class Lifecycle(LifecycleService):
     @overrides
     def post_prime(self, step_info: StepInfo) -> bool:
         """Run post-prime parts steps for Snapcraft."""
+        from snapcraft.parts import plugins
+
         project = cast(models.Project, self._project)
+
+        part_name = step_info.part_name
+        plugin_name = project.parts[part_name]["plugin"]
+
+        # Handle plugin-specific prime fixes
+        if plugin_name == "python":
+            plugins.PythonPlugin.post_prime(step_info)
+
+        # Handle patch-elf
 
         # do not use system libraries in classic confinement
         use_system_libs = not bool(project.confinement == "classic")
