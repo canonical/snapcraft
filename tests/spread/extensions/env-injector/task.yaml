@@ -40,35 +40,45 @@ execute: |
 
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
+  echo "[env-injector] Creating global envfile"
   # Create global envfile
   echo 'HELLO_WORLD=Hello World' >> envfile.env
 
+  echo "[env-injector] Creating app-specific envfile"
   # Create app-specific envfile
   echo 'SCOPED=Scoped' >> appenv.env
 
+  echo "[env-injector] Setting global env variable"
   # Set env vars: Global
   snap set env-injector-hello env.global="World"
 
+  echo "[env-injector] Setting app-specific env variable"
   # Set env vars: specific to each app
   snap set env-injector-hello apps.hello1.env.hello="Hello"
   snap set env-injector-hello apps.hello2.env.specific="City"
 
+  echo "[env-injector] Rejecting invalid keys"
+  # Set env vars: specific to each app
   # To check if key with dot will be rejected 
   snap set env-injector-hello env.word.dot="wrong"
 
+  echo "[env-injector] Testing order of env vars"
   # To test order of env vars
   echo 'ORDER="From envfile"' >> envfile.env
   snap set env-injector-hello apps.hello1.env.order="from app-specific"
 
+  echo "[env-injector] Load envfiles"
   # Load global and app-specific envfiles
   snap set env-injector-hello envfile="${SNAP_DIR}"/envfile.env
   snap set env-injector-hello apps.hello1.envfile="${SNAP_DIR}"/appenv.env
 
+  echo "[env-injector] Run hello1 and hello2 apps"
   # Run the hello command
   # These will fail if the env vars are not set as expected
   env-injector-hello.hello1
   env-injector-hello.hello2
 
+  echo "[env-injector] Run hello-demo app"
   # Make sure that alias is NOT rewritten
   snap set env-injector-hello apps.myapp.env.specific="City"
   env-injector-hello.hello-demo
