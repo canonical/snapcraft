@@ -72,16 +72,6 @@ from . import _kernel_build
 
 logger = logging.getLogger(__name__)
 
-_default_kernel_image_target = {
-    "amd64": "bzImage",
-    "armhf": "zImage",
-    "arm64": "Image",
-    "powerpc": "uImage",
-    "ppc64el": "vmlinux.strip",
-    "s390x": "bzImage",
-    "riscv64": "Image",
-}
-
 
 class KernelPlugin(PluginV2):
     """Plugin class implementing kernel build functionality"""
@@ -133,43 +123,15 @@ class KernelPlugin(PluginV2):
         if host_arch != self._target_arch:
             self._cross_building = True
 
-    def _init_build_env(self) -> None:
-        # first get all the architectures, new v2 plugin is making life difficult
-        logger.info("Initializing build env...")
-
-        self._make_cmd = ["make", "-j$(nproc)"]
-        # we are building out of tree, configure paths
-        self._make_cmd.append("-C")
-        self._make_cmd.append("${KERNEL_SRC}")
-        self._make_cmd.append("O=${SNAPCRAFT_PART_BUILD}")
-
-        self._check_cross_compilation()
-        self._set_kernel_targets()
-
-    def _check_cross_compilation(self) -> None:
-        if self._cross_building:
-            self._make_cmd.append(f"ARCH={self._kernel_arch}")
-            self._make_cmd.append("CROSS_COMPILE=${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}-")
-
-    def _set_kernel_targets(self) -> None:
+        # set kernel targets
         if not self.options.kernel_image_target:
-            self.kernel_image_target = _default_kernel_image_target[self._deb_arch]
+            self.kernel_image_target = _kernel_build.default_kernel_image_target[
+                self._deb_arch
+            ]
         elif isinstance(self.options.kernel_image_target, str):
             self.kernel_image_target = self.options.kernel_image_target
         elif self._deb_arch in self.options.kernel_image_target:
             self.kernel_image_target = self.options.kernel_image_target[self._deb_arch]
-
-        self._make_targets = [self.kernel_image_target, "modules"]
-        self._make_install_targets = [
-            "modules_install",
-            "INSTALL_MOD_STRIP=1",
-            "INSTALL_MOD_PATH=${SNAPCRAFT_PART_INSTALL}",
-        ]
-        if self._kernel_arch in ("arm", "arm64", "riscv64"):
-            self._make_targets.append("dtbs")
-            self._make_install_targets.extend(
-                ["dtbs_install", "INSTALL_DTBS_PATH=${SNAPCRAFT_PART_INSTALL}/dtbs"]
-            )
 
     @overrides
     def get_build_snaps(self) -> Set[str]:
@@ -191,7 +153,10 @@ class KernelPlugin(PluginV2):
             "kpartx",
             "libelf-dev",
             "libssl-dev",
+            "lz4",
             "systemd",
+            "xz-utils",
+            "zstd",
         }
 
         if self.options.kernel_enable_zfs_support:
@@ -212,13 +177,17 @@ class KernelPlugin(PluginV2):
     @overrides
     def get_build_environment(self) -> Dict[str, str]:
         logger.info("Getting build env...")
-        self._init_build_env()
-
         return {
-            "CROSS_COMPILE": "${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}-",
+            "CRAFT_ARCH_TRIPLET_BUILD_FOR": "${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}",
+            "CRAFT_PROJECT_DIR": "${SNAPCRAFT_PROJECT_DIR}",
+            "CRAFT_PART_SRC": "${SNAPCRAFT_PART_SRC}",
+            "CRAFT_PART_BUILD": "${SNAPCRAFT_PART_BUILD}",
+            "CRAFT_PART_INSTALL": "${SNAPCRAFT_PART_INSTALL}",
+            "CRAFT_TARGET_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
+            "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
             "ARCH": self._kernel_arch,
-            "DEB_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
-            "KERNEL_BUILD_ARCH_DIR": f"${{SNAPCRAFT_PART_BUILD}}/arch/{self._kernel_arch}/boot",
+            "DEB_ARCH": "${CRAFT_TARGET_ARCH}",
+            "KERNEL_BUILD_ARCH_DIR": f"${{CRAFT_PART_BUILD}}/arch/{self._kernel_arch}/boot",
             "KERNEL_IMAGE_TARGET": self.kernel_image_target,
         }
 
@@ -229,19 +198,12 @@ class KernelPlugin(PluginV2):
         if self.options.kernel_kdefconfig:
             kconfigflavour = ""
         return _kernel_build.get_build_commands(
-            make_cmd=self._make_cmd.copy(),
-            make_targets=self._make_targets,
-            make_install_targets=self._make_install_targets,
-            target_arch_triplet="${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}",
+            kernel_arch=self._kernel_arch,
             config_flavour=kconfigflavour,
             defconfig=self.options.kernel_kdefconfig,
             configs=self.options.kernel_kconfigs,
             enable_zfs_support=self.options.kernel_enable_zfs_support,
             enable_perf=self.options.kernel_enable_perf,
-            project_dir="${SNAPCRAFT_PROJECT_DIR}",
-            source_dir="${SNAPCRAFT_PART_SRC}",
-            build_dir="${SNAPCRAFT_PART_BUILD}",
-            install_dir="${SNAPCRAFT_PART_INSTALL}",
         )
 
     @property
