@@ -24,7 +24,8 @@ from snaphelpers import SnapConfigOptions, SnapCtlError
 from snapcraft.utils import is_snapcraft_running_from_snap
 
 
-class SnapConfig(pydantic.BaseModel, extra=pydantic.Extra.forbid):
+# TODO: use craft-application's base model
+class SnapConfig(pydantic.BaseModel, extra="forbid"):
     """Data stored in a snap config.
 
     :param provider: provider to use. Valid values are 'lxd' and 'multipass'.
@@ -32,7 +33,7 @@ class SnapConfig(pydantic.BaseModel, extra=pydantic.Extra.forbid):
 
     provider: Optional[Literal["lxd", "multipass"]] = None
 
-    @pydantic.validator("provider", pre=True)
+    @pydantic.field_validator("provider")
     @classmethod
     def convert_to_lower(cls, provider):
         """Convert provider value to lowercase."""

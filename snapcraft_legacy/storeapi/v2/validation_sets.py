@@ -95,7 +95,7 @@ class EditableBuildAssertion(models.CraftBaseModel):
     sequence: int
     """The "sequence" assertion header"""
 
-    snaps: Annotated[list[Snap], pydantic.Field(min_items=1)]
+    snaps: Annotated[list[Snap], pydantic.Field(min_length=1)]
     """List of snaps in a Validation Set assertion"""
 
     def marshal_scalars_as_strings(self) -> Dict[str, Any]:
@@ -124,7 +124,8 @@ class BuildAssertion(EditableBuildAssertion):
     type: Literal["validation-set"]
     """The "type" assertion header"""
 
-    @pydantic.root_validator(pre=True)
+    @pydantic.model_validator(mode="before")
+    @classmethod
     def remove_sign_key(cls, values):
         """Accept but always ignore the sign key.
 
