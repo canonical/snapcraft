@@ -22,14 +22,10 @@ import re
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
-    List,
     Literal,
     Mapping,
-    Optional,
     Sequence,
     Tuple,
-    Union,
     cast,
 )
 
@@ -71,7 +67,7 @@ else:
 # fmt: on
 
 
-def _validate_command_chain(command_chains: Optional[List[str]]) -> Optional[List[str]]:
+def _validate_command_chain(command_chains: list[str] | None) -> list[str] | None:
     """Validate command_chain."""
     if command_chains is not None:
         for command_chain in command_chains:
@@ -283,8 +279,8 @@ def _validate_component(name: str) -> str:
 
 
 def _get_partitions_from_components(
-    components_data: Optional[Dict[str, Any]]
-) -> Optional[List[str]]:
+    components_data: dict[str, Any] | None
+) -> list[str] | None:
     """Get a list of partitions based on the project's components.
 
     :returns: A list of partitions formatted as ['default', 'component/<name>', ...]
@@ -299,8 +295,8 @@ def _get_partitions_from_components(
 class Socket(models.CraftBaseModel):
     """Snapcraft app socket definition."""
 
-    listen_stream: Union[int, str]
-    socket_mode: Optional[int]
+    listen_stream: int | str
+    socket_mode: int | None = None
 
     @pydantic.field_validator("listen_stream")
     @classmethod
@@ -334,10 +330,10 @@ class Lint(models.CraftBaseModel):
         The "known" linter names are the keys in :ref:`LINTERS`
     """
 
-    ignore: List[Union[str, Dict[str, List[str]]]]
+    ignore: list[str | dict[str, list[str]]]
 
     # A private field to simplify lookup.
-    _lint_ignores: Dict[str, List[str]] = PrivateAttr(default_factory=dict)
+    _lint_ignores: dict[str, list[str]] = PrivateAttr(default_factory=dict)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -357,7 +353,7 @@ class Lint(models.CraftBaseModel):
             and len(self._lint_ignores[linter_name]) == 0
         )
 
-    def ignored_files(self, linter_name: str) -> List[str]:
+    def ignored_files(self, linter_name: str) -> list[str]:
         """Get a list of filenames/patterns to ignore for `lint_name`.
 
         Since the main usecase for this method is a for-loop with `fnmatch()`, it will
@@ -377,58 +373,54 @@ class App(models.CraftBaseModel):
     """Snapcraft project app definition."""
 
     command: str
-    autostart: Optional[str]
-    common_id: Optional[str]
-    bus_name: Optional[str]
-    desktop: Optional[str]
-    completer: Optional[str]
-    stop_command: Optional[str]
-    post_stop_command: Optional[str]
-    start_timeout: Optional[str]
-    stop_timeout: Optional[str]
-    watchdog_timeout: Optional[str]
-    reload_command: Optional[str]
-    restart_delay: Optional[str]
-    timer: Optional[str]
-    daemon: Optional[Literal["simple", "forking", "oneshot", "notify", "dbus"]]
+    autostart: str | None = None
+    common_id: str | None = None
+    bus_name: str | None = None
+    desktop: str | None = None
+    completer: str | None = None
+    stop_command: str | None = None
+    post_stop_command: str | None = None
+    start_timeout: str | None = None
+    stop_timeout: str | None = None
+    watchdog_timeout: str | None = None
+    reload_command: str | None = None
+    restart_delay: str | None = None
+    timer: str | None = None
+    daemon: Literal["simple", "forking", "oneshot", "notify", "dbus"] | None = None
     after: UniqueStrList = cast(UniqueStrList, [])
     before: UniqueStrList = cast(UniqueStrList, [])
-    refresh_mode: Optional[Literal["endure", "restart", "ignore-running"]]
-    stop_mode: Optional[
-        Literal[
-            "sigterm",
-            "sigterm-all",
-            "sighup",
-            "sighup-all",
-            "sigusr1",
-            "sigusr1-all",
-            "sigusr2",
-            "sigusr2-all",
-            "sigint",
-            "sigint-all",
-        ]
-    ]
-    restart_condition: Optional[
-        Literal[
-            "on-success",
-            "on-failure",
-            "on-abnormal",
-            "on-abort",
-            "on-watchdog",
-            "always",
-            "never",
-        ]
-    ]
-    install_mode: Optional[Literal["enable", "disable"]]
-    slots: Optional[UniqueStrList]
-    plugs: Optional[UniqueStrList]
-    aliases: Optional[UniqueStrList]
-    environment: Optional[Dict[str, str]]
-    command_chain: List[str] = []
-    sockets: Optional[Dict[str, Socket]]
-    daemon_scope: Optional[Literal["system", "user"]]
-    activates_on: Optional[UniqueStrList]
-    passthrough: Optional[Dict[str, Any]]
+    refresh_mode: Literal["endure", "restart", "ignore-running"] | None = None
+    stop_mode: Literal[
+        "sigterm",
+        "sigterm-all",
+        "sighup",
+        "sighup-all",
+        "sigusr1",
+        "sigusr1-all",
+        "sigusr2",
+        "sigusr2-all",
+        "sigint",
+        "sigint-all",
+    ] | None = None
+    restart_condition: Literal[
+        "on-success",
+        "on-failure",
+        "on-abnormal",
+        "on-abort",
+        "on-watchdog",
+        "always",
+        "never",
+    ] | None = None
+    install_mode: Literal["enable", "disable"] | None = None
+    slots: UniqueStrList | None = None
+    plugs: UniqueStrList | None = None
+    aliases: UniqueStrList | None = None
+    environment: dict[str, str] | None = None
+    command_chain: list[str] = []
+    sockets: dict[str, Socket] | None = None
+    daemon_scope: Literal["system", "user"] | None = None
+    activates_on: UniqueStrList | None = None
+    passthrough: dict[str, Any] | None = None
 
     @pydantic.field_validator("autostart")
     @classmethod
@@ -480,10 +472,10 @@ class App(models.CraftBaseModel):
 class Hook(models.CraftBaseModel):
     """Snapcraft project hook definition."""
 
-    command_chain: Optional[List[str]]
-    environment: Optional[Dict[str, str]]
-    plugs: Optional[UniqueStrList]
-    passthrough: Optional[Dict[str, Any]]
+    command_chain: list[str] | None = None
+    environment: dict[str, str] | None = None
+    plugs: UniqueStrList | None = None
+    passthrough: dict[str, Any] | None = None
 
     @pydantic.field_validator("command_chain")
     @classmethod
@@ -501,17 +493,17 @@ class Hook(models.CraftBaseModel):
 class Architecture(models.CraftBaseModel, extra="forbid"):
     """Snapcraft project architecture definition."""
 
-    build_on: Union[str, UniqueStrList]
-    build_for: Optional[Union[str, UniqueStrList]]
+    build_on: str | UniqueStrList
+    build_for: str | UniqueStrList | None = None
 
 
 class ContentPlug(models.CraftBaseModel):
     """Snapcraft project content plug definition."""
 
-    content: Optional[str]
+    content: str | None = None
     interface: str
     target: str
-    default_provider: Optional[str]
+    default_provider: str | None = None
 
     @pydantic.field_validator("default_provider")
     @classmethod
@@ -592,23 +584,10 @@ class Component(models.CraftBaseModel):
     summary: SummaryStr
     description: str
     type: Literal["test"]
-    version: Optional[VersionStr]  # type: ignore[assignment]
-    hooks: dict[str, Hook] | None
+    version: VersionStr | None = None
+    hooks: dict[str, Hook] | None = None
 
-    @pydantic.field_validator("version")
-    @classmethod
-    def _validate_version(cls, version):
-        if version == "":
-            raise ValueError("Component version cannot be an empty string.")
-
-        if version:
-            _validate_version_name(version, "Component")
-
-        return version
-
-
-MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description", "grade")
-
+MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
 class Project(models.Project):
     """Snapcraft project definition.
@@ -621,41 +600,38 @@ class Project(models.Project):
 
     # snapcraft's `name` is more general than craft-application
     name: ProjectName  # type: ignore[assignment]
-    build_base: str | None = pydantic.Field(validate_default=True)
+    build_base: str | None = pydantic.Field(validate_default=True, default=None)
     compression: Literal["lzo", "xz"] = "xz"
-    version: Optional[VersionStr]  # type: ignore[assignment]
-    donation: Optional[UniqueStrList]
+    version: VersionStr | None = None
+    donation: UniqueStrList | None = None
     # snapcraft's `source_code` is more general than craft-application
-    source_code: Optional[UniqueStrList]  # type: ignore[assignment]
-    contact: Optional[UniqueStrList]  # type: ignore[assignment]
-    issues: Optional[UniqueStrList]  # type: ignore[assignment]
-    website: Optional[UniqueStrList]
-    type: Optional[Literal["app", "base", "gadget", "kernel", "snapd"]]
-    icon: Optional[str]
+    source_code: UniqueStrList | None = None
+    contact: UniqueStrList | None = None
+    issues: UniqueStrList | None = None
+    website: UniqueStrList | None = None
+    type: Literal["app", "base", "gadget", "kernel", "snapd"] | None = None
+    icon: str | None = None
     confinement: Literal["classic", "devmode", "strict"]
-    layout: Optional[
-        Dict[str, Dict[Literal["symlink", "bind", "bind-file", "type"], str]]
-    ]
-    grade: Optional[Literal["stable", "devel"]]
-    architectures: List[Union[str, Architecture]] | None = None
+    layout: dict[str, dict[Literal["symlink", "bind", "bind-file", "type"], str]] | None = None
+    grade: Literal["stable", "devel"] | None = None
+    architectures: list[str | Architecture] | None = None
     platforms: dict[str, Platform] | None = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
     assumes: UniqueStrList = cast(UniqueStrList, [])
-    package_repositories: Optional[List[Dict[str, Any]]]
-    hooks: Optional[Dict[str, Hook]]
-    passthrough: Optional[Dict[str, Any]]
-    apps: Optional[Dict[str, App]]
-    plugs: Optional[Dict[str, Union[ContentPlug, Any]]]
-    slots: Optional[Dict[str, Any]]
-    lint: Optional[Lint]
-    epoch: Optional[str]
-    adopt_info: Optional[str]
-    system_usernames: Optional[Dict[str, Any]]
-    environment: Optional[Dict[str, Optional[str]]]
-    build_packages: Grammar[list[str]] | None
-    build_snaps: Grammar[list[str]] | None
-    ua_services: Optional[UniqueStrList]
-    provenance: Optional[str]
-    components: Optional[Dict[ProjectName, Component]]
+    hooks: dict[str, Hook] | None = None
+    passthrough: dict[str, Any] | None = None
+    apps: dict[str, App] | None = None
+    plugs: dict[str, ContentPlug | Any] | None = None
+    slots: dict[str, Any] | None = None
+    lint: Lint | None = None
+    epoch: str | None = None
+    adopt_info: str | None = None
+    system_usernames: dict[str, Any] | None = None
+    environment: dict[str, str | None] | None = None
+    build_packages: Grammar[list[str]] | None = None
+    build_snaps: Grammar[list[str]] | None = None
+    ua_services: UniqueStrList | None = None
+    provenance: str | None = None
+    components: dict[ProjectName, Component] | None = None
 
     @override
     @classmethod
@@ -758,16 +734,6 @@ class Project(models.Project):
     def _validate_snap_name(cls, name):
         return _validate_name(name=name, field_name="snap")
 
-    @pydantic.field_validator("version")
-    @classmethod
-    def _validate_version(cls, version, values):
-        if not version and "adopt_info" not in values:
-            raise ValueError("Version must be declared if not adopting metadata")
-
-        _validate_version_name(version, "Snap")
-
-        return version
-
     @pydantic.field_validator("components")
     @classmethod
     def _validate_components(cls, components):
@@ -829,11 +795,11 @@ class Project(models.Project):
 
     @pydantic.field_validator("build_base")
     @classmethod
-    def _validate_build_base(cls, build_base, values):
+    def _validate_build_base(
+            cls, value: str | None, info: pydantic.ValidationInfo
+    ) -> str | None:
         """Build-base defaults to the base value if not specified."""
-        if not build_base:
-            build_base = values.get("base")
-        return build_base
+        return value or info.data.get("base")
 
     @pydantic.field_validator("epoch")
     @classmethod
@@ -871,30 +837,7 @@ class Project(models.Project):
             field_value = cast(UniqueStrList, [field_value])
         return field_value
 
-    @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "Project":
-        """Create and populate a new ``Project`` object from dictionary data.
-
-        The unmarshal method validates entries in the input dictionary, populating
-        the corresponding fields in the data object.
-
-        :param data: The dictionary data to unmarshal.
-
-        :return: The newly created object.
-
-        :raise TypeError: If data is not a dictionary.
-        """
-        if not isinstance(data, dict):
-            raise TypeError("Project data is not a dictionary")
-
-        try:
-            project = Project(**data)
-        except pydantic.ValidationError as err:
-            raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
-
-        return project
-
-    def _get_content_plugs(self) -> List[ContentPlug]:
+    def _get_content_plugs(self) -> list[ContentPlug]:
         """Get list of content plugs."""
         if self.plugs is not None:
             return [
@@ -902,7 +845,7 @@ class Project(models.Project):
             ]
         return []
 
-    def get_content_snaps(self) -> List[str]:
+    def get_content_snaps(self) -> list[str]:
         """Get list of snaps from ContentPlug `default-provider` fields."""
         return [
             x.default_provider
@@ -910,10 +853,10 @@ class Project(models.Project):
             if x.default_provider is not None
         ]
 
-    def get_extra_build_snaps(self) -> List[str]:
+    def get_extra_build_snaps(self) -> list[str]:
         """Get list of extra snaps required to build."""
         # Build snaps defined by the user with channel stripped
-        build_snaps: List[str] = []
+        build_snaps: list[str] = []
         for part in self.parts.values():
             build_snaps.extend(part.get("build-snaps", []))
         part_build_snaps = {p.split("/")[0] for p in build_snaps}
@@ -951,7 +894,7 @@ class Project(models.Project):
         if (
             self.architectures
             and isinstance(self.architectures[0], Architecture)
-            and isinstance(self.architectures[0].build_on, List)
+            and isinstance(self.architectures[0].build_on, list)
         ):
             return self.architectures[0].build_on[0]
 
@@ -963,14 +906,14 @@ class Project(models.Project):
         if (
             self.architectures
             and isinstance(self.architectures[0], Architecture)
-            and isinstance(self.architectures[0].build_for, List)
+            and isinstance(self.architectures[0].build_for, list)
         ):
             return self.architectures[0].build_for[0]
 
         # will not happen after schema validation
         raise RuntimeError("cannot determine build-for architecture")
 
-    def get_build_for_arch_triplet(self) -> Optional[str]:
+    def get_build_for_arch_triplet(self) -> str | None:
         """Get the architecture triplet for the first build-for architecture for core22.
 
         :returns: The build-for arch triplet. If build-for is "all", then return None.
@@ -982,14 +925,14 @@ class Project(models.Project):
 
         return None
 
-    def get_component_names(self) -> List[str]:
+    def get_component_names(self) -> list[str]:
         """Get a list of component names.
 
         :returns: A list of component names.
         """
         return list(self.components.keys()) if self.components else []
 
-    def get_partitions(self) -> Optional[List[str]]:
+    def get_partitions(self) -> list[str] | None:
         """Get a list of partitions based on the project's components.
 
         :returns: A list of partitions formatted as ['default', 'component/<name>', ...]
@@ -1020,10 +963,10 @@ class _GrammarAwarePart(_GrammarAwareModel):
 class GrammarAwareProject(_GrammarAwareModel):
     """Project definition containing grammar-aware components."""
 
-    parts: Dict[str, _GrammarAwarePart]
+    parts: dict[str, _GrammarAwarePart]
 
     @classmethod
-    def validate_grammar(cls, data: Dict[str, Any]) -> None:
+    def validate_grammar(cls, data: dict[str, Any]) -> None:
         """Ensure grammar-enabled entries are syntactically valid."""
         try:
             cls(**data)
@@ -1034,7 +977,7 @@ class GrammarAwareProject(_GrammarAwareModel):
 class ArchitectureProject(models.CraftBaseModel, extra="ignore"):
     """Project definition containing only architecture data."""
 
-    architectures: List[Union[str, Architecture]] = [get_host_architecture()]
+    architectures: list[str | Architecture] = [get_host_architecture()]
 
     @pydantic.field_validator("architectures")
     @classmethod
@@ -1042,34 +985,10 @@ class ArchitectureProject(models.CraftBaseModel, extra="ignore"):
         """Validate architecture data."""
         return validate_architectures(architectures)
 
-    @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "ArchitectureProject":
-        """Create and populate a new ``ArchitectureProject`` object from dictionary data.
-
-        The unmarshal method validates entries in the input dictionary, populating
-        the corresponding fields in the data object.
-
-        :param data: The dictionary data to unmarshal.
-
-        :return: The newly created object.
-
-        :raise TypeError: If data is not a dictionary.
-        """
-        if not isinstance(data, dict):
-            raise TypeError("Project data is not a dictionary")
-
-        try:
-            architectures = ArchitectureProject(**data)
-        except pydantic.ValidationError as err:
-            raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
-
-        return architectures
-
-
 class ComponentProject(models.CraftBaseModel, extra="ignore"):
     """Project definition containing only component data."""
 
-    components: Optional[Dict[ProjectName, Component]]
+    components: dict[ProjectName, Component] | None = None
 
     @pydantic.field_validator("components")
     @classmethod
@@ -1080,37 +999,14 @@ class ComponentProject(models.CraftBaseModel, extra="ignore"):
 
         return components
 
-    @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "ComponentProject":
-        """Create and populate a new ``ComponentProject`` object from dictionary data.
-
-        The unmarshal method validates entries in the input dictionary, populating
-        the corresponding fields in the data object.
-
-        :param data: The dictionary data to unmarshal.
-
-        :return: The newly created object.
-
-        :raise TypeError: If data is not a dictionary.
-        """
-        if not isinstance(data, dict):
-            raise TypeError("Project data is not a dictionary")
-
-        try:
-            components = ComponentProject(**data)
-        except pydantic.ValidationError as err:
-            raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
-
-        return components
-
-    def get_component_names(self) -> List[str]:
+    def get_component_names(self) -> list[str]:
         """Get a list of component names.
 
         :returns: A list of component names.
         """
         return list(self.components.keys()) if self.components else []
 
-    def get_partitions(self) -> Optional[List[str]]:
+    def get_partitions(self) -> list[str] | None:
         """Get a list of partitions based on the project's components.
 
         :returns: A list of partitions formatted as ['default', 'component/<name>', ...]
@@ -1213,7 +1109,7 @@ def _printable_field_location_split(location: str) -> Tuple[str, str]:
     return field_name, "top-level"
 
 
-def _format_global_keyword_warning(keyword: str, empty_entries: List[str]) -> str:
+def _format_global_keyword_warning(keyword: str, empty_entries: list[str]) -> str:
     """Create a warning message about global assignment in the ``keyword`` field.
 
     :param keyword:
@@ -1242,7 +1138,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
     build_base: str | None = None
     name: str
     platforms: dict[str, Platform] | None = None  # type: ignore[assignment]
-    architectures: List[Union[str, Architecture]] | None = None
+    architectures: list[str | Architecture] | None = None
     project_type: str | None = pydantic.Field(default=None, alias="type")
 
     @pydantic.field_validator("platforms")
@@ -1307,7 +1203,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
 
         return platforms
 
-    def get_build_plan(self) -> List[BuildInfo]:
+    def get_build_plan(self) -> list[BuildInfo]:
         """Get the build plan for this project."""
         build_infos: list[BuildInfo] = []
         effective_base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
