@@ -77,6 +77,40 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
+8.3.2 (2024-Aug-05)
+-------------------
+
+Core
+====
+
+Bases
+#####
+
+core24
+""""""
+
+* Fix a bug where classic snaps with a Python virtual environment would attempt
+  to use the system's Python intepretter (`#4942`_).
+
+Plugins
+#######
+
+Kernel
+""""""
+
+* Fix a bug where removing a missing symlink would cause the kernel plugin
+  to fail.
+
+Store
+=====
+
+* Fix a bug where ``edit-validation-sets`` would fail when editing a validation
+  sets with snap revisions (`#4909`_).
+
+For a complete list of commits, check out the `8.3.2`_ release on GitHub.
+
+
 8.3.1 (2024-Jul-08)
 -------------------
 
@@ -964,6 +998,8 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _#4886: https://github.com/canonical/snapcraft/issues/4886
 .. _#4889: https://github.com/canonical/snapcraft/issues/4889
 .. _#4890: https://github.com/canonical/snapcraft/issues/4890
+.. _#4909: https://github.com/canonical/snapcraft/issues/4909
+.. _#4942: https://github.com/canonical/snapcraft/issues/4942
 
 .. _8.0.0: https://github.com/canonical/snapcraft/releases/tag/8.0.0
 .. _8.0.1: https://github.com/canonical/snapcraft/releases/tag/8.0.1
@@ -987,3 +1023,4 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _8.2.12: https://github.com/canonical/snapcraft/releases/tag/8.2.12
 .. _8.3.0: https://github.com/canonical/snapcraft/releases/tag/8.3.0
 .. _8.3.1: https://github.com/canonical/snapcraft/releases/tag/8.3.1
+.. _8.3.2: https://github.com/canonical/snapcraft/releases/tag/8.3.2
