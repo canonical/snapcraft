@@ -235,13 +235,13 @@ class TestProjectValidation:
     @pytest.mark.parametrize(
         "name,error",
         [
-            ("name_with_underscores", "Snap names can only use"),
-            ("name-with-UPPERCASE", "Snap names can only use"),
-            ("name with spaces", "Snap names can only use"),
-            ("-name-starts-with-hyphen", "Snap names cannot start with a hyphen"),
-            ("name-ends-with-hyphen-", "Snap names cannot end with a hyphen"),
-            ("name-has--two-hyphens", "Snap names cannot have two hyphens in a row"),
-            ("123456", "Snap names can only use"),
+            ("name_with_underscores", "snap names can only use"),
+            ("name-with-UPPERCASE", "snap names can only use"),
+            ("name with spaces", "snap names can only use"),
+            ("-name-starts-with-hyphen", "snap names cannot start with a hyphen"),
+            ("name-ends-with-hyphen-", "snap names cannot end with a hyphen"),
+            ("name-has--two-hyphens", "snap names cannot have two hyphens in a row"),
+            ("123456", "snap names can only use"),
             (
                 "a2345678901234567890123456789012345678901",
                 "ensure this value has at most 40 characters",
@@ -2490,7 +2490,15 @@ class TestComponents:
             project.unmarshal(project_yaml_data(components=component))
 
     @pytest.mark.parametrize(
-        "name", ["name", "name-with-dashes", "x" * 40, "foo-snap-bar"]
+        "name",
+        [
+            "name",
+            "name-with-dashes",
+            "name-with-numbers-0123",
+            "0123-name-with-numbers",
+            "x" * 40,
+            "foo-snap-bar",
+        ],
     )
     def test_component_name_valid(
         self, project, name, project_yaml_data, stub_component_data
@@ -2505,26 +2513,21 @@ class TestComponents:
     @pytest.mark.parametrize(
         "name,error",
         [
-            (
-                "snap-",
-                "Component names cannot start with the reserved namespace 'snap-'",
-            ),
-            (
+            pytest.param(
                 "snap-foo",
-                "Component names cannot start with the reserved namespace 'snap-'",
+                "component names cannot start with the reserved prefix 'snap-'",
+                id="reserved prefix",
             ),
-            ("123456", "Component names can only use"),
-            ("name-ends-with-digits-0123", "Component names can only use"),
-            ("456-name-starts-with-digits", "Component names can only use"),
-            ("name-789-contains-digits", "Component names can only use"),
-            ("name_with_underscores", "Component names can only use"),
-            ("name-with-UPPERCASE", "Component names can only use"),
-            ("name with spaces", "Component names can only use"),
-            ("-name-starts-with-hyphen", "Component names cannot start with a hyphen"),
-            ("name-ends-with-hyphen-", "Component names cannot end with a hyphen"),
+            pytest.param("123456", "component names can only use", id="no letters"),
+            ("name_with_underscores", "component names can only use"),
+            ("name-with-UPPERCASE", "component names can only use"),
+            ("name with spaces", "component names can only use"),
+            ("name-with-$symbols", "component names can only use"),
+            ("-name-starts-with-hyphen", "component names cannot start with a hyphen"),
+            ("name-ends-with-hyphen-", "component names cannot end with a hyphen"),
             (
                 "name-has--two-hyphens",
-                "Component names cannot have two hyphens in a row",
+                "component names cannot have two hyphens in a row",
             ),
             ("x" * 41, "ensure this value has at most 40 characters"),
         ],
