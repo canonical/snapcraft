@@ -19,6 +19,8 @@ import pytest
 from snapcraft.extensions import gnome
 from snapcraft.extensions.extension import get_extensions_data_dir
 
+_EXTENSION_NAME = "gnome"
+
 ############
 # Fixtures #
 ############
@@ -27,7 +29,10 @@ from snapcraft.extensions.extension import get_extensions_data_dir
 @pytest.fixture
 def gnome_extension():
     return gnome.GNOME(
-        yaml_data={"base": "core22", "parts": {}}, arch="amd64", target_arch="amd64"
+        name=_EXTENSION_NAME,
+        yaml_data={"base": "core22", "parts": {}},
+        arch="amd64",
+        target_arch="amd64",
     )
 
 
@@ -41,6 +46,7 @@ def gnome_extension_core24():
 @pytest.fixture
 def gnome_extension_with_build_snap():
     return gnome.GNOME(
+        name=_EXTENSION_NAME,
         yaml_data={
             "base": "core22",
             "parts": {"part1": {"build-snaps": ["gnome-44-2204-sdk"]}},
@@ -53,6 +59,7 @@ def gnome_extension_with_build_snap():
 @pytest.fixture
 def gnome_extension_with_default_build_snap_from_latest_edge():
     return gnome.GNOME(
+        name=_EXTENSION_NAME,
         yaml_data={
             "base": "core22",
             "parts": {"part1": {"build-snaps": ["gnome-42-2204-sdk/latest/edge"]}},

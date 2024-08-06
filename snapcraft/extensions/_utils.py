@@ -59,7 +59,10 @@ def apply_extensions(
     for extension_name in sorted(declared_extensions.keys()):
         extension_class = get_extension_class(extension_name)
         extension = extension_class(
-            yaml_data=copy.deepcopy(yaml_data), arch=arch, target_arch=target_arch
+            name=extension_name,
+            yaml_data=copy.deepcopy(yaml_data),
+            arch=arch,
+            target_arch=target_arch,
         )
         extension.validate(extension_name=extension_name)
         _apply_extension(yaml_data, declared_extensions[extension_name], extension)
