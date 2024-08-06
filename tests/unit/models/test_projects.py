@@ -2490,7 +2490,15 @@ class TestComponents:
             project.unmarshal(project_yaml_data(components=component))
 
     @pytest.mark.parametrize(
-        "name", ["name", "name-with-dashes", "x" * 40, "foo-snap-bar"]
+        "name",
+        [
+            "name",
+            "name-with-dashes",
+            "name-with-numbers-0123",
+            "0123-name-with-numbers",
+            "x" * 40,
+            "foo-snap-bar",
+        ],
     )
     def test_component_name_valid(
         self, project, name, project_yaml_data, stub_component_data
