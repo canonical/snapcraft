@@ -1,2 +1,5 @@
+import black
+
+
 def main():
-    print("hello world")
+    print(f"hello world! black version: {black.__version__}")

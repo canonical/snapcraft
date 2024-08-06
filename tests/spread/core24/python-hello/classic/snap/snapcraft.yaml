@@ -16,6 +16,8 @@ parts:
   hello:
     plugin: python
     source: src
+    python-packages:
+      - black
     build-attributes:
       - enable-patchelf
     stage-packages:
@@ -23,3 +25,4 @@ parts:
       - libpython3.12-stdlib
       - python3.12-minimal
       - python3.12-venv
+      - python3-minimal # (for the "python3" symlink)
