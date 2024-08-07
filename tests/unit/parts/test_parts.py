@@ -64,7 +64,7 @@ def test_parts_lifecycle_run(mocker, parts_data, step_name, new_dir, emitter):
             application_name="snapcraft",
             work_dir=ANY,
             cache_dir=ANY,
-            arch="x86_64",
+            arch="amd64",
             base="core22",
             ignore_local_sources=["*.snap"],
             extra_build_snaps=["core22"],
@@ -411,7 +411,8 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_installed(
 
 
 def test_parts_lifecycle_bad_architecture(parts_data, new_dir):
-    with pytest.raises(errors.InvalidArchitecture) as raised:
+    error = "Architecture 'bad-arch' is not supported"
+    with pytest.raises(errors.PartsLifecycleError, match=error):
         PartsLifecycle(
             parts_data,
             work_dir=new_dir,
@@ -430,8 +431,6 @@ def test_parts_lifecycle_bad_architecture(parts_data, new_dir):
             target_arch="bad-arch",
             partitions=None,
         )
-
-    assert str(raised.value) == "Architecture 'bad-arch' is not supported."
 
 
 def test_parts_lifecycle_run_with_all_architecture(mocker, parts_data, new_dir):
@@ -465,7 +464,7 @@ def test_parts_lifecycle_run_with_all_architecture(mocker, parts_data, new_dir):
             application_name="snapcraft",
             work_dir=ANY,
             cache_dir=ANY,
-            arch="x86_64",
+            arch="amd64",
             base="core22",
             ignore_local_sources=["*.snap"],
             extra_build_snaps=None,

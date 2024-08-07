@@ -27,8 +27,8 @@ from unittest.mock import ANY, Mock
 import pytest
 from craft_application import launchpad
 from craft_application.errors import RemoteBuildError
+from craft_application.git import GitRepo
 from craft_application.launchpad.models import BuildState
-from craft_application.remote.git import GitRepo
 from craft_application.remote.utils import get_build_id
 
 from snapcraft import application, const

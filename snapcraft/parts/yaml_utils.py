@@ -25,7 +25,7 @@ import yaml.error
 
 from snapcraft import const, errors, utils
 from snapcraft.extensions import apply_extensions
-from snapcraft.models import Architecture, GrammarAwareProject
+from snapcraft.models import GrammarAwareProject
 
 from . import grammar
 
@@ -208,9 +208,7 @@ def apply_yaml(
         )
     ):
         # replace all architectures with the architectures in the current build plan
-        yaml_data["architectures"] = [
-            Architecture(build_on=build_on, build_for=build_for)
-        ]
+        yaml_data["architectures"] = [{"build-on": build_on, "build-for": build_for}]
     else:
         # replace all platforms with the platform in the current build plan
         yaml_data["platforms"] = {

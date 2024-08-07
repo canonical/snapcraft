@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -25,6 +25,8 @@ import textwrap
 
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
+from craft_parts.errors import InvalidArchitecture
+from craft_platforms import DebianArchitecture
 from pydantic import ValidationError
 
 from snapcraft.parts.plugins import KernelPlugin
@@ -160,7 +162,7 @@ class TestPluginKernel:
             properties={
                 "kernel-enable-zfs-support": True,
             },
-            arch="armv7l",
+            arch="armhf",
         )
         assert plugin.get_build_packages() == {
             "bc",
@@ -401,7 +403,7 @@ class TestPluginKernel:
                 "kernel-compiler-paths": ["gcc-11/bin"],
                 "kernel-image-target": {"arm64": "Image", "armhf": "Image.gz"},
             },
-            arch="armv7l",
+            arch="armhf",
         )
 
         assert plugin.get_build_environment() == {
@@ -682,7 +684,7 @@ class TestPluginKernel:
                 "kernel-initrd-configured-modules": ["libarc4"],
                 "kernel-initrd-overlay": "my-overlay",
             },
-            arch="armv7l",
+            arch="armhf",
         )
 
         # we need to get build environment
@@ -724,23 +726,21 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _build_perf_armhf_cmd)
         assert _is_sub_array(build_commands, _finalize_install_cmd)
 
-    @pytest.mark.parametrize("arch", ["aarch64", "armv7l", "riscv64", "x86_64"])
+    @pytest.mark.parametrize("arch", ["arm64", "armhf", "riscv64", "amd64"])
     def test_check_arch(self, arch, setup_method_fixture, new_dir):
-        cross_building = platform.machine() != arch
+        cross_building = DebianArchitecture.from_host() != arch
         plugin = setup_method_fixture(new_dir, arch=arch)
 
-        assert plugin._kernel_arch == _KERNEL_ARCH_TRANSLATIONS[arch]
-        assert plugin._deb_arch == _DEB_ARCH_TRANSLATIONS[arch]
-        assert plugin._target_arch == _DEB_ARCH_TRANSLATIONS[arch]
+        assert plugin._kernel_arch == _DEB_TO_KERNEL_ARCH_TRANSLATIONS[arch]
+        assert plugin._deb_arch == arch
+        assert plugin._target_arch == arch
         assert plugin._cross_building == cross_building
 
     def test_check_arch_i686(self, setup_method_fixture, new_dir):
-        # we do not support i686 so use this arch to test unknnown arch by plugin
-        arch = "i686"
-        with pytest.raises(ValueError) as error:
-            setup_method_fixture(new_dir, arch=arch)
-
-        assert str(error.value) == "unknown deb architecture"
+        # we do not support i686 so use this arch to test unknown arch by plugin
+        error = "Architecture 'i686' is not supported"
+        with pytest.raises(InvalidArchitecture, match=error):
+            setup_method_fixture(new_dir, arch="i686")
 
     def test_check_new_config_good(self, setup_method_fixture, new_dir, caplog):
         # create test config
@@ -1209,11 +1209,11 @@ _DEB_ARCH_TRANSLATIONS = {
     "x86_64": "amd64",
 }
 
-_KERNEL_ARCH_TRANSLATIONS = {
-    "aarch64": "arm64",
-    "armv7l": "arm",
+_DEB_TO_KERNEL_ARCH_TRANSLATIONS = {
+    "arm64": "arm64",
+    "armhf": "arm",
     "riscv64": "riscv",
-    "x86_64": "x86",
+    "amd64": "x86",
 }
 
 _SNAPPY_DEV_KEY_FINGERPRINT = "F1831DDAFC42E99D"

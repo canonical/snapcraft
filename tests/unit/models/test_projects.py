@@ -20,7 +20,7 @@ from typing import Any, Dict, cast
 import pydantic
 import pytest
 from craft_application.errors import CraftValidationError
-from craft_application.models import BuildInfo, UniqueStrList
+from craft_application.models import BuildInfo, UniqueStrList, VersionStr
 from craft_providers.bases import BaseName
 
 import snapcraft.models
@@ -157,6 +157,23 @@ class TestProjectDefaults:
 
 class TestProjectValidation:
     """Validate top-level project items."""
+
+    def test_reentrant_validation(self, project_yaml_data):
+        """Validators should be reentrant.
+
+        When changing a field, validators should be able to validate existing data.
+        For example, a "before" validator will see "build-base" when creating the model
+        and "build_base" when re-validating the model.
+        """
+        data = project_yaml_data(
+            base="bare",
+            # build-base has to be parsed for the validator to allow 'architectures'
+            build_base="core22",
+            architectures=["amd64"],
+        )
+        project = Project.unmarshal(data)
+
+        project.version = cast(VersionStr, "1.2.3")
 
     @pytest.mark.parametrize("field", ["name", "confinement", "parts"])
     def test_mandatory_fields(self, field, project_yaml_data):
@@ -778,7 +795,6 @@ class TestPlatforms:
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(platforms={"amd64": None}))
 
-
     @pytest.mark.parametrize(
         ("architectures", "expected"),
         [
@@ -1175,9 +1191,7 @@ class TestAppValidation:
             assert project.apps is not None
             assert project.apps["app1"].install_mode == install_mode
         else:
-            error = (
-                 "apps.app1.install_mode\n  Input should be 'enable' or 'disable'"
-            )
+            error = "apps.app1.install_mode\n  Input should be 'enable' or 'disable'"
             with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
@@ -1732,7 +1746,6 @@ class TestArchitecture:
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
-
     def test_architecture_invalid_multiple_implicit_build_for(self, project_yaml_data):
         """Only a single item can be defined for `build-for`.
 
@@ -1743,7 +1756,6 @@ class TestArchitecture:
         error = "only one architecture can be defined for 'build-for'"
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
-
 
     def test_architecture_invalid_build_on_all_build_for_all(self, project_yaml_data):
         """`build-on: all` and `build-for: all` is invalid."""
@@ -1769,7 +1781,6 @@ class TestArchitecture:
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
-
     def test_architecture_invalid_build_on_all_build_for_architecture(
         self, project_yaml_data
     ):
@@ -1783,7 +1794,6 @@ class TestArchitecture:
         error = "'all' cannot be used for 'build-on'"
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
-
 
     def test_architecture_build_on_architecture_build_for_all(self, project_yaml_data):
         """`build-on: arch` and `build-for: all` is valid."""
@@ -1893,7 +1903,6 @@ class TestArchitecture:
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
-
     def test_architecture_multiple_build_for_same_architecture_implicit(
         self, project_yaml_data
     ):
@@ -1912,7 +1921,6 @@ class TestArchitecture:
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
-
     @pytest.mark.parametrize(
         "architectures",
         [
@@ -1929,7 +1937,6 @@ class TestArchitecture:
         error = "Architecture 'unknown' is not supported."
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
-
 
     def test_project_get_build_on(self, project_yaml_data):
         """Test `get_build_on()` returns the build-on string."""
@@ -2454,7 +2461,7 @@ class TestComponents:
 
     @pytest.fixture
     def stub_component_data(self):
-        data: dict[str, Any] = {
+        data = {
             "type": "test",
             "summary": "test summary",
             "description": "test description",
@@ -2467,7 +2474,7 @@ class TestComponents:
         component_data = {"foo": stub_component_data, "bar": stub_component_data}
         components = {
             "foo": snapcraft.models.Component.unmarshal(stub_component_data),
-            "bar": snapcraft.models.Component.unmarshal(stub_component_data)
+            "bar": snapcraft.models.Component.unmarshal(stub_component_data),
         }
 
         test_project = project.unmarshal(project_yaml_data(components=component_data))

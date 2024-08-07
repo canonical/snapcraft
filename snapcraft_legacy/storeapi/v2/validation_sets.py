@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Annotated, Dict, Literal, TYPE_CHECKING
+from typing import Any, Literal, TYPE_CHECKING
 import numbers
 import pydantic
 
@@ -68,13 +68,13 @@ class Snap(models.CraftBaseModel):
     name: SnapName
     """Snap name"""
 
-    id: SnapId | None
+    id: SnapId | None = None
     """Snap ID"""
 
-    presence: Literal["required", "optional", "invalid"] | None
+    presence: Literal["required", "optional", "invalid"] | None = None
     """Snap presence"""
 
-    revision: int | None
+    revision: int | None = None
     """Snap revision"""
 
 
@@ -89,7 +89,7 @@ class EditableBuildAssertion(models.CraftBaseModel):
     name: str
     """The "name" assertion header"""
 
-    revision: str | None
+    revision: str | None = None
     """The "revision" assertion header"""
 
     sequence: int
@@ -98,7 +98,7 @@ class EditableBuildAssertion(models.CraftBaseModel):
     snaps: Annotated[list[Snap], pydantic.Field(min_length=1)]
     """List of snaps in a Validation Set assertion"""
 
-    def marshal_scalars_as_strings(self) -> Dict[str, Any]:
+    def marshal_scalars_as_strings(self) -> dict[str, Any]:
         """Marshal the object where all scalars are represented as strings."""
         data = self.marshal()
         return cast_dict_scalars_to_strings(data)
@@ -115,7 +115,7 @@ class BuildAssertion(EditableBuildAssertion):
     series: str
     """The "series" assertion header"""
 
-    sign_key_sha3_384: str | None
+    sign_key_sha3_384: str | None = None
     """Signing key ID."""
 
     timestamp: str

@@ -20,7 +20,6 @@ import textwrap
 from typing import Dict, List
 
 import tabulate
-import yaml
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from overrides import overrides
@@ -135,5 +134,5 @@ class ExpandExtensionsCommand(AppCommand):
         # not part of the Project model
         extract_parse_info(yaml_data_for_arch)
 
-        models.Project.unmarshal(yaml_data_for_arch)
-        emit.message(yaml.safe_dump(yaml_data_for_arch, indent=4, sort_keys=False))
+        project_data = models.Project.unmarshal(yaml_data_for_arch)
+        emit.message(project_data.to_yaml_string())

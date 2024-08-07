@@ -393,22 +393,22 @@ def extra_project_params():
 
 @pytest.fixture()
 def default_project(extra_project_params):
-    from craft_application.models import SummaryStr, VersionStr
-
     from snapcraft.models.project import Project
 
     parts = extra_project_params.pop("parts", {})
 
-    return Project(
-        name="default",
-        version=VersionStr("1.0"),
-        summary=SummaryStr("default project"),
-        description="default project",
-        base="core24",
-        grade="devel",
-        parts=parts,
-        license="MIT",
-        **extra_project_params,
+    return Project.unmarshal(
+        {
+            "name": "default",
+            "version": "1.0",
+            "summary": "default project",
+            "description": "default project",
+            "base": "core24",
+            "grade": "devel",
+            "parts": parts,
+            "license": "MIT",
+            **extra_project_params,
+        }
     )
 
 

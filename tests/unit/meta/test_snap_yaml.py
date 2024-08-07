@@ -16,12 +16,10 @@
 
 import textwrap
 from pathlib import Path
-from typing import cast
 
 import pydantic
 import pytest
 import yaml
-from craft_application.models import SummaryStr, UniqueStrList, VersionStr
 
 from snapcraft import const, models
 from snapcraft.meta import snap_yaml
@@ -1018,7 +1016,7 @@ def test_content_plug_invalid_target():
     assert len(err) == 1
     assert err[0]["loc"] == ("target",)
     assert err[0]["type"] == "value_error"
-    assert err[0]["msg"] == "value cannot be empty"
+    assert err[0]["msg"] == "Value error, value cannot be empty"
 
 
 def test_content_plug_provider():
@@ -1366,18 +1364,23 @@ def test_no_links(simple_project):
 
 def test_component_metadata_from_component():
     """Create a ComponentMetadata from a Component."""
-    component = models.Component(
-        summary=SummaryStr("test"),
-        description="test",
-        type="test",
-        version=VersionStr("1.0"),
-        hooks={
-            "install": models.Hook(
-                plugs=cast(UniqueStrList, ["home", "network"]),
-                command_chain=["test"],
-                environment={"test-variable-1": "test", "test-variable-2": "test"},
-                passthrough={"somefield": ["some", "value"]},
-            )
+    component = models.Component.unmarshal(
+        {
+            "summary": "test",
+            "description": "test",
+            "type": "test",
+            "version": "1.0",
+            "hooks": {
+                "install": {
+                    "plugs": ["home", "network"],
+                    "command_chain": ["test"],
+                    "environment": {
+                        "test-variable-1": "test",
+                        "test-variable-2": "test",
+                    },
+                    "passthrough": {"somefield": ["some", "value"]},
+                },
+            },
         },
     )
 
