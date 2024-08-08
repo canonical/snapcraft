@@ -1,7 +1,7 @@
 summary: Build and run a basic hello-world snap using extensions
 
 systems:
-  - ubuntu-24.04
+  - ubuntu-24.04*
 
 environment:
 
