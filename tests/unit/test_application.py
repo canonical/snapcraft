@@ -148,15 +148,15 @@ def test_application_expand_extensions(emitter, monkeypatch, extension_source, n
             base: core24
             license: MIT
             parts:
-                fake-extension/fake-part:
-                    plugin: nil
+              fake-extension/fake-part:
+                plugin: nil
             confinement: strict
             grade: devel
             apps:
-                app1:
-                    command: app1
-                    plugs:
-                    - fake-plug
+              app1:
+                command: app1
+                plugs:
+                - fake-plug
         """
         )
     )

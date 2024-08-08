@@ -176,7 +176,6 @@ class LintCommand(AppCommand):
             project_name="snapcraft-linter",
             project_path=Path().absolute(),
             base_configuration=base_configuration,
-            build_base=build_base.value,
             instance_name=instance_name,
             allow_unstable=False,
         ) as instance:

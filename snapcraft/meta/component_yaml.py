@@ -33,10 +33,10 @@ class ComponentMetadata(SnapcraftMetadata):
 
     component: str
     type: str
-    version: str | None
+    version: str | None = None
     summary: str
     description: str
-    provenance: str | None
+    provenance: str | None = None
 
 
 def write(

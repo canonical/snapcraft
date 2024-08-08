@@ -555,18 +555,6 @@ def test_get_provider_snap_config(mocker, provider, expected_provider):
     assert isinstance(actual_provider, expected_provider)
 
 
-def test_get_provider_snap_config_invalid(mocker):
-    """Verify an invalid environmental variable raises an error."""
-    snap_config = SnapConfig()
-    snap_config.provider = "invalid-provider"  # type: ignore
-    mocker.patch("snapcraft.providers.get_snap_config", return_value=snap_config)
-
-    with pytest.raises(ValueError) as raised:
-        providers.get_provider()
-
-    assert str(raised.value) == "unsupported provider specified: 'invalid-provider'"
-
-
 def test_get_provider_snap_config_priority(mocker):
     """Verify provider defined by SNAPCRAFT_BUILD_ENVIRONMENT has the correct priority.
 

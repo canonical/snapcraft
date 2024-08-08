@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,14 +19,14 @@
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from pydantic_yaml import YamlModel
+import craft_application.models
 
 from snapcraft import __version__, errors, models, os_release, utils
 
 
-class Manifest(YamlModel):
+class Manifest(craft_application.models.CraftBaseModel):
     """Manifest file for snaps."""
 
     # Snapcraft annotations
@@ -40,30 +40,24 @@ class Manifest(YamlModel):
     version: str
     summary: str
     description: str
-    base: Optional[str]
+    base: str | None = None
     grade: str
     confinement: str
-    apps: Optional[Dict[str, Any]]
-    parts: Dict[str, Any]
+    apps: dict[str, Any] | None = None
+    parts: dict[str, Any]
 
     # TODO: add assumes, environment, hooks, slots
 
     # Architecture
-    architectures: List[str]
+    architectures: list[str]
 
     # Image info
-    image_info: Dict[str, Any]
+    image_info: dict[str, Any]
 
     # Build environment
-    build_packages: List[str]
-    build_snaps: List[str]
-    primed_stage_packages: List
-
-    class Config:
-        """Pydantic model configuration."""
-
-        allow_population_by_field_name = True
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+    build_packages: list[str]
+    build_snaps: list[str]
+    primed_stage_packages: list
 
 
 def write(  # noqa PLR0913
@@ -71,10 +65,10 @@ def write(  # noqa PLR0913
     prime_dir: Path,
     *,
     arch: str,
-    parts: Dict[str, Any],
+    parts: dict[str, Any],
     image_information: str,
     start_time: datetime,
-    primed_stage_packages: List[str],
+    primed_stage_packages: list[str],
 ):
     """Create a manifest.yaml file."""
     snap_dir = prime_dir / "snap"
@@ -117,14 +111,4 @@ def write(  # noqa PLR0913
         primed_stage_packages=primed_stage_packages,
     )
 
-    yaml_data = manifest.yaml(
-        by_alias=True,
-        exclude_none=True,
-        exclude_unset=True,
-        allow_unicode=True,
-        sort_keys=False,
-        width=1000,
-    )
-
-    manifest_yaml = snap_dir / "manifest.yaml"
-    manifest_yaml.write_text(yaml_data)
+    manifest.to_yaml_file(snap_dir / "manifest.yaml")

@@ -21,7 +21,6 @@ from textwrap import dedent
 import pytest
 
 from snapcraft import errors
-from snapcraft.models import Architecture
 from snapcraft.parts import yaml_utils
 
 
@@ -196,7 +195,7 @@ def test_apply_yaml_defines_root_packages(minimal_yaml_data, key, value):
         "version": "1.0",
         "summary": "summary",
         "description": "description",
-        "architectures": [Architecture(build_on="amd64", build_for="amd64")],
+        "architectures": [{"build-on": "amd64", "build-for": "amd64"}],
         "parts": {"nil": {}, "snapcraft/core": {"plugin": "nil", key: ["foo"]}},
     }
 

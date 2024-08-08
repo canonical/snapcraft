@@ -21,6 +21,7 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import ANY, Mock, PropertyMock, call
 
+import pydantic
 import pytest
 from craft_cli import EmitterMode, emit
 from craft_parts import Action, Features, ProjectInfo, Step, callbacks
@@ -804,7 +805,7 @@ def test_lifecycle_pack_metadata_error(cmd, snapcraft_yaml, new_dir, mocker):
         )
 
     assert str(raised.value) == (
-        "error setting grade: unexpected value; permitted: 'stable', 'devel'"
+        "error setting grade: Input should be 'stable' or 'devel'"
     )
     assert run_mock.mock_calls == [
         call("prime", shell=False, shell_after=False, rerun_step=False)
@@ -1197,13 +1198,11 @@ def test_check_experimental_plugins_enabled(snapcraft_yaml, mocker):
 
 
 def test_get_snap_project_no_base(snapcraft_yaml, new_dir):
-    with pytest.raises(errors.ProjectValidationError) as raised:
-        Project.unmarshal(snapcraft_yaml(base=None))
-
-    assert str(raised.value) == (
-        "Bad snapcraft.yaml content:\n"
-        "- Snap base must be declared when type is not base, kernel or snapd"
+    error = (
+        "Value error, Snap base must be declared when type is not base, kernel or snapd"
     )
+    with pytest.raises(pydantic.ValidationError, match=error):
+        Project.unmarshal(snapcraft_yaml(base=None))
 
 
 @pytest.mark.parametrize("base", ["core22", "core24"])
@@ -1234,7 +1233,7 @@ def test_set_global_environment(base, mocker, new_dir):
             "version": "test-version",
             "grade": "test-grade",
         },
-        arch="aarch64",
+        arch="arm64",
         cache_dir=new_dir,
     )
     set_global_environment(info)

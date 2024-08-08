@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -26,7 +26,7 @@ from overrides import overrides
 from snapcraft.elf import ElfFile, SonameCache, elf_utils
 from snapcraft.elf import errors as elf_errors
 
-from .base import Linter, LinterIssue, LinterResult, Optional
+from .base import Linter, LinterIssue, LinterResult
 
 
 class LibraryLinter(Linter):
@@ -130,7 +130,7 @@ class LibraryLinter(Linter):
             if match:
                 self._ld_config_cache[match.group(1)] = Path(match.group(2))
 
-    def _find_deb_package(self, library_name: str) -> Optional[str]:
+    def _find_deb_package(self, library_name: str) -> str | None:
         """Find the deb package that provides a library.
 
         :param library_name: The filename of the library to find.

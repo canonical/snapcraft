@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2022 Canonical Ltd.
+# Copyright 2015-2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -93,13 +93,14 @@ install_requires = [
     "attrs",
     "catkin-pkg; sys_platform == 'linux'",
     "click",
-    "craft-application>=3.1.0",
-    "craft-archives",
+    "craft-application @ git+https://github.com/canonical/craft-application@feature/pydantic-2#egg=craft-application",
+    "craft-archives @ git+https://github.com/canonical/craft-archives@main#egg=craft-archives",
     "craft-cli>=2.6.0",
-    "craft-grammar",
-    "craft-parts>=1.34.0",
-    "craft-providers",
-    "craft-store",
+    "craft-grammar @ git+https://github.com/canonical/craft-grammar@main#egg=craft-grammar",
+    "craft-parts @ git+https://github.com/canonical/craft-parts@main#egg=craft-parts",
+    "craft-platforms~=0.1",
+    "craft-providers @ git+https://github.com/canonical/craft-providers@feature/2.0#egg=craft-providers",
+    "craft-store @ git+https://github.com/canonical/craft-store@main#egg=craft-store",
     "docutils<0.20",  # Frozen until we can update sphinx dependencies.
     "gnupg",
     "jsonschema==2.5.1",
@@ -111,6 +112,8 @@ install_requires = [
     "overrides",
     "packaging",
     "progressbar",
+    "pydantic~=2.8",
+    "pydantic-yaml~=1.3",
     "pyelftools",
     # Pygit2 and libgit2 need to match versions.
     # Further info: https://www.pygit2.org/install.html#version-numbers

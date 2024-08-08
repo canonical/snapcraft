@@ -22,20 +22,19 @@ from snapcraft import errors
 
 @pytest.fixture
 def extra_project_params(extra_project_params):
-    from craft_application.models import SummaryStr, VersionStr
 
     extra_project_params["components"] = {
         "firstcomponent": {
             "type": "test",
-            "summary": SummaryStr("first component"),
+            "summary": "first component",
             "description": "lorem ipsum",
-            "version": VersionStr("1.0"),
+            "version": "1.0",
         },
         "secondcomponent": {
             "type": "test",
-            "summary": SummaryStr("second component"),
+            "summary": "second component",
             "description": "lorem ipsum",
-            "version": VersionStr("1.0"),
+            "version": "1.0",
         },
     }
 
