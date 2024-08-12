@@ -743,6 +743,7 @@ def test_monitor_build(mocker, emitter, snapcraft_yaml, base, fake_services):
                 {"amd64": launchpad.models.BuildState.PENDING},
                 {"amd64": launchpad.models.BuildState.BUILDING},
                 {"amd64": launchpad.models.BuildState.UPLOADING},
+                {"amd64": launchpad.models.BuildState.SUPERSEDED},
                 {"amd64": launchpad.models.BuildState.SUCCESS},
             ]
         ],
@@ -774,9 +775,10 @@ def test_monitor_build(mocker, emitter, snapcraft_yaml, base, fake_services):
     mock_fetch_artifacts.assert_called_once()
     mock_cleanup.assert_called_once()
 
-    emitter.assert_progress("Stopped: amd64")
+    emitter.assert_progress("Pending: amd64")
     emitter.assert_progress("Building: amd64")
     emitter.assert_progress("Uploading: amd64")
+    emitter.assert_progress("Stopped: amd64")
     emitter.assert_progress("Succeeded: amd64")
 
 
