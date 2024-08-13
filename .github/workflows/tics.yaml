@@ -29,13 +29,15 @@ jobs:
           echo "::endgroup::"
 
       - name: Setup Tox environment
-        run: tox run-parallel --parallel auto --parallel-no-spinner --parallel-live --colored yes -e test-all-py310 --notest
+        run: tox --workdir /tmp/tox run-parallel --parallel auto --parallel-no-spinner --parallel-live --colored yes -e test-all-py310 --notest
 
       - name: Test with tox
-        run: tox run --skip-pkg-install --result-json results/tox-py310.json --colored yes -e test-all-py310
+        run: tox --workdir /tmp/tox run --skip-pkg-install --result-json results/tox-py310.json --colored yes -e test-all-py310
 
       - name: Run TICS analysis
         uses: tiobe/tics-github-action@v3
+        env:
+          PATH: "/tmp/tox/test-all-py310/bin:/snap/bin:/home/runner/.local/bin:/home/runner/.cargo/bin:/bin:/usr/bin:/usr/local/bin:"
         with:
           mode: qserver
           project: snapcraft
