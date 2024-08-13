@@ -3,7 +3,8 @@ summary: Build and run a basic snap using the flutter plugin and extension
 kill-timeout: 30m
 
 environment:
-  FLUTTER/dev: dev
+  # fails due to upstream bug: https://github.com/flutter/flutter/issues/133881
+  # FLUTTER/dev: dev
   FLUTTER/master: master
   FLUTTER/beta: beta
   FLUTTER/stable: stable
