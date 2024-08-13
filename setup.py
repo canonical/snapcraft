@@ -64,6 +64,8 @@ dev_requires = [
     "coverage[toml]",
     "pyflakes",
     "fixtures",
+    # For Tiobe TiCS
+    "flake8",
     "mccabe",
     "mypy",
     "testscenarios",
@@ -73,6 +75,8 @@ dev_requires = [
     "pydocstyle",
     "pyftpdlib",
     "pyinstaller; sys_platform == 'win32'",
+    # For Tiobe TiCS
+    "pylint",
     "pyramid",
     "pytest",
     "pytest-cov",
