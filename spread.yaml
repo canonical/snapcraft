@@ -313,11 +313,6 @@ suites:
    systems:
      - ubuntu-22.04*
 
- tests/spread/core24/:
-   summary: core24 tests
-   systems:
-     - ubuntu-22.04*
-
  # General, core suite
  tests/spread/general/:
    summary: tests of snapcraft core functionality
