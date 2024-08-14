@@ -47,3 +47,13 @@ LEGACY_BASES = frozenset({"core20"})
 
 CURRENT_BASES = frozenset(BASES - ESM_BASES - LEGACY_BASES)
 """Bases handled by the current snapcraft codebase."""
+
+
+SNAPCRAFT_ENVIRONMENT_VARIABLES = frozenset(
+    {
+        "SNAPCRAFT_BUILD_INFO",
+        "SNAPCRAFT_IMAGE_INFO",
+        "SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS",
+    }
+)
+"""Snapcraft-specific environment variables."""
