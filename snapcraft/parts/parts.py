@@ -32,7 +32,7 @@ from snapcraft import errors
 from snapcraft.meta import ExtractedMetadata
 from snapcraft.parts.extract_metadata import extract_lifecycle_metadata
 from snapcraft.services.lifecycle import get_prime_dirs_from_project
-from snapcraft.utils import convert_architecture_deb_to_platform, get_host_architecture
+from snapcraft.utils import get_host_architecture
 
 _LIFECYCLE_STEPS = {
     "pull": Step.PULL,
@@ -94,15 +94,13 @@ class PartsLifecycle:
         if target_arch == "all":
             target_arch = get_host_architecture()
 
-        platform_arch = convert_architecture_deb_to_platform(target_arch)
-
         try:
             self._lcm = craft_parts.LifecycleManager(
                 {"parts": all_parts},
                 application_name="snapcraft",
                 work_dir=work_dir,
                 cache_dir=cache_dir,
-                arch=platform_arch,
+                arch=target_arch,
                 base=base,
                 ignore_local_sources=["*.snap"],
                 extra_build_snaps=extra_build_snaps,
