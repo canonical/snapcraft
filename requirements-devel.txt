@@ -3,7 +3,7 @@ PasteDeploy==3.1.0
 PyNaCl==1.5.0
 PyYAML==6.0.1
 SecretStorage==3.3.3
-WebOb==1.8.7
+WebOb==1.8.8
 astroid==3.2.4
 attrs==23.2.0
 black==24.3.0
