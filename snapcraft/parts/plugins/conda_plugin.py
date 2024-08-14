@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -19,7 +19,7 @@
 import os
 import platform
 import textwrap
-from typing import Any, Dict, List, Optional, Set, cast
+from typing import Literal, cast
 
 from craft_parts import plugins
 from overrides import overrides
@@ -61,29 +61,15 @@ def _get_miniconda_source(version: str) -> str:
     return source
 
 
-class CondaPluginProperties(plugins.PluginProperties, plugins.PluginModel):
+class CondaPluginProperties(plugins.PluginProperties, frozen=True):
     """The part properties used by the conda plugin."""
 
+    plugin: Literal["conda"] = "conda"
+
     # part properties required by the plugin
-    conda_packages: Optional[List[str]] = None
-    conda_python_version: Optional[str] = None
+    conda_packages: list[str] | None = None
+    conda_python_version: str | None = None
     conda_miniconda_version: str = "latest"
-
-    @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "CondaPluginProperties":
-        """Populate class attributes from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = plugins.extract_plugin_properties(
-            data,
-            plugin_name="conda",
-        )
-        return cls(**plugin_data)
 
 
 class CondaPlugin(plugins.Plugin):
@@ -108,15 +94,15 @@ class CondaPlugin(plugins.Plugin):
     properties_class = CondaPluginProperties
 
     @overrides
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
     @overrides
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return set()
 
     @overrides
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {"PATH": "${HOME}/miniconda/bin:${PATH}"}
 
     @staticmethod
@@ -149,7 +135,7 @@ class CondaPlugin(plugins.Plugin):
         return " ".join(deploy_cmd)
 
     @overrides
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         options = cast(CondaPluginProperties, self._options)
         url = _get_miniconda_source(options.conda_miniconda_version)
         return [
