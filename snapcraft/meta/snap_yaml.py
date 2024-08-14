@@ -19,14 +19,13 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Set, Union, cast
+from typing import Any, Literal, cast
 
 import pydantic
 import yaml
-from craft_application.models import BaseMetadata, SummaryStr, constraints
+from craft_application.models import BaseMetadata, SummaryStr, base, constraints
+from craft_application.models.constraints import SingleEntryDict
 from craft_cli import emit
-from pydantic import ValidationError, validator
-from typing_extensions import override
 
 from snapcraft import errors, models
 from snapcraft.elf.elf_utils import get_arch_triplet
@@ -40,18 +39,27 @@ from snapcraft.utils import (
 class SnapcraftMetadata(BaseMetadata):
     """Snapcraft-specific metadata base model."""
 
+    model_config = pydantic.ConfigDict(
+        validate_assignment=True,
+        extra="allow",
+        populate_by_name=True,
+        alias_generator=base.alias_generator,
+        # snap metadata may contain versions as ints or floats
+        coerce_numbers_to_str=True,
+    )
+
     def marshal(self) -> dict[str, str | list[str] | dict[str, Any]]:
-        """Convert to a dictionary."""
-        return self.dict(
-            by_alias=True, exclude_unset=True, exclude_none=True, exclude_defaults=True
+        """Convert to a dictionary and exclude defaults."""
+        return self.model_dump(
+            mode="json", by_alias=True, exclude_unset=True, exclude_defaults=True
         )
 
 
 class Socket(SnapcraftMetadata):
     """snap.yaml app socket entry."""
 
-    listen_stream: Union[int, str]
-    socket_mode: Optional[int]
+    listen_stream: int | str
+    socket_mode: int | None = None
 
 
 class SnapApp(SnapcraftMetadata):
@@ -65,70 +73,59 @@ class SnapApp(SnapcraftMetadata):
     """
 
     command: str
-    autostart: Optional[str]
-    common_id: Optional[str]
-    bus_name: Optional[str]
-    completer: Optional[str]
-    stop_command: Optional[str]
-    post_stop_command: Optional[str]
-    start_timeout: Optional[str]
-    stop_timeout: Optional[str]
-    watchdog_timeout: Optional[str]
-    reload_command: Optional[str]
-    restart_delay: Optional[str]
-    timer: Optional[str]
-    daemon: Optional[str]
-    after: Optional[List[str]]
-    before: Optional[List[str]]
-    refresh_mode: Optional[str]
-    stop_mode: Optional[str]
-    restart_condition: Optional[str]
-    install_mode: Optional[str]
-    plugs: Optional[List[str]]
-    slots: Optional[List[str]]
-    aliases: Optional[List[str]]
-    environment: Optional[Dict[str, Any]]
-    command_chain: Optional[List[str]]
-    sockets: Optional[Dict[str, Socket]]
-    daemon_scope: Optional[str]
-    activates_on: Optional[List[str]]
+    autostart: str | None = None
+    common_id: str | None = None
+    bus_name: str | None = None
+    completer: str | None = None
+    stop_command: str | None = None
+    post_stop_command: str | None = None
+    start_timeout: str | None = None
+    stop_timeout: str | None = None
+    watchdog_timeout: str | None = None
+    reload_command: str | None = None
+    restart_delay: str | None = None
+    timer: str | None = None
+    daemon: str | None = None
+    after: list[str] | None = None
+    before: list[str] | None = None
+    refresh_mode: str | None = None
+    stop_mode: str | None = None
+    restart_condition: str | None = None
+    install_mode: str | None = None
+    plugs: list[str] | None = None
+    slots: list[str] | None = None
+    aliases: list[str] | None = None
+    environment: dict[str, Any] | None = None
+    command_chain: list[str] | None = None
+    sockets: dict[str, Socket] | None = None
+    daemon_scope: str | None = None
+    activates_on: list[str] | None = None
 
 
 class ContentPlug(SnapcraftMetadata):  # type: ignore # (pydantic plugin is crashing)
     """Content plug definition in the snap metadata."""
 
-    @override
-    class Config(BaseMetadata.Config):
-        """Allow extra parameters in content plugs."""
-
-        extra = pydantic.Extra.ignore
+    model_config = pydantic.ConfigDict(
+        validate_assignment=True,
+        # allow extra parameters in content plugs
+        extra="ignore",
+        populate_by_name=True,
+        alias_generator=base.alias_generator,
+    )
 
     interface: Literal["content"]
     target: str
-    content: Optional[str]
-    default_provider: Optional[str]
+    content: str | None = None
+    default_provider: str | None = None
 
-    @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "ContentPlug":
-        """Create and populate a new ``ContentPlug`` object from dictionary data.
-
-        :param data: The dictionary data to unmarshal.
-        :return: The newly created object.
-        :raise TypeError: If data is not a dictionary.
-        """
-        if not isinstance(data, dict):
-            raise TypeError("data is not a dictionary")
-
-        return cls(**data)
-
-    @validator("target")
+    @pydantic.field_validator("target")
     @classmethod
     def _validate_target_not_empty(cls, val):
         if val == "":
             raise ValueError("value cannot be empty")
         return val
 
-    @validator("default_provider")
+    @pydantic.field_validator("default_provider")
     @classmethod
     def _validate_default_provider(cls, default_provider):
         if default_provider and "/" in default_provider:
@@ -139,7 +136,7 @@ class ContentPlug(SnapcraftMetadata):  # type: ignore # (pydantic plugin is cras
         return default_provider
 
     @property
-    def provider(self) -> Optional[str]:
+    def provider(self) -> str | None:
         """Return the default content provider name."""
         if self.default_provider is None:
             return None
@@ -155,26 +152,13 @@ class ContentSlot(SnapcraftMetadata):
     """Content slot definition in the snap metadata."""
 
     interface: Literal["content"]
-    content: Optional[str]
-    read: List[str] = []
-    write: List[str] = []
+    content: str | None = None
+    read: list[str] = []
+    write: list[str] = []
 
-    @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "ContentSlot":
-        """Create and populate a new ``ContentSlot`` object from dictionary data.
-
-        :param data: The dictionary data to unmarshal.
-        :return: The newly created object.
-        :raise TypeError: If data is not a dictionary.
-        """
-        if not isinstance(data, dict):
-            raise TypeError("data is not a dictionary")
-
-        return cls(**data)
-
-    def get_content_dirs(self, installed_path: Path) -> Set[Path]:
+    def get_content_dirs(self, installed_path: Path) -> set[Path]:
         """Obtain the slot's content directories."""
-        content_dirs: Set[Path] = set()
+        content_dirs: set[Path] = set()
 
         for path_ in self.read + self.write:
             # Strip leading "$SNAP" and "/".
@@ -189,11 +173,11 @@ class ContentSlot(SnapcraftMetadata):
 class Links(SnapcraftMetadata):
     """Metadata links used in snaps."""
 
-    contact: Optional[constraints.UniqueStrList]
-    donation: Optional[constraints.UniqueStrList]
-    issues: Optional[constraints.UniqueStrList]
-    source_code: Optional[constraints.UniqueStrList]
-    website: Optional[constraints.UniqueStrList]
+    contact: constraints.UniqueStrList | None = None
+    donation: constraints.UniqueStrList | None = None
+    issues: constraints.UniqueStrList | None = None
+    source_code: constraints.UniqueStrList | None = None
+    website: constraints.UniqueStrList | None = None
 
     @staticmethod
     def _normalize_value(
@@ -235,13 +219,15 @@ class ComponentMetadata(SnapcraftMetadata):  # type: ignore # (pydantic plugin i
     summary: SummaryStr
     description: str
     type: str
-    hooks: dict[str, models.Hook] | None
+    hooks: dict[str, models.Hook] | None = None
 
-    @override
-    class Config(BaseMetadata.Config):
-        """Ignore extra parameters in component metadata."""
-
-        extra = pydantic.Extra.ignore
+    model_config = pydantic.ConfigDict(
+        validate_assignment=True,
+        # ignore extra parameters in component metadata
+        extra="ignore",
+        populate_by_name=True,
+        alias_generator=base.alias_generator,
+    )
 
     @classmethod
     def from_component(cls, component: models.Component) -> "ComponentMetadata":
@@ -259,52 +245,35 @@ class SnapMetadata(SnapcraftMetadata):
     """
 
     name: str
-    title: Optional[str]
+    title: str | None = None
     version: str
     summary: SummaryStr
     description: str
-    license: Optional[str]
-    type: Optional[str]
-    architectures: List[str]
-    base: Optional[str]
-    assumes: Optional[List[str]]
-    epoch: Optional[str]
-    apps: Optional[Dict[str, SnapApp]]
+    license: str | None = None
+    type: str | None = None
+    architectures: list[str]
+    base: str | None = None
+    assumes: list[str] | None = None
+    epoch: str | None = None
+    apps: dict[str, SnapApp] | None = None
     confinement: str
     grade: str
-    environment: Optional[Dict[str, Any]]
-    plugs: Optional[Dict[str, Any]]
-    slots: Optional[Dict[str, Any]]
-    hooks: Optional[Dict[str, Any]]
-    layout: Optional[
-        Dict[str, Dict[Literal["symlink", "bind", "bind-file", "type"], str]]
-    ]
-    system_usernames: Optional[Dict[str, Any]]
-    provenance: Optional[str]
-    links: Optional[Links]
-    components: Optional[Dict[str, ComponentMetadata]]
+    environment: dict[str, Any] | None = None
+    plugs: dict[str, Any] | None = None
+    slots: dict[str, Any] | None = None
+    hooks: dict[str, Any] | None = None
+    layout: (
+        dict[str, SingleEntryDict[Literal["symlink", "bind", "bind-file", "type"], str]]
+        | None
+    ) = None
+    system_usernames: dict[str, Any] | None = None
+    provenance: str | None = None
+    links: Links | None = None
+    components: dict[str, ComponentMetadata] | None = None
 
-    @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "SnapMetadata":
-        """Create and populate a new ``SnapMetadata`` object from dictionary data.
-
-        The unmarshal method validates entries in the input dictionary, populating
-        the corresponding fields in the data object.
-
-        :param data: The dictionary data to unmarshal.
-
-        :return: The newly created object.
-
-        :raise TypeError: If data is not a dictionary.
-        """
-        if not isinstance(data, dict):
-            raise TypeError("data is not a dictionary")
-
-        return cls(**data)
-
-    def get_provider_content_directories(self) -> List[Path]:
+    def get_provider_content_directories(self) -> list[Path]:
         """Get provider content directories from installed snaps."""
-        provider_dirs: Set[Path] = set()
+        provider_dirs: set[Path] = set()
 
         for plug in self.get_content_plugs():
             # Get matching slot provider for plug
@@ -326,35 +295,35 @@ class SnapMetadata(SnapcraftMetadata):
 
         return sorted(provider_dirs)
 
-    def get_content_plugs(self) -> List[ContentPlug]:
+    def get_content_plugs(self) -> list[ContentPlug]:
         """Return a list of content plugs from the snap metadata plugs."""
         if not self.plugs:
             return []
 
-        content_plugs: List[ContentPlug] = []
+        content_plugs: list[ContentPlug] = []
         for name, data in self.plugs.items():
             try:
                 plug = ContentPlug.unmarshal(data)
                 if not plug.content:
                     plug.content = name
                 content_plugs.append(plug)
-            except (TypeError, ValidationError):
+            except (TypeError, pydantic.ValidationError):
                 continue
         return content_plugs
 
-    def get_content_slots(self) -> List[ContentSlot]:
+    def get_content_slots(self) -> list[ContentSlot]:
         """Return a list of content slots from the snap metadata slots."""
         if not self.slots:
             return []
 
-        content_slots: List[ContentSlot] = []
+        content_slots: list[ContentSlot] = []
         for name, slot_data in self.slots.items():
             try:
                 slot = ContentSlot.unmarshal(slot_data)
                 if not slot.content:
                     slot.content = name
                 content_slots.append(slot)
-            except (TypeError, ValidationError):
+            except (TypeError, pydantic.ValidationError):
                 continue
         return content_slots
 
@@ -375,8 +344,8 @@ def read(prime_dir: Path) -> SnapMetadata:
     return SnapMetadata.unmarshal(data)
 
 
-def _create_snap_app(app: models.App, assumes: Set[str]) -> SnapApp:
-    app_sockets: Dict[str, Socket] = {}
+def _create_snap_app(app: models.App, assumes: set[str]) -> SnapApp:
+    app_sockets: dict[str, Socket] = {}
     if app.sockets:
         for socket_name, socket in app.sockets.items():
             app_sockets[socket_name] = Socket(
@@ -425,7 +394,7 @@ def _create_snap_app(app: models.App, assumes: Set[str]) -> SnapApp:
     return snap_app
 
 
-def _get_grade(grade: Optional[str], build_base: Optional[str]) -> str:
+def _get_grade(grade: str | None = None, build_base: str | None = None) -> str:
     """Get the grade for a project.
 
     If the build_base is `devel`, then the grade should be `devel`.
@@ -456,9 +425,9 @@ def get_metadata_from_project(
     :param prime_dir: The directory containing the content to be snapped.
     :param arch: Target architecture the snap project is built to.
     """
-    assumes: Set[str] = set()
+    assumes: set[str] = set()
 
-    snap_apps: Dict[str, SnapApp] = {}
+    snap_apps: dict[str, SnapApp] = {}
     if project.apps:
         for name, app in project.apps.items():
             snap_apps[name] = _create_snap_app(app, assumes)
@@ -542,11 +511,11 @@ def _repr_str(dumper, data):
 
 
 def _populate_environment(
-    environment: Optional[Dict[str, Optional[str]]],
+    environment: dict[str, str | None] | None,
     prime_dir: Path,
-    arch_triplet: Optional[str],
+    arch_triplet: str | None,
     confinement: str,
-) -> Optional[Dict[str, Optional[str]]]:
+) -> dict[str, str | None] | None:
     """Populate default app environment variables, LD_LIBRARY_PATH and PATH.
 
     Three cases for environment variables:
@@ -589,8 +558,8 @@ def _populate_environment(
 
 
 def _process_components(
-    components: Dict[str, models.Component] | None
-) -> Dict[str, ComponentMetadata] | None:
+    components: dict[str, models.Component] | None
+) -> dict[str, ComponentMetadata] | None:
     """Convert Components from a project to ComponentMetadata for a snap.yaml.
 
     :param components: Component data from a project model.

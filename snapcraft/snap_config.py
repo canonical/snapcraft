@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,53 +15,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Snap config file definitions and helpers."""
-from typing import Any, Dict, Literal, Optional
+from typing import Annotated, Literal, Optional
 
+import craft_application.models
 import pydantic
 from craft_cli import emit
 from snaphelpers import SnapConfigOptions, SnapCtlError
 
 from snapcraft.utils import is_snapcraft_running_from_snap
 
+ProviderName = Annotated[
+    Literal["lxd", "multipass"], pydantic.BeforeValidator(lambda name: name.lower())
+]
 
-class SnapConfig(pydantic.BaseModel, extra=pydantic.Extra.forbid):
+
+class SnapConfig(craft_application.models.CraftBaseModel):
     """Data stored in a snap config.
 
     :param provider: provider to use. Valid values are 'lxd' and 'multipass'.
     """
 
-    provider: Optional[Literal["lxd", "multipass"]] = None
-
-    @pydantic.validator("provider", pre=True)
-    @classmethod
-    def convert_to_lower(cls, provider):
-        """Convert provider value to lowercase."""
-        return provider.lower()
-
-    @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "SnapConfig":
-        """Create and populate a new ``SnapConfig`` object from dictionary data.
-
-        The unmarshal method validates entries in the input dictionary, populating
-        the corresponding fields in the data object.
-
-        :param data: The dictionary data to unmarshal.
-
-        :return: The newly created object.
-
-        :raise TypeError: If data is not a dictionary.
-        :raise ValueError: If data is invalid.
-        """
-        if not isinstance(data, dict):
-            raise TypeError("snap config data is not a dictionary")
-
-        try:
-            snap_config = cls(**data)
-        except pydantic.ValidationError as error:
-            # TODO: use `_format_pydantic_errors()` from project.py
-            raise ValueError(f"error parsing snap config: {error}") from error
-
-        return snap_config
+    provider: ProviderName | None = None
 
 
 def get_snap_config() -> Optional[SnapConfig]:

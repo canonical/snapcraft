@@ -22,7 +22,6 @@ from textwrap import dedent
 
 import pytest
 import yaml
-from craft_application.models import SummaryStr, VersionStr
 
 from snapcraft import __version__, linters, meta, models, pack, services
 from snapcraft.application import APP_METADATA
@@ -85,33 +84,35 @@ def test_metadata(
         build_plan=default_build_plan,
     )
 
-    assert package_service.metadata == meta.SnapMetadata(
-        name="default",
-        title=None,
-        version=VersionStr("1.0"),
-        summary=SummaryStr("default project"),
-        description="default project",
-        license="MIT",
-        type=None,
-        architectures=["amd64"],
-        base="core24",
-        assumes=None,
-        epoch=None,
-        apps=None,
-        confinement="devmode",
-        grade="devel",
-        environment={
-            "LD_LIBRARY_PATH": "${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}",
-            "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
-        },
-        plugs=None,
-        slots=None,
-        hooks=None,
-        layout=None,
-        system_usernames=None,
-        provenance=None,
-        links=None,
-        components=None,
+    assert package_service.metadata == meta.SnapMetadata.unmarshal(
+        {
+            "name": "default",
+            "title": None,
+            "version": "1.0",
+            "summary": "default project",
+            "description": "default project",
+            "license": "MIT",
+            "type": None,
+            "architectures": ["amd64"],
+            "base": "core24",
+            "assumes": None,
+            "epoch": None,
+            "apps": None,
+            "confinement": "devmode",
+            "grade": "devel",
+            "environment": {
+                "LD_LIBRARY_PATH": "${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}",
+                "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+            },
+            "plugs": None,
+            "slots": None,
+            "hooks": None,
+            "layout": None,
+            "system_usernames": None,
+            "provenance": None,
+            "links": None,
+            "components": None,
+        }
     )
 
 

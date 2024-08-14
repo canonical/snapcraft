@@ -14,19 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Annotated, Dict, Literal, TYPE_CHECKING
+from typing import Any, Literal
 import numbers
 import pydantic
 
 from craft_application import models
+from typing_extensions import Annotated
 
 
-if TYPE_CHECKING:
-    SnapName = str
-    SnapId = str
-else:
-    SnapName = pydantic.constr(max_length=40)
-    SnapId = pydantic.constr(max_length=40)
+SnapName = Annotated[str, pydantic.StringConstraints(max_length=40)]
+SnapId = Annotated[str, pydantic.StringConstraints(max_length=40)]
 
 
 def cast_dict_scalars_to_strings(data: dict) -> dict[str, Any]:
@@ -66,13 +63,13 @@ class Snap(models.CraftBaseModel):
     name: SnapName
     """Snap name"""
 
-    id: SnapId | None
+    id: SnapId | None = None
     """Snap ID"""
 
-    presence: Literal["required", "optional", "invalid"] | None
+    presence: Literal["required", "optional", "invalid"] | None = None
     """Snap presence"""
 
-    revision: int | None
+    revision: int | None = None
     """Snap revision"""
 
 
@@ -87,16 +84,16 @@ class EditableBuildAssertion(models.CraftBaseModel):
     name: str
     """The "name" assertion header"""
 
-    revision: str | None
+    revision: str | None = None
     """The "revision" assertion header"""
 
     sequence: int
     """The "sequence" assertion header"""
 
-    snaps: Annotated[list[Snap], pydantic.Field(min_items=1)]
+    snaps: Annotated[list[Snap], pydantic.Field(min_length=1)]
     """List of snaps in a Validation Set assertion"""
 
-    def marshal_scalars_as_strings(self) -> Dict[str, Any]:
+    def marshal_scalars_as_strings(self) -> dict[str, Any]:
         """Marshal the object where all scalars are represented as strings."""
         data = self.marshal()
         return cast_dict_scalars_to_strings(data)
@@ -113,7 +110,7 @@ class BuildAssertion(EditableBuildAssertion):
     series: str
     """The "series" assertion header"""
 
-    sign_key_sha3_384: str | None
+    sign_key_sha3_384: None = None
     """Signing key ID."""
 
     timestamp: str
@@ -122,7 +119,8 @@ class BuildAssertion(EditableBuildAssertion):
     type: Literal["validation-set"]
     """The "type" assertion header"""
 
-    @pydantic.root_validator(pre=True)
+    @pydantic.model_validator(mode="before")
+    @classmethod
     def remove_sign_key(cls, values):
         """Accept but always ignore the sign key.
 

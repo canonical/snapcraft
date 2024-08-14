@@ -27,14 +27,12 @@ from snapcraft.parts.setup_assets import setup_assets
 
 @pytest.fixture
 def extra_project_params(extra_project_params):
-    from craft_application.models import SummaryStr, VersionStr
-
     extra_project_params["components"] = {
         "firstcomponent": {
             "type": "test",
-            "summary": SummaryStr("first component"),
+            "summary": "first component",
             "description": "lorem ipsum",
-            "version": VersionStr("1.0"),
+            "version": "1.0",
             "hooks": {
                 "configure": {
                     "environment": {

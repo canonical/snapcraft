@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -47,35 +47,23 @@ def test_unmarshal():
 
 def test_unmarshal_not_a_dictionary():
     """Verify unmarshalling with data that is not a dictionary raises an error."""
-    with pytest.raises(TypeError) as raised:
+    error = "Project data is not a dictionary"
+    with pytest.raises(TypeError, match=error):
         SnapConfig.unmarshal("provider=lxd")  # type: ignore
-
-    assert str(raised.value) == "snap config data is not a dictionary"
 
 
 def test_unmarshal_invalid_provider_error():
     """Verify unmarshalling with an invalid provider raises an error."""
-    with pytest.raises(ValueError) as raised:
+    error = "provider\n  Input should be 'lxd' or 'multipass'"
+    with pytest.raises(ValueError, match=error):
         SnapConfig.unmarshal({"provider": "invalid-value"})
-
-    assert str(raised.value) == (
-        "error parsing snap config: 1 validation error for SnapConfig\n"
-        "provider\n"
-        "  unexpected value; permitted: 'lxd', 'multipass' "
-        "(type=value_error.const; given=invalid-value; permitted=('lxd', 'multipass'))"
-    )
 
 
 def test_unmarshal_extra_data_error():
     """Verify unmarshalling with extra data raises an error."""
-    with pytest.raises(ValueError) as raised:
+    error = "test\n  Extra inputs are not permitted"
+    with pytest.raises(ValueError, match=error):
         SnapConfig.unmarshal({"provider": "lxd", "test": "test"})
-
-    assert str(raised.value) == (
-        "error parsing snap config: 1 validation error for SnapConfig\n"
-        "test\n"
-        "  extra fields not permitted (type=value_error.extra)"
-    )
 
 
 @pytest.mark.parametrize("provider", ["lxd", "multipass"])
