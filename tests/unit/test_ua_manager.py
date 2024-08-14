@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2022 Canonical Ltd.
+# Copyright 2021-2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -129,6 +129,11 @@ def test_ua_manager_enable_services(fake_process, mock_status_data):
     - Services not in the status data are enabled.
     - Enabled services are not re-enabled.
     """
+    services = {
+        "disabled-service-1",
+        "disabled-service-2",
+        "service-not-in-status-data",
+    }
     fake_process.register_subprocess(
         ["ua", "status", "--all", "--format", "json"], stdout=mock_status_data
     )
@@ -140,23 +145,14 @@ def test_ua_manager_enable_services(fake_process, mock_status_data):
         [
             "ua",
             "enable",
-            "disabled-service-1",
-            "disabled-service-2",
-            "service-not-in-status-data",
+            *sorted(services),
             "--beta",
             "--assume-yes",
         ]
     )
     fake_process.register_subprocess(["ua", "detach", "--assume-yes"])
 
-    with ua_manager.ua_manager(
-        "test-ua-token",
-        services=[
-            "disabled-service-1",
-            "disabled-service-2",
-            "service-not-in-status-data",
-        ],
-    ):
+    with ua_manager.ua_manager("test-ua-token", services=services):
         pass
 
     assert list(fake_process.calls) == [
@@ -166,9 +162,7 @@ def test_ua_manager_enable_services(fake_process, mock_status_data):
         [
             "ua",
             "enable",
-            "disabled-service-1",
-            "disabled-service-2",
-            "service-not-in-status-data",
+            *sorted(services),
             "--beta",
             "--assume-yes",
         ],
@@ -178,6 +172,10 @@ def test_ua_manager_enable_services(fake_process, mock_status_data):
 
 def test_ua_manager_enable_services_no_services(fake_process):
     """Assume services are disabled if the services node is not in the status data."""
+    services = {
+        "disabled-service-1",
+        "disabled-service-2",
+    }
     fake_process.register_subprocess(
         ["ua", "status", "--all", "--format", "json"],
         stdout='{"attached": false, "_doc": "Content..."}',
@@ -191,17 +189,14 @@ def test_ua_manager_enable_services_no_services(fake_process):
         [
             "ua",
             "enable",
-            "disabled-service-1",
-            "disabled-service-2",
+            *sorted(services),
             "--beta",
             "--assume-yes",
         ]
     )
     fake_process.register_subprocess(["ua", "detach", "--assume-yes"])
 
-    with ua_manager.ua_manager(
-        "test-ua-token", services=["disabled-service-1", "disabled-service-2"]
-    ):
+    with ua_manager.ua_manager("test-ua-token", services=services):
         pass
 
     assert list(fake_process.calls) == [
@@ -211,8 +206,7 @@ def test_ua_manager_enable_services_no_services(fake_process):
         [
             "ua",
             "enable",
-            "disabled-service-1",
-            "disabled-service-2",
+            *sorted(services),
             "--beta",
             "--assume-yes",
         ],
@@ -222,6 +216,7 @@ def test_ua_manager_enable_services_no_services(fake_process):
 
 def test_ua_manager_enable_services_error(fake_process):
     """Raise a UAEnableServicesError when the `ua enable` command fails."""
+    services = {"svc1", "svc2"}
     fake_process.register_subprocess(
         ["ua", "status", "--all", "--format", "json"],
         stdout='{"attached": false, "_doc": "Content..."}',
@@ -232,19 +227,19 @@ def test_ua_manager_enable_services_error(fake_process):
         stdout='{"attached": false, "_doc": "Content..."}',
     )
     fake_process.register_subprocess(
-        ["ua", "enable", "svc1", "svc2", "--beta", "--assume-yes"], returncode=1
+        ["ua", "enable", *sorted(services), "--beta", "--assume-yes"], returncode=1
     )
     fake_process.register_subprocess(["ua", "detach", "--assume-yes"])
 
     with pytest.raises(ua_manager.UAEnableServicesError) as raised:
-        with ua_manager.ua_manager("test-ua-token", services=["svc1", "svc2"]):
+        with ua_manager.ua_manager("test-ua-token", services={"svc1", "svc2"}):
             pass
 
     assert list(fake_process.calls) == [
         ["ua", "status", "--all", "--format", "json"],
         ["ua", "attach", "test-ua-token"],
         ["ua", "status", "--all", "--format", "json"],
-        ["ua", "enable", "svc1", "svc2", "--beta", "--assume-yes"],
+        ["ua", "enable", *sorted(services), "--beta", "--assume-yes"],
         ["ua", "detach", "--assume-yes"],
     ]
     assert str(raised.value) == "Error enabling UA services."

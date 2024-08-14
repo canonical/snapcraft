@@ -19,30 +19,22 @@ from __future__ import annotations
 
 import copy
 import re
-from typing import (
-    TYPE_CHECKING,
-    Annotated,
-    Any,
-    Dict,
-    List,
-    Literal,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Any, Literal, Mapping, Tuple, cast
 
 import pydantic
 from craft_application import models
 from craft_application.errors import CraftValidationError
-from craft_application.models import BuildInfo, SummaryStr, UniqueStrList, VersionStr
+from craft_application.models import BuildInfo, SummaryStr, VersionStr
+from craft_application.models.constraints import (
+    SingleEntryDict,
+    SingleEntryList,
+    UniqueList,
+)
 from craft_cli import emit
-from craft_grammar.models import GrammarSingleEntryDictList, GrammarStr, GrammarStrList
+from craft_grammar.models import Grammar  # type: ignore[import-untyped]
 from craft_providers import bases
-from pydantic import PrivateAttr, constr
-from typing_extensions import Self, override
+from pydantic import ConfigDict, PrivateAttr, StringConstraints
+from typing_extensions import Annotated, Self, override
 
 from snapcraft import utils
 from snapcraft.const import SUPPORTED_ARCHS, SnapArch
@@ -57,17 +49,10 @@ from snapcraft.utils import (
     is_architecture_supported,
 )
 
-# A workaround for mypy false positives
-# see https://github.com/samuelcolvin/pydantic/issues/975#issuecomment-551147305
-# fmt: off
-if TYPE_CHECKING:
-    ProjectName = str
-else:
-    ProjectName = constr(max_length=40)
-# fmt: on
+ProjectName = Annotated[str, StringConstraints(max_length=40)]
 
 
-def _validate_command_chain(command_chains: Optional[List[str]]) -> Optional[List[str]]:
+def _validate_command_chain(command_chains: list[str] | None) -> list[str] | None:
     """Validate command_chain."""
     if command_chains is not None:
         for command_chain in command_chains:
@@ -151,8 +136,8 @@ def _expand_architectures(architectures):
         # convert strings into Architecture objects
         if isinstance(architecture, str):
             architectures[index] = Architecture(
-                build_on=cast(UniqueStrList, [architecture]),
-                build_for=cast(UniqueStrList, [architecture]),
+                build_on=cast(UniqueList[str], [architecture]),
+                build_for=cast(UniqueList[str], [architecture]),
             )
         elif isinstance(architecture, Architecture):
             # convert strings to lists
@@ -279,8 +264,8 @@ def _validate_component(name: str) -> str:
 
 
 def _get_partitions_from_components(
-    components_data: Optional[Dict[str, Any]]
-) -> Optional[List[str]]:
+    components_data: dict[str, Any] | None
+) -> list[str] | None:
     """Get a list of partitions based on the project's components.
 
     :returns: A list of partitions formatted as ['default', 'component/<name>', ...]
@@ -295,10 +280,10 @@ def _get_partitions_from_components(
 class Socket(models.CraftBaseModel):
     """Snapcraft app socket definition."""
 
-    listen_stream: Union[int, str]
-    socket_mode: Optional[int]
+    listen_stream: int | str
+    socket_mode: int | None = None
 
-    @pydantic.validator("listen_stream")
+    @pydantic.field_validator("listen_stream")
     @classmethod
     def _validate_list_stream(cls, listen_stream):
         if isinstance(listen_stream, int):
@@ -330,10 +315,14 @@ class Lint(models.CraftBaseModel):
         The "known" linter names are the keys in :ref:`LINTERS`
     """
 
-    ignore: List[Union[str, Dict[str, List[str]]]]
+    ignore: list[str | dict[str, list[str]]]
 
     # A private field to simplify lookup.
-    _lint_ignores: Dict[str, List[str]] = PrivateAttr(default_factory=dict)
+    _lint_ignores: dict[str, list[str]] = PrivateAttr(default_factory=dict)
+
+    def __eq__(self, other):
+        """Compare two Lint objects and ignore private attributes."""
+        return self.ignore == other.ignore
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -353,7 +342,7 @@ class Lint(models.CraftBaseModel):
             and len(self._lint_ignores[linter_name]) == 0
         )
 
-    def ignored_files(self, linter_name: str) -> List[str]:
+    def ignored_files(self, linter_name: str) -> list[str]:
         """Get a list of filenames/patterns to ignore for `lint_name`.
 
         Since the main usecase for this method is a for-loop with `fnmatch()`, it will
@@ -373,24 +362,24 @@ class App(models.CraftBaseModel):
     """Snapcraft project app definition."""
 
     command: str
-    autostart: Optional[str]
-    common_id: Optional[str]
-    bus_name: Optional[str]
-    desktop: Optional[str]
-    completer: Optional[str]
-    stop_command: Optional[str]
-    post_stop_command: Optional[str]
-    start_timeout: Optional[str]
-    stop_timeout: Optional[str]
-    watchdog_timeout: Optional[str]
-    reload_command: Optional[str]
-    restart_delay: Optional[str]
-    timer: Optional[str]
-    daemon: Optional[Literal["simple", "forking", "oneshot", "notify", "dbus"]]
-    after: UniqueStrList = cast(UniqueStrList, [])
-    before: UniqueStrList = cast(UniqueStrList, [])
-    refresh_mode: Optional[Literal["endure", "restart", "ignore-running"]]
-    stop_mode: Optional[
+    autostart: str | None = None
+    common_id: str | None = None
+    bus_name: str | None = None
+    desktop: str | None = None
+    completer: str | None = None
+    stop_command: str | None = None
+    post_stop_command: str | None = None
+    start_timeout: str | None = None
+    stop_timeout: str | None = None
+    watchdog_timeout: str | None = None
+    reload_command: str | None = None
+    restart_delay: str | None = None
+    timer: str | None = None
+    daemon: Literal["simple", "forking", "oneshot", "notify", "dbus"] | None = None
+    after: UniqueList[str] = pydantic.Field(default_factory=list)
+    before: UniqueList[str] = pydantic.Field(default_factory=list)
+    refresh_mode: Literal["endure", "restart", "ignore-running"] | None = None
+    stop_mode: (
         Literal[
             "sigterm",
             "sigterm-all",
@@ -403,8 +392,9 @@ class App(models.CraftBaseModel):
             "sigint",
             "sigint-all",
         ]
-    ]
-    restart_condition: Optional[
+        | None
+    ) = None
+    restart_condition: (
         Literal[
             "on-success",
             "on-failure",
@@ -414,19 +404,20 @@ class App(models.CraftBaseModel):
             "always",
             "never",
         ]
-    ]
-    install_mode: Optional[Literal["enable", "disable"]]
-    slots: Optional[UniqueStrList]
-    plugs: Optional[UniqueStrList]
-    aliases: Optional[UniqueStrList]
-    environment: Optional[Dict[str, str]]
-    command_chain: List[str] = []
-    sockets: Optional[Dict[str, Socket]]
-    daemon_scope: Optional[Literal["system", "user"]]
-    activates_on: Optional[UniqueStrList]
-    passthrough: Optional[Dict[str, Any]]
+        | None
+    ) = None
+    install_mode: Literal["enable", "disable"] | None = None
+    slots: UniqueList[str] | None = None
+    plugs: UniqueList[str] | None = None
+    aliases: UniqueList[str] | None = None
+    environment: dict[str, str] | None = None
+    command_chain: list[str] = []
+    sockets: dict[str, Socket] | None = None
+    daemon_scope: Literal["system", "user"] | None = None
+    activates_on: UniqueList[str] | None = None
+    passthrough: dict[str, Any] | None = None
 
-    @pydantic.validator("autostart")
+    @pydantic.field_validator("autostart")
     @classmethod
     def _validate_autostart_name(cls, name):
         if not re.match(r"^[A-Za-z0-9. _#:$-]+\.desktop$", name):
@@ -436,7 +427,7 @@ class App(models.CraftBaseModel):
 
         return name
 
-    @pydantic.validator("bus_name")
+    @pydantic.field_validator("bus_name")
     @classmethod
     def _validate_bus_name(cls, name):
         if not re.match(r"^[A-Za-z0-9/. _#:$-]*$", name):
@@ -444,7 +435,7 @@ class App(models.CraftBaseModel):
 
         return name
 
-    @pydantic.validator(
+    @pydantic.field_validator(
         "start_timeout", "stop_timeout", "watchdog_timeout", "restart_delay"
     )
     @classmethod
@@ -454,12 +445,12 @@ class App(models.CraftBaseModel):
 
         return timeval
 
-    @pydantic.validator("command_chain")
+    @pydantic.field_validator("command_chain")
     @classmethod
     def _validate_command_chain(cls, command_chains):
         return _validate_command_chain(command_chains)
 
-    @pydantic.validator("aliases")
+    @pydantic.field_validator("aliases")
     @classmethod
     def _validate_aliases(cls, aliases):
         for alias in aliases:
@@ -476,17 +467,17 @@ class App(models.CraftBaseModel):
 class Hook(models.CraftBaseModel):
     """Snapcraft project hook definition."""
 
-    command_chain: Optional[List[str]]
-    environment: Optional[Dict[str, str]]
-    plugs: Optional[UniqueStrList]
-    passthrough: Optional[Dict[str, Any]]
+    command_chain: list[str] | None = None
+    environment: dict[str, str] | None = None
+    plugs: UniqueList[str] | None = None
+    passthrough: dict[str, Any] | None = None
 
-    @pydantic.validator("command_chain")
+    @pydantic.field_validator("command_chain")
     @classmethod
     def _validate_command_chain(cls, command_chains):
         return _validate_command_chain(command_chains)
 
-    @pydantic.validator("plugs")
+    @pydantic.field_validator("plugs")
     @classmethod
     def _validate_plugs(cls, plugs):
         if not plugs:
@@ -494,22 +485,22 @@ class Hook(models.CraftBaseModel):
         return plugs
 
 
-class Architecture(models.CraftBaseModel, extra=pydantic.Extra.forbid):
+class Architecture(models.CraftBaseModel, extra="forbid"):
     """Snapcraft project architecture definition."""
 
-    build_on: Union[str, UniqueStrList]
-    build_for: Optional[Union[str, UniqueStrList]]
+    build_on: str | UniqueList[str]
+    build_for: str | UniqueList[str] | None = None
 
 
 class ContentPlug(models.CraftBaseModel):
     """Snapcraft project content plug definition."""
 
-    content: Optional[str]
+    content: str | None = None
     interface: str
     target: str
-    default_provider: Optional[str]
+    default_provider: str | None = None
 
-    @pydantic.validator("default_provider")
+    @pydantic.field_validator("default_provider")
     @classmethod
     def _validate_default_provider(cls, default_provider):
         if default_provider and "/" in default_provider:
@@ -523,24 +514,18 @@ class ContentPlug(models.CraftBaseModel):
 class Platform(models.Platform):
     """Snapcraft project platform definition."""
 
-    build_on: Annotated[  # type: ignore[assignment,reportIncompatibleVariableOverride]
-        list[SnapArch] | None,
-        pydantic.Field(min_items=1, unique_items=True),
-    ]
-    build_for: Annotated[  # type: ignore[assignment,reportIncompatibleVariableOverride]
-        list[SnapArch | Literal["all"]] | None,
-        pydantic.Field(min_items=1, max_items=1, unique_items=True),
-    ]
+    build_on: UniqueList[str] | None = pydantic.Field(min_length=1)
+    build_for: SingleEntryList | None = None
 
-    @pydantic.validator("build_on", "build_for", pre=True)
+    @pydantic.field_validator("build_on", "build_for", mode="before")
     @classmethod
-    def _vectorise_build_for(cls, val: str | list[str]) -> list[str]:
-        """Vectorise target architectures if needed."""
+    def _vectorise_build_on_build_for(cls, val: str | list[str]) -> list[str]:
+        """Vectorise architectures if needed."""
         if isinstance(val, str):
             val = [val]
         return val
 
-    @pydantic.root_validator(skip_on_failure=True)
+    @pydantic.model_validator(mode="before")
     @classmethod
     def _validate_platform_set(cls, values: Mapping[str, Any]) -> Mapping[str, Any]:
         """If build_for is provided, then build_on must also be.
@@ -563,17 +548,19 @@ class Platform(models.Platform):
         platforms: dict[str, Self] = {}
         for architecture in architectures:
             if isinstance(architecture, str):
-                build_on = build_for = cast(UniqueStrList, [architecture])
+                build_on = build_for = cast(UniqueList[str], [architecture])
             else:
                 if isinstance(architecture.build_on, str):
-                    build_on = build_for = cast(UniqueStrList, [architecture.build_on])
+                    build_on = build_for = cast(
+                        UniqueList[str], [architecture.build_on]
+                    )
                 else:
-                    build_on = build_for = cast(UniqueStrList, architecture.build_on)
+                    build_on = build_for = cast(UniqueList[str], architecture.build_on)
                 if architecture.build_for:
                     if isinstance(architecture.build_for, str):
-                        build_for = cast(UniqueStrList, [architecture.build_for])
+                        build_for = cast(UniqueList[str], [architecture.build_for])
                     else:
-                        build_for = cast(UniqueStrList, architecture.build_for)
+                        build_for = cast(UniqueList[str], architecture.build_for)
 
             platforms[build_for[0]] = cls(build_for=build_for, build_on=build_on)
 
@@ -586,19 +573,8 @@ class Component(models.CraftBaseModel):
     summary: SummaryStr
     description: str
     type: Literal["test"]
-    version: Optional[VersionStr]  # type: ignore[assignment]
-    hooks: dict[str, Hook] | None
-
-    @pydantic.validator("version")
-    @classmethod
-    def _validate_version(cls, version):
-        if version == "":
-            raise ValueError("Component version cannot be an empty string.")
-
-        if version:
-            _validate_version_name(version, "Component")
-
-        return version
+    version: VersionStr | None = None
+    hooks: dict[str, Hook] | None = None
 
 
 MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
@@ -615,41 +591,41 @@ class Project(models.Project):
 
     # snapcraft's `name` is more general than craft-application
     name: ProjectName  # type: ignore[assignment]
-    build_base: Optional[str]
+    build_base: str | None = pydantic.Field(validate_default=True, default=None)
     compression: Literal["lzo", "xz"] = "xz"
-    version: Optional[VersionStr]  # type: ignore[assignment]
-    donation: Optional[UniqueStrList]
+    version: VersionStr | None = None
+    donation: UniqueList[str] | None = None
     # snapcraft's `source_code` is more general than craft-application
-    source_code: Optional[UniqueStrList]  # type: ignore[assignment]
-    contact: Optional[UniqueStrList]  # type: ignore[assignment]
-    issues: Optional[UniqueStrList]  # type: ignore[assignment]
-    website: Optional[UniqueStrList]
-    type: Optional[Literal["app", "base", "gadget", "kernel", "snapd"]]
-    icon: Optional[str]
+    source_code: UniqueList[str] | None = None  # type: ignore[assignment]
+    contact: UniqueList[str] | None = None  # type: ignore[assignment]
+    issues: UniqueList[str] | None = None  # type: ignore[assignment]
+    website: UniqueList[str] | None = None
+    type: Literal["app", "base", "gadget", "kernel", "snapd"] | None = None
+    icon: str | None = None
     confinement: Literal["classic", "devmode", "strict"]
-    layout: Optional[
-        Dict[str, Dict[Literal["symlink", "bind", "bind-file", "type"], str]]
-    ]
-    grade: Optional[Literal["stable", "devel"]]
-    architectures: List[Union[str, Architecture]] | None = None
+    layout: (
+        dict[str, SingleEntryDict[Literal["symlink", "bind", "bind-file", "type"], str]]
+        | None
+    ) = None
+    grade: Literal["stable", "devel"] | None = None
+    architectures: list[str | Architecture] | None = None
     platforms: dict[str, Platform] | None = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    assumes: UniqueStrList = cast(UniqueStrList, [])
-    package_repositories: Optional[List[Dict[str, Any]]]
-    hooks: Optional[Dict[str, Hook]]
-    passthrough: Optional[Dict[str, Any]]
-    apps: Optional[Dict[str, App]]
-    plugs: Optional[Dict[str, Union[ContentPlug, Any]]]
-    slots: Optional[Dict[str, Any]]
-    lint: Optional[Lint]
-    epoch: Optional[str]
-    adopt_info: Optional[str]
-    system_usernames: Optional[Dict[str, Any]]
-    environment: Optional[Dict[str, Optional[str]]]
-    build_packages: Optional[GrammarStrList]
-    build_snaps: Optional[GrammarStrList]
-    ua_services: Optional[UniqueStrList]
-    provenance: Optional[str]
-    components: Optional[Dict[ProjectName, Component]]
+    assumes: UniqueList[str] = pydantic.Field(default_factory=list)
+    hooks: dict[str, Hook] | None = None
+    passthrough: dict[str, Any] | None = None
+    apps: dict[str, App] | None = None
+    plugs: dict[str, ContentPlug | Any] | None = None
+    slots: dict[str, Any] | None = None
+    lint: Lint | None = None
+    epoch: str | None = None
+    adopt_info: str | None = None
+    system_usernames: dict[str, Any] | None = None
+    environment: dict[str, str | None] | None = None
+    build_packages: Grammar[list[str]] | None = None
+    build_snaps: Grammar[list[str]] | None = None
+    ua_services: set[str] | None = None
+    provenance: str | None = None
+    components: dict[ProjectName, Component] | None = None
 
     @override
     @classmethod
@@ -676,7 +652,7 @@ class Project(models.Project):
         except KeyError as err:
             raise CraftValidationError(f"Unknown base {base!r}") from err
 
-    @pydantic.validator("plugs")
+    @pydantic.field_validator("plugs")
     @classmethod
     def _validate_plugs(cls, plugs):
         empty_plugs = []
@@ -711,7 +687,7 @@ class Project(models.Project):
 
         return plugs
 
-    @pydantic.validator("slots")
+    @pydantic.field_validator("slots")
     @classmethod
     def _validate_slots(cls, slots):
         empty_slots = []
@@ -726,43 +702,31 @@ class Project(models.Project):
 
         return slots
 
-    @pydantic.root_validator(pre=True)
-    @classmethod
-    def _validate_adoptable_fields(cls, values):
+    @pydantic.model_validator(mode="after")
+    def _validate_adoptable_fields(self) -> Self:
         for field in MANDATORY_ADOPTABLE_FIELDS:
-            if field not in values and "adopt-info" not in values:
+            if getattr(self, field) is None and self.adopt_info is None:
                 raise ValueError(
                     f"Required field '{field}' is not set and 'adopt-info' not used."
                 )
-        return values
+        return self
 
-    @pydantic.root_validator(pre=True)
-    @classmethod
-    def _validate_mandatory_base(cls, values):
-        snap_type = values.get("type")
-        base = values.get("base")
+    @pydantic.model_validator(mode="after")
+    def _validate_mandatory_base(self):
+        snap_type = self.type
+        base = self.base
         if (base is not None) ^ (snap_type not in ["base", "kernel", "snapd"]):
             raise ValueError(
                 "Snap base must be declared when type is not base, kernel or snapd"
             )
-        return values
+        return self
 
-    @pydantic.validator("name")
+    @pydantic.field_validator("name")
     @classmethod
     def _validate_snap_name(cls, name):
         return _validate_name(name=name, field_name="snap")
 
-    @pydantic.validator("version")
-    @classmethod
-    def _validate_version(cls, version, values):
-        if not version and "adopt_info" not in values:
-            raise ValueError("Version must be declared if not adopting metadata")
-
-        _validate_version_name(version, "Snap")
-
-        return version
-
-    @pydantic.validator("components")
+    @pydantic.field_validator("components")
     @classmethod
     def _validate_components(cls, components):
         """Validate component names."""
@@ -771,18 +735,8 @@ class Project(models.Project):
 
         return components
 
-    @pydantic.validator("grade", "summary", "description")
-    @classmethod
-    def _validate_adoptable_field(cls, field_value, values, field):
-        if not field_value and "adopt_info" not in values:
-            raise ValueError(
-                f"{field.name.capitalize()} must be declared if not adopting metadata"
-            )
-        return field_value
-
-    @pydantic.root_validator(pre=False)
-    @classmethod
-    def _validate_platforms_and_architectures(cls, values):
+    @pydantic.model_validator(mode="after")
+    def _validate_platforms_and_architectures(self) -> Self:
         """Validate usage of platforms and architectures.
 
         core22 base:
@@ -794,51 +748,50 @@ class Project(models.Project):
          - can optionally define platforms
         """
         base = get_effective_base(
-            base=values.get("base"),
-            build_base=values.get("build_base"),
-            project_type=values.get("type"),
-            name=values.get("name"),
+            base=self.base,
+            build_base=self.build_base,
+            project_type=self.type,
+            name=self.name,
         )
         if base == "core22":
-            if values.get("platforms"):
+            if self.platforms:
                 raise ValueError(
                     f"'platforms' keyword is not supported for base {base!r}. "
                     "Use 'architectures' keyword instead."
                 )
             # set default value
-            if not values.get("architectures"):
-                values["architectures"] = [
+            if not self.architectures:
+                self.architectures = [
                     Architecture(
-                        build_on=cast(UniqueStrList, [get_host_architecture()]),
-                        build_for=cast(UniqueStrList, [get_host_architecture()]),
+                        build_on=[get_host_architecture()],
+                        build_for=[get_host_architecture()],
                     )
                 ]
 
-        elif values.get("architectures"):
+        elif self.architectures:
             raise ValueError(
                 f"'architectures' keyword is not supported for base {base!r}. "
                 "Use 'platforms' keyword instead."
             )
 
-        return values
+        return self
 
-    @pydantic.root_validator()
-    @classmethod
-    def _validate_grade_and_build_base(cls, values):
+    @pydantic.model_validator(mode="after")
+    def _validate_grade_and_build_base(self) -> Self:
         """If build_base is devel, then grade must be devel."""
-        if values.get("build_base") == "devel" and values.get("grade") == "stable":
+        if self.build_base == "devel" and self.grade == "stable":
             raise ValueError("grade must be 'devel' when build-base is 'devel'")
-        return values
+        return self
 
-    @pydantic.validator("build_base", always=True)
+    @pydantic.field_validator("build_base")
     @classmethod
-    def _validate_build_base(cls, build_base, values):
+    def _validate_build_base(
+        cls, value: str | None, info: pydantic.ValidationInfo
+    ) -> str | None:
         """Build-base defaults to the base value if not specified."""
-        if not build_base:
-            build_base = values.get("base")
-        return build_base
+        return value or info.data.get("base")
 
-    @pydantic.validator("epoch")
+    @pydantic.field_validator("epoch")
     @classmethod
     def _validate_epoch(cls, epoch):
         """Verify epoch format."""
@@ -849,13 +802,13 @@ class Project(models.Project):
 
         return epoch
 
-    @pydantic.validator("architectures", always=True)
+    @pydantic.field_validator("architectures")
     @classmethod
     def _validate_architecture_data(cls, architectures):
         """Validate architecture data."""
         return validate_architectures(architectures)
 
-    @pydantic.validator("provenance")
+    @pydantic.field_validator("provenance")
     @classmethod
     def _validate_provenance(cls, provenance):
         if provenance and not re.match(r"^[a-zA-Z0-9-]+$", provenance):
@@ -865,39 +818,16 @@ class Project(models.Project):
 
         return provenance
 
-    @pydantic.validator(
-        "contact", "donation", "issues", "source_code", "website", pre=True
+    @pydantic.field_validator(
+        "contact", "donation", "issues", "source_code", "website", mode="before"
     )
     @classmethod
     def _validate_urls(cls, field_value):
         if isinstance(field_value, str):
-            field_value = cast(UniqueStrList, [field_value])
+            field_value = cast(UniqueList[str], [field_value])
         return field_value
 
-    @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "Project":
-        """Create and populate a new ``Project`` object from dictionary data.
-
-        The unmarshal method validates entries in the input dictionary, populating
-        the corresponding fields in the data object.
-
-        :param data: The dictionary data to unmarshal.
-
-        :return: The newly created object.
-
-        :raise TypeError: If data is not a dictionary.
-        """
-        if not isinstance(data, dict):
-            raise TypeError("Project data is not a dictionary")
-
-        try:
-            project = Project(**data)
-        except pydantic.ValidationError as err:
-            raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
-
-        return project
-
-    def _get_content_plugs(self) -> List[ContentPlug]:
+    def _get_content_plugs(self) -> list[ContentPlug]:
         """Get list of content plugs."""
         if self.plugs is not None:
             return [
@@ -905,7 +835,7 @@ class Project(models.Project):
             ]
         return []
 
-    def get_content_snaps(self) -> List[str]:
+    def get_content_snaps(self) -> list[str]:
         """Get list of snaps from ContentPlug `default-provider` fields."""
         return [
             x.default_provider
@@ -913,10 +843,10 @@ class Project(models.Project):
             if x.default_provider is not None
         ]
 
-    def get_extra_build_snaps(self) -> List[str]:
+    def get_extra_build_snaps(self) -> list[str]:
         """Get list of extra snaps required to build."""
         # Build snaps defined by the user with channel stripped
-        build_snaps: List[str] = []
+        build_snaps: list[str] = []
         for part in self.parts.values():
             build_snaps.extend(part.get("build-snaps", []))
         part_build_snaps = {p.split("/")[0] for p in build_snaps}
@@ -954,7 +884,7 @@ class Project(models.Project):
         if (
             self.architectures
             and isinstance(self.architectures[0], Architecture)
-            and isinstance(self.architectures[0].build_on, List)
+            and isinstance(self.architectures[0].build_on, list)
         ):
             return self.architectures[0].build_on[0]
 
@@ -966,14 +896,14 @@ class Project(models.Project):
         if (
             self.architectures
             and isinstance(self.architectures[0], Architecture)
-            and isinstance(self.architectures[0].build_for, List)
+            and isinstance(self.architectures[0].build_for, list)
         ):
             return self.architectures[0].build_for[0]
 
         # will not happen after schema validation
         raise RuntimeError("cannot determine build-for architecture")
 
-    def get_build_for_arch_triplet(self) -> Optional[str]:
+    def get_build_for_arch_triplet(self) -> str | None:
         """Get the architecture triplet for the first build-for architecture for core22.
 
         :returns: The build-for arch triplet. If build-for is "all", then return None.
@@ -985,14 +915,14 @@ class Project(models.Project):
 
         return None
 
-    def get_component_names(self) -> List[str]:
+    def get_component_names(self) -> list[str]:
         """Get a list of component names.
 
         :returns: A list of component names.
         """
         return list(self.components.keys()) if self.components else []
 
-    def get_partitions(self) -> Optional[List[str]]:
+    def get_partitions(self) -> list[str] | None:
         """Get a list of partitions based on the project's components.
 
         :returns: A list of partitions formatted as ['default', 'component/<name>', ...]
@@ -1002,32 +932,31 @@ class Project(models.Project):
 
 
 class _GrammarAwareModel(pydantic.BaseModel):
-    class Config:
-        """Default configuration for grammar-aware models."""
-
-        validate_assignment = True
-        extra = "allow"  # this is required to verify only grammar-aware parts
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
-        allow_population_by_field_name = True
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="allow",
+        alias_generator=lambda s: s.replace("_", "-"),
+        populate_by_name=True,
+    )
 
 
 class _GrammarAwarePart(_GrammarAwareModel):
-    source: Optional[GrammarStr]
-    build_environment: Optional[GrammarSingleEntryDictList]
-    build_packages: Optional[GrammarStrList]
-    stage_packages: Optional[GrammarStrList]
-    build_snaps: Optional[GrammarStrList]
-    stage_snaps: Optional[GrammarStrList]
-    parse_info: Optional[List[str]]
+    source: Grammar[str] | None = None
+    build_environment: Grammar[list[SingleEntryDict[str, str]]] | None = None
+    build_packages: Grammar[list[str]] | None = None
+    stage_packages: Grammar[list[str]] | None = None
+    build_snaps: Grammar[list[str]] | None = None
+    stage_snaps: Grammar[list[str]] | None = None
+    parse_info: list[str] | None = None
 
 
 class GrammarAwareProject(_GrammarAwareModel):
     """Project definition containing grammar-aware components."""
 
-    parts: Dict[str, _GrammarAwarePart]
+    parts: dict[str, _GrammarAwarePart]
 
     @classmethod
-    def validate_grammar(cls, data: Dict[str, Any]) -> None:
+    def validate_grammar(cls, data: dict[str, Any]) -> None:
         """Ensure grammar-enabled entries are syntactically valid."""
         try:
             cls(**data)
@@ -1035,47 +964,27 @@ class GrammarAwareProject(_GrammarAwareModel):
             raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
 
 
-class ArchitectureProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
+class ArchitectureProject(models.CraftBaseModel, extra="ignore"):
     """Project definition containing only architecture data."""
 
-    architectures: List[Union[str, Architecture]] = [get_host_architecture()]
+    architectures: list[str | Architecture] = pydantic.Field(
+        default=[get_host_architecture()],
+        validate_default=True,
+    )
 
-    @pydantic.validator("architectures", always=True)
+    @pydantic.field_validator("architectures")
     @classmethod
     def _validate_architecture_data(cls, architectures):
         """Validate architecture data."""
         return validate_architectures(architectures)
 
-    @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "ArchitectureProject":
-        """Create and populate a new ``ArchitectureProject`` object from dictionary data.
 
-        The unmarshal method validates entries in the input dictionary, populating
-        the corresponding fields in the data object.
-
-        :param data: The dictionary data to unmarshal.
-
-        :return: The newly created object.
-
-        :raise TypeError: If data is not a dictionary.
-        """
-        if not isinstance(data, dict):
-            raise TypeError("Project data is not a dictionary")
-
-        try:
-            architectures = ArchitectureProject(**data)
-        except pydantic.ValidationError as err:
-            raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
-
-        return architectures
-
-
-class ComponentProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
+class ComponentProject(models.CraftBaseModel, extra="ignore"):
     """Project definition containing only component data."""
 
-    components: Optional[Dict[ProjectName, Component]]
+    components: dict[ProjectName, Component] | None = None
 
-    @pydantic.validator("components")
+    @pydantic.field_validator("components")
     @classmethod
     def _validate_components(cls, components):
         """Validate component names."""
@@ -1084,37 +993,14 @@ class ComponentProject(models.CraftBaseModel, extra=pydantic.Extra.ignore):
 
         return components
 
-    @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "ComponentProject":
-        """Create and populate a new ``ComponentProject`` object from dictionary data.
-
-        The unmarshal method validates entries in the input dictionary, populating
-        the corresponding fields in the data object.
-
-        :param data: The dictionary data to unmarshal.
-
-        :return: The newly created object.
-
-        :raise TypeError: If data is not a dictionary.
-        """
-        if not isinstance(data, dict):
-            raise TypeError("Project data is not a dictionary")
-
-        try:
-            components = ComponentProject(**data)
-        except pydantic.ValidationError as err:
-            raise ProjectValidationError(_format_pydantic_errors(err.errors())) from err
-
-        return components
-
-    def get_component_names(self) -> List[str]:
+    def get_component_names(self) -> list[str]:
         """Get a list of component names.
 
         :returns: A list of component names.
         """
         return list(self.components.keys()) if self.components else []
 
-    def get_partitions(self) -> Optional[List[str]]:
+    def get_partitions(self) -> list[str] | None:
         """Get a list of partitions based on the project's components.
 
         :returns: A list of partitions formatted as ['default', 'component/<name>', ...]
@@ -1217,7 +1103,7 @@ def _printable_field_location_split(location: str) -> Tuple[str, str]:
     return field_name, "top-level"
 
 
-def _format_global_keyword_warning(keyword: str, empty_entries: List[str]) -> str:
+def _format_global_keyword_warning(keyword: str, empty_entries: list[str]) -> str:
     """Create a warning message about global assignment in the ``keyword`` field.
 
     :param keyword:
@@ -1242,38 +1128,24 @@ def _format_global_keyword_warning(keyword: str, empty_entries: List[str]) -> st
 class SnapcraftBuildPlanner(models.BuildPlanner):
     """A project model that creates build plans."""
 
-    base: str | None
+    base: str | None = None
     build_base: str | None = None
     name: str
     platforms: dict[str, Platform] | None = None  # type: ignore[assignment]
-    architectures: List[Union[str, Architecture]] | None = None
+    architectures: list[str | Architecture] | None = None
     project_type: str | None = pydantic.Field(default=None, alias="type")
 
-    @pydantic.validator("platforms")
+    @pydantic.field_validator("platforms")
     @classmethod
-    def _validate_all_platforms(cls, platforms: dict[str, Any]) -> dict[str, Any]:
+    def _validate_all_platforms(
+        cls, platforms: dict[str, Platform]
+    ) -> dict[str, Platform]:
         """Validate and convert platform data to a dict of Platforms."""
-        for platform_label in platforms:
-            platform_data: Platform | dict[str, Any] = (
-                platforms[platform_label] if platforms[platform_label] else {}
-            )
+        for platform_label, platform in platforms.items():
             error_prefix = f"Error for platform entry '{platform_label}'"
-
-            # Make sure the provided platform_set is valid
-            if isinstance(platform_data, Platform):
-                platform = platform_data
-            else:
-                try:
-                    platform = Platform(**platform_data)
-                except CraftValidationError as err:
-                    raise ValueError(f"{error_prefix}: {str(err)}") from None
-
             # build_on and build_for are validated
             # let's also validate the platform label
-            if platform.build_on:
-                build_on_one_of: Sequence[SnapArch | str] = platform.build_on
-            else:
-                build_on_one_of = [platform_label]
+            build_on_one_of = platform.build_on or [platform_label]
 
             # If the label maps to a valid architecture and
             # `build-for` is present, then both need to have the same value,
@@ -1311,7 +1183,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
 
         return platforms
 
-    def get_build_plan(self) -> List[BuildInfo]:
+    def get_build_plan(self) -> list[BuildInfo]:
         """Get the build plan for this project."""
         build_infos: list[BuildInfo] = []
         effective_base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
@@ -1332,8 +1204,8 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
         if self.platforms is None:
             self.platforms = {
                 get_host_architecture(): Platform(
-                    build_on=[SnapArch(get_host_architecture())],
-                    build_for=[SnapArch(get_host_architecture())],
+                    build_on=[SnapArch(get_host_architecture()).value],
+                    build_for=[SnapArch(get_host_architecture()).value],
                 )
             }
             # For backwards compatibility with core22, convert the platforms.

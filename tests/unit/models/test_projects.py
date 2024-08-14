@@ -20,7 +20,7 @@ from typing import Any, Dict, cast
 import pydantic
 import pytest
 from craft_application.errors import CraftValidationError
-from craft_application.models import BuildInfo, UniqueStrList
+from craft_application.models import BuildInfo, UniqueStrList, VersionStr
 from craft_providers.bases import BaseName
 
 import snapcraft.models
@@ -158,12 +158,34 @@ class TestProjectDefaults:
 class TestProjectValidation:
     """Validate top-level project items."""
 
+    def test_build_base_validation_reentrant(self, project_yaml_data):
+        """Validators should be reentrant.
+
+        Changing a field causes all validators to re-run, so validators should not
+        fail when validating an existing model.
+
+        This is a regression test for `base: core22` and `build-base: bare`, where
+        the validators receive "build-base" when creating the model and "build_base"
+        when re-validating.
+        """
+        data = project_yaml_data(
+            base="bare",
+            # build-base has to be parsed for the validator to allow 'architectures'
+            build_base="core22",
+            architectures=["amd64"],
+        )
+
+        project = Project.unmarshal(data)
+
+        # changing any value will re-run the validators, which should not raise an error
+        project.version = cast(VersionStr, "1.2.3")
+
     @pytest.mark.parametrize("field", ["name", "confinement", "parts"])
     def test_mandatory_fields(self, field, project_yaml_data):
         data = project_yaml_data()
         data.pop(field)
-        error = f"field {field!r} required in top-level configuration"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = f"{field}\n  Field required"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
     @pytest.mark.parametrize(
@@ -182,7 +204,7 @@ class TestProjectValidation:
 
         if requires_base:
             error = "Snap base must be declared when type is not"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
         else:
             project = Project.unmarshal(data)
@@ -200,7 +222,7 @@ class TestProjectValidation:
         data = project_yaml_data()
         data.pop(field)
         error = f"Required field '{field}' is not set and 'adopt-info' not used."
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
     @pytest.mark.parametrize("field", MANDATORY_ADOPTABLE_FIELDS)
@@ -244,12 +266,12 @@ class TestProjectValidation:
             ("123456", "snap names can only use"),
             (
                 "a2345678901234567890123456789012345678901",
-                "ensure this value has at most 40 characters",
+                "String should have at most 40 characters",
             ),
         ],
     )
     def test_project_name_invalid(self, name, error, project_yaml_data):
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(name=name))
 
     @pytest.mark.parametrize(
@@ -269,17 +291,11 @@ class TestProjectValidation:
         assert project.version == version
 
     def test_project_version_invalid(self, project_yaml_data):
-        # We only test one invalid version as this model is inherited
-        # from Craft Application.
-        with pytest.raises(errors.ProjectValidationError) as raised:
+        """Test one invalid version as this is inherited from Craft Application."""
+        error = "invalid version: Valid versions consist of"
 
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(version="1=1"))
-
-        assert str(raised.value) == (
-            "Bad snapcraft.yaml content:\n- string does not match regex "
-            '"^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$" '
-            "(in field 'version')"
-        )
 
     @pytest.mark.parametrize(
         "snap_type",
@@ -294,8 +310,8 @@ class TestProjectValidation:
             project = Project.unmarshal(data)
             assert project.type == snap_type
         else:
-            error = ".*unexpected value; permitted: 'app', 'base', 'gadget', 'kernel', 'snapd'"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            error = "Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
     @pytest.mark.parametrize(
@@ -308,8 +324,8 @@ class TestProjectValidation:
             project = Project.unmarshal(data)
             assert project.confinement == confinement
         else:
-            error = ".*unexpected value; permitted: 'classic', 'devmode', 'strict'"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            error = "Input should be 'classic', 'devmode' or 'strict'"
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
     @pytest.mark.parametrize("grade", ["devel", "stable", "_invalid"])
@@ -320,8 +336,8 @@ class TestProjectValidation:
             project = Project.unmarshal(data)
             assert project.grade == grade
         else:
-            error = ".*unexpected value; permitted: 'stable', 'devel'"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            error = "Input should be 'stable' or 'devel'"
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
     @pytest.mark.parametrize("grade", ["devel", "stable", "_invalid"])
@@ -332,7 +348,7 @@ class TestProjectValidation:
         if grade != "_invalid":
             project.grade = grade
         else:
-            error = ".*unexpected value; permitted: 'stable', 'devel'"
+            error = "Input should be 'stable' or 'devel'"
             with pytest.raises(pydantic.ValidationError, match=error):
                 project.grade = grade  # type: ignore
 
@@ -343,8 +359,8 @@ class TestProjectValidation:
 
     def test_project_summary_invalid(self, project_yaml_data):
         summary = "x" * 79
-        error = "ensure this value has at most 78 characters"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = "String should have at most 78 characters"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(summary=summary))
 
     @pytest.mark.parametrize(
@@ -375,7 +391,7 @@ class TestProjectValidation:
     )
     def test_project_epoch_invalid(self, epoch, project_yaml_data):
         error = "Epoch is a positive integer followed by an optional asterisk"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(epoch=epoch))
 
     def test_project_package_repository(self, project_yaml_data):
@@ -399,8 +415,8 @@ class TestProjectValidation:
                 "type": "apt",
             },
         ]
-        error = r".*- field 'url' required .*\n- field 'key-id' required"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = r"url\n  Field required.*\n.*\n.*key-id\n  Field required"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(package_repositories=repos))
 
     def test_project_package_repository_extra_fields(self, project_yaml_data):
@@ -410,8 +426,8 @@ class TestProjectValidation:
                 "extra": "something",
             },
         ]
-        error = r".*- extra field 'extra' not permitted"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = "Extra inputs are not permitted"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(package_repositories=repos))
 
     @pytest.mark.parametrize(
@@ -435,8 +451,8 @@ class TestProjectValidation:
         ],
     )
     def test_project_environment_invalid(self, environment, project_yaml_data):
-        error = ".*value is not a valid dict"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = "Input should be a valid dictionary"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(environment=environment))
 
     @pytest.mark.parametrize(
@@ -460,8 +476,8 @@ class TestProjectValidation:
         ],
     )
     def test_project_plugs_invalid(self, plugs, project_yaml_data):
-        error = ".*value is not a valid dict"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = "Input should be a valid dictionary"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(plugs=plugs))
 
     def test_project_content_plugs_valid(self, project_yaml_data):
@@ -489,7 +505,7 @@ class TestProjectValidation:
         }
         error = ".*'content-interface' must have a 'target' parameter"
 
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(plugs=content_plug))
 
     def test_project_get_content_snaps(self, project_yaml_data):
@@ -520,7 +536,7 @@ class TestProjectValidation:
             "test-provider/edge"
         )
 
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(plugs=content_plug_data))
 
     @pytest.mark.parametrize("decl_type", ["symlink", "bind", "bind-file", "type"])
@@ -532,11 +548,8 @@ class TestProjectValidation:
         assert project.layout["foo"][decl_type] == "bar"
 
     def test_project_layout_invalid(self, project_yaml_data):
-        error = (
-            "Bad snapcraft.yaml content:\n"
-            "- unexpected value; permitted: 'symlink', 'bind', 'bind-file', 'type'"
-        )
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = "Input should be 'symlink', 'bind', 'bind-file' or 'type'"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(layout={"foo": {"invalid": "bar"}}))
 
     @pytest.mark.parametrize(
@@ -577,12 +590,9 @@ class TestProjectValidation:
 
     def test_project_build_base_devel_grade_stable_error(self, project_yaml_data):
         """Raise an error if build_base is `devel` and grade is `stable`."""
-        error = (
-            "Bad snapcraft.yaml content:\n"
-            "- grade must be 'devel' when build-base is 'devel'"
-        )
+        error = "grade must be 'devel' when build-base is 'devel'"
 
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(build_base="devel", grade="stable"))
 
     @pytest.mark.parametrize(
@@ -722,7 +732,7 @@ class TestHookValidation:
         hook = {"configure": {"command-chain": ["_invalid!"]}}
         error = "'_invalid!' is not a valid command chain"
 
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(hooks=hook))
 
     @pytest.mark.parametrize(
@@ -736,15 +746,15 @@ class TestHookValidation:
     def test_project_hooks_environment_invalid(self, environment, project_yaml_data):
         hooks = {"configure": {"environment": environment}}
 
-        error = ".*value is not a valid dict"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = "Input should be a valid dictionary"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(hooks=hooks))
 
     def test_project_hooks_plugs_empty(self, project_yaml_data):
         hook = {"configure": {"plugs": []}}
-        error = ".*'plugs' field cannot be empty"
+        error = "'plugs' field cannot be empty"
 
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(hooks=hook))
 
 
@@ -778,19 +788,17 @@ class TestPlatforms:
 
     def test_platform_build_for_requires_build_on(self, project_yaml_data):
         """Raise an error if build-for is provided by build-on is not."""
-        with pytest.raises(CraftValidationError) as raised:
+        error = r"build-on\n  Field required"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Platform(**{"build-for": [const.SnapArch.amd64]})  # type: ignore[reportArgumentType]
 
-        assert "'build_for' expects 'build_on' to also be provided" in str(raised.value)
-
     def test_platforms_not_allowed_core22(self, project_yaml_data):
-        with pytest.raises(errors.ProjectValidationError) as raised:
-            Project.unmarshal(project_yaml_data(platforms={"amd64": None}))
-
-        assert (
+        error = (
             "'platforms' keyword is not supported for base 'core22'. "
-            "Use 'architectures' keyword instead." in str(raised.value)
+            "Use 'architectures' keyword instead."
         )
+        with pytest.raises(pydantic.ValidationError, match=error):
+            Project.unmarshal(project_yaml_data(platforms={"amd64": None}))
 
     @pytest.mark.parametrize(
         ("architectures", "expected"),
@@ -888,8 +896,11 @@ class TestAppValidation:
             assert project.apps is not None
             assert project.apps["app1"].autostart == autostart
         else:
-            error = ".*'_invalid' is not a valid desktop file name"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            error = (
+                "apps.app1.autostart\n  Value error, '_invalid' is not a valid "
+                "desktop file name"
+            )
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
     def test_app_common_id(self, app_yaml_data):
@@ -910,8 +921,10 @@ class TestAppValidation:
             assert project.apps is not None
             assert project.apps["app1"].bus_name == bus_name
         else:
-            error = ".*'_invalid!' is not a valid bus name"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            error = (
+                "apps.app1.bus_name\n  Value error, '_invalid!' is not a valid bus name"
+            )
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
     def test_app_completer(self, app_yaml_data):
@@ -948,8 +961,8 @@ class TestAppValidation:
     def test_app_start_timeout_invalid(self, start_timeout, app_yaml_data):
         data = app_yaml_data(start_timeout=start_timeout)
 
-        error = f".*'{start_timeout}' is not a valid time value"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = f"'{start_timeout}' is not a valid time value"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
     @pytest.mark.parametrize(
@@ -968,8 +981,8 @@ class TestAppValidation:
     def test_app_stop_timeout_invalid(self, stop_timeout, app_yaml_data):
         data = app_yaml_data(stop_timeout=stop_timeout)
 
-        error = f".*'{stop_timeout}' is not a valid time value"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = f"'{stop_timeout}' is not a valid time value"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
     @pytest.mark.parametrize(
@@ -988,8 +1001,8 @@ class TestAppValidation:
     def test_app_watchdog_timeout_invalid(self, watchdog_timeout, app_yaml_data):
         data = app_yaml_data(watchdog_timeout=watchdog_timeout)
 
-        error = f".*'{watchdog_timeout}' is not a valid time value"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = f"'{watchdog_timeout}' is not a valid time value"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
     def test_app_reload_command(self, app_yaml_data):
@@ -1014,8 +1027,11 @@ class TestAppValidation:
     def test_app_restart_delay_invalid(self, restart_delay, app_yaml_data):
         data = app_yaml_data(restart_delay=restart_delay)
 
-        error = f".*'{restart_delay}' is not a valid time value"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = (
+            f"apps.app1.restart_delay\n  Value error, '{restart_delay}' is not a "
+            "valid time value"
+        )
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
     def test_app_timer(self, app_yaml_data):
@@ -1036,8 +1052,8 @@ class TestAppValidation:
             assert project.apps is not None
             assert project.apps["app1"].daemon == daemon
         else:
-            error = ".*unexpected value; permitted: 'simple', 'forking', 'oneshot'"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            error = "apps.app1.daemon\n  Input should be 'simple', 'forking', 'oneshot', 'notify' or 'dbus'"
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
     @pytest.mark.parametrize(
@@ -1051,8 +1067,8 @@ class TestAppValidation:
         data = app_yaml_data(after=after)
 
         if after == "i am a string":
-            error = ".*value is not a valid list"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            error = "apps.app1.after\n  Input should be a valid list"
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
         else:
             project = Project.unmarshal(data)
@@ -1062,8 +1078,8 @@ class TestAppValidation:
     def test_app_duplicate_after(self, app_yaml_data):
         data = app_yaml_data(after=["duplicate", "duplicate"])
 
-        error = ".*duplicate entries in 'after' not permitted"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = "apps.app1.after\n  Value error, duplicate values in list"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
     @pytest.mark.parametrize(
@@ -1077,8 +1093,8 @@ class TestAppValidation:
         data = app_yaml_data(before=before)
 
         if before == "i am a string":
-            error = ".*value is not a valid list"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            error = "apps.app1.before\n  Input should be a valid list"
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
         else:
             project = Project.unmarshal(data)
@@ -1088,8 +1104,8 @@ class TestAppValidation:
     def test_app_duplicate_before(self, app_yaml_data):
         data = app_yaml_data(before=["duplicate", "duplicate"])
 
-        error = ".*duplicate entries in 'before' not permitted"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = "apps.app1.before\n  Value error, duplicate values in list"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
     @pytest.mark.parametrize(
@@ -1103,8 +1119,11 @@ class TestAppValidation:
             assert project.apps is not None
             assert project.apps["app1"].refresh_mode == refresh_mode
         else:
-            error = ".*unexpected value; permitted: 'endure', 'restart'"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            error = (
+                "apps.app1.refresh_mode\n  Input should be 'endure', 'restart' "
+                "or 'ignore-running'"
+            )
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
     @pytest.mark.parametrize(
@@ -1131,8 +1150,12 @@ class TestAppValidation:
             assert project.apps is not None
             assert project.apps["app1"].stop_mode == stop_mode
         else:
-            error = ".*unexpected value; permitted: 'sigterm', 'sigterm-all', 'sighup'"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            error = (
+                "apps.app1.stop_mode\n  Input should be 'sigterm', 'sigterm-all', "
+                "'sighup', 'sighup-all', 'sigusr1', 'sigusr1-all', "
+                "'sigusr2', 'sigusr2-all', 'sigint' or 'sigint-all'"
+            )
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
     @pytest.mark.parametrize(
@@ -1156,8 +1179,12 @@ class TestAppValidation:
             assert project.apps is not None
             assert project.apps["app1"].restart_condition == restart_condition
         else:
-            error = ".*unexpected value; permitted: 'on-success', 'on-failure', 'on-abnormal'"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            error = (
+                "apps.app1.restart_condition\n  Input should be 'on-success', "
+                "'on-failure', 'on-abnormal', 'on-abort', 'on-watchdog', "
+                "'always' or 'never'"
+            )
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
     @pytest.mark.parametrize("install_mode", ["enable", "disable", "_invalid"])
@@ -1169,8 +1196,8 @@ class TestAppValidation:
             assert project.apps is not None
             assert project.apps["app1"].install_mode == install_mode
         else:
-            error = ".*unexpected value; permitted: 'enable', 'disable'"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            error = "apps.app1.install_mode\n  Input should be 'enable' or 'disable'"
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
     def test_app_valid_aliases(self, app_yaml_data):
@@ -1191,19 +1218,21 @@ class TestAppValidation:
         data = app_yaml_data(aliases=aliases)
 
         if isinstance(aliases, list):
-            error = f".*'{aliases[0]}' is not a valid alias"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            error = (
+                f"apps.app1.aliases\n  Value error, '{aliases[0]}' is not a valid alias"
+            )
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
         else:
-            error = ".*value is not a valid list"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            error = "apps.app1.aliases\n  Input should be a valid list"
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
     def test_app_duplicate_aliases(self, app_yaml_data):
         data = app_yaml_data(aliases=["duplicate", "duplicate"])
 
-        error = ".*duplicate entries in 'aliases' not permitted"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = "apps.app1.aliases\n  Value error, duplicate values in list"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
     @pytest.mark.parametrize(
@@ -1231,8 +1260,8 @@ class TestAppValidation:
     def test_app_environment_invalid(self, environment, app_yaml_data):
         data = app_yaml_data(environment=environment)
 
-        error = ".*value is not a valid dict"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = "apps.app1.environment\n  Input should be a valid dictionary"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
     @pytest.mark.parametrize(
@@ -1248,12 +1277,15 @@ class TestAppValidation:
         data = app_yaml_data(command_chain=command_chain)
 
         if command_chain == "i am a string":
-            error = ".*value is not a valid list"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            error = "apps.app1.command_chain\n  Input should be a valid list"
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
         elif command_chain == ["_invalid!"]:
-            error = f".*'{command_chain[0]}' is not a valid command chain"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            error = (
+                f"apps.app1.command_chain\n  Value error, '{command_chain[0]}' is not a "
+                "valid command chain"
+            )
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
         else:
             project = Project.unmarshal(data)
@@ -1277,8 +1309,11 @@ class TestAppValidation:
     ):
         data = socket_yaml_data(listen_stream=listen_stream)
 
-        error = f".*{listen_stream} is not an integer between 1 and 65535"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = (
+            f"apps.app1.sockets.socket1.listen_stream\n  Value error, {listen_stream} is not an "
+            "integer between 1 and 65535"
+        )
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
     @pytest.mark.parametrize("listen_stream", ["@foo"])
@@ -1287,15 +1322,18 @@ class TestAppValidation:
     ):
         data = socket_yaml_data(listen_stream=listen_stream)
 
-        error = f".*{listen_stream!r} is not a valid socket path.*"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = (
+            f"apps.app1.sockets.socket1.listen_stream\n  Value error, {listen_stream!r} is not a "
+            "valid socket path"
+        )
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
     def test_app_sockets_missing_listen_stream(self, socket_yaml_data):
         data = socket_yaml_data()
 
-        error = ".*field 'listen-stream' required"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = "apps.app1.sockets.socket1.listen-stream\n  Field required"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
     @pytest.mark.parametrize("socket_mode", [1, "_invalid"])
@@ -1308,8 +1346,8 @@ class TestAppValidation:
             assert project.apps["app1"].sockets is not None
             assert project.apps["app1"].sockets["socket1"].socket_mode == socket_mode
         else:
-            error = ".*value is not a valid integer"
-            with pytest.raises(errors.ProjectValidationError, match=error):
+            error = "apps.app1.sockets.socket1.socket_mode\n  Input should be a valid integer"
+            with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
     @pytest.mark.parametrize(
@@ -1337,8 +1375,8 @@ class TestAppValidation:
         ],
     )
     def test_project_system_usernames_invalid(self, system_username, project_yaml_data):
-        error = "- value is not a valid dict"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = "Input should be a valid dictionary"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(system_usernames=system_username))
 
     def test_project_provenance(self, project_yaml_data):
@@ -1350,7 +1388,7 @@ class TestAppValidation:
     def test_project_provenance_invalid(self, provenance, project_yaml_data):
         """Verify invalid provenance values raises an error."""
         error = "provenance must consist of alphanumeric characters and/or hyphens."
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(provenance=provenance))
 
 
@@ -1462,7 +1500,7 @@ class TestGrammarValidation:
             }
         )
 
-        error = r".*- 'try' was removed from grammar, use 'on <arch>' instead"
+        error = "'try' was removed from grammar, use 'on <arch>' instead"
         with pytest.raises(errors.ProjectValidationError, match=error):
             GrammarAwareProject.validate_grammar(data)
 
@@ -1478,7 +1516,7 @@ class TestGrammarValidation:
             }
         )
 
-        error = r".*- value must be a string: \[25\]"
+        error = r"value must be a str: \[25\]"
         with pytest.raises(errors.ProjectValidationError, match=error):
             GrammarAwareProject.validate_grammar(data)
 
@@ -1494,7 +1532,7 @@ class TestGrammarValidation:
             }
         )
 
-        error = r".*- syntax error in 'on' selector"
+        error = "syntax error in 'on' selector"
         with pytest.raises(errors.ProjectValidationError, match=error):
             GrammarAwareProject.validate_grammar(data)
 
@@ -1634,10 +1672,9 @@ class TestArchitecture:
         """A single string is not valid."""
         data = project_yaml_data(architectures="amd64")
 
-        with pytest.raises(errors.ProjectValidationError) as error:
+        error = "Input should be a valid list"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
-
-        assert "value is not a valid list" in str(error.value)
 
     def test_architecture_multiple_build_on(self, project_yaml_data):
         """Multiple architectures can be defined in a single `build-on`."""
@@ -1679,19 +1716,17 @@ class TestArchitecture:
             ]
         )
 
-        with pytest.raises(errors.ProjectValidationError) as error:
+        error = r"bad-property\n  Extra inputs are not permitted"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
-
-        assert "extra field 'bad-property' not permitted" in str(error.value)
 
     def test_architecture_missing_build_on(self, project_yaml_data):
         """`build-on` is a required field."""
         data = project_yaml_data(architectures=[{"build-for": ["amd64"]}])
 
-        with pytest.raises(errors.ProjectValidationError) as error:
+        error = r"build-on\n  Field required"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
-
-        assert "field 'build-on' required" in str(error.value)
 
     def test_architecture_build_on_all_and_others(self, project_yaml_data):
         """
@@ -1702,10 +1737,9 @@ class TestArchitecture:
             architectures=[{"build-on": ["all", "amd64"], "build-for": ["amd64"]}]
         )
 
-        with pytest.raises(errors.ProjectValidationError) as error:
+        error = "'all' cannot be used for 'build-on'"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
-
-        assert "'all' cannot be used for 'build-on'" in str(error.value)
 
     def test_architecture_invalid_multiple_build_for(self, project_yaml_data):
         """Only a single item can be defined for `build-for`."""
@@ -1713,23 +1747,20 @@ class TestArchitecture:
             architectures=[{"build-on": ["amd64"], "build-for": ["all", "amd64"]}]
         )
 
-        with pytest.raises(errors.ProjectValidationError) as error:
+        error = "only one architecture can be defined for 'build-for'"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
-
-        assert "only one architecture can be defined for 'build-for'" in str(
-            error.value
-        )
 
     def test_architecture_invalid_multiple_implicit_build_for(self, project_yaml_data):
-        """Only a single item can be defined for `build-for`."""
+        """Only a single item can be defined for `build-for`.
+
+        This is true even when 'build-for' is implicitly inferred from 'build-on'.
+        """
         data = project_yaml_data(architectures=[{"build-on": ["amd64", "armhf"]}])
 
-        with pytest.raises(errors.ProjectValidationError) as error:
+        error = "only one architecture can be defined for 'build-for'"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
-
-        assert "only one architecture can be defined for 'build-for'" in str(
-            error.value
-        )
 
     def test_architecture_invalid_build_on_all_build_for_all(self, project_yaml_data):
         """`build-on: all` and `build-for: all` is invalid."""
@@ -1739,10 +1770,9 @@ class TestArchitecture:
             ]
         )
 
-        with pytest.raises(errors.ProjectValidationError) as error:
+        error = "'all' cannot be used for 'build-on'"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
-
-        assert "'all' cannot be used for 'build-on'" in str(error.value)
 
     def test_architecture_invalid_build_on_all_implicit(self, project_yaml_data):
         """`build-on: all` is invalid, even when build-for is missing."""
@@ -1752,10 +1782,9 @@ class TestArchitecture:
             ]
         )
 
-        with pytest.raises(errors.ProjectValidationError) as error:
+        error = "'all' cannot be used for 'build-on'"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
-
-        assert "'all' cannot be used for 'build-on'" in str(error.value)
 
     def test_architecture_invalid_build_on_all_build_for_architecture(
         self, project_yaml_data
@@ -1767,10 +1796,9 @@ class TestArchitecture:
             ]
         )
 
-        with pytest.raises(errors.ProjectValidationError) as error:
+        error = "'all' cannot be used for 'build-on'"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
-
-        assert "'all' cannot be used for 'build-on'" in str(error.value)
 
     def test_architecture_build_on_architecture_build_for_all(self, project_yaml_data):
         """`build-on: arch` and `build-for: all` is valid."""
@@ -1795,10 +1823,9 @@ class TestArchitecture:
             ]
         )
 
-        with pytest.raises(errors.ProjectValidationError) as error:
+        error = "'all' cannot be used for 'build-on'"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
-
-        assert "'all' cannot be used for 'build-on'" in str(error.value)
 
     def test_architecture_build_for_all_and_other_architectures(
         self, project_yaml_data
@@ -1811,14 +1838,13 @@ class TestArchitecture:
             ]
         )
 
-        with pytest.raises(errors.ProjectValidationError) as error:
-            Project.unmarshal(data)
-
-        assert (
+        error = (
             "one of the items has 'all' in 'build-for', but there are"
             " 2 items: upon release they will conflict."
-            "'all' should only be used if there is a single item" in str(error.value)
+            "'all' should only be used if there is a single item"
         )
+        with pytest.raises(pydantic.ValidationError, match=error):
+            Project.unmarshal(data)
 
     def test_architecture_multiple_build_on_all(self, project_yaml_data):
         """`all` cannot be used for multiple `build-on` fields."""
@@ -1829,10 +1855,9 @@ class TestArchitecture:
             ]
         )
 
-        with pytest.raises(errors.ProjectValidationError) as error:
+        error = "'all' cannot be used for 'build-on'"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
-
-        assert "'all' cannot be used for 'build-on'" in str(error.value)
 
     def test_architecture_multiple_build_for_all(self, project_yaml_data):
         """`all` cannot be used for multiple `build-for` fields."""
@@ -1843,14 +1868,13 @@ class TestArchitecture:
             ]
         )
 
-        with pytest.raises(errors.ProjectValidationError) as error:
-            Project.unmarshal(data)
-
-        assert (
+        error = (
             "one of the items has 'all' in 'build-for', but there are"
             " 2 items: upon release they will conflict."
-            "'all' should only be used if there is a single item" in str(error.value)
+            "'all' should only be used if there is a single item"
         )
+        with pytest.raises(pydantic.ValidationError, match=error):
+            Project.unmarshal(data)
 
     def test_architecture_multiple_build_on_same_architecture(self, project_yaml_data):
         """The same architecture can be defined in multiple `build-on` fields."""
@@ -1880,12 +1904,9 @@ class TestArchitecture:
             ]
         )
 
-        with pytest.raises(errors.ProjectValidationError) as error:
+        error = "multiple items will build snaps that claim to run on amd64"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
-
-        assert "multiple items will build snaps that claim to run on amd64" in str(
-            error.value
-        )
 
     def test_architecture_multiple_build_for_same_architecture_implicit(
         self, project_yaml_data
@@ -1901,12 +1922,9 @@ class TestArchitecture:
             ]
         )
 
-        with pytest.raises(errors.ProjectValidationError) as error:
+        error = "multiple items will build snaps that claim to run on amd64"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
-
-        assert "multiple items will build snaps that claim to run on amd64" in str(
-            error.value
-        )
 
     @pytest.mark.parametrize(
         "architectures",
@@ -1921,10 +1939,9 @@ class TestArchitecture:
         """Raise an error for unsupported architectures."""
         data = project_yaml_data(architectures=[architectures])
 
-        with pytest.raises(errors.ProjectValidationError) as error:
+        error = "Architecture 'unknown' is not supported"
+        with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
-
-        assert "Architecture 'unknown' is not supported." in str(error.value)
 
     def test_project_get_build_on(self, project_yaml_data):
         """Test `get_build_on()` returns the build-on string."""
@@ -1974,13 +1991,13 @@ class TestArchitecture:
 
     def test_architectures_not_allowed(self, project_yaml_data):
         """'architectures' keyword is not allowed if base is not core22."""
-        with pytest.raises(errors.ProjectValidationError) as raised:
-            Project.unmarshal(project_yaml_data(**CORE24_DATA, architectures=["amd64"]))
-
-        assert (
+        error = (
             "'architectures' keyword is not supported for base 'core24'. "
             "Use 'platforms' keyword instead."
-        ) in str(raised.value)
+        )
+
+        with pytest.raises(pydantic.ValidationError, match=error):
+            Project.unmarshal(project_yaml_data(**CORE24_DATA, architectures=["amd64"]))
 
 
 class TestApplyRootPackages:
@@ -2094,7 +2111,7 @@ class TestApplyRootPackages:
 )
 def test_build_planner_get_build_plan(platforms, expected_build_infos):
     """Test `get_build_plan()` function with different platforms."""
-    planner = snapcraft.models.project.SnapcraftBuildPlanner.parse_obj(
+    planner = snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
         {"name": "test-snap", "base": "core24", "platforms": platforms}
     )
 
@@ -2225,7 +2242,7 @@ def test_build_planner_get_build_plan(platforms, expected_build_infos):
 )
 def test_build_planner_get_build_plan_core22(architectures, expected_build_infos):
     """Test `get_build_plan()` function with different platforms."""
-    planner = snapcraft.models.project.SnapcraftBuildPlanner.parse_obj(
+    planner = snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
         {"name": "test-snap", "base": "core22", "architectures": architectures}
     )
 
@@ -2243,10 +2260,10 @@ def test_build_planner_get_build_plan_core22(architectures, expected_build_infos
             "platform entry label must correspond to a valid architecture if 'build-for' is not provided",
             id="no-build-for",
         ),
-        # this will always be invalid
+        # this is invalid because the platform 'all' will be used for 'build-on'
         pytest.param(
             {"all": None},
-            "value is not a valid enumeration member",
+            "'all' cannot be used for 'build-on'",
             id="no-build-for-no-build-on",
         ),
     ],
@@ -2258,10 +2275,8 @@ def test_build_planner_all_as_platform_invalid(platforms, message):
         "base": "core24",
         "platforms": platforms,
     }
-    with pytest.raises(pydantic.ValidationError) as raised:
+    with pytest.raises(pydantic.ValidationError, match=message):
         snapcraft.models.project.SnapcraftBuildPlanner(**build_plan_data)
-
-    assert message in str(raised.value)
 
 
 def test_build_planner_all_with_other_builds():
@@ -2319,7 +2334,7 @@ def test_build_planner_all_with_other_builds_core22():
 
 def test_get_build_plan_devel():
     """Test that "devel" build-bases are correctly reflected on the build plan"""
-    planner = snapcraft.models.project.SnapcraftBuildPlanner.parse_obj(
+    planner = snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
         {
             "name": "test-snap",
             "base": "core24",
@@ -2341,7 +2356,7 @@ def test_get_build_plan_devel():
 
 def test_platform_default():
     """Default value for platforms is the host architecture."""
-    planner = snapcraft.models.project.SnapcraftBuildPlanner.parse_obj(
+    planner = snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
         {"name": "test-snap", "base": "core24"}
     )
 
@@ -2362,7 +2377,7 @@ def test_build_planner_get_build_plan_base(mocker):
     mock_get_effective_base = mocker.patch(
         "snapcraft.models.project.get_effective_base", return_value="core24"
     )
-    planner = snapcraft.models.project.SnapcraftBuildPlanner.parse_obj(
+    planner = snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
         {
             "name": "test-snap",
             "base": "test-base",
@@ -2393,8 +2408,9 @@ def test_build_planner_get_build_plan_base(mocker):
 
 def test_project_platform_error_has_context():
     """Platform validation errors include which platform entry is invalid."""
-    with pytest.raises(CraftValidationError) as raised:
-        snapcraft.models.project.SnapcraftBuildPlanner.parse_obj(
+    error = r"build-on\n  Field required"
+    with pytest.raises(pydantic.ValidationError, match=error):
+        snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
             {
                 "name": "test-snap",
                 "base": "test-base",
@@ -2404,13 +2420,11 @@ def test_project_platform_error_has_context():
             }
         )
 
-    assert "'build_for' expects 'build_on' to also be provided." in str(raised.value)
-
 
 def test_project_platform_mismatch():
     """Raise an error if platform name and build-for are valid but different archs."""
     with pytest.raises(pydantic.ValidationError) as raised:
-        snapcraft.models.project.SnapcraftBuildPlanner.parse_obj(
+        snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
             {
                 "name": "test-snap",
                 "base": "test-base",
@@ -2430,7 +2444,7 @@ def test_project_platform_mismatch():
 def test_project_platform_unknown_name():
     """Raise an error if an empty platform is not a valid architecture."""
     with pytest.raises(CraftValidationError) as raised:
-        snapcraft.models.project.SnapcraftBuildPlanner.parse_obj(
+        snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
             {
                 "name": "test-snap",
                 "base": "test-base",
@@ -2452,7 +2466,7 @@ class TestComponents:
 
     @pytest.fixture
     def stub_component_data(self):
-        data: dict[str, Any] = {
+        data = {
             "type": "test",
             "summary": "test summary",
             "description": "test description",
@@ -2462,9 +2476,13 @@ class TestComponents:
         return data
 
     def test_components_valid(self, project, project_yaml_data, stub_component_data):
-        components = {"foo": stub_component_data, "bar": stub_component_data}
+        component_data = {"foo": stub_component_data, "bar": stub_component_data}
+        components = {
+            "foo": snapcraft.models.Component.unmarshal(stub_component_data),
+            "bar": snapcraft.models.Component.unmarshal(stub_component_data),
+        }
 
-        test_project = project.unmarshal(project_yaml_data(components=components))
+        test_project = project.unmarshal(project_yaml_data(components=component_data))
 
         assert test_project.components == components
 
@@ -2484,9 +2502,9 @@ class TestComponents:
     ):
         component = {"foo": stub_component_data}
         component["foo"]["type"] = "invalid"
-        error = ".*unexpected value; permitted: 'test'"
 
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = "Input should be 'test'"
+        with pytest.raises(pydantic.ValidationError, match=error):
             project.unmarshal(project_yaml_data(components=component))
 
     @pytest.mark.parametrize(
@@ -2529,7 +2547,7 @@ class TestComponents:
                 "name-has--two-hyphens",
                 "component names cannot have two hyphens in a row",
             ),
-            ("x" * 41, "ensure this value has at most 40 characters"),
+            ("x" * 41, "String should have at most 40 characters"),
         ],
     )
     def test_component_name_invalid(
@@ -2537,7 +2555,7 @@ class TestComponents:
     ):
         component = {name: stub_component_data}
 
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        with pytest.raises(pydantic.ValidationError, match=error):
             project.unmarshal(project_yaml_data(components=component))
 
     def test_component_summary_valid(
@@ -2558,8 +2576,8 @@ class TestComponents:
         component = {"foo": stub_component_data}
         component["foo"]["summary"] = "x" * 79
 
-        error = "ensure this value has at most 78 characters"
-        with pytest.raises(errors.ProjectValidationError, match=error):
+        error = "String should have at most 78 characters"
+        with pytest.raises(pydantic.ValidationError, match=error):
             project.unmarshal(project_yaml_data(components=component))
 
     @pytest.mark.parametrize(
@@ -2590,62 +2608,63 @@ class TestComponents:
         [
             pytest.param(
                 "1_0",
-                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
+                "invalid version: Valid versions consist of upper- and lower-case",
                 id="'_' in version",
             ),
             pytest.param(
                 "1=1",
-                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
+                "invalid version: Valid versions consist of upper- and lower-case",
                 id="'=' in version",
             ),
             pytest.param(
                 ".1",
-                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
+                "invalid version: Valid versions consist of upper- and lower-case",
                 id="cannot start with '.'",
             ),
             pytest.param(
                 ":1",
-                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
+                "invalid version: Valid versions consist of upper- and lower-case",
                 id="cannot start with ':'",
             ),
             pytest.param(
                 "+1",
-                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
+                "invalid version: Valid versions consist of upper- and lower-case",
                 id="cannot start with '+'",
             ),
             pytest.param(
                 "~1",
-                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
+                "invalid version: Valid versions consist of upper- and lower-case",
                 id="cannot start with '~'",
             ),
             pytest.param(
                 "-1",
-                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
+                "invalid version: Valid versions consist of upper- and lower-case",
                 id="cannot start with '-'",
             ),
             pytest.param(
                 "1.",
-                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
+                "invalid version: Valid versions consist of upper- and lower-case",
                 id="cannot end with '.'",
             ),
             pytest.param(
                 "1:",
-                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
+                "invalid version: Valid versions consist of upper- and lower-case",
                 id="cannot end with ':'",
             ),
             pytest.param(
                 "1-",
-                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
+                "invalid version: Valid versions consist of upper- and lower-case",
                 id="cannot end with '-'",
             ),
             pytest.param(
                 "x" * 33,
-                "ensure this value has at most 32 characters",
+                # TODO: can we fix this wording for strings?
+                "Value should have at most 32 items after validation, not 33",
                 id="too large",
             ),
             pytest.param(
                 "",
-                'string does not match regex "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"',
+                "invalid version: Valid versions consist of upper- and lower-case",
                 id="empty string",
             ),
         ],
@@ -2656,11 +2675,8 @@ class TestComponents:
         component = {"foo": stub_component_data}
         component["foo"]["version"] = version
 
-        with pytest.raises(errors.ProjectValidationError) as raised:
+        with pytest.raises(pydantic.ValidationError, match=error):
             project.unmarshal(project_yaml_data(components=component))
-
-        assert error in str(raised.value)
-        assert str(raised.value).endswith("(in field 'components.foo.version')")
 
     def test_get_component_names(self, project, project_yaml_data, stub_component_data):
         components = {"foo": stub_component_data, "bar-baz": stub_component_data}

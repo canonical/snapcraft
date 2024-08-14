@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2022 Canonical Ltd.
+# Copyright 2021-2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -73,7 +73,7 @@ def _attach(ua_token: str) -> None:
         raise UATokenAttachError from error
 
 
-def _enable_services(services: List[str]) -> None:
+def _enable_services(services: set[str]) -> None:
     """Enable the specified UA services.
 
     If a service is already enabled, it will not be re-enabled because UA will raise
@@ -81,16 +81,16 @@ def _enable_services(services: List[str]) -> None:
     """
     with emit.open_stream("Enable UA services") as stream:
         service_data = _status().get("services")
-        enabled_services = []
-        disabled_services = []
+        enabled_services = set()
+        disabled_services = set()
 
         if service_data:
             # sort services into enabled and disabled
             for service in services:
                 if _is_service_enabled(service, service_data):
-                    enabled_services.append(service)
+                    enabled_services.add(service)
                 else:
-                    disabled_services.append(service)
+                    disabled_services.add(service)
         else:
             # assume all services are disabled if they are not in the status data
             disabled_services = services
@@ -105,7 +105,13 @@ def _enable_services(services: List[str]) -> None:
             emit.debug(f"Enabling services {disabled_services}.")
             try:
                 subprocess.check_call(
-                    ["ua", "enable", *disabled_services, "--beta", "--assume-yes"],
+                    [
+                        "ua",
+                        "enable",
+                        *sorted(disabled_services),
+                        "--beta",
+                        "--assume-yes",
+                    ],
                     stdout=stream,
                     stderr=stream,
                 )
@@ -153,7 +159,7 @@ def _status() -> Dict[str, Any]:
 
 @contextlib.contextmanager
 def ua_manager(
-    ua_token: Optional[str], *, services: Optional[List[str]]
+    ua_token: Optional[str], *, services: Optional[set[str]]
 ) -> Iterator[None]:
     """Attach and detach UA token as required.
 

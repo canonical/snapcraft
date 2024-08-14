@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,10 +20,12 @@ import abc
 import enum
 import fnmatch
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal
 
 import pydantic
+from craft_application.models import base
 from craft_cli import emit
+from pydantic import ConfigDict
 
 from snapcraft import elf, models
 
@@ -52,10 +54,10 @@ class LinterIssue(pydantic.BaseModel):
     type: Literal["lint"]
     name: str
     result: LinterResult
-    filename: Optional[str]
+    filename: str | None = None
     text: str
-    url: Optional[str]
-    suggested_changes: Optional[str]  # XXX: pending definition
+    url: str | None = None
+    suggested_changes: str | None = None  # XXX: pending definition
 
     def __init__(self, **kwargs):
         super().__init__(type="lint", **kwargs)
@@ -72,12 +74,11 @@ class LinterIssue(pydantic.BaseModel):
 
         return msg
 
-    class Config:
-        """Pydantic model configuration."""
-
-        validate_assignment = True
-        extra = "forbid"
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="forbid",
+        alias_generator=base.alias_generator,
+    )
 
 
 class Linter(abc.ABC):
@@ -90,21 +91,21 @@ class Linter(abc.ABC):
         self,
         name: str,
         snap_metadata: "SnapMetadata",
-        lint: Optional[models.Lint],
+        lint: models.Lint | None,
     ):
         self._name = name
         self._snap_metadata = snap_metadata
         self._lint = lint or models.Lint(ignore=[])
 
     @abc.abstractmethod
-    def run(self) -> List[LinterIssue]:
+    def run(self) -> list[LinterIssue]:
         """Execute linting.
 
         :return: A list of linter issues flagged by this linter.
         """
 
     def _is_file_ignored(
-        self, filepath: Union[elf.ElfFile, Path], category: str = ""
+        self, filepath: elf.ElfFile | Path, category: str = ""
     ) -> bool:
         """Check if the file name matches an ignored file pattern.
 
@@ -136,7 +137,7 @@ class Linter(abc.ABC):
         return False
 
     @staticmethod
-    def get_categories() -> List[str]:
+    def get_categories() -> list[str]:
         """Get a list of specific subcategories that can be filtered against.
 
         For Linter subclasses that perform multiple "kinds" of linting, this
