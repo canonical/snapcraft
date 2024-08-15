@@ -133,4 +133,4 @@ zipp==3.20.0
 zope.deprecation==5.0
 zope.interface==7.0.1
 python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz; sys.platform == "linux"
-pyinstaller==5.13.1; sys.platform == "win32"
+pyinstaller==5.13.2; sys.platform == "win32"
