@@ -80,7 +80,10 @@ class TestPluginKernel:
             "kpartx",
             "libelf-dev",
             "libssl-dev",
+            "lz4",
             "systemd",
+            "xz-utils",
+            "zstd",
         }
 
     def test_get_base_build_packages_zfs(self, setup_method_fixture, new_dir):
@@ -104,7 +107,10 @@ class TestPluginKernel:
             "kpartx",
             "libelf-dev",
             "libssl-dev",
+            "lz4",
             "systemd",
+            "xz-utils",
+            "zstd",
             "autoconf",
             "automake",
             "libblkid-dev",
@@ -134,7 +140,10 @@ class TestPluginKernel:
             "kpartx",
             "libelf-dev",
             "libssl-dev",
+            "lz4",
             "systemd",
+            "xz-utils",
+            "zstd",
             "autoconf",
             "automake",
             "libblkid-dev",
@@ -260,7 +269,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _prepare_config_flavour_generic_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_cmd)
         assert _is_sub_array(build_commands, _prepare_kernel_versions)
-        assert _check_config in build_commands
+        assert _is_sub_array(build_commands, _check_config)
         if platform.machine() == "x86_64":
             assert _is_sub_array(build_commands, _build_kernel_abi_version_x86_cmd)
             assert _is_sub_array(build_commands, _install_kernel_x86_cmd)
@@ -268,10 +277,11 @@ class TestPluginKernel:
             assert _is_sub_array(build_commands, _build_kernel_abi_version_cmd)
             assert _is_sub_array(build_commands, _install_kernel_dtbs_cmd)
 
-        assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
-        assert _is_sub_array(build_commands, _install_config_cmd)
+        assert _is_sub_array(build_commands, _post_install_steps_cmd)
         assert not _is_sub_array(build_commands, _build_zfs_cmd)
         assert not _is_sub_array(build_commands, _build_perf_cmd)
+        assert _is_sub_array(build_commands, _build_no_zfs_cmd)
+        assert _is_sub_array(build_commands, _build_no_perf_cmd)
         assert _is_sub_array(build_commands, _finalize_install_cmd)
 
     def test_check_get_build_command_kdeconfig(self, setup_method_fixture, new_dir):
@@ -290,20 +300,19 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _clean_old_build_cmd)
         assert _is_sub_array(build_commands, _prepare_snappy_config_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_cmd)
-        assert _check_config in build_commands
+        assert _is_sub_array(build_commands, _check_config)
         if platform.machine() == "x86_64":
             assert _is_sub_array(build_commands, _build_kernel_x86_cmd)
             assert _is_sub_array(build_commands, _install_kernel_x86_cmd)
         else:
-            print(f"build_commands:{build_commands}")
-            print(f"_build_kernel_cmd:{_build_kernel_cmd}")
             assert _is_sub_array(build_commands, _build_kernel_cmd)
             assert _is_sub_array(build_commands, _install_kernel_cmd)
 
-        assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
-        assert _is_sub_array(build_commands, _install_config_cmd)
+        assert _is_sub_array(build_commands, _post_install_steps_cmd)
         assert not _is_sub_array(build_commands, _build_zfs_cmd)
         assert not _is_sub_array(build_commands, _build_perf_cmd)
+        assert _is_sub_array(build_commands, _build_no_zfs_cmd)
+        assert _is_sub_array(build_commands, _build_no_perf_cmd)
         assert _is_sub_array(build_commands, _finalize_install_cmd)
 
     def test_check_get_build_command_config_flavour_configs(
@@ -329,7 +338,7 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _prepare_config_extra_config_cmd)
         assert _is_sub_array(build_commands, _remake_old_config_cmd)
         assert _is_sub_array(build_commands, _prepare_kernel_versions)
-        assert _check_config in build_commands
+        assert _is_sub_array(build_commands, _check_config)
         if platform.machine() == "x86_64":
             assert _is_sub_array(
                 build_commands, _build_kernel_abi_version_x86_raspi_cmd
@@ -339,10 +348,11 @@ class TestPluginKernel:
             assert _is_sub_array(build_commands, _build_kernel_abi_version_raspi_cmd)
             assert _is_sub_array(build_commands, _install_kernel_dtbs_cmd)
 
-        assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
-        assert _is_sub_array(build_commands, _install_config_cmd)
+        assert _is_sub_array(build_commands, _post_install_steps_cmd)
         assert _is_sub_array(build_commands, _build_zfs_cmd)
         assert _is_sub_array(build_commands, _build_perf_cmd)
+        assert not _is_sub_array(build_commands, _build_no_zfs_cmd)
+        assert not _is_sub_array(build_commands, _build_no_perf_cmd)
         assert _is_sub_array(build_commands, _finalize_install_cmd)
 
     def test_check_get_build_command_cross(self, setup_method_fixture, new_dir):
@@ -366,15 +376,16 @@ class TestPluginKernel:
         assert _is_sub_array(build_commands, _clean_old_build_cmd)
         assert _is_sub_array(build_commands, _prepare_config_flavour_raspi_cmd)
         assert _is_sub_array(build_commands, _prepare_config_extra_config_cmd)
-        assert _is_sub_array(build_commands, _remake_old_config_armhf_cmd)
+        assert _is_sub_array(build_commands, _remake_old_config_cmd)
         assert _is_sub_array(build_commands, _prepare_kernel_versions)
-        assert _check_config in build_commands
+        assert _is_sub_array(build_commands, _check_config)
         assert _is_sub_array(build_commands, _build_kernel_armhf_cmd)
         assert _is_sub_array(build_commands, _install_kernel_armhf_cmd)
-        assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
-        assert _is_sub_array(build_commands, _install_config_cmd)
+        assert _is_sub_array(build_commands, _post_install_steps_cmd)
         assert _is_sub_array(build_commands, _build_zfs_cmd)
-        assert _is_sub_array(build_commands, _build_perf_armhf_cmd)
+        assert _is_sub_array(build_commands, _build_perf_cmd)
+        assert not _is_sub_array(build_commands, _build_no_zfs_cmd)
+        assert not _is_sub_array(build_commands, _build_no_perf_cmd)
         assert _is_sub_array(build_commands, _finalize_install_cmd)
 
     @pytest.mark.parametrize("arch", ["arm64", "armhf", "riscv64", "amd64"])
@@ -593,337 +604,405 @@ _DEB_TO_KERNEL_ARCH_TRANSLATIONS = {
 }
 
 _determine_kernel_src = [
-    " ".join(
-        [
-            "[ -d ${CRAFT_PART_SRC}/kernel ]",
-            "&&",
-            "KERNEL_SRC=${CRAFT_PART_SRC}",
-            "||",
-            "KERNEL_SRC=${CRAFT_PROJECT_DIR}",
-        ],
-    ),
-    'echo "PATH=$PATH"',
-    'echo "KERNEL_SRC=${KERNEL_SRC}"',
+    textwrap.dedent(
+        """
+        [ -d "${CRAFT_PART_SRC}/kernel" ] && KERNEL_SRC="${CRAFT_PART_SRC}" || KERNEL_SRC="${CRAFT_PROJECT_DIR}"
+        echo "PATH=${PATH}"
+        echo "KERNEL_SRC=${KERNEL_SRC}"
+        """
+    )
 ]
 
 _clean_old_build_cmd = [
     textwrap.dedent(
         """
         echo "Cleaning previous build first..."
-        [ -e ${CRAFT_PART_INSTALL}/modules ] && rm -rf ${CRAFT_PART_INSTALL}/modules
-        [ -L ${CRAFT_PART_INSTALL}/lib/modules ] && rm -rf ${CRAFT_PART_INSTALL}/lib/modules
+        [ -e "${CRAFT_PART_INSTALL}/modules" ] && rm -rf "${CRAFT_PART_INSTALL}/modules"
+        [ -L "${CRAFT_PART_INSTALL}/lib/modules" ] && rm -rf "${CRAFT_PART_INSTALL}/lib/modules"
         """
     )
 ]
 
 _prepare_snappy_config_cmd = [
-    'echo "Preparing config..."',
-    "if [ ! -e ${CRAFT_PART_BUILD}/.config ]; then",
-    "\tmake -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} snappy_defconfig",
-    "fi",
+    textwrap.dedent(
+        """
+        echo "Preparing config..."
+        if [ ! -e "${CRAFT_PART_BUILD}/.config" ]; then
+            make \\
+                -j1 \\
+                -C "${KERNEL_SRC}" O="${CRAFT_PART_BUILD}" \\
+                snappy_defconfig
+        fi
+        """
+    )
 ]
 
 _prepare_config_flavour_generic_cmd = [
-    'echo "Preparing config..."',
-    "if [ ! -e ${CRAFT_PART_BUILD}/.config ]; then",
     textwrap.dedent(
-        """	echo "Assembling Ubuntu config..."
-	if [ -f ${KERNEL_SRC}/debian/rules ] && [ -x ${KERNEL_SRC}/debian/rules ]; then
-		# Generate Ubuntu kernel configs
-		pushd ${KERNEL_SRC}
-		fakeroot debian/rules clean genconfigs || true
-		popd
+        """
+        echo "Preparing config..."
+        if [ ! -e "${CRAFT_PART_BUILD}/.config" ]; then
+            echo "Assembling Ubuntu config..."
+            if [ -f "${KERNEL_SRC}/debian/rules" ] && [ -x "${KERNEL_SRC}/debian/rules" ]; then
+                # Generate Ubuntu kernel configs
+                pushd "${KERNEL_SRC}"
+                fakeroot debian/rules clean genconfigs || true
+                popd
 
-		# Pick the right kernel .config for the target arch and flavour
-		ubuntuconfig=${KERNEL_SRC}/CONFIGS/${DEB_ARCH}-config.flavour.generic
-		cat ${ubuntuconfig} > ${CRAFT_PART_BUILD}/.config
+                # Pick the right kernel .config for the target arch and flavour
+                ubuntuconfig="${KERNEL_SRC}/CONFIGS/${DEB_ARCH}-config.flavour.generic"
+                cat "${ubuntuconfig}" > "${CRAFT_PART_BUILD}/.config"
 
-		# Clean up kernel source directory
-		pushd ${KERNEL_SRC}
-		fakeroot debian/rules clean
-		rm -rf CONFIGS/
-		popd
-	fi"""
+                # Clean up kernel source directory
+                pushd "${KERNEL_SRC}"
+                fakeroot debian/rules clean
+                rm -rf CONFIGS/
+                popd
+            fi
+        fi
+	    """
     ),
-    "fi",
 ]
 
 _prepare_config_flavour_raspi_cmd = [
-    'echo "Preparing config..."',
-    "if [ ! -e ${CRAFT_PART_BUILD}/.config ]; then",
     textwrap.dedent(
-        """	echo "Assembling Ubuntu config..."
-	if [ -f ${KERNEL_SRC}/debian/rules ] && [ -x ${KERNEL_SRC}/debian/rules ]; then
-		# Generate Ubuntu kernel configs
-		pushd ${KERNEL_SRC}
-		fakeroot debian/rules clean genconfigs || true
-		popd
+        """
+        echo "Preparing config..."
+        if [ ! -e "${CRAFT_PART_BUILD}/.config" ]; then
+            echo "Assembling Ubuntu config..."
+            if [ -f "${KERNEL_SRC}/debian/rules" ] && [ -x "${KERNEL_SRC}/debian/rules" ]; then
+                # Generate Ubuntu kernel configs
+                pushd "${KERNEL_SRC}"
+                fakeroot debian/rules clean genconfigs || true
+                popd
 
-		# Pick the right kernel .config for the target arch and flavour
-		ubuntuconfig=${KERNEL_SRC}/CONFIGS/${DEB_ARCH}-config.flavour.raspi
-		cat ${ubuntuconfig} > ${CRAFT_PART_BUILD}/.config
+                # Pick the right kernel .config for the target arch and flavour
+                ubuntuconfig="${KERNEL_SRC}/CONFIGS/${DEB_ARCH}-config.flavour.raspi"
+                cat "${ubuntuconfig}" > "${CRAFT_PART_BUILD}/.config"
 
-		# Clean up kernel source directory
-		pushd ${KERNEL_SRC}
-		fakeroot debian/rules clean
-		rm -rf CONFIGS/
-		popd
-	fi"""
+                # Clean up kernel source directory
+                pushd "${KERNEL_SRC}"
+                fakeroot debian/rules clean
+                rm -rf CONFIGS/
+                popd
+            fi
+        fi
+	    """
     ),
-    "fi",
 ]
 
 _prepare_kernel_versions = [
-    "ABI_VERSION=$(head -n 1 ${KERNEL_SRC}/debian/changelog | awk -F '[()]' '{split($2, v, \"-\"); split(v[2], a, \".\"); print a[1]}')",
-    "KERNEL_MAIN_VERSION=$(head -n 1 ${KERNEL_SRC}/debian/changelog | awk -F '[()]' '{split($2, v, \"-\"); print v[1]}')",
-]
-
-_prepare_config_extra_config_cmd = [
-    'echo "Applying extra config...."',
-    "echo 'CONFIG_DEBUG_INFO=n\nCONFIG_DM_CRYPT=y' > ${CRAFT_PART_BUILD}/.config_snap",
-    "cat ${CRAFT_PART_BUILD}/.config >> ${CRAFT_PART_BUILD}/.config_snap",
-    "echo 'CONFIG_DEBUG_INFO=n\nCONFIG_DM_CRYPT=y' >> ${CRAFT_PART_BUILD}/.config_snap",
-    "mv ${CRAFT_PART_BUILD}/.config_snap ${CRAFT_PART_BUILD}/.config",
-]
-
-_remake_old_config_cmd = [
-    'echo "Remaking oldconfig...."',
-    "bash -c 'yes \"\" || true' | make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} oldconfig",
-]
-
-_remake_old_config_armhf_cmd = [
-    'echo "Remaking oldconfig...."',
-    " ".join(
-        [
-            "bash -c 'yes \"\" || true' | make -j1 -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD}",
-            "ARCH=arm CROSS_COMPILE=${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
-            "oldconfig",
-        ],
+    textwrap.dedent(
+        """
+        echo "Gathering release information"
+        DEBIAN="${KERNEL_SRC}/debian"
+        src_pkg_name=$(sed -n '1s/^\\(.*\\) (.*).*$/\\1/p' "${DEBIAN}/changelog")
+        release=$(sed -n '1s/^'"${src_pkg_name}"'.*(\\(.*\\)-.*).*$/\\1/p' "${DEBIAN}/changelog")
+        revisions=$(sed -n 's/^'"${src_pkg_name}"'\\ .*('"${release}"'-\\(.*\\)).*$/\\1/p' "${DEBIAN}/changelog" | tac)
+        revision=$(echo ${revisions} | awk '{print $NF}')
+        abinum=$(echo ${revision} | sed -r -e 's/([^\\+~]*)\\.[^\\.]+(~.*)?(\\+.*)?$/\\1/')
+        abi_release="${release}-${abinum}"
+        uploadnum=$(echo ${revision} | sed -r -e 's/[^\\+~]*\\.([^\\.~]+(~.*)?(\\+.*)?$)/\\1/')
+        """
     ),
 ]
 
-_check_config = " ".join(
-    [
-        sys.executable,
-        "-I",
-        inspect.getfile(check_new_config),
-        "check_new_config",
-        "${CRAFT_PART_BUILD}/.config",
-    ],
-)
+_prepare_config_extra_config_cmd = [
+    textwrap.dedent(
+        """
+        echo "Applying extra config...."
+        echo -e 'CONFIG_DEBUG_INFO=n\\nCONFIG_DM_CRYPT=y' > "${CRAFT_PART_BUILD}/.config_snap"
+        cat "${CRAFT_PART_BUILD}/.config" >> "${CRAFT_PART_BUILD}/.config_snap"
+        echo -e 'CONFIG_DEBUG_INFO=n\\nCONFIG_DM_CRYPT=y' >> "${CRAFT_PART_BUILD}/.config_snap"
+        mv "${CRAFT_PART_BUILD}/.config_snap" "${CRAFT_PART_BUILD}/.config"
+        """
+    ),
+]
+
+_remake_old_config_cmd = [
+    textwrap.dedent(
+        """
+        echo "Remaking oldconfig...."
+        bash -c 'yes "" || true' | make -j1 -C "${KERNEL_SRC}" O="${CRAFT_PART_BUILD}" oldconfig
+        """
+    ),
+]
+
+_check_config = [
+    textwrap.dedent(
+        f"""
+        echo "Checking config for expected options..."
+        {sys.executable} \\
+            -I {inspect.getfile(check_new_config)} \\
+                check_new_config "${{CRAFT_PART_BUILD}}/.config"
+        """
+    ),
+]
 
 _build_kernel_cmd = [
-    "make -j$(nproc) -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} Image modules dtbs",
+    textwrap.dedent(
+        """
+        echo "Building kernel..."
+        # shellcheck disable=SC2086 #SC2086 does not apply as ${KERNEL_IMAGE_TARGET} is single word
+        make \\
+            -j "$(nproc)" \\
+            -C "${KERNEL_SRC}" O="${CRAFT_PART_BUILD}" \\
+            ${KERNEL_IMAGE_TARGET} modules dtbs
+        """
+    ),
 ]
 
 _build_kernel_abi_version_cmd = [
-    _build_kernel_cmd[0]
-    + " "
-    + " ".join(
-        [
-            'KERNELRELEASE="${KERNEL_MAIN_VERSION}-${ABI_VERSION}-generic"',
-            'CFLAGS_MODULE="-DPKG_ABI=${ABI_VERSION}"',
-        ]
+    textwrap.dedent(
+        """
+        echo "Building kernel..."
+        # shellcheck disable=SC2086 #SC2086 does not apply as ${KERNEL_IMAGE_TARGET} is single word
+        make \\
+            -j "$(nproc)" \\
+            -C "${KERNEL_SRC}" O="${CRAFT_PART_BUILD}" \\
+            KERNELVERSION="${abi_release}-generic" \\
+            CONFIG_DEBUG_SECTION_MISMATCH=y \\
+            KBUILD_BUILD_VERSION="${uploadnum}" \\
+            LOCALVERSION= localver-extra= \\
+            CFLAGS_MODULE="-DPKG_ABI=${abinum}" \\
+            ${KERNEL_IMAGE_TARGET} modules dtbs
+        """
     ),
 ]
 
 _build_kernel_abi_version_raspi_cmd = [
-    _build_kernel_cmd[0]
-    + " "
-    + " ".join(
-        [
-            'KERNELRELEASE="${KERNEL_MAIN_VERSION}-${ABI_VERSION}-raspi"',
-            'CFLAGS_MODULE="-DPKG_ABI=${ABI_VERSION}"',
-        ]
+    textwrap.dedent(
+        """
+        echo "Building kernel..."
+        # shellcheck disable=SC2086 #SC2086 does not apply as ${KERNEL_IMAGE_TARGET} is single word
+        make \\
+            -j "$(nproc)" \\
+            -C "${KERNEL_SRC}" O="${CRAFT_PART_BUILD}" \\
+            KERNELVERSION="${abi_release}-raspi" \\
+            CONFIG_DEBUG_SECTION_MISMATCH=y \\
+            KBUILD_BUILD_VERSION="${uploadnum}" \\
+            LOCALVERSION= localver-extra= \\
+            CFLAGS_MODULE="-DPKG_ABI=${abinum}" \\
+            ${KERNEL_IMAGE_TARGET} modules dtbs
+        """
     ),
 ]
 
 _build_kernel_x86_cmd = [
-    "make -j$(nproc) -C ${KERNEL_SRC} O=${CRAFT_PART_BUILD} bzImage modules",
+    textwrap.dedent(
+        """
+        echo "Building kernel..."
+        # shellcheck disable=SC2086 #SC2086 does not apply as ${KERNEL_IMAGE_TARGET} is single word
+        make \\
+            -j "$(nproc)" \\
+            -C "${KERNEL_SRC}" O="${CRAFT_PART_BUILD}" \\
+            ${KERNEL_IMAGE_TARGET} modules
+        """
+    ),
 ]
 
 _build_kernel_abi_version_x86_cmd = [
-    _build_kernel_x86_cmd[0]
-    + " "
-    + " ".join(
-        [
-            'KERNELRELEASE="${KERNEL_MAIN_VERSION}-${ABI_VERSION}-generic"',
-            'CFLAGS_MODULE="-DPKG_ABI=${ABI_VERSION}"',
-        ]
+    textwrap.dedent(
+        """
+        echo "Building kernel..."
+        # shellcheck disable=SC2086 #SC2086 does not apply as ${KERNEL_IMAGE_TARGET} is single word
+        make \\
+            -j "$(nproc)" \\
+            -C "${KERNEL_SRC}" O="${CRAFT_PART_BUILD}" \\
+            KERNELVERSION="${abi_release}-generic" \\
+            CONFIG_DEBUG_SECTION_MISMATCH=y \\
+            KBUILD_BUILD_VERSION="${uploadnum}" \\
+            LOCALVERSION= localver-extra= \\
+            CFLAGS_MODULE="-DPKG_ABI=${abinum}" \\
+            ${KERNEL_IMAGE_TARGET} modules
+        """
     ),
 ]
 
 _build_kernel_abi_version_x86_raspi_cmd = [
-    _build_kernel_x86_cmd[0]
-    + " "
-    + " ".join(
-        [
-            'KERNELRELEASE="${KERNEL_MAIN_VERSION}-${ABI_VERSION}-raspi"',
-            'CFLAGS_MODULE="-DPKG_ABI=${ABI_VERSION}"',
-        ]
+    textwrap.dedent(
+        """
+        echo "Building kernel..."
+        # shellcheck disable=SC2086 #SC2086 does not apply as ${KERNEL_IMAGE_TARGET} is single word
+        make \\
+            -j "$(nproc)" \\
+            -C "${KERNEL_SRC}" O="${CRAFT_PART_BUILD}" \\
+            KERNELVERSION="${abi_release}-raspi" \\
+            CONFIG_DEBUG_SECTION_MISMATCH=y \\
+            KBUILD_BUILD_VERSION="${uploadnum}" \\
+            LOCALVERSION= localver-extra= \\
+            CFLAGS_MODULE="-DPKG_ABI=${abinum}" \\
+            ${KERNEL_IMAGE_TARGET} modules
+        """
     ),
 ]
 
 _build_kernel_armhf_cmd = [
-    " ".join(
-        [
-            "make -j$(nproc)",
-            "-C ${KERNEL_SRC}",
-            "O=${CRAFT_PART_BUILD}",
-            "ARCH=arm",
-            "CROSS_COMPILE=${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
-            "Image.gz modules dtbs",
-            'KERNELRELEASE="${KERNEL_MAIN_VERSION}-${ABI_VERSION}-raspi"',
-            'CFLAGS_MODULE="-DPKG_ABI=${ABI_VERSION}"',
-        ],
+    textwrap.dedent(
+        """
+        echo "Building kernel..."
+        # shellcheck disable=SC2086 #SC2086 does not apply as ${KERNEL_IMAGE_TARGET} is single word
+        make \\
+            -j "$(nproc)" \\
+            -C "${KERNEL_SRC}" O="${CRAFT_PART_BUILD}" \\
+            KERNELVERSION="${abi_release}-raspi" \\
+            CONFIG_DEBUG_SECTION_MISMATCH=y \\
+            KBUILD_BUILD_VERSION="${uploadnum}" \\
+            LOCALVERSION= localver-extra= \\
+            CFLAGS_MODULE="-DPKG_ABI=${abinum}" \\
+            ${KERNEL_IMAGE_TARGET} modules dtbs
+        """
     ),
 ]
 
 _install_kernel_cmd = [
-    " ".join(
-        [
-            "make -j$(nproc) -C ${KERNEL_SRC}",
-            "O=${CRAFT_PART_BUILD}",
-            "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
-            "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
-            "dtbs_install INSTALL_DTBS_PATH=${CRAFT_PART_INSTALL}/dtbs",
-        ],
+    textwrap.dedent(
+        """
+        echo "Installing kernel build..."
+        make \\
+            -j "$(nproc)" \\
+            -C "${KERNEL_SRC}" O="${CRAFT_PART_BUILD}" \\
+            CONFIG_PREFIX="${CRAFT_PART_INSTALL}" \\
+            modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH="${CRAFT_PART_INSTALL}" dtbs_install INSTALL_DTBS_PATH="${CRAFT_PART_INSTALL}/dtbs"
+        """
     ),
 ]
 
 _install_kernel_x86_cmd = [
-    " ".join(
-        [
-            "make -j$(nproc) -C ${KERNEL_SRC}",
-            "O=${CRAFT_PART_BUILD}",
-            "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
-            "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
-        ],
+    textwrap.dedent(
+        """
+        echo "Installing kernel build..."
+        make \\
+            -j "$(nproc)" \\
+            -C "${KERNEL_SRC}" O="${CRAFT_PART_BUILD}" \\
+            CONFIG_PREFIX="${CRAFT_PART_INSTALL}" \\
+            modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH="${CRAFT_PART_INSTALL}"
+        """
     ),
 ]
 
 _install_kernel_dtbs_cmd = [
-    " ".join(
-        [
-            "make -j$(nproc) -C ${KERNEL_SRC}",
-            "O=${CRAFT_PART_BUILD}",
-            "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
-            "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
-            "dtbs_install INSTALL_DTBS_PATH=${CRAFT_PART_INSTALL}/dtbs",
-        ],
+    textwrap.dedent(
+        """
+        echo "Installing kernel build..."
+        make \\
+            -j "$(nproc)" \\
+            -C "${KERNEL_SRC}" O="${CRAFT_PART_BUILD}" \\
+            CONFIG_PREFIX="${CRAFT_PART_INSTALL}" \\
+            modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH="${CRAFT_PART_INSTALL}" dtbs_install INSTALL_DTBS_PATH="${CRAFT_PART_INSTALL}/dtbs"
+        """
     ),
 ]
 
 _install_kernel_armhf_cmd = [
-    " ".join(
-        [
-            "make",
-            "-j$(nproc)",
-            "-C ${KERNEL_SRC}",
-            "O=${CRAFT_PART_BUILD}",
-            "ARCH=arm",
-            "CROSS_COMPILE=${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
-            "CONFIG_PREFIX=${CRAFT_PART_INSTALL}",
-            "modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${CRAFT_PART_INSTALL}",
-            "dtbs_install INSTALL_DTBS_PATH=${CRAFT_PART_INSTALL}/dtbs",
-        ],
+    textwrap.dedent(
+        """
+        echo "Installing kernel build..."
+        make \\
+            -j "$(nproc)" \\
+            -C "${KERNEL_SRC}" O="${CRAFT_PART_BUILD}" \\
+            CONFIG_PREFIX="${CRAFT_PART_INSTALL}" \\
+            modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH="${CRAFT_PART_INSTALL}" dtbs_install INSTALL_DTBS_PATH="${CRAFT_PART_INSTALL}/dtbs"
+        """
     ),
 ]
 
-_parse_kernel_release_cmd = [
-    "KERNEL_RELEASE=$(cat ${CRAFT_PART_BUILD}/include/config/kernel.release)",
-]
+_post_install_steps_cmd = [
+    textwrap.dedent(
+        """
+        echo "Parsing created kernel release..."
+        KERNEL_RELEASE=$(cat "${CRAFT_PART_BUILD}/include/config/kernel.release")
 
-_install_config_cmd = [
-    'echo "Installing kernel config..."',
-    "ln -f ${CRAFT_PART_BUILD}/.config ${CRAFT_PART_INSTALL}/config-${KERNEL_RELEASE}",
-]
+        echo "Copying kernel image..."
+        # if kernel.img already exists, replace it, we are probably re-running
+        # build
+        [ -e "${CRAFT_PART_INSTALL}/kernel.img" ] && rm -rf "${CRAFT_PART_INSTALL}/kernel.img"
+        mv "${KERNEL_BUILD_ARCH_DIR}/${KERNEL_IMAGE_TARGET}" "${CRAFT_PART_INSTALL}/kernel.img"
 
+        echo "Copying System map..."
+        [ -e "${CRAFT_PART_INSTALL}/System.map" ] && rm -rf "${CRAFT_PART_INSTALL}"/System.map*
+        ln -f "${CRAFT_PART_BUILD}/System.map" "${CRAFT_PART_INSTALL}/System.map-${KERNEL_RELEASE}"
+
+        echo "Installing kernel config..."
+        ln -f "${CRAFT_PART_BUILD}/.config" "${CRAFT_PART_INSTALL}/config-${KERNEL_RELEASE}"
+        """
+    ),
+]
 
 _finalize_install_cmd = [
     textwrap.dedent(
         """
-
         echo "Finalizing install directory..."
         # upstream kernel installs under $INSTALL_MOD_PATH/lib/modules/
         # but snapd expects modules/ and firmware/
-        mv ${CRAFT_PART_INSTALL}/lib/modules ${CRAFT_PART_INSTALL}/
+        mv "${CRAFT_PART_INSTALL}/lib/modules" "${CRAFT_PART_INSTALL}"
         # remove symlinks modules/*/build and modules/*/source
-        rm -rf ${CRAFT_PART_INSTALL}/modules/*/build ${CRAFT_PART_INSTALL}/modules/*/source
+        rm -rf "${CRAFT_PART_INSTALL}"/modules/*/build "${CRAFT_PART_INSTALL}"/modules/*/source
         # if there is firmware dir, move it to snap root
         # this could have been from stage packages or from kernel build
-        [ -d ${CRAFT_PART_INSTALL}/lib/firmware ] && mv ${CRAFT_PART_INSTALL}/lib/firmware ${CRAFT_PART_INSTALL}
+        [ -d "${CRAFT_PART_INSTALL}/lib/firmware" ] && mv "${CRAFT_PART_INSTALL}/lib/firmware" "${CRAFT_PART_INSTALL}"
         # create symlinks for modules and firmware for convenience
-        ln -sf ../modules ${CRAFT_PART_INSTALL}/lib/modules
-        ln -sf ../firmware ${CRAFT_PART_INSTALL}/lib/firmware
+        ln -sf ../modules "${CRAFT_PART_INSTALL}/lib/modules"
+        ln -sf ../firmware "${CRAFT_PART_INSTALL}/lib/firmware"
         """
     )
 ]
 
-
 _clone_zfs_cmd = [
     textwrap.dedent(
         """
-        if [ ! -d ${CRAFT_PART_BUILD}/zfs ]; then
-        	echo "cloning zfs..."
-        	git clone --depth=1 https://github.com/openzfs/zfs ${CRAFT_PART_BUILD}/zfs -b master
+        if [ ! -d "${CRAFT_PART_BUILD}/zfs" ]; then
+            echo "cloning zfs..."
+            git clone --depth=1 https://github.com/openzfs/zfs "${CRAFT_PART_BUILD}/zfs" -b master
         fi
         """
     )
+]
+
+_build_no_zfs_cmd = [
+    'echo "Not building zfs modules"',
 ]
 
 _build_zfs_cmd = [
     textwrap.dedent(
         """
         echo "Building zfs modules..."
-        cd ${CRAFT_PART_BUILD}/zfs
+        cd "${CRAFT_PART_BUILD}/zfs"
         ./autogen.sh
-        ./configure --with-linux=${KERNEL_SRC} --with-linux-obj=${CRAFT_PART_BUILD} \
---with-config=kernel --host=${CRAFT_ARCH_TRIPLET_BUILD_FOR}
-        make -j$(nproc)
-        make install DESTDIR=${CRAFT_PART_INSTALL}/zfs
-        release_version="$(ls ${CRAFT_PART_INSTALL}/modules)"
-        mv ${CRAFT_PART_INSTALL}/zfs/lib/modules/${release_version}/extra \
-${CRAFT_PART_INSTALL}/modules/${release_version}
-        rm -rf ${CRAFT_PART_INSTALL}/zfs
+        ./configure --with-linux="${KERNEL_SRC}" \\
+                    --with-linux-obj="${CRAFT_PART_BUILD}" \\
+                    --with-config=kernel \\
+                    --host="${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
+        make -j "$(nproc)"
+        make install DESTDIR="${CRAFT_PART_INSTALL}/zfs"
+        release_version="$(ls "${CRAFT_PART_INSTALL}/modules")"
+        mv "${CRAFT_PART_INSTALL}/zfs/lib/modules/${release_version}/extra" \\
+           "${CRAFT_PART_INSTALL}/modules/${release_version}"
+        rm -rf "${CRAFT_PART_INSTALL}/zfs"
         echo "Rebuilding module dependencies"
-        depmod -b ${CRAFT_PART_INSTALL} ${release_version}
+        depmod -b "${CRAFT_PART_INSTALL}" "${release_version}"
         """
     )
 ]
 
+_build_no_perf_cmd = [
+    'echo "Not building perf binary"',
+]
+
 _build_perf_cmd = [
-    'echo "Building perf binary..."',
-    'mkdir -p "${CRAFT_PART_BUILD}/tools/perf"',
-    " ".join(
-        [
-            "make -j$(nproc)",
-            "-C ${KERNEL_SRC}",
-            "O=${CRAFT_PART_BUILD}",
-            '-C "${KERNEL_SRC}/tools/perf"',
-            'O="${CRAFT_PART_BUILD}/tools/perf"',
-        ],
+    textwrap.dedent(
+        """
+        echo "Building perf binary..."
+        mkdir -p "${CRAFT_PART_BUILD}/tools/perf
+        # Override source and build directories
+        make -j "$(nproc)" \\
+             -C "${KERNEL_SRC}/tools/perf" \\
+             O="${CRAFT_PART_BUILD}/tools/perf"
+        install -Dm0755 "${CRAFT_PART_BUILD}/tools/perf/perf" \\
+                        "${CRAFT_PART_INSTALL}"/bin/perf
+        """
     ),
-    'install -Dm0755 "${CRAFT_PART_BUILD}/tools/perf/perf" "${CRAFT_PART_INSTALL}/bin/perf"',
 ]
-
-_build_perf_armhf_cmd = [
-    'echo "Building perf binary..."',
-    'mkdir -p "${CRAFT_PART_BUILD}/tools/perf"',
-    " ".join(
-        [
-            "make -j$(nproc)",
-            "-C ${KERNEL_SRC}",
-            "O=${CRAFT_PART_BUILD}",
-            "ARCH=arm",
-            "CROSS_COMPILE=${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
-            '-C "${KERNEL_SRC}/tools/perf"',
-            'O="${CRAFT_PART_BUILD}/tools/perf"',
-        ],
-    ),
-    'install -Dm0755 "${CRAFT_PART_BUILD}/tools/perf/perf" "${CRAFT_PART_INSTALL}/bin/perf"',
-]
-
 
 _BUUILT_IN_BASE = [
     "CONFIG_DEVTMPFS=y",
