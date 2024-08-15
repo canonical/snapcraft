@@ -597,7 +597,7 @@ class Project(models.Project):
 
     # snapcraft's `name` is more general than craft-application
     name: ProjectName  # type: ignore[assignment]
-    build_base: Optional[str]
+    build_base: Optional[str]  # type: ignore[assignment]
     compression: Literal["lzo", "xz"] = "xz"
     version: Optional[VersionStr]  # type: ignore[assignment]
     donation: Optional[UniqueStrList]
