@@ -200,17 +200,6 @@ def test_useragent_linux_with_testing(monkeypatch, testing_env):
     )
 
 
-@pytest.mark.parametrize("testing_env", ("TRAVIS_TESTING", "AUTOPKGTEST_TMP"))
-def test_useragent_windows_with_testing(monkeypatch, testing_env):
-    """Construct a user-agent as a patched Windows machine"""
-    monkeypatch.setenv(testing_env, "1")
-    os_platform = OSPlatform(system="Windows", release="10", machine="AMD64")
-
-    assert client.build_user_agent(version="7.1.0", os_platform=os_platform) == (
-        "snapcraft/7.1.0 (testing) Windows/10 (AMD64)"
-    )
-
-
 #####################
 # Store Environment #
 #####################

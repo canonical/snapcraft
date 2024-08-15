@@ -15,11 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import fileinput
 import os
-import pathlib
 import subprocess
-import sys
 
 
 def determine_version():
@@ -59,21 +56,5 @@ def determine_version():
     return f"{version}.post{distance}+git{commit[1:]}"
 
 
-def set_snapcraft_iss():
-    snapcraft_iss_path = pathlib.Path("windows/snapcraft.iss")
-    assert (
-        snapcraft_iss_path.exists()
-    ), f"Run from project root and ensure {snapcraft_iss_path!s} exists."
-    with fileinput.input(str(snapcraft_iss_path), inplace=True) as iss_file:
-        for line in iss_file:
-            if line.startswith("AppVersion="):
-                print(f"AppVersion={determine_version()}")
-            else:
-                print(line, end="")
-
-
 if __name__ == "__main__":
-    if len(sys.argv) == 2 and sys.argv[1] == "set-snapcraft-iss":
-        set_snapcraft_iss()
-    else:
-        print(determine_version())
+    print(determine_version())
