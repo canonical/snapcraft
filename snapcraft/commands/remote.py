@@ -246,7 +246,8 @@ class RemoteBuildCommand(ExtensibleCommand):
             builder.cleanup()
         return returncode
 
-    def _monitor_and_complete(  # noqa: PLR0912 (too many branches)
+    # noqa for too-many-branches and too-many-statements
+    def _monitor_and_complete(  # noqa: PLR0912, PLR0915
         self, build_id: str | None, builds: Collection[Build]
     ) -> int:
         builder = self._services.remote_build
