@@ -78,6 +78,24 @@ Changelog
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
 
+7.5.6 (2024-Aug-15)
+-------------------
+
+Core
+====
+
+Bases
+#####
+
+core22
+""""""
+
+* Fix a regression where icons would not be configured and installed for snaps
+  with no ``apps`` defined in their ``snapcraft.yaml``.
+
+For a complete list of commits, check out the `7.5.6`_ release on GitHub.
+
+
 8.3.2 (2024-Aug-05)
 -------------------
 
@@ -1001,6 +1019,7 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _#4909: https://github.com/canonical/snapcraft/issues/4909
 .. _#4942: https://github.com/canonical/snapcraft/issues/4942
 
+.. _7.5.6: https://github.com/canonical/snapcraft/releases/tag/7.5.6
 .. _8.0.0: https://github.com/canonical/snapcraft/releases/tag/8.0.0
 .. _8.0.1: https://github.com/canonical/snapcraft/releases/tag/8.0.1
 .. _8.0.2: https://github.com/canonical/snapcraft/releases/tag/8.0.2
