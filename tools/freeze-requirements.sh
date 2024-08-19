@@ -40,6 +40,10 @@ pip install -e .
 pip freeze --exclude-editable > requirements.txt
 requirements_fixups "requirements.txt"
 
+pip install -e .[docs]
+pip freeze --exclude-editable > requirements-docs.txt
+requirements_fixups "requirements-docs.txt"
+
 # Set the configured python-apt and python-distutils-extra packages.
 pip install -e .[dev]
 pip freeze --exclude-editable > requirements-devel.txt
