@@ -143,10 +143,12 @@ install_requires = [
 
 docs_requires = {
     "canonical-sphinx",
-    "pyspelling",
-    "sphinxcontrib-details-directive",
     "sphinx-autobuild",
+    "sphinx-autodoc-typehints",
+    "sphinxcontrib-details-directive",
     "sphinx-lint",
+    "sphinx-toolbox",
+    "pyspelling",
 }
 
 extras_requires = {"dev": dev_requires, "docs": docs_requires}
