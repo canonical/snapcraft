@@ -5,6 +5,8 @@ Snapcraft commands
 
 .. include:: commands/toc.rst
 
+.. _reference-lifecycle-commands:
+
 Lifecycle
 ---------
 Lifecycle commands can take an optional parameter ``<part-name>``. When a part
