@@ -609,6 +609,7 @@ class Project(models.Project):
     ) = None
     grade: Literal["stable", "devel"] | None = None
     architectures: list[str | Architecture] | None = None
+    _architectures_in_yaml: bool | None = None
     platforms: dict[str, Platform] | None = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
     assumes: UniqueList[str] = pydantic.Field(default_factory=list)
     hooks: dict[str, Hook] | None = None
@@ -759,8 +760,14 @@ class Project(models.Project):
                     f"'platforms' keyword is not supported for base {base!r}. "
                     "Use 'architectures' keyword instead."
                 )
-            # set default value
-            if not self.architectures:
+
+            # this is a one-shot - the value should not change when re-validating
+            if self.architectures and self._architectures_in_yaml is None:
+                # record if architectures are defined in the yaml for remote-build (#4881)
+                self._architectures_in_yaml = True
+            elif not self.architectures:
+                self._architectures_in_yaml = False
+                # set default value
                 self.architectures = [
                     Architecture(
                         build_on=[get_host_architecture()],

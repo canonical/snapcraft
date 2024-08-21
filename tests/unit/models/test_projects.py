@@ -1999,6 +1999,30 @@ class TestArchitecture:
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(**CORE24_DATA, architectures=["amd64"]))
 
+    @pytest.mark.parametrize(
+        ("data", "expected"),
+        [
+            ({"base": "core22", "architectures": ["amd64"]}, True),
+            ({"base": "core22"}, False),
+            # core24 and newer do not set this field
+            ({"base": "core24"}, None),
+        ],
+    )
+    def test_architectures_in_yaml(self, project_yaml_data, data, expected):
+        """Check if architectures were present in the yaml before unmarshalling."""
+        project_yaml = project_yaml_data(**data)
+
+        project = Project.unmarshal(project_yaml)
+
+        assert project._architectures_in_yaml is expected
+
+        # adding architectures after unmarshalling does not change the field
+        if project.base == "core22":
+            project.architectures = [
+                Architecture(build_on=["amd64"], build_for=["amd64"])
+            ]
+            assert project._architectures_in_yaml is expected
+
 
 class TestApplyRootPackages:
     """Test Transform the Project."""

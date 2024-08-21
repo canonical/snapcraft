@@ -7,16 +7,20 @@ description: Test snap for remote build
 grade: stable
 confinement: strict
 
+# This does not test:
+# - multiple artefacts on the same build-on (#4995)
+# - cross-compiling (#4996)
+
 platforms:
   # implicit build-on and build-for
   amd64:
   # implicit build-for
-  armhf:
+  arm64:
     build-on: [arm64]
   # fully defined
-  arm64:
-    build-on: [amd64, arm64]
-    build-for: [arm64]
+  armhf:
+    build-on: [armhf]
+    build-for: [armhf]
 
 parts:
   my-part:
