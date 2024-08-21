@@ -25,13 +25,14 @@ import pydantic
 import pytest
 from craft_cli import EmitterMode, emit
 from craft_parts import Action, Features, ProjectInfo, Step, callbacks
+from craft_platforms import DebianArchitecture
 from craft_providers.bases.ubuntu import BuilddBaseAlias
 
 from snapcraft import errors
 from snapcraft.elf import ElfFile
 from snapcraft.models import MANDATORY_ADOPTABLE_FIELDS, Project
 from snapcraft.parts import lifecycle as parts_lifecycle
-from snapcraft.parts import set_global_environment
+from snapcraft.parts import set_global_environment, yaml_utils
 from snapcraft.parts.plugins import KernelPlugin, MatterSdkPlugin
 from snapcraft.parts.update_metadata import update_project_metadata
 from snapcraft.utils import get_host_architecture
@@ -146,7 +147,9 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
         ),
     )
 
-    project = Project.unmarshal(yaml_data)
+    arch = DebianArchitecture.from_host().value
+    applied_yaml = yaml_utils.apply_yaml(yaml_data, arch, arch)
+    project = Project.unmarshal(applied_yaml)
 
     if filename == "build-aux/snap/snapcraft.yaml":
         assets_dir = Path("build-aux/snap")
@@ -198,7 +201,9 @@ def test_lifecycle_run_with_components(
         ),
     )
 
-    project = Project.unmarshal(yaml_data)
+    arch = DebianArchitecture.from_host().value
+    applied_yaml = yaml_utils.apply_yaml(yaml_data, arch, arch)
+    project = Project.unmarshal(applied_yaml)
 
     assert mock_run_command.mock_calls == [
         call(
@@ -247,7 +252,9 @@ def test_lifecycle_run_no_components(new_dir, snapcraft_yaml, mocker):
         ),
     )
 
-    project = Project.unmarshal(yaml_data)
+    arch = DebianArchitecture.from_host().value
+    applied_yaml = yaml_utils.apply_yaml(yaml_data, arch, arch)
+    project = Project.unmarshal(applied_yaml)
 
     assert mock_run_command.mock_calls == [
         call(

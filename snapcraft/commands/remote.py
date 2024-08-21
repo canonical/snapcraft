@@ -26,11 +26,11 @@ from typing import Any, cast
 
 import lazr.restfulclient.errors
 from craft_application import errors
-from craft_application.application import filter_plan
 from craft_application.commands import ExtensibleCommand
 from craft_application.errors import RemoteBuildError
 from craft_application.launchpad.models import Build, BuildState
 from craft_application.remote.utils import get_build_id
+from craft_application.util import humanize_list
 from craft_cli import emit
 from overrides import overrides
 
@@ -106,6 +106,9 @@ class RemoteBuildCommand(ExtensibleCommand):
             metavar="name",
             default=os.getenv("CRAFT_PLATFORM"),
             help="Set platform to build for",
+            # '--platform' needs to be handled differently since remote-build can
+            # build for an architecture that is not in the project metadata
+            dest="remote_build_platform",
         )
         group.add_argument(
             "--build-for",
@@ -113,6 +116,9 @@ class RemoteBuildCommand(ExtensibleCommand):
             metavar="arch",
             default=os.getenv("CRAFT_BUILD_FOR"),
             help="Set architecture to build for",
+            # '--build-for' needs to be handled differently since remote-build can
+            # build for architecture that is not in the project metadata
+            dest="remote_build_build_for",
         )
         parser.add_argument(
             "--project", help="upload to the specified Launchpad project"
@@ -143,8 +149,56 @@ class RemoteBuildCommand(ExtensibleCommand):
                     "In non-interactive runs, please use the option "
                     "`--launchpad-accept-public-upload`."
                 ),
+                doc_slug="/explanation/remote-build.html",
                 reportable=False,
-                retcode=77,
+                retcode=os.EX_NOPERM,
+            )
+
+        build_for = parsed_args.remote_build_build_for or None
+        platform = parsed_args.remote_build_platform or None
+        parameter = "--build-for" if build_for else "--platform" if platform else None
+        keyword = (
+            "architectures"
+            if self.project._architectures_in_yaml
+            else "platforms" if self.project.platforms else None
+        )
+
+        if keyword and parameter:
+            raise errors.RemoteBuildError(
+                f"{parameter!r} cannot be used when {keyword!r} is in the snapcraft.yaml.",
+                resolution=f"Remove {parameter!r} from the command line or remove {keyword!r} in the snapcraft.yaml.",
+                doc_slug="/explanation/remote-build.html",
+                retcode=os.EX_CONFIG,
+            )
+
+        if platform:
+            if self.project.get_effective_base() == "core22":
+                raise errors.RemoteBuildError(
+                    "'--platform' cannot be used for core22 snaps.",
+                    resolution="Use '--build-for' instead.",
+                    doc_slug="/explanation/remote-build.html",
+                    retcode=os.EX_CONFIG,
+                )
+            if platform not in SUPPORTED_ARCHS:
+                raise errors.RemoteBuildError(
+                    f"Unsupported platform {parsed_args.remote_build_platform!r}.",
+                    resolution=(
+                        "Use a supported debian architecture. Supported "
+                        f"architectures are: {humanize_list(SUPPORTED_ARCHS, 'and')}"
+                    ),
+                    doc_slug="/explanation/remote-build.html",
+                    retcode=os.EX_CONFIG,
+                )
+
+        if build_for and build_for not in SUPPORTED_ARCHS:
+            raise errors.RemoteBuildError(
+                f"Unsupported build-for architecture {parsed_args.remote_build_build_for!r}.",
+                resolution=(
+                    "Use a supported debian architecture. Supported "
+                    f"architectures are: {humanize_list(SUPPORTED_ARCHS, 'and')}"
+                ),
+                doc_slug="/explanation/remote-build.html",
+                retcode=os.EX_CONFIG,
             )
 
     def _run(  # noqa: PLR0915 [too-many-statements]
@@ -159,14 +213,13 @@ class RemoteBuildCommand(ExtensibleCommand):
         if parsed_args.project:
             self._services.remote_build.set_project(parsed_args.project)
 
-        self._validate(parsed_args)
         emit.progress(
             "remote-build is experimental and is subject to change. Use with caution.",
             permanent=True,
         )
 
         builder = self._services.remote_build
-        project = cast(models.Project, self._services.project)
+        self.project = cast(models.Project, self._services.project)
         config = cast(dict[str, Any], self.config)
         project_dir = (
             Path(config.get("global_args", {}).get("project_dir") or ".")
@@ -175,41 +228,22 @@ class RemoteBuildCommand(ExtensibleCommand):
         )
 
         emit.trace(f"Project directory: {project_dir}")
+        self._validate(parsed_args)
 
-        possible_build_plan = filter_plan(
-            self._app.BuildPlannerClass.unmarshal(project.marshal()).get_build_plan(),
-            platform=parsed_args.platform,
-            build_for=parsed_args.build_for,
-            host_arch=None,
-        )
+        if parsed_args.remote_build_build_for:
+            architectures = [parsed_args.remote_build_build_for]
+        elif parsed_args.remote_build_platform:
+            architectures = [parsed_args.remote_build_platform]
+        else:
+            architectures = self._get_project_build_fors()
 
-        architectures: list[str] | None = list(
-            {build_info.build_for for build_info in possible_build_plan}
-        )
-
-        if parsed_args.platform and not architectures:
-            emit.progress(
-                f"platform '{parsed_args.platform}' is not present in the build plan.",
-                permanent=True,
-            )
-            return 78  # Configuration error
-
-        if parsed_args.build_for and not architectures:
-            if parsed_args.build_for not in SUPPORTED_ARCHS:
-                raise errors.RemoteBuildError(
-                    f"build-for '{parsed_args.build_for}' is not supported.", retcode=78
-                )
-            # Allow the user to build for a single architecture if snapcraft.yaml
-            # doesn't define architectures.
-            architectures = [parsed_args.build_for]
-
-        emit.debug(f"Architectures to build: {architectures}")
+        emit.debug(f"Architectures to build for: {architectures}")
 
         if parsed_args.launchpad_timeout:
             emit.debug(f"Setting timeout to {parsed_args.launchpad_timeout} seconds")
             builder.set_timeout(parsed_args.launchpad_timeout)
 
-        build_id = get_build_id(self._app.name, project.name, project_dir)
+        build_id = get_build_id(self._app.name, self.project.name, project_dir)
         if parsed_args.recover:
             emit.progress(f"Recovering build {build_id}")
             builds = builder.resume_builds(build_id)
@@ -325,3 +359,18 @@ class RemoteBuildCommand(ExtensibleCommand):
             f"Artifacts: {', '.join(artifact_names)}"
         )
         return return_code
+
+    def _get_project_build_fors(self) -> list[str]:
+        """Get a unique list of build-for architectures from the project.
+
+        :returns: A list of architectures.
+        """
+        build_plan = self._app.BuildPlannerClass.unmarshal(
+            self.project.marshal()
+        ).get_build_plan()
+        emit.debug(f"Build plan: {build_plan}")
+
+        build_fors = set({build_info.build_for for build_info in build_plan})
+        emit.debug(f"Parsed build-for architectures from build plan: {build_fors}")
+
+        return list(build_fors)

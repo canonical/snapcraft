@@ -410,8 +410,8 @@ def test_run_in_shallow_repo_unsupported(
 ######################
 
 
-@pytest.mark.parametrize("base", const.CURRENT_BASES)
-def test_no_platform_defined_no_platform_or_build_for(
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"devel"})
+def test_default_architecture(
     mocker,
     snapcraft_yaml,
     base,
@@ -419,18 +419,9 @@ def test_no_platform_defined_no_platform_or_build_for(
     mock_confirm,
     mock_remote_builder_fake_build_process,
 ):
-    """Test that the remote-build command uses the host architecture if no platform is defined."""
-    snapcraft_yaml_dict = {
-        "base": base,
-        "build-base": "devel",
-        "grade": "devel",
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    mocker.patch.object(
-        sys,
-        "argv",
-        ["snapcraft", "remote-build"],
-    )
+    """Default to the host architecture if not defined elsewhere."""
+    snapcraft_yaml(base=base)
+    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"])
     mock_start_builds = mocker.patch(
         "craft_application.services.remotebuild.RemoteBuildService.start_builds"
     )
@@ -442,7 +433,7 @@ def test_no_platform_defined_no_platform_or_build_for(
     )
 
 
-@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22", "devel"})
 def test_platform_build_for_all(
     mocker,
     snapcraft_yaml,
@@ -451,10 +442,9 @@ def test_platform_build_for_all(
     mock_confirm,
     mock_remote_builder_fake_build_process,
 ):
+    """Use 'build-for: all' from the project metadata with the platforms keyword."""
     snapcraft_yaml_dict = {
         "base": base,
-        "build-base": "devel",
-        "grade": "devel",
         "platforms": {
             "test-platform": {"build-on": "arm64", "build-for": "all"},
         },
@@ -478,10 +468,9 @@ def test_platform_build_for_all_core22(
     mock_confirm,
     mock_remote_builder_fake_build_process,
 ):
-    """remote-build command uses all platforms if no platform or build-for is given."""
+    """Use 'build-for: all' from the project metadata with the architectures keyword."""
     snapcraft_yaml_dict = {
         "base": "core22",
-        "grade": "devel",
         "architectures": [
             {"build-on": ["arm64"], "build-for": ["all"]},
         ],
@@ -498,8 +487,8 @@ def test_platform_build_for_all_core22(
     assert mock_start_builds.call_args[1]["architectures"] == ["all"]
 
 
-@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
-def test_platform_defined_no_platform_or_build_for(
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22", "devel"})
+def test_platform_in_project_metadata(
     mocker,
     snapcraft_yaml,
     base,
@@ -507,14 +496,13 @@ def test_platform_defined_no_platform_or_build_for(
     mock_confirm,
     mock_remote_builder_fake_build_process,
 ):
-    """remote-build command uses all platforms if no platform or build-for is given."""
+    """Use the platform's build-for architectures from the project metadata."""
     snapcraft_yaml_dict = {
         "base": base,
-        "build-base": "devel",
-        "grade": "devel",
         "platforms": {
             "rpi4": {"build-on": "arm64", "build-for": "arm64"},
             "x86-64": {"build-on": "amd64", "build-for": "amd64"},
+            "same-build-for-x86-64": {"build-on": "riscv64", "build-for": "amd64"},
         },
     }
     snapcraft_yaml(**snapcraft_yaml_dict)
@@ -534,12 +522,42 @@ def test_platform_defined_no_platform_or_build_for(
     assert const.SnapArch.amd64 in mock_start_builds.call_args[1]["architectures"]
 
 
-@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
-@pytest.mark.parametrize(
-    ["platform", "arch"],
-    [("rpi4", const.SnapArch.arm64), ("x86-64", const.SnapArch.amd64)],
-)
-def test_platform(
+def test_architecture_in_project_metadata(
+    mocker,
+    snapcraft_yaml,
+    fake_services,
+    mock_confirm,
+    mock_remote_builder_fake_build_process,
+):
+    """Use the build-for architectures from the project metadata."""
+    snapcraft_yaml_dict = {
+        "base": "core22",
+        "architectures": [
+            {"build-on": ["arm64"], "build-for": ["arm64"]},
+            {"build-on": ["riscv64"], "build-for": ["riscv64"]},
+        ],
+    }
+    snapcraft_yaml(**snapcraft_yaml_dict)
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["snapcraft", "remote-build"],
+    )
+    mock_start_builds = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.start_builds"
+    )
+    app = application.create_app()
+    app.run()
+
+    mock_start_builds.assert_called_once()
+    assert sorted(mock_start_builds.call_args[1]["architectures"]) == sorted(
+        ["arm64", "riscv64"]
+    )
+
+
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22", "devel"})
+@pytest.mark.parametrize("platform", const.SnapArch)
+def test_platform_argument(
     mocker,
     snapcraft_yaml,
     base,
@@ -547,19 +565,9 @@ def test_platform(
     mock_confirm,
     mock_remote_builder_fake_build_process,
     platform,
-    arch,
 ):
-    """Test that the remote-build command uses the platform if --platform is given."""
-    snapcraft_yaml_dict = {
-        "base": base,
-        "build-base": "devel",
-        "grade": "devel",
-        "platforms": {
-            "rpi4": {"build-on": "arm64", "build-for": "arm64"},
-            "x86-64": {"build-on": "amd64", "build-for": "amd64"},
-        },
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
+    """Use architectures provided by the `--platform` argument."""
+    snapcraft_yaml(base=base)
     mocker.patch.object(
         sys,
         "argv",
@@ -571,30 +579,118 @@ def test_platform(
     app = application.create_app()
     app.run()
 
-    mock_start_builds.assert_called_once_with(ANY, architectures=[arch])
+    mock_start_builds.assert_called_once_with(ANY, architectures=[platform])
 
 
-@pytest.mark.xfail(
-    reason="craft-application catches before it gets to the remote-build command"
-)
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"devel"})
+@pytest.mark.parametrize("build_for", const.SnapArch)
+def test_build_for_argument(
+    mocker,
+    snapcraft_yaml,
+    base,
+    fake_services,
+    mock_confirm,
+    mock_remote_builder_fake_build_process,
+    build_for,
+):
+    """Use architectures provided by the `--build-for` argument."""
+    snapcraft_yaml(base=base)
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["snapcraft", "remote-build", "--build-for", build_for],
+    )
+    mock_start_builds = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.start_builds"
+    )
+    app = application.create_app()
+    app.run()
+
+    mock_start_builds.assert_called_once_with(ANY, architectures=[build_for])
+
+
+def test_architecture_defined_twice_error(
+    capsys,
+    mocker,
+    snapcraft_yaml,
+    fake_services,
+    mock_confirm,
+):
+    """Error if architectures are in the project metadata and as a build argument."""
+    snapcraft_yaml_dict = {
+        "base": "core22",
+        "architectures": [{"build-on": ["riscv64"], "build-for": ["riscv64"]}],
+    }
+    snapcraft_yaml(**snapcraft_yaml_dict)
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["snapcraft", "remote-build", "--build-for", "riscv64"],
+    )
+    app = application.create_app()
+    app.run()
+
+    _, err = capsys.readouterr()
+
+    assert (
+        "'--build-for' cannot be used when 'architectures' is in the snapcraft.yaml."
+    ) in err
+    assert (
+        "Remove '--build-for' from the command line or remove 'architectures' in the snapcraft.yaml."
+    ) in err
+
+
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22", "devel"})
+@pytest.mark.parametrize("argument", ["--build-for", "--platform"])
+def test_platform_defined_twice_error(
+    base,
+    argument,
+    capsys,
+    mocker,
+    snapcraft_yaml,
+    fake_services,
+    mock_confirm,
+):
+    """Error if platforms are in the project metadata and as a build argument."""
+    snapcraft_yaml_dict = {
+        "base": base,
+        "platforms": {
+            "riscv64": {"build-on": "riscv64", "build-for": "riscv64"},
+        },
+    }
+    snapcraft_yaml(**snapcraft_yaml_dict)
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["snapcraft", "remote-build", argument, "riscv64"],
+    )
+    app = application.create_app()
+    app.run()
+
+    _, err = capsys.readouterr()
+
+    assert (
+        f"{argument!r} cannot be used when 'platforms' is in the snapcraft.yaml."
+    ) in err
+    assert (
+        f"Remove {argument!r} from the command line or remove 'platforms' in the snapcraft.yaml."
+    ) in err
+
+
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
-def test_platform_error(
-    emitter,
+def test_unknown_platform_error(
+    capsys,
     mocker,
     snapcraft_yaml,
     base,
     fake_services,
     mock_confirm,
 ):
-    """Test that the remote-build command errors if the given platform is not found."""
+    """Error if `--platform` is not a valid debian architecture."""
     snapcraft_yaml_dict = {
         "base": base,
         "build-base": "devel",
         "grade": "devel",
-        "platforms": {
-            "rpi4": {"build-on": "arm64", "build-for": "arm64"},
-            "x86-64": {"build-on": "amd64", "build-for": "amd64"},
-        },
     }
     snapcraft_yaml(**snapcraft_yaml_dict)
     mocker.patch.object(
@@ -604,90 +700,18 @@ def test_platform_error(
     )
 
     app = application.create_app()
-    assert app.run() == 1
-    emitter.assert_progress(
-        "Platform 'nonexistent' not found in the project definition.", permanent=True
-    )
+    assert app.run() == os.EX_CONFIG
+
+    _, err = capsys.readouterr()
+    assert "Unsupported platform 'nonexistent'" in err
+    assert (
+        "Recommended resolution: Use a supported debian architecture. "
+        "Supported architectures are:"
+    ) in err
 
 
-@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
-@pytest.mark.parametrize(
-    ["build_for", "arch"],
-    [("amd64", const.SnapArch.amd64), ("arm64", const.SnapArch.arm64)],
-)
-def test_build_for(
-    mocker,
-    snapcraft_yaml,
-    base,
-    fake_services,
-    mock_confirm,
-    mock_remote_builder_fake_build_process,
-    build_for,
-    arch,
-):
-    """Test that the remote-build command uses the build-for if --build-for is given."""
-    snapcraft_yaml_dict = {
-        "base": base,
-        "build-base": "devel",
-        "grade": "devel",
-        "platforms": {
-            "rpi4": {"build-on": "arm64", "build-for": "arm64"},
-            "x86-64": {"build-on": "amd64", "build-for": "amd64"},
-        },
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    mocker.patch.object(
-        sys,
-        "argv",
-        ["snapcraft", "remote-build", "--build-for", build_for],
-    )
-    mock_start_builds = mocker.patch(
-        "craft_application.services.remotebuild.RemoteBuildService.start_builds"
-    )
-    app = application.create_app()
-    app.run()
-
-    mock_start_builds.assert_called_once_with(ANY, architectures=[arch])
-
-
-@pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.parametrize(
-    ["build_for", "arch"],
-    [("amd64", const.SnapArch.amd64), ("arm64", const.SnapArch.arm64)],
-)
-def test_build_for_no_platforms(
-    mocker,
-    snapcraft_yaml,
-    base,
-    fake_services,
-    mock_confirm,
-    mock_remote_builder_fake_build_process,
-    build_for,
-    arch,
-):
-    """remote-build command uses the build-for if --build-for is given without platforms."""
-    snapcraft_yaml_dict = {
-        "base": base,
-        "build-base": "devel",
-        "grade": "devel",
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    mocker.patch.object(
-        sys,
-        "argv",
-        ["snapcraft", "remote-build", "--build-for", build_for],
-    )
-    mock_start_builds = mocker.patch(
-        "craft_application.services.remotebuild.RemoteBuildService.start_builds"
-    )
-    app = application.create_app()
-    app.run()
-
-    mock_start_builds.assert_called_once_with(ANY, architectures=[arch])
-
-
-@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
-def test_build_for_error(
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22", "devel"})
+def test_unknown_build_for_error(
     capsys,
     mocker,
     snapcraft_yaml,
@@ -696,17 +720,8 @@ def test_build_for_error(
     mock_confirm,
     mock_remote_builder_fake_build_process,
 ):
-    """Test that the remote-build command errors if the given build-for is not found."""
-    snapcraft_yaml_dict = {
-        "base": base,
-        "build-base": "devel",
-        "grade": "devel",
-        "platforms": {
-            "rpi4": {"build-on": "arm64", "build-for": "arm64"},
-            "x86-64": {"build-on": "amd64", "build-for": "amd64"},
-        },
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
+    """Error if `--build-for` is not a valid debian architecture."""
+    snapcraft_yaml(base=base)
     mocker.patch.object(
         sys,
         "argv",
@@ -716,11 +731,42 @@ def test_build_for_error(
         "craft_application.services.remotebuild.RemoteBuildService.start_builds"
     )
     app = application.create_app()
-    assert app.run() == 1
+    assert app.run() == os.EX_CONFIG
 
     _, err = capsys.readouterr()
 
-    assert "Architecture 'nonexistent' is not supported." in err
+    assert "Unsupported build-for architecture 'nonexistent'" in err
+    assert (
+        "Recommended resolution: Use a supported debian architecture. "
+        "Supported architectures are:"
+    ) in err
+
+
+def test_platform_core22_error(
+    capsys,
+    mocker,
+    snapcraft_yaml,
+    fake_services,
+    mock_confirm,
+    mock_remote_builder_fake_build_process,
+):
+    """Error on `--platform` for core22 snaps."""
+    snapcraft_yaml(base="core22")
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["snapcraft", "remote-build", "--platform", "amd64"],
+    )
+    mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.start_builds"
+    )
+    app = application.create_app()
+    assert app.run() == os.EX_CONFIG
+
+    _, err = capsys.readouterr()
+
+    assert "--platform' cannot be used for core22 snaps" in err
+    assert "Use '--build-for' instead." in err
 
 
 ########################
