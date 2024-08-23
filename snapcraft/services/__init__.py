@@ -16,16 +16,20 @@
 
 """Snapcraft services."""
 
-from snapcraft.services.lifecycle import Lifecycle
-from snapcraft.services.package import Package
-from snapcraft.services.provider import Provider
-from snapcraft.services.remotebuild import RemoteBuild
-from snapcraft.services.service_factory import SnapcraftServiceFactory
+from .assertions import AssertionService
+from .lifecycle import Lifecycle
+from .package import Package
+from .provider import Provider
+from .registry_sets import RegistrySetsService
+from .remotebuild import RemoteBuild
+from .service_factory import SnapcraftServiceFactory
 
 __all__ = [
+    "AssertionService",
     "Lifecycle",
     "Package",
     "Provider",
+    "RegistrySetsService",
     "RemoteBuild",
     "SnapcraftServiceFactory",
 ]

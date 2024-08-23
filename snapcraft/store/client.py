@@ -504,6 +504,61 @@ class LegacyStoreClientCLI:
         return Revisions.unmarshal(response.json())
 
 
+    def build_registry_assertion(self, registry_set: dict[str, Any]) -> dict[str, Any]:
+        """Build a registry assertion."""
+
+        response = self.request(
+            "POST",
+            f"{self._base_url}/api/v2/registries/build-assertion",
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            json=registry_set,
+        )
+
+        return response.json()
+
+
+    def post_registry_sets(self, signed_registry_set: bytes) -> str:
+        """Return a list of registry sets."""
+        endpoint = f"{self._base_url}/api/v2/registries"
+
+        response = self.request(
+            "POST",
+            endpoint,
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/x.ubuntu.assertion",
+            },
+            data=signed_registry_set,
+        )
+
+        return response.json()
+
+
+    def list_registry_sets(self, name: str) -> dict[str, Any]:
+        """Return a list of registry sets.
+
+        :param name: If specified, only list the registry set with that name.
+        """
+        endpoint = f"{self._base_url}/api/v2/registries"
+        if name:
+            endpoint += f"/{name}"
+
+        response = self.request(
+            "GET",
+            endpoint,
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+
+        # TODO: unmarshal to a RegistrySet
+        return response.json()
+
+
 class OnPremStoreClientCLI(LegacyStoreClientCLI):
     """On Premises Store Client command line interface."""
 

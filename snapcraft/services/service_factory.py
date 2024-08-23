@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -44,3 +44,7 @@ class SnapcraftServiceFactory(ServiceFactory):
     RemoteBuildClass: type[  # type: ignore[reportIncompatibleVariableOverride]
         services.RemoteBuild
     ] = services.RemoteBuild
+
+    RegistrySetsService: type[  # type: ignore[reportIncompatibleVariableOverride]
+        services.RegistrySetsService
+    ] = services.RegistrySetsService

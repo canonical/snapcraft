@@ -142,12 +142,14 @@ COMMAND_GROUPS = [
         ],
     ),
     CommandGroup(
-        "Store Validation Sets",
+        "Store Assertions",
         [
             commands.StoreEditValidationSetsCommand,
             commands.StoreLegacyListValidationSetsCommand,
             commands.StoreLegacyValidateCommand,
             commands.StoreLegacyGatedCommand,
+            commands.StoreEditRegistrySetsCommand,
+            commands.StoreListRegistrySetsCommand,
         ],
     ),
     CommandGroup(

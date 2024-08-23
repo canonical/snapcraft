@@ -250,7 +250,7 @@ class Snapcraft(Application):
           - for the "version" command
         """
         argv_command = self._get_argv_command()
-        if argv_command == "lint":
+        if argv_command in {"lint", "list-registry-sets", "edit-registry-sets"}:
             # We don't need to check for core24 if we're just linting
             return super()._get_dispatcher()
 
