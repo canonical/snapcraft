@@ -16,7 +16,7 @@ import types
 import pytest
 
 
-@pytest.fixture()
+@pytest.fixture
 def project_main_module() -> types.ModuleType:
     """Fixture that returns the project's principal package (imported).
 
