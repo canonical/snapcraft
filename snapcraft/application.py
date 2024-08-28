@@ -66,7 +66,7 @@ MAPPED_ENV_VARS = {
 
 def _get_esm_error_for_base(base: str) -> None:
     """Raise an error appropriate for the base under ESM."""
-    channel: Optional[str] = None
+    channel: str | None = None
     match base:
         case "core":
             channel = "4.x"
@@ -77,9 +77,12 @@ def _get_esm_error_for_base(base: str) -> None:
         case _:
             return
 
-    raise RuntimeError(
-        f"ERROR: base {base!r} was last supported on Snapcraft {version} available "
-        f"on the {channel!r} channel."
+    raise errors.SnapcraftError(
+        message=f"Base {base!r} is not supported by this version of Snapcraft.",
+        resolution=(
+            f"Use Snapcraft {version} from the {channel!r} channel of snapcraft where "
+            f"{base!r} was last supported."
+        ),
     )
 
 
@@ -271,19 +274,27 @@ class Snapcraft(Application):
                     None,
                 ):
                     raise errors.SnapcraftError(
-                        f"Unknown value {build_strategy!r} in environment variable "
-                        "'SNAPCRAFT_REMOTE_BUILD_STRATEGY'. "
-                        "Valid values are 'disable-fallback' and 'force-fallback'."
+                        message=(
+                            f"Unknown value {build_strategy!r} in environment variable "
+                            "'SNAPCRAFT_REMOTE_BUILD_STRATEGY'. "
+                        ),
+                        resolution=(
+                            "Valid values are 'disable-fallback' and 'force-fallback'."
+                        ),
                     )
 
                 # core20 must use the legacy remote builder because the Project model
                 # cannot parse core20 snapcraft.yaml schemas (#4885)
                 if "core20" in (base, build_base):
                     if build_strategy == "disable-fallback":
-                        raise RuntimeError(
-                            "'SNAPCRAFT_REMOTE_BUILD_STRATEGY=disable-fallback' cannot "
-                            "be used for core20 snaps. Unset the environment variable "
-                            "or use 'force-fallback'."
+                        raise errors.SnapcraftError(
+                            message=(
+                                "'SNAPCRAFT_REMOTE_BUILD_STRATEGY=disable-fallback' "
+                                "cannot be used for core20 snaps."
+                            ),
+                            resolution=(
+                                "Unset the environment variable or use 'force-fallback'."
+                            ),
                         )
                     raise errors.ClassicFallback()
 
