@@ -22,24 +22,24 @@ import logging
 import os
 import pathlib
 import sys
-from typing import Any, Optional
+from typing import Any
 
-import craft_application.commands as craft_app_commands
 import craft_cli
 import craft_parts
 import craft_store
 from craft_application import Application, AppMetadata, util
+from craft_application.commands import get_other_command_group
 from craft_cli import emit
 from craft_parts.plugins.plugins import PluginType
 from overrides import override
 
 import snapcraft
 import snapcraft_legacy
-from snapcraft import cli, errors, models, services, store
+from snapcraft import cli, commands, errors, models, services, store
 from snapcraft.extensions import apply_extensions
 from snapcraft.models.project import SnapcraftBuildPlanner, apply_root_packages
 from snapcraft.parts import set_global_environment
-from snapcraft.utils import get_host_architecture
+from snapcraft.utils import get_effective_base, get_host_architecture
 from snapcraft_legacy.cli import legacy
 
 from .legacy_cli import _LIB_NAMES, _ORIGINAL_LIB_NAME_LOG_LEVEL
@@ -66,7 +66,6 @@ MAPPED_ENV_VARS = {
 
 def _get_esm_error_for_base(base: str) -> None:
     """Raise an error appropriate for the base under ESM."""
-    channel: str | None = None
     match base:
         case "core":
             channel = "4.x"
@@ -150,11 +149,15 @@ class Snapcraft(Application):
 
         super()._configure_services(provider_name)
 
-    # TODO: remove this override (#4911)
     @property
     def command_groups(self):
-        """Short-circuit the standard command groups for now."""
-        return self._command_groups
+        """Replace craft-application's LifecycleCommand group."""
+        _command_groups = super().command_groups
+        for index, command_group in enumerate(_command_groups):
+            if command_group.name == "Lifecycle":
+                _command_groups[index] = cli.CORE24_LIFECYCLE_COMMAND_GROUP
+
+        return _command_groups
 
     @override
     def _resolve_project_path(self, project_dir: pathlib.Path | None) -> pathlib.Path:
@@ -176,6 +179,31 @@ class Snapcraft(Application):
         config = super().app_config
         config["core24"] = self._known_core24
         return config
+
+    @override
+    def _pre_run(self, dispatcher: craft_cli.Dispatcher) -> None:
+        """Do any final setup before running the command.
+
+        :raises SnapcraftError: If the wrong codebase is chosen for the project.
+        :raises SnapcraftError: If the project uses a base that is not supported by the
+          current version of Snapcraft.
+        """
+        if self._snapcraft_yaml_data:
+            # if the project metadata is incomplete, assume core24 so craft application
+            # can present user-friendly errors when unmarshalling the model
+            effective_base = (
+                get_effective_base(
+                    base=self._snapcraft_yaml_data.get("base"),
+                    build_base=self._snapcraft_yaml_data.get("build-base"),
+                    project_type=self._snapcraft_yaml_data.get("type"),
+                    name=self._snapcraft_yaml_data.get("name"),
+                )
+                or "core24"
+            )
+            _get_esm_error_for_base(effective_base)
+            self._ensure_remote_build_supported(effective_base)
+
+        super()._pre_run(dispatcher)
 
     @override
     def run(self) -> int:
@@ -216,6 +244,7 @@ class Snapcraft(Application):
         # This is why we have the enablement after the check, if not
         # we could have directly returned with .get_partitions() which
         # handles the empty case.
+        craft_parts.Features.reset()
         craft_parts.Features(enable_partitions=True)
 
         return components.get_partitions()
@@ -232,82 +261,179 @@ class Snapcraft(Application):
 
     @staticmethod
     def _get_argv_command() -> str | None:
-        """Return the first non-option argument."""
-        for arg in sys.argv[1:]:
-            if arg.startswith("-"):
-                continue
-            return arg
+        """Return the first command name used as an argument."""
+        command_names = {
+            command.name
+            for group in [
+                *cli.COMMAND_GROUPS,
+                cli.CORE22_LIFECYCLE_COMMAND_GROUP,
+                cli.CORE24_LIFECYCLE_COMMAND_GROUP,
+                get_other_command_group(),
+            ]
+            for command in group.commands
+        }
 
-        return None
+        return next((arg for arg in sys.argv[1:] if arg in command_names), None)
+
+    def _check_for_classic_fallback(self) -> None:
+        """Check for and raise a ClassicFallback if an older codebase should be used.
+
+        The project should use the classic fallback path for any of the following conditions.
+
+        core20:
+          1. Running a lifecycle command for a core20 snap
+          2. Expanding extensions for a core20 snap
+          3. Listing plugins for a core20 snap via the project metadata
+          4. Remote builds for a core20 snap
+          5. Listing plugins for a core20 snap via `snapcraft list-plugins --base core20`
+
+        core22:
+          6. Running a lifecycle command for a core22 snap
+          7. Remote builds for a core22 snap with the `force-fallback` strategy
+
+        Exception: If `--version` or `-V` is passed, do not use the classic fallback.
+
+        If none of the above conditions are met, then the default craft-application
+        code path should be used.
+
+        :raises ClassicFallback: If the project should use the classic fallback code path.
+        """
+        argv_command = self._get_argv_command()
+        build_strategy = os.environ.get("SNAPCRAFT_REMOTE_BUILD_STRATEGY", None)
+
+        # Exception: If `--version` or `-V` is passed, do not use the classic fallback.
+        if {"--version", "-V"}.intersection(sys.argv):
+            return
+
+        if self._snapcraft_yaml_data:
+            # if the project metadata is incomplete, assume core24 so craft application
+            # can present user-friendly errors when unmarshalling the model
+            effective_base = (
+                get_effective_base(
+                    base=self._snapcraft_yaml_data.get("base"),
+                    build_base=self._snapcraft_yaml_data.get("build-base"),
+                    project_type=self._snapcraft_yaml_data.get("type"),
+                    name=self._snapcraft_yaml_data.get("name"),
+                )
+                or "core24"
+            )
+
+            classic_lifecycle_commands = [
+                command.name for command in cli.CORE22_LIFECYCLE_COMMAND_GROUP.commands
+            ]
+
+            if effective_base == "core20":
+                # 1. Running a lifecycle command for a core20 snap
+                # 2. Expanding extensions for a core20 snap
+                # 3. Listing plugins for a core20 snap via the project metadata
+                if argv_command is None or argv_command in [
+                    *classic_lifecycle_commands,
+                    "expand-extensions",
+                    "list-plugins",
+                    "plugins",
+                ]:
+                    raise errors.ClassicFallback()
+
+                # 4. Remote builds for a core20 snap
+                # Note that a `core20` snap with 'disable-fallback' set will follow the
+                # craft-application codepath and an error will be raised after the
+                # dispatcher is created.
+                if (
+                    argv_command == "remote-build"
+                    and not build_strategy
+                    or build_strategy == "force-fallback"
+                ):
+                    raise errors.ClassicFallback()
+
+            if effective_base == "core22":
+                # 6. Running a lifecycle command for a core22 snap
+                if argv_command is None or argv_command in classic_lifecycle_commands:
+                    raise errors.ClassicFallback()
+
+                # 7. Remote builds for a core22 snap with the `force-fallback` strategy
+                if (
+                    argv_command == "remote-build"
+                    and build_strategy == "force-fallback"
+                ):
+                    raise errors.ClassicFallback()
+
+        # 5. Listing plugins for a core20 snap via `snapcraft list-plugins --base core20`
+        if argv_command in ["list-plugins", "plugins"] and {
+            "--base=core20",
+            "core20",
+        }.intersection(sys.argv):
+            raise errors.ClassicFallback()
+
+    @staticmethod
+    def _ensure_remote_build_supported(base: str) -> None:
+        """Ensure the version of remote build is supported for the project.
+
+        1. SNAPCRAFT_REMOTE_BUILD_STRATEGY must be unset, 'disable-fallback', or
+          'force-fallback'
+        2. core20 projects must use the legacy remote builder
+        3. core24 and newer projects must use the craft-application remote builder
+
+        :raises SnapcraftError: If the environment variable `SNAPCRAFT_REMOTE_BUILD_STRATEGY`
+          is invalid.
+        :raises SnapcraftError: If the remote build version cannot be used for the project.
+        """
+        build_strategy = os.environ.get("SNAPCRAFT_REMOTE_BUILD_STRATEGY", None)
+
+        # 1. SNAPCRAFT_REMOTE_BUILD_STRATEGY must be unset, 'disable-fallback', or 'force-fallback'
+        if build_strategy and build_strategy not in (
+            "force-fallback",
+            "disable-fallback",
+        ):
+            raise errors.SnapcraftError(
+                message=(
+                    f"Unknown value {build_strategy!r} in environment variable "
+                    "'SNAPCRAFT_REMOTE_BUILD_STRATEGY'. "
+                ),
+                resolution=(
+                    "Valid values are 'disable-fallback' and 'force-fallback'."
+                ),
+            )
+
+        # 2. core20 projects must use the legacy remote builder (#4885)
+        if base == "core20" and build_strategy == "disable-fallback":
+            raise errors.SnapcraftError(
+                message=(
+                    "'SNAPCRAFT_REMOTE_BUILD_STRATEGY=disable-fallback' "
+                    "cannot be used for core20 snaps."
+                ),
+                resolution=(
+                    "Unset the environment variable or set it to 'force-fallback'."
+                ),
+            )
+
+        # 3. core24 and newer projects must use the craft-application remote builder
+        elif base not in ["core20", "core22"] and build_strategy == "force-fallback":
+            raise errors.SnapcraftError(
+                message=(
+                    "'SNAPCRAFT_REMOTE_BUILD_STRATEGY=force-fallback' cannot "
+                    "be used for core24 and newer snaps."
+                ),
+                resolution=(
+                    "Unset the environment variable or set it to 'disable-fallback'."
+                ),
+            )
 
     @override
     def _get_dispatcher(self) -> craft_cli.Dispatcher:
         """Handle multiplexing of Snapcraft "codebases" depending on the project's base.
 
-        The ClassicFallback-based flow is used in any of the following scenarios:
-          - there is no project to load
-          - for core20 remote builds if SNAPCRAFT_REMOTE_BUILD_STRATEGY is not "disable-fallback"
-          - for core22 remote builds if SNAPCRAFT_REMOTE_BUILD_STRATEGY is "force-fallback"
+        ClassicFallback errors must be raised before creating the Dispatcher.
 
-        The craft-application-based flow is used in any of the following scenarios:
-          - the project base is core24 or newer
-          - for the "version" command
+        - The codebase for core24 and newer commands uses craft-application to
+          create and manage the Dispatcher.
+        - The codebase for core22 commands creates its own Dispatcher and handles
+            errors and exit codes.
+        - The codebase for core20 commands uses the legacy snapcraft codebase which
+            handles logging, errors, and exit codes internally.
+
+        :raises ClassicFallback: If the core20 or core22 codebases should be used.
         """
-        argv_command = self._get_argv_command()
-        if argv_command == "lint":
-            # We don't need to check for core24 if we're just linting
-            return super()._get_dispatcher()
-
-        if self._snapcraft_yaml_data:
-            base = self._snapcraft_yaml_data.get("base")
-            build_base = self._snapcraft_yaml_data.get("build-base")
-            _get_esm_error_for_base(base)
-
-            if argv_command == "remote-build" and any(
-                b in ("core20", "core22") for b in (base, build_base)
-            ):
-                build_strategy = os.environ.get("SNAPCRAFT_REMOTE_BUILD_STRATEGY", None)
-                if build_strategy not in (
-                    "force-fallback",
-                    "disable-fallback",
-                    "",
-                    None,
-                ):
-                    raise errors.SnapcraftError(
-                        message=(
-                            f"Unknown value {build_strategy!r} in environment variable "
-                            "'SNAPCRAFT_REMOTE_BUILD_STRATEGY'. "
-                        ),
-                        resolution=(
-                            "Valid values are 'disable-fallback' and 'force-fallback'."
-                        ),
-                    )
-
-                # core20 must use the legacy remote builder because the Project model
-                # cannot parse core20 snapcraft.yaml schemas (#4885)
-                if "core20" in (base, build_base):
-                    if build_strategy == "disable-fallback":
-                        raise errors.SnapcraftError(
-                            message=(
-                                "'SNAPCRAFT_REMOTE_BUILD_STRATEGY=disable-fallback' "
-                                "cannot be used for core20 snaps."
-                            ),
-                            resolution=(
-                                "Unset the environment variable or use 'force-fallback'."
-                            ),
-                        )
-                    raise errors.ClassicFallback()
-
-                # Use craft-application unless explicitly forced to use legacy snapcraft
-                if (
-                    "core22" in (base, build_base)
-                    and build_strategy == "force-fallback"
-                ):
-                    raise errors.ClassicFallback()
-            elif not self._known_core24 and not (
-                argv_command == "version" or "--version" in sys.argv or "-V" in sys.argv
-            ):
-                raise errors.ClassicFallback()
+        self._check_for_classic_fallback()
         return super()._get_dispatcher()
 
     @override
@@ -318,7 +444,7 @@ class Snapcraft(Application):
             self.command_groups,
             summary=str(self.app.summary),
             extra_global_args=self._global_arguments,
-            default_command=craft_app_commands.lifecycle.PackCommand,
+            default_command=commands.PackCommand,
         )
 
     @override
@@ -335,10 +461,9 @@ def create_app() -> Snapcraft:
     app = Snapcraft(
         app=APP_METADATA,
         services=snapcraft_services,
-        extra_loggers={"snapcraft.remote"},
     )
 
-    for group in [cli.CORE24_LIFECYCLE_COMMAND_GROUP, *cli.COMMAND_GROUPS]:
+    for group in cli.COMMAND_GROUPS:
         app.add_command_group(group.name, group.commands)
 
     return app

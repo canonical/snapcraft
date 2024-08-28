@@ -143,7 +143,6 @@ COMMAND_GROUPS = [
     craft_cli.CommandGroup(
         "Other",
         [
-            *craft_application.commands.get_other_command_group().commands,
             commands.LintCommand,
             commands.InitCommand,
         ],
