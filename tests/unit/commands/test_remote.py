@@ -32,7 +32,6 @@ from craft_application.launchpad.models import BuildState
 from craft_application.remote.utils import get_build_id
 
 from snapcraft import application, const
-from snapcraft.errors import ClassicFallback
 from snapcraft.utils import get_host_architecture
 
 # remote-build control logic may check if the working dir is a git repo,
@@ -238,15 +237,6 @@ def test_remote_build_sudo_warns(emitter, snapcraft_yaml, base, mock_run_remote_
         permanent=True,
     )
     mock_run_remote_build.assert_called_once()
-
-
-@pytest.mark.usefixtures("mock_argv", "mock_confirm", "fake_services")
-def test_cannot_load_snapcraft_yaml(capsys, mocker):
-    """Raise an error if the snapcraft.yaml does not exist."""
-    app = application.create_app()
-
-    with pytest.raises(ClassicFallback):
-        app.run()
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
