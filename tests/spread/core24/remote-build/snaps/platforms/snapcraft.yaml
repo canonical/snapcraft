@@ -8,7 +8,6 @@ grade: stable
 confinement: strict
 
 # This does not test:
-# - multiple artefacts on the same build-on (#4995)
 # - cross-compiling (#4996)
 
 platforms:

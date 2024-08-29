@@ -201,6 +201,41 @@ class RemoteBuildCommand(ExtensibleCommand):
                 retcode=os.EX_CONFIG,
             )
 
+        self._validate_single_artifact_per_build_on()
+
+    def _validate_single_artifact_per_build_on(self) -> None:
+        """Validate that only one artifact will be created for each build-on.
+
+        :raise RemoteBuildError: If multiple artifacts will be created for the same build-on.
+        """
+        # mapping of `build-on` to `build-for` architectures
+        build_map: dict[str, list[str]] = {}
+        for build_info in self.build_plan:
+            build_map.setdefault(build_info.build_on, []).append(build_info.build_for)
+
+        # assemble a list so all errors are shown at once
+        build_on_errors = list()
+        for build_on, build_fors in build_map.items():
+            if len(build_fors) > 1:
+                build_on_errors.append(
+                    f"\n  - Building on {build_on!r} will create snaps for "
+                    f"{humanize_list(build_fors, 'and')}."
+                )
+
+        if build_on_errors:
+            raise errors.RemoteBuildError(
+                message=(
+                    "Remote build does not support building multiple snaps on the "
+                    f"same architecture:{''.join(build_on_errors)}"
+                ),
+                resolution=(
+                    "Ensure that only one snap will be created for each build-on "
+                    "architecture."
+                ),
+                doc_slug="/explanation/remote-build.html",
+                retcode=os.EX_CONFIG,
+            )
+
     def _run(  # noqa: PLR0915 [too-many-statements]
         self, parsed_args: argparse.Namespace, **kwargs: Any
     ) -> int | None:
@@ -220,6 +255,12 @@ class RemoteBuildCommand(ExtensibleCommand):
 
         builder = self._services.remote_build
         self.project = cast(models.Project, self._services.project)
+
+        self.build_plan = self._app.BuildPlannerClass.unmarshal(
+            self.project.marshal()
+        ).get_build_plan()
+        emit.debug(f"Build plan: {self.build_plan}")
+
         config = cast(dict[str, Any], self.config)
         project_dir = (
             Path(config.get("global_args", {}).get("project_dir") or ".")
@@ -365,12 +406,7 @@ class RemoteBuildCommand(ExtensibleCommand):
 
         :returns: A list of architectures.
         """
-        build_plan = self._app.BuildPlannerClass.unmarshal(
-            self.project.marshal()
-        ).get_build_plan()
-        emit.debug(f"Build plan: {build_plan}")
-
-        build_fors = set({build_info.build_for for build_info in build_plan})
+        build_fors = set({build_info.build_for for build_info in self.build_plan})
         emit.debug(f"Parsed build-for architectures from build plan: {build_fors}")
 
         return list(build_fors)

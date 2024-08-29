@@ -769,6 +769,125 @@ def test_platform_core22_error(
     assert "Use '--build-for' instead." in err
 
 
+@pytest.mark.parametrize(
+    ("base", "build_info", "error_messages"),
+    [
+        pytest.param(
+            "core22",
+            {
+                "architectures": [
+                    {"build-on": "amd64", "build-for": "amd64"},
+                    {"build-on": ["amd64", "riscv64"], "build-for": "riscv64"},
+                ],
+            },
+            ["Building on 'amd64' will create snaps for 'amd64' and 'riscv64'."],
+            id="core22-simple",
+        ),
+        pytest.param(
+            "core22",
+            {
+                "architectures": [
+                    {"build-on": "amd64", "build-for": "amd64"},
+                    {"build-on": ["amd64", "riscv64"], "build-for": "riscv64"},
+                    {"build-on": "s390x", "build-for": "s390x"},
+                    {"build-on": "s390x", "build-for": "ppc64el"},
+                ],
+            },
+            [
+                "Building on 'amd64' will create snaps for 'amd64' and 'riscv64'.",
+                "Building on 's390x' will create snaps for 'ppc64el' and 's390x'.",
+            ],
+            id="core22-complex",
+        ),
+        pytest.param(
+            "core24",
+            {
+                "platforms": {
+                    "platform1": {"build-on": "amd64", "build-for": "amd64"},
+                    "platform2": {
+                        "build-on": ["amd64", "riscv64"],
+                        "build-for": "riscv64",
+                    },
+                },
+            },
+            ["Building on 'amd64' will create snaps for 'amd64' and 'riscv64'."],
+            id="core24-simple",
+        ),
+        pytest.param(
+            "core24",
+            {
+                "platforms": {
+                    "platform1": {"build-on": "amd64", "build-for": "riscv64"},
+                    "identical-platform": {"build-on": "amd64", "build-for": "riscv64"},
+                },
+            },
+            # this will show 'riscv64' twice because the platform name is different
+            ["Building on 'amd64' will create snaps for 'riscv64' and 'riscv64'."],
+            id="core24-same-architectures-different-platform-name",
+        ),
+        pytest.param(
+            "core24",
+            {
+                "platforms": {
+                    "amd64": None,
+                    "riscv64": {"build-on": "amd64", "build-for": "riscv64"},
+                },
+            },
+            ["Building on 'amd64' will create snaps for 'amd64' and 'riscv64'."],
+            id="core24-shorthand",
+        ),
+        pytest.param(
+            "core24",
+            {
+                "platforms": {
+                    "platform1": {"build-on": "amd64", "build-for": "amd64"},
+                    "platform2": {
+                        "build-on": ["amd64", "s390x"],
+                        "build-for": "riscv64",
+                    },
+                    "s390x": None,
+                    "platform4": {"build-on": "s390x", "build-for": "riscv64"},
+                },
+            },
+            [
+                "Building on 'amd64' will create snaps for 'amd64' and 'riscv64'.",
+                "Building on 's390x' will create snaps for 'riscv64', 'riscv64', and 's390x'.",
+            ],
+            id="core24-complex",
+        ),
+    ],
+)
+def test_multiple_artifacts_per_build_on(
+    check,
+    base,
+    build_info,
+    error_messages,
+    capsys,
+    mocker,
+    snapcraft_yaml,
+    fake_services,
+    mock_confirm,
+    mock_remote_builder_fake_build_process,
+):
+    """Error when multiple artifacts will be produced on one build-on architecture."""
+    snapcraft_yaml(**{"base": base, **build_info})
+    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"])
+    mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.start_builds"
+    )
+    app = application.create_app()
+    assert app.run() == os.EX_CONFIG
+
+    _, err = capsys.readouterr()
+
+    check.is_in(
+        "Remote build does not support building multiple snaps on the same architecture",
+        err,
+    )
+    for message in error_messages:
+        check.is_in(message, err)
+
+
 ########################
 # Remote builder tests #
 ########################
