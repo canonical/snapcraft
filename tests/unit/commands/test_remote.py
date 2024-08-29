@@ -858,6 +858,7 @@ def test_platform_core22_error(
     ],
 )
 def test_multiple_artifacts_per_build_on(
+    check,
     base,
     build_info,
     error_messages,
@@ -879,12 +880,12 @@ def test_multiple_artifacts_per_build_on(
 
     _, err = capsys.readouterr()
 
-    assert (
-        "Remote build does not support building multiple snaps on the same architecture"
-        in err
+    check.is_in(
+        "Remote build does not support building multiple snaps on the same architecture",
+        err,
     )
     for message in error_messages:
-        assert message in err
+        check.is_in(message, err)
 
 
 ########################
