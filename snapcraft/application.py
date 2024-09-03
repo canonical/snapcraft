@@ -234,18 +234,16 @@ class Snapcraft(Application):
         return return_code
 
     @override
+    def _enable_craft_parts_features(self) -> None:
+        """Enable partitions if components are defined."""
+        if self._snapcraft_yaml_data and self._snapcraft_yaml_data.get("components"):
+            craft_parts.Features(enable_partitions=True)
+
+    @override
     def _setup_partitions(self, yaml_data: dict[str, Any]) -> list[str] | None:
         components = models.ComponentProject.unmarshal(yaml_data)
         if components.components is None:
             return None
-
-        # Users of partitions need to manually enable them, in Snapcraft
-        # this is done dynamically depending on the existence of components.
-        # This is why we have the enablement after the check, if not
-        # we could have directly returned with .get_partitions() which
-        # handles the empty case.
-        craft_parts.Features.reset()
-        craft_parts.Features(enable_partitions=True)
 
         return components.get_partitions()
 
