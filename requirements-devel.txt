@@ -32,7 +32,7 @@ craft-parts==2.0.0
 craft-platforms==0.1.1
 craft-providers==2.0.0
 craft-store==3.0.0
-cryptography==43.0.0
+cryptography==43.0.1
 cssutils==2.11.1
 dict2css==0.3.0.post1
 dill==0.3.8
