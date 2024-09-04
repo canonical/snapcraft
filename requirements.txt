@@ -15,7 +15,7 @@ craft-parts==2.0.0
 craft-platforms==0.1.1
 craft-providers==2.0.0
 craft-store==3.0.0
-cryptography==43.0.0
+cryptography==43.0.1
 distro==1.9.0
 docutils==0.19
 gnupg==2.3.1
