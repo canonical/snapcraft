@@ -55,7 +55,7 @@ Store snap tracks
 
 .. include:: commands/store-snap-tracks-commands.rst
 
-Store validation sets
----------------------
+Store assertions
+----------------
 
-.. include:: commands/store-validation-sets-commands.rst
+.. include:: commands/store-assertions-commands.rst

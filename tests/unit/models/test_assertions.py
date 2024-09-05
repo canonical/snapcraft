@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,22 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Snapcraft services."""
 
-from snapcraft.services.assertions import AssertionService
-from snapcraft.services.lifecycle import Lifecycle
-from snapcraft.services.package import Package
-from snapcraft.services.provider import Provider
-from snapcraft.services.registries import RegistriesService
-from snapcraft.services.remotebuild import RemoteBuild
-from snapcraft.services.service_factory import SnapcraftServiceFactory
+"""Tests for Assertion models."""
 
-__all__ = [
-    "AssertionService",
-    "Lifecycle",
-    "Package",
-    "Provider",
-    "RegistriesService",
-    "RemoteBuild",
-    "SnapcraftServiceFactory",
-]
+
+def test_assertion_defaults(fake_registry_assertion_data, check):
+    """Test default values of the RegistryAssertion model."""
+    check.equal(fake_registry_assertion_data.body, None)
+    check.equal(fake_registry_assertion_data.body_length, None)
+    check.equal(fake_registry_assertion_data.sign_key_sha3_384, None)
+    check.equal(fake_registry_assertion_data.summary, None)
+    check.equal(fake_registry_assertion_data.revision, 0)

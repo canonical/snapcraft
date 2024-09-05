@@ -52,6 +52,7 @@ from .names import (
     StoreRegisterCommand,
 )
 from .plugins import ListPluginsCommand, PluginsCommand
+from .registries import StoreListRegistriesCommand
 from .remote import RemoteBuildCommand
 from .status import (
     StoreListRevisionsCommand,
@@ -92,6 +93,7 @@ __all__ = [
     "StoreLegacyUploadMetadataCommand",
     "StoreLegacyValidateCommand",
     "StoreListRevisionsCommand",
+    "StoreListRegistriesCommand",
     "StoreListTracksCommand",
     "StoreLoginCommand",
     "StoreLogoutCommand",
