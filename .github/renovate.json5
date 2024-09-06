@@ -1,10 +1,10 @@
 {
   // Configuration file for RenovateBot: https://docs.renovatebot.com/configuration-options
-  extends: ["config:recommended", ":semanticCommitTypeAll(build)"],
+  extends: ["config:recommended", ":semanticCommitTypeAll(build)", ":enablePreCommit"],
   labels: ["dependencies"],  // For convenient searching in GitHub
   baseBranches: ["$default", "/^hotfix\\/.*/"],
   pip_requirements: {
-    fileMatch: ["^tox.ini$", "(^|/)requirements([\\w-]*)\\.txt$", "^.pre-commit-config.yaml$"]
+    fileMatch: ["^tox.ini$", "(^|/)requirements([\\w-]*)\\.txt$"]
   },
    packageRules: [
     {
@@ -135,16 +135,6 @@
         "# renovate: datasource=(?<datasource>\\S+)\n\\s+(?<depName>.*?)(\\[[\\w]*\\])*[=><]=?(?<currentValue>.*?)\n"
       ]
     },
-    {
-      // .pre-commit-config.yaml version updates
-      fileMatch: [".pre-commit-config.yaml"],
-      customType: "regex",
-      datasourceTemplate: "pypi",
-      depTypeTemplate: "lint",
-      matchStrings: [
-        "- repo: .*/<(?<depName>\\S+)\\s*\\n\\s*rev:\s+\"?v?(?<currentValue>\\S*)\"?",
-      ]
-    }
   ],
   timezone: "Etc/UTC",
   schedule: ["every weekend"],
