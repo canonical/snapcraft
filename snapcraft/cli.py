@@ -132,12 +132,17 @@ COMMAND_GROUPS = [
         ],
     ),
     craft_cli.CommandGroup(
-        "Store Assertions",
+        "Store Validation Sets",
         [
             commands.StoreEditValidationSetsCommand,
             commands.StoreLegacyListValidationSetsCommand,
             commands.StoreLegacyValidateCommand,
             commands.StoreLegacyGatedCommand,
+        ],
+    ),
+    craft_cli.CommandGroup(
+        "Store Registries",
+        [
             commands.StoreListRegistriesCommand,
         ],
     ),

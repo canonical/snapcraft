@@ -32,7 +32,13 @@ class StoreListRegistriesCommand(craft_application.commands.AppCommand):
     help_msg = "List registries"
     overview = textwrap.dedent(
         """
-        List registries for the authenticated account.
+        List all registries for the authenticated account.
+
+        Shows the account ID, name, revision, and last modified date of each registry.
+
+        If a name is provided, only the registry with that name will be listed.
+
+        Use the ``edit-registries`` command create and edit registries.
         """
     )
     _services: services.SnapcraftServiceFactory  # type: ignore[reportIncompatibleVariableOverride]
@@ -44,7 +50,7 @@ class StoreListRegistriesCommand(craft_application.commands.AppCommand):
             metavar="name",
             required=False,
             type=str,
-            help="Name of registry set to list",
+            help="Name of the registry to list",
         )
         parser.add_argument(
             "--format",
