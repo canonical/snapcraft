@@ -78,6 +78,27 @@ Changelog
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
 
+8.3.3 (2024-Aug-28)
+-------------------
+
+Core
+====
+
+* Improve detection and error messages when LXD is not installed or not
+  properly enabled.
+
+Bases
+#####
+
+core24
+""""""
+
+* Require Multipass >= ``1.14.1`` when using Multipass to build ``core24``
+  snaps.
+
+For a complete list of commits, check out the `8.3.3`_ release on GitHub.
+
+
 7.5.6 (2024-Aug-15)
 -------------------
 
@@ -1043,3 +1064,4 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _8.3.0: https://github.com/canonical/snapcraft/releases/tag/8.3.0
 .. _8.3.1: https://github.com/canonical/snapcraft/releases/tag/8.3.1
 .. _8.3.2: https://github.com/canonical/snapcraft/releases/tag/8.3.2
+.. _8.3.3: https://github.com/canonical/snapcraft/releases/tag/8.3.3
