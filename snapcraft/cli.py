@@ -141,6 +141,12 @@ COMMAND_GROUPS = [
         ],
     ),
     craft_cli.CommandGroup(
+        "Store Registries",
+        [
+            commands.StoreListRegistriesCommand,
+        ],
+    ),
+    craft_cli.CommandGroup(
         "Other",
         [
             commands.LintCommand,
