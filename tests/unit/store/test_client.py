@@ -25,7 +25,7 @@ import requests
 from craft_store import endpoints
 from craft_store.models import RevisionsResponseModel
 
-from snapcraft import errors
+from snapcraft import errors, models
 from snapcraft.store import LegacyUbuntuOne, client, constants
 from snapcraft.store.channel_map import ChannelMap
 from snapcraft.utils import OSPlatform
@@ -166,6 +166,38 @@ def list_revisions_payload():
                 "risk": "stable",
                 "track": "latest",
                 "when": "2020-02-12T17:51:40.891996Z",
+            },
+        ],
+    }
+
+
+@pytest.fixture
+def list_registries_payload():
+    return {
+        "assertions": [
+            {
+                "headers": {
+                    "account-id": "test-account-id",
+                    "authority-id": "test-authority-id",
+                    "body-length": "92",
+                    "name": "test-registry",
+                    "revision": "9",
+                    "sign-key-sha3-384": "test-sign-key",
+                    "timestamp": "2024-01-01T10:20:30Z",
+                    "type": "registry",
+                    "views": {
+                        "wifi-setup": {
+                            "rules": [
+                                {
+                                    "access": "read-write",
+                                    "request": "ssids",
+                                    "storage": "wifi.ssids",
+                                }
+                            ]
+                        }
+                    },
+                },
+                "body": '{\n  "storage": {\n    "schema": {\n      "wifi": {\n        "values": "any"\n      }\n    }\n  }\n}',
             },
         ],
     }
@@ -1050,6 +1082,62 @@ def test_list_revisions(fake_client, list_revisions_payload):
             headers={"Content-Type": "application/json", "Accept": "application/json"},
         )
     ]
+
+
+###################
+# List Registries #
+###################
+
+
+@pytest.mark.parametrize("name", [None, "test-registry"])
+def test_list_registries(name, fake_client, list_registries_payload, check):
+    """Test the registries endpoint."""
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(list_registries_payload).encode()
+    )
+
+    registries = client.StoreClientCLI().list_registries(name=name)
+
+    check.is_instance(registries, list)
+    for registry in registries:
+        check.is_instance(registry, models.RegistryAssertion)
+    check.equal(
+        fake_client.request.mock_calls,
+        [
+            call(
+                "GET",
+                f"https://dashboard.snapcraft.io/api/v2/registries{f'/{name}' if name else ''}",
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+        ],
+    )
+
+
+def test_list_registries_empty(fake_client, check):
+    """Test the registries endpoint with no registries returned."""
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps({"assertions": []}).encode()
+    )
+
+    registries = client.StoreClientCLI().list_registries()
+
+    check.equal(registries, [])
+    check.equal(
+        fake_client.request.mock_calls,
+        [
+            call(
+                "GET",
+                "https://dashboard.snapcraft.io/api/v2/registries",
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+        ],
+    )
 
 
 ########################
