@@ -353,6 +353,17 @@ def test_application_dotnet_not_registered(base, build_base, snapcraft_yaml):
     assert "dotnet" not in craft_parts.plugins.get_registered_plugins()
 
 
+@pytest.mark.parametrize("base", const.CURRENT_BASES)
+def test_application_poetry_not_registered(base, snapcraft_yaml):
+    """poetry plugin is disabled for all bases."""
+    snapcraft_yaml(base=base)
+    app = application.create_app()
+
+    app._register_default_plugins()
+
+    assert "poetry" not in craft_parts.plugins.get_registered_plugins()
+
+
 def test_default_command_integrated(monkeypatch, mocker, new_dir):
     """Test that for core24 projects we accept "pack" as the default command."""
 

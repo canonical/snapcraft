@@ -134,6 +134,9 @@ class Snapcraft(Application):
         """Register per application plugins when initializing."""
         super()._register_default_plugins()
 
+        # poetry plugin needs integration work, see #5025
+        craft_parts.plugins.unregister("poetry")
+
         if self._known_core24:
             # dotnet is disabled for core24 and newer because it is pending a rewrite
             craft_parts.plugins.unregister("dotnet")

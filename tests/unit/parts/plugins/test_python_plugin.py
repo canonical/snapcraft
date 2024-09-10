@@ -107,7 +107,7 @@ def test_get_build_commands(plugin, new_dir):
             eval "${{opts_state}}"
             """
         ),
-        'ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"\n',
+        'ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"',
     ]
 
 
