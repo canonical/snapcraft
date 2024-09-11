@@ -90,11 +90,11 @@ Current
    :ref:`lifecycle commands<reference-lifecycle-commands>`.
 
 ``--platform`` or ``--build-for`` can only be provided when the ``platforms``
-and ``architectures`` keywords are not defined in the project metadata
+or ``architectures`` keywords are not defined in the project metadata
 (`[12]`_).
 
-These keywords are mutually exclusive and must be a single debian architecture.
-A list of comma-separated architectures is not supported (`[11]`_).
+These keywords are mutually exclusive and must be a comma-separated list of
+debian architectures.
 
 ``core22`` snaps can only use ``--build-for``. ``core24`` and newer snaps
 can use ``--platform`` or ``--build-for``.
@@ -180,7 +180,6 @@ Launchpad is not able to parse this notation (`[9]`_).
 .. _`[8]`: https://bugs.launchpad.net/snapcraft/+bug/2007789
 .. _`[9]`: https://bugs.launchpad.net/snapcraft/+bug/2042167
 .. _`[10]`: https://github.com/canonical/snapcraft/issues/4885
-.. _`[11]`: https://github.com/canonical/snapcraft/issues/4990
 .. _`[12]`: https://github.com/canonical/snapcraft/issues/4992
 .. _`[13]`: https://github.com/canonical/snapcraft/issues/4996
 .. _`[14]`: https://github.com/canonical/snapcraft/issues/4995
