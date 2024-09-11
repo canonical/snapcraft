@@ -1,0 +1,2 @@
+test-snap-build-for-arg-core22_1.0_amd64.snap
+test-snap-build-for-arg-core22_1.0_s390x.snap

@@ -77,51 +77,51 @@ class RemoteBuildCommand(ExtensibleCommand):
     @overrides
     def _fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
-            "--recover", action="store_true", help="recover an interrupted build"
+            "--recover", action="store_true", help="Recover an interrupted build"
         )
         parser.add_argument(
             "--launchpad-accept-public-upload",
             action="store_true",
-            help="acknowledge that uploaded code will be publicly available.",
+            help="Acknowledge that uploaded code will be publicly available",
         )
         parser.add_argument(
             "--launchpad-timeout",
             type=int,
             default=0,
             metavar="<seconds>",
-            help="Time in seconds to wait for launchpad to build.",
+            help="Time in seconds to wait for launchpad to build",
         )
 
         parser.add_argument(
-            "--status", action="store_true", help="display remote build status"
+            "--status", action="store_true", help="Display remote build status"
         )
         parser.add_argument(
-            "--build-id", metavar="build-id", help="specific build id to retrieve"
+            "--build-id", metavar="build-id", help="Specific build ID to retrieve"
         )
 
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
             "--platform",
-            type=str,
+            type=lambda arg: [arch.strip() for arch in arg.split(",")],
             metavar="name",
             default=os.getenv("CRAFT_PLATFORM"),
-            help="Set platform to build for",
+            help="Comma-separated list of platforms to build for",
             # '--platform' needs to be handled differently since remote-build can
             # build for an architecture that is not in the project metadata
-            dest="remote_build_platform",
+            dest="remote_build_platforms",
         )
         group.add_argument(
             "--build-for",
-            type=str,
+            type=lambda arg: [arch.strip() for arch in arg.split(",")],
             metavar="arch",
             default=os.getenv("CRAFT_BUILD_FOR"),
-            help="Set architecture to build for",
+            help="Comma-separated list of architectures to build for",
             # '--build-for' needs to be handled differently since remote-build can
             # build for architecture that is not in the project metadata
-            dest="remote_build_build_for",
+            dest="remote_build_build_fors",
         )
         parser.add_argument(
-            "--project", help="upload to the specified Launchpad project"
+            "--project", help="Upload to the specified Launchpad project"
         )
 
     def _validate(self, parsed_args: argparse.Namespace) -> None:
@@ -154,9 +154,9 @@ class RemoteBuildCommand(ExtensibleCommand):
                 retcode=os.EX_NOPERM,
             )
 
-        build_for = parsed_args.remote_build_build_for or None
-        platform = parsed_args.remote_build_platform or None
-        parameter = "--build-for" if build_for else "--platform" if platform else None
+        build_fors = parsed_args.remote_build_build_fors or None
+        platforms = parsed_args.remote_build_platforms or None
+        parameter = "--build-for" if build_fors else "--platform" if platforms else None
         keyword = (
             "architectures"
             if self.project._architectures_in_yaml
@@ -171,7 +171,7 @@ class RemoteBuildCommand(ExtensibleCommand):
                 retcode=os.EX_CONFIG,
             )
 
-        if platform:
+        if platforms:
             if self.project.get_effective_base() == "core22":
                 raise errors.RemoteBuildError(
                     "'--platform' cannot be used for core22 snaps.",
@@ -179,27 +179,30 @@ class RemoteBuildCommand(ExtensibleCommand):
                     doc_slug="/explanation/remote-build.html",
                     retcode=os.EX_CONFIG,
                 )
-            if platform not in SUPPORTED_ARCHS:
-                raise errors.RemoteBuildError(
-                    f"Unsupported platform {parsed_args.remote_build_platform!r}.",
-                    resolution=(
-                        "Use a supported debian architecture. Supported "
-                        f"architectures are: {humanize_list(SUPPORTED_ARCHS, 'and')}"
-                    ),
-                    doc_slug="/explanation/remote-build.html",
-                    retcode=os.EX_CONFIG,
-                )
+            for platform in platforms:
+                if platform not in SUPPORTED_ARCHS:
+                    raise errors.RemoteBuildError(
+                        f"Unsupported platform {platform!r}.",
+                        resolution=(
+                            "Use a supported debian architecture. Supported "
+                            f"architectures are: {humanize_list(SUPPORTED_ARCHS, 'and')}"
+                        ),
+                        doc_slug="/explanation/remote-build.html",
+                        retcode=os.EX_CONFIG,
+                    )
 
-        if build_for and build_for not in SUPPORTED_ARCHS:
-            raise errors.RemoteBuildError(
-                f"Unsupported build-for architecture {parsed_args.remote_build_build_for!r}.",
-                resolution=(
-                    "Use a supported debian architecture. Supported "
-                    f"architectures are: {humanize_list(SUPPORTED_ARCHS, 'and')}"
-                ),
-                doc_slug="/explanation/remote-build.html",
-                retcode=os.EX_CONFIG,
-            )
+        if build_fors:
+            for build_for in build_fors:
+                if build_for not in SUPPORTED_ARCHS:
+                    raise errors.RemoteBuildError(
+                        f"Unsupported build-for architecture {build_for!r}.",
+                        resolution=(
+                            "Use a supported debian architecture. Supported "
+                            f"architectures are: {humanize_list(SUPPORTED_ARCHS, 'and')}"
+                        ),
+                        doc_slug="/explanation/remote-build.html",
+                        retcode=os.EX_CONFIG,
+                    )
 
         self._validate_single_artifact_per_build_on()
 
@@ -271,10 +274,10 @@ class RemoteBuildCommand(ExtensibleCommand):
         emit.trace(f"Project directory: {project_dir}")
         self._validate(parsed_args)
 
-        if parsed_args.remote_build_build_for:
-            architectures = [parsed_args.remote_build_build_for]
-        elif parsed_args.remote_build_platform:
-            architectures = [parsed_args.remote_build_platform]
+        if parsed_args.remote_build_build_fors:
+            architectures = parsed_args.remote_build_build_fors
+        elif parsed_args.remote_build_platforms:
+            architectures = parsed_args.remote_build_platforms
         else:
             architectures = self._get_project_build_fors()
 
