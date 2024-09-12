@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from craft_application import ServiceFactory
 
@@ -44,3 +45,10 @@ class SnapcraftServiceFactory(ServiceFactory):
     RemoteBuildClass: type[  # type: ignore[reportIncompatibleVariableOverride]
         services.RemoteBuild
     ] = services.RemoteBuild
+    RegistriesClass: type[  # type: ignore[reportIncompatibleVariableOverride]
+        services.RegistriesService
+    ] = services.RegistriesService
+
+    if TYPE_CHECKING:
+        # Allow static type check to report correct types for Snapcraft services
+        registries: services.RegistriesService = None  # type: ignore[assignment]

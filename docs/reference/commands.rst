@@ -59,3 +59,8 @@ Store validation sets
 ---------------------
 
 .. include:: commands/store-validation-sets-commands.rst
+
+Store registries
+----------------
+
+.. include:: commands/store-registries-commands.rst

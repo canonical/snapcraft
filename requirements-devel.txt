@@ -17,20 +17,20 @@ canonical-sphinx==0.1.0
 canonical-sphinx-extensions==0.0.23
 catkin-pkg==1.0.0
 certifi==2024.7.4
-cffi==1.17.0
+cffi==1.17.1
 chardet==5.2.0
 charset-normalizer==3.3.2
 click==8.1.7
 codespell==2.3.0
 colorama==0.4.6
 coverage==7.6.1
-craft-application==4.1.0
+craft-application==4.1.2
 craft-archives==2.0.0
 craft-cli==2.7.0
 craft-grammar==2.0.0
-craft-parts==2.0.0
+craft-parts==2.1.0
 craft-platforms==0.1.1
-craft-providers==2.0.0
+craft-providers==2.0.1
 craft-store==3.0.0
 cryptography==43.0.1
 cssutils==2.11.1
@@ -76,7 +76,7 @@ mdit-py-plugins==0.4.1
 mdurl==0.1.2
 more-itertools==10.4.0
 msgpack==1.0.8
-mypy==1.11.1
+mypy==1.11.2
 mypy-extensions==1.0.0
 myst-parser==4.0.0
 natsort==8.4.0
@@ -107,11 +107,11 @@ pyflakes==3.2.0
 pyftpdlib==1.5.10
 pygit2==1.13.3
 Pygments==2.18.0
-pylint==3.2.6
+pylint==3.2.7
 pylxd==2.3.4
 pymacaroons==0.13.0
 PyNaCl==1.5.0
-pyparsing==3.1.2
+pyparsing==3.1.4
 pyproject-api==1.7.1
 pyramid==2.0.2
 pyRFC3339==1.1
@@ -164,7 +164,7 @@ sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==2.0.0
 sphinxcontrib-serializinghtml==2.0.0
 sphinxext-opengraph==0.9.1
-starlette==0.38.2
+starlette==0.38.4
 tabulate==0.9.0
 testscenarios==0.5.0
 testtools==2.7.2
@@ -182,7 +182,7 @@ types-toml==0.10.8.20240310
 types-urllib3==1.26.25.14
 typing_extensions==4.12.2
 uc-micro-py==1.0.3
-urllib3==1.26.19
+urllib3==1.26.20
 uvicorn==0.30.6
 validators==0.33.0
 venusian==3.1.0
@@ -196,8 +196,8 @@ websockets==12.0
 wheel==0.44.0
 ws4py==0.5.1
 yamllint==1.35.1
-zipp==3.20.0
+zipp==3.20.1
 zope.deprecation==5.0
-zope.interface==7.0.1
+zope.interface==7.0.3
 python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz; sys.platform == "linux"
-pyinstaller==5.13.1; sys.platform == "win32"
+pyinstaller==5.13.2; sys.platform == "win32"

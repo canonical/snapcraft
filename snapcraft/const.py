@@ -36,6 +36,22 @@ class SnapArch(str, enum.Enum):
 
 SUPPORTED_ARCHS = frozenset(arch.value for arch in SnapArch)
 
+
+class OutputFormat(str, enum.Enum):
+    """Output formats for snapcraft commands."""
+
+    json = "json"
+    table = "table"
+
+    def __str__(self) -> str:
+        """Stringify the value."""
+        return str(self.value)
+
+
+OUTPUT_FORMATS = frozenset(output_format.value for output_format in OutputFormat)
+"""Supported output formats for commands."""
+
+
 BASES = frozenset({"core", "core18", "core20", "core22", "core24", "devel"})
 """All bases recognized by snapcraft."""
 
