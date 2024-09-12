@@ -14,29 +14,81 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Models for assertion sets."""
+"""Assertion models."""
 
-from typing import Any, Literal
+from typing import Literal
 
 from craft_application import models
+from typing_extensions import Self
 
 
-class RegistryAssertion(models.CraftBaseModel):
-    """Data model for a registry assertion."""
+class Registry(models.CraftBaseModel):
+    """Access and data definitions for a specific facet of a snap or system."""
+
+    request: str | None = None
+    """Optional dot-separated path to access the field."""
+
+    storage: str
+    """Dot-separated storage path."""
+
+    access: Literal["read", "write", "read-write"] | None = None
+    """Access permissions for the field."""
+
+    content: list[Self] | None = None
+    """Optional nested rules."""
+
+
+class Rules(models.CraftBaseModel):
+    """A list of registries for a particular view."""
+
+    rules: list[Registry]
+
+
+class EditableRegistryAssertion(models.CraftBaseModel):
+    """Subset of a registries assertion that can be edited by the user."""
 
     account_id: str
-    authority_id: str
-    body: dict[str, Any] | str | None = None
-    body_length: str | None = None
+    """Issuer of the registry assertion and owner of the signing key."""
+
     name: str
-    revision: int = 0
-    sign_key_sha3_384: str | None = None
     summary: str | None = None
-    timestamp: str
+    revision: int | None = 0
+
+    views: dict[str, Rules]
+    """A map of logical views of how the storage is accessed."""
+
+    body: str | None = None
+    """A JSON schema that defines the storage structure."""
+
+
+class RegistryAssertion(EditableRegistryAssertion):
+    """A full registries assertion containing editable and non-editable fields."""
+
     type: Literal["registry"]
-    views: dict[str, Any]
+
+    authority_id: str
+    """Issuer of the registry assertion and owner of the signing key."""
+
+    timestamp: str
+    """Timestamp of when the assertion was issued."""
+
+    body_length: str | None = None
+    """Length of the body field."""
+
+    sign_key_sha3_384: str | None = None
+    """Signing key ID."""
+
+
+class RegistriesList(models.CraftBaseModel):
+    """A list of registry assertions."""
+
+    registry_list: list[RegistryAssertion] = []
 
 
 # this will be a union for validation sets and registries once
 # validation sets are migrated from the legacy codebase
 Assertion = RegistryAssertion
+
+# this will be a union for editable validation sets and editable registries once
+# validation sets are migrated from the legacy codebase
+EditableAssertion = EditableRegistryAssertion
