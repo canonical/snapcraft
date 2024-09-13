@@ -209,13 +209,13 @@ class Snapcraft(Application):
         super()._pre_run(dispatcher)
 
     @override
-    def run(self) -> int:
+    def _run_inner(self) -> int:
         try:
-            return_code = super().run()
+            return_code = super()._run_inner()
         except craft_store.errors.NoKeyringError as err:
             self._emit_error(
                 craft_cli.errors.CraftError(
-                    f"craft-store error: {err}",
+                    f"{err}",
                     resolution=(
                         "Ensure the keyring is working or "
                         f"{store.constants.ENVIRONMENT_STORE_CREDENTIALS} "
@@ -227,9 +227,7 @@ class Snapcraft(Application):
             return_code = 1
         except craft_store.errors.CraftStoreError as err:
             self._emit_error(
-                craft_cli.errors.CraftError(
-                    f"craft-store error: {err}", resolution=err.resolution
-                ),
+                craft_cli.errors.CraftError(f"{err}", resolution=err.resolution),
                 cause=err,
             )
             return_code = 1

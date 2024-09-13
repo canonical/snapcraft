@@ -665,7 +665,7 @@ def test_known_core24(snapcraft_yaml, base, build_base, is_known_core24):
 )
 def test_store_error(mocker, capsys, message, resolution, expected_message):
     mocker.patch(
-        "snapcraft.application.Application.run",
+        "snapcraft.application.Application._run_inner",
         side_effect=craft_store.errors.CraftStoreError(message, resolution=resolution),
     )
 
@@ -673,12 +673,12 @@ def test_store_error(mocker, capsys, message, resolution, expected_message):
 
     assert return_code == 1
     _, err = capsys.readouterr()
-    assert f"craft-store error: {expected_message}" in err
+    assert expected_message in err
 
 
 def test_store_key_error(mocker, capsys):
     mocker.patch(
-        "snapcraft.application.Application.run",
+        "snapcraft.application.Application._run_inner",
         side_effect=craft_store.errors.NoKeyringError(),
     )
 
@@ -692,7 +692,7 @@ def test_store_key_error(mocker, capsys):
         # pylint: disable=[line-too-long]
         dedent(
             """\
-            craft-store error: No keyring found to store or retrieve credentials from.
+            No keyring found to store or retrieve credentials from.
             Recommended resolution: Ensure the keyring is working or SNAPCRAFT_STORE_CREDENTIALS is correctly exported into the environment
             For more information, check out: https://snapcraft.io/docs/snapcraft-authentication
         """
