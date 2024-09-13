@@ -68,6 +68,22 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+8.3.4 (2024-Sep-13)
+-------------------
+
+Core
+====
+
+Plugins
+#######
+
+NPM
+"""
+
+* Fix a bug where NPM parts fail to build if the ``pull`` and ``build`` steps
+  did not occur in the same execution of Snapcraft.
+
+For a complete list of commits, check out the `8.3.4`_ release on GitHub.
 
 8.4.0 (2024-Sep-10)
 -------------------
@@ -1171,4 +1187,5 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _8.3.1: https://github.com/canonical/snapcraft/releases/tag/8.3.1
 .. _8.3.2: https://github.com/canonical/snapcraft/releases/tag/8.3.2
 .. _8.3.3: https://github.com/canonical/snapcraft/releases/tag/8.3.3
+.. _8.3.4: https://github.com/canonical/snapcraft/releases/tag/8.3.4
 .. _8.4.0: https://github.com/canonical/snapcraft/releases/tag/8.4.0
