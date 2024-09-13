@@ -4,29 +4,28 @@ Linters
 A *linter* is an analysis tool that checks for common errors or compatibility
 issues, usually automatically, or as part of some other process.
 
-Snapcraft (from version 7.2 onwards) includes its own linter functionality when
-working with snaps using a ``core22`` or newer :doc:`base</reference/bases>`.
+Snapcraft 7.2 and higher provides built-in linter functionality when the snap
+uses core22 or higher as its :doc:`base </reference/bases>`.
 
-Snapcraft linters run automatically when a snap is packed unless otherwise
-disabled.
+By default, these built-in linters run automatically when a snap is built. If
+they're unneeded, you can disable them in the snap's ``snapcraft.yaml``.
 
-Available linters
+Built-in linters
 -----------------
 
 Snapcraft runs the following linters:
 
-- `classic`_: verifies binary file parameters for snaps using classic
-  `confinement`_
+- `classic`_. Verifies binary file parameters for snaps using
+  `classic confinement`_.
 
-- `library`_: verifies that no ELF file dependencies, such as libraries, are
-  missing and that no extra libraries are included in the snap package
+- `library`_. Verifies that no ELF file dependencies, such as libraries, are
+  missing, and that no extra libraries are included in the snap package.
 
-Disabling linters
-~~~~~~~~~~~~~~~~~
+Disable a linter
+----------------
 
-Snapcraft linters run automatically when a snap is packed but specific linters
-can be disabled by specifying a ``ignore`` entry in the ``lint`` section of
-``snapcraft.yaml``:
+You can disable a linter by adding it to the ``lint.ignore`` key in
+``snapcraft.yaml``. For example:
 
 .. code-block:: yaml
 
@@ -35,14 +34,17 @@ can be disabled by specifying a ``ignore`` entry in the ``lint`` section of
        - classic
        - library
 
-The ``ignore`` entry must include one or more [linter names](#heading--linters)
-for those linters to be disabled.
 
 Ignore specific files
 ~~~~~~~~~~~~~~~~~~~~~
 
-To omit specific files from a linter, add their snap location under the linter
-name:
+To disable a linter for a specific file, you can list it under a linter's entry
+in the ``lint.ignore`` key. The path is relative to the snap directory tree,
+and supports wildcard characters (**\***).
+
+In the following example, the ``classic`` linter is disabled entirely, and the
+``library`` linter won't run for the files in ``usr/lib`` that match the
+specified pattern:
 
 .. code-block:: yaml
 
@@ -52,11 +54,8 @@ name:
        - library:
          - usr/lib/**/libfoo.so*
 
-In the above example, the ``classic`` linter will be disabled entirely, and the
-``library`` linter will not run for the files matching the specified file
-pattern.
 
 
 .. _classic: https://snapcraft.io/docs/linters-classic
-.. _confinement: https://snapcraft.io/docs/snap-confinement
+.. _classic confinement: https://snapcraft.io/docs/snap-confinement
 .. _library: https://snapcraft.io/docs/linters-library
