@@ -1,0 +1,11 @@
+summary: Pull, then Build, a Node snap
+
+execute: |
+  snapcraft pull
+  snapcraft build
+  snapcraft pack
+  test -f npm-reentrant*.snap
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
