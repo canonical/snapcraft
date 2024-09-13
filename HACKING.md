@@ -92,7 +92,7 @@ tox run -e lint-docs
 For a rudimentary spell check, you can use codespell:
 
 ```shell
-tox run -e codespell
+tox run -e lint-codespell
 ```
 
 
