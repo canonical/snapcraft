@@ -28,7 +28,7 @@ craft-application==4.1.2
 craft-archives==2.0.0
 craft-cli==2.7.0
 craft-grammar==2.0.0
-craft-parts==2.1.0
+craft-parts==2.1.1
 craft-platforms==0.1.1
 craft-providers==2.0.1
 craft-store==3.0.0
