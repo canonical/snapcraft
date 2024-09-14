@@ -36,7 +36,7 @@ docs = [
     "sphinx-autobuild~=2024.2",
     "sphinx-pydantic==0.1.1",
     "sphinx-toolbox~=3.5",
-    "sphinx-lint==0.9.1",
+    "sphinx-lint==1.0.0",
 ]
 
 [build-system]
