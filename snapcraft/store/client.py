@@ -27,7 +27,7 @@ import requests
 from craft_cli import emit
 from overrides import overrides
 
-from snapcraft import __version__, errors, utils
+from snapcraft import __version__, errors, models, utils
 from snapcraft_legacy.storeapi.v2.releases import Releases as Revisions
 
 from . import channel_map, constants
@@ -502,6 +502,37 @@ class LegacyStoreClientCLI:
         )
 
         return Revisions.unmarshal(response.json())
+
+    def list_registries(
+        self, *, name: str | None = None
+    ) -> list[models.RegistryAssertion]:
+        """Return a list of registries.
+
+        :param name: If specified, only list the registry set with that name.
+        """
+        endpoint = f"{self._base_url}/api/v2/registries"
+        if name:
+            endpoint += f"/{name}"
+
+        response = self.request(
+            "GET",
+            endpoint,
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+
+        registry_assertions = []
+        if assertions := response.json().get("assertions"):
+            for assertion_data in assertions:
+                emit.debug(f"Parsing assertion: {assertion_data}")
+                assertion = models.RegistryAssertion.unmarshal(
+                    assertion_data["headers"]
+                )
+                registry_assertions.append(assertion)
+
+        return registry_assertions
 
 
 class OnPremStoreClientCLI(LegacyStoreClientCLI):
