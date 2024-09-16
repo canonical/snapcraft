@@ -1222,8 +1222,8 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
                 )
 
         for platform_entry, platform in self.platforms.items():
-            for build_for in platform.build_for or [SnapArch(platform_entry)]:
-                for build_on in platform.build_on or [SnapArch(platform_entry)]:
+            for build_for in platform.build_for or [SnapArch(platform_entry).value]:
+                for build_on in platform.build_on or [SnapArch(platform_entry).value]:
                     build_infos.append(
                         BuildInfo(
                             platform=platform_entry,
