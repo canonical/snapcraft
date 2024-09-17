@@ -56,22 +56,22 @@ execute: |
   export SNAPCRAFT_STORE_AUTH="${SPREAD_VARIANT}"
 
   # Who Am I?
-  snapcraft whoami
+  snapcraft whoami --verbosity=trace
 
   # Register
-  snapcraft register --yes "${snap_name}"
+  snapcraft register --yes "${snap_name}" --verbosity=trace
 
   # Take a look at registered snaps.
-  snapcraft list
+  snapcraft list --verbosity=trace
 
   # Push and Release
-  snapcraft upload "${snap_file}" --release edge --component "foo=${foo_component_file}" --component "bar-baz=${bar_baz_component_file}"
+  snapcraft upload "${snap_file}" --release edge --component "foo=${foo_component_file}" --component "bar-baz=${bar_baz_component_file}" --verbosity=trace
 
   # Show revisions
-  snapcraft list-revisions "${snap_name}"
+  snapcraft list-revisions "${snap_name}" --verbosity=trace
 
   # Release
-  snapcraft release "${snap_name}" 1 edge
+  snapcraft release "${snap_name}" 1 edge --verbosity=trace
 
   # Status
   snapcraft status "${snap_name}"
