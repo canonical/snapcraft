@@ -546,7 +546,20 @@ def test_architecture_in_project_metadata(
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22", "devel"})
-@pytest.mark.parametrize("platform", const.SnapArch)
+@pytest.mark.parametrize(
+    ("platforms", "expected_platforms"),
+    [
+        *zip(const.SnapArch, [[arch] for arch in const.SnapArch]),
+        ("amd64,riscv64", ["amd64", "riscv64"]),
+        ("amd64,riscv64,s390x", ["amd64", "riscv64", "s390x"]),
+        pytest.param(" amd64 , riscv64 ", ["amd64", "riscv64"], id="with-whitespace"),
+        pytest.param(
+            "amd64,amd64,riscv64",
+            ["amd64", "amd64", "riscv64"],
+            id="launchpad-handles-duplicates",
+        ),
+    ],
+)
 def test_platform_argument(
     mocker,
     snapcraft_yaml,
@@ -554,14 +567,15 @@ def test_platform_argument(
     fake_services,
     mock_confirm,
     mock_remote_builder_fake_build_process,
-    platform,
+    platforms,
+    expected_platforms,
 ):
     """Use architectures provided by the `--platform` argument."""
     snapcraft_yaml(base=base)
     mocker.patch.object(
         sys,
         "argv",
-        ["snapcraft", "remote-build", "--platform", platform],
+        ["snapcraft", "remote-build", "--platform", platforms],
     )
     mock_start_builds = mocker.patch(
         "craft_application.services.remotebuild.RemoteBuildService.start_builds"
@@ -569,11 +583,24 @@ def test_platform_argument(
     app = application.create_app()
     app.run()
 
-    mock_start_builds.assert_called_once_with(ANY, architectures=[platform])
+    mock_start_builds.assert_called_once_with(ANY, architectures=expected_platforms)
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"devel"})
-@pytest.mark.parametrize("build_for", const.SnapArch)
+@pytest.mark.parametrize(
+    ("build_fors", "expected_build_fors"),
+    [
+        *zip(const.SnapArch, [[arch] for arch in const.SnapArch]),
+        ("amd64,riscv64", ["amd64", "riscv64"]),
+        ("amd64,riscv64,s390x", ["amd64", "riscv64", "s390x"]),
+        pytest.param(" amd64 , riscv64 ", ["amd64", "riscv64"], id="with-whitespace"),
+        pytest.param(
+            "amd64,amd64,riscv64",
+            ["amd64", "amd64", "riscv64"],
+            id="duplicates-passthrough-to-launchpad",
+        ),
+    ],
+)
 def test_build_for_argument(
     mocker,
     snapcraft_yaml,
@@ -581,14 +608,15 @@ def test_build_for_argument(
     fake_services,
     mock_confirm,
     mock_remote_builder_fake_build_process,
-    build_for,
+    build_fors,
+    expected_build_fors,
 ):
     """Use architectures provided by the `--build-for` argument."""
     snapcraft_yaml(base=base)
     mocker.patch.object(
         sys,
         "argv",
-        ["snapcraft", "remote-build", "--build-for", build_for],
+        ["snapcraft", "remote-build", "--build-for", build_fors],
     )
     mock_start_builds = mocker.patch(
         "craft_application.services.remotebuild.RemoteBuildService.start_builds"
@@ -596,7 +624,7 @@ def test_build_for_argument(
     app = application.create_app()
     app.run()
 
-    mock_start_builds.assert_called_once_with(ANY, architectures=[build_for])
+    mock_start_builds.assert_called_once_with(ANY, architectures=expected_build_fors)
 
 
 def test_architecture_defined_twice_error(
@@ -667,11 +695,21 @@ def test_platform_defined_twice_error(
     ) in err
 
 
+@pytest.mark.parametrize(
+    "platforms",
+    [
+        "nonexistent",
+        "nonexistent,riscv64",
+        "riscv64,nonexistent",
+        "riscv64,nonexistent,amd64",
+    ],
+)
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
 def test_unknown_platform_error(
     capsys,
     mocker,
     snapcraft_yaml,
+    platforms,
     base,
     fake_services,
     mock_confirm,
@@ -686,7 +724,7 @@ def test_unknown_platform_error(
     mocker.patch.object(
         sys,
         "argv",
-        ["snapcraft", "remote-build", "--platform", "nonexistent"],
+        ["snapcraft", "remote-build", "--platform", platforms],
     )
 
     app = application.create_app()
@@ -700,11 +738,21 @@ def test_unknown_platform_error(
     ) in err
 
 
+@pytest.mark.parametrize(
+    "build_fors",
+    [
+        "nonexistent",
+        "nonexistent,riscv64",
+        "riscv64,nonexistent",
+        "riscv64,nonexistent,amd64",
+    ],
+)
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22", "devel"})
 def test_unknown_build_for_error(
     capsys,
     mocker,
     snapcraft_yaml,
+    build_fors,
     base,
     fake_services,
     mock_confirm,
@@ -715,7 +763,7 @@ def test_unknown_build_for_error(
     mocker.patch.object(
         sys,
         "argv",
-        ["snapcraft", "remote-build", "--build-for", "nonexistent"],
+        ["snapcraft", "remote-build", "--build-for", build_fors],
     )
     mocker.patch(
         "craft_application.services.remotebuild.RemoteBuildService.start_builds"
