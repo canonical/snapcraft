@@ -527,6 +527,8 @@ class LegacyStoreClientCLI:
         if assertions := response.json().get("assertions"):
             for assertion_data in assertions:
                 emit.debug(f"Parsing assertion: {assertion_data}")
+                # move body into model
+                assertion_data["headers"]["body"] = assertion_data["body"]
                 assertion = models.RegistryAssertion.unmarshal(
                     assertion_data["headers"]
                 )

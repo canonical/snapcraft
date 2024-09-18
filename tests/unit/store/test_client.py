@@ -1101,6 +1101,11 @@ def test_list_registries(name, fake_client, list_registries_payload, check):
     check.is_instance(registries, list)
     for registry in registries:
         check.is_instance(registry, models.RegistryAssertion)
+        check.equal(
+            registry.body,
+            '{\n  "storage": {\n    "schema": {\n      "wifi": {\n        '
+            '"values": "any"\n      }\n    }\n  }\n}',
+        )
     check.equal(
         fake_client.request.mock_calls,
         [

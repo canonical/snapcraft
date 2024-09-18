@@ -18,12 +18,54 @@
 
 from __future__ import annotations
 
+import textwrap
 from typing import Any
 
+from craft_application.util import dump_yaml
 from typing_extensions import override
 
 from snapcraft import models
 from snapcraft.services import Assertion
+
+_REGISTRY_SETS_TEMPLATE = textwrap.dedent(
+    """\
+    account-id: {account_id}
+    name: {set_name}
+    # summary: {summary}
+    # The revision for this registries set
+    # revision: {revision}
+    {views}
+    {body}
+    """
+)
+
+
+_REGISTRY_SETS_VIEWS_TEMPLATE = textwrap.dedent(
+    """\
+    views:
+      wifi-setup:
+        rules:
+          - request: ssids
+            storage: wifi.ssids
+            access: read
+    """
+)
+
+
+_REGISTRY_SETS_BODY_TEMPLATE = textwrap.dedent(
+    """\
+    body: |-
+      {
+        "storage": {
+          "schema": {
+            "wifi": {
+              "values": "any"
+            }
+          }
+        }
+      }
+    """
+)
 
 
 class Registries(Assertion):
@@ -33,6 +75,11 @@ class Registries(Assertion):
     @override
     def _assertion_name(self) -> str:
         return "registries set"
+
+    @property
+    @override
+    def _editable_assertion_class(self) -> type[models.EditableAssertion]:
+        return models.EditableRegistryAssertion
 
     @override
     def _get_assertions(self, name: str | None = None) -> list[models.Assertion]:
@@ -54,3 +101,27 @@ class Registries(Assertion):
         ]
 
         return headers, registries
+
+    @override
+    def _generate_yaml_from_model(self, assertion: models.Assertion) -> str:
+        return _REGISTRY_SETS_TEMPLATE.format(
+            account_id=assertion.account_id,
+            views=dump_yaml(
+                {"views": assertion.marshal().get("views")}, default_flow_style=False
+            ),
+            body=dump_yaml({"body": assertion.body}, default_flow_style=False),
+            summary=assertion.summary,
+            set_name=assertion.name,
+            revision=assertion.revision,
+        )
+
+    @override
+    def _generate_yaml_from_template(self, name: str, account_id: str) -> str:
+        return _REGISTRY_SETS_TEMPLATE.format(
+            account_id=account_id,
+            views=_REGISTRY_SETS_VIEWS_TEMPLATE,
+            body=_REGISTRY_SETS_BODY_TEMPLATE,
+            summary="A brief summary of the registries set",
+            set_name=name,
+            revision=1,
+        )

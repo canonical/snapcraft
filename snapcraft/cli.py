@@ -143,6 +143,7 @@ COMMAND_GROUPS = [
     craft_cli.CommandGroup(
         "Store Registries",
         [
+            commands.StoreEditRegistriesCommand,
             commands.StoreListRegistriesCommand,
         ],
     ),
