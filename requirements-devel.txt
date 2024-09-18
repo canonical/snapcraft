@@ -24,7 +24,7 @@ click==8.1.7
 codespell==2.3.0
 colorama==0.4.6
 coverage==7.6.1
-craft-application==4.2.2
+craft-application==4.2.3
 craft-archives==2.0.0
 craft-cli==2.7.0
 craft-grammar==2.0.0
