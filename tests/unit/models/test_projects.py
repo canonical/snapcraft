@@ -2070,6 +2070,37 @@ class TestApplyRootPackages:
         ),
         pytest.param(
             {
+                "s390x": {
+                    "build-on": "s390x",
+                },
+                "riscv64": {
+                    "build-on": ["amd64", "riscv64"],
+                },
+            },
+            [
+                BuildInfo(
+                    build_on="s390x",
+                    build_for="s390x",
+                    base=BaseName(name="ubuntu", version="24.04"),
+                    platform="s390x",
+                ),
+                BuildInfo(
+                    build_on="amd64",
+                    build_for="riscv64",
+                    base=BaseName(name="ubuntu", version="24.04"),
+                    platform="riscv64",
+                ),
+                BuildInfo(
+                    build_on="riscv64",
+                    build_for="riscv64",
+                    base=BaseName(name="ubuntu", version="24.04"),
+                    platform="riscv64",
+                ),
+            ],
+            id="implicit_build_for",
+        ),
+        pytest.param(
+            {
                 "arm64": {
                     "build-on": ["arm64", "armhf"],
                     "build-for": ["arm64"],
