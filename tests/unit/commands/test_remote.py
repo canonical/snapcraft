@@ -36,7 +36,8 @@ from snapcraft.utils import get_host_architecture
 
 # remote-build control logic may check if the working dir is a git repo,
 # so execute all tests inside a test directory
-pytestmark = pytest.mark.usefixtures("new_dir")
+# The service also emits
+pytestmark = pytest.mark.usefixtures("new_dir", "emitter")
 
 
 @pytest.fixture()
@@ -163,7 +164,7 @@ def test_no_confirmation_for_private_project(
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_argv")
+@pytest.mark.usefixtures("mock_argv", "emitter")
 def test_command_user_confirms_upload(
     snapcraft_yaml, base, mock_confirm, fake_services
 ):
@@ -183,7 +184,7 @@ def test_command_user_confirms_upload(
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_argv", "fake_services")
+@pytest.mark.usefixtures("mock_argv", "emitter", "fake_services")
 def test_command_user_denies_upload(
     capsys,
     snapcraft_yaml,
@@ -206,7 +207,7 @@ def test_command_user_denies_upload(
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_argv", "fake_services")
+@pytest.mark.usefixtures("mock_argv", "emitter", "fake_services")
 def test_command_accept_upload(
     mocker, snapcraft_yaml, base, mock_confirm, mock_run_remote_build
 ):
@@ -224,7 +225,9 @@ def test_command_accept_upload(
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_argv", "mock_confirm", "fake_services", "fake_sudo")
+@pytest.mark.usefixtures(
+    "mock_argv", "mock_confirm", "emitter", "fake_services", "fake_sudo"
+)
 def test_remote_build_sudo_warns(emitter, snapcraft_yaml, base, mock_run_remote_build):
     "Check if a warning is shown when snapcraft is run with sudo."
     snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
@@ -240,8 +243,8 @@ def test_remote_build_sudo_warns(emitter, snapcraft_yaml, base, mock_run_remote_
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_argv", "mock_confirm", "fake_services")
-def test_launchpad_timeout_default(mocker, snapcraft_yaml, base, fake_services):
+@pytest.mark.usefixtures("mock_argv", "mock_confirm", "emitter", "fake_services")
+def test_launchpad_timeout_default(mocker, snapcraft_yaml, base):
     """Check if no timeout is set by default."""
     snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
     snapcraft_yaml(**snapcraft_yaml_dict)
@@ -256,8 +259,8 @@ def test_launchpad_timeout_default(mocker, snapcraft_yaml, base, fake_services):
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_argv", "mock_confirm", "fake_services")
-def test_launchpad_timeout(mocker, snapcraft_yaml, base, fake_services):
+@pytest.mark.usefixtures("mock_argv", "mock_confirm", "emitter", "fake_services")
+def test_launchpad_timeout(mocker, snapcraft_yaml, base):
     """Set the timeout for the remote builder."""
     mocker.patch.object(
         sys, "argv", ["snapcraft", "remote-build", "--launchpad-timeout", "100"]
@@ -281,7 +284,7 @@ def test_launchpad_timeout(mocker, snapcraft_yaml, base, fake_services):
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_argv", "mock_confirm", "fake_services")
+@pytest.mark.usefixtures("mock_argv", "mock_confirm", "emitter", "fake_services")
 def test_run_core22_and_later(snapcraft_yaml, base, mock_remote_build_run):
     """Bases that are core22 and later will use craft-application remote-build."""
     snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
@@ -309,15 +312,8 @@ def test_run_core20(
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_confirm", "mock_argv")
-def test_run_in_repo_newer_than_core22(
-    emitter,
-    mocker,
-    snapcraft_yaml,
-    base,
-    new_dir,
-    fake_services,
-):
+@pytest.mark.usefixtures("mock_confirm", "mock_argv", "emitter", "fake_services")
+def test_run_in_repo_newer_than_core22(mocker, snapcraft_yaml, base, new_dir):
     """Bases newer than core22 run craft-application remote-build regardless of being in a repo."""
     # initialize a git repo
     GitRepo(new_dir)
@@ -337,15 +333,10 @@ def test_run_in_repo_newer_than_core22(
 @pytest.mark.usefixtures(
     "mock_confirm",
     "mock_argv",
+    "mock_remote_builder_start_builds",
+    "fake_services",
 )
-def test_run_in_shallow_repo_unsupported(
-    capsys,
-    new_dir,
-    snapcraft_yaml,
-    base,
-    mock_remote_builder_start_builds,
-    fake_services,
-):
+def test_run_in_shallow_repo_unsupported(capsys, new_dir, snapcraft_yaml, base):
     """devel / core24 and newer bases run new remote-build in a shallow git repo."""
     root_path = Path(new_dir)
     snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
