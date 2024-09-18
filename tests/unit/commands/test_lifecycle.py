@@ -107,7 +107,8 @@ def test_snap_command_fallback(tmp_path, emitter, mocker, fake_services):
     )
 
 
-def test_core24_try_command(tmp_path, mocker, fake_services):
+@pytest.mark.usefixtures("emitter")
+def test_core24_try_command(tmp_path, fake_services):
     parsed_args = argparse.Namespace(parts=[], output=tmp_path)
     cmd = lifecycle.TryCommand({"app": APP_METADATA, "services": fake_services})
 
