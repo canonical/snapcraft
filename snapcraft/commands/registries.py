@@ -29,7 +29,7 @@ class StoreListRegistriesCommand(craft_application.commands.AppCommand):
     """List registries."""
 
     name = "list-registries"
-    help_msg = "List registries"
+    help_msg = "List registries sets"
     overview = textwrap.dedent(
         """
         List all registries for the authenticated account.
@@ -68,4 +68,42 @@ class StoreListRegistriesCommand(craft_application.commands.AppCommand):
         self._services.registries.list_assertions(
             name=parsed_args.name,
             output_format=parsed_args.format,
+        )
+
+
+class StoreEditRegistriesCommand(craft_application.commands.AppCommand):
+    """Edit a registries set."""
+
+    name = "edit-registries"
+    help_msg = "Edit or create a registries set"
+    overview = textwrap.dedent(
+        """
+        Edit a registries set.
+
+        If the registries set does not exist, then a new registries set will be created.
+
+        The account ID of the authenticated account can be determined with the
+        ``snapcraft whoami`` command.
+
+        Use the ``list-registries`` command to view existing registries.
+        """
+    )
+    _services: services.SnapcraftServiceFactory  # type: ignore[reportIncompatibleVariableOverride]
+
+    @override
+    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+        parser.add_argument(
+            "account_id",
+            metavar="account-id",
+            help="The account ID of the registries set to edit",
+        )
+        parser.add_argument(
+            "name", metavar="name", help="Name of the registries set to edit"
+        )
+
+    @override
+    def run(self, parsed_args: "argparse.Namespace"):
+        self._services.registries.edit_assertion(
+            name=parsed_args.name,
+            account_id=parsed_args.account_id,
         )
