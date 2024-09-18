@@ -46,9 +46,9 @@ class SnapcraftServiceFactory(ServiceFactory):
         services.RemoteBuild
     ] = services.RemoteBuild
     RegistriesClass: type[  # type: ignore[reportIncompatibleVariableOverride]
-        services.RegistriesService
-    ] = services.RegistriesService
+        services.Registries
+    ] = services.Registries
 
     if TYPE_CHECKING:
         # Allow static type check to report correct types for Snapcraft services
-        registries: services.RegistriesService = None  # type: ignore[assignment]
+        registries: services.Registries = None  # type: ignore[assignment]

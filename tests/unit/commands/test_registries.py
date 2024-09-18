@@ -23,9 +23,7 @@ from snapcraft import application, const
 
 @pytest.fixture
 def mock_list_assertions(mocker):
-    return mocker.patch(
-        "snapcraft.services.registries.RegistriesService.list_assertions"
-    )
+    return mocker.patch("snapcraft.services.registries.Registries.list_assertions")
 
 
 @pytest.mark.usefixtures("memory_keyring")

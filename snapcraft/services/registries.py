@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Abstract service class for assertions."""
+"""Service class for registries."""
 
 from __future__ import annotations
 
@@ -23,39 +23,25 @@ from typing import Any
 from typing_extensions import override
 
 from snapcraft import models
-from snapcraft.services import AssertionService
+from snapcraft.services import Assertion
 
 
-class RegistriesService(AssertionService):
+class Registries(Assertion):
     """Service for interacting with registries."""
 
     @property
     @override
-    def _assertion_type(self) -> str:
-        """The pluralized name of the assertion type."""
-        return "registries"
+    def _assertion_name(self) -> str:
+        return "registries set"
 
     @override
     def _get_assertions(self, name: str | None = None) -> list[models.Assertion]:
-        """Get assertions from the store.
-
-        :param name: The name of the assertion to retrieve. If not provided, all
-          assertions are retrieved.
-
-        :returns: A list of assertions.
-        """
         return self._store_client.list_registries(name=name)
 
     @override
     def _normalize_assertions(
         self, assertions: list[models.Assertion]
     ) -> tuple[list[str], list[list[Any]]]:
-        """Convert a list of assertion models to a tuple of headers and data.
-
-        :param assertions: A list of assertions to normalize.
-
-        :returns: A tuple containing the headers and normalized assertions.
-        """
         headers = ["Account ID", "Name", "Revision", "When"]
         registries = [
             [

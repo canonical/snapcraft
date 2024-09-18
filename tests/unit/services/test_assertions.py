@@ -34,15 +34,15 @@ class FakeAssertion(CraftBaseModel):
 
 
 @pytest.fixture
-def mock_assertion_service(default_factory):
+def fake_assertion_service(default_factory):
     from snapcraft.application import APP_METADATA
-    from snapcraft.services import AssertionService
+    from snapcraft.services import Assertion
 
-    class FakeAssertionService(AssertionService):
+    class FakeAssertionService(Assertion):
         @property
         @override
-        def _assertion_type(self) -> str:
-            return "fake-assertions"
+        def _assertion_name(self) -> str:
+            return "fake assertion"
 
         @override
         def _get_assertions(  # type: ignore[override]
@@ -70,9 +70,9 @@ def mock_assertion_service(default_factory):
     return FakeAssertionService(app=APP_METADATA, services=default_factory)
 
 
-def test_list_assertions_table(mock_assertion_service, emitter):
+def test_list_assertions_table(fake_assertion_service, emitter):
     """List assertions as a table."""
-    mock_assertion_service.list_assertions(
+    fake_assertion_service.list_assertions(
         output_format=const.OutputFormat.table, name="test-registry"
     )
 
@@ -86,9 +86,9 @@ def test_list_assertions_table(mock_assertion_service, emitter):
     )
 
 
-def test_list_assertions_json(mock_assertion_service, emitter):
+def test_list_assertions_json(fake_assertion_service, emitter):
     """List assertions as json."""
-    mock_assertion_service.list_assertions(
+    fake_assertion_service.list_assertions(
         output_format=const.OutputFormat.json, name="test-registry"
     )
 
@@ -96,7 +96,7 @@ def test_list_assertions_json(mock_assertion_service, emitter):
         textwrap.dedent(
             """\
             {
-                "fake-assertions": [
+                "fake assertions": [
                     {
                         "test-field-1": "test-value-1",
                         "test-field-2": 0
@@ -111,11 +111,11 @@ def test_list_assertions_json(mock_assertion_service, emitter):
     )
 
 
-def test_list_assertions_unknown_format(mock_assertion_service):
+def test_list_assertions_unknown_format(fake_assertion_service):
     """Error for unknown formats."""
     expected = "Command or feature not implemented: '--format unknown'"
 
     with pytest.raises(errors.FeatureNotImplemented, match=expected):
-        mock_assertion_service.list_assertions(
+        fake_assertion_service.list_assertions(
             output_format="unknown", name="test-registry"
         )

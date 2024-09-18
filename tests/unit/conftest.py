@@ -533,9 +533,9 @@ def remote_build_service(default_factory, mocker):
 @pytest.fixture()
 def registries_service(default_factory, mocker):
     from snapcraft.application import APP_METADATA
-    from snapcraft.services import RegistriesService
+    from snapcraft.services import Registries
 
-    service = RegistriesService(app=APP_METADATA, services=default_factory)
+    service = Registries(app=APP_METADATA, services=default_factory)
     service._store_client = mocker.patch(
         "snapcraft.store.StoreClientCLI", autospec=True
     )
@@ -544,32 +544,34 @@ def registries_service(default_factory, mocker):
 
 
 @pytest.fixture()
-def fake_registry_assertion_data():
-    """Returns a dictionary of assertion data with required fields."""
+def fake_registry_assertion():
+    """Returns a fake registry assertion with required fields."""
     from snapcraft.models import RegistryAssertion
 
-    def _assertion_data(**kwargs) -> dict[str, Any]:
-        return {
-            "account_id": "test-account-id",
-            "authority_id": "test-authority-id",
-            "name": "test-registry",
-            "timestamp": "2024-01-01T10:20:30Z",
-            "type": "registry",
-            "views": {
-                "wifi-setup": {
-                    "rules": [
-                        {
-                            "access": "read-write",
-                            "request": "ssids",
-                            "storage": "wifi.ssids",
-                        }
-                    ]
-                }
-            },
-            **kwargs,
-        }
+    def _fake_registry_assertion(**kwargs) -> RegistryAssertion:
+        return RegistryAssertion.unmarshal(
+            {
+                "account_id": "test-account-id",
+                "authority_id": "test-authority-id",
+                "name": "test-registry",
+                "timestamp": "2024-01-01T10:20:30Z",
+                "type": "registry",
+                "views": {
+                    "wifi-setup": {
+                        "rules": [
+                            {
+                                "access": "read-write",
+                                "request": "ssids",
+                                "storage": "wifi.ssids",
+                            }
+                        ]
+                    }
+                },
+                **kwargs,
+            }
+        )
 
-    return RegistryAssertion.unmarshal(_assertion_data())
+    return _fake_registry_assertion
 
 
 @pytest.fixture()
