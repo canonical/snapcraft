@@ -30,7 +30,7 @@ from typing_extensions import override
 from snapcraft import const, errors, models, store
 
 
-class AssertionService(base.AppService):
+class Assertion(base.AppService):
     """Abstract service for interacting with assertions."""
 
     @override
@@ -41,8 +41,8 @@ class AssertionService(base.AppService):
 
     @property
     @abc.abstractmethod
-    def _assertion_type(self) -> str:
-        """The pluralized name of the assertion type."""
+    def _assertion_name(self) -> str:
+        """The lowercase name of the assertion type."""
 
     @abc.abstractmethod
     def _get_assertions(self, name: str | None = None) -> list[models.Assertion]:
@@ -81,7 +81,7 @@ class AssertionService(base.AppService):
             match output_format:
                 case const.OutputFormat.json:
                     json_assertions = {
-                        self._assertion_type.lower(): [
+                        f"{self._assertion_name}s": [
                             {
                                 header.lower(): value
                                 for header, value in zip(headers, assertion)
@@ -102,4 +102,4 @@ class AssertionService(base.AppService):
                         msg=f"'--format {output_format}'",
                     )
         else:
-            craft_cli.emit.message(f"No {self._assertion_type} found.")
+            craft_cli.emit.message(f"No {self._assertion_name}s found.")

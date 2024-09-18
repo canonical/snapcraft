@@ -18,7 +18,7 @@
 
 
 def test_registries_service_type(registries_service):
-    assert registries_service._assertion_type == "registries"
+    assert registries_service._assertion_name == "registries set"
 
 
 def test_get_assertions(registries_service):
@@ -36,16 +36,14 @@ def test_normalize_assertions_empty(registries_service, check):
     check.equal(registries, [])
 
 
-def test_normalize_assertions(fake_registry_assertion_data, registries_service, check):
+def test_normalize_assertions(fake_registry_assertion, registries_service, check):
     registries = [
-        fake_registry_assertion_data,
-        fake_registry_assertion_data.copy(
-            update={
-                "account_id": "test-account-id-2",
-                "name": "test-registry-2",
-                "revision": 100,
-                "timestamp": "2024-12-31",
-            }
+        fake_registry_assertion(),
+        fake_registry_assertion(
+            account_id="test-account-id-2",
+            name="test-registry-2",
+            revision=100,
+            timestamp="2024-12-31",
         ),
     ]
 
