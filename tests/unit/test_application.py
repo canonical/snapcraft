@@ -17,9 +17,11 @@
 
 import json
 import os
+import re
 import sys
 from textwrap import dedent
 
+import craft_application.remote
 import craft_cli
 import craft_parts.plugins
 import craft_store
@@ -698,6 +700,25 @@ def test_store_key_error(mocker, capsys):
         """
             # pylint: enable=[line-too-long]
         )
+    )
+
+
+def test_remote_build_error(mocker, capsys):
+    """Catch remote build errors and include a documentation link."""
+    mocker.patch(
+        "snapcraft.application.Application._run_inner",
+        side_effect=craft_application.remote.RemoteBuildError(message="test-error"),
+    )
+
+    return_code = application.main()
+
+    assert return_code == 1
+    _, err = capsys.readouterr()
+
+    assert re.match(
+        r"^test-error\n"
+        r"For more information, check out: .*/explanation/remote-build\n",
+        err,
     )
 
 
