@@ -15,7 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Data models for snapcraft."""
 
-from .assertions import Assertion, RegistryAssertion
+from .assertions import (
+    Assertion,
+    EditableAssertion,
+    EditableRegistryAssertion,
+    Registry,
+    RegistryAssertion,
+)
 from .manifest import Manifest
 from .project import (
     MANDATORY_ADOPTABLE_FIELDS,
@@ -43,12 +49,15 @@ __all__ = [
     "Component",
     "ComponentProject",
     "ContentPlug",
+    "EditableAssertion",
+    "EditableRegistryAssertion",
     "GrammarAwareProject",
     "Hook",
     "Lint",
     "Manifest",
     "Platform",
     "Project",
+    "Registry",
     "RegistryAssertion",
     "SnapcraftBuildPlanner",
     "Socket",
