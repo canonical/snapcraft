@@ -82,6 +82,44 @@ def socket_yaml_data(app_yaml_data):
     yield _socket_yaml_data
 
 
+@pytest.fixture
+def fake_project_with_numbers(project_yaml_data):
+    """Returns a fake project with numbers in string fields.
+
+    This includes numbers in fields that are validated by snapcraft and fields
+    validated by craft-parts.
+    """
+    return project_yaml_data(
+        # string
+        version=1.0,
+        # string
+        icon=2,
+        # list[str]
+        website=[3.0, 4],
+        # dict[str, str]
+        environment={
+            "float": 5.0,
+            "int": 6,
+        },
+        parts={
+            "p1": {
+                "plugin": "nil",
+                # string
+                "source-type": 7,
+                # string
+                "source-commit": 8.0,
+                # list[str]
+                "build-snaps": [9, 10.0],
+                # dict[str, str]
+                "build-environment": [
+                    {"float": 11.0},
+                    {"int": 12},
+                ],
+            }
+        },
+    )
+
+
 class TestProjectDefaults:
     """Ensure unspecified items have the correct default value."""
 
@@ -699,6 +737,23 @@ class TestProjectValidation:
         assert project.website == [
             "https://github.com/NickvisionApps/Parabolic",
             "https://github.com/NickvisionApps/Denaro",
+        ]
+
+    def test_coerce_numbers(self, fake_project_with_numbers):
+        """Coerce numbers into strings."""
+        project = Project.unmarshal(fake_project_with_numbers)
+
+        assert project.version == "1.0"
+        assert project.icon == "2"
+        assert project.website == ["3.0", "4"]
+        assert project.environment == {"float": "5.0", "int": "6"}
+        # parts remain a dictionary with original types
+        assert project.parts["p1"]["source-type"] == 7
+        assert project.parts["p1"]["source-commit"] == 8.0
+        assert project.parts["p1"]["build-snaps"] == [9, 10.0]
+        assert project.parts["p1"]["build-environment"] == [
+            {"float": 11.0},
+            {"int": 12},
         ]
 
 
@@ -1504,6 +1559,10 @@ class TestGrammarValidation:
         with pytest.raises(errors.ProjectValidationError, match=error):
             GrammarAwareProject.validate_grammar(data)
 
+    def test_grammar_number_coercion(self, fake_project_with_numbers):
+        """Ensure that grammar validation does not fail when coercing numbers into strings."""
+        GrammarAwareProject.validate_grammar(fake_project_with_numbers)
+
     def test_grammar_type_error(self, project_yaml_data):
         data = project_yaml_data(
             parts={
@@ -1516,7 +1575,7 @@ class TestGrammarValidation:
             }
         )
 
-        error = r"value must be a str: \[25\]"
+        error = r"Input should be a valid string \(in field 'parts\.p1\.source\[0\]'\)"
         with pytest.raises(errors.ProjectValidationError, match=error):
             GrammarAwareProject.validate_grammar(data)
 
