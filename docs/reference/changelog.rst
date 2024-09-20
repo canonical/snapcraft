@@ -74,7 +74,7 @@ Changelog
 Core
 ====
 
-* Fix a regression where numeric entries in a ``snapcraft.yaml`` could not be
+* Fix a regression where numeric entries in ``snapcraft.yaml`` couldn't be
   parsed.
 
 Bases
@@ -83,14 +83,14 @@ Bases
 core24
 """"""
 
-* Fix a regression where ``build-for`` could not be omitted in a ``platforms``
+* Fix a regression where ``build-for`` couldn't be omitted in a ``platforms``
   entry in a ``snapcraft.yaml`` file.
 
-* Fix a regression where ``--shell`` and ``--shell-after`` were not supported
+* Fix a regression where ``--shell`` and ``--shell-after`` weren't supported
   for the ``pack`` command (`#4963`_).
 
-* Fix a regression where ``--debug`` would not shell into the build environment
-  if the packing step fails (`#4959`_).
+* Fix a regression where ``--debug`` wouldn't open a shell into the build
+  environment if the packing step fails (`#4959`_).
 
 Plugins
 #######
@@ -99,7 +99,7 @@ NPM
 """
 
 * Fix a bug where NPM parts fail to build if the ``pull`` and ``build`` steps
-  did not occur in the same execution of Snapcraft.
+  didn't occur in the same instance of Snapcraft.
 
 Command line
 ============
@@ -112,7 +112,7 @@ Command line
 Remote build
 ============
 
-* Fix a regression where ``--build-for`` and ``--platform`` could not accept
+* Fix a regression where ``--build-for`` and ``--platform`` couldn't accept
   comma-separated values (`#4990`_).
 
 * Fix a regression where remote build errors would be raised as an internal
@@ -123,10 +123,10 @@ Remote build
 Store
 =====
 
-* Fix a regression where Ubuntu One macaroons could not be refreshed
+* Fix a regression where Ubuntu One macaroons couldn't be refreshed
   (`#5048`_).
 
-For a complete list of commits, check out the `8.4.1`_ release on GitHub.
+For a complete list of changes, check out the `8.4.1`_ release on GitHub.
 
 
 8.4.0 (2024-Sep-10)
