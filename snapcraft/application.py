@@ -82,6 +82,7 @@ def _get_esm_error_for_base(base: str) -> None:
             f"Use Snapcraft {version} from the {channel!r} channel of snapcraft where "
             f"{base!r} was last supported."
         ),
+        doc_slug="/reference/bases",
     )
 
 
@@ -395,6 +396,7 @@ class Snapcraft(Application):
                 resolution=(
                     "Valid values are 'disable-fallback' and 'force-fallback'."
                 ),
+                doc_slug="/explanation/remote-build",
             )
 
         # 2. core20 projects must use the legacy remote builder (#4885)
@@ -407,6 +409,7 @@ class Snapcraft(Application):
                 resolution=(
                     "Unset the environment variable or set it to 'force-fallback'."
                 ),
+                doc_slug="/explanation/remote-build",
             )
 
         # 3. core24 and newer projects must use the craft-application remote builder
@@ -419,6 +422,7 @@ class Snapcraft(Application):
                 resolution=(
                     "Unset the environment variable or set it to 'disable-fallback'."
                 ),
+                doc_slug="/explanation/remote-build",
             )
 
     @override

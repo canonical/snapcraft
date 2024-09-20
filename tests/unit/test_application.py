@@ -400,7 +400,13 @@ def test_esm_error(snapcraft_yaml, base, monkeypatch, capsys):
     application.main()
 
     _, err = capsys.readouterr()
-    assert f"Base {base!r} is not supported by this version of Snapcraft" in err
+
+    assert re.match(
+        rf"^Base {base!r} is not supported by this version of Snapcraft.\n"
+        rf"Recommended resolution: Use Snapcraft .* from the '.*' channel of snapcraft where {base!r} was last supported.\n"
+        r"For more information, check out: .*/reference/bases\n",
+        err,
+    )
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
@@ -461,10 +467,12 @@ def test_run_remote_build_core24_error(monkeypatch, snapcraft_yaml, base, capsys
     application.main()
 
     _, err = capsys.readouterr()
-    assert (
-        "'SNAPCRAFT_REMOTE_BUILD_STRATEGY=force-fallback' cannot be used "
-        "for core24 and newer snaps"
-    ) in err
+    assert re.match(
+        r"^'SNAPCRAFT_REMOTE_BUILD_STRATEGY=force-fallback' cannot be used for core24 and newer snaps\.\n"
+        r"Recommended resolution: Unset the environment variable or set it to 'disable-fallback'\.\n"
+        r"For more information, check out: .*/explanation/remote-build",
+        err,
+    )
 
 
 @pytest.mark.parametrize("base", const.LEGACY_BASES)
@@ -479,9 +487,11 @@ def test_run_envvar_disable_fallback_core20(snapcraft_yaml, base, monkeypatch, c
     application.main()
 
     _, err = capsys.readouterr()
-    assert (
-        f"'SNAPCRAFT_REMOTE_BUILD_STRATEGY=disable-fallback' cannot be used for {base} snaps"
-        in err
+    assert re.match(
+        r"'SNAPCRAFT_REMOTE_BUILD_STRATEGY=disable-fallback' cannot be used for core20 snaps\.\n"
+        r"Recommended resolution: Unset the environment variable or set it to 'force-fallback'\.\n"
+        r"For more information, check out: .*/explanation/remote-build",
+        err,
     )
 
 
@@ -546,9 +556,11 @@ def test_run_envvar_invalid(snapcraft_yaml, base, monkeypatch, capsys):
     application.main()
 
     _, err = capsys.readouterr()
-    assert (
-        "Unknown value 'badvalue' in environment variable 'SNAPCRAFT_REMOTE_BUILD_STRATEGY'"
-        in err
+    assert re.match(
+        r"Unknown value 'badvalue' in environment variable 'SNAPCRAFT_REMOTE_BUILD_STRATEGY'\.\n"
+        r"Recommended resolution: Valid values are 'disable-fallback' and 'force-fallback'\.\n"
+        r"For more information, check out: .*/explanation/remote-build",
+        err,
     )
 
 
