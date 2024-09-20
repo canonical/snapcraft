@@ -18,6 +18,7 @@
 
 from typing import Literal
 
+import pydantic
 from craft_application import models
 from typing_extensions import Self
 
@@ -82,7 +83,7 @@ class RegistryAssertion(EditableRegistryAssertion):
 class RegistriesList(models.CraftBaseModel):
     """A list of registry assertions."""
 
-    registry_list: list[RegistryAssertion] = []
+    registry_list: list[RegistryAssertion] = pydantic.Field(default_factory=list)
 
 
 # this will be a union for validation sets and registries once

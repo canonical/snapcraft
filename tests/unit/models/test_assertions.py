@@ -24,9 +24,9 @@ def test_registry_defaults(check):
     """Test default values of the Registry model."""
     registry = Registry.unmarshal({"storage": "test-storage"})
 
-    check.equal(registry.request, None)
-    check.equal(registry.access, None)
-    check.equal(registry.content, None)
+    check.is_none(registry.request)
+    check.is_none(registry.access)
+    check.is_none(registry.content)
 
 
 def test_registry_nested(check):
@@ -73,9 +73,9 @@ def test_editable_registry_assertion_defaults(check):
         }
     )
 
-    check.equal(assertion.summary, None)
+    check.is_none(assertion.summary)
     check.equal(assertion.revision, 0)
-    check.equal(assertion.body, None)
+    check.is_none(assertion.body)
 
 
 def test_registry_assertion_defaults(check):
@@ -101,8 +101,8 @@ def test_registry_assertion_defaults(check):
         }
     )
 
-    check.equal(assertion.body, None)
-    check.equal(assertion.body_length, None)
-    check.equal(assertion.sign_key_sha3_384, None)
-    check.equal(assertion.summary, None)
+    check.is_none(assertion.body)
+    check.is_none(assertion.body_length)
+    check.is_none(assertion.sign_key_sha3_384)
+    check.is_none(assertion.summary)
     check.equal(assertion.revision, 0)
