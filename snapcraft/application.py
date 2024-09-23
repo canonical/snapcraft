@@ -27,7 +27,7 @@ from typing import Any
 import craft_cli
 import craft_parts
 import craft_store
-from craft_application import Application, AppMetadata, util
+from craft_application import Application, AppMetadata, remote, util
 from craft_application.commands import get_other_command_group
 from craft_cli import emit
 from craft_parts.plugins.plugins import PluginType
@@ -82,6 +82,7 @@ def _get_esm_error_for_base(base: str) -> None:
             f"Use Snapcraft {version} from the {channel!r} channel of snapcraft where "
             f"{base!r} was last supported."
         ),
+        doc_slug="/reference/bases",
     )
 
 
@@ -209,13 +210,13 @@ class Snapcraft(Application):
         super()._pre_run(dispatcher)
 
     @override
-    def run(self) -> int:
+    def _run_inner(self) -> int:
         try:
-            return_code = super().run()
+            return_code = super()._run_inner()
         except craft_store.errors.NoKeyringError as err:
             self._emit_error(
                 craft_cli.errors.CraftError(
-                    f"craft-store error: {err}",
+                    f"{err}",
                     resolution=(
                         "Ensure the keyring is working or "
                         f"{store.constants.ENVIRONMENT_STORE_CREDENTIALS} "
@@ -227,12 +228,14 @@ class Snapcraft(Application):
             return_code = 1
         except craft_store.errors.CraftStoreError as err:
             self._emit_error(
-                craft_cli.errors.CraftError(
-                    f"craft-store error: {err}", resolution=err.resolution
-                ),
+                craft_cli.errors.CraftError(f"{err}", resolution=err.resolution),
                 cause=err,
             )
             return_code = 1
+        except remote.RemoteBuildError as err:
+            err.doc_slug = "/explanation/remote-build"
+            self._emit_error(err)
+            return_code = err.retcode
 
         return return_code
 
@@ -393,6 +396,7 @@ class Snapcraft(Application):
                 resolution=(
                     "Valid values are 'disable-fallback' and 'force-fallback'."
                 ),
+                doc_slug="/explanation/remote-build",
             )
 
         # 2. core20 projects must use the legacy remote builder (#4885)
@@ -405,6 +409,7 @@ class Snapcraft(Application):
                 resolution=(
                     "Unset the environment variable or set it to 'force-fallback'."
                 ),
+                doc_slug="/explanation/remote-build",
             )
 
         # 3. core24 and newer projects must use the craft-application remote builder
@@ -417,6 +422,7 @@ class Snapcraft(Application):
                 resolution=(
                     "Unset the environment variable or set it to 'disable-fallback'."
                 ),
+                doc_slug="/explanation/remote-build",
             )
 
     @override

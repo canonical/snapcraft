@@ -68,6 +68,67 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+8.4.1 (2024-Sep-20)
+-------------------
+
+Core
+====
+
+* Fix a regression where numeric entries in ``snapcraft.yaml`` couldn't be
+  parsed.
+
+Bases
+#####
+
+core24
+""""""
+
+* Fix a regression where ``build-for`` couldn't be omitted in a ``platforms``
+  entry in a ``snapcraft.yaml`` file.
+
+* Fix a regression where ``--shell`` and ``--shell-after`` weren't supported
+  for the ``pack`` command (`#4963`_).
+
+* Fix a regression where ``--debug`` wouldn't open a shell into the build
+  environment if the packing step fails (`#4959`_).
+
+Plugins
+#######
+
+NPM
+"""
+
+* Fix a bug where NPM parts fail to build if the ``pull`` and ``build`` steps
+  didn't occur in the same instance of Snapcraft.
+
+Command line
+============
+
+* Fix a regression where store errors would be raised as an internal error
+  (`#4930`_).
+
+* Add documentation links for error messages about using an `ESM base`_.
+
+Remote build
+============
+
+* Fix a regression where ``--build-for`` and ``--platform`` couldn't accept
+  comma-separated values (`#4990`_).
+
+* Fix a regression where remote build errors would be raised as an internal
+  error (`#4908`_).
+
+* Add documentation links and recommended resolutions to remote-build errors.
+
+Store
+=====
+
+* Fix a regression where Ubuntu One macaroons couldn't be refreshed
+  (`#5048`_).
+
+For a complete list of changes, check out the `8.4.1`_ release on GitHub.
+
+
 8.3.4 (2024-Sep-13)
 -------------------
 
@@ -79,11 +140,11 @@ Plugins
 
 NPM
 """
-
 * Fix a bug where NPM parts fail to build if the ``pull`` and ``build`` steps
   did not occur in the same execution of Snapcraft.
 
 For a complete list of commits, check out the `8.3.4`_ release on GitHub.
+
 
 8.4.0 (2024-Sep-10)
 -------------------
@@ -1156,11 +1217,17 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _#4886: https://github.com/canonical/snapcraft/issues/4886
 .. _#4889: https://github.com/canonical/snapcraft/issues/4889
 .. _#4890: https://github.com/canonical/snapcraft/issues/4890
+.. _#4908: https://github.com/canonical/snapcraft/issues/4908
 .. _#4909: https://github.com/canonical/snapcraft/issues/4909
+.. _#4930: https://github.com/canonical/snapcraft/issues/4930
 .. _#4941: https://github.com/canonical/snapcraft/issues/4941
 .. _#4942: https://github.com/canonical/snapcraft/issues/4942
+.. _#4959: https://github.com/canonical/snapcraft/issues/4959
+.. _#4963: https://github.com/canonical/snapcraft/issues/4963
+.. _#4990: https://github.com/canonical/snapcraft/issues/4990
 .. _#4995: https://github.com/canonical/snapcraft/issues/4995
 .. _#5008: https://github.com/canonical/snapcraft/issues/5008
+.. _#5048: https://github.com/canonical/snapcraft/issues/5048
 
 .. _7.5.6: https://github.com/canonical/snapcraft/releases/tag/7.5.6
 .. _8.0.0: https://github.com/canonical/snapcraft/releases/tag/8.0.0
@@ -1189,3 +1256,4 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _8.3.3: https://github.com/canonical/snapcraft/releases/tag/8.3.3
 .. _8.3.4: https://github.com/canonical/snapcraft/releases/tag/8.3.4
 .. _8.4.0: https://github.com/canonical/snapcraft/releases/tag/8.4.0
+.. _8.4.1: https://github.com/canonical/snapcraft/releases/tag/8.4.1
