@@ -54,6 +54,28 @@ VALIDATION_SET_DATA = {
                         "id": "XXSnapIDForXSnapName2XXXXXXXXXXX",
                         "name": "snap-name-2",
                     },
+                    {
+                        "id": "XXSnapIDForXSnapName3XXXXXXXXXXX",
+                        "name": "snap-name-3",
+                        "presence": "optional",
+                        "revision": "1",
+                        "components": {
+                            "comp-name-1": {
+                                "presence": "required",
+                                "revision": "11",
+                            },
+                        },
+                    },
+                    {
+                        "id": "XXSnapIDForXSnapName4XXXXXXXXXXX",
+                        "name": "snap-name-4",
+                        "presence": "optional",
+                        "components": {
+                            "comp-name-1": "required",
+                            "comp-name-2": "optional",
+                            "comp-name-3": "invalid",
+                        },
+                    },
                 ],
                 "timestamp": "2020-10-29T16:36:56Z",
                 "type": "validation-set",
@@ -125,6 +147,28 @@ def edit_return_value():
                     "revision": "10",
                 },
                 {"id": "XXSnapIDForXSnapName2XXXXXXXXXXX", "name": "snap-name-2"},
+                {
+                    "id": "XXSnapIDForXSnapName3XXXXXXXXXXX",
+                    "name": "snap-name-3",
+                    "presence": "optional",
+                    "revision": "1",
+                    "components": {
+                        "comp-name-1": {
+                            "presence": "required",
+                            "revision": "11",
+                        },
+                    },
+                },
+                {
+                    "id": "XXSnapIDForXSnapName4XXXXXXXXXXX",
+                    "name": "snap-name-4",
+                    "presence": "optional",
+                    "components": {
+                        "comp-name-1": "required",
+                        "comp-name-2": "optional",
+                        "comp-name-3": "invalid",
+                    },
+                },
             ],
         }
     )
@@ -157,6 +201,28 @@ EXPECTED_BUILD_ASSERTION_CALL = call(
                 "revision": 10,
             },
             {"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"},
+            {
+                "id": "XXSnapIDForXSnapName3XXXXXXXXXXX",
+                "name": "snap-name-3",
+                "presence": "optional",
+                "revision": 1,
+                "components": {
+                    "comp-name-1": {
+                        "presence": "required",
+                        "revision": 11,
+                    },
+                },
+            },
+            {
+                "id": "XXSnapIDForXSnapName4XXXXXXXXXXX",
+                "name": "snap-name-4",
+                "presence": "optional",
+                "components": {
+                    "comp-name-1": "required",
+                    "comp-name-2": "optional",
+                    "comp-name-3": "invalid",
+                },
+            },
         ],
     }
 )
@@ -165,7 +231,9 @@ EXPECTED_SIGNED_VALIDATION_SETS = (
     '{{"account-id": "AccountIDXXXOfTheRequestingUserX", "name": "certification-x1", '
     '"revision": "222", "sequence": "9", "snaps": [{{"name": "snap-name-1", "id": '
     '"XXSnapIDForXSnapName1XXXXXXXXXXX", "presence": "optional", "revision": "10"}}, '
-    '{{"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"}}], '
+    '{{"name": "snap-name-2", "id": "XXSnapIDForXSnapName2XXXXXXXXXXX"}}, '
+    '{{"name": "snap-name-3", "id": "XXSnapIDForXSnapName3XXXXXXXXXXX", "presence": "optional", "revision": "1", "components": {{"comp-name-1": {{"presence": "required", "revision": "11"}}}}}}, '
+    '{{"name": "snap-name-4", "id": "XXSnapIDForXSnapName4XXXXXXXXXXX", "presence": "optional", "components": {{"comp-name-1": "required", "comp-name-2": "optional", "comp-name-3": "invalid"}}}}], '
     '"authority-id": "AccountIDXXXOfTheRequestingUserX", "series": "16", "timestamp": '
     '"2020-10-29T16:36:56Z", "type": "validation-set"}}\n\nSIGNED{key_name}'
 )

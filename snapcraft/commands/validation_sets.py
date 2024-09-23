@@ -48,6 +48,12 @@ _VALIDATIONS_SETS_SNAPS_TEMPLATE = textwrap.dedent(
                        # the provided name.
     #    presence: [required|optional|invalid]  # Optional, defaults to required.
     #    revision: <n> # The revision of the snap. Optional.
+    #    components: # Constraints to apply to the snap's components. Optional.
+    #      <component-name>: [required|optional|invalid] # Short form for specifying the component's presence.
+    #      <component-name>: # Long form that allows specifying the component's revision.
+    #        presence: [required|optional|invalid] # Presence of the component. Required.
+    #        revision: <n> # The revision of the component, required if the snap's revision is given.
+                           # Otherwise, not allowed.
 """
 )
 
