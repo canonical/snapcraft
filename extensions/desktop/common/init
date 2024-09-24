@@ -3,7 +3,7 @@
 # Launcher init
 # This is not used with the gnome extension for
 # core22 and later, please see
-# https://github.com/snapcore/snapcraft-desktop-integration
+# https://github.com/canonical/snapcraft-desktop-integration
 ###########################################################
 
 # shellcheck disable=SC2034

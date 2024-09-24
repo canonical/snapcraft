@@ -1,7 +1,7 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: Snapcraft
 Upstream-Contact: Snapcraft Team <snapcraft@lists.snapcraft.io>
-Source: https://github.com/snapcore/snapcraft
+Source: https://github.com/canonical/snapcraft
 
 Files: *
 Copyright: 2015-2017 Canonical Ltd

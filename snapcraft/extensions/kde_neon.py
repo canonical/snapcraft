@@ -204,7 +204,7 @@ class KDENeon(Extension):
         """
         # We can change this to the lightweight command-chain when
         # the content snap includes the desktop-launch from
-        # https://github.com/snapcore/snapcraft-desktop-integration
+        # https://github.com/canonical/snapcraft-desktop-integration
         source = get_extensions_data_dir() / "desktop" / "kde-neon"
 
         if self.kde_snaps.builtin:
