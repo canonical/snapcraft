@@ -10,12 +10,12 @@ sphinx:
   configuration: docs/conf.py
 
 # Optionally build your docs in additional formats such as PDF
-formats:
-  - pdf
-  - epub
+#formats:
+#  - pdf
+#  - epub
 
 build:
-  os: ubuntu-22.04
+  os: ubuntu-24.04
   tools:
     python: "3"
 

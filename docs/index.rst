@@ -1,6 +1,6 @@
 .. starcraft documentation root file
 
-StarCraft
+Starcraft
 =========
 
 .. toctree::

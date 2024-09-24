@@ -2,37 +2,42 @@
 starbase
 ********
 
-A base repository for Starcraft projects.
+The base repository for Starcraft projects.
 
 Description
 -----------
-This project is designed to act as the basis for any future starcraft projects
-as well as a testbed for any tooling changes we want to make before merging
-them into other projects.
+This template code is the basis for all future starcraft projects, and acts as
+the testbed for any major tooling changes that we want to make before
+propagating them across all projects.
 
 Structure
 ---------
 TODO
 
-How to migrate existing projects
+Migrate existing projects
 --------------------------------
 TODO
 
-How to create a new project
+Create a new project
 ---------------------------
 [TODO: Make this a template repository.]
 
 #. `Use this template`_ to create your repository.
 #. Ensure the ``LICENSE`` file represents the current best practices from the
-   Canonical legal team for the specific project you intend to release. (LGPL v3
-   for libraries, GPL v3 for applications.)
+   Canonical legal team for the specific project you intend to release. We use
+   LGPL v3 for libraries, and GPL v3 for apps.
 #. Rename any files or directories and ensure references are updated.
-#. Replace any appropriate ``starcraft`` references with the appropriate name.
-#. Put correct contact information into CODE_OF_CONDUCT.md
-#. Write a new README
-#. Import your documentation to ReadTheDocs_.
+#. Replace any instances of the word ``Starcraft`` with the product's name.
+#. Place contact information in a code of conduct.
+#. Rewrite the README.
+#. If a Diataxis quadrant (tutorials, how-tos, references, explanations)
+   doesn't yet have content, remove its landing page from the TOC and delete
+   its card in ``docs/index.rst``. You can re-index it when at least one
+   document has been produced for it.
+#. Register the product's documentation on our custom domain on `Read the
+   Docs for Business`_.
 
 .. _EditorConfig: https://editorconfig.org/
 .. _pre-commit: https://pre-commit.com/
-.. _ReadTheDocs: https://docs.readthedocs.io/en/stable/intro/import-guide.html
+.. _Read the Docs for Business: https://library.canonical.com/documentation/publish-on-read-the-docs
 .. _use this template: https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template
