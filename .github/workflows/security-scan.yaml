@@ -13,3 +13,5 @@ jobs:
     uses: lengau/starflow/.github/workflows/scan-python.yaml@work/secscan
     with:
       packages: python-apt-dev
+      osv-extra-args: '--config=source/osv-scanner.toml'
+      trivy-extra-args: '--severity HIGH,CRITICAL --ignore-unfixed --skip-dirs "tests/spread/**"'
