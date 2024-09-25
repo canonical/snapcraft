@@ -1,0 +1,15 @@
+name: Security scan
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - hotfix/*
+      - work/secscan  # For development
+
+jobs:
+  python-scans:
+    name: Scan Python project
+    uses: lengau/starflow/.github/workflows/scan-python.yaml@work/secscan
+    with:
+      packages: python-apt-dev
